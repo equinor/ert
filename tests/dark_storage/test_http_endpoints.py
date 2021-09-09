@@ -52,3 +52,17 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     assert parameters_json[0]["name"] == "COEFFS:COEFF_A"
     assert parameters_json[1]["name"] == "COEFFS:COEFF_B"
     assert parameters_json[2]["name"] == "COEFFS:COEFF_C"
+
+
+def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
+    experiment_id = uuid.uuid4()
+    resp: Response = dark_storage_client.get(
+        f"/experiments/{experiment_id}/observations"
+    )
+    response_json = resp.json()
+
+    assert len(response_json) == 1
+    assert response_json[0]["name"] == "POLY_OBS"
+    assert len(response_json[0]["errors"]) == 5
+    assert len(response_json[0]["values"]) == 5
+    assert len(response_json[0]["x_axis"]) == 5
