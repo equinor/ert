@@ -8,9 +8,6 @@ that highlights the features of ert3 in a reservoir context.
  - ert3: In Equinor you can fetch an installation via Komodo, but
    in general a `pip install ert` should suffice.
  - flow: A functioning installation of OPM Flow with a binary named `flow`.
- - `SPE1_WORKSPACE_ROOT` defined as the workspace root. This is only a temporary
-   workaround. Running `export SPE1_WORKSPAE_ROOT=$(pwd)` in the root should
-   suffice in bash.
  - ecl2df: In addition to the ERT dependencies the job `summary2json` utilises
    ecl2df. It can be installed via `pip install ecl2df`.
  - ert-storage: To store results, ert3 utilizes a service called ert-storage.
