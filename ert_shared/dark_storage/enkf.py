@@ -64,3 +64,8 @@ def get_res(*, _: None = Depends(security)) -> LibresFacade:
     if _libres_facade is None:
         init_facade()
     return _libres_facade
+
+
+def get_size():
+    res = get_res()
+    return res.get_ensemble_size()

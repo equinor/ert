@@ -3,7 +3,7 @@ from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
 import graphene as gr
 
-from ert_shared.dark_storage.enkf import get_res, get_id
+from ert_shared.dark_storage.enkf import get_id, get_size
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
@@ -35,7 +35,7 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_size(root: Any, info: "ResolveInfo") -> int:
-        return 42
+        return get_size()
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
