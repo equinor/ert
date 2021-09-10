@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 import os
 import sys
@@ -416,7 +415,3 @@ def main():
         args.func(args)
 
     clear_global_state()
-
-
-if __name__ == "__main__":
-    main()
