@@ -3,7 +3,7 @@ Setup
 
 If you work at Equinor you should have ert available after sourcing a komodo release. Run the command::
 
-    source /project/res/komodo/stable/enable
+    source /prog/res/komodo/stable/enable
 
 Then you can test the installation by running::
 
