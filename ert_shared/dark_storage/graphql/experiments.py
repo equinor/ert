@@ -5,7 +5,7 @@ from typing import Any, List, TYPE_CHECKING
 
 import graphene as gr
 
-from ert_shared.dark_storage.enkf import get_res, ids, get_id
+from ert_shared.dark_storage.enkf import get_res, get_id, get_size
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
 
 

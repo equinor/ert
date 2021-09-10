@@ -3,7 +3,13 @@ from typing import Any, Mapping
 
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
-from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
+from ert_shared.dark_storage.enkf import (
+    LibresFacade,
+    get_res,
+    get_id,
+    get_name,
+    get_size,
+)
 
 router = APIRouter(tags=["ensemble"])
 
@@ -25,7 +31,7 @@ def get_ensemble(
         parent=None,
         experiment_id=get_id("experiment", "default"),
         userdata={"name": get_name("ensemble", ensemble_id)},
-        size=42,
+        size=get_size(),
         parameter_names=[],
         response_names=[],
         child_ensemble_ids=[],

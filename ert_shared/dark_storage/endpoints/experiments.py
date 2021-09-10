@@ -5,7 +5,7 @@ from typing import Any, Mapping, List
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_size
 
 router = APIRouter(tags=["experiment"])
 
@@ -58,7 +58,7 @@ def get_experiment_ensembles(
             parent=None,
             experiment_id=get_id("experiment", "default"),
             userdata={"name": case},
-            size=42,
+            size=get_size(),
             parameter_names=[],
             response_names=[],
             child_ensemble_ids=[],
