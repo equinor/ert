@@ -327,6 +327,11 @@ class RecordTransmitter:
         if isinstance(record, NumericalRecord):
             async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
                 await ft.write(get_serializer(mime).encode(record.data))
+        elif record.record_type == RecordType.TAR:
+            async with aiofiles.open(str(location) + ".tar", mode="wb") as ft:
+                await ft.write(record.data)
+            async with tarfile.open(str(location) + ".tar") as tar:
+                await tar.extractall(str(location))
         else:
             async with aiofiles.open(str(location), mode="wb") as fb:
                 await fb.write(record.data)  # type: ignore
