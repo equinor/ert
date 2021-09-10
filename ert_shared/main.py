@@ -405,13 +405,15 @@ def main():
     locale.setlocale(locale.LC_NUMERIC, "C")
 
     args = ert_parser(None, sys.argv[1:])
+    logger = logging.getLogger(__name__)
     if args.verbose:
-        logger = logging.getLogger()
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
-
-    with start_ert_server(), ErtPluginContext() as context:
-        context.plugin_manager.add_logging_handles(logging)
-        args.func(args)
-
+    try:
+        with start_ert_server(), ErtPluginContext() as context:
+            context.plugin_manager.add_logging_handles(logging)
+            args.func(args)
+    except:
+        logger.exception("ert crashed unexpectedly")
+        sys.exit("ert crashed unexpectedly")
     clear_global_state()
