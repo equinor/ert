@@ -21,7 +21,7 @@ from cwrap import BaseCClass
 
 from ecl.util.util import StringList
 from res import ResPrototype
-from res.config import ConfigParser, ConfigContent, ConfigSettings, UnrecognizedEnum
+from res.config import ConfigParser, ConfigContent
 
 from res.enkf import (
     SiteConfig,
@@ -110,11 +110,7 @@ class ResConfig(BaseCClass):
     ):
 
         configs = sum(
-            [
-                1
-                for x in [user_config_file, config, config_dict]
-                if x is not None
-            ]
+            [1 for x in [user_config_file, config, config_dict] if x is not None]
         )
 
         if configs > 1:
