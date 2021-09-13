@@ -122,6 +122,16 @@ The C library files get installed into `res/.libs`, which is where the
 
 ## Example usage
 
+### Basic ert test
+To test if ert itself is working, go to `test-data/local/poly_example` and start ert by running `poly.ert` with `ert gui`
+```
+cd test-data/local/poly_example
+ert gui poly.ert
+````
+This opens up the ert graphical user interface.
+Finally, test ert by starting and successfully running the simulation. 
+
+### ert with a reservoir simulator
 To actually get ert to work at your site you need to configure details about
 your system; at the very least this means you must configure where your
 reservoir simulator is installed. This is described in the *Post installation*
