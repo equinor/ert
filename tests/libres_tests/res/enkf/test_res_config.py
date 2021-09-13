@@ -23,7 +23,6 @@ import pytest
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 from ecl.util.test import TestAreaContext
-from ecl.util.util import CTime
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import (
@@ -308,11 +307,17 @@ class ResConfigTest(ResTest):
         expand_config_data()
 
     def test_missing_config(self):
-        with pytest.raises(ValueError, match="Error trying to create ResConfig without any configuration"):
+        with pytest.raises(
+            ValueError,
+            match="Error trying to create ResConfig without any configuration",
+        ):
             ResConfig()
 
     def test_multiple_configs(self):
-        with pytest.raises(ValueError, match="Attempting to create ResConfig object with multiple config objects"):
+        with pytest.raises(
+            ValueError,
+            match="Attempting to create ResConfig object with multiple config objects",
+        ):
             ResConfig(user_config_file="test", config="test")
 
     @tmpdir()
