@@ -1,21 +1,30 @@
 import asyncio
+import copy
 import pathlib
 import pickle
 import shutil
-import copy
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
+
 import cloudpickle
 from pydantic import FilePath
+
 import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
 from ert.data import RecordTransmitter
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.ensemble.builder import (
+    create_ensemble_builder,
+    create_file_io_builder,
+    create_job_builder,
+    create_realization_builder,
+    create_step_builder,
+)
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 
 _EVTYPE_SNAPSHOT_STOPPED = "Stopped"
 _EVTYPE_SNAPSHOT_FAILED = "Failed"
@@ -92,14 +101,12 @@ def _prepare_output(
     return dict(transmitters)
 
 
-def _build_ee_config(
+def _build_ensemble(
     storage_path: str,
     ensemble: EnsembleConfig,
     stages_config: StagesConfig,
     parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
-    dispatch_uri: str,
-) -> Dict[str, Any]:
-
+) -> _Ensemble:
     if ensemble.size is not None:
         ensemble_size = ensemble.size
     else:
@@ -110,85 +117,77 @@ def _build_ee_config(
     commands = (
         stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
     )
-    output_locations = [out.location for out in stage.output]
-    jobs = []
 
     def command_location(name: str) -> FilePath:
         return next(
             (cmd.location for cmd in commands if cmd.name == name), pathlib.Path(name)
         )
 
-    if isinstance(stage, ert3.config.Function):
-        jobs.append(
-            {
-                "name": stage.function.__name__,
-                "executable": cloudpickle.dumps(stage.function),
-                "output": output_locations[0],
-            }
+    step_builder = (
+        create_step_builder()
+        .set_name(f"{stage.name}-only_step")
+        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
+    )
+
+    for output in stage.output:
+        step_builder.add_output(
+            create_file_io_builder()
+            .set_name(output.record)
+            .set_path(Path(output.location))
+            .set_mime(output.mime)
         )
 
+    for input_ in stage.input:
+        step_builder.add_input(
+            create_file_io_builder()
+            .set_name(input_.record)
+            .set_path(Path(input_.location))
+            .set_mime(input_.mime)
+        )
+
+    for cmd in commands:
+        step_builder.add_input(
+            create_file_io_builder()
+            .set_name(cmd.name)
+            .set_path(command_location(cmd.name))
+            .set_mime(cmd.mime)
+            .set_executable()
+        )
+
+    if isinstance(stage, ert3.config.Function):
+        step_builder.add_job(
+            create_job_builder()
+            .set_name(stage.function.__name__)
+            .set_executable(cloudpickle.dumps(stage.function))
+        )
     if isinstance(stage, ert3.config.Unix):
         for script in stage.script:
             name, *args = script.split()
-            jobs.append(
-                {
-                    "name": name,
-                    "executable": command_location(name),
-                    "args": tuple(args),
-                }
+            step_builder.add_job(
+                create_job_builder()
+                .set_name(name)
+                .set_executable(command_location(name))
+                .set_args(tuple(args))
             )
 
-    steps = [
-        {
-            "name": stage.name + "-only_step",
-            "inputs": [
-                {
-                    "record": input_.record,
-                    "location": input_.location,
-                    "mime": input_.mime,
-                    "is_executable": False,
-                }
-                for input_ in stage.input
-            ]
-            + [
-                {
-                    "record": cmd.name,
-                    "location": command_location(cmd.name),
-                    "mime": cmd.mime,
-                    "is_executable": True,
-                }
-                for cmd in commands
-            ],
-            "outputs": [
-                {
-                    "record": output.record,
-                    "location": output.location,
-                    "mime": output.mime,
-                }
-                for output in stage.output
-            ],
-            "jobs": jobs,
-            "type": "function" if isinstance(stage, ert3.config.Function) else "unix",
-        }
-    ]
+    builder = (
+        create_ensemble_builder()
+        .set_ensemble_size(ensemble_size)
+        .set_max_running(10000)
+        .set_max_retries(0)
+        .set_executor(ensemble.forward_model.driver)
+        .set_forward_model(
+            create_realization_builder().active(True).add_step(step_builder)
+        )
+    )
 
     inputs = _prepare_input(
         ensemble.storage_type, stage, parameters, storage_path, ensemble_size
     )
     outputs = _prepare_output(ensemble.storage_type, stage, storage_path, ensemble_size)
+    builder.set_inputs(inputs).set_outputs(outputs)
 
-    ee_config: Dict[str, Any] = {
-        "steps": steps,
-        "realizations": ensemble_size,
-        "max_running": 10000,
-        "max_retries": 0,
-        "executor": ensemble.forward_model.driver,
-        "dispatch_uri": dispatch_uri,
-        "inputs": inputs,
-        "outputs": outputs,
-    }
-
-    return ee_config
+    return builder.build()
 
 
 def _run(
@@ -215,16 +214,14 @@ def evaluate(
     stages_config: StagesConfig,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
 
-    config = EvaluatorServerConfig()
-    ee_config = _build_ee_config(
+    ensemble = _build_ensemble(
         storage_path,
         ensemble_config,
         stages_config,
         parameters,
-        config.dispatch_uri,
     )
-    ensemble = PrefectEnsemble(ee_config)  # type: ignore
 
+    config = EvaluatorServerConfig()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
     return result
