@@ -5,11 +5,14 @@ import signal
 import sys
 import json
 import typing
+import logging
 
 import job_runner.reporting as reporting
 from job_runner import JOBS_FILE
 from job_runner.reporting.message import Finish
 from job_runner.runner import JobRunner
+
+logger = logging.getLogger(__name__)
 
 
 def _setup_reporters(
@@ -69,6 +72,7 @@ def main(args):
     job_runner = JobRunner(jobs_data)
 
     for job_status in job_runner.run(parsed_args.job):
+        logger.info(f"Job status: {job_status}")
         for reporter in reporters:
             reporter.report(job_status)
 
