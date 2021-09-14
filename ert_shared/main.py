@@ -2,8 +2,11 @@ import logging
 import os
 import sys
 import re
+import yaml
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
+
+from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
 from ert_shared.storage.main import run_server
@@ -399,7 +402,8 @@ def start_ert_server():
 
 
 def main():
-    import ert_logging  # Only use ert logger config when running ERT
+    with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
+        logging.config.dictConfig(yaml.safe_load(conf_file))
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
