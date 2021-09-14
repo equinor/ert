@@ -8,7 +8,7 @@ input:
     source: stochastic.wells_no_delay
     record: wells
   -
-    source: resources.SPE1CASE2.DATA.jinja2
+    source: resources.case
     record: spe1_template
 
 output:

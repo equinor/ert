@@ -14,6 +14,5 @@ ert3 record load designed_field_properties resources/field_properties.json
 ert3 run doe
 ert3 export doe
 
-ert3 record load spe1case2_template resources/SPE1CASE2.DATA.jinja2 --blob-record
 ert3 run sensitivity
 ert3 export sensitivity

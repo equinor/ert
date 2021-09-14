@@ -1,0 +1,19 @@
+PVTW
+-- Item 1: pressure reference (psia)
+-- Item 2: water FVF (rb per bbl or rb per stb)
+-- Item 3: water compressibility (psi^{-1})
+-- Item 4: water viscosity (cp)
+-- Item 5: water 'viscosibility' (psi^{-1})
+
+-- Using values from Norne:
+-- In METRIC units:
+-- 	277.0 1.038 4.67E-5 0.318 0.0 /
+-- In FIELD units:
+    	4017.55 1.038 3.22E-6 0.318 0.0 /
+
+ROCK
+-- Item 1: reference pressure (psia)
+-- Item 2: rock compressibility (psi^{-1})
+
+-- Using values from table 1 in Odeh:
+	14.7 3E-6 /

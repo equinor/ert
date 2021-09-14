@@ -13,7 +13,12 @@ from pydantic import FilePath
 import ert
 import ert3
 from ert3.config import EnsembleConfig, StagesConfig, Step
-from ert.data import RecordTransmitter
+from ert.data import (
+    RecordTransmitter,
+    FileRecordTransformation,
+    TarRecordTransformation,
+    ExecutableRecordTransformation,
+)
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.ensemble.builder import (
@@ -131,6 +136,11 @@ def _build_ensemble(
             .set_name(output.record)
             .set_path(Path(output.location))
             .set_mime(output.mime)
+            .set_transformation(
+                TarRecordTransformation()
+                if output.is_directory
+                else FileRecordTransformation()
+            )
         )
 
     for input_ in stage.input.values():
@@ -139,6 +149,11 @@ def _build_ensemble(
             .set_name(input_.record)
             .set_path(Path(input_.location))
             .set_mime(input_.mime)
+            .set_transformation(
+                TarRecordTransformation()
+                if input_.is_directory
+                else FileRecordTransformation()
+            )
         )
 
     for cmd in commands:
@@ -147,7 +162,7 @@ def _build_ensemble(
             .set_name(cmd.name)
             .set_path(command_location(cmd.name))
             .set_mime(cmd.mime)
-            .set_executable()
+            .set_transformation(ExecutableRecordTransformation())
         )
 
     if isinstance(stage, ert3.config.Function):

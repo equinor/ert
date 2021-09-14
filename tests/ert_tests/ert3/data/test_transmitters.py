@@ -11,62 +11,12 @@ import pytest
 from ert_utils import tmp
 
 from ert.data import (
-    InMemoryRecordTransmitter,
     RecordTransmitter,
-    SharedDiskRecordTransmitter,
     NumericalRecord,
     BlobRecord,
 )
 import ert
 
-
-@pytest.fixture()
-def storage_path(workspace, ert_storage):
-    yield ert.storage.get_records_url(workspace)
-
-
-@contextlib.contextmanager
-def shared_disk_factory_context(**kwargs):
-    tmp_path = tempfile.TemporaryDirectory()
-    tmp_storage_path = pathlib.Path(tmp_path.name) / ".shared-storage"
-    tmp_storage_path.mkdir(parents=True)
-
-    def shared_disk_factory(name: str) -> SharedDiskRecordTransmitter:
-        return SharedDiskRecordTransmitter(
-            name=name,
-            storage_path=tmp_storage_path,
-        )
-
-    try:
-        yield shared_disk_factory
-    finally:
-        tmp_path.cleanup()
-
-
-@contextlib.contextmanager
-def in_memory_factory_context(**kwargs):
-    def in_memory_factory(name: str) -> InMemoryRecordTransmitter:
-        return InMemoryRecordTransmitter(name=name)
-
-    yield in_memory_factory
-
-
-@contextlib.contextmanager
-def ert_storage_factory_context(storage_path):
-    def ert_storage_factory(name: str) -> ert.storage.StorageRecordTransmitter:
-        return ert.storage.StorageRecordTransmitter(name=name, storage_url=storage_path)
-
-    yield ert_storage_factory
-
-
-factory_params = pytest.mark.parametrize(
-    ("record_transmitter_factory_context"),
-    (
-        ert_storage_factory_context,
-        in_memory_factory_context,
-        shared_disk_factory_context,
-    ),
-)
 
 simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
@@ -118,7 +68,6 @@ mime_types = pytest.mark.parametrize(
 
 @pytest.mark.asyncio
 @simple_records
-@factory_params
 async def test_simple_record_transmit(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
@@ -139,7 +88,6 @@ async def test_simple_record_transmit(
 
 @pytest.mark.asyncio
 @simple_records
-@factory_params
 @mime_types
 async def test_simple_record_transmit_from_file(
     record_transmitter_factory_context: ContextManager[
@@ -178,7 +126,6 @@ async def test_simple_record_transmit_from_file(
 
 @pytest.mark.asyncio
 @simple_records
-@factory_params
 async def test_simple_record_transmit_and_load(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
@@ -199,7 +146,6 @@ async def test_simple_record_transmit_and_load(
 
 @pytest.mark.asyncio
 @simple_records
-@factory_params
 @mime_types
 async def test_simple_record_transmit_and_dump(
     record_transmitter_factory_context: ContextManager[
@@ -237,7 +183,6 @@ async def test_simple_record_transmit_and_dump(
 
 @pytest.mark.asyncio
 @simple_records
-@factory_params
 async def test_simple_record_transmit_pickle_and_load(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
@@ -259,7 +204,6 @@ async def test_simple_record_transmit_pickle_and_load(
 
 
 @pytest.mark.asyncio
-@factory_params
 async def test_load_untransmitted_record(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
@@ -274,7 +218,6 @@ async def test_load_untransmitted_record(
 
 
 @pytest.mark.asyncio
-@factory_params
 async def test_dump_untransmitted_record(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
