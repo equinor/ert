@@ -61,7 +61,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
             .set_name(name)
             .set_path(Path(path))
             .set_mime(mime)
-            .set_executable()
+            .set_transformation(ert.data.ExecutableRecordTransformation())
         )
     for name, path, mime in outputs:
         step_builder.add_output(

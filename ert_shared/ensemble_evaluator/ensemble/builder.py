@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Optional, Iterator, Type, TypeVar
 from collections import defaultdict
 from graphlib import TopologicalSorter
 from pathlib import Path
+from enum import Enum
 
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.ensemble.legacy import _LegacyEnsemble
@@ -13,6 +14,7 @@ from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert.data import RecordTransformation, FileRecordTransformation
 
 from res.enkf import EnKFState, RunArg
 
@@ -52,10 +54,16 @@ def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
 
 
 class _IO:
-    def __init__(self, name):
+    def __init__(
+        self, name, transformation: RecordTransformation = FileRecordTransformation()
+    ):
+        self._transformation: RecordTransformation = transformation
         if not name:
             raise ValueError(f"{self} needs name")
         self._name = name
+
+    def get_transformation(self):
+        return self._transformation
 
     def get_name(self):
         return self._name
@@ -69,9 +77,14 @@ class _IOBuilder:
 
     def __init__(self):
         self._name = None
+        self._transformation: RecordTransformation = FileRecordTransformation()
 
     def set_name(self: _IOBuilder_TV, name) -> _IOBuilder_TV:
         self._name = name
+        return self
+
+    def set_transformation(self, transformation: RecordTransformation) -> "_IOBuilder":
+        self._transformation = transformation
         return self
 
     def build(self):
@@ -93,8 +106,14 @@ class _DummyIOBuilder(_IOBuilder):
 
 
 class _FileIO(_IO):
-    def __init__(self, name: str, path: Path, mime: str) -> None:
-        super().__init__(name)
+    def __init__(
+        self,
+        name: str,
+        path: Path,
+        mime: str,
+        transformation: RecordTransformation = FileRecordTransformation(),
+    ) -> None:
+        super().__init__(name, transformation)
         self._path = path
         self._mime = mime
 
@@ -103,13 +122,6 @@ class _FileIO(_IO):
 
     def get_mime(self):
         return self._mime
-
-    def is_executable(self):
-        return isinstance(self, _ExecIO)
-
-
-class _ExecIO(_FileIO):
-    pass
 
 
 class _FileIOBuilder(_IOBuilder):
@@ -127,14 +139,10 @@ class _FileIOBuilder(_IOBuilder):
         self._mime = mime
         return self
 
-    def set_executable(self) -> "_FileIOBuilder":
-        self._cls = _ExecIO
-        return self
-
     def build(self):
         if not self._mime:
             raise ValueError(f"FileIO {self._name} needs mime")
-        return self._cls(self._name, self._path, self._mime)
+        return self._cls(self._name, self._path, self._mime, self._transformation)
 
 
 def create_file_io_builder() -> _FileIOBuilder:

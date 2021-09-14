@@ -34,6 +34,7 @@ def _prepare_experiment_record(
     record_name: str,
     record_source: List[str],
     record_mime: str,
+    record_is_directory: bool,
     ensemble_size: int,
     experiment_name: str,
     workspace_root: pathlib.Path,
@@ -54,7 +55,10 @@ def _prepare_experiment_record(
     elif record_source[0] == "resources":
         file_path = workspace_root / "resources" / record_source[1]
         collection = ert.data.load_collection_from_file(
-            file_path, record_mime, ensemble_size=ensemble_size
+            file_path,
+            record_mime,
+            ensemble_size=ensemble_size,
+            is_directory=record_is_directory,
         )
         future = ert.storage.transmit_record_collection(
             record_coll=collection,
@@ -124,10 +128,12 @@ def _prepare_storage_records(
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
         record_mime = step.input[record_name].mime
+        record_is_directory = step.input[record_name].is_directory
         transmitters = _prepare_experiment_record(
             record_name,
             record_source,
             record_mime,
+            record_is_directory,
             ensemble_size,
             experiment_name,
             workspace_root,

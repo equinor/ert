@@ -5,8 +5,8 @@ input:
   -
     source: stochastic.wells
     record: wells
-  -
-    source: storage.spe1case2_template
+  
+  - source: resources.case
     record: spe1_template
 
 output:

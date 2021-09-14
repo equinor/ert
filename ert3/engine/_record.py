@@ -9,9 +9,12 @@ def load_record(
     record_name: str,
     record_file: Path,
     record_mime: str,
+    record_is_directory: bool = False,
 ) -> None:
 
-    collection = ert.data.load_collection_from_file(record_file, record_mime)
+    collection = ert.data.load_collection_from_file(
+        file_path=record_file, mime=record_mime, is_directory=record_is_directory
+    )
     future = ert.storage.transmit_record_collection(collection, record_name, workspace)
     asyncio.get_event_loop().run_until_complete(future)
 

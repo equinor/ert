@@ -1,4 +1,6 @@
 import pathlib
+import tarfile
+import io
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
@@ -232,17 +234,33 @@ class RecordCollection:
         return self._collection_type
 
 
+def path_to_bytes(file_path: pathlib.Path) -> bytes:
+    tar_obj = io.BytesIO()
+    with tarfile.open(fileobj=tar_obj, mode="w") as tar:
+        tar.add(file_path, arcname="")
+    return tar_obj.getvalue()
+
+
 def load_collection_from_file(
-    file_path: pathlib.Path, mime: str, ensemble_size: int = 1
+    file_path: pathlib.Path,
+    mime: str,
+    ensemble_size: int = 1,
+    is_directory: bool = False,
 ) -> RecordCollection:
     if mime == "application/octet-stream":
-        with open(file_path, "rb") as fb:
+        if is_directory:
             return RecordCollection(
-                records=(BlobRecord(data=fb.read()),),
+                records=(BlobRecord(data=path_to_bytes(file_path)),),
                 ensemble_size=ensemble_size,
                 collection_type=RecordCollectionType.UNIFORM,
             )
-
+        else:
+            with open(file_path, "rb") as fb:
+                return RecordCollection(
+                    records=(BlobRecord(data=fb.read()),),
+                    ensemble_size=ensemble_size,
+                    collection_type=RecordCollectionType.UNIFORM,
+                )
     with open(file_path, "rt", encoding="utf-8") as f:
         raw_ensrecord = get_serializer(mime).decode_from_file(f)
     return RecordCollection(

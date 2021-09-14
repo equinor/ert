@@ -9,12 +9,20 @@ from ert.data.record._record import (
     RecordIndex,
     RecordType,
     RecordValidationError,
+    path_to_bytes,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
     RecordTransmitter,
     RecordTransmitterType,
     SharedDiskRecordTransmitter,
+)
+
+from .record._transformation import (
+    FileRecordTransformation,
+    TarRecordTransformation,
+    ExecutableRecordTransformation,
+    RecordTransformation,
 )
 
 __all__ = (
@@ -32,4 +40,9 @@ __all__ = (
     "RecordType",
     "RecordValidationError",
     "SharedDiskRecordTransmitter",
+    "FileRecordTransformation",
+    "TarRecordTransformation",
+    "ExecutableRecordTransformation",
+    "RecordTransformation",
+    "path_to_bytes",
 )

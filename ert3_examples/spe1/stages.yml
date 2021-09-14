@@ -7,9 +7,10 @@
     -
       record: wells
       location: wells.json
-    -
-      record: spe1_template
-      location: SPE1.DATA.jinja2
+
+    - record: spe1_template
+      is_directory: true
+      location: case
 
   output:
     -
@@ -36,6 +37,7 @@
       location: render.py
 
   script:
-    - render -t SPE1.DATA.jinja2 -i field_properties.json wells.json -o SPE1.DATA
-    - flow SPE1
-    - summary2json --datafile SPE1.DATA --keywords WOPT:PROD WWPT:PROD WGPT:PROD WWIT:INJ
+    - render -t case/SPE1CASE2.DATA.jinja2 -i field_properties.json wells.json -o case/SPE1.DATA
+    - flow case/SPE1
+    - summary2json --datafile case/SPE1.DATA --keywords WOPT:PROD WWPT:PROD WGPT:PROD WWIT:INJ
+

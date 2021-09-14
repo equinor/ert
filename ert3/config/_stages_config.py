@@ -46,17 +46,16 @@ def _ensure_mime(cls: Type[_StagesConfig], field: str, values: Dict[str, Any]) -
         if not ert.serialization.has_serializer(guess):
             return DEFAULT_RECORD_MIME_TYPE
         return guess
-    return (
-        DEFAULT_CMD_MIME_TYPE
-        if cls == TransportableCommand
-        else DEFAULT_RECORD_MIME_TYPE
-    )
+    elif cls == TransportableCommand:
+        return DEFAULT_CMD_MIME_TYPE
+    return DEFAULT_RECORD_MIME_TYPE
 
 
 class Record(_StagesConfig):
     record: str
     location: str
     mime: str = ""
+    is_directory: bool = False
 
     _ensure_record_mime = validator("mime", allow_reuse=True)(_ensure_mime)
 

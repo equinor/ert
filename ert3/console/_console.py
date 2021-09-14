@@ -73,6 +73,14 @@ def _build_record_argparser(subparsers: Any) -> None:
         action="store_true",
         help="Indicate that the record is a blob",
     )
+
+    record_load_parser.add_argument(
+        "--is-directory",
+        action="store_true",
+        default=False,
+        help="Indicate that the record is a blob created as a tar from a directory",
+    )
+
     record_load_parser.add_argument(
         "--mime-type",
         default="guess",
@@ -282,7 +290,7 @@ def _record(workspace: Path, args: Any) -> None:
         else:
             record_mime = args.mime_type
 
-        if args.blob_record:
+        if args.blob_record or args.is_directory:
             record_mime = "application/octet-stream"
 
         ert3.engine.load_record(
@@ -290,6 +298,7 @@ def _record(workspace: Path, args: Any) -> None:
             args.record_name,
             args.record_file,
             record_mime,
+            args.is_directory,
         )
     else:
         raise NotImplementedError(

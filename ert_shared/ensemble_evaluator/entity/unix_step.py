@@ -75,22 +75,17 @@ class UnixTask(prefect.Task):
         transmitters: Dict[int, RecordTransmitter],
         runpath: Path,
     ):
-        Path(runpath / _BIN_FOLDER).mkdir(parents=True)
-
         futures = []
         for input_ in self._step.get_inputs():
-            path_base = runpath / _BIN_FOLDER if input_.is_executable() else runpath
             futures.append(
-                transmitters[input_.get_name()].dump(
-                    path_base / input_.get_path(), input_.get_mime()
+                input_.get_transformation().transform(
+                    transmitter=transmitters[input_.get_name()],
+                    mime=input_.get_mime(),
+                    runpath=runpath,
+                    location=input_.get_path(),
                 )
             )
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-        for input_ in self._step.get_inputs():
-            if input_.is_executable():
-                path = runpath / _BIN_FOLDER / input_.get_path()
-                st = path.stat()
-                path.chmod(st.st_mode | stat.S_IEXEC)
 
     def run(self, inputs=None):
         with tempfile.TemporaryDirectory() as run_path:

@@ -155,7 +155,7 @@ def get_degree_step(degree, degree_spelled):
         .set_name(f"generate_{degree_spelled}_degree")
         .set_path(Path("evaluate_coeffs.py"))
         .set_mime("text/x-python")
-        .set_executable()
+        .set_transformation(ert.data.ExecutableRecordTransformation())
     )
 
     step_builder.add_input(
@@ -211,7 +211,7 @@ def sum_coeffs_step():
         .set_name("sum_up")
         .set_path(Path("sum_coeffs.py"))
         .set_mime("text/x-python")
-        .set_executable()
+        .set_transformation(ert.data.ExecutableRecordTransformation())
     )
 
     step_builder.add_input(
