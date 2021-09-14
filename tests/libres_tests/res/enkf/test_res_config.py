@@ -685,7 +685,7 @@ class ResConfigTest(ResTest):
                 os.path.realpath(config_data_new[ConfigKeys.JOB_SCRIPT])
             )
             config_data_new[ConfigKeys.ANALYSIS_LOAD] = [
-                {ConfigKeys.USER_NAME: "RML_ENKF", ConfigKeys.LIB_NAME: "rml_enkf.so"}
+                {ConfigKeys.USER_NAME: "LIB_IES", ConfigKeys.LIB_NAME: "libies.so"}
             ]
 
             # open config via dictionary

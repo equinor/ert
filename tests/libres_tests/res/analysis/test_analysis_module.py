@@ -31,7 +31,7 @@ from res.util import Matrix
 
 class AnalysisModuleTest(ResTest):
     def setUp(self):
-        self.libname = "rml_enkf.so"
+        self.libname = "libies.so"
 
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT

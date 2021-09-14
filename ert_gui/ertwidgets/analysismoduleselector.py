@@ -63,8 +63,8 @@ class AnalysisModuleSelector(QWidget):
             return active_name
         elif "STD_ENKF" in modules and not self._iterable:
             return "STD_ENKF"
-        elif "RML_ENKF" in modules and self._iterable:
-            return "RML_ENKF"
+        elif "LIB_IES" in modules and self._iterable:
+            return "LIB_IES"
         elif len(modules) > 0:
             return modules[0]
 

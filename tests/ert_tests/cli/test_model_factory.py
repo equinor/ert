@@ -184,12 +184,12 @@ class ModelFactoryTest(ErtTest):
     def test_analysis_module_name_iterable(self):
 
         active_name = "STD_ENKF"
-        modules = ["RML_ENKF"]
+        modules = ["LIB_IES"]
         name = model_factory._get_analysis_module_name(
             active_name, modules, iterable=True
         )
 
-        self.assertEqual(name, "RML_ENKF")
+        self.assertEqual(name, "LIB_IES")
 
     def test_analysis_module_name_not_iterable(self):
 
