@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi.param_functions import Depends
 import graphene as gr
 from graphene.types.scalars import ID
-from ert_shared.dark_storage.common import ensemble_parameters,get_response_names
+from ert_shared.dark_storage.common import ensemble_parameters, get_response_names
 
 from ert_shared.dark_storage.enkf import get_id, get_res, get_size
 

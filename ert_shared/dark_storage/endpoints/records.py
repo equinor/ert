@@ -158,7 +158,7 @@ async def get_ensemble_record(
     ensemble_name = get_name("ensemble", ensemble_id)
     dataframe = data_for_key(ensemble_name, name)
     if realization_index:
-        dataframe=dataframe[realization_index]
+        dataframe = dataframe[realization_index]
     return Response(
         content=dataframe.to_csv().encode(),
         media_type="text/csv",
@@ -206,9 +206,7 @@ def get_ensemble_responses(
 ) -> Mapping[str, js.RecordOut]:
     return {
         resp: js.RecordOut(
-            id = get_id(f"response", f"{ensemble_id}/{resp}"),
-            name = resp,
-            userdata = {}
+            id=get_id(f"response", f"{ensemble_id}/{resp}"), name=resp, userdata={}
         )
         for resp in get_response_names()
     }
