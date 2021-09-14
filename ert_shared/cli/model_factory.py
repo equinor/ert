@@ -101,8 +101,8 @@ def _get_analysis_module_name(active_name, modules, iterable):
         return active_name
     elif "STD_ENKF" in modules and not iterable:
         return "STD_ENKF"
-    elif "RML_ENKF" in modules and iterable:
-        return "RML_ENKF"
+    elif "LIB_IES" in modules and iterable:
+        return "LIB_IES"
     elif len(modules) > 0:
         return modules[0]
 

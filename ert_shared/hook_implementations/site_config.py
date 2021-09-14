@@ -11,5 +11,5 @@ def site_config_lines():
         "JOB_SCRIPT job_dispatch.py",
         "QUEUE_SYSTEM LOCAL",
         "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-        "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
+        "ANALYSIS_LOAD LIB_IES libies.so",
     ]

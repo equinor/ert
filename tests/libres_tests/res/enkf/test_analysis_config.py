@@ -87,12 +87,12 @@ class AnalysisConfigTest(ResTest):
                 ConfigKeys.MIN_REALIZATIONS: 0,
                 ConfigKeys.ANALYSIS_LOAD: [
                     {
-                        ConfigKeys.USER_NAME: "RML_ENKF",
-                        ConfigKeys.LIB_NAME: "rml_enkf.so",
+                        ConfigKeys.USER_NAME: "LIB_IES",
+                        ConfigKeys.LIB_NAME: "libies.so",
                     },
                     {
                         ConfigKeys.USER_NAME: "MODULE_ENKF",
-                        ConfigKeys.LIB_NAME: "rml_enkf.so",
+                        ConfigKeys.LIB_NAME: "libies.so",
                     },
                 ],
                 ConfigKeys.ANALYSIS_COPY: [
