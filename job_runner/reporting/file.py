@@ -2,12 +2,16 @@ import json
 import os
 import socket
 import time
+import logging
+import functools
 
 from job_runner.io import cond_unlink
 from job_runner.reporting.message import (
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
     _JOB_STATUS_SUCCESS,
+    _JOB_EXIT_FAILED_STRING,
+    Message,
     Exited,
     Finish,
     Init,
@@ -18,6 +22,8 @@ from job_runner.reporting.base import Reporter
 from job_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"
+logger = logging.getLogger(__name__)
+append = functools.partial(open, mode="a")
 
 
 class File(Reporter):
@@ -32,13 +38,15 @@ class File(Reporter):
         self.node = socket.gethostname()
         self._sync_disc_timeout = sync_disc_timeout
 
-    def report(self, msg):
+    def report(self, msg: Message):
         job_status = {}
+
         if msg.job:
-            index = msg.job.index
-            job_status = self.status_dict["jobs"][index]
+            logger.debug("Adding message job to status dictionary.")
+            job_status = self.status_dict["jobs"][msg.job.index]
 
         if isinstance(msg, Init):
+            logger.debug("Init Message Instance")
             self._delete_old_status_files()
             self._init_status_file()
             self.status_dict = self._init_job_status_dict(
@@ -47,27 +55,39 @@ class File(Reporter):
 
         elif isinstance(msg, Start):
             if msg.success():
+                logger.debug(f"Job {msg.job.name()} was successfully started")
                 self._start_status_file(msg)
                 self._add_log_line(msg.job)
-                job_status["status"] = _JOB_STATUS_RUNNING
-                job_status["start_time"] = data_util.datetime_serialize(msg.timestamp)
+                job_status.update(
+                    status=_JOB_STATUS_RUNNING,
+                    start_time=data_util.datetime_serialize(msg.timestamp),
+                )
             else:
+                logger.error(f"Job {msg.job.name()} FAILED to start")
                 error_msg = msg.error_message
-                job_status["status"] = _JOB_STATUS_FAILURE
-                job_status["error"] = error_msg
-                job_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
-
+                job_status.update(
+                    status=_JOB_STATUS_FAILURE,
+                    error=error_msg,
+                    end_time=data_util.datetime_serialize(msg.timestamp),
+                )
                 self._complete_status_file(msg)
+
         elif isinstance(msg, Exited):
             job_status["end_time"] = data_util.datetime_serialize(msg.timestamp)
-
             if msg.success():
+                logger.debug(f"Job {msg.job.name()} exited successfully")
                 job_status["status"] = _JOB_STATUS_SUCCESS
                 self._complete_status_file(msg)
             else:
                 error_msg = msg.error_message
-                job_status["error"] = error_msg
-                job_status["status"] = _JOB_STATUS_FAILURE
+                logger.error(
+                    _JOB_EXIT_FAILED_STRING.format(
+                        job_name=msg.job.name(),
+                        exit_code=msg.exit_code,
+                        error_message=msg.error_message,
+                    )
+                )
+                job_status.update(error=error_msg, status=_JOB_STATUS_FAILURE)
 
                 # A STATUS_file is not written if there is no exit_code, i.e.
                 # when the job is killed due to timeout.
@@ -76,12 +96,16 @@ class File(Reporter):
                 self._dump_error_file(msg.job, error_msg)
 
         elif isinstance(msg, Running):
-            job_status["max_memory_usage"] = msg.max_memory_usage
-            job_status["current_memory_usage"] = msg.current_memory_usage
-            job_status["status"] = _JOB_STATUS_RUNNING
+            job_status.update(
+                max_memory_usage=msg.max_memory_usage,
+                current_memory_usage=msg.current_memory_usage,
+                status=_JOB_STATUS_RUNNING,
+            )
 
         elif isinstance(msg, Finish):
+            logger.debug("Runner finished")
             if msg.success():
+                logger.debug("Runner finished successfully")
                 self.status_dict["end_time"] = data_util.datetime_serialize(
                     msg.timestamp
                 )
@@ -89,15 +113,20 @@ class File(Reporter):
         self._dump_status_json()
 
     def _delete_old_status_files(self):
+        logger.debug("Deleting old status files")
         cond_unlink(self.ERROR_file)
         cond_unlink(self.STATUS_file)
         cond_unlink(self.OK_file)
 
-    def _init_status_file(self):
-        with open(self.STATUS_file, "a") as f:
-            f.write("{:32}: {}/{}\n".format("Current host", self.node, os.uname()[4]))
+    def _write_status_file(self, msg: str) -> None:
+        with append(file=self.STATUS_file) as status_file:
+            status_file.write(msg)
 
-    def _init_job_status_dict(self, start_time, run_id, jobs):
+    def _init_status_file(self):
+        self._write_status_file(f"{'Current host':32}: {self.node}/{os.uname()[4]}\n")
+
+    @staticmethod
+    def _init_job_status_dict(start_time, run_id, jobs):
         return {
             "run_id": run_id,
             "start_time": data_util.datetime_serialize(start_time),
@@ -106,21 +135,26 @@ class File(Reporter):
         }
 
     def _start_status_file(self, msg):
-        with open(self.STATUS_file, "a") as f:
-            f.write(f"{msg.job.name():32}: {msg.timestamp.strftime(TIME_FORMAT)} .... ")
+        timestamp = msg.timestamp.strftime(TIME_FORMAT)
+        job_name = msg.job.name()
+        self._write_status_file(f"{job_name:32}: {timestamp} .... ")
+        logger.info(
+            f"Append {job_name} job starting timestamp {timestamp} to STATUS_file."
+        )
 
     def _complete_status_file(self, msg):
         status: str = ""
+        timestamp = msg.timestamp.strftime(TIME_FORMAT)
         if not msg.success():
             # There was no status code in the case of STARTUP_ERROR, so use
             # an arbitrary code less than -9.
             exit_code = -10 if isinstance(msg, Start) else msg.exit_code
             status = f" EXIT: {exit_code}/{msg.error_message}"
-        with open(self.STATUS_file, "a") as f:
-            f.write(f"{msg.timestamp.strftime(TIME_FORMAT)}  {status}\n")
+            logger.error(f"{msg.job.name()} job, {timestamp} {status}")
+        self._write_status_file(f"{timestamp}  {status}\n")
 
     def _add_log_line(self, job):
-        with open(self.LOG_file, "a") as f:
+        with append(file=self.LOG_file) as f:
             args = " ".join(job.job_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
@@ -128,7 +162,7 @@ class File(Reporter):
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
     def _dump_error_file(self, job, error_msg):
-        with open(self.ERROR_file, "a") as file:
+        with append(self.ERROR_file) as file:
             file.write("<error>\n")
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
