@@ -18,6 +18,11 @@ def ensemble_parameters(ensemble_name: str) -> List[dict]:
     ]
 
 
+def ensemble_parameter_names(ensemble_name: str) -> List[str]:
+    res = get_res()
+    return res.gen_kw_keys()
+
+
 def get_response_names():
     res = get_res()
     response_names = [

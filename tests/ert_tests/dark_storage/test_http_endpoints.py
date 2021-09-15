@@ -100,16 +100,37 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(response_df2.columns) == 10
     assert len(response_df2.index) == 3
 
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id1}/records/POLY_RES@0"
+    )
+    stream = io.BytesIO(resp.content)
+    record_df1 = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+    assert len(record_df1.columns) == 10
+    assert len(record_df1.index) == 3
+
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id1}/records/POLY_RES@0?realization_index=2"
+    )
+    stream = io.BytesIO(resp.content)
+    record_df1_indexed = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+    assert len(record_df1_indexed.columns) == 10
+    assert len(record_df1_indexed.index) == 1
+
 
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
-    ensemble_id = uuid.uuid4()
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{id}}}"}
+    )
+    answer_json = resp.json()
+    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/parameters")
     parameters_json = resp.json()
 
     assert len(parameters_json) == 3
-    assert parameters_json[0]["name"] == "COEFFS:COEFF_A"
-    assert parameters_json[1]["name"] == "COEFFS:COEFF_B"
-    assert parameters_json[2]["name"] == "COEFFS:COEFF_C"
+    assert parameters_json[0] == "COEFFS:COEFF_A"
+    assert parameters_json[1] == "COEFFS:COEFF_B"
+    assert parameters_json[2] == "COEFFS:COEFF_C"
 
 
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):

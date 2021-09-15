@@ -1,5 +1,4 @@
 from typing import List
-import pytest
 
 
 def test_openapi(ert_storage_app, dark_storage_app):

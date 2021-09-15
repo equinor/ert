@@ -220,6 +220,10 @@ class LibresFacade(object):
         """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genKwKeys()
 
+    def gen_kw_keys(self):
+        """:rtype: list of str"""
+        return self._enkf_main.getKeyManager().genKwKeys()
+
     def is_gen_data_key(self, key):
         """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genDataKeys()
