@@ -2,9 +2,9 @@ from importlib.abc import Loader
 import importlib.util
 import mimetypes
 from typing import Callable, Tuple, Type, cast, Union, Dict, Any
-
 from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert
+
 
 DEFAULT_RECORD_MIME_TYPE: str = "application/octet-stream"
 DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
@@ -69,16 +69,19 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-class _Step(_StagesConfig):
-    name: str
-    input: Dict[str, Record] = None
-    output: Tuple[Record, ...]
-
-    @validator('input', pre=True, always=True)
-    def set_dict_from_list(cls, records: Tuple[Record, ...]) -> Dict[str, Record]:
+def _set_dict_from_list(cls: Type[_StagesConfig], records: Tuple[Record, ...]) -> Dict[str, Record]:
         """ Grab names in records and use as keys """
         recordDict = {record['record']: record for record in records}
         return recordDict
+
+
+class _Step(_StagesConfig):
+    name: str
+    input: Dict[str, Record] = None
+    output: Dict[str, Record] = None
+
+    _set_input_from_list = validator('input', pre=True, always=True, allow_reuse=True)(_set_dict_from_list)
+    _set_output_from_list = validator('output', pre=True, always=True, allow_reuse=True)(_set_dict_from_list)
 
 
 class Function(_Step):
