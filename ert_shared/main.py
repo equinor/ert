@@ -416,7 +416,7 @@ def main():
     logger.info("Running ert with {}".format(str(args)))
     try:
         with start_ert_server(), ErtPluginContext() as context:
-            context.plugin_manager.add_logging_handles(logging)
+            context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             args.func(args)
     except:
         logger.exception("ert crashed unexpectedly")

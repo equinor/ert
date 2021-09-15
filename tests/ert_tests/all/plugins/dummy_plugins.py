@@ -86,12 +86,13 @@ def register_visualization_plugin(handler):
 
 
 @hook_implementation
-def add_log_handle(logging):
-    logger = logging.getLogger()
+def add_log_handle_to_root():
+    import logging
+
     fh = logging.FileHandler("spam.log")
     fh.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    return fh
