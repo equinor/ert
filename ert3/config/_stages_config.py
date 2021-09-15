@@ -70,8 +70,8 @@ class TransportableCommand(_StagesConfig):
 
 
 def _set_dict_from_list(
-    cls: Type[_StagesConfig], records: Tuple[Record, ...]
-) -> Dict[str, Record]:
+    cls: Type[_StagesConfig], records: Tuple[Any, ...]
+) -> Dict[str, Any]:
     """Grab names in records and use as keys"""
     recordDict = {record["record"]: record for record in records}
     return recordDict
@@ -79,8 +79,8 @@ def _set_dict_from_list(
 
 class _Step(_StagesConfig):
     name: str
-    input: Dict[str, Record] = None
-    output: Dict[str, Record] = None
+    input: Dict[str, Record]
+    output: Dict[str, Record]
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
         _set_dict_from_list
