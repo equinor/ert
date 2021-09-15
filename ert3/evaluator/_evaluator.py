@@ -39,7 +39,7 @@ def _prepare_input(
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     futures = []
-    for input_ in step_config.input:
+    for input_ in step_config.input.values():
         for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
             transmitter: RecordTransmitter
             if storage_type == "shared_disk":
@@ -89,7 +89,7 @@ def _prepare_output(
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
-    for output in step_config.output:
+    for output in step_config.output.values():
         for iens in range(0, ensemble_size):
             if storage_type == "shared_disk":
                 transmitters[iens][
@@ -126,7 +126,7 @@ def _build_ee_config(
     commands = (
         stage.transportable_commands if isinstance(stage, ert3.config.Unix) else []
     )
-    output_locations = [out.location for out in stage.output]
+    output_locations = [out.location for out in stage.output.values()]
     jobs = []
 
     def command_location(name: str) -> FilePath:
@@ -236,7 +236,7 @@ def _prepare_output_records(
 
     futures = []
     for iens in sorted(raw_records.keys(), key=int):
-        for record, transmitter in raw_records[iens].items():
+        for record, transmitter in raw_records[iens].values():
             futures.append(_load(iens, record, transmitter))
     results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
