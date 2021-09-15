@@ -164,7 +164,7 @@ def _build_ee_config(
                     "mime": input_.mime,
                     "is_executable": False,
                 }
-                for input_ in stage.input
+                for input_ in stage.input.values()
             ]
             + [
                 {
@@ -181,7 +181,7 @@ def _build_ee_config(
                     "location": output.location,
                     "mime": output.mime,
                 }
-                for output in stage.output
+                for output in stage.output.values()
             ],
             "jobs": jobs,
             "type": "function" if isinstance(stage, ert3.config.Function) else "unix",
