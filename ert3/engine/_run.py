@@ -29,9 +29,7 @@ def _prepare_experiment(
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
+        record_mime = step.input[record_name].mime
         parameters[record_name] = _get_experiment_record_indices(
             workspace_root, record_source, record_mime, parameters_config
         )
@@ -186,9 +184,7 @@ def _prepare_evaluation(
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
+        record_mime = step.input[record_name].mime
         _prepare_experiment_record(
             record_name,
             record_source,
@@ -236,9 +232,7 @@ def _prepare_storage_records(
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
+        record_mime = step.input[record_name].mime
         if record_source[0] != "stochastic":
             _prepare_experiment_record(
                 record_name,

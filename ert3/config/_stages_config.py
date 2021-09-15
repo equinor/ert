@@ -71,8 +71,14 @@ class TransportableCommand(_StagesConfig):
 
 class _Step(_StagesConfig):
     name: str
-    input: Tuple[Record, ...]
+    input: Dict[str, Record] = None
     output: Tuple[Record, ...]
+
+    @validator('input', pre=True, always=True)
+    def set_dict_from_list(cls, records: Tuple[Record, ...]) -> Dict[str, Record]:
+        """ Grab names in records and use as keys """
+        recordDict = {record['record']: record for record in records}
+        return recordDict
 
 
 class Function(_Step):
