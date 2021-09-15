@@ -234,8 +234,10 @@ class ErtPluginManager(pluggy.PluginManager):
         self.hook.legacy_ertscript_workflow(config=config)
         return config
 
-    def add_logging_handles(self, log_handle):
-        self.hook.add_log_handle(logging=log_handle)
+    def add_logging_handle_to_root(self, logger):
+        handles = self.hook.add_log_handle_to_root()
+        for handle in handles:
+            logger.addHandler(handle)
 
 
 class ErtPluginContext:

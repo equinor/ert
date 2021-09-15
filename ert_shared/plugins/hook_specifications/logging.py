@@ -2,11 +2,11 @@ from ert_shared.plugins.plugin_manager import hook_specification
 
 
 @hook_specification
-def add_log_handle(logging):
+def add_log_handle_to_root():
     """
-    Modify ert's logging instance, for example adding handlers and changing formatting.
+    Create a log handle which will be added to the root logger
+    in the main entry point.
 
-    :param logging: A handle to the ert logging instance.
-    :type logging: :module:`logging`
-    :return: None
+    :return: A log handle that will be added to the root logger
+    :rtype: logging.Handler
     """
