@@ -5,7 +5,6 @@ from typing import (
     AsyncGenerator,
     Generator,
     Mapping,
-    MutableMapping,
     Optional,
     TYPE_CHECKING,
     Tuple,
@@ -20,11 +19,6 @@ from starlette.testclient import (
     TestClient as StarletteTestClient,
     ASGI2App,
     ASGI3App,
-    Cookies,
-    Params,
-    DataType,
-    TimeOut,
-    FileType,
 )
 from sqlalchemy.orm import sessionmaker
 from graphene import Schema as GrapheneSchema
@@ -197,7 +191,7 @@ def _override_get_db(session: sessionmaker) -> None:
     from ert_storage.app import app
     from ert_storage.database import (
         get_db,
-        IS_POSTGRES,
+        database_config,
     )
 
     async def override_get_db(
@@ -207,7 +201,7 @@ def _override_get_db(session: sessionmaker) -> None:
 
         # Make PostgreSQL return float8 columns with highest precision. If we don't
         # do this, we may lose up to 3 of the least significant digits.
-        if IS_POSTGRES:
+        if database_config.IS_POSTGRES:
             db.execute("SET extra_float_digits=3")
         try:
             yield db
@@ -222,23 +216,19 @@ def _override_get_db(session: sessionmaker) -> None:
 
 
 def _begin_transaction() -> _TransactionInfo:
-    from ert_storage.database import (
-        engine,
-        IS_SQLITE,
-        HAS_AZURE_BLOB_STORAGE,
-    )
+    from ert_storage.database import database_config
     from ert_storage.database_schema import Base
 
-    if IS_SQLITE:
-        Base.metadata.create_all(bind=engine)
-    if HAS_AZURE_BLOB_STORAGE:
+    if database_config.IS_SQLITE:
+        Base.metadata.create_all(bind=database_config.engine)
+    if database_config.HAS_AZURE_BLOB_STORAGE:
         import asyncio
         from ert_storage.database import create_container_if_not_exist
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(create_container_if_not_exist())
 
-    connection = engine.connect()
+    connection = database_config.engine.connect()
     transaction = connection.begin()
     session = sessionmaker(autocommit=False, autoflush=False, bind=connection)
 
