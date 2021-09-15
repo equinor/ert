@@ -7,12 +7,13 @@ import tempfile
 import os
 
 import prefect
+import ert
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
-from ert.data import RecordTransmitter
-
 _BIN_FOLDER = "bin"
+
+ser = ert.serialization.get_serializer("application/x-record-transmitter")
 
 
 class UnixTask(prefect.Task):
@@ -71,19 +72,23 @@ class UnixTask(prefect.Task):
 
     def _load_and_dump_input(
         self,
-        transmitters: Dict[int, RecordTransmitter],
+        transmitters: Dict[int, str],
         runpath: Path,
     ):
-        Path(runpath / _BIN_FOLDER).mkdir(parents=True)
 
+        Path(runpath / _BIN_FOLDER).mkdir(parents=True)
         futures = []
         for input_ in self._step.get_inputs():
             path_base = runpath / _BIN_FOLDER if input_.is_executable() else runpath
-            futures.append(
-                transmitters[input_.get_name()].dump(
-                    path_base / input_.get_path(), input_.get_mime()
-                )
-            )
+            # transmitter = ser.decode(transmitters[input_.get_name()])
+
+            async def foo(t):
+                tr = ser.decode(t)
+                await tr.dump(path_base / input_.get_path(), input_.get_mime())
+
+            futures.append(foo(transmitters[input_.get_name()]))
+        import os
+
         asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         for input_ in self._step.get_inputs():
             if input_.is_executable():
@@ -112,16 +117,20 @@ class UnixTask(prefect.Task):
                         raise FileNotFoundError(
                             f"Output file {output.get_path()} was not generated!"
                         )
-
-                    outputs[output.get_name()] = self._output_transmitters[
-                        output.get_name()
-                    ]
+                    transmitter = ser.decode(
+                        self._output_transmitters[output.get_name()]
+                    )
+                    outputs[output.get_name()] = transmitter
                     futures.append(
-                        outputs[output.get_name()].transmit_file(
+                        transmitter.transmit_file(
                             run_path / output.get_path(), output.get_mime()
                         )
                     )
                 asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+
+                # now that transmitters are transmitted, serialize them
+                for output in self._step.get_outputs():
+                    outputs[output.get_name()] = ser.encode(outputs[output.get_name()])
 
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_SUCCESS,

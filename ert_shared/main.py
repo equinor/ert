@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import multiprocessing
 import os
 import sys
 import re
@@ -419,4 +420,5 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method("forkserver")
     main()

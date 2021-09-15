@@ -286,3 +286,35 @@ async def test_dump_untransmitted_record(
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
             await transmitter.dump("some.file", "text/whatever")
+
+
+@pytest.mark.asyncio
+@simple_records
+@factory_params
+async def test_serialization(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+    record_in,
+    expected_data,
+    storage_path,
+):
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory:
+        ser = ert.serialization.get_serializer("application/x-record-transmitter")
+
+        # serialization of an untransmitted transmitter
+        original_transmitter = record_transmitter_factory(name="some_name")
+        first = ser.decode(ser.encode(original_transmitter))
+        assert original_transmitter == first
+
+        await first.transmit_record(record_in)
+
+        # serialization of a transmitted transmitter
+        second = ser.decode(ser.encode(first))
+        assert first == second
+
+        # loading of highly serialized transmitter still yields record
+        record = await second.load()
+        assert record.data == expected_data

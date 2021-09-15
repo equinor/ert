@@ -1,10 +1,23 @@
+import base64
 import pathlib
+import pickle
 import shutil
 import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 import aiofiles
 
@@ -220,15 +233,25 @@ class RecordCollectionMap(_DataElement):
         return len(self.record_names)
 
 
-class RecordTransmitterState(Enum):
-    transmitted = auto()
-    not_transmitted = auto()
+class RecordTransmitterState(str, Enum):
+    transmitted = "transmitted"
+    not_transmitted = "not_transmitted"
 
 
-class RecordTransmitterType(Enum):
-    in_memory = auto()
-    ert_storage = auto()
-    shared_disk = auto()
+class RecordTransmitterType(str, Enum):
+    in_memory = "in_memory"
+    ert_storage = "ert_storage"
+    shared_disk = "shared_disk"
+
+
+class _RawRecordTransmitter(NamedTuple):
+    """Crude schema for all record transmitters."""
+
+    state: RecordTransmitterState
+    uri: str
+    record_type: RecordType
+    transmitter_type: RecordTransmitterType
+    data: Dict[str, Any]
 
 
 class RecordTransmitter:
@@ -237,6 +260,11 @@ class RecordTransmitter:
         self._uri: str = ""
         self._record_type: Optional[RecordType] = None
         self._transmitter_type: RecordTransmitterType = transmitter_type
+
+    def __eq__(self, o: object) -> bool:
+        if isinstance(o, type(self)):
+            return self.__dict__ == o.__dict__
+        return False
 
     def _set_transmitted_state(
         self, uri: str, record_type: Optional[RecordType]
@@ -318,6 +346,41 @@ class RecordTransmitter:
             async with aiofiles.open(str(location), mode="wb") as fb:
                 await fb.write(record.data)  # type: ignore
 
+    @abstractmethod
+    def _special_serialization_data(self) -> Dict[str, Any]:
+        """Provide a dict with idiosyncratic data about this specific, concrete
+        transmitter."""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def _from_special_serialization_data(
+        cls, data: Dict[str, Any]
+    ) -> "RecordTransmitter":
+        """From a dict describing the idiosyncratic data for this specific,
+        concrete transmitter, return such a transmitter if the required data
+        are present."""
+        pass
+
+    def to_dict(self) -> Dict[str, Any]:
+        return _RawRecordTransmitter(
+            transmitter_type=self._transmitter_type,
+            state=self._state,
+            record_type=self._record_type,
+            uri=self._uri,
+            data=self._special_serialization_data(),
+        )._asdict()
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "RecordTransmitter":
+        raw = _RawRecordTransmitter(**data)
+        transmitter = cls._from_special_serialization_data(raw.data)
+        transmitter._state = RecordTransmitterState(raw.state)
+        if raw.record_type:
+            transmitter._record_type = RecordType(raw.record_type)
+        transmitter._uri = raw.uri
+        return transmitter
+
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
     _INTERNAL_MIME_TYPE = "application/x-yaml"
@@ -343,6 +406,8 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         return str(self._storage_uri)
 
     async def _load_numerical_record(self) -> NumericalRecord:
+        # import requests
+        # requests.get("http://example.org")
         async with aiofiles.open(str(self._uri), mode="rt", encoding="utf-8") as f:
             contents = await f.read()
         serializer = get_serializer(SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE)
@@ -368,6 +433,22 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
             async with aiofiles.open(location, mode="wt", encoding="utf-8") as f:
                 await f.write(contents)
 
+    def _special_serialization_data(self) -> Dict[str, Any]:
+        return {
+            "storage_path": str(self._storage_path),
+            "concrete_key": self._concrete_key,
+            "storage_uri": str(self._storage_uri),
+        }
+
+    @classmethod
+    def _from_special_serialization_data(
+        cls, data: Dict[str, Any]
+    ) -> "RecordTransmitter":
+        transmitter = cls("", Path(data["storage_path"]))
+        transmitter._concrete_key = data["concrete_key"]
+        transmitter._storage_uri = Path(data["storage_uri"])
+        return transmitter
+
 
 class InMemoryRecordTransmitter(RecordTransmitter):
     def __init__(self, name: str):
@@ -388,6 +469,26 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
     async def _load_blob_record(self) -> BlobRecord:
         return BlobRecord(data=self._record.data)
+
+    def _special_serialization_data(self) -> Dict[str, Any]:
+        data = {
+            "name": self._name,
+        }
+
+        # pickling does not run __init__, which means the _record attribute may
+        # or may not exist
+        if hasattr(self, "_record"):
+            data["record"] = (base64.b64encode(pickle.dumps(self._record))).decode()
+        return data
+
+    @classmethod
+    def _from_special_serialization_data(
+        cls, data: Dict[str, Any]
+    ) -> "RecordTransmitter":
+        transmitter = cls(data["name"])
+        if "record" in data:
+            transmitter._record = pickle.loads(base64.b64decode(data["record"]))
+        return transmitter
 
 
 def load_collection_from_file(

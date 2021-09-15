@@ -98,6 +98,22 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         record = await load_record(self._uri, self._record_type)
         return ert.data.BlobRecord(data=record.data)
 
+    def _special_serialization_data(self) -> Dict[str, Any]:
+        return {
+            "name": self._name,
+            "uri": self._uri,
+            "real_id": self._real_id,
+        }
+
+    @classmethod
+    def _from_special_serialization_data(
+        cls, data: Dict[str, Any]
+    ) -> "ert.data.RecordTransmitter":
+        transmitter = cls(data["name"], "")
+        transmitter._uri = data["uri"]
+        transmitter._real_id = data["real_id"]
+        return transmitter
+
 
 async def _get_from_server_async(
     url: str,

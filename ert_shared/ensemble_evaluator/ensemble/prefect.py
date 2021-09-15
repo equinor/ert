@@ -16,6 +16,7 @@ import cloudpickle
 import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
+import ert
 from ert_shared.port_handler import find_available_port
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -110,7 +111,18 @@ class PrefectEnsemble(_Ensemble):
         self._ee_id: Optional[str] = None
         self._iens_to_task = {}
         self._allow_cancel = multiprocessing.Event()
+
+        self._serialize_transmitters()
+
         super().__init__(self._reals, metadata={"iter": 0})
+
+    def _serialize_transmitters(self):
+        ser = ert.serialization.get_serializer("application/x-record-transmitter")
+        for iens in range(0, self.config[ids.REALIZATIONS]):
+            for record, transmitter in self.config[ids.INPUTS][iens].items():
+                self.config[ids.INPUTS][iens][record] = ser.encode(transmitter)
+            for record, transmitter in self.config[ids.OUTPUTS][iens].items():
+                self.config[ids.OUTPUTS][iens][record] = ser.encode(transmitter)
 
     def _get_reals(self):
         real_builders = []
@@ -190,7 +202,12 @@ class PrefectEnsemble(_Ensemble):
                         inp.get_name(): transmitter_map[iens][inp.get_name()]
                         for inp in step.get_inputs()
                     }
-                    outputs = self.config[ids.OUTPUTS][iens]
+                    outputs = {
+                        record: transmitter
+                        for record, transmitter in self.config[ids.OUTPUTS][
+                            iens
+                        ].items()
+                    }
                     max_retries = self.config.get(ids.MAX_RETRIES, DEFAULT_MAX_RETRIES)
                     # Prefect does not allow retry_delay if max_retries is 0
                     if max_retries == 0:
@@ -217,7 +234,7 @@ class PrefectEnsemble(_Ensemble):
     def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
         self._ee_config = config
-        mp_ctx = multiprocessing.get_context(method="forkserver")
+        mp_ctx = multiprocessing.get_context()
         self._eval_proc = mp_ctx.Process(
             target=self._evaluate,
             args=(config, ee_id),
@@ -228,6 +245,9 @@ class PrefectEnsemble(_Ensemble):
 
     def _evaluate(self, ee_config: EvaluatorServerConfig, ee_id):
         asyncio.set_event_loop(asyncio.get_event_loop())
+        import requests
+
+        requests.get("http://example.org")
         try:
             with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
@@ -287,7 +307,7 @@ class PrefectEnsemble(_Ensemble):
             if isinstance(state_map[iens].result[task].result, Exception):
                 raise state_map[iens].result[task].result
             for output_name, transmitter in state_map[iens].result[task].result.items():
-                self.config["outputs"][iens][output_name] = transmitter
+                self.config[ids.OUTPUTS][iens][output_name] = transmitter
 
     def is_cancellable(self):
         return True

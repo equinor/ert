@@ -156,6 +156,12 @@ def test_run_once_polynomial_evaluation(
     evaluation_experiment_config,
     gaussian_parameters_config,
 ):
+    import multiprocessing
+
+    multiprocessing.set_start_method("spawn")
+    import time
+
+    time.sleep(2)
     ert3.engine.run(
         ensemble,
         stages_config,
