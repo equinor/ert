@@ -59,7 +59,7 @@ class Exporter:
         export_job.run(
             ert=ERT.ert,
             arguments=[
-                ".ert_runpath_list",
+                ERT.ert.getRunpathList().getExportFile(),
                 parameters["output_file"],
                 parameters["time_index"],
                 parameters["column_keys"],
