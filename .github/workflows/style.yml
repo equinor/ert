@@ -8,13 +8,49 @@ on:
  pull_request:
 
 jobs:
-  check-style:
-    timeout-minutes: 15
+  create-virtualenv:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.8']
+    steps:
+      - name: make requirements file
+        run: |
+          tee requirements.txt > /dev/null <<EOT
+          flake8
+          black
+          pylint
+          EOT
 
+      - name: source code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: virtualenv cache
+        uses: syphar/restore-virtualenv@v1.1
+        id: cache-virtualenv
+
+      - name: pip cache
+        uses: syphar/restore-pip-download-cache@v1
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+
+      - name: Install Python dependencies
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt
+
+  check-style:
+    needs: create-virtualenv
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8']
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v2
       with:
@@ -23,22 +59,21 @@ jobs:
     - name: Clang Format
       run: ./script/clang-format --check
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8
-        python -m pip install black
-        python -m pip install pylint
+
+    - uses: syphar/restore-virtualenv@v1.1
+      id: cache-virtualenv
+
     - name: Lint with flake8
       run: |
         flake8 ert3 tests/ert_tests/ert3
+
     - name: Run black
       run: |
         black . --check
+
     - name: Run pylint
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
