@@ -9,35 +9,35 @@ class ErtError(Exception):
 
 class IllegalWorkspaceOperation(ErtError):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
 
 
 class IllegalWorkspaceState(ErtError):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
 
 
 class NonExistantExperiment(IllegalWorkspaceOperation):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
 
 
 class ConfigValidationError(ErtError):
     def __init__(self, message: str, source: Optional[str] = None) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
         self.source = source
 
 
 class StorageError(ErtError):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
 
 
 class ElementExistsError(StorageError):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
 
 
 class ElementMissingError(StorageError):
     def __init__(self, message: str) -> None:
-        self.message = "{}".format(message)
+        self.message = f"{message}"
