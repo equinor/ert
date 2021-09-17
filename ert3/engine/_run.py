@@ -90,7 +90,7 @@ def _get_experiment_record_indices(
             assert param_size is not None  # To make mypy checker happy
             return [str(x) for x in range(param_size)]
 
-    raise ValueError("Unknown record source location {}".format(source))
+    raise ValueError(f"Unknown record source location {source}")
 
 
 # pylint: disable=too-many-arguments
@@ -156,7 +156,7 @@ def _prepare_experiment_record(
             experiment_name=experiment_name,
         )
     else:
-        raise ValueError("Unknown record source location {}".format(record_source[0]))
+        raise ValueError(f"Unknown record source location {record_source[0]}")
 
 
 def _prepare_evaluation(
