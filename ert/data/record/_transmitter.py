@@ -185,7 +185,11 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         return "in_memory"
 
     async def _load_numerical_record(self) -> NumericalRecord:
-        return NumericalRecord(data=self._record.data)
+        if not isinstance(self._record, NumericalRecord):
+            raise TypeError("loading numerical from blob record")
+        return self._record
 
     async def _load_blob_record(self) -> BlobRecord:
-        return BlobRecord(data=self._record.data)
+        if not isinstance(self._record, BlobRecord):
+            raise TypeError("loading blob from numerical record")
+        return self._record

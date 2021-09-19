@@ -162,7 +162,7 @@ def _prepare_sensitivity_records(
     }
     for record_name in sensitivity_parameters:
         ensemble_record = ert.data.RecordCollection(
-            records=sensitivity_parameters[record_name]
+            records=tuple(sensitivity_parameters[record_name])
         )
         future = ert.storage.transmit_record_collection(
             record_coll=ensemble_record,

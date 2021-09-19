@@ -1,25 +1,13 @@
-from abc import ABC, abstractmethod
-from collections import deque
-import xarray as xr
-import numpy as np
-from enum import Enum
-from typing import (
-    Generator,
-    Type,
-    Union,
-    List,
-    Dict,
-    Mapping,
-    Tuple,
-    Optional,
-    MutableMapping,
-    Deque,
-    Sequence,
-)
 import pathlib
-import ert
+from abc import ABC
+from collections import deque
+from enum import Enum
+from typing import Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
+
 from beartype import beartype
-from beartype.roar import BeartypeException
+from beartype.roar import BeartypeException  # type: ignore
+
+import ert
 
 number = Union[int, float]
 numerical_record_data = Union[
@@ -29,7 +17,7 @@ numerical_record_data = Union[
 ]
 blob_record_data = bytes
 record_data = Union[numerical_record_data, blob_record_data]
-record_collection = Union[Tuple["NumericalRecord", ...], Tuple["BlobRecord", ...]]
+record_collection = Tuple["Record", ...]
 RecordIndex = Tuple[Union[int, str], ...]
 
 
@@ -62,25 +50,26 @@ class Record(ABC):
     def record_type(self) -> RecordType:
         pass
 
-    def as_xarray(self) -> xr.DataArray:
-        pass
-
-    def as_numpy(self) -> np.typing.ArrayLike:
-        pass
-
     @staticmethod
-    def create(spec_or_record: Union[dict, "Record"]) -> "Record":
+    def create(
+        spec_or_record: Union[
+            Dict[str, bytes], Dict[str, numerical_record_data], "Record"
+        ]
+    ) -> "Record":
         if isinstance(spec_or_record, Record):
             return spec_or_record
         data = spec_or_record["data"]
         if isinstance(data, bytes):
             return BlobRecord(data)
         else:
-            return NumericalRecord(**spec_or_record)
+            index = spec_or_record.get("index")
+            if not isinstance(index, int):
+                index = None
+            return NumericalRecord(data=data, index=index)
 
 
 class BlobRecord(Record):
-    def __init__(self, data: record_data) -> None:
+    def __init__(self, data: blob_record_data) -> None:
         self._record_type = RecordType.BYTES
 
         try:
@@ -93,7 +82,7 @@ class BlobRecord(Record):
         return data
 
     @property
-    def data(self) -> record_data:
+    def data(self) -> blob_record_data:
         return self._data
 
     @property
@@ -120,7 +109,6 @@ class NumericalRecord(Record):
 
         self._type = self._infer_type()
         self._index = self._validate_index(index)
-        self._init_xarray()
 
     @beartype
     def _validate_data(self, data: numerical_record_data) -> numerical_record_data:
@@ -158,9 +146,6 @@ class NumericalRecord(Record):
                 return RecordType.MAPPING_STR_FLOAT
         raise RecordValidationError(f"unexpected data type {type(data)}")
 
-    def _init_xarray(self):
-        pass
-
     @property
     def index(self) -> RecordIndex:
         return self._index
@@ -184,17 +169,17 @@ class RecordCollection:
         self, records: record_collection, ensemble_size: Optional[int] = None
     ) -> None:
         coerced_records = tuple(Record.create(record) for record in records)
-        records, ensemble_size, record_type = self._validate_data(
+        records, ens_size, record_type = self._validate_data(
             coerced_records, ensemble_size
         )
         self._records = records
-        self._ensemble_size = ensemble_size
+        self._ensemble_size = ens_size
         self._record_type = record_type
 
     @beartype
     def _validate_data(
         self, records: record_collection, ensemble_size: Optional[int]
-    ) -> Tuple[record_collection, Optional[int], RecordType]:
+    ) -> Tuple[record_collection, int, RecordType]:
         if not records:
             raise RecordValidationError("no records")
 
@@ -203,19 +188,20 @@ class RecordCollection:
 
         if ensemble_size != len(records):
             raise RecordValidationError(
-                f"ensemble size ({ensemble_size}) does not match number of records ({len(records)})"
+                f"ensemble size mismatch: {ensemble_size}/{len(records)}"
             )
 
         record_type = records[0].record_type
         for index, record in enumerate(records[1:]):
             if record.record_type != record_type:
                 raise RecordValidationError(
-                    f"Ensemble records must be homogenously type {record_type}, found {record.record_type} at index {index}"
+                    f"Ensemble records must be homogenously type {record_type}, found"
+                    + f" {record.record_type} at index {index}"
                 )
         return (records, ensemble_size, record_type)
 
     @property
-    def records(self) -> Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]:
+    def records(self) -> Tuple[Record, ...]:
         return self._records
 
     @property
@@ -227,9 +213,7 @@ class RecordCollection:
         return self.records[0].record_type
 
     def __eq__(self, o: object) -> bool:
-        print("MAFA??", self.__dict__, o.__dict__)
         if isinstance(o, RecordCollection):
-
             return self.__dict__ == o.__dict__
         return False
 
@@ -240,11 +224,11 @@ def load_collection_from_file(
     if mime == "application/octet-stream":
         with open(file_path, "rb") as fb:
             return RecordCollection(
-                records=[BlobRecord(data=fb.read())] * ens_size,
+                records=tuple(BlobRecord(data=fb.read()) for _ in range(ens_size))
             )
 
     with open(file_path, "rt", encoding="utf-8") as f:
         raw_ensrecord = ert.serialization.get_serializer(mime).decode_from_file(f)
     return RecordCollection(
-        records=[NumericalRecord(data=raw_record) for raw_record in raw_ensrecord]
+        records=tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
     )

@@ -103,12 +103,16 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
     async def _load_numerical_record(self) -> ert.data.NumericalRecord:
         assert self._record_type
         record = await load_record(self._uri, self._record_type)
-        return ert.data.NumericalRecord(data=record.data)
+        if not isinstance(record, ert.data.NumericalRecord):
+            raise TypeError(f"unexpected blobrecord for numerical {self._uri}")
+        return record
 
     async def _load_blob_record(self) -> ert.data.BlobRecord:
         assert self._record_type
         record = await load_record(self._uri, self._record_type)
-        return ert.data.BlobRecord(data=record.data)
+        if not isinstance(record, ert.data.BlobRecord):
+            raise TypeError(f"unexpected numerical record for blob {self._uri}")
+        return record
 
 
 async def get_record_storage_transmitters(
@@ -639,7 +643,7 @@ def get_ensemble_record(
                 asyncio.get_event_loop().run_until_complete(transmitter.load())
             )
 
-    return ert.data.RecordCollection(records=records)
+    return ert.data.RecordCollection(records=tuple(records))
 
 
 def get_ensemble_record_names(

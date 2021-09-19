@@ -47,7 +47,7 @@ class Distribution:
             return ert.data.NumericalRecord(data=x.tolist())
         else:
             return ert.data.NumericalRecord(
-                data={idx: float(val) for idx, val in zip(self.index, x)}
+                data={idx: float(val) for idx, val in zip(self.index, x)}  # type: ignore  # noqa
             )
 
     def sample(self) -> ert.data.Record:
