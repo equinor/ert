@@ -72,6 +72,7 @@ setup(
         "ansicolors==1.1.8",
         "async-exit-stack; python_version < '3.7'",
         "async-generator",
+        "beartype",
         "cloudevents",
         "cloudpickle",
         "console-progressbar==1.1.2",
