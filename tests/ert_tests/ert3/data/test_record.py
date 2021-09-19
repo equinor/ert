@@ -1,7 +1,7 @@
 import json
 import typing
 
-import pydantic
+import beartype
 import pytest
 
 import ert
@@ -61,7 +61,7 @@ def test_valid_blob_record(data):
     ),
 )
 def test_invalid_numerical_record(data):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.NumericalRecord(data=data)
 
 
@@ -79,7 +79,7 @@ def test_invalid_numerical_record(data):
     ),
 )
 def test_invalid_blob_record(data):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.BlobRecord(data=data)
 
 
@@ -95,7 +95,7 @@ def test_invalid_blob_record(data):
     ),
 )
 def test_inconsistent_index_record(data, index):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(AssertionError):
         ert.data.NumericalRecord(data=data, index=index)
 
 
@@ -132,13 +132,13 @@ def test_valid_ensemble_record(raw_ensrec, record_type):
 
 
 def test_ensemble_record_not_empty():
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.RecordCollection(records=[])
 
 
 def test_invalid_ensemble_record():
     raw_ensrec = [{"data": b"a"}, {"data": [1.1, 2.2]}]
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.RecordCollection(records=raw_ensrec)
 
 
@@ -150,7 +150,7 @@ def test_invalid_ensemble_record():
     ),
 )
 def test_non_uniform_ensemble_record_types(raw_ensrec):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.RecordCollection(records=raw_ensrec)
 
 
@@ -164,7 +164,7 @@ def test_non_uniform_ensemble_record_types(raw_ensrec):
     ),
 )
 def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ensemble_size)
 
 

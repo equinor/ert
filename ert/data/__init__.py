@@ -1,20 +1,24 @@
-from ert.data._record import (
+from .record._record import (
     BlobRecord,
-    InMemoryRecordTransmitter,
     NumericalRecord,
     Record,
+    RecordValidationError,
     RecordCollection,
     RecordIndex,
-    RecordTransmitter,
-    RecordTransmitterType,
     RecordType,
-    SharedDiskRecordTransmitter,
     load_collection_from_file,
     record_data,
+)
+from .record._transmitter import (
+    InMemoryRecordTransmitter,
+    RecordTransmitter,
+    RecordTransmitterType,
+    SharedDiskRecordTransmitter,
 )
 
 __all__ = (
     "Record",
+    "RecordValidationError",
     "NumericalRecord",
     "BlobRecord",
     "RecordCollection",
