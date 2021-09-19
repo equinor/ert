@@ -113,9 +113,9 @@ class RecordTransmitter:
                 await ft.write(
                     ert.serialization.get_serializer(mime).encode(record.data)
                 )
-        else:
+        elif isinstance(record, BlobRecord):
             async with aiofiles.open(str(location), mode="wb") as fb:
-                await fb.write(record.data)  # type: ignore
+                await fb.write(record.data)
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
