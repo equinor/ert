@@ -35,6 +35,7 @@ jobs:
         run: |
           pip install -U pip
           pip install -r requirements/style.txt
+          pip install .  # We need the dependencies of ERT to avoid import-error
 
   check-style:
     needs: create-virtualenv
@@ -68,5 +69,4 @@ jobs:
 
     - name: Run pylint
       run: |
-        pip install .  # We need the dependencies of ERT to avoid import-error
         pylint ert ert3
