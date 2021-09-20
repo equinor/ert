@@ -247,6 +247,7 @@ class EnsembleEvaluator:
             else:
                 self._stop()
             self._ws_thread.join()
+            raise
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
