@@ -211,7 +211,7 @@ def _build_ee_config(
 def _run(
     ensemble_evaluator: EnsembleEvaluator,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
-    result = {}
+    result: Dict[int, Dict[str, RecordTransmitter]] = {}
     with ensemble_evaluator.run() as monitor:
         for event in monitor.track():
             if isinstance(event.data, dict) and event.data.get("status") in [
@@ -236,7 +236,7 @@ def _prepare_output_records(
 
     futures = []
     for iens in sorted(raw_records.keys(), key=int):
-        for record, transmitter in raw_records[iens].values():
+        for record, transmitter in raw_records[iens].items():
             futures.append(_load(iens, record, transmitter))
     results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
