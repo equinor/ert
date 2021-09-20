@@ -1,4 +1,5 @@
-black
+-r style.txt
+
 flaky
 pytest>=6.2.0
 pytest-qt
@@ -12,7 +13,6 @@ pytest-timeout
 jsonpath_ng
 sphinxcontrib.datatemplates
 decorator
-pylint
 click
 scikit-build
 setuptools_scm

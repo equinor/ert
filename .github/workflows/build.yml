@@ -139,7 +139,7 @@ jobs:
     - name: Install wheel and test dependencies
       run: |
         find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+        pip install -r requirements/dev.txt
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
@@ -198,7 +198,7 @@ jobs:
     - name: Install wheel and test dependencies
       run: |
         find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+        pip install -r requirements/dev.txt
 
     - name: Make test directory
       run: |
@@ -253,7 +253,7 @@ jobs:
     - name: Install wheel and test dependencies
       run: |
         find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
+        pip install -r requirements/dev.txt
 
     - name: Run Python tests
       run: |

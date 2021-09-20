@@ -14,14 +14,6 @@ jobs:
       matrix:
         python-version: ['3.8']
     steps:
-      - name: make requirements file
-        run: |
-          tee requirements.txt > /dev/null <<EOT
-          flake8
-          black
-          pylint
-          EOT
-
       - name: source code
         uses: actions/checkout@v2
 
@@ -42,7 +34,7 @@ jobs:
         if: steps.cache-virtualenv.outputs.cache-hit != 'true'
         run: |
           pip install -U pip
-          pip install -r requirements.txt
+          pip install -r requirements/style.txt
 
   check-style:
     needs: create-virtualenv
