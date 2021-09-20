@@ -18,7 +18,7 @@ from ert_shared.status.entity.state import (
 
 class MonitorTest(unittest.TestCase):
     def test_color_always(self):
-        out = StringIO()  # not atty, so coloring is automatically disabled
+        out = StringIO()  # not a tty, so coloring is automatically disabled
         monitor = Monitor(out=out, color_always=True)
 
         self.assertEqual(
