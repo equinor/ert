@@ -34,9 +34,6 @@ class OutOfOrderSnapshotUpdateException(ValueError):
 
 class EvaluatorTracker:
     DONE = "done"
-    CONNECTION_ERROR = "connection_error"
-
-    MAX_FAILURES = 10
 
     def __init__(
         self,
@@ -73,7 +70,6 @@ class EvaluatorTracker:
     def _drain_monitor(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
-        failures = 0
         while not self._model.isFinished():
             try:
                 drainer_logger.debug("connecting to new monitor...")
@@ -116,13 +112,6 @@ class EvaluatorTracker:
             except (ConnectionRefusedError, ClientError) as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
-                    failures += 1
-                    if failures == EvaluatorTracker.MAX_FAILURES:
-                        drainer_logger.debug("giving up.")
-                        self._work_queue.put(EvaluatorTracker.CONNECTION_ERROR)
-                        return
-            else:
-                failures = 0
 
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
@@ -142,11 +131,6 @@ class EvaluatorTracker:
                         yield EndEvent(
                             failed=self._model.hasRunFailed(),
                             failed_msg=self._model.getFailMessage(),
-                        )
-                    elif event == EvaluatorTracker.CONNECTION_ERROR:
-                        yield EndEvent(
-                            failed=True,
-                            failed_msg="Connection error",
                         )
                 except GeneratorExit:
                     # consumers may exit at this point, make sure the last

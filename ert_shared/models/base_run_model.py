@@ -101,6 +101,12 @@ class BaseRunModel(object):
             self.updateDetailedProgress()
             self._fail_message = str(e)
             self._simulationEnded()
+        except Exception as e:
+            self.updateDetailedProgress()
+            self._failed = True
+            self._fail_message = str(e)
+            self._simulationEnded()
+            raise
 
     def runSimulations(self, job_queue, run_context):
         raise NotImplementedError("Method must be implemented by inheritors!")

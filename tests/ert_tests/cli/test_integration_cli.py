@@ -1,6 +1,7 @@
 import os
 import shutil
 import threading
+import time
 from argparse import ArgumentParser
 from unittest.mock import MagicMock, Mock, call, patch
 
@@ -162,8 +163,12 @@ def test_cli_test_connection_error(tmpdir, source_root, capsys):
         os.path.join(str(tmpdir), "poly_example"),
     )
 
+    def _simulate_connection_refused():
+        time.sleep(1)  # there's always some waiting for a connection
+        raise ConnectionRefusedError("Connection error")
+
     mock_monitor = MagicMock()
-    mock_monitor.__enter__.side_effect = ConnectionRefusedError
+    mock_monitor.__enter__.side_effect = _simulate_connection_refused
 
     with patch(
         "ert_shared.status.tracker.evaluator.create_ee_monitor",
