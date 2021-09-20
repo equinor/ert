@@ -18,6 +18,7 @@ import sys
 import logging
 from ert_shared import ERT
 
+logger = logging.getLogger(__name__)
 
 class Exporter:
     def __init__(self):
@@ -32,21 +33,19 @@ class Exporter:
             error = "Export not available due to {job_name} is not installed.".format(
                 job_name=self._export_job
             )
-            logging.warning(error)
+            logger.warning(error)
             return False
 
         if runpath_job is None:
             error = "Export not available due to {job_name} is not installed.".format(
                 job_name=self._runpath_job
             )
-            logging.warning(error)
+            logger.warning(error)
             return False
 
         return True
 
     def run_export(self, parameters):
-
-        logger = logging.getLogger()
         export_job = ERT.enkf_facade.get_workflow_job(self._export_job)
         runpath_job = ERT.enkf_facade.get_workflow_job(self._runpath_job)
 
