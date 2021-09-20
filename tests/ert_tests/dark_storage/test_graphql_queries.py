@@ -72,7 +72,7 @@ def test_get_response_names(poly_example_tmp_dir, dark_storage_client):
         "responseNames"
     ]
     assert len(response_names) == 1
-    assert "POLY_RES" in response_names
+    assert "POLY_RES@0" in response_names
 
 
 def test_get_responses(poly_example_tmp_dir, dark_storage_client):
@@ -87,7 +87,7 @@ def test_get_responses(poly_example_tmp_dir, dark_storage_client):
     print(answer_json)
     responses = answer_json["data"]["experiments"][0]["ensembles"][0]["responses"]
     assert len(responses) == 1
-    assert responses[0]["name"] == "POLY_RES"
+    assert responses[0]["name"] == "POLY_RES@0"
 
 
 def test_query_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
