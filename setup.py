@@ -74,7 +74,7 @@ setup(
         "async-generator",
         "cloudevents",
         "cloudpickle",
-        "console-progressbar==1.1.2",
+        "tqdm>=4.62.0",
         "cryptography",
         "cwrap",
         "dask_jobqueue",

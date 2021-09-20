@@ -2,8 +2,8 @@
 import sys
 from datetime import datetime
 
+from tqdm import tqdm
 from colors import color as ansi_color
-from console_progressbar import ProgressBar
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 from ert_shared.status.entity.event import (
     EndEvent,
@@ -122,32 +122,17 @@ class Monitor:
             # indeterminate, no progress to be shown
             return
 
-        prefix = """
-    --> {phase_name}
-
-    {current_phase}/{target}""".format(
-            phase_name=event.phase_name,
-            current_phase=min(event.total_phases, event.current_phase + 1),
-            target=event.total_phases,
-        )
-
+        current_phase = min(event.total_phases, event.current_phase + 1)
         elapsed = datetime.now() - self._start_time
 
-        statuses = self._get_legends()
-        suffix = """{runtime}
+        nphase = f" {current_phase}/{event.total_phases}"
 
-{statuses}""".format(
-            statuses=statuses, runtime=format_running_time(elapsed.seconds)
-        )
-
-        pb = ProgressBar(
-            total=100,
-            prefix=prefix,
-            suffix=suffix,
-            decimals=0,
-            length=self.bar_length,
-            fill=self.filled_bar_char,
-            zfill=self.empty_bar_char,
-            file=self._out,
-        )
-        pb.print_progress_bar(event.progress * 100)
+        bar_format = "   {desc} |{bar}| {percentage:3.0f}% {unit}"
+        tqdm.write(f"    --> {event.phase_name}", file=self._out)
+        tqdm.write("\n", end="")
+        with tqdm(total=100, ncols=100, bar_format=bar_format, file=self._out) as pbar:
+            pbar.set_description_str(nphase, refresh=False)
+            pbar.unit = "{runtime}".format(runtime=format_running_time(elapsed.seconds))
+            pbar.update(event.progress * 100)
+        tqdm.write("\n", end="")
+        tqdm.write(self._get_legends(), file=self._out)
