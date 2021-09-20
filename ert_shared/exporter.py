@@ -19,6 +19,7 @@ from ert_shared import ERT
 
 logger = logging.getLogger(__name__)
 
+
 class Exporter:
     def __init__(self):
         self._export_job = "CSV_EXPORT2"
@@ -29,16 +30,12 @@ class Exporter:
         runpath_job = ERT.enkf_facade.get_workflow_job(self._runpath_job)
 
         if export_job is None:
-            error = "Export not available due to {job_name} is not installed.".format(
-                job_name=self._export_job
-            )
+            error = f"Export not available due to {self._export_job} is not installed."
             logger.warning(error)
             return False
 
         if runpath_job is None:
-            error = "Export not available due to {job_name} is not installed.".format(
-                job_name=self._runpath_job
-            )
+            error = f"Export not available due to {self._runpath_job} is not installed."
             logger.warning(error)
             return False
 
@@ -50,9 +47,7 @@ class Exporter:
 
         runpath_job.run(ert=ERT.ert, arguments=[], verbose=True)
         if runpath_job.hasFailed():
-            raise UserWarning(
-                "Failed to execute {job_name}".format(job_name=self._runpath_job)
-            )
+            raise UserWarning(f"Failed to execute {self._runpath_job}")
 
         export_job.run(
             ert=ERT.ert,
@@ -65,6 +60,4 @@ class Exporter:
             verbose=True,
         )
         if export_job.hasFailed():
-            raise UserWarning(
-                "Failed to execute {job_name}".format(job_name=self._export_job)
-            )
+            raise UserWarning(f"Failed to execute {self._export_job}")
