@@ -13,9 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
-import sys
 import logging
+
 from ert_shared import ERT
 
 logger = logging.getLogger(__name__)
