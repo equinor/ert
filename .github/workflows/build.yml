@@ -98,9 +98,41 @@ jobs:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
         path: dist/*
 
+  create-virtualenv:
+    needs: [build-wheels]
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: syphar/restore-virtualenv@v1.1
+        id: ${{ matrix.os }}-virtualenv-${{ matrix.python-version }}
+
+      - name: pip cache
+        uses: syphar/restore-pip-download-cache@v1
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+
+      - name: Get wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+
+      - name: Install Python dependencies
+        if: steps.cache-virtualenv.outputs.cache-hit != 'true'
+        run: |
+          pip install -U pip
+          find . -name "*.whl" -exec pip install {} \;
+          pip install -r requirements/dev.txt
+
   tests-ert:
     name: Run ert tests
-    needs: [build-wheels]
+    needs: [build-wheels, create-virtualenv]
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -131,15 +163,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r requirements/dev.txt
+    - uses: syphar/restore-virtualenv@v1.1
+      id: cache-virtualenv
 
     - name: Test Ubuntu
       if: matrix.os == 'ubuntu-latest'
@@ -165,7 +190,7 @@ jobs:
 
   docs-ert:
     name: Test ert docs
-    needs: [build-wheels]
+    needs: [build-wheels, create-virtualenv]
     timeout-minutes: 3
     strategy:
       fail-fast: false
@@ -190,16 +215,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r requirements/dev.txt
-
     - name: Make test directory
       run: |
         mkdir tmp_tests
@@ -208,13 +223,16 @@ jobs:
         mv setup.cfg tmp_tests/setup.cfg
         mkdir tmp_tests/.git
 
+    - uses: syphar/restore-virtualenv@v1.1
+      id: cache-virtualenv
+
     - name: Test docs
       run: |
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 
   tests-libres:
     name: Run libres tests
-    needs: [build-wheels]
+    needs: [build-wheels, create-virtualenv]
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -245,19 +263,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r requirements/dev.txt
+    - uses: syphar/restore-virtualenv@v1.1
+      id: cache-virtualenv
 
     - name: Run Python tests
       run: |
-        # Run tests
         pytest tests/libres_tests
 
 
