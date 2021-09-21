@@ -44,7 +44,6 @@ async def get_response_misfits(
         response_dict[index] = data_df
 
     obs = create_observations(res)
-    # TODO: is it ok to simply take the first element here?
     obs_keys = res.observation_keys(response_name)
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")

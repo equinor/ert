@@ -164,7 +164,6 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
 
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
-
     ensemble_id = experiment_json[0]["ensemble_ids"][0]
 
     resp: Response = dark_storage_client.get(
@@ -172,7 +171,6 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
     )
     stream = io.BytesIO(resp.content)
     misfit = pd.read_csv(stream, index_col=0, float_precision="round_trip")
-    print(misfit)
 
     assert_array_equal(misfit.columns, ["0", "2", "4", "6", "8"])
     assert misfit.shape == (3, 5)
