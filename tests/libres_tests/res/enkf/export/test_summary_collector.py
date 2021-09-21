@@ -44,3 +44,15 @@ class SummaryCollectorTest(ResTest):
 
             with self.assertRaises(KeyError):
                 data["FOPR"]
+
+            realization_index = 10
+            data = SummaryCollector.loadAllSummaryData(
+                ert,
+                "default_0",
+                ["WWCT:OP1", "WWCT:OP2"],
+                realization_index=realization_index,
+            )
+
+            assert data.index.levels[0] == [realization_index]
+            assert len(data.index.levels[1]) == 200
+            assert list(data.columns) == ["WWCT:OP1", "WWCT:OP2"]

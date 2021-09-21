@@ -7,8 +7,8 @@ from ert_shared.dark_storage.common import (
     get_response_names,
     data_for_key,
     ensemble_parameter_names,
+    observations_for_obs_keys,
 )
-from ert_shared.storage.extraction import create_observations
 from ert_storage import json_schema as js
 
 from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
@@ -139,6 +139,8 @@ async def get_record_observations(
     realization_index: Optional[int] = None,
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
+    case = get_name("ensemble", ensemble_id)
+    obss = observations_for_obs_keys(case, obs_keys)
     return [
         js.ObservationOut(
             id=uuid4(),
@@ -148,8 +150,7 @@ async def get_record_observations(
             x_axis=obs["x_axis"],
             name=obs["name"],
         )
-        for obs in create_observations(res)
-        if obs["name"] in obs_keys
+        for obs in obss
     ]
 
 
@@ -174,7 +175,7 @@ async def get_ensemble_record(
     realization_index: Optional[int] = None,
 ) -> Any:
     ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(ensemble_name, name)
+    dataframe = data_for_key(ensemble_name, name, realization_index)
     if realization_index is not None:
         # dataframe.loc returns a Series, and when we reconstruct a DataFrame from a Series, it defaults to be
         # oriented the wrong way, so we must transpose it

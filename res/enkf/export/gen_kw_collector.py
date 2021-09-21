@@ -28,7 +28,7 @@ class GenKwCollector(object):
         return key_manager.genKwKeys()
 
     @staticmethod
-    def loadAllGenKwData(ert, case_name, keys=None):
+    def loadAllGenKwData(ert, case_name, keys=None, realization_index=None):
         """
         @type ert: EnKFMain
         @type case_name: str
@@ -37,7 +37,10 @@ class GenKwCollector(object):
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
-        realizations = GenKwCollector.createActiveList(ert, fs)
+        if realization_index is None:
+            realizations = GenKwCollector.createActiveList(ert, fs)
+        else:
+            realizations = [realization_index]
 
         gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)
 

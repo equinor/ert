@@ -25,3 +25,15 @@ class GenDataCollectorTest(ResTest):
             self.assertFloatEqual(data1[0][0], -0.008206)
             self.assertFloatEqual(data1[24][1], -0.119255)
             self.assertFloatEqual(data1[24][1000], -0.258516)
+
+            realization_index = 10
+            data1 = GenDataCollector.loadGenData(
+                ert,
+                "default_0",
+                "SNAKE_OIL_OPR_DIFF",
+                199,
+                realization_index=realization_index,
+            )
+
+            assert len(data1.index) == 2000
+            assert list(data1.columns) == [realization_index]

@@ -3,12 +3,12 @@ from pandas import DataFrame, MultiIndex
 import numpy
 from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
 from res.enkf.plot_data import EnsemblePlotGenData
-from ecl.util.util import BoolVector
+from ecl.util.util import BoolVector, IntVector
 
 
 class GenDataCollector(object):
     @staticmethod
-    def loadGenData(ert, case_name, key, report_step):
+    def loadGenData(ert, case_name, key, report_step, realization_index=None):
         """@type ert: EnKFMain
         @type case_name: str
         @type key: str
@@ -20,7 +20,10 @@ class GenDataCollector(object):
         columns.
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
-        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        if realization_index:
+            realizations = IntVector.active_list(str(realization_index))
+        else:
+            realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         config_node = ert.ensembleConfig().getNode(key)
         gen_data_config = config_node.getModelConfig()
 
