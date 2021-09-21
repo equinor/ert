@@ -2,9 +2,10 @@ import logging
 import os
 import sys
 import re
-import yaml
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
+
+import yaml
 
 from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
@@ -28,7 +29,7 @@ from ert_shared.ide.keywords.definitions import (
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.plugins.plugin_manager import ErtPluginContext
 from ert_shared.plugins import launch_visualization_plugin
-from ert_shared.feature_toggling import FeatureToggling, feature_enabled
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 import ert_shared
 
