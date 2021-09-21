@@ -35,7 +35,7 @@ async def get_response_misfits(
 
     ensemble_name = get_name("ensemble", ensemble_id)
     dataframe = data_for_key(ensemble_name, response_name)
-    if realization_index or realization_index == 0:
+    if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
     response_dict = {}
@@ -45,7 +45,10 @@ async def get_response_misfits(
 
     obs = create_observations(res)
     # TODO: is it ok to simply take the first element here?
-    obs_key = res.observation_keys(response_name)[0]
+    obs_keys = res.observation_keys(response_name)
+    if not obs_keys:
+        raise ValueError(f"No observations for key {response_name}")
+    obs_key = obs_keys[0]
     for o in obs:
         if o["name"] == obs_key:
             observation_df = pd.DataFrame(
