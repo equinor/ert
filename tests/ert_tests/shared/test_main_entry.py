@@ -20,13 +20,13 @@ def test_main_logging(monkeypatch, caplog):
     assert "ert crashed unexpectedly\nTraceback" in caplog.text
 
 
-def test_main_logging_argparse(monkeypatch, caplog):
-    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
-    monkeypatch.setattr(main, "valid_file", MagicMock(return_value=True))
-    monkeypatch.setattr(main, "run_cli", MagicMock())
-    monkeypatch.setattr(main, "start_ert_server", MagicMock())
-    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
-    monkeypatch.setattr(sys, "argv", ["ert", "test_run", "config.ert"])
-    with caplog.at_level(logging.INFO):
-        main.main()
-    assert "mode='test_run'" in caplog.text
+# def test_main_logging_argparse(monkeypatch, caplog):
+#     monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+#     monkeypatch.setattr(main, "valid_file", MagicMock(return_value=True))
+#     monkeypatch.setattr(main, "run_cli", MagicMock())
+#     monkeypatch.setattr(main, "start_ert_server", MagicMock())
+#     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
+#     monkeypatch.setattr(sys, "argv", ["ert", "test_run", "config.ert"])
+#     with caplog.at_level(logging.INFO):
+#         main.main()
+#     assert "mode='test_run'" in caplog.text
