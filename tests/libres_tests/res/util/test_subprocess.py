@@ -16,35 +16,55 @@
 
 
 import unittest
-from subprocess import PIPE, Popen
+import os
+from subprocess import PIPE, Popen, TimeoutExpired
 
 from libres_utils import tmpdir
 
 from res.util.subprocess import await_process_tee
 
+# This method finds the limit of the system pipe-buffer which
+# might be taken into account when using subprocesses with pipes
+def _find_system_pipe_max_size():
+    p = Popen(["dd", "if=/dev/zero", "bs=1"], stdin=PIPE, stdout=PIPE)
+    try:
+        p.wait(timeout=1)
+    except TimeoutExpired:
+        p.kill()
+        return len(p.stdout.read())
+
+
+_maxBytes = _find_system_pipe_max_size()
+
 
 class TestSubprocess(unittest.TestCase):
     @tmpdir()
     def test_await_process_tee(self):
+        with open("original", "wb") as fh:
+            fh.write(bytearray(os.urandom(_maxBytes)))
+
         with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-            process = Popen(["/bin/cat", "/bin/cat"], stdout=PIPE)
+            process = Popen(["/bin/cat", "original"], stdout=PIPE)
             await_process_tee(process, a_fh, b_fh)
 
         with open("a", "rb") as f:
             a_content = f.read()
         with open("b", "rb") as f:
             b_content = f.read()
-        with open("/bin/cat", "rb") as f:
-            cat_content = f.read()
+        with open("original", "rb") as f:
+            original_content = f.read()
 
         self.assertTrue(process.stdout.closed)
-        self.assertEqual(cat_content, a_content)
-        self.assertEqual(cat_content, b_content)
+        self.assertEqual(original_content, a_content)
+        self.assertEqual(original_content, b_content)
 
     @tmpdir()
     def test_await_process_finished_tee(self):
+        with open("original", "wb") as fh:
+            fh.write(bytearray(os.urandom(_maxBytes)))
+
         with open("a", "wb") as a_fh, open("b", "wb") as b_fh:
-            process = Popen(["/bin/cat", "/bin/cat"], stdout=PIPE)
+            process = Popen(["/bin/cat", "original"], stdout=PIPE)
             process.wait()
             await_process_tee(process, a_fh, b_fh)
 
@@ -52,9 +72,9 @@ class TestSubprocess(unittest.TestCase):
             a_content = f.read()
         with open("b", "rb") as f:
             b_content = f.read()
-        with open("/bin/cat", "rb") as f:
-            cat_content = f.read()
+        with open("original", "rb") as f:
+            original_content = f.read()
 
         self.assertTrue(process.stdout.closed)
-        self.assertEqual(cat_content, a_content)
-        self.assertEqual(cat_content, b_content)
+        self.assertEqual(original_content, a_content)
+        self.assertEqual(original_content, b_content)
