@@ -1,18 +1,9 @@
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
-from typing import (
-    Callable,
-    Tuple,
-    Type,
-    cast,
-    Union,
-    Dict,
-    Any,
-    Mapping,
-    NamedTuple,
-    Sequence,
-)
+from typing import Callable, Tuple, Type, cast, Union, Dict, Any, Mapping
+from types import MappingProxyType
+from collections import OrderedDict
 from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert
 
@@ -80,41 +71,34 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-def _get_tuplevalue_from_key(s, key: str) -> Any:
-    """Return freezed-dict (tuple from dict) value from key"""
-    tuple_restored_to_dict = dict(s)
-    return tuple_restored_to_dict[key]
+class IndexedOrderedDict(OrderedDict):
+    def __getitem__(self, attr: Any):
+        if isinstance(attr, str):
+            return super().__getitem__(attr)
+        return self[list(self.keys())[attr]]
 
 
-class FreezedDict(Tuple):
-    """Tuple from freezed dict / tuple with getitem method"""
-
-    __getitem__ = _get_tuplevalue_from_key
-
-    def values(self):
-        """Mimics method 'values' from dict-class"""
-        tuple_restored_to_dict = dict(self)
-        return tuple_restored_to_dict.values()
-
-
-def _set_input_from_list(cls, records: Tuple[Dict[str, str], ...]) -> FreezedDict:
+def _set_dict_from_list(
+    cls, records: Tuple[Dict[str, str], ...]
+) -> Mapping[str, Record]:
     """Grab record-names in records and use as keys"""
-    record_dict = {record["record"]: Record(**record) for record in records}
-    record_tuple = tuple(record_dict.items())
-    record_dict_freezed = FreezedDict(record_tuple)
-    return record_dict_freezed
+    ordered_dict = IndexedOrderedDict(
+        {record["record"]: Record(**record) for record in records}
+    )
+    proxy = MappingProxyType(ordered_dict)
+    return proxy
 
 
 class _Step(_StagesConfig):
     name: str
-    input: FreezedDict
-    output: FreezedDict
+    input: MappingProxyType
+    output: MappingProxyType
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
-        _set_input_from_list
+        _set_dict_from_list
     )
     _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
-        _set_input_from_list
+        _set_dict_from_list
     )
 
 
