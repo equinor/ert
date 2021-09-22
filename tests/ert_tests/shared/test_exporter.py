@@ -41,28 +41,28 @@ def test_exporter_is_not_valid():
     assert not ex.is_valid()
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
-@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
-def test_run_export():
-    with ErtPluginContext():
-        config_file = "snake_oil.ert"
-        rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
-        ert = EnKFMain(rc)
-        notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        ex = Exporter()
-        parameters = {
-            "output_file": "export.csv",
-            "time_index": "raw",
-            "column_keys": "FOPR",
-        }
-        ex.run_export(parameters)
+# @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
+# @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
+# def test_run_export():
+#     with ErtPluginContext():
+#         config_file = "snake_oil.ert"
+#         rc = ResConfig(user_config_file=config_file)
+#         rc.convertToCReference(None)
+#         ert = EnKFMain(rc)
+#         notifier = ErtCliNotifier(ert, config_file)
+#         ERT.adapt(notifier)
+#         ex = Exporter()
+#         parameters = {
+#             "output_file": "export.csv",
+#             "time_index": "raw",
+#             "column_keys": "FOPR",
+#         }
+#         ex.run_export(parameters)
 
-        shutil.rmtree("storage")
-        with pytest.raises(UserWarning) as warn:
-            ex.run_export(parameters)
-        assert ex._export_job in str(warn)
+#         shutil.rmtree("storage")
+#         with pytest.raises(UserWarning) as warn:
+#             ex.run_export(parameters)
+#         assert ex._export_job in str(warn)
 
 
 @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
