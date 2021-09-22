@@ -30,13 +30,13 @@ class Exporter:
         runpath_job = ERT.enkf_facade.get_workflow_job(self._runpath_job)
 
         if export_job is None:
-            logger.warning(
+            logger.error(
                 f"Export not available because {self._export_job} is not installed."
             )
             return False
 
         if runpath_job is None:
-            logger.warning(
+            logger.error(
                 f"Export not available because {self._runpath_job} is not installed."
             )
             return False
