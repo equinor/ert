@@ -44,7 +44,7 @@ def run_alembic(args: List[str]) -> None:
     """
     Forward arguments to alembic
     """
-    from alembic.config import main
+    from alembic.config import main as alembic_main
 
     dbkey = "ERT_STORAGE_DATABASE_URL"
     dburl = os.getenv(dbkey)
@@ -67,7 +67,7 @@ def run_alembic(args: List[str]) -> None:
     ]
 
     try:
-        main(argv=argv, prog="ert-storage alembic")
+        alembic_main(argv=argv, prog="ert-storage alembic")
     except FileNotFoundError as exc:
         if os.path.basename(exc.filename) == "script.py.mako":
             sys.exit(
