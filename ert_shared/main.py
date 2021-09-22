@@ -413,10 +413,10 @@ def main():
     if args.verbose:
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
-    logger.info("Running ert with {}".format(str(args)))
     try:
         with start_ert_server(), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
+            logger.info("Running ert with {}".format(str(args)))
             args.func(args)
     except:
         logger.exception("ert crashed unexpectedly")
