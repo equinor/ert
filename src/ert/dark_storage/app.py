@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.responses import Response, RedirectResponse
+from starlette.graphql import GraphQLApp
 
 from ert_storage.endpoints import router as endpoints_router
 from ert_storage.graphql import router as graphql_router
@@ -50,13 +51,13 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def initialize_database() -> None:
-    from ert_storage.database import database_config
+    from ert_storage.database import engine, IS_SQLITE, HAS_AZURE_BLOB_STORAGE
     from ert_storage.database_schema import Base
 
-    if database_config.IS_SQLITE:
+    if IS_SQLITE:
         # Our SQLite backend doesn't support migrations, so create the database on the fly.
-        Base.metadata.create_all(bind=database_config.engine)
-    if database_config.HAS_AZURE_BLOB_STORAGE:
+        Base.metadata.create_all(bind=engine)
+    if HAS_AZURE_BLOB_STORAGE:
         from ert_storage.database import create_container_if_not_exist
 
         await create_container_if_not_exist()

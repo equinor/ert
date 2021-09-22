@@ -6,7 +6,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from ert_storage.database import database_config
+from ert_storage.database import ENV_RDBMS
 from ert_storage.database_schema import Base
 
 # this is the Alembic Config object, which provides
@@ -43,7 +43,7 @@ def run_migrations_offline():
     """
     # Alembic uses sprintf somewhere. Escape the '%'s so that alembic doesn't
     # think they're part of the format string.
-    url = os.environ[database_config.ENV_RDBMS].replace("%", "%%")
+    url = os.environ[ENV_RDBMS].replace("%", "%%")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,7 +64,7 @@ def run_migrations_online():
     """
     # Alembic uses sprintf somewhere. Escape the '%'s so that alembic doesn't
     # think they're part of the format string.
-    url = os.environ[database_config.ENV_RDBMS].replace("%", "%%")
+    url = os.environ[ENV_RDBMS].replace("%", "%%")
 
     config.set_section_option(config.config_ini_section, "sqlalchemy.url", str(url))
     connectable = engine_from_config(

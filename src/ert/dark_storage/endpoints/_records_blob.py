@@ -1,17 +1,21 @@
+import io
 from typing import Optional, List, Type, AsyncGenerator
 from uuid import uuid4, UUID
 
+import numpy as np
+import pandas as pd
 from fastapi import (
     Request,
     UploadFile,
     Depends,
 )
+from fastapi.logger import logger
 from fastapi.responses import Response, StreamingResponse
 
 from ert_storage import database_schema as ds
-from ert_storage.database import Session, get_db, database_config
+from ert_storage.database import Session, get_db, HAS_AZURE_BLOB_STORAGE
 
-if database_config.HAS_AZURE_BLOB_STORAGE:
+if HAS_AZURE_BLOB_STORAGE:
     from ert_storage.database import azure_blob_container
 
 
@@ -158,7 +162,7 @@ def get_blob_handler(
     realization_index: Optional[int] = None,
 ) -> BlobHandler:
     blob_handler: Type[BlobHandler]
-    if database_config.HAS_AZURE_BLOB_STORAGE:
+    if HAS_AZURE_BLOB_STORAGE:
         blob_handler = AzureBlobHandler
     else:
         blob_handler = BlobHandler
@@ -169,7 +173,7 @@ def get_blob_handler(
 
 def get_blob_handler_from_record(db: Session, record: ds.Record) -> BlobHandler:
     blob_handler: Type[BlobHandler]
-    if database_config.HAS_AZURE_BLOB_STORAGE:
+    if HAS_AZURE_BLOB_STORAGE:
         blob_handler = AzureBlobHandler
     else:
         blob_handler = BlobHandler

@@ -1,11 +1,12 @@
-from uuid import UUID
+from uuid import uuid4, UUID
 import pandas as pd
 from fastapi import (
     APIRouter,
     Depends,
 )
 from fastapi.responses import Response
-from ert_storage.database import Session, get_db
+from pandas.core.frame import DataFrame
+from ert_storage.database import Session, get_db, HAS_AZURE_BLOB_STORAGE
 from ert_storage import database_schema as ds
 
 router = APIRouter(tags=["response"])

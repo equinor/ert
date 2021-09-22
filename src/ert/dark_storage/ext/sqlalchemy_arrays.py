@@ -10,7 +10,7 @@ does it internally for its other types.
 from typing import Optional, Type, Union
 import sqlalchemy as sa
 
-from ert_storage.database import database_config
+from ert_storage.database import IS_POSTGRES
 
 import graphene
 from graphene_sqlalchemy.converter import convert_sqlalchemy_type
@@ -24,14 +24,7 @@ SQLAlchemyColumn = Union[sa.types.TypeEngine, Type[sa.types.TypeEngine]]
 FloatArray: SQLAlchemyColumn
 StringArray: SQLAlchemyColumn
 
-# IS_POSTGRES will fail with exception if ENV_DBMS is not available.
-# This module is loaded during compability-check from ERT ( dark-storage api /
-# ert-storage api ) and we need it to complete the loading without exception. It
-# make no sense setting an environment variable in ERT when testing to specify which
-# database is to be used when dark-storage is backed by no database at all. To
-# achieve this we are checking if ENV_DBMS is available. The API itself should not
-# change depending on which database is implemented so this should not be a problem.
-if database_config.ENV_RDBMS_AVAILABLE and database_config.IS_POSTGRES:
+if IS_POSTGRES:
     FloatArray = sa.ARRAY(sa.FLOAT)
     StringArray = sa.ARRAY(sa.String)
 else:

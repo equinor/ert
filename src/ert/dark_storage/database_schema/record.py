@@ -4,6 +4,7 @@ from uuid import uuid4
 import sqlalchemy as sa
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from ert_storage.ext.sqlalchemy_arrays import FloatArray
 from ert_storage.ext.uuid import UUID
