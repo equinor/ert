@@ -34,7 +34,7 @@ def _find_system_pipe_max_size():
         return len(p.stdout.read())
 
 
-_maxBytes = _find_system_pipe_max_size()
+_maxBytes = _find_system_pipe_max_size() - 1
 
 
 class TestSubprocess(unittest.TestCase):
