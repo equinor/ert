@@ -78,14 +78,14 @@ def create_analysis_module(lib_name):
     return AnalysisModule(lib_name=f"{lib_name}.so")
 
 
-class RMLTest(ResTest):
+class IESTest(ResTest):
     def setUp(self):
         self.user = "TEST"
 
     @tmpdir()
-    def test_analysis_module_rml_enkf(self):
+    def test_analysis_module_ies_enkf(self):
         rng = RandomNumberGenerator()
-        module = create_analysis_module("rml_enkf")
+        module = create_analysis_module("libies")
         ens_size = 12
         obs_size = 1
 

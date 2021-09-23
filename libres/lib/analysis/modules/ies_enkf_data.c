@@ -161,9 +161,16 @@ void ies_enkf_data_store_initialE(ies_enkf_data_type *data,
         data->E = matrix_alloc(obs_size_msk, ens_size_msk);
         matrix_set(data->E, -999.9);
         int m = 0;
-        for (int i = 0; i < obs_size_msk; i++) {
-            if (bool_vector_iget(data->obs_mask0, i)) {
-                matrix_copy_row(data->E, E0, i, m);
+        for (int iobs = 0; iobs < obs_size_msk; iobs++) {
+            if (bool_vector_iget(data->obs_mask0, iobs)) {
+                int active_idx = 0;
+                for (int iens = 0; iens < ens_size_msk; iens++) {
+                    if (bool_vector_iget(data->ens_mask, iens)) {
+                        matrix_iset_safe(data->E, iobs, iens,
+                                         matrix_iget(E0, m, active_idx));
+                        active_idx++;
+                    }
+                }
                 m++;
             }
         }
@@ -171,9 +178,11 @@ void ies_enkf_data_store_initialE(ies_enkf_data_type *data,
         if (dbg) {
             int nrobs_inp = matrix_get_rows(E0);
             int m_nrobs = util_int_min(nrobs_inp - 1, 50);
-            int m_ens_size = util_int_min(ens_size_msk - 1, 16);
+            int e0_col_size = matrix_get_columns(E0);
+            int m_ens_size = util_int_min(e0_col_size - 1, 16);
             matrix_pretty_fprint_submat(E0, "Ein", "%11.5f", data->log_fp, 0,
                                         m_nrobs, 0, m_ens_size);
+            m_ens_size = util_int_min(ens_size_msk - 1, 16);
             m_nrobs = util_int_min(obs_size_msk - 1, 50);
             matrix_pretty_fprint_submat(data->E, "data->E", "%11.5f",
                                         data->log_fp, 0, m_nrobs, 0,
