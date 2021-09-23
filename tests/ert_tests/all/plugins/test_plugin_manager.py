@@ -10,8 +10,6 @@ import dummy_plugins
 import ert_shared.hook_implementations
 from ert_shared.plugins import ErtPluginManager
 
-_lib_extension = "dylib" if uname()[0] == "Darwin" else "so"
-
 
 class PluginManagerTest(unittest.TestCase):
     def test_no_plugins(self):
@@ -33,7 +31,7 @@ class PluginManagerTest(unittest.TestCase):
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
+                "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
             ],
             pm._site_config_lines(),
         )
@@ -70,7 +68,7 @@ class PluginManagerTest(unittest.TestCase):
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD RML_ENKF rml_enkf.{}".format(_lib_extension),
+                "ANALYSIS_LOAD RML_ENKF rml_enkf.so",
                 "-- Content below originated from dummy (site_config_lines)",
                 "JOB_SCRIPT job_dispatch_dummy.py",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 2",

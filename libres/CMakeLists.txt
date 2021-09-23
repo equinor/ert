@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6.1)
 project(res C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 
 if(NOT SKBUILD)
   message(WARNING "This CMakeLists.txt file should not be used directly.\n"
