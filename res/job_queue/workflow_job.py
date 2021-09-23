@@ -123,6 +123,14 @@ class WorkflowJob(BaseCClass):
 
         return result
 
+    @property
+    def execution_type(self):
+        if self.isInternal() and self.isInternalScript():
+            return "internal python"
+        elif self.isInternal():
+            return "internal C"
+        return "external"
+
     def run(self, ert, arguments, verbose=False):
         """
         @type ert: res.enkf.enkf_main.EnKFMain
