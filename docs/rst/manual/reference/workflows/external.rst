@@ -1,11 +1,11 @@
-External Workflows
-==================
+External Workflow Jobs
+======================
 
-These jobs invoke an external program/script to do the job, this is
-very similar to the jobs of the forward model, but instead of running
-as separate jobs on the cluster - one for each realization, the
-workflow jobs will be invoked on the workstation running ERT, and
-typically go through all the realizations in one loop.
+External workflow jobs invoke programs and scripts that are not bundled with ERT, 
+which makes them similar to jobs defined as part of forward models.
+The difference lies in the way they are run.
+While workflow jobs are run on the workstation running ERT
+and go through all the realizations in one loop, forward model jobs run in parallell on HPC clusters. 
 
 The executable invoked by the workflow job can be an executable you
 have written yourself - in any language, or it can be an existing
