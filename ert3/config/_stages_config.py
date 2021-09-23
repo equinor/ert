@@ -71,8 +71,7 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-# mypy ignore, as alternative is more code: https://mypy.readthedocs.io/en/latest/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
-# Fixed from 3.9 -->
+# mypy ignore missing parameter for generic type
 class IndexedOrderedDict(OrderedDict):  # type: ignore
     """Ordered dict with custom getitem-method"""
 
