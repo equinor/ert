@@ -95,8 +95,8 @@ def _set_dict_from_list(
 
 class _Step(_StagesConfig):
     name: str
-    input: MappingProxyType[str, Record]
-    output: MappingProxyType[str, Record]
+    input: MappingProxyType  # type: ignore
+    output: MappingProxyType  # type: ignore
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
         _set_dict_from_list
