@@ -92,17 +92,13 @@ def test_check_loaded_mime_types(base_unix_stage_config):
         == ert3.config._stages_config.DEFAULT_CMD_MIME_TYPE
     )
     # Check input
-    input_record_name = raw_config[0]["input"][0]["record"]
     assert (
-        config[0].input[input_record_name].mime
-        == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
+        config[0].input[0].mime == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
     )
     assert config[0].input["some_json_record"].mime == "application/json"
     # Check output
-    output_record_name = raw_config[0]["output"][0]["record"]
     assert (
-        config[0].output[output_record_name].mime
-        == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
+        config[0].output[0].mime == ert3.config._stages_config.DEFAULT_RECORD_MIME_TYPE
     )
     assert config[0].output["some_json_record"].mime == "application/json"
 
@@ -235,12 +231,11 @@ def test_stage_unknown_field(base_stage_config):
 
 def test_stage_input_immutable(base_stage_config):
     config = ert3.config.load_stages_config(base_stage_config)
-    input_record_name = base_stage_config[0]["input"][0]["record"]
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].input[input_record_name] = None
+        config[0].input[0] = None
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].input[input_record_name].record = None
+        config[0].input[0].record = None
 
 
 def test_stage_input_unknown_field(base_stage_config):
@@ -255,13 +250,11 @@ def test_stage_input_unknown_field(base_stage_config):
 
 def test_stage_output_immutable(base_stage_config):
     config = ert3.config.load_stages_config(base_stage_config)
-    output_record_name = base_stage_config[0]["output"][0]["record"]
     with pytest.raises(TypeError, match="does not support item assignment"):
-        config[0].output[output_record_name] = None
+        config[0].output[0] = None
 
     with pytest.raises(TypeError, match="does not support item assignment"):
-        print(type(output_record_name), type(config[0].output))
-        config[0].output[output_record_name].record = None
+        config[0].output[0].record = None
 
 
 def test_stage_output_unknown_field(base_stage_config):
