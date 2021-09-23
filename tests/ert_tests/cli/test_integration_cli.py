@@ -9,7 +9,7 @@ import pytest
 
 import ert_shared
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
-from ert_shared.cli.main import run_cli
+from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
 
@@ -44,7 +44,7 @@ def test_target_case_equal_current_case(tmpdir, source_root):
             ],
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(ErtCliError, match="They were both: test_case"):
             run_cli(parsed)
 
 
@@ -180,7 +180,7 @@ def test_cli_test_connection_error(tmpdir, source_root, capsys):
         with tmpdir.as_cwd():
             parser = ArgumentParser(prog="test_main")
             parsed = ert_parser(parser, [TEST_RUN_MODE, "poly_example/poly.ert"])
-            with pytest.raises(SystemExit):
+            with pytest.raises(ErtCliError):
                 run_cli(parsed)
 
     capture = capsys.readouterr()
