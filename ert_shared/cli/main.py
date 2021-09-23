@@ -21,9 +21,8 @@ from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
 
-def _clear_and_exit(args):
-    clear_global_state()
-    sys.exit(args)
+class ErtCliError(Exception):
+    pass
 
 
 def run_cli(args):
@@ -52,7 +51,8 @@ def run_cli(args):
             "ERROR: Target file system and source file system can not be the same. "
             "They were both: {}.".format(args.target_case)
         )
-        _clear_and_exit(msg)
+        clear_global_state()
+        raise ErtCliError(msg)
 
     ee_config = None
     if FeatureToggling.is_enabled("ensemble-evaluator"):
@@ -83,4 +83,5 @@ def run_cli(args):
     thread.join()
 
     if model.hasRunFailed():
-        _clear_and_exit(1)  # the monitor has already reported the error message
+        clear_global_state()
+        raise ErtCliError  # the monitor has already reported the error message

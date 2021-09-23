@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
-from ert_shared.cli.main import run_cli
+from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.storage.main import run_server
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -418,6 +418,8 @@ def main():
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info("Running ert with {}".format(str(args)))
             args.func(args)
+    except ErtCliError as err:
+        sys.exit(str(err))
     except:
         logger.exception("ert crashed unexpectedly")
         sys.exit("ert crashed unexpectedly")
