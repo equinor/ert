@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import logging
 
 from cwrap import BaseCClass  # pylint: disable=import-error
 
@@ -59,6 +60,8 @@ class Workflow(BaseCClass):
         @type context: SubstitutionList
         @rtype: bool
         """
+        logger = logging.getLogger(__name__)
+
         # Reset status
         self.__status = {}
         self.__running = True
@@ -83,6 +86,22 @@ class Workflow(BaseCClass):
                     "completed": not job.hasFailed(),
                     "return": return_value,
                 }
+
+                info = {
+                    "class": "WORKFLOW_JOB",
+                    "job_name": job.name(),
+                    "arguments": " ".join(args),
+                    "stdout": job.stdoutdata(),
+                    "stderr": job.stderrdata(),
+                    "execution_type": job.execution_type,
+                }
+
+                if job.hasFailed():
+                    logger.error(f"Workflow job {job.name()} failed", extra=info)
+                else:
+                    logger.info(
+                        f"Workflow job {job.name()} completed successfully", extra=info
+                    )
 
         self.__current_job = None
         self.__running = False
