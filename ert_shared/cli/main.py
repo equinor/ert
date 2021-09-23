@@ -26,7 +26,6 @@ class ErtCliError(Exception):
 
 
 def run_cli(args):
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
     res_config = ResConfig(args.config)
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
