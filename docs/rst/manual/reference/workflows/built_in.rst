@@ -181,51 +181,6 @@ all available data will be used - and all parameters will be updated.
 Jobs related to running simulations - including updates
 -------------------------------------------------------
 
-**RUN_SMOOTHER**
-
-The RUN_SMOOTHER job will run a simulation and perform an update. The
-job has one required argument - the name of a case where the updated
-parameters are stored. Optionally the job can take a second boolean
-argument, if the second argument is set to true the job will rerun
-based on the updated parameters.
-
-Run a simulation and an update. Store the updated parameters in the
-specified case. This case is created if it does not exist:
-
-::
-
-	RUN_SMOOTHER new_case
-
-
-Run a simulation and an update. Store the updated parameters in the
-specified case, then run a simulation on this case:
-
-::
-
-	RUN_SMOOTHER new_case true
-
-
-
-**RUN_SMOOTHER_WITH_ITER**
-
-This is exactly like the RUN_SMOOTHER job, but it has an additional
-first argument iter which can be used to control the iter number in
-the RUNPATH. When using the RUN_SMOOTHER job the iter number will be
-defaulted to zero, and one in the optional rerun.
-
-**ENSEMBLE_RUN**
-
-The ENSEMBLE_RUN job will run a simulation, no update. The job take as
-optional arguments a range and/or list of which realizations to run.
-
-::
-
-	ENSEMBLE_RUN
-
-::
-
-	ENSEMBLE_RUN 1-5, 8
-
 
 **LOAD_RESULTS**
 
@@ -265,37 +220,6 @@ multi iteration workflow:
 
 Will load the realisations 1,2,3 and 8,9,10 from the fourth iteration
 (counting starts at zero).
-
-
-**MDA_ES**
-
-This workflow job (plugin) is used to run the *Multiple Data
-Assimilation Ensemble Smoother* :code:`MDA ES`.  Only two arguments
-are required to start the MDA ES process; target case format and
-iteration weights.  The weights implicitly indicate the number of
-iterations and the normalized global standard deviation scaling
-applied to the update step.
-
-::
-
-	MDA_ES target_case_%d observations/obs.txt
-
-This command will use the weights specified in the obs.txt file. This
-file should have a single floating point number per line.
-Alternatively the weights can be given as arguments as shown here.
-
-::
-
-	MDA_ES target_case_%d 8,4,2,1
-
-This command will use the normalized version of the weights 8,4,2,1
-and run for four iterations.  The prior will be in *target_case_0* and
-the results from the last iteration will be in *target_case_4*.
-**Note: the weights must be listed with no spaces and separated with
-commas.**
-
-If this is run as a plugin from Ertshell or the GUI a convenient user
-interface can be shown.
 
 
 Jobs for ranking realizations
