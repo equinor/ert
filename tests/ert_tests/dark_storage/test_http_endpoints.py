@@ -1,9 +1,10 @@
 from argparse import ArgumentParser
 
+from numpy.testing import assert_array_equal
 from requests import Response
 import uuid
 
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE
+from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_EXPERIMENT_MODE
 from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
 
@@ -145,3 +146,31 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
+
+
+def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--realizations",
+            "1,2,4",
+            "poly.ert",
+        ],
+    )
+
+    run_cli(parsed)
+
+    resp: Response = dark_storage_client.get("/experiments")
+    experiment_json = resp.json()
+    ensemble_id = experiment_json[0]["ensemble_ids"][0]
+
+    resp: Response = dark_storage_client.get(
+        f"/compute/misfits?ensemble_id={ensemble_id}&response_name=POLY_RES@0"
+    )
+    stream = io.BytesIO(resp.content)
+    misfit = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+
+    assert_array_equal(misfit.columns, ["0", "2", "4", "6", "8"])
+    assert misfit.shape == (3, 5)
