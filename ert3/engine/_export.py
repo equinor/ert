@@ -43,9 +43,7 @@ def _prepare_export_parameters(
                 inputs[record_name].append(record.data)
 
         elif record_source[0] == "resources":
-            record_mime = next(
-                input_.mime for input_ in step.input if input_.record == record_name
-            )
+            record_mime = step.input[record_name].mime
             # DO NOT export blob records as inputs
             if record_mime == "application/octet-stream":
                 continue

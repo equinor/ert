@@ -71,17 +71,17 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-class IndexedOrderedDict(OrderedDict):
+class IndexedOrderedDict(OrderedDict[str, Record]):
     """Ordered dict with custom getitem-method"""
 
-    def __getitem__(self, attr: Any):
+    def __getitem__(self, attr: Any) -> Record:
         if isinstance(attr, str):
             return super().__getitem__(attr)
         return self[list(self.keys())[attr]]
 
 
 def _set_dict_from_list(
-    cls, records: Tuple[Dict[str, str], ...]
+    cls: Type[_StagesConfig], records: Tuple[Dict[str, str], ...]
 ) -> Mapping[str, Record]:
     """Grab record-names in records and use as keys"""
     ordered_dict = IndexedOrderedDict(
@@ -93,8 +93,8 @@ def _set_dict_from_list(
 
 class _Step(_StagesConfig):
     name: str
-    input: MappingProxyType
-    output: MappingProxyType
+    input: MappingProxyType[str, Record]
+    output: MappingProxyType[str, Record]
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
         _set_dict_from_list
