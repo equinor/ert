@@ -5,10 +5,9 @@ from uuid import UUID
 from fastapi.param_functions import Depends
 import graphene as gr
 from graphene.types.scalars import ID
-from ert_shared.dark_storage.common import ensemble_parameters
+from ert_shared.dark_storage.common import ensemble_parameters, get_response_names
 
-
-from ert_shared.dark_storage.enkf import get_id, get_size
+from ert_shared.dark_storage.enkf import get_id, get_res, get_size
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
@@ -60,7 +59,7 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_response_names(root: Any, info: "ResolveInfo") -> List[str]:
-        raise NotImplementedError
+        return get_response_names()
 
     @staticmethod
     def resolve_userdata(root: Any, info: "ResolveInfo") -> Any:
@@ -102,7 +101,7 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
 
     @staticmethod
     def resolve_responses(root: Any, info: "ResolveInfo") -> "Response":
-        raise NotImplementedError
+        return _EnsembleMixin.resolve_response_names(root, info)
 
     @staticmethod
     def resolve_unique_responses(root: Any, info: "ResolveInfo") -> "UniqueResponse":

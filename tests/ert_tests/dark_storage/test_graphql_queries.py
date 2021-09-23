@@ -9,19 +9,24 @@ from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
 
 
-def test_my_get_experiment(poly_example_tmp_dir, dark_storage_client):
+def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.post(
-        "/gql", json={"query": "{experiments{name}}"}
+        "/gql", json={"query": "{experiments{name, priors}}"}
     )
     answer_json = resp.json()
     print(answer_json)
-    assert "experiments" in answer_json["data"]
+
     assert len(answer_json["data"]["experiments"]) == 1
-    assert "name" in answer_json["data"]["experiments"][0]
-    assert answer_json["data"]["experiments"][0]["name"] == "default"
+    exp = answer_json["data"]["experiments"][0]
+    assert exp["name"] == "default"
+    priors = json.loads(exp["priors"])
+    assert "COEFFS" in priors
+    assert "COEFF_A" == priors["COEFFS"][0]["key"]
+    assert "COEFF_B" == priors["COEFFS"][1]["key"]
+    assert "COEFF_C" == priors["COEFFS"][2]["key"]
 
 
-def test_my_get_enesembles(poly_example_tmp_dir, dark_storage_client):
+def test_get_enesembles(poly_example_tmp_dir, dark_storage_client):
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
@@ -62,8 +67,41 @@ def test_my_get_enesembles(poly_example_tmp_dir, dark_storage_client):
     assert userdata["name"] == "poly_runpath_file"
 
 
+def test_get_response_names(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{responseNames}}}"}
+    )
+    answer_json = resp.json()
+    print(answer_json)
+    response_names = answer_json["data"]["experiments"][0]["ensembles"][0][
+        "responseNames"
+    ]
+    assert len(response_names) == 1
+    assert "POLY_RES@0" in response_names
+
+
+def test_get_responses(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql",
+        json={
+            "query": "{experiments{ensembles{responses{"
+            "id, name, realizationIndex, timeCreated, timeUpdated, userdata}}}}"
+        },
+    )
+    answer_json = resp.json()
+    print(answer_json)
+    responses = answer_json["data"]["experiments"][0]["ensembles"][0]["responses"]
+    assert len(responses) == 1
+    assert responses[0]["name"] == "POLY_RES@0"
+
+
 def test_query_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
-    ensemble_id = uuid.uuid4()
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{id}}}"}
+    )
+    answer_json = resp.json()
+    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+
     resp: Response = dark_storage_client.post(
         "/gql",
         json={"query": f'{{ensemble(id: "{ensemble_id}") {{parameters {{name}} }} }}'},

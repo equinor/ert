@@ -131,8 +131,8 @@ def test_workflows_merge_duplicate(caplog):
 def test_add_logging_handle(tmpdir):
     with tmpdir.as_cwd():
         pm = ErtPluginManager(plugins=[dummy_plugins])
-        pm.add_logging_handles(logging)
+        pm.add_logging_handle_to_root(logging.getLogger())
         logging.critical("I should write this to spam.log")
-        with open("spam.log") as fin:
+        with open("spam.log", encoding="utf-8") as fin:
             result = fin.read()
         assert "I should write this to spam.log" in result

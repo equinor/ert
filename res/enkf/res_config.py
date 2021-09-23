@@ -21,7 +21,7 @@ from cwrap import BaseCClass
 
 from ecl.util.util import StringList
 from res import ResPrototype
-from res.config import ConfigParser, ConfigContent, ConfigSettings, UnrecognizedEnum
+from res.config import ConfigParser, ConfigContent
 
 from res.enkf import (
     SiteConfig,
@@ -109,13 +109,18 @@ class ResConfig(BaseCClass):
         self, user_config_file=None, config=None, throw_on_error=True, config_dict=None
     ):
 
-        _assert_configs = (
-            len([x for x in (config, config_dict, user_config_file) if x is not None])
-            == 1
+        configs = sum(
+            [1 for x in [user_config_file, config, config_dict] if x is not None]
         )
-        if _assert_configs is False:
+
+        if configs > 1:
             raise ValueError(
-                "Wrong config input - only one config means needs to be provided!"
+                "Attempting to create ResConfig object with multiple config objects"
+            )
+
+        if configs == 0:
+            raise ValueError(
+                "Error trying to create ResConfig without any configuration"
             )
 
         self._errors, self._failed_keys = None, None

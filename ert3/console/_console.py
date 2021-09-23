@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import mimetypes
 import os
 import pathlib
@@ -208,32 +209,59 @@ def _run(workspace: Path, args: Any) -> None:
     stages_config = _load_stages_config(workspace)
     experiment_config = _load_experiment_config(workspace, args.experiment_name)
     parameters_config = _load_parameters_config(workspace)
-    ert3.engine.run(
-        ensemble,
-        stages_config,
-        experiment_config,
-        parameters_config,
-        workspace,
-        args.experiment_name,
-    )
+    if experiment_config.type == "evaluation":
+        ert3.engine.run(
+            ensemble,
+            stages_config,
+            experiment_config,
+            parameters_config,
+            workspace,
+            args.experiment_name,
+        )
+    elif experiment_config.type == "sensitivity":
+        ert3.engine.run_sensitivity_analysis(
+            ensemble,
+            stages_config,
+            experiment_config,
+            parameters_config,
+            workspace,
+            args.experiment_name,
+        )
 
 
 def _export(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "export"
-    ert3.engine.export(workspace, args.experiment_name)
+    ensemble = _load_ensemble_config(workspace, args.experiment_name)
+    experiment_config = _load_experiment_config(workspace, args.experiment_name)
+    parameters_config = _load_parameters_config(workspace)
+    stages_config = _load_stages_config(workspace)
+
+    ensemble_size = ert3.engine.get_ensemble_size(
+        ensemble=ensemble,
+        experiment_config=experiment_config,
+        parameters_config=parameters_config,
+    )
+    ert3.engine.export(
+        workspace, args.experiment_name, ensemble, stages_config, ensemble_size
+    )
 
 
 def _record(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
         parameters_config = _load_parameters_config(workspace)
-        ert3.engine.sample_record(
-            workspace,
+        collection = ert3.engine.sample_record(
             parameters_config,
             args.parameter_group,
-            args.record_name,
             args.ensemble_size,
         )
+        future = ert.storage.transmit_record_collection(
+            record_coll=collection,
+            record_name=args.record_name,
+            workspace=workspace,
+        )
+        asyncio.get_event_loop().run_until_complete(future)
+
     elif args.sub_record_cmd == "load":
         if args.mime_type == "guess" and not args.blob_record:
             guess = mimetypes.guess_type(str(args.record_file))[0]

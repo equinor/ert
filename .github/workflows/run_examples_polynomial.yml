@@ -9,7 +9,7 @@ on:
 
 jobs:
   run-ert3-polynomial-local:
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

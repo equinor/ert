@@ -200,7 +200,9 @@ A full example can be found here: `Webviz-ERT <https://github.com/equinor/webviz
 
 Logging Configuration
 ~~~~~~~~~~~~~~~~~~~~~
-The logging can be configured by plugins to add custom log handlers
+The logging can be configured by plugins to add custom log handlers.
+
+.. autofunction:: ert_shared.plugins.hook_specifications.logging.add_log_handle_to_root
 
 Minimal example to log to a new file:
 
@@ -210,9 +212,9 @@ Minimal example to log to a new file:
    from ert_shared.plugins.plugin_manager import hook_implementation
 
     @hook_implementation
-    def add_log_handle(logging):
-        logger = logging.getLogger()  # add to root logger
+    def add_log_handle_to_root():
+        import logging
         fh = logging.FileHandler('spam.log')
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        return fh

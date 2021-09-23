@@ -169,7 +169,7 @@ class _ParameterConfig(_ParametersConfig):
                 size=size,
             )
         else:
-            raise ValueError("Unknown distribution type: {}".format(dist_config.type))
+            raise ValueError(f"Unknown distribution type: {dist_config.type}")
 
 
 class ParametersConfig(_ParametersConfig):

@@ -74,6 +74,13 @@ $ pip install -r dev-requirements.txt
 $ pytest tests/
 ```
 
+<strong>For Mac-users</strong> <em>The default maximum number of open files is normally relatively low on MacOS.
+This is likely to make tests crash with mysterious error-messages.
+You can inspect the current limits in your shell by issuing he command 'ulimit -a'.
+In order to increase maximum number of open files, run 'ulimit -n 16384' (or some other large number)
+and put the command in your .profile to make it persist.
+</em>
+
 ERT is meant to be installed using `setup.py`, directly or using `pip
 install ./`. The `CMakeLists.txt` in libres exists, but is used by `setup.py`
 to generate the ERT C library (the C library formerly known as *libres*) and

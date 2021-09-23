@@ -5,6 +5,7 @@ import stat
 import subprocess
 import tempfile
 import os
+import json
 
 import prefect
 from ert_shared.ensemble_evaluator.client import Client
@@ -122,7 +123,6 @@ class UnixTask(prefect.Task):
                         )
                     )
                 asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
-
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_SUCCESS,
                     ev_source=self._step.get_source(self._ee_id),

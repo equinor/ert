@@ -1,18 +1,28 @@
 import copy
 import logging
 import pickle
-from typing import Dict, List, Tuple, Optional, Iterator, Type
+import uuid
+from typing import Dict, List, Tuple, Optional, Iterator, Type, TypeVar
 from collections import defaultdict
 from graphlib import TopologicalSorter
 from pathlib import Path
 
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.ensemble.legacy import _LegacyEnsemble
+from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+
 from res.enkf import EnKFState, RunArg
 
 logger = logging.getLogger(__name__)
+
+
+_SOURCE_TEMPLATE_BASE = "/ert/ee/{ee_id}/"
+_SOURCE_TEMPLATE_REAL = "/real/{iens}"
+_SOURCE_TEMPLATE_STEP = "/step/{step_id}"
+_SOURCE_TEMPLATE_JOB = "/job/{job_id}"
 
 
 def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
@@ -51,13 +61,16 @@ class _IO:
         return self._name
 
 
+_IOBuilder_TV = TypeVar("_IOBuilder_TV", bound="_IOBuilder")
+
+
 class _IOBuilder:
     _concrete_cls: Optional[Type[_IO]] = None
 
     def __init__(self):
         self._name = None
 
-    def set_name(self, name):
+    def set_name(self: _IOBuilder_TV, name) -> _IOBuilder_TV:
         self._name = name
         return self
 
@@ -152,21 +165,28 @@ def create_output_builder():
     return _OutputBuilder()
 
 
+_BaseJobBuilder_TV = TypeVar("_BaseJobBuilder_TV", bound="_BaseJobBuilder")
+
+
 class _BaseJobBuilder:
     def __init__(self):
         self._id = None
         self._name = None
 
-    def reset(self):
+    def reset(self: _BaseJobBuilder_TV) -> _BaseJobBuilder_TV:
         self._id = None
         self._name = None
         return self
 
-    def set_id(self, id_):
+    def set_id(self: _BaseJobBuilder_TV, id_) -> _BaseJobBuilder_TV:
         self._id = id_
         return self
 
-    def set_name(self, name):
+    def set_parent_source(self: _BaseJobBuilder_TV, source) -> _BaseJobBuilder_TV:
+        self._parent_source = source
+        return self
+
+    def set_name(self: _BaseJobBuilder_TV, name) -> _BaseJobBuilder_TV:
         self._name = name
         return self
 
@@ -179,21 +199,24 @@ class _JobBuilder(_BaseJobBuilder):
         super().__init__()
         self._executable = None
         self._args = None
-        self._step_source = None
+        self._parent_source = None
 
-    def set_step_source(self, source):
-        self._step_source = source
-        return self
-
-    def set_executable(self, executable):
+    def set_executable(self, executable) -> "_JobBuilder":
         self._executable = executable
         return self
 
-    def set_args(self, args):
+    def set_args(self, args) -> "_JobBuilder":
         self._args = args
         return self
 
     def build(self):
+        if self._id is None:
+            self._id = str(uuid.uuid4())
+        source = (
+            _SOURCE_TEMPLATE_BASE
+            + self._parent_source
+            + _SOURCE_TEMPLATE_JOB.format(job_id=self._id)
+        )
         try:
             cmd_is_callable = callable(pickle.loads(self._executable))
         except TypeError:
@@ -203,15 +226,11 @@ class _JobBuilder(_BaseJobBuilder):
                 raise ValueError(
                     "callable executable does not take args, use inputs instead"
                 )
-            return _FunctionJob(
-                self._id, self._name, self._step_source, self._executable
-            )
-        return _UnixJob(
-            self._id, self._name, self._step_source, self._executable, self._args
-        )
+            return _FunctionJob(self._id, self._name, source, self._executable)
+        return _UnixJob(self._id, self._name, source, self._executable, self._args)
 
 
-def create_job_builder():
+def create_job_builder() -> _JobBuilder:
     return _JobBuilder()
 
 
@@ -251,6 +270,8 @@ class _LegacyJobBuilder(_BaseJobBuilder):
         return self
 
     def build(self):
+        if self._id is None:
+            self._id = str(uuid.uuid4())
         return _LegacyJob(self._id, self._name, self._ext_job)
 
 
@@ -259,14 +280,14 @@ def create_legacy_job_builder():
 
 
 class _BaseJob:
-    def __init__(self, id_, name, step_source):
+    def __init__(self, id_, name, source):
         if id_ is None:
             raise ValueError(f"{self} need id")
         if name is None:
             raise ValueError(f"{self} need name")
         self._id = id_
         self._name = name
-        self._step_source = step_source
+        self._source = source
 
     def get_id(self):
         return self._id
@@ -275,7 +296,7 @@ class _BaseJob:
         return self._name
 
     def get_source(self, ee_id):
-        return f"{self._step_source.format(ee_id=ee_id)}/job/{self._id}"
+        return self._source.format(ee_id=ee_id)
 
 
 class _UnixJob(_BaseJob):
@@ -502,7 +523,7 @@ class _StageBuilder:
 
     def build(self):
         if not self._id:
-            raise ValueError(f"invalid id for stage {self._id}")
+            self._id = str(uuid.uuid4())
         if not self._name:
             raise ValueError(f"invalid name for stage {self._name}")
         inputs = [builder.build() for builder in self._inputs]
@@ -520,7 +541,7 @@ class _StepBuilder(_StageBuilder):
         super().__init__()
         self._jobs = []
         self._type = None
-        self._source = None
+        self._parent_source = None
 
         # legacy parts
         self._max_runtime = None
@@ -537,8 +558,8 @@ class _StepBuilder(_StageBuilder):
         self._type = type_
         return self
 
-    def set_source(self, source):
-        self._source = source
+    def set_parent_source(self, source):
+        self._parent_source = source
         return self
 
     def add_job(self, job):
@@ -583,7 +604,15 @@ class _StepBuilder(_StageBuilder):
 
     def build(self):
         stage = super().build()
-        jobs = [builder.build() for builder in self._jobs]
+
+        step_source = self._parent_source + _SOURCE_TEMPLATE_STEP.format(
+            step_id=stage.get_id()
+        )
+        source = _SOURCE_TEMPLATE_BASE + step_source
+
+        jobs = [
+            builder.set_parent_source(step_source).build() for builder in self._jobs
+        ]
         if self._run_arg:
             return _LegacyStep(
                 stage.get_id(),
@@ -614,11 +643,11 @@ class _StepBuilder(_StageBuilder):
             stage.get_outputs(),
             jobs,
             stage.get_name(),
-            self._source,
+            source,
         )
 
 
-def create_step_builder():
+def create_step_builder() -> _StepBuilder:
     return _StepBuilder()
 
 
@@ -629,11 +658,11 @@ class _RealizationBuilder:
         self._active = None
         self._iens = None
 
-    def active(self, active):
+    def active(self, active) -> "_RealizationBuilder":
         self._active = active
         return self
 
-    def add_step(self, step):
+    def add_step(self, step) -> "_RealizationBuilder":
         self._steps.append(step)
         return self
 
@@ -641,25 +670,36 @@ class _RealizationBuilder:
         self._stages.append(stage)
         return self
 
-    def set_iens(self, iens):
+    def set_iens(self, iens) -> "_RealizationBuilder":
         self._iens = iens
         return self
 
     def build(self):
-        steps = [builder.build() for builder in self._steps]
+        realization_source = _SOURCE_TEMPLATE_REAL.format(iens=self._iens)
+        source = _SOURCE_TEMPLATE_BASE + realization_source
+
+        steps = [
+            builder.set_parent_source(realization_source).build()
+            for builder in self._steps
+        ]
+
         ts_sorted_steps = _sort_steps(steps)
 
         return _Realization(
-            self._iens, steps, self._active, ts_sorted_steps=ts_sorted_steps
+            self._iens,
+            steps,
+            self._active,
+            source=source,
+            ts_sorted_steps=ts_sorted_steps,
         )
 
 
-def create_realization_builder():
+def create_realization_builder() -> _RealizationBuilder:
     return _RealizationBuilder()
 
 
 class _Realization:
-    def __init__(self, iens, steps, active, ts_sorted_steps=None):
+    def __init__(self, iens, steps, active, source, ts_sorted_steps=None):
         if iens is None:
             raise ValueError(f"{self} needs iens")
         if steps is None:
@@ -670,6 +710,8 @@ class _Realization:
         self._iens = iens
         self._steps = steps
         self._active = active
+
+        self._source = source
 
         self._ts_sorted_indices = None
         if ts_sorted_steps is not None:
@@ -695,6 +737,9 @@ class _Realization:
     def set_active(self, active):
         self._active = active
 
+    def get_source(self, ee_id):
+        return self._source.format(ee_id=ee_id)
+
     def get_steps_sorted_topologically(self) -> Iterator[_Step]:
         steps = self._steps
         if not self._ts_sorted_indices:
@@ -706,34 +751,89 @@ class _Realization:
 class _EnsembleBuilder:
     def __init__(self):
         self._reals = None
+        self._forward_model = None
         self._size = None
         self._metadata = None
         self._legacy_dependencies = None
+        self._inputs = None
+        self._outputs = None
+
+        self._custom_port_range = None
+        self._max_running = None
+        self._max_retries = None
+        self._retry_delay = None
+        self._executor = None
+
         self.reset()
 
-    def reset(self):
+    def reset(self) -> "_EnsembleBuilder":
         self._reals = []
+        self._forward_model = None
         self._size = 0
         self._metadata = {}
         self._legacy_dependencies = None
+
+        self._custom_port_range = None
+        self._max_running = 10000
+        self._max_retries = 0
+        self._retry_delay = 5
+        self._executor = "local"
         return self
 
-    def add_realization(self, real):
+    def set_forward_model(self, forward_model) -> "_EnsembleBuilder":
+        if self._reals:
+            raise ValueError(
+                "Cannot set forward model when realizations are already specified"
+            )
+        self._forward_model = forward_model
+        return self
+
+    def add_realization(self, real) -> "_EnsembleBuilder":
+        if self._forward_model:
+            raise ValueError("Cannot add realization when forward model is specified")
         self._reals.append(real)
         return self
 
-    def set_metadata(self, key, value):
+    def set_metadata(self, key, value) -> "_EnsembleBuilder":
         self._metadata[key] = value
         return self
 
-    def set_ensemble_size(self, size):
+    def set_ensemble_size(self, size) -> "_EnsembleBuilder":
         """Duplicate the ensemble members that existed at build time so as to
         get the desired state."""
         self._size = size
         return self
 
-    def set_legacy_dependencies(self, *args):
+    def set_legacy_dependencies(self, *args) -> "_EnsembleBuilder":
         self._legacy_dependencies = args
+        return self
+
+    def set_inputs(self, inputs) -> "_EnsembleBuilder":
+        self._inputs = inputs
+        return self
+
+    def set_outputs(self, outputs) -> "_EnsembleBuilder":
+        self._outputs = outputs
+        return self
+
+    def set_custom_port_range(self, custom_port_range) -> "_EnsembleBuilder":
+        self._custom_port_range = custom_port_range
+        return self
+
+    def set_max_running(self, max_running) -> "_EnsembleBuilder":
+        self._max_running = max_running
+        return self
+
+    def set_max_retries(self, max_retries) -> "_EnsembleBuilder":
+        self._max_retries = max_retries
+        return self
+
+    def set_retry_delay(self, retry_delay) -> "_EnsembleBuilder":
+        self._retry_delay = retry_delay
+        return self
+
+    def set_executor(self, executor) -> "_EnsembleBuilder":
+        self._executor = executor
         return self
 
     @staticmethod
@@ -743,7 +843,7 @@ class _EnsembleBuilder:
         queue_config,
         analysis_config,
         res_config,
-    ):
+    ) -> "_EnsembleBuilder":
         builder = _EnsembleBuilder().set_legacy_dependencies(
             queue_config,
             analysis_config,
@@ -794,23 +894,39 @@ class _EnsembleBuilder:
             builder.add_realization(real)
         return builder
 
-    def build(self):
-        # duplicate the original reals
-        orig_len = len(self._reals)
-        for i in range(orig_len, self._size):
-            logger.debug(f"made deep-copied real {i}")
-            real = copy.deepcopy(self._reals[i % orig_len])
-            real.set_iens(i)
-            self._reals.append(real)
+    def build(self) -> _Ensemble:
+        if not (self._reals or self._forward_model):
+            raise ValueError("Either forward model or realizations needs to be set")
 
-        reals = [builder.build() for builder in self._reals]
+        reals = []
+        if self._forward_model:
+            # duplicate the original forward model into realizations
+            for i in range(self._size):
+                logger.debug(f"made deep-copied real {i}")
+                real = copy.deepcopy(self._forward_model)
+                real.set_iens(i)
+                reals.append(real)
+        else:
+            reals = self._reals
+
+        reals = [builder.build() for builder in reals]
 
         if self._legacy_dependencies:
             return _LegacyEnsemble(reals, self._metadata, *self._legacy_dependencies)
-        return _Ensemble(reals, self._metadata)
+        else:
+            return PrefectEnsemble(
+                reals=reals,
+                inputs=self._inputs,
+                outputs=self._outputs,
+                max_running=self._max_running,
+                max_retries=self._max_retries,
+                executor=self._executor,
+                retry_delay=self._retry_delay,
+                custom_port_range=self._custom_port_range,
+            )
 
 
-def create_ensemble_builder():
+def create_ensemble_builder() -> _EnsembleBuilder:
     return _EnsembleBuilder()
 
 

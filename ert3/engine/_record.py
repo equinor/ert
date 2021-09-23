@@ -1,6 +1,5 @@
-from typing import Optional
 from pathlib import Path
-
+import asyncio
 import ert
 import ert3
 
@@ -12,31 +11,17 @@ def load_record(
     record_mime: str,
 ) -> None:
 
-    record_coll = ert.data.load_collection_from_file(record_file, record_mime)
-
-    ert.storage.add_ensemble_record(
-        workspace=workspace,
-        record_name=record_name,
-        ensemble_record=record_coll,
-    )
+    collection = ert.data.load_collection_from_file(record_file, record_mime)
+    future = ert.storage.transmit_record_collection(collection, record_name, workspace)
+    asyncio.get_event_loop().run_until_complete(future)
 
 
-# pylint: disable=too-many-arguments
 def sample_record(
-    workspace: Path,
     parameters_config: ert3.config.ParametersConfig,
     parameter_group_name: str,
-    record_name: str,
     ensemble_size: int,
-    experiment_name: Optional[str] = None,
-) -> None:
+) -> ert.data.RecordCollection:
     distribution = parameters_config[parameter_group_name].as_distribution()
-    ensrecord = ert.data.RecordCollection(
+    return ert.data.RecordCollection(
         records=[distribution.sample() for _ in range(ensemble_size)]
-    )
-    ert.storage.add_ensemble_record(
-        workspace=workspace,
-        record_name=record_name,
-        ensemble_record=ensrecord,
-        experiment_name=experiment_name,
     )

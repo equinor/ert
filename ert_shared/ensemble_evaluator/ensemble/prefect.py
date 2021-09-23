@@ -1,35 +1,31 @@
 import asyncio
 import contextlib
+import functools
+import importlib
 import logging
 import multiprocessing
 import os
 import signal
 import threading
-from typing import Optional
-import uuid
-from datetime import timedelta
-from functools import partial
 import time
+from datetime import timedelta
+from multiprocessing.context import BaseContext
+from typing import Optional
 
-import prefect
 import cloudpickle
+import prefect
 import prefect.utilities.logging
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
-from ert_shared.port_handler import find_available_port
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.ensemble.builder import (
-    _Ensemble,
-    create_job_builder,
-    create_realization_builder,
-    create_step_builder,
-    create_file_io_builder,
-)
-from ert_shared.ensemble_evaluator.client import Client
 from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
+
+from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.port_handler import find_available_port
 
 logger = logging.getLogger(__name__)
 
@@ -101,65 +97,39 @@ def _get_executor(custom_port_range, name="local"):
 
 
 class PrefectEnsemble(_Ensemble):
-    def __init__(self, config, custom_port_range=None):
-        self.config = config
-        self._custom_range = custom_port_range
+    def __init__(
+        self,
+        reals,
+        inputs,
+        outputs,
+        max_running,
+        max_retries,
+        executor,
+        retry_delay,
+        custom_port_range=None,
+    ):
+        super().__init__(reals=reals, metadata={"iter": 0})
+        self._inputs = inputs
+        self._outputs = outputs
+        self._real_per_batch = max_running
+
+        self._max_retries = max_retries
+        self._retry_delay = timedelta(seconds=retry_delay)
+
+        # If we instansiate an executor here the prefect ensemble
+        # will fail to pickle (required when using multiprocessing),
+        # as the executor has an internal thread lock. Hence, we
+        # bind the parameters and delay creating an instance until
+        # we actually need it. Issue seems to be Python 3.6 specific.
+        self._new_executor = functools.partial(
+            _get_executor, custom_port_range, executor
+        )
+
         self._ee_config = None
-        self._reals = self._get_reals()
         self._eval_proc = None
         self._ee_id: Optional[str] = None
         self._iens_to_task = {}
         self._allow_cancel = multiprocessing.Event()
-        super().__init__(self._reals, metadata={"iter": 0})
-
-    def _get_reals(self):
-        real_builders = []
-        for iens in range(0, self.config[ids.REALIZATIONS]):
-            real_builder = create_realization_builder().active(True).set_iens(iens)
-            for step in self.config[ids.STEPS]:
-                step_id = uuid.uuid4()
-                step_source = f"/ert/ee/{{ee_id}}/real/{iens}/step/{step_id}"
-                step_builder = (
-                    create_step_builder()
-                    .set_id(step_id)
-                    .set_name(step[ids.NAME])
-                    .set_source(step_source)
-                    .set_type(step[ids.TYPE])
-                )
-
-                for io in step.get(ids.INPUTS, []):
-                    input_builder = (
-                        create_file_io_builder()
-                        .set_name(io[ids.RECORD])
-                        .set_path(io[ids.LOCATION])
-                        .set_mime(io[ids.MIME])
-                    )
-
-                    if io.get(ids.IS_EXECUTABLE):
-                        input_builder.set_executable()
-
-                    step_builder.add_input(input_builder)
-                for io in step.get(ids.OUTPUTS, []):
-                    step_builder.add_output(
-                        create_file_io_builder()
-                        .set_name(io[ids.RECORD])
-                        .set_path(io[ids.LOCATION])
-                        .set_mime(io[ids.MIME])
-                    )
-
-                for job in step[ids.JOBS]:
-                    job_builder = (
-                        create_job_builder()
-                        .set_id(str(uuid.uuid4()))
-                        .set_name(job[ids.NAME])
-                        .set_executable(job[ids.EXECUTABLE])
-                        .set_args(job.get(ids.ARGS))
-                        .set_step_source(step_source)
-                    )
-                    step_builder.add_job(job_builder)
-                real_builder.add_step(step_builder)
-            real_builders.append(real_builder)
-        return [builder.build() for builder in real_builders]
 
     def _on_task_failure(self, task, state):
         if prefect_context.task_run_count > task.max_retries:
@@ -183,42 +153,53 @@ class PrefectEnsemble(_Ensemble):
             for iens in real_range:
                 transmitter_map[iens] = {
                     record: transmitter
-                    for record, transmitter in self.config[ids.INPUTS][iens].items()
+                    for record, transmitter in self._inputs[iens].items()
                 }
                 for step in self._reals[iens].get_steps_sorted_topologically():
                     inputs = {
                         inp.get_name(): transmitter_map[iens][inp.get_name()]
                         for inp in step.get_inputs()
                     }
-                    outputs = self.config[ids.OUTPUTS][iens]
-                    max_retries = self.config.get(ids.MAX_RETRIES, DEFAULT_MAX_RETRIES)
+                    outputs = self._outputs[iens]
                     # Prefect does not allow retry_delay if max_retries is 0
-                    if max_retries == 0:
-                        retry_delay = None
-                    else:
-                        delay = self.config.get("retry_delay", DEFAULT_RETRY_DELAY)
-                        retry_delay = timedelta(seconds=delay)
+                    retry_delay = None if self._max_retries == 0 else self._retry_delay
                     step_task = step.get_task(
                         outputs,
                         ee_id,
                         name=str(iens),
-                        max_retries=max_retries,
+                        max_retries=self._max_retries,
                         retry_delay=retry_delay,
                         on_failure=self._on_task_failure,
                     )
                     result = step_task(inputs=inputs)
-                    self._iens_to_task[iens] = result
+                    if iens not in self._iens_to_task:
+                        self._iens_to_task[iens] = []
+                    self._iens_to_task[iens].append(result)
                     for output in step.get_outputs():
                         transmitter_map[iens][output.get_name()] = result[
                             output.get_name()
                         ]
         return flow
 
+    @staticmethod
+    def _get_multiprocessing_context() -> BaseContext:
+        """See _prefect_forkserver_preload"""
+        preload_module_name = (
+            "ert_shared.ensemble_evaluator.ensemble._prefect_forkserver_preload"
+        )
+        loader = importlib.util.find_spec(preload_module_name)
+        if not loader:
+            raise ModuleNotFoundError(f"No module named {preload_module_name}")
+        ctx = multiprocessing.get_context("forkserver")
+        ctx.set_forkserver_preload([preload_module_name])
+        return ctx
+
     def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
         self._ee_config = config
-        mp_ctx = multiprocessing.get_context(method="forkserver")
-        self._eval_proc = mp_ctx.Process(
+
+        ctx = self._get_multiprocessing_context()
+        self._eval_proc = ctx.Process(
             target=self._evaluate,
             args=(config, ee_id),
         )
@@ -249,7 +230,7 @@ class PrefectEnsemble(_Ensemble):
                         "source": f"/ert/ee/{self._ee_id}",
                         "datacontenttype": "application/octet-stream",
                     },
-                    cloudpickle.dumps(self.config["outputs"]),
+                    cloudpickle.dumps(self._outputs),
                 )
                 c.send(to_json(event).decode())
         except Exception as e:
@@ -267,27 +248,26 @@ class PrefectEnsemble(_Ensemble):
                 c.send(to_json(event).decode())
 
     def run_flow(self, ee_id):
-        real_per_batch = self.config[ids.MAX_RUNNING]
-        real_range = range(self.config[ids.REALIZATIONS])
+        num_realizations = len(self._reals)
+        real_range = range(num_realizations)
         i = 0
         state_map = {}
-        while i < self.config[ids.REALIZATIONS]:
-            realization_range = real_range[i : i + real_per_batch]
+        while i < num_realizations:
+            realization_range = real_range[i : i + self._real_per_batch]
             flow = self.get_flow(ee_id, realization_range)
             with prefect_log_level_context(level="WARNING"):
-                state = flow.run(
-                    executor=_get_executor(
-                        self._custom_range, self.config[ids.EXECUTOR]
-                    )
-                )
+                state = flow.run(executor=self._new_executor())
             for iens in realization_range:
                 state_map[iens] = state
-            i = i + real_per_batch
-        for iens, task in self._iens_to_task.items():
-            if isinstance(state_map[iens].result[task].result, Exception):
-                raise state_map[iens].result[task].result
-            for output_name, transmitter in state_map[iens].result[task].result.items():
-                self.config["outputs"][iens][output_name] = transmitter
+            i = i + self._real_per_batch
+        for iens, tasks in self._iens_to_task.items():
+            for task in tasks:
+                if isinstance(state_map[iens].result[task].result, Exception):
+                    raise state_map[iens].result[task].result
+                for output_name, transmitter in (
+                    state_map[iens].result[task].result.items()
+                ):
+                    self._outputs[iens][output_name] = transmitter
 
     def is_cancellable(self):
         return True

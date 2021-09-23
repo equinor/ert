@@ -2,7 +2,7 @@ size: 10
 
 input:
   -
-    source: resources.field_properties.json
+    source: storage.designed_field_properties
     record: field_properties
   -
     source: resources.wells.json

@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 import numpy as np
 
@@ -72,17 +74,19 @@ def test_single_evaluation(distribution):
     samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
-    evaluations = []
-    for sample in samples:
+    model_output = {}
+    futures = []
+    for iens, sample in enumerate(samples):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        evaluation = ishigami_single(x, y, z)
-        evaluations.append(ert.data.NumericalRecord(data=evaluation))
+        t = ert.data.InMemoryRecordTransmitter("output")
+        futures.append(
+            t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
+        )
+        model_output[iens] = {"output": t}
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    model_output = ert.data.RecordCollectionMap(
-        ensemble_records={"output": ert.data.RecordCollection(records=evaluations)}
-    )
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
 
@@ -105,17 +109,19 @@ def test_parameter_array():
     samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
-    evaluations = []
-    for sample in samples:
+    model_output = {}
+    futures = []
+    for iens, sample in enumerate(samples):
         x = sample["xs"].data[0]
         y = sample["xs"].data[1]
         z = sample["xs"].data[2]
-        evaluation = ishigami_single(x, y, z)
-        evaluations.append(ert.data.NumericalRecord(data=evaluation))
+        t = ert.data.InMemoryRecordTransmitter("output")
+        futures.append(
+            t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
+        )
+        model_output[iens] = {"output": t}
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    model_output = ert.data.RecordCollectionMap(
-        ensemble_records={"output": ert.data.RecordCollection(records=evaluations)}
-    )
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
 
@@ -138,17 +144,19 @@ def test_multiple_evaluations():
     samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
-    evaluations = []
-    for sample in samples:
+    model_output = {}
+    futures = []
+    for iens, sample in enumerate(samples):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        evaluation = ishigami_multiple(x, y, z)
-        evaluations.append(ert.data.NumericalRecord(data=evaluation))
+        t = ert.data.InMemoryRecordTransmitter("output")
+        futures.append(
+            t.transmit_record(ert.data.NumericalRecord(data=ishigami_multiple(x, y, z)))
+        )
+        model_output[iens] = {"output": t}
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    model_output = ert.data.RecordCollectionMap(
-        ensemble_records={"output": ert.data.RecordCollection(records=evaluations)}
-    )
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
 
@@ -171,19 +179,21 @@ def test_analyse_multiple_groups():
     samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
-    evaluations = []
-    for sample in samples:
+    model_output = {}
+    futures = []
+    for iens, sample in enumerate(samples):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         a = sample["coeffs"].data["a"]
         b = sample["coeffs"].data["b"]
         c = sample["coeffs"].data["c"]
         evaluation = polynomial(x, y, a, b, c)
-        evaluations.append(ert.data.NumericalRecord(data=evaluation))
+        t = ert.data.InMemoryRecordTransmitter("output")
+        futures.append(t.transmit_record(ert.data.NumericalRecord(data=evaluation)))
+        model_output[iens] = {"output": t}
 
-    model_output = ert.data.RecordCollectionMap(
-        ensemble_records={"output": ert.data.RecordCollection(records=evaluations)}
-    )
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(
         analysis,
@@ -206,16 +216,18 @@ def test_sample_size(sample_size):
     samples = ert3.algorithms.fast_sample(parameters, harmonics, sample_size)
     assert_samples(samples, sample_size, param_size, parameters)
 
-    evaluations = []
-    for sample in samples:
+    model_output = {}
+    futures = []
+    for iens, sample in enumerate(samples):
         x = sample["xs"].data["x"]
         y = sample["xs"].data["y"]
         z = sample["xs"].data["z"]
-        evaluation = ishigami_single(x, y, z)
-        evaluations.append(ert.data.NumericalRecord(data=evaluation))
+        t = ert.data.InMemoryRecordTransmitter("output")
+        futures.append(
+            t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
+        )
+        model_output[iens] = {"output": t}
+    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
 
-    model_output = ert.data.RecordCollectionMap(
-        ensemble_records={"output": ert.data.RecordCollection(records=evaluations)}
-    )
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)

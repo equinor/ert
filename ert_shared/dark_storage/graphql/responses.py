@@ -1,8 +1,10 @@
+import time
 from datetime import datetime
 from typing import Any, TYPE_CHECKING
 from uuid import UUID
 import graphene as gr
 
+from ert_shared.dark_storage.enkf import get_id
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
@@ -18,24 +20,24 @@ class Response(gr.ObjectType):
 
     @staticmethod
     def resolve_id(root: Any, info: "ResolveInfo") -> UUID:
-        raise NotImplementedError
+        return get_id("response", root)
 
     @staticmethod
     def resolve_name(root: Any, info: "ResolveInfo") -> str:
-        raise NotImplementedError
+        return root
 
     @staticmethod
     def resolve_realization_index(root: Any, info: "ResolveInfo") -> int:
-        raise NotImplementedError
+        return 1
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
-        raise NotImplementedError
+        return datetime.now()
 
     @staticmethod
     def resolve_time_updated(root: Any, info: "ResolveInfo") -> datetime:
-        raise NotImplementedError
+        return datetime.now()
 
     @staticmethod
     def resolve_userdata(root: Any, info: "ResolveInfo") -> Any:
-        raise NotImplementedError
+        return {}

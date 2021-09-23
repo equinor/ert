@@ -1,10 +1,12 @@
-#!/usr/bin/env python
 import logging
 import os
 import sys
 import re
+import yaml
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
+
+from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli
 from ert_shared.storage.main import run_server
@@ -400,23 +402,23 @@ def start_ert_server():
 
 
 def main():
-    import ert_logging  # Only use ert logger config when running ERT
+    with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
+        logging.config.dictConfig(yaml.safe_load(conf_file))
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
 
     args = ert_parser(None, sys.argv[1:])
+    logger = logging.getLogger(__name__)
     if args.verbose:
-        logger = logging.getLogger()
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
-
-    with start_ert_server(), ErtPluginContext() as context:
-        context.plugin_manager.add_logging_handles(logging)
-        args.func(args)
-
+    try:
+        with start_ert_server(), ErtPluginContext() as context:
+            context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
+            logger.info("Running ert with {}".format(str(args)))
+            args.func(args)
+    except:
+        logger.exception("ert crashed unexpectedly")
+        sys.exit("ert crashed unexpectedly")
     clear_global_state()
-
-
-if __name__ == "__main__":
-    main()

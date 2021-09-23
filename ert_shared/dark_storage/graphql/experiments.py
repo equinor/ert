@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from uuid import UUID
-from typing import Any, List, TYPE_CHECKING
+from typing import Any, List, TYPE_CHECKING, Mapping
 
 import graphene as gr
 
@@ -51,8 +51,10 @@ class Experiment(gr.ObjectType, _ExperimentMixin):
         return res.cases()
 
     @staticmethod
-    def resolve_priors(root: Any, info: "ResolveInfo") -> Any:
-        return None
+    def resolve_priors(root: Any, info: "ResolveInfo") -> Mapping:
+        res = get_res()
+        priors = res.gen_kw_priors()
+        return priors
 
 
 class CreateExperiment(gr.Mutation, _ExperimentMixin):

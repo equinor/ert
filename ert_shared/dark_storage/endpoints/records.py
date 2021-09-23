@@ -1,11 +1,19 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Any, Mapping, Optional, List
 
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
+
+from ert_shared.dark_storage.common import (
+    get_response_names,
+    data_for_key,
+    ensemble_parameter_names,
+)
+from ert_shared.storage.extraction import create_observations
 from ert_storage import json_schema as js
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
-
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
+from fastapi.responses import Response
+import pandas as pd
 
 router = APIRouter(tags=["record"])
 
@@ -130,7 +138,19 @@ async def get_record_observations(
     name: str,
     realization_index: Optional[int] = None,
 ) -> List[js.ObservationOut]:
-    raise NotImplementedError
+    obs_keys = res.observation_keys(name)
+    return [
+        js.ObservationOut(
+            id=uuid4(),
+            userData=[],
+            errors=obs["errors"],
+            values=obs["values"],
+            x_axis=obs["x_axis"],
+            name=obs["name"],
+        )
+        for obs in create_observations(res)
+        if obs["name"] in obs_keys
+    ]
 
 
 @router.get(
@@ -153,14 +173,24 @@ async def get_ensemble_record(
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
 ) -> Any:
-    raise NotImplementedError
+    ensemble_name = get_name("ensemble", ensemble_id)
+    dataframe = data_for_key(ensemble_name, name)
+    if realization_index is not None:
+        # dataframe.loc returns a Series, and when we reconstruct a DataFrame from a Series, it defaults to be
+        # oriented the wrong way, so we must transpose it
+        dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
+    return Response(
+        content=dataframe.to_csv().encode(),
+        media_type="text/csv",
+    )
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
 async def get_ensemble_parameters(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> List[str]:
-    raise NotImplementedError
+    ensemble_name = get_name(type="ensemble", uuid=ensemble_id)
+    return ensemble_parameter_names(ensemble_name)
 
 
 @router.get(
@@ -195,4 +225,9 @@ async def get_record_data(
 def get_ensemble_responses(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> Mapping[str, js.RecordOut]:
-    return {}
+    return {
+        resp: js.RecordOut(
+            id=get_id(f"response", f"{ensemble_id}/{resp}"), name=resp, userdata={}
+        )
+        for resp in get_response_names()
+    }
