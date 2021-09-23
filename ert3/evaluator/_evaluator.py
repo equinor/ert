@@ -125,7 +125,7 @@ def _build_ensemble(
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    for output in stage.output:
+    for output in stage.output.values():
         step_builder.add_output(
             create_file_io_builder()
             .set_name(output.record)
@@ -133,7 +133,7 @@ def _build_ensemble(
             .set_mime(output.mime)
         )
 
-    for input_ in stage.input:
+    for input_ in stage.input.values():
         step_builder.add_input(
             create_file_io_builder()
             .set_name(input_.record)

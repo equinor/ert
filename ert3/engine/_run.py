@@ -19,7 +19,6 @@ def _prepare_experiment(
     if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
         raise ValueError(f"Experiment {experiment_name} have been carried out.")
 
-
     parameters = [elem.record for elem in ensemble.input]
     responses = [elem.record for elem in ensemble.output]
     ert.storage.init_experiment(
