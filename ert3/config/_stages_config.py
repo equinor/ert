@@ -71,10 +71,12 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-class IndexedOrderedDict(OrderedDict[str, Record]):
+# mypy ignore, as alternative is more code: https://mypy.readthedocs.io/en/latest/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
+# Fixed from 3.9 -->
+class IndexedOrderedDict(OrderedDict):  # type: ignore
     """Ordered dict with custom getitem-method"""
 
-    def __getitem__(self, attr: Any) -> Record:
+    def __getitem__(self, attr: Any) -> Any:
         if isinstance(attr, str):
             return super().__getitem__(attr)
         return self[list(self.keys())[attr]]
