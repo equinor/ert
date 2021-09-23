@@ -38,10 +38,7 @@ class StdEnKFDebugTest(ResTest):
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
         )
-        if sys.platform.lower() == "darwin":
-            lib_name = "std_enkf_debug.dylib"
-        else:
-            lib_name = "std_enkf_debug.so"
+        lib_name = "std_enkf_debug.so"
         self.libname = find_file(self.SOURCE_ROOT, lib_name)
         if self.libname:
             self.module = AnalysisModule(lib_name=self.libname)

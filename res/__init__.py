@@ -40,13 +40,7 @@ def _load_lib():
     lib_path = os.path.join(os.path.dirname(__file__), ".libs")
     if not os.path.isdir(lib_path):
         lib_path = ""
-
-    if platform.system() == "Linux":
-        lib_path = os.path.join(lib_path, "libres.so")
-    elif platform.system() == "Darwin":
-        lib_path = os.path.join(lib_path, "libres.dylib")
-    else:
-        raise NotImplementedError("Invalid platform")
+    lib_path = os.path.join(lib_path, "libres.so")
 
     lib = ctypes.CDLL(lib_path, ctypes.RTLD_GLOBAL)
 
