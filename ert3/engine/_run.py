@@ -121,9 +121,7 @@ def _prepare_storage_records(
     for input_record in ensemble.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = next(
-            input_.mime for input_ in step.input if input_.record == record_name
-        )
+        record_mime = step.input[record_name].mime
         transmitters = _prepare_experiment_record(
             record_name,
             record_source,

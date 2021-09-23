@@ -1,10 +1,12 @@
 from importlib.abc import Loader
 import importlib.util
 import mimetypes
-from typing import Callable, Tuple, Type, cast, Union, Dict, Any
-
+from typing import Callable, Tuple, Type, cast, Union, Dict, Any, Mapping
+from types import MappingProxyType
+from collections import OrderedDict
 from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert
+
 
 DEFAULT_RECORD_MIME_TYPE: str = "application/octet-stream"
 DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
@@ -69,10 +71,38 @@ class TransportableCommand(_StagesConfig):
     )
 
 
+# mypy ignore missing parameter for generic type
+class IndexedOrderedDict(OrderedDict):  # type: ignore
+    """Ordered dict with custom getitem-method"""
+
+    def __getitem__(self, attr: Any) -> Any:
+        if isinstance(attr, str):
+            return super().__getitem__(attr)
+        return self[list(self.keys())[attr]]
+
+
+def _set_dict_from_list(
+    cls: Type[_StagesConfig], records: Tuple[Dict[str, str], ...]
+) -> Mapping[str, Record]:
+    """Grab record-names in records and use as keys"""
+    ordered_dict = IndexedOrderedDict(
+        {record["record"]: Record(**record) for record in records}
+    )
+    proxy = MappingProxyType(ordered_dict)
+    return proxy
+
+
 class _Step(_StagesConfig):
     name: str
-    input: Tuple[Record, ...]
-    output: Tuple[Record, ...]
+    input: MappingProxyType  # type: ignore
+    output: MappingProxyType  # type: ignore
+
+    _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
+        _set_dict_from_list
+    )
+    _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
+        _set_dict_from_list
+    )
 
 
 class Function(_Step):

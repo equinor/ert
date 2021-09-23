@@ -81,20 +81,16 @@ def _prepare_output(
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
-    for output in step_config.output:
+    for record_name in step_config.output.keys():
         for iens in range(0, ensemble_size):
             if storage_type == "shared_disk":
-                transmitters[iens][
-                    output.record
-                ] = ert.data.SharedDiskRecordTransmitter(
-                    name=output.record,
+                transmitters[iens][record_name] = ert.data.SharedDiskRecordTransmitter(
+                    name=record_name,
                     storage_path=pathlib.Path(storage_path),
                 )
             elif storage_type == "ert_storage":
-                transmitters[iens][
-                    output.record
-                ] = ert.storage.StorageRecordTransmitter(
-                    name=output.record, storage_url=storage_path, iens=iens
+                transmitters[iens][record_name] = ert.storage.StorageRecordTransmitter(
+                    name=record_name, storage_url=storage_path, iens=iens
                 )
             else:
                 raise ValueError(f"Unsupported transmitter type: {storage_type}")
@@ -129,7 +125,7 @@ def _build_ensemble(
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    for output in stage.output:
+    for output in stage.output.values():
         step_builder.add_output(
             create_file_io_builder()
             .set_name(output.record)
@@ -137,7 +133,7 @@ def _build_ensemble(
             .set_mime(output.mime)
         )
 
-    for input_ in stage.input:
+    for input_ in stage.input.values():
         step_builder.add_input(
             create_file_io_builder()
             .set_name(input_.record)
@@ -193,7 +189,7 @@ def _build_ensemble(
 def _run(
     ensemble_evaluator: EnsembleEvaluator,
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
-    result = {}
+    result: Dict[int, Dict[str, RecordTransmitter]] = {}
     with ensemble_evaluator.run() as monitor:
         for event in monitor.track():
             if isinstance(event.data, dict) and event.data.get("status") in [
