@@ -72,6 +72,8 @@ class TransportableCommand(_StagesConfig):
 
 
 class IndexedOrderedDict(OrderedDict):
+    """Ordered dict with custom getitem-method"""
+
     def __getitem__(self, attr: Any):
         if isinstance(attr, str):
             return super().__getitem__(attr)

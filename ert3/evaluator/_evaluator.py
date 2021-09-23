@@ -39,22 +39,22 @@ def _prepare_input(
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
     futures = []
-    for input_ in step_config.input.values():
-        for iens, record in enumerate(inputs.ensemble_records[input_.record].records):
+    for record_name in step_config.input.keys():
+        for iens, record in enumerate(inputs.ensemble_records[record_name].records):
             transmitter: RecordTransmitter
             if storage_type == "shared_disk":
                 transmitter = ert.data.SharedDiskRecordTransmitter(
-                    name=input_.record,
+                    name=record_name,
                     storage_path=pathlib.Path(storage_path),
                 )
             elif storage_type == "ert_storage":
                 transmitter = ert.storage.StorageRecordTransmitter(
-                    name=input_.record, storage_url=storage_path, iens=iens
+                    name=record_name, storage_url=storage_path, iens=iens
                 )
             else:
                 raise ValueError(f"Unsupported transmitter type: {storage_type}")
             futures.append(transmitter.transmit_record(record))
-            transmitters[iens][input_.record] = transmitter
+            transmitters[iens][record_name] = transmitter
     asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
     if isinstance(step_config, ert3.config.Unix):
         command_futures = []
@@ -89,20 +89,16 @@ def _prepare_output(
 ) -> Dict[int, Dict[str, RecordTransmitter]]:
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = defaultdict(dict)
 
-    for output in step_config.output.values():
+    for record_name in step_config.output.keys():
         for iens in range(0, ensemble_size):
             if storage_type == "shared_disk":
-                transmitters[iens][
-                    output.record
-                ] = ert.data.SharedDiskRecordTransmitter(
-                    name=output.record,
+                transmitters[iens][record_name] = ert.data.SharedDiskRecordTransmitter(
+                    name=record_name,
                     storage_path=pathlib.Path(storage_path),
                 )
             elif storage_type == "ert_storage":
-                transmitters[iens][
-                    output.record
-                ] = ert.storage.StorageRecordTransmitter(
-                    name=output.record, storage_url=storage_path, iens=iens
+                transmitters[iens][record_name] = ert.storage.StorageRecordTransmitter(
+                    name=record_name, storage_url=storage_path, iens=iens
                 )
             else:
                 raise ValueError(f"Unsupported transmitter type: {storage_type}")
