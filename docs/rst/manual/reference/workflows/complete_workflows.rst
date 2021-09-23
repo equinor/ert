@@ -14,45 +14,43 @@ jobs PLOT and ECL_HIST we can create a small workflow example:
 	ECL_HIST  <RUNPATH_FILE>   <QC_PATH>/<ERTCASE>/wwct_hist   WWCT:OP_1  WWCT:OP_2
 
 In this workflow we create plots of the nodes
-WWCT:OP_1, WWCT:OP_3, PRESSURE:10,10,10, FGPT and FOPT. The plot job we
+:code:`WWCT` : :code:`OP_1`, :code:`WWCT` : :code:`OP_3`, :code:`PRESSURE`:10,10,10, :code:`FGPT` and :code:`FOPT`. The plot job we
 have created in this example is general, if we limited
 ourselves to ECLIPSE summary variables we could get wildcard
 support. Then we invoke the ECL_HIST example job to create a
 histogram. See below for documentation of <RUNPATH_FILE> and
 <ERTCASE>.
 
-
 Loading workflows
 -----------------
 
-Workflows are loaded with the configuration option LOAD_WORKFLOW:
+Workflows are loaded with the configuration option :code:`LOAD_WORKFLOW`:
 
 ::
 
 	LOAD_WORKFLOW  /path/to/workflow/WFLOW1
 	LOAD_WORKFLOW  /path/to/workflow/workflow2  WFLOW2
 
-The LOAD_WORKFLOW takes the path to a workflow file as the first
+The :code:`LOAD_WORKFLOW` takes the path to a workflow file as the first
 argument. By default the workflow will be labeled with the filename
-internally in ERT, but optionally you can supply a second extra
-argument which will be used as name for the workflow. Alternatively
+internally in ERT, but you can optionally supply a second extra argument 
+which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
-
 
 .. _hook_workflow:
 
-Automatically run workflows : HOOK_WORKFLOW
--------------------------------------------
+Automatically run workflows : :code:`HOOK_WORKFLOW`
+---------------------------------------------------
 
 With the keyword :code:`HOOK_WORKFLOW` you can configure workflow
 'hooks'; meaning workflows which will be run automatically at certain
 points during ERTs execution. Currently there are four points in ERTs
-flow of execution where you can hook in a workflow, before the
-simulations start, :code:`PRE_SIMULATION`;  after all the simulations
-have completed :code:`POST_SIMULATION`; before the update step,
-:code:`PRE_UPDATE` and after the update step, :code:`POST_UPDATE`. The
-:code:`POST_SIMULATION` hook is typically used to trigger QC
-workflows:
+flow of execution where you can hook in a workflow:
+
+- Before the simulations start using :code:`PRE_SIMULATION`,
+- after all the simulations have completed using :code:`POST_SIMULATION`,
+- before the update step using :code:`PRE_UPDATE` and
+- after the update step using :code:`POST_UPDATE`. 
 
 ::
 
@@ -61,7 +59,6 @@ workflows:
    HOOK_WORKFLOW postUpdateWFLOW  POST_UPDATE
    HOOK_WORKFLOW QC_WFLOW1        POST_SIMULATION
    HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
-
 
 In this example the workflow :code:`initWFLOW` will run after all the
 simulation directories have been created, just before the forward
@@ -73,7 +70,6 @@ two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW`
 keyword.
-
 
 Locating the realisations: <RUNPATH_FILE>
 -----------------------------------------
@@ -106,10 +102,9 @@ like this:
 	9   /path/to/real9  CASE_0009
 
 The name and location of this file is available as the magical string
-<RUNPATH_FILE> and that is typically used as the first argument to
-external workflow jobs which should iterate over all realisations. The
-realisations referred to in the <RUNPATH_FILE> are meant to be last
-simulations you have run; the file is updated every time you run
-simulations. This implies that it is (currently) not so convenient to
+<RUNPATH_FILE> which is typically used as the first argument to
+external workflow jobs which should iterate over all realisations. 
+The realisations referred to in the <RUNPATH_FILE> should be the last simulations you have run. 
+The file is updated every time you run simulations. 
+This implies that it is (currently) not so convenient to
 alter which directories should be used when running a workflow.
-
