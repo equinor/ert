@@ -193,17 +193,6 @@ add_library(res SHARED
 
 #-----------------------------------------------------------------
 
-add_library(rml_enkf SHARED
-  analysis/modules/rml_enkf_config.c
-  analysis/modules/rml_enkf.c
-  analysis/modules/rml_enkf_common.c
-  analysis/modules/rml_enkf_log.c)
-target_link_libraries(rml_enkf PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
-target_include_directories(rml_enkf PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
-set_target_properties(rml_enkf PROPERTIES VERSION 1.0
-  SOVERSION 1.0
-  PREFIX "")
-
 add_library(ies SHARED
   analysis/modules/ies_enkf.c
   analysis/modules/ies_enkf_config.c
@@ -247,11 +236,6 @@ install(TARGETS res
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-install(TARGETS rml_enkf
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS ies
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -377,21 +361,6 @@ target_link_libraries(rms_file_test res)
 
 add_executable(analysis_external_module analysis/tests/analysis_test_external_module.cpp)
 target_link_libraries(analysis_external_module res)
-
-add_test(NAME analysis_module_rml
-         COMMAND analysis_external_module
-                 "RML_ENKF"
-                 $<TARGET_FILE_NAME:rml_enkf> 41
-                 ITER:45
-                 USE_PRIOR:False
-                 LAMBDA_REDUCE:0.10
-                 LAMBDA_INCREASE:2.5
-                 ENKF_TRUNCATION:0.77
-                 LAMBDA0:0.25
-                 LAMBDA_MIN:0.01
-                 LOG_FILE:LogFile.txt
-                 CLEAR_LOG:True
-                 LAMBDA_RECALCULATE:True)
 
 
 foreach(name analysis_test_module_info analysis_module_test)

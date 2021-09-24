@@ -391,33 +391,10 @@ In plain English, the ES MDA consist of several consecutive smoother updates wit
 error bars. The ES MDA with one iteration is identical to the Ensemble smoother. 
 
 
-Iterative Ensemble Smoother (IES RML)
--------------------------------------
-The iterative ensemble smoother solves the minimization problem 
-:math:`\nabla\mathcal{J}=0` using a steepest decent approach with gradient:
-
-.. math::
-   \nabla_x\mathcal{J} = \bar{C}_{xx}^{-1}(x_j -x_j^f) + \nabla_x g(x_j)\bar{C}_{dd}^{-1}(g(x_j)-d_j),
-
-and Hessian:
-
-.. math::
-   \nabla_x\nabla_x\mathcal{J} = \bar{C}_{xx}^{-1} + \nabla_x g(x_j)\bar{C}_{dd}^{-1}(\nabla_x g(x_j)-d_j))^{T}.
- 
-The solution is then found by iteration:
-
-.. math::
-   \begin{align}
-   x_j^{i+1} & = x_j^i - \gamma(\nabla\nabla\mathcal{J}_j)^{-1}\nabla\mathcal{J}_j^{i}\\
-   y_j^{i+1} & = g(x_j^{i+1})
-   \end{align}
-
-
 Iterative Ensemble Smoother - Ensemble subspace version
 -------------------------------------------------------
 
-
-
+The algorithm implemented is described in the article [Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching]( https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full ).
 
 
 
