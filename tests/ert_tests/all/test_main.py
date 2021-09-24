@@ -227,3 +227,51 @@ def test_version_mocked(capsys, monkeypatch):
     ert_version = ert_version.rstrip("\n")
 
     assert ert_version == "1.0.3"
+
+
+@pytest.mark.parametrize(
+    "port_input,expected_range",
+    [("10-20", range(10, 21)), ("0-65535", range(0, 65536)), ("1-1", range(1, 2))],
+)
+def test_argparse_valid_port_range(port_input, expected_range):
+    parsed = ert_parser(
+        None,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--port-range",
+            port_input,
+            "path/to/config.ert",
+        ],
+    )
+    assert parsed.port_range == expected_range
+
+
+@pytest.mark.parametrize(
+    "port_input",
+    [("20-10"), ("65535"), ("1--31"), ("0-65536")],
+)
+def test_argparse_invalid_port_range(
+    port_input,
+):
+    with pytest.raises(SystemExit):
+
+        parsed = ert_parser(
+            None,
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "--port-range",
+                port_input,
+                "path/to/config.ert",
+            ],
+        )
+
+
+def test_argparse_no_port_range():
+    parsed = ert_parser(
+        None,
+        [
+            ENSEMBLE_EXPERIMENT_MODE,
+            "path/to/config.ert",
+        ],
+    )
+    assert parsed.port_range == None
