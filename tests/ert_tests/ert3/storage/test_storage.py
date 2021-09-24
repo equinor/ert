@@ -145,8 +145,38 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     res = ert.storage.get_ensemble_record(
         workspace=tmpdir,
         record_name="my_ensemble_record",
+        ensemble_size=len(raw_ensrec),
     )
 
+    assert res == ensrecord
+
+
+@pytest.mark.requires_ert_storage
+@pytest.mark.parametrize(
+    "raw_ensrec",
+    (
+        {"data": [0.5, 1.1, 2.2]},
+        {"data": {"a": 0.5, "b": 1.1, "c": 2.2}},
+        {"data": {2: 0.5, 5: 1.1, 7: 2.2}},
+        {"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"},
+    ),
+)
+def test_add_and_get_uniform_ensemble_record(tmpdir, raw_ensrec, ert_storage):
+    ert.storage.init(workspace=tmpdir)
+    ens_size = 5
+    ensrecord = ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ens_size)
+    future = ert.storage.transmit_record_collection(
+        record_coll=ensrecord,
+        record_name="my_ensemble_record",
+        workspace=tmpdir,
+    )
+    asyncio.get_event_loop().run_until_complete(future)
+
+    res = ert.storage.get_ensemble_record(
+        workspace=tmpdir, record_name="my_ensemble_record", ensemble_size=ens_size
+    )
+
+    assert res.is_uniform is True
     assert res == ensrecord
 
 
@@ -179,8 +209,7 @@ def test_get_unstored_ensemble_record(tmpdir, ert_storage):
 
     with pytest.raises(ert.exceptions.ElementMissingError):
         ert.storage.get_ensemble_record(
-            workspace=tmpdir,
-            record_name="my_ensemble_record",
+            workspace=tmpdir, record_name="my_ensemble_record", ensemble_size=2
         )
 
 
@@ -225,7 +254,10 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
                 ]
             )
             fetched_ensemble_record = ert.storage.get_ensemble_record(
-                workspace=tmpdir, record_name=name, experiment_name=experiment
+                workspace=tmpdir,
+                record_name=name,
+                experiment_name=experiment,
+                ensemble_size=ensemble_size,
             )
             assert ensemble_record == fetched_ensemble_record
 
@@ -258,6 +290,7 @@ def test_get_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
             workspace=tmpdir,
             record_name="my_record",
             experiment_name="non_existing_experiment",
+            ensemble_size=2,
         )
 
 

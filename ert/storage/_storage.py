@@ -111,7 +111,7 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         return ert.data.BlobRecord(data=record.data)
 
 
-async def get_record_storage_transmitters(
+async def _get_record_storage_transmitters(
     records_url: str,
     record_name: str,
     record_source: Optional[str] = None,
@@ -132,9 +132,7 @@ async def get_record_storage_transmitters(
             + f"size {len(uris)}"
         )
     if ensemble_size is not None and is_uniform and len(uris) != 1:
-        raise ert.exceptions.ErtError(
-            "Stored record ensemble is uniform but not of length 1"
-        )
+        raise ert.exceptions.ErtError("Ensemble is uniform but stores multiple records")
 
     transmitters = []
     for record_uri in uris:
@@ -144,6 +142,18 @@ async def get_record_storage_transmitters(
         transmitter.set_transmitted(record_uri, record_type)
         transmitters.append(transmitter)
 
+    return transmitters, is_uniform
+
+
+async def get_record_storage_transmitters(
+    records_url: str,
+    record_name: str,
+    record_source: Optional[str] = None,
+    ensemble_size: Optional[int] = None,
+) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+    transmitters, is_uniform = await _get_record_storage_transmitters(
+        records_url, record_name, record_source, ensemble_size
+    )
     if ensemble_size is not None and is_uniform:
         return {iens: {record_name: transmitters[0]} for iens in range(ensemble_size)}
     return {
@@ -597,33 +607,44 @@ def _get_experiment_parameters(experiment_name: str) -> Iterable[str]:
     return list(response.json())
 
 
+async def _get_record_collection(
+    records_url: str,
+    record_name: str,
+    record_source: Optional[str] = None,
+    ensemble_size: Optional[int] = None,
+) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+    return await _get_record_storage_transmitters(
+        records_url, record_name, record_source, ensemble_size
+    )
+
+
 def get_ensemble_record(
     *,
     workspace: Path,
     record_name: str,
+    ensemble_size: int,
     experiment_name: Optional[str] = None,
     source: Optional[str] = None,
-    ensemble_size: Optional[int] = None,
 ) -> ert.data.RecordCollection:
     records_url = ert.storage.get_records_url(
         workspace=workspace, experiment_name=experiment_name
     )
 
-    transmitters = asyncio.get_event_loop().run_until_complete(
-        ert.storage.get_record_storage_transmitters(
+    transmitters, is_uniform = asyncio.get_event_loop().run_until_complete(
+        _get_record_collection(
             records_url=records_url,
             record_name=record_name,
             record_source=source,
             ensemble_size=ensemble_size,
         )
     )
-    records = []
-    for transmitter_map in transmitters.values():
-        for transmitter in transmitter_map.values():
-            records.append(
-                asyncio.get_event_loop().run_until_complete(transmitter.load())
-            )
-
+    if is_uniform:
+        record = asyncio.get_event_loop().run_until_complete(transmitters[0].load())
+        return ert.data.RecordCollection(records=record, ensemble_size=ensemble_size)
+    records = [
+        asyncio.get_event_loop().run_until_complete(transmitter.load())
+        for transmitter in transmitters
+    ]
     return ert.data.RecordCollection(records=records)
 
 
