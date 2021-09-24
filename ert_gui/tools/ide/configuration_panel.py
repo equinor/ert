@@ -27,7 +27,7 @@ class ConfigurationPanel(QWidget):
 
     reloadApplication = Signal(str)
 
-    def __init__(self, config_file, help_tool):
+    def __init__(self, config_file):
         QWidget.__init__(self)
 
         layout = QVBoxLayout()
@@ -45,8 +45,6 @@ class ConfigurationPanel(QWidget):
         # reload_action.triggered.connect(self.reload)
 
         toolbar.addSeparator()
-
-        toolbar.addAction(help_tool.getAction())
 
         stretchy_separator = QWidget()
         stretchy_separator.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

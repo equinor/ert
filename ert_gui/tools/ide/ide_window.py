@@ -7,7 +7,7 @@ from ert_gui.tools.ide.configuration_panel import ConfigurationPanel
 class IdeWindow(QMainWindow):
     reloadTriggered = Signal(str)
 
-    def __init__(self, config_file, parent, help_tool):
+    def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
         self.resize(900, 900)
@@ -15,7 +15,7 @@ class IdeWindow(QMainWindow):
         self.__position = None
         self.__geometry = None
 
-        self.__configuration_panel = ConfigurationPanel(config_file, help_tool)
+        self.__configuration_panel = ConfigurationPanel(config_file)
         self.__configuration_panel.reloadApplication.connect(self.reloadTriggered)
         self.setCentralWidget(self.__configuration_panel)
         self.setWindowTitle("Configuration - {}".format(config_file))

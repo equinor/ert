@@ -5,9 +5,6 @@ from qtpy.QtWidgets import QPlainTextEdit, QCompleter, QShortcut
 from qtpy.QtGui import QFont, QTextOption, QKeySequence, QTextCursor
 
 
-from ert_gui.tools import HelpCenter
-
-
 class IdePanel(QPlainTextEdit):
     def __init__(self):
         QPlainTextEdit.__init__(self)
@@ -15,8 +12,6 @@ class IdePanel(QPlainTextEdit):
         self.setFont(QFont("monospace", 10))
         self.setCursorWidth(2)
         self.installEventFilter(self)
-
-        self.cursorPositionChanged.connect(self.showHelp)
 
         self.completer = QCompleter(self)
         self.completer.setWidget(self)
@@ -31,18 +26,6 @@ class IdePanel(QPlainTextEdit):
 
         select_fragment = QShortcut(QKeySequence("Ctrl+J"), self)
         select_fragment.activated.connect(self.selectFragment)
-
-    def showHelp(self):
-        text_cursor = self.textCursor()
-        user_data = text_cursor.block().userData()
-
-        if user_data is not None and hasattr(user_data, "configuration_line"):
-            configuration_line = user_data.configuration_line
-
-            if configuration_line.keyword().hasKeywordDefinition():
-                HelpCenter.getHelpCenter("ERT").setHelpMessageLink(
-                    "config/" + configuration_line.documentationLink()
-                )
 
     def getText(self):
         return self.document().toPlainText()

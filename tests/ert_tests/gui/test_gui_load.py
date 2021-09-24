@@ -8,7 +8,6 @@ from qtpy.QtCore import Qt
 
 import ert_gui
 from ert_gui.gert_main import _start_window, run_gui
-from ert_gui.tools import HelpCenter
 
 
 @pytest.fixture()
@@ -80,8 +79,6 @@ def patch_enkf_main(monkeypatch, tmpdir):
     )
 
     yield mocked_enkf_main
-    # Clean up:
-    HelpCenter._HelpCenter__help_centers = {}
 
 
 @pytest.mark.skipif(

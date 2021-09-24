@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 
-from qtpy.QtWidgets import QAction, QMessageBox
+from qtpy.QtWidgets import QMessageBox
 
 from ert_gui.tools.ide import ConfigurationPanel
 
@@ -10,14 +10,9 @@ UNICODE_TEXT = u"""ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫�
 ᚷᛁᚠ᛫ᚻᛖ᛫ᚹᛁᛚᛖ᛫ᚠᚩᚱ᛫ᛞᚱᛁᚻᛏᚾᛖ᛫ᛞᚩᛗᛖᛋ᛫ᚻᛚᛇᛏᚪᚾ᛬"""
 
 
-class MockHelpTool(object):
-    def getAction(self):
-        return QAction(None)
-
-
 def test_init(qtbot):
     """Initialise a ConfigurationPanel"""
-    w = ConfigurationPanel(__file__, MockHelpTool())
+    w = ConfigurationPanel(__file__)
     qtbot.addWidget(w)
 
     w.close()
@@ -29,7 +24,7 @@ def test_load_unicode(tmpdir, qtbot):
         with io.open("poly.ert", "w") as f:
             f.write(UNICODE_TEXT)
 
-        w = ConfigurationPanel("poly.ert", MockHelpTool())
+        w = ConfigurationPanel("poly.ert")
         qtbot.addWidget(w)
 
         assert w.ide_panel.getText() == UNICODE_TEXT
@@ -52,7 +47,7 @@ def test_save_unicode(tmpdir, qtbot, monkeypatch):
         with io.open("poly.ert", "w") as f:
             f.write(u"Hello World\n")
 
-        widget = ConfigurationPanel("poly.ert", MockHelpTool())
+        widget = ConfigurationPanel("poly.ert")
         qtbot.addWidget(widget)
 
         widget.ide_panel.setPlainText(UNICODE_TEXT)

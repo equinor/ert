@@ -23,9 +23,7 @@ import ert_gui.ertwidgets
 from ert_gui.ertnotifier import configureErtNotifier
 from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
-from ert_gui.tools import HelpCenter
 from ert_gui.tools.export import ExportTool
-from ert_gui.tools.help import HelpTool
 from ert_gui.tools.ide import IdeTool
 from ert_gui.tools.load_results import LoadResultsTool
 from ert_gui.tools.manage_cases import ManageCasesTool
@@ -61,9 +59,6 @@ def run_gui(args):
 def _start_window(ert, args):
 
     _check_locale()
-
-    help_center = HelpCenter("ERT")
-    help_center.setHelpMessageLink("welcome_to_ert")
 
     splash = ErtSplash(version_string="Version {}".format(ert_gui.__version__))
     splash.show()
@@ -124,12 +119,11 @@ def _setup_main_window(ert, args):
     window = GertMainWindow(config_file)
     window.setWidget(SimulationPanel(config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
-    help_tool = HelpTool("ERT", window)
 
     window.addDock(
         "Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(IdeTool(config_file, help_tool))
+    window.addTool(IdeTool(config_file))
     window.addTool(PlotTool(config_file))
     window.addTool(ExportTool())
     window.addTool(WorkflowsTool())
@@ -137,6 +131,5 @@ def _setup_main_window(ert, args):
     window.addTool(PluginsTool(plugin_handler))
     window.addTool(RunAnalysisTool())
     window.addTool(LoadResultsTool())
-    window.addTool(help_tool)
     window.adjustSize()
     return window
