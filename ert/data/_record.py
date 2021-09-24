@@ -95,12 +95,6 @@ class Record(_DataElement):
                     return RecordType.MAPPING_STR_FLOAT
         return record_type
 
-    def get_instance(self) -> "Record":
-        if self.record_type is not None:
-            if self.record_type == RecordType.BYTES:
-                return BlobRecord(data=self.data)
-        return NumericalRecord(data=self.data)
-
 
 class NumericalRecord(Record):
     data: numerical_record_data
