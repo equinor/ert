@@ -4,7 +4,7 @@ import asyncio
 from functools import partial
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Set
+from typing import Any, Dict, Iterable, Optional, Set, Tuple, List
 
 import pandas as pd
 import requests
@@ -116,13 +116,13 @@ async def _get_record_storage_transmitters(
     record_name: str,
     record_source: Optional[str] = None,
     ensemble_size: Optional[int] = None,
-) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+) -> Tuple[List[StorageRecordTransmitter], bool]:
     if record_source is None:
         record_source = record_name
     uri = f"{records_url}/{record_source}"
     metadata = await get_record_metadata(uri)
     record_type = metadata["record_type"]
-    is_uniform = metadata["is_uniform"]
+    is_uniform: bool = metadata["is_uniform"]
     uris = metadata["uris"]
     # We expect the number of uris in the record metadata to match the size of
     # the ensemble or be equal to 1, in the case of an uniform record
@@ -610,9 +610,9 @@ def _get_experiment_parameters(experiment_name: str) -> Iterable[str]:
 async def _get_record_collection(
     records_url: str,
     record_name: str,
+    ensemble_size: int,
     record_source: Optional[str] = None,
-    ensemble_size: Optional[int] = None,
-) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+) -> Tuple[List[StorageRecordTransmitter], bool]:
     return await _get_record_storage_transmitters(
         records_url, record_name, record_source, ensemble_size
     )
