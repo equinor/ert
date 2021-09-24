@@ -93,6 +93,33 @@ def valid_num_iterations(user_input):
     return user_input
 
 
+def attemp_int_conversion(val: str) -> int:
+    try:
+        return int(val)
+    except ValueError:
+        raise ArgumentTypeError(f"{val} is not a valid integer")
+
+
+def convert_port(val: str) -> int:
+    val = attemp_int_conversion(val)
+    if not (0 <= val <= 65535):
+        raise ArgumentTypeError(f"{val} is not in valid port range 0-65535")
+    return val
+
+
+def valid_port_range(user_input: str) -> range:
+    if "-" not in user_input:
+        raise ArgumentTypeError("Port range must contain two integers separated by '-'")
+    a, b = user_input.split("-")
+
+    a, b = convert_port(a), convert_port(b)
+
+    if b < a:
+        raise ArgumentTypeError(f"Invalid port range [{a},{b}], {b} is < {a}")
+
+    return range(a, b + 1)
+
+
 def range_limited_int(user_input):
     try:
         i = int(user_input)
@@ -373,6 +400,12 @@ def get_ert_parser(parser=None):
             action="store_true",
             help="Disable monitoring.",
             default=False,
+        )
+        cli_parser.add_argument(
+            "--port-range",
+            type=valid_port_range,
+            required=False,
+            help="Port range [a,b] to be used by the evaluator. Format: a-b",
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
 
