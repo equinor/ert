@@ -9,7 +9,7 @@ from ert_gui.tools.ide import IdeWindow
 
 
 class IdeTool(Tool):
-    def __init__(self, config_file, help_tool):
+    def __init__(self, config_file):
         super(IdeTool, self).__init__(
             "Configure", "tools/ide", resourceIcon("ide/widgets")
         )
@@ -17,13 +17,10 @@ class IdeTool(Tool):
         self.ide_window = None
         self.config_file = config_file
         self.path = basename(config_file)
-        self.help_tool = help_tool
 
     def trigger(self):
         if self.ide_window is None:
-            self.ide_window = ref(
-                IdeWindow(self.config_file, self.parent(), self.help_tool)
-            )
+            self.ide_window = ref(IdeWindow(self.config_file, self.parent()))
             self.ide_window().reloadTriggered.connect(ERT.reloadERT)
 
         self.ide_window().show()

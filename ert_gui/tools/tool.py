@@ -1,7 +1,5 @@
 from qtpy.QtWidgets import QAction
 
-from ert_gui.tools import HelpCenter
-
 
 class Tool(object):
     def __init__(
@@ -27,8 +25,6 @@ class Tool(object):
         self.__action.setEnabled(self.isEnabled())
         self.__action.setCheckable(checkable)
         self.__action.triggered.connect(self.trigger)
-
-        HelpCenter.addHelpToAction(self.__action, self.getHelpLink())
 
     def getIcon(self):
         return self.__icon

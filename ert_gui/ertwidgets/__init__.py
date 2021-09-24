@@ -10,12 +10,6 @@ def addHelpToWidget(widget, link):
 
     def enterEvent(event):
         original_enter_event(event)
-        try:
-            from ert_gui.tools import HelpCenter
-
-            HelpCenter.getHelpCenter("ERT").setHelpMessageLink(link)
-        except AttributeError:
-            pass
 
     widget.enterEvent = enterEvent
 

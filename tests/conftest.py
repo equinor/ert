@@ -29,6 +29,8 @@ def env_save():
         (key, val) for key, val in os.environ.items() if key != "PYTEST_CURRENT_TEST"
     ]
     if set(environment_pre) != set(environment_post):
+        print(set(environment_pre) - set(environment_post))
+        print(set(environment_post) - set(environment_pre))
         raise EnvironmentError(
             "Your environment has changed after that test, please reset"
         )
