@@ -4,8 +4,18 @@ import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Tuple, Union
-
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
+from contextlib import suppress
 import aiofiles
 
 # Type hinting for wrap must be turned off until (1) is resolved.
@@ -20,6 +30,7 @@ from pydantic import (
     PositiveInt,
     root_validator,
     validator,
+    ValidationError,
 )
 from ert.serialization import get_serializer
 
@@ -126,39 +137,76 @@ class BlobRecord(Record):
     data: blob_record_data
 
 
-_RecordCollectionDataTypes = Union[
-    NumericalRecord, Tuple[NumericalRecord, ...], BlobRecord, Tuple[BlobRecord, ...]
-]
+_RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
 
 
-class RecordCollection(_DataElement):
-    records: _RecordCollectionDataTypes
-    ensemble_size: Optional[PositiveInt] = None
-    is_uniform: bool = True
+class RecordCollection:
+    def __init__(self, records: Any, ensemble_size: Optional[PositiveInt] = None):
+        self._records: _RecordTupleType
+        # Check if a single record is passed.
+        record = self._make_record(records)
+        if record is None:
+            # The input is not a record object, it is not a uniform record. Try
+            # to make a tuple of records.
+            converted_records = tuple(self._make_record(record) for record in records)
+            if None in converted_records:
+                raise ValueError("Could not convert all inputs to records")
+            if len(converted_records) < 1:
+                raise ValueError("At least one record must be provided")
+            for record in converted_records[1:]:
+                if record.record_type != converted_records[0].record_type:
+                    raise ValueError("Ensemble records must have a uniform record type")
+            self._records = cast(_RecordTupleType, converted_records)
+            self._ensemble_size = len(self._records)
+            if ensemble_size is not None and ensemble_size is not self._ensemble_size:
+                raise ValueError("Ensemble size does not match the record count")
+            self._is_uniform = False
+        else:
+            # A single record was passed, it is a uniform record, the ensemble
+            # size must be set.
+            if ensemble_size is None:
+                raise ValueError("Ensemble size missing for uniform record")
+            self._records = cast(_RecordTupleType, (record,) * ensemble_size)
+            self._ensemble_size = ensemble_size
+            self._is_uniform = True
+
+    def __eq__(self, other: object) -> bool:
+        return self.__dict__ == other.__dict__
+
+    # TODO: this method is a bit funky, in particular how pydantic validation
+    # errors are thrown out. However, this should become nicer when the records
+    # are not using pydantic anymore.
+    @staticmethod
+    def _make_record(value: Any) -> Optional[Union[NumericalRecord, BlobRecord]]:
+        if isinstance(value, (NumericalRecord, BlobRecord)):
+            return value
+        if isinstance(value, dict):
+            # First check for a numerical record, suppress validation errors,
+            # since we will continue to check for blob records
+            with suppress(ValidationError):
+                return NumericalRecord.parse_obj(value)
+            # Also suppres the error here, on failure we will raise a value
+            # error below.,
+            with suppress(ValidationError):
+                return BlobRecord.parse_obj(value)
+        return None
+
+    @property
+    def records(self) -> _RecordTupleType:
+        return self._records
+
+    @property
+    def ensemble_size(self) -> int:
+        return self._ensemble_size
+
+    @property
+    def is_uniform(self) -> bool:
+        return self._is_uniform
 
     @property
     def record_type(self) -> RecordType:
-        return self.records[0].record_type
-
-    @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble(cls, collection: Dict[str, Any]) -> Dict[str, Any]:
-        records = collection["records"]
-        ensemble_size = collection["ensemble_size"]
-        if isinstance(records, tuple):
-            assert len(records) > 0
-            for record in records[1:]:
-                if record.record_type != records[0].record_type:
-                    raise ValueError("Ensemble records must have a uniform record type")
-            if ensemble_size is None:
-                collection["ensemble_size"] = len(records)
-            else:
-                assert ensemble_size == len(records)
-            collection["is_uniform"] = False
-        else:
-            assert ensemble_size is not None
-            collection["records"] = (records,) * ensemble_size
-            collection["is_uniform"] = True
-        return collection
+        assert self._records[0].record_type is not None  # mypy needs this
+        return self._records[0].record_type
 
 
 class RecordTransmitterState(Enum):
