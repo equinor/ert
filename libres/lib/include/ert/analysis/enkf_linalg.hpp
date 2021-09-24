@@ -75,24 +75,6 @@ matrix_type *enkf_linalg_alloc_mp_randrot(int ens_size, rng_type *rng);
 void enkf_linalg_set_randrot(matrix_type *Q, rng_type *rng);
 void enkf_linalg_checkX(const matrix_type *X, bool bootstrap);
 
-//rml_enkf functions
-
-void enkf_linalg_rml_enkfX1(matrix_type *X1, matrix_type *Udr, matrix_type *S,
-                            matrix_type *R);
-void enkf_linalg_rml_enkfX2(matrix_type *X2, double *Wdr, matrix_type *X1,
-                            double a, int nsign);
-void enkf_linalg_rml_enkfX3(matrix_type *X3, matrix_type *VdTr, double *Wdr,
-                            matrix_type *X2, int nsign);
-
-double enkf_linalg_data_mismatch(matrix_type *D, matrix_type *R,
-                                 matrix_type *Sk);
-void enkf_linalg_Covariance(matrix_type *Cd, const matrix_type *E, double nsc,
-                            int nrobs);
-void enkf_linalg_rml_enkfAm(matrix_type *Um, const double *Wm, int nsign1);
-
-void enkf_linalg_rml_enkfX7(matrix_type *X7, matrix_type *VdT, double *Wdr,
-                            double a, matrix_type *X6);
-
 #ifdef __cplusplus
 }
 #endif
