@@ -122,14 +122,18 @@ async def get_record_storage_transmitters(
     uri = f"{records_url}/{record_source}"
     metadata = await get_record_metadata(uri)
     record_type = metadata["record_type"]
+    is_uniform = metadata["is_uniform"]
     uris = metadata["uris"]
-    # We giving an ensemble size we expect the number of uris in the record metadata
-    # to match the size of the ensemble or be equal to 1, in the case of an
-    # uniform record and, has the same data stored only once for all the realizations
-    if ensemble_size is not None and 1 < len(uris) != ensemble_size:
+    # We expect the number of uris in the record metadata to match the size of
+    # the ensemble or be equal to 1, in the case of an uniform record
+    if ensemble_size is not None and not is_uniform and len(uris) != ensemble_size:
         raise ert.exceptions.ErtError(
             f"Ensemble size {ensemble_size} does not match stored record ensemble "
             + f"size {len(uris)}"
+        )
+    if ensemble_size is not None and is_uniform and len(uris) != 1:
+        raise ert.exceptions.ErtError(
+            "Stored record ensemble is uniform but not of length 1"
         )
 
     transmitters = []
@@ -140,7 +144,7 @@ async def get_record_storage_transmitters(
         transmitter.set_transmitted(record_uri, record_type)
         transmitters.append(transmitter)
 
-    if ensemble_size is not None and len(transmitters) == 1:
+    if ensemble_size is not None and is_uniform:
         return {iens: {record_name: transmitters[0]} for iens in range(ensemble_size)}
     return {
         iens: {record_name: transmitter}
@@ -278,25 +282,6 @@ def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
     )
 
 
-def _response_to_record_collection(
-    content: bytes, metadata: _NumericalMetaData
-) -> ert.data.RecordCollection:
-    record_type = metadata.record_type
-    records: Iterable[ert.data.Record]
-    if record_type == ert.data.RecordType.BYTES:
-        records = (
-            ert.data.BlobRecord(data=content) for _ in range(metadata.ensemble_size)
-        )
-    else:
-        records = (
-            ert.data.NumericalRecord(
-                data=_interpret_series(row=row, record_type=metadata.record_type)
-            )
-            for _, row in read_csv(io.BytesIO(content)).iterrows()
-        )
-    return ert.data.RecordCollection(records=tuple(records))
-
-
 async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
     headers = {
         "Token": StorageInfo.token(),
@@ -347,6 +332,7 @@ async def transmit_record_collection(
     record: ert.data.Record
     metadata: Dict[Any, Any] = {
         "record_type": record_coll.record_type,
+        "is_uniform": record_coll.is_uniform,
         "uris": [],
     }
 
@@ -357,15 +343,14 @@ async def transmit_record_collection(
     else:
         ensemble_size = record_coll.ensemble_size
 
-    # Handle special case when we have a uniform record collection (collection of size
-    # one)
-    if record_coll.ensemble_size not in (1, ensemble_size):
+    if record_coll.ensemble_size != ensemble_size:
         raise ert.exceptions.ErtError(
             f"Experiment ensemble size {ensemble_size} does not match"
             f" data size {record_coll.ensemble_size}"
         )
 
-    if record_coll.ensemble_size == 1:
+    # Handle special case of a uniform record collection
+    if record_coll.is_uniform:
         record = record_coll.records[0]
         transmitter = ert.storage.StorageRecordTransmitter(
             name=record_name, storage_url=records_url, iens=0
