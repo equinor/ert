@@ -123,9 +123,13 @@ class EvaluatorTracker:
             if len(not_tracked_yet) > 0:
                 evaluation_id = list(not_tracked_yet)[0]
                 tracked_evaluations.add(evaluation_id)
-                self._track_evaluation(
-                    evaluation_id=evaluation_id, logger=drainer_logger
+                evaluation_tracker_thread = threading.Thread(
+                    target=self._track_evaluation,
+                    args=(evaluation_id, drainer_logger),
+                    name=f"TrackEvaluationThread-{evaluation_id}",
                 )
+                evaluation_tracker_thread.start()
+                evaluation_tracker_thread.join()
             # This sleep needs to be there. Refer to issue #1250: `Authority
             # on information about evaluations/experiments`
             time.sleep(self._next_ensemble_evaluator_wait_time)
