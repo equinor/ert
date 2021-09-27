@@ -1,13 +1,9 @@
-from cloudevents.http.event import CloudEvent
-from datetime import datetime
-from typing import List, Optional, Union
 from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
 )
-import itertools
 import logging
 import queue
 import threading
