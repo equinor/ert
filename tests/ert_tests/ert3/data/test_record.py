@@ -123,7 +123,7 @@ def test_inconsistent_index_record(data, index):
 def test_valid_ensemble_record(raw_ensrec, record_type):
     ensrecord = ert.data.RecordCollection(records=raw_ensrec)
     assert ensrecord.record_type == record_type
-    assert ensrecord.is_uniform is False
+    assert ensrecord.collection_type != ert.data.RecordCollectionType.UNIFORM
     assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
     for raw_record, record in zip(raw_ensrec, ensrecord.records):
         raw_record = raw_record["data"]
@@ -146,9 +146,13 @@ def test_valid_ensemble_record(raw_ensrec, record_type):
 )
 def test_valid_uniform_ensemble_record(raw_ensrec, record_type):
     ens_size = 5
-    ensrecord = ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ens_size)
+    ensrecord = ert.data.RecordCollection(
+        records=(raw_ensrec,),
+        ensemble_size=ens_size,
+        collection_type=ert.data.RecordCollectionType.UNIFORM,
+    )
     assert ensrecord.record_type == record_type
-    assert ensrecord.is_uniform is True
+    assert ensrecord.collection_type == ert.data.RecordCollectionType.UNIFORM
     assert len(ensrecord.records) == ensrecord.ensemble_size == ens_size
     raw_record = raw_ensrec["data"]
     assert len(raw_record) == len(ensrecord.records[0].data)
@@ -172,7 +176,10 @@ def test_invalid_ensemble_record():
 
 def test_uniform_ensemble_record_missing_size():
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records={"data": b"a"})
+        ert.data.RecordCollection(
+            records={"data": b"a"},
+            collection_type=ert.data.RecordCollectionType.UNIFORM,
+        )
 
 
 @pytest.mark.parametrize(
@@ -211,7 +218,7 @@ def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
     assert len(collection.records) == len(raw_collection)
     assert collection.ensemble_size == len(raw_collection)
     assert collection.record_type != ert.data.RecordType.BYTES
-    assert collection.is_uniform is False
+    assert collection.collection_type != ert.data.RecordCollectionType.UNIFORM
 
 
 def test_load_blob_record_collection_from_file(designed_blob_record_file):
@@ -222,7 +229,7 @@ def test_load_blob_record_collection_from_file(designed_blob_record_file):
     assert len(collection.records) == ens_size
     assert collection.ensemble_size == ens_size
     assert collection.record_type == ert.data.RecordType.BYTES
-    assert collection.is_uniform is True
+    assert collection.collection_type == ert.data.RecordCollectionType.UNIFORM
     # All records must be references to the same object:
     for record in collection.records[1:]:
         assert record is collection.records[0]

@@ -12,6 +12,7 @@ from typing import (
     MutableMapping,
     Optional,
     Tuple,
+    Sequence,
     Union,
     cast,
 )
@@ -137,38 +138,43 @@ class BlobRecord(Record):
     data: blob_record_data
 
 
+class RecordCollectionType(str, Enum):
+    NON_UNIFORM = "NON_UNIFORM"
+    UNIFORM = "UNIFORM"
+
+
 _RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
 
 
 class RecordCollection:
-    def __init__(self, records: Any, ensemble_size: Optional[PositiveInt] = None):
-        self._records: _RecordTupleType
-        # Check if a single record is passed.
-        record = self._make_record(records)
-        if record is None:
-            # The input is not a record object, it is not a uniform record. Try
-            # to make a tuple of records.
-            converted_records = tuple(self._make_record(record) for record in records)
-            if None in converted_records:
-                raise ValueError("Could not convert all inputs to records")
-            if len(converted_records) < 1:
-                raise ValueError("At least one record must be provided")
-            for record in converted_records[1:]:
-                if record.record_type != converted_records[0].record_type:
+    def __init__(
+        self,
+        records: Sequence[Any],
+        ensemble_size: Optional[PositiveInt] = None,
+        collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
+    ):
+        converted_records = tuple(self._make_record(record) for record in records)
+        if None in converted_records:
+            raise ValueError("Could not convert input to records")
+        if len(converted_records) < 1:
+            raise ValueError("At least one record must be provided")
+        if collection_type == RecordCollectionType.UNIFORM:
+            if len(converted_records) > 1:
+                raise ValueError("Multiple records provided for a uniform record")
+            if ensemble_size is None:
+                raise ValueError("Ensemble size missing for uniform record")
+            self._records = cast(_RecordTupleType, converted_records * ensemble_size)
+            self._ensemble_size = ensemble_size
+        else:
+            if ensemble_size is not None and ensemble_size != len(converted_records):
+                raise ValueError("Ensemble size does not match the record count")
+            record_type = cast(Record, converted_records[0]).record_type
+            for converted_record in converted_records:
+                if cast(Record, converted_record).record_type != record_type:
                     raise ValueError("Ensemble records must have a uniform record type")
             self._records = cast(_RecordTupleType, converted_records)
             self._ensemble_size = len(self._records)
-            if ensemble_size is not None and ensemble_size is not self._ensemble_size:
-                raise ValueError("Ensemble size does not match the record count")
-            self._is_uniform = False
-        else:
-            # A single record was passed, it is a uniform record, the ensemble
-            # size must be set.
-            if ensemble_size is None:
-                raise ValueError("Ensemble size missing for uniform record")
-            self._records = cast(_RecordTupleType, (record,) * ensemble_size)
-            self._ensemble_size = ensemble_size
-            self._is_uniform = True
+        self._collection_type = collection_type
 
     def __eq__(self, other: object) -> bool:
         return self.__dict__ == other.__dict__
@@ -200,13 +206,13 @@ class RecordCollection:
         return self._ensemble_size
 
     @property
-    def is_uniform(self) -> bool:
-        return self._is_uniform
-
-    @property
     def record_type(self) -> RecordType:
         assert self._records[0].record_type is not None  # mypy needs this
         return self._records[0].record_type
+
+    @property
+    def collection_type(self) -> RecordCollectionType:
+        return self._collection_type
 
 
 class RecordTransmitterState(Enum):
@@ -385,11 +391,13 @@ def load_collection_from_file(
     if mime == "application/octet-stream":
         with open(file_path, "rb") as fb:
             return RecordCollection(
-                records=BlobRecord(data=fb.read()), ensemble_size=ensemble_size
+                records=(BlobRecord(data=fb.read()),),
+                ensemble_size=ensemble_size,
+                collection_type=RecordCollectionType.UNIFORM,
             )
 
     with open(file_path, "rt", encoding="utf-8") as f:
         raw_ensrecord = get_serializer(mime).decode_from_file(f)
     return RecordCollection(
-        records=[NumericalRecord(data=raw_record) for raw_record in raw_ensrecord]
+        records=tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
     )

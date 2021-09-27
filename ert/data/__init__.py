@@ -11,6 +11,7 @@ from ert.data._record import (
     SharedDiskRecordTransmitter,
     load_collection_from_file,
     record_data,
+    RecordCollectionType,
 )
 
 __all__ = (
@@ -26,4 +27,5 @@ __all__ = (
     "RecordTransmitterType",
     "record_data",
     "load_collection_from_file",
+    "RecordCollectionType",
 )

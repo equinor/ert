@@ -23,5 +23,5 @@ def sample_record(
 ) -> ert.data.RecordCollection:
     distribution = parameters_config[parameter_group_name].as_distribution()
     return ert.data.RecordCollection(
-        records=[distribution.sample() for _ in range(ensemble_size)]
+        records=tuple(distribution.sample() for _ in range(ensemble_size))
     )
