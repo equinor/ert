@@ -116,23 +116,29 @@ async def _get_record_storage_transmitters(
     record_name: str,
     record_source: Optional[str] = None,
     ensemble_size: Optional[int] = None,
-) -> Tuple[List[StorageRecordTransmitter], bool]:
+) -> Tuple[List[StorageRecordTransmitter], ert.data.RecordCollectionType]:
     if record_source is None:
         record_source = record_name
     uri = f"{records_url}/{record_source}"
     metadata = await get_record_metadata(uri)
     record_type = metadata["record_type"]
-    is_uniform: bool = metadata["is_uniform"]
+    collection_type: ert.data.RecordCollectionType = metadata["collection_type"]
     uris = metadata["uris"]
     # We expect the number of uris in the record metadata to match the size of
     # the ensemble or be equal to 1, in the case of an uniform record
-    if ensemble_size is not None and not is_uniform and len(uris) != ensemble_size:
-        raise ert.exceptions.ErtError(
-            f"Ensemble size {ensemble_size} does not match stored record ensemble "
-            + f"size {len(uris)}"
-        )
-    if ensemble_size is not None and is_uniform and len(uris) != 1:
-        raise ert.exceptions.ErtError("Ensemble is uniform but stores multiple records")
+    if ensemble_size is not None:
+        if collection_type == ert.data.RecordCollectionType.UNIFORM and len(uris) != 1:
+            raise ert.exceptions.ErtError(
+                "Ensemble is uniform but stores multiple records"
+            )
+        if (
+            collection_type != ert.data.RecordCollectionType.UNIFORM
+            and len(uris) != ensemble_size
+        ):
+            raise ert.exceptions.ErtError(
+                f"Ensemble size {ensemble_size} does not match stored record ensemble "
+                + f"size {len(uris)}"
+            )
 
     transmitters = []
     for record_uri in uris:
@@ -142,7 +148,7 @@ async def _get_record_storage_transmitters(
         transmitter.set_transmitted(record_uri, record_type)
         transmitters.append(transmitter)
 
-    return transmitters, is_uniform
+    return transmitters, collection_type
 
 
 async def get_record_storage_transmitters(
@@ -151,10 +157,13 @@ async def get_record_storage_transmitters(
     record_source: Optional[str] = None,
     ensemble_size: Optional[int] = None,
 ) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
-    transmitters, is_uniform = await _get_record_storage_transmitters(
+    transmitters, collection_type = await _get_record_storage_transmitters(
         records_url, record_name, record_source, ensemble_size
     )
-    if ensemble_size is not None and is_uniform:
+    if (
+        ensemble_size is not None
+        and collection_type == ert.data.RecordCollectionType.UNIFORM
+    ):
         return {iens: {record_name: transmitters[0]} for iens in range(ensemble_size)}
     return {
         iens: {record_name: transmitter}
@@ -342,7 +351,7 @@ async def transmit_record_collection(
     record: ert.data.Record
     metadata: Dict[Any, Any] = {
         "record_type": record_coll.record_type,
-        "is_uniform": record_coll.is_uniform,
+        "collection_type": record_coll.collection_type,
         "uris": [],
     }
 
@@ -360,7 +369,7 @@ async def transmit_record_collection(
         )
 
     # Handle special case of a uniform record collection
-    if record_coll.is_uniform:
+    if record_coll.collection_type == ert.data.RecordCollectionType.UNIFORM:
         record = record_coll.records[0]
         transmitter = ert.storage.StorageRecordTransmitter(
             name=record_name, storage_url=records_url, iens=0
@@ -612,7 +621,7 @@ async def _get_record_collection(
     record_name: str,
     ensemble_size: int,
     record_source: Optional[str] = None,
-) -> Tuple[List[StorageRecordTransmitter], bool]:
+) -> Tuple[List[StorageRecordTransmitter], ert.data.RecordCollectionType]:
     return await _get_record_storage_transmitters(
         records_url, record_name, record_source, ensemble_size
     )
@@ -630,7 +639,7 @@ def get_ensemble_record(
         workspace=workspace, experiment_name=experiment_name
     )
 
-    transmitters, is_uniform = asyncio.get_event_loop().run_until_complete(
+    transmitters, collection_type = asyncio.get_event_loop().run_until_complete(
         _get_record_collection(
             records_url=records_url,
             record_name=record_name,
@@ -638,14 +647,13 @@ def get_ensemble_record(
             ensemble_size=ensemble_size,
         )
     )
-    if is_uniform:
-        record = asyncio.get_event_loop().run_until_complete(transmitters[0].load())
-        return ert.data.RecordCollection(records=record, ensemble_size=ensemble_size)
-    records = [
+    records = tuple(
         asyncio.get_event_loop().run_until_complete(transmitter.load())
         for transmitter in transmitters
-    ]
-    return ert.data.RecordCollection(records=records)
+    )
+    return ert.data.RecordCollection(
+        records=records, ensemble_size=ensemble_size, collection_type=collection_type
+    )
 
 
 def get_ensemble_record_names(

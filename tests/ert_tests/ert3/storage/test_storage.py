@@ -164,7 +164,11 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 def test_add_and_get_uniform_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     ert.storage.init(workspace=tmpdir)
     ens_size = 5
-    ensrecord = ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ens_size)
+    ensrecord = ert.data.RecordCollection(
+        records=(raw_ensrec,),
+        ensemble_size=ens_size,
+        collection_type=ert.data.RecordCollectionType.UNIFORM,
+    )
     future = ert.storage.transmit_record_collection(
         record_coll=ensrecord,
         record_name="my_ensemble_record",
@@ -175,8 +179,6 @@ def test_add_and_get_uniform_ensemble_record(tmpdir, raw_ensrec, ert_storage):
     res = ert.storage.get_ensemble_record(
         workspace=tmpdir, record_name="my_ensemble_record", ensemble_size=ens_size
     )
-
-    assert res.is_uniform is True
     assert res == ensrecord
 
 
