@@ -67,7 +67,6 @@ class EvaluatorTracker:
         self._general_interval = general_interval
 
     def _track_evaluation(self, evaluation_id, logger):
-        failures = 0
         try:
             logger.debug("connecting to new monitor...")
             with create_ee_monitor(
@@ -104,13 +103,7 @@ class EvaluatorTracker:
                         logger.debug("got terminator event")
 
         except (ConnectionRefusedError, ClientError) as e:
-            if not self._model.isFinished():
-                logger.debug(f"connection refused: {e}")
-                failures += 1
-                if failures == EvaluatorTracker.MAX_FAILURES:
-                    logger.debug("giving up.")
-                    self._work_queue.put(EvaluatorTracker.CONNECTION_ERROR)
-                    return
+            logger.debug(f"connection error: {e}")
 
     def _drain_monitor(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
