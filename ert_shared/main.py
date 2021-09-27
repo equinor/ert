@@ -452,6 +452,7 @@ def main():
             logger.info("Running ert with {}".format(str(args)))
             args.func(args)
     except ErtCliError as err:
+        logger.exception(str(err))
         sys.exit(str(err))
     except:
         logger.exception("ert crashed unexpectedly")
