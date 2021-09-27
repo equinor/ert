@@ -123,12 +123,40 @@ def test_inconsistent_index_record(data, index):
 def test_valid_ensemble_record(raw_ensrec, record_type):
     ensrecord = ert.data.RecordCollection(records=raw_ensrec)
     assert ensrecord.record_type == record_type
+    assert ensrecord.is_uniform is False
     assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
     for raw_record, record in zip(raw_ensrec, ensrecord.records):
         raw_record = raw_record["data"]
         assert len(raw_record) == len(record.data)
         for raw_elem, elem in zip(raw_record, record.data):
             assert raw_elem == elem
+
+
+@pytest.mark.parametrize(
+    ("raw_ensrec", "record_type"),
+    (
+        ({"data": [0.5, 1.1, 2.2]}, ert.data.RecordType.LIST_FLOAT),
+        (
+            {"data": {"a": 0.5, "b": 1.1, "c": 2.2}},
+            ert.data.RecordType.MAPPING_STR_FLOAT,
+        ),
+        ({"data": {2: 0.5, 5: 1.1, 7: 2.2}}, ert.data.RecordType.MAPPING_INT_FLOAT),
+        ({"data": b"a"}, ert.data.RecordType.BYTES),
+    ),
+)
+def test_valid_uniform_ensemble_record(raw_ensrec, record_type):
+    ens_size = 5
+    ensrecord = ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ens_size)
+    assert ensrecord.record_type == record_type
+    assert ensrecord.is_uniform is True
+    assert len(ensrecord.records) == ensrecord.ensemble_size == ens_size
+    raw_record = raw_ensrec["data"]
+    assert len(raw_record) == len(ensrecord.records[0].data)
+    for raw_elem, elem in zip(raw_record, ensrecord.records[0].data):
+        assert raw_elem == elem
+    # All records must be references to the same object:
+    for record in ensrecord.records[1:]:
+        assert record is ensrecord.records[0]
 
 
 def test_ensemble_record_not_empty():
@@ -140,6 +168,11 @@ def test_invalid_ensemble_record():
     raw_ensrec = [{"data": b"a"}, {"data": [1.1, 2.2]}]
     with pytest.raises(pydantic.ValidationError):
         ert.data.RecordCollection(records=raw_ensrec)
+
+
+def test_uniform_ensemble_record_missing_size():
+    with pytest.raises(pydantic.ValidationError):
+        ert.data.RecordCollection(records={"data": b"a"})
 
 
 @pytest.mark.parametrize(
@@ -178,13 +211,18 @@ def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
     assert len(collection.records) == len(raw_collection)
     assert collection.ensemble_size == len(raw_collection)
     assert collection.record_type != ert.data.RecordType.BYTES
+    assert collection.is_uniform is False
 
 
 def test_load_blob_record_collection_from_file(designed_blob_record_file):
     ens_size = 5
     collection = ert.data.load_collection_from_file(
-        designed_blob_record_file, "application/octet-stream", ens_size=ens_size
+        designed_blob_record_file, "application/octet-stream", ensemble_size=ens_size
     )
     assert len(collection.records) == ens_size
     assert collection.ensemble_size == ens_size
     assert collection.record_type == ert.data.RecordType.BYTES
+    assert collection.is_uniform is True
+    # All records must be references to the same object:
+    for record in collection.records[1:]:
+        assert record is collection.records[0]

@@ -17,6 +17,7 @@ from pydantic import (
     StrictFloat,
     StrictInt,
     StrictStr,
+    PositiveInt,
     root_validator,
     validator,
 )
@@ -131,34 +132,39 @@ class BlobRecord(Record):
     data: blob_record_data
 
 
+_RecordCollectionDataTypes = Union[
+    NumericalRecord, Tuple[NumericalRecord, ...], BlobRecord, Tuple[BlobRecord, ...]
+]
+
+
 class RecordCollection(_DataElement):
-    records: Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
-    ensemble_size: Optional[int] = None
+    records: _RecordCollectionDataTypes
+    ensemble_size: Optional[PositiveInt] = None
+    is_uniform: bool = True
 
     @property
-    def record_type(self) -> Optional[RecordType]:
+    def record_type(self) -> RecordType:
         return self.records[0].record_type
 
-    @validator("ensemble_size", pre=True, always=True)
-    def ensemble_size_validator(
-        cls, ensemble_size: Optional[int], values: Dict[str, Any]
-    ) -> Optional[int]:
-        if ensemble_size is None and "records" in values:
-            ensemble_size = len(values["records"])
-        assert ensemble_size is not None and ensemble_size > 0
-        return ensemble_size
-
     @root_validator(skip_on_failure=True)
-    def ensure_consistent_ensemble(
-        cls, ensemble_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        assert "records" in ensemble_record and "ensemble_size" in ensemble_record
-        assert len(ensemble_record["records"]) == ensemble_record["ensemble_size"]
-        record_type = ensemble_record["records"][0].record_type
-        for record in ensemble_record["records"][1:]:
-            if record.record_type != record_type:
-                raise ValueError("Ensemble records must have a uniform record type")
-        return ensemble_record
+    def ensure_consistent_ensemble(cls, collection: Dict[str, Any]) -> Dict[str, Any]:
+        records = collection["records"]
+        ensemble_size = collection["ensemble_size"]
+        if isinstance(records, tuple):
+            assert len(records) > 0
+            for record in records[1:]:
+                if record.record_type != records[0].record_type:
+                    raise ValueError("Ensemble records must have a uniform record type")
+            if ensemble_size is None:
+                collection["ensemble_size"] = len(records)
+            else:
+                assert ensemble_size == len(records)
+            collection["is_uniform"] = False
+        else:
+            assert ensemble_size is not None
+            collection["records"] = (records,) * ensemble_size
+            collection["is_uniform"] = True
+        return collection
 
 
 class RecordTransmitterState(Enum):
@@ -332,12 +338,12 @@ class InMemoryRecordTransmitter(RecordTransmitter):
 
 
 def load_collection_from_file(
-    file_path: pathlib.Path, mime: str, ens_size: int = 1
+    file_path: pathlib.Path, mime: str, ensemble_size: int = 1
 ) -> RecordCollection:
     if mime == "application/octet-stream":
         with open(file_path, "rb") as fb:
             return RecordCollection(
-                records=[BlobRecord(data=fb.read())] * ens_size,
+                records=BlobRecord(data=fb.read()), ensemble_size=ensemble_size
             )
 
     with open(file_path, "rt", encoding="utf-8") as f:
