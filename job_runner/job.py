@@ -18,12 +18,8 @@ class Job(object):
         self.sleep_interval = sleep_interval
         self.job_data = job_data
         self.index = index
-        self.std_err = None
-        self.std_out = None
-        if "stderr" in job_data and job_data["stderr"]:
-            self.std_err = job_data["stderr"]
-        if "stdout" in job_data and job_data["stdout"]:
-            self.std_out = job_data["stdout"]
+        self.std_err = job_data.get("stderr")
+        self.std_out = job_data.get("stdout")
 
     def run(self):
         start_message = Start(self)
