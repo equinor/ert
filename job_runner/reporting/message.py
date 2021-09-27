@@ -10,6 +10,13 @@ _RUNNER_STATUS_SUCCESS = "Success"
 _RUNNER_STATUS_FAILURE = "Failure"
 
 
+_JOB_EXIT_FAILED_STRING = """Job {job_name} FAILED with code {exit_code}
+----------------------------------------------------------
+Error message: {error_message}
+----------------------------------------------------------
+"""
+
+
 class _MetaMessage(type):
     def __repr__(cls):
         return f"MessageType<{cls.__name__}>"
