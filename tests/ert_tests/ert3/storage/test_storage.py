@@ -131,10 +131,12 @@ def _assert_equal_data(a, b):
         [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
-def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
+def test_add_and_get_ensemble_record(
+    tmpdir, raw_ensrec, raw_ensrec_to_records, ert_storage
+):
     ert.storage.init(workspace=tmpdir)
 
-    ensrecord = ert.data.RecordCollection(records=raw_ensrec)
+    ensrecord = ert.data.RecordCollection(records=raw_ensrec_to_records(raw_ensrec))
     future = ert.storage.transmit_record_collection(
         record_coll=ensrecord,
         record_name="my_ensemble_record",
@@ -155,17 +157,19 @@ def test_add_and_get_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 @pytest.mark.parametrize(
     "raw_ensrec",
     (
-        {"data": [0.5, 1.1, 2.2]},
-        {"data": {"a": 0.5, "b": 1.1, "c": 2.2}},
-        {"data": {2: 0.5, 5: 1.1, 7: 2.2}},
-        {"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"},
+        [{"data": [0.5, 1.1, 2.2]}],
+        [{"data": {"a": 0.5, "b": 1.1, "c": 2.2}}],
+        [{"data": {2: 0.5, 5: 1.1, 7: 2.2}}],
+        [{"data": b"asdfkasjdhjflkjah21WE123TTDSG34f"}],
     ),
 )
-def test_add_and_get_uniform_ensemble_record(tmpdir, raw_ensrec, ert_storage):
+def test_add_and_get_uniform_ensemble_record(
+    tmpdir, raw_ensrec, raw_ensrec_to_records, ert_storage
+):
     ert.storage.init(workspace=tmpdir)
     ens_size = 5
     ensrecord = ert.data.RecordCollection(
-        records=(raw_ensrec,),
+        records=raw_ensrec_to_records(raw_ensrec),
         ensemble_size=ens_size,
         collection_type=ert.data.RecordCollectionType.UNIFORM,
     )
@@ -183,10 +187,12 @@ def test_add_and_get_uniform_ensemble_record(tmpdir, raw_ensrec, ert_storage):
 
 
 @pytest.mark.requires_ert_storage
-def test_add_ensemble_record_twice(tmpdir, ert_storage):
+def test_add_ensemble_record_twice(tmpdir, raw_ensrec_to_records, ert_storage):
     ert.storage.init(workspace=tmpdir)
 
-    ensrecord = ert.data.RecordCollection(records=[{"data": [42]}])
+    ensrecord = ert.data.RecordCollection(
+        records=raw_ensrec_to_records([{"data": [42]}])
+    )
     future = ert.storage.transmit_record_collection(
         record_coll=ensrecord,
         record_name="my_ensemble_record",
@@ -231,10 +237,12 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
-                records=[
-                    ert.data.NumericalRecord(data=[nid * eid * rid])
-                    for rid in range(ensemble_size)
-                ]
+                records=tuple(
+                    [
+                        ert.data.NumericalRecord(data=[nid * eid * rid])
+                        for rid in range(ensemble_size)
+                    ]
+                )
             )
             asyncio.get_event_loop().run_until_complete(
                 ert.storage.transmit_record_collection(
@@ -250,10 +258,12 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
-                records=[
-                    ert.data.NumericalRecord(data=[nid * eid * rid])
-                    for rid in range(ensemble_size)
-                ]
+                records=tuple(
+                    [
+                        ert.data.NumericalRecord(data=[nid * eid * rid])
+                        for rid in range(ensemble_size)
+                    ]
+                )
             )
             fetched_ensemble_record = ert.storage.get_ensemble_record(
                 workspace=tmpdir,
@@ -265,7 +275,9 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
 
 
 @pytest.mark.requires_ert_storage
-def test_add_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
+def test_add_ensemble_record_to_non_existing_experiment(
+    tmpdir, ert_storage, raw_ensrec_to_records
+):
     ert.storage.init(workspace=tmpdir)
     with pytest.raises(
         ert.exceptions.NonExistantExperiment,
@@ -273,7 +285,9 @@ def test_add_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
     ):
         asyncio.get_event_loop().run_until_complete(
             ert.storage.transmit_record_collection(
-                record_coll=ert.data.RecordCollection(records=[{"data": [0, 1, 2]}]),
+                record_coll=ert.data.RecordCollection(
+                    records=raw_ensrec_to_records([{"data": [0, 1, 2]}])
+                ),
                 record_name="my_record",
                 workspace=tmpdir,
                 experiment_name="non_existing_experiment",
@@ -312,9 +326,9 @@ def test_get_record_names(tmpdir, ert_storage):
         for nid in range(1, 3):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
-                records=[
-                    ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)
-                ]
+                records=tuple(
+                    [ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)]
+                )
             )
             future = ert.storage.transmit_record_collection(
                 record_coll=ensemble_record,

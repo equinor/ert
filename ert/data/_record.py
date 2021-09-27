@@ -12,11 +12,9 @@ from typing import (
     MutableMapping,
     Optional,
     Tuple,
-    Sequence,
     Union,
     cast,
 )
-from contextlib import suppress
 import aiofiles
 
 # Type hinting for wrap must be turned off until (1) is resolved.
@@ -31,7 +29,6 @@ from pydantic import (
     PositiveInt,
     root_validator,
     validator,
-    ValidationError,
 )
 from ert.serialization import get_serializer
 
@@ -149,53 +146,31 @@ _RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
 class RecordCollection:
     def __init__(
         self,
-        records: Sequence[Any],
+        records: Tuple[Record, ...],
         ensemble_size: Optional[PositiveInt] = None,
         collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
     ):
-        converted_records = tuple(self._make_record(record) for record in records)
-        if None in converted_records:
-            raise ValueError("Could not convert input to records")
-        if len(converted_records) < 1:
+        if len(records) < 1:
             raise ValueError("At least one record must be provided")
         if collection_type == RecordCollectionType.UNIFORM:
-            if len(converted_records) > 1:
+            if len(records) > 1:
                 raise ValueError("Multiple records provided for a uniform record")
             if ensemble_size is None:
                 raise ValueError("Ensemble size missing for uniform record")
-            self._records = cast(_RecordTupleType, converted_records * ensemble_size)
+            self._records = cast(_RecordTupleType, records * ensemble_size)
             self._ensemble_size = ensemble_size
         else:
-            if ensemble_size is not None and ensemble_size != len(converted_records):
+            if ensemble_size is not None and ensemble_size != len(records):
                 raise ValueError("Ensemble size does not match the record count")
-            record_type = cast(Record, converted_records[0]).record_type
-            for converted_record in converted_records:
-                if cast(Record, converted_record).record_type != record_type:
+            for record in records:
+                if record.record_type != records[0].record_type:
                     raise ValueError("Ensemble records must have a uniform record type")
-            self._records = cast(_RecordTupleType, converted_records)
+            self._records = cast(_RecordTupleType, records)
             self._ensemble_size = len(self._records)
         self._collection_type = collection_type
 
     def __eq__(self, other: object) -> bool:
         return self.__dict__ == other.__dict__
-
-    # TODO: this method is a bit funky, in particular how pydantic validation
-    # errors are thrown out. However, this should become nicer when the records
-    # are not using pydantic anymore.
-    @staticmethod
-    def _make_record(value: Any) -> Optional[Union[NumericalRecord, BlobRecord]]:
-        if isinstance(value, (NumericalRecord, BlobRecord)):
-            return value
-        if isinstance(value, dict):
-            # First check for a numerical record, suppress validation errors,
-            # since we will continue to check for blob records
-            with suppress(ValidationError):
-                return NumericalRecord.parse_obj(value)
-            # Also suppres the error here, on failure we will raise a value
-            # error below.,
-            with suppress(ValidationError):
-                return BlobRecord.parse_obj(value)
-        return None
 
     @property
     def records(self) -> _RecordTupleType:
