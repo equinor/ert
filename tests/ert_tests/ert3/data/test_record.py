@@ -120,8 +120,8 @@ def test_inconsistent_index_record(data, index):
         ),
     ),
 )
-def test_valid_ensemble_record(raw_ensrec, record_type):
-    ensrecord = ert.data.RecordCollection(records=raw_ensrec)
+def test_valid_ensemble_record(raw_ensrec, raw_ensrec_to_records, record_type):
+    ensrecord = ert.data.RecordCollection(records=raw_ensrec_to_records(raw_ensrec))
     assert ensrecord.record_type == record_type
     assert ensrecord.collection_type != ert.data.RecordCollectionType.UNIFORM
     assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
@@ -135,26 +135,26 @@ def test_valid_ensemble_record(raw_ensrec, record_type):
 @pytest.mark.parametrize(
     ("raw_ensrec", "record_type"),
     (
-        ({"data": [0.5, 1.1, 2.2]}, ert.data.RecordType.LIST_FLOAT),
+        ([{"data": [0.5, 1.1, 2.2]}], ert.data.RecordType.LIST_FLOAT),
         (
-            {"data": {"a": 0.5, "b": 1.1, "c": 2.2}},
+            [{"data": {"a": 0.5, "b": 1.1, "c": 2.2}}],
             ert.data.RecordType.MAPPING_STR_FLOAT,
         ),
-        ({"data": {2: 0.5, 5: 1.1, 7: 2.2}}, ert.data.RecordType.MAPPING_INT_FLOAT),
-        ({"data": b"a"}, ert.data.RecordType.BYTES),
+        ([{"data": {2: 0.5, 5: 1.1, 7: 2.2}}], ert.data.RecordType.MAPPING_INT_FLOAT),
+        ([{"data": b"a"}], ert.data.RecordType.BYTES),
     ),
 )
-def test_valid_uniform_ensemble_record(raw_ensrec, record_type):
+def test_valid_uniform_ensemble_record(raw_ensrec, raw_ensrec_to_records, record_type):
     ens_size = 5
     ensrecord = ert.data.RecordCollection(
-        records=(raw_ensrec,),
+        records=raw_ensrec_to_records(raw_ensrec),
         ensemble_size=ens_size,
         collection_type=ert.data.RecordCollectionType.UNIFORM,
     )
     assert ensrecord.record_type == record_type
     assert ensrecord.collection_type == ert.data.RecordCollectionType.UNIFORM
     assert len(ensrecord.records) == ensrecord.ensemble_size == ens_size
-    raw_record = raw_ensrec["data"]
+    raw_record = raw_ensrec[0]["data"]
     assert len(raw_record) == len(ensrecord.records[0].data)
     for raw_elem, elem in zip(raw_record, ensrecord.records[0].data):
         assert raw_elem == elem
@@ -165,19 +165,19 @@ def test_valid_uniform_ensemble_record(raw_ensrec, record_type):
 
 def test_ensemble_record_not_empty():
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records=[])
+        ert.data.RecordCollection(records=tuple())
 
 
-def test_invalid_ensemble_record():
+def test_invalid_ensemble_record(raw_ensrec_to_records):
     raw_ensrec = [{"data": b"a"}, {"data": [1.1, 2.2]}]
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records=raw_ensrec)
+        ert.data.RecordCollection(records=raw_ensrec_to_records(raw_ensrec))
 
 
-def test_uniform_ensemble_record_missing_size():
+def test_uniform_ensemble_record_missing_size(raw_ensrec_to_records):
     with pytest.raises(ValueError):
         ert.data.RecordCollection(
-            records={"data": b"a"},
+            records=raw_ensrec_to_records([{"data": b"a"}]),
             collection_type=ert.data.RecordCollectionType.UNIFORM,
         )
 
@@ -189,9 +189,9 @@ def test_uniform_ensemble_record_missing_size():
         [{"data": {1: 1.1}}, {"data": [1.1, 2.2]}],
     ),
 )
-def test_non_uniform_ensemble_record_types(raw_ensrec):
+def test_non_uniform_ensemble_record_types(raw_ensrec, raw_ensrec_to_records):
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records=raw_ensrec)
+        ert.data.RecordCollection(records=raw_ensrec_to_records(raw_ensrec))
 
 
 @pytest.mark.parametrize(
@@ -203,9 +203,13 @@ def test_non_uniform_ensemble_record_types(raw_ensrec):
         ),
     ),
 )
-def test_inconsistent_size_ensemble_record(raw_ensrec, ensemble_size):
+def test_inconsistent_size_ensemble_record(
+    raw_ensrec, raw_ensrec_to_records, ensemble_size
+):
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records=raw_ensrec, ensemble_size=ensemble_size)
+        ert.data.RecordCollection(
+            records=raw_ensrec_to_records(raw_ensrec), ensemble_size=ensemble_size
+        )
 
 
 def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):

@@ -11,6 +11,7 @@ from ert_shared.storage.server_monitor import (
 
 import requests
 import pytest
+import typing
 
 import ert3
 
@@ -284,3 +285,18 @@ def ert_storage(ert_storage_client, monkeypatch):
         "get_info",
         lambda: {"baseurl": "http://127.0.0.1:51820", "auth": ("", "")},
     )
+
+
+@pytest.fixture
+def raw_ensrec_to_records():
+    def _coerce_raw_ensrec(spec) -> typing.Tuple[ert.data.Record]:
+        recs = []
+        for rec in spec:
+            data = rec["data"]
+            if isinstance(data, bytes):
+                recs.append(ert.data.BlobRecord.parse_obj(rec))
+            else:
+                recs.append(ert.data.NumericalRecord.parse_obj(rec))
+        return tuple(recs)
+
+    return _coerce_raw_ensrec
