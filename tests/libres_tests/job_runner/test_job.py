@@ -92,3 +92,24 @@ class JobTests(TestCase):
         with self.assertRaises(IOError):
             for _ in job.run():
                 pass
+
+
+def test_init_job_no_std():
+    job = Job(
+        {},
+        0,
+    )
+    assert job.std_err is None
+    assert job.std_out is None
+
+
+def test_init_job_with_std():
+    job = Job(
+        {
+            "stdout": "exit_out",
+            "stderr": "exit_err",
+        },
+        0,
+    )
+    assert job.std_err == "exit_err"
+    assert job.std_out == "exit_out"
