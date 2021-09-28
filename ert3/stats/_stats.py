@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, cast
 
 import numpy as np
 import scipy.stats
@@ -29,7 +29,7 @@ class Distribution:
         elif index is not None:
             self._size = len(tuple(index))
             self._as_array = False
-            self._index = tuple(idx for idx in index)
+            self._index = cast(ert.data.RecordIndex, tuple(idx for idx in index))
 
         self._raw_rvs = rvs
         self._raw_ppf = ppf
@@ -47,7 +47,9 @@ class Distribution:
             return ert.data.NumericalRecord(data=x.tolist())
         else:
             return ert.data.NumericalRecord(
-                data={idx: float(val) for idx, val in zip(self.index, x)}
+                data={
+                    idx: float(val) for idx, val in zip(self.index, x)  # type: ignore
+                }
             )
 
     def sample(self) -> ert.data.Record:

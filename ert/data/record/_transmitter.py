@@ -1,19 +1,13 @@
-import pathlib
 import shutil
 import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
-    Any,
     Dict,
     List,
-    Mapping,
-    MutableMapping,
     Optional,
-    Tuple,
     Union,
-    cast,
 )
 import aiofiles
 
@@ -21,16 +15,14 @@ import aiofiles
 # (1) https://github.com/Tinche/aiofiles/issues/8
 from aiofiles.os import wrap  # type: ignore
 from pydantic import (
-    BaseModel,
     StrictBytes,
     StrictFloat,
     StrictInt,
     StrictStr,
-    PositiveInt,
-    root_validator,
-    validator,
 )
 from ert.serialization import get_serializer
+
+from ._record import Record, RecordType, NumericalRecord, BlobRecord
 
 _copy = wrap(shutil.copy)
 
@@ -42,152 +34,6 @@ numerical_record_data = Union[
 ]
 blob_record_data = StrictBytes
 record_data = Union[numerical_record_data, blob_record_data]
-
-
-def parse_json_key_as_int(obj: Any) -> Any:
-    if isinstance(obj, dict):
-        return {int(k): v for k, v in obj.items()}
-    return obj
-
-
-class _DataElement(BaseModel):
-    class Config:
-        validate_all = True
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        arbitrary_types_allowed = True
-
-
-RecordIndex = Tuple[Union[StrictInt, StrictStr], ...]
-
-
-def _build_record_index(
-    data: numerical_record_data,
-) -> RecordIndex:
-    if isinstance(data, MutableMapping):
-        return tuple(data.keys())
-    else:
-        return tuple(range(len(data)))
-
-
-class RecordType(str, Enum):
-    LIST_FLOAT = "LIST_FLOAT"
-    MAPPING_INT_FLOAT = "MAPPING_INT_FLOAT"
-    MAPPING_STR_FLOAT = "MAPPING_STR_FLOAT"
-    BYTES = "BYTES"
-
-
-class Record(_DataElement):
-    data: record_data
-    record_type: Optional[RecordType] = None
-
-    @validator("record_type", pre=True)
-    def record_type_validator(
-        cls,
-        record_type: Optional[RecordType],
-        values: Dict[str, Any],
-    ) -> Optional[RecordType]:
-        if record_type is None and "data" in values:
-            data = values["data"]
-            if isinstance(data, list):
-                if not data or isinstance(data[0], (int, float)):
-                    return RecordType.LIST_FLOAT
-            elif isinstance(data, bytes):
-                return RecordType.BYTES
-            elif isinstance(data, Mapping):
-                if not data:
-                    return RecordType.MAPPING_STR_FLOAT
-                if isinstance(list(data.keys())[0], (int, float)):
-                    return RecordType.MAPPING_INT_FLOAT
-                if isinstance(list(data.keys())[0], str):
-                    return RecordType.MAPPING_STR_FLOAT
-        return record_type
-
-
-class NumericalRecord(Record):
-    data: numerical_record_data
-    index: Optional[RecordIndex] = None
-
-    @validator("index", pre=True)
-    def index_validator(
-        cls,
-        index: Optional[RecordIndex],
-        values: Dict[str, Any],
-    ) -> Optional[RecordIndex]:
-        if index is None and "data" in values:
-            index = _build_record_index(values["data"])
-        return index
-
-    @root_validator(skip_on_failure=True)
-    def ensure_consistent_index(cls, record: Dict[str, Any]) -> Dict[str, Any]:
-        assert (
-            "data" in record and "index" in record
-        ), "both data and index must be defined for a record"
-        norm_record_index = _build_record_index(record["data"])
-        assert (
-            norm_record_index == record["index"]
-        ), f"inconsistent index {norm_record_index} vs {record['index']}"
-        return record
-
-
-class BlobRecord(Record):
-    data: blob_record_data
-
-
-class RecordCollectionType(str, Enum):
-    NON_UNIFORM = "NON_UNIFORM"
-    UNIFORM = "UNIFORM"
-
-
-_RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
-
-
-class RecordCollection:
-    def __init__(
-        self,
-        records: Tuple[Record, ...],
-        ensemble_size: Optional[PositiveInt] = None,
-        collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
-    ):
-        if len(records) < 1:
-            raise ValueError("At least one record must be provided")
-        if collection_type == RecordCollectionType.UNIFORM:
-            if len(records) > 1:
-                raise ValueError("Multiple records provided for a uniform record")
-            if ensemble_size is None:
-                raise ValueError("Ensemble size missing for uniform record")
-            self._records = cast(_RecordTupleType, records * ensemble_size)
-            self._ensemble_size = ensemble_size
-        else:
-            if ensemble_size is not None and ensemble_size != len(records):
-                raise ValueError("Ensemble size does not match the record count")
-            for record in records:
-                if record.record_type != records[0].record_type:
-                    raise ValueError("Ensemble records must have a uniform record type")
-            self._records = cast(_RecordTupleType, records)
-            self._ensemble_size = len(self._records)
-        self._collection_type = collection_type
-
-    def __eq__(self, other: object) -> bool:
-        return self.__dict__ == other.__dict__
-
-    @property
-    def records(self) -> _RecordTupleType:
-        return self._records
-
-    @property
-    def ensemble_size(self) -> int:
-        return self._ensemble_size
-
-    @property
-    def record_type(self) -> RecordType:
-        assert self._records[0].record_type is not None  # mypy needs this
-        return self._records[0].record_type
-
-    @property
-    def collection_type(self) -> RecordCollectionType:
-        return self._collection_type
 
 
 class RecordTransmitterState(Enum):
@@ -354,25 +200,11 @@ class InMemoryRecordTransmitter(RecordTransmitter):
         return "in_memory"
 
     async def _load_numerical_record(self) -> NumericalRecord:
-        return NumericalRecord(data=self._record.data)
+        if not isinstance(self._record, NumericalRecord):
+            raise TypeError("loading numerical from blob record")
+        return self._record
 
     async def _load_blob_record(self) -> BlobRecord:
-        return BlobRecord(data=self._record.data)
-
-
-def load_collection_from_file(
-    file_path: pathlib.Path, mime: str, ensemble_size: int = 1
-) -> RecordCollection:
-    if mime == "application/octet-stream":
-        with open(file_path, "rb") as fb:
-            return RecordCollection(
-                records=(BlobRecord(data=fb.read()),),
-                ensemble_size=ensemble_size,
-                collection_type=RecordCollectionType.UNIFORM,
-            )
-
-    with open(file_path, "rt", encoding="utf-8") as f:
-        raw_ensrecord = get_serializer(mime).decode_from_file(f)
-    return RecordCollection(
-        records=tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
-    )
+        if not isinstance(self._record, BlobRecord):
+            raise TypeError("loading blob from numerical record")
+        return self._record
