@@ -1,38 +1,52 @@
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 import logging
 import logging.config
 import os
-import sys
 import re
-import yaml
+import sys
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
+import yaml
+
 from ert_logging import LOGGING_CONFIG
+import ert_shared
 from ert_shared import clear_global_state
+<<<<<<< HEAD
 from ert_shared.cli.main import run_cli, ErtCliError
+=======
+>>>>>>> Import order
 from ert_shared.cli import (
-    ENSEMBLE_SMOOTHER_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
-    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
+from ert_shared.cli.main import ErtCliError, run_cli
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
+from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.ide.keywords.definitions import (
-    RangeStringArgument,
+    IntegerArgument,
+    NumberListStringArgument,
     ProperNameArgument,
     ProperNameFormatArgument,
-    NumberListStringArgument,
-    IntegerArgument,
+    RangeStringArgument,
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
+<<<<<<< HEAD
 from ert_shared.plugins.plugin_manager import ErtPluginContext
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert_shared.services import Storage, WebvizErt
 import ert_shared
+=======
+from ert_shared.plugins import launch_visualization_plugin
+from ert_shared.plugins.plugin_manager import ErtPluginContext
+from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
+from ert_shared.storage.main import run_server
+>>>>>>> Import order
 
 
 def run_ert_storage(args):
