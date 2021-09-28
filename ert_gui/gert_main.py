@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import logging
 
 from qtpy.QtCore import Qt, QLocale
 from qtpy.QtWidgets import QApplication, QMessageBox
@@ -47,6 +48,16 @@ def run_gui(args):
     app = QApplication([])  # Early so that QT is initialized before other imports
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     res_config = ResConfig(args.config)
+
+    # Create logger inside function to make sure all handlers have been added to the root-logger.
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Logging forward model jobs",
+        extra={
+            "workflow_jobs": str(res_config.model_config.getForwardModel().joblist())
+        },
+    )
+
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
 

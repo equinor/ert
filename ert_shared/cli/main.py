@@ -27,6 +27,16 @@ class ErtCliError(Exception):
 
 def run_cli(args):
     res_config = ResConfig(args.config)
+
+    # Create logger inside function to make sure all handlers have been added to the root-logger.
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Logging forward model jobs",
+        extra={
+            "workflow_jobs": str(res_config.model_config.getForwardModel().joblist())
+        },
+    )
+
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtCliNotifier(ert, args.config)
