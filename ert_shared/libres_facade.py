@@ -1,3 +1,4 @@
+import os
 from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
@@ -46,6 +47,12 @@ class LibresFacade(object):
         return str(
             self._enkf_main.getEnkfFsManager().getCurrentFileSystem().getCaseName()
         )
+
+    def get_active_realizations(self, case_name):
+        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
+        realizations = SummaryCollector.createActiveList(self._enkf_main, fs)
+
+        return realizations
 
     def get_queue_config(self):
         return self._enkf_main.get_queue_config()
@@ -222,6 +229,10 @@ class LibresFacade(object):
         """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().summaryKeys()
 
+    def get_summary_keys(self):
+        """:rtype: list of str"""
+        return self._enkf_main.getKeyManager().summaryKeys()
+
     def is_gen_kw_key(self, key):
         """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genKwKeys()
@@ -233,6 +244,10 @@ class LibresFacade(object):
     def is_gen_data_key(self, key):
         """:rtype: bool"""
         return key in self._enkf_main.getKeyManager().genDataKeys()
+
+    def get_gen_data_keys(self):
+        """:rtype: list of str"""
+        return self._enkf_main.getKeyManager().genDataKeys()
 
     def gen_kw_priors(self):
         return self._enkf_main.getKeyManager().gen_kw_priors()

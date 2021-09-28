@@ -20,15 +20,15 @@ class Response(gr.ObjectType):
 
     @staticmethod
     def resolve_id(root: Any, info: "ResolveInfo") -> UUID:
-        return get_id("response", root)
+        return get_id("response", root["name"])
 
     @staticmethod
     def resolve_name(root: Any, info: "ResolveInfo") -> str:
-        return root
+        return root["name"]
 
     @staticmethod
     def resolve_realization_index(root: Any, info: "ResolveInfo") -> int:
-        return 1
+        return root["real_id"]
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:

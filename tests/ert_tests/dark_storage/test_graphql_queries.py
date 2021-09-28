@@ -77,8 +77,10 @@ def test_get_responses(poly_example_tmp_dir, dark_storage_client):
     answer_json = resp.json()
     print(answer_json)
     responses = answer_json["data"]["experiments"][0]["ensembles"][0]["responses"]
-    assert len(responses) == 1
-    assert responses[0]["name"] == "POLY_RES@0"
+    assert len(responses) == 3
+    for real_idx, response in zip([1, 2, 4], responses):
+        assert response["name"] == "POLY_RES@0"
+        assert response["realizationIndex"] == real_idx
 
 
 def test_query_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
