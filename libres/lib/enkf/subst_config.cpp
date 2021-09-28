@@ -253,4 +253,10 @@ static void subst_config_init_load(subst_config_type *subst_config,
         int num_cpu = ecl_util_get_num_cpu(data_file);
         subst_config_install_num_cpu(subst_config, num_cpu);
     }
+
+    // The NUM_CPU keyword in the user's config overrides the one set by the DATA_FILE above
+    if (config_content_has_item(content, NUM_CPU_KEY)) {
+        int num_cpu = config_content_get_value_as_int(content, NUM_CPU_KEY);
+        subst_config_install_num_cpu(subst_config, num_cpu);
+    }
 }
