@@ -17,6 +17,8 @@ from ert_shared.status.entity.event import (
 )
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
+from ert_shared.feature_toggling import FeatureToggling
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
     QDialog,
@@ -270,10 +272,16 @@ class RunDialog(QDialog):
 
         self._ticker.start(1000)
 
+        ee_config = (
+            EnsembleEvaluatorService.get_config()
+            if FeatureToggling.is_enabled("ensemble-evaluator")
+            else None
+        )
+
         tracker = create_tracker(
             self._run_model,
             num_realizations=self._simulations_argments["active_realizations"].count(),
-            ee_config=self._simulations_argments.get("ee_config", None),
+            ee_config=ee_config,
         )
 
         worker = TrackerWorker(tracker)

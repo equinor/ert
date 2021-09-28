@@ -1,3 +1,4 @@
+from typing import Dict
 from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -16,6 +17,9 @@ from ert_shared.models.base_run_model import BaseRunModel
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+from ert_shared.ensemble_evaluator.monitor import (
+    create_experiment as create_experiment_monitor,
+)
 from ert_shared.ensemble_evaluator.utils import (
     wait_for_evaluator,
     get_current_evaluations,
@@ -53,7 +57,6 @@ class EvaluatorTracker:
         self._cert = cert
         self._protocol = "ws" if cert is None else "wss"
         self._monitor_url = f"{self._protocol}://{host}:{port}"
-        self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
 
         self._work_queue = queue.Queue()
 
@@ -108,31 +111,32 @@ class EvaluatorTracker:
     def _drain_monitor(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
-        tracked_evaluations = set()
-        while not self._model.isFinished():
-            current_evaluations = asyncio.get_event_loop().run_until_complete(
-                get_current_evaluations(
-                    base_url=self._monitor_url,
-                    token=self._token,
-                    cert=self._cert,
+        tracked_evaluations: Dict[str, threading.Thread] = dict()
+        while self._model.experiment_id is None:
+            time.sleep(0.1)
+        with create_experiment_monitor(
+            self._model.experiment_id,
+            self._monitor_host,
+            self._monitor_port,
+            protocol=self._protocol,
+            cert=self._cert,
+            token=self._token,
+        ) as monitor:
+            for event in monitor.track():
+                if not event.data:
+                    continue
+                not_tracked_yet = set(event.data["evaluations"]) - set(
+                    tracked_evaluations.keys()
                 )
-            )
-            not_tracked_yet = set(current_evaluations) - tracked_evaluations
-            if len(not_tracked_yet) > 1:
-                drainer_logger.warning("More than one new evaluation!")
-            if len(not_tracked_yet) > 0:
-                evaluation_id = list(not_tracked_yet)[0]
-                tracked_evaluations.add(evaluation_id)
-                evaluation_tracker_thread = threading.Thread(
-                    target=self._track_evaluation,
-                    args=(evaluation_id, drainer_logger),
-                    name=f"TrackEvaluationThread-{evaluation_id}",
-                )
-                evaluation_tracker_thread.start()
-                evaluation_tracker_thread.join()
-            # This sleep needs to be there. Refer to issue #1250: `Authority
-            # on information about evaluations/experiments`
-            time.sleep(self._next_ensemble_evaluator_wait_time)
+                for evaluation_id in not_tracked_yet:
+                    tracked_evaluations[evaluation_id] = threading.Thread(
+                        target=self._track_evaluation,
+                        args=(evaluation_id, drainer_logger),
+                        name=f"TrackEvaluationThread-{evaluation_id}",
+                    )
+                    tracked_evaluations[evaluation_id].start()
+            for t in tracked_evaluations.values():
+                t.join()
 
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
