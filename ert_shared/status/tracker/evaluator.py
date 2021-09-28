@@ -59,6 +59,7 @@ class EvaluatorTracker:
         self._monitor_url = f"{self._protocol}://{host}:{port}"
 
         self._work_queue = queue.Queue()
+        self._last_eval_id = None
 
         self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
@@ -135,6 +136,7 @@ class EvaluatorTracker:
                         name=f"TrackEvaluationThread-{evaluation_id}",
                     )
                     tracked_evaluations[evaluation_id].start()
+                    self._last_eval_id = evaluation_id
             for t in tracked_evaluations.values():
                 t.join()
 
@@ -242,6 +244,7 @@ class EvaluatorTracker:
             return
 
         with create_ee_monitor(
+            self._last_eval_id,
             self._monitor_host,
             self._monitor_port,
             token=self._token,
