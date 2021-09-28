@@ -32,13 +32,11 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
-from ert_shared.feature_toggling import FeatureToggling
 
 import os
 from res.enkf import EnKFMain, ResConfig
 from res.util import ResLog
 
-import res
 import ecl
 import sys
 import time
