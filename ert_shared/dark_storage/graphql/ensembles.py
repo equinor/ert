@@ -5,7 +5,12 @@ from uuid import UUID
 from fastapi.param_functions import Depends
 import graphene as gr
 from graphene.types.scalars import ID
-from ert_shared.dark_storage.common import ensemble_parameters, get_response_names
+from ert_shared.dark_storage.common import (
+    ensemble_parameters,
+    ensemble_parameter_names,
+    get_response_names,
+    get_responses,
+)
 
 from ert_shared.dark_storage.enkf import get_id, get_res, get_size
 
@@ -39,7 +44,7 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_size(root: Any, info: "ResolveInfo") -> int:
-        return get_size()
+        return get_size(root)
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
@@ -55,7 +60,7 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_parameter_names(root: Any, info: "ResolveInfo") -> List[str]:
-        return [parameter["name"] for parameter in ensemble_parameters(root)]
+        return ensemble_parameter_names()
 
     @staticmethod
     def resolve_response_names(root: Any, info: "ResolveInfo") -> List[str]:
@@ -101,7 +106,7 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
 
     @staticmethod
     def resolve_responses(root: Any, info: "ResolveInfo") -> "Response":
-        return _EnsembleMixin.resolve_response_names(root, info)
+        return get_responses(root)
 
     @staticmethod
     def resolve_unique_responses(root: Any, info: "ResolveInfo") -> "UniqueResponse":

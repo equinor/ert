@@ -38,7 +38,37 @@ def poly_example_tmp_dir(
                 "poly.ert",
             ],
         )
+        run_cli(parsed)
+        yield
 
+
+@pytest.fixture
+def poly_example_new_storage(monkeypatch, new_storage_client, tmpdir, source_root):
+    from ert_shared.feature_toggling import FeatureToggling
+
+    # Enable new storage
+    feature = FeatureToggling._conf["new-storage"]
+    monkeypatch.setattr(feature, "is_enabled", True)
+
+    poly_dir = py.path.local(os.path.join(str(tmpdir), "poly_example"))
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        poly_dir,
+    )
+
+    with poly_dir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "poly_runpath_file",
+                "--realizations",
+                "0,1,2",
+                "poly.ert",
+            ],
+        )
         run_cli(parsed)
         yield
 
@@ -51,7 +81,7 @@ def dark_storage_client(dark_storage_app, monkeypatch):
 
 @pytest.fixture
 def env(monkeypatch):
-    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
+    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite:///:memory:")
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
 
 
@@ -75,3 +105,18 @@ def reset_enkf():
     enkf._config = None
     enkf._ert = None
     enkf._libres_facade = None
+
+
+@pytest.fixture
+def new_storage_client(monkeypatch, ert_storage_client):
+    import requests
+    from ert_shared.storage import extraction
+
+    class MockStorage:
+        @staticmethod
+        def session():
+            return ert_storage_client
+
+    monkeypatch.setattr(extraction, "Storage", MockStorage)
+
+    return ert_storage_client

@@ -7,34 +7,32 @@ import pandas as pd
 from res.enkf import EnkfObservationImplementationType
 
 
-def ensemble_parameters(ensemble_name: str) -> List[dict]:
-    res = get_res()
-    return [
-        dict(
-            name=key,
-            values=parameter.values.tolist(),
-        )
-        for key, parameter in (
-            (key, res.gather_gen_kw_data(ensemble_name, key))
-            for key in res.all_data_type_keys()
-            if res.is_gen_kw_key(key)
-        )
-    ]
-
-
 def ensemble_parameter_names(ensemble_name: str) -> List[str]:
     res = get_res()
     return res.gen_kw_keys()
 
 
+def ensemble_parameters(ensemble_name: str) -> List[dict]:
+    return [dict(name=key) for key in ensemble_parameter_names(ensemble_name)]
+
+
 def get_response_names():
     res = get_res()
-    response_names = [
-        key
-        for key in res.all_data_type_keys()
-        if res.is_gen_data_key(key) or res.is_summary_key(key)
-    ]
-    return response_names
+    result = res.get_summary_keys().copy()
+    result.extend(res.get_gen_data_keys().copy())
+    return result
+
+
+def get_responses(ensemble_name: str):
+    res = get_res()
+    response_names = get_response_names()
+    responses = []
+    active_realizations = res.get_active_realizations(ensemble_name)
+
+    for real_id in active_realizations:
+        for response_name in response_names:
+            responses.append({"name": response_name, "real_id": real_id})
+    return responses
 
 
 def data_for_key(case, key, realization_index=None):

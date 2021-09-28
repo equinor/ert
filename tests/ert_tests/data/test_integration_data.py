@@ -344,3 +344,29 @@ def test_all_measured_snapshot(snapshot, facade_snake_oil):
     obs_keys = facade_snake_oil.get_matching_wildcards()("*").strings
     measured_data = MeasuredData(facade_snake_oil, obs_keys)
     snapshot.assert_match(measured_data.data.to_csv(), "snake_oil_measured_output.csv")
+
+
+def test_active_realizations(facade_snake_oil):
+    current_case_name = facade_snake_oil.get_current_case_name()
+    active_realizations = facade_snake_oil.get_active_realizations(current_case_name)
+    assert len(active_realizations) == 25
+    assert active_realizations == list(range(25))
+
+
+def test_get_data_keys(facade_snake_oil):
+    summary_keys = set(facade_snake_oil.get_summary_keys())
+    for key in summary_keys:
+        assert facade_snake_oil.is_summary_key(key)
+
+    gen_data_keys = set(facade_snake_oil.get_gen_data_keys())
+    for key in gen_data_keys:
+        assert facade_snake_oil.is_gen_data_key(key)
+
+    gen_kw_keys = set(facade_snake_oil.gen_kw_keys())
+    for key in gen_kw_keys:
+        assert facade_snake_oil.is_gen_kw_key(key)
+
+    all_keys = set(facade_snake_oil.all_data_type_keys())
+    diff = all_keys.difference(summary_keys, gen_data_keys, gen_kw_keys)
+
+    assert len(diff) == 0
