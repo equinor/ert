@@ -13,6 +13,7 @@ import cloudevents.exceptions
 import cloudpickle
 from ert_shared.ensemble_evaluator.entity import identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
@@ -151,6 +152,76 @@ class EnsembleEvaluation:
         return self._ensemble.get_successful_realizations()
 
 
+class Experiment:
+    def __init__(self, experiment_id, name) -> None:
+        self.experiment_id = experiment_id
+        self.name = name
+        self._clients: Set[WebSocketServerProtocol] = set()
+        self.evaluations = set()
+        self.state = identifiers.EVTYPE_EXPERIMENT_SUBMITTED
+
+    @contextmanager
+    def connect_client(self, websocket: WebSocketServerProtocol):
+        self._clients.add(websocket)
+        yield
+        self._clients.remove(websocket)
+
+    async def stop(self):
+        self.state = identifiers.EVTYPE_EXPERIMENT_SUCCESS
+        await self.broadcast(self.to_cloud_event())
+        await self.broadcast(self.end_cloud_event())
+
+    async def add_evaluation(self, evaluation_id):
+        self.evaluations.add(evaluation_id)
+        await self.broadcast(self.to_cloud_event())
+
+    async def start(self):
+        self.state = identifiers.EVTYPE_EXPERIMENT_RUNNING
+        await self.broadcast(self.to_cloud_event())
+
+    def to_cloud_event(
+        self,
+        extra_attrs={},
+        data_marshaller=serialization.evaluator_marshaller,
+    ):
+        attrs = {
+            "type": identifiers.EVTYPE_EE_EXPERIMENT_UPDATE,
+            "source": f"/ert/experiment/{self.experiment_id}",
+        }
+        attrs.update(extra_attrs)
+
+        data = {
+            "state": self.state,
+            "evaluations": list(self.evaluations),
+            "name": self.name,
+        }
+        out_cloudevent = CloudEvent(
+            attrs,
+            data,
+        )
+        return to_json(out_cloudevent, data_marshaller=data_marshaller).decode()
+
+    def end_cloud_event(
+        self,
+        extra_attrs={},
+        data_marshaller=serialization.evaluator_marshaller,
+    ):
+        attrs = {
+            "type": identifiers.EVTYPE_EE_EXPERIMENT_TERMINATED,
+            "source": f"/ert/experiment/{self.experiment_id}",
+        }
+        attrs.update(extra_attrs)
+
+        out_cloudevent = CloudEvent(
+            attrs,
+        )
+        return to_json(out_cloudevent, data_marshaller=data_marshaller).decode()
+
+    async def broadcast(self, message):
+        if self._clients:
+            await asyncio.wait([client.send(message) for client in self._clients])
+
+
 class EnsembleEvaluator:
     def __init__(self, config):
 
@@ -159,6 +230,7 @@ class EnsembleEvaluator:
         self._loop = asyncio.new_event_loop()
         self._server_done = self._loop.create_future()
 
+        self.experiments = dict()
         self.ensemble_evaluations = dict()
 
         self._ws_thread = threading.Thread(
@@ -170,9 +242,15 @@ class EnsembleEvaluator:
         self, evaluation_id: str
     ) -> Optional[EnsembleEvaluation]:
         if evaluation_id not in self.ensemble_evaluations:
-            print("Requested evaluation ID does not match ensemble")
+            print("Requested evaluation ID does not match any evaluation")
             return None
         return self.ensemble_evaluations[evaluation_id]
+
+    def get_experiment_from_id(self, experiment_id: str) -> Optional[Experiment]:
+        if experiment_id not in self.experiments:
+            print("Requested experiment ID does not match any experiments")
+            return None
+        return self.experiments[experiment_id]
 
     async def handle_client(self, websocket: WebSocketServerProtocol, path: str):
         evaluation_id = path.split("/")[2]
@@ -228,12 +306,25 @@ class EnsembleEvaluator:
                 ]:
                     return
 
+    async def handle_experiment(self, websocket: WebSocketServerProtocol, path: str):
+        experiment_id = path.split("/")[2]
+
+        experiment = self.get_experiment_from_id(experiment_id)
+
+        with experiment.connect_client(websocket):
+            event = experiment.to_cloud_event()
+            await websocket.send(event)
+            async for _ in websocket:
+                pass
+
     async def connection_handler(self, websocket: WebSocketServerProtocol, path: str):
         elements = path.split("/")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
         elif elements[1] == "dispatch":
             await self.handle_dispatch(websocket, path)
+        elif elements[1] == "experiment":
+            await self.handle_experiment(websocket, path)
         else:
             logger.info("Connection attempt to unknown path: %s.", path)
 
@@ -300,9 +391,43 @@ class EnsembleEvaluator:
                 self.ensemble_evaluations[evaluation_id].cancel()
         return self.ensemble_evaluations[evaluation_id].get_successful_realizations()
 
-    def submit_ensemble(self, ensemble, iter_):
+    def start_experiment(self, name: str):
+        experiment_id = str(uuid.uuid1()).split("-")[0]
+        self.experiments[experiment_id] = Experiment(experiment_id, name)
+        self._loop.create_task(self.experiments[experiment_id].start())
+        return experiment_id
+
+    def add_evaluation(self, experiment_id, evaluation_id):
+        self._loop.create_task(
+            self.experiments[experiment_id].add_evaluation(evaluation_id)
+        )
+
+    def stop_experiment(self, experiment_id):
+        self._loop.create_task(self.experiments[experiment_id].stop())
+
+    def submit_ensemble(self, ensemble, iter_, experiment_id):
         evaluation_id = str(uuid.uuid1()).split("-")[0]
         self.ensemble_evaluations[evaluation_id] = EnsembleEvaluation(
             ensemble=ensemble, iter_=iter_, evaluation_id=evaluation_id, loop=self._loop
         )
+        self.add_evaluation(experiment_id, evaluation_id)
         return evaluation_id
+
+
+class EnsembleEvaluatorService:
+
+    _instance = None
+    _config = None
+
+    @classmethod
+    def get_evaluator(cls):
+        return cls._instance
+
+    @classmethod
+    def get_config(cls):
+        return cls._config
+
+    @classmethod
+    def start(cls, config: EvaluatorServerConfig):
+        cls._config = config
+        cls._instance = EnsembleEvaluator(config)

@@ -13,10 +13,10 @@ import asyncio
 
 from ecl.util.util import BoolVector
 from ert_shared import ERT
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
@@ -66,6 +66,8 @@ class BaseRunModel(object):
         self.support_restart = True
         self._run_context = None
         self._last_run_iteration = -1
+
+        self.experiment_id = None
         self.reset()
 
     def ert(self):
@@ -79,6 +81,7 @@ class BaseRunModel(object):
     def reset(self):
         self._failed = False
         self._phase = 0
+        self.experiment_id = None
 
     def start_simulations_thread(self, arguments):
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -89,13 +92,13 @@ class BaseRunModel(object):
             self.initial_realizations_mask = arguments["active_realizations"]
 
             if FeatureToggling.is_enabled("ensemble-evaluator"):
-                ee_config = arguments["ee_config"]
-                evaluator = EnsembleEvaluator(ee_config)
+                evaluator: EnsembleEvaluator = EnsembleEvaluatorService.get_evaluator()
+                self.experiment_id = evaluator.start_experiment(self.__class__.__name__)
 
             run_context = self.runSimulations(arguments, evaluator=evaluator)
 
             if FeatureToggling.is_enabled("ensemble-evaluator"):
-                evaluator.stop()
+                evaluator.stop_experiment(self.experiment_id)
 
             self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
@@ -385,7 +388,7 @@ class BaseRunModel(object):
         self.ert().initRun(run_context)
 
         evaluation_id = evaluator.submit_ensemble(
-            ensemble, iter_=run_context.get_iter()
+            ensemble, iter_=run_context.get_iter(), experiment_id=self.experiment_id
         )
         totalOk = evaluator.run_and_get_successful_realizations(
             evaluation_id=evaluation_id

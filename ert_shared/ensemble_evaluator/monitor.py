@@ -15,13 +15,22 @@ from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 logger = logging.getLogger(__name__)
 
 
-class _Monitor:
+class _BaseMonitor:
     def __init__(
-        self, evaluation_id, host, port, protocol="wss", cert=None, token=None
+        self,
+        host,
+        port,
+        endpoint,
+        end_event_type,
+        protocol="wss",
+        cert=None,
+        token=None,
     ):
-        self._evaluation_id = evaluation_id
         self._base_uri = f"{protocol}://{host}:{port}"
-        self._client_uri = f"{self._base_uri}/client/{self._evaluation_id}"
+        self._client_uri = f"{self._base_uri}/{endpoint}"
+
+        self._end_event_type = end_event_type
+
         self._cert = cert
         self._token = token
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
@@ -51,6 +60,44 @@ class _Monitor:
                 to_json(cloud_event, data_marshaller=serialization.evaluator_marshaller)
             )
 
+    def track(self):
+        with ExitStack() as stack:
+            duplexer = self._ws_duplexer
+            if not duplexer:
+                duplexer = SyncWebsocketDuplexer(
+                    self._client_uri, self._base_uri, self._cert, self._token
+                )
+                stack.callback(duplexer.stop)
+            for message in duplexer.receive():
+                try:
+                    event = from_json(
+                        message, data_unmarshaller=serialization.evaluator_unmarshaller
+                    )
+                except DataUnmarshallerError:
+                    event = from_json(message, data_unmarshaller=pickle.loads)
+                yield event
+                if event["type"] == self._end_event_type:
+                    logger.debug(
+                        f"monitor-{self._id} client received {self._end_event_type}"
+                    )
+                    break
+
+
+class _Monitor(_BaseMonitor):
+    def __init__(
+        self, evaluation_id, host, port, protocol="wss", cert=None, token=None
+    ):
+        self._evaluation_id = evaluation_id
+        super().__init__(
+            host=host,
+            port=port,
+            endpoint=f"client/{self._evaluation_id}",
+            end_event_type=identifiers.EVTYPE_EE_TERMINATED,
+            protocol=protocol,
+            cert=cert,
+            token=token,
+        )
+
     def signal_cancel(self):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
 
@@ -77,26 +124,26 @@ class _Monitor:
         self._send_event(out_cloudevent)
         logger.debug(f"monitor-{self._id} informed server monitor is done")
 
-    def track(self):
-        with ExitStack() as stack:
-            duplexer = self._ws_duplexer
-            if not duplexer:
-                duplexer = SyncWebsocketDuplexer(
-                    self._client_uri, self._base_uri, self._cert, self._token
-                )
-                stack.callback(duplexer.stop)
-            for message in duplexer.receive():
-                try:
-                    event = from_json(
-                        message, data_unmarshaller=serialization.evaluator_unmarshaller
-                    )
-                except DataUnmarshallerError:
-                    event = from_json(message, data_unmarshaller=pickle.loads)
-                yield event
-                if event["type"] == identifiers.EVTYPE_EE_TERMINATED:
-                    logger.debug(f"monitor-{self._id} client received terminated")
-                    break
+
+class _ExperimentMonitor(_BaseMonitor):
+    def __init__(
+        self, experiment_id, host, port, protocol="wss", cert=None, token=None
+    ):
+        self._experiment_id = experiment_id
+        super().__init__(
+            host=host,
+            port=port,
+            endpoint=f"experiment/{self._experiment_id}",
+            end_event_type=identifiers.EVTYPE_EE_EXPERIMENT_TERMINATED,
+            protocol=protocol,
+            cert=cert,
+            token=token,
+        )
 
 
 def create(evaluation_id, host, port, protocol, cert, token):
     return _Monitor(evaluation_id, host, port, protocol, cert, token)
+
+
+def create_experiment(experiment_id, host, port, protocol, cert, token):
+    return _ExperimentMonitor(experiment_id, host, port, protocol, cert, token)

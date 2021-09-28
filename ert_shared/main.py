@@ -1,3 +1,5 @@
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 import logging
 import logging.config
 import os
@@ -182,6 +184,12 @@ def get_ert_parser(parser=None):
     gui_parser.add_argument("config", type=valid_file, help=config_help)
     gui_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    gui_parser.add_argument(
+        "--port-range",
+        type=valid_port_range,
+        required=False,
+        help="Port range [a,b] to be used by the evaluator. Format: a-b",
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
     gui_url_or_bind = gui_parser.add_mutually_exclusive_group()
@@ -431,6 +439,20 @@ def start_ert_server(mode: str):
         yield
 
 
+@contextmanager
+def start_ensemble_evaluator(custom_port_range=None):
+    evaluator = None
+    if FeatureToggling.is_enabled("ensemble-evaluator"):
+        ee_config = EvaluatorServerConfig(custom_port_range=custom_port_range)
+        EnsembleEvaluatorService.start(config=ee_config)
+        evaluator = EnsembleEvaluatorService.get_evaluator()
+    try:
+        yield
+    finally:
+        if evaluator is not None:
+            evaluator.stop()
+
+
 def main():
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
         logging.config.dictConfig(yaml.safe_load(conf_file))
@@ -444,7 +466,9 @@ def main():
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
     try:
-        with start_ert_server(args.mode), ErtPluginContext() as context:
+        with start_ert_server(args.mode), start_ensemble_evaluator(
+            custom_port_range=args.port_range
+        ), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info("Running ert with {}".format(str(args)))
             args.func(args)

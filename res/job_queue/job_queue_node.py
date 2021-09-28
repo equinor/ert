@@ -222,7 +222,9 @@ class JobQueueNode(BaseCClass):
         self._set_thread_status(ThreadStatus.RUNNING)
         self._start_time = None
         self._thread = Thread(
-            target=self._job_monitor, args=(driver, pool_sema, max_submit), name=f"{self.job_name} ({self.run_path})"
+            target=self._job_monitor,
+            args=(driver, pool_sema, max_submit),
+            name=f"{self.job_name} ({self.run_path})",
         )
         self._thread.start()
 

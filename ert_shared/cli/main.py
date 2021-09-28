@@ -15,7 +15,7 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
@@ -63,10 +63,11 @@ def run_cli(args):
         clear_global_state()
         raise ErtCliError(msg)
 
-    ee_config = None
-    if FeatureToggling.is_enabled("ensemble-evaluator"):
-        ee_config = EvaluatorServerConfig(custom_port_range=args.port_range)
-        argument.update({"ee_config": ee_config})
+    ee_config = (
+        EnsembleEvaluatorService.get_config()
+        if FeatureToggling.is_enabled("ensemble-evaluator")
+        else None
+    )
 
     thread = threading.Thread(
         name="ert_cli_simulation_thread",
