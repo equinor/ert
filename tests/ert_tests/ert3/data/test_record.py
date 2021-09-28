@@ -1,7 +1,6 @@
 import json
 import typing
 
-import pydantic
 import pytest
 
 import ert
@@ -56,12 +55,14 @@ def test_valid_blob_record(data):
         {"a": "b"},
         {"key": None, "a": None},
         {"1": 1, "2": "2"},
+        {"1": 1, "2": 1.0},
+        {"1": 1, 2: 2},
         b"abcde",
         [b"abcde"],
     ),
 )
 def test_invalid_numerical_record(data):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.NumericalRecord(data=data)
 
 
@@ -79,23 +80,24 @@ def test_invalid_numerical_record(data):
     ),
 )
 def test_invalid_blob_record(data):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.BlobRecord(data=data)
 
 
 @pytest.mark.parametrize(
     ("data", "index"),
     (
-        ([1, 2, 3], [0, 1]),  # <- Too short index
-        ([1, 2, 3], [0, 1, 5]),  # <- Wrong last index
-        ([1, 2, 3], [0, 1, 2, 3]),  # <- Too long index
+        ([1, 2, 3], (0, 1)),  # <- Too short index
+        ([1, 2, 3], (0, 1, 5)),  # <- Wrong last index
+        ([1, 2, 3], (0, 1, 2, 3)),  # <- Too long index
         ({"a": 0, "b": 1, "c": 2}, ("a", "b", "d")),  # <- Wrong index
         ({"a": 0, "b": 1, "c": 2}, ("a", "b")),  # <- Too short index
         ({"a": 0, "b": 1, "c": 2}, ("a", "b", "c", "d")),  # <- Too long index
+        ({1: 0, 2: 0}, (1, 2.0)),  # <- Mix of index types
     ),
 )
 def test_inconsistent_index_record(data, index):
-    with pytest.raises(pydantic.ValidationError):
+    with pytest.raises(ert.data.RecordValidationError):
         ert.data.NumericalRecord(data=data, index=index)
 
 

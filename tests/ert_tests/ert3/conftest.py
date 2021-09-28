@@ -291,9 +291,9 @@ def raw_ensrec_to_records():
         for rec in spec:
             data = rec["data"]
             if isinstance(data, bytes):
-                recs.append(ert.data.BlobRecord.parse_obj(rec))
+                recs.append(ert.data.BlobRecord(data))
             else:
-                recs.append(ert.data.NumericalRecord.parse_obj(rec))
+                recs.append(ert.data.NumericalRecord(data=data, index=rec.get("index")))
         return tuple(recs)
 
     return _coerce_raw_ensrec
