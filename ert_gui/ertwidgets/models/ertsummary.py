@@ -5,7 +5,7 @@ from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert_shared import ERT
 
 
-class ErtSummary(object):
+class ErtSummary():
     def getForwardModels(self) -> List[str]:
         forward_model = ERT.ert.getModelConfig().getForwardModel()
         return list(forward_model.joblist())
