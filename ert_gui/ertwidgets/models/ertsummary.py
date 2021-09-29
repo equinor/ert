@@ -42,14 +42,5 @@ class ErtSummary(object):
             else:
                 keys.append("%s [%s]" % (key, data_key))
 
-        # keys = []
-        # for key in summary_keys:
-        #     count = summary_keys_count[key]
-        #     if count > 1:
-        #         #keys.append("%s (%d)" % (key, count))
-        #         keys.append("%s" % key)
-        #     else:
-        #         keys.append(key)
-
         obs_keys = list(gen_obs) + summary_keys
         return sorted(obs_keys, key=lambda k: k.lower())
