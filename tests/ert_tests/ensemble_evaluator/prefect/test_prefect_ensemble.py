@@ -125,7 +125,11 @@ def test_prefect_retries(
         if not run_path.exists():
             run_path.touch()
             raise RuntimeError("This is an expected ERROR")
-        run_path.unlink()
+        try:
+            run_path.unlink()
+        except FileNotFoundError:
+            # some other real beat us to it
+            pass
         return []
 
     pickle_func = cloudpickle.dumps(function_that_fails_once)
