@@ -1,23 +1,22 @@
+from typing import List
+
 from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert_shared import ERT
 
 
 class ErtSummary(object):
-    def getForwardModels(self):
-        """@rtype: list of str"""
+    def getForwardModels(self) -> List[str]:
         forward_model = ERT.ert.getModelConfig().getForwardModel()
-        return [job for job in forward_model.joblist()]
+        return list(forward_model.joblist())
 
-    def getParameters(self):
-        """@rtype: list of str"""
+    def getParameters(self) -> List[str]:
         parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(
             EnkfVarType.PARAMETER
         )
-        return sorted([parameter for parameter in parameters], key=lambda k: k.lower())
+        return sorted(list(parameters), key=lambda k: k.lower())
 
-    def getObservations(self):
-        """@rtype: list of str"""
+    def getObservations(self) -> List[str]:
         gen_obs = ERT.ert.getObservations().getTypedKeylist(
             EnkfObservationImplementationType.GEN_OBS
         )
@@ -52,5 +51,5 @@ class ErtSummary(object):
         #     else:
         #         keys.append(key)
 
-        obs_keys = [observation for observation in gen_obs] + summary_keys
+        obs_keys = list(gen_obs) + summary_keys
         return sorted(obs_keys, key=lambda k: k.lower())
