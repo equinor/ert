@@ -329,7 +329,6 @@ class RMSRunTest(ResTest):
                         },
                         f,
                     )
-                self.monkeypatch.setenv("RMS_TEST_VAR", "fdsgfdgfdsgfds")
 
                 os.mkdir("run_path")
                 os.mkdir("bin")
@@ -508,7 +507,7 @@ env:
                 f.write(
                     TEST_ENV_WRAPPER.format(
                         expected_path_prefix="/some/path",
-                        expected_pythonpath="/some/pythonpath",
+                        expected_pythonpath="/some/other/pythonpath",
                     )
                 )
 
@@ -516,6 +515,7 @@ env:
             os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
+            self.monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
 
             action = {
                 "exit_status": 0,
@@ -559,7 +559,7 @@ env:
                 f.write(
                     TEST_ENV_WRAPPER.format(
                         expected_path_prefix="/some/other/path:/some/path",
-                        expected_pythonpath="/some/other/pythonpath:/some/pythonpath",
+                        expected_pythonpath="/some/other/pythonpath",
                     )
                 )
             with open("rms_exec_env.json", "w") as f:
@@ -576,7 +576,7 @@ env:
             os.chmod(wrapper_file_name, st.st_mode | stat.S_IEXEC)
             self.monkeypatch.setenv("RMS_SITE_CONFIG", "rms_config.yml")
             self.monkeypatch.setenv("PATH", f"{os.getcwd()}/bin:{os.environ['PATH']}")
-
+            self.monkeypatch.setenv("PYTHONPATH", "/some/other/pythonpath")
             with patch.object(sys, "argv", ["rms"]):
                 action = {
                     "exit_status": 0,

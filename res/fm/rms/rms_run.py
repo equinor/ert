@@ -100,7 +100,7 @@ class RMSRun(object):
             os.makedirs(self.run_path)
 
         self_exe, _ = os.path.splitext(os.path.basename(sys.argv[0]))
-        exec_env = os.environ.copy()
+        exec_env = {}
 
         config_env = self.config.env(self.version)
         if not config_env and not self.allow_no_env:
@@ -112,6 +112,7 @@ class RMSRun(object):
         if os.path.isfile(exec_env_file):
             with open(exec_env_file) as f:
                 user_env = json.load(f)
+
         for var in set(config_env.keys()) | set(user_env.keys()):
             exec_env[var] = ":".join(
                 filter(None, [user_env.get(var), config_env.get(var)])
@@ -164,7 +165,16 @@ class RMSRun(object):
             )
 
     def exec_rms(self, exec_env):
-        args = [self.config.wrapper] if self.config.wrapper is not None else []
+        # The rms exec environement needs to be injected between executing the
+        # wrapper and launching rms. PATH_PREFIX must be set in advance.
+        prefix_path = exec_env.pop("PATH_PREFIX", "")
+        env_args = ["env", *(f"{key}={value}" for key, value in exec_env.items())]
+        args = (
+            ["env", f"PATH_PREFIX={prefix_path}", self.config.wrapper] + env_args
+            if self.config.wrapper is not None
+            else env_args
+        )
+
         args += [
             self.config.executable,
             "-project",
@@ -188,9 +198,5 @@ class RMSRun(object):
 
         if self.config.threads:
             args += ["-threads", str(self.config.threads)]
-
-        if not exec_env:
-            exec_env = os.environ
-
-        comp_process = subprocess.run(args=args, env=exec_env)
+        comp_process = subprocess.run(args=args)
         return comp_process.returncode
