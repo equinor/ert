@@ -5,7 +5,7 @@ from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 from ert_shared import ERT
 
 
-class ErtSummary():
+class ErtSummary:
     def getForwardModels(self) -> List[str]:
         forward_model = ERT.ert.getModelConfig().getForwardModel()
         return list(forward_model.joblist())
@@ -40,7 +40,7 @@ class ErtSummary():
             if key == data_key:
                 keys.append(key)
             else:
-                keys.append("%s [%s]" % (key, data_key))
+                keys.append(f"{key} [{data_key}]")
 
         obs_keys = list(gen_obs) + summary_keys
         return sorted(obs_keys, key=lambda k: k.lower())
