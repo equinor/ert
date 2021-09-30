@@ -109,22 +109,9 @@ class ResConfig(BaseCClass):
         self, user_config_file=None, config=None, throw_on_error=True, config_dict=None
     ):
 
-        configs = sum(
-            [1 for x in [user_config_file, config, config_dict] if x is not None]
-        )
-
-        if configs > 1:
-            raise ValueError(
-                "Attempting to create ResConfig object with multiple config objects"
-            )
-
-        if configs == 0:
-            raise ValueError(
-                "Error trying to create ResConfig without any configuration"
-            )
+        self._assert_input(user_config_file, config, throw_on_error, config_dict)
 
         self._errors, self._failed_keys = None, None
-        self._assert_input(user_config_file, config_dict, throw_on_error)
 
         configs = None
         config_dir = None
@@ -153,23 +140,29 @@ class ResConfig(BaseCClass):
                 % (user_config_file if user_config_file else config)
             )
 
-    def _assert_input(self, user_config_file, config, throw_on_error):
-        if config and not isinstance(config, dict):
+    def _assert_input(self, user_config_file, config, throw_on_error, config_dict):
+        configs = sum(
+            [1 for x in [user_config_file, config, config_dict] if x is not None]
+        )
+
+        if configs > 1:
             raise ValueError(
-                "Expected config to be a dictionary, was %r" % type(config)
+                "Attempting to create ResConfig object with multiple config objects"
             )
+
+        if configs == 0:
+            raise ValueError(
+                "Error trying to create ResConfig without any configuration"
+            )
+
+        if config and not isinstance(config, dict):
+            raise ValueError(f"Expected config to be a dictionary, was {type(config)}")
 
         if user_config_file and not isinstance(user_config_file, str):
             raise ValueError("Expected user_config_file to be a string.")
 
-        if user_config_file is not None and config is not None:
-            raise ValueError(
-                "Expected either user_config_file "
-                + "or config to be provided, got both!"
-            )
-
         if user_config_file is not None and not isfile(user_config_file):
-            raise IOError('No such configuration file "%s".' % user_config_file)
+            raise IOError(f'No such configuration file "{user_config_file}".')
 
         if user_config_file is not None and not throw_on_error:
             raise NotImplementedError(
