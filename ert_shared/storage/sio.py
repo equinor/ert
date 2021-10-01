@@ -3,9 +3,10 @@ import io
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, BinaryIO, Generator, ItemsView, Optional
+from typing import Any, BinaryIO, Generator, ItemsView, Optional, Union
 from pydantic import BaseModel
 import numpy as np
+import pandas as pd
 import math
 import zlib
 
@@ -61,30 +62,34 @@ def _func(x: float) -> float:
     return y * (max_ - min_) + min_
 
 
-def read_data(data: bytes) -> np.ndarray:
-    (file_type,) = struct.unpack("<i", data[:4])
+def read_data(stream: Union[BinaryIO, bytes]) -> np.ndarray:
+    if isinstance(stream, bytes):
+        data_size = len(stream)
+        stream = io.BytesIO(stream)
+    (_, file_type,) = read_unpack(stream, "<Qi")
     if file_type == 104:  # FIELD
-        data = zlib.decompress(data[4:])
+        data = zlib.decompress(stream.read())
         return np.frombuffer(data)  # , dtype=np.float64)  # Either int, float or double
     if file_type == 107 or file_type == 102:
         # Either GEN_KW (107) or MULTFLT (102, deprecated since 2009)
-        return np.frombuffer(data[4:], dtype=np.float64)
+        return np.frombuffer(stream.read(), dtype=np.float64)
     if file_type == 110:  # SUMMARY
-        size, default_value = struct.unpack("<id", data[4:16])
+        size, default_value = read_unpack(stream, "<id")
         # default_value is an ecl thing that we ignore
-        assert size * 8 + 16 == len(data)
-        return np.frombuffer(data[16:], dtype=np.float64)
+        return np.frombuffer(stream.read(), dtype=np.float64)
     if file_type == 113:  # GEN_DATA
-        size, report_step = struct.unpack("<ii", data[4:12])
-        # decompress with type
+        size, report_step = read_unpack(stream, "<ii")
+        data = zlib.decompress(stream.read())
+        return np.frombuffer(data, dtype=np.float64)
     if file_type == 114:  # SURFACE
-        return np.frombuffer(data[4:], dtype=np.float64)
+        return np.frombuffer(stream.read(), dtype=np.float64)
     if file_type == 115:  # CONTAINER
         # doesn't implement read_from_buffer
         raise NotImplementedError
     if file_type == 116:  # EXT_PARAM
         # unsure how to read this type
         raise NotImplementedError
+    return np.array([])# raise NotImplementedError(f"Unknown file_type {file_type}")
 
 
 class NodeStatus(Enum):
@@ -140,7 +145,6 @@ class IndexFile:
             status, index = self._read_node(stream)
             assert status == NodeStatus.in_use
             assert key not in self._used_indices
-            print(key, index)
             self._used_indices[key] = index
 
         (nfree,) = read_unpack(stream, "<i")
@@ -169,6 +173,14 @@ class IndexFile:
             status = NodeStatus.free
         else:
             status = NodeStatus.invalid
+
+        assert node_offset >= 0
+        assert node_length >= 0
+        assert data_offset >= 0
+        assert data_length >= 0
+
+        assert data_length < node_length
+
         return (
             status,
             NodeIndex(
@@ -189,9 +201,15 @@ class DataFile:
         self._stream = stream
 
     def __getitem__(self, index: NodeIndex) -> bytes:
-        self._stream.seek(index.node_offset + index.data_offset + 8)
+        self._stream.seek(index.node_offset + index.data_offset)
         return read_exact(self._stream, index.data_length)
-        # return np.frombuffer(data, dtype=np.float32)
+
+
+def read_case_config(stream: BinaryIO) -> int:
+    """
+    Reads the case_config file, which contains only the iteration number
+    """
+    return read_unpack(stream, "<i")[0]
 
 
 # class Ensemble:
@@ -226,22 +244,42 @@ class DataFile:
 
 
 def each_ensemble() -> None:
+    kw = "FOPR"
     root = Path("storage/snake_oil/ensemble")
     for path in root.glob("*/"):
         if not path.is_dir():
             continue
 
-        for mod in range(32):
-            base = str(path / f"Ensemble/mod_{mod}/PARAMETER")
-            index_file = IndexFile(open(f"{base}.index", "rb"))
-            data_file = DataFile(open(f"{base}.data_0", "rb"))
+        arrays = {}
+        print("iteration:", read_case_config(open(path / "files/case_config", "rb")))
+        for iens in range(25):
+            try:
+                base = str(path / f"Ensemble/mod_{iens % 32}/FORECAST")
+                index_file = IndexFile(open(f"{base}.index", "rb"))
+                data_file = DataFile(open(f"{base}.data_0", "rb"))
 
-            for key, index in index_file._used_indices.items():
-                print("Trying to read", key)
-                data = data_file[index]
-                read_data(data)
+                data = data_file[index_file[f"{kw}.{iens}"]]
+                arrays[iens] = read_data(data)
+            except KeyError: ...
+        # print(pd.DataFrame(arrays))
 
-            sys.exit(0)
+    # root = Path("storage/snake_oil/ensemble")
+    # for path in root.glob("*/"):
+    #     if not path.is_dir():
+    #         continue
+
+    #     for mod in range(0, 32):
+    #         base = str(path / f"Ensemble/mod_{mod}/FORECAST")
+    #         index_file = IndexFile(open(f"{base}.index", "rb"))
+    #         data_file = DataFile(open(f"{base}.data_0", "rb"))
+
+    #         for key, index in index_file._used_indices.items():
+    #             print("Trying to read", key)
+    #             data = data_file[index]
+    #             array = read_data(data)
+    #             print(array.tolist(), array.shape)
+
+    #         sys.exit(0)
 
     #     if path.is_dir():
     #         yield Ensemble(path)
