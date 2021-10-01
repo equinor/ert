@@ -90,8 +90,10 @@ class MonitorTest(unittest.TestCase):
         # Seems not be a an issue when used normally.
         expected = """    --> Test Phase
 
+
     |                                                                                      |   0% it
     1/2 |##############################5                              |  50% Running time: 0 seconds
+
     Waiting        50/100
     Pending         0/100
     Running         0/100
