@@ -73,8 +73,7 @@ class AboutDialog(QDialog):
 
         version.setAlignment(Qt.AlignHCenter)
         version.setText(
-            "Versions: ecl:%s    res:%s    ert:%s"
-            % (ecl.__version__, res.__version__, ert_gui.__version__)
+            "Versions: ecl:%s  ert:%s" % (ecl.__version__, ert_gui.__version__)
         )
         info_layout.addWidget(version)
 
