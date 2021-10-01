@@ -174,6 +174,7 @@ class EnsembleEvaluator:
             return HTTPStatus.OK, {}, b""
 
     async def evaluator_server(self, done):
+        logger.debug(f"Async server starting at {self._config.url}")
         async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),

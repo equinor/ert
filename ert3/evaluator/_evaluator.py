@@ -220,6 +220,9 @@ def evaluate(
     config = EvaluatorServerConfig()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
+
+    config.cleanup()
+
     return result
 
 

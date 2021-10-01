@@ -47,11 +47,12 @@ def test_hook_call_order_es_mda(monkeypatch):
     across different models.
     """
     test_class = MultipleDataAssimilation
+    ee_config = EvaluatorServerConfig()
     minimum_args = {
         "start_iteration": 0,
         "weights": [1],
         "analysis_module": "some_module",
-        "ee_config": EvaluatorServerConfig(),
+        "ee_config": ee_config,
     }
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()
@@ -77,6 +78,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         call(expected_call, ert=ERT_mock.ert) for expected_call in EXPECTED_CALL_ORDER
     ]
     assert mock_sim_runner.mock_calls == expected_calls
+    ee_config.cleanup()
 
 
 def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
