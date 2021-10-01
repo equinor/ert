@@ -358,8 +358,22 @@ class EnsembleEvaluator:
         loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
+    def _stop_server(self):
+        if not self._server_done.done():
+            self._server_done.set_result(None)
+
+    def stop(self):
+        self._loop.call_soon_threadsafe(self._stop_server)
+        self._ws_thread.join()
+
+
+class EnsembleEvaluatorSession:
+    def __init__(self, evaluator, config) -> None:
+        self._evaluator = evaluator
+        self._config = config
+
     def run(self, evaluation_id) -> ee_monitor._Monitor:
-        self.ensemble_evaluations[evaluation_id].start(self._config)
+        self._evaluator.ensemble_evaluations[evaluation_id].start(self._config)
         return ee_monitor.create(
             evaluation_id,
             self._config.host,
@@ -368,14 +382,6 @@ class EnsembleEvaluator:
             self._config.cert,
             self._config.token,
         )
-
-    def _stop_server(self):
-        if not self._server_done.done():
-            self._server_done.set_result(None)
-
-    def stop(self):
-        self._loop.call_soon_threadsafe(self._stop_server)
-        self._ws_thread.join()
 
     def run_and_get_successful_realizations(self, evaluation_id):
         try:
@@ -387,28 +393,37 @@ class EnsembleEvaluator:
                 "run_and_get_successful_realizations caught %s, cancelling or stopping ensemble...",
                 e,
             )
-            if self.ensemble_evaluations[evaluation_id].is_cancellable():
-                self.ensemble_evaluations[evaluation_id].cancel()
-        return self.ensemble_evaluations[evaluation_id].get_successful_realizations()
+            if self._evaluator.ensemble_evaluations[evaluation_id].is_cancellable():
+                self._evaluator.ensemble_evaluations[evaluation_id].cancel()
+        return self._evaluator.ensemble_evaluations[
+            evaluation_id
+        ].get_successful_realizations()
 
     def start_experiment(self, name: str):
         experiment_id = str(uuid.uuid1()).split("-")[0]
-        self.experiments[experiment_id] = Experiment(experiment_id, name)
-        self._loop.create_task(self.experiments[experiment_id].start())
+        self._evaluator.experiments[experiment_id] = Experiment(experiment_id, name)
+        self._evaluator._loop.create_task(
+            self._evaluator.experiments[experiment_id].start()
+        )
         return experiment_id
 
     def add_evaluation(self, experiment_id, evaluation_id):
-        self._loop.create_task(
-            self.experiments[experiment_id].add_evaluation(evaluation_id)
+        self._evaluator._loop.create_task(
+            self._evaluator.experiments[experiment_id].add_evaluation(evaluation_id)
         )
 
     def stop_experiment(self, experiment_id):
-        self._loop.create_task(self.experiments[experiment_id].stop())
+        self._evaluator._loop.create_task(
+            self._evaluator.experiments[experiment_id].stop()
+        )
 
     def submit_ensemble(self, ensemble, iter_, experiment_id):
         evaluation_id = str(uuid.uuid1()).split("-")[0]
-        self.ensemble_evaluations[evaluation_id] = EnsembleEvaluation(
-            ensemble=ensemble, iter_=iter_, evaluation_id=evaluation_id, loop=self._loop
+        self._evaluator.ensemble_evaluations[evaluation_id] = EnsembleEvaluation(
+            ensemble=ensemble,
+            iter_=iter_,
+            evaluation_id=evaluation_id,
+            loop=self._evaluator._loop,
         )
         self.add_evaluation(experiment_id, evaluation_id)
         return evaluation_id
@@ -416,18 +431,22 @@ class EnsembleEvaluator:
 
 class EnsembleEvaluatorService:
 
-    _instance = None
-    _config = None
+    _instance: EnsembleEvaluator = None
+    _config: EvaluatorServerConfig = None
 
     @classmethod
-    def get_evaluator(cls):
-        return cls._instance
+    def get_evaluator_session(cls) -> EnsembleEvaluatorSession:
+        return EnsembleEvaluatorSession(cls._instance, cls._config)
 
     @classmethod
-    def get_config(cls):
+    def get_config(cls) -> EvaluatorServerConfig:
         return cls._config
 
     @classmethod
-    def start(cls, config: EvaluatorServerConfig):
+    def start(cls, config: EvaluatorServerConfig) -> None:
         cls._config = config
         cls._instance = EnsembleEvaluator(config)
+
+    @classmethod
+    def stop(cls) -> None:
+        cls._instance.stop()

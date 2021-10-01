@@ -17,7 +17,7 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorService
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluatorSession
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 from res.util import ResLog
@@ -92,7 +92,9 @@ class BaseRunModel(object):
             self.initial_realizations_mask = arguments["active_realizations"]
 
             if FeatureToggling.is_enabled("ensemble-evaluator"):
-                evaluator: EnsembleEvaluator = EnsembleEvaluatorService.get_evaluator()
+                evaluator: EnsembleEvaluatorSession = (
+                    EnsembleEvaluatorService.get_evaluator_session()
+                )
                 self.experiment_id = evaluator.start_experiment(self.__class__.__name__)
 
             run_context = self.runSimulations(arguments, evaluator=evaluator)

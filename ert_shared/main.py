@@ -7,14 +7,10 @@ from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
 import yaml
-
 from ert_logging import LOGGING_CONFIG
+
 import ert_shared
 from ert_shared import clear_global_state
-<<<<<<< HEAD
-from ert_shared.cli.main import run_cli, ErtCliError
-=======
->>>>>>> Import order
 from ert_shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -35,18 +31,9 @@ from ert_shared.ide.keywords.definitions import (
     RangeStringArgument,
 )
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
-<<<<<<< HEAD
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-from ert_shared.feature_toggling import FeatureToggling
-from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
 from ert_shared.services import Storage, WebvizErt
-import ert_shared
-=======
-from ert_shared.plugins import launch_visualization_plugin
-from ert_shared.plugins.plugin_manager import ErtPluginContext
 from ert_shared.storage.command import add_parser_options as ert_api_add_parser_options
-from ert_shared.storage.main import run_server
->>>>>>> Import order
 
 
 def run_ert_storage(args):
@@ -459,12 +446,12 @@ def start_ensemble_evaluator(custom_port_range=None):
     if FeatureToggling.is_enabled("ensemble-evaluator"):
         ee_config = EvaluatorServerConfig(custom_port_range=custom_port_range)
         EnsembleEvaluatorService.start(config=ee_config)
-        evaluator = EnsembleEvaluatorService.get_evaluator()
+        evaluator = EnsembleEvaluatorService.get_evaluator_session()
     try:
         yield
     finally:
         if evaluator is not None:
-            evaluator.stop()
+            EnsembleEvaluatorService.stop()
 
 
 def main():
