@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/int_vector.hpp>
@@ -26,6 +28,8 @@
 #include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/workflow.hpp>
+
+namespace fs = std::filesystem;
 
 #define CMD_TYPE_ID 66153
 #define WORKFLOW_TYPE_ID 6762081
@@ -93,7 +97,7 @@ static void workflow_store_error(workflow_type *workflow,
 
 bool workflow_try_compile(workflow_type *script,
                           const subst_list_type *context) {
-    if (util_file_exists(script->src_file)) {
+    if (fs::exists(script->src_file)) {
         const char *src_file = script->src_file;
         char *tmp_file = NULL;
         bool update = false;

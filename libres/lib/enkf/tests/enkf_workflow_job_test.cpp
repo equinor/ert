@@ -15,11 +15,16 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+
+namespace fs = std::filesystem;
 
 ert_test_context_type *create_context(const char *config_file,
                                       const char *name) {
@@ -344,7 +349,7 @@ static void test_export_runpath_file(ert_test_context_type *test_context,
         const char *runpath_fmt =
             model_config_get_runpath_as_char(model_config);
 
-        test_assert_true(util_file_exists(runpath_file_name));
+        test_assert_true(fs::exists(runpath_file_name));
         FILE *file = util_fopen(runpath_file_name, "r");
 
         int file_iens = 0;

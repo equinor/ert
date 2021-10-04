@@ -226,7 +226,7 @@ set_target_properties(std_enkf_debug PROPERTIES VERSION 1.0
 target_compile_definitions(res PRIVATE -DINTERNAL_LINK)
 
 find_package(LAPACK REQUIRED)
-target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS})
+target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem)
 target_include_directories(res
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>

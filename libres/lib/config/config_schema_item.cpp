@@ -16,12 +16,13 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include <set>
 #include <string>
 #include <vector>
+#include <filesystem>
+
+#include <stdlib.h>
+#include <string.h>
 
 #include <ert/util/type_macros.hpp>
 #include <ert/util/parser.hpp>
@@ -30,6 +31,8 @@
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>
+
+namespace fs = std::filesystem;
 
 typedef struct validate_struct validate_type;
 
@@ -249,7 +252,7 @@ bool config_schema_item_valid_string(config_item_types value_type,
         break;
     case (CONFIG_RUNTIME_FILE):
         if (runtime)
-            return util_file_exists(value);
+            return fs::exists(value);
         else
             return true;
         break;
@@ -418,7 +421,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                     if (!util_is_abs_path(value)) {
 
                         char *relocated = alloc_relocated__(path_elm, value);
-                        if (util_file_exists(relocated)) {
+                        if (fs::exists(relocated)) {
                             if (util_is_executable(relocated))
                                 stringlist_iset_copy(token_list, iarg,
                                                      relocated);

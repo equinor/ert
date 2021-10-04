@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
@@ -23,14 +25,16 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
 
+namespace fs = std::filesystem;
+
 void test_current_file_not_present_symlink_present(const char *model_config) {
-    test_assert_true(util_file_exists("Storage/enkf"));
+    test_assert_true(fs::exists("Storage/enkf"));
     util_make_slink("enkf", "Storage/current");
     res_config_type *res_config = res_config_alloc_load(model_config);
     enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
     test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
-    test_assert_false(util_file_exists("Storage/current"));
-    test_assert_true(util_file_exists("Storage/current_case"));
+    test_assert_false(fs::exists("Storage/current"));
+    test_assert_true(fs::exists("Storage/current_case"));
     char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
     test_assert_string_equal(current_case, "enkf");
     free(current_case);
@@ -39,11 +43,11 @@ void test_current_file_not_present_symlink_present(const char *model_config) {
 }
 
 void test_current_file_present(const char *model_config) {
-    test_assert_true(util_file_exists("Storage/current_case"));
+    test_assert_true(fs::exists("Storage/current_case"));
     res_config_type *res_config = res_config_alloc_load(model_config);
     enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
     test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
-    test_assert_false(util_file_exists("Storage/current"));
+    test_assert_false(fs::exists("Storage/current"));
     char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
     test_assert_string_equal(current_case, "enkf");
     free(current_case);

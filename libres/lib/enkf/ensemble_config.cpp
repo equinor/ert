@@ -16,15 +16,16 @@
    for more details.
 */
 
+#include <unordered_map>
+#include <map>
+#include <string>
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h> /* must have rw locking on the config_nodes ... */
-
-#include <unordered_map>
-#include <map>
-#include <string>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
@@ -41,6 +42,8 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+
+namespace fs = std::filesystem;
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
 
@@ -995,7 +998,7 @@ int ensemble_config_forward_init(const ensemble_config_type *ens_config,
                             enkf_node_get_config(node),
                             run_arg_get_runpath(run_arg), iens);
 
-                        if (init_file && !util_file_exists(init_file))
+                        if (init_file && !fs::exists(init_file))
                             fprintf(stderr,
                                     "File not found: %s - failed to initialize "
                                     "node: %s\n",

@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -28,6 +30,8 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+
+namespace fs = std::filesystem;
 
 typedef struct {
     pthread_mutex_t mutex1;
@@ -44,10 +48,10 @@ void test_mount() {
     test_assert_true(enkf_fs_exists("mnt"));
     {
         enkf_fs_type *fs = enkf_fs_mount("mnt");
-        test_assert_true(util_file_exists("mnt/mnt.lock"));
+        test_assert_true(fs::exists("mnt/mnt.lock"));
         test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_decref(fs);
-        test_assert_false(util_file_exists("mnt/mnt.lock"));
+        test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
         enkf_fs_type *fs =
@@ -75,7 +79,7 @@ void createFS() {
     if (pid == 0) {
         enkf_fs_type *fs_false = enkf_fs_mount("mnt");
         test_assert_false(enkf_fs_is_read_only(fs_false));
-        test_assert_true(util_file_exists("mnt/mnt.lock"));
+        test_assert_true(fs::exists("mnt/mnt.lock"));
         pthread_mutex_unlock(&data->mutex1);
         pthread_mutex_lock(&data->mutex2);
         enkf_fs_decref(fs_false);

@@ -15,8 +15,10 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <cmath>
+#include <filesystem>
+
+#include <stdlib.h>
 #include <pthread.h>
 
 #include <ert/util/util.h>
@@ -26,6 +28,8 @@
 
 #include <ert/res_util/res_log.hpp>
 #include <ert/enkf/time_map.hpp>
+
+namespace fs = std::filesystem;
 
 #define DEFAULT_TIME -1
 
@@ -128,7 +132,7 @@ void time_map_set_strict(time_map_type *time_map, bool strict) {
 time_map_type *time_map_fread_alloc_readonly(const char *filename) {
     time_map_type *tm = time_map_alloc();
 
-    if (util_file_exists(filename))
+    if (fs::exists(filename))
         time_map_fread(tm, filename);
     tm->read_only = true;
 
@@ -313,7 +317,7 @@ void time_map_fread(time_map_type *map, const char *filename) {
     time_map_assert_writable(map);
     pthread_rwlock_wrlock(&map->rw_lock);
     {
-        if (util_file_exists(filename)) {
+        if (fs::exists(filename)) {
             FILE *stream = util_fopen(filename, "r");
             time_t_vector_type *file_map = time_t_vector_fread_alloc(stream);
 

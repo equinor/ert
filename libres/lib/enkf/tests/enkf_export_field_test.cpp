@@ -15,10 +15,14 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+
+namespace fs = std::filesystem;
 
 void test_export_field(ert_test_context_type *test_context,
                        const char *job_name, const char *job_file) {
@@ -39,10 +43,8 @@ void test_export_field(ert_test_context_type *test_context,
             ert_test_context_run_worklow_job(test_context, job_name, args));
         stringlist_free(args);
     }
-    test_assert_true(
-        util_file_exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
-    test_assert_true(
-        util_file_exists("TEST_EXPORT/test_export_field/PermZ2.grdecl"));
+    test_assert_true(fs::exists("TEST_EXPORT/test_export_field/PermZ0.grdecl"));
+    test_assert_true(fs::exists("TEST_EXPORT/test_export_field/PermZ2.grdecl"));
 }
 
 int main(int argc, const char **argv) {

@@ -19,10 +19,13 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <filesystem>
 
 #include <ert/res_util/matrix.hpp>
 
 #include <ert/res_util/es_testdata.hpp>
+
+namespace fs = std::filesystem;
 
 #define ROW_MAJOR_STORAGE true
 
@@ -56,7 +59,7 @@ private:
 };
 
 matrix_type *alloc_load(const std::string &name, int rows, int columns) {
-    if (!util_file_exists(name.c_str()))
+    if (!fs::exists(name))
         return NULL;
 
     FILE *stream = util_fopen(name.c_str(), "r");

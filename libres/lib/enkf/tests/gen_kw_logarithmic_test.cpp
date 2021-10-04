@@ -15,12 +15,17 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
 #include <ert/enkf/gen_kw.hpp>
+
+namespace fs = std::filesystem;
 
 void verify_parameters_txt() {
     int buffer_size = 0;
@@ -83,7 +88,7 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
         enkf_state_ecl_write(enkf_main_get_ensemble_config(enkf_main),
                              enkf_main_get_model_config(enkf_main), run_arg,
                              init_fs);
-        test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
+        test_assert_true(fs::exists("simulations/run0/parameters.txt"));
         run_arg_free(run_arg);
     }
     enkf_node_free(enkf_node);

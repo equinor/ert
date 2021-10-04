@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -29,6 +31,8 @@
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/config/config_parser.hpp>
+
+namespace fs = std::filesystem;
 
 #define CLEAR_STRING "__RESET__"
 
@@ -577,7 +581,7 @@ config_parse__(config_parser_type *config, config_content_type *content,
 
                 const char *include_file = stringlist_iget(token_list, 1);
 
-                if (!util_file_exists(include_file)) {
+                if (!fs::exists(include_file)) {
                     char *error_message = (char *)util_alloc_sprintf(
                         "%s file:%s not found", include_kw, include_file);
                     config_error_add(config_content_get_errors(content),

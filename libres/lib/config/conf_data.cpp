@@ -16,11 +16,15 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/util.hpp>
 
 #include <ert/config/conf_data.hpp>
+
+namespace fs = std::filesystem;
 
 #define DT_STR_STRING "string"
 #define DT_INT_STRING "integer"
@@ -80,7 +84,7 @@ bool conf_data_validate_string_as_dt_value(dt_enum dt, const char *str) {
             return val >= 0.0;
     }
     case (DT_FILE): {
-        return util_file_exists(str);
+        return fs::exists(str);
     }
     case (DT_DATE): {
         time_t date;

@@ -15,20 +15,24 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
+
 #include <cmath>
 #include <ctime>
-
-#include <map>
-
-#include <ert/util/stringlist.h>
-
-#include <ert/enkf/value_export.hpp>
 #include <iomanip>
 #include <iostream>
 #include <chrono>
 #include <string>
 #include <sstream>
+#include <map>
+#include <filesystem>
+
+#include <stdlib.h>
+
+#include <ert/util/stringlist.h>
+
+#include <ert/enkf/value_export.hpp>
+
+namespace fs = std::filesystem;
 
 #define VALUE_EXPORT_TYPE_ID 5741761
 
@@ -40,7 +44,7 @@ struct value_export_struct {
 };
 
 static void backup_if_existing(const char *filename) {
-    if (not util_file_exists(filename))
+    if (not fs::exists(filename))
         return;
 
     auto time_to_string = [](const std::tm *tmb,
@@ -59,7 +63,7 @@ static void backup_if_existing(const char *filename) {
         std::stringstream fname_stream;
         fname_stream << filename << "_backup_"
                      << time_to_string(gmtime(&tt), format);
-        for (int i = 0; util_file_exists(fname_stream.str().c_str()) && i < 100;
+        for (int i = 0; fs::exists(fname_stream.str().c_str()) && i < 100;
              ++i) {
             fname_stream.clear();
             fname_stream << filename << "_backup_"

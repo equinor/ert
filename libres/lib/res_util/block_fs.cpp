@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -30,6 +32,8 @@
 #include <ert/util/long_vector.hpp>
 
 #include <ert/res_util/block_fs.hpp>
+
+namespace fs = std::filesystem;
 
 #define MOUNT_MAP_MAGIC_INT 8861290
 #define BLOCK_FS_TYPE_ID 7100652
@@ -753,13 +757,13 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
 static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
     if (read_write) {
         /* Normal read-write open.- */
-        if (util_file_exists(block_fs->data_file))
+        if (fs::exists(block_fs->data_file))
             block_fs->data_stream = util_fopen(block_fs->data_file, "r+");
         else
             block_fs->data_stream = util_fopen(block_fs->data_file, "w+");
     } else {
         /* read-only open. */
-        if (util_file_exists(block_fs->data_file))
+        if (fs::exists(block_fs->data_file))
             block_fs->data_stream = util_fopen(block_fs->data_file, "r");
         else
             block_fs->data_stream = NULL;
@@ -1050,7 +1054,7 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
     block_fs_type *block_fs;
     {
 
-        if (!util_file_exists(mount_file))
+        if (!fs::exists(mount_file))
             /* This is a brand new filesystem - create the mount map first. */
             block_fs_fwrite_mount_info__(mount_file, 0);
         {

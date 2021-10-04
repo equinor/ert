@@ -15,6 +15,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <pthread.h>
 
@@ -24,6 +26,8 @@
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/state_map.hpp>
+
+namespace fs = std::filesystem;
 
 #define STATE_MAP_TYPE_ID 500672132
 
@@ -47,7 +51,7 @@ state_map_type *state_map_alloc() {
 
 state_map_type *state_map_fread_alloc(const char *filename) {
     state_map_type *map = state_map_alloc();
-    if (util_file_exists(filename)) {
+    if (fs::exists(filename)) {
         FILE *stream = util_fopen(filename, "r");
         int_vector_fread(map->state, stream);
         fclose(stream);
@@ -186,7 +190,7 @@ bool state_map_fread(state_map_type *map, const char *filename) {
     bool file_exists = false;
     pthread_rwlock_wrlock(&map->rw_lock);
     {
-        if (util_file_exists(filename)) {
+        if (fs::exists(filename)) {
             FILE *stream = util_fopen(filename, "r");
             if (stream) {
                 int_vector_fread(map->state, stream);

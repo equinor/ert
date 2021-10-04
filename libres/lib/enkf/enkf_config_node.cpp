@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -38,6 +40,8 @@
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
+
+namespace fs = std::filesystem;
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
@@ -542,7 +546,7 @@ enkf_config_node_get_FIELD_fill_file(enkf_config_node_type *config_node,
     if (config_node->init_file_abs_path) {
         config_node->init_file_abs_path =
             util_alloc_abs_path(config_node->init_file_abs_path);
-        if (!util_file_exists(config_node->init_file_abs_path)) {
+        if (!fs::exists(config_node->init_file_abs_path)) {
             free(config_node->init_file_abs_path);
             config_node->init_file_abs_path = NULL;
         }

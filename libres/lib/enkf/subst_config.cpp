@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
 
 #include <ert/config/config_content.hpp>
 
@@ -23,6 +24,8 @@
 #include <ert/enkf/subst_config.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/runpath_list.hpp>
+
+namespace fs = std::filesystem;
 
 struct subst_config_struct {
 
@@ -246,7 +249,7 @@ static void subst_config_init_load(subst_config_type *subst_config,
         const char *data_file =
             config_content_get_value_as_abspath(content, DATA_FILE_KEY);
 
-        if (!util_file_exists(data_file))
+        if (!fs::exists(data_file))
             util_abort("%s: Could not find ECLIPSE data file: %s\n", __func__,
                        data_file ? data_file : "NULL");
 

@@ -15,15 +15,20 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdio.h>
 
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
+namespace fs = std::filesystem;
+
 void test_magic_strings(ert_test_context_type *test_context) {
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
     test_assert_true(ert_test_context_run_worklow(test_context, "MAGIC_PRINT"));
-    test_assert_true(util_file_exists("magic-list.txt"));
+    test_assert_true(fs::exists("magic-list.txt"));
 
     {
         FILE *stream = util_fopen("magic-list.txt", "r");

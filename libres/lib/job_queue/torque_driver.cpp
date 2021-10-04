@@ -15,6 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
  */
+
+#include <filesystem>
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -23,6 +26,8 @@
 #include <ert/util/type_macros.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
+
+namespace fs = std::filesystem;
 
 #define TORQUE_DRIVER_TYPE_ID 34873653
 #define TORQUE_JOB_TYPE_ID 12312312
@@ -525,7 +530,7 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
         free(argv);
     }
 
-    if (util_file_exists(tmp_file)) {
+    if (fs::exists(tmp_file)) {
         status = torque_driver_parse_status(tmp_file, jobnr_char);
         unlink(tmp_file);
     } else
@@ -541,7 +546,7 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr_char) {
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
-    if (util_file_exists(qstat_file)) {
+    if (fs::exists(qstat_file)) {
         char *line = NULL;
         {
             FILE *stream = util_fopen(qstat_file, "r");

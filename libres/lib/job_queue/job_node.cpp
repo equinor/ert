@@ -16,18 +16,21 @@
    for more details.
 */
 
+#include <string>
+#include <filesystem>
+
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
-
-#include <string>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/res_log.hpp>
 
 #include <ert/job_queue/job_node.hpp>
+
+namespace fs = std::filesystem;
 
 #define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX -999
@@ -144,7 +147,7 @@ static char *__alloc_tag_content(const char *xml_buffer, const char *tag) {
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
     job_queue_node_free_error_info(node);
     if (node->exit_file) {
-        if (util_file_exists(node->exit_file)) {
+        if (fs::exists(node->exit_file)) {
             char *xml_buffer =
                 util_fread_alloc_file_content(node->exit_file, NULL);
 
@@ -488,7 +491,7 @@ job_queue_node_status_update_confirmed_running__(job_queue_node_type *node) {
         return true;
     }
 
-    if (util_file_exists(node->status_file))
+    if (fs::exists(node->status_file))
         node->confirmed_running = true;
     return node->confirmed_running;
 }

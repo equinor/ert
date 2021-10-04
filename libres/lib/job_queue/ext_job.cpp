@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -30,6 +32,8 @@
 
 #include <ert/job_queue/job_kw_definitions.hpp>
 #include <ert/job_queue/ext_job.hpp>
+
+namespace fs = std::filesystem;
 
 /*
   About arguments
@@ -396,7 +400,7 @@ void ext_job_set_max_time(ext_job_type *ext_job, int max_time) {
 void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
                             const char *executable_input, bool search_path) {
 
-    if (util_file_exists(executable_abs)) {
+    if (fs::exists(executable_abs)) {
         /*
        The @executable parameter points to an existing file; we store
        the full path as the executable field of the job; we also try
@@ -456,7 +460,7 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
      discard the job.
   */
     if (ext_job->executable != NULL) {
-        if (util_file_exists(executable_abs)) {
+        if (fs::exists(executable_abs)) {
             if (!util_is_executable(ext_job->executable)) {
                 fprintf(stderr,
                         "** You do not have execute rights to:%s - job will "

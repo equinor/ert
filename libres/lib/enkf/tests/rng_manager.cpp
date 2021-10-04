@@ -15,12 +15,17 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
 #include <ert/util/rng.h>
 #include <ert/util/test_work_area.h>
 #include <ert/enkf/rng_manager.hpp>
+
+namespace fs = std::filesystem;
 
 #define MAX_INT 999999
 
@@ -82,7 +87,7 @@ void test_state() {
     ecl::util::TestArea ta("test_rng");
     rng_manager_iget(rng_manager, 100);
     rng_manager_save_state(rng_manager, "seed.txt");
-    test_assert_true(util_file_exists("seed.txt"));
+    test_assert_true(fs::exists("seed.txt"));
     {
         rng_manager_type *rng_manager1 = rng_manager_alloc_load("seed.txt");
         rng_manager_type *rng_manager2 = rng_manager_alloc_load("seed.txt");

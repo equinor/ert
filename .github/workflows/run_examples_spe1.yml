@@ -52,6 +52,8 @@ jobs:
 
     - name: Install ERT
       run: |
+        export CC=gcc-10
+        export CXX=g++-10
         pip install .[storage]
 
     - name: Install spe1 dependencies

@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
@@ -24,6 +26,8 @@
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/enkf_main.hpp>
+
+namespace fs = std::filesystem;
 
 void create_runpath(enkf_main_type *enkf_main, int iter) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
@@ -53,7 +57,7 @@ void install_file(const ecl::util::TestArea &ta, const char *input_src_file) {
         if (!util_entry_exists(src_path))
             util_make_path(src_path);
 
-        if (util_file_exists(src_file.c_str())) {
+        if (fs::exists(src_file)) {
             char *target_file = util_alloc_filename(ta.test_cwd().c_str(),
                                                     input_src_file, NULL);
             util_copy_file(src_file.c_str(), target_file);
