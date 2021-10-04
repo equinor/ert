@@ -31,8 +31,6 @@ string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO "${RE
 
 message( STATUS "libres version: ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}" )
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
-find_package(CXX11Features)
 set(CMAKE_C_STANDARD 99)
 
 #-----------------------------------------------------------------
