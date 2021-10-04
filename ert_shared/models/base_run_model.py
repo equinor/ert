@@ -14,14 +14,12 @@ import asyncio
 
 from ecl.util.util import BoolVector
 from ert_shared import ERT
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
-from res.util import ResLog
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -335,9 +333,7 @@ class BaseRunModel(object):
             .haveEnoughRealisations(num_successful_realizations, self._ensemble_size)
         ):
             raise ErtRunError(
-                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
-                "Check ERT log file '%s' or simulation folder for details."
-                % ResLog.getFilename()
+                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
             )
 
     def checkMinimumActiveRealizations(self, run_context):
