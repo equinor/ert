@@ -20,7 +20,6 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
-from res.util import ResLog
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -334,9 +333,7 @@ class BaseRunModel(object):
             .haveEnoughRealisations(num_successful_realizations, self._ensemble_size)
         ):
             raise ErtRunError(
-                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations.\n\n"
-                "Check ERT log file '%s' or simulation folder for details."
-                % ResLog.getFilename()
+                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
             )
 
     def checkMinimumActiveRealizations(self, run_context):

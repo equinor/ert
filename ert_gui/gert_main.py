@@ -37,7 +37,6 @@ from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
 
 from res.enkf import EnKFMain, ResConfig
-from res.util import ResLog
 
 import ecl
 
@@ -89,8 +88,6 @@ def _start_window(ert, args):
     splash.finish(window)
     window.activateWindow()
     window.raise_()
-
-    ResLog.log(3, f"Versions: ecl:{ecl.__version__} ert:{ert_gui.__version__}")
 
     if not ert._real_enkf_main().have_observations():
         QMessageBox.warning(
