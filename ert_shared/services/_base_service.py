@@ -116,10 +116,15 @@ class _Proc(threading.Thread):
             conn_info = exc
 
         self._set_conn_info(conn_info)
-        while self._proc.poll() is None:
+
+        while True:
+            if self._proc.poll() is not None:
+                break
             if self._shutdown.wait(1):
                 self._do_shutdown()
-                return
+                break
+
+        self._ensure_delete_conn_info()
 
     def shutdown(self) -> int:
         """Shutdown the server."""
@@ -149,6 +154,7 @@ class _Proc(threading.Thread):
             # Timeout reached, exit with a failure
             if ready == ([], [], []):
                 self._do_shutdown()
+                self._ensure_delete_conn_info()
                 return None
 
             x = self._comm_pipe.read(PIPE_BUF)
@@ -158,7 +164,6 @@ class _Proc(threading.Thread):
         return comm_buf.getvalue()
 
     def _do_shutdown(self) -> None:
-        self._ensure_delete_conn_info()
         if self._proc is None:
             return
         try:
