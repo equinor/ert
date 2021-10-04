@@ -16,17 +16,18 @@
    for more details.
 */
 
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <dlfcn.h>
 #include <unistd.h>
-
-#include <vector>
-#include <string>
-#include <sstream>
-#include <algorithm>
 
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
@@ -36,6 +37,8 @@
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
+
+namespace fs = std::filesystem;
 
 #define LSF_JSON "lsf_info.json"
 
@@ -193,7 +196,7 @@ long lsf_job_get_jobnr(const lsf_job_type *job) { return job->lsf_jobnr; }
 
 int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     int jobid = 0;
-    if ((util_file_exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
+    if ((fs::exists(stdout_file)) && (util_file_size(stdout_file) > 0)) {
         FILE *stream = util_fopen(stdout_file, "r");
         if (util_fseek_string(stream, "<", true, true)) {
             char *jobid_string = util_fscanf_alloc_upto(stream, ">", false);

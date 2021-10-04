@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <sys/types.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -33,6 +35,8 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
+
+namespace fs = std::filesystem;
 
 /*
 
@@ -329,7 +333,7 @@ static int enkf_fs_fread_fs_version__(FILE *stream) {
 
 static int enkf_fs_get_fs_version__(const char *config_file) {
     int version = -1;
-    if (util_file_exists(config_file)) {
+    if (fs::exists(config_file)) {
         FILE *stream = util_fopen(config_file, "r");
         version = enkf_fs_fread_fs_version__(stream);
         fclose(stream);
@@ -815,7 +819,7 @@ FILE *enkf_fs_open_case_tstep_file(const enkf_fs_type *fs,
 }
 
 static FILE *enkf_fs_open_exfile(const char *filename) {
-    if (util_file_exists(filename))
+    if (fs::exists(filename))
         return util_fopen(filename, "r");
     else
         return NULL;

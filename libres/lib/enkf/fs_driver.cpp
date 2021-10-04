@@ -15,11 +15,14 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
 
 #include <ert/util/util.h>
 
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/fs_driver.hpp>
+
+namespace fs = std::filesystem;
 
 /*
    The underlying base types (abstract - with no accompanying
@@ -82,7 +85,7 @@ FILE *fs_driver_open_fstab(const char *path, bool create) {
     if (create)
         util_make_path(path);
 
-    if (util_file_exists(fstab_file) != create) {
+    if (fs::exists(fstab_file) != create) {
         if (create)
             stream = util_fopen(fstab_file, "w");
         else

@@ -16,12 +16,16 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 
 #include <ert/util/util.h>
 
 #include <ert/enkf/cases_config.hpp>
+
+namespace fs = std::filesystem;
 
 struct cases_config_struct {
     int iteration_number;
@@ -62,7 +66,7 @@ void cases_config_fwrite(cases_config_type *config, const char *filename) {
 }
 
 void cases_config_fread(cases_config_type *config, const char *filename) {
-    if (util_file_exists(filename)) {
+    if (fs::exists(filename)) {
         FILE *stream = util_fopen(filename, "r");
         int iteration_number = util_fread_int(stream);
         cases_config_set_iteration_number(config, iteration_number);

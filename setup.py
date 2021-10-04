@@ -123,10 +123,10 @@ setup(
         "-DRES_VERSION=" + get_version(),
         "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
-        # everything not OS X. We depend on C++11, which makes our minimum
-        # supported OS X release 10.9
-        "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9",
-        f"-DCMAKE_INSTALL_LIBDIR=res/.libs",
+        # everything not OS X. We depend on C++17, which makes our minimum
+        # supported OS X release 10.15
+        "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
+        "-DCMAKE_INSTALL_LIBDIR=res/.libs",
     ],
     cmake_source_dir="libres/",
     classifiers=[

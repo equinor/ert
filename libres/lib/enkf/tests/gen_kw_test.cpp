@@ -15,6 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -23,6 +26,8 @@
 
 #include <ert/res_util/util_printf.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
+
+namespace fs = std::filesystem;
 
 void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     stringlist_type *key_list = ensemble_config_alloc_keylist_from_var_type(
@@ -40,8 +45,8 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     enkf_state_ecl_write(enkf_main_get_ensemble_config(enkf_main),
                          enkf_main_get_model_config(enkf_main), run_arg,
                          init_fs);
-    test_assert_true(util_file_exists("simulations/run0/parameters.txt"));
-    test_assert_true(util_file_exists("simulations/run0/parameters.json"));
+    test_assert_true(fs::exists("simulations/run0/parameters.txt"));
+    test_assert_true(fs::exists("simulations/run0/parameters.json"));
     run_arg_free(run_arg);
 
     stringlist_free(key_list);

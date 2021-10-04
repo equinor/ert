@@ -16,10 +16,12 @@
    for more details.
 */
 
+#include <cmath>
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <cmath>
 
 #include <ert/util/util.h>
 #include <ert/res_util/matrix.hpp>
@@ -34,6 +36,8 @@
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_common.hpp>
+
+namespace fs = std::filesystem;
 
 /*
    The file implements a general data type which can be used to update
@@ -255,7 +259,7 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
         bool_vector_iset(gen_data->active_mask, size - 1, true);
         {
             char *active_file = util_alloc_sprintf("%s_active", filename);
-            if (util_file_exists(active_file)) {
+            if (fs::exists(active_file)) {
                 file_exists = true;
                 FILE *stream = util_fopen(active_file, "r");
                 int active_int;
@@ -309,7 +313,7 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
 bool gen_data_fload_with_report_step(
     gen_data_type *gen_data, const char *filename,
     const forward_load_context_type *load_context) {
-    bool file_exists = util_file_exists(filename);
+    bool file_exists = fs::exists(filename);
     void *buffer = NULL;
     if (file_exists) {
         ecl_type_enum load_type;

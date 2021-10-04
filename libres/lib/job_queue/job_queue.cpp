@@ -20,6 +20,8 @@
 #define _GNU_SOURCE /* Must define this to get access to pthread_rwlock_t */
 #endif
 
+#include <filesystem>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,6 +36,8 @@
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/job_list.hpp>
+
+namespace fs = std::filesystem;
 
 /*
 
@@ -506,7 +510,7 @@ static void job_queue_user_exit__(job_queue_type *queue) {
 static bool job_queue_check_node_status_files(const job_queue_type *job_queue,
                                               job_queue_node_type *node) {
     const char *exit_file = job_queue_node_get_exit_file(node);
-    if (exit_file && util_file_exists(exit_file))
+    if (exit_file && fs::exists(exit_file))
         return false; // job has failed
 
     const char *ok_file = job_queue_node_get_ok_file(node);
@@ -520,10 +524,10 @@ static bool job_queue_check_node_status_files(const job_queue_type *job_queue,
 
     /* Wait for OK file */
     while (total_wait_time < job_queue->max_ok_wait_time) {
-        if (util_file_exists(ok_file))
+        if (fs::exists(ok_file))
             return true;
 
-        if (exit_file && util_file_exists(exit_file))
+        if (exit_file && fs::exists(exit_file))
             return false; // job has failed
 
         sleep(ok_sleep_time);

@@ -16,10 +16,11 @@
  for more details.
  */
 
+#include <unordered_map>
+#include <filesystem>
+
 #include <time.h>
 #include <stdlib.h>
-
-#include <unordered_map>
 
 #include <ert/util/util.h>
 #include <ert/util/parser.h>
@@ -34,6 +35,8 @@
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+
+namespace fs = std::filesystem;
 
 /*
  This file implements a struct which holds configuration information
@@ -109,7 +112,7 @@ void ecl_config_assert_restart(const ecl_config_type *ecl_config) {
 
 ui_return_type *ecl_config_validate_data_file(const ecl_config_type *ecl_config,
                                               const char *data_file) {
-    if (util_file_exists(data_file))
+    if (fs::exists(data_file))
         return ui_return_alloc(UI_RETURN_OK);
     else {
         ui_return_type *ui_return = ui_return_alloc(UI_RETURN_FAIL);
@@ -483,7 +486,7 @@ void ecl_config_set_grid(ecl_config_type *ecl_config, const char *grid_file) {
 ui_return_type *ecl_config_validate_grid(const ecl_config_type *ecl_config,
                                          const char *grid_file) {
     ui_return_type *ui_return;
-    if (util_file_exists(grid_file)) {
+    if (fs::exists(grid_file)) {
         ecl_file_enum file_type = ecl_util_get_file_type(grid_file, NULL, NULL);
         if ((file_type == ECL_EGRID_FILE) || (file_type == ECL_GRID_FILE))
             ui_return = ui_return_alloc(UI_RETURN_OK);

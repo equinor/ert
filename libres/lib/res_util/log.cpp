@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -23,6 +25,11 @@
 #include <sys/types.h>
 
 #include "ert/util/build_config.h"
+#include <ert/util/util.hpp>
+
+#include <ert/res_util/log.hpp>
+
+namespace fs = std::filesystem;
 
 #ifdef HAVE_FSYNC
 #include <unistd.h>
@@ -31,10 +38,6 @@
 #ifdef HAVE_PTHREAD
 #include <pthread.h>
 #endif
-
-#include <ert/util/util.hpp>
-
-#include <ert/res_util/log.hpp>
 
 struct log_struct {
     char *filename;
@@ -53,7 +56,7 @@ static void log_delete_empty(const log_type *logh) {
     if (!logh->filename)
         return;
 
-    if (!util_file_exists(logh->filename))
+    if (!fs::exists(logh->filename))
         return;
 
     if (util_file_size(logh->filename) == 0)

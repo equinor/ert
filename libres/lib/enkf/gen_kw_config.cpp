@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,6 +33,8 @@
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/trans_func.hpp>
 #include <ert/enkf/config_keys.hpp>
+
+namespace fs = std::filesystem;
 
 #define GEN_KW_CONFIG_TYPE_ID 550761
 #define GEN_KW_PARAMETER_TYPE_ID 886201
@@ -108,7 +112,7 @@ const char *gen_kw_config_get_template_file(const gen_kw_config_type *config) {
 void gen_kw_config_set_template_file(gen_kw_config_type *config,
                                      const char *template_file) {
     if (template_file != NULL) {
-        if (!util_file_exists(template_file))
+        if (!fs::exists(template_file))
             util_abort("%s: the template_file:%s does not exist - aborting.\n",
                        __func__, template_file);
     }

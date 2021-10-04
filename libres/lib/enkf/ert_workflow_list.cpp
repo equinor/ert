@@ -16,13 +16,14 @@
    for more details.
 */
 
+#include <set>
+#include <string>
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
-
-#include <set>
-#include <string>
 
 #include <ert/util/hash.h>
 #include <ert/res_util/subst_list.hpp>
@@ -38,6 +39,8 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/site_config.hpp>
 #include <ert/enkf/model_config.hpp>
+
+namespace fs = std::filesystem;
 
 #define ERT_WORKFLOW_LIST_TYPE_ID 8856275
 
@@ -131,7 +134,7 @@ workflow_type *
 ert_workflow_list_add_workflow(ert_workflow_list_type *workflow_list,
                                const char *workflow_file,
                                const char *workflow_name) {
-    if (util_file_exists(workflow_file)) {
+    if (fs::exists(workflow_file)) {
         workflow_type *workflow =
             workflow_alloc(workflow_file, workflow_list->joblist);
         char *name;

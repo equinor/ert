@@ -15,6 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
@@ -22,6 +25,8 @@
 #include <ert/util/util.hpp>
 
 #include <ert/res_util/log.hpp>
+
+namespace fs = std::filesystem;
 
 #define LOG_FILE "log.txt"
 
@@ -48,25 +53,25 @@ void test_delete_empty() {
         test_assert_not_NULL(logh);
         log_close(logh);
 
-        test_assert_false(util_file_exists(LOG_FILE));
+        test_assert_false(fs::exists(LOG_FILE));
     }
 
     {
         log_type *logh = log_open_file(LOG_FILE, LOG_DEBUG);
         log_close(logh);
 
-        test_assert_false(util_file_exists(LOG_FILE));
+        test_assert_false(fs::exists(LOG_FILE));
     }
 
     {
         log_type *logh = log_open_file(LOG_FILE, LOG_DEBUG);
         log_add_message(logh, LOG_DEBUG, "Message");
         log_close(logh);
-        test_assert_true(util_file_exists(LOG_FILE));
+        test_assert_true(fs::exists(LOG_FILE));
 
         logh = log_open_file(LOG_FILE, LOG_DEBUG);
         log_close(logh);
-        test_assert_true(util_file_exists(LOG_FILE));
+        test_assert_true(fs::exists(LOG_FILE));
     }
 }
 
@@ -90,9 +95,9 @@ void test_file_deleted() {
     log_type *logh = log_open_file(LOG_FILE, LOG_DEBUG);
     log_add_message(logh, LOG_DEBUG, "Message");
     util_unlink(LOG_FILE);
-    test_assert_false(util_file_exists(LOG_FILE));
+    test_assert_false(fs::exists(LOG_FILE));
     log_close(logh);
-    test_assert_false(util_file_exists(LOG_FILE));
+    test_assert_false(fs::exists(LOG_FILE));
 }
 
 void test_stream_open() {

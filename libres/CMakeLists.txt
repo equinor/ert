@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.6.1)
 project(res C CXX)
 
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 if(NOT SKBUILD)
   message(WARNING "This CMakeLists.txt file should not be used directly.\n"
@@ -30,8 +32,6 @@ string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\2" RES_VERSION_MINOR "${RE
 string( REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO "${RES_VERSION}")
 
 message( STATUS "libres version: ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}" )
-
-set(CMAKE_C_STANDARD 99)
 
 #-----------------------------------------------------------------
 
@@ -88,6 +88,8 @@ file(COPY ../job_runner/job_dispatch.py
 set( ERT_ROOT "${PROJECT_BINARY_DIR}" )
 
 #-----------------------------------------------------------------
+
+find_package(Filesystem REQUIRED)
 
 find_package(Threads)
 if (CMAKE_USE_PTHREADS_INIT)

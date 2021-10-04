@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <string.h>
 
 #include <ert/util/type_macros.hpp>
@@ -25,6 +27,8 @@
 
 #include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_content_node.hpp>
+
+namespace fs = std::filesystem;
 
 #define CONFIG_CONTENT_NODE_ID 6752887
 struct config_content_node_struct {
@@ -205,7 +209,7 @@ config_content_node_iget_as_executable(config_content_node_type *node,
             config_path_elm_alloc_abspath(node->cwd, config_value);
 
         if (!strstr(config_value, UTIL_PATH_SEP_STRING) &&
-            !util_file_exists(path_value)) {
+            !fs::exists(path_value)) {
             char *tmp = res_env_alloc_PATH_executable(config_value);
             if (tmp) {
                 free(path_value);

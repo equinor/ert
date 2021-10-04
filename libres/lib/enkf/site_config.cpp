@@ -16,11 +16,12 @@
    for more details.
  */
 
+#include <string>
+#include <filesystem>
+
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include <string>
 
 #include <ert/util/util.h>
 #include <ert/util/stringlist.h>
@@ -36,6 +37,8 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
+
+namespace fs = std::filesystem;
 
 /*
    This struct contains information which is specific to the site
@@ -475,7 +478,7 @@ site_config_alloc_content(config_parser_type *config_parser) {
     if (site_config_file == NULL)
         util_abort("%s: No config file specified.\n", __func__);
 
-    if (!util_file_exists(site_config_file))
+    if (!fs::exists(site_config_file))
         util_abort("%s: can not locate site configuration file:%s \n", __func__,
                    site_config_file);
 
@@ -514,7 +517,7 @@ const char *site_config_get_location() {
     const char *env_site_config = getenv("ERT_SITE_CONFIG");
 
     if (env_site_config != NULL) {
-        if (util_file_exists(env_site_config)) {
+        if (fs::exists(env_site_config)) {
             site_config = env_site_config;
         } else {
             fprintf(stderr,

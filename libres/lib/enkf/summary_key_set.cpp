@@ -15,6 +15,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <pthread.h>
 
@@ -22,6 +24,8 @@
 #include <ert/util/hash.h>
 
 #include <ert/enkf/summary_key_set.hpp>
+
+namespace fs = std::filesystem;
 
 #define SUMMARY_KEY_SET_TYPE_ID 700672133
 
@@ -137,7 +141,7 @@ bool summary_key_set_fread(summary_key_set_type *set, const char *filename) {
     {
         hash_clear(set->key_set);
 
-        if (util_file_exists(filename)) {
+        if (fs::exists(filename)) {
             FILE *stream = util_fopen(filename, "r");
             if (stream) {
                 stringlist_type *key_set = stringlist_fread_alloc(stream);

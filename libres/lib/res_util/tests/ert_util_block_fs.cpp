@@ -15,13 +15,19 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>
+
 #include <ert/res_util/block_fs.hpp>
+
+namespace fs = std::filesystem;
 
 void test_assert_util_abort(const char *function_name, void call_func(void *),
                             void *arg);
@@ -47,11 +53,11 @@ void createFS1() {
         block_fs_type *bfs = block_fs_mount("test.mnt", 1000, 10000, 0.67, 10,
                                             true, false, true);
         test_assert_false(block_fs_is_readonly(bfs));
-        test_assert_true(util_file_exists("test.lock_0"));
+        test_assert_true(fs::exists("test.lock_0"));
         {
             int total_sleep = 0;
             while (true) {
-                if (util_file_exists("stop")) {
+                if (fs::exists("stop")) {
                     unlink("stop");
                     break;
                 }
@@ -75,7 +81,7 @@ void test_lock_conflict() {
     ecl::util::TestArea ta("lockfile");
     createFS1();
     while (true) {
-        if (util_file_exists("test.lock_0"))
+        if (fs::exists("test.lock_0"))
             break;
     }
 
@@ -89,7 +95,7 @@ void test_lock_conflict() {
         fclose(stream);
     }
 
-    while (util_file_exists("stop")) {
+    while (fs::exists("stop")) {
         usleep(1000);
     }
 }

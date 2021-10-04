@@ -18,6 +18,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 #include <assert.h>
 #include <string.h>
@@ -28,6 +29,8 @@
 
 #include <ert/config/conf.hpp>
 #include <ert/config/conf_util.hpp>
+
+namespace fs = std::filesystem;
 
 struct conf_class_struct {
     const conf_class_type *super_class; /* Can be NULL */
@@ -1046,7 +1049,7 @@ bool conf_instance_get_path_error(const conf_instance_type *conf_instance) {
             const conf_item_spec_type *conf_item_spec =
                 conf_item->conf_item_spec;
             if (conf_item_spec->dt == DT_FILE) {
-                if (!util_file_exists(conf_item->value))
+                if (!fs::exists(conf_item->value))
                     path_errors = true;
             }
         }

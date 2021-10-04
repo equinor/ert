@@ -15,13 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <stdio.h>
 
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <filesystem>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <ext/json/cJSON.h>
 
@@ -29,6 +31,8 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/enkf/value_export.hpp>
+
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -69,10 +73,10 @@ void test_create() {
     test_assert_true(value_export_is_instance(export_value));
 
     value_export_txt(export_value);
-    test_assert_false(util_file_exists("parameters.txt"));
+    test_assert_false(fs::exists("parameters.txt"));
 
     value_export_json(export_value);
-    test_assert_false(util_file_exists("parameters.json"));
+    test_assert_false(fs::exists("parameters.json"));
 
     value_export_free(export_value);
 }
@@ -90,7 +94,7 @@ void test_export_json() {
     test_assert_int_equal(5, value_export_size(export_value));
     value_export_json(export_value);
 
-    test_assert_true(util_file_exists("path/parameters.json"));
+    test_assert_true(fs::exists("path/parameters.json"));
 
     std::ifstream f("path/parameters.json");
     auto const strJSON = std::string(std::istreambuf_iterator<char>(f),
@@ -142,10 +146,10 @@ void test_export_txt() {
     test_assert_int_equal(2, value_export_size(export_value));
 
     value_export_txt(export_value);
-    test_assert_true(util_file_exists("path/parameters.txt"));
+    test_assert_true(fs::exists("path/parameters.txt"));
 
     value_export_txt__(export_value, "path/parameters__.txt");
-    test_assert_true(util_file_exists("path/parameters__.txt"));
+    test_assert_true(fs::exists("path/parameters__.txt"));
     test_assert_true(
         util_files_equal("path/parameters__.txt", "path/parameters.txt"));
     {

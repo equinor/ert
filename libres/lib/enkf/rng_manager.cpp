@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,6 +25,8 @@
 #include <ert/util/vector.h>
 #include <ert/enkf/rng_manager.hpp>
 #include <ert/res_util/res_log.hpp>
+
+namespace fs = std::filesystem;
 
 #define RNG_MANAGER_TYPE_ID 77250451
 
@@ -73,7 +77,7 @@ rng_manager_type *rng_manager_alloc(const char *random_seed) {
 }
 
 rng_manager_type *rng_manager_alloc_load(const char *seed_file) {
-    if (!util_file_exists(seed_file))
+    if (!fs::exists(seed_file))
         return NULL;
 
     rng_manager_type *rng_manager = rng_manager_alloc_default();

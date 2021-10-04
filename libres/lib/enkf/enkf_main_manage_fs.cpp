@@ -15,10 +15,14 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
+
+#include <dirent.h>
 
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <dirent.h>
+
+namespace fs = std::filesystem;
 
 /*
   This small function is here only to make sure that the main
@@ -50,7 +54,7 @@ enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
         model_config_get_enspath(enkf_main_get_model_config(enkf_main));
     char *current_case_file =
         util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
-    bool exists = util_file_exists(current_case_file);
+    bool exists = fs::exists(current_case_file);
     free(current_case_file);
     return exists;
 }
