@@ -10,7 +10,7 @@ def approx(x, eps=0.2):
     return pytest.approx(x, abs=eps, rel=eps)
 
 
-@flaky.flaky(max_runs=3, min_passes=2)
+@flaky.flaky(max_runs=4, min_passes=2)
 @pytest.mark.parametrize(
     ("size", "mean", "std"),
     (
@@ -38,7 +38,7 @@ def test_gaussian_distribution(size, mean, std):
         assert np.array(sample.data).std() == approx(std)
 
 
-@flaky.flaky(max_runs=3, min_passes=2)
+@flaky.flaky(max_runs=4, min_passes=2)
 @pytest.mark.parametrize(
     ("index", "mean", "std"),
     (
@@ -77,7 +77,7 @@ def test_gaussian_distribution_invalid():
         ert3.stats.Gaussian(0, 1, size=10, index=list(range(10)))
 
 
-@flaky.flaky(max_runs=3, min_passes=2)
+@flaky.flaky(max_runs=4, min_passes=2)
 @pytest.mark.parametrize(
     ("size", "lower_bound", "upper_bound"),
     (
@@ -105,7 +105,7 @@ def test_uniform_distribution(size, lower_bound, upper_bound):
         assert np.array(sample.data).max() == approx(upper_bound)
 
 
-@flaky.flaky(max_runs=3, min_passes=2)
+@flaky.flaky(max_runs=4, min_passes=2)
 @pytest.mark.parametrize(
     ("index", "lower_bound", "upper_bound"),
     (
