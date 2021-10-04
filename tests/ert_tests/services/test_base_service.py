@@ -12,6 +12,7 @@ from ert_shared.services._base_service import (
     BaseService,
     local_exec_args,
 )
+import time
 
 
 class _DummyService(BaseService):
@@ -174,6 +175,7 @@ def test_json_deleted(server):
     subprocess is finished running.
     """
     server.fetch_conn_info()  # wait for it to start
+    time.sleep(2)  # ensure subprocess is done before calling shutdown()
     server.shutdown()
 
     assert not os.path.exists("dummy_server.json")
