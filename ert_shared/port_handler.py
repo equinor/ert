@@ -18,31 +18,31 @@ class InvalidHostException(Exception):
 def find_available_port(
     custom_host: Optional[str] = None,
     custom_range: Optional[range] = None,
-) -> Tuple[str, int]:
+) -> Tuple[str, int, socket.socket]:
     current_host = custom_host if custom_host is not None else _get_ip_address()
     current_range = (
         custom_range if custom_range is not None else range(51820, 51840 + 1)
     )
-
     if current_range.start == current_range.stop:
-        return current_host, current_range.start
-
-    attempts = 0
-    while attempts < current_range.stop - current_range.start:
         try:
-            attempts += 1
-            num = random.randrange(current_range.start, current_range.stop)
-            sock = _bind_socket(host=current_host, port=num)
-            sock.close()
-            return current_host, num
+            return (
+                current_host,
+                current_range.start,
+                _bind_socket(host=current_host, port=current_range.start),
+            )
         except PortAlreadyInUseException:
-            continue
+            pass
+    else:
+        attempts = 0
+        while attempts < current_range.stop - current_range.start:
+            try:
+                attempts += 1
+                num = random.randrange(current_range.start, current_range.stop)
+                return current_host, num, _bind_socket(host=current_host, port=num)
+            except PortAlreadyInUseException:
+                continue
 
     raise NoPortsInRangeException(f"No available ports in predefined {current_range}.")
-
-
-def get_socket(host: str, port: int) -> socket.socket:
-    return _bind_socket(host=host, port=port, reuse_addr=True)
 
 
 def _bind_socket(host: str, port: int, reuse_addr: bool = False) -> socket.socket:

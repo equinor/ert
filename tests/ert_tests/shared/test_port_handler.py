@@ -7,8 +7,7 @@ from ert_shared import port_handler
 
 def test_find_available_port(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
-    host, port = port_handler.find_available_port(custom_range=custom_range)
-    sock = port_handler.get_socket(host, port)
+    host, port, sock = port_handler.find_available_port(custom_range=custom_range)
     assert host is not None
     assert port is not None
     assert port in custom_range
@@ -18,18 +17,15 @@ def test_find_available_port(unused_tcp_port):
 
 def test_find_available_port_forced(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port)
-    host, port = port_handler.find_available_port(custom_range=custom_range)
+    host, port, sock = port_handler.find_available_port(custom_range=custom_range)
     assert port == unused_tcp_port
-
-    sock = port_handler.get_socket(host, port)
     assert sock is not None
     assert sock.fileno() != -1
 
 
 def test_no_more_ports_in_range(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
-    host, port = port_handler.find_available_port(custom_range=custom_range)
-    sock = port_handler.get_socket(host, port)
+    host, port, sock = port_handler.find_available_port(custom_range=custom_range)
     assert sock is not None
     assert sock.fileno() != -1
 
