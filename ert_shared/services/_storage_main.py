@@ -90,8 +90,7 @@ def run_server(args=None, debug=False):
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    host, port = port_handler.find_available_port(custom_host=args.host)
-    sock = port_handler.get_socket(host=host, port=port)
+    host, port, sock = port_handler.find_available_port(custom_host=args.host)
     connection_info = {
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
