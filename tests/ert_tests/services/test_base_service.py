@@ -86,15 +86,6 @@ def test_shutdown_after_finish(server):
 
 @pytest.mark.script(
     """\
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-"""
-)
-def test_info(server):
-    assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
-
-
-@pytest.mark.script(
-    """\
 time.sleep(0.5)
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 """
@@ -122,9 +113,10 @@ time.sleep(10)
 sys.exit(1)
 """
 )
-def test_long_lived(server):
+def test_long_lived(server, tmp_path):
     assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
     assert server.shutdown() == -signal.SIGTERM
+    assert not (tmp_path / "dummy_server.json").exists()
 
 
 @pytest.mark.script(
@@ -176,7 +168,6 @@ def test_json_deleted(server):
     """
     server.fetch_conn_info()  # wait for it to start
     time.sleep(2)  # ensure subprocess is done before calling shutdown()
-    server.shutdown()
 
     assert not os.path.exists("dummy_server.json")
 
@@ -193,6 +184,7 @@ def test_json_exists(monkeypatch, tmp_path):
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
+time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
 def test_singleton_start(server_script, tmp_path):
@@ -235,7 +227,10 @@ def test_singleton_connect_early(server_script):
     class ClientThread(threading.Thread):
         def run(self):
             start_event.set()
-            self.client = _DummyService.connect(timeout=5)
+            try:
+                self.client = _DummyService.connect(timeout=5)
+            except Exception as ex:
+                self.exception = ex
             ready_event.set()
 
     client_thread = ClientThread()
@@ -244,6 +239,9 @@ def test_singleton_connect_early(server_script):
     start_event.wait()  # Client thread has started
     with _DummyService.start_server(exec_args=[str(server_script)]) as server:
         ready_event.wait()  # Client thread has connected to server
+        assert not getattr(
+            client_thread, "exception", None
+        ), f"Exception from connect: {client_thread.exception}"
         client = client_thread.client
         assert client is not server
         assert client.fetch_conn_info() == server.fetch_conn_info()
@@ -270,6 +268,7 @@ def test_singleton_start_or_connect(server_script):
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
+time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
 def test_singleton_start_or_connect_exists(server_script):
