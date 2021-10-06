@@ -73,7 +73,7 @@ def render_template(input_files, template_file, output_file):
     Will render a jinja2 template file with the parameters given
     :param input_files: parameters as a list of JSON or YAML files
     :param template_file: template file in jinja2 format
-    :param output_file: output desitnation for the rendered template file
+    :param output_file: output destination for the rendered template file
     """
     if isinstance(input_files, str) and input_files:
         input_files = (input_files,)
