@@ -105,7 +105,7 @@ class _Proc(threading.Thread):
 
         if comm is None:
             self._set_conn_info(TimeoutError())
-            return
+            return  # _read_conn_info() has already cleaned up in this case
 
         conn_info: ConnInfo = None
         try:
@@ -148,7 +148,9 @@ class _Proc(threading.Thread):
 
     def _read_conn_info(self, proc: Popen) -> Optional[str]:
         comm_buf = io.StringIO()
-        while proc.poll() is None:
+        first_iter = True
+        while first_iter or proc.poll() is None:
+            first_iter = False
             ready = select([self._comm_pipe], [], [], self._timeout)
 
             # Timeout reached, exit with a failure
@@ -172,23 +174,6 @@ class _Proc(threading.Thread):
         except TimeoutExpired:
             self._proc.kill()
             self._proc.wait()
-
-    def _write_to_buf(
-        self, fd: int, buffer: io.BytesIO, func: Callable[[str], None]
-    ) -> None:
-        pipe_buf = os.read(fd, PIPE_BUF)
-        buffer.write(pipe_buf)
-
-        new_lines = pipe_buf.count(b"\n")
-        if new_lines == 0:
-            return
-
-        lines = buffer.getvalue().split(b"\n")
-        for i in range(new_lines):
-            func(lines[i].decode())
-        buffer.truncate(0)
-        buffer.seek(0)
-        buffer.write(lines[-1])
 
     def _ensure_delete_conn_info(self) -> None:
         """
