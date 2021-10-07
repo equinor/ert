@@ -255,10 +255,10 @@ def test_parameters(client):
     for col in parameters_df:
         record_data = client.get(
             f"/ensembles/{ensemble_id}/records/COEFFS:{col}",
-            headers={"accept": "application/x-dataframe"},
+            headers={"accept": "application/x-parquet"},
         ).content
         stream = io.BytesIO(record_data)
-        df = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+        df = pd.read_parquet(stream)
 
         # ERT produces a low-quality version
         assert_almost_equal(parameters_df[col].values, df.values.flatten(), decimal=4)

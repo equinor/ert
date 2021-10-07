@@ -10,6 +10,7 @@ import requests
 import pandas as pd
 import datetime
 import logging
+import io
 
 
 if TYPE_CHECKING:
@@ -343,11 +344,13 @@ def post_ensemble_results(ert: "LibresFacade", ensemble_id: str) -> None:
         realizations = record["data"]
         name = record["name"]
         for index, data in realizations.items():
+            stream = io.BytesIO()
+            data.to_parquet(stream)
             _post_to_server(
                 f"ensembles/{ensemble_id}/records/{name}/matrix",
                 params={"realization_index": index, "record_class": "response"},
-                data=data.to_csv().encode(),
-                headers={"content-type": "application/x-dataframe"},
+                data=stream.getvalue(),
+                headers={"content-type": "application/x-parquet"},
             )
             if record["observations"] is not None:
                 _post_to_server(

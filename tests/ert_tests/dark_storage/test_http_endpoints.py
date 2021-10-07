@@ -10,6 +10,7 @@ from ert_shared.main import ert_parser
 
 import pandas as pd
 import io
+import pytest
 
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
@@ -87,10 +88,20 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(response_df2.index) == 3
 
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/POLY_RES@0"
+        f"/ensembles/{ensemble_id1}/records/POLY_RES@0",
+        headers={"accept": "text/csv"},
     )
     stream = io.BytesIO(resp.content)
     record_df1 = pd.read_csv(stream, index_col=0, float_precision="round_trip")
+    assert len(record_df1.columns) == 10
+    assert len(record_df1.index) == 3
+
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id1}/records/POLY_RES@0",
+        headers={"accept": "application/x-parquet"},
+    )
+    stream = io.BytesIO(resp.content)
+    record_df1 = pd.read_parquet(stream)
     assert len(record_df1.columns) == 10
     assert len(record_df1.index) == 3
 
