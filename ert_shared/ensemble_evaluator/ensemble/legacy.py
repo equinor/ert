@@ -133,7 +133,11 @@ class _LegacyEnsemble(_Ensemble):
                 ]
 
             self._job_queue.add_ensemble_evaluator_information_to_jobs_file(
-                self._ee_id, dispatch_url, cert, token
+                self._ee_id,
+                dispatch_url,
+                cert,
+                token,
+                # process="ert2",
             )
 
             try:

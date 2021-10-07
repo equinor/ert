@@ -25,6 +25,7 @@ import logging
 import time
 import ssl
 import typing
+import statistics
 
 import websockets
 from websockets.datastructures import Headers
@@ -533,11 +534,10 @@ class JobQueue(BaseCClass):
         if finished_realizations < minimum_required_realizations:
             return
 
-        completed_jobs = [
-            job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
-        ]
-        average_runtime = sum([job.runtime for job in completed_jobs]) / float(
-            len(completed_jobs)
+        average_runtime = statistics.mean(
+            job.runtime
+            for job in self.job_list
+            if job.status == JobStatusType.JOB_QUEUE_DONE
         )
 
         for job in self.job_list:
@@ -553,7 +553,12 @@ class JobQueue(BaseCClass):
         return self._differ.diff_states(old_state, new_state)
 
     def add_ensemble_evaluator_information_to_jobs_file(
-        self, ee_id, dispatch_url, cert, token
+        self,
+        ee_id,
+        dispatch_url,
+        cert,
+        token,
+        # process = None,
     ):
         for q_index, q_node in enumerate(self.job_list):
             if cert is not None:
@@ -564,6 +569,7 @@ class JobQueue(BaseCClass):
                 data = json.load(jobs_file)
 
                 data["ee_id"] = ee_id
+                data["process"] = "ert2"  # ert2 is the only one using "jobs.json"
                 data["real_id"] = self._differ.qindex_to_iens(q_index)
                 data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url
