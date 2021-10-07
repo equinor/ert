@@ -14,6 +14,7 @@ from ert_storage import json_schema as js
 from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
 from fastapi.responses import Response
 import pandas as pd
+import io
 
 router = APIRouter(tags=["record"])
 
@@ -179,10 +180,20 @@ async def get_ensemble_record(
         # dataframe.loc returns a Series, and when we reconstruct a DataFrame from a Series, it defaults to be
         # oriented the wrong way, so we must transpose it
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
-    return Response(
-        content=dataframe.to_csv().encode(),
-        media_type="text/csv",
-    )
+
+    if accept == "application/x-parquet":
+        dataframe.columns = [str(s) for s in dataframe.columns]
+        stream = io.BytesIO()
+        dataframe.to_parquet(stream)
+        return Response(
+            content=stream.getvalue(),
+            media_type=accept,
+        )
+    else:
+        return Response(
+            content=dataframe.to_csv().encode(),
+            media_type="text/csv",
+        )
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
