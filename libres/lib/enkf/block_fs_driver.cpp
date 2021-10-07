@@ -283,31 +283,6 @@ static void block_fs_driver_save_vector(void *_driver, const char *node_key,
     }
 }
 
-void block_fs_driver_unlink_node(void *_driver, const char *node_key,
-                                 int report_step, int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key =
-            block_fs_driver_alloc_node_key(driver, node_key, report_step, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_unlink_file(bfs->block_fs, key);
-        free(key);
-    }
-}
-
-void block_fs_driver_unlink_vector(void *_driver, const char *node_key,
-                                   int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key = block_fs_driver_alloc_vector_key(driver, node_key, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_unlink_file(bfs->block_fs, key);
-        free(key);
-    }
-}
-
 bool block_fs_driver_has_node(void *_driver, const char *node_key,
                               int report_step, int iens) {
     block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
@@ -371,12 +346,10 @@ static block_fs_driver_type *block_fs_driver_alloc(int num_fs) {
     }
     driver->load_node = block_fs_driver_load_node;
     driver->save_node = block_fs_driver_save_node;
-    driver->unlink_node = block_fs_driver_unlink_node;
     driver->has_node = block_fs_driver_has_node;
 
     driver->load_vector = block_fs_driver_load_vector;
     driver->save_vector = block_fs_driver_save_vector;
-    driver->unlink_vector = block_fs_driver_unlink_vector;
     driver->has_vector = block_fs_driver_has_vector;
 
     driver->free_driver = block_fs_driver_free;

@@ -65,7 +65,6 @@
     enkf_fs_fread_node()
     enkf_fs_has_node()
     enkf_fs_fwrite_node()
-    enkf_fs_unlink_node()  - not implemented yet.
 
 
   So all these functions (partly except enkf_fs_has_node()) work on a enkf_node
