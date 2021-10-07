@@ -212,9 +212,10 @@ def test_singleton_connect(server_script):
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
+time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
-def test_singleton_connect_early(server_script):
+def test_singleton_connect_early(server_script, tmp_path):
     """
     Tests that a connection can be attempted even if it's started _before_
     the server exists
@@ -245,6 +246,8 @@ def test_singleton_connect_early(server_script):
         client = client_thread.client
         assert client is not server
         assert client.fetch_conn_info() == server.fetch_conn_info()
+
+    assert not (tmp_path / "dummy_server.json").exists()
 
 
 @pytest.mark.script(
