@@ -456,7 +456,7 @@ def external_sum_function(tmpdir):
         file_path = module_path / "bar.py"
         file_path.write_text(
             "def bar(coeffs):\n    return internal_call(coeffs)\n"
-            "def internal_call(coeffs):\n    return [sum(coeffs.values())]\n"
+            "def internal_call(coeffs):\n    return {'function_output':[sum(coeffs.values())]}\n"
         )
         spec = importlib.util.spec_from_file_location("foo", str(file_path))
         module = importlib.util.module_from_spec(spec)

@@ -41,10 +41,12 @@ if __name__ == "__main__":
 
 POLY_FUNCTION = """
 def polynomial(coefficients):
-    return tuple(
-        coefficients["a"] * x ** 2 + coefficients["b"] * x + coefficients["c"]
-        for x in range(10)
-    )
+    return {
+        "polynomial_output": tuple(
+            coefficients["a"] * x ** 2 + coefficients["b"] * x + coefficients["c"]
+            for x in range(10)
+        )
+    }
 """
 
 POLY_SCRIPT_X_UNCERTAINTIES = """#!/usr/bin/env python3
