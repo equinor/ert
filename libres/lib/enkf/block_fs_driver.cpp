@@ -30,14 +30,6 @@
 #include <ert/enkf/block_fs_driver.hpp>
 
 typedef struct bfs_struct bfs_type;
-typedef struct bfs_config_struct bfs_config_type;
-
-struct bfs_config_struct {
-    bool read_only;
-    bool preload;
-    int block_size;
-    bool bfs_lock;
-};
 
 #define BFS_TYPE_ID 5510643
 
@@ -46,33 +38,16 @@ struct bfs_struct {
     block_fs_type *block_fs;
     char *
         mountfile; // The full path to the file mounted by the block_fs layer - including extension.
-
-    const bfs_config_type *config;
 };
 
 struct block_fs_driver_struct {
     FS_DRIVER_FIELDS;
     int __id;
     int num_fs;
-    bfs_config_type *config;
 
     // New variables
     bfs_type **fs_list;
 };
-
-bfs_config_type *bfs_config_alloc(fs_driver_enum driver_type, bool read_only,
-                                  bool bfs_lock) {
-    {
-        bfs_config_type *config =
-            (bfs_config_type *)util_malloc(sizeof *config);
-        config->read_only = read_only;
-        config->bfs_lock = bfs_lock;
-
-        return config;
-    }
-}
-
-void bfs_config_free(bfs_config_type *config) { free(config); }
 
 static UTIL_SAFE_CAST_FUNCTION(bfs, BFS_TYPE_ID);
 
@@ -90,10 +65,9 @@ static void *bfs_close__(void *arg) {
     return NULL;
 }
 
-static bfs_type *bfs_alloc(const bfs_config_type *config) {
+static bfs_type *bfs_alloc() {
     bfs_type *fs = (bfs_type *)util_malloc(sizeof *fs);
     UTIL_TYPE_ID_INIT(fs, BFS_TYPE_ID);
-    fs->config = config;
 
     // New init
     fs->mountfile = NULL;
@@ -101,8 +75,8 @@ static bfs_type *bfs_alloc(const bfs_config_type *config) {
     return fs;
 }
 
-static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
-    bfs_type *bfs = bfs_alloc(config);
+static bfs_type *bfs_alloc_new(char *mountfile) {
+    bfs_type *bfs = bfs_alloc();
 
     bfs->mountfile =
         mountfile; // Warning pattern break: This is allocated in external scope; and the bfs takes ownership.
@@ -110,10 +84,8 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 }
 
 static void bfs_mount(bfs_type *bfs) {
-    const bfs_config_type *config = bfs->config;
     bfs->block_fs = block_fs_mount(
-        bfs->mountfile,
-        config->read_only, config->bfs_lock);
+        bfs->mountfile);
 }
 
 static void *bfs_mount__(void *arg) {
@@ -287,7 +259,6 @@ void block_fs_driver_free(void *_driver) {
         thread_pool_join(tp);
         thread_pool_free(tp);
     }
-    bfs_config_free(driver->config);
     free(driver->fs_list);
     free(driver);
 }
@@ -331,14 +302,11 @@ static block_fs_driver_type *block_fs_driver_alloc(int num_fs) {
 
 static void *block_fs_driver_alloc_new(fs_driver_enum driver_type,
                                        bool read_only, int num_fs,
-                                       const char *mountfile_fmt,
-                                       bool block_level_lock) {
+                                       const char *mountfile_fmt) {
     block_fs_driver_type *driver = block_fs_driver_alloc(num_fs);
-    driver->config = bfs_config_alloc(driver_type, read_only, block_level_lock);
     {
         for (int ifs = 0; ifs < driver->num_fs; ifs++)
-            driver->fs_list[ifs] = bfs_alloc_new(
-                driver->config, util_alloc_sprintf(mountfile_fmt, ifs));
+            driver->fs_list[ifs] = bfs_alloc_new(util_alloc_sprintf(mountfile_fmt, ifs));
     }
     return driver;
 }
@@ -389,11 +357,10 @@ void *block_fs_driver_open(FILE *fstab_stream, const char *mount_point,
     char *tmp_fmt = util_fread_alloc_string(fstab_stream);
     char *mountfile_fmt =
         util_alloc_sprintf("%s%c%s", mount_point, UTIL_PATH_SEP_CHAR, tmp_fmt);
-    const bool block_level_lock = false;
 
     block_fs_driver_type *driver =
         (block_fs_driver_type *)block_fs_driver_alloc_new(
-            driver_type, read_only, num_fs, mountfile_fmt, block_level_lock);
+            driver_type, read_only, num_fs, mountfile_fmt);
 
     block_fs_driver_mount(driver);
 

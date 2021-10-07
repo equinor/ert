@@ -87,14 +87,12 @@ struct block_fs_struct {
     char *base_name;
 
     char *data_file;
-    char *lock_file;
     char *index_file;
 
     int data_fd;
     FILE *data_stream;
 
     long int data_file_size; /* The total number of bytes in the data_file. */
-    int lock_fd; /* The file descriptor for the lock_file. Set to -1 if we do not have write access. */
 
     pthread_mutex_t io_lock;  /* Lock held during fread of the data file. */
     pthread_rwlock_t rw_lock; /* Read-write lock during all access to the fs. */
@@ -106,7 +104,6 @@ struct block_fs_struct {
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
                                        only contain pointers to the objects stored in this vector. */
     int write_count; /* This just counts the number of writes since the file system was mounted. */
-    bool data_owner;
 };
 
 static void block_fs_rotate__(block_fs_type *block_fs);
@@ -313,12 +310,7 @@ static file_node_type *file_node_index_buffer_fread_alloc(buffer_type *buffer) {
 }
 
 static inline void block_fs_aquire_wlock(block_fs_type *block_fs) {
-    if (block_fs->data_owner)
-        pthread_rwlock_wrlock(&block_fs->rw_lock);
-    else
-        util_abort(
-            "%s: tried to write to read only filesystem mounted at: %s \n",
-            __func__, block_fs->mount_file);
+    pthread_rwlock_wrlock(&block_fs->rw_lock);
 }
 
 static inline void block_fs_release_rwlock(block_fs_type *block_fs) {
@@ -357,17 +349,13 @@ static void block_fs_set_filenames(block_fs_type *block_fs) {
     /* The 0 refers to the data version after "defragmenting". It is fixed at 0
      * as deleting nodes is no longer possible. */
     const char *data_ext = "data_0";
-    const char *lock_ext = "lock_0";
     const char *index_ext = "index";
 
     free(block_fs->data_file);
-    free(block_fs->lock_file);
     free(block_fs->index_file);
 
     block_fs->data_file =
         util_alloc_filename(block_fs->path, block_fs->base_name, data_ext);
-    block_fs->lock_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, lock_ext);
     block_fs->index_file =
         util_alloc_filename(block_fs->path, block_fs->base_name, index_ext);
 }
@@ -385,8 +373,7 @@ static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs_set_filenames(block_fs);
 }
 
-static block_fs_type *block_fs_alloc_empty(const char *mount_file, bool read_only,
-                                           bool use_lockfile) {
+static block_fs_type *block_fs_alloc_empty(const char *mount_file) {
     block_fs_type *block_fs = (block_fs_type *)util_malloc(sizeof *block_fs);
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
@@ -407,29 +394,9 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file, bool read_onl
                        __func__, mount_file);
     }
     block_fs->data_file = NULL;
-    block_fs->lock_file = NULL;
     block_fs->index_file = NULL;
     block_fs_reinit(block_fs);
 
-    {
-        bool lock_aquired = true;
-
-        if (use_lockfile) {
-            lock_aquired = util_try_lockf(
-                block_fs->lock_file, S_IWUSR + S_IWGRP, &block_fs->lock_fd);
-
-            if (!lock_aquired)
-                fprintf(stderr,
-                        " Another program has already opened filesystem "
-                        "read-write - this instance will be UNSYNCRONIZED "
-                        "read-only. Cross your fingers ....\n");
-        }
-
-        if (lock_aquired && (read_only == false))
-            block_fs->data_owner = true;
-        else
-            block_fs->data_owner = false;
-    }
     return block_fs;
 }
 
@@ -516,25 +483,13 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
    calling this function again, with read_only == false.
 */
 
-static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
-    if (read_write) {
-        /* Normal read-write open.- */
-        if (util_file_exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r+");
-        else
-            block_fs->data_stream = util_fopen(block_fs->data_file, "w+");
-    } else {
-        /* read-only open. */
-        if (util_file_exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r");
-        else
-            block_fs->data_stream = NULL;
-        /*
-       If we ever try to dereference this pointer it will break
-       hard; but it should be stopped in hash_get() calls before the
-       data_stream is dereferenced anyway?
-    */
-    }
+static void block_fs_open_data(block_fs_type *block_fs) {
+    /* Normal read-write open.- */
+    if (util_file_exists(block_fs->data_file))
+        block_fs->data_stream = util_fopen(block_fs->data_file, "r+");
+    else
+        block_fs->data_stream = util_fopen(block_fs->data_file, "w+");
+
     if (block_fs->data_stream == NULL)
         block_fs->data_fd = -1;
     else
@@ -555,36 +510,34 @@ static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
 
 static void block_fs_fix_nodes(block_fs_type *block_fs,
                                long_vector_type *offset_list) {
-    if (block_fs->data_owner) {
-        fsync(block_fs->data_fd);
-        {
-            char *key = NULL;
-            for (int inode = 0; inode < long_vector_size(offset_list);
-                 inode++) {
-                bool new_node = false;
-                long int node_offset = long_vector_iget(offset_list, inode);
-                file_node_type *file_node;
-                block_fs_fseek(block_fs, node_offset);
-                file_node = file_node_fread_alloc(block_fs->data_stream, &key);
+    fsync(block_fs->data_fd);
+    {
+        char *key = NULL;
+        for (int inode = 0; inode < long_vector_size(offset_list);
+             inode++) {
+            bool new_node = false;
+            long int node_offset = long_vector_iget(offset_list, inode);
+            file_node_type *file_node;
+            block_fs_fseek(block_fs, node_offset);
+            file_node = file_node_fread_alloc(block_fs->data_stream, &key);
 
-                if ((file_node->status == NODE_INVALID) ||
-                    (file_node->status == NODE_WRITE_ACTIVE)) {
-                    /* This node is really quite broken. */
-                    long int node_end;
-                    block_fs_fseek_valid_node(block_fs);
-                    node_end = ftell(block_fs->data_stream);
-                    file_node->node_size = node_end - node_offset;
-                }
-
-                block_fs_fseek(block_fs, node_offset);
-                file_node_fwrite(file_node, NULL, block_fs->data_stream);
-                if (!new_node)
-                    file_node_free(file_node);
+            if ((file_node->status == NODE_INVALID) ||
+                (file_node->status == NODE_WRITE_ACTIVE)) {
+                /* This node is really quite broken. */
+                long int node_end;
+                block_fs_fseek_valid_node(block_fs);
+                node_end = ftell(block_fs->data_stream);
+                file_node->node_size = node_end - node_offset;
             }
-            free(key);
+
+            block_fs_fseek(block_fs, node_offset);
+            file_node_fwrite(file_node, NULL, block_fs->data_stream);
+            if (!new_node)
+                file_node_free(file_node);
         }
-        fsync(block_fs->data_fd);
+        free(key);
     }
+    fsync(block_fs->data_fd);
 }
 
 static void block_fs_build_index(block_fs_type *block_fs,
@@ -704,15 +657,7 @@ static bool block_fs_load_index(block_fs_type *block_fs) {
     return false;
 }
 
-bool block_fs_is_readonly(const block_fs_type *bfs) {
-    if (bfs->data_owner)
-        return false;
-    else
-        return true;
-}
-
-block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
-                              bool use_lockfile) {
+block_fs_type *block_fs_mount(const char *mount_file) {
     block_fs_type *block_fs;
     {
 
@@ -721,10 +666,9 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
             block_fs_fwrite_mount_info__(mount_file);
         {
             long_vector_type *fix_nodes = long_vector_alloc(0, 0);
-            block_fs = block_fs_alloc_empty(
-                mount_file, read_only, use_lockfile);
+            block_fs = block_fs_alloc_empty(mount_file);
             /* We build up the index & free_nodes_list based on the header/index information embedded in the datafile. */
-            block_fs_open_data(block_fs, false);
+            block_fs_open_data(block_fs);
             if (block_fs->data_stream != NULL) {
                 if (!block_fs_load_index(block_fs))
                     block_fs_build_index(block_fs, fix_nodes);
@@ -733,9 +677,7 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
             }
 
             block_fs_open_data(
-                block_fs,
-                block_fs
-                    ->data_owner); /* The data_stream is opened for reading AND writing (IFF we are data_owner - otherwise it is still read only) */
+                block_fs);
             block_fs_fix_nodes(block_fs, fix_nodes);
             long_vector_free(fix_nodes);
         }
@@ -749,12 +691,11 @@ static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
     /* No usable nodes in the free nodes list - must allocate a brand new one. */
 
     long int offset;
-    int node_size;
     file_node_type *new_node;
 
     /* Must lock the total size here ... */
     offset = block_fs->data_file_size;
-    new_node = file_node_alloc(NODE_IN_USE, offset, node_size);
+    new_node = file_node_alloc(NODE_IN_USE, offset, min_size);
     block_fs_install_node(
         block_fs, new_node); /* <- This will update the total file size. */
 
@@ -782,11 +723,9 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
 */
 
 void block_fs_fsync(block_fs_type *block_fs) {
-    if (block_fs->data_owner) {
-        fsync(block_fs->data_fd);
-        block_fs_fseek(block_fs, block_fs->data_file_size);
-        ftell(block_fs->data_stream);
-    }
+    fsync(block_fs->data_fd);
+    block_fs_fseek(block_fs, block_fs->data_file_size);
+    ftell(block_fs->data_stream);
 }
 
 /*
@@ -888,67 +827,51 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
 }
 
 static void block_fs_dump_index(block_fs_type *block_fs) {
-    if (block_fs->data_owner) {
-        struct stat stat_buffer;
-        int stat_return = stat(block_fs->data_file, &stat_buffer);
-        if (stat_return != 0)
-            return;
-        {
-            time_t data_mtime = stat_buffer.st_mtime;
-            FILE *index_stream = util_fopen(block_fs->index_file, "w");
-            util_fwrite_int(INDEX_MAGIC_INT, index_stream);
-            util_fwrite_int(INDEX_FORMAT_VERSION, index_stream);
-            util_fwrite_time_t(data_mtime, index_stream);
+   struct stat stat_buffer;
+   int stat_return = stat(block_fs->data_file, &stat_buffer);
+   if (stat_return != 0)
+       return;
+   {
+       time_t data_mtime = stat_buffer.st_mtime;
+       FILE *index_stream = util_fopen(block_fs->index_file, "w");
+       util_fwrite_int(INDEX_MAGIC_INT, index_stream);
+       util_fwrite_int(INDEX_FORMAT_VERSION, index_stream);
+       util_fwrite_time_t(data_mtime, index_stream);
 
-            /* 1: Dumping the hash table of active nodes. */
-            {
-                hash_iter_type *index_iter = hash_iter_alloc(block_fs->index);
+       /* 1: Dumping the hash table of active nodes. */
+       {
+           hash_iter_type *index_iter = hash_iter_alloc(block_fs->index);
 
-                util_fwrite_int(hash_get_size(block_fs->index), index_stream);
-                while (!hash_iter_is_complete(index_iter)) {
-                    const char *key = hash_iter_get_next_key(index_iter);
-                    const file_node_type *file_node =
-                        (const file_node_type *)hash_get(block_fs->index, key);
+           util_fwrite_int(hash_get_size(block_fs->index), index_stream);
+           while (!hash_iter_is_complete(index_iter)) {
+               const char *key = hash_iter_get_next_key(index_iter);
+               const file_node_type *file_node =
+                   (const file_node_type *)hash_get(block_fs->index, key);
 
-                    util_fwrite_string(key, index_stream);
-                    file_node_dump_index(file_node, index_stream);
-                }
-                hash_iter_free(index_iter);
-            }
+               util_fwrite_string(key, index_stream);
+               file_node_dump_index(file_node, index_stream);
+           }
+           hash_iter_free(index_iter);
+       }
 
-            /* 2: Block fs doesn't support "free nodes" anymore. Write 0 as the number of free nodes. */
-            util_fwrite_int(0, index_stream);
+       /* 2: Block fs doesn't support "free nodes" anymore. Write 0 as the number of free nodes. */
+       util_fwrite_int(0, index_stream);
 
-            fclose(index_stream);
-        }
-    }
+       fclose(index_stream);
+   }
 }
 
 void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
-
-    if (block_fs->data_owner)
-        block_fs_aquire_wlock(block_fs);
+    block_fs_aquire_wlock(block_fs);
 
     if (block_fs->data_stream != NULL)
         fclose(block_fs->data_stream);
 
-    if (block_fs->data_owner)
-        block_fs_dump_index(block_fs);
-
-    if (block_fs->lock_fd > 0) {
-        close(
-            block_fs
-                ->lock_fd); /* Closing the lock_file file descriptor - and releasing the lock. */
-        util_unlink_existing(block_fs->lock_file);
-    }
-
-    if (block_fs->data_owner) {
-        block_fs_release_rwlock(block_fs);
-    }
+    block_fs_dump_index(block_fs);
+    block_fs_release_rwlock(block_fs);
 
     free(block_fs->index_file);
-    free(block_fs->lock_file);
     free(block_fs->base_name);
     free(block_fs->data_file);
     free(block_fs->path);
