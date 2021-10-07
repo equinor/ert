@@ -37,9 +37,11 @@ class GenKwCollector(object):
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
-        if realization_index is None:
-            realizations = GenKwCollector.createActiveList(ert, fs)
-        else:
+        realizations = GenKwCollector.createActiveList(ert, fs)
+
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization ({realization_index})")
             realizations = [realization_index]
 
         gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)

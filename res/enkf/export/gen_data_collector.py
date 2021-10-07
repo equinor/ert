@@ -20,10 +20,12 @@ class GenDataCollector(object):
         columns.
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
+        realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
             realizations = IntVector.active_list(str(realization_index))
-        else:
-            realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+
         config_node = ert.ensembleConfig().getNode(key)
         gen_data_config = config_node.getModelConfig()
 
@@ -38,7 +40,6 @@ class GenDataCollector(object):
         data_array.fill(numpy.nan)
         for realization_index, realization_number in enumerate(realizations):
             realization_vector = ensemble_data[realization_number]
-
             if (
                 len(realization_vector) > 0
             ):  # Must check because of a bug changing between different case with different states

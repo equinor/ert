@@ -2,6 +2,7 @@ from libres_utils import ResTest
 
 from res.enkf.export import GenKwCollector
 from res.test import ErtTestContext
+import pytest
 
 
 class GenKwCollectorTest(ResTest):
@@ -51,3 +52,12 @@ class GenKwCollectorTest(ResTest):
             assert len(data.index) == 1
             assert list(data.columns) == ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
             self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][10], 0.282923)
+
+            non_existing_realization_index = 150
+            with pytest.raises(IndexError):
+                data = GenKwCollector.loadAllGenKwData(
+                    ert,
+                    "default_0",
+                    ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"],
+                    realization_index=non_existing_realization_index,
+                )

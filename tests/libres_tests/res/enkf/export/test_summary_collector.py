@@ -3,6 +3,7 @@ from pytest import MonkeyPatch
 
 from res.enkf.export import SummaryCollector
 from res.test import ErtTestContext
+import pytest
 
 
 class SummaryCollectorTest(ResTest):
@@ -56,3 +57,12 @@ class SummaryCollectorTest(ResTest):
             assert data.index.levels[0] == [realization_index]
             assert len(data.index.levels[1]) == 200
             assert list(data.columns) == ["WWCT:OP1", "WWCT:OP2"]
+
+            non_existing_realization_index = 150
+            with pytest.raises(IndexError):
+                data = SummaryCollector.loadAllSummaryData(
+                    ert,
+                    "default_0",
+                    ["WWCT:OP1", "WWCT:OP2"],
+                    realization_index=non_existing_realization_index,
+                )
