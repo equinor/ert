@@ -35,12 +35,10 @@ void fs_driver_init(fs_driver_type *driver) {
     driver->load_node = NULL;
     driver->save_node = NULL;
     driver->has_node = NULL;
-    driver->unlink_node = NULL;
 
     driver->load_vector = NULL;
     driver->save_vector = NULL;
     driver->has_vector = NULL;
-    driver->unlink_vector = NULL;
 
     driver->free_driver = NULL;
     driver->fsync_driver = NULL;

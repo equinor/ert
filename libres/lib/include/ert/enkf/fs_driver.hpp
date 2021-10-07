@@ -167,12 +167,10 @@ typedef void(load_node_ftype)(void *driver, const char *, int, int,
                               buffer_type *);
 typedef void(save_node_ftype)(void *driver, const char *, int, int,
                               buffer_type *);
-typedef void(unlink_node_ftype)(void *driver, const char *, int, int);
 typedef bool(has_node_ftype)(void *driver, const char *, int, int);
 
 typedef void(load_vector_ftype)(void *driver, const char *, int, buffer_type *);
 typedef void(save_vector_ftype)(void *driver, const char *, int, buffer_type *);
-typedef void(unlink_vector_ftype)(void *driver, const char *, int);
 typedef bool(has_vector_ftype)(void *driver, const char *, int);
 
 typedef void(fsync_driver_ftype)(void *driver);
@@ -201,11 +199,9 @@ typedef void(free_driver_ftype)(void *driver);
     load_node_ftype *load_node;                                                \
     save_node_ftype *save_node;                                                \
     has_node_ftype *has_node;                                                  \
-    unlink_node_ftype *unlink_node;                                            \
     load_vector_ftype *load_vector;                                            \
     save_vector_ftype *save_vector;                                            \
     has_vector_ftype *has_vector;                                              \
-    unlink_vector_ftype *unlink_vector;                                        \
     free_driver_ftype *free_driver;                                            \
     fsync_driver_ftype *fsync_driver;                                          \
     int type_id
