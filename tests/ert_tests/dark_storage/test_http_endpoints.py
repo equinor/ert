@@ -17,7 +17,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     answer_json = resp.json()
     assert len(answer_json) == 1
     assert "ensemble_ids" in answer_json[0]
-    assert len(answer_json[0]["ensemble_ids"]) == 1
+    assert len(answer_json[0]["ensemble_ids"]) == 2
     assert "name" in answer_json[0]
     assert answer_json[0]["name"] == "default"
 
@@ -26,7 +26,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 1
+    assert len(experiment_json[0]["ensemble_ids"]) == 2
 
     ensemble_id = experiment_json[0]["ensemble_ids"][0]
 
@@ -41,34 +41,19 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 1
+    assert len(experiment_json[0]["ensemble_ids"]) == 2
 
     experiment_id = experiment_json[0]["id"]
 
     resp: Response = dark_storage_client.get(f"/experiments/{experiment_id}/ensembles")
     ensembles_json = resp.json()
 
-    assert len(ensembles_json) == 1
+    assert len(ensembles_json) == 2
     assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
     assert ensembles_json[0]["userdata"]["name"] == "default"
 
 
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--target-case",
-            "poly_runpath_file",
-            "--realizations",
-            "1,2,4",
-            "poly.ert",
-        ],
-    )
-
-    run_cli(parsed)
-
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
 
@@ -148,20 +133,26 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["x_axis"]) == 5
 
 
-def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_EXPERIMENT_MODE,
-            "--realizations",
-            "1,2,4",
-            "poly.ert",
-        ],
+def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{id}}}"}
     )
+    answer_json = resp.json()
+    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
 
-    run_cli(parsed)
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id}/records/POLY_RES@0/observations"
+    )
+    response_json = resp.json()
 
+    assert len(response_json) == 1
+    assert response_json[0]["name"] == "POLY_OBS"
+    assert len(response_json[0]["errors"]) == 5
+    assert len(response_json[0]["values"]) == 5
+    assert len(response_json[0]["x_axis"]) == 5
+
+
+def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     ensemble_id = experiment_json[0]["ensemble_ids"][0]

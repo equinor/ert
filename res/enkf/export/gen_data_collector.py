@@ -3,12 +3,12 @@ from pandas import DataFrame, MultiIndex
 import numpy
 from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
 from res.enkf.plot_data import EnsemblePlotGenData
-from ecl.util.util import BoolVector
+from ecl.util.util import BoolVector, IntVector
 
 
 class GenDataCollector(object):
     @staticmethod
-    def loadGenData(ert, case_name, key, report_step):
+    def loadGenData(ert, case_name, key, report_step, realization_index=None):
         """@type ert: EnKFMain
         @type case_name: str
         @type key: str
@@ -21,6 +21,11 @@ class GenDataCollector(object):
         """
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
         realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
+        if realization_index:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = IntVector.active_list(str(realization_index))
+
         config_node = ert.ensembleConfig().getNode(key)
         gen_data_config = config_node.getModelConfig()
 
@@ -35,7 +40,6 @@ class GenDataCollector(object):
         data_array.fill(numpy.nan)
         for realization_index, realization_number in enumerate(realizations):
             realization_vector = ensemble_data[realization_number]
-
             if (
                 len(realization_vector) > 0
             ):  # Must check because of a bug changing between different case with different states

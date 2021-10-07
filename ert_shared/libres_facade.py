@@ -135,17 +135,21 @@ class LibresFacade(object):
         else:
             return []
 
-    def gather_gen_kw_data(self, case, key):
+    def gather_gen_kw_data(self, case, key, realization_index=None):
         """:rtype: pandas.DataFrame"""
-        data = GenKwCollector.loadAllGenKwData(self._enkf_main, case, [key])
+        data = GenKwCollector.loadAllGenKwData(
+            self._enkf_main, case, [key], realization_index=realization_index
+        )
         if key in data:
             return data[key].to_frame().dropna()
         else:
             return DataFrame()
 
-    def gather_summary_data(self, case, key):
+    def gather_summary_data(self, case, key, realization_index=None):
         """:rtype: pandas.DataFrame"""
-        data = SummaryCollector.loadAllSummaryData(self._enkf_main, case, [key])
+        data = SummaryCollector.loadAllSummaryData(
+            self._enkf_main, case, [key], realization_index
+        )
         if not data.empty:
             data = data.reset_index()
 
@@ -196,7 +200,7 @@ class LibresFacade(object):
 
         return data
 
-    def gather_gen_data_data(self, case, key):
+    def gather_gen_data_data(self, case, key, realization_index=None):
         """:rtype: pandas.DataFrame"""
         key_parts = key.split("@")
         key = key_parts[0]
@@ -206,7 +210,9 @@ class LibresFacade(object):
             report_step = 0
 
         try:
-            data = GenDataCollector.loadGenData(self._enkf_main, case, key, report_step)
+            data = GenDataCollector.loadGenData(
+                self._enkf_main, case, key, report_step, realization_index
+            )
         except (ValueError, KeyError):
             data = DataFrame()
 

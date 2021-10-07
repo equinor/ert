@@ -27,20 +27,6 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
 
 
 def test_get_enesembles(poly_example_tmp_dir, dark_storage_client):
-    parser = ArgumentParser(prog="test_main")
-    parsed = ert_parser(
-        parser,
-        [
-            ENSEMBLE_SMOOTHER_MODE,
-            "--target-case",
-            "poly_runpath_file",
-            "--realizations",
-            "1,2,4",
-            "poly.ert",
-        ],
-    )
-
-    run_cli(parsed)
 
     resp: Response = dark_storage_client.post(
         "/gql", json={"query": "{experiments{ensembles{userdata}}}"}

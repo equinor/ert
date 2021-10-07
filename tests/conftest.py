@@ -5,7 +5,7 @@ import pytest
 from utils import SOURCE_DIR
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def source_root():
     return SOURCE_DIR
 

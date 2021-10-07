@@ -23,7 +23,7 @@ class SummaryCollector(object):
         return key_manager.summaryKeys()
 
     @staticmethod
-    def loadAllSummaryData(ert, case_name, keys=None):
+    def loadAllSummaryData(ert, case_name, keys=None, realization_index=None):
         """
         @type ert: EnKFMain
         @type case_name: str
@@ -34,7 +34,13 @@ class SummaryCollector(object):
 
         time_map = fs.getTimeMap()
         dates = [time_map[index].datetime() for index in range(1, len(time_map))]
+
         realizations = SummaryCollector.createActiveList(ert, fs)
+
+        if realization_index is not None:
+            if realization_index not in realizations:
+                raise IndexError(f"No such realization {realization_index}")
+            realizations = [realization_index]
 
         summary_keys = SummaryCollector.getAllSummaryKeys(ert)
         if keys is not None:

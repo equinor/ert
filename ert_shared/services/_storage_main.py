@@ -7,6 +7,7 @@ import argparse
 from pathlib import Path
 from ert_shared import port_handler
 from ert_shared import __file__ as ert_shared_path
+from ert_shared.plugins import ErtPluginContext
 from ert_shared.storage.command import add_parser_options
 from uvicorn.supervisors import ChangeReload
 from typing import List
@@ -169,4 +170,5 @@ if __name__ == "__main__":
     import ert_logging
 
     terminate_on_parent_death()
-    run_server(debug=False)
+    with ErtPluginContext() as context:
+        run_server(debug=False)

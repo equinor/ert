@@ -4,16 +4,16 @@ from typing import Optional
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 
-from ert_shared.dark_storage.common import data_for_key
+from ert_shared.dark_storage.common import data_for_key, observations_for_obs_keys
 from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_name
 import pandas as pd
 
-from ert_shared.storage.extraction import create_observations
 from ert_storage.compute import calculate_misfits_from_pandas
 
 from ert_storage import exceptions as exc
 
 router = APIRouter(tags=["misfits"])
+from dateutil.parser import parse
 
 
 @router.get(
@@ -43,23 +43,33 @@ async def get_response_misfits(
         data_df = pd.DataFrame(data).T
         response_dict[index] = data_df
 
-    obs = create_observations(res)
     obs_keys = res.observation_keys(response_name)
+    obs = observations_for_obs_keys(ensemble_name, obs_keys)
+
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")
-    obs_key = obs_keys[0]
-    for o in obs:
-        if o["name"] == obs_key:
-            observation_df = pd.DataFrame(
-                data={"values": o["values"], "errors": o["errors"]},
-                index=[int(x) for x in o["x_axis"]],
-            )
+    if not obs:
+        raise ValueError(f"Cant fetch observations for key {response_name}")
+    o = obs[0]
+
+    def parse_index(x):
+        try:
+            return int(x)
+        except:
+            return parse(x)
+
+    observation_df = pd.DataFrame(
+        data={"values": o["values"], "errors": o["errors"]},
+        index=[parse_index(x) for x in o["x_axis"]],
+    )
     try:
         result_df = calculate_misfits_from_pandas(
             response_dict, observation_df, summary_misfits
         )
     except Exception as misfits_exc:
-        raise exc.UnprocessableError(f"Unable to compute misfits: {misfits_exc}")
+        raise exc.UnprocessableError(
+            f"Unable to compute misfits: {misfits_exc}"
+        ) from misfits_exc
     return Response(
         content=result_df.to_csv().encode(),
         media_type="text/csv",
