@@ -33,12 +33,9 @@ typedef struct bfs_struct bfs_type;
 typedef struct bfs_config_struct bfs_config_type;
 
 struct bfs_config_struct {
-    int fsync_interval;
-    double fragmentation_limit;
     bool read_only;
     bool preload;
     int block_size;
-    int max_cache_size;
     bool bfs_lock;
 };
 
@@ -65,41 +62,12 @@ struct block_fs_driver_struct {
 
 bfs_config_type *bfs_config_alloc(fs_driver_enum driver_type, bool read_only,
                                   bool bfs_lock) {
-    const int PARAMETER_blocksize = 64;
-    const int DYNAMIC_blocksize = 64;
-    const int DEFAULT_blocksize = 64;
-
-    const bool PARAMETER_preload = false;
-    const bool DYNAMIC_preload = true;
-    const bool DEFAULT_preload = false;
-
-    const int max_cache_size = 512;
-    const int fsync_interval =
-        10; /* An fsync() call is issued for every 10'th write. */
-    const double fragmentation_limit = 1.0; /* 1.0 => NO defrag is run. */
-
     {
         bfs_config_type *config =
             (bfs_config_type *)util_malloc(sizeof *config);
-        config->max_cache_size = max_cache_size;
-        config->fsync_interval = fsync_interval;
-        config->fragmentation_limit = fragmentation_limit;
         config->read_only = read_only;
         config->bfs_lock = bfs_lock;
 
-        switch (driver_type) {
-        case (DRIVER_PARAMETER):
-            config->block_size = PARAMETER_blocksize;
-            config->preload = PARAMETER_preload;
-            break;
-        case (DRIVER_DYNAMIC_FORECAST):
-            config->block_size = DYNAMIC_blocksize;
-            config->preload = DYNAMIC_preload;
-            break;
-        default:
-            config->block_size = DEFAULT_blocksize;
-            config->preload = DEFAULT_preload;
-        }
         return config;
     }
 }
@@ -110,7 +78,7 @@ static UTIL_SAFE_CAST_FUNCTION(bfs, BFS_TYPE_ID);
 
 static void bfs_close(bfs_type *bfs) {
     if (bfs->block_fs != NULL)
-        block_fs_close(bfs->block_fs, false);
+        block_fs_close(bfs->block_fs);
     free(bfs->mountfile);
     free(bfs);
 }
@@ -144,8 +112,7 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 static void bfs_mount(bfs_type *bfs) {
     const bfs_config_type *config = bfs->config;
     bfs->block_fs = block_fs_mount(
-        bfs->mountfile, config->block_size, config->max_cache_size,
-        config->fragmentation_limit, config->fsync_interval, config->preload,
+        bfs->mountfile,
         config->read_only, config->bfs_lock);
 }
 
@@ -283,31 +250,6 @@ static void block_fs_driver_save_vector(void *_driver, const char *node_key,
     }
 }
 
-void block_fs_driver_unlink_node(void *_driver, const char *node_key,
-                                 int report_step, int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key =
-            block_fs_driver_alloc_node_key(driver, node_key, report_step, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_unlink_file(bfs->block_fs, key);
-        free(key);
-    }
-}
-
-void block_fs_driver_unlink_vector(void *_driver, const char *node_key,
-                                   int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key = block_fs_driver_alloc_vector_key(driver, node_key, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_unlink_file(bfs->block_fs, key);
-        free(key);
-    }
-}
-
 bool block_fs_driver_has_node(void *_driver, const char *node_key,
                               int report_step, int iens) {
     block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
@@ -371,12 +313,10 @@ static block_fs_driver_type *block_fs_driver_alloc(int num_fs) {
     }
     driver->load_node = block_fs_driver_load_node;
     driver->save_node = block_fs_driver_save_node;
-    driver->unlink_node = block_fs_driver_unlink_node;
     driver->has_node = block_fs_driver_has_node;
 
     driver->load_vector = block_fs_driver_load_vector;
     driver->save_vector = block_fs_driver_save_vector;
-    driver->unlink_vector = block_fs_driver_unlink_vector;
     driver->has_vector = block_fs_driver_has_vector;
 
     driver->free_driver = block_fs_driver_free;
