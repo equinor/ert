@@ -129,7 +129,7 @@ def test_function_step(
     inputs = {"values": input_transmitter_factory("values", test_values)}
 
     def sum_function(values):
-        return [sum(values)]
+        return {"output": [sum(values)]}
 
     step = get_step(
         step_name="test_step",
@@ -162,7 +162,7 @@ def test_function_step(
         task_result.result["output"].load()
     )
     transmitted_result = transmitted_record.data
-    expected_result = sum_function(values=test_values)
+    expected_result = sum_function(values=test_values)["output"]
     assert expected_result == transmitted_result
 
 
@@ -180,7 +180,7 @@ def test_function_step_for_function_defined_outside_py_environment(
     step = get_step(
         step_name="test_step",
         inputs=[("coeffs", "NA", "text/whatever")],
-        outputs=[("output", Path("output.out"), "application/json")],
+        outputs=[("function_output", Path("output.out"), "application/json")],
         jobs=[("test_function", external_sum_function, None)],
         type_="function",
     )
@@ -201,11 +201,11 @@ def test_function_step_for_function_defined_outside_py_environment(
     assert flow_run.is_successful()
 
     assert len(task_result.result) == 1
-    expected_uri = output_trans["output"]._uri
-    output_uri = task_result.result["output"]._uri
+    expected_uri = output_trans["function_output"]._uri
+    output_uri = task_result.result["function_output"]._uri
     assert expected_uri == output_uri
     transmitted_record = asyncio.get_event_loop().run_until_complete(
-        task_result.result["output"].load()
+        task_result.result["function_output"].load()
     )
     transmitted_result = transmitted_record.data
     assert [expected_result] == transmitted_result

@@ -42,7 +42,9 @@ class FunctionTask(prefect.Task):
         futures = []
         for output in self._step.get_outputs():
             transmitter = self._output_transmitters[output.get_name()]
-            futures.append(_transmit(output, transmitter, function_output))
+            futures.append(
+                _transmit(output, transmitter, function_output[output.get_name()])
+            )
         results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
         transmitter_map = {result[0]: result[1] for result in results}
         return transmitter_map

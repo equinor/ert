@@ -130,7 +130,7 @@ def test_prefect_retries(
         except FileNotFoundError:
             # some other real beat us to it
             pass
-        return []
+        return {"function_output": []}
 
     pickle_func = cloudpickle.dumps(function_that_fails_once)
     ensemble = function_ensemble_builder_factory(pickle_func).set_retry_delay(2).build()
@@ -170,7 +170,7 @@ def test_prefect_no_retries(
             run_path.touch()
             raise RuntimeError("This is an expected ERROR")
         run_path.unlink()
-        return []
+        return {"function_output": []}
 
     pickle_func = cloudpickle.dumps(function_that_fails_once)
     ensemble = (
@@ -238,7 +238,8 @@ def test_run_prefect_for_function_defined_outside_py_environment(
     successful_realizations = evaluator._ensemble.get_successful_realizations()
     assert successful_realizations == ensemble_size
     expected_results = [
-        pickle.loads(external_sum_function)(coeffs) for coeffs in coefficients
+        pickle.loads(external_sum_function)(coeffs)["function_output"]
+        for coeffs in coefficients
     ]
     transmitter_futures = [res["function_output"].load() for res in results.values()]
     results = asyncio.get_event_loop().run_until_complete(
