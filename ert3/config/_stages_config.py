@@ -72,9 +72,9 @@ class TransportableCommand(_StagesConfig):
 
 # mypy ignore missing parameter for generic type
 class IndexedOrderedDict(OrderedDict):  # type: ignore
-    """Ordered dict with custom getitem-method"""
+    """Extend OrderedDict to add support for accessing elements by their index."""
 
-    def __getitem__(self, attr: Any) -> Any:
+    def __getitem__(self, attr: Union[str, int]) -> Any:
         if isinstance(attr, str):
             return super().__getitem__(attr)
         return self[list(self.keys())[attr]]
