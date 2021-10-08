@@ -295,3 +295,10 @@ def test_stage_script_immutable(base_unix_stage_config):
 
     with pytest.raises(TypeError, match="does not support item assignment"):
         config[0].script[0][0] = "x"
+
+
+def test_indexed_ordered_dict():
+    idx_ordered_dict = ert3.config.IndexedOrderedDict(
+        {"record_key_1": "record_value_1", "record_key_2": "record_value_2"}
+    )
+    assert idx_ordered_dict[0] == idx_ordered_dict["record_key_1"]

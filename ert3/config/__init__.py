@@ -7,6 +7,7 @@ from ert3.config._stages_config import (
     Function,
     Unix,
     DEFAULT_RECORD_MIME_TYPE,
+    IndexedOrderedDict,
 )
 from ert3.config._experiment_config import load_experiment_config, ExperimentConfig
 from ert3.config._parameters_config import load_parameters_config, ParametersConfig
