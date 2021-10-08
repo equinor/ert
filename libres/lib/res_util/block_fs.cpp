@@ -1186,16 +1186,6 @@ static double get_fragmentation(const block_fs_type *block_fs) {
     return block_fs->free_size * 1.0 / block_fs->data_file_size;
 }
 
-void block_fs_unlink_file(block_fs_type *block_fs, const char *filename) {
-    block_fs_aquire_wlock(block_fs);
-
-    block_fs_unlink_file__(block_fs, filename);
-    if (get_fragmentation(block_fs) > block_fs->fragmentation_limit)
-        block_fs_rotate__(block_fs);
-
-    block_fs_release_rwlock(block_fs);
-}
-
 /*
    It seems it is not enough to call fsync(); must also issue this
    funny fseek + ftell combination to ensure that all data is on
