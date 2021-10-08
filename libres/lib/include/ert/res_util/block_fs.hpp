@@ -48,7 +48,6 @@ void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
                             const buffer_type *buffer);
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer);
-void block_fs_unlink_file(block_fs_type *block_fs, const char *filename);
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename);
 vector_type *block_fs_alloc_filelist(block_fs_type *block_fs,
                                      const char *pattern,
