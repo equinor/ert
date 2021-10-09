@@ -10,13 +10,6 @@ def get_ecl_include():
     return get_include()
 
 
-def get_data_files():
-    data_files = []
-    for root, _, files in os.walk("share/ert"):
-        data_files.append((root, [os.path.join(root, name) for name in files]))
-    return data_files
-
-
 def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
@@ -28,7 +21,7 @@ def package_files(directory):
 extra_files = package_files("ert_gui/resources/")
 logging_configuration = package_files("ert_logging/")
 ert3_example_files = package_files("ert3_examples/")
-
+share_files = package_files("share/")
 
 with open("README.md") as f:
     long_description = f.read()
@@ -36,10 +29,6 @@ with open("README.md") as f:
 packages = find_packages(
     exclude=["*.tests", "*.tests.*", "tests.*", "tests", "tests*", "libres"],
 )
-
-# Given this unusual layout where we cannot fall back on a "root package",
-# package_dir is built manually from libres_packages.
-res_files = get_data_files()
 
 setup(
     name="ert",
@@ -52,6 +41,7 @@ setup(
     url="https://github.com/equinor/ert",
     packages=packages,
     package_data={
+        "share": share_files,
         "ert_gui": extra_files,
         "ert_logging": logging_configuration,
         "ert3_examples": ert3_example_files,
@@ -62,7 +52,6 @@ setup(
         ],
     },
     include_package_data=True,
-    data_files=res_files,
     license="GPL-3.0",
     platforms="any",
     install_requires=[
