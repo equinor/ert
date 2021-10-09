@@ -2,18 +2,19 @@
 
 
 # TODO: This script is a hack in its entirety to get hold the template_render
-# job from libres. Over time this script should disappear...
+# job from share/ert/forward-models/templating/script/
+# Over time this script should disappear.
 
-
-import pathlib
-import res
-import subprocess
 import sys
+import pathlib
+import subprocess
+
+import res
 
 
 def _locate_template_render_exec():
     return (
-        pathlib.Path(res.__file__).parent.parent.parent.parent.parent
+        pathlib.Path(res.__file__).parent.parent
         / "share"
         / "ert"
         / "forward-models"
