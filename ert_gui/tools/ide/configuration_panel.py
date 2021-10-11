@@ -99,9 +99,9 @@ class ConfigurationPanel(QWidget):
             self.reload(self.config_file)
 
     def saveAs(self):
-        config_file = QFileDialog.getSaveFileName(self, "Save Configuration File As")
-
-        config_file = str(config_file)
+        config_file: tuple(str, str) = QFileDialog.getSaveFileName(
+            self, "Save Configuration File As"
+        )[0]
 
         if len(config_file) > 0:
             with open(config_file, "w") as f:
