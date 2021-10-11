@@ -82,7 +82,7 @@ setup(
         "decorator",
         "deprecation",
         "dnspython >= 2",
-        "ecl >= 2.12.0",
+        "ecl >= 2.13.0",
         "ert-storage",
         "fastapi",
         "graphene",
