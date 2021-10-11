@@ -1,6 +1,6 @@
 from importlib.abc import Loader
 import importlib.util
-from typing import Callable, Tuple, Type, cast, Union, Dict, Any, Mapping
+from typing import Callable, Tuple, cast, Union, Dict, Any, Mapping
 from types import MappingProxyType
 from collections import OrderedDict
 from pydantic import BaseModel, FilePath, ValidationError, validator
