@@ -63,10 +63,7 @@ class IndexedOrderedDict(OrderedDict):  # type: ignore
         return self[list(self.keys())[attr]]
 
 
-def _set_dict_from_list(
-    cls: Type[_StagesConfig], records: Tuple[Dict[str, str], ...]
-) -> Mapping[str, Record]:
-    """Grab record-names in records and use as keys"""
+def _create_record_mapping(records: Tuple[Dict[str, str], ...]) -> Mapping[str, Record]:
     ordered_dict = IndexedOrderedDict(
         {record["record"]: Record(**record) for record in records}
     )
@@ -80,10 +77,10 @@ class _Step(_StagesConfig):
     output: MappingProxyType  # type: ignore
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
-        _set_dict_from_list
+        _create_record_mapping
     )
     _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
-        _set_dict_from_list
+        _create_record_mapping
     )
 
 
