@@ -39,11 +39,10 @@ public:
     block_fs_driver(int num_fs);
     ~block_fs_driver();
 
-    static block_fs_driver *new_(bool preload, bool read_only, int num_fs,
-                                 const char *mountfile_fmt,
-                                 bool block_level_lock);
+    static block_fs_driver *new_(bool preload, int num_fs,
+                                 const char *mountfile_fmt);
     static block_fs_driver *open(FILE *fstab_stream, const char *mount_point,
-                                 bool preload, bool read_only);
+                                 bool preload);
 
     bool has_node(const char *node_key, int report_step, int iens);
     void load_node(const char *node_key, int report_step, int iens,

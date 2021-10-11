@@ -153,7 +153,6 @@ struct enkf_fs_struct {
     std::unique_ptr<ert::block_fs_driver> parameter;
     std::unique_ptr<ert::block_fs_driver> index;
 
-    bool read_only; /* Whether this filesystem has been mounted read-only. */
     time_map_type *time_map;
     cases_config_type *cases_config;
     state_map_type *state_map;
@@ -224,7 +223,6 @@ static enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     fs->mount_point = util_alloc_string_copy(mount_point);
     fs->refcount = 0;
     fs->runcount = 0;
-    fs->lock_fd = 0;
 
     if (mount_point == NULL)
         util_abort("%s: fatal internal error: mount_point == NULL \n",
@@ -237,17 +235,6 @@ static enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
         fs->case_name = util_alloc_string_copy(path_tmp[path_len - 1]);
         fs->root_path = util_alloc_joined_string(
             (const char **)path_tmp, path_len, UTIL_PATH_SEP_STRING);
-        fs->lock_file =
-            util_alloc_filename(fs->mount_point, fs->case_name, "lock");
-
-        if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
-            fs->read_only = false;
-        } else {
-            fprintf(stderr, " Another program has already opened filesystem "
-                            "read-write - this instance will be UNSYNCRONIZED "
-                            "read-only. Cross your fingers ....\n");
-            fs->read_only = true;
-        }
 
         util_free_stringlist(path_tmp, path_len);
     }
@@ -554,10 +541,8 @@ bool enkf_fs_exists(const char *mount_point) {
 }
 
 static void enkf_fs_umount(enkf_fs_type *fs) {
-    if (!fs->read_only) {
-        enkf_fs_fsync(fs);
-        enkf_fs_fwrite_misfit(fs);
-    }
+    enkf_fs_fsync(fs);
+    enkf_fs_fwrite_misfit(fs);
 
     int refcount = fs->refcount;
     if (refcount > 0)
@@ -575,7 +560,6 @@ static void enkf_fs_umount(enkf_fs_type *fs) {
 
     free(fs->case_name);
     free(fs->root_path);
-    free(fs->lock_file);
     free(fs->mount_point);
     path_fmt_free(fs->case_fmt);
     path_fmt_free(fs->case_member_fmt);
@@ -663,11 +647,6 @@ bool enkf_fs_has_vector(enkf_fs_type *enkf_fs, const char *node_key,
 void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
                          const char *node_key, enkf_var_type var_type,
                          int report_step, int iens) {
-    if (enkf_fs->read_only)
-        util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
-                   "- aborting. \n",
-                   __func__, enkf_fs->mount_point);
-
     if ((var_type == PARAMETER) && (report_step > 0))
         util_abort(
             "%s: Parameters can only be saved for report_step = 0   %s:%d\n",
@@ -696,8 +675,6 @@ const char *enkf_fs_get_mount_point(const enkf_fs_type *fs) {
 const char *enkf_fs_get_case_name(const enkf_fs_type *fs) {
     return fs->case_name;
 }
-
-bool enkf_fs_is_read_only(const enkf_fs_type *fs) { return fs->read_only; }
 
 char *enkf_fs_alloc_case_filename(const enkf_fs_type *fs,
                                   const char *input_name) {
