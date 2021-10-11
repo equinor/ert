@@ -23,7 +23,6 @@ def _load_summary(datafile):
     if not datafile.is_file():
         sys.exit(f"{datafile} is not an existing file")
     eclfiles = ecl2df.EclFiles(datafile)
-    ecl2df.summary.df(eclfiles)
     return ecl2df.summary.df(eclfiles)
 
 
