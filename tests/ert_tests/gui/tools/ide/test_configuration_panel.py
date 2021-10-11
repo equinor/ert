@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import io
 
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox, QFileDialog
 
 from ert_gui.tools.ide import ConfigurationPanel
+import os
 
 UNICODE_TEXT = u"""ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
 ᛋᚳᛖᚪᛚ᛫ᚦᛖᚪᚻ᛫ᛗᚪᚾᚾᚪ᛫ᚷᛖᚻᚹᛦᛚᚳ᛫ᛗᛁᚳᛚᚢᚾ᛫ᚻᛦᛏ᛫ᛞᚫᛚᚪᚾ
@@ -55,3 +56,43 @@ def test_save_unicode(tmpdir, qtbot, monkeypatch):
 
         with io.open("poly.ert") as f:
             assert f.read() == UNICODE_TEXT
+
+
+def test_saveas(tmpdir, qtbot, monkeypatch):
+    @staticmethod
+    def information(*args, **kwargs):
+        return QMessageBox.No
+
+    monkeypatch.setattr(QMessageBox, "information", information)
+    monkeypatch.setattr(
+        QFileDialog, "getSaveFileName", lambda *args: ("poly_copy.ert", "")
+    )
+
+    with tmpdir.as_cwd():
+        with io.open("poly.ert", "w") as f:
+            f.write(u"Hello World\n")
+
+        widget = ConfigurationPanel("poly.ert")
+        widget.show()
+        qtbot.addWidget(widget)
+        qtbot.waitExposed(widget)
+        widget.saveAs()
+
+        with io.open("poly.ert") as orig, io.open("poly_copy.ert") as cpy:
+            assert orig.read() == cpy.read()
+
+
+def test_saveas_cancel(tmpdir, qtbot, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args: ("", ""))
+
+    with tmpdir.as_cwd():
+        with io.open("poly.ert", "w") as f:
+            f.write(u"Hello World\n")
+
+        widget = ConfigurationPanel("poly.ert")
+        widget.show()
+        qtbot.addWidget(widget)
+        qtbot.waitExposed(widget)
+        widget.saveAs()
+
+        assert len(os.listdir(tmpdir)) == 1, "Should not created new file"
