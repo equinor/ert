@@ -9,6 +9,8 @@ DEFAULT_RECORD_MIME_TYPE: str = "application/octet-stream"
 def _ensure_mime(val: str, **kwargs: Any) -> str:
     """Guess on mime based on the value of basis_for_guess."""
     if val:
+        if not ert.serialization.has_serializer(val):
+            raise ValueError(f"{val} is not a valid mime.")
         return val
 
     basis = kwargs["basis_for_guess"]

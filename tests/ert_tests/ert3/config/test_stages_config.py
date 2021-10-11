@@ -2,6 +2,7 @@ import os
 import pathlib
 import stat
 from typing import Callable
+from unittest.mock import patch
 
 import pytest
 
@@ -69,11 +70,20 @@ def test_entry_point_not_valid(config, expected_error):
         ert3.config.load_stages_config(config)
 
 
-def test_single_function_step_valid(base_function_stage_config):
-    config = ert3.config.load_stages_config(base_function_stage_config)
-    assert config[0].name == "function_stage"
-    assert isinstance(config[0].function, Callable)
-    assert config[0].function.__name__ == "sum"
+def test_check_loaded_mime_types_new_default(base_unix_stage_config):
+    """If a Record's default mime is set to something other than an empty string,
+    the `_ensure_mime` validator will not modify the mime,
+    which may lead to an invalid mime.
+    """
+    from ert3.config._stages_config import Record
+
+    raw_config = base_unix_stage_config
+
+    with patch.object(
+        Record.__dict__["__fields__"]["mime"], "default", "application/not_a_valid_mime"
+    ):
+        with pytest.raises(ert.exceptions.ConfigValidationError):
+            _ = ert3.config.load_stages_config(raw_config)
 
 
 def test_check_loaded_mime_types(base_unix_stage_config):
@@ -111,11 +121,9 @@ def test_step_multi_cmd(base_unix_stage_config):
         "poly2 abort",
     ]
     create_mock_script(path="poly2")
-    config = ert3.config.load_stages_config(config)
-    assert config[0].script[0] == "poly run1"
-    assert config[0].script[1] == "poly2 gogo"
-    assert config[0].script[2] == "poly run2"
-    assert config[0].script[3] == "poly2 abort"
+
+    with pytest.raises(ert.exceptions.ConfigValidationError):
+        config = ert3.config.load_stages_config(config)
 
 
 def test_step_non_existing_transportable_cmd(base_unix_stage_config):
