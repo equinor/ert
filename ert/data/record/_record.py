@@ -1,6 +1,7 @@
 import io
 import pathlib
 import tarfile
+import json
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
@@ -15,6 +16,8 @@ from typing import (
     Tuple,
     Union,
     cast,
+    Generic,
+    TypeVar,
 )
 
 import aiofiles
@@ -26,13 +29,12 @@ from ert.serialization import get_serializer
 from ert_shared.async_utils import get_event_loop
 
 number = Union[int, float]
-numerical_record_data = Union[
-    List[number],
-    Dict[str, number],
-    Dict[int, number],
-]
+numerical_record_data = Union[List[number], Dict[str, number], Dict[int, number]]
 blob_record_data = bytes
-record_data = Union[numerical_record_data, blob_record_data]
+record_data = Union[
+    numerical_record_data,
+    blob_record_data,
+]
 record_collection = Tuple["Record", ...]
 RecordIndex = Union[Tuple[int, ...], Tuple[str, ...]]
 
@@ -52,10 +54,15 @@ class RecordValidationError(Exception):
 
 
 class RecordType(str, Enum):
+    # NumericalRecord types
     LIST_FLOAT = "LIST_FLOAT"
     MAPPING_INT_FLOAT = "MAPPING_INT_FLOAT"
     MAPPING_STR_FLOAT = "MAPPING_STR_FLOAT"
+    # BlobRecord type
     BYTES = "BYTES"
+    # RecordTree types
+    NUMERICAL_TREE = "NUMERICAL_TREE"
+    BLOB_TREE = "BLOB_TREE"
 
 
 class Record(ABC):
@@ -179,6 +186,83 @@ class NumericalRecord(Record):
         if isinstance(o, type(self)):
             return self.__dict__ == o.__dict__
         return False
+
+
+RecordGen = TypeVar("RecordGen", BlobRecord, NumericalRecord)
+
+
+class RecordTree(Record, Generic[RecordGen]):
+    def __init__(self, record_dict: Dict[str, Any]) -> None:
+        self._record_type = RecordType.BYTES
+        self._flat_record_dict: Dict[str, RecordGen] = self._flatten_record_dict(
+            record_dict
+        )
+        try:
+            self._validate_data(self._flat_record_dict)
+        except BeartypeException as e:
+            raise RecordValidationError(str(e))
+
+    @beartype
+    def _validate_data(self, flat_record_dict: Dict[str, RecordGen]) -> None:
+        # beartype does not do deep validation on dicts, so we do non-nested validation
+        # TODO: remove once https://github.com/beartype/beartype/issues/53 is done
+        if flat_record_dict:
+            _record_type = list(flat_record_dict.values())[0].record_type
+            for val in flat_record_dict.values():
+                if val.record_type != _record_type:
+                    raise RecordValidationError(
+                        f"RecordTree needs same record types {_record_type}!={val.record_type}"
+                    )
+        else:
+            raise RecordValidationError("No records found in RecordTree")
+
+    def _flatten_record_dict(
+        self,
+        record_dict: Dict[str, Any],
+        root: str = "",
+    ) -> Dict[str, RecordGen]:
+        flat_record_dict: Dict[str, RecordGen] = {}
+        for record_name, record in record_dict.items():
+            if isinstance(record, dict):
+                flat_record_dict.update(
+                    self._flatten_record_dict(record, f"{root}{record_name}/")
+                )
+            elif isinstance(self, BlobRecordTree) and isinstance(record, BlobRecord):
+                flat_record_dict[f"{root}{record_name}"] = record
+            elif isinstance(self, NumericalRecordTree) and isinstance(
+                record, NumericalRecord
+            ):
+                flat_record_dict[f"{root}{record_name}"] = record
+            else:
+                raise RecordValidationError(
+                    f"RecordTree needs same record types {type(record)}!={self.record_type}"
+                )
+        return flat_record_dict
+
+    @property
+    def data(self) -> record_data:
+        # internally, recordtree is represented as BlobRecord; we don't need data here
+        return json.dumps("RECORD_TREE").encode("utf-8")
+
+    @property
+    def record_type(self) -> RecordType:
+        return RecordType.BYTES
+
+    @property
+    def flat_record_dict(self) -> Dict[str, RecordGen]:
+        return self._flat_record_dict
+
+
+class BlobRecordTree(RecordTree[BlobRecord]):
+    @property
+    def record_type(self) -> RecordType:
+        return RecordType.BLOB_TREE
+
+
+class NumericalRecordTree(RecordTree[NumericalRecord]):
+    @property
+    def record_type(self) -> RecordType:
+        return RecordType.NUMERICAL_TREE
 
 
 class RecordCollectionType(str, Enum):

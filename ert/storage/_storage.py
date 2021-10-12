@@ -1,8 +1,9 @@
 import io
 import logging
+import json
 from functools import partial
 from http import HTTPStatus
-from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import pandas as pd
 import requests
@@ -33,6 +34,22 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         self._uri = f"{storage_url}/{name}"
         self._real_id: Optional[int] = iens
 
+    async def _get_recordtree_transmitters(
+        self,
+        trans_records: Dict[str, str],
+        record_type: ert.data.RecordType,
+        path: Optional[str] = None,
+    ) -> Dict[str, ert.data.RecordTransmitter]:
+        _storage_url = self._uri[: self._uri.rfind("/")]
+        transmitters: Dict[str, ert.data.RecordTransmitter] = {}
+        for record_path, record_uri in trans_records.items():
+            if path is None or path in record_path:
+                record_name = record_path.split("/")[-1]
+                transmitter = StorageRecordTransmitter(record_name, _storage_url)
+                transmitter.set_transmitted(record_uri, record_type)
+                transmitters[record_path] = transmitter
+        return transmitters
+
     @property
     def uri(self) -> str:
         if not self.is_transmitted():
@@ -61,6 +78,26 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
             url = f"{url}?realization_index={self._real_id}"
             self._uri = f"{self._uri}?realization_index={self._real_id}"
         await add_record(url, record)
+        return self._uri
+
+    async def _transmit_recordtree(
+        self, record: Union[ert.data.NumericalRecordTree, ert.data.BlobRecordTree]
+    ) -> str:
+        data: Dict[str, str] = {}
+        storage_url = self._uri[: self._uri.rfind("/")]
+        for record_path in record.flat_record_dict:
+            record_name = record_path.split("/")[-1]
+            transmitter = StorageRecordTransmitter(record_name, storage_url)
+            await transmitter.transmit_record(record.flat_record_dict[record_path])
+            data[record_path] = transmitter._uri
+        await self._transmit_blob_record(
+            ert.data.BlobRecord(data=json.dumps(data).encode("utf-8"))
+        )
+        if self._real_id:
+            url = f"{self._uri}/userdata?realization_index=0"
+        else:
+            url = f"{self._uri}/userdata?"
+        await _put_to_server_async(url, {}, json={"record_type": record._record_type})
         return self._uri
 
     async def _load_numerical_record(self) -> ert.data.NumericalRecord:
@@ -270,10 +307,22 @@ def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
 
 
 async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
-    headers = _set_content_header(header="accept", record_type=record_type)
+    if record_type in (
+        ert.data.RecordType.NUMERICAL_TREE,
+        ert.data.RecordType.BLOB_TREE,
+    ):
+        headers = _set_content_header(
+            header="accept", record_type=ert.data.RecordType.BYTES
+        )
+    else:
+        headers = _set_content_header(header="accept", record_type=record_type)
     response = await _get_from_server_async(url=url, headers=headers)
     content = response.content
-    if record_type != ert.data.RecordType.BYTES:
+    if record_type in (
+        ert.data.RecordType.LIST_FLOAT,
+        ert.data.RecordType.MAPPING_STR_FLOAT,
+        ert.data.RecordType.MAPPING_INT_FLOAT,
+    ):
         dataframe: pd.DataFrame = read_csv(io.BytesIO(content))
         for _, row in dataframe.iterrows():  # pylint: disable=no-member
             return ert.data.NumericalRecord(
