@@ -269,48 +269,6 @@ def poly_ensemble(poly_ensemble_builder):
     return poly_ensemble_builder.build()
 
 
-def get_function_ensemble(pickled_function, coefficients, transmitter_factory):
-    step_builder = (
-        ee.create_step_builder().set_name("function_evaluation").set_type("function")
-    )
-
-    coeffs_input = (
-        ee.create_file_io_builder()
-        .set_name("coeffs")
-        .set_path("coeffs")
-        .set_mime("application/json")
-    )
-    for iens, values in enumerate(coefficients):
-        transmitter = create_input_transmitter(values, transmitter_factory("coeffs"))
-        coeffs_input.set_transmitter_factory(lambda _t=transmitter: _t, iens)
-    step_builder.add_input(coeffs_input)
-
-    step_builder.add_output(
-        ee.create_file_io_builder()
-        .set_name("function_output")
-        .set_path("output")
-        .set_mime("application/json")
-        .set_transmitter_factory(partial(transmitter_factory, "function_output"))
-    )
-    step_builder.add_job(
-        ee.create_job_builder()
-        .set_name("user_defined_function")
-        .set_executable(pickled_function)
-    )
-    real_builder = ee.create_realization_builder().active(True).add_step(step_builder)
-
-    builder = (
-        ee.create_ensemble_builder()
-        .set_custom_port_range(custom_port_range=range(1024, 65535))
-        .set_ensemble_size(25)
-        .set_max_running(6)
-        .set_max_retries(2)
-        .set_executor("local")
-        .set_forward_model(real_builder)
-    )
-    return builder
-
-
 @pytest.fixture()
 def function_ensemble_builder_factory(
     ensemble_size,

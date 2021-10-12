@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta
 from pathlib import Path
+import pickle
 from typing import Type, Dict
 
 import cloudpickle
@@ -13,20 +14,6 @@ from ert_utils import tmp
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
-
-
-def input_transmitter(data, transmitter: Type[ert.data.RecordTransmitter]):
-    record = ert.data.NumericalRecord(data=data)
-    asyncio.get_event_loop().run_until_complete(transmitter.transmit_record(record))
-    return transmitter
-
-
-def create_script_transmitter(name: str, location: Path, transmitter_factory):
-    script_transmitter = transmitter_factory(name)
-    asyncio.get_event_loop().run_until_complete(
-        script_transmitter.transmit_file(location, mime="application/octet-stream")
-    )
-    return script_transmitter
 
 
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):
@@ -78,24 +65,79 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
 
 
 @pytest.fixture()
-def step_test_script_transmitter(test_data_path, transmitter_factory):
-    return create_script_transmitter(
-        "script",
-        location=test_data_path / "unix_test_script.py",
-        transmitter_factory=transmitter_factory,
+def step_test_script_transmitter(test_data_path, transmitter_factory, script_name):
+    script_transmitter = transmitter_factory("script")
+    asyncio.get_event_loop().run_until_complete(
+        script_transmitter.transmit_file(
+            test_data_path / script_name, mime="application/octet-stream"
+        )
     )
+    return script_transmitter
 
 
-@pytest.fixture()
-def step_test_retry_script_transmitter(test_data_path, transmitter_factory):
-    return create_script_transmitter(
-        "script",
-        location=test_data_path / "unix_test_retry_script.py",
-        transmitter_factory=transmitter_factory,
-    )
+def prefect_flow_run(ws_monitor, step, input_map, output_map, **kwargs):
+    """Use prefect-flow to run task from step output using task_inputs"""
+    with prefect.context(url=ws_monitor.url, token=None, cert=None):
+        with Flow("testing") as flow:
+            task = step.get_task(
+                output_transmitters=output_map, ee_id="test_ee_id", **kwargs
+            )
+            result = task(inputs=input_map)
+        with tmp():
+            flow_run = flow.run()
+    # Stop the mock evaluator WS server
+    messages = ws_monitor.join_and_get_messages()
+    return result, flow_run, messages
 
 
-def test_unix_task(mock_ws_monitor, step_test_script_transmitter, transmitter_factory):
+def assert_prefect_flow_run(
+    result,
+    flow_run,
+    expect=True,
+    step_type="unix",
+    step_output=None,
+    expected_result=None,
+):
+    """Assert if statements associated a prefect-flow-run are valid"""
+    output_name = "output" if step_type == "unix" else "function_output"
+    task_result = flow_run.result[result]
+    # Check for all parametrizations
+    assert task_result.is_successful() == expect
+    assert flow_run.is_successful() == expect
+    # Check when success is True
+    if expect:
+        assert len(task_result.result) == 1
+        expected_uri = step_output[output_name]._uri
+        output_uri = task_result.result[output_name]._uri
+        assert expected_uri == output_uri
+        # If function-step: Check result
+        if step_type == "function":
+            transmitted_record = asyncio.get_event_loop().run_until_complete(
+                task_result.result[output_name].load()
+            )
+            transmitted_result = transmitted_record.data
+            assert transmitted_result == expected_result
+    else:
+        # Check when success is False
+        assert isinstance(task_result.result, Exception)
+        assert (
+            "unix_test_script.py: error: unrecognized arguments: bar"
+            in task_result.message
+        )
+
+
+@pytest.mark.parametrize("script_name", [("unix_test_script.py")])
+@pytest.mark.parametrize(
+    "job_args, error_test", [(["vas"], False), (["foo", "bar"], True)]
+)
+def test_unix_task(
+    mock_ws_monitor,
+    step_test_script_transmitter,
+    transmitter_factory,
+    job_args,
+    error_test,
+):
+    """Test unix-step and error. Create step, run prefect flow, assert results"""
     step, input_map, output_map = get_step(
         step_name="test_step",
         inputs=[
@@ -114,94 +156,50 @@ def test_unix_task(mock_ws_monitor, step_test_script_transmitter, transmitter_fa
                 partial(transmitter_factory, "output"),
             )
         ],
-        jobs=[("script", Path("unix_test_script.py"), ["vas"])],
+        jobs=[("script", Path("unix_test_script.py"), job_args)],
         type_="unix",
     )
-
-    with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
-            result = task(inputs=input_map)
-        with tmp():
-            flow_run = flow.run()
-
-    # Stop the mock evaluator WS server
-    mock_ws_monitor.join()
-
-    task_result = flow_run.result[result]
-    assert task_result.is_successful()
-    assert flow_run.is_successful()
-
-    assert len(task_result.result) == 1
-    expected_uri = output_map["output"]._uri
-    output_uri = task_result.result["output"]._uri
-    assert expected_uri == output_uri
-
-
-def test_function_step(mock_ws_monitor, input_transmitter_factory, transmitter_factory):
-    test_values = [42, 24, 6]
-
-    def sum_function(values):
-        return {"output": [sum(values)]}
-
-    step, input_map, output_map = get_step(
-        step_name="test_step",
-        inputs=[
-            (
-                "values",
-                "NA",
-                "text/whatever",
-                partial(input_transmitter_factory, "values", test_values),
-            )
-        ],
-        outputs=[
-            (
-                "output",
-                Path("output.out"),
-                "application/json",
-                partial(transmitter_factory, "output"),
-            )
-        ],
-        jobs=[("test_function", cloudpickle.dumps(sum_function), None)],
-        type_="function",
+    result, flow_run, _ = prefect_flow_run(
+        ws_monitor=mock_ws_monitor,
+        step=step,
+        input_map=input_map,
+        output_map=output_map,
+    )
+    assert_prefect_flow_run(
+        result=result,
+        flow_run=flow_run,
+        step_output=output_map,
+        step_type="unix",
+        expect=not error_test,
     )
 
-    with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
-            result = task(inputs=input_map)
-        with tmp():
-            flow_run = flow.run()
 
-    # Stop the mock evaluator WS server
-    mock_ws_monitor.join()
-
-    task_result = flow_run.result[result]
-    assert task_result.is_successful()
-    assert flow_run.is_successful()
-
-    assert len(task_result.result) == 1
-    expected_uri = output_map["output"]._uri
-    output_uri = task_result.result["output"]._uri
-    assert expected_uri == output_uri
-    transmitted_record = asyncio.get_event_loop().run_until_complete(
-        task_result.result["output"].load()
-    )
-    transmitted_result = transmitted_record.data
-    expected_result = sum_function(values=test_values)["output"]
-    assert expected_result == transmitted_result
+@pytest.fixture
+def internal_function():
+    return "internal"
 
 
-def test_function_step_for_function_defined_outside_py_environment(
+@pytest.fixture(params=["internal_function", "external_sum_function"])
+def function(request):
+    return request.getfixturevalue(request.param)
+
+
+def test_function_step(
+    function,
     mock_ws_monitor,
-    external_sum_function,
     input_transmitter_factory,
     transmitter_factory,
 ):
-
+    """Test both internal and external function"""
     test_values = {"a": 42, "b": 24, "c": 6}
-    expected_result = 72
+    if function == "internal":
 
+        def sum_function(coeffs):
+            return {"function_output": [sum(coeffs.values())]}
+
+        sumfun = cloudpickle.dumps(sum_function)
+    else:
+        sumfun = function
     step, input_map, output_map = get_step(
         step_name="test_step",
         inputs=[
@@ -220,77 +218,21 @@ def test_function_step_for_function_defined_outside_py_environment(
                 partial(transmitter_factory, "function_output"),
             )
         ],
-        jobs=[("test_function", external_sum_function, None)],
+        jobs=[("test_function", sumfun, None)],
         type_="function",
     )
-
-    with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
-            result = task(inputs=input_map)
-        with tmp():
-            flow_run = flow.run()
-
-    # Stop the mock evaluator WS server
-    mock_ws_monitor.join()
-
-    task_result = flow_run.result[result]
-    assert task_result.is_successful()
-    assert flow_run.is_successful()
-
-    assert len(task_result.result) == 1
-    expected_uri = output_map["function_output"]._uri
-    output_uri = task_result.result["function_output"]._uri
-    assert expected_uri == output_uri
-    transmitted_record = asyncio.get_event_loop().run_until_complete(
-        task_result.result["function_output"].load()
+    result, flow_run, _ = prefect_flow_run(
+        ws_monitor=mock_ws_monitor,
+        step=step,
+        input_map=input_map,
+        output_map=output_map,
     )
-    transmitted_result = transmitted_record.data
-    assert [expected_result] == transmitted_result
-
-
-def test_unix_step_error(
-    mock_ws_monitor, step_test_script_transmitter, transmitter_factory
-):
-    step, input_map, output_map = get_step(
-        step_name="test_step",
-        inputs=[
-            (
-                "test_script",
-                Path("unix_test_script.py"),
-                "application/x-python",
-                lambda _t=step_test_script_transmitter: _t,
-            )
-        ],
-        outputs=[
-            (
-                "output",
-                Path("output.out"),
-                "application/json",
-                partial(transmitter_factory, "output"),
-            )
-        ],
-        jobs=[("test_script", Path("unix_test_script.py"), ["foo", "bar"])],
-        type_="unix",
-    )
-
-    with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
-            result = task(inputs=input_map)
-        with tmp():
-            flow_run = flow.run()
-
-    # Stop the mock evaluator WS server
-    mock_ws_monitor.join()
-
-    task_result = flow_run.result[result]
-    assert not task_result.is_successful()
-    assert not flow_run.is_successful()
-
-    assert isinstance(task_result.result, Exception)
-    assert (
-        "unix_test_script.py: error: unrecognized arguments: bar" in task_result.message
+    assert_prefect_flow_run(
+        result=result,
+        flow_run=flow_run,
+        step_output=output_map,
+        step_type="function",
+        expected_result=pickle.loads(sumfun)(test_values)["function_output"],
     )
 
 
@@ -301,54 +243,16 @@ class _MockedPrefectEnsemble:
     _on_task_failure = PrefectEnsemble._on_task_failure
 
 
-def test_on_task_failure(mock_ws_monitor, step_test_retry_script_transmitter):
-    mock_ensemble = _MockedPrefectEnsemble()
-
-    with tmp() as runpath:
-        step, input_map, output_map = get_step(
-            step_name="test_step",
-            inputs=[
-                (
-                    "script",
-                    Path("unix_test_retry_script.py"),
-                    "application/x-python",
-                    lambda _t=step_test_retry_script_transmitter: _t,
-                )
-            ],
-            outputs=[],
-            jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
-            type_="unix",
-        )
-
-        with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-            with Flow("testing") as flow:
-                task = step.get_task(
-                    output_transmitters=output_map,
-                    ee_id="test_ee_id",
-                    max_retries=3,
-                    retry_delay=timedelta(seconds=1),
-                    on_failure=mock_ensemble._on_task_failure,
-                )
-                result = task(inputs=input_map)
-            flow_run = flow.run()
-
-    # Stop the mock evaluator WS server
-    messages = mock_ws_monitor.join_and_get_messages()
-
-    task_result = flow_run.result[result]
-    assert task_result.is_successful()
-    assert flow_run.is_successful()
-
-    fail_job_messages = [msg for msg in messages if ids.EVTYPE_FM_JOB_FAILURE in msg]
-    fail_step_messages = [msg for msg in messages if ids.EVTYPE_FM_STEP_FAILURE in msg]
-
-    expected_job_failed_messages = 2
-    expected_step_failed_messages = 0
-    assert expected_job_failed_messages == len(fail_job_messages)
-    assert expected_step_failed_messages == len(fail_step_messages)
-
-
-def test_on_task_failure_fail_step(mock_ws_monitor, step_test_retry_script_transmitter):
+@pytest.mark.parametrize("retries,nfails,expect", [(3, 0, True), (1, 1, False)])
+@pytest.mark.parametrize("script_name", [("unix_test_retry_script.py")])
+def test_on_task_failure(
+    mock_ws_monitor,
+    step_test_script_transmitter,
+    retries,
+    nfails,
+    expect,
+):
+    """Test both job and task failure of prefect-flow-run"""
     mock_ensemble = _MockedPrefectEnsemble()
     with tmp() as runpath:
         step, input_map, output_map = get_step(
@@ -358,37 +262,27 @@ def test_on_task_failure_fail_step(mock_ws_monitor, step_test_retry_script_trans
                     "script",
                     Path("unix_test_retry_script.py"),
                     "application/x-python",
-                    lambda _t=step_test_retry_script_transmitter: _t,
+                    lambda _t=step_test_script_transmitter: _t,
                 )
             ],
             outputs=[],
             jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
             type_="unix",
         )
-
-        with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-            with Flow("testing") as flow:
-                task = step.get_task(
-                    output_transmitters=output_map,
-                    ee_id="test_ee_id",
-                    max_retries=1,
-                    retry_delay=timedelta(seconds=1),
-                    on_failure=mock_ensemble._on_task_failure,
-                )
-                result = task(inputs=input_map)
-            flow_run = flow.run()
-
-    # Stop the mock evaluator WS server
-    messages = mock_ws_monitor.join_and_get_messages()
-
+        result, flow_run, messages = prefect_flow_run(
+            ws_monitor=mock_ws_monitor,
+            step=step,
+            input_map=input_map,
+            output_map=output_map,
+            max_retries=retries,
+            retry_delay=timedelta(seconds=1),
+            on_failure=mock_ensemble._on_task_failure,
+        )
     task_result = flow_run.result[result]
-    assert not task_result.is_successful()
-    assert not flow_run.is_successful()
-
+    assert task_result.is_successful() == expect
+    assert flow_run.is_successful() == expect
     fail_job_messages = [msg for msg in messages if ids.EVTYPE_FM_JOB_FAILURE in msg]
     fail_step_messages = [msg for msg in messages if ids.EVTYPE_FM_STEP_FAILURE in msg]
-
     expected_job_failed_messages = 2
-    expected_step_failed_messages = 1
     assert expected_job_failed_messages == len(fail_job_messages)
-    assert expected_step_failed_messages == len(fail_step_messages)
+    assert nfails == len(fail_step_messages)
