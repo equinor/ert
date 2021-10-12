@@ -7,6 +7,7 @@ class _Ensemble(BaseModel):
     size: int
     parameter_names: List[str]
     response_names: List[str]
+    active_realizations: List[int] = []
 
 
 class EnsembleIn(_Ensemble):

@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ert_storage.database import Base
 from ert_storage.ext.uuid import UUID as UUID
-from ert_storage.ext.sqlalchemy_arrays import StringArray
+from ert_storage.ext.sqlalchemy_arrays import StringArray, IntArray
 from ._userdata_field import UserdataField
 
 
@@ -15,6 +15,7 @@ class Ensemble(Base, UserdataField):
     pk = sa.Column(sa.Integer, primary_key=True)
     id = sa.Column(UUID, unique=True, default=uuid4, nullable=False)
     size = sa.Column(sa.Integer, nullable=False)
+    active_realizations = sa.Column(IntArray, nullable=True, default=[])
     time_created = sa.Column(sa.DateTime, server_default=func.now())
     time_updated = sa.Column(
         sa.DateTime, server_default=func.now(), onupdate=func.now()

@@ -93,19 +93,18 @@ def new_record(
         .join(ds.RecordInfo)
         .filter_by(ensemble_pk=ensemble.pk, name=name)
     )
-    if realization_index is not None:
-        if realization_index not in range(ensemble.size) and ensemble.size != -1:
-            raise exc.ExpectationError(
-                f"Ensemble '{name}' ('{ensemble_id}') does have a 'size' "
-                f"of {ensemble.size}. The posted record is targeting "
-                f"'realization_index' {realization_index} which is out "
-                f"of bounds."
-            )
-
-        q = q.filter(
-            (ds.Record.realization_index == None)
-            | (ds.Record.realization_index == realization_index)
+    if (
+        ensemble.size != -1
+        and realization_index is not None
+        and realization_index not in ensemble.active_realizations
+    ):
+        raise exc.ExpectationError(
+            f"Realization index {realization_index} outside of allowed realization indices {ensemble.active_realizations}"
         )
+    q = q.filter(
+        (ds.Record.realization_index == None)
+        | (ds.Record.realization_index == realization_index)
+    )
 
     if q.count() > 0:
         raise exc.ConflictError(

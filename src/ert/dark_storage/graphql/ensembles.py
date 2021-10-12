@@ -76,6 +76,7 @@ class CreateEnsemble(SQLAlchemyMutation):
     class Arguments:
         parameter_names = gr.List(gr.String)
         size = gr.Int()
+        active_realizations = gr.List(gr.Int)
 
     @staticmethod
     def mutate(
@@ -83,6 +84,7 @@ class CreateEnsemble(SQLAlchemyMutation):
         info: "ResolveInfo",
         parameter_names: List[str],
         size: int,
+        active_realizations: Optional[List[int]] = None,
         experiment_id: Optional[str] = None,
     ) -> ds.Ensemble:
         db = get_session(info.context)
@@ -94,11 +96,15 @@ class CreateEnsemble(SQLAlchemyMutation):
         else:
             raise ValueError("ID is required")
 
+        if active_realizations is None:
+            active_realizations = list(range(size))
+
         ensemble = ds.Ensemble(
             parameter_names=parameter_names,
             response_names=[],
             experiment=experiment,
             size=size,
+            active_realizations=active_realizations,
         )
 
         db.add(ensemble)
