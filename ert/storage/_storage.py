@@ -8,7 +8,6 @@ from typing import Any, Dict, Iterable, Optional, Set, Tuple, List
 
 import pandas as pd
 import requests
-from pydantic import BaseModel
 
 import ert
 from ert_shared.services import Storage
@@ -26,18 +25,6 @@ _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
 _PARAMETER_RECORD_SEPARATOR = "."
 _OCTET_STREAM = "application/octet-stream"
 _CSV = "text/csv"
-
-
-class _NumericalMetaData(BaseModel):
-    class Config:
-        validate_all = True
-        validate_assignment = True
-        extra = "forbid"
-        allow_mutation = False
-        arbitrary_types_allowed = True
-
-    ensemble_size: int
-    record_type: ert.data.RecordType
 
 
 class StorageRecordTransmitter(ert.data.RecordTransmitter):
