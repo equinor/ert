@@ -11,15 +11,22 @@ import pytest
 from ert_utils import tmp
 
 import ert
-from ert.data import BlobRecord, NumericalRecord, RecordTransmitter
+from ert.data import (
+    BlobRecord,
+    NumericalRecord,
+    RecordTransmitter,
+    NumericalRecordTree,
+    BlobRecordTree,
+    RecordType,
+)
+from ert.data.record import _transmitter
+
+record123 = NumericalRecord(data=[1, 2, 3])
 
 simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
     (
-        (
-            NumericalRecord(data=[1, 2, 3]),
-            [1, 2, 3],
-        ),
+        (record123, [1, 2, 3]),
         (
             NumericalRecord(data=(1.0, 10.0, 42.0, 999.0)),
             [1.0, 10.0, 42.0, 999.0],
@@ -32,10 +39,7 @@ simple_records = pytest.mark.parametrize(
             NumericalRecord(data=[12.0]),
             [12.0],
         ),
-        (
-            NumericalRecord(data={1, 2, 3}),
-            [1, 2, 3],
-        ),
+        (record123, [1, 2, 3]),
         (
             NumericalRecord(data={"a": 0, "b": 1, "c": 2}),
             {"a": 0, "b": 1, "c": 2},
@@ -51,6 +55,50 @@ simple_records = pytest.mark.parametrize(
         (
             BlobRecord(data=b"\xF0\x9F\xA6\x89"),
             b"\xF0\x9F\xA6\x89",
+        ),
+        (
+            NumericalRecordTree(
+                record_dict={
+                    "key_A:OP2": ert.data.NumericalRecord(
+                        data={"a": 1, "b": 1, "c": 2}
+                    ),
+                    "group:BC": {
+                        "key_B:OP2": ert.data.NumericalRecord(
+                            data={"a": 2, "b": 1, "c": 2}
+                        ),
+                        "key_C:OP2": ert.data.NumericalRecord(
+                            data={"a": 3, "b": 1, "c": 2}
+                        ),
+                    },
+                },
+            ),
+            {
+                "key_A:OP2": {"a": 1, "b": 1, "c": 2},
+                "group:BC": {
+                    "key_B:OP2": {"a": 2, "b": 1, "c": 2},
+                    "key_C:OP2": {"a": 3, "b": 1, "c": 2},
+                },
+            },
+        ),
+        (
+            BlobRecordTree(
+                record_dict={
+                    "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                    "key_B:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                    "group_OP2": {
+                        "key_AA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                        "key_BA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                    },
+                },
+            ),
+            {
+                "key_A:OP1": b"\xF0\x9F\xA6\x89",
+                "key_B:OP1": b"\xF0\x9F\xA6\x89",
+                "group_OP2": {
+                    "key_AA:OP2": b"\xF0\x9F\xA6\x89",
+                    "key_BA:OP2": b"\xF0\x9F\xA6\x89",
+                },
+            },
         ),
     ),
 )
@@ -99,6 +147,8 @@ async def test_simple_record_transmit_from_file(
     mime_type,
     storage_path,
 ):
+    if isinstance(record_in, (NumericalRecordTree, BlobRecordTree)):
+        pytest.skip("unsupported serialization of opaque RecordTree")
     if isinstance(record_in, BlobRecord) and mime_type != "application/octet-stream":
         pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
     if (
@@ -139,9 +189,14 @@ async def test_simple_record_transmit_and_load(
     ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_record(record_in)
-
         record = await transmitter.load()
-        assert record.data == expected_data
+        if record.record_type in [RecordType.NUMERICAL_TREE, RecordType.BLOB_TREE]:
+            flat_data = {
+                _path: _rec.data for _path, _rec in record.flat_record_dict.items()
+            }
+            assert _transmitter._unflatten_record_dict(flat_data) == expected_data
+        else:
+            assert record.data == expected_data
 
 
 @pytest.mark.asyncio
@@ -156,6 +211,8 @@ async def test_simple_record_transmit_and_dump(
     mime_type,
     storage_path,
 ):
+    if isinstance(record_in, (NumericalRecordTree, BlobRecordTree)):
+        pytest.skip("unsupported serialization of opaque RecordTree")
     if isinstance(record_in, BlobRecord) and mime_type != "application/octet-stream":
         pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
     if (
@@ -199,8 +256,13 @@ async def test_simple_record_transmit_pickle_and_load(
         await transmitter.transmit_record(record_in)
         transmitter = pickle.loads(cloudpickle.dumps(transmitter))
         record = await transmitter.load()
-
-        assert record.data == expected_data
+        if record.record_type in [RecordType.NUMERICAL_TREE, RecordType.BLOB_TREE]:
+            flat_data = {
+                _path: _rec.data for _path, _rec in record.flat_record_dict.items()
+            }
+            assert _transmitter._unflatten_record_dict(flat_data) == expected_data
+        else:
+            assert record.data == expected_data
 
 
 @pytest.mark.asyncio
@@ -229,3 +291,27 @@ async def test_dump_untransmitted_record(
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
             await transmitter.dump("some.file", "text/whatever")
+
+
+@pytest.mark.parametrize(
+    "flat_record_dict, expected_dict",
+    [
+        ({}, {}),
+        ({"foo/bar": record123}, {"foo": {"bar": record123}}),
+        ({"foo/bar/com": record123}, {"foo": {"bar": {"com": record123}}}),
+        ({"foo:bar": record123}, {"foo:bar": record123}),
+        (
+            # Splits by slashes only on top dict level:
+            {"foo": {"bar/com": record123}},
+            {"foo": {"bar/com": record123}},
+        ),
+        ({"foo": {"bar": record123}}, {"foo": {"bar": record123}}),
+        ({"foo/bar": {"com": record123}}, {"foo": {"bar": {"com": record123}}}),
+        (
+            {"foo/bar": record123, "foo/com": record123},
+            {"foo": {"bar": record123, "com": record123}},
+        ),
+    ],
+)
+def test_unflatten_record_dict(flat_record_dict, expected_dict):
+    assert _transmitter._unflatten_record_dict(flat_record_dict) == expected_dict

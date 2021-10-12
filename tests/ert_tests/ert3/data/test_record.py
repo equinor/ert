@@ -183,6 +183,64 @@ def test_empty_record_collection(length, collection_type):
         )
 
 
+@pytest.mark.parametrize(
+    ("record_dict"),
+    (
+        {
+            "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            "key_B:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            "group_OP2": {
+                "key_AA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                "key_BA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            },
+        },
+        {
+            "key_A:OP2": ert.data.NumericalRecord(data={"a": 0, "b": 1, "c": 2}),
+            "key_B:OP2": ert.data.NumericalRecord(
+                data={"a": 0, "b": 1, "c": 2},
+            ),
+            "key_C:OP2": ert.data.NumericalRecord(
+                data={"a": 0, "b": 1, "c": 2},
+            ),
+        },
+    ),
+)
+def test_valid_recordtree_creation(record_dict):
+    if isinstance(list(record_dict.values())[0], ert.data.BlobRecord):
+        record = ert.data.BlobRecordTree(record_dict=record_dict)
+        assert record.record_type == ert.data.RecordType.BLOB_TREE
+    else:
+        record = ert.data.NumericalRecordTree(record_dict=record_dict)
+        assert record.record_type == ert.data.RecordType.NUMERICAL_TREE
+
+
+@pytest.mark.parametrize(
+    ("record_dict"),
+    (
+        {
+            "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            "key_B:OP1": ert.data.NumericalRecord(data={"a": 0, "b": 1, "c": 2}),
+        },
+        {
+            "key_B:OP1": ert.data.NumericalRecord(data={"a": 0, "b": 1, "c": 2}),
+            "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+        },
+        {
+            "key_A:OP2": ert.data.NumericalRecord(data={"a": 0, "b": 1, "c": 2}),
+            "key_B:OP2": ert.data.NumericalRecord(
+                data=(0, 2, 4),
+            ),
+            "key_C:OP2": ert.data.NumericalRecord(
+                data={"a": 0, "b": 1, "c": 2},
+            ),
+        },
+    ),
+)
+def test_invalid_recordtree_creation(record_dict):
+    with pytest.raises(ert.data.RecordValidationError):
+        ert.data.BlobRecordTree(record_dict=record_dict)
+
+
 def test_invalid_ensemble_record(raw_ensrec_to_records):
     raw_ensrec = [{"data": b"a"}, {"data": [1.1, 2.2]}]
     with pytest.raises(ValueError):

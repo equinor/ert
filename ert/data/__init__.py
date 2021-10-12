@@ -1,4 +1,6 @@
 from ert.data.record._record import (
+    BlobRecordTree,
+    NumericalRecordTree,
     BlobRecord,
     load_collection_from_file,
     NumericalRecord,
@@ -27,6 +29,8 @@ from .record._transformation import (
 )
 
 __all__ = (
+    "BlobRecordTree",
+    "NumericalRecordTree",
     "BlobRecord",
     "InMemoryRecordTransmitter",
     "load_collection_from_file",
