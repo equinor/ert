@@ -23,7 +23,6 @@ from libres_utils import ResTest
 
 from res.analysis import (
     AnalysisModule,
-    AnalysisModuleLoadStatusEnum,
     AnalysisModuleOptionsEnum,
 )
 from res.util import Matrix
@@ -31,33 +30,16 @@ from res.util import Matrix
 
 class AnalysisModuleTest(ResTest):
     def setUp(self):
-        self.libname = "libies.so"
-
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
         )
 
-    def createAnalysisModule(self):
-        return AnalysisModule(lib_name=self.libname)
-
-    def test_load_status_enum(self):
-        source_file_path = "libres/lib/include/ert/analysis/analysis_module.hpp"
-        self.assertEnumIsFullyDefined(
-            AnalysisModuleLoadStatusEnum,
-            "analysis_module_load_status_enum",
-            source_file_path,
-        )
-
     def test_analysis_module(self):
-        am = self.createAnalysisModule()
-
-        self.assertEqual(basename(am.getLibName()), self.libname)
-
-        self.assertFalse(am.getInternal())
+        am = AnalysisModule("IES_ENKF")
 
         self.assertTrue(am.setVar("ITER", "1"))
 
-        self.assertEqual(am.getTableName(), "analysis_table")
+        self.assertEqual(am.getTableName(), "IES_ENKF")
 
         self.assertTrue(am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE))
 
@@ -68,7 +50,7 @@ class AnalysisModuleTest(ResTest):
         self.assertIsInstance(am.getInt("ITER"), int)
 
     def test_set_get_var(self):
-        mod = AnalysisModule(name="STD_ENKF")
+        mod = AnalysisModule("STD_ENKF")
         with self.assertRaises(KeyError):
             mod.setVar("NO-NOT_THIS_KEY", 100)
 
@@ -77,13 +59,13 @@ class AnalysisModuleTest(ResTest):
 
     def test_create_internal(self):
         with self.assertRaises(KeyError):
-            mod = AnalysisModule(name="STD_ENKFXXX")
+            mod = AnalysisModule("STD_ENKFXXX")
 
-        mod = AnalysisModule(name="STD_ENKF")
+        mod = AnalysisModule("STD_ENKF")
 
     def test_initX_enkf_linalg_lowrankCinv(self):
         """Test AnalysisModule.initX with EE=False and GE=False"""
-        mod = AnalysisModule(name="STD_ENKF")
+        mod = AnalysisModule("STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
         self.assertFalse(mod.getBool("USE_EE"))
         self.assertFalse(mod.getBool("USE_GE"))
@@ -97,7 +79,7 @@ class AnalysisModuleTest(ResTest):
 
     def test_initX_enkf_linalg_lowrank_EE(self):
         """Test AnalysisModule.initX with EE=True and GE=False"""
-        mod = AnalysisModule(name="STD_ENKF")
+        mod = AnalysisModule("STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
         mod.setVar("USE_EE", True)
         self.assertTrue(mod.getBool("USE_EE"))
@@ -111,7 +93,7 @@ class AnalysisModuleTest(ResTest):
 
     def test_initX_subspace_inversion_algorithm(self):
         """Test AnalysisModule.initX with EE=True and GE=True, the subspace inversion algorithm"""
-        mod = AnalysisModule(name="STD_ENKF")
+        mod = AnalysisModule("STD_ENKF")
         A, S, R, dObs, E, D = self._n_identity_mcs()
 
         mod.setVar("USE_EE", True)

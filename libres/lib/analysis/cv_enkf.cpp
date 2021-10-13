@@ -631,13 +631,7 @@ bool cv_enkf_get_bool(const void *arg, const char *var_name) {
     }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME CV_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {
+analysis_table_type CV_ENKF = {
     .name = "CV_ENKF",
     .updateA = NULL,
     .initX = cv_enkf_initX,

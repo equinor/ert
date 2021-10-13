@@ -200,26 +200,20 @@ void *std_enkf_debug_get_ptr(const void *arg, const char *var_name) {
         return NULL;
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME STD_ENKF_DEBUG
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {.name = "STD_ENKF_DEBUG_DEBUG",
-                                 .alloc = std_enkf_debug_data_alloc,
-                                 .freef = std_enkf_debug_data_free,
-                                 .set_int = std_enkf_debug_set_int,
-                                 .set_double = std_enkf_debug_set_double,
-                                 .set_bool = std_enkf_debug_set_bool,
-                                 .set_string = std_enkf_debug_set_string,
-                                 .get_options = std_enkf_debug_get_options,
-                                 .initX = std_enkf_debug_initX,
-                                 .updateA = NULL,
-                                 .init_update = NULL,
-                                 .complete_update = NULL,
-                                 .has_var = std_enkf_debug_has_var,
-                                 .get_int = std_enkf_debug_get_int,
-                                 .get_double = std_enkf_debug_get_double,
-                                 .get_bool = std_enkf_debug_get_bool,
-                                 .get_ptr = std_enkf_debug_get_ptr};
+analysis_table_type STD_ENKF_DEBUG = {.name = "STD_ENKF_DEBUG",
+                                      .alloc = std_enkf_debug_data_alloc,
+                                      .freef = std_enkf_debug_data_free,
+                                      .set_int = std_enkf_debug_set_int,
+                                      .set_double = std_enkf_debug_set_double,
+                                      .set_bool = std_enkf_debug_set_bool,
+                                      .set_string = std_enkf_debug_set_string,
+                                      .get_options = std_enkf_debug_get_options,
+                                      .initX = std_enkf_debug_initX,
+                                      .updateA = NULL,
+                                      .init_update = NULL,
+                                      .complete_update = NULL,
+                                      .has_var = std_enkf_debug_has_var,
+                                      .get_int = std_enkf_debug_get_int,
+                                      .get_double = std_enkf_debug_get_double,
+                                      .get_bool = std_enkf_debug_get_bool,
+                                      .get_ptr = std_enkf_debug_get_ptr};

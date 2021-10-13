@@ -912,13 +912,7 @@ void *ies_enkf_get_ptr(const void *arg, const char *var_name) {
     }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME IES_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {
+analysis_table_type IES_ENKF = {
     .name = "IES_ENKF",
     .updateA = ies_enkf_updateA,
     .initX = NULL,

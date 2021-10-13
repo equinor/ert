@@ -21,7 +21,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util import BoolVector, RandomNumberGenerator
 from libres_utils import ResTest, tmpdir
 
-from res.analysis import AnalysisModule, AnalysisModuleLoadStatusEnum
+from res.analysis import AnalysisModule
 from res.enkf import MeasData, ObsData
 from res.util import Matrix
 
@@ -73,19 +73,15 @@ def init_matrices(ens, mask, obs, rng):
     obs_data.scale(S, E=E, D=D, R=R, D_obs=dObs)
     return (A, S, E, D, R, dObs)
 
+    class IESTest(ResTest):
+        def setUp(self):
+            self.user = "TEST"
 
-def create_analysis_module(lib_name):
-    return AnalysisModule(lib_name=f"{lib_name}.so")
+        @tmpdir()
+        def test_analysis_module_ies_enkf(self):
+            rng = RandomNumberGenerator()
+            module = AnalysisModule("IES_ENKF")
 
-
-class IESTest(ResTest):
-    def setUp(self):
-        self.user = "TEST"
-
-    @tmpdir()
-    def test_analysis_module_ies_enkf(self):
-        rng = RandomNumberGenerator()
-        module = create_analysis_module("libies")
         ens_size = 12
         obs_size = 1
 

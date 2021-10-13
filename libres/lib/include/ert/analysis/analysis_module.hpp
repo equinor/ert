@@ -50,26 +50,9 @@ typedef enum {
     ANALYSIS_ITERABLE = 32 // The module can bu used as an iterative smoother.
 } analysis_module_flag_enum;
 
-#define EXTERNAL_MODULE_NAME "analysis_table"
-#define EXTERNAL_MODULE_SYMBOL analysis_table
-
-typedef enum {
-    LOAD_OK = 0,
-    DLOPEN_FAILURE = 1,
-    LOAD_SYMBOL_TABLE_NOT_FOUND = 2
-} analysis_module_load_status_enum;
-
 typedef struct analysis_module_struct analysis_module_type;
 
-analysis_module_type *
-analysis_module_alloc_internal__(const char *symbol_table, bool verbose,
-                                 analysis_module_load_status_enum *load_status);
-analysis_module_type *analysis_module_alloc_internal(const char *symbol_table);
-
-analysis_module_type *
-analysis_module_alloc_external__(const char *lib_name, bool verbose,
-                                 analysis_module_load_status_enum *load_status);
-analysis_module_type *analysis_module_alloc_external(const char *libname);
+analysis_module_type *analysis_module_alloc(const char *symbol_table);
 
 void analysis_module_free(analysis_module_type *module);
 
@@ -93,8 +76,6 @@ void analysis_module_init_update(analysis_module_type *module,
                                  const matrix_type *dObs, const matrix_type *E,
                                  const matrix_type *D, rng_type *rng);
 
-const char *analysis_module_get_lib_name(const analysis_module_type *module);
-bool analysis_module_internal(const analysis_module_type *module);
 bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
                              const char *string_value);
 const char *analysis_module_get_table_name(const analysis_module_type *module);

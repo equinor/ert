@@ -287,13 +287,7 @@ bool std_enkf_get_bool(const void *arg, const char *var_name) {
     }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME STD_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {
+analysis_table_type STD_ENKF = {
     .name = "STD_ENKF",
     .updateA = NULL,
     .initX = std_enkf_initX,

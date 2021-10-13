@@ -25,7 +25,7 @@ List of keywords
 Keyword name                                                            Required                                Default value                   Purpose
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_COPY <analysis_copy>`                                    NO                                                                      Create new instance of analysis module
-:ref:`ANALYSIS_LOAD <analysis_load>`                                    NO                                                                      Load analysis module
+:ref:`ANALYSIS_LOAD <analysis_load>`                                    NO                                                                      Deprecated
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                                NO                                      STD_ENKF                        Select analysis module to use in update
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
@@ -1390,18 +1390,8 @@ to load, select and modify the analysis modules are documented here.
 .. _analysis_load:
 .. topic:: ANALYSIS_LOAD
 
-        The ANALYSIS_LOAD key is the main key to load an analysis module:
-
-        ::
-
-                ANALYSIS_LOAD ANAME  analysis.so
-
-        The first argument ANAME is just an arbitrary unique name which you want to
-        use to refer to the module later. The second argument is the name of the
-        shared library file implementing the module, this can either be an absolute
-        path as /path/to/my/module/ana.so or a relative file name as analysis.so. The
-        module is loaded with dlopen() and the normal shared library search semantics
-        applies.
+        `ANALYSIS_LOAD` is deprecated. It used to dynamically load an analysis
+        module from a shared object, but now is a no-op.
 
 
 .. _analysis_select:

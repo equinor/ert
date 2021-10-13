@@ -31,7 +31,6 @@ class PluginManagerTest(unittest.TestCase):
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD LIB_IES libies.so",
             ],
             pm._site_config_lines(),
         )
@@ -68,7 +67,6 @@ class PluginManagerTest(unittest.TestCase):
                 "JOB_SCRIPT job_dispatch.py",
                 "QUEUE_SYSTEM LOCAL",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 1",
-                "ANALYSIS_LOAD LIB_IES libies.so",
                 "-- Content below originated from dummy (site_config_lines)",
                 "JOB_SCRIPT job_dispatch_dummy.py",
                 "QUEUE_OPTION LOCAL MAX_RUNNING 2",

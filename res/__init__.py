@@ -65,16 +65,6 @@ def _load_lib():
     # Set site-config to point to [PREFIX]/share/ert/site-config
     site_config(str(path).encode("utf-8"))
 
-    # Configure set_analysis_modules_dir to be a ctypes.CFUNCTION with type:
-    # void set_analysis_modules_dir(char *);
-    set_analysis_modules_dir = lib.set_analysis_modules_dir
-    set_analysis_modules_dir.restype = None
-    set_analysis_modules_dir.argtypes = (ctypes.c_char_p,)
-
-    # Set analysis modules dir to be [CURRENT DIR]/.libs
-    path = os.path.join(os.path.dirname(__file__), ".libs")
-    set_analysis_modules_dir(path.encode("utf-8"))
-
     return lib
 
 
