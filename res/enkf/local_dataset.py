@@ -8,7 +8,6 @@ from ecl.util.util import StringList
 class LocalDataset(BaseCClass):
     TYPE_NAME = "local_dataset"
 
-    _alloc = ResPrototype("void* local_dataset_alloc(char*)", bind=False)
     _size = ResPrototype("int   local_dataset_get_size(local_dataset)")
     _has_key = ResPrototype("bool  local_dataset_has_key(local_dataset, char*)")
     _keys = ResPrototype("stringlist_obj local_dataset_alloc_keys(local_dataset)")

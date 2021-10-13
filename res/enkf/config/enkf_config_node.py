@@ -70,9 +70,6 @@ class EnkfConfigNode(BaseCClass):
     _get_enkf_infile = ResPrototype(
         "char* enkf_config_node_get_enkf_infile(enkf_config_node)"
     )
-    _get_init_file = ResPrototype(
-        "char* enkf_config_node_get_FIELD_fill_file(enkf_config_node, path_fmt)"
-    )
     _get_init_file_fmt = ResPrototype(
         "char* enkf_config_node_get_init_file_fmt(enkf_config_node)"
     )

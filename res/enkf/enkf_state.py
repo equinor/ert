@@ -20,7 +20,7 @@ from res.enkf.enums import EnkfInitModeEnum, EnkfVarType
 
 class EnKFState(BaseCClass):
     TYPE_NAME = "enkf_state"
-    _free = ResPrototype("void* enkf_state_free( enkf_state )")
+    _free = ResPrototype("void enkf_state_free( enkf_state )")
     _get_ens_config = ResPrototype(
         "ens_config_ref enkf_state_get_ensemble_config( enkf_state )"
     )

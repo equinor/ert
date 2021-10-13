@@ -6,7 +6,6 @@ from res.enkf import LocalMinistep
 class LocalUpdateStep(BaseCClass):
     TYPE_NAME = "local_updatestep"
 
-    _alloc = ResPrototype("void  local_updatestep_alloc(char*)", bind=False)
     _size = ResPrototype("int   local_updatestep_get_num_ministep(local_updatestep)")
     _iget_ministep = ResPrototype(
         "local_ministep_ref local_updatestep_iget_ministep(local_updatestep, int)"

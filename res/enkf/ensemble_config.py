@@ -42,9 +42,6 @@ class EnsembleConfig(BaseCClass):
     _alloc = ResPrototype(
         "void* ensemble_config_alloc(config_content, ecl_grid, ecl_sum)", bind=False
     )
-    _alloc_load = ResPrototype(
-        "void* ensemble_config_alloc_load(char* , ecl_grid, ecl_sum)", bind=False
-    )
     _alloc_full = ResPrototype("void* ensemble_config_alloc_full(char*)", bind=False)
     _free = ResPrototype("void ensemble_config_free( ens_config )")
     _has_key = ResPrototype("bool ensemble_config_has_key( ens_config , char* )")

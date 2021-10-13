@@ -28,9 +28,6 @@ class QueueConfig(BaseCClass):
     TYPE_NAME = "queue_config"
 
     _free = ResPrototype("void queue_config_free( queue_config )")
-    _alloc_job_queue = ResPrototype(
-        "job_queue_obj queue_config_alloc_job_queue( queue_config )"
-    )
     _alloc = ResPrototype("void* queue_config_alloc_load(char*)", bind=False)
     _alloc_full = ResPrototype(
         "void* queue_config_alloc_full(char*, bool, int, int, queue_driver_enum)",

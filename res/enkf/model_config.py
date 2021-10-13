@@ -60,9 +60,6 @@ class ModelConfig(BaseCClass):
     _get_max_internal_submit = ResPrototype(
         "int   model_config_get_max_internal_submit(model_config)"
     )
-    _set_max_internal_submit = ResPrototype(
-        "void  model_config_set_max_internal_submit(model_config, int)"
-    )
     _get_runpath_as_char = ResPrototype(
         "char* model_config_get_runpath_as_char(model_config)"
     )
@@ -71,7 +68,6 @@ class ModelConfig(BaseCClass):
     )
     _set_runpath = ResPrototype("void  model_config_set_runpath(model_config, char*)")
     _get_enspath = ResPrototype("char* model_config_get_enspath(model_config)")
-    _get_history = ResPrototype("history_ref model_config_get_history(model_config)")
     _get_history_source = ResPrototype(
         "history_source_enum model_config_get_history_source(model_config)"
     )
@@ -96,9 +92,6 @@ class ModelConfig(BaseCClass):
         "char* model_config_get_obs_config_file(model_config)"
     )
     _get_data_root = ResPrototype("char* model_config_get_data_root(model_config)")
-    _set_data_root = ResPrototype(
-        "void model_config_get_data_root(model_config, char*)"
-    )
     _get_time_map = ResPrototype(
         "void model_config_get_external_time_map(model_config)"
     )
