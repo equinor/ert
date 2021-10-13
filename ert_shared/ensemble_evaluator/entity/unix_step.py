@@ -78,7 +78,7 @@ class UnixTask(prefect.Task):
         futures = []
         for input_ in self._step.get_inputs():
             futures.append(
-                input_.get_transformation().transform(
+                input_.get_transformation().transform_input(
                     transmitter=transmitters[input_.get_name()],
                     mime=input_.get_mime(),
                     runpath=runpath,
@@ -113,8 +113,11 @@ class UnixTask(prefect.Task):
                         output.get_name()
                     ]
                     futures.append(
-                        outputs[output.get_name()].transmit_file(
-                            run_path / output.get_path(), output.get_mime()
+                        output.get_transformation().transform_output(
+                            transmitter=outputs[output.get_name()],
+                            mime=output.get_mime(),
+                            runpath=run_path,
+                            location=output.get_path(),
                         )
                     )
                 asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
