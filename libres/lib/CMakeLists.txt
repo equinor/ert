@@ -451,8 +451,7 @@ if (NOT APPLE)
      target_link_libraries(job_list_test res)
 
      add_test(NAME job_list_test
-         COMMAND valgrind --leak-check=full --error-exitcode=1
-                 $<TARGET_FILE:job_list_test>)
+         COMMAND $<TARGET_FILE:job_list_test>)
 endif()
 
 
