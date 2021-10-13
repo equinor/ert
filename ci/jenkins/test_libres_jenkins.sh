@@ -44,7 +44,7 @@ build_libecl () {
 	run enable_environment
 
 	pushd $LIBECL_BUILD
-	cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL
+	cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE=RelWithDebInfo
 	make -j 6 install
 	popd
 }
@@ -56,6 +56,7 @@ build_libres () {
 	cmake ${ERT_SOURCE_ROOT}/libres \
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
+		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		  -DBUILD_TESTS=ON \
 		  -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
 	make -j 6 install
@@ -95,6 +96,10 @@ enable_environment () {
 
 	export ERT_SHOW_BACKTRACE=Y
 	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py36-rhel7/root/lib/python3.6/site-packages/ert_configurations/resources/rms_config.yml
+
+	# Conan v1 bundles its own certs due to legacy reasons, so we point it
+	# to the system's certs instead.
+	export CONAN_CACERT_PATH=/etc/pki/tls/cert.pem
 }
 
 create_directories () {
@@ -116,6 +121,9 @@ create_virtualenv () {
 	python3 -m venv $ENV
 	source $ENV/bin/activate
 	pip install -U pip wheel setuptools cmake
+
+	# Conan is a C++ package manager and is required by ecl
+	pip install conan
 }
 
 run_ctest () {
