@@ -19,6 +19,7 @@ struct deleter {
 };
 
 class summary_observation {
+public:
     std::unique_ptr<summary_obs_type, deleter> m_ptr;
 
 public:
@@ -30,18 +31,6 @@ public:
                                      const std::string &arg1, double arg2,
                                      double arg3) {
         return {summary_obs_alloc(arg0.c_str(), arg1.c_str(), arg2, arg3)};
-    }
-
-    double get_value() const { return summary_obs_get_value(m_ptr.get()); }
-
-    double get_std() const { return summary_obs_get_std(m_ptr.get()); }
-
-    double get_std_scaling() const {
-        return summary_obs_get_std_scaling(m_ptr.get());
-    }
-
-    std::string get_summary_key() const {
-        return summary_obs_get_summary_key(m_ptr.get());
     }
 
     void update_std_scale(double arg0, py::object arg1) {
@@ -58,10 +47,18 @@ public:
 PYBIND11_MODULE(_clib, m) {
     py::class_<summary_observation>(m, "_SummaryObservationImpl")
         .def(py::init(&summary_observation::alloc))
-        .def("_get_value", &summary_observation::get_value)
-        .def("_get_std", &summary_observation::get_std)
-        .def("_get_std_scaling", &summary_observation::get_std_scaling)
-        .def("_get_summary_key", &summary_observation::get_summary_key)
+        .def("_get_value",
+             [](const summary_observation &self) { return self.m_ptr->value; })
+        .def("_get_std",
+             [](const summary_observation &self) { return self.m_ptr->std; })
+        .def("_get_std_scaling",
+             [](const summary_observation &self) {
+                 return self.m_ptr->std_scaling;
+             })
+        .def("_get_summary_key",
+             [](const summary_observation &self) {
+                 return std::string(self.m_ptr->summary_key);
+             })
         .def("_update_std_scale", &summary_observation::update_std_scale)
         .def("_set_std_scale", &summary_observation::set_std_scale);
 }

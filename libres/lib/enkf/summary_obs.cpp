@@ -28,17 +28,6 @@
 #define SUMMARY_OBS_TYPE_ID 66103
 #define OBS_SIZE 1
 
-struct summary_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    char *
-        summary_key; /* The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
-    char *obs_key;
-
-    double value; /* Observation value. */
-    double std;   /* Standard deviation of observation. */
-    double std_scaling;
-};
-
 /*
   This function allocates a summary_obs instance. The summary_key
   string should be of the format used by the summary.x program.

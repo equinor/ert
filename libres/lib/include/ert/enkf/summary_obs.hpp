@@ -36,7 +36,16 @@
 extern "C" {
 #endif
 
-typedef struct summary_obs_struct summary_obs_type;
+typedef struct summary_obs_struct {
+    UTIL_TYPE_ID_DECLARATION;
+    char *
+        summary_key; /* The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
+    char *obs_key;
+
+    double value; /* Observation value. */
+    double std;   /* Standard deviation of observation. */
+    double std_scaling;
+} summary_obs_type;
 
 void summary_obs_free(summary_obs_type *summary_obs);
 
