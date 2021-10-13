@@ -538,29 +538,23 @@ void *fwd_step_enkf_get_ptr(const void *arg, const char *var_name) {
     }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME FWD_STEP_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
+analysis_table_type FWD_STEP_ENKF = {.name = "FWD_STEP_ENKF",
+                                     .updateA = fwd_step_enkf_updateA,
+                                     .initX = NULL,
+                                     .init_update = NULL,
+                                     .complete_update = NULL,
 
-analysis_table_type LINK_NAME = {.name = "FWD_STEP_ENKF",
-                                 .updateA = fwd_step_enkf_updateA,
-                                 .initX = NULL,
-                                 .init_update = NULL,
-                                 .complete_update = NULL,
+                                     .freef = fwd_step_enkf_data_free,
+                                     .alloc = fwd_step_enkf_data_alloc,
 
-                                 .freef = fwd_step_enkf_data_free,
-                                 .alloc = fwd_step_enkf_data_alloc,
+                                     .set_int = fwd_step_enkf_set_int,
+                                     .set_double = fwd_step_enkf_set_double,
+                                     .set_bool = fwd_step_enkf_set_bool,
+                                     .set_string = fwd_step_enkf_set_string,
+                                     .get_options = fwd_step_enkf_get_options,
 
-                                 .set_int = fwd_step_enkf_set_int,
-                                 .set_double = fwd_step_enkf_set_double,
-                                 .set_bool = fwd_step_enkf_set_bool,
-                                 .set_string = fwd_step_enkf_set_string,
-                                 .get_options = fwd_step_enkf_get_options,
-
-                                 .has_var = fwd_step_enkf_has_var,
-                                 .get_int = fwd_step_enkf_get_int,
-                                 .get_double = fwd_step_enkf_get_double,
-                                 .get_bool = fwd_step_enkf_get_bool,
-                                 .get_ptr = fwd_step_enkf_get_ptr};
+                                     .has_var = fwd_step_enkf_has_var,
+                                     .get_int = fwd_step_enkf_get_int,
+                                     .get_double = fwd_step_enkf_get_double,
+                                     .get_bool = fwd_step_enkf_get_bool,
+                                     .get_ptr = fwd_step_enkf_get_ptr};

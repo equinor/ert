@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <unordered_map>
 
 #include <stdexcept>
 
@@ -31,12 +32,30 @@
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
+extern analysis_table_type BOOTSTRAP_ENKF;
+extern analysis_table_type CV_ENKF;
+extern analysis_table_type IES_ENKF;
+extern analysis_table_type NULL_ENKF;
+extern analysis_table_type SQRT_ENKF;
+extern analysis_table_type STD_ENKF;
+extern analysis_table_type STD_ENKF_DEBUG;
+
+namespace {
+const std::unordered_map<std::string, analysis_table_type *> analysis_tables{
+    {"BOOTSTRAP_ENKF", &BOOTSTRAP_ENKF},
+    {"CV_ENKF", &CV_ENKF},
+    {"IES_ENKF", &IES_ENKF},
+    {"NULL_ENKF", &NULL_ENKF},
+    {"SQRT_ENKF", &SQRT_ENKF},
+    {"STD_ENKF", &STD_ENKF},
+    {"STD_ENKF_DEBUG", &STD_ENKF_DEBUG},
+};
+}
+
 struct analysis_module_struct {
     UTIL_TYPE_ID_DECLARATION;
-    void *lib_handle;
     void *module_data;
     char *symbol_table;
-    char *lib_name;
 
     analysis_free_ftype *freef;
     analysis_alloc_ftype *alloc;
@@ -57,21 +76,17 @@ struct analysis_module_struct {
     analysis_get_bool_ftype *get_bool;
     analysis_get_ptr_ftype *get_ptr;
 
-    bool internal;
     char *
         user_name; /* String used to identify this module for the user; not used in
                                                    the linking process. */
 };
 
-static std::string analysis_modules_dir;
-
 static analysis_module_type *
-analysis_module_alloc_empty(const char *symbol_table, const char *lib_name) {
+analysis_module_alloc_empty(const char *symbol_table) {
     analysis_module_type *module =
         (analysis_module_type *)util_malloc(sizeof *module);
     UTIL_TYPE_ID_INIT(module, ANALYSIS_MODULE_TYPE_ID);
 
-    module->lib_handle = NULL;
     module->initX = NULL;
     module->updateA = NULL;
     module->set_int = NULL;
@@ -90,30 +105,16 @@ analysis_module_alloc_empty(const char *symbol_table, const char *lib_name) {
 
     module->user_name = NULL;
     module->symbol_table = util_alloc_string_copy(symbol_table);
-    module->lib_name = util_alloc_string_copy(lib_name);
 
     return module;
 }
 
-static bool analysis_module_internal_check(analysis_module_type *module) {
-    if (!module->user_name)
-        fprintf(stderr,
-                "Invalid module loaded from lib:%s / symbol_table:%s - name "
-                "not set\n",
-                module->lib_name, module->symbol_table);
-
-    return true;
-}
-
 static analysis_module_type *
 analysis_module_alloc__(const analysis_table_type *table,
-                        const char *symbol_table, const char *lib_name,
-                        void *lib_handle) {
+                        const char *symbol_table) {
 
-    analysis_module_type *module =
-        analysis_module_alloc_empty(symbol_table, lib_name);
+    analysis_module_type *module = analysis_module_alloc_empty(symbol_table);
 
-    module->lib_handle = lib_handle;
     module->initX = table->initX;
     module->updateA = table->updateA;
     module->init_update = table->init_update;
@@ -135,87 +136,15 @@ analysis_module_alloc__(const analysis_table_type *table,
     if (module->alloc)
         module->module_data = module->alloc();
 
-    if (!analysis_module_internal_check(module)) {
-        fprintf(
-            stderr,
-            "** Warning loading module: %s failed - internal inconsistency\n",
-            module->user_name);
-        analysis_module_free(module);
-        module = NULL;
-    }
-
     return module;
 }
 
-static analysis_module_type *
-analysis_module_alloc(const char *libname, const char *table_name, bool verbose,
-                      analysis_module_load_status_enum *load_status) {
-    analysis_module_type *module = NULL;
-    void *lib_handle = nullptr;
+analysis_module_type *analysis_module_alloc(const char *table_name) {
+    auto it = analysis_tables.find(table_name);
+    if (it == analysis_tables.cend())
+        return nullptr;
 
-    if (libname == nullptr) {
-        // internal
-        lib_handle = dlopen(nullptr, RTLD_NOW);
-    } else {
-        // external, look for the library in <site-packages>/res/.libs
-        if (!analysis_modules_dir.empty()) {
-            auto lib_path = analysis_modules_dir + "/" + libname;
-            lib_handle = dlopen(lib_path.c_str(), RTLD_NOW);
-            if (lib_handle == nullptr && verbose)
-                fprintf(stderr, "Failed to load library:%s Error:%s\n",
-                        lib_path.c_str(), dlerror());
-        }
-
-        // external, look for library system-wide
-        if (lib_handle == nullptr) {
-            lib_handle = dlopen(libname, RTLD_NOW);
-        }
-
-        // error handling
-        if (lib_handle == nullptr) {
-            *load_status = DLOPEN_FAILURE;
-            if (verbose)
-                fprintf(stderr, "Failed to load library:%s Error:%s \n",
-                        libname, dlerror());
-            return NULL;
-        }
-    }
-
-    analysis_table_type *analysis_table =
-        (analysis_table_type *)dlsym(lib_handle, table_name);
-    if (analysis_table != NULL) {
-        *load_status = LOAD_OK;
-        module = analysis_module_alloc__(analysis_table, table_name, libname,
-                                         lib_handle);
-    } else {
-        *load_status = LOAD_SYMBOL_TABLE_NOT_FOUND;
-        if (verbose)
-            fprintf(stderr, "Failed to load symbol table:%s Error:%s \n",
-                    table_name, dlerror());
-    }
-
-    if (module == NULL)
-        dlclose(lib_handle);
-
-    if (module != NULL) {
-        if (libname == NULL)
-            module->internal = true;
-        else
-            module->internal = false;
-    }
-
-    return module;
-}
-
-analysis_module_type *analysis_module_alloc_internal(const char *symbol_table) {
-    analysis_module_load_status_enum load_status;
-    return analysis_module_alloc(NULL, symbol_table, true, &load_status);
-}
-
-analysis_module_type *analysis_module_alloc_external(const char *lib_name) {
-    analysis_module_load_status_enum load_status;
-    return analysis_module_alloc(lib_name, EXTERNAL_MODULE_NAME, true,
-                                 &load_status);
+    return analysis_module_alloc__(it->second, table_name);
 }
 
 const char *analysis_module_get_name(const analysis_module_type *module) {
@@ -230,14 +159,6 @@ const char *analysis_module_get_table_name(const analysis_module_type *module) {
     return module->symbol_table;
 }
 
-const char *analysis_module_get_lib_name(const analysis_module_type *module) {
-    return module->lib_name;
-}
-
-bool analysis_module_internal(const analysis_module_type *module) {
-    return module->internal;
-}
-
 static UTIL_SAFE_CAST_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
     UTIL_IS_INSTANCE_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
 
@@ -245,10 +166,8 @@ static UTIL_SAFE_CAST_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
     if (module->freef != NULL)
         module->freef(module->module_data);
 
-    free(module->lib_name);
     free(module->user_name);
     free(module->symbol_table);
-    dlclose(module->lib_handle);
     free(module);
 }
 
@@ -479,8 +398,4 @@ void *analysis_module_get_ptr(const analysis_module_type *module,
                   __func__, var, module->user_name);
 
     return NULL;
-}
-
-extern "C" void set_analysis_modules_dir(const char *lib) {
-    analysis_modules_dir = lib;
 }

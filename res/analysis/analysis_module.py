@@ -26,17 +26,8 @@ from res.util import Matrix
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc_external = ResPrototype(
-        "void* analysis_module_alloc_external(char*)", bind=False
-    )
-    _alloc_internal = ResPrototype(
-        "void* analysis_module_alloc_internal(char*)", bind=False
-    )
+    _alloc = ResPrototype("void* analysis_module_alloc(char*)", bind=False)
     _free = ResPrototype("void analysis_module_free(analysis_module)")
-    _get_lib_name = ResPrototype("char* analysis_module_get_lib_name(analysis_module)")
-    _get_module_internal = ResPrototype(
-        "bool analysis_module_internal(analysis_module)"
-    )
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
     )
@@ -114,19 +105,10 @@ class AnalysisModule(BaseCClass):
         "CV_PEN_PRESS": {"type": bool, "description": "CV_PEN_PRESS"},
     }
 
-    def __init__(self, name=None, lib_name=None):
-        if name is None and lib_name is None:
-            raise ValueError("Must supply exactly one of lib or lib_name")
-
-        if name and lib_name:
-            raise ValueError("Must supply exactly one of name or lib_name")
-
-        if lib_name:
-            c_ptr = self._alloc_external(lib_name)
-        else:
-            c_ptr = self._alloc_internal(name)
-            if not c_ptr:
-                raise KeyError("Failed to load internal module:%s" % name)
+    def __init__(self, name):
+        c_ptr = self._alloc(name)
+        if not c_ptr:
+            raise KeyError("Failed to load internal module:%s" % name)
 
         super(AnalysisModule, self).__init__(c_ptr)
 
@@ -174,12 +156,6 @@ class AnalysisModule(BaseCClass):
         ad = self._ad_str()
         fmt = "AnalysisModule(name = %s, table = %s, lib = %s, %s) %s"
         return fmt % (nm, tn, ln, mi, ad)
-
-    def getLibName(self):
-        return self._get_lib_name()
-
-    def getInternal(self):
-        return self._get_module_internal()
 
     def __assertVar(self, var_name):
         if not self.hasVar(var_name):
@@ -255,11 +231,7 @@ class AnalysisModule(BaseCClass):
 
         if self.getName() != other.getName():
             return False
-        if self.getLibName() != other.getLibName():
-            return False
         if self.getTableName() != other.getTableName():
-            return False
-        if self.getInternal() != other.getInternal():
             return False
 
         var_name_local = self.getVariableNames()

@@ -162,13 +162,7 @@ int sqrt_enkf_get_int(const void *arg, const char *var_name) {
     { return std_enkf_get_int(module_data->std_data, var_name); }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME SQRT_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {.name = "SQRT_ENKF",
+analysis_table_type SQRT_ENKF = {.name = "SQRT_ENKF",
                                  .updateA = NULL,
                                  .initX = sqrt_enkf_initX,
                                  .init_update = sqrt_enkf_init_update,

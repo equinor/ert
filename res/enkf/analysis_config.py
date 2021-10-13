@@ -42,9 +42,6 @@ class AnalysisConfig(BaseCClass):
     _add_module_copy = ResPrototype(
         "void analysis_config_add_module_copy( analysis_config, " "char* , char* )"
     )
-    _load_external_module = ResPrototype(
-        "bool analysis_config_load_external_module( analysis_config, " "char* , char* )"
-    )
 
     _free = ResPrototype("void analysis_config_free( analysis_config )")
     _get_rerun = ResPrototype("int analysis_config_get_rerun( analysis_config )")
@@ -174,14 +171,6 @@ class AnalysisConfig(BaseCClass):
             )
             if c_ptr:
                 super(AnalysisConfig, self).__init__(c_ptr)
-
-                # external modules
-                ext_modules_list = config_dict.get(ConfigKeys.ANALYSIS_LOAD, [])
-                for ext_module in ext_modules_list:
-                    self._load_external_module(
-                        ext_module[ConfigKeys.LIB_NAME],
-                        ext_module[ConfigKeys.USER_NAME],
-                    )
 
                 # copy modules
                 analysis_copy_list = config_dict.get(ConfigKeys.ANALYSIS_COPY, [])

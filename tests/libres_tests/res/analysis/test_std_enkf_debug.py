@@ -38,12 +38,7 @@ class StdEnKFDebugTest(ResTest):
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
         )
-        lib_name = "std_enkf_debug.so"
-        self.libname = find_file(self.SOURCE_ROOT, lib_name)
-        if self.libname:
-            self.module = AnalysisModule(lib_name=self.libname)
-        else:
-            pytest.skip("Debug library not found")
+        self.module = AnalysisModule("STD_ENKF_DEBUG")
 
     def toggleKey(self, key):
         self.assertTrue(self.module.hasVar(key))

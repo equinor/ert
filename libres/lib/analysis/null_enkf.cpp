@@ -33,13 +33,7 @@ void null_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
 
 long null_enkf_get_options(void *arg, long flag) { return 0L; }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME NULL_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {
+analysis_table_type NULL_ENKF = {
     .name = "NULL_ENKF",
     .updateA = NULL,
     .initX = null_enkf_initX,

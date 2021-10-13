@@ -253,13 +253,7 @@ int bootstrap_enkf_get_int(const void *arg, const char *var_name) {
     { return std_enkf_get_int(module_data->std_enkf_data, var_name); }
 }
 
-#ifdef INTERNAL_LINK
-#define LINK_NAME BOOTSTRAP_ENKF
-#else
-#define LINK_NAME EXTERNAL_MODULE_SYMBOL
-#endif
-
-analysis_table_type LINK_NAME = {
+analysis_table_type BOOTSTRAP_ENKF = {
     .name = "BOOTSTRAP_ENKF",
     .updateA = bootstrap_enkf_updateA,
     .initX = NULL,

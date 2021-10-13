@@ -76,16 +76,6 @@ UTIL_IS_INSTANCE_FUNCTION(analysis_config, ANALYSIS_CONFIG_TYPE_ID)
 Interacting with modules
 ------------------------
 
-The modules which are included in the build must be installed/loaded with a
-hard-coded call to analysis_config_load_internal_module(). External modules
-are loaded with the config statement:
-
-   ANALYSIS_LOAD    ModuleName   libfile
-
-Where 'ModuleName is the name you want to use to refer to the module, and
-libfile is the name of the library file which implements the analysis
-module[1].
-
 It is possible to create a copy of an analysis module under a different
 name, this can be convenient when trying out the same algorithm with
 different parameter settings. I.e. based on the built in module STD_ENKF we
@@ -284,47 +274,14 @@ void analysis_config_set_merge_observations(analysis_config_type *config,
     config->merge_observations = merge_observations;
 }
 
-void analysis_config_load_internal_module(analysis_config_type *config,
-                                          const char *symbol_table) {
-    analysis_module_type *module = analysis_module_alloc_internal(symbol_table);
+void analysis_config_load_module(analysis_config_type *config,
+                                 const char *symbol_table) {
+    analysis_module_type *module = analysis_module_alloc(symbol_table);
     if (module)
         config->analysis_modules[analysis_module_get_name(module)] = module;
     else
         fprintf(stderr, "** Warning: failed to load module %s from %s.\n",
                 analysis_module_get_name(module), symbol_table);
-}
-
-void analysis_config_load_all_external_modules_from_config(
-    analysis_config_type *analysis, const config_content_type *config) {
-
-    if (config_content_has_item(config, ANALYSIS_LOAD_KEY)) {
-        const config_content_item_type *load_item =
-            config_content_get_item(config, ANALYSIS_LOAD_KEY);
-        for (int i = 0; i < config_content_item_get_size(load_item); i++) {
-            const config_content_node_type *load_node =
-                config_content_item_iget_node(load_item, i);
-            const char *user_name = config_content_node_iget(load_node, 0);
-            const char *lib_name = config_content_node_iget(load_node, 1);
-
-            analysis_config_load_external_module(analysis, lib_name, user_name);
-        }
-    }
-}
-
-bool analysis_config_load_external_module(analysis_config_type *config,
-                                          const char *lib_name,
-                                          const char *user_name) {
-    analysis_module_type *module = analysis_module_alloc_external(lib_name);
-    if (module != NULL) {
-        if (user_name)
-            analysis_module_set_name(module, user_name);
-        config->analysis_modules[analysis_module_get_name(module)] = module;
-        return true;
-    } else {
-        fprintf(stderr, "** Warning: failed to load module from %s.\n",
-                lib_name);
-        return false;
-    }
 }
 
 void analysis_config_add_module_copy(analysis_config_type *config,
@@ -334,13 +291,8 @@ void analysis_config_add_module_copy(analysis_config_type *config,
         analysis_config_get_module(config, src_name);
     analysis_module_type *target_module;
 
-    if (analysis_module_internal(src_module)) {
-        const char *symbol_table = analysis_module_get_table_name(src_module);
-        target_module = analysis_module_alloc_internal(symbol_table);
-    } else {
-        const char *lib_name = analysis_module_get_lib_name(src_module);
-        target_module = analysis_module_alloc_external(lib_name);
-    }
+    const char *symbol_table = analysis_module_get_table_name(src_module);
+    target_module = analysis_module_alloc(symbol_table);
 
     config->analysis_modules[target_name] = target_module;
     analysis_module_set_name(target_module, target_name);
@@ -414,12 +366,13 @@ analysis_config_get_active_module_name(const analysis_config_type *config) {
 }
 
 void analysis_config_load_internal_modules(analysis_config_type *config) {
-    analysis_config_load_internal_module(config, "STD_ENKF");
-    analysis_config_load_internal_module(config, "NULL_ENKF");
-    analysis_config_load_internal_module(config, "SQRT_ENKF");
-    analysis_config_load_internal_module(config, "CV_ENKF");
-    analysis_config_load_internal_module(config, "BOOTSTRAP_ENKF");
-    analysis_config_load_internal_module(config, "FWD_STEP_ENKF");
+    analysis_config_load_module(config, "BOOTSTRAP_ENKF");
+    analysis_config_load_module(config, "CV_ENKF");
+    analysis_config_load_module(config, "IES_ENKF");
+    analysis_config_load_module(config, "NULL_ENKF");
+    analysis_config_load_module(config, "SQRT_ENKF");
+    analysis_config_load_module(config, "STD_ENKF");
+    analysis_config_load_module(config, "STD_ENKF_DEBUG");
     analysis_config_select_module(config, DEFAULT_ANALYSIS_MODULE);
 }
 
@@ -507,9 +460,6 @@ void analysis_config_init(analysis_config_type *analysis,
         analysis_config_set_max_runtime(
             analysis, config_content_get_value_as_int(config, MAX_RUNTIME_KEY));
     }
-
-    /* Loading external modules */
-    analysis_config_load_all_external_modules_from_config(analysis, config);
 
     /* Reload/copy modules. */
     {
@@ -670,21 +620,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
     return config;
 }
 
-static analysis_config_type *analysis_config_alloc_load_site_config() {
-    analysis_config_type *analysis_config = analysis_config_alloc_default();
-
-    config_parser_type *config = config_alloc();
-    config_content_type *content = site_config_alloc_content(config);
-
-    analysis_config_load_all_external_modules_from_config(analysis_config,
-                                                          content);
-
-    config_free(config);
-    config_content_free(content);
-
-    return analysis_config;
-}
-
 analysis_config_type *analysis_config_alloc_load(const char *user_config_file) {
     config_parser_type *config_parser = config_alloc();
     config_content_type *config_content = NULL;
@@ -703,8 +638,7 @@ analysis_config_type *analysis_config_alloc_load(const char *user_config_file) {
 
 analysis_config_type *
 analysis_config_alloc(const config_content_type *config_content) {
-    analysis_config_type *analysis_config =
-        analysis_config_alloc_load_site_config();
+    analysis_config_type *analysis_config = analysis_config_alloc_default();
 
     if (config_content) {
         analysis_config_load_internal_modules(analysis_config);

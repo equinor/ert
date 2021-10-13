@@ -77,6 +77,14 @@ add_library(res SHARED
                 analysis/std_enkf.cpp
                 analysis/stepwise.cpp
 
+                # IES_ENKF
+                analysis/modules/ies_enkf.cpp
+                analysis/modules/ies_enkf_config.cpp
+                analysis/modules/ies_enkf_data.cpp
+
+                # STD_ENKF_DEBUG
+                analysis/modules/std_enkf_debug.c
+
                 job_queue/ext_job.cpp
                 job_queue/ext_joblist.cpp
                 job_queue/forward_model.cpp
@@ -193,31 +201,11 @@ add_library(res SHARED
 
 #-----------------------------------------------------------------
 
-add_library(ies SHARED
-  analysis/modules/ies_enkf.cpp
-  analysis/modules/ies_enkf_config.cpp
-  analysis/modules/ies_enkf_data.cpp)
-target_link_libraries(ies PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
-target_include_directories(ies PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
-
-add_library(std_enkf_debug SHARED
-  analysis/modules/std_enkf_debug.c)
-target_link_libraries(std_enkf_debug PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
-target_include_directories(std_enkf_debug PRIVATE ${ECL_INCLUDE_DIRS} include modules)
-set_target_properties(std_enkf_debug PROPERTIES VERSION 1.0
-  SOVERSION 1.0
-  PREFIX "")
-
-#-----------------------------------------------------------------
-
-# The INTERNAL_LINK property is required to get the
-# system with analysis modules to work, might have some side-effects?
-target_compile_definitions(res PRIVATE -DINTERNAL_LINK)
-
 find_package(LAPACK REQUIRED)
 target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem)
 target_include_directories(res
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules>
         $<INSTALL_INTERFACE:include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
@@ -237,11 +225,6 @@ install(TARGETS res
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(TARGETS ies
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
 #-----------------------------------------------------------------
 
 if (NOT BUILD_TESTS)
@@ -251,27 +234,27 @@ endif()
 foreach(name ies_enkf_config ies_enkf_data)
   add_executable(${name} analysis/modules/tests/${name}.cpp)
   target_include_directories(${name} PRIVATE analysis/modules)
-  target_link_libraries(${name} res ies)
+  target_link_libraries(${name} res)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 add_executable( ies_module analysis/modules/tests/ies_enkf_module.cpp)
-target_link_libraries(ies_module res ies)
-add_test(NAME ies_module COMMAND ies_module $<TARGET_FILE_NAME:ies> ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
+target_link_libraries(ies_module res)
+add_test(NAME ies_module COMMAND ies_module ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_linalg analysis/modules/tests/ies_linalg.cpp)
 target_include_directories(ies_linalg PRIVATE analysis/modules)
-target_link_libraries(ies_linalg res ies)
+target_link_libraries(ies_linalg res)
 add_test(NAME ies_linalg COMMAND ies_linalg ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_std_compare analysis/modules/tests/ies_std_compare.cpp)
 target_include_directories(ies_std_compare PRIVATE analysis/modules)
-target_link_libraries(ies_std_compare res ies)
+target_link_libraries(ies_std_compare res)
 add_test(NAME ies_std_compare COMMAND ies_std_compare ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 
 add_executable(ies_iteration analysis/modules/tests/ies_iteration.cpp)
 target_include_directories(ies_iteration PRIVATE analysis/modules)
-target_link_libraries(ies_iteration res ies)
+target_link_libraries(ies_iteration res)
 add_test(NAME ies_iteration COMMAND ies_iteration ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly_normal)
 
 add_executable(ies_enkf_main analysis/modules/tests/ies_enkf_main.cpp ${ies_source})
@@ -363,10 +346,6 @@ target_link_libraries(sched_history_summary res)
 
 add_executable(rms_file_test rms/tests/rms_file_test.cpp)
 target_link_libraries(rms_file_test res)
-
-add_executable(analysis_external_module analysis/tests/analysis_test_external_module.cpp)
-target_link_libraries(analysis_external_module res)
-
 
 foreach(name analysis_test_module_info analysis_module_test)
   add_executable(${name} analysis/tests/${name}.cpp)
@@ -537,7 +516,6 @@ endif()
 
 foreach (test   enkf_active_list
                 enkf_analysis_config
-                enkf_analysis_config_ext_module
                 enkf_cases_config
                 enkf_config_node
                 enkf_enkf_config_node_gen_data
@@ -598,7 +576,6 @@ foreach(test enkf_magic_string_in_workflows
              enkf_workflow_job_test_directory
              enkf_ert_test_context
              gen_kw_logarithmic_test
-             enkf_analysis_config_analysis_load
              enkf_forward_init_GEN_KW
              enkf_forward_init_GEN_PARAM
              enkf_umask_config_test
@@ -680,11 +657,6 @@ add_config_test(gen_kw_test
 add_config_test(gen_kw_logarithmic_test
                 gen_kw_logarithmic_test
                 ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/gen_kw_logarithmic/config_GEN_KW_logarithmic)
-
-add_config_test(enkf_analysis_config_analysis_load enkf_analysis_config_analysis_load ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_config)
-set_property(TEST enkf_analysis_config_analysis_load PROPERTY
-    ENVIRONMENT
-    "ERT_SITE_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/config/analysis_load_site_config;LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}:$ENV{LD_LIBRARY_PATH}")
 
 add_config_test(enkf_workflow_job_test_directory enkf_workflow_job_test_directory ${CMAKE_CURRENT_SOURCE_DIR}/enkf/tests/data/workflow_jobs)
 #-----------------------------------------------------------------

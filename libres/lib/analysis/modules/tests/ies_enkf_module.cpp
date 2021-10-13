@@ -6,7 +6,7 @@
 
 #include <ert/res_util/es_testdata.hpp>
 
-void test_steplength1(const char *module_lib, const char *path_testdata) {
+void test_steplength1(const char *path_testdata) {
     res::es_testdata testdata(path_testdata);
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *X =
@@ -14,10 +14,8 @@ void test_steplength1(const char *module_lib, const char *path_testdata) {
     matrix_type *prior = testdata.alloc_matrix("A0", testdata.state_size,
                                                testdata.active_ens_size);
 
-    analysis_module_type *std_module =
-        analysis_module_alloc_internal("STD_ENKF");
-    analysis_module_type *ies_module =
-        analysis_module_alloc_external(module_lib);
+    analysis_module_type *std_module = analysis_module_alloc("STD_ENKF");
+    analysis_module_type *ies_module = analysis_module_alloc("IES_ENKF");
 
     test_assert_true(
         analysis_module_set_var(std_module, ENKF_TRUNCATION_KEY_, "0.95"));
@@ -40,16 +38,15 @@ void test_steplength1(const char *module_lib, const char *path_testdata) {
     analysis_module_free(ies_module);
 }
 
-void test_load(const char *module_lib) {
-    analysis_module_type *module = analysis_module_alloc_external(module_lib);
+void test_load() {
+    analysis_module_type *module = analysis_module_alloc("IES_ENKF");
     test_assert_not_NULL(module);
     analysis_module_free(module);
 }
 
 int main(int argc, char **argv) {
-    const char *module_lib = argv[1];
-    const char *path_testdata = argv[2];
+    const char *path_testdata = argv[1];
 
-    test_load(module_lib);
-    test_steplength1(module_lib, path_testdata);
+    test_load();
+    test_steplength1(path_testdata);
 }
