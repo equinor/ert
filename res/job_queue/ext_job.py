@@ -23,7 +23,6 @@ from res.config import ContentTypeEnum
 
 class ExtJob(BaseCClass):
     TYPE_NAME = "ext_job"
-    _alloc = ResPrototype("void* ext_job_alloc(char*,char*, bool)", bind=False)
     _fscanf_alloc = ResPrototype(
         "void* ext_job_fscanf_alloc(char*, char*, bool, char* , bool)", bind=False
     )

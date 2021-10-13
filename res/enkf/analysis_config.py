@@ -65,9 +65,6 @@ class AnalysisConfig(BaseCClass):
     _get_iter_config = ResPrototype(
         "analysis_iter_config_ref analysis_config_get_iter_config(analysis_config)"
     )
-    _have_enough_realisations = ResPrototype(
-        "bool analysis_config_have_enough_realisations(analysis_config, int, int)"
-    )
     _get_max_runtime = ResPrototype(
         "int analysis_config_get_max_runtime(analysis_config)"
     )

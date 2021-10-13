@@ -32,12 +32,6 @@ class EnkfFs(BaseCClass):
     _decref = ResPrototype("int   enkf_fs_decref(enkf_fs)")
     _incref = ResPrototype("int   enkf_fs_incref(enkf_fs)")
     _get_refcount = ResPrototype("int   enkf_fs_get_refcount(enkf_fs)")
-    _has_node = ResPrototype(
-        "bool  enkf_fs_has_node(enkf_fs,     char*,  int,   int, int, int)"
-    )
-    _has_vector = ResPrototype(
-        "bool  enkf_fs_has_vector(enkf_fs,   char*,  int,   int, int)"
-    )
     _get_case_name = ResPrototype("char* enkf_fs_get_case_name(enkf_fs)")
     _is_read_only = ResPrototype("bool  enkf_fs_is_read_only(enkf_fs)")
     _is_running = ResPrototype("bool  enkf_fs_is_running(enkf_fs)")

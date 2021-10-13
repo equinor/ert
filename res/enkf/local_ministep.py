@@ -7,7 +7,6 @@ from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset, ObsData
 class LocalMinistep(BaseCClass):
     TYPE_NAME = "local_ministep"
 
-    _alloc = ResPrototype("void* local_ministep_alloc(char*)", bind=False)
     _add_node = ResPrototype(
         "void local_ministep_add_obsdata_node(local_ministep, local_obsdata_node)"
     )

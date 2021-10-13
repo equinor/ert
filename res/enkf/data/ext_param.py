@@ -27,13 +27,11 @@ class ExtParam(BaseCClass):
     _alloc = ResPrototype("void*  ext_param_alloc( ext_param_config )", bind=False)
     _free = ResPrototype("void   ext_param_free( ext_param )")
     _iset = ResPrototype("void   ext_param_iset( ext_param, int, double)")
-    _iiset = ResPrototype("void   ext_param_iiset( ext_param, int, int, double)")
     _key_set = ResPrototype("void   ext_param_key_set( ext_param, char*, double)")
     _key_suffix_set = ResPrototype(
         "void   ext_param_key_suffix_set( ext_param, char*, char*, double)"
     )
     _iget = ResPrototype("double ext_param_iget( ext_param, int)")
-    _iiget = ResPrototype("double ext_param_iiget( ext_param, int, int)")
     _key_get = ResPrototype("double ext_param_key_get( ext_param, char*)")
     _key_suffix_get = ResPrototype(
         "double ext_param_key_suffix_get( ext_param, char*, char*)"

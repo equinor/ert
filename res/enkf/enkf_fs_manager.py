@@ -85,7 +85,6 @@ class EnkfFsManager(BaseCClass):
 
     _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_fs_manager)")
     _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
-    _fs_exists = ResPrototype("bool enkf_main_fs_exists(enkf_fs_manager, char*)")
     _alloc_caselist = ResPrototype(
         "stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)"
     )

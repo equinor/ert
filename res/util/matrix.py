@@ -59,18 +59,10 @@ class Matrix(BaseCClass):
     _random_init = ResPrototype("void matrix_random_init(matrix, rng)")
     _dump_csv = ResPrototype("void matrix_dump_csv(matrix, char*)")
 
-    # Requires BLAS. If the library does not have the
-    # matrix_alloc_matmul() function the prototype will have _func =
-    # None, and NotImplementedError( ) will be raised int the
-    # __call__() method if we try to use this function.
-    try:
-        _alloc_matmul = ResPrototype(
-            "matrix_obj  matrix_alloc_matmul(matrix, matrix)", bind=False
-        )
-    except AttributeError:
-        _alloc_matmul = None
+    _alloc_matmul = ResPrototype(
+        "matrix_obj  matrix_alloc_matmul(matrix, matrix)", bind=False
+    )
 
-    # Requires BLAS!
     @classmethod
     def matmul(cls, m1, m2):
         """

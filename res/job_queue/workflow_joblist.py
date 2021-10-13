@@ -20,9 +20,6 @@ class WorkflowJoblist(BaseCClass):
     _get_job = ResPrototype(
         "workflow_job_ref workflow_joblist_get_job(workflow_joblist, char*)"
     )
-    _count = ResPrototype(
-        "workflow_job_ref workflow_joblist_get_job(workflow_joblist, char*)"
-    )
 
     def __init__(self):
         c_ptr = self._alloc()

@@ -223,9 +223,6 @@ class _RealEnKFMain(BaseCClass):
         "char* enkf_main_get_user_config_file(enkf_main)"
     )
     _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
-    _export_field = ResPrototype(
-        "bool enkf_main_export_field(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int)"
-    )
     _export_field_with_fs = ResPrototype(
         "bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)"
     )

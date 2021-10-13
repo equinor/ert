@@ -24,9 +24,6 @@ from ecl.util.util import CTime
 class TimeMap(BaseCClass):
     TYPE_NAME = "time_map"
 
-    _fread_alloc_readonly = ResPrototype(
-        "void*  time_map_fread_alloc_readonly(char*)", bind=False
-    )
     _alloc = ResPrototype("void*  time_map_alloc()", bind=False)
     _load = ResPrototype("bool   time_map_fread(time_map , char*)")
     _save = ResPrototype("void   time_map_fwrite(time_map , char*)")

@@ -9,7 +9,6 @@ class SubstitutionList(BaseCClass):
     _free = ResPrototype("void subst_list_free(subst_list)")
     _size = ResPrototype("int subst_list_get_size(subst_list)")
     _iget_key = ResPrototype("char* subst_list_iget_key(subst_list, int)")
-    _iget_value = ResPrototype("char* subst_list_iget_value(subst_list, int)")
     _get_value = ResPrototype("char* subst_list_get_value(subst_list, char*)")
     _has_key = ResPrototype("bool subst_list_has_key(subst_list, char*)")
     _get_doc = ResPrototype("char* subst_list_get_doc_string(subst_list, char*)")

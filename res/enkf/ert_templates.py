@@ -37,10 +37,6 @@ class ErtTemplates(BaseCClass):
     _add_template = ResPrototype(
         "ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)"
     )
-    _add_template_unbound = ResPrototype(
-        "ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)",
-        bind=False,
-    )
 
     def __init__(self, parent_subst, config_content=None, config_dict=None):
         if not ((config_content is not None) ^ (config_dict is not None)):

@@ -89,8 +89,6 @@ class JobQueue(BaseCClass):
     _start_user_exit = ResPrototype("bool job_queue_start_user_exit( job_queue )")
     _get_user_exit = ResPrototype("bool job_queue_get_user_exit( job_queue )")
     _free = ResPrototype("void job_queue_free( job_queue )")
-    _set_max_running = ResPrototype("void job_queue_set_max_running( job_queue , int)")
-    _get_max_running = ResPrototype("int  job_queue_get_max_running( job_queue )")
     _set_max_job_duration = ResPrototype(
         "void job_queue_set_max_job_duration( job_queue , int)"
     )
@@ -99,9 +97,7 @@ class JobQueue(BaseCClass):
     )
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
     _kill_job = ResPrototype("bool job_queue_kill_job( job_queue , int )")
-    _start_queue = ResPrototype("void job_queue_run_jobs( job_queue , int , bool)")
     _run_jobs = ResPrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
-    _sim_start = ResPrototype("time_t job_queue_iget_sim_start( job_queue , int)")
     _iget_driver_data = ResPrototype(
         "void* job_queue_iget_driver_data( job_queue , int)"
     )
@@ -115,7 +111,6 @@ class JobQueue(BaseCClass):
     _submit_complete = ResPrototype("void job_queue_submit_complete( job_queue )")
     _iget_sim_start = ResPrototype("time_t job_queue_iget_sim_start( job_queue , int)")
     _get_active_size = ResPrototype("int  job_queue_get_active_size( job_queue )")
-    _get_pause = ResPrototype("bool job_queue_get_pause(job_queue)")
     _set_pause_on = ResPrototype("void job_queue_set_pause_on(job_queue)")
     _set_pause_off = ResPrototype("void job_queue_set_pause_off(job_queue)")
     _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
