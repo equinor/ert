@@ -47,18 +47,18 @@ public:
 PYBIND11_MODULE(_clib, m) {
     py::class_<summary_observation>(m, "_SummaryObservationImpl")
         .def(py::init(&summary_observation::alloc))
-        .def("_get_value",
+        .def("getValue",
              [](const summary_observation &self) { return self.m_ptr->value; })
-        .def("_get_std",
+        .def("getStandardDeviation",
              [](const summary_observation &self) { return self.m_ptr->std; })
-        .def("_get_std_scaling",
-             [](const summary_observation &self) {
+        .def("getStdScaling",
+             [](const summary_observation &self, int index=0) {
                  return self.m_ptr->std_scaling;
              })
-        .def("_get_summary_key",
+        .def("getSummaryKey",
              [](const summary_observation &self) {
                  return std::string(self.m_ptr->summary_key);
              })
-        .def("_update_std_scale", &summary_observation::update_std_scale)
-        .def("_set_std_scale", &summary_observation::set_std_scale);
+        .def("updateStdScaling", &summary_observation::update_std_scale)
+        .def("set_std_scaling", &summary_observation::set_std_scale);
 }

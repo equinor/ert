@@ -38,30 +38,8 @@ class SummaryObservation(_SummaryObservationImpl):
         assert isinstance(auto_corrf_param, float)
         super().__init__(summary_key, observation_key, value, std)
 
-    def getValue(self):
-        """@rtype: float"""
-        return self._get_value()
-
-    def getStandardDeviation(self):
-        """@rtype: float"""
-        return self._get_std()
-
-    def getStdScaling(self, index=0):
-        """@rtype: float"""
-        return self._get_std_scaling()
-
-    def set_std_scaling(self, scaling_factor):
-        self._set_std_scale(scaling_factor)
-
     def __len__(self):
         return 1
-
-    def getSummaryKey(self):
-        """@rtype: str"""
-        return self._get_summary_key()
-
-    def updateStdScaling(self, factor, active_list):
-        self._update_std_scale(factor, active_list)
 
     def __repr__(self):
         sk = self.getSummaryKey()
