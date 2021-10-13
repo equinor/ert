@@ -6,9 +6,6 @@ from typing import List, Dict, Any
 import ert
 import ert3
 
-# Character used to separate record source "paths".
-_SOURCE_SEPARATOR = "."
-
 
 def _prepare_experiment(
     workspace_root: pathlib.Path,
@@ -32,7 +29,8 @@ def _prepare_experiment(
 # pylint: disable=too-many-arguments
 def _prepare_experiment_record(
     record_name: str,
-    record_source: List[str],
+    record_source_namespace: ert3.config.SourceNS,
+    record_source_location: str,
     record_mime: str,
     record_is_directory: bool,
     ensemble_size: int,
@@ -41,19 +39,18 @@ def _prepare_experiment_record(
     parameters_config: ert3.config.ParametersConfig,
     experiment_config: ert3.config.ExperimentConfig,
 ) -> Dict[int, Dict[str, ert.storage.StorageRecordTransmitter]]:
-    assert len(record_source) == 2
-    if record_source[0] == "storage":
+    if record_source_namespace == ert3.config.SourceNS.storage:
         records_url = ert.storage.get_records_url(workspace_root)
         future = ert.storage.get_record_storage_transmitters(
             records_url=records_url,
             record_name=record_name,
-            record_source=record_source[1],
+            record_source=record_source_location,
             ensemble_size=ensemble_size,
         )
         return asyncio.get_event_loop().run_until_complete(future)
 
-    elif record_source[0] == "resources":
-        file_path = workspace_root / "resources" / record_source[1]
+    elif record_source_namespace == ert3.config.SourceNS.resources:
+        file_path = workspace_root / "resources" / record_source_location
         collection = ert.data.load_collection_from_file(
             file_path,
             record_mime,
@@ -69,10 +66,13 @@ def _prepare_experiment_record(
         transmitters = asyncio.get_event_loop().run_until_complete(future)
         return transmitters
 
-    elif experiment_config.type != "sensitivity" and record_source[0] == "stochastic":
+    elif (
+        experiment_config.type != "sensitivity"
+        and record_source_namespace == ert3.config.SourceNS.stochastic
+    ):
         collection = ert3.engine.sample_record(
             parameters_config,
-            record_source[1],
+            record_source_location,
             ensemble_size=ensemble_size,
         )
         future = ert.storage.transmit_record_collection(
@@ -83,10 +83,13 @@ def _prepare_experiment_record(
         )
         transmitters = asyncio.get_event_loop().run_until_complete(future)
         return transmitters
-    elif experiment_config.type == "sensitivity" and record_source[0] == "stochastic":
+    elif (
+        experiment_config.type == "sensitivity"
+        and record_source_namespace == ert3.config.SourceNS.stochastic
+    ):
         return {}
     else:
-        raise ValueError(f"Unknown record source location {record_source[0]}")
+        raise ValueError(f"Unknown record source {record_source_namespace}")
 
 
 def _load_sensitivity_parameters(
@@ -100,10 +103,8 @@ def _load_sensitivity_parameters(
     sensitivity_parameters = {}
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR)
-        if record_source[0] == "stochastic":
-            assert len(record_source) == 2
-            group_name = record_source[1]
+        if input_record.source_namespace == ert3.config.SourceNS.stochastic:
+            group_name = input_record.source_location
             sensitivity_parameters[record_name] = all_distributions[group_name]
     return sensitivity_parameters
 
@@ -126,12 +127,19 @@ def _prepare_storage_records(
     }
     for input_record in ensemble.input:
         record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        record_mime = step.input[record_name].mime
-        record_is_directory = step.input[record_name].is_directory
+        record_mime = input_record.mime
+
+        # if is_directory was not defined for the source
+        # use the step configuration provided value
+        record_is_directory = (
+            step.input[record_name].is_directory
+            if input_record.is_directory is None
+            else input_record.is_directory
+        )
         transmitters = _prepare_experiment_record(
             record_name,
-            record_source,
+            input_record.source_namespace,
+            input_record.source_location,
             record_mime,
             record_is_directory,
             ensemble_size,
@@ -155,7 +163,7 @@ def _prepare_sensitivity_records(
     sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
         param.record: []
         for param in ensemble.input
-        if param.source.split(_SOURCE_SEPARATOR)[0] == "stochastic"
+        if param.source_namespace == ert3.config.SourceNS.stochastic
     }
 
     for realization in sensitivity_records:

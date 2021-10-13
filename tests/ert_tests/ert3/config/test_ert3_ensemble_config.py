@@ -55,16 +55,79 @@ def test_forward_model_invalid_driver(base_ensemble_config):
 
 
 @pytest.mark.parametrize(
-    "input_config, expected_source, expected_record",
+    ",".join(
+        (
+            "input_config",
+            "expected_source",
+            "expected_record",
+            "expected_namespace",
+            "expected_location",
+            "expected_mime",
+            "expected_is_directory",
+        )
+    ),
     [
-        ({"source": "some.source", "record": "coeffs"}, "some.source", "coeffs"),
+        pytest.param(
+            {"source": "some.source", "record": "coeffs"},
+            "some.source",
+            "coeffs",
+            "",
+            "",
+            "",
+            None,
+            marks=pytest.mark.xfail(),
+        ),
+        (
+            {"source": "stochastic.source", "record": "coeffs"},
+            "stochastic.source",
+            "coeffs",
+            "stochastic",
+            "source",
+            "application/octet-stream",
+            None,
+        ),
+        (
+            {"source": "resources.some.json", "record": "coeffs"},
+            "resources.some.json",
+            "coeffs",
+            "resources",
+            "some.json",
+            "application/json",
+            None,
+        ),
+        (
+            {
+                "source": "storage.my_folder",
+                "record": "my_folder",
+                "is_directory": True,
+            },
+            "storage.my_folder",
+            "my_folder",
+            "storage",
+            "my_folder",
+            "application/octet-stream",
+            True,
+        ),
     ],
 )
-def test_input(input_config, expected_source, expected_record, base_ensemble_config):
+def test_input(
+    input_config,
+    expected_source,
+    expected_record,
+    expected_namespace,
+    expected_location,
+    expected_mime,
+    expected_is_directory,
+    base_ensemble_config,
+):
     base_ensemble_config["input"] = [input_config]
     config = ert3.config.load_ensemble_config(base_ensemble_config)
     assert config.input[0].source == expected_source
     assert config.input[0].record == expected_record
+    assert config.input[0].source_namespace == expected_namespace
+    assert config.input[0].source_location == expected_location
+    assert config.input[0].mime == expected_mime
+    assert config.input[0].is_directory == expected_is_directory
 
 
 @pytest.mark.parametrize(
@@ -72,7 +135,7 @@ def test_input(input_config, expected_source, expected_record, base_ensemble_con
     [
         ({}, "2 validation errors for EnsembleConfig"),
         ({"record": "coeffs"}, "source\n  field required"),
-        ({"source": "some.source"}, "record\n  field required"),
+        ({"source": "storage.source"}, "record\n  field required"),
     ],
 )
 def test_invalid_input(input_config, expected_error, base_ensemble_config):

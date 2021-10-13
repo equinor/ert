@@ -1,15 +1,11 @@
 from importlib.abc import Loader
 import importlib.util
-import mimetypes
 from typing import Callable, Tuple, Type, cast, Union, Dict, Any, Mapping
 from types import MappingProxyType
 from collections import OrderedDict
 from pydantic import BaseModel, FilePath, ValidationError, validator
 import ert
-
-
-DEFAULT_RECORD_MIME_TYPE: str = "application/octet-stream"
-DEFAULT_CMD_MIME_TYPE: str = "application/octet-stream"
+from ._validator import ensure_mime
 
 
 def _import_from(path: str) -> Callable[..., Any]:
@@ -38,26 +34,13 @@ class _StagesConfig(BaseModel):
         arbitrary_types_allowed = True
 
 
-def _ensure_mime(cls: Type[_StagesConfig], field: str, values: Dict[str, Any]) -> str:
-    if field:
-        return field
-    guess = mimetypes.guess_type(str(values.get("location", "")))[0]
-    if guess:
-        if not ert.serialization.has_serializer(guess):
-            return DEFAULT_RECORD_MIME_TYPE
-        return guess
-    elif cls == TransportableCommand:
-        return DEFAULT_CMD_MIME_TYPE
-    return DEFAULT_RECORD_MIME_TYPE
-
-
 class Record(_StagesConfig):
     record: str
     location: str
     mime: str = ""
     is_directory: bool = False
 
-    _ensure_record_mime = validator("mime", allow_reuse=True)(_ensure_mime)
+    _ensure_record_mime = validator("mime", allow_reuse=True)(ensure_mime("location"))
 
 
 class TransportableCommand(_StagesConfig):
@@ -66,7 +49,7 @@ class TransportableCommand(_StagesConfig):
     mime: str = ""
 
     _ensure_transportablecommand_mime = validator("mime", allow_reuse=True)(
-        _ensure_mime
+        ensure_mime("location")
     )
 
 
