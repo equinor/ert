@@ -22,6 +22,81 @@ which can be referenced later in experiments, a distribution (`uniform` or
 `gauss`) and a list of variables that are drawn from the distribution.
 
 #### Stages
+
+`stages.yml` consists of one or multiple `stages`, where each `stage` defines a single forward model.
+
+A `stage` is specified using a combination of the following keys:
+
+---
+
+**name:**
+
+(Required)\
+Name of stage, used to specify which stage to run in the `forward_model` section of ensemble-configuration, which are defined in `ensemble.yml`.\
+TODO: Can the name be whatever, or does it have to be a valid variable name of some kind?
+
+**input:** 
+
+(Required)\
+Specify `record` to fetch from storage and where to store it compute-side. 
+
+  - **record**:
+
+      Name of record that already exists in storage.\
+      TODO: Can the name be whatever?\
+      TODO: Define `record`?\
+      TODO: Do we only look for the `record` in storage?
+
+  - **location**:
+
+      Name of file located compute-side to write content of `record` into.\
+      TODO: Constraints to what type of file?\
+      TODO: Can it be something else than a file, for example location to some storage?
+
+**output:**
+
+(Optional)\
+Specify file located compute-side to write into `record` located in storage.
+
+  - **record:** 
+
+      Name of record that already exists in storage. (?)\
+      TODO: Will the `record` be created if it does not exist?
+
+  - **location:** 
+
+      Name of file located compute-side for which we want to write the content of into `record`.
+
+**transportable_commands:**
+
+(Optional, define either `transportable_commands` and `scripts` or `function`)\
+TODO: Can we define both?
+
+  - **name:**
+
+      Name of executable that can be executed compute-side.
+
+  - **location:**
+
+      Executable\
+      TODO: Can this be an absolute path?
+
+**script:**
+
+(Optional, define either `transportable_commands` and `scripts` or `function`)
+
+How to call executable defined in `transportable_commands`, or other valid Unix-commands.
+
+**function:**
+
+(Optional, define either `transportable_commands` and `scripts` or `function`)
+
+Which function to execute.
+
+Format: `<package>.<module>:<function>`
+
+---
+
 The forward model in ert3 is a stage and is described in
 [stages.yml](stages.yml). Currently the only available stage is a unix step,
 which gets input data as files on disk, runs a script and then is to produce
