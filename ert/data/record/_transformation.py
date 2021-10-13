@@ -4,21 +4,27 @@ import tarfile
 import io
 import stat
 
-from ert.data import RecordTransmitter, BlobRecord
+from ert.data import RecordTransmitter, BlobRecord, path_to_bytes
 
 _BIN_FOLDER = "bin"
 
 
 class RecordTransformation(ABC):
     @abstractmethod
-    async def transform(
+    async def transform_input(
+        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+    ) -> None:
+        raise NotImplementedError("not implemented")
+
+    @abstractmethod
+    async def transform_output(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
         raise NotImplementedError("not implemented")
 
 
 class FileRecordTransformation(RecordTransformation):
-    async def transform(
+    async def transform_input(
         self,
         transmitter: RecordTransmitter,
         mime: str,
@@ -28,9 +34,14 @@ class FileRecordTransformation(RecordTransformation):
         _location = runpath / location
         await transmitter.dump(_location, mime)
 
+    async def transform_output(
+        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+    ) -> None:
+        await transmitter.transmit_file(runpath / location, mime)
+
 
 class TarRecordTransformation(RecordTransformation):
-    async def transform(
+    async def transform_input(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
         record = await transmitter.load()
@@ -40,9 +51,15 @@ class TarRecordTransformation(RecordTransformation):
         else:
             raise TypeError("Record needs to be a BlobRecord type!")
 
+    async def transform_output(
+        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+    ) -> None:
+        blob_record = BlobRecord(data=path_to_bytes(runpath / location))
+        await transmitter.transmit_record(blob_record)
+
 
 class ExecutableRecordTransformation(RecordTransformation):
-    async def transform(
+    async def transform_input(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
         # pre-make bin folder if neccessary
@@ -55,3 +72,8 @@ class ExecutableRecordTransformation(RecordTransformation):
         path = runpath / _BIN_FOLDER / location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
+
+    async def transform_output(
+        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+    ) -> None:
+        await transmitter.transmit_file(runpath / location, mime)

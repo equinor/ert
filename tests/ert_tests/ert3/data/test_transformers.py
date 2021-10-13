@@ -17,14 +17,24 @@ from ert.data import (
 
 
 @contextlib.contextmanager
+def file_factory_context(tmpdir):
+    def file_factory(files: List[str]) -> None:
+        for file in files:
+            dir_path = pathlib.Path(tmpdir) / file
+            dir_path.parent.mkdir(parents=True, exist_ok=True)
+            dir_path.touch()
+
+    yield file_factory
+
+
+@contextlib.contextmanager
 def record_factory_context(tmpdir):
     def record_factory(is_dir: bool):
         if is_dir:
             dir_path = pathlib.Path(tmpdir) / "resources" / "test_dir"
-            dir_path.mkdir(parents=True, exist_ok=True)
             _files = [dir_path / "a.txt", dir_path / "b.txt"]
-            for file in _files:
-                file.touch()
+            with file_factory_context(tmpdir) as file_factory:
+                file_factory(_files)
             return BlobRecord(data=path_to_bytes(dir_path))
         else:
             return BlobRecord(data=b"\xF0\x9F\xA6\x89")
@@ -62,7 +72,7 @@ transformation_params = pytest.mark.parametrize(
 
 @pytest.mark.asyncio
 @transformation_params
-async def test_atomic_transformation(
+async def test_atomic_transformation_input(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
@@ -85,7 +95,40 @@ async def test_atomic_transformation(
         await transmitter.transmit_record(record_in)
         assert transmitter.is_transmitted()
         transformation = transformation_class()
-        await transformation.transform(transmitter, mime, runpath, location)
+        await transformation.transform_input(transmitter, mime, runpath, location)
 
         for file in res_files_dumped:
             assert os.path.isfile(os.path.join(runpath, file))
+
+
+@pytest.mark.asyncio
+@transformation_params
+async def test_atomic_transformation_output(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+    transformation_class: RecordTransformation,
+    location: str,
+    mime: str,
+    is_dir: bool,
+    res_files_dumped: List[str],
+    storage_path,
+    tmp_path,
+):
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory, file_factory_context(
+        tmp_path
+    ) as file_factory, tmp():
+        runpath = tmp_path
+        file_factory(files=res_files_dumped)
+        transmitter = record_transmitter_factory(name="trans_custom")
+        assert transmitter.is_transmitted() is False
+        transformation = transformation_class()
+        if not is_dir:
+            location = res_files_dumped[0]
+        await transformation.transform_output(transmitter, mime, runpath, location)
+        assert transmitter.is_transmitted()
+
+        blob_record = await transmitter.load()
+        assert isinstance(blob_record, BlobRecord)
