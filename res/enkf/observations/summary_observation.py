@@ -14,29 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import BaseCClass
-from res import ResPrototype
+from res._clib import _SummaryObservationImpl
 
 
-class SummaryObservation(BaseCClass):
-    TYPE_NAME = "summary_obs"
-
-    _alloc = ResPrototype(
-        "void*  summary_obs_alloc(char*, char*, double, double, char*, double)",
-        bind=False,
-    )
-    _free = ResPrototype("void   summary_obs_free(summary_obs)")
-    _get_value = ResPrototype("double summary_obs_get_value(summary_obs)")
-    _get_std = ResPrototype("double summary_obs_get_std(summary_obs)")
-    _get_std_scaling = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
-    _get_summary_key = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
-    _update_std_scale = ResPrototype(
-        "void   summary_obs_update_std_scale(summary_obs , double , active_list)"
-    )
-    _set_std_scale = ResPrototype(
-        "void   summary_obs_set_std_scale(summary_obs , double)"
-    )
-
+class SummaryObservation(_SummaryObservationImpl):
     def __init__(
         self,
         summary_key,
@@ -55,15 +36,7 @@ class SummaryObservation(BaseCClass):
             assert isinstance(auto_corrf_name, str)
 
         assert isinstance(auto_corrf_param, float)
-        c_ptr = self._alloc(
-            summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param
-        )
-        if c_ptr:
-            super(SummaryObservation, self).__init__(c_ptr)
-        else:
-            raise ValueError(
-                "Unable to construct SummaryObservation with given configuration!"
-            )
+        super().__init__(summary_key, observation_key, value, std)
 
     def getValue(self):
         """@rtype: float"""
@@ -89,9 +62,6 @@ class SummaryObservation(BaseCClass):
 
     def updateStdScaling(self, factor, active_list):
         self._update_std_scale(factor, active_list)
-
-    def free(self):
-        self._free()
 
     def __repr__(self):
         sk = self.getSummaryKey()

@@ -134,3 +134,8 @@ endfunction()
 
 
 add_subdirectory(lib)
+
+if(SKBUILD)
+  # Compile the Python C Extension
+  add_subdirectory(pybind)
+endif()
