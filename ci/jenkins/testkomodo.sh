@@ -7,8 +7,8 @@ install_libecl () {
     git clone https://github.com/equinor/libecl $LIBECL_ROOT
     mkdir -p $LIBECL_BUILD
     pushd $LIBECL_BUILD
-    cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL
-    make -j 6 install
+    cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    ninja install
     popd
 }
 
@@ -32,14 +32,14 @@ build_libres () {
         # In order to use the .so files from komodo, LD_LIBRARY_PATH must be set
         export LIBRES_LIB=$(find ${KOMODO_PATH}/root/ -name libres.so -exec dirname {} \;)
         export LIBECL_LIB=$(find ${KOMODO_PATH}/root/ -name libecl.so -exec dirname {} \;)
-        export LD_LIBRARY_PATH=${LIBECL_LIB}:${LIBRES_LIB}
+        export LD_LIBRARY_PATH=${LIBECL_LIB}:${LIBRES_LIB}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
     fi
     cmake .. \
           -DCMAKE_PREFIX_PATH=$INSTALL \
           -DCMAKE_INSTALL_PREFIX=$INSTALL \
           -DBUILD_TESTS=ON \
           -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
-    make -j 6
+    ninja
     popd
     # Remove built .so files when it is not a PR build
     if [ -z "$CI_PR_RUN" ]
@@ -112,7 +112,8 @@ start_tests () {
     popd
 
     # build and run libres ctests
-    source_build_tools
+    ci_install_cmake
+    ci_install_conan
     install_libecl
     build_libres
     run_libres_ctest
