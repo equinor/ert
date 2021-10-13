@@ -31,12 +31,16 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
+        
+    - name: Install Conan
+      run: |
+        python3 -m pip install conan
 
     - name: Build libecl
       run: |
         git clone https://github.com/equinor/libecl
         mkdir libecl/build
-        cmake -S libecl -B libecl/build
+        cmake -S libecl -B libecl/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
         sudo cmake --build libecl/build --target install
         sudo rm -rf libecl
 
