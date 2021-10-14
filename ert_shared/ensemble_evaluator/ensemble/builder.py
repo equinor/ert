@@ -54,9 +54,9 @@ def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
 
 
 class _IO:
-    def __init__(
-        self, name, transformation: RecordTransformation = FileRecordTransformation()
-    ):
+    def __init__(self, name, transformation: Optional[RecordTransformation] = None):
+        if transformation is None:
+            transformation = FileRecordTransformation()
         self._transformation: RecordTransformation = transformation
         if not name:
             raise ValueError(f"{self} needs name")
@@ -111,9 +111,9 @@ class _FileIO(_IO):
         name: str,
         path: Path,
         mime: str,
-        transformation: RecordTransformation = FileRecordTransformation(),
+        transformation: Optional[RecordTransformation] = None,
     ) -> None:
-        super().__init__(name, transformation)
+        super().__init__(name, transformation=transformation)
         self._path = path
         self._mime = mime
 
