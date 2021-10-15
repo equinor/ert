@@ -82,46 +82,27 @@ def assert_export(export_data, ensemble_config, stages_config, parameters_config
 
 
 def assert_distribution(
-    ensemble_config, stages_config, parameters_config, distribution, coefficients
+    ensemble_config,
+    stages_config,
+    parameters_config,
+    distribution,
+    coefficients,
+    original_samples,
 ):
-    indices = ("a", "b", "c")
+
+    config = load_experiment_config(ensemble_config, stages_config, parameters_config)
+    params = [p for p in config["parameters"] if p.distribution.type == distribution]
+    assert len(params) == 1, f"Did not find parameters for {distribution}"
+    indices = params[0].variables
 
     for real_coefficient in coefficients.records:
         assert sorted(indices) == sorted(real_coefficient.index)
         for idx in real_coefficient.index:
             assert isinstance(real_coefficient.data[idx], float)
 
-    samples = {idx: [] for idx in indices}
-    for sample in coefficients.records:
-        for key in indices:
-            samples[key].append(sample.data[key])
-
-    config = load_experiment_config(ensemble_config, stages_config, parameters_config)
-    parameter = None
-    for p in config["parameters"]:
-        if p.distribution.type == distribution:
-            parameter = p
-            break
-
-    assert parameter is not None
-
-    input_data = parameter.distribution.input
-
-    for variable in parameter.variables:
-        values = samples[variable]
-
-        if distribution == "gaussian":
-            assert input_data.mean == pytest.approx(sum(values) / len(values), abs=0.1)
-            assert input_data.std == pytest.approx(np.std(values), abs=0.1)
-
-        elif distribution == "uniform":
-            assert input_data.lower_bound == pytest.approx(min(values), abs=0.1)
-            assert input_data.upper_bound == pytest.approx(max(values), abs=0.1)
-            mean = (input_data.lower_bound + input_data.upper_bound) / 2
-            assert mean == pytest.approx(sum(values) / len(values), abs=0.1)
-
-        else:
-            raise ValueError(f"Unknown distribution {distribution}")
+    assert len(coefficients.records) == len(original_samples)
+    for sample, orig in zip(coefficients.records, original_samples):
+        assert sample == orig, f"Sample {sample} differs from original {orig}"
 
 
 def assert_sensitivity_export(

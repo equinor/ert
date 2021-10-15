@@ -12,6 +12,7 @@ from integration_utils import (
 
 import ert
 import ert3
+from unittest.mock import patch
 
 
 @pytest.fixture()
@@ -292,11 +293,24 @@ def test_gaussian_distribution(
     stages_config,
     gaussian_parameters_config,
 ):
-    coefficients = ert3.engine.sample_record(
-        gaussian_parameters_config, "coefficients", 1000
-    )
+    orig_method = ert3.stats.Gaussian.sample
+    returned_samples = []
 
-    assert 1000 == coefficients.ensemble_size
+    def wrapper(self):
+        retval = orig_method(self)
+        returned_samples.append(retval)
+        return retval
+
+    with patch(
+        "ert3.stats.Gaussian.sample", side_effect=wrapper, autospec=True
+    ) as sample_calls:
+        coefficients = ert3.engine.sample_record(
+            gaussian_parameters_config, "coefficients", 1000
+        )
+
+        assert 1000 == coefficients.ensemble_size
+        assert 1000 == len(sample_calls.call_args_list)
+        assert 1000 == len(returned_samples)
 
     assert_distribution(
         big_ensemble,
@@ -304,6 +318,7 @@ def test_gaussian_distribution(
         gaussian_parameters_config,
         "gaussian",
         coefficients,
+        returned_samples,
     )
 
 
@@ -312,13 +327,26 @@ def test_uniform_distribution(
     stages_config,
     uniform_parameters_config,
 ):
-    coefficients = ert3.engine.sample_record(
-        uniform_parameters_config,
-        "uniform_coefficients",
-        1000,
-    )
+    orig_method = ert3.stats.Uniform.sample
+    returned_samples = []
 
-    assert 1000 == coefficients.ensemble_size
+    def wrapper(self):
+        retval = orig_method(self)
+        returned_samples.append(retval)
+        return retval
+
+    with patch(
+        "ert3.stats.Uniform.sample", side_effect=wrapper, autospec=True
+    ) as sample_calls:
+        coefficients = ert3.engine.sample_record(
+            uniform_parameters_config,
+            "uniform_coefficients",
+            1000,
+        )
+
+        assert 1000 == coefficients.ensemble_size
+        assert 1000 == len(sample_calls.call_args_list)
+        assert 1000 == len(returned_samples)
 
     assert_distribution(
         presampled_big_ensemble,
@@ -326,6 +354,7 @@ def test_uniform_distribution(
         uniform_parameters_config,
         "uniform",
         coefficients,
+        returned_samples,
     )
 
 
