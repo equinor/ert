@@ -26,6 +26,7 @@ def create_experiment(ert) -> dict:
 def create_ensemble(
     ert,
     size: int,
+    active_realizations: List[int],
     parameter_names: List[str],
     response_names: List[str],
     update_id: str = None,
@@ -36,6 +37,7 @@ def create_ensemble(
         response_names=response_names,
         update_id=update_id,
         userdata={"name": ert.get_current_case_name()},
+        active_realizations=active_realizations,
     )
 
 
@@ -82,15 +84,13 @@ def _create_response_observation_links(ert) -> Mapping[str, str]:
 def create_response_records(ert, ensemble_name: str, observations: List[dict]):
     data = {
         key.split("@")[0]: ert.gather_gen_data_data(case=ensemble_name, key=key)
-        for key in ert.all_data_type_keys()
-        if ert.is_gen_data_key(key)
+        for key in ert.get_gen_data_keys()
     }
 
     data.update(
         {
             key: ert.gather_summary_data(case=ensemble_name, key=key)
-            for key in ert.all_data_type_keys()
-            if ert.is_summary_key(key)
+            for key in ert.get_summary_keys()
         }
     )
     response_observation_links = _create_response_observation_links(ert)
@@ -365,7 +365,10 @@ def post_ensemble_data(
     ert: "LibresFacade",
     ensemble_size: int,
     update_id: Optional[str] = None,
+    active_realizations: Optional[List[int]] = None,
 ) -> str:
+    if active_realizations is None:
+        active_realizations = []
 
     if update_id is None:
         exp_response = _post_to_server(
@@ -397,6 +400,7 @@ def post_ensemble_data(
             parameter_names=[param["name"] for param in parameters],
             response_names=response_names,
             update_id=update_id,
+            active_realizations=active_realizations,
         ),
     )
 

@@ -12,7 +12,12 @@ from ert_shared.dark_storage.common import (
     get_responses,
 )
 
-from ert_shared.dark_storage.enkf import get_id, get_res, get_size
+from ert_shared.dark_storage.enkf import (
+    get_id,
+    get_res,
+    get_size,
+    get_active_realizations,
+)
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
@@ -26,6 +31,7 @@ if TYPE_CHECKING:
 class _EnsembleMixin:
     id = gr.UUID(required=True)
     size = gr.Int(required=True)
+    active_realizations = gr.List(gr.Int, required=False)
     time_created = gr.DateTime()
     time_updated = gr.DateTime()
     experiment = gr.Field(
@@ -45,6 +51,10 @@ class _EnsembleMixin:
     @staticmethod
     def resolve_size(root: Any, info: "ResolveInfo") -> int:
         return get_size(root)
+
+    @staticmethod
+    def resolve_active_realizations(root: Any, info: "ResolveInfo") -> List[int]:
+        return get_active_realizations(root)
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
@@ -121,6 +131,7 @@ class CreateEnsemble(gr.Mutation, _EnsembleMixin):
     class Arguments:
         parameter_names = gr.List(gr.String)
         size = gr.Int()
+        active_realizations = gr.List(gr.Int)
 
     @staticmethod
     def mutate(
@@ -128,6 +139,7 @@ class CreateEnsemble(gr.Mutation, _EnsembleMixin):
         info: "ResolveInfo",
         parameter_names: List[str],
         size: int,
+        active_realizations: List[int] = [],
         experiment_id: Optional[str] = None,
     ) -> None:
         raise NotImplementedError
