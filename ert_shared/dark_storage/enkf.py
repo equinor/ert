@@ -54,4 +54,9 @@ def get_res(*, _: None = Depends(security)) -> LibresFacade:
 
 def get_size(ensemble_name):
     res = get_res()
-    return len(res.get_active_realizations(ensemble_name))
+    return res.get_ensemble_size()
+
+
+def get_active_realizations(ensemble_name):
+    res = get_res()
+    return res.get_active_realizations(ensemble_name)

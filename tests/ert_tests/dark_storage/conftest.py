@@ -65,7 +65,7 @@ def poly_example_new_storage(monkeypatch, new_storage_client, tmpdir, source_roo
                 "--target-case",
                 "poly_runpath_file",
                 "--realizations",
-                "0,1,2",
+                "1,3,5",
                 "poly.ert",
             ],
         )

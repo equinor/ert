@@ -73,7 +73,12 @@ class BaseRunModel(object):
 
     @property
     def _ensemble_size(self):
-        return self.initial_realizations_mask.count(True)
+        return len(self.initial_realizations_mask)
+
+    @property
+    def _active_realizations(self):
+        realization_mask = self.initial_realizations_mask
+        return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
 
     def reset(self):
         self._failed = False
@@ -330,7 +335,9 @@ class BaseRunModel(object):
         elif (
             not self.ert()
             .analysisConfig()
-            .haveEnoughRealisations(num_successful_realizations, self._ensemble_size)
+            .haveEnoughRealisations(
+                num_successful_realizations, len(self._active_realizations)
+            )
         ):
             raise ErtRunError(
                 "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
@@ -341,7 +348,7 @@ class BaseRunModel(object):
         if (
             not self.ert()
             .analysisConfig()
-            .haveEnoughRealisations(active_realizations, self._ensemble_size)
+            .haveEnoughRealisations(active_realizations, len(self._active_realizations))
         ):
             raise ErtRunError(
                 "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
@@ -401,7 +408,10 @@ class BaseRunModel(object):
     def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
         self.setPhaseName("Uploading data...")
         ensemble_id = post_ensemble_data(
-            ert=ERT.enkf_facade, ensemble_size=self._ensemble_size, update_id=update_id
+            ert=ERT.enkf_facade,
+            ensemble_size=self._ensemble_size,
+            update_id=update_id,
+            active_realizations=self._active_realizations,
         )
         self.setPhaseName("Uploading done")
         return ensemble_id

@@ -31,6 +31,7 @@ class Mutations(gr.ObjectType):
     create_experiment = CreateExperiment.Field()
     create_ensemble = gr.Field(
         CreateEnsemble,
+        active_realizations=gr.List(gr.Int),
         parameter_names=gr.List(gr.String),
         size=gr.Int(),
         experiment_id=gr.ID(required=True),

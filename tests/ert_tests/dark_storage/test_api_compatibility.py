@@ -58,10 +58,12 @@ def test_response_comparison(
 ):
     # Compare ensembles
     new_storage_resp: Response = new_storage_client.post(
-        "/gql", json={"query": "{experiments{ensembles{size, userdata}}}"}
+        "/gql",
+        json={"query": "{experiments{ensembles{size, userdata, activeRealizations}}}"},
     )
     dark_storage_resp: Response = dark_storage_client.post(
-        "/gql", json={"query": "{experiments{ensembles{size, userdata}}}"}
+        "/gql",
+        json={"query": "{experiments{ensembles{size, userdata, activeRealizations}}}"},
     )
     assert new_storage_resp.json() == dark_storage_resp.json()
 
