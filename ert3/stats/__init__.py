@@ -1,8 +1,8 @@
-from ert3.stats._stats import Distribution
-from ert3.stats._stats import Gaussian
-from ert3.stats._stats import Uniform
+from ert3.stats._stats import Constant, Discrete, Distribution, Gaussian, Uniform
 
 __all__ = [
+    "Constant",
+    "Discrete",
     "Distribution",
     "Gaussian",
     "Uniform",

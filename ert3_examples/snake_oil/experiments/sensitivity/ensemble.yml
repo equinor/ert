@@ -1,4 +1,6 @@
 input:
+  - source: stochastic.SEED
+    record: SEED
   -
     source: stochastic.OP1_PERSISTENCE
     record: op1_persistence
@@ -30,10 +32,8 @@ input:
     source: stochastic.BPR_138_PERSISTENCE
     record: bpr_138_persistence
   -
-    # Single files as records must reside in a directory, here "resources"
-    # and cannot contain dots.
-    source: resources.seedtxt
-    record: seedtxt
+    source: resources.seed_tmpl
+    record: seed_tmpl
   -
     source: resources.snake_oil_txt_tmpl
     record: snake_oil_params_txt_tmpl
