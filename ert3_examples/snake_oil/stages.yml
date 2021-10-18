@@ -2,6 +2,9 @@
   name: run_simulator
 
   input:
+    - record: SEED
+      location: seed.json
+
     - record: op1_persistence
       location: op1_persistence.json
     - record: op1_octaves
@@ -24,9 +27,8 @@
       location: bpr_138_persistence.json
 
     -
-      record: seedtxt
-      location: seed.txt
-
+      record: seed_tmpl
+      location: seed_tmpl
     -
       record: snake_oil_params_txt_tmpl
       location: snake_oil_params.txt.tmpl
@@ -46,6 +48,6 @@
       location: snake_oil_simulator.py
 
   script:
-    # Can't sample to integers/constants/discrete, seed.txt is fixed.
+    - render -t seed_tmpl -i seed.json -o seed.txt
     - render -t snake_oil_params.txt.tmpl -i *.json -o snake_oil_params.txt
     - snaky_simulator

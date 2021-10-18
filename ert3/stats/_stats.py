@@ -1,4 +1,5 @@
-from typing import Optional, Callable, cast
+import random
+from typing import Callable, List, Optional, cast
 
 import numpy as np
 import scipy.stats
@@ -7,13 +8,29 @@ import ert
 
 
 class Distribution:
+    """A distribution is an object that can draw stochastic numbers in the
+    form of a NumericalRecord.
+
+    The record is a collection with size, and either a dummy integer index or
+    an explicit index. Either size or index must be provided. When an index
+    is provided, the size is implicit from the length of the index.
+
+    Every number in the sampled NumericalRecord (if size > 1) is independent.￼
+
+    Args:
+        size: Length of the NumericalRecord
+        index: Explicit integer or string index if size is not provided.
+        rvs: Callback to a function that draws the numbers.
+        ppf: Callback to a function that computes the percentile function.
+    """
+
     def __init__(
         self,
         *,
         size: Optional[int],
         index: Optional[ert.data.RecordIndex],
         rvs: Callable[[int], np.ndarray],  # type: ignore
-        ppf: Callable[[np.ndarray], np.ndarray]  # type: ignore
+        ppf: Callable[[np.ndarray], np.ndarray],  # type: ignore
     ) -> None:
         if size is None and index is None:
             raise ValueError("Cannot create distribution with neither size nor index")
@@ -68,7 +85,7 @@ class Gaussian(Distribution):
         std: float,
         *,
         size: Optional[int] = None,
-        index: Optional[ert.data.RecordIndex] = None
+        index: Optional[ert.data.RecordIndex] = None,
     ) -> None:
         self._mean = mean
         self._std = std
@@ -108,7 +125,7 @@ class Uniform(Distribution):
         upper_bound: float,
         *,
         size: Optional[int] = None,
-        index: Optional[ert.data.RecordIndex] = None
+        index: Optional[ert.data.RecordIndex] = None,
     ) -> None:
         self._lower_bound = lower_bound
         self._upper_bound = upper_bound
@@ -144,3 +161,78 @@ class Uniform(Distribution):
     @property
     def type(self) -> str:
         return "uniform"
+
+
+class Discrete(Distribution):
+    """Draw a NumericalRecord of specified size (or with specified index) from
+    a discrete list of values. Each value has equal weight.
+
+    Only float values are supported.
+    """
+
+    def __init__(
+        self,
+        values: List[float],
+        *,
+        size: Optional[int] = None,
+        index: Optional[ert.data.RecordIndex] = None,
+    ) -> None:
+        self._values = values
+        self._sortedvalues = sorted(self._values)
+
+        def rvs(size: int) -> np.ndarray:  # type: ignore
+            return np.array(random.choices(self._values, k=size))
+
+        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+            # pylint: disable=line-too-long
+            # See https://openpress.usask.ca/introtoappliedstatsforpsych/chapter/6-1-discrete-data-percentiles-and-quartiles/ # noqa: E501
+            # and in particular equation 6.2 (keeping in mind zero-indexing in Python)
+            n = len(self._sortedvalues)
+            idxs = np.ceil(x * n).astype(int)
+            retval: np.ndarray = np.array(  # type: ignore
+                [self._sortedvalues[i - 1] if 1 <= i <= n else np.nan for i in idxs]
+            )
+            return retval
+
+        super().__init__(
+            size=size,
+            index=index,
+            rvs=rvs,
+            ppf=ppf,
+        )
+
+    @property
+    def values(self) -> List[float]:
+        return self._values
+
+    @property
+    def type(self) -> str:
+        return "discrete"
+
+
+class Constant(Discrete):
+    """A constant distribution will make a NumericalRecord of specified size or with
+    specified index, but with all elements equal to the specified value"""
+
+    def __init__(
+        self,
+        value: float,
+        *,
+        size: Optional[int] = None,
+        index: Optional[ert.data.RecordIndex] = None,
+    ) -> None:
+        self._value = value
+
+        super().__init__(
+            [value],
+            size=size,
+            index=index,
+        )
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    @property
+    def type(self) -> str:
+        return "constant"

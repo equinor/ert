@@ -11,10 +11,9 @@
   name: wells_no_delay
   type: stochastic
   distribution:
-    type: uniform
+    type: constant
     input:
-      lower_bound: 1
-      upper_bound: 1
+      value: 1
   variables: ["delay"]
 -
   name: wells
