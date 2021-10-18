@@ -121,7 +121,7 @@ def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
     ]
 
 
-def test_gen_obs_runtime(monkeypatch, copy_snake_oil):
+def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
@@ -131,26 +131,9 @@ def test_gen_obs_runtime(monkeypatch, copy_snake_oil):
 
     facade = LibresFacade(ert)
 
-    df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(1, 500)])
-    assert df.data.shape == (27, 1996)
-    df.remove_inactive_observations()
-    assert df.data.shape == (27, 1995)
+    df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(500)])
 
-
-def test_gen_obs_runtime_no_inactive_observations(monkeypatch, copy_snake_oil):
-    obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-    with obs_file.open(mode="a") as fin:
-        fin.write(create_general_observation(force_failure=True))
-
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
-
-    df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(1, 500)])
-    assert df.data.shape == (27, 1996)
-    df.remove_inactive_observations()
-    assert df.data.shape == (27, 1996)
+    snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
 
 
 def test_gen_obs(monkeypatch, facade_snake_oil):
@@ -305,24 +288,10 @@ def create_summary_observation():
     return observations
 
 
-def create_general_observation(force_failure=False):
+def create_general_observation():
     observations = ""
-    index_list = np.array(range(1, 2001))
-
-    sane = False
-    while not sane:
-        random.shuffle(index_list)
-        index_list = [index_list[i : i + 4] for i in range(0, len(index_list), 4)]
-
-        # Must avoid idx 2000 in the first block because the test
-        # using these observations skips that block
-        sane = 2000 not in index_list[0]
-
-    # The caller wants us to generate a set of observations which fails...
-    if force_failure:
-        idx = [idx for idx in range(len(index_list)) if 2000 in index_list[idx]][0]
-        index_list[idx], index_list[0] = index_list[0], index_list[idx]
-
+    index_list = np.array(range(2000))
+    index_list = [index_list[i : i + 4] for i in range(0, len(index_list), 4)]
     for nr, (i1, i2, i3, i4) in enumerate(index_list):
         observations += f"""
     \nGENERAL_OBSERVATION CUSTOM_DIFF_{nr}
