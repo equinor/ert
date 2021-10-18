@@ -7,6 +7,10 @@ import yaml
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
+from ert_logging._log_util_abort import _log_util_abort
+
+from ecl import set_abort_handler
+
 from ert_logging import LOGGING_CONFIG
 from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli, ErtCliError
@@ -434,6 +438,7 @@ def start_ert_server(mode: str):
 def main():
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
         logging.config.dictConfig(yaml.safe_load(conf_file))
+    set_abort_handler(_log_util_abort)
     import locale
 
     locale.setlocale(locale.LC_NUMERIC, "C")
