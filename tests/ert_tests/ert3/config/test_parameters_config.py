@@ -104,7 +104,7 @@ def test_invalid_gauss(input_):
 
 
 @pytest.mark.parametrize(
-    ("lower_bound", "upper_bound"), ((-10.1, -5.3), (-1, 2), (0, 100), (1, 1))
+    ("lower_bound", "upper_bound"), ((-10.1, -5.3), (-1, 2), (0, 100))
 )
 def test_valid_uniform(lower_bound, upper_bound):
     raw_config = [
@@ -179,6 +179,7 @@ def test_valid_uniform_size():
         {"lower_bound": 0},
         {"upper_bound": 0},
         {"lower_bound": 2, "upper_bound": 1, "mean": 0},
+        {"lower_bound": 1, "upper_bound": 1},
     ),
 )
 def test_invalid_uniform(input_):
@@ -188,6 +189,133 @@ def test_invalid_uniform(input_):
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
+                "input": input_,
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+
+    with pytest.raises(ert.exceptions.ConfigValidationError):
+        ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.mark.parametrize(
+    ("values"),
+    (
+        [1],
+        [1, 1],
+        [0, 1, 2, 3, 4],
+        [1, 1.1],
+    ),
+)
+def test_valid_discrete(values):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "discrete",
+                "input": {"values": values},
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "discrete"
+    assert param.distribution.input.values == values
+    assert tuple(param.variables) == ("x", "y", "z")
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.Discrete)
+    assert tuple(param.variables) == tuple(distribution.index)
+    assert param.distribution.input.values == distribution._values
+
+
+@pytest.mark.parametrize(
+    "input_",
+    (
+        {},
+        {"values": []},
+        {"values": [0, "invalid value", 2]},
+    ),
+)
+def test_invalid_discrete(input_):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "discrete",
+                "input": input_,
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+
+    with pytest.raises(ert.exceptions.ConfigValidationError):
+        ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.mark.parametrize(
+    ("value"),
+    (
+        0,
+        1,
+        0.5,
+        100000,
+    ),
+)
+def test_valid_constant(value):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "constant",
+                "input": {
+                    "value": value,
+                },
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "constant"
+    assert param.distribution.input.value == value
+    assert tuple(param.variables) == ("x", "y", "z")
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.Constant)
+    assert tuple(param.variables) == tuple(distribution.index)
+    assert param.distribution.input.value == distribution._value
+
+
+@pytest.mark.parametrize(
+    "input_",
+    (
+        None,
+        "not valid",
+    ),
+)
+def test_invalid_constant(input_):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "constant",
                 "input": input_,
             },
             "variables": ["x", "y", "z"],

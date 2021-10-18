@@ -68,12 +68,29 @@ class _UniformInput(_ParametersConfig):
         if low is None or up is None:
             return values
 
-        if low <= up:
+        if low < up:
             return values
 
         raise ValueError(
             f"Expected lower_bound ({low}) to be smaller than upper_bound ({up})"
         )
+
+
+class _DiscreteInput(_ParametersConfig):
+    values: List[float]
+
+    @root_validator
+    def _ensure_proper_values(cls, values):  # type: ignore
+        value_list = values.get("values")
+
+        if value_list is not None and len(value_list) > 0:
+            return values
+
+        raise ValueError(f"Expected non-empty list of values but got {value_list}")
+
+
+class _ConstantInput(_ParametersConfig):
+    value: float
 
 
 class _GaussianDistribution(_ParametersConfig):
@@ -84,6 +101,16 @@ class _GaussianDistribution(_ParametersConfig):
 class _UniformDistribution(_ParametersConfig):
     type: Literal["uniform"]
     input: _UniformInput
+
+
+class _DiscreteDistribution(_ParametersConfig):
+    type: Literal["discrete"]
+    input: _DiscreteInput
+
+
+class _ConstantDistribution(_ParametersConfig):
+    type: Literal["constant"]
+    input: _ConstantInput
 
 
 class _VariablesConfig(_ParametersConfig):
@@ -120,7 +147,12 @@ def _ensure_valid_size(size: Optional[int]) -> Optional[int]:
 class _ParameterConfig(_ParametersConfig):
     name: str
     type: Literal["stochastic"]
-    distribution: Union[_GaussianDistribution, _UniformDistribution]
+    distribution: Union[
+        _ConstantDistribution,
+        _DiscreteDistribution,
+        _GaussianDistribution,
+        _UniformDistribution,
+    ]
     variables: Optional[_VariablesConfig] = None
     size: Optional[int] = None
 
@@ -170,6 +202,22 @@ class _ParameterConfig(_ParametersConfig):
             return ert3.stats.Uniform(
                 dist_config.input.lower_bound,
                 dist_config.input.upper_bound,
+                index=index,
+                size=size,
+            )
+        elif dist_config.type == "discrete":
+            assert dist_config.input.values is not None
+
+            return ert3.stats.Discrete(
+                dist_config.input.values,
+                index=index,
+                size=size,
+            )
+        elif dist_config.type == "constant":
+            assert dist_config.input.value is not None
+
+            return ert3.stats.Constant(
+                dist_config.input.value,
                 index=index,
                 size=size,
             )

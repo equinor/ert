@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 import scipy
-from unittest.mock import patch, MagicMock
 
 import ert3
 
@@ -187,6 +188,46 @@ def test_uniform_distribution_invalid():
 
 
 @pytest.mark.parametrize(
+    ("size", "values"),
+    (
+        (1000, [42]),
+        (1000, [42, 42]),
+        (1000, [0, 1, 2, 3, 4]),
+        (1000, [0, 0.1]),
+    ),
+)
+def test_discrete_validvalues(size, values):
+    discrete = ert3.stats.Discrete(values, size=size)
+
+    assert discrete.values == values
+
+    for _ in range(100):
+        sample = discrete.sample()
+        assert sample.index == tuple(range(size)), "Indices should be identical"
+        assert np.isin(sample.data, values).all()
+
+
+@pytest.mark.parametrize(
+    ("index", "values"),
+    (
+        (("x", "y", "z"), [42]),
+        (("z", "y", "x"), [42]),
+        ((3, 2, 1), [42]),
+        (("x", "y", "z", "blah"), [0, 1, 2, 3, 4]),
+    ),
+)
+def test_discrete_validvalues_index(index, values):
+    discrete = ert3.stats.Discrete(values, index=index)
+
+    assert discrete.values == values
+
+    for _ in range(100):
+        sample = discrete.sample()
+        assert sample.index == index, "Indices should be identical"
+        assert np.isin([sample.data[key] for key in index], values).all()
+
+
+@pytest.mark.parametrize(
     ("mean", "std", "q", "size", "index"),
     (
         (0, 1, 0.005, 3, None),
@@ -237,3 +278,69 @@ def test_uniform_ppf(lower, upper, q, size, index):
     assert sorted(dist.index) == sorted(ppf_result.index)
     for idx in dist.index:
         assert ppf_result.data[idx] == pytest.approx(expected_value)
+
+
+@pytest.mark.parametrize(
+    ("values", "q", "expected_val"),
+    (
+        ([0], 0.0, np.nan),
+        ([0], 0.1, 0),
+        ([0], 0.2, 0),
+        ([0], 0.5, 0),
+        ([0], 0.9, 0),
+        ([0], 1.0, 0),
+        ([1], 0.9, 1),
+        ([0, 0], 0.1, 0),
+        ([0, 0], 0.9, 0),
+        ([42], 0.999, 42),
+        ([0], 1.1, np.nan),
+        ([0], 0.1, 0),
+        ([42, 420, 4200], 0.0, np.nan),
+        ([42, 420, 4200], 0.2, 42),
+        ([42, 420, 4200], 0.3333333, 42),
+        ([42, 420, 4200], 0.3333334, 420),
+        ([42, 420, 4200], 0.5, 420),
+        ([42, 420, 4200], 0.6666666, 420),
+        ([42, 420, 4200], 0.6666667, 4200),
+        ([42, 42, 4200], 0.6666666, 42),
+        ([42, 42, 4200], 0.6666667, 4200),
+        ([42, 4200, 42], 0.6666666, 42),
+        ([42, 4200, 42], 0.6666667, 4200),
+        ([42, 420, 4200], 0.9, 4200),
+        ([42, 420, 4200], 0.9, 4200),
+        ([4200, 420, 42], 0.9, 4200),
+        ([42, 420, 4200], 1.1, np.nan),
+    ),
+)
+def test_discrete_ppf(values, q, expected_val):
+    # Test distributions with a size argument, yielding implicit indices:
+    for size in (1, 5, 10):
+        dist = ert3.stats.Discrete(values, size=size)
+        assert len(dist.index) == size
+
+        ppf_result = dist.ppf(q)
+        assert ppf_result.index == dist.index
+        assert np.array_equal(ppf_result.data, [expected_val] * size, equal_nan=True)
+
+    # Test distribution with explicit index values:
+    for index in (
+        ("a", "b", "c"),
+        ("b", "a", "c"),
+        ("single_key",),
+        tuple(index_len * "x" for index_len in range(1, 10)),
+    ):
+        dist = ert3.stats.Discrete(values, index=index)
+
+        expected = [expected_val] * len(index)
+        assert len(dist.index) == len(expected)
+
+        ppf_result = dist.ppf(q)
+
+        # Sorting is not guaranteed when the values are indexed:
+        assert sorted(ppf_result.index) == sorted(dist.index)
+
+        for idx, e in zip(dist.index, expected):
+            if np.isnan(e):
+                assert np.isnan(ppf_result.data[idx])
+            else:
+                assert ppf_result.data[idx] == e

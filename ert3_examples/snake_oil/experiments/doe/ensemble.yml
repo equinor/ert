@@ -1,6 +1,8 @@
 size: 10
 
 input:
+  - source: stochastic.SEED
+    record: SEED
   -
     source: storage.OP1_PERSISTENCE
     record: op1_persistence
@@ -32,8 +34,8 @@ input:
     source: storage.BPR_138_PERSISTENCE
     record: bpr_138_persistence
   -
-    source: resources.seedtxt
-    record: seedtxt
+    source: resources.seed_tmpl
+    record: seed_tmpl
   -
     source: resources.snake_oil_txt_tmpl
     record: snake_oil_params_txt_tmpl
