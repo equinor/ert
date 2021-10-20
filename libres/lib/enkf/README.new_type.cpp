@@ -17,8 +17,7 @@
 */
 
 /*
-The two files README.new_type.c and README.new_type_config.c (along
-with the corresponding header files) are meant to serve as a
+This file is meant to serve as a
 documentation and reference on how to add new object types to the enkf
 system.
 
@@ -72,8 +71,7 @@ this is that all members should share configuration information,
 i.e. for instance all the members in a permeability field should have
 the same active/inactive cells, all the relperm instances should use
 the same relperm model e.t.c. This file is about implementing the data
-members, i.e. the small boxes. The implementation of the config
-object, is discussed in README.new_type_config.c.
+members, i.e. the small boxes.
 
 
 1.  alloc_ftype: new_type * new_type_alloc(const new_type_config *);
