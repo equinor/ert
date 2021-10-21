@@ -30,6 +30,7 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/block_fs_driver.hpp>
 
 namespace fs = std::filesystem;
 
@@ -39,6 +40,37 @@ typedef struct {
 } shared_data;
 
 static shared_data *data = NULL;
+
+
+void test_block_fs_driver_create_fs() {
+    ecl::util::TestArea ta("block_fs_driver_create_fs");
+
+    FILE *file_write = fopen("ert_fstab", "w");
+    block_fs_driver_create_fs(file_write, "mnt", DRIVER_PARAMETER, 32, "Ensemble/mod_%d", "PARAMETER");
+    fclose(file_write);
+
+    FILE *file_read = fopen("ert_fstab", "r");
+    int read_driver_type;
+    int read_num_fs;
+    int read_len;
+    char read_mountfile_fmt[100];
+    fread(&read_driver_type, sizeof read_driver_type, 1, file_read);
+    fread(&read_num_fs, sizeof read_num_fs, 1, file_read);
+    fread(&read_len, sizeof read_len, 1, file_read);
+    fread(&read_mountfile_fmt, sizeof(char), 100, file_read);
+    fclose(file_read);
+
+    test_assert_int_equal(read_driver_type, 1);
+    test_assert_int_equal(read_num_fs, 32);
+    test_assert_int_equal(read_len, 29);
+    test_assert_string_equal(read_mountfile_fmt, "Ensemble/mod_%d/PARAMETER.mnt");
+
+    // `num_fs` parameter of `block_fs_driver_create_fs` specifies
+    // how many sub-folders Ensemble/ should have.
+    test_assert_true(fs::exists("mnt/Ensemble/mod_0"));
+    test_assert_true(fs::exists("mnt/Ensemble/mod_31"));
+    test_assert_false(fs::exists("mnt/Ensemble/mod_32"));
+}
 
 void test_mount() {
     ecl::util::TestArea ta("mount");
@@ -149,5 +181,6 @@ int main(int argc, char **argv) {
     test_mount();
     test_refcount();
     test_read_only2();
+    test_block_fs_driver_create_fs();
     exit(0);
 }
