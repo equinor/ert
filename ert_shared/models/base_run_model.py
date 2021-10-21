@@ -1,25 +1,25 @@
+import logging
+import time
+import uuid
+import asyncio
 from typing import Optional
 
+from ecl.util.util import BoolVector
+
+from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.enums.realization_state_enum import RealizationStateEnum
+from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
-from res.enkf.ert_run_context import ErtRunContext
 from ert_shared.feature_toggling import FeatureToggling, feature_enabled
-import logging
-import time
-import uuid
-import asyncio
-
-from ecl.util.util import BoolVector
 from ert_shared import ERT
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -106,7 +106,7 @@ class BaseRunModel(object):
             self._simulationEnded()
             raise
 
-    def runSimulations(self, job_queue, run_context):
+    def runSimulations(self, arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def create_context(self, arguments):
