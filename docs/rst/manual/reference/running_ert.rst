@@ -13,7 +13,7 @@ Graphical User Interface (GUI)
 Command Line Interface (CLI)
 ----------------------------
 
-The following sub commands can be used in order to use Ert's command line interface.
+The following sub commands can be used in order to use ERT's command line interface.
 Note that different sub commands may require different additional arguments.
 
 Test Run
@@ -43,6 +43,15 @@ Ensemble Smoother
    :prog: ert
    :path: ensemble_smoother
 
+Iterative Ensemble Smoother
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. argparse::
+   :module: ert_shared.main
+   :func: get_ert_parser
+   :prog: ert
+   :path: iterative_ensemble_smoother
+    
 ES MDA
 ~~~~~~
 
