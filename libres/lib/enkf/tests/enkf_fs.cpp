@@ -41,12 +41,12 @@ typedef struct {
 
 static shared_data *data = NULL;
 
-
 void test_block_fs_driver_create_fs() {
     ecl::util::TestArea ta("block_fs_driver_create_fs");
 
     FILE *file_write = fopen("ert_fstab", "w");
-    block_fs_driver_create_fs(file_write, "mnt", DRIVER_PARAMETER, 32, "Ensemble/mod_%d", "PARAMETER");
+    block_fs_driver_create_fs(file_write, "mnt", DRIVER_PARAMETER, 32,
+                              "Ensemble/mod_%d", "PARAMETER");
     fclose(file_write);
 
     FILE *file_read = fopen("ert_fstab", "r");
@@ -63,7 +63,8 @@ void test_block_fs_driver_create_fs() {
     test_assert_int_equal(read_driver_type, 1);
     test_assert_int_equal(read_num_fs, 32);
     test_assert_int_equal(read_len, 29);
-    test_assert_string_equal(read_mountfile_fmt, "Ensemble/mod_%d/PARAMETER.mnt");
+    test_assert_string_equal(read_mountfile_fmt,
+                             "Ensemble/mod_%d/PARAMETER.mnt");
 
     // `num_fs` parameter of `block_fs_driver_create_fs` specifies
     // how many sub-folders Ensemble/ should have.
