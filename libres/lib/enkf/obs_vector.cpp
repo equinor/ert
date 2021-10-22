@@ -1082,7 +1082,7 @@ const char *obs_vector_get_obs_key(const obs_vector_type *obs_vector) {
 local_obsdata_node_type *
 obs_vector_alloc_local_node(const obs_vector_type *obs_vector) {
     local_obsdata_node_type *obs_node =
-        local_obsdata_node_alloc(obs_vector->obs_key, false);
+        local_obsdata_node_alloc(obs_vector->obs_key, false, nullptr);
     local_obsdata_node_reset_tstep_list(obs_node, obs_vector->step_list);
     return obs_node;
 }

@@ -5,7 +5,9 @@ from res import ResPrototype
 class LocalObsdataNode(BaseCClass):
     TYPE_NAME = "local_obsdata_node"
 
-    _alloc = ResPrototype("void* local_obsdata_node_alloc(char* , bool)", bind=False)
+    _alloc = ResPrototype(
+        "void* local_obsdata_node_alloc(char* , bool, active_list)", bind=False
+    )
     _free = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
     _get_key = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
     _add_range = ResPrototype(
@@ -27,9 +29,9 @@ class LocalObsdataNode(BaseCClass):
         "active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)"
     )
 
-    def __init__(self, obs_key, all_timestep_active=True):
+    def __init__(self, obs_key, all_timestep_active=True, active_list=None):
         if isinstance(obs_key, str):
-            c_ptr = self._alloc(obs_key, all_timestep_active)
+            c_ptr = self._alloc(obs_key, all_timestep_active, active_list)
             if c_ptr:
                 super(LocalObsdataNode, self).__init__(c_ptr)
             else:

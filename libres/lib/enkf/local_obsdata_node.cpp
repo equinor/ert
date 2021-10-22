@@ -47,12 +47,16 @@ local_obsdata_node_alloc__(const char *obs_key, bool all_timestep_active) {
     return node;
 }
 
-local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key,
-                                                  bool all_timestep_active) {
+local_obsdata_node_type *
+local_obsdata_node_alloc(const char *obs_key, bool all_timestep_active,
+                         const active_list_type *active_list) {
     local_obsdata_node_type *node =
         local_obsdata_node_alloc__(obs_key, all_timestep_active);
 
-    node->active_list = active_list_alloc();
+    if (active_list)
+        node->active_list = active_list_alloc_copy(active_list);
+    else
+        node->active_list = active_list_alloc();
     node->tstep_list = int_vector_alloc(0, 0);
 
     return node;

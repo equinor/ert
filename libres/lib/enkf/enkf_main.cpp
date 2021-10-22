@@ -1611,7 +1611,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             while (!hash_iter_is_complete(obs_iter)) {
                 const char *obs_key = hash_iter_get_next_key(obs_iter);
                 local_obsdata_node_type *obsdata_node =
-                    local_obsdata_node_alloc(obs_key, true);
+                    local_obsdata_node_alloc(obs_key, true, nullptr);
                 local_obsdata_add_node(obsdata, obsdata_node);
             }
             local_ministep_add_obsdata(ministep, obsdata);
