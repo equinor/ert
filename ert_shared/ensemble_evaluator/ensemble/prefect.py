@@ -53,7 +53,7 @@ async def _eq_submit_job(self, script_filename):
 
 
 def _get_executor(custom_port_range, name="local"):
-    _, port, _ = find_available_port(custom_range=custom_port_range)
+    _, port = find_available_port(custom_range=custom_port_range)
     if name == "local":
         cluster_kwargs = {
             "silence_logs": "debug",
@@ -201,16 +201,16 @@ class PrefectEnsemble(_Ensemble):
         ctx = self._get_multiprocessing_context()
         self._eval_proc = ctx.Process(
             target=self._evaluate,
-            args=(ee_id, config.dispatch_uri, config.token, config.cert),
+            args=(config, ee_id),
         )
         self._eval_proc.daemon = True
         self._eval_proc.start()
         self._allow_cancel.set()
 
-    def _evaluate(self, ee_id, dispatch_uri, token, cert):
+    def _evaluate(self, ee_config: EvaluatorServerConfig, ee_id):
         asyncio.set_event_loop(asyncio.get_event_loop())
         try:
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STARTED,
@@ -218,10 +218,12 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            with prefect.context(url=dispatch_uri, token=token, cert=cert):
+            with prefect.context(
+                url=ee_config.dispatch_uri, token=ee_config.token, cert=ee_config.cert
+            ):
                 self.run_flow(ee_id)
 
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STOPPED,
@@ -236,7 +238,7 @@ class PrefectEnsemble(_Ensemble):
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
             )
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(ee_config.dispatch_uri, ee_config.token, ee_config.cert) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_FAILED,

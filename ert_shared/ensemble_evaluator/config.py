@@ -106,31 +106,6 @@ def _generate_certificate(
     return cert_str, key_bytes, pw
 
 
-"""
-This class is responsible for identifying a host:port-combo and then provide
-low-level sockets bound to said combo. The problem is that these sockets may
-be closed by underlying code, while the EvaluatorServerConfig-instance is
-still alive and expected to provide a bound low-level socket. Thus we risk
-that the host:port is hijacked by another process in the meantime.
-
-To prevent this, we keep a handle to the bound socket and every time
-a socket is requested we return a duplicate of this. The duplicate will be
-bound similarly to the handle, but when closed the handle stays open and
-holds the port.
-
-In particular, the websocket-server closes the websocket when exiting a
-context:
-
-   https://github.com/aaugustin/websockets/blob/c439f1d52aafc05064cc11702d1c3014046799b0/src/websockets/legacy/server.py#L890
-
-and digging into the cpython-implementation of asyncio, we see that causes
-the asyncio code to also close the underlying socket:
-
-   https://github.com/python/cpython/blob/b34dd58fee707b8044beaf878962a6fa12b304dc/Lib/asyncio/selector_events.py#L607-L611
-
-"""
-
-
 class EvaluatorServerConfig:
     def __init__(
         self,
@@ -138,7 +113,7 @@ class EvaluatorServerConfig:
         use_token: bool = True,
         generate_cert: bool = True,
     ) -> None:
-        self.host, self.port, self._socket_handle = port_handler.find_available_port(
+        self.host, self.port = port_handler.find_available_port(
             custom_range=custom_port_range
         )
         self.protocol = "wss" if generate_cert else "ws"
@@ -156,8 +131,8 @@ class EvaluatorServerConfig:
 
         self.token = _generate_authentication() if use_token else None
 
-    def get_socket(self) -> socket.socket:
-        return self._socket_handle.dup()
+    def get_socket(self):
+        return port_handler.get_socket(host=self.host, port=self.port)
 
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER
