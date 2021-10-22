@@ -88,41 +88,6 @@ This section contains a list of epics suggested to be carried out to continue
 realizing the development strategy. It is expected that a section is
 turned into an epic issue before it is launched.
 
-Remove the legacy legacy evaluator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-An evaluation proxy was defined for which an implementation using the legacy
-evaluation and an implementation based on prefect exists. However, ert2 only
-consumes the legacy evaluator via the proxy if enabled by a feature flag. We
-should make the proxy implementation production ready before making it the
-default interaction, followed by deleting the possibility to interact with the
-legacy evaluator without utilising the proxy.
-
-Unify the data models of the new storage instances
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Currently three implementations of ert-storage exists. The legacy storage
-currently residing in libres, the version in the ert repository used for the
-webviz instance and the version in the ert-storage repository used for ert3
-testing. A first step to unite these implementations is to merge the
-ert-storage implementations in ert and ert-storage such that the visualisation
-instance and the ert3 implementation is backed by the same storage instance.
-
-Make ERT mono-repo
-~~~~~~~~~~~~~~~~~~
-Due to fast moving modules and natural strangulation proxies that slice across
-repositories it is viewed as beneficial to merge all ERT related repositories
-into a single mono repository. That is, if the responsibility of a repository
-cannot be explained without explaining ERT it should be moved into the mono
-repository. We should start by moving libres and then afterwards plan for
-moving ert-storage.
-
-Single ert module
-~~~~~~~~~~~~~~~~~
-A single ert module with heavy usage of submodules. For the parts where ert2
-and ert3 differs (engine, configuration and part of UI) we either introduce the
-submodules ert.two and ert.three, or ert.engine2 and ert.engine. Either way,
-shared code should be put in the ert3 module(s) such that down the road we can
-remove ert2 entirely without touching ert3.
-
 Logging
 ~~~~~~~
 Currently there are numerous ways of logging in ert and libres. Furthermore,
@@ -146,12 +111,25 @@ With an implementation of the storage API backed on EnKFMain and file storage
 we are again ready to aim for all user facing data (visualisation and export)
 to pass through the storage API.
 
-Introduce blob records
-~~~~~~~~~~~~~~~~~~~~~~
-To pass blob data around in the evaluation in ert3 we need to expose the
-possibility to internalise and pass around blob data. It should culminate in
-the SPE1 example no longer having to depend on `cp` to move the datafile to the
-compute node.
+Move the responsibility of fetching and storing data out of the analysis module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As a first step towards further isolating the analysis pipeline of ERT and
+opening up for the possiblity of a stateless Python API for analysis we are to
+separate the responsibility of data fetching and storing (including the
+knowledge of EnKFMain and storage) and all logic for how analysis is done. In
+addition, we should improve the test base and seek local code improvements.
+
+Delete the deprecated interaction with the queue system
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+After production setting the ensemble evaluator, we should phase out the
+possibility of interacting with the queue system bypassing the legacy
+evaluator.
+
+Run ERT2 forward models using prefect evaluator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Transpile the ERT2 forward model into a single Unix Step that can be executed
+by the prefect evaluator. This should be introduced via a feature flag, that is
+later made default, before the legacy evaluator is removed.
 
 Drop the Qt-plotter
 ~~~~~~~~~~~~~~~~~~~
@@ -163,6 +141,13 @@ Increase visual scalability of the new visualiser
 The product owner has a list of improvements to make the visualiser scale
 better visually for large cases. We should gather these into a milestone of
 issues.
+
+Introduce an experiment concept
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To improve the synergies between ERT2 and ERT3 a shared implementation of an
+experiment should be introduced - with the responsibility of executing a single
+experiment. This implementation should contain the logic of the current run
+models in ERT2 and parts of the engine logic in ERT3.
 
 Configurable compute environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
