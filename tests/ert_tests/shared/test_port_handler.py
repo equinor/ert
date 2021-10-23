@@ -5,8 +5,8 @@ import pytest
 from ert_shared import port_handler
 
 
-def test_find_available_port():
-    custom_range = range(50000, 50001)
+def test_find_available_port(unused_tcp_port):
+    custom_range = range(unused_tcp_port, unused_tcp_port + 1)
     host, port = port_handler.find_available_port(custom_range=custom_range)
     sock = port_handler.get_socket(host, port)
     assert host is not None
@@ -26,8 +26,8 @@ def test_find_available_port_forced(unused_tcp_port):
     assert sock.fileno() != -1
 
 
-def test_no_more_ports_in_range():
-    custom_range = range(50000, 50001)
+def test_no_more_ports_in_range(unused_tcp_port):
+    custom_range = range(unused_tcp_port, unused_tcp_port + 1)
     host, port = port_handler.find_available_port(custom_range=custom_range)
     sock = port_handler.get_socket(host, port)
     assert sock is not None
