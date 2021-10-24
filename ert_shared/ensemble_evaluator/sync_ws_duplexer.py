@@ -98,19 +98,24 @@ class SyncWebsocketDuplexer:
 
     def stop(self) -> None:
         """Stop the duplexer. Most likely idempotent."""
-        if self._loop.is_running():
-            if self._ws:
-                asyncio.run_coroutine_threadsafe(
-                    self._ws.close(), loop=self._loop
-                ).result()
-            try:
-                self._loop.call_soon_threadsafe(self._connection.cancel)
-                asyncio.run_coroutine_threadsafe(
-                    asyncio.wait_for(self._connection, None, loop=self._loop),
-                    loop=self._loop,
-                ).result()
-            except (OSError, asyncio.CancelledError, CancelledError):
-                # The OSError will have been raised in send/receive already.
-                pass
-        self._loop.call_soon_threadsafe(self._loop.stop)
-        self._loop_thread.join()
+        try:
+            if self._loop.is_running():
+                if self._ws:
+                    asyncio.run_coroutine_threadsafe(
+                        self._ws.close(), loop=self._loop
+                    ).result()
+                try:
+                    self._loop.call_soon_threadsafe(self._connection.cancel)
+                    asyncio.run_coroutine_threadsafe(
+                        asyncio.wait_for(self._connection, None, loop=self._loop),
+                        loop=self._loop,
+                    ).result()
+                except (OSError, asyncio.CancelledError, CancelledError):
+                    # The OSError will have been raised in send/receive already.
+                    pass
+        except Exception as ex:
+            pass
+            # print("--->  BOOM <---", self, ex)
+        finally:
+            self._loop.call_soon_threadsafe(self._loop.stop)
+            self._loop_thread.join()
