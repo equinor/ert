@@ -3,6 +3,8 @@ import os
 import sys
 import threading
 import json
+import time
+
 from select import select, PIPE_BUF
 from subprocess import Popen, TimeoutExpired
 from pathlib import Path
@@ -135,8 +137,16 @@ class _Proc(threading.Thread):
     def _assert_server_not_running(self) -> None:
         """It doesn't seem to be possible to check whether a server has been started
         other than looking for files that were created during the startup process.
-
+        Due to possible race-condition we do a retry if file is present to make sure
+        we have waited long enough before sys.exit
         """
+        for i in range(3):
+            if (Path.cwd() / f"{self._service_name}_server.json").exists():
+                print(
+                    f"{self._service_name}_server.json is present on this location. Retry {i}"
+                )
+                time.sleep(1)
+
         if (Path.cwd() / f"{self._service_name}_server.json").exists():
             print(
                 f"A file called {self._service_name}_server.json is present from this location. "
