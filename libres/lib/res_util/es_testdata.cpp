@@ -15,6 +15,9 @@
   for more details.
 */
 
+#include <iostream>
+#include <fstream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <array>
@@ -250,25 +253,15 @@ void es_testdata::save(const std::string &path) const {
 */
 
 matrix_type *es_testdata::alloc_state(const std::string &name) const {
-    std::vector<double> data;
-    {
-        pushd tmp_path(this->path);
-        FILE *stream = fopen(name.c_str(), "r");
-        if (!stream)
-            throw std::invalid_argument("No such state matrix: " + this->path +
-                                        "/" + name);
 
-        while (true) {
-            double value;
-            int read_count = fscanf(stream, "%lg", &value);
-            if (read_count == 1)
-                data.push_back(value);
-            else
-                break;
-        }
+    pushd tmp_path(this->path);
 
-        fclose(stream);
-    }
+    std::ifstream stream(name);
+    if (!stream)
+        throw std::invalid_argument("No such state matrix: " + this->path +
+                                    "/" + name);
+    std::istream_iterator<double> start(stream), end;
+    std::vector<double> data(start, end);
 
     if ((data.size() % this->active_ens_size) != 0)
         throw std::invalid_argument(
