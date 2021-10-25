@@ -17,6 +17,7 @@
 */
 
 #include <filesystem>
+#include <memory>
 
 #include <sys/types.h>
 #include <string.h>
@@ -39,26 +40,6 @@
 namespace fs = std::filesystem;
 
 /*
-
-  About storage in the EnKF system
-  ================================
-
-  The system for storage in the EnKF system is quite complicated, maybe too
-  complicated. The reason the system is so complex is (at least) twofold:
-
-    1. It is a goal that it should be relatively easy to write new
-       systems (i.e. drivers) for storage. The current suite of
-       drivers (plain_driver_xx) are based on normal (compressed)
-       fread() and fwrite() system calls. But with the current
-       implementation one could write e.g. a MySQL based driver for
-       storage without touching(??) the rest of the EnKF code.
-
-    2. The parameters / static restart data / dynamic restart data
-       have very different storage characteristics. By splitting the
-       storage up in different drivers we can write drivers which are
-       specialized for the different types of data.
-
-
   The interface
   -------------
 
@@ -103,39 +84,6 @@ namespace fs = std::filesystem;
   following:
 
 
-  dynamic driver
-  --------------
-  This is the simplest driver, all data is stored both in a forecast version and
-  an analyzed version.
-
-
-  parameter driver
-  ----------------
-  This driver utilizes that parameters do not change during the forward model,
-  i.e. (analyzed , t) = (forecast , t - 1). So, only one version of the data is
-  actually stored; if you ask for the forecast you just get the data from the
-  previous report_step.
-  To support spin-ups and such the driver will actually go backwards in
-  report_time all the way until a node is found on disk.
-
-
-  static driver
-  -------------
-  Like the parameter driver this also only stores one version of the data,
-  however in addition it has to query the node for an ID to support multiple
-  occurring keywords in ECLIPSE restart files.
-
-  Currently only the plain_driver_xxx family has been implemented. Observe that
-  there is no dependencies between the drivers, it is perfectly possible to
-  implement a new driver for storage of static data only. (There is probably a
-  large amount of static data which is common both between members and for
-  several consecutive report steps; utilizing that one could write a static
-  driver which was admittedly slower, but leaner on the storage.)
-
-  The drivers are allocated prior to allocating the enkf_fs instance, and
-  pointers are passed in when allocating the enkf_fs instance.
-
-
   Mounting the filesystem
   -----------------------
 
@@ -167,7 +115,7 @@ namespace fs = std::filesystem;
      int               int          void *
 
   The driver category should be one of the four integer values in
-  fs_driver_type (fs_types.h) and DRIVER_ID is one of the integer
+  ert::block_fs_driver (fs_types.hpp) and DRIVER_ID is one of the integer
   values in fs_driver_impl. The last void * data is whatever
   (serialized) info the driver needs to bootstrap. This info is
   written by the drivers xxxx_fwrite_mount_info() function, and it is
@@ -181,12 +129,6 @@ namespace fs = std::filesystem;
   If the enkf_mount_info file is deleted that can cause problems.
   It is currently 'protected' with chomd a-w - but that is of course not
   foolprof.
-*/
-
-/*
-   Observe the following convention: the initial ensemble at report
-   step 0 is supposed to be analyzed. If we ask for the forecast at
-   report_step 0, we should get the analyzed value.
 */
 
 #define ENKF_FS_TYPE_ID 1089763
@@ -207,9 +149,9 @@ struct enkf_fs_struct {
     char *lock_file;
     int lock_fd;
 
-    fs_driver_type *dynamic_forecast;
-    fs_driver_type *parameter;
-    fs_driver_type *index;
+    std::unique_ptr<ert::block_fs_driver> dynamic_forecast;
+    std::unique_ptr<ert::block_fs_driver> parameter;
+    std::unique_ptr<ert::block_fs_driver> index;
 
     bool read_only; /* Whether this filesystem has been mounted read-only. */
     time_map_type *time_map;
@@ -271,16 +213,13 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
 }
 
 static enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
-    enkf_fs_type *fs = (enkf_fs_type *)util_malloc(sizeof *fs);
+    enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
     fs->cases_config = cases_config_alloc();
     fs->state_map = state_map_alloc();
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
-    fs->index = NULL;
-    fs->parameter = NULL;
-    fs->dynamic_forecast = NULL;
     fs->read_only = true;
     fs->mount_point = util_alloc_string_copy(mount_point);
     fs->refcount = 0;
@@ -375,17 +314,18 @@ static void enkf_fs_create_block_fs(FILE *stream, int num_drivers,
                               "INDEX");
 }
 
-static void enkf_fs_assign_driver(enkf_fs_type *fs, fs_driver_type *driver,
+static void enkf_fs_assign_driver(enkf_fs_type *fs,
+                                  ert::block_fs_driver *driver,
                                   fs_driver_enum driver_type) {
     switch (driver_type) {
     case (DRIVER_PARAMETER):
-        fs->parameter = driver;
+        fs->parameter.reset(driver);
         break;
     case (DRIVER_DYNAMIC_FORECAST):
-        fs->dynamic_forecast = driver;
+        fs->dynamic_forecast.reset(driver);
         break;
     case (DRIVER_INDEX):
-        fs->index = driver;
+        fs->index.reset(driver);
         break;
     case (DRIVER_STATIC):
         util_abort("%s: internal error - should not assign a STATIC driver \n",
@@ -408,10 +348,13 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
             fs_driver_enum driver_type;
             if (fread(&driver_type, sizeof driver_type, 1, fstab_stream) == 1) {
                 if (fs_types_valid(driver_type)) {
-                    fs_driver_type *driver =
-                        (fs_driver_type *)block_fs_driver_open(
-                            fstab_stream, mount_point, driver_type,
-                            fs->read_only);
+                    // Enable preloading for dynamic blockfs-es only
+                    bool preload = false;
+                    if (driver_type == DRIVER_DYNAMIC_FORECAST)
+                        preload = false;
+
+                    ert::block_fs_driver *driver = ert::block_fs_driver::open(
+                        fstab_stream, mount_point, preload, fs->read_only);
                     enkf_fs_assign_driver(fs, driver, driver_type);
                 } else
                     block_fs_driver_fskip(fstab_stream);
@@ -610,10 +553,6 @@ bool enkf_fs_exists(const char *mount_point) {
     return exists;
 }
 
-static void enkf_fs_free_driver(fs_driver_type *driver) {
-    driver->free_driver(driver);
-}
-
 static void enkf_fs_umount(enkf_fs_type *fs) {
     if (!fs->read_only) {
         enkf_fs_fsync(fs);
@@ -627,10 +566,6 @@ static void enkf_fs_umount(enkf_fs_type *fs) {
                    __func__, refcount);
 
     res_log_fdebug("%s umount filesystem %s", __func__, fs->mount_point);
-
-    enkf_fs_free_driver(fs->dynamic_forecast);
-    enkf_fs_free_driver(fs->parameter);
-    enkf_fs_free_driver(fs->index);
 
     if (fs->lock_fd > 0) {
         close(
@@ -652,39 +587,31 @@ static void enkf_fs_umount(enkf_fs_type *fs) {
     time_map_free(fs->time_map);
     cases_config_free(fs->cases_config);
     misfit_ensemble_free(fs->misfit_ensemble);
-    free(fs);
+    delete fs;
 }
 
-static void *enkf_fs_select_driver(enkf_fs_type *fs, enkf_var_type var_type,
-                                   const char *key) {
-    void *driver = NULL;
+static ert::block_fs_driver *enkf_fs_select_driver(enkf_fs_type *fs,
+                                                   enkf_var_type var_type,
+                                                   const char *key) {
     switch (var_type) {
     case (DYNAMIC_RESULT):
-        driver = fs->dynamic_forecast;
-        break;
+        return fs->dynamic_forecast.get();
     case (EXT_PARAMETER):
-        driver = fs->parameter;
-        break;
+        return fs->parameter.get();
     case (PARAMETER):
-        driver = fs->parameter;
-        break;
+        return fs->parameter.get();
     default:
         util_abort("%s: fatal internal error - could not determine enkf_fs "
                    "driver for object:%s[integer type:%d] - aborting.\n",
                    __func__, key, var_type);
     }
-    return driver;
-}
-
-static void enkf_fs_fsync_driver(fs_driver_type *driver) {
-    if (driver->fsync_driver != NULL)
-        driver->fsync_driver(driver);
+    std::abort();
 }
 
 void enkf_fs_fsync(enkf_fs_type *fs) {
-    enkf_fs_fsync_driver(fs->parameter);
-    enkf_fs_fsync_driver(fs->dynamic_forecast);
-    enkf_fs_fsync_driver(fs->index);
+    fs->parameter->fsync();
+    fs->dynamic_forecast->fsync();
+    fs->index->fsync();
 
     enkf_fs_fsync_time_map(fs);
     enkf_fs_fsync_cases_config(fs);
@@ -696,39 +623,41 @@ void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
                         const char *node_key, enkf_var_type var_type,
                         int report_step, int iens) {
 
-    fs_driver_type *driver =
-        (fs_driver_type *)enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    ert::block_fs_driver *driver =
+        (ert::block_fs_driver *)enkf_fs_select_driver(enkf_fs, var_type,
+                                                      node_key);
     if (var_type == PARAMETER)
         /* Parameters are *ONLY* stored at report_step == 0 */
         report_step = 0;
 
     buffer_rewind(buffer);
-    driver->load_node(driver, node_key, report_step, iens, buffer);
+    driver->load_node(node_key, report_step, iens, buffer);
 }
 
 void enkf_fs_fread_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
                           const char *node_key, enkf_var_type var_type,
                           int iens) {
 
-    fs_driver_type *driver =
-        (fs_driver_type *)enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    ert::block_fs_driver *driver =
+        (ert::block_fs_driver *)enkf_fs_select_driver(enkf_fs, var_type,
+                                                      node_key);
 
     buffer_rewind(buffer);
-    driver->load_vector(driver, node_key, iens, buffer);
+    driver->load_vector(node_key, iens, buffer);
 }
 
 bool enkf_fs_has_node(enkf_fs_type *enkf_fs, const char *node_key,
                       enkf_var_type var_type, int report_step, int iens) {
-    fs_driver_type *driver =
-        fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs, var_type, node_key));
-    return driver->has_node(driver, node_key, report_step, iens);
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    return driver->has_node(node_key, report_step, iens);
 }
 
 bool enkf_fs_has_vector(enkf_fs_type *enkf_fs, const char *node_key,
                         enkf_var_type var_type, int iens) {
-    fs_driver_type *driver =
-        fs_driver_safe_cast(enkf_fs_select_driver(enkf_fs, var_type, node_key));
-    return driver->has_vector(driver, node_key, iens);
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    return driver->has_vector(node_key, iens);
 }
 
 void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -743,13 +672,9 @@ void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
         util_abort(
             "%s: Parameters can only be saved for report_step = 0   %s:%d\n",
             __func__, node_key, report_step);
-    {
-        void *_driver = enkf_fs_select_driver(enkf_fs, var_type, node_key);
-        {
-            fs_driver_type *driver = fs_driver_safe_cast(_driver);
-            driver->save_node(driver, node_key, report_step, iens, buffer);
-        }
-    }
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    driver->save_node(node_key, report_step, iens, buffer);
 }
 
 void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
@@ -759,13 +684,9 @@ void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
         util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
                    "- aborting. \n",
                    __func__, enkf_fs->mount_point);
-    {
-        void *_driver = enkf_fs_select_driver(enkf_fs, var_type, node_key);
-        {
-            fs_driver_type *driver = fs_driver_safe_cast(_driver);
-            driver->save_vector(driver, node_key, iens, buffer);
-        }
-    }
+    ert::block_fs_driver *driver =
+        enkf_fs_select_driver(enkf_fs, var_type, node_key);
+    driver->save_vector(node_key, iens, buffer);
 }
 
 const char *enkf_fs_get_mount_point(const enkf_fs_type *fs) {

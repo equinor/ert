@@ -31,7 +31,6 @@ namespace fs = std::filesystem;
 #include <ert/res_util/thread_pool.hpp>
 
 #include <ert/enkf/fs_types.hpp>
-#include <ert/enkf/fs_driver.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
 
 typedef struct bfs_struct bfs_type;
@@ -58,26 +57,7 @@ struct bfs_struct {
     const bfs_config_type *config;
 };
 
-struct block_fs_driver_struct {
-    FS_DRIVER_FIELDS;
-    int __id;
-    int num_fs;
-    bfs_config_type *config;
-
-    // New variables
-    bfs_type **fs_list;
-};
-
-bfs_config_type *bfs_config_alloc(fs_driver_enum driver_type, bool read_only,
-                                  bool bfs_lock) {
-    const int PARAMETER_blocksize = 64;
-    const int DYNAMIC_blocksize = 64;
-    const int DEFAULT_blocksize = 64;
-
-    const bool PARAMETER_preload = false;
-    const bool DYNAMIC_preload = true;
-    const bool DEFAULT_preload = false;
-
+bfs_config_type *bfs_config_alloc(bool preload, bool read_only, bool bfs_lock) {
     const int max_cache_size = 512;
     const int fsync_interval =
         10; /* An fsync() call is issued for every 10'th write. */
@@ -91,20 +71,8 @@ bfs_config_type *bfs_config_alloc(fs_driver_enum driver_type, bool read_only,
         config->fragmentation_limit = fragmentation_limit;
         config->read_only = read_only;
         config->bfs_lock = bfs_lock;
-
-        switch (driver_type) {
-        case (DRIVER_PARAMETER):
-            config->block_size = PARAMETER_blocksize;
-            config->preload = PARAMETER_preload;
-            break;
-        case (DRIVER_DYNAMIC_FORECAST):
-            config->block_size = DYNAMIC_blocksize;
-            config->preload = DYNAMIC_preload;
-            break;
-        default:
-            config->block_size = DEFAULT_blocksize;
-            config->preload = DEFAULT_preload;
-        }
+        config->preload = preload;
+        config->block_size = 64;
         return config;
     }
 }
@@ -162,27 +130,13 @@ static void *bfs_mount__(void *arg) {
 
 static void bfs_fsync(bfs_type *bfs) { block_fs_fsync(bfs->block_fs); }
 
-static void block_fs_driver_assert_cast(block_fs_driver_type *block_fs_driver) {
-    if (block_fs_driver->__id != BLOCK_FS_DRIVER_ID)
-        util_abort("%s: internal error - cast failed - aborting \n", __func__);
-}
-
-static block_fs_driver_type *block_fs_driver_safe_cast(void *__driver) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)__driver;
-    block_fs_driver_assert_cast(driver);
-    return driver;
-}
-
-static char *block_fs_driver_alloc_node_key(const block_fs_driver_type *driver,
-                                            const char *node_key,
+static char *block_fs_driver_alloc_node_key(const char *node_key,
                                             int report_step, int iens) {
     char *key = util_alloc_sprintf("%s.%d.%d", node_key, report_step, iens);
     return key;
 }
 
-static char *
-block_fs_driver_alloc_vector_key(const block_fs_driver_type *driver,
-                                 const char *node_key, int iens) {
+static char *block_fs_driver_alloc_vector_key(const char *node_key, int iens) {
     char *key = util_alloc_sprintf("%s.%d", node_key, iens);
     return key;
 }
@@ -228,151 +182,92 @@ bool block_fs_sscanf_key(const char *key, char **config_key, int *__report_step,
         return false;
 }
 
-static bfs_type *block_fs_driver_get_fs(block_fs_driver_type *driver,
-                                        int iens) {
-    int phase = (iens % driver->num_fs);
-
-    return driver->fs_list[phase];
+bfs_type *ert::block_fs_driver::get_fs(int iens) {
+    int phase = (iens % this->num_fs);
+    return this->fs_list[phase];
 }
 
-static void block_fs_driver_load_node(void *_driver, const char *node_key,
-                                      int report_step, int iens,
-                                      buffer_type *buffer) {
-    block_fs_driver_type *driver = block_fs_driver_safe_cast(_driver);
-    {
-        char *key =
-            block_fs_driver_alloc_node_key(driver, node_key, report_step, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
+void ert::block_fs_driver::load_node(const char *node_key, int report_step,
+                                     int iens, buffer_type *buffer) {
+    char *key = block_fs_driver_alloc_node_key(node_key, report_step, iens);
+    bfs_type *bfs = this->get_fs(iens);
 
-        block_fs_fread_realloc_buffer(bfs->block_fs, key, buffer);
+    block_fs_fread_realloc_buffer(bfs->block_fs, key, buffer);
 
-        free(key);
-    }
+    free(key);
 }
 
-static void block_fs_driver_load_vector(void *_driver, const char *node_key,
-                                        int iens, buffer_type *buffer) {
-    block_fs_driver_type *driver = block_fs_driver_safe_cast(_driver);
-    {
-        char *key = block_fs_driver_alloc_vector_key(driver, node_key, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
+void ert::block_fs_driver::load_vector(const char *node_key, int iens,
+                                       buffer_type *buffer) {
+    char *key = block_fs_driver_alloc_vector_key(node_key, iens);
+    bfs_type *bfs = this->get_fs(iens);
 
-        block_fs_fread_realloc_buffer(bfs->block_fs, key, buffer);
-        free(key);
-    }
+    block_fs_fread_realloc_buffer(bfs->block_fs, key, buffer);
+    free(key);
 }
 
-static void block_fs_driver_save_node(void *_driver, const char *node_key,
-                                      int report_step, int iens,
-                                      buffer_type *buffer) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key =
-            block_fs_driver_alloc_node_key(driver, node_key, report_step, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
-        free(key);
-    }
+void ert::block_fs_driver::save_node(const char *node_key, int report_step,
+                                     int iens, buffer_type *buffer) {
+    char *key = block_fs_driver_alloc_node_key(node_key, report_step, iens);
+    bfs_type *bfs = this->get_fs(iens);
+    block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
+    free(key);
 }
 
-static void block_fs_driver_save_vector(void *_driver, const char *node_key,
-                                        int iens, buffer_type *buffer) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key = block_fs_driver_alloc_vector_key(driver, node_key, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
-        free(key);
-    }
+void ert::block_fs_driver::save_vector(const char *node_key, int iens,
+                                       buffer_type *buffer) {
+    char *key = block_fs_driver_alloc_vector_key(node_key, iens);
+    bfs_type *bfs = this->get_fs(iens);
+    block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
+    free(key);
 }
 
-bool block_fs_driver_has_node(void *_driver, const char *node_key,
-                              int report_step, int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key =
-            block_fs_driver_alloc_node_key(driver, node_key, report_step, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        bool has_node = block_fs_has_file(bfs->block_fs, key);
-        free(key);
-        return has_node;
-    }
+bool ert::block_fs_driver::has_node(const char *node_key, int report_step,
+                                    int iens) {
+    char *key = block_fs_driver_alloc_node_key(node_key, report_step, iens);
+    bfs_type *bfs = this->get_fs(iens);
+    bool has_node = block_fs_has_file(bfs->block_fs, key);
+    free(key);
+    return has_node;
 }
 
-bool block_fs_driver_has_vector(void *_driver, const char *node_key, int iens) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-    {
-        char *key = block_fs_driver_alloc_vector_key(driver, node_key, iens);
-        bfs_type *bfs = block_fs_driver_get_fs(driver, iens);
-        bool has_node = block_fs_has_file(bfs->block_fs, key);
-        free(key);
-        return has_node;
-    }
+bool ert::block_fs_driver::has_vector(const char *node_key, int iens) {
+    char *key = block_fs_driver_alloc_vector_key(node_key, iens);
+    bfs_type *bfs = this->get_fs(iens);
+    bool has_node = block_fs_has_file(bfs->block_fs, key);
+    free(key);
+    return has_node;
 }
 
-void block_fs_driver_free(void *_driver) {
-    block_fs_driver_type *driver = block_fs_driver_safe_cast(_driver);
-    {
-        int driver_nr;
-        thread_pool_type *tp = thread_pool_alloc(4, true);
-        for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++)
-            thread_pool_add_job(tp, bfs_close__, driver->fs_list[driver_nr]);
+ert::block_fs_driver::~block_fs_driver() {
+    int driver_nr;
+    thread_pool_type *tp = thread_pool_alloc(4, true);
+    for (driver_nr = 0; driver_nr < this->num_fs; driver_nr++)
+        thread_pool_add_job(tp, bfs_close__, this->fs_list[driver_nr]);
 
-        thread_pool_join(tp);
-        thread_pool_free(tp);
-    }
-    bfs_config_free(driver->config);
-    free(driver->fs_list);
-    free(driver);
+    thread_pool_join(tp);
+    thread_pool_free(tp);
+
+    bfs_config_free(this->config);
+    free(this->fs_list);
 }
 
-static void block_fs_driver_fsync(void *_driver) {
-    block_fs_driver_type *driver = (block_fs_driver_type *)_driver;
-    block_fs_driver_assert_cast(driver);
-
-    {
-        int driver_nr;
-        block_fs_driver_type *driver = block_fs_driver_safe_cast(_driver);
-        for (driver_nr = 0; driver_nr < driver->num_fs; driver_nr++)
-            bfs_fsync(driver->fs_list[driver_nr]);
-    }
+void ert::block_fs_driver::fsync() {
+    int driver_nr;
+    for (driver_nr = 0; driver_nr < this->num_fs; driver_nr++)
+        bfs_fsync(this->fs_list[driver_nr]);
 }
 
-static block_fs_driver_type *block_fs_driver_alloc(int num_fs) {
-    block_fs_driver_type *driver =
-        (block_fs_driver_type *)util_malloc(sizeof *driver);
-    {
-        fs_driver_type *fs_driver = (fs_driver_type *)driver;
-        fs_driver_init(fs_driver);
-    }
-    driver->load_node = block_fs_driver_load_node;
-    driver->save_node = block_fs_driver_save_node;
-    driver->has_node = block_fs_driver_has_node;
-
-    driver->load_vector = block_fs_driver_load_vector;
-    driver->save_vector = block_fs_driver_save_vector;
-    driver->has_vector = block_fs_driver_has_vector;
-
-    driver->free_driver = block_fs_driver_free;
-    driver->fsync_driver = block_fs_driver_fsync;
-    driver->__id = BLOCK_FS_DRIVER_ID;
-    driver->num_fs = num_fs;
-
-    driver->fs_list =
-        (bfs_type **)util_calloc(driver->num_fs, sizeof *driver->fs_list);
-    return driver;
+ert::block_fs_driver::block_fs_driver(int num_fs) : num_fs(num_fs) {
+    this->fs_list = (bfs_type **)util_calloc(this->num_fs, sizeof(bfs_type *));
 }
 
-static void *block_fs_driver_alloc_new(fs_driver_enum driver_type,
-                                       bool read_only, int num_fs,
-                                       const char *mountfile_fmt,
-                                       bool block_level_lock) {
-    block_fs_driver_type *driver = block_fs_driver_alloc(num_fs);
-    driver->config = bfs_config_alloc(driver_type, read_only, block_level_lock);
+ert::block_fs_driver *ert::block_fs_driver::new_(bool preload, bool read_only,
+                                                 int num_fs,
+                                                 const char *mountfile_fmt,
+                                                 bool block_level_lock) {
+    ert::block_fs_driver *driver = new ert::block_fs_driver(num_fs);
+    driver->config = bfs_config_alloc(preload, read_only, block_level_lock);
     {
         for (int ifs = 0; ifs < driver->num_fs; ifs++)
             driver->fs_list[ifs] = bfs_alloc_new(
@@ -381,11 +276,11 @@ static void *block_fs_driver_alloc_new(fs_driver_enum driver_type,
     return driver;
 }
 
-static void block_fs_driver_mount(block_fs_driver_type *driver) {
+void ert::block_fs_driver::mount() {
     thread_pool_type *tp = thread_pool_alloc(4, true);
 
-    for (int ifs = 0; ifs < driver->num_fs; ifs++)
-        thread_pool_add_job(tp, bfs_mount__, driver->fs_list[ifs]);
+    for (int ifs = 0; ifs < this->num_fs; ifs++)
+        thread_pool_add_job(tp, bfs_mount__, this->fs_list[ifs]);
 
     thread_pool_join(tp);
     thread_pool_free(tp);
@@ -424,19 +319,19 @@ void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
   the block_fs_driver_create() function.
 */
 
-void *block_fs_driver_open(FILE *fstab_stream, const char *mount_point,
-                           fs_driver_enum driver_type, bool read_only) {
+ert::block_fs_driver *ert::block_fs_driver::open(FILE *fstab_stream,
+                                                 const char *mount_point,
+                                                 bool preload, bool read_only) {
     int num_fs = util_fread_int(fstab_stream);
     char *tmp_fmt = util_fread_alloc_string(fstab_stream);
     char *mountfile_fmt =
         util_alloc_sprintf("%s%c%s", mount_point, UTIL_PATH_SEP_CHAR, tmp_fmt);
     const bool block_level_lock = false;
 
-    block_fs_driver_type *driver =
-        (block_fs_driver_type *)block_fs_driver_alloc_new(
-            driver_type, read_only, num_fs, mountfile_fmt, block_level_lock);
+    ert::block_fs_driver *driver = ert::block_fs_driver::new_(
+        preload, read_only, num_fs, mountfile_fmt, block_level_lock);
 
-    block_fs_driver_mount(driver);
+    driver->mount();
 
     free(tmp_fmt);
     free(mountfile_fmt);
