@@ -1525,49 +1525,6 @@ void enkf_main_init_run(enkf_main_type *enkf_main,
     }
 }
 
-static bool enkf_main_run_analysis(enkf_main_type *enkf_main,
-                                   enkf_fs_type *source_fs,
-                                   const char *target_fs_name,
-                                   int iteration_number) {
-    bool updateOK = false;
-    const analysis_config_type *analysis_config =
-        enkf_main_get_analysis_config(enkf_main);
-    analysis_module_type *analysis_module =
-        analysis_config_get_active_module(analysis_config);
-    int pre_iteration_number = analysis_module_get_int(analysis_module, "ITER");
-
-    if (target_fs_name == NULL) {
-        fprintf(stderr, "Sorry: the updated ensemble will overwrite the "
-                        "current case in the iterated ensemble smoother.");
-        printf("Running analysis on case %s, target case is %s\n",
-               enkf_main_get_current_fs(enkf_main),
-               enkf_main_get_current_fs(enkf_main));
-        updateOK = enkf_main_smoother_update(enkf_main, source_fs,
-                                             enkf_main_get_fs(enkf_main));
-    } else {
-        enkf_fs_type *target_fs =
-            enkf_main_mount_alt_fs(enkf_main, target_fs_name, true);
-        updateOK = enkf_main_smoother_update(enkf_main, source_fs, target_fs);
-        enkf_fs_decref(target_fs);
-    }
-
-    int post_iteration_number =
-        analysis_module_get_int(analysis_module, "ITER");
-
-    if (post_iteration_number <= pre_iteration_number)
-        updateOK = false;
-
-    if (updateOK) {
-        enkf_fs_type *target_fs =
-            enkf_main_mount_alt_fs(enkf_main, target_fs_name, true);
-        cases_config_set_int(enkf_fs_get_cases_config(target_fs),
-                             "iteration_number", iteration_number + 1);
-        enkf_fs_decref(target_fs);
-    }
-
-    return updateOK;
-}
-
 ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
     const enkf_main_type *enkf_main, enkf_fs_type *fs,
     bool_vector_type *iactive, int iter) {
