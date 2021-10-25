@@ -115,7 +115,6 @@ class SyncWebsocketDuplexer:
                     pass
         except Exception as ex:
             pass
-            # print("--->  BOOM <---", self, ex)
         finally:
             self._loop.call_soon_threadsafe(self._loop.stop)
             self._loop_thread.join()
