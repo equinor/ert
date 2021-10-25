@@ -183,5 +183,5 @@ def test_cli_test_connection_error(tmpdir, source_root, capsys):
             with pytest.raises(ErtCliError):
                 run_cli(parsed)
 
-    capture = capsys.readouterr()
-    assert "Connection error" in capture.out
+                capture = capsys.readouterr()
+                assert "Connection error" in capture.out
