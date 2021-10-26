@@ -117,16 +117,17 @@ class _Proc(threading.Thread):
         except Exception as exc:
             conn_info = exc
 
-        self._set_conn_info(conn_info)
+        try:
+            self._set_conn_info(conn_info)
 
-        while True:
-            if self._proc.poll() is not None:
-                break
-            if self._shutdown.wait(1):
-                self._do_shutdown()
-                break
-
-        self._ensure_delete_conn_info()
+            while True:
+                if self._proc.poll() is not None:
+                    break
+                if self._shutdown.wait(1):
+                    self._do_shutdown()
+                    break
+        finally:
+            self._ensure_delete_conn_info()
 
     def shutdown(self) -> int:
         """Shutdown the server."""
