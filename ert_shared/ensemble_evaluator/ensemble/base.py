@@ -160,3 +160,6 @@ class _Ensemble:
         )
 
         return Snapshot(top.dict())
+
+
+Ensemble = _Ensemble

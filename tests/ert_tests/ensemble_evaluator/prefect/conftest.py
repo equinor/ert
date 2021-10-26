@@ -57,71 +57,12 @@ def input_transmitter_factory(transmitter_factory):
     return make_transmitter
 
 
-def create_coefficient_transmitters(
-    coefficients, transmitter_factory: Callable[[str], Type[ert.data.RecordTransmitter]]
-):
-    transmitters = {}
-    record_name = "coeffs"
-    for iens, values in enumerate(coefficients):
-        transmitter = transmitter_factory(record_name)
-        transmitters[iens] = {
-            record_name: create_input_transmitter(values, transmitter)
-        }
-    return transmitters
-
-
 def create_script_transmitter(name: str, location: Path, transmitter_factory):
     script_transmitter = transmitter_factory(name)
     asyncio.get_event_loop().run_until_complete(
         script_transmitter.transmit_file(location, mime="application/octet-stream")
     )
     return script_transmitter
-
-
-def get_output_transmitters(
-    names, transmitter_factory: Callable[[str], Type[ert.data.RecordTransmitter]]
-):
-    return {name: transmitter_factory(name) for name in names}
-
-
-def step_output_transmitters(
-    step, transmitter_factory: Callable[[str], Type[ert.data.RecordTransmitter]]
-):
-    transmitters = {}
-    for output in step.get_outputs():
-        transmitters[output.get_name()] = transmitter_factory(output.get_name())
-
-    return transmitters
-
-
-@pytest.fixture()
-def step_output_transmitters_factory(transmitter_factory):
-    return partial(step_output_transmitters, transmitter_factory=transmitter_factory)
-
-
-def get_poly_scripts(script_base_path, transmitter_factory):
-    return {
-        "generate_zero_degree": create_script_transmitter(
-            "generate_zero_degree",
-            script_base_path / "evaluate_coeffs.py",
-            transmitter_factory=transmitter_factory,
-        ),
-        "generate_first_degree": create_script_transmitter(
-            "generate_first_degree",
-            script_base_path / "evaluate_coeffs.py",
-            transmitter_factory=transmitter_factory,
-        ),
-        "generate_second_degree": create_script_transmitter(
-            "generate_second_degree",
-            script_base_path / "evaluate_coeffs.py",
-            transmitter_factory=transmitter_factory,
-        ),
-        "sum_up": create_script_transmitter(
-            "sum_up",
-            script_base_path / "sum_coeffs.py",
-            transmitter_factory=transmitter_factory,
-        ),
-    }
 
 
 @pytest.fixture()
@@ -145,31 +86,48 @@ def test_data_path():
     return Path(__file__).parent / "scripts"
 
 
-def get_degree_step(degree, degree_spelled):
+def get_degree_step(
+    degree, degree_spelled, transmitter_factory, test_data_path, coefficients
+):
     step_builder = (
         ee.create_step_builder().set_name(f"{degree_spelled}_degree").set_type("unix")
     )
 
+    input_name = f"generate_{degree_spelled}_degree"
     step_builder.add_input(
         ee.create_file_io_builder()
-        .set_name(f"generate_{degree_spelled}_degree")
+        .set_name(input_name)
         .set_path(Path("evaluate_coeffs.py"))
         .set_mime("text/x-python")
         .set_transformation(ert.data.ExecutableRecordTransformation())
+        .set_transmitter_factory(
+            partial(
+                create_script_transmitter,
+                input_name,
+                test_data_path / "evaluate_coeffs.py",
+                transmitter_factory=transmitter_factory,
+            )
+        )
     )
 
-    step_builder.add_input(
+    coeffs_input = (
         ee.create_file_io_builder()
         .set_name("coeffs")
         .set_path(Path("coeffs.json"))
         .set_mime("application/json")
     )
+    for iens, values in enumerate(coefficients):
+        transmitter = create_input_transmitter(values, transmitter_factory("coeffs"))
+        coeffs_input.set_transmitter_factory(lambda _t=transmitter: _t, iens)
+    step_builder.add_input(coeffs_input)
 
+    output_name = f"input{degree}"
     step_builder.add_output(
         ee.create_file_io_builder()
-        .set_name(f"input{degree}")
+        .set_name(output_name)
         .set_path(Path(f"poly_{degree}.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, output_name))
     )
     step_builder.add_job(
         ee.create_job_builder()
@@ -181,29 +139,49 @@ def get_degree_step(degree, degree_spelled):
 
 
 @pytest.fixture()
-def zero_degree_step():
-    step_builder = get_degree_step(degree=0, degree_spelled="zero")
+def zero_degree_step(transmitter_factory, test_data_path, coefficients):
+    step_builder = get_degree_step(
+        degree=0,
+        degree_spelled="zero",
+        transmitter_factory=transmitter_factory,
+        test_data_path=test_data_path,
+        coefficients=coefficients,
+    )
+
     step_builder.add_input(
         ee.create_file_io_builder()
         .set_name("input2")
         .set_path(Path("poly_2.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "input2"))
     )
     return step_builder
 
 
 @pytest.fixture()
-def first_degree_step():
-    return get_degree_step(degree=1, degree_spelled="first")
+def first_degree_step(transmitter_factory, test_data_path, coefficients):
+    return get_degree_step(
+        degree=1,
+        degree_spelled="first",
+        transmitter_factory=transmitter_factory,
+        test_data_path=test_data_path,
+        coefficients=coefficients,
+    )
 
 
 @pytest.fixture()
-def second_degree_step():
-    return get_degree_step(degree=2, degree_spelled="second")
+def second_degree_step(transmitter_factory, test_data_path, coefficients):
+    return get_degree_step(
+        degree=2,
+        degree_spelled="second",
+        transmitter_factory=transmitter_factory,
+        test_data_path=test_data_path,
+        coefficients=coefficients,
+    )
 
 
 @pytest.fixture()
-def sum_coeffs_step():
+def sum_coeffs_step(test_data_path, transmitter_factory):
     step_builder = ee.create_step_builder().set_name("add_coeffs").set_type("unix")
 
     step_builder.add_input(
@@ -212,6 +190,14 @@ def sum_coeffs_step():
         .set_path(Path("sum_coeffs.py"))
         .set_mime("text/x-python")
         .set_transformation(ert.data.ExecutableRecordTransformation())
+        .set_transmitter_factory(
+            partial(
+                create_script_transmitter,
+                "sum_up",
+                test_data_path / "sum_coeffs.py",
+                transmitter_factory=transmitter_factory,
+            )
+        )
     )
 
     step_builder.add_input(
@@ -219,18 +205,21 @@ def sum_coeffs_step():
         .set_name("input0")
         .set_path(Path("poly_0.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "input0"))
     )
     step_builder.add_input(
         ee.create_file_io_builder()
         .set_name("input1")
         .set_path(Path("poly_1.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "input1"))
     )
     step_builder.add_input(
         ee.create_file_io_builder()
         .set_name("input2")
         .set_path(Path("poly_2.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "input2"))
     )
 
     step_builder.add_output(
@@ -238,6 +227,7 @@ def sum_coeffs_step():
         .set_name("sum_output")
         .set_path(Path("poly_sum.out"))
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "sum_output"))
     )
     step_builder.add_job(
         ee.create_job_builder()
@@ -261,36 +251,7 @@ def real_builder(
 
 
 @pytest.fixture()
-def poly_ensemble_inputs(coefficients, test_data_path, transmitter_factory):
-    script_transmitters = get_poly_scripts(
-        script_base_path=test_data_path, transmitter_factory=transmitter_factory
-    )
-
-    coeffs_trans = create_coefficient_transmitters(coefficients, transmitter_factory)
-
-    inputs = {}
-    for iens in range(len(coeffs_trans)):
-        inputs[iens] = {**coeffs_trans[iens], **script_transmitters}
-
-    return inputs
-
-
-@pytest.fixture()
-def poly_ensemble_outputs(transmitter_factory, ensemble_size):
-    outputs = {
-        i: get_output_transmitters(
-            ["sum_output", "input0", "input1", "input2"], transmitter_factory
-        )
-        for i in range(ensemble_size)
-    }
-
-    return outputs
-
-
-@pytest.fixture()
-def poly_ensemble_builder(
-    real_builder, poly_ensemble_inputs, poly_ensemble_outputs, ensemble_size
-):
+def poly_ensemble_builder(real_builder, ensemble_size):
     builder = (
         ee.create_ensemble_builder()
         .set_custom_port_range(custom_port_range=range(1024, 65535))
@@ -299,8 +260,6 @@ def poly_ensemble_builder(
         .set_max_retries(2)
         .set_executor("local")
         .set_forward_model(real_builder)
-        .set_inputs(poly_ensemble_inputs)
-        .set_outputs(poly_ensemble_outputs)
     )
     return builder
 
@@ -310,23 +269,28 @@ def poly_ensemble(poly_ensemble_builder):
     return poly_ensemble_builder.build()
 
 
-def get_function_ensemble(pickled_function):
+def get_function_ensemble(pickled_function, coefficients, transmitter_factory):
     step_builder = (
         ee.create_step_builder().set_name("function_evaluation").set_type("function")
     )
 
-    step_builder.add_input(
+    coeffs_input = (
         ee.create_file_io_builder()
         .set_name("coeffs")
         .set_path("coeffs")
         .set_mime("application/json")
     )
+    for iens, values in enumerate(coefficients):
+        transmitter = create_input_transmitter(values, transmitter_factory("coeffs"))
+        coeffs_input.set_transmitter_factory(lambda _t=transmitter: _t, iens)
+    step_builder.add_input(coeffs_input)
 
     step_builder.add_output(
         ee.create_file_io_builder()
         .set_name("function_output")
         .set_path("output")
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "function_output"))
     )
     step_builder.add_job(
         ee.create_job_builder()
@@ -348,24 +312,10 @@ def get_function_ensemble(pickled_function):
 
 
 @pytest.fixture()
-def function_ensemble_inputs(coefficients, transmitter_factory):
-    coeffs_trans = create_coefficient_transmitters(coefficients, transmitter_factory)
-    return coeffs_trans
-
-
-@pytest.fixture()
-def function_ensemble_outputs(transmitter_factory, ensemble_size):
-    outputs = {
-        i: get_output_transmitters(["function_output"], transmitter_factory)
-        for i in range(ensemble_size)
-    }
-
-    return outputs
-
-
-@pytest.fixture()
 def function_ensemble_builder_factory(
-    function_ensemble_inputs, function_ensemble_outputs, ensemble_size
+    ensemble_size,
+    transmitter_factory,
+    coefficients,
 ):
     job_builder = ee.create_job_builder().set_name("user_defined_function")
 
@@ -373,18 +323,24 @@ def function_ensemble_builder_factory(
         ee.create_step_builder().set_name("function_evaluation").set_type("function")
     )
 
-    step_builder.add_input(
+    coeffs_input = (
         ee.create_file_io_builder()
         .set_name("coeffs")
         .set_path("coeffs")
         .set_mime("application/json")
     )
 
+    for iens, values in enumerate(coefficients):
+        transmitter = create_input_transmitter(values, transmitter_factory("coeffs"))
+        coeffs_input.set_transmitter_factory(lambda _t=transmitter: _t, iens)
+    step_builder.add_input(coeffs_input)
+
     step_builder.add_output(
         ee.create_file_io_builder()
         .set_name("function_output")
         .set_path("output")
         .set_mime("application/json")
+        .set_transmitter_factory(partial(transmitter_factory, "function_output"))
     )
     step_builder.add_job(job_builder)
     real_builder = ee.create_realization_builder().active(True).add_step(step_builder)
@@ -397,8 +353,6 @@ def function_ensemble_builder_factory(
         .set_max_retries(2)
         .set_executor("local")
         .set_forward_model(real_builder)
-        .set_inputs(function_ensemble_inputs)
-        .set_outputs(function_ensemble_outputs)
     )
 
     def build(pickled_function):

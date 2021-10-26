@@ -7,12 +7,13 @@ from ._stages_config import (
     Function,
     Unix,
     IndexedOrderedDict,
+    TransportableCommand,
+    Step,
 )
 from ._validator import DEFAULT_RECORD_MIME_TYPE
 from ._experiment_config import load_experiment_config, ExperimentConfig
 from ._parameters_config import load_parameters_config, ParametersConfig
-
-Step = Union[Function, Unix]
+from ._linked_inputs import LinkedInput, link_inputs
 
 __all__ = [
     "load_ensemble_config",
@@ -29,4 +30,7 @@ __all__ = [
     "DEFAULT_RECORD_MIME_TYPE",
     "SourceNS",
     "IndexedOrderedDict",
+    "TransportableCommand",
+    "LinkedInput",
+    "link_inputs",
 ]

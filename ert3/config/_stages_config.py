@@ -121,3 +121,6 @@ def load_stages_config(config_dict: Dict[str, Any]) -> StagesConfig:
         return StagesConfig.parse_obj(config_dict)
     except ValidationError as err:
         raise ert.exceptions.ConfigValidationError(str(err), source="stages")
+
+
+Step = Union[Function, Unix]

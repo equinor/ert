@@ -1,13 +1,13 @@
 import asyncio
 from datetime import timedelta
 from pathlib import Path
-from typing import Callable, Type
+from typing import Type, Dict
 
 import cloudpickle
 import prefect
 import pytest
 from prefect import Flow
-
+from functools import partial
 import ert
 from ert_utils import tmp
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
@@ -29,20 +29,18 @@ def create_script_transmitter(name: str, location: Path, transmitter_factory):
     return script_transmitter
 
 
-def step_output_transmitters(
-    step, transmitter_factory: Callable[[str], Type[ert.data.RecordTransmitter]]
-):
-    transmitters = {}
-    for output in step.get_outputs():
-        transmitters[output.get_name()] = transmitter_factory(output.get_name())
-
-    return transmitters
-
-
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):
+    input_map: Dict[str, ert.data.RecordTransmitter] = {}
+    output_map: Dict[str, ert.data.RecordTransmitter] = {}
     real_source = "/real/0"
     step_source = "/real/0/step/0"
-    step_builder = ee.create_step_builder()
+    step_builder = (
+        ee.create_step_builder()
+        .set_parent_source(source=real_source)
+        .set_id("0")
+        .set_name(step_name)
+        .set_type(type_)
+    )
     for idx, (name, executable, args) in enumerate(jobs):
         step_builder.add_job(
             ee.create_job_builder()
@@ -52,23 +50,31 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
             .set_args(args)
             .set_parent_source(step_source)
         )
-    step_builder.set_parent_source(source=real_source)
-    step_builder.set_id("0")
-    step_builder.set_name(step_name)
-    for name, path, mime in inputs:
+    for name, path, mime, factory in inputs:
         step_builder.add_input(
             ee.create_file_io_builder()
             .set_name(name)
             .set_path(Path(path))
             .set_mime(mime)
             .set_transformation(ert.data.ExecutableRecordTransformation())
+            .set_transmitter_factory(factory)
         )
-    for name, path, mime in outputs:
+    for name, path, mime, factory in outputs:
         step_builder.add_output(
-            ee.create_file_io_builder().set_name(name).set_path(path).set_mime(mime)
+            ee.create_file_io_builder()
+            .set_name(name)
+            .set_path(path)
+            .set_mime(mime)
+            .set_transmitter_factory(factory)
         )
-    step_builder.set_type(type_)
-    return step_builder.build()
+
+    for input_ in step_builder._inputs:
+        input_map[input_._name] = input_.transmitter_factory()()
+
+    for output in step_builder._outputs:
+        output_map[output._name] = output.transmitter_factory()()
+
+    return step_builder.build(), input_map, output_map
 
 
 @pytest.fixture()
@@ -89,23 +95,33 @@ def step_test_retry_script_transmitter(test_data_path, transmitter_factory):
     )
 
 
-def test_unix_task(
-    mock_ws_monitor, step_test_script_transmitter, step_output_transmitters_factory
-):
-
-    step = get_step(
+def test_unix_task(mock_ws_monitor, step_test_script_transmitter, transmitter_factory):
+    step, input_map, output_map = get_step(
         step_name="test_step",
-        inputs=[("script", Path("unix_test_script.py"), "application/x-python")],
-        outputs=[("output", Path("output.out"), "application/json")],
+        inputs=[
+            (
+                "script",
+                Path("unix_test_script.py"),
+                "application/x-python",
+                lambda _t=step_test_script_transmitter: _t,
+            )
+        ],
+        outputs=[
+            (
+                "output",
+                Path("output.out"),
+                "application/json",
+                partial(transmitter_factory, "output"),
+            )
+        ],
         jobs=[("script", Path("unix_test_script.py"), ["vas"])],
         type_="unix",
     )
 
     with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        output_trans = step_output_transmitters_factory(step)
         with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
-            result = task(inputs={"script": step_test_script_transmitter})
+            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
+            result = task(inputs=input_map)
         with tmp():
             flow_run = flow.run()
 
@@ -117,33 +133,43 @@ def test_unix_task(
     assert flow_run.is_successful()
 
     assert len(task_result.result) == 1
-    expected_uri = output_trans["output"]._uri
+    expected_uri = output_map["output"]._uri
     output_uri = task_result.result["output"]._uri
     assert expected_uri == output_uri
 
 
-def test_function_step(
-    mock_ws_monitor, input_transmitter_factory, step_output_transmitters_factory
-):
+def test_function_step(mock_ws_monitor, input_transmitter_factory, transmitter_factory):
     test_values = [42, 24, 6]
-    inputs = {"values": input_transmitter_factory("values", test_values)}
 
     def sum_function(values):
         return {"output": [sum(values)]}
 
-    step = get_step(
+    step, input_map, output_map = get_step(
         step_name="test_step",
-        inputs=[("values", "NA", "text/whatever")],
-        outputs=[("output", Path("output.out"), "application/json")],
+        inputs=[
+            (
+                "values",
+                "NA",
+                "text/whatever",
+                partial(input_transmitter_factory, "values", test_values),
+            )
+        ],
+        outputs=[
+            (
+                "output",
+                Path("output.out"),
+                "application/json",
+                partial(transmitter_factory, "output"),
+            )
+        ],
         jobs=[("test_function", cloudpickle.dumps(sum_function), None)],
         type_="function",
     )
 
     with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        output_trans = step_output_transmitters_factory(step)
         with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
-            result = task(inputs=inputs)
+            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
+            result = task(inputs=input_map)
         with tmp():
             flow_run = flow.run()
 
@@ -155,7 +181,7 @@ def test_function_step(
     assert flow_run.is_successful()
 
     assert len(task_result.result) == 1
-    expected_uri = output_trans["output"]._uri
+    expected_uri = output_map["output"]._uri
     output_uri = task_result.result["output"]._uri
     assert expected_uri == output_uri
     transmitted_record = asyncio.get_event_loop().run_until_complete(
@@ -170,26 +196,38 @@ def test_function_step_for_function_defined_outside_py_environment(
     mock_ws_monitor,
     external_sum_function,
     input_transmitter_factory,
-    step_output_transmitters_factory,
+    transmitter_factory,
 ):
 
     test_values = {"a": 42, "b": 24, "c": 6}
-    inputs = {"coeffs": input_transmitter_factory("coeffs", test_values)}
     expected_result = 72
 
-    step = get_step(
+    step, input_map, output_map = get_step(
         step_name="test_step",
-        inputs=[("coeffs", "NA", "text/whatever")],
-        outputs=[("function_output", Path("output.out"), "application/json")],
+        inputs=[
+            (
+                "coeffs",
+                "NA",
+                "text/whatever",
+                partial(input_transmitter_factory, "coeffs", test_values),
+            )
+        ],
+        outputs=[
+            (
+                "function_output",
+                Path("output.out"),
+                "application/json",
+                partial(transmitter_factory, "function_output"),
+            )
+        ],
         jobs=[("test_function", external_sum_function, None)],
         type_="function",
     )
 
     with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        output_trans = step_output_transmitters_factory(step)
         with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
-            result = task(inputs=inputs)
+            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
+            result = task(inputs=input_map)
         with tmp():
             flow_run = flow.run()
 
@@ -201,7 +239,7 @@ def test_function_step_for_function_defined_outside_py_environment(
     assert flow_run.is_successful()
 
     assert len(task_result.result) == 1
-    expected_uri = output_trans["function_output"]._uri
+    expected_uri = output_map["function_output"]._uri
     output_uri = task_result.result["function_output"]._uri
     assert expected_uri == output_uri
     transmitted_record = asyncio.get_event_loop().run_until_complete(
@@ -214,21 +252,32 @@ def test_function_step_for_function_defined_outside_py_environment(
 def test_unix_step_error(
     mock_ws_monitor, step_test_script_transmitter, transmitter_factory
 ):
-    step = get_step(
+    step, input_map, output_map = get_step(
         step_name="test_step",
-        inputs=[("test_script", Path("unix_test_script.py"), "application/x-python")],
-        outputs=[("output", Path("output.out"), "application/json")],
+        inputs=[
+            (
+                "test_script",
+                Path("unix_test_script.py"),
+                "application/x-python",
+                lambda _t=step_test_script_transmitter: _t,
+            )
+        ],
+        outputs=[
+            (
+                "output",
+                Path("output.out"),
+                "application/json",
+                partial(transmitter_factory, "output"),
+            )
+        ],
         jobs=[("test_script", Path("unix_test_script.py"), ["foo", "bar"])],
         type_="unix",
     )
 
     with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-        output_trans = step_output_transmitters(
-            step, transmitter_factory=transmitter_factory
-        )
         with Flow("testing") as flow:
-            task = step.get_task(output_transmitters=output_trans, ee_id="test_ee_id")
-            result = task(inputs={"test_script": step_test_script_transmitter})
+            task = step.get_task(output_transmitters=output_map, ee_id="test_ee_id")
+            result = task(inputs=input_map)
         with tmp():
             flow_run = flow.run()
 
@@ -252,16 +301,19 @@ class _MockedPrefectEnsemble:
     _on_task_failure = PrefectEnsemble._on_task_failure
 
 
-def test_on_task_failure(
-    mock_ws_monitor, step_test_retry_script_transmitter, transmitter_factory
-):
+def test_on_task_failure(mock_ws_monitor, step_test_retry_script_transmitter):
     mock_ensemble = _MockedPrefectEnsemble()
 
     with tmp() as runpath:
-        step = get_step(
+        step, input_map, output_map = get_step(
             step_name="test_step",
             inputs=[
-                ("script", Path("unix_test_retry_script.py"), "application/x-python")
+                (
+                    "script",
+                    Path("unix_test_retry_script.py"),
+                    "application/x-python",
+                    lambda _t=step_test_retry_script_transmitter: _t,
+                )
             ],
             outputs=[],
             jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
@@ -269,18 +321,15 @@ def test_on_task_failure(
         )
 
         with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-            output_trans = step_output_transmitters(
-                step, transmitter_factory=transmitter_factory
-            )
             with Flow("testing") as flow:
                 task = step.get_task(
-                    output_transmitters=output_trans,
+                    output_transmitters=output_map,
                     ee_id="test_ee_id",
                     max_retries=3,
                     retry_delay=timedelta(seconds=1),
                     on_failure=mock_ensemble._on_task_failure,
                 )
-                result = task(inputs={"script": step_test_retry_script_transmitter})
+                result = task(inputs=input_map)
             flow_run = flow.run()
 
     # Stop the mock evaluator WS server
@@ -299,15 +348,18 @@ def test_on_task_failure(
     assert expected_step_failed_messages == len(fail_step_messages)
 
 
-def test_on_task_failure_fail_step(
-    mock_ws_monitor, step_test_retry_script_transmitter, transmitter_factory
-):
+def test_on_task_failure_fail_step(mock_ws_monitor, step_test_retry_script_transmitter):
     mock_ensemble = _MockedPrefectEnsemble()
     with tmp() as runpath:
-        step = get_step(
+        step, input_map, output_map = get_step(
             step_name="test_step",
             inputs=[
-                ("script", Path("unix_test_retry_script.py"), "application/x-python")
+                (
+                    "script",
+                    Path("unix_test_retry_script.py"),
+                    "application/x-python",
+                    lambda _t=step_test_retry_script_transmitter: _t,
+                )
             ],
             outputs=[],
             jobs=[("script", Path("unix_test_retry_script.py"), [runpath])],
@@ -315,18 +367,15 @@ def test_on_task_failure_fail_step(
         )
 
         with prefect.context(url=mock_ws_monitor.url, token=None, cert=None):
-            output_trans = step_output_transmitters(
-                step, transmitter_factory=transmitter_factory
-            )
             with Flow("testing") as flow:
                 task = step.get_task(
-                    output_transmitters=output_trans,
+                    output_transmitters=output_map,
                     ee_id="test_ee_id",
                     max_retries=1,
                     retry_delay=timedelta(seconds=1),
                     on_failure=mock_ensemble._on_task_failure,
                 )
-                result = task(inputs={"script": step_test_retry_script_transmitter})
+                result = task(inputs=input_map)
             flow_run = flow.run()
 
     # Stop the mock evaluator WS server

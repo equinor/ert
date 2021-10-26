@@ -1,10 +1,16 @@
 import asyncio
-import json
 import pathlib
-from typing import List, Dict, Any
-
+from typing import Dict, Tuple, List
 import ert
 import ert3
+from ert3.config import SourceNS
+from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
+from ._sensitivity import (
+    analyze_sensitivity,
+    transmitter_map_sensitivity,
+    prepare_sensitivity,
+)
+from ._entity import TransmitterCoroutine
 
 
 def _prepare_experiment(
@@ -26,244 +32,93 @@ def _prepare_experiment(
     )
 
 
-# pylint: disable=too-many-arguments
-def _prepare_experiment_record(
-    record_name: str,
-    record_source_namespace: ert3.config.SourceNS,
-    record_source_location: str,
-    record_mime: str,
-    record_is_directory: bool,
+def _gather_transmitter_maps(
+    futures: List[TransmitterCoroutine],
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
+    map_: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {}
+    res = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    for iens_to_trans_map in res:
+        for iens, trans_map in iens_to_trans_map.items():
+            if iens not in map_:
+                map_[iens] = trans_map
+            else:
+                map_[iens].update(trans_map)
+    return map_
+
+
+def _transmitter_map_storage(
+    inputs: Tuple[ert3.config.LinkedInput, ...],
     ensemble_size: int,
-    experiment_name: str,
-    workspace_root: pathlib.Path,
-    parameters_config: ert3.config.ParametersConfig,
-    experiment_config: ert3.config.ExperimentConfig,
-) -> Dict[int, Dict[str, ert.storage.StorageRecordTransmitter]]:
-    if record_source_namespace == ert3.config.SourceNS.storage:
-        records_url = ert.storage.get_records_url(workspace_root)
+    records_url: str,
+) -> List[TransmitterCoroutine]:
+    futures: List[TransmitterCoroutine] = []
+    for input_ in inputs:
         future = ert.storage.get_record_storage_transmitters(
             records_url=records_url,
-            record_name=record_name,
-            record_source=record_source_location,
+            record_name=input_.name,
+            record_source=input_.source_location,
             ensemble_size=ensemble_size,
         )
-        return asyncio.get_event_loop().run_until_complete(future)
+        futures.append(future)
+    return futures
 
-    elif record_source_namespace == ert3.config.SourceNS.resources:
-        file_path = workspace_root / "resources" / record_source_location
+
+def _transmitter_map_resources(
+    inputs: Tuple[ert3.config.LinkedInput, ...],
+    ensemble_size: int,
+    experiment_name: str,
+    workspace_root: pathlib.Path,
+) -> List[TransmitterCoroutine]:
+    futures: List[TransmitterCoroutine] = []
+    for input_ in inputs:
+        file_path = workspace_root / "resources" / input_.source_location
         collection = ert.data.load_collection_from_file(
             file_path,
-            record_mime,
+            input_.source_mime,
             ensemble_size=ensemble_size,
-            is_directory=record_is_directory,
+            is_directory=input_.source_is_directory,
         )
         future = ert.storage.transmit_record_collection(
             record_coll=collection,
-            record_name=record_name,
+            record_name=input_.name,
             workspace=workspace_root,
             experiment_name=experiment_name,
         )
-        transmitters = asyncio.get_event_loop().run_until_complete(future)
-        return transmitters
+        futures.append(future)
+    return futures
 
-    elif (
-        experiment_config.type != "sensitivity"
-        and record_source_namespace == ert3.config.SourceNS.stochastic
-    ):
+
+def _transmitter_map_stochastic(
+    inputs: Tuple[ert3.config.LinkedInput, ...],
+    parameters_config: ert3.config.ParametersConfig,
+    ensemble_size: int,
+    experiment_name: str,
+    workspace_root: pathlib.Path,
+) -> List[TransmitterCoroutine]:
+    futures: List[TransmitterCoroutine] = []
+    for input_ in inputs:
         collection = ert3.engine.sample_record(
             parameters_config,
-            record_source_location,
+            input_.source_location,
             ensemble_size=ensemble_size,
         )
         future = ert.storage.transmit_record_collection(
             record_coll=collection,
-            record_name=record_name,
+            record_name=input_.name,
             workspace=workspace_root,
             experiment_name=experiment_name,
         )
-        transmitters = asyncio.get_event_loop().run_until_complete(future)
-        return transmitters
-    elif (
-        experiment_config.type == "sensitivity"
-        and record_source_namespace == ert3.config.SourceNS.stochastic
-    ):
-        return {}
-    else:
-        raise ValueError(f"Unknown record source {record_source_namespace}")
+        futures.append(future)
+    return futures
 
 
-def _load_sensitivity_parameters(
-    ensemble: ert3.config.EnsembleConfig,
-    parameters_config: ert3.config.ParametersConfig,
-) -> Dict[str, ert3.stats.Distribution]:
-    all_distributions = {
-        param.name: param.as_distribution() for param in parameters_config
-    }
-
-    sensitivity_parameters = {}
-    for input_record in ensemble.input:
-        record_name = input_record.record
-        if input_record.source_namespace == ert3.config.SourceNS.stochastic:
-            group_name = input_record.source_location
-            sensitivity_parameters[record_name] = all_distributions[group_name]
-    return sensitivity_parameters
-
-
-def _prepare_storage_records(
-    ensemble: ert3.config.EnsembleConfig,
-    ensemble_size: int,
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
-    stages_config: ert3.config.StagesConfig,
+def _get_storage_path(
+    ensemble_config: ert3.config.EnsembleConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
-) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    step = stages_config.step_from_key(ensemble.forward_model.stage)
-    if not step:
-        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
-
-    transmitter_map: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {
-        iens: {} for iens in range(ensemble_size)
-    }
-    for input_record in ensemble.input:
-        record_name = input_record.record
-        record_mime = input_record.mime
-
-        # if is_directory was not defined for the source
-        # use the step configuration provided value
-        record_is_directory = (
-            step.input[record_name].is_directory
-            if input_record.is_directory is None
-            else input_record.is_directory
-        )
-        transmitters = _prepare_experiment_record(
-            record_name,
-            input_record.source_namespace,
-            input_record.source_location,
-            record_mime,
-            record_is_directory,
-            ensemble_size,
-            experiment_name,
-            workspace_root,
-            parameters_config,
-            experiment_config,
-        )
-
-        for iens, trans_map in transmitters.items():
-            transmitter_map[iens].update(trans_map)
-    return transmitter_map
-
-
-def _prepare_sensitivity_records(
-    ensemble: ert3.config.EnsembleConfig,
-    sensitivity_records: List[Dict[str, ert.data.Record]],
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
-        param.record: []
-        for param in ensemble.input
-        if param.source_namespace == ert3.config.SourceNS.stochastic
-    }
-
-    for realization in sensitivity_records:
-        assert sensitivity_parameters.keys() == realization.keys()
-        for record_name in realization:
-            sensitivity_parameters[record_name].append(realization[record_name])
-
-    transmitter_map: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {
-        iens: {} for iens in range(len(sensitivity_records))
-    }
-    for record_name in sensitivity_parameters:
-        ensemble_record = ert.data.RecordCollection(
-            records=tuple(sensitivity_parameters[record_name])
-        )
-        future = ert.storage.transmit_record_collection(
-            record_coll=ensemble_record,
-            record_name=record_name,
-            workspace=workspace_root,
-            experiment_name=experiment_name,
-        )
-        transmitters = asyncio.get_event_loop().run_until_complete(future)
-        for iens, trans_map in transmitters.items():
-            transmitter_map[iens].update(trans_map)
-    return transmitter_map
-
-
-def _prepare_sensitivity(
-    ensemble: ert3.config.EnsembleConfig,
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
-) -> List[Dict[str, ert.data.Record]]:
-    sensitivity_distributions = _load_sensitivity_parameters(
-        ensemble, parameters_config
-    )
-
-    if experiment_config.algorithm == "one-at-a-time":
-        sensitivity_input_records = ert3.algorithms.one_at_the_time(
-            sensitivity_distributions, tail=experiment_config.tail
-        )
-    elif experiment_config.algorithm == "fast":
-        sensitivity_input_records = ert3.algorithms.fast_sample(
-            sensitivity_distributions,
-            experiment_config.harmonics,
-            experiment_config.sample_size,
-        )
-    else:
-        raise ValueError(f"Unknown algorithm {experiment_config.algorithm}")
-    return sensitivity_input_records
-
-
-def _store_sensitivity_analysis(
-    analysis: Dict[Any, Any],
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-    output_file: str,
-) -> None:
-    experiment_root = (
-        pathlib.Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
-    )
-    with open(experiment_root / output_file, "w", encoding="utf-8") as f:
-        json.dump(analysis, f)
-
-
-def _analyze_sensitivity(
-    ensemble: ert3.config.EnsembleConfig,
-    experiment_config: ert3.config.ExperimentConfig,
-    parameters_config: ert3.config.ParametersConfig,
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-    model_output: Dict[int, Dict[str, ert.data.RecordTransmitter]],
-) -> None:
-    if experiment_config.algorithm == "one-at-a-time":
-        # There is no post analysis step for the one-at-a-time algorithm
-        pass
-    elif experiment_config.algorithm == "fast":
-        sensitivity_parameters = _load_sensitivity_parameters(
-            ensemble, parameters_config
-        )
-        analysis = ert3.algorithms.fast_analyze(
-            sensitivity_parameters, model_output, experiment_config.harmonics
-        )
-        _store_sensitivity_analysis(
-            analysis, workspace_root, experiment_name, "fast_analysis.json"
-        )
-    else:
-        raise ValueError(
-            "Unable to determine analysis step "
-            f"for algorithm {experiment_config.algorithm}"
-        )
-
-
-def _evaluate(
-    parameters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
-    ensemble: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    if ensemble.storage_type == "ert_storage":
-        storage_path = ert.storage.get_records_url(workspace_root, experiment_name)
+) -> str:
+    if ensemble_config.storage_type == "ert_storage":
+        return ert.storage.get_records_url(workspace_root, experiment_name)
     else:
         evaluation_tmp_dir = (
             pathlib.Path(workspace_root)
@@ -271,14 +126,12 @@ def _evaluate(
             / "tmp"
             / experiment_name
         )
-        storage_path = str(evaluation_tmp_dir / ".my_storage")
-
-    return ert3.evaluator.evaluate(storage_path, parameters, ensemble, stages_config)
+        return str(evaluation_tmp_dir / ".my_storage")
 
 
 # pylint: disable=too-many-arguments
 def run(
-    ensemble: ert3.config.EnsembleConfig,
+    ensemble_config: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
@@ -286,76 +139,163 @@ def run(
     experiment_name: str,
 ) -> None:
     # This reassures mypy that the ensemble size is defined
-    assert ensemble.size is not None
-    ensemble_size = ensemble.size
+    assert ensemble_config.size is not None
+    ensemble_size = ensemble_config.size
 
-    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble_size)
+    if experiment_config.type != "evaluation":
+        raise ValueError("this entry point can only run 'evaluation' experiments")
 
-    parameters = _prepare_storage_records(
-        ensemble,
+    _prepare_experiment(workspace_root, experiment_name, ensemble_config, ensemble_size)
+    storage_path = _get_storage_path(ensemble_config, workspace_root, experiment_name)
+    records_url = ert.storage.get_records_url(workspace_root)
+
+    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+    if not stage:
+        raise ValueError(
+            f"No step config for key {ensemble_config.forward_model.stage}"
+        )
+    assert stage is not None
+
+    step_builder = (
+        create_step_builder()
+        .set_name(f"{stage.name}-only_step")
+        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
+    )
+
+    inputs = ert3.config.link_inputs(ensemble_config, stage)
+
+    storage_inputs = tuple(inputs[SourceNS.storage].values())
+    resource_inputs = tuple(inputs[SourceNS.resources].values())
+    stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
+    transmitters = _gather_transmitter_maps(
+        _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
+        + _transmitter_map_resources(
+            resource_inputs, ensemble_size, experiment_name, workspace_root
+        )
+        + _transmitter_map_stochastic(
+            stochastic_inputs,
+            parameters_config,
+            ensemble_size,
+            experiment_name,
+            workspace_root,
+        )
+    )
+
+    for records in (storage_inputs, resource_inputs, stochastic_inputs):
+        ert3.evaluator.add_step_inputs(
+            records,
+            transmitters,
+            step_builder,
+        )
+
+    ert3.evaluator.add_step_outputs(
+        ensemble_config.storage_type,
+        stage,
+        storage_path,
         ensemble_size,
-        experiment_config,
-        parameters_config,
-        stages_config,
-        workspace_root,
-        experiment_name,
+        step_builder,
     )
 
-    _evaluate(
-        parameters,
-        ensemble,
-        stages_config,
-        workspace_root,
-        experiment_name,
+    if isinstance(stage, ert3.config.Unix):
+        ert3.evaluator.add_commands(
+            stage.transportable_commands,
+            ensemble_config.storage_type,
+            storage_path,
+            step_builder,
+        )
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage,
+        ensemble_config.forward_model.driver,
+        ensemble_size,
+        step_builder,
     )
+    ert3.evaluator.evaluate(ensemble)
 
 
 # pylint: disable=too-many-arguments
 def run_sensitivity_analysis(
-    ensemble: ert3.config.EnsembleConfig,
+    ensemble_config: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace_root: pathlib.Path,
     experiment_name: str,
 ) -> None:
-    sensitivity_input_records = _prepare_sensitivity(
-        ensemble,
+    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+    if not stage:
+        raise ValueError(
+            f"No step config for key {ensemble_config.forward_model.stage}"
+        )
+    assert stage is not None
+
+    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    storage_inputs = tuple(inputs[SourceNS.storage].values())
+    resource_inputs = tuple(inputs[SourceNS.resources].values())
+    stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
+    sensitivity_input_records = prepare_sensitivity(
+        stochastic_inputs,
         experiment_config,
         parameters_config,
     )
     ensemble_size = len(sensitivity_input_records)
 
-    _prepare_experiment(workspace_root, experiment_name, ensemble, ensemble_size)
+    _prepare_experiment(workspace_root, experiment_name, ensemble_config, ensemble_size)
 
-    parameters = _prepare_sensitivity_records(
-        ensemble,
-        sensitivity_input_records,
-        workspace_root,
-        experiment_name,
+    storage_path = _get_storage_path(ensemble_config, workspace_root, experiment_name)
+    records_url = ert.storage.get_records_url(workspace_root)
+
+    step_builder = (
+        create_step_builder()
+        .set_name(f"{stage.name}-only_step")
+        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    storage_transmitters = _prepare_storage_records(
-        ensemble,
+    transmitters = _gather_transmitter_maps(
+        _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
+        + _transmitter_map_resources(
+            resource_inputs, ensemble_size, experiment_name, workspace_root
+        )
+        + transmitter_map_sensitivity(
+            stochastic_inputs,
+            sensitivity_input_records,
+            experiment_name,
+            workspace_root,
+        )
+    )
+    for records in (storage_inputs, resource_inputs, stochastic_inputs):
+        ert3.evaluator.add_step_inputs(
+            records,
+            transmitters,
+            step_builder,
+        )
+
+    ert3.evaluator.add_step_outputs(
+        ensemble_config.storage_type,
+        stage,
+        storage_path,
         ensemble_size,
-        experiment_config,
-        parameters_config,
-        stages_config,
-        workspace_root,
-        experiment_name,
+        step_builder,
     )
-    for iens, trans_map in storage_transmitters.items():
-        parameters[iens].update(trans_map)
 
-    output_transmitters = _evaluate(
-        parameters,
-        ensemble,
-        stages_config,
-        workspace_root,
-        experiment_name,
+    if isinstance(stage, ert3.config.Unix):
+        ert3.evaluator.add_commands(
+            stage.transportable_commands,
+            ensemble_config.storage_type,
+            storage_path,
+            step_builder,
+        )
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage,
+        ensemble_config.forward_model.driver,
+        ensemble_size,
+        step_builder,
     )
-    _analyze_sensitivity(
-        ensemble,
+
+    output_transmitters = ert3.evaluator.evaluate(ensemble)
+    analyze_sensitivity(
+        stochastic_inputs,
         experiment_config,
         parameters_config,
         workspace_root,
@@ -365,12 +305,25 @@ def run_sensitivity_analysis(
 
 
 def get_ensemble_size(
-    ensemble: ert3.config.EnsembleConfig,
+    ensemble_config: ert3.config.EnsembleConfig,
+    stages_config: ert3.config.StagesConfig,
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
 ) -> int:
     if experiment_config.type == "sensitivity":
-        return len(_prepare_sensitivity(ensemble, experiment_config, parameters_config))
+        stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+        if not stage:
+            raise ValueError(
+                f"No step config for key {ensemble_config.forward_model.stage}"
+            )
+        stochastic_inputs = tuple(
+            ert3.config.link_inputs(ensemble_config, stage)[
+                SourceNS.stochastic
+            ].values()
+        )
+        return len(
+            prepare_sensitivity(stochastic_inputs, experiment_config, parameters_config)
+        )
     else:
-        assert ensemble.size is not None
-        return ensemble.size
+        assert ensemble_config.size is not None
+        return ensemble_config.size

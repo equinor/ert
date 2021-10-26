@@ -2,7 +2,18 @@ import copy
 import logging
 import pickle
 import uuid
-from typing import Dict, List, Tuple, Optional, Iterator, Type, TypeVar
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Tuple,
+    Optional,
+    Iterator,
+    Type,
+    TypeVar,
+)
 from collections import defaultdict
 from graphlib import TopologicalSorter
 from pathlib import Path
@@ -11,12 +22,17 @@ from enum import Enum
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.ensemble.legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
+from ert_shared.ensemble_evaluator.ensemble.io_map import InputMap, OutputMap
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert.data import RecordTransformation, FileRecordTransformation
 
 from res.enkf import EnKFState, RunArg
+
+if TYPE_CHECKING:
+    import ert
+
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +84,9 @@ class _IO:
     def get_name(self):
         return self._name
 
+    def get_transmitter(self) -> None:
+        raise NotImplementedError("IO should not have a transmitter")
+
 
 _IOBuilder_TV = TypeVar("_IOBuilder_TV", bound="_IOBuilder")
 
@@ -75,9 +94,12 @@ _IOBuilder_TV = TypeVar("_IOBuilder_TV", bound="_IOBuilder")
 class _IOBuilder:
     _concrete_cls: Optional[Type[_IO]] = None
 
+    _TRANSMITTER_FACTORY_ALL = -1
+
     def __init__(self):
         self._name = None
         self._transformation: RecordTransformation = FileRecordTransformation()
+        self._transmitter_factories: Dict[int, ert.data.transmitter_factory] = {}
 
     def set_name(self: _IOBuilder_TV, name) -> _IOBuilder_TV:
         self._name = name
@@ -86,6 +108,32 @@ class _IOBuilder:
     def set_transformation(self, transformation: RecordTransformation) -> "_IOBuilder":
         self._transformation = transformation
         return self
+
+    def set_transmitter_factory(
+        self, factory: "ert.data.transmitter_factory", index: Optional[int] = None
+    ) -> "_IOBuilder":
+        """Fix the transmitter factory for this IO to index if index is >= 0. If the
+        index is omitted or is < 0, it the factory will be called for all indices not
+        fixed to an index.
+        """
+        if index is None or index < 0:
+            index = self._TRANSMITTER_FACTORY_ALL
+        self._transmitter_factories[index] = factory
+        return self
+
+    def transmitter_factory(self, index: Optional[int] = None):
+        """Return a fixed transmitter for index, a ensemble-wide transmitter if index is
+        -1, or None.
+        """
+        global_factory = self._TRANSMITTER_FACTORY_ALL in self._transmitter_factories
+        if index is None or index == self._TRANSMITTER_FACTORY_ALL:
+            if not global_factory:
+                return None
+        if index not in self._transmitter_factories:
+            if not global_factory:
+                return None
+            return self._transmitter_factories[self._TRANSMITTER_FACTORY_ALL]
+        return self._transmitter_factories[index]
 
     def build(self):
         if self._concrete_cls is None:
@@ -511,7 +559,6 @@ class _StageBuilder:
         self._inputs: List[_IOBuilder] = []
         self._outputs: List[_IOBuilder] = []
         self._stages: List[_StageBuilder] = []
-        self._io_map: Dict[_IOBuilder, _IOBuilder] = {}
 
     def set_id(self, id_: str):
         self._id = id_
@@ -570,7 +617,7 @@ class _StepBuilder(_StageBuilder):
         self._parent_source = source
         return self
 
-    def add_job(self, job):
+    def add_job(self, job: _JobBuilder) -> "_StepBuilder":
         self._jobs.append(job)
         return self
 
@@ -661,8 +708,8 @@ def create_step_builder() -> _StepBuilder:
 
 class _RealizationBuilder:
     def __init__(self):
-        self._steps = []
-        self._stages: List[_Stage] = []
+        self._steps: List[_StepBuilder] = []
+        self._stages: List[_StageBuilder] = []
         self._active = None
         self._iens = None
 
@@ -674,7 +721,7 @@ class _RealizationBuilder:
         self._steps.append(step)
         return self
 
-    def add_stage(self, stage: _Stage) -> "_RealizationBuilder":
+    def add_stage(self, stage: _StageBuilder) -> "_RealizationBuilder":
         self._stages.append(stage)
         return self
 
@@ -816,12 +863,12 @@ class _EnsembleBuilder:
         self._legacy_dependencies = args
         return self
 
-    def set_inputs(self, inputs) -> "_EnsembleBuilder":
-        self._inputs = inputs
+    def set_inputs(self, inputs: InputMap) -> "_EnsembleBuilder":
+        self._inputs = inputs.to_dict()
         return self
 
-    def set_outputs(self, outputs) -> "_EnsembleBuilder":
-        self._outputs = outputs
+    def set_outputs(self, outputs: OutputMap) -> "_EnsembleBuilder":
+        self._outputs = outputs.to_dict()
         return self
 
     def set_custom_port_range(self, custom_port_range) -> "_EnsembleBuilder":
@@ -902,6 +949,33 @@ class _EnsembleBuilder:
             builder.add_realization(real)
         return builder
 
+    def _build_io_maps(self, reals: List[_RealizationBuilder]) -> None:
+        i_matrix: Dict[int, Dict[str, Optional["ert.data.RecordTransmitter"]]] = {
+            i: {} for i in range(len(reals))
+        }
+        o_matrix: Dict[int, Dict[str, Optional["ert.data.RecordTransmitter"]]] = {
+            i: {} for i in range(len(reals))
+        }
+        o_names = set()
+        for iens, real in enumerate(reals):
+            for step in real._steps:
+                for output in step._outputs:
+                    if isinstance(output, _DummyIOBuilder):
+                        continue
+                    factory = output.transmitter_factory(iens)
+                    o_matrix[iens][output._name] = factory() if factory else None
+                    o_names.add(output._name)
+        for iens, real in enumerate(reals):
+            for step in real._steps:
+                for input_ in step._inputs:
+                    if isinstance(input_, _DummyIOBuilder):
+                        continue
+                    if input_._name not in o_names:
+                        factory = input_.transmitter_factory(iens)
+                        i_matrix[iens][input_._name] = factory() if factory else None
+        self._inputs = InputMap.from_dict(i_matrix).validate().to_dict()
+        self._outputs = OutputMap.from_dict(o_matrix).validate().to_dict()
+
     def build(self) -> _Ensemble:
         if not (self._reals or self._forward_model):
             raise ValueError("Either forward model or realizations needs to be set")
@@ -916,6 +990,10 @@ class _EnsembleBuilder:
                 reals.append(real)
         else:
             reals = self._reals
+
+        # legacy has dummy IO, so no need to build an IO map
+        if not self._legacy_dependencies:
+            self._build_io_maps(reals)
 
         reals = [builder.build() for builder in reals]
 
@@ -952,3 +1030,7 @@ def create_ensemble_builder_from_legacy(
         analysis_config,
         res_config,
     )
+
+
+StepBuilder = _StepBuilder
+Step = _Step
