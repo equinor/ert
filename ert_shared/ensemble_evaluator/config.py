@@ -1,5 +1,8 @@
 import ipaddress
 import logging
+
+from pydantic import BaseModel
+
 from ert_shared import port_handler
 import tempfile
 
@@ -159,6 +162,11 @@ class EvaluatorServerConfig:
     def get_socket(self) -> socket.socket:
         return self._socket_handle.dup()
 
+    def get_info(self):
+        return EvaluatorServerConfigInfo(
+            dispatch_uri=self.dispatch_uri, token=self.token, cert=self.cert
+        )
+
     def get_server_ssl_context(
         self, protocol: int = ssl.PROTOCOL_TLS_SERVER
     ) -> typing.Optional[ssl.SSLContext]:
@@ -181,3 +189,9 @@ class EvaluatorServerConfig:
                 return context
         finally:
             tempfile.tempdir = backup_default_tmp
+
+
+class EvaluatorServerConfigInfo(BaseModel):
+    dispatch_uri: str
+    token: str
+    cert: str
