@@ -9,6 +9,16 @@ from ert.data import RecordTransmitter, BlobRecord, path_to_bytes
 _BIN_FOLDER = "bin"
 
 
+def _prepare_location(base_path: Path, location: Path) -> None:
+    """Ensure relative, and if the location is within a folder, create those
+    folders."""
+    if location.is_absolute():
+        raise ValueError(f"location {location} must be relative")
+    abs_path = base_path / location
+    if not abs_path.parent.exists():
+        abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+
 class RecordTransformation(ABC):
     @abstractmethod
     async def transform_input(
@@ -31,8 +41,8 @@ class FileRecordTransformation(RecordTransformation):
         runpath: Path,
         location: Path,
     ) -> None:
-        _location = runpath / location
-        await transmitter.dump(_location, mime)
+        _prepare_location(runpath, location)
+        await transmitter.dump(runpath / location, mime)
 
     async def transform_output(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
@@ -47,6 +57,7 @@ class TarRecordTransformation(RecordTransformation):
         record = await transmitter.load()
         if isinstance(record, BlobRecord):
             with tarfile.open(fileobj=io.BytesIO(record.data), mode="r") as tar:
+                _prepare_location(runpath, location)
                 tar.extractall(runpath / location)
         else:
             raise TypeError("Record needs to be a BlobRecord type!")
@@ -63,13 +74,15 @@ class ExecutableRecordTransformation(RecordTransformation):
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
         # pre-make bin folder if neccessary
-        Path(runpath / _BIN_FOLDER).mkdir(parents=True, exist_ok=True)
+        base_path = Path(runpath / _BIN_FOLDER)
+        base_path.mkdir(parents=True, exist_ok=True)
 
         # create file(s)
-        await transmitter.dump(runpath / _BIN_FOLDER / location, mime)
+        _prepare_location(base_path, location)
+        await transmitter.dump(base_path / location, mime)
 
         # post-proccess if neccessary
-        path = runpath / _BIN_FOLDER / location
+        path = base_path / location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
 
