@@ -207,27 +207,15 @@ analysis_module_alloc(const char *libname, const char *table_name, bool verbose,
     return module;
 }
 
-analysis_module_type *analysis_module_alloc_internal__(
-    const char *symbol_table, bool verbose,
-    analysis_module_load_status_enum *load_status) {
-    return analysis_module_alloc(NULL, symbol_table, verbose, load_status);
-}
-
 analysis_module_type *analysis_module_alloc_internal(const char *symbol_table) {
     analysis_module_load_status_enum load_status;
-    return analysis_module_alloc_internal__(symbol_table, true, &load_status);
-}
-
-analysis_module_type *analysis_module_alloc_external__(
-    const char *lib_name, bool verbose,
-    analysis_module_load_status_enum *load_status) {
-    return analysis_module_alloc(lib_name, EXTERNAL_MODULE_NAME, verbose,
-                                 load_status);
+    return analysis_module_alloc(NULL, symbol_table, true, &load_status);
 }
 
 analysis_module_type *analysis_module_alloc_external(const char *lib_name) {
     analysis_module_load_status_enum load_status;
-    return analysis_module_alloc_external__(lib_name, true, &load_status);
+    return analysis_module_alloc(lib_name, EXTERNAL_MODULE_NAME, true,
+                                 &load_status);
 }
 
 const char *analysis_module_get_name(const analysis_module_type *module) {
