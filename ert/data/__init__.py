@@ -16,6 +16,7 @@ from .record._transmitter import (
     RecordTransmitter,
     RecordTransmitterType,
     SharedDiskRecordTransmitter,
+    transmitter_factory,
 )
 
 from .record._transformation import (
@@ -45,4 +46,5 @@ __all__ = (
     "ExecutableRecordTransformation",
     "RecordTransformation",
     "path_to_bytes",
+    "transmitter_factory",
 )

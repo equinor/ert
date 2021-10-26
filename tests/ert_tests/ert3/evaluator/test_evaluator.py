@@ -4,6 +4,7 @@ import pytest
 
 import ert
 import ert3
+from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 
 TEST_PARAMETRIZATION = [
     ([(0, 0, 0)], [[0] * 10]),
@@ -41,19 +42,46 @@ def test_evaluator_script(
     workspace, stages_config, base_ensemble_dict, coeffs, expected
 ):
     storage_path = workspace / ".ert" / "tmp" / "test"
-    input_records = get_inputs(coeffs)
+    input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
-    ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
+    ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
+    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
 
-    evaluation_records = ert3.evaluator.evaluate(
-        storage_path,
-        input_records,
-        ensemble,
-        stages_config,
+    step_builder = (
+        create_step_builder()
+        .set_name(f"{stage.name}-only_step")
+        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    for iens, transmitter_map in evaluation_records.items():
+    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
+
+    ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)
+
+    ert3.evaluator.add_step_outputs(
+        ensemble_config.storage_type,
+        stage,
+        storage_path,
+        ensemble_config.size,
+        step_builder,
+    )
+
+    if isinstance(stage, ert3.config.Unix):
+        ert3.evaluator.add_commands(
+            stage.transportable_commands,
+            base_ensemble_dict["storage_type"],
+            storage_path,
+            step_builder,
+        )
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage, ensemble_config.forward_model.driver, ensemble_config.size, step_builder
+    )
+
+    evaluation_records = ert3.evaluator.evaluate(ensemble)
+
+    for _, transmitter_map in evaluation_records.items():
         record = asyncio.get_event_loop().run_until_complete(
             transmitter_map["polynomial_output"].load()
         )
@@ -69,21 +97,46 @@ def test_evaluator_function(
     workspace, function_stages_config, base_ensemble_dict, coeffs, expected
 ):
     storage_path = workspace / ".ert" / "tmp" / "test"
-
-    input_records = get_inputs(coeffs)
+    input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
+    ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
+    stage = function_stages_config.step_from_key(ensemble_config.forward_model.stage)
 
-    ensemble = ert3.config.load_ensemble_config(base_ensemble_dict)
-
-    evaluation_records = ert3.evaluator.evaluate(
-        storage_path,
-        input_records,
-        ensemble,
-        function_stages_config,
+    step_builder = (
+        create_step_builder()
+        .set_name(f"{stage.name}-only_step")
+        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    for iens, transmitter_map in evaluation_records.items():
+    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
+
+    ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)
+
+    ert3.evaluator.add_step_outputs(
+        ensemble_config.storage_type,
+        stage,
+        storage_path,
+        ensemble_config.size,
+        step_builder,
+    )
+
+    if isinstance(stage, ert3.config.Unix):
+        ert3.evaluator.add_commands(
+            stage.transportable_commands,
+            base_ensemble_dict["storage_type"],
+            storage_path,
+            step_builder,
+        )
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage, ensemble_config.forward_model.driver, ensemble_config.size, step_builder
+    )
+
+    evaluation_records = ert3.evaluator.evaluate(ensemble)
+
+    for _, transmitter_map in evaluation_records.items():
         record = asyncio.get_event_loop().run_until_complete(
             transmitter_map["polynomial_output"].load()
         )

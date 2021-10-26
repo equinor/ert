@@ -4,6 +4,7 @@ from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
+    Callable,
     Dict,
     List,
     Optional,
@@ -34,6 +35,7 @@ numerical_record_data = Union[
 ]
 blob_record_data = StrictBytes
 record_data = Union[numerical_record_data, blob_record_data]
+transmitter_factory = Callable[..., "RecordTransmitter"]
 
 
 class RecordTransmitterState(Enum):
@@ -70,11 +72,11 @@ class RecordTransmitter:
 
     @abstractmethod
     async def _load_numerical_record(self) -> NumericalRecord:
-        pass
+        raise NotImplementedError("not implemented")
 
     @abstractmethod
     async def _load_blob_record(self) -> BlobRecord:
-        pass
+        raise NotImplementedError("not implemented")
 
     async def load(self) -> Record:
         if not self.is_transmitted():
@@ -85,11 +87,11 @@ class RecordTransmitter:
 
     @abstractmethod
     async def _transmit_numerical_record(self, record: NumericalRecord) -> str:
-        pass
+        raise NotImplementedError("not implemented")
 
     @abstractmethod
     async def _transmit_blob_record(self, record: BlobRecord) -> str:
-        pass
+        raise NotImplementedError("not implemented")
 
     async def transmit_record(self, record: Record) -> None:
         if self.is_transmitted():

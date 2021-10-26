@@ -95,7 +95,9 @@ async def test_atomic_transformation_input(
         await transmitter.transmit_record(record_in)
         assert transmitter.is_transmitted()
         transformation = transformation_class()
-        await transformation.transform_input(transmitter, mime, runpath, location)
+        await transformation.transform_input(
+            transmitter, mime, runpath, pathlib.Path(location)
+        )
 
         for file in res_files_dumped:
             assert os.path.isfile(os.path.join(runpath, file))

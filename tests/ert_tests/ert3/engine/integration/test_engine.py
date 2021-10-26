@@ -204,6 +204,7 @@ def test_export_polynomial_evaluation(
 ):
     workspace = workspace_integration
     (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
+    print(workspace)
     ert3.engine.run(
         ensemble,
         stages_config,
@@ -520,7 +521,8 @@ def test_sensitivity_oat_run_and_export(
         "sensitivity",
     )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble=sensitivity_ensemble,
+        ensemble_config=sensitivity_ensemble,
+        stages_config=stages_config,
         experiment_config=sensitivity_oat_experiment_config,
         parameters_config=gaussian_parameters_config,
     )
@@ -556,7 +558,8 @@ def test_sensitivity_fast_run_and_export(
         "sensitivity",
     )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble=sensitivity_ensemble,
+        ensemble_config=sensitivity_ensemble,
+        stages_config=stages_config,
         experiment_config=sensitivity_fast_experiment_config,
         parameters_config=gaussian_parameters_config,
     )
@@ -598,7 +601,8 @@ def test_partial_sensitivity_run_and_export(
         "partial_sensitivity",
     )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble=partial_sensitivity_ensemble,
+        ensemble_config=partial_sensitivity_ensemble,
+        stages_config=double_stages_config,
         experiment_config=sensitivity_oat_experiment_config,
         parameters_config=gaussian_parameters_config,
     )

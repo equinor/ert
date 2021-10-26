@@ -124,7 +124,7 @@ async def get_record_storage_transmitters(
     record_name: str,
     record_source: Optional[str] = None,
     ensemble_size: Optional[int] = None,
-) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     transmitters, collection_type = await _get_record_storage_transmitters(
         records_url, record_name, record_source, ensemble_size
     )
@@ -304,7 +304,7 @@ async def transmit_record_collection(
     record_name: str,
     workspace: Path,
     experiment_name: Optional[str] = None,
-) -> Dict[int, Dict[str, StorageRecordTransmitter]]:
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     assert record_coll.ensemble_size is not None
     record: ert.data.Record
     metadata: Dict[Any, Any] = {
@@ -337,7 +337,7 @@ async def transmit_record_collection(
         await add_record_metadata(records_url, record_name, metadata)
         return {iens: {record_name: transmitter} for iens in range(ensemble_size)}
 
-    transmitters: Dict[int, Dict[str, StorageRecordTransmitter]] = {}
+    transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {}
     transmitter_list = []
     for iens, record in enumerate(record_coll.records):
         transmitter = StorageRecordTransmitter(record_name, records_url, iens=iens)

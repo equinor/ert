@@ -168,12 +168,23 @@ def test_topological_sort(steps, expected, ambiguous):
     any ambiguous steps.
     """
     real = ee.create_realization_builder().set_iens(0).active(True)
+    transmitted_factory = MagicMock()
+    non_transmitted_factory = MagicMock().return_value = MagicMock()
+    non_transmitted_factory.return_value.is_transmitted.return_value = False
     for step_def in steps:
         step = ee.create_step_builder().set_id("0").set_name(step_def["name"])
         for input_ in step_def["inputs"]:
-            step.add_input(ee.create_input_builder().set_name(input_))
+            step.add_input(
+                ee.create_input_builder()
+                .set_name(input_)
+                .set_transmitter_factory(transmitted_factory)
+            )
         for output in step_def["outputs"]:
-            step.add_output(ee.create_output_builder().set_name(output))
+            step.add_output(
+                ee.create_output_builder()
+                .set_name(output)
+                .set_transmitter_factory(non_transmitted_factory)
+            )
         real.add_step(step)
 
     ensemble = ee.create_ensemble_builder().add_realization(real).build()
