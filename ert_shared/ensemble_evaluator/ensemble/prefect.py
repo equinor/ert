@@ -22,7 +22,10 @@ from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.config import (
+    EvaluatorServerConfig,
+    EvaluatorServerConfigInfo,
+)
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.port_handler import find_available_port
@@ -196,21 +199,23 @@ class PrefectEnsemble(_Ensemble):
 
     def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
-        self._ee_config = config
+        self._ee_config = config.get_info()
 
+        # everything in self will be pickled since we bind a member function in target
         ctx = self._get_multiprocessing_context()
-        self._eval_proc = ctx.Process(
-            target=self._evaluate,
-            args=(ee_id, config.dispatch_uri, config.token, config.cert),
-        )
+        self._eval_proc = ctx.Process(target=self._evaluate)
         self._eval_proc.daemon = True
         self._eval_proc.start()
         self._allow_cancel.set()
 
-    def _evaluate(self, ee_id, dispatch_uri, token, cert):
+    def _evaluate(self):
         asyncio.set_event_loop(asyncio.get_event_loop())
         try:
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(
+                self._ee_config.dispatch_uri,
+                self._ee_config.token,
+                self._ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STARTED,
@@ -218,10 +223,18 @@ class PrefectEnsemble(_Ensemble):
                     },
                 )
                 c.send(to_json(event).decode())
-            with prefect.context(url=dispatch_uri, token=token, cert=cert):
-                self.run_flow(ee_id)
+            with prefect.context(
+                url=self._ee_config.dispatch_uri,
+                token=self._ee_config.token,
+                cert=self._ee_config.cert,
+            ):
+                self.run_flow(self._ee_id)
 
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(
+                self._ee_config.dispatch_uri,
+                self._ee_config.token,
+                self._ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_STOPPED,
@@ -236,7 +249,11 @@ class PrefectEnsemble(_Ensemble):
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
             )
-            with Client(dispatch_uri, token, cert) as c:
+            with Client(
+                self._ee_config.dispatch_uri,
+                self._ee_config.token,
+                self._ee_config.cert,
+            ) as c:
                 event = CloudEvent(
                     {
                         "type": ids.EVTYPE_ENSEMBLE_FAILED,
