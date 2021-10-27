@@ -139,12 +139,15 @@ class _Proc(threading.Thread):
         """It doesn't seem to be possible to check whether a server has been started
         other than looking for files that were created during the startup process.
         Due to possible race-condition we do a retry if file is present to make sure
-        we have waited long enough before sys.exit
+        we have waited long enough before sys.exit. In the _do_shutdown() we are
+        waiting a possible 10 seconds after the termination so we need to wait at
+        least that amount of time.
         """
-        for i in range(3):
+        for i in range(20):
             if (Path.cwd() / f"{self._service_name}_server.json").exists():
                 print(
-                    f"{self._service_name}_server.json is present on this location. Retry {i}"
+                    f"{self._service_name}_server.json is present on this location. "
+                    f"Retry {i+1}"
                 )
                 time.sleep(1)
 
