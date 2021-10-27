@@ -14,7 +14,7 @@ extern "C" {
 
 typedef struct ies_enkf_data_struct ies_enkf_data_type;
 
-void *ies_enkf_data_alloc(rng_type *rng);
+void *ies_enkf_data_alloc();
 void ies_enkf_data_free(void *arg);
 
 void ies_enkf_data_set_iteration_nr(ies_enkf_data_type *data, int iteration_nr);

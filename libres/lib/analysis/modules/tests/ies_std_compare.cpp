@@ -26,7 +26,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
     ies_enkf_data_type *ies_data1 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc(rng));
+        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
     ies_enkf_config_type *ies_config1 = ies_enkf_data_get_config(ies_data1);
     std_enkf_data_type *std_data =
         static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
