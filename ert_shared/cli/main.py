@@ -93,4 +93,4 @@ def run_cli(args):
 
     if model.hasRunFailed():
         clear_global_state()
-        raise ErtCliError  # the monitor has already reported the error message
+        raise ErtCliError(model.getFailMessage())
