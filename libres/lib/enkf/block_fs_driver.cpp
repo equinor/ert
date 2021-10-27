@@ -16,11 +16,6 @@
    for more details.
 */
 
-#include <filesystem>
-#include <cstdio>
-
-namespace fs = std::filesystem;
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -395,27 +390,24 @@ void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
                                fs_driver_enum driver_type, int num_fs,
                                const char *ens_path_fmt, const char *filename) {
 
-    std::fwrite(&driver_type, sizeof driver_type, 1, stream);
-    std::fwrite(&num_fs, sizeof num_fs, 1, stream);
-
+    util_fwrite_int(driver_type, stream);
+    util_fwrite_int(num_fs, stream);
     {
-        std::string mountfile_fmt = std::string(ens_path_fmt) +
-                                    std::string(1, UTIL_PATH_SEP_CHAR) +
-                                    std::string(filename) + std::string(".mnt");
-
-        int len = mountfile_fmt.length();
-        std::fwrite(&len, sizeof len, 1, stream);
-        std::fwrite(mountfile_fmt.c_str(), sizeof(char), len + 1, stream);
+        char *mountfile_fmt = util_alloc_sprintf("%s%c%s.mnt", ens_path_fmt,
+                                                 UTIL_PATH_SEP_CHAR, filename);
+        util_fwrite_string(mountfile_fmt, stream);
+        free(mountfile_fmt);
     }
 
     for (int ifs = 0; ifs < num_fs; ifs++) {
-        char *path_fmt;
-        asprintf(&path_fmt, ens_path_fmt, ifs);
+        char *path_fmt = util_alloc_sprintf("%s%c%s", mount_point,
+                                            UTIL_PATH_SEP_CHAR, ens_path_fmt);
+        char *ens_path = util_alloc_sprintf(path_fmt, ifs);
 
-        fs::path ens_path = fs::path(mount_point) / fs::path(path_fmt);
-        fs::create_directories(ens_path);
+        util_make_path(ens_path);
 
         free(path_fmt);
+        free(ens_path);
     }
 }
 
