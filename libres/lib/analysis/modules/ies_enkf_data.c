@@ -44,7 +44,7 @@ struct ies_enkf_data_struct {
 UTIL_SAFE_CAST_FUNCTION(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
 
-void *ies_enkf_data_alloc(rng_type *rng) {
+void *ies_enkf_data_alloc() {
     ies_enkf_data_type *data = util_malloc(sizeof *data);
     UTIL_TYPE_ID_INIT(data, IES_ENKF_DATA_TYPE_ID);
     data->iteration_nr = 0;
