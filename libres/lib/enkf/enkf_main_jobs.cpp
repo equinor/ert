@@ -471,7 +471,8 @@ enkf_main_std_scale_correlated_obs_JOB(void *self,
         const auto *state_map = enkf_fs_get_state_map(fs);
         auto *has_data_mask =
             bool_vector_alloc(state_map_get_size(state_map), false);
-        state_map_select_matching(state_map, has_data_mask, STATE_HAS_DATA);
+        state_map_select_matching(state_map, has_data_mask, STATE_HAS_DATA,
+                                  true);
         auto *realizations = bool_vector_alloc_active_list(has_data_mask);
         bool_vector_free(has_data_mask);
 

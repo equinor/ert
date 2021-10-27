@@ -850,7 +850,7 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
 
-    state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA);
+    state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     {
         FILE *log_stream = enkf_main_log_step_list(enkf_main, step_list);
         double global_std_scaling =

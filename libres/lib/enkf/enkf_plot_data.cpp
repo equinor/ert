@@ -116,7 +116,7 @@ void enkf_plot_data_load(enkf_plot_data_type *plot_data, enkf_fs_type *fs,
         mask = bool_vector_alloc_copy(input_mask);
     else
         mask = bool_vector_alloc(ens_size, false);
-    state_map_select_matching(state_map, mask, STATE_HAS_DATA);
+    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
 
     enkf_plot_data_resize(plot_data, ens_size);
     enkf_plot_data_reset(plot_data);
