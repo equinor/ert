@@ -210,9 +210,9 @@ bool state_map_fread(state_map_type *map, const char *filename) {
   NB: This function does *not* resize select_target vector; i.e. realizations
   beyond the size of the select_target vector will not be selected.
 */
-static void state_map_select_matching__(const state_map_type *map,
-                                        bool_vector_type *select_target,
-                                        int select_mask, bool select) {
+void state_map_select_matching(const state_map_type *map,
+                               bool_vector_type *select_target, int select_mask,
+                               bool select) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
         {
@@ -227,18 +227,6 @@ static void state_map_select_matching__(const state_map_type *map,
         }
         pthread_rwlock_unlock(&map->rw_lock);
     }
-}
-
-void state_map_select_matching(const state_map_type *map,
-                               bool_vector_type *select_target,
-                               int select_mask) {
-    state_map_select_matching__(map, select_target, select_mask, true);
-}
-
-void state_map_deselect_matching(const state_map_type *map,
-                                 bool_vector_type *select_target,
-                                 int select_mask) {
-    state_map_select_matching__(map, select_target, select_mask, false);
 }
 
 static void state_map_set_from_mask__(state_map_type *map,

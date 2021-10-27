@@ -47,11 +47,8 @@ bool state_map_equal(const state_map_type *map1, const state_map_type *map2);
 void state_map_fwrite(const state_map_type *map, const char *filename);
 bool state_map_fread(state_map_type *map, const char *filename);
 void state_map_select_matching(const state_map_type *map,
-                               bool_vector_type *select_target,
-                               int select_mask);
-void state_map_deselect_matching(const state_map_type *map,
-                                 bool_vector_type *select_target,
-                                 int select_mask);
+                               bool_vector_type *select_target, int select_mask,
+                               bool select);
 void state_map_set_from_inverted_mask(state_map_type *map,
                                       const bool_vector_type *mask,
                                       realisation_state_enum state);
