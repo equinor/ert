@@ -35,7 +35,7 @@ def _run(
             ]:
                 monitor.signal_done()
                 if event.data.get("status") == ENSEMBLE_STATE_FAILED:
-                    raise RuntimeError("AFAIUU")
+                    raise RuntimeError("Ensemble evaluation failed")
             if event["type"] == EVTYPE_EE_TERMINATED and isinstance(event.data, bytes):
                 result = pickle.loads(event.data)
 
