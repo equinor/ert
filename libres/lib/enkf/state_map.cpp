@@ -215,18 +215,16 @@ void state_map_select_matching(const state_map_type *map,
                                bool select) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
-        {
-            const int *map_ptr = int_vector_get_ptr(map->state);
-            int size = util_int_min(int_vector_size(map->state),
-                                    bool_vector_size(select_target));
-            for (int i = 0; i < size; i++) {
-                int state_value = map_ptr[i];
-                if (state_value & select_mask)
-                    bool_vector_iset(select_target, i, select);
-            }
+        const int *map_ptr = int_vector_get_ptr(map->state);
+        int size = util_int_min(int_vector_size(map->state),
+                                bool_vector_size(select_target));
+        for (int i = 0; i < size; i++) {
+            int state_value = map_ptr[i];
+            if (state_value & select_mask)
+                bool_vector_iset(select_target, i, select);
         }
-        pthread_rwlock_unlock(&map->rw_lock);
     }
+    pthread_rwlock_unlock(&map->rw_lock);
 }
 
 static void state_map_set_from_mask__(state_map_type *map,
