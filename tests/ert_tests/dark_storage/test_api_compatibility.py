@@ -53,9 +53,9 @@ def test_graphql(env):
     assert expect == actual
 
 
-def test_response_comparison(
-    dark_storage_client, poly_example_new_storage, new_storage_client
-):
+def test_response_comparison(run_poly_example_new_storage):
+    new_storage_client, dark_storage_client = run_poly_example_new_storage
+
     # Compare ensembles
     new_storage_resp: Response = new_storage_client.post(
         "/gql",
