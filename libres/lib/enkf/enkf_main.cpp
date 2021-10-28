@@ -1275,14 +1275,6 @@ bool enkf_main_UPDATE(enkf_main_type *enkf_main,
     return true;
 }
 
-static bool enkf_main_smoother_update__(enkf_main_type *enkf_main,
-                                        const int_vector_type *step_list,
-                                        enkf_fs_type *source_fs,
-                                        enkf_fs_type *target_fs) {
-    return enkf_main_UPDATE(enkf_main, step_list, source_fs, target_fs, 0,
-                            SMOOTHER_RUN);
-}
-
 bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                                enkf_fs_type *source_fs,
                                enkf_fs_type *target_fs) {
@@ -1299,7 +1291,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
 
     step_list = enkf_main_update_alloc_step_list(enkf_main, 0, step2, stride);
     update_done =
-        enkf_main_smoother_update__(enkf_main, step_list, source_fs, target_fs);
+        enkf_main_UPDATE(enkf_main, step_list, source_fs, target_fs, 0, SMOOTHER_RUN);
     int_vector_free(step_list);
 
     return update_done;
