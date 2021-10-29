@@ -1166,7 +1166,7 @@ static void lsf_driver_set_internal_submit(lsf_driver_type *driver) {
     /* The BSUB_QUEUE variable must NOT be set when using the shell
      function, because then stdout is redirected and read. */
 
-    util_setenv("BSUB_QUIET", "yes");
+    res_env_setenv("BSUB_QUIET", "yes");
     driver->submit_method = LSF_SUBMIT_INTERNAL;
     free(driver->remote_lsf_server);
     driver->remote_lsf_server = NULL;
