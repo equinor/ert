@@ -41,6 +41,8 @@ def test_target_case_equal_current_case(tmpdir, source_root):
                 "--target-case",
                 "test_case",
                 "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
 
@@ -74,6 +76,8 @@ def test_runpath_file(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16,32,64",
                 "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
 
@@ -101,6 +105,8 @@ def test_ensemble_evaluator(tmpdir, source_root):
                 "1,2,4,8,16,32,64",
                 "--disable-ensemble-evaluator",
                 "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -130,6 +136,8 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
                 "--realizations",
                 "1,2,4,8,16,32,64",
                 "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
@@ -148,7 +156,15 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
 
     with tmpdir.as_cwd():
         parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(parser, [TEST_RUN_MODE, "poly_example/poly.ert"])
+        parsed = ert_parser(
+            parser,
+            [
+                TEST_RUN_MODE,
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
         run_cli(parsed)
 
     monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
@@ -179,7 +195,15 @@ def test_cli_test_connection_error(tmpdir, source_root, capsys):
     ):
         with tmpdir.as_cwd():
             parser = ArgumentParser(prog="test_main")
-            parsed = ert_parser(parser, [TEST_RUN_MODE, "poly_example/poly.ert"])
+            parsed = ert_parser(
+                parser,
+                [
+                    TEST_RUN_MODE,
+                    "poly_example/poly.ert",
+                    "--port-range",
+                    "1024-65535",
+                ],
+            )
             with pytest.raises(ErtCliError):
                 run_cli(parsed)
 

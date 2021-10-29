@@ -139,8 +139,8 @@ def test_generator(unused_tcp_port, ws):
                 break
 
 
-def test_secure_echo(unused_tcp_port, ws):
-    custom_port_range = range(unused_tcp_port, unused_tcp_port)
+def test_secure_echo(ws):
+    custom_port_range = range(1024, 65535)
     config = EvaluatorServerConfig(custom_port_range=custom_port_range)
 
     async def handler(websocket, path):
@@ -149,15 +149,15 @@ def test_secure_echo(unused_tcp_port, ws):
 
     ws(
         config.host,
-        unused_tcp_port,
+        config.port,
         handler,
         ssl=config.get_server_ssl_context(),
         sock=config.get_socket(),
     )
     with ExitStack() as stack:
         duplexer = SyncWebsocketDuplexer(
-            f"wss://{config.host}:{unused_tcp_port}",
-            f"wss://{config.host}:{unused_tcp_port}",
+            f"wss://{config.host}:{config.port}",
+            f"wss://{config.host}:{config.port}",
             cert=config.cert,
             token=None,
         )

@@ -36,6 +36,8 @@ def test_run_mocked_lsf_queue(poly_case_context):
         [
             ENSEMBLE_EXPERIMENT_MODE,
             "poly_example/poly.ert",
+            "--port-range",
+            "1024-65535",
         ],
     )
 
@@ -62,6 +64,8 @@ def test_mock_bsub_fail_random(poly_case_context):
         [
             ENSEMBLE_EXPERIMENT_MODE,
             "poly_example/poly.ert",
+            "--port-range",
+            "1024-65535",
         ],
     )
 

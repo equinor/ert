@@ -51,7 +51,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         "start_iteration": 0,
         "weights": [1],
         "analysis_module": "some_module",
-        "ee_config": EvaluatorServerConfig(),
+        "ee_config": EvaluatorServerConfig(custom_port_range=range(1024, 65535)),
     }
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()

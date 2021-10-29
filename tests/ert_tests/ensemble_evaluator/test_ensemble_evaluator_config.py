@@ -23,7 +23,7 @@ def test_load_config(unused_tcp_port):
     assert not sock._closed
     sock.close()
 
-    ee_config = EvaluatorServerConfig()
+    ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
     sock = ee_config.get_socket()
     assert sock is not None
     assert not sock._closed

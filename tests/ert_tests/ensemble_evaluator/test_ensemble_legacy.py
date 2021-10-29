@@ -9,9 +9,9 @@ from ert_shared.status.entity import state
 
 
 @pytest.mark.timeout(60)
-def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
+def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
     num_reals = 2
-    custom_port_range = range(unused_tcp_port, unused_tcp_port)
+    custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(custom_port_range=custom_port_range)
@@ -33,9 +33,9 @@ def test_run_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
 
 
 @pytest.mark.timeout(60)
-def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_builder):
+def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
     num_reals = 10
-    custom_port_range = range(unused_tcp_port, unused_tcp_port)
+    custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=5).build()
         config = EvaluatorServerConfig(custom_port_range=custom_port_range)
@@ -53,9 +53,9 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, unused_tcp_port, make_ensemble_b
 
 
 @pytest.mark.timeout(60)
-def test_run_legacy_ensemble_exception(tmpdir, unused_tcp_port, make_ensemble_builder):
+def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
     num_reals = 2
-    custom_port_range = range(unused_tcp_port, unused_tcp_port)
+    custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(custom_port_range=custom_port_range)

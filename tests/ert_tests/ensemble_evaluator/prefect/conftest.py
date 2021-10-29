@@ -322,9 +322,8 @@ def function_ensemble_builder_factory(
 
 
 @pytest.fixture()
-def evaluator_config(unused_tcp_port):
-    fixed_port = range(unused_tcp_port, unused_tcp_port)
-    return EvaluatorServerConfig(custom_port_range=fixed_port)
+def evaluator_config():
+    return EvaluatorServerConfig(custom_port_range=range(1024, 65535))
 
 
 class MockWSMonitor:

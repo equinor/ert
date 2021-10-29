@@ -18,6 +18,7 @@ class InvalidHostException(Exception):
 def find_available_port(
     custom_host: Optional[str] = None,
     custom_range: Optional[range] = None,
+    reuse_addr: bool = False,
 ) -> Tuple[str, int, socket.socket]:
     current_host = custom_host if custom_host is not None else _get_ip_address()
     current_range = (
@@ -28,7 +29,9 @@ def find_available_port(
             return (
                 current_host,
                 current_range.start,
-                _bind_socket(host=current_host, port=current_range.start),
+                _bind_socket(
+                    host=current_host, port=current_range.start, reuse_addr=reuse_addr
+                ),
             )
         except PortAlreadyInUseException:
             pass
@@ -38,7 +41,11 @@ def find_available_port(
             try:
                 attempts += 1
                 num = random.randrange(current_range.start, current_range.stop)
-                return current_host, num, _bind_socket(host=current_host, port=num)
+                return (
+                    current_host,
+                    num,
+                    _bind_socket(host=current_host, port=num, reuse_addr=reuse_addr),
+                )
             except PortAlreadyInUseException:
                 continue
 

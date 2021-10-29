@@ -188,7 +188,6 @@ def test_tracking(
     assert_present_in_snapshot,
     tmpdir,
     source_root,
-    unused_tcp_port,
 ):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", f"{experiment_folder}"),
@@ -218,7 +217,7 @@ def test_tracking(
 
         ee_config = None
         if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = EvaluatorServerConfig(range(unused_tcp_port, unused_tcp_port))
+            ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
             argument.update({"ee_config": ee_config})
 
         thread = threading.Thread(
