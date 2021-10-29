@@ -223,13 +223,6 @@ class ForwardModelFormattedPrintTest(ResTest):
 
     JOBS_JSON_FILE = "jobs.json"
 
-    @classmethod
-    def setUpClass(cls):
-        # Make all executable paths absolute
-        for job in joblist:
-            if not os.path.isabs(job["executable"]):
-                job["executable"] = os.path.join(os.getcwd(), job["executable"])
-
     def validate_ext_job(self, ext_job, ext_job_config):
         zero_if_none = lambda x: 0 if x is None else x
 
@@ -268,6 +261,12 @@ class ForwardModelFormattedPrintTest(ResTest):
                 )
 
     def generate_job_from_dict(self, ext_job_config, private=True):
+        import copy
+
+        ext_job_config = copy.deepcopy(ext_job_config)
+        ext_job_config["executable"] = os.path.join(
+            os.getcwd(), ext_job_config["executable"]
+        )
         ext_job = _generate_job(
             ext_job_config["name"],
             ext_job_config["executable"],
@@ -329,6 +328,8 @@ class ForwardModelFormattedPrintTest(ResTest):
                         create_std_file(job, std=key, job_index=job_index),
                         loaded_job[key],
                     )
+                elif key is "executable":
+                    assert job[key] in loaded_job[key]
                 else:
                     self.assertEqual(job[key], loaded_job[key])
 
