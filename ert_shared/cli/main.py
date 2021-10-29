@@ -77,7 +77,7 @@ def run_cli(args):
 
     tracker = create_tracker(model, detailed_interval=0, ee_config=ee_config)
 
-    out = open(os.devnull, "w") if args.disable_monitoring else sys.stdout
+    out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
     monitor = Monitor(out=out, color_always=args.color_always)
 
     try:

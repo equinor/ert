@@ -208,4 +208,4 @@ def test_cli_test_connection_error(tmpdir, source_root, capsys):
                 run_cli(parsed)
 
                 capture = capsys.readouterr()
-                assert "Connection error" in capture.out
+                assert "Connection error" in capture.err
