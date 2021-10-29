@@ -10,3 +10,4 @@ markers = [
     "unstable",
     "consumer_driven_contract_verification",
 ]
+addopts = "-n4 --dist loadscope"

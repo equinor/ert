@@ -154,12 +154,13 @@ jobs:
         sleep 3
         herbstluftwm &
         sleep 1
-        python -c "import sys; print(sys.path)"
+        rm -rf res
         pytest tests/ert_tests -sv
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
+        rm -rf res
         pytest tests/ert_tests -sv
 
     - name: Test CLI
@@ -262,7 +263,8 @@ jobs:
     - name: Run Python tests
       run: |
         # Run tests
-        pytest tests/libres_tests
+        rm -rf res
+        pytest tests/libres_tests -sv
 
 
   publish:
