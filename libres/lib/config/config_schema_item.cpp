@@ -446,7 +446,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                         }
 
                         /*
-                         * util_alloc_PATH_executable aborts if some parts of the path is
+                         * res_env_alloc_PATH_executable aborts if some parts of the path is
                          * not an existing dir, so call it only when its an absolute path
                          */
                         char *path_exe = res_env_alloc_PATH_executable(value);
