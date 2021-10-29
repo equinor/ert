@@ -5,6 +5,7 @@ import pytest
 import ert
 import ert3
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
+from ert_shared.asyncio import get_event_loop
 
 TEST_PARAMETRIZATION = [
     ([(0, 0, 0)], [[0] * 10]),
@@ -32,7 +33,7 @@ def get_inputs(coeffs):
             t.transmit_record(ert.data.NumericalRecord(data={"a": a, "b": b, "c": c}))
         )
         input_records[iens] = {record_name: t}
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
     return input_records
 
 
@@ -137,7 +138,7 @@ def test_evaluator_function(
     evaluation_records = ert3.evaluator.evaluate(ensemble)
 
     for _, transmitter_map in evaluation_records.items():
-        record = asyncio.get_event_loop().run_until_complete(
+        record = get_event_loop().run_until_complete(
             transmitter_map["polynomial_output"].load()
         )
         transmitter_map["polynomial_output"] = record.data

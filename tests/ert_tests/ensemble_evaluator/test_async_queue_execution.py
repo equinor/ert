@@ -6,6 +6,7 @@ import pytest
 import websockets
 from cloudevents.http import from_json
 
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 
@@ -38,10 +39,8 @@ async def test_happy_path(
     host = "localhost"
     url = f"ws://{host}:{unused_tcp_port}"
 
-    done = asyncio.get_event_loop().create_future()
-    mock_ws_task = asyncio.get_event_loop().create_task(
-        mock_ws(host, unused_tcp_port, done)
-    )
+    done = get_event_loop().create_future()
+    mock_ws_task = get_event_loop().create_task(mock_ws(host, unused_tcp_port, done))
     await wait_for_evaluator(base_url=url, timeout=5)
 
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()

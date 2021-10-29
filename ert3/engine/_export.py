@@ -1,10 +1,10 @@
-import asyncio
 import json
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any
 import ert
 import ert3
+from ert_shared.asyncio import get_event_loop
 
 _SOURCE_SEPARATOR = "."
 
@@ -72,7 +72,7 @@ def _prepare_export_responses(
         for iens in range(ensemble_size):
             url = f"{records_url}/{record_name}?realization_index={iens}"
             future = ert.storage.load_record(url, ert.data.RecordType.LIST_FLOAT)
-            record = asyncio.get_event_loop().run_until_complete(future)
+            record = get_event_loop().run_until_complete(future)
             outputs[record_name].append(record.data)
     return outputs
 

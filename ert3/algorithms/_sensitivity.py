@@ -1,12 +1,12 @@
-import asyncio
 from typing import Set, MutableMapping, List, Dict, Optional, Any
 
 import numpy as np
-from SALib.sample import fast_sampler
 from SALib.analyze import fast
+from SALib.sample import fast_sampler
 
-from ert3.stats import Distribution, Gaussian, Uniform
+from ert_shared.asyncio import get_event_loop
 from ert.data import RecordTransmitter, Record, NumericalRecord
+from ert3.stats import Distribution, Gaussian, Uniform
 
 
 def _build_base_records(
@@ -139,9 +139,7 @@ def fast_analyze(
         if len(transmitter_map) < 1:
             raise ValueError("Cannot analyze sensitivity with no output")
         for transmitter in transmitter_map.values():
-            records.append(
-                asyncio.get_event_loop().run_until_complete(transmitter.load())
-            )
+            records.append(get_event_loop().run_until_complete(transmitter.load()))
 
     ensemble_size = len(model_output)
     if harmonics is None:

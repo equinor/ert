@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import mimetypes
 import os
 import pathlib
@@ -10,6 +9,7 @@ from typing import Any, List, Union
 
 import pkg_resources as pkg
 import yaml
+
 import ert
 import ert3
 from ert3.config import (
@@ -19,6 +19,7 @@ from ert3.config import (
     ParametersConfig,
     StagesConfig,
 )
+from ert_shared.asyncio import get_event_loop
 from ert_shared.services import Storage
 
 _ERT3_DESCRIPTION = (
@@ -268,7 +269,7 @@ def _record(workspace: Path, args: Any) -> None:
             record_name=args.record_name,
             workspace=workspace,
         )
-        asyncio.get_event_loop().run_until_complete(future)
+        get_event_loop().run_until_complete(future)
 
     elif args.sub_record_cmd == "load":
         if args.mime_type == "guess" and not args.blob_record:

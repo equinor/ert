@@ -1,6 +1,5 @@
 import io
 import logging
-import asyncio
 from functools import partial
 from http import HTTPStatus
 from pathlib import Path
@@ -10,6 +9,7 @@ import pandas as pd
 import requests
 
 import ert
+from ert_shared.asyncio import get_event_loop
 from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)
@@ -150,7 +150,7 @@ async def _get_from_server_async(
     **kwargs: Any,
 ) -> requests.Response:
 
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
 
     # Using sync code because one of the httpx dependencies (anyio) throws an
     # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
@@ -182,7 +182,7 @@ async def _post_to_server_async(
     if headers is None:
         headers = {}
 
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
     # Using sync code because one of the httpx dependencies (anyio) throws an
     # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
     # Refactor and try to use aiohttp or httpx once the issue above is fixed
@@ -210,7 +210,7 @@ async def _put_to_server_async(
     headers: Dict[str, str],
     **kwargs: Any,
 ) -> requests.Response:
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
 
     # Using sync code because one of the httpx dependencies (anyio) throws an
     # AttributeError: module 'anyio._backends._asyncio' has no attribute 'current_time'
@@ -586,7 +586,7 @@ def get_ensemble_record(
         workspace=workspace, experiment_name=experiment_name
     )
 
-    transmitters, collection_type = asyncio.get_event_loop().run_until_complete(
+    transmitters, collection_type = get_event_loop().run_until_complete(
         _get_record_collection(
             records_url=records_url,
             record_name=record_name,
@@ -595,7 +595,7 @@ def get_ensemble_record(
         )
     )
     records = tuple(
-        asyncio.get_event_loop().run_until_complete(transmitter.load())
+        get_event_loop().run_until_complete(transmitter.load())
         for transmitter in transmitters
     )
     return ert.data.RecordCollection(

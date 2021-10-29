@@ -1,9 +1,9 @@
-import asyncio
 import collections
 
 import pytest
 
 import ert
+from ert_shared.asyncio import get_event_loop
 
 
 @pytest.mark.requires_ert_storage
@@ -142,7 +142,7 @@ def test_add_and_get_ensemble_record(
         record_name="my_ensemble_record",
         workspace=tmpdir,
     )
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
 
     res = ert.storage.get_ensemble_record(
         workspace=tmpdir,
@@ -178,7 +178,7 @@ def test_add_and_get_uniform_ensemble_record(
         record_name="my_ensemble_record",
         workspace=tmpdir,
     )
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
 
     res = ert.storage.get_ensemble_record(
         workspace=tmpdir, record_name="my_ensemble_record", ensemble_size=ens_size
@@ -198,7 +198,7 @@ def test_add_ensemble_record_twice(tmpdir, raw_ensrec_to_records, ert_storage):
         record_name="my_ensemble_record",
         workspace=tmpdir,
     )
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
 
     with pytest.raises(
         ert.exceptions.ElementExistsError,
@@ -208,7 +208,7 @@ def test_add_ensemble_record_twice(tmpdir, raw_ensrec_to_records, ert_storage):
             record_name="my_ensemble_record",
             workspace=tmpdir,
         )
-        asyncio.get_event_loop().run_until_complete(future)
+        get_event_loop().run_until_complete(future)
 
 
 @pytest.mark.requires_ert_storage
@@ -244,7 +244,7 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
                     ]
                 )
             )
-            asyncio.get_event_loop().run_until_complete(
+            get_event_loop().run_until_complete(
                 ert.storage.transmit_record_collection(
                     record_coll=ensemble_record,
                     record_name=name,
@@ -283,7 +283,7 @@ def test_add_ensemble_record_to_non_existing_experiment(
         ert.exceptions.NonExistantExperiment,
         match="Experiment non_existing_experiment does not exist",
     ):
-        asyncio.get_event_loop().run_until_complete(
+        get_event_loop().run_until_complete(
             ert.storage.transmit_record_collection(
                 record_coll=ert.data.RecordCollection(
                     records=raw_ensrec_to_records([{"data": [0, 1, 2]}])
@@ -337,7 +337,7 @@ def test_get_record_names(tmpdir, ert_storage):
                 experiment_name=experiment,
             )
 
-            asyncio.get_event_loop().run_until_complete(future)
+            get_event_loop().run_until_complete(future)
             experiment_records[str(experiment)].append(name)
 
             recnames = ert.storage.get_ensemble_record_names(

@@ -1,4 +1,3 @@
-import asyncio
 from datetime import timedelta
 from pathlib import Path
 import pickle
@@ -12,6 +11,7 @@ from functools import partial
 import ert
 from ert_utils import tmp
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
 
@@ -67,7 +67,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
 @pytest.fixture()
 def step_test_script_transmitter(test_data_path, transmitter_factory, script_name):
     script_transmitter = transmitter_factory("script")
-    asyncio.get_event_loop().run_until_complete(
+    get_event_loop().run_until_complete(
         script_transmitter.transmit_file(
             test_data_path / script_name, mime="application/octet-stream"
         )
@@ -112,7 +112,7 @@ def assert_prefect_flow_run(
         assert expected_uri == output_uri
         # If function-step: Check result
         if step_type == "function":
-            transmitted_record = asyncio.get_event_loop().run_until_complete(
+            transmitted_record = get_event_loop().run_until_complete(
                 task_result.result[output_name].load()
             )
             transmitted_result = transmitted_record.data

@@ -1,13 +1,13 @@
 import asyncio
 from typing import Any, Dict
 from pathlib import Path
-import stat
 import subprocess
 import tempfile
 import os
-import json
 
 import prefect
+
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
@@ -85,7 +85,7 @@ class UnixTask(prefect.Task):
                     location=input_.get_path(),
                 )
             )
-        asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     def run(self, inputs=None):
         with tempfile.TemporaryDirectory() as run_path:
@@ -120,7 +120,7 @@ class UnixTask(prefect.Task):
                             location=output.get_path(),
                         )
                     )
-                asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+                get_event_loop().run_until_complete(asyncio.gather(*futures))
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_SUCCESS,
                     ev_source=self._step.get_source(self._ee_id),

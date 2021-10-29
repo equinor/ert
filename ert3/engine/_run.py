@@ -4,6 +4,7 @@ from typing import Dict, Tuple, List
 import ert
 import ert3
 from ert3.config import SourceNS
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 from ._sensitivity import (
     analyze_sensitivity,
@@ -36,7 +37,7 @@ def _gather_transmitter_maps(
     futures: List[TransmitterCoroutine],
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     map_: Dict[int, Dict[str, ert.data.RecordTransmitter]] = {}
-    res = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    res = get_event_loop().run_until_complete(asyncio.gather(*futures))
     for iens_to_trans_map in res:
         for iens, trans_map in iens_to_trans_map.items():
             if iens not in map_:
