@@ -191,7 +191,8 @@ class EvaluatorServerConfig:
             tempfile.tempdir = backup_default_tmp
 
 
-class EvaluatorServerConfigInfo(BaseModel):
-    dispatch_uri: str
-    token: str
-    cert: str
+class EvaluatorServerConfigInfo:
+    def __init__(self, dispatch_uri: str, token: str, cert: str):
+        self.dispatch_uri = dispatch_uri
+        self.token = token
+        self.cert = cert
