@@ -19,7 +19,7 @@ class _DummyService(BaseService):
     service_name = "dummy"
 
     def __init__(self, exec_args, *args, **kwargs):
-        super().__init__(exec_args=exec_args, timeout=5, *args, **kwargs)
+        super().__init__(exec_args=exec_args, timeout=10, *args, **kwargs)
 
     def start(self):
         """Helper function for non-singleton testing"""
@@ -121,7 +121,7 @@ def test_long_lived(server, tmp_path):
 
 @pytest.mark.script(
     """\
-time.sleep(10)
+time.sleep(30)
 sys.exit(2)
 """
 )
@@ -204,7 +204,7 @@ os.close(fd)
 )
 def test_singleton_connect(server_script):
     with _DummyService.start_server(exec_args=[str(server_script)]) as server:
-        client = _DummyService.connect(timeout=5)
+        client = _DummyService.connect(timeout=30)
         assert server is client
 
 
@@ -229,7 +229,7 @@ def test_singleton_connect_early(server_script, tmp_path):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(timeout=5)
+                self.client = _DummyService.connect(timeout=30)
             except Exception as ex:
                 self.exception = ex
             ready_event.set()

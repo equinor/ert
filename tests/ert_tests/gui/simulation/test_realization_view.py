@@ -28,7 +28,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
 
     qtbot.addWidget(widget)
 
-    with qtbot.waitActive(widget):
+    with qtbot.waitActive(widget, timeout=30000):
         model = SnapshotModel()
         model._add_snapshot(SnapshotModel.prerender(small_snapshot), iter)
 
@@ -46,7 +46,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         print(mock_delegate._max_id)
         qtbot.waitUntil(
             lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
-            timeout=5000,
+            timeout=30000,
         )
 
 
@@ -65,7 +65,7 @@ def test_selection_success(large_snapshot, qtbot):
     widget.resize(800, 600)
     widget.move(0, 0)
 
-    with qtbot.waitActive(widget):
+    with qtbot.waitActive(widget, timeout=30000):
         widget.show()
 
     selection_id = 22
@@ -78,7 +78,7 @@ def test_selection_success(large_snapshot, qtbot):
         return isinstance(node, Node) and str(node.id) == str(selection_id)
 
     with qtbot.waitSignal(
-        widget.currentChanged, timeout=5000, check_params_cb=check_selection_cb
+        widget.currentChanged, timeout=30000, check_params_cb=check_selection_cb
     ):
         qtbot.mouseClick(
             widget._real_view.viewport(),
