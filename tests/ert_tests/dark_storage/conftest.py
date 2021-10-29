@@ -36,6 +36,8 @@ def poly_example_tmp_dir(
                 "--realizations",
                 "1,2,4",
                 "poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
         run_cli(parsed)
@@ -67,6 +69,8 @@ def poly_example_new_storage(monkeypatch, new_storage_client, tmpdir, source_roo
                 "--realizations",
                 "1,3,5",
                 "poly.ert",
+                "--port-range",
+                "1024-65535",
             ],
         )
         run_cli(parsed)

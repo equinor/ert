@@ -189,7 +189,7 @@ def _dump_ext_job(ext_job, index):
 @pytest.fixture
 def make_ee_config():
     def _ee_config(**kwargs):
-        return EvaluatorServerConfig(custom_port_range=range(60000, 65000), **kwargs)
+        return EvaluatorServerConfig(custom_port_range=range(1024, 65535), **kwargs)
 
     return _ee_config
 
