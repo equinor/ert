@@ -1,11 +1,35 @@
-from ert_data import loader as loader
 import pandas as pd
+import logging
+
+from typing import List
+
+from ert_data import loader as loader
 from ert_data.measured import MeasuredData
+from ert_shared.services import Storage
+
+logger = logging.getLogger(__name__)
 
 
 class PlotApi(object):
     def __init__(self, facade):
         self._facade = facade
+
+    def _get_all_cases(self) -> List[str]:
+        cases = []
+        with Storage.session() as client:
+            try:
+                response = client.get("/experiments")
+                experiments = response.json()
+                for experiment in experiments:
+                    for ensemble_id in experiment["ensemble_ids"]:
+                        response = client.get(f"/ensembles/{ensemble_id}")
+                        response_json = response.json()
+                        case_name = response_json["userdata"]["name"]
+                        cases.append(case_name)
+                return cases
+            except Exception as e:
+                logging.exception(f"Could not retrieve case information! {str(e)}")
+                return []
 
     def all_data_type_keys(self):
         """Returns a list of all the keys except observation keys. For each key a dict is returned with info about
@@ -37,19 +61,17 @@ class PlotApi(object):
             meta["data_origin"] = "GEN_KW"
         return meta
 
-    def get_all_cases_not_running(self):
+    def get_all_cases_not_running(self) -> List:
         """Returns a list of all cases that are not running. For each case a dict with info about the case is
         returned"""
-        facade = self._facade
-        return [
-            {
-                "name": case,
-                "hidden": facade.is_case_hidden(case),
-                "has_data": facade.case_has_data(case),
-            }
-            for case in facade.cases()
-            if not facade.is_case_running(case)
-        ]
+        # Currently the ensemble information from the storage API does not contain any hint if a case is running or not
+        # for now we return all the cases, running or not
+        cases = []
+
+        for name in self._get_all_cases():
+            case = dict(name=name, hidden=name.startswith("."))
+            cases.append(case)
+        return cases
 
     def data_for_key(self, case, key):
         """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is

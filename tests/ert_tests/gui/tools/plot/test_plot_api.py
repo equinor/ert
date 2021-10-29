@@ -1,12 +1,12 @@
 import os
 import shutil
 from unittest import TestCase
-
+from unittest.mock import MagicMock
 import pytest
 from utils import SOURCE_DIR
 from ert_utils import tmpdir
 from pandas import DataFrame
-
+from ert_shared.services import Storage
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
@@ -218,6 +218,15 @@ class PlotApiTest(TestCase):
                 self.assertEqual(0, len(key_def["observations"]))
 
 
+class MockResponse:
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status_code = status_code
+
+    def json(self):
+        return self.json_data
+
+
 def test_key_def_structure(api):
     shutil.rmtree("storage", ignore_errors=True)
     key_defs = api.all_data_type_keys()
@@ -236,13 +245,48 @@ def test_key_def_structure(api):
     assert fopr == expected
 
 
-def test_case_structure(api):
-    cases = api.get_all_cases_not_running()
-    case = next(x for x in cases if x["name"] == "default_0")
+def mocked_requests_get(*args, **kwargs):
+    ensemble = {
+        "/ensembles/ens_id_1": {"name": "ensemble_1"},
+        "/ensembles/ens_id_2": {"name": ".ensemble_2"},
+    }
 
-    expected = {"has_data": True, "hidden": False, "name": "default_0"}
+    if args[0] in ensemble:
+        return MockResponse({"userdata": ensemble[args[0]]}, 200)
+    elif "/experiments" in args[0]:
+        return MockResponse(
+            [
+                {
+                    "name": "default",
+                    "id": "exp_1",
+                    "ensemble_ids": ["ens_id_1", "ens_id_2"],
+                    "priors": {},
+                    "userdata": {},
+                }
+            ],
+            200,
+        )
 
-    assert case == expected
+    return MockResponse(None, 404)
+
+
+def test_case_structure(api, monkeypatch):
+    from contextlib import contextmanager
+
+    @contextmanager
+    def session():
+        yield MagicMock(get=mocked_requests_get)
+
+    monkeypatch.setattr(Storage, "session", session)
+
+    cases = [case["name"] for case in api.get_all_cases_not_running()]
+    hidden_case = [
+        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
+    ]
+    expected = ["ensemble_1", ".ensemble_2"]
+
+    assert cases == expected
+    assert hidden_case == [".ensemble_2"]
 
 
 @pytest.fixture
