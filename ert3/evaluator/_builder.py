@@ -1,4 +1,3 @@
-import asyncio
 import pathlib
 from functools import partial
 from typing import Callable, Dict, Tuple, Type, cast
@@ -8,6 +7,7 @@ from pydantic import FilePath
 
 import ert
 import ert3
+from ert_shared.asyncio import get_event_loop
 
 from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
 from ert_shared.ensemble_evaluator.ensemble.builder import (
@@ -71,7 +71,7 @@ def add_commands(
             )
         else:
             raise ValueError(f"Unsupported transmitter type: {storage_type}")
-        asyncio.get_event_loop().run_until_complete(
+        get_event_loop().run_until_complete(
             transmitter.transmit_file(command.location, mime="application/octet-stream")
         )
         step.add_input(

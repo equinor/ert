@@ -6,6 +6,8 @@ from functools import partial
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
+
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from res.enkf import RunArg
@@ -64,16 +66,14 @@ class _LegacyEnsemble(_Ensemble):
                     dispatch_url, timeout_cloudevent, token=token, cert=cert
                 )
 
-        send_timeout_future = asyncio.get_event_loop().create_task(
-            send_timeout_message()
-        )
+        send_timeout_future = get_event_loop().create_task(send_timeout_message())
 
         return on_timeout, send_timeout_future
 
     def evaluate(self, config, ee_id):
         self._config = config
         self._ee_id = ee_id
-        asyncio.get_event_loop().run_until_complete(
+        get_event_loop().run_until_complete(
             wait_for_evaluator(
                 base_url=self._config.url,
                 token=self._config.token,
@@ -97,7 +97,7 @@ class _LegacyEnsemble(_Ensemble):
                     "id": str(uuid.uuid1()),
                 }
             )
-            asyncio.get_event_loop().run_until_complete(
+            get_event_loop().run_until_complete(
                 self.send_cloudevent(
                     dispatch_url, out_cloudevent, token=token, cert=cert
                 )
@@ -105,7 +105,7 @@ class _LegacyEnsemble(_Ensemble):
 
             self._job_queue = self._queue_config.create_job_queue()
 
-            timeout_queue = asyncio.Queue(loop=asyncio.get_event_loop())
+            timeout_queue = asyncio.Queue(loop=get_event_loop())
             on_timeout, send_timeout_future = self.setup_timeout_callback(timeout_queue)
 
             for real in self.get_active_reals():
@@ -150,11 +150,9 @@ class _LegacyEnsemble(_Ensemble):
                     await timeout_queue.put(None)
                     await send_timeout_future
 
-                self._aggregate_future = asyncio.get_event_loop().create_task(
-                    _run_queue()
-                )
+                self._aggregate_future = get_event_loop().create_task(_run_queue())
                 self._allow_cancel.set()
-                asyncio.get_event_loop().run_until_complete(self._aggregate_future)
+                get_event_loop().run_until_complete(self._aggregate_future)
             except asyncio.CancelledError:
                 logger.debug("cancelled aggregate future")
             else:
@@ -165,7 +163,7 @@ class _LegacyEnsemble(_Ensemble):
                         "id": str(uuid.uuid1()),
                     }
                 )
-                asyncio.get_event_loop().run_until_complete(
+                get_event_loop().run_until_complete(
                     self.send_cloudevent(
                         dispatch_url, out_cloudevent, token=token, cert=cert
                     )
@@ -182,7 +180,7 @@ class _LegacyEnsemble(_Ensemble):
                     "id": str(uuid.uuid1()),
                 }
             )
-            asyncio.get_event_loop().run_until_complete(
+            get_event_loop().run_until_complete(
                 self.send_cloudevent(
                     dispatch_url, out_cloudevent, token=token, cert=cert
                 )
@@ -214,7 +212,7 @@ class _LegacyEnsemble(_Ensemble):
                 "id": str(uuid.uuid1()),
             }
         )
-        asyncio.get_event_loop().run_until_complete(
+        get_event_loop().run_until_complete(
             self.send_cloudevent(
                 self._config.dispatch_uri,
                 out_cloudevent,

@@ -1,9 +1,9 @@
-import asyncio
-
 import json
 import pathlib
 
 import pytest
+
+from ert_shared.asyncio import get_event_loop
 from integration_utils import (
     assert_distribution,
     assert_export,
@@ -376,7 +376,7 @@ def test_run_presampled(
     future = ert.storage.transmit_record_collection(
         record_coll=coeff0, record_name="coefficients0", workspace=workspace
     )
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
 
     assert 10 == coeff0.ensemble_size
     for real_coeff in coeff0.records:
@@ -434,7 +434,7 @@ def test_run_uniform_presampled(
         record_name="uniform_coefficients0",
         workspace=workspace,
     )
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
     assert 10 == uniform_coeff0.ensemble_size
     for real_coeff in uniform_coeff0.records:
         assert sorted(("a", "b", "c")) == sorted(real_coeff.index)

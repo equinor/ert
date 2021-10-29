@@ -9,6 +9,8 @@ import ert3
 # Expected values for S1 and ST for ishigami function
 # sample_size = 15000, harmonics = 4, bounds = [-pi, pi]
 # uniform distribution
+from ert_shared.asyncio import get_event_loop
+
 ISHIGAMI_S1 = [0.3076, 0.4424, 6.351e-27]
 ISHIGAMI_ST = [0.5507, 0.4695, 0.2392]
 
@@ -85,7 +87,7 @@ def test_single_evaluation(distribution):
             t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
         )
         model_output[iens] = {"output": t}
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
@@ -120,7 +122,7 @@ def test_parameter_array():
             t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
         )
         model_output[iens] = {"output": t}
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
@@ -155,7 +157,7 @@ def test_multiple_evaluations():
             t.transmit_record(ert.data.NumericalRecord(data=ishigami_multiple(x, y, z)))
         )
         model_output[iens] = {"output": t}
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)
@@ -192,7 +194,7 @@ def test_analyse_multiple_groups():
         futures.append(t.transmit_record(ert.data.NumericalRecord(data=evaluation)))
         model_output[iens] = {"output": t}
 
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(
@@ -227,7 +229,7 @@ def test_sample_size(sample_size):
             t.transmit_record(ert.data.NumericalRecord(data=ishigami_single(x, y, z)))
         )
         model_output[iens] = {"output": t}
-    asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+    get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     analysis = ert3.algorithms.fast_analyze(parameters, model_output, harmonics)
     assert_analysis(analysis, analysis_size, param_size, parameters["xs"].index)

@@ -1,7 +1,7 @@
 from pathlib import Path
-import asyncio
 import ert
 import ert3
+from ert_shared.asyncio import get_event_loop
 
 
 def load_record(
@@ -16,7 +16,7 @@ def load_record(
         file_path=record_file, mime=record_mime, is_directory=record_is_directory
     )
     future = ert.storage.transmit_record_collection(collection, record_name, workspace)
-    asyncio.get_event_loop().run_until_complete(future)
+    get_event_loop().run_until_complete(future)
 
 
 def sample_record(

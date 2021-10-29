@@ -6,6 +6,7 @@ from http import HTTPStatus
 
 import websockets
 
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     InteractionDirection,
     _Narrative,
@@ -20,7 +21,7 @@ class NarrativeProxy(object):
         self.error = None
 
     async def _async_proxy(self, url, q):
-        self.done = asyncio.get_event_loop().create_future()
+        self.done = get_event_loop().create_future()
 
         async def handle_messages(msg_q: asyncio.Queue, done: asyncio.Future):
             try:
@@ -64,8 +65,8 @@ class NarrativeProxy(object):
                     aiohttp.ClientError("Unable to find suitable port for proxy")
                 )
 
-            asyncio.get_event_loop().run_in_executor(None, lambda: q.put(port[0]))
-            asyncio.get_event_loop().run_in_executor(None, lambda: q.put(self.done))
+            get_event_loop().run_in_executor(None, lambda: q.put(port[0]))
+            get_event_loop().run_in_executor(None, lambda: q.put(self.done))
             error = await self.done
             q.put(error)
 
@@ -74,9 +75,8 @@ class NarrativeProxy(object):
             return HTTPStatus.OK, {}, b""
 
     def _proxy(self, url, q):
-        asyncio.set_event_loop(asyncio.new_event_loop())
-        q.put(asyncio.get_event_loop())
-        asyncio.get_event_loop().run_until_complete(self._async_proxy(url, q))
+        q.put(get_event_loop())
+        get_event_loop().run_until_complete(self._async_proxy(url, q))
 
     @contextmanager
     def proxy(self, url):

@@ -21,10 +21,10 @@ from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import (
     EvaluatorServerConfig,
-    EvaluatorServerConfigInfo,
 )
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -210,7 +210,7 @@ class PrefectEnsemble(_Ensemble):
         self._allow_cancel.set()
 
     def _evaluate(self):
-        asyncio.set_event_loop(asyncio.get_event_loop())
+        get_event_loop()
         try:
             with Client(
                 self._ee_config.dispatch_uri,

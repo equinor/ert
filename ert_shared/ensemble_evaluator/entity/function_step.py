@@ -2,6 +2,8 @@ import asyncio
 import pickle
 from typing import Dict
 import prefect
+
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 
@@ -26,7 +28,7 @@ class FunctionTask(prefect.Task):
         futures = []
         for input_ in self._step.get_inputs():
             futures.append(_load(input_, transmitters[input_.get_name()]))
-        results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        results = get_event_loop().run_until_complete(asyncio.gather(*futures))
         kwargs = {result[0]: result[1].data for result in results}
         function_output = func(**kwargs)
 
@@ -45,7 +47,7 @@ class FunctionTask(prefect.Task):
             futures.append(
                 _transmit(output, transmitter, function_output[output.get_name()])
             )
-        results = asyncio.get_event_loop().run_until_complete(asyncio.gather(*futures))
+        results = get_event_loop().run_until_complete(asyncio.gather(*futures))
         transmitter_map = {result[0]: result[1] for result in results}
         return transmitter_map
 

@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 from functools import partial
 import importlib
@@ -14,6 +13,8 @@ import pytest
 import ert
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ensemble_evaluator_utils import _mock_ws
+
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
@@ -45,7 +46,7 @@ transmitter_factory_context: ContextManager[
 
 def create_input_transmitter(data, transmitter: Type[ert.data.RecordTransmitter]):
     record = ert.data.NumericalRecord(data=data)
-    asyncio.get_event_loop().run_until_complete(transmitter.transmit_record(record))
+    get_event_loop().run_until_complete(transmitter.transmit_record(record))
     return transmitter
 
 
@@ -59,7 +60,7 @@ def input_transmitter_factory(transmitter_factory):
 
 def create_script_transmitter(name: str, location: Path, transmitter_factory):
     script_transmitter = transmitter_factory(name)
-    asyncio.get_event_loop().run_until_complete(
+    get_event_loop().run_until_complete(
         script_transmitter.transmit_file(location, mime="application/octet-stream")
     )
     return script_transmitter

@@ -1,19 +1,18 @@
 import asyncio
 import base64
 import json
-import os
 import threading
 import uuid
 from asyncio.events import AbstractEventLoop
 from asyncio.queues import QueueEmpty
 from enum import Enum
 from http import HTTPStatus
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from cloudevents.sdk import types
 from websockets.server import WebSocketServer  # type: ignore
 
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 try:
@@ -386,12 +385,12 @@ class _ProviderVerifier:
             target=self._sync_listener, args=[on_connect]
         )
         self._ws_thread.start()
-        if asyncio.get_event_loop().is_running():
+        if get_event_loop().is_running():
             raise RuntimeError(
                 "sync narrative should control the loop, maybe you called verify() from within an async test?"
             )
         self._ws_thread.join()
-        errors = asyncio.get_event_loop().run_until_complete(self._collect_errors())
+        errors = get_event_loop().run_until_complete(self._collect_errors())
         if errors:
             raise AssertionError(errors)
 
@@ -462,6 +461,8 @@ class _ProviderMock:
         self._conn_info = conn_info
         self._ce_serializer = ce_serializer
 
+        # ensure there is an event loop in case we are not on main loop
+        get_event_loop()
         # A queue on which errors will be put
         self._errors: asyncio.Queue = asyncio.Queue()
 
@@ -526,11 +527,11 @@ class _ProviderMock:
     def __enter__(self):
         self._ws_thread = threading.Thread(target=self._sync_ws)
         self._ws_thread.start()
-        if asyncio.get_event_loop().is_running():
+        if get_event_loop().is_running():
             raise RuntimeError(
                 "sync narrative should control the loop, maybe you called it from within an async test?"
             )
-        asyncio.get_event_loop().run_until_complete(
+        get_event_loop().run_until_complete(
             wait_for_evaluator(self._conn_info["base_uri"])
         )
         return self
@@ -538,7 +539,7 @@ class _ProviderMock:
     def __exit__(self, *args, **kwargs):
         self._loop.call_soon_threadsafe(self._done.set_result, None)
         self._ws_thread.join()
-        errors = asyncio.get_event_loop().run_until_complete(self._verify())
+        errors = get_event_loop().run_until_complete(self._verify())
         if errors:
             raise AssertionError(errors)
 

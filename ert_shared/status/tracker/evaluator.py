@@ -1,13 +1,10 @@
-from cloudevents.http.event import CloudEvent
-from datetime import datetime
-from typing import List, Optional, Union
+from ert_shared.asyncio import get_event_loop
 from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
 )
-import itertools
 import logging
 import queue
 import threading
@@ -204,7 +201,7 @@ class EvaluatorTracker:
         # See issue: https://github.com/equinor/ert/issues/1250
         #
         try:
-            asyncio.get_event_loop().run_until_complete(
+            get_event_loop().run_until_complete(
                 wait_for_evaluator(
                     base_url=self._monitor_url,
                     token=self._token,
