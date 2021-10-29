@@ -1,2 +1,12 @@
 [build-system]
 requires = ["setuptools", "setuptools_scm", "wheel", "scikit-build", "cmake", "ninja", "ecl"]
+
+[tool.pytest.ini_options]
+markers = [
+    "requires_ert_storage",
+    "script",
+    "requires_window_manager",
+    "consumer_driven_contract_test",
+    "unstable",
+    "consumer_driven_contract_verification",
+]
