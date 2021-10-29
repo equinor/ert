@@ -13,10 +13,11 @@ class _TestWorkflowJobPrototype(ResPrototype):
 
 class WorkflowJobTest(ResTest):
     _alloc_config = _TestWorkflowJobPrototype(
-        "void* workflow_job_alloc_config()", bind=False
+        "config_parser_obj workflow_job_alloc_config()", bind=False
     )
     _alloc_from_file = _TestWorkflowJobPrototype(
-        "workflow_job_obj workflow_job_config_alloc(char*, void*, char*)", bind=False
+        "workflow_job_obj workflow_job_config_alloc( char* , config_parser , char*)",
+        bind=False,
     )
 
     def test_workflow_job_creation(self):
