@@ -146,9 +146,21 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     parameters_json = resp.json()
 
     assert len(parameters_json) == 3
-    assert parameters_json[0] == {"labels": [], "name": "COEFFS:COEFF_A"}
-    assert parameters_json[1] == {"labels": [], "name": "COEFFS:COEFF_B"}
-    assert parameters_json[2] == {"labels": [], "name": "COEFFS:COEFF_C"}
+    assert parameters_json[0] == {
+        "labels": [],
+        "name": "COEFFS:COEFF_A",
+        "userdata": {"data_origin": "GEN_KW"},
+    }
+    assert parameters_json[1] == {
+        "labels": [],
+        "name": "COEFFS:COEFF_B",
+        "userdata": {"data_origin": "GEN_KW"},
+    }
+    assert parameters_json[2] == {
+        "labels": [],
+        "name": "COEFFS:COEFF_C",
+        "userdata": {"data_origin": "GEN_KW"},
+    }
 
 
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):

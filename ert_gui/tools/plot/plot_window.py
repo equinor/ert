@@ -95,7 +95,7 @@ class PlotWindow(QMainWindow):
                 case_to_data_map = {
                     case: self._api.data_for_key(case, key) for case in cases
                 }
-                if len(key_def["observations"]) > 0 and cases:
+                if key_def["observations"] and cases:
                     observations = self._api.observations_for_key(cases[0], key)
                 else:
                     observations = None

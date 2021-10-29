@@ -14,7 +14,8 @@ def ensemble_parameter_names(ensemble_name: str) -> List[str]:
 
 def ensemble_parameters(ensemble_name: str) -> List[dict]:
     return [
-        dict(name=key, labels=[]) for key in ensemble_parameter_names(ensemble_name)
+        dict(name=key, userdata=dict(data_origin="GEN_KW"), labels=[])
+        for key in ensemble_parameter_names(ensemble_name)
     ]
 
 
