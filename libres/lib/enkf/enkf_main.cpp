@@ -810,10 +810,8 @@ static void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
 }
 
 // Opens and returns a log file.  A subroutine of enkf_main_UPDATE.
-static FILE *enkf_main_log_step_list(enkf_main_type *enkf_main,
+static FILE *enkf_main_log_step_list(const char *log_path,
                                      const int_vector_type *step_list) {
-    const char *log_path =
-        analysis_config_get_log_path(enkf_main_get_analysis_config(enkf_main));
     char *log_file;
     if (int_vector_size(step_list) == 1)
         log_file = util_alloc_sprintf("%s%c%04d", log_path, UTIL_PATH_SEP_CHAR,
@@ -852,7 +850,10 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
 
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     {
-        FILE *log_stream = enkf_main_log_step_list(enkf_main, step_list);
+        FILE *log_stream = enkf_main_log_step_list(
+            analysis_config_get_log_path(
+                enkf_main_get_analysis_config(enkf_main)),
+            step_list);
         double global_std_scaling =
             analysis_config_get_global_std_scaling(analysis_config);
         meas_data_type *meas_data = meas_data_alloc(ens_mask);
