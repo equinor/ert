@@ -1277,20 +1277,19 @@ bool enkf_main_UPDATE(enkf_main_type *enkf_main,
 bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                                enkf_fs_type *source_fs,
                                enkf_fs_type *target_fs) {
-    int stride = 1;
-    int step2;
     time_map_type *time_map = enkf_fs_get_time_map(source_fs);
-    int_vector_type *step_list;
-    bool update_done;
 
-    step2 = time_map_get_last_step(time_map);
+    int step2 = time_map_get_last_step(time_map);
     if (step2 < 0)
         step2 = model_config_get_last_history_restart(
             enkf_main_get_model_config(enkf_main));
 
-    step_list = enkf_main_update_alloc_step_list(enkf_main, 0, step2, stride);
-    update_done = enkf_main_UPDATE(enkf_main, step_list, source_fs, target_fs,
-                                   SMOOTHER_RUN);
+    int_vector_type *step_list = int_vector_alloc(0, 0);
+    for (int i = 0; i <= step2; i++)
+        int_vector_append(step_list, i);
+
+    bool update_done = enkf_main_UPDATE(enkf_main, step_list, source_fs,
+                                        target_fs, SMOOTHER_RUN);
     int_vector_free(step_list);
 
     return update_done;
@@ -1455,41 +1454,6 @@ void enkf_main_submit_jobs(enkf_main_type *enkf_main,
     for (iens = 0; iens < run_size; iens++)
         arg_pack_free(arg_pack_list[iens]);
     free(arg_pack_list);
-}
-
-/*
-   The special value stride == 0 means to just include step2.
-*/
-int_vector_type *
-enkf_main_update_alloc_step_list(const enkf_main_type *enkf_main,
-                                 int load_start, int step2, int stride) {
-    int_vector_type *step_list = int_vector_alloc(0, 0);
-
-    if (step2 < load_start)
-        util_abort(
-            "%s: fatal internal error: Tried to make step list %d ... %d\n",
-            __func__, load_start, step2);
-
-    if (stride == 0) {
-        int_vector_append(step_list, step2);
-        return step_list;
-    }
-
-    int step = util_int_max(0, load_start);
-    while (true) {
-        int_vector_append(step_list, step);
-
-        if (step == step2)
-            break;
-        else {
-            step += stride;
-            if (step >= step2) {
-                int_vector_append(step_list, step2);
-                break;
-            }
-        }
-    }
-    return step_list;
 }
 
 /*
