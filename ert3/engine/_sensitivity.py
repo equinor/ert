@@ -1,6 +1,5 @@
-import json
 import pathlib
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 import ert
 import ert3
@@ -27,27 +26,14 @@ def analyze_sensitivity(
         analysis = ert3.algorithms.fast_analyze(
             sensitivity_parameters, model_output, experiment_config.harmonics
         )
-        _store_sensitivity_analysis(
-            analysis, workspace_root, experiment_name, "fast_analysis.json"
+        ert3.workspace.export_json(
+            workspace_root, experiment_name, analysis, output_file="fast_analysis.json"
         )
     else:
         raise ValueError(
             "Unable to determine analysis step "
             f"for algorithm {experiment_config.algorithm}"
         )
-
-
-def _store_sensitivity_analysis(
-    analysis: Dict[Any, Any],
-    workspace_root: pathlib.Path,
-    experiment_name: str,
-    output_file: str,
-) -> None:
-    experiment_root = (
-        pathlib.Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
-    )
-    with open(experiment_root / output_file, "w", encoding="utf-8") as f:
-        json.dump(analysis, f)
 
 
 def transmitter_map_sensitivity(
