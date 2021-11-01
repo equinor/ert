@@ -275,13 +275,12 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
 */
 
 static vector_type *
-enkf_main_alloc_node_ensemble(const enkf_main_type *enkf_main,
-                              enkf_fs_type *src_fs, const char *key,
-                              int report_step) {
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+enkf_main_alloc_node_ensemble(const ensemble_config_type *ens_config,
+                              const int ens_size, enkf_fs_type *src_fs,
+                              const char *key, int report_step) {
     vector_type *node_ensemble = vector_alloc_new();
     const enkf_config_node_type *config_node =
-        ensemble_config_get_node(enkf_main_get_ensemble_config(enkf_main), key);
+        ensemble_config_get_node(ens_config, key);
     node_id_type node_id = {.report_step = report_step, .iens = -1};
     int iens;
 
@@ -341,12 +340,12 @@ static void enkf_main_node_std(const vector_type *ensemble,
     }
 }
 
-void enkf_main_inflate_node(enkf_main_type *enkf_main, enkf_fs_type *src_fs,
-                            enkf_fs_type *target_fs, int report_step,
+void enkf_main_inflate_node(const ensemble_config_type *ens_config,
+                            enkf_fs_type *src_fs, enkf_fs_type *target_fs,
+                            const int ens_size, int report_step,
                             const char *key, const enkf_node_type *min_std) {
-    int ens_size = enkf_main_get_ensemble_size(enkf_main);
     vector_type *ensemble = enkf_main_alloc_node_ensemble(
-        enkf_main, src_fs, key, report_step); // Was ANALYZED
+        ens_config, ens_size, src_fs, key, report_step); // Was ANALYZED
     enkf_node_type *mean =
         enkf_node_copyc((const enkf_node_type *)vector_iget_const(ensemble, 0));
     enkf_node_type *std = enkf_node_copyc(mean);
@@ -395,22 +394,24 @@ void enkf_main_inflate_node(enkf_main_type *enkf_main, enkf_fs_type *src_fs,
     direkte.
 */
 
-void enkf_main_inflate(enkf_main_type *enkf_main, enkf_fs_type *src_fs,
-                       enkf_fs_type *target_fs, int report_step,
+void enkf_main_inflate(const ensemble_config_type *ens_config,
+                       enkf_fs_type *src_fs, enkf_fs_type *target_fs,
+                       const int ens_size, int report_step,
                        hash_type *use_count) {
-    stringlist_type *keys = ensemble_config_alloc_keylist_from_var_type(
-        enkf_main_get_ensemble_config(enkf_main), PARAMETER);
+
+    stringlist_type *keys =
+        ensemble_config_alloc_keylist_from_var_type(ens_config, PARAMETER);
 
     for (int ikey = 0; ikey < stringlist_get_size(keys); ikey++) {
         const char *key = stringlist_iget(keys, ikey);
         if (hash_get_counter(use_count, key) > 0) {
-            const enkf_config_node_type *config_node = ensemble_config_get_node(
-                enkf_main_get_ensemble_config(enkf_main), key);
+            const enkf_config_node_type *config_node =
+                ensemble_config_get_node(ens_config, key);
             const enkf_node_type *min_std =
                 enkf_config_node_get_min_std(config_node);
 
             if (min_std != NULL)
-                enkf_main_inflate_node(enkf_main, src_fs, target_fs,
+                enkf_main_inflate_node(ens_config, src_fs, target_fs, ens_size,
                                        report_step, key, min_std);
         }
     }
@@ -849,6 +850,8 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
   */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
+    const ensemble_config_type *ensemble_config =
+        enkf_main_get_ensemble_config(enkf_main);
 
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     {
@@ -866,8 +869,6 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
       over there.
     */
         if (target_fs != source_fs) {
-            const ensemble_config_type *ensemble_config =
-                enkf_main_get_ensemble_config(enkf_main);
             stringlist_type *param_keys =
                 ensemble_config_alloc_keylist_from_var_type(ensemble_config,
                                                             PARAMETER);
@@ -955,8 +956,9 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
                         "No active observations/parameters for MINISTEP: %s.",
                         local_ministep_get_name(ministep));
             }
-            enkf_main_inflate(enkf_main, source_fs, target_fs, current_step,
-                              use_count);
+            enkf_main_inflate(ensemble_config, source_fs, target_fs,
+                              enkf_main_get_ensemble_size(enkf_main),
+                              current_step, use_count);
             hash_free(use_count);
         }
 
