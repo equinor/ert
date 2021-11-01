@@ -184,7 +184,7 @@ def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_failing_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
+    monitor_failing_ensemble().verify(ee_config.client_uri, on_connect=ensemble.start)
     ensemble.join()
 
 
@@ -201,7 +201,7 @@ def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_failing_evaluation.verify(ee_config.client_uri, on_connect=ensemble.start)
+    monitor_failing_evaluation().verify(ee_config.client_uri, on_connect=ensemble.start)
     ensemble.join()
 
 
@@ -220,7 +220,9 @@ def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    monitor_successful_ensemble.verify(ee_config.client_uri, on_connect=ensemble.start)
+    monitor_successful_ensemble().verify(
+        ee_config.client_uri, on_connect=ensemble.start
+    )
     ensemble.join()
 
 
@@ -237,5 +239,5 @@ def test_verify_dispatch_failing_job(make_ee_config, event_loop):
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
-    dispatch_failing_job.verify(ee_config.client_uri, on_connect=lambda: None)
+    dispatch_failing_job().verify(ee_config.client_uri, on_connect=lambda: None)
     ee.stop()
