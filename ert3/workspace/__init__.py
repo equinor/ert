@@ -3,6 +3,7 @@ from ert3.workspace._workspace import load
 from ert3.workspace._workspace import get_experiment_names
 from ert3.workspace._workspace import experiment_has_run
 from ert3.workspace._workspace import assert_experiment_exists
+from ert3.workspace._workspace import export_json
 
 EXPERIMENTS_BASE = "experiments"
 
@@ -12,4 +13,5 @@ __all__ = [
     "get_experiment_names",
     "experiment_has_run",
     "assert_experiment_exists",
+    "export_json",
 ]

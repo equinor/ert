@@ -1,6 +1,7 @@
 import os
+import json
 from pathlib import Path
-from typing import Union, Optional, Set
+from typing import Union, Optional, Set, List, Dict, Any
 
 import ert3
 import ert
@@ -60,3 +61,19 @@ def initialize(path: Union[str, Path]) -> None:
 
 def load(path: Union[str, Path]) -> Optional[Path]:
     return _locate_root(path)
+
+
+def export_json(
+    workspace_root: Path,
+    experiment_name: str,
+    data: Union[Dict[int, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]],
+    output_file: Optional[str] = None,
+) -> None:
+    experiment_root = (
+        Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
+    )
+    if output_file is None:
+        output_file = "data.json"
+    assert_experiment_exists(workspace_root, experiment_name)
+    with open(experiment_root / output_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)

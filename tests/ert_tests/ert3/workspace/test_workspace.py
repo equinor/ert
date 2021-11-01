@@ -87,3 +87,26 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
 
     assert ert3.workspace.experiment_has_run(tmpdir, "test1")
     assert not ert3.workspace.experiment_has_run(tmpdir, "test2")
+
+
+@pytest.mark.requires_ert_storage
+def test_workspace_export_json(tmpdir, ert_storage):
+    experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
+
+    ert3.workspace.initialize(tmpdir)
+    Path(experiments_dir / "test1").mkdir(parents=True)
+
+    ert.storage.init_experiment(
+        experiment_name="test1",
+        parameters={},
+        ensemble_size=42,
+        responses=[],
+    )
+
+    ert3.workspace.export_json(tmpdir, "test1", {1: "x", 2: "y"})
+    assert (experiments_dir / "test1" / "data.json").exists()
+
+    ert3.workspace.export_json(
+        tmpdir, "test1", {1: "x", 2: "y"}, output_file="test.json"
+    )
+    assert (experiments_dir / "test1" / "test.json").exists()

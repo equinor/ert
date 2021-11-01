@@ -1,4 +1,3 @@
-import json
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any
@@ -84,10 +83,6 @@ def export(
     stages_config: ert3.config.StagesConfig,
     ensemble_size: int,
 ) -> None:
-
-    experiment_root = (
-        Path(workspace_root) / ert3.workspace.EXPERIMENTS_BASE / experiment_name
-    )
     ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
 
     if not ert3.workspace.experiment_has_run(workspace_root, experiment_name):
@@ -99,12 +94,11 @@ def export(
     responses = _prepare_export_responses(
         workspace_root, experiment_name, ensemble, ensemble_size
     )
-    data: List[Dict[str, Dict[str, Any]]] = []
 
+    data: List[Dict[str, Dict[str, Any]]] = []
     for iens in range(ensemble_size):
         inputs = {record: data[iens] for record, data in parameters.items()}
         outputs = {record: data[iens] for record, data in responses.items()}
         data.append({"input": inputs, "output": outputs})
 
-    with open(experiment_root / "data.json", "w", encoding="utf-8") as f:
-        json.dump(data, f)
+    ert3.workspace.export_json(workspace_root, experiment_name, data)
