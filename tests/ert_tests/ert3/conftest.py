@@ -20,6 +20,8 @@ from ert.storage import StorageRecordTransmitter
 
 import ert3
 
+_EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
+
 POLY_SCRIPT = """#!/usr/bin/env python3
 import json
 import sys
@@ -148,7 +150,7 @@ def workspace(tmpdir, ert_storage):
 
 
 def _create_coeffs_record_file(workspace):
-    doe_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe"
+    doe_dir = workspace / _EXPERIMENTS_BASE / "doe"
     doe_dir.ensure(dir=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
     with open(doe_dir / "coefficients_record.json", "w") as f:
@@ -168,7 +170,7 @@ def designed_coeffs_record_file_integration(workspace_integration):
 
 @pytest.fixture()
 def designed_blob_record_file(workspace):
-    file_path = workspace / ert3.workspace.EXPERIMENTS_BASE / "doe" / "record.bin"
+    file_path = workspace / _EXPERIMENTS_BASE / "doe" / "record.bin"
     file_path.dirpath().ensure(dir=True)
     with open(file_path, "wb") as f:
         f.write(b"0x410x420x43")
@@ -177,9 +179,7 @@ def designed_blob_record_file(workspace):
 
 @pytest.fixture()
 def oat_compatible_record_file(workspace_integration):
-    sensitivity_dir = (
-        workspace_integration / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
-    )
+    sensitivity_dir = workspace_integration / _EXPERIMENTS_BASE / "partial_sensitivity"
     sensitivity_dir.ensure(dir=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(6)]
     with open(sensitivity_dir / "coefficients_record.json", "w") as f:
@@ -189,9 +189,7 @@ def oat_compatible_record_file(workspace_integration):
 
 @pytest.fixture()
 def oat_incompatible_record_file(workspace_integration):
-    sensitivity_dir = (
-        workspace_integration / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
-    )
+    sensitivity_dir = workspace_integration / _EXPERIMENTS_BASE / "partial_sensitivity"
     sensitivity_dir.ensure(dir=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
     with open(sensitivity_dir / "coefficients_record.json", "w") as f:

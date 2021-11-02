@@ -5,6 +5,8 @@ import pytest
 import ert3
 import ert
 
+_EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
+
 
 @pytest.mark.requires_ert_storage
 def test_workspace_initialize(tmpdir, ert_storage):
@@ -33,7 +35,7 @@ def test_workspace_load(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
-    experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
+    experiments_dir = Path(tmpdir) / _EXPERIMENTS_BASE
     with pytest.raises(
         ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
@@ -55,7 +57,7 @@ def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_workspace_assert_get_experiment_names(tmpdir, ert_storage):
-    experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
+    experiments_dir = Path(tmpdir) / _EXPERIMENTS_BASE
     with pytest.raises(
         ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
@@ -72,7 +74,7 @@ def test_workspace_assert_get_experiment_names(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_workspace_experiment_has_run(tmpdir, ert_storage):
-    experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
+    experiments_dir = Path(tmpdir) / _EXPERIMENTS_BASE
     with pytest.raises(
         ert.exceptions.IllegalWorkspaceState,
         match=f"the workspace {tmpdir} cannot access experiments",
@@ -97,7 +99,7 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_workspace_export_json(tmpdir, ert_storage):
-    experiments_dir = Path(tmpdir) / ert3.workspace.EXPERIMENTS_BASE
+    experiments_dir = Path(tmpdir) / _EXPERIMENTS_BASE
 
     ert3.workspace.initialize(tmpdir)
     Path(experiments_dir / "test1").mkdir(parents=True)
