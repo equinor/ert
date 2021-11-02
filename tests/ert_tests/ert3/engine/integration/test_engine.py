@@ -14,6 +14,8 @@ import ert
 import ert3
 from unittest.mock import patch
 
+_EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
+
 
 @pytest.fixture()
 def sensitivity_ensemble(base_ensemble_dict):
@@ -180,7 +182,7 @@ def test_run_once_polynomial_evaluation(
 
 @pytest.mark.requires_ert_storage
 def test_export_not_run(workspace, ensemble, stages_config):
-    (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
+    (workspace / _EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     with pytest.raises(ValueError, match="Cannot export experiment"):
         ert3.engine.export(
             pathlib.Path(), "evaluation", ensemble, stages_config, ensemble.size
@@ -188,9 +190,7 @@ def test_export_not_run(workspace, ensemble, stages_config):
 
 
 def _load_export_data(workspace, experiment_name):
-    export_file = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "data.json"
-    )
+    export_file = workspace / _EXPERIMENTS_BASE / experiment_name / "data.json"
     with open(export_file) as f:
         return json.load(f)
 
@@ -204,7 +204,7 @@ def test_export_polynomial_evaluation(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    (workspace / ert3.workspace.EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
+    (workspace / _EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
     print(workspace)
     ert3.engine.run(
         ensemble,
@@ -229,7 +229,7 @@ def test_export_uniform_polynomial_evaluation(
     uniform_parameters_config,
 ):
     workspace = workspace_integration
-    uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "uniform_evaluation"
+    uni_dir = workspace / _EXPERIMENTS_BASE / "uniform_evaluation"
     uni_dir.ensure(dir=True)
     ert3.engine.run(
         uniform_ensemble,
@@ -262,7 +262,7 @@ def test_export_x_uncertainties_polynomial_evaluation(
     x_uncertainty_parameters_config,
 ):
     workspace = workspace_integration
-    uni_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "x_uncertainty"
+    uni_dir = workspace / _EXPERIMENTS_BASE / "x_uncertainty"
     uni_dir.ensure(dir=True)
     ert3.engine.run(
         x_uncertainty_ensemble,
@@ -368,9 +368,7 @@ def test_run_presampled(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    presampled_dir = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_evaluation"
-    )
+    presampled_dir = workspace / _EXPERIMENTS_BASE / "presampled_evaluation"
     presampled_dir.ensure(dir=True)
     coeff0 = ert3.engine.sample_record(gaussian_parameters_config, "coefficients", 10)
     future = ert.storage.transmit_record_collection(
@@ -419,9 +417,7 @@ def test_run_uniform_presampled(
     uniform_parameters_config,
 ):
     workspace = workspace_integration
-    presampled_dir = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / "presampled_uniform_evaluation"
-    )
+    presampled_dir = workspace / _EXPERIMENTS_BASE / "presampled_uniform_evaluation"
     presampled_dir.ensure(dir=True)
     uniform_coeff0 = ert3.engine.sample_record(
         uniform_parameters_config,
@@ -540,7 +536,7 @@ def test_sensitivity_oat_run_and_export(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
+    (workspace / _EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
     ert3.engine.run_sensitivity_analysis(
         sensitivity_ensemble,
         stages_config,
@@ -577,7 +573,7 @@ def test_sensitivity_fast_run_and_export(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    (workspace / ert3.workspace.EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
+    (workspace / _EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
     ert3.engine.run_sensitivity_analysis(
         sensitivity_ensemble,
         stages_config,
@@ -616,7 +612,7 @@ def test_partial_sensitivity_run_and_export(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    experiment_dir = workspace / _EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
     ert3.engine.load_record(
         workspace, "other_coefficients", oat_compatible_record_file, "application/json"
@@ -664,7 +660,7 @@ def test_incompatible_partial_sensitivity_run(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    experiment_dir = workspace / ert3.workspace.EXPERIMENTS_BASE / "partial_sensitivity"
+    experiment_dir = workspace / _EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
     ert3.engine.load_record(
         workspace,

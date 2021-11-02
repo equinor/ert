@@ -8,17 +8,10 @@ from pathlib import Path
 from typing import Any, List, Union
 
 import pkg_resources as pkg
-import yaml
 
 import ert
 import ert3
-from ert3.config import (
-    DEFAULT_RECORD_MIME_TYPE,
-    EnsembleConfig,
-    ExperimentConfig,
-    ParametersConfig,
-    StagesConfig,
-)
+from ert3.config import DEFAULT_RECORD_MIME_TYPE
 from ert_shared.asyncio import get_event_loop
 from ert_shared.services import Storage
 
@@ -215,10 +208,12 @@ def _init(args: Any) -> None:
 def _run(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "run"
     ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
-    ensemble = _load_ensemble_config(workspace, args.experiment_name)
-    stages_config = _load_stages_config(workspace)
-    experiment_config = _load_experiment_config(workspace, args.experiment_name)
-    parameters_config = _load_parameters_config(workspace)
+    ensemble = ert3.workspace.load_ensemble_config(workspace, args.experiment_name)
+    stages_config = ert3.workspace.load_stages_config(workspace)
+    experiment_config = ert3.workspace.load_experiment_config(
+        workspace, args.experiment_name
+    )
+    parameters_config = ert3.workspace.load_parameters_config(workspace)
     if experiment_config.type == "evaluation":
         ert3.engine.run(
             ensemble,
@@ -241,10 +236,12 @@ def _run(workspace: Path, args: Any) -> None:
 
 def _export(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "export"
-    ensemble = _load_ensemble_config(workspace, args.experiment_name)
-    experiment_config = _load_experiment_config(workspace, args.experiment_name)
-    parameters_config = _load_parameters_config(workspace)
-    stages_config = _load_stages_config(workspace)
+    ensemble = ert3.workspace.load_ensemble_config(workspace, args.experiment_name)
+    experiment_config = ert3.workspace.load_experiment_config(
+        workspace, args.experiment_name
+    )
+    parameters_config = ert3.workspace.load_parameters_config(workspace)
+    stages_config = ert3.workspace.load_stages_config(workspace)
 
     ensemble_size = ert3.engine.get_ensemble_size(
         ensemble_config=ensemble,
@@ -260,7 +257,7 @@ def _export(workspace: Path, args: Any) -> None:
 def _record(workspace: Path, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
-        parameters_config = _load_parameters_config(workspace)
+        parameters_config = ert3.workspace.load_parameters_config(workspace)
         collection = ert3.engine.sample_record(
             parameters_config,
             args.parameter_group,
@@ -391,31 +388,3 @@ def _main() -> None:
         _clean(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
-
-
-def _load_ensemble_config(workspace: Path, experiment_name: str) -> EnsembleConfig:
-    ensemble_config = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
-    )
-    with open(ensemble_config, encoding="utf-8") as f:
-        return ert3.config.load_ensemble_config(yaml.safe_load(f))
-
-
-def _load_stages_config(workspace: Path) -> StagesConfig:
-    with open(workspace / "stages.yml", encoding="utf-8") as f:
-        sys.path.append(str(workspace))
-        config = ert3.config.load_stages_config(yaml.safe_load(f))
-        return config
-
-
-def _load_experiment_config(workspace: Path, experiment_name: str) -> ExperimentConfig:
-    experiment_config = (
-        workspace / ert3.workspace.EXPERIMENTS_BASE / experiment_name / "experiment.yml"
-    )
-    with open(experiment_config, encoding="utf-8") as f:
-        return ert3.config.load_experiment_config(yaml.safe_load(f))
-
-
-def _load_parameters_config(workspace: Path) -> ParametersConfig:
-    with open(workspace / "parameters.yml", encoding="utf-8") as f:
-        return ert3.config.load_parameters_config(yaml.safe_load(f))
