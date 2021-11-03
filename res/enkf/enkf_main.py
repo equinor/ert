@@ -238,9 +238,6 @@ class _RealEnKFMain(BaseCClass):
     _create_run_path = ResPrototype(
         "void enkf_main_create_run_path(enkf_main , ert_run_context)"
     )
-    _submit_simulation = ResPrototype(
-        "void enkf_main_isubmit_job(enkf_main , run_arg, job_queue)"
-    )
     _alloc_run_context_ENSEMBLE_EXPERIMENT = ResPrototype(
         "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)"
     )
@@ -441,9 +438,6 @@ class _RealEnKFMain(BaseCClass):
 
     def createRunpath(self, run_context):
         self._create_run_path(run_context)
-
-    def submitSimulation(self, run_arg, queue):
-        self._submit_simulation(run_arg, queue)
 
     def getRunContextENSEMPLE_EXPERIMENT(self, fs, iactive, iteration=0):
         return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, iactive, iteration)

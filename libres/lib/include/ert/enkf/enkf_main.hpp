@@ -255,7 +255,6 @@ void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
                            const char *value);
 const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);
-void *enkf_main_isubmit_job__(void *arg);
 
 UTIL_SAFE_CAST_HEADER(enkf_main);
 UTIL_IS_INSTANCE_HEADER(enkf_main);
