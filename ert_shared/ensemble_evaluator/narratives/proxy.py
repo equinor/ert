@@ -10,6 +10,7 @@ from ert_shared.ensemble_evaluator.narratives.narrative import (
     InteractionDirection,
     _Narrative,
 )
+from ert_shared import port_handler
 
 
 class NarrativeProxy(object):
@@ -56,8 +57,14 @@ class NarrativeProxy(object):
             port=0,
             process_request=self.process_request,
         ) as s:
-            port = s.sockets[0].getsockname()[1]
-            asyncio.get_event_loop().run_in_executor(None, lambda: q.put(port))
+            local_family = port_handler.get_family_for_localhost()
+            port = [p.getsockname()[1] for p in s.sockets if p.family == local_family]
+            if len(port) == 0:
+                self.done.set_result(
+                    aiohttp.ClientError("Unable to find suitable port for proxy")
+                )
+
+            asyncio.get_event_loop().run_in_executor(None, lambda: q.put(port[0]))
             asyncio.get_event_loop().run_in_executor(None, lambda: q.put(self.done))
             error = await self.done
             q.put(error)

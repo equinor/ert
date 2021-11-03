@@ -69,6 +69,10 @@ def _bind_socket(host: str, port: int, reuse_addr: bool = False) -> socket.socke
         )
 
 
+def get_family_for_localhost() -> socket.AddressFamily:
+    return get_family(_get_ip_address())
+
+
 def get_family(host: str) -> socket.AddressFamily:
     try:
         socket.inet_pton(socket.AF_INET6, host)
