@@ -1,6 +1,5 @@
 
-
-#include "ies_enkf_data.h"
+#include <ies_enkf_data.hpp>
 
 void test_create() {
     ies_enkf_config_type *config = ies_enkf_config_alloc();

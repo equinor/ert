@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2019  Equinor ASA, Norway.
 
-   The file 'ies_enkf.c' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'ies_enkf.cpp' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,12 +32,8 @@
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 
-#include "ies_enkf_config.h"
-#include "ies_enkf_data.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <ies_enkf_config.hpp>
+#include <ies_enkf_data.hpp>
 
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);
@@ -67,10 +63,6 @@ void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
 
 void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
                                        matrix_type *A0, FILE *log_fp, bool dbg);
-
-#ifdef __cplusplus
-}
-#endif
 
 #define ENKF_SUBSPACE_DIMENSION_KEY "ENKF_SUBSPACE_DIMENSION"
 #define ENKF_TRUNCATION_KEY "ENKF_TRUNCATION"
@@ -302,7 +294,7 @@ void ies_enkf_updateA(
      * ies_inversion=IES_INVERSION_SUBSPACE_RE is much faster (N^2m) than
      * ies_inversion=IES_INVERSION_SUBSPACE_EE_R (Nm^2).
      *
-     * See the enum: ies_inverson in ies_enkf_config.h:
+     * See the enum: ies_inverson in ies_enkf_config.hpp:
      *
      * ies_inversion=IES_INVERSION_EXACT(0)            -> exact inversion from (b) with exact R=I
      * ies_inversion=IES_INVERSION_SUBSPACE_EXACT_R(1) -> subspace inversion from (a) with exact R
@@ -759,7 +751,8 @@ bool ies_enkf_set_int(void *arg, const char *var_name, int value) {
         else if (
             strcmp(var_name, IES_INVERSION_KEY) ==
             0) // This should probably translate string value - now it goes directly on the value of the ies_inversion_type enum.
-            ies_enkf_config_set_ies_inversion(config, value);
+            ies_enkf_config_set_ies_inversion(
+                config, static_cast<ies_inversion_type>(value));
         else
             name_recognized = false;
 
@@ -927,18 +920,18 @@ void *ies_enkf_get_ptr(const void *arg, const char *var_name) {
 
 analysis_table_type LINK_NAME = {
     .name = "IES_ENKF",
-    .initX = NULL,
     .updateA = ies_enkf_updateA,
+    .initX = NULL,
     .init_update = ies_enkf_init_update,
     .complete_update = NULL,
-    .alloc = ies_enkf_data_alloc,
     .freef = ies_enkf_data_free,
-    .has_var = ies_enkf_has_var,
+    .alloc = ies_enkf_data_alloc,
     .set_int = ies_enkf_set_int,
     .set_double = ies_enkf_set_double,
     .set_bool = ies_enkf_set_bool,
     .set_string = ies_enkf_set_string,
     .get_options = ies_enkf_get_options,
+    .has_var = ies_enkf_has_var,
     .get_int = ies_enkf_get_int,
     .get_double = ies_enkf_get_double,
     .get_bool = ies_enkf_get_bool,

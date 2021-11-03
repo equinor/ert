@@ -4,8 +4,8 @@
 #include <ert/res_util/es_testdata.hpp>
 
 #include <ert/analysis/std_enkf.hpp>
-#include "ies_enkf_data.h"
-#include "ies_enkf.h"
+#include <ies_enkf_data.hpp>
+#include <ies_enkf.hpp>
 
 /*
 TEST 3 (consistency between IES and STD_ENKF):
