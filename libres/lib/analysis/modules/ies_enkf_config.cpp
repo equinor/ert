@@ -1,7 +1,7 @@
 /*
    Copyright (C) 2019  Equinor ASA, Norway.
 
-   The file 'ies_enkf_config.c' is part of ERT - Ensemble based Reservoir Tool.
+   The file 'ies_enkf_config.cpp' is part of ERT - Ensemble based Reservoir Tool.
 
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ies_enkf_config.h>
+#include <ies_enkf_config.hpp>
 
 #define INVALID_TRUNCATION -1
 #define INVALID_SUBSPACE_DIMENSION -1
@@ -59,7 +59,8 @@ struct ies_enkf_config_struct {
 };
 
 ies_enkf_config_type *ies_enkf_config_alloc() {
-    ies_enkf_config_type *config = util_malloc(sizeof *config);
+    ies_enkf_config_type *config =
+        static_cast<ies_enkf_config_type *>(util_malloc(sizeof *config));
     UTIL_TYPE_ID_INIT(config, IES_ENKF_CONFIG_TYPE_ID);
     config->ies_logfile = NULL;
     ies_enkf_config_set_truncation(config, DEFAULT_ENKF_TRUNCATION);
@@ -155,7 +156,7 @@ void ies_enkf_config_set_ies_dec_steplength(ies_enkf_config_type *config,
 /* IES_INVERSION          */
 ies_inversion_type
 ies_enkf_config_get_ies_inversion(const ies_enkf_config_type *config) {
-    return config->ies_inversion;
+    return static_cast<ies_inversion_type>(config->ies_inversion);
 }
 void ies_enkf_config_set_ies_inversion(ies_enkf_config_type *config,
                                        ies_inversion_type ies_inversion) {

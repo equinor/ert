@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2019  Equinor ASA, Norway.
 
-  The file 'ies_enkf.h' is part of ERT - Ensemble based Reservoir Tool.
+  The file 'ies_enkf.hpp' is part of ERT - Ensemble based Reservoir Tool.
 
   ERT is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,10 +25,6 @@
 #include <ert/analysis/module_info.hpp>
 #include <ert/res_util/matrix.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
                           const bool_vector_type *obs_mask,
                           const matrix_type *S, const matrix_type *R,
@@ -37,16 +33,12 @@ void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
 
 void ies_enkf_updateA(
     void *module_data,
-    matrix_type *A,    // Updated ensemble A retured to ERT.
-    matrix_type *Yin,  // Ensemble of predicted measurements
-    matrix_type *Rin,  // Measurement error covariance matrix (not used)
-    matrix_type *dObs, // Actual observations (not used)
-    matrix_type *Ein,  // Ensemble of observation perturbations
-    matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
+    matrix_type *A,          // Updated ensemble A returned to ERT.
+    const matrix_type *Yin,  // Ensemble of predicted measurements
+    const matrix_type *Rin,  // Measurement error covariance matrix (not used)
+    const matrix_type *dObs, // Actual observations (not used)
+    const matrix_type *Ein,  // Ensemble of observation perturbations
+    const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
     const module_info_type *module_info, rng_type *rng);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

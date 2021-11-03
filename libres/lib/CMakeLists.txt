@@ -194,9 +194,9 @@ add_library(res SHARED
 #-----------------------------------------------------------------
 
 add_library(ies SHARED
-  analysis/modules/ies_enkf.c
-  analysis/modules/ies_enkf_config.c
-  analysis/modules/ies_enkf_data.c)
+  analysis/modules/ies_enkf.cpp
+  analysis/modules/ies_enkf_config.cpp
+  analysis/modules/ies_enkf_data.cpp)
 target_link_libraries(ies PRIVATE ${RES} ${ECL} ${CMAKE_DL_LIBS})
 target_include_directories(ies PRIVATE ${ECL_INCLUDE_DIRS} include analysis/modules)
 

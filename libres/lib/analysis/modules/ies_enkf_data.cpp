@@ -1,5 +1,5 @@
-#include "ies_enkf_config.h"
-#include "ies_enkf_data.h"
+#include <ies_enkf_config.hpp>
+#include <ies_enkf_data.hpp>
 
 /*
   The configuration data used by the ies_enkf module is contained in a
@@ -37,7 +37,7 @@ struct ies_enkf_data_struct {
         E; // Prior ensemble of measurement perturations (should be the same for all iterations)
     bool converged; // GN has converged
     ies_enkf_config_type *
-        config; // This I don't understand but I assume I include data from the ies_enkf_config_type defined in ies_enkf_config.c
+        config; // This I don't understand but I assume I include data from the ies_enkf_config_type defined in ies_enkf_config.cpp
     FILE *log_fp; // logfile id
 };
 
@@ -45,7 +45,8 @@ UTIL_SAFE_CAST_FUNCTION(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
 
 void *ies_enkf_data_alloc() {
-    ies_enkf_data_type *data = util_malloc(sizeof *data);
+    ies_enkf_data_type *data =
+        static_cast<ies_enkf_data_type *>(util_malloc(sizeof *data));
     UTIL_TYPE_ID_INIT(data, IES_ENKF_DATA_TYPE_ID);
     data->iteration_nr = 0;
     data->state_size = 0;

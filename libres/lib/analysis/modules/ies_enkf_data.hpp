@@ -6,7 +6,7 @@
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/type_macros.hpp>
 
-#include "ies_enkf_config.h"
+#include <ies_enkf_config.hpp>
 
 #ifdef __cplusplus
 extern "C" {
