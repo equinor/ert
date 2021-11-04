@@ -180,6 +180,7 @@ def _init(args: Any) -> None:
 
     if args.example is None:
         ert3.workspace.initialize(pathlib.Path.cwd())
+        ert.storage.init(workspace=pathlib.Path.cwd())
     else:
         example_name = args.example
         pkg_examples_path = _get_ert3_examples_path()
@@ -208,6 +209,7 @@ def _init(args: Any) -> None:
             )
 
         ert3.workspace.initialize(wd_example_path)
+        ert.storage.init(workspace=wd_example_path)
 
 
 def _run(workspace: Path, args: Any) -> None:

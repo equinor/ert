@@ -9,6 +9,7 @@ import ert
 @pytest.mark.requires_ert_storage
 def test_workspace_initialize(tmpdir, ert_storage):
     ert3.workspace.initialize(tmpdir)
+    ert.storage.init(workspace=tmpdir)
 
     assert (Path(tmpdir) / ert3._WORKSPACE_DATA_ROOT).is_dir()
 
@@ -17,6 +18,7 @@ def test_workspace_initialize(tmpdir, ert_storage):
         match="Already inside an ERT workspace.",
     ):
         ert3.workspace.initialize(tmpdir)
+        ert.storage.init(workspace=tmpdir)
 
 
 @pytest.mark.requires_ert_storage
@@ -24,6 +26,7 @@ def test_workspace_load(tmpdir, ert_storage):
     assert ert3.workspace.load(tmpdir) is None
     assert ert3.workspace.load(tmpdir / "foo") is None
     ert3.workspace.initialize(tmpdir)
+    ert.storage.init(workspace=tmpdir)
     assert ert3.workspace.load(tmpdir) == tmpdir
     assert ert3.workspace.load(tmpdir / "foo") == tmpdir
 
@@ -38,6 +41,7 @@ def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
         ert3.workspace.get_experiment_names(tmpdir)
 
     ert3.workspace.initialize(tmpdir)
+    ert.storage.init(workspace=tmpdir)
     Path(experiments_dir / "test1").mkdir(parents=True)
 
     ert3.workspace.assert_experiment_exists(tmpdir, "test1")
@@ -59,6 +63,7 @@ def test_workspace_assert_get_experiment_names(tmpdir, ert_storage):
         ert3.workspace.get_experiment_names(tmpdir)
 
     ert3.workspace.initialize(tmpdir)
+    ert.storage.init(workspace=tmpdir)
     Path(experiments_dir / "test1").mkdir(parents=True)
     Path(experiments_dir / "test2").mkdir(parents=True)
 
@@ -75,6 +80,7 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
         ert3.workspace.get_experiment_names(tmpdir)
 
     ert3.workspace.initialize(tmpdir)
+    ert.storage.init(workspace=tmpdir)
     Path(experiments_dir / "test1").mkdir(parents=True)
     Path(experiments_dir / "test2").mkdir(parents=True)
 
@@ -85,8 +91,8 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
         responses=[],
     )
 
-    assert ert3.workspace.experiment_has_run(tmpdir, "test1")
-    assert not ert3.workspace.experiment_has_run(tmpdir, "test2")
+    assert "test1" in ert.storage.get_experiment_names(workspace=tmpdir)
+    assert "test2" not in ert.storage.get_experiment_names(workspace=tmpdir)
 
 
 @pytest.mark.requires_ert_storage

@@ -167,7 +167,7 @@ def test_run_once_polynomial_evaluation(
         workspace,
         "evaluation",
     )
-    with pytest.raises(ValueError, match="Experiment evaluation have been carried out"):
+    with pytest.raises(ValueError, match="Experiment evaluation has been carried out"):
         ert3.engine.run(
             ensemble,
             stages_config,

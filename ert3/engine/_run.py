@@ -20,8 +20,8 @@ def _prepare_experiment(
     ensemble: ert3.config.EnsembleConfig,
     ensemble_size: int,
 ) -> None:
-    if ert3.workspace.experiment_has_run(workspace_root, experiment_name):
-        raise ValueError(f"Experiment {experiment_name} have been carried out.")
+    if experiment_name in ert.storage.get_experiment_names(workspace=workspace_root):
+        raise ValueError(f"Experiment {experiment_name} has been carried out.")
 
     parameters = [elem.record for elem in ensemble.input]
     responses = [elem.record for elem in ensemble.output]

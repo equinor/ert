@@ -85,7 +85,9 @@ def export(
 ) -> None:
     ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
 
-    if not ert3.workspace.experiment_has_run(workspace_root, experiment_name):
+    if experiment_name not in ert.storage.get_experiment_names(
+        workspace=workspace_root
+    ):
         raise ValueError("Cannot export experiment that has not been carried out")
 
     parameters = _prepare_export_parameters(
