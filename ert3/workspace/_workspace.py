@@ -43,11 +43,6 @@ def get_experiment_names(workspace_root: Union[str, Path]) -> Set[str]:
     }
 
 
-def experiment_has_run(workspace_root: Path, experiment_name: str) -> bool:
-    experiments = ert.storage.get_experiment_names(workspace=workspace_root)
-    return experiment_name in experiments
-
-
 def initialize(path: Union[str, Path]) -> None:
     path = Path(path)
     if load(path) is not None:
@@ -56,7 +51,6 @@ def initialize(path: Union[str, Path]) -> None:
         )
 
     os.mkdir(path / ert3._WORKSPACE_DATA_ROOT)
-    ert.storage.init(workspace=path)
 
 
 def load(path: Union[str, Path]) -> Optional[Path]:

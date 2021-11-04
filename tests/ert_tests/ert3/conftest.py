@@ -133,6 +133,7 @@ def workspace_integration(tmpdir):
 
     with Storage.start_server():
         ert3.workspace.initialize(workspace)
+        ert.storage.init(workspace=workspace)
         yield workspace
 
 
@@ -142,6 +143,7 @@ def workspace(tmpdir, ert_storage):
     workspace.mkdir()
     workspace.chdir()
     ert3.workspace.initialize(workspace)
+    ert.storage.init(workspace=workspace)
     yield workspace
 
 
