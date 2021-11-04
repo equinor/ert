@@ -7,6 +7,7 @@ ERT is primarily developed for use with reservoir models, but the tool can be us
 with model updates and uncertainty estimation. You can read more about the theory in :doc:`theory/ensemble_based_methods`
 
 
+
 .. toctree::
    :hidden:
 
@@ -54,10 +55,12 @@ with model updates and uncertainty estimation. You can read more about the theor
    experimental/index
 
 .. toctree::
+   :maxdepth: 2
    :hidden:
-   :caption: Architecture
+   :caption: Developer Documentation
 
-   architecture/index
+   developer_documentation/index
+   autoapi/ert3/workspace/index
 
 .. toctree::
    :hidden:

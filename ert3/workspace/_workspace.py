@@ -1,3 +1,13 @@
+"""
+_workspace.py
+====================================
+The workspace holds all knowledge of config(s) and filesystem.
+It's knowledge does not leak into other parts of the code.
+It may only be employed.
+Is elsewise stateless, and is independent of storage.
+"""
+
+
 import json
 import sys
 import shutil
@@ -23,6 +33,8 @@ def _locate_root(path: Path) -> Optional[Path]:
 
 
 class Workspace:
+    """A Workspace holds the knowledge of experiments, resources and config"""
+
     def __init__(self, path: Union[str, Path]) -> None:
         root = _locate_root(Path(path))
         if root is None:
@@ -46,6 +58,8 @@ class Workspace:
         return self._path / "resources"
 
     def assert_experiment_exists(self, experiment_name: str) -> None:
+        """Check if the experiment `experiment_name` exists in workspace."""
+
         experiment_root = self._path / _EXPERIMENTS_BASE / experiment_name
         if not experiment_root.is_dir():
             raise ert.exceptions.IllegalWorkspaceOperation(
