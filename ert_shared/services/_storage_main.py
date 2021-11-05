@@ -72,6 +72,26 @@ def find_ert_config() -> str:
     )
 
 
+def _create_connection_info(sock, authtoken):
+    connection_info = {
+        "urls": [
+            f"http://{host}:{sock.getsockname()[1]}"
+            for host in (
+                sock.getsockname()[0],
+                socket.gethostname(),
+                socket.getfqdn(),
+            )
+        ],
+        "authtoken": authtoken,
+    }
+
+    os.environ["ERT_STORAGE_CONNECTION_STRING"] = json.dumps(
+        connection_info, separators=(",", ":")
+    )
+
+    return connection_info
+
+
 def run_server(args=None, debug=False):
     if args is None:
         args = parse_args()
@@ -91,20 +111,11 @@ def run_server(args=None, debug=False):
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    host, port, sock = port_handler.find_available_port(
+    _, _, sock = port_handler.find_available_port(
         custom_host=args.host, reuse_addr=True
     )
-    connection_info = {
-        "urls": [
-            f"http://{host}:{sock.getsockname()[1]}"
-            for host in (
-                sock.getsockname()[0],
-                socket.gethostname(),
-                socket.getfqdn(),
-            )
-        ],
-        "authtoken": authtoken,
-    }
+
+    connection_info = _create_connection_info(sock, authtoken)
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
