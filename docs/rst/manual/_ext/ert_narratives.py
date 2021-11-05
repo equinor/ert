@@ -1,10 +1,12 @@
-from sphinx.application import Sphinx
-from pathlib import Path
 import json
+import logging
 import sys
+import warnings
 from docutils import nodes, statemachine
-from os.path import basename
 from docutils.parsers.rst import Directive
+from os.path import basename
+from pathlib import Path
+from sphinx.application import Sphinx
 
 from ert_shared.ensemble_evaluator import narratives
 
@@ -28,7 +30,8 @@ class ErtNarratives(Directive):
             lines = []
             dest_dir = Path(source).parent
             for name in narratives.__all__:
-                narrative = getattr(narratives, name)
+                narrative_function = getattr(narratives, name)
+                narrative = narrative_function()
                 file_name = f"{narrative.name.replace(' ', '_')}.json"
                 with open(dest_dir / file_name, "w") as n_file:
                     n_file.write(json.dumps(narrative.json(), indent=4, sort_keys=True))
@@ -42,6 +45,9 @@ class ErtNarratives(Directive):
             self.state_machine.insert_input(lines, source)
             return []
         except Exception:
+            logging.exception(
+                f"Failed to produce ert_narratives in {basename(source)}:{self.lineno}:"
+            )
             return [
                 nodes.error(
                     None,
