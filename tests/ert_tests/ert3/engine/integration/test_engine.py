@@ -1,5 +1,6 @@
 import json
 import pathlib
+from contextlib import contextmanager
 
 import pytest
 
@@ -152,6 +153,22 @@ def x_uncertainty_parameters_config():
     yield ert3.config.load_parameters_config(raw_config)
 
 
+@contextmanager
+def assert_clean_workspace(workspace, allowed_files=None):
+    def _get_files(workspace):
+        files = set(pathlib.Path(workspace).rglob("*"))
+        dot_ert_files = set(pathlib.Path(workspace / ".ert").rglob("*"))
+        return files - dot_ert_files
+
+    files = _get_files(workspace)
+    yield
+    if allowed_files is None:
+        assert files == _get_files(workspace)
+    else:
+        new_files = _get_files(workspace) - files
+        assert set(item.name for item in new_files) == set(allowed_files)
+
+
 @pytest.mark.requires_ert_storage
 def test_run_once_polynomial_evaluation(
     workspace_integration,
@@ -161,15 +178,7 @@ def test_run_once_polynomial_evaluation(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
-    ert3.engine.run(
-        ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "evaluation",
-    )
-    with pytest.raises(ValueError, match="Experiment evaluation has been carried out"):
+    with assert_clean_workspace(workspace):
         ert3.engine.run(
             ensemble,
             stages_config,
@@ -178,15 +187,28 @@ def test_run_once_polynomial_evaluation(
             workspace,
             "evaluation",
         )
+    with assert_clean_workspace(workspace):
+        with pytest.raises(
+            ValueError, match="Experiment evaluation has been carried out"
+        ):
+            ert3.engine.run(
+                ensemble,
+                stages_config,
+                evaluation_experiment_config,
+                gaussian_parameters_config,
+                workspace,
+                "evaluation",
+            )
 
 
 @pytest.mark.requires_ert_storage
 def test_export_not_run(workspace, ensemble, stages_config):
     (workspace / _EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
-    with pytest.raises(ValueError, match="Cannot export experiment"):
-        ert3.engine.export(
-            pathlib.Path(), "evaluation", ensemble, stages_config, ensemble.size
-        )
+    with assert_clean_workspace(workspace):
+        with pytest.raises(ValueError, match="Cannot export experiment"):
+            ert3.engine.export(
+                pathlib.Path(), "evaluation", ensemble, stages_config, ensemble.size
+            )
 
 
 def _load_export_data(workspace, experiment_name):
@@ -205,16 +227,20 @@ def test_export_polynomial_evaluation(
 ):
     workspace = workspace_integration
     (workspace / _EXPERIMENTS_BASE / "evaluation").ensure(dir=True)
-    print(workspace)
-    ert3.engine.run(
-        ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "evaluation",
-    )
-    ert3.engine.export(workspace, "evaluation", ensemble, stages_config, ensemble.size)
+    with assert_clean_workspace(workspace):
+        ert3.engine.run(
+            ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "evaluation",
+        )
+
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace, "evaluation", ensemble, stages_config, ensemble.size
+        )
 
     export_data = _load_export_data(workspace, "evaluation")
     assert_export(export_data, ensemble, stages_config, gaussian_parameters_config)
@@ -231,21 +257,23 @@ def test_export_uniform_polynomial_evaluation(
     workspace = workspace_integration
     uni_dir = workspace / _EXPERIMENTS_BASE / "uniform_evaluation"
     uni_dir.ensure(dir=True)
-    ert3.engine.run(
-        uniform_ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        uniform_parameters_config,
-        workspace,
-        "uniform_evaluation",
-    )
-    ert3.engine.export(
-        workspace,
-        "uniform_evaluation",
-        uniform_ensemble,
-        stages_config,
-        uniform_ensemble.size,
-    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.run(
+            uniform_ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            uniform_parameters_config,
+            workspace,
+            "uniform_evaluation",
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace,
+            "uniform_evaluation",
+            uniform_ensemble,
+            stages_config,
+            uniform_ensemble.size,
+        )
 
     export_data = _load_export_data(workspace, "uniform_evaluation")
     assert_export(
@@ -264,21 +292,23 @@ def test_export_x_uncertainties_polynomial_evaluation(
     workspace = workspace_integration
     uni_dir = workspace / _EXPERIMENTS_BASE / "x_uncertainty"
     uni_dir.ensure(dir=True)
-    ert3.engine.run(
-        x_uncertainty_ensemble,
-        x_uncertainty_stages_config,
-        evaluation_experiment_config,
-        x_uncertainty_parameters_config,
-        workspace,
-        "x_uncertainty",
-    )
-    ert3.engine.export(
-        workspace,
-        "x_uncertainty",
-        x_uncertainty_ensemble,
-        x_uncertainty_stages_config,
-        x_uncertainty_ensemble.size,
-    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.run(
+            x_uncertainty_ensemble,
+            x_uncertainty_stages_config,
+            evaluation_experiment_config,
+            x_uncertainty_parameters_config,
+            workspace,
+            "x_uncertainty",
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace,
+            "x_uncertainty",
+            x_uncertainty_ensemble,
+            x_uncertainty_stages_config,
+            x_uncertainty_ensemble.size,
+        )
 
     export_data = _load_export_data(workspace, "x_uncertainty")
     assert_export(
@@ -370,33 +400,37 @@ def test_run_presampled(
     workspace = workspace_integration
     presampled_dir = workspace / _EXPERIMENTS_BASE / "presampled_evaluation"
     presampled_dir.ensure(dir=True)
-    coeff0 = ert3.engine.sample_record(gaussian_parameters_config, "coefficients", 10)
-    future = ert.storage.transmit_record_collection(
-        record_coll=coeff0, record_name="coefficients0", workspace=workspace
-    )
-    get_event_loop().run_until_complete(future)
+    with assert_clean_workspace(workspace):
+        coeff0 = ert3.engine.sample_record(
+            gaussian_parameters_config, "coefficients", 10
+        )
+        future = ert.storage.transmit_record_collection(
+            record_coll=coeff0, record_name="coefficients0", workspace=workspace
+        )
+        get_event_loop().run_until_complete(future)
 
-    assert 10 == coeff0.ensemble_size
-    for real_coeff in coeff0.records:
-        assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
-        for idx in real_coeff.index:
-            assert isinstance(real_coeff.data[idx], float)
+        assert 10 == coeff0.ensemble_size
+        for real_coeff in coeff0.records:
+            assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+            for idx in real_coeff.index:
+                assert isinstance(real_coeff.data[idx], float)
 
-    ert3.engine.run(
-        presampled_ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "presampled_evaluation",
-    )
-    ert3.engine.export(
-        workspace,
-        "presampled_evaluation",
-        presampled_ensemble,
-        stages_config,
-        presampled_ensemble.size,
-    )
+        ert3.engine.run(
+            presampled_ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "presampled_evaluation",
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace,
+            "presampled_evaluation",
+            presampled_ensemble,
+            stages_config,
+            presampled_ensemble.size,
+        )
 
     export_data = _load_export_data(workspace, "presampled_evaluation")
     assert coeff0.ensemble_size == len(export_data)
@@ -419,39 +453,41 @@ def test_run_uniform_presampled(
     workspace = workspace_integration
     presampled_dir = workspace / _EXPERIMENTS_BASE / "presampled_uniform_evaluation"
     presampled_dir.ensure(dir=True)
-    uniform_coeff0 = ert3.engine.sample_record(
-        uniform_parameters_config,
-        "uniform_coefficients",
-        10,
-    )
+    with assert_clean_workspace(workspace):
+        uniform_coeff0 = ert3.engine.sample_record(
+            uniform_parameters_config,
+            "uniform_coefficients",
+            10,
+        )
 
-    future = ert.storage.transmit_record_collection(
-        record_coll=uniform_coeff0,
-        record_name="uniform_coefficients0",
-        workspace=workspace,
-    )
-    get_event_loop().run_until_complete(future)
-    assert 10 == uniform_coeff0.ensemble_size
-    for real_coeff in uniform_coeff0.records:
-        assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
-        for idx in real_coeff.index:
-            assert isinstance(real_coeff.data[idx], float)
+        future = ert.storage.transmit_record_collection(
+            record_coll=uniform_coeff0,
+            record_name="uniform_coefficients0",
+            workspace=workspace,
+        )
+        get_event_loop().run_until_complete(future)
+        assert 10 == uniform_coeff0.ensemble_size
+        for real_coeff in uniform_coeff0.records:
+            assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+            for idx in real_coeff.index:
+                assert isinstance(real_coeff.data[idx], float)
 
-    ert3.engine.run(
-        presampled_uniform_ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        uniform_parameters_config,
-        workspace,
-        "presampled_uniform_evaluation",
-    )
-    ert3.engine.export(
-        workspace,
-        "presampled_uniform_evaluation",
-        presampled_uniform_ensemble,
-        stages_config,
-        presampled_uniform_ensemble.size,
-    )
+        ert3.engine.run(
+            presampled_uniform_ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            uniform_parameters_config,
+            workspace,
+            "presampled_uniform_evaluation",
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace,
+            "presampled_uniform_evaluation",
+            presampled_uniform_ensemble,
+            stages_config,
+            presampled_uniform_ensemble.size,
+        )
 
     export_data = _load_export_data(workspace, "presampled_uniform_evaluation")
     assert uniform_coeff0.ensemble_size == len(export_data)
@@ -479,23 +515,26 @@ def test_record_load_and_run(
     gaussian_parameters_config,
 ):
     workspace = workspace_integration
+    with assert_clean_workspace(workspace):
+        ert3.engine.load_record(
+            workspace,
+            "designed_coefficients",
+            designed_coeffs_record_file_integration,
+            "application/json",
+        )
 
-    ert3.engine.load_record(
-        workspace,
-        "designed_coefficients",
-        designed_coeffs_record_file_integration,
-        "application/json",
-    )
-
-    ert3.engine.run(
-        doe_ensemble,
-        stages_config,
-        evaluation_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "doe",
-    )
-    ert3.engine.export(workspace, "doe", doe_ensemble, stages_config, doe_ensemble.size)
+        ert3.engine.run(
+            doe_ensemble,
+            stages_config,
+            evaluation_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "doe",
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace, "doe", doe_ensemble, stages_config, doe_ensemble.size
+        )
 
     designed_collection = ert.data.load_collection_from_file(
         designed_coeffs_record_file_integration, "application/json"
@@ -512,19 +551,20 @@ def test_record_load_and_run(
 
 @pytest.mark.requires_ert_storage
 def test_record_load_twice(workspace, designed_coeffs_record_file):
-    ert3.engine.load_record(
-        workspace,
-        "designed_coefficients",
-        designed_coeffs_record_file,
-        "application/json",
-    )
-    with pytest.raises(ert.exceptions.ElementExistsError):
+    with assert_clean_workspace(workspace):
         ert3.engine.load_record(
             workspace,
             "designed_coefficients",
             designed_coeffs_record_file,
             "application/json",
         )
+        with pytest.raises(ert.exceptions.ElementExistsError):
+            ert3.engine.load_record(
+                workspace,
+                "designed_coefficients",
+                designed_coeffs_record_file,
+                "application/json",
+            )
 
 
 @pytest.mark.requires_ert_storage
@@ -537,23 +577,25 @@ def test_sensitivity_oat_run_and_export(
 ):
     workspace = workspace_integration
     (workspace / _EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
-    ert3.engine.run_sensitivity_analysis(
-        sensitivity_ensemble,
-        stages_config,
-        sensitivity_oat_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "sensitivity",
-    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.run_sensitivity_analysis(
+            sensitivity_ensemble,
+            stages_config,
+            sensitivity_oat_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "sensitivity",
+        )
     ensemble_size = ert3.engine.get_ensemble_size(
         ensemble_config=sensitivity_ensemble,
         stages_config=stages_config,
         experiment_config=sensitivity_oat_experiment_config,
         parameters_config=gaussian_parameters_config,
     )
-    ert3.engine.export(
-        workspace, "sensitivity", sensitivity_ensemble, stages_config, ensemble_size
-    )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace, "sensitivity", sensitivity_ensemble, stages_config, ensemble_size
+        )
     export_data = _load_export_data(workspace, "sensitivity")
     assert_sensitivity_export(
         export_data,
@@ -574,23 +616,25 @@ def test_sensitivity_fast_run_and_export(
 ):
     workspace = workspace_integration
     (workspace / _EXPERIMENTS_BASE / "sensitivity").ensure(dir=True)
-    ert3.engine.run_sensitivity_analysis(
-        sensitivity_ensemble,
-        stages_config,
-        sensitivity_fast_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "sensitivity",
-    )
+    with assert_clean_workspace(workspace, allowed_files={"fast_analysis.json"}):
+        ert3.engine.run_sensitivity_analysis(
+            sensitivity_ensemble,
+            stages_config,
+            sensitivity_fast_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "sensitivity",
+        )
     ensemble_size = ert3.engine.get_ensemble_size(
         ensemble_config=sensitivity_ensemble,
         stages_config=stages_config,
         experiment_config=sensitivity_fast_experiment_config,
         parameters_config=gaussian_parameters_config,
     )
-    ert3.engine.export(
-        workspace, "sensitivity", sensitivity_ensemble, stages_config, ensemble_size
-    )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace, "sensitivity", sensitivity_ensemble, stages_config, ensemble_size
+        )
 
     export_data = _load_export_data(workspace, "sensitivity")
     assert_sensitivity_export(
@@ -614,17 +658,21 @@ def test_partial_sensitivity_run_and_export(
     workspace = workspace_integration
     experiment_dir = workspace / _EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
-    ert3.engine.load_record(
-        workspace, "other_coefficients", oat_compatible_record_file, "application/json"
-    )
-    ert3.engine.run_sensitivity_analysis(
-        partial_sensitivity_ensemble,
-        double_stages_config,
-        sensitivity_oat_experiment_config,
-        gaussian_parameters_config,
-        workspace,
-        "partial_sensitivity",
-    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.load_record(
+            workspace,
+            "other_coefficients",
+            oat_compatible_record_file,
+            "application/json",
+        )
+        ert3.engine.run_sensitivity_analysis(
+            partial_sensitivity_ensemble,
+            double_stages_config,
+            sensitivity_oat_experiment_config,
+            gaussian_parameters_config,
+            workspace,
+            "partial_sensitivity",
+        )
     ensemble_size = ert3.engine.get_ensemble_size(
         ensemble_config=partial_sensitivity_ensemble,
         stages_config=double_stages_config,
@@ -632,13 +680,14 @@ def test_partial_sensitivity_run_and_export(
         parameters_config=gaussian_parameters_config,
     )
 
-    ert3.engine.export(
-        workspace,
-        "partial_sensitivity",
-        partial_sensitivity_ensemble,
-        double_stages_config,
-        ensemble_size,
-    )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace,
+            "partial_sensitivity",
+            partial_sensitivity_ensemble,
+            double_stages_config,
+            ensemble_size,
+        )
 
     export_data = _load_export_data(workspace, "partial_sensitivity")
     assert_sensitivity_export(
@@ -662,20 +711,22 @@ def test_incompatible_partial_sensitivity_run(
     workspace = workspace_integration
     experiment_dir = workspace / _EXPERIMENTS_BASE / "partial_sensitivity"
     experiment_dir.ensure(dir=True)
-    ert3.engine.load_record(
-        workspace,
-        "other_coefficients",
-        oat_incompatible_record_file,
-        "application/json",
-    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.load_record(
+            workspace,
+            "other_coefficients",
+            oat_incompatible_record_file,
+            "application/json",
+        )
 
     err_msg = "Ensemble size 6 does not match stored record ensemble size 10"
-    with pytest.raises(ert.exceptions.ErtError, match=err_msg):
-        ert3.engine.run_sensitivity_analysis(
-            partial_sensitivity_ensemble,
-            double_stages_config,
-            sensitivity_oat_experiment_config,
-            gaussian_parameters_config,
-            workspace,
-            "partial_sensitivity",
-        )
+    with assert_clean_workspace(workspace):
+        with pytest.raises(ert.exceptions.ErtError, match=err_msg):
+            ert3.engine.run_sensitivity_analysis(
+                partial_sensitivity_ensemble,
+                double_stages_config,
+                sensitivity_oat_experiment_config,
+                gaussian_parameters_config,
+                workspace,
+                "partial_sensitivity",
+            )
