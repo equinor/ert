@@ -1,3 +1,4 @@
+import sys
 import asyncio
 from itertools import permutations
 from pathlib import Path
@@ -117,27 +118,32 @@ def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
     assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
 
 
+def function_that_fails_once(coeffs):
+    # all retries load pickled function --> difficult to avoid assuming filesystem
+    # Assumes sum(coeffs) is unique per realization
+    sum_coeffs = sum(coeffs.values())
+    run_path = Path("ran_once" + str(sum_coeffs))  # Avoid data races
+    if not run_path.exists():
+        run_path.touch()
+        raise RuntimeError("This is an expected ERROR")
+    try:
+        run_path.unlink()
+    except FileNotFoundError:
+        # some other real beat us to it
+        pass
+    return {"function_output": []}
+
+
 @pytest.mark.timeout(60)
 def test_prefect_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir, ensemble_size
 ):
-    def function_that_fails_once(coeffs):
-        # all retries load pickled function --> difficult to avoid assuming filesystem
-        # Assumes sum(coeffs) is unique per realization
-        sum_coeffs = sum(coeffs.values())
-        run_path = Path("ran_once" + str(sum_coeffs))  # Avoid data races
-        if not run_path.exists():
-            run_path.touch()
-            raise RuntimeError("This is an expected ERROR")
-        try:
-            run_path.unlink()
-        except FileNotFoundError:
-            # some other real beat us to it
-            pass
-        return {"function_output": []}
 
     """Evaluator fails once through pickled-fail-function. Asserts fail and retries"""
+    cloudpickle.register_pickle_by_value(sys.modules[__name__])
     pickle_func = cloudpickle.dumps(function_that_fails_once)
+    cloudpickle.unregister_pickle_by_value(sys.modules[__name__])
+
     ensemble = function_ensemble_builder_factory(pickle_func).set_retry_delay(2).build()
     evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0, ee_id="1")
     with tmpdir.as_cwd():
@@ -164,23 +170,12 @@ def test_prefect_retries(
 def test_prefect_no_retries(
     evaluator_config, function_ensemble_builder_factory, tmpdir
 ):
-    def function_that_fails_once(coeffs):
-        # all retries load pickled function --> difficult to avoid assuming filesystem
-        # Assumes sum(coeffs) is unique per realization
-        sum_coeffs = sum(coeffs.values())
-        run_path = Path("ran_once" + str(sum_coeffs))  # Avoid data races
-        if not run_path.exists():
-            run_path.touch()
-            raise RuntimeError("This is an expected ERROR")
-        try:
-            run_path.unlink()
-        except FileNotFoundError:
-            # some other real beat us to it
-            pass
-        return {"function_output": []}
 
     """Evaluator tries and fails once. Asserts if job and step fails"""
+    cloudpickle.register_pickle_by_value(sys.modules[__name__])
     pickle_func = cloudpickle.dumps(function_that_fails_once)
+    cloudpickle.unregister_pickle_by_value(sys.modules[__name__])
+
     ensemble = (
         function_ensemble_builder_factory(pickle_func)
         .set_retry_delay(1)
