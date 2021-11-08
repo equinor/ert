@@ -62,3 +62,47 @@ class ActiveListTest(ResTest):
         self.assertTrue("PARTLY_ACTIVE" in rep)
         self.assertFalse("INACTIVE" in rep)
         self.assertFalse("ALL_ACTIVE" in rep)
+
+
+def test_active_index_list_empty():
+    # Empty list
+    active_list_obj = ActiveList()
+    mode = active_list_obj.getMode()
+    assert mode == ActiveMode.ALL_ACTIVE
+    list1 = active_list_obj.get_active_index_list()
+    assert len(list1) == 0
+
+
+def test_active_index_list_add_active():
+    # add elements, mode is changed to partly active
+    active_list_obj = ActiveList()
+    assign_list = [0, 1, 4, 12, 88, 77, 5]
+    for index in assign_list:
+        active_list_obj.addActiveIndex(index)
+    mode = active_list_obj.getMode()
+    assert mode == ActiveMode.PARTLY_ACTIVE
+    list2 = active_list_obj.get_active_index_list()
+    # Can not assume that the list is sorted or that it is
+    # in the same order as the order the elements are added
+    assign_list.sort()
+    list2.sort()
+    assert assign_list == list2
+    default_value = 10
+    size = active_list_obj.getActiveSize(default_value)
+    assert size == len(list2)
+
+
+def test_active_index_list_add_more_active():
+    active_list_obj = ActiveList()
+    assign_list = [0, 1, 4, 12, 88, 77, 5]
+    for index in assign_list:
+        active_list_obj.addActiveIndex(index)
+    # activate more (partly overlapping already activated )
+    index = 1
+    active_list_obj.addActiveIndex(index)
+
+    list2 = active_list_obj.get_active_index_list()
+    list2.sort()
+
+    assign_list2 = [0, 1, 4, 5, 12, 77, 88]
+    assert list2 == assign_list2
