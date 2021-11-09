@@ -1291,40 +1291,6 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
     return update_done;
 }
 
-static void enkf_main_monitor_job_queue(const enkf_main_type *enkf_main,
-                                        job_queue_type *job_queue) {
-    const analysis_config_type *analysis_config =
-        enkf_main_get_analysis_config(enkf_main);
-    if (analysis_config_get_stop_long_running(analysis_config)) {
-        bool cont = true;
-        while (cont) {
-            //Check if minimum number of realizations have run, and if so, kill the rest after a certain time
-            if (analysis_config_have_enough_realisations(
-                    analysis_config, job_queue_get_num_complete(job_queue),
-                    enkf_main_get_ensemble_size(enkf_main))) {
-                job_queue_set_auto_job_stop_time(job_queue);
-                cont = false;
-            }
-
-            //Check if all possible successes satisfies the minimum number of realizations threshold. If not so, it is time to give up
-            int possible_successes = job_queue_get_num_running(job_queue) +
-                                     job_queue_get_num_waiting(job_queue) +
-                                     job_queue_get_num_pending(job_queue) +
-                                     job_queue_get_num_complete(job_queue);
-
-            if (analysis_config_have_enough_realisations(
-                    analysis_config, possible_successes,
-                    enkf_main_get_ensemble_size(enkf_main))) {
-                cont = false;
-            }
-
-            if (cont) {
-                util_usleep(10000);
-            }
-        }
-    }
-}
-
 static void enkf_main_write_run_path(enkf_main_type *enkf_main,
                                      const ert_run_context_type *run_context) {
     runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);
