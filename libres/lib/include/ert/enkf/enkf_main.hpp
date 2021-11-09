@@ -129,7 +129,6 @@ void enkf_main_fprintf_PC(const char *filename, matrix_type *PC,
 void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose);
 
 ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main);
-bool enkf_main_run_workflow(enkf_main_type *enkf_main, const char *workflow);
 
 rng_config_type *enkf_main_get_rng_config(const enkf_main_type *enkf_main);
 void enkf_main_rng_init(enkf_main_type *enkf_main);
