@@ -1691,17 +1691,6 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);
 }
 
-bool enkf_main_run_workflow(enkf_main_type *enkf_main, const char *workflow) {
-    ert_workflow_list_type *workflow_list =
-        enkf_main_get_workflow_list(enkf_main);
-    if (ert_workflow_list_has_workflow(workflow_list, workflow)) {
-        return ert_workflow_list_run_workflow_blocking(workflow_list, workflow,
-                                                       enkf_main);
-    } else {
-        return false;
-    }
-}
-
 int enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main,
                                                int iter,
                                                bool_vector_type *iactive,
