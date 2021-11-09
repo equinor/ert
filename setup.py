@@ -82,7 +82,7 @@ setup(
         "deprecation",
         "dnspython >= 2",
         "ecl >= 2.11.0-rc0",
-        "ert-storage",
+        "ert-storage<=0.3.1",
         "fastapi",
         "graphene",
         "graphlib_backport; python_version < '3.9'",
