@@ -1,3 +1,4 @@
+import logging
 import asyncio
 from threading import Thread
 from PyQt5.QtWidgets import QAbstractItemView
@@ -223,7 +224,21 @@ class RunDialog(QDialog):
                 self,
             )
             self._open_files[selected_file] = viewer
-            viewer.finished.connect(lambda _, f=selected_file: self._open_files.pop(f))
+
+            def remove_file():
+                """
+                We have sometimes seen this fail because the selected file is not
+                in open file, without being able to reproduce the exception.
+                """
+                try:
+                    self._open_files.pop(selected_file)
+                except KeyError:
+                    logger = logging.getLogger(__name__)
+                    logger.exception(
+                        f"Failed to pop: {selected_file} from {self._open_files}"
+                    )
+
+            viewer.finished.connect(remove_file)
 
         elif selected_file in self._open_files:
             self._open_files[selected_file].raise_()
