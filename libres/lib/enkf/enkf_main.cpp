@@ -831,13 +831,13 @@ static FILE *enkf_main_log_step_list(const char *log_path,
 /*
  * This is THE ENKF update function.  It should only be called from enkf_main_UPDATE.
  */
-static void enkf_main_update__(enkf_main_type *enkf_main,
-                               const int_vector_type *step_list,
-                               enkf_fs_type *source_fs, enkf_fs_type *target_fs,
-                               run_mode_type run_mode,
-                               const analysis_config_type *analysis_config,
-                               const local_updatestep_type *updatestep,
-                               const int total_ens_size) {
+static void enkf_main_update__(
+    const int_vector_type *step_list, enkf_fs_type *source_fs,
+    enkf_fs_type *target_fs, run_mode_type run_mode,
+    const analysis_config_type *analysis_config,
+    const local_updatestep_type *updatestep, const int total_ens_size,
+    ensemble_config_type *ensemble_config, enkf_obs_type *obs, bool verbose,
+    rng_type *shared_rng, enkf_state_type **ensemble) {
     /*
    Observations and measurements are collected in these temporary
    structures. obs_data is a precursor for the 'd' vector, and
@@ -849,15 +849,11 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
   */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
-    ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
 
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     {
         FILE *log_stream = enkf_main_log_step_list(
-            analysis_config_get_log_path(
-                enkf_main_get_analysis_config(enkf_main)),
-            step_list);
+            analysis_config_get_log_path(analysis_config), step_list);
         double global_std_scaling =
             analysis_config_get_global_std_scaling(analysis_config);
         meas_data_type *meas_data = meas_data_alloc(ens_mask);
@@ -916,8 +912,6 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
         */
                 local_obsdata_reset_tstep_list(obsdata, step_list);
 
-                const analysis_config_type *analysis_config =
-                    enkf_main_get_analysis_config(enkf_main);
                 double alpha = analysis_config_get_alpha(analysis_config);
                 double std_cutoff =
                     analysis_config_get_std_cutoff(analysis_config);
@@ -925,21 +919,21 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
                 if (analysis_config_get_std_scale_correlated_obs(
                         analysis_config)) {
                     double scale_factor = enkf_obs_scale_correlated_std(
-                        enkf_main->obs, source_fs, ens_active_list, obsdata,
-                        alpha, std_cutoff, false);
+                        obs, source_fs, ens_active_list, obsdata, alpha,
+                        std_cutoff, false);
                     res_log_finfo(
                         "Scaling standard deviation in obdsata set:%s with %g",
                         local_obsdata_get_name(obsdata), scale_factor);
                 }
-                enkf_obs_get_obs_and_measure_data(enkf_main->obs, source_fs,
-                                                  obsdata, ens_active_list,
-                                                  meas_data, obs_data);
+                enkf_obs_get_obs_and_measure_data(obs, source_fs, obsdata,
+                                                  ens_active_list, meas_data,
+                                                  obs_data);
 
-                enkf_analysis_deactivate_outliers(
-                    obs_data, meas_data, std_cutoff, alpha, enkf_main->verbose);
+                enkf_analysis_deactivate_outliers(obs_data, meas_data,
+                                                  std_cutoff, alpha, verbose);
                 local_ministep_add_obs_data(ministep, obs_data);
 
-                if (enkf_main->verbose)
+                if (verbose)
                     enkf_analysis_fprintf_obs_summary(
                         obs_data, meas_data, step_list,
                         local_ministep_get_name(ministep), stdout);
@@ -952,17 +946,15 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
                     enkf_main_analysis_update(
                         target_fs, ens_mask, use_count, run_mode,
                         int_vector_get_first(step_list), current_step, ministep,
-                        meas_data, obs_data, analysis_config,
-                        enkf_main->shared_rng, enkf_main->ens_size,
-                        enkf_main->ensemble, ensemble_config);
+                        meas_data, obs_data, analysis_config, shared_rng,
+                        total_ens_size, ensemble, ensemble_config);
                 else if (target_fs != source_fs)
                     res_log_ferror(
                         "No active observations/parameters for MINISTEP: %s.",
                         local_ministep_get_name(ministep));
             }
             enkf_main_inflate(ensemble_config, source_fs, target_fs,
-                              enkf_main_get_ensemble_size(enkf_main),
-                              current_step, use_count);
+                              total_ens_size, current_step, use_count);
             hash_free(use_count);
         }
 
@@ -1269,8 +1261,11 @@ bool enkf_main_UPDATE(enkf_main_type *enkf_main,
                   "updates - sorry\n");
     }
 
-    enkf_main_update__(enkf_main, step_list, source_fs, target_fs, run_mode,
-                       analysis_config, updatestep, total_ens_size);
+    enkf_main_update__(step_list, source_fs, target_fs, run_mode,
+                       analysis_config, updatestep, total_ens_size,
+                       enkf_main_get_ensemble_config(enkf_main), enkf_main->obs,
+                       enkf_main->verbose, enkf_main->shared_rng,
+                       enkf_main->ensemble);
 
     return true;
 }
