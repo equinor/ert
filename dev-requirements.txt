@@ -18,4 +18,3 @@ scikit-build
 setuptools_scm
 pytest-snapshot
 flake8>=4.0.0
-pytest-xdist
