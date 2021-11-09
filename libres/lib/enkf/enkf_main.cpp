@@ -108,11 +108,12 @@ static void enkf_main_init_fs(enkf_main_type *enkf_main);
 static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main);
 static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 static void enkf_main_analysis_update(
-    enkf_main_type *enkf_main, enkf_fs_type *target_fs,
-    const bool_vector_type *ens_mask, hash_type *use_count,
-    run_mode_type run_mode, int step1, int step2,
+    enkf_fs_type *target_fs, const bool_vector_type *ens_mask,
+    hash_type *use_count, run_mode_type run_mode, int step1, int step2,
     const local_ministep_type *ministep, const meas_data_type *forecast,
-    obs_data_type *obs_data);
+    obs_data_type *obs_data, const analysis_config_type *analysis_config,
+    rng_type *shared_rng, int ensemble_size, enkf_state_type **ensemble,
+    ensemble_config_type *ensemble_config);
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
@@ -848,7 +849,7 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
   */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
-    const ensemble_config_type *ensemble_config =
+    ensemble_config_type *ensemble_config =
         enkf_main_get_ensemble_config(enkf_main);
 
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
@@ -949,9 +950,11 @@ static void enkf_main_update__(enkf_main_type *enkf_main,
                 if ((obs_data_get_active_size(obs_data) > 0) &&
                     (meas_data_get_active_obs_size(meas_data) > 0))
                     enkf_main_analysis_update(
-                        enkf_main, target_fs, ens_mask, use_count, run_mode,
+                        target_fs, ens_mask, use_count, run_mode,
                         int_vector_get_first(step_list), current_step, ministep,
-                        meas_data, obs_data);
+                        meas_data, obs_data, analysis_config,
+                        enkf_main->shared_rng, enkf_main->ens_size,
+                        enkf_main->ensemble, ensemble_config);
                 else if (target_fs != source_fs)
                     res_log_ferror(
                         "No active observations/parameters for MINISTEP: %s.",
@@ -1013,11 +1016,12 @@ static void enkf_main_store_PC(const analysis_config_type *analysis_config,
 }
 
 static void enkf_main_analysis_update(
-    enkf_main_type *enkf_main, enkf_fs_type *target_fs,
-    const bool_vector_type *ens_mask, hash_type *use_count,
-    run_mode_type run_mode, int step1, int step2,
+    enkf_fs_type *target_fs, const bool_vector_type *ens_mask,
+    hash_type *use_count, run_mode_type run_mode, int step1, int step2,
     const local_ministep_type *ministep, const meas_data_type *forecast,
-    obs_data_type *obs_data) {
+    obs_data_type *obs_data, const analysis_config_type *analysis_config,
+    rng_type *shared_rng, int ensemble_size, enkf_state_type **ensemble,
+    ensemble_config_type *ensemble_config) {
 
     const int cpu_threads = 4;
     const int matrix_start_size = 250000;
@@ -1036,8 +1040,6 @@ static void enkf_main_analysis_update(
         bool_vector_alloc_active_index_list(ens_mask, -1);
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
 
-    const analysis_config_type *analysis_config =
-        enkf_main_get_analysis_config(enkf_main);
     analysis_module_type *module =
         analysis_config_get_active_module(analysis_config);
     if (local_ministep_has_analysis_module(ministep))
@@ -1046,10 +1048,10 @@ static void enkf_main_analysis_update(
     assert_matrix_size(X, "X", active_ens_size, active_ens_size);
     assert_matrix_size(S, "S", active_size, active_ens_size);
     assert_matrix_size(R, "R", active_size, active_size);
-    assert_size_equal(enkf_main_get_ensemble_size(enkf_main), ens_mask);
+    assert_size_equal(ensemble_size, ens_mask);
 
     if (analysis_module_check_option(module, ANALYSIS_NEED_ED)) {
-        E = obs_data_allocE(obs_data, enkf_main->shared_rng, active_ens_size);
+        E = obs_data_allocE(obs_data, shared_rng, active_ens_size);
         D = obs_data_allocD(obs_data, E, S);
 
         assert_matrix_size(E, "E", active_size, active_ens_size);
@@ -1064,15 +1066,14 @@ static void enkf_main_analysis_update(
         localA = A;
 
     analysis_module_init_update(module, ens_mask, obs_mask, S, R, dObs, E, D,
-                                enkf_main->shared_rng);
+                                shared_rng);
     {
         hash_iter_type *dataset_iter =
             local_ministep_alloc_dataset_iter(ministep);
         serialize_info_type *serialize_info = serialize_info_alloc(
             target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-            target_fs, enkf_main_get_ensemble_config(enkf_main),
-            iens_active_index, 0, enkf_main->ensemble, run_mode, step2, A,
-            cpu_threads);
+            target_fs, ensemble_config, iens_active_index, 0, ensemble,
+            run_mode, step2, A, cpu_threads);
 
         if (analysis_config_get_store_PC(analysis_config))
             enkf_main_store_PC(analysis_config, step1, step2, active_ens_size,
@@ -1080,7 +1081,7 @@ static void enkf_main_analysis_update(
 
         if (localA == NULL)
             analysis_module_initX(module, X, NULL, S, R, dObs, E, D,
-                                  enkf_main->shared_rng);
+                                  shared_rng);
 
         while (!hash_iter_is_complete(dataset_iter)) {
             const char *dataset_name = hash_iter_get_next_key(dataset_iter);
@@ -1105,9 +1106,8 @@ static void enkf_main_analysis_update(
           */
 
                     // Part 1: Parameters which do not have row scaling attached.
-                    enkf_main_serialize_dataset(
-                        enkf_main_get_ensemble_config(enkf_main), dataset,
-                        step2, use_count, tp, serialize_info);
+                    enkf_main_serialize_dataset(ensemble_config, dataset, step2,
+                                                use_count, tp, serialize_info);
                     module_info_type *module_info = enkf_main_module_info_alloc(
                         ministep, obs_data, dataset, local_obsdata,
                         serialize_info->active_size.data(),
@@ -1119,23 +1119,22 @@ static void enkf_main_analysis_update(
                                                          ANALYSIS_ITERABLE)) {
                             analysis_module_updateA(module, localA, S, R, dObs,
                                                     E, D, module_info,
-                                                    enkf_main->shared_rng);
+                                                    shared_rng);
                         } else
                             analysis_module_updateA(module, localA, S, R, dObs,
                                                     E, D, module_info,
-                                                    enkf_main->shared_rng);
+                                                    shared_rng);
                     } else {
                         if (analysis_module_check_option(module,
                                                          ANALYSIS_USE_A)) {
                             analysis_module_initX(module, X, localA, S, R, dObs,
-                                                  E, D, enkf_main->shared_rng);
+                                                  E, D, shared_rng);
                         }
                         matrix_inplace_matmul_mt2(A, X, tp);
                     }
 
-                    enkf_main_deserialize_dataset(
-                        enkf_main_get_ensemble_config(enkf_main), dataset,
-                        serialize_info, tp);
+                    enkf_main_deserialize_dataset(ensemble_config, dataset,
+                                                  serialize_info, tp);
                     enkf_main_module_info_free(module_info);
                 }
 
@@ -1187,8 +1186,7 @@ static void enkf_main_analysis_update(
                             if (analysis_module_check_option(module,
                                                              ANALYSIS_USE_A))
                                 analysis_module_initX(module, X, localA, S, R,
-                                                      dObs, E, D,
-                                                      enkf_main->shared_rng);
+                                                      dObs, E, D, shared_rng);
 
                             const row_scaling_type *row_scaling =
                                 local_dataset_get_row_scaling(dataset,
