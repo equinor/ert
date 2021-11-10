@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
 @pytest.fixture()
 def storage_path(workspace, ert_storage):
-    yield ert.storage.get_records_url(workspace)
+    yield ert.storage.get_records_url(workspace.name)
 
 
 @contextlib.contextmanager
@@ -129,29 +129,29 @@ def pytest_generate_tests(metafunc):
 def workspace_integration(tmpdir):
     from ert_shared.services import Storage
 
-    workspace = tmpdir / "polynomial"
-    workspace.mkdir()
-    workspace.chdir()
+    workspace_dir = pathlib.Path(tmpdir / "polynomial")
+    workspace_dir.mkdir()
+    os.chdir(workspace_dir)
 
     with Storage.start_server():
-        ert3.workspace.initialize(workspace)
-        ert.storage.init(workspace=workspace)
-        yield workspace
+        workspace_obj = ert3.workspace.initialize(workspace_dir)
+        ert.storage.init(workspace_name=workspace_obj.name)
+        yield workspace_obj
 
 
 @pytest.fixture()
 def workspace(tmpdir, ert_storage):
-    workspace = tmpdir / "polynomial"
-    workspace.mkdir()
-    workspace.chdir()
-    ert3.workspace.initialize(workspace)
-    ert.storage.init(workspace=workspace)
-    yield workspace
+    workspace_dir = pathlib.Path(tmpdir / "polynomial")
+    workspace_dir.mkdir()
+    os.chdir(workspace_dir)
+    workspace_obj = ert3.workspace.initialize(workspace_dir)
+    ert.storage.init(workspace_name=workspace_obj.name)
+    yield workspace_obj
 
 
 def _create_coeffs_record_file(workspace):
-    doe_dir = workspace / _EXPERIMENTS_BASE / "doe"
-    doe_dir.ensure(dir=True)
+    doe_dir = workspace._path / _EXPERIMENTS_BASE / "doe"
+    doe_dir.mkdir(parents=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
     with open(doe_dir / "coefficients_record.json", "w") as f:
         json.dump(coeffs, f)
@@ -170,8 +170,8 @@ def designed_coeffs_record_file_integration(workspace_integration):
 
 @pytest.fixture()
 def designed_blob_record_file(workspace):
-    file_path = workspace / _EXPERIMENTS_BASE / "doe" / "record.bin"
-    file_path.dirpath().ensure(dir=True)
+    file_path = workspace._path / _EXPERIMENTS_BASE / "doe" / "record.bin"
+    file_path.parent.mkdir(parents=True)
     with open(file_path, "wb") as f:
         f.write(b"0x410x420x43")
     return file_path
@@ -179,8 +179,10 @@ def designed_blob_record_file(workspace):
 
 @pytest.fixture()
 def oat_compatible_record_file(workspace_integration):
-    sensitivity_dir = workspace_integration / _EXPERIMENTS_BASE / "partial_sensitivity"
-    sensitivity_dir.ensure(dir=True)
+    sensitivity_dir = (
+        workspace_integration._path / _EXPERIMENTS_BASE / "partial_sensitivity"
+    )
+    sensitivity_dir.mkdir(parents=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(6)]
     with open(sensitivity_dir / "coefficients_record.json", "w") as f:
         json.dump(coeffs, f)
@@ -189,8 +191,10 @@ def oat_compatible_record_file(workspace_integration):
 
 @pytest.fixture()
 def oat_incompatible_record_file(workspace_integration):
-    sensitivity_dir = workspace_integration / _EXPERIMENTS_BASE / "partial_sensitivity"
-    sensitivity_dir.ensure(dir=True)
+    sensitivity_dir = (
+        workspace_integration._path / _EXPERIMENTS_BASE / "partial_sensitivity"
+    )
+    sensitivity_dir.mkdir(parents=True)
     coeffs = [{"a": x, "b": x, "c": x} for x in range(10)]
     with open(sensitivity_dir / "coefficients_record.json", "w") as f:
         json.dump(coeffs, f)

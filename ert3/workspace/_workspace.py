@@ -1,6 +1,6 @@
-import os
 import json
 import sys
+import shutil
 from pathlib import Path
 from typing import Union, Optional, Set, List, Dict, Any
 
@@ -9,99 +9,115 @@ import yaml
 import ert3
 import ert
 
+_WORKSPACE_DATA_ROOT = ".ert"
 _EXPERIMENTS_BASE = "experiments"
 
 
-def _locate_root(path: Union[str, Path]) -> Optional[Path]:
-    path = Path(path)
+def _locate_root(path: Path) -> Optional[Path]:
     while True:
-        if (path / ert3._WORKSPACE_DATA_ROOT).exists():
+        if (path / _WORKSPACE_DATA_ROOT).exists():
             return path
         if path == Path(path.root):
             return None
         path = path.parent
 
 
-def assert_experiment_exists(
-    workspace_root: Union[str, Path], experiment_name: str
-) -> None:
-    experiment_root = Path(workspace_root) / _EXPERIMENTS_BASE / experiment_name
-    if not experiment_root.is_dir():
-        raise ert.exceptions.IllegalWorkspaceOperation(
-            f"{experiment_name} is not an experiment "
-            f"within the workspace {workspace_root}"
+class Workspace:
+    def __init__(self, path: Union[str, Path]) -> None:
+        root = _locate_root(Path(path))
+        if root is None:
+            raise ert.exceptions.IllegalWorkspaceOperation(
+                "Not inside an ERT workspace."
+            )
+        self._path = root
+
+    @property
+    def name(self) -> str:
+        return str(self._path)
+
+    def get_experiment_tmp_dir(self, experiment_name: str) -> Path:
+        if experiment_name not in self.get_experiment_names():
+            raise ert.exceptions.IllegalWorkspaceOperation(
+                f"experiment {experiment_name} does not exist"
+            )
+        return self._path / _WORKSPACE_DATA_ROOT / "tmp" / experiment_name
+
+    def get_resources_dir(self) -> Path:
+        return self._path / "resources"
+
+    def assert_experiment_exists(self, experiment_name: str) -> None:
+        experiment_root = self._path / _EXPERIMENTS_BASE / experiment_name
+        if not experiment_root.is_dir():
+            raise ert.exceptions.IllegalWorkspaceOperation(
+                f"{experiment_name} is not an experiment "
+                f"within the workspace {self.name}"
+            )
+
+    def get_experiment_names(self) -> Set[str]:
+        experiment_base = self._path / _EXPERIMENTS_BASE
+        if not experiment_base.is_dir():
+            raise ert.exceptions.IllegalWorkspaceState(
+                f"the workspace {self._path} cannot access experiments"
+            )
+        return {
+            experiment.name
+            for experiment in experiment_base.iterdir()
+            if experiment.is_dir()
+        }
+
+    def load_ensemble_config(self, experiment_name: str) -> ert3.config.EnsembleConfig:
+        ensemble_config = (
+            self._path / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
         )
+        with open(ensemble_config, encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        return ert3.config.load_ensemble_config(config_dict)
 
+    def load_stages_config(self) -> ert3.config.StagesConfig:
+        with open(self._path / "stages.yml", encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        sys.path.append(str(self._path))
+        return ert3.config.load_stages_config(config_dict)
 
-def get_experiment_names(workspace_root: Union[str, Path]) -> Set[str]:
-    experiment_base = Path(workspace_root) / _EXPERIMENTS_BASE
-    if not experiment_base.is_dir():
-        raise ert.exceptions.IllegalWorkspaceState(
-            f"the workspace {workspace_root} cannot access experiments"
+    def load_experiment_config(
+        self, experiment_name: str
+    ) -> ert3.config.ExperimentConfig:
+        experiment_config = (
+            self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
         )
-    return {
-        experiment.name
-        for experiment in experiment_base.iterdir()
-        if experiment.is_dir()
-    }
+        with open(experiment_config, encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        return ert3.config.load_experiment_config(config_dict)
+
+    def load_parameters_config(self) -> ert3.config.ParametersConfig:
+        with open(self._path / "parameters.yml", encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        return ert3.config.load_parameters_config(config_dict)
+
+    def clean_experiment(self, experiment_name: str) -> None:
+        tmp_dir = self.get_experiment_tmp_dir(experiment_name)
+        if tmp_dir.exists():
+            shutil.rmtree(tmp_dir)
+
+    def export_json(
+        self,
+        experiment_name: str,
+        data: Union[Dict[int, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]],
+        output_file: Optional[str] = None,
+    ) -> None:
+        experiment_root = self._path / _EXPERIMENTS_BASE / experiment_name
+        if output_file is None:
+            output_file = "data.json"
+        self.assert_experiment_exists(experiment_name)
+        with open(experiment_root / output_file, "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
 
-def initialize(path: Union[str, Path]) -> None:
+def initialize(path: Union[str, Path]) -> Workspace:
     path = Path(path)
-    if load(path) is not None:
+    if _locate_root(path) is not None:
         raise ert.exceptions.IllegalWorkspaceOperation(
             "Already inside an ERT workspace."
         )
-
-    os.mkdir(path / ert3._WORKSPACE_DATA_ROOT)
-
-
-def load(path: Union[str, Path]) -> Optional[Path]:
-    return _locate_root(path)
-
-
-def export_json(
-    workspace_root: Path,
-    experiment_name: str,
-    data: Union[Dict[int, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]],
-    output_file: Optional[str] = None,
-) -> None:
-    experiment_root = Path(workspace_root) / _EXPERIMENTS_BASE / experiment_name
-    if output_file is None:
-        output_file = "data.json"
-    assert_experiment_exists(workspace_root, experiment_name)
-    with open(experiment_root / output_file, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-
-
-def load_ensemble_config(
-    workspace: Path, experiment_name: str
-) -> ert3.config.EnsembleConfig:
-    ensemble_config = workspace / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
-    with open(ensemble_config, encoding="utf-8") as f:
-        config_dict = yaml.safe_load(f)
-    return ert3.config.load_ensemble_config(config_dict)
-
-
-def load_stages_config(workspace: Path) -> ert3.config.StagesConfig:
-    with open(workspace / "stages.yml", encoding="utf-8") as f:
-        config_dict = yaml.safe_load(f)
-    sys.path.append(str(workspace))
-    return ert3.config.load_stages_config(config_dict)
-
-
-def load_experiment_config(
-    workspace: Path, experiment_name: str
-) -> ert3.config.ExperimentConfig:
-    experiment_config = (
-        workspace / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
-    )
-    with open(experiment_config, encoding="utf-8") as f:
-        config_dict = yaml.safe_load(f)
-    return ert3.config.load_experiment_config(config_dict)
-
-
-def load_parameters_config(workspace: Path) -> ert3.config.ParametersConfig:
-    with open(workspace / "parameters.yml", encoding="utf-8") as f:
-        config_dict = yaml.safe_load(f)
-    return ert3.config.load_parameters_config(config_dict)
+    (path / _WORKSPACE_DATA_ROOT).mkdir()
+    return Workspace(path)

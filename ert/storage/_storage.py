@@ -2,7 +2,6 @@ import io
 import logging
 from functools import partial
 from http import HTTPStatus
-from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Set, Tuple, List
 
 import pandas as pd
@@ -302,7 +301,7 @@ async def add_record_metadata(
 async def transmit_record_collection(
     record_coll: ert.data.RecordCollection,
     record_name: str,
-    workspace: Path,
+    workspace_name: str,
     experiment_name: Optional[str] = None,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     assert record_coll.ensemble_size is not None
@@ -313,9 +312,9 @@ async def transmit_record_collection(
         "uris": [],
     }
 
-    records_url = await get_records_url_async(workspace, experiment_name)
+    records_url = await get_records_url_async(workspace_name, experiment_name)
     if experiment_name is not None:
-        ensemble_id = await _get_ensemble_id_async(workspace, experiment_name)
+        ensemble_id = await _get_ensemble_id_async(workspace_name, experiment_name)
         ensemble_size = await _get_ensemble_size(ensemble_id=ensemble_id)
     else:
         ensemble_size = record_coll.ensemble_size
@@ -369,9 +368,9 @@ def _get_from_server(
     return resp
 
 
-def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> str:
+def get_records_url(workspace_name: str, experiment_name: Optional[str] = None) -> str:
     if experiment_name is None:
-        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+        experiment_name = f"{workspace_name}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert.exceptions.NonExistantExperiment(
@@ -383,9 +382,9 @@ def get_records_url(workspace: Path, experiment_name: Optional[str] = None) -> s
 
 
 async def get_records_url_async(
-    workspace: Path, experiment_name: Optional[str] = None
+    workspace_name: str, experiment_name: Optional[str] = None
 ) -> str:
-    ensemble_id = await _get_ensemble_id_async(workspace, experiment_name)
+    ensemble_id = await _get_ensemble_id_async(workspace_name, experiment_name)
     return f"/ensembles/{ensemble_id}/records"
 
 
@@ -445,11 +444,11 @@ def _get_experiment_by_name(experiment_name: str) -> Dict[str, Any]:
 
 
 async def _get_ensemble_id_async(
-    workspace: Path, experiment_name: Optional[str] = None
+    workspace_name: str, experiment_name: Optional[str] = None
 ) -> str:
     url = "/experiments"
     if experiment_name is None:
-        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+        experiment_name = f"{workspace_name}.{_ENSEMBLE_RECORDS}"
 
     response = await _get_from_server_async(url, {})
     experiments = {exp["name"]: exp for exp in response.json()}
@@ -468,15 +467,15 @@ async def _get_ensemble_size(ensemble_id: str) -> int:
     return int(response_json["size"])
 
 
-def init(*, workspace: Path) -> None:
+def init(*, workspace_name: str) -> None:
     response = _get_from_server(path="experiments")
     experiment_names = {exp["name"]: exp["ensemble_ids"] for exp in response.json()}
 
     for special_key in _SPECIAL_KEYS:
-        if f"{workspace}.{special_key}" in experiment_names:
+        if f"{workspace_name}.{special_key}" in experiment_names:
             raise ValueError("Storage already initialized")
         _init_experiment(
-            experiment_name=f"{workspace}.{special_key}",
+            experiment_name=f"{workspace_name}.{special_key}",
             parameters={},
             ensemble_size=-1,
             responses=[],
@@ -537,11 +536,11 @@ def _init_experiment(
         raise ert.exceptions.StorageError(response.text)
 
 
-def get_experiment_names(*, workspace: Path) -> Set[str]:
+def get_experiment_names(*, workspace_name: str) -> Set[str]:
     response = _get_from_server(path="experiments")
     experiment_names = {exp["name"] for exp in response.json()}
     for special_key in _SPECIAL_KEYS:
-        key = f"{workspace}.{special_key}"
+        key = f"{workspace_name}.{special_key}"
         if key in experiment_names:
             experiment_names.remove(key)
     return experiment_names
@@ -576,14 +575,14 @@ async def _get_record_collection(
 
 def get_ensemble_record(
     *,
-    workspace: Path,
+    workspace_name: str,
     record_name: str,
     ensemble_size: int,
     experiment_name: Optional[str] = None,
     source: Optional[str] = None,
 ) -> ert.data.RecordCollection:
     records_url = ert.storage.get_records_url(
-        workspace=workspace, experiment_name=experiment_name
+        workspace_name=workspace_name, experiment_name=experiment_name
     )
 
     transmitters, collection_type = get_event_loop().run_until_complete(
@@ -604,11 +603,11 @@ def get_ensemble_record(
 
 
 def get_ensemble_record_names(
-    *, workspace: Path, experiment_name: Optional[str] = None, _flatten: bool = True
+    *, workspace_name: str, experiment_name: Optional[str] = None, _flatten: bool = True
 ) -> Iterable[str]:
     # _flatten is a parameter used only for testing separated parameter records
     if experiment_name is None:
-        experiment_name = f"{workspace}.{_ENSEMBLE_RECORDS}"
+        experiment_name = f"{workspace_name}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
         raise ert.exceptions.NonExistantExperiment(

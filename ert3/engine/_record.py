@@ -5,7 +5,7 @@ from ert_shared.asyncio import get_event_loop
 
 
 def load_record(
-    workspace: Path,
+    workspace: ert3.workspace.Workspace,
     record_name: str,
     record_file: Path,
     record_mime: str,
@@ -15,7 +15,9 @@ def load_record(
     collection = ert.data.load_collection_from_file(
         file_path=record_file, mime=record_mime, is_directory=record_is_directory
     )
-    future = ert.storage.transmit_record_collection(collection, record_name, workspace)
+    future = ert.storage.transmit_record_collection(
+        collection, record_name, workspace.name
+    )
     get_event_loop().run_until_complete(future)
 
 
