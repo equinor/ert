@@ -1,5 +1,4 @@
 from collections import defaultdict
-from pathlib import Path
 from typing import List, Dict, Any
 import ert
 import ert3
@@ -9,7 +8,7 @@ _SOURCE_SEPARATOR = "."
 
 
 def _prepare_export_parameters(
-    workspace: Path,
+    workspace: ert3.workspace.Workspace,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
@@ -29,7 +28,7 @@ def _prepare_export_parameters(
             exp_name = None if record_source[0] == "storage" else experiment_name
             source = record_source[1] if record_source[0] == "storage" else None
             collection = ert.storage.get_ensemble_record(
-                workspace=workspace,
+                workspace_name=workspace.name,
                 record_name=record_name,
                 experiment_name=exp_name,
                 source=source,
@@ -46,7 +45,7 @@ def _prepare_export_parameters(
             # DO NOT export blob records as inputs
             if record_mime == "application/octet-stream":
                 continue
-            file_path = workspace / "resources" / record_source[1]
+            file_path = workspace.get_resources_dir() / record_source[1]
             collection = ert.data.load_collection_from_file(file_path, record_mime)
             assert collection.ensemble_size == ensemble_size
             for record in collection.records:
@@ -58,14 +57,14 @@ def _prepare_export_parameters(
 
 
 def _prepare_export_responses(
-    workspace: Path,
+    workspace_name: str,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
     ensemble_size: int,
 ) -> Dict[str, List[ert.data.record_data]]:
     outputs = defaultdict(list)
     responses = [elem.record for elem in ensemble.output]
-    records_url = ert.storage.get_records_url(workspace, experiment_name)
+    records_url = ert.storage.get_records_url(workspace_name, experiment_name)
 
     for record_name in responses:
         for iens in range(ensemble_size):
@@ -77,24 +76,24 @@ def _prepare_export_responses(
 
 
 def export(
-    workspace_root: Path,
+    workspace: ert3.workspace.Workspace,
     experiment_name: str,
     ensemble: ert3.config.EnsembleConfig,
     stages_config: ert3.config.StagesConfig,
     ensemble_size: int,
 ) -> None:
-    ert3.workspace.assert_experiment_exists(workspace_root, experiment_name)
+    workspace.assert_experiment_exists(experiment_name)
 
     if experiment_name not in ert.storage.get_experiment_names(
-        workspace=workspace_root
+        workspace_name=workspace.name
     ):
         raise ValueError("Cannot export experiment that has not been carried out")
 
     parameters = _prepare_export_parameters(
-        workspace_root, experiment_name, ensemble, stages_config, ensemble_size
+        workspace, experiment_name, ensemble, stages_config, ensemble_size
     )
     responses = _prepare_export_responses(
-        workspace_root, experiment_name, ensemble, ensemble_size
+        workspace.name, experiment_name, ensemble, ensemble_size
     )
 
     data: List[Dict[str, Dict[str, Any]]] = []
@@ -103,4 +102,4 @@ def export(
         outputs = {record: data[iens] for record, data in responses.items()}
         data.append({"input": inputs, "output": outputs})
 
-    ert3.workspace.export_json(workspace_root, experiment_name, data)
+    workspace.export_json(experiment_name, data)

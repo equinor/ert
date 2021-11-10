@@ -1,26 +1,13 @@
-import pathlib
 import pickle
-import shutil
-from pathlib import Path
 from typing import Dict
 
 import ert
-import ert3
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 from ert_shared.status.entity.state import ENSEMBLE_STATE_STOPPED, ENSEMBLE_STATE_FAILED
-
-
-def _create_evaluator_tmp_dir(workspace_root: Path, evaluation_name: str) -> Path:
-    return (
-        pathlib.Path(workspace_root)
-        / ert3._WORKSPACE_DATA_ROOT
-        / "tmp"
-        / evaluation_name
-    )
 
 
 def _run(
@@ -49,9 +36,3 @@ def evaluate(
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
     return result
-
-
-def cleanup(workspace_root: Path, evaluation_name: str) -> None:
-    tmp_dir = _create_evaluator_tmp_dir(workspace_root, evaluation_name)
-    if tmp_dir.exists():
-        shutil.rmtree(tmp_dir)

@@ -1,4 +1,3 @@
-import pathlib
 from typing import Dict, List, Tuple
 
 import ert
@@ -12,7 +11,7 @@ def analyze_sensitivity(
     stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
     experiment_config: ert3.config.ExperimentConfig,
     parameters_config: ert3.config.ParametersConfig,
-    workspace_root: pathlib.Path,
+    workspace: ert3.workspace.Workspace,
     experiment_name: str,
     model_output: Dict[int, Dict[str, ert.data.RecordTransmitter]],
 ) -> None:
@@ -26,8 +25,8 @@ def analyze_sensitivity(
         analysis = ert3.algorithms.fast_analyze(
             sensitivity_parameters, model_output, experiment_config.harmonics
         )
-        ert3.workspace.export_json(
-            workspace_root, experiment_name, analysis, output_file="fast_analysis.json"
+        workspace.export_json(
+            experiment_name, analysis, output_file="fast_analysis.json"
         )
     else:
         raise ValueError(
@@ -40,7 +39,7 @@ def transmitter_map_sensitivity(
     stochastic_inputs: Tuple[ert3.config.LinkedInput, ...],
     sensitivity_records: List[Dict[str, ert.data.Record]],
     experiment_name: str,
-    workspace_root: pathlib.Path,
+    workspace: ert3.workspace.Workspace,
 ) -> List[TransmitterCoroutine]:
     sensitivity_parameters: Dict[str, List[ert.data.Record]] = {
         input_.name: [] for input_ in stochastic_inputs
@@ -59,7 +58,7 @@ def transmitter_map_sensitivity(
         future = ert.storage.transmit_record_collection(
             record_coll=ensemble_record,
             record_name=record_name,
-            workspace=workspace_root,
+            workspace_name=workspace.name,
             experiment_name=experiment_name,
         )
         futures.append(future)

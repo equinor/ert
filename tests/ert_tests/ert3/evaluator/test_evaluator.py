@@ -42,7 +42,7 @@ def get_inputs(coeffs):
 def test_evaluator_script(
     workspace, stages_config, base_ensemble_dict, coeffs, expected
 ):
-    storage_path = workspace / ".ert" / "tmp" / "test"
+    storage_path = workspace._path / ".ert" / "tmp" / "test"
     input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
@@ -97,7 +97,7 @@ def test_evaluator_script(
 def test_evaluator_function(
     workspace, function_stages_config, base_ensemble_dict, coeffs, expected
 ):
-    storage_path = workspace / ".ert" / "tmp" / "test"
+    storage_path = workspace._path / ".ert" / "tmp" / "test"
     input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"

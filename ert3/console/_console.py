@@ -11,6 +11,7 @@ import pkg_resources as pkg
 
 import ert
 import ert3
+from ert3.workspace import Workspace
 from ert3.config import DEFAULT_RECORD_MIME_TYPE
 from ert_shared.asyncio import get_event_loop
 from ert_shared.services import Storage
@@ -172,8 +173,8 @@ def _init(args: Any) -> None:
     assert args.sub_cmd == "init"
 
     if args.example is None:
-        ert3.workspace.initialize(pathlib.Path.cwd())
-        ert.storage.init(workspace=pathlib.Path.cwd())
+        workspace = ert3.workspace.initialize(pathlib.Path.cwd())
+        ert.storage.init(workspace_name=workspace.name)
     else:
         example_name = args.example
         pkg_examples_path = _get_ert3_examples_path()
@@ -187,8 +188,12 @@ def _init(args: Any) -> None:
                 f"Valid examples names are:  {', '.join(_get_ert3_example_names())}."
             )
 
-        # check that we are not inside an ERT workspace already
-        if ert3.workspace.load(pathlib.Path.cwd()) is not None:
+        # If we can create a workspace, it existed already:
+        try:
+            ert3.workspace.Workspace(pathlib.Path.cwd())
+        except ert.exceptions.IllegalWorkspaceOperation:
+            pass
+        else:
             raise ert.exceptions.IllegalWorkspaceOperation(
                 "Already inside an ERT workspace."
             )
@@ -201,19 +206,17 @@ def _init(args: Any) -> None:
                 f"Your working directory already contains example {example_name}."
             )
 
-        ert3.workspace.initialize(wd_example_path)
-        ert.storage.init(workspace=wd_example_path)
+        workspace = ert3.workspace.initialize(wd_example_path)
+        ert.storage.init(workspace_name=workspace.name)
 
 
-def _run(workspace: Path, args: Any) -> None:
+def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
-    ert3.workspace.assert_experiment_exists(workspace, args.experiment_name)
-    ensemble = ert3.workspace.load_ensemble_config(workspace, args.experiment_name)
-    stages_config = ert3.workspace.load_stages_config(workspace)
-    experiment_config = ert3.workspace.load_experiment_config(
-        workspace, args.experiment_name
-    )
-    parameters_config = ert3.workspace.load_parameters_config(workspace)
+    workspace.assert_experiment_exists(args.experiment_name)
+    ensemble = workspace.load_ensemble_config(args.experiment_name)
+    stages_config = workspace.load_stages_config()
+    experiment_config = workspace.load_experiment_config(args.experiment_name)
+    parameters_config = workspace.load_parameters_config()
     if experiment_config.type == "evaluation":
         ert3.engine.run(
             ensemble,
@@ -234,14 +237,12 @@ def _run(workspace: Path, args: Any) -> None:
         )
 
 
-def _export(workspace: Path, args: Any) -> None:
+def _export(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "export"
-    ensemble = ert3.workspace.load_ensemble_config(workspace, args.experiment_name)
-    experiment_config = ert3.workspace.load_experiment_config(
-        workspace, args.experiment_name
-    )
-    parameters_config = ert3.workspace.load_parameters_config(workspace)
-    stages_config = ert3.workspace.load_stages_config(workspace)
+    ensemble = workspace.load_ensemble_config(args.experiment_name)
+    experiment_config = workspace.load_experiment_config(args.experiment_name)
+    parameters_config = workspace.load_parameters_config()
+    stages_config = workspace.load_stages_config()
 
     ensemble_size = ert3.engine.get_ensemble_size(
         ensemble_config=ensemble,
@@ -254,10 +255,10 @@ def _export(workspace: Path, args: Any) -> None:
     )
 
 
-def _record(workspace: Path, args: Any) -> None:
+def _record(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "record"
     if args.sub_record_cmd == "sample":
-        parameters_config = ert3.workspace.load_parameters_config(workspace)
+        parameters_config = workspace.load_parameters_config()
         collection = ert3.engine.sample_record(
             parameters_config,
             args.parameter_group,
@@ -266,7 +267,7 @@ def _record(workspace: Path, args: Any) -> None:
         future = ert.storage.transmit_record_collection(
             record_coll=collection,
             record_name=args.record_name,
-            workspace=workspace,
+            workspace_name=workspace.name,
         )
         get_event_loop().run_until_complete(future)
 
@@ -307,12 +308,12 @@ def _record(workspace: Path, args: Any) -> None:
         )
 
 
-def _status(workspace: Path, args: Any) -> None:
+def _status(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "status"
     ert3.console.status(workspace)
 
 
-def _clean(workspace: Path, args: Any) -> None:
+def _clean(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "clean"
     ert3.console.clean(workspace, args.experiment_names, args.all)
 
@@ -359,7 +360,7 @@ def _main() -> None:
     parser = _build_argparser()
     args = parser.parse_args()
 
-    # Commands that does not require an ert workspace
+    # Commands that do not require an ert workspace:
     if args.sub_cmd is None:
         parser.print_help()
         return
@@ -370,11 +371,8 @@ def _main() -> None:
         _service(args)
         return
 
-    # Commands that does requires an ert workspace
-    workspace = ert3.workspace.load(pathlib.Path.cwd())
-
-    if workspace is None:
-        raise ert.exceptions.IllegalWorkspaceOperation("Not inside an ERT workspace.")
+    # The remaining commands require an existing ert workspace:
+    workspace = Workspace(pathlib.Path.cwd())
 
     if args.sub_cmd == "run":
         _run(workspace, args)

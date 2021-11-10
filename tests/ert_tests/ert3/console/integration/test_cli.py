@@ -1,6 +1,7 @@
 import copy
 import pathlib
 import sys
+import os
 from unittest.mock import patch
 
 import pytest
@@ -61,7 +62,8 @@ def test_cli_init_twice(tmpdir, ert_storage):
 
 @pytest.mark.requires_ert_storage
 def test_cli_init_subfolder(workspace):
-    workspace.mkdir("sub_folder").chdir()
+    (workspace._path / "sub_folder").mkdir()
+    os.chdir(workspace._path / "sub_folder")
     args = ["ert3", "init"]
     with patch.object(sys, "argv", args):
         with pytest.raises(
@@ -147,7 +149,7 @@ def test_cli_record_load_not_existing_file(workspace):
         "record",
         "load",
         "designed_coefficients",
-        str(workspace / "doe" / "no_such_file.json"),
+        str(workspace._path / "doe" / "no_such_file.json"),
     ]
     with patch.object(sys, "argv", args):
         with pytest.raises(SystemExit):
@@ -248,9 +250,9 @@ def _assert_done_or_pending(captured, experiments, done_indices):
 
 @pytest.mark.requires_ert_storage
 def test_cli_status_no_runs(workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
-    experiments = ert3.workspace.get_experiment_names(workspace)
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
+    experiments = workspace.get_experiment_names()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
@@ -261,12 +263,12 @@ def test_cli_status_no_runs(workspace, capsys):
 
 @pytest.mark.requires_ert_storage
 def test_cli_status_some_runs(workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
-    experiments_folder.mkdir("E1")
-    experiments_folder.mkdir("E2")
-    experiments_folder.mkdir("E3")
-    experiments = list(ert3.workspace.get_experiment_names(workspace))
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
+    (experiments_folder / "E1").mkdir(parents=True)
+    (experiments_folder / "E2").mkdir(parents=True)
+    (experiments_folder / "E3").mkdir(parents=True)
+    experiments = list(workspace.get_experiment_names())
 
     done_indices = [1, 3]
     for idx in done_indices:
@@ -286,10 +288,10 @@ def test_cli_status_some_runs(workspace, capsys):
 
 @pytest.mark.requires_ert_storage
 def test_cli_status_all_run(workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
 
-    experiments = ert3.workspace.get_experiment_names(workspace)
+    experiments = workspace.get_experiment_names()
 
     for experiment in experiments:
         ert.storage.init_experiment(
@@ -308,7 +310,7 @@ def test_cli_status_all_run(workspace, capsys):
 
 @pytest.mark.requires_ert_storage
 def test_cli_status_no_experiments(workspace, capsys):
-    workspace.mkdir(_EXPERIMENTS_BASE)
+    (workspace._path / _EXPERIMENTS_BASE).mkdir()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
@@ -324,33 +326,33 @@ def test_cli_status_no_experiments_root(workspace):
     with patch.object(sys, "argv", args):
         with pytest.raises(
             ert.exceptions.IllegalWorkspaceState,
-            match=f"the workspace {workspace} cannot access experiments",
+            match=f"the workspace {workspace.name} cannot access experiments",
         ):
             ert3.console._console._main()
 
 
 @pytest.mark.requires_ert_storage
 def test_cli_clean_no_runs(workspace):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace_name=workspace.name) == set()
 
     args = ["ert3", "status"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace_name=workspace.name) == set()
 
 
 @pytest.mark.requires_ert_storage
 def test_cli_clean_all(workspace):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        experiments_folder.mkdir(experiment)
+        (experiments_folder / experiment).mkdir(parents=True)
 
-    experiments = ert3.workspace.get_experiment_names(workspace)
+    experiments = workspace.get_experiment_names()
 
     for experiment in experiments:
         ert.storage.init_experiment(
@@ -359,46 +361,38 @@ def test_cli_clean_all(workspace):
             ensemble_size=42,
             responses=[],
         )
-        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).mkdir(parents=True)
-        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
+        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
+    assert (
+        ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
+    )
 
     args = ["ert3", "clean", "--all"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == set()
+    assert ert.storage.get_experiment_names(workspace_name=workspace.name) == set()
     for experiment in experiments:
-        assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
+        assert not workspace.get_experiment_tmp_dir(experiment).exists()
 
 
 @pytest.mark.requires_ert_storage
 def test_cli_clean_one(workspace):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        experiments_folder.mkdir(experiment)
+        (experiments_folder / experiment).mkdir(parents=True)
         ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
             ensemble_size=42,
             responses=[],
         )
-        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).mkdir(parents=True)
-        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
+        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
+    assert (
+        ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
+    )
 
     deleted_experiment = experiments.pop()
 
@@ -406,22 +400,20 @@ def test_cli_clean_one(workspace):
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
+    assert (
+        ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
+    )
     for experiment in experiments:
-        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
-    assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-        workspace, deleted_experiment
-    ).exists()
+        assert workspace.get_experiment_tmp_dir(experiment).exists()
+    assert not workspace.get_experiment_tmp_dir(deleted_experiment).exists()
 
 
 @pytest.mark.requires_ert_storage
 def test_cli_clean_non_existant_experiment(workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        experiments_folder.mkdir(experiment)
+        (experiments_folder / experiment).mkdir(parents=True)
 
     for experiment in experiments:
         ert.storage.init_experiment(
@@ -430,14 +422,11 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
             ensemble_size=42,
             responses=[],
         )
-        ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).mkdir(parents=True)
-        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
+        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
+    assert (
+        ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
+    )
 
     deleted_experiment = experiments.pop()
 
@@ -445,14 +434,12 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
-    assert ert.storage.get_experiment_names(workspace=workspace) == experiments
+    assert (
+        ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
+    )
     for experiment in experiments:
-        assert ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-            workspace, experiment
-        ).exists()
-    assert not ert3.evaluator._evaluator._create_evaluator_tmp_dir(
-        workspace, deleted_experiment
-    ).exists()
+        workspace.get_experiment_tmp_dir(experiment).exists()
+    assert not workspace.get_experiment_tmp_dir(deleted_experiment).exists()
 
     captured = capsys.readouterr()
     assert (
@@ -517,8 +504,8 @@ def test_cli_validation_stages_function(config, expected, capsys):
 @pytest.mark.requires_ert_storage
 def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
     ert3.config.load_ensemble_config(base_ensemble_dict)
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
     config = copy.deepcopy(base_ensemble_dict)
     config["size"] = "a"
     with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
@@ -533,15 +520,15 @@ def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
 
 @pytest.mark.requires_ert_storage
 def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
     with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
     config = {"type": {}}
     with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
         yaml.dump(config, f)
     config = [{"name": "name", "type": "unix", "input": [], "output": []}]
-    with open(workspace / "stages.yml", "w") as f:
+    with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
@@ -552,15 +539,15 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
 
 @pytest.mark.requires_ert_storage
 def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
-    experiments_folder = workspace.mkdir(_EXPERIMENTS_BASE)
-    experiments_folder.mkdir("E0")
+    experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder / "E0").mkdir(parents=True)
     with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
     config = {"type": "evaluation"}
     with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
         yaml.dump(config, f)
     config = [{"name": {}, "type": "unix", "input": [], "output": []}]
-    with open(workspace / "stages.yml", "w") as f:
+    with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
