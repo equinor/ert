@@ -20,16 +20,44 @@ def setup_case(tmpdir, source_root):
         yield copy_case
 
 
-def test_create(setup_case):
+@pytest.mark.parametrize(
+    "module",
+    [
+        "BOOTSTRAP_ENKF",
+        "CV_ENKF",
+        "IES_ENKF",
+        "NULL_ENKF",
+        "SQRT_ENKF",
+        "STD_ENKF",
+        "STD_ENKF_DEBUG",
+    ],
+)
+def test_get_module(setup_case, module):
     res_config = setup_case("local/mini_ert", "mini_config")
     ert = EnKFMain(res_config)
     es_update = ESUpdate(ert)
 
-    assert not es_update.hasModule("NO_NOT_THIS_MODULE")
-    with pytest.raises(KeyError):
-        es_update.getModule("STD_ENKF_XXX")
+    es_update.getModule(module)
 
-    es_update.getModule("STD_ENKF")
+
+@pytest.mark.parametrize(
+    "module, expected", [("NO_NOT_THIS_MODULE", False), ("STD_ENKF", True)]
+)
+def test_has_module(setup_case, module, expected):
+    res_config = setup_case("local/mini_ert", "mini_config")
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+
+    assert es_update.hasModule(module) is expected
+
+
+def test_get_invalid_module(setup_case):
+    res_config = setup_case("local/mini_ert", "mini_config")
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+
+    with pytest.raises(KeyError, match="No such module:STD_ENKF_XXX"):
+        es_update.getModule("STD_ENKF_XXX")
 
 
 @pytest.mark.xfail(sys.platform == "darwin", reason="Different result from update")
