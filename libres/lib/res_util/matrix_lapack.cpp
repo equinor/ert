@@ -15,7 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-
+#include <algorithm>
 #include <cmath>
 
 #include <ert/util/util.hpp>
@@ -196,8 +196,8 @@ void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
     int ldu, ldvt;
     double *VT_data, *U_data;
     int info = 0;
-    int min_worksize = util_int_max(3 * util_int_min(m, n) + util_int_max(m, n),
-                                    5 * util_int_min(m, n));
+    int min_worksize = util_int_max(3 * std::min(m, n) + util_int_max(m, n),
+                                    5 * std::min(m, n));
     double *work;
     int worksize;
 

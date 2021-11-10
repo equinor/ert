@@ -1,6 +1,8 @@
+#include <cmath>
+#include <algorithm>
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <cmath>
 
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
@@ -8,11 +10,15 @@
 
 #include <ert/analysis/enkf_linalg.hpp>
 
+/*
+Implements Eq. 14.31 in the book Data Assimilation,
+The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
+*/
 void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
                        const matrix_type *D, const double *eig) {
     const int nrobs = matrix_get_rows(D);
     const int nrens = matrix_get_columns(D);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
     int i, j;
     matrix_type *X1 = matrix_alloc(nrmin, nrobs);
     matrix_type *X2 = matrix_alloc(nrmin, nrens);
@@ -22,8 +28,8 @@ void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
         for (j = 0; j < nrobs; j++)
             matrix_iset(X1, i, j, eig[i] * matrix_iget(W, j, i));
 
-    matrix_matmul(X2, X1, D); /*   X2 = X1 * D           (Eq. 14.31) */
-    matrix_matmul(X3, W, X2); /*  X3 = W * X2 = X1 * X2 (Eq. 14.31) */
+    matrix_matmul(X2, X1, D); /*  X2 = X1 * D */
+    matrix_matmul(X3, W, X2); /*  X3 = W * X2 = X1 * X2 */
 
     matrix_free(X1);
     matrix_free(X2);
@@ -83,7 +89,7 @@ int enkf_linalg_svd_truncation(const matrix_type *S, double truncation,
         ((truncation < 0) && (ncomp > 0))) {
 
         int num_singular_values =
-            util_int_min(matrix_get_rows(S), matrix_get_columns(S));
+            std::min(matrix_get_rows(S), matrix_get_columns(S));
         {
             matrix_type *workS = matrix_alloc_copy(S);
             matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
@@ -165,7 +171,7 @@ int enkf_linalg_svdS(const matrix_type *S, double truncation, int ncomp,
     if (((truncation > 0) && (ncomp < 0)) ||
         ((truncation < 0) && (ncomp > 0))) {
         int num_singular_values =
-            util_int_min(matrix_get_rows(S), matrix_get_columns(S));
+            std::min(matrix_get_rows(S), matrix_get_columns(S));
         {
             matrix_type *workS = matrix_alloc_copy(S);
             matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
@@ -198,7 +204,7 @@ int enkf_linalg_svdS(const matrix_type *S, double truncation, int ncomp,
 
 int enkf_linalg_num_PC(const matrix_type *S, double truncation) {
     int num_singular_values =
-        util_int_min(matrix_get_rows(S), matrix_get_columns(S));
+        std::min(matrix_get_rows(S), matrix_get_columns(S));
     int num_significant;
     double *sig0 = (double *)util_calloc(num_singular_values, sizeof *sig0);
 
@@ -229,7 +235,7 @@ void enkf_linalg_lowrankE(
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
 
     matrix_type *U0 = matrix_alloc(nrobs, nrmin);
     double *inv_sig0 = (double *)util_calloc(nrmin, sizeof *inv_sig0);
@@ -310,7 +316,7 @@ void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
 
     double *inv_sig0 = (double *)util_calloc(nrmin, sizeof *inv_sig0);
 
@@ -351,7 +357,7 @@ void enkf_linalg_lowrankCinv(
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
 
     matrix_type *U0 = matrix_alloc(nrobs, nrmin);
     matrix_type *Z = matrix_alloc(nrmin, nrmin);
@@ -369,7 +375,7 @@ void enkf_linalg_meanX5(const matrix_type *S, const matrix_type *W,
 
     const int nrens = matrix_get_columns(S);
     const int nrobs = matrix_get_rows(S);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
     double *work =
         (double *)util_calloc((2 * nrmin + nrobs + nrens), sizeof *work);
     matrix_type *innov = enkf_linalg_alloc_innov(dObs, S);
@@ -407,7 +413,7 @@ void enkf_linalg_meanX5(const matrix_type *S, const matrix_type *W,
 void enkf_linalg_X5sqrt(matrix_type *X2, matrix_type *X5,
                         const matrix_type *randrot, int nrobs) {
     const int nrens = matrix_get_columns(X5);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
     matrix_type *VT = matrix_alloc(nrens, nrens);
     double *sig = (double *)util_calloc(nrmin, sizeof *sig);
     double *isig = (double *)util_calloc(nrmin, sizeof *sig);
@@ -493,7 +499,7 @@ void enkf_linalg_init_sqrtX(matrix_type *X5, const matrix_type *S,
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
 
     matrix_type *X2 = matrix_alloc(nrmin, nrens);
 
@@ -644,7 +650,7 @@ int enkf_linalg_get_PC(const matrix_type *S0, const matrix_type *dObs,
 
     const int nrobs = matrix_get_rows(S0);
     const int nrens = matrix_get_columns(S0);
-    const int nrmin = util_int_min(nrobs, nrens);
+    const int nrmin = std::min(nrobs, nrens);
 
     matrix_type *U0 = matrix_alloc(nrobs, nrens);
     matrix_type *S = matrix_alloc_copy(S0);
@@ -653,7 +659,7 @@ int enkf_linalg_get_PC(const matrix_type *S0, const matrix_type *dObs,
 
     double_vector_iset(singular_values, nrmin - 1, 0);
     matrix_subtract_row_mean(S);
-    ncomp = util_int_min(ncomp, nrmin);
+    ncomp = std::min(ncomp, nrmin);
     inv_sig0 = double_vector_get_ptr(singular_values);
     {
         matrix_type *S_mean = matrix_alloc(nrobs, 1);

@@ -16,10 +16,12 @@
    for more details.
 */
 
+#include <cmath>
+#include <algorithm>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <cmath>
 
 #include <ert/util/util.hpp>
 #include <ert/util/rng.hpp>
@@ -119,7 +121,7 @@ void cv_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
         int i, j;
         const int nrobs = matrix_get_rows(S);
         const int nrens = matrix_get_columns(S);
-        const int nrmin = util_int_min(nrobs, nrens);
+        const int nrmin = std::min(nrobs, nrens);
 
         cv_data->Z = matrix_alloc(nrmin, nrens);
         cv_data->Rp = matrix_alloc(nrmin, nrmin);

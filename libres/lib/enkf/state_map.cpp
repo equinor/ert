@@ -14,7 +14,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-
+#include <algorithm>
 #include <filesystem>
 
 #include <stdlib.h>
@@ -216,8 +216,8 @@ void state_map_select_matching(const state_map_type *map,
     pthread_rwlock_rdlock(&map->rw_lock);
     {
         const int *map_ptr = int_vector_get_ptr(map->state);
-        int size = util_int_min(int_vector_size(map->state),
-                                bool_vector_size(select_target));
+        int size = std::min(int_vector_size(map->state),
+                            bool_vector_size(select_target));
         for (int i = 0; i < size; i++) {
             int state_value = map_ptr[i];
             if (state_value & select_mask)

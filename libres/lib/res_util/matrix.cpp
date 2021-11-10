@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <algorithm>
 
 #include <stdbool.h>
 
@@ -340,8 +341,8 @@ static bool matrix_resize__(matrix_type *matrix, int rows, int columns,
         bool resize_OK = true;
 
         if ((rows != matrix->rows) || (columns != matrix->columns)) {
-            int copy_rows = util_int_min(rows, matrix->rows);
-            int copy_columns = util_int_min(columns, matrix->columns);
+            int copy_rows = std::min(rows, matrix->rows);
+            int copy_columns = std::min(columns, matrix->columns);
             matrix_type *copy_view = NULL;
             matrix_type *copy = NULL;
 

@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <ies_enkf_config.hpp>
 #include <ies_enkf_data.hpp>
 
@@ -178,13 +180,13 @@ void ies_enkf_data_store_initialE(ies_enkf_data_type *data,
 
         if (dbg) {
             int nrobs_inp = matrix_get_rows(E0);
-            int m_nrobs = util_int_min(nrobs_inp - 1, 50);
+            int m_nrobs = std::min(nrobs_inp - 1, 50);
             int e0_col_size = matrix_get_columns(E0);
-            int m_ens_size = util_int_min(e0_col_size - 1, 16);
+            int m_ens_size = std::min(e0_col_size - 1, 16);
             matrix_pretty_fprint_submat(E0, "Ein", "%11.5f", data->log_fp, 0,
                                         m_nrobs, 0, m_ens_size);
-            m_ens_size = util_int_min(ens_size_msk - 1, 16);
-            m_nrobs = util_int_min(obs_size_msk - 1, 50);
+            m_ens_size = std::min(ens_size_msk - 1, 16);
+            m_nrobs = std::min(obs_size_msk - 1, 50);
             matrix_pretty_fprint_submat(data->E, "data->E", "%11.5f",
                                         data->log_fp, 0, m_nrobs, 0,
                                         m_ens_size);
@@ -221,8 +223,8 @@ void ies_enkf_data_augment_initialE(ies_enkf_data_type *data,
         }
 
         if (dbg) {
-            int m_nrobs = util_int_min(obs_size_msk - 1, 50);
-            int m_ens_size = util_int_min(ens_size_msk - 1, 16);
+            int m_nrobs = std::min(obs_size_msk - 1, 50);
+            int m_ens_size = std::min(ens_size_msk - 1, 16);
             matrix_pretty_fprint_submat(data->E, "data->E", "%11.5f",
                                         data->log_fp, 0, m_nrobs, 0,
                                         m_ens_size);
@@ -235,8 +237,8 @@ void ies_enkf_data_store_initialA(ies_enkf_data_type *data,
     if (!data->A0) {
         // We store the initial ensemble to use it in final update equation                     (Line 11)
         bool dbg = ies_enkf_config_get_ies_debug(data->config);
-        int m_state_size = util_int_min(matrix_get_rows(A) - 1, 50);
-        int m_ens_size = util_int_min(matrix_get_columns(A) - 1, 16);
+        int m_state_size = std::min(matrix_get_rows(A) - 1, 50);
+        int m_ens_size = std::min(matrix_get_columns(A) - 1, 16);
         fprintf(data->log_fp, "Allocating and assigning data->A0 \n");
         data->A0 = matrix_alloc_copy(A);
         if (dbg)
@@ -250,7 +252,7 @@ void ies_enkf_data_allocateW(ies_enkf_data_type *data, int ens_size) {
     if (!data->W) {
         // We initialize data-W which will store W for use in next iteration                    (Line 9)
         bool dbg = ies_enkf_config_get_ies_debug(data->config);
-        int m_ens_size = util_int_min(ens_size - 1, 16);
+        int m_ens_size = std::min(ens_size - 1, 16);
         fprintf(data->log_fp, "Allocating data->W\n");
         data->W = matrix_alloc(ens_size, ens_size);
         matrix_set(data->W, 0.0);
