@@ -28,7 +28,7 @@ build_libres () {
           -DCMAKE_PREFIX_PATH=$INSTALL \
           -DCMAKE_INSTALL_PREFIX=$INSTALL \
           -DBUILD_TESTS=ON \
-          -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+          -DEQUINOR_TESTDATA_ROOT=/project/oompf/ErtTestData
     ninja
     popd
     # Remove built .so files when it is not a PR build

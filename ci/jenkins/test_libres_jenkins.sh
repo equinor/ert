@@ -58,7 +58,7 @@ build_libres () {
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
 		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		  -DBUILD_TESTS=ON \
-		  -DEQUINOR_TESTDATA_ROOT=/project/res-testdata/ErtTestData
+		  -DEQUINOR_TESTDATA_ROOT=/project/oompf/ErtTestData
 	make -j 6 install
 	popd
 }
