@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <algorithm>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -102,7 +103,7 @@ void *gen_common_fread_alloc(const char *file, ecl_data_type load_data_type,
                 /* Allocate more elements. */
                 if (current_size == buffer_elements) {
                     read_size *= 2;
-                    read_size = util_int_min(read_size, max_read_size);
+                    read_size = std::min(read_size, max_read_size);
                     buffer_elements += read_size;
                     buffer = (char *)util_realloc(buffer, buffer_elements *
                                                               sizeof_ctype);

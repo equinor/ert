@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <algorithm>
 
 #include <stdlib.h>
 
@@ -102,7 +103,7 @@ void sqrt_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
         double truncation = std_enkf_get_truncation(data->std_data);
         int nrobs = matrix_get_rows(S);
         int ens_size = matrix_get_columns(S);
-        int nrmin = util_int_min(ens_size, nrobs);
+        int nrmin = std::min(ens_size, nrobs);
         matrix_type *W = matrix_alloc(nrobs, nrmin);
         double *eig = (double *)util_calloc(nrmin, sizeof *eig);
 

@@ -20,6 +20,7 @@
 #define _GNU_SOURCE /* Must define this to get access to pthread_rwlock_t */
 #endif
 
+#include <algorithm>
 #include <filesystem>
 
 #include <string.h>
@@ -711,15 +712,15 @@ static bool submit_new_jobs(job_queue_type *queue) {
         job_queue_status_get_count(queue->status, JOB_QUEUE_RUNNING);
 
     int max_running = job_queue_get_max_running(queue);
-    int num_submit_new = util_int_min(max_submit, max_running - total_active);
+    int num_submit_new = std::min(max_submit, max_running - total_active);
 
     // If max_running == 0 that should be interpreted as no limit; i.e. the queue
     // layer will attempt to send an unlimited number of jobs to the driver - the
     // driver can reject the jobs.
     if (max_running == 0)
-        num_submit_new = util_int_min(
-            max_submit,
-            job_queue_status_get_count(queue->status, JOB_QUEUE_WAITING));
+        num_submit_new =
+            std::min(max_submit, job_queue_status_get_count(queue->status,
+                                                            JOB_QUEUE_WAITING));
 
     bool new_jobs = false;
     if (job_queue_status_get_count(queue->status, JOB_QUEUE_WAITING) >

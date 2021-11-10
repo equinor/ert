@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <algorithm>
 
 #include <math.h>
 #include <stdlib.h>
@@ -179,9 +180,9 @@ void ies_enkf_updateA(
     double nsc = 1.0 / sqrt(ens_size - 1.0);
 
     /* dimensions for printing */
-    int m_nrobs = util_int_min(nrobs_inp - 1, 7);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
-    int m_state_size = util_int_min(state_size - 1, 3);
+    int m_nrobs = std::min(nrobs_inp - 1, 7);
+    int m_ens_size = std::min(ens_size - 1, 16);
+    int m_state_size = std::min(state_size - 1, 3);
 
     ies_enkf_data_allocateW(data, ens_size_msk);
     ies_enkf_data_store_initialA(data, A);
@@ -403,8 +404,8 @@ void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
     }
 
     if (dbg) {
-        int m_nrobs = util_int_min(matrix_get_rows(E) - 1, 7);
-        int m_ens_size = util_int_min(matrix_get_columns(E) - 1, 16);
+        int m_nrobs = std::min(matrix_get_rows(E) - 1, 7);
+        int m_ens_size = std::min(matrix_get_columns(E) - 1, 16);
         matrix_pretty_fprint_submat(E, "E", "%11.5f", log_fp, 0, m_nrobs, 0,
                                     m_ens_size);
     }
@@ -417,9 +418,9 @@ void ies_enkf_linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y,
     int state_size = matrix_get_rows(A);
     int nrobs = matrix_get_rows(Y);
 
-    int m_nrobs = util_int_min(nrobs - 1, 7);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
-    int m_state_size = util_int_min(state_size - 1, 3);
+    int m_nrobs = std::min(nrobs - 1, 7);
+    int m_ens_size = std::min(ens_size - 1, 16);
+    int m_state_size = std::min(state_size - 1, 3);
 
     fprintf(log_fp, "Activating AAi projection for Y\n");
     double *eig = (double *)util_calloc(ens_size, sizeof *eig);
@@ -456,7 +457,7 @@ void ies_enkf_linalg_extract_active_W(const ies_enkf_data_type *data,
     const matrix_type *dataW = ies_enkf_data_getW(data);
     int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(W0);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
+    int m_ens_size = std::min(ens_size - 1, 16);
     int i = -1;
     int j;
     for (int iens = 0; iens < ens_size_msk; iens++) {
@@ -494,8 +495,8 @@ void ies_linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
                         matrix_type *S, double rcond, FILE *log_fp, bool dbg) {
     int ens_size = matrix_get_columns(W0);
     int nrobs = matrix_get_rows(S);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
-    int m_nrobs = util_int_min(nrobs - 1, 7);
+    int m_ens_size = std::min(ens_size - 1, 16);
+    int m_nrobs = std::min(nrobs - 1, 7);
     double nsc = 1.0 / sqrt(ens_size - 1.0);
 
     matrix_type *YT =
@@ -545,10 +546,10 @@ void ies_enkf_linalg_subspace_inversion(
     double ies_steplength, int subspace_dimension, FILE *log_fp, bool dbg) {
 
     int ens_size = matrix_get_columns(S);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
+    int m_ens_size = std::min(ens_size - 1, 16);
     int nrobs = matrix_get_rows(S);
-    int m_nrobs = util_int_min(nrobs - 1, 7);
-    int nrmin = util_int_min(ens_size, nrobs);
+    int m_nrobs = std::min(nrobs - 1, 7);
+    int nrmin = std::min(ens_size, nrobs);
     double nsc = 1.0 / sqrt(ens_size - 1.0);
     matrix_type *X1 = matrix_alloc(nrobs, nrmin); // Used in subspace inversion
     matrix_type *X3 =
@@ -613,7 +614,7 @@ void ies_enkf_linalg_subspace_inversion(
 
     if (dbg)
         matrix_pretty_fprint_submat(X1, "X1", "%11.5f", log_fp, 0, m_nrobs, 0,
-                                    util_int_min(m_nrobs, nrmin - 1));
+                                    std::min(m_nrobs, nrmin - 1));
     if (dbg)
         matrix_pretty_fprint_submat(X3, "X3", "%11.5f", log_fp, 0, m_nrobs, 0,
                                     m_ens_size);
@@ -718,8 +719,8 @@ void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
     int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(A0);
     int state_size = matrix_get_rows(A0);
-    int m_ens_size = util_int_min(ens_size - 1, 16);
-    int m_state_size = util_int_min(state_size - 1, 3);
+    int m_ens_size = std::min(ens_size - 1, 16);
+    int m_state_size = std::min(state_size - 1, 3);
     int i = -1;
     const bool_vector_type *ens_mask = ies_enkf_data_get_ens_mask(data);
     const matrix_type *dataA0 = ies_enkf_data_getA0(data);

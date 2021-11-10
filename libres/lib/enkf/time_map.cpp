@@ -14,7 +14,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 
@@ -81,8 +81,8 @@ bool time_map_attach_refcase(time_map_type *time_map,
 
     {
         int step;
-        int max_step = util_int_min(time_map_get_size(time_map),
-                                    ecl_sum_get_last_report_step(refcase) + 1);
+        int max_step = std::min(time_map_get_size(time_map),
+                                ecl_sum_get_last_report_step(refcase) + 1);
 
         for (step = 0; step < max_step; step++) {
             time_t current_time = time_map_iget__(time_map, step);
