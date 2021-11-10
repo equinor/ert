@@ -60,7 +60,7 @@ jobs:
         ctest --output-on-failure
 
   build-wheels:
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
