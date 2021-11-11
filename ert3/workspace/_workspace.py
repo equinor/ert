@@ -2,7 +2,7 @@ import json
 import sys
 import shutil
 from pathlib import Path
-from typing import Union, Optional, Set, List, Dict, Any
+from typing import Union, Optional, Set, List, Dict, Any, Tuple
 
 import yaml
 
@@ -65,29 +65,34 @@ class Workspace:
             if experiment.is_dir()
         }
 
-    def load_ensemble_config(self, experiment_name: str) -> ert3.config.EnsembleConfig:
-        ensemble_config = (
-            self._path / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
-        )
-        with open(ensemble_config, encoding="utf-8") as f:
-            config_dict = yaml.safe_load(f)
-        return ert3.config.load_ensemble_config(config_dict)
-
-    def load_stages_config(self) -> ert3.config.StagesConfig:
-        with open(self._path / "stages.yml", encoding="utf-8") as f:
-            config_dict = yaml.safe_load(f)
-        sys.path.append(str(self._path))
-        return ert3.config.load_stages_config(config_dict)
-
     def load_experiment_config(
         self, experiment_name: str
-    ) -> ert3.config.ExperimentConfig:
-        experiment_config = (
+    ) -> Tuple[
+        ert3.config.ExperimentConfig,
+        ert3.config.StagesConfig,
+        ert3.config.EnsembleConfig,
+    ]:
+        experiment_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
         )
-        with open(experiment_config, encoding="utf-8") as f:
+        with open(experiment_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
-        return ert3.config.load_experiment_config(config_dict)
+        experiment_config = ert3.config.load_experiment_config(config_dict)
+
+        stages_config_path = self._path / "stages.yml"
+        with open(stages_config_path, encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        sys.path.append(str(self._path))
+        stage_config = ert3.config.load_stages_config(config_dict)
+
+        ensemble_config_path = (
+            self._path / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
+        )
+        with open(ensemble_config_path, encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        ensemble_config = ert3.config.load_ensemble_config(config_dict)
+
+        return experiment_config, stage_config, ensemble_config
 
     def load_parameters_config(self) -> ert3.config.ParametersConfig:
         with open(self._path / "parameters.yml", encoding="utf-8") as f:
