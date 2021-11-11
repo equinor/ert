@@ -257,11 +257,6 @@ target_include_directories(ies_iteration PRIVATE analysis/modules)
 target_link_libraries(ies_iteration res)
 add_test(NAME ies_iteration COMMAND ies_iteration ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly_normal)
 
-add_executable(ies_enkf_main analysis/modules/tests/ies_enkf_main.cpp ${ies_source})
-target_include_directories(ies_enkf_main PRIVATE analysis/modules)
-target_link_libraries(ies_enkf_main res)
-add_test(NAME ies_enkf_main COMMAND ies_enkf_main)
-
 foreach(name ert_util_logh
              ert_util_arg_pack
              ert_util_matrix
