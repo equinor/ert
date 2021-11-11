@@ -238,7 +238,7 @@ foreach(name ies_enkf_config ies_enkf_data)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
-add_executable( ies_module analysis/modules/tests/ies_enkf_module.cpp)
+add_executable(ies_module analysis/modules/tests/ies_enkf_module.cpp)
 target_link_libraries(ies_module res)
 add_test(NAME ies_module COMMAND ies_module ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
 

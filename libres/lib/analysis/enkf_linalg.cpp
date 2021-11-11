@@ -10,9 +10,9 @@
 
 #include <ert/analysis/enkf_linalg.hpp>
 
-/*
-Implements Eq. 14.31 in the book Data Assimilation,
-The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
+/**
+ * Implements Eq. 14.31 in the book Data Assimilation,
+ * The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
 */
 void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
                        const matrix_type *D, const double *eig) {
@@ -35,10 +35,26 @@ void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
     matrix_free(X2);
 }
 
+/**
+ * Implements a version of Eq. 14.34 from the book Data Assimilation,
+ * The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
+ *
+ * Eq. 14.34 is as follows:
+ *
+ *     X2 = (I + \Lambda_1)^{-1/2} @ X^T_1 * S
+ *
+ * , but this function seems to implement the following:
+ *
+ *     X2 = X^T_1 * S
+ *     X2 = (\Lambda^{-1/2}_1 * X2^T)^T
+ *
+ * See tests for more details.
+*/
 void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
                        const matrix_type *W, const double *eig) {
     const int nrens = matrix_get_columns(S);
     const int idim = matrix_get_rows(X2);
+
     matrix_dgemm(X2, W, S, true, false, 1.0, 0.0);
     {
         int i, j;
