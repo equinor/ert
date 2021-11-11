@@ -213,13 +213,15 @@ def _init(args: Any) -> None:
 def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
-    ensemble = workspace.load_ensemble_config(args.experiment_name)
-    stages_config = workspace.load_stages_config()
-    experiment_config = workspace.load_experiment_config(args.experiment_name)
+    (
+        experiment_config,
+        stages_config,
+        ensemble_config,
+    ) = workspace.load_experiment_config(args.experiment_name)
     parameters_config = workspace.load_parameters_config()
     if experiment_config.type == "evaluation":
         ert3.engine.run(
-            ensemble,
+            ensemble_config,
             stages_config,
             experiment_config,
             parameters_config,
@@ -228,7 +230,7 @@ def _run(workspace: Workspace, args: Any) -> None:
         )
     elif experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
-            ensemble,
+            ensemble_config,
             stages_config,
             experiment_config,
             parameters_config,
@@ -239,19 +241,21 @@ def _run(workspace: Workspace, args: Any) -> None:
 
 def _export(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "export"
-    ensemble = workspace.load_ensemble_config(args.experiment_name)
-    experiment_config = workspace.load_experiment_config(args.experiment_name)
+    (
+        experiment_config,
+        stages_config,
+        ensemble_config,
+    ) = workspace.load_experiment_config(args.experiment_name)
     parameters_config = workspace.load_parameters_config()
-    stages_config = workspace.load_stages_config()
 
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble_config=ensemble,
+        ensemble_config=ensemble_config,
         stages_config=stages_config,
         experiment_config=experiment_config,
         parameters_config=parameters_config,
     )
     ert3.engine.export(
-        workspace, args.experiment_name, ensemble, stages_config, ensemble_size
+        workspace, args.experiment_name, ensemble_config, stages_config, ensemble_size
     )
 
 

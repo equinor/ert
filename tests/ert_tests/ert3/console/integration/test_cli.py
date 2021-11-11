@@ -510,6 +510,12 @@ def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
     config["size"] = "a"
     with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
         yaml.dump(config, f)
+    config = {"type": "evaluation"}
+    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
+        yaml.dump(config, f)
+    config = []
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
@@ -524,7 +530,7 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
     (experiments_folder / "E0").mkdir(parents=True)
     with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
-    config = {"type": {}}
+    config = {"type": "evaluation"}
     with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
         yaml.dump(config, f)
     config = [{"name": "name", "type": "unix", "input": [], "output": []}]
