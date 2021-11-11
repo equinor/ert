@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools_scm", "wheel", "scikit-build", "cmake", "ninja", "ecl"]
+requires = ["setuptools", "setuptools_scm", "wheel", "scikit-build", "cmake", "ninja", "ecl", "conan"]
 
 [tool.pytest.ini_options]
 markers = [

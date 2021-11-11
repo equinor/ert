@@ -1,5 +1,4 @@
-
-#include <ert/util/test_util.hpp>
+#include <catch2/catch.hpp>
 
 #include <ert/util/rng.h>
 #include <ert/util/util.h>
@@ -10,7 +9,7 @@
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);
 
-void test_ies_enkf_linalg_extract_active() {
+TEST_CASE("ies_enkf_linalg_extract_active", "[analysis]") {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     ies_enkf_data_type *data = (ies_enkf_data_type *)ies_enkf_data_alloc();
 
@@ -49,7 +48,7 @@ void test_ies_enkf_linalg_extract_active() {
     // Test that `ies_enkf_linalg_extract_active` does nothing when all observations and realizations are active
     matrix_type *E = matrix_alloc(state_size, ens_size);
     ies_enkf_linalg_extract_active(data, E, stdout, false);
-    test_assert_bool_equal(matrix_equal(Ein, E), true);
+    REQUIRE(matrix_equal(Ein, E));
 
     // Test that `ies_enkf_linalg_extract_active` can deactivate an ensemble
     bool_vector_iset(ens_mask, 1, false);
@@ -58,12 +57,12 @@ void test_ies_enkf_linalg_extract_active() {
     matrix_type *E_ens_deactivate = matrix_alloc(state_size, ens_size);
     ies_enkf_linalg_extract_active(data, E_ens_deactivate, stdout, false);
 
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 0, 0), 1.0);
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 1, 0), 2.0);
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 2, 0), 3.0);
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 0, 1), 0.0);
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 1, 1), 0.0);
-    test_assert_double_equal(matrix_iget(E_ens_deactivate, 2, 1), 0.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 0, 0) == 1.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 1, 0) == 2.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 2, 0) == 3.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 0, 1) == 0.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 1, 1) == 0.0);
+    REQUIRE(matrix_iget(E_ens_deactivate, 2, 1) == 0.0);
 
     // Test that `ies_enkf_linalg_extract_active` can deactivate an observation
     bool_vector_iset(obs_mask, 1, false);
@@ -72,12 +71,12 @@ void test_ies_enkf_linalg_extract_active() {
     matrix_type *E_obs_deactivate = matrix_alloc(state_size, ens_size);
     ies_enkf_linalg_extract_active(data, E_obs_deactivate, stdout, false);
 
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 0, 0), 1.0);
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 1, 0), 3.0);
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 2, 0), 0.0);
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 0, 1), 0.0);
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 1, 1), 0.0);
-    test_assert_double_equal(matrix_iget(E_obs_deactivate, 2, 1), 0.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 0, 0) == 1.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 1, 0) == 3.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 2, 0) == 0.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 0, 1) == 0.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 1, 1) == 0.0);
+    REQUIRE(matrix_iget(E_obs_deactivate, 2, 1) == 0.0);
 
     bool_vector_free(ens_mask);
     bool_vector_free(obs_mask);
@@ -87,5 +86,3 @@ void test_ies_enkf_linalg_extract_active() {
     ies_enkf_data_free(data);
     rng_free(rng);
 }
-
-int main(int argc, char **argv) { test_ies_enkf_linalg_extract_active(); }
