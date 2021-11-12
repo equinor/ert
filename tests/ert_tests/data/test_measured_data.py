@@ -1,8 +1,8 @@
 from unittest.mock import Mock
 
+import numpy as np
 import pandas as pd
 import pytest
-
 from ert_data import loader
 from ert_data.measured import MeasuredData
 
@@ -110,35 +110,79 @@ def test_remove_failed_realizations(
 
 @pytest.mark.usefixtures("facade", "measured_data_setup")
 @pytest.mark.parametrize(
-    "input_dataframe,expected_result",
+    "input_header, measured_data, expected_result",
     [
-        (
+        pytest.param(
             pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, 8.0, 9.0]], index=[1]),
             pd.DataFrame(
                 data=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
                 index=["OBS", "STD", 1],
             ),
+            id="no-errors",
         ),
-        (
-            pd.DataFrame(data=[[1, None, 3], [4, None, 6]], index=["OBS", "STD"]),
+        pytest.param(
+            pd.DataFrame(data=[[1, None, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, 8.0, 9.0]], index=[1]),
             pd.DataFrame(
                 data=[[1.0, 3.0], [4.0, 6.0], [7.0, 9.0]],
                 index=["OBS", "STD", 1],
                 columns=[0, 2],
             ),
+            id="none-in-OBS-row",
+        ),
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, None, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, 8.0, 9.0]], index=[1]),
+            pd.DataFrame(
+                data=[[1.0, 3.0], [4.0, 6.0], [7.0, 9.0]],
+                index=["OBS", "STD", 1],
+                columns=[0, 2],
+            ),
+            id="none-in-STD-row",
+        ),
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, np.nan, 9.0]], index=[1]),
+            pd.DataFrame(
+                data=[[1.0, 3.0], [4.0, 6.0], [7.0, 9.0]],
+                index=["OBS", "STD", 1],
+                columns=[0, 2],
+            ),
+            id="nan-in-measured-data",
+        ),
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, np.inf, 9.0]], index=[1]),
+            pd.DataFrame(
+                data=[[1.0, 3.0], [4.0, 6.0], [7.0, 9.0]],
+                index=["OBS", "STD", 1],
+                columns=[0, 2],
+            ),
+            id="inf-in-measured-data",
+        ),
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[7.0, -np.inf, 9.0]], index=[1]),
+            pd.DataFrame(
+                data=[[1.0, 3.0], [4.0, 6.0], [7.0, 9.0]],
+                index=["OBS", "STD", 1],
+                columns=[0, 2],
+            ),
+            id="negative-inf-in-measured-data",
         ),
     ],
 )
 def test_remove_inactive_observations(
-    input_dataframe,
+    input_header,
+    measured_data,
     expected_result,
     monkeypatch,
     facade,
     measured_data_setup,
-    valid_data,
 ):
-    input_dataframe.columns = _set_multiindex(input_dataframe)
-    measured_data_setup(valid_data, input_dataframe, monkeypatch)
+    input_header.columns = _set_multiindex(input_header)
+    measured_data_setup(measured_data, input_header, monkeypatch)
     md = MeasuredData(facade, ["obs_key"])
 
     expected_result.columns = _set_multiindex(expected_result)
@@ -146,6 +190,37 @@ def test_remove_inactive_observations(
 
     md.remove_inactive_observations()
     assert md.data.equals(expected_result)
+
+
+@pytest.mark.usefixtures("facade", "measured_data_setup")
+@pytest.mark.parametrize(
+    "input_header, measured_data",
+    [
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[np.inf, np.inf, np.inf]], index=[1]),
+            id="all-inf-in-measured-data",
+        ),
+        pytest.param(
+            pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], index=["OBS", "STD"]),
+            pd.DataFrame(data=[[np.nan, np.nan, np.nan]], index=[1]),
+            id="all-nan-in-measured-data",
+        ),
+    ],
+)
+def test_empty_dataset_from_remove_inactive_observations(
+    input_header,
+    measured_data,
+    monkeypatch,
+    facade,
+    measured_data_setup,
+):
+    input_header.columns = _set_multiindex(input_header)
+    measured_data_setup(measured_data, input_header, monkeypatch)
+    md = MeasuredData(facade, ["obs_key"])
+
+    with pytest.raises(ValueError, match="This operation results in an empty dataset"):
+        md.remove_inactive_observations()
 
 
 @pytest.mark.usefixtures("facade", "measured_data_setup")
