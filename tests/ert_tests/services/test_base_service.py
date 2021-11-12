@@ -11,6 +11,8 @@ from ert_shared.services._base_service import (
     ServerBootFail,
     BaseService,
     local_exec_args,
+    cleanup_service_files,
+    SERVICE_NAMES,
 )
 import time
 
@@ -301,3 +303,24 @@ def test_local_exec_args_multi():
     assert exec_args[0] == sys.executable
     assert exec_args[2] == "foo"
     assert exec_args[3] == "-bar"
+
+
+def test_cleanup_service_files(tmpdir):
+    storage_service_name = "storage"
+    storage_service_file = f"{storage_service_name}_server.json"
+    with open(storage_service_file, "w") as f:
+        f.write("storage_service info")
+    assert Path(storage_service_file).exists()
+    SERVICE_NAMES.add(storage_service_name)
+
+    webviz_service_name = "webviz-ert"
+    webviz_service_file = f"{webviz_service_name}_server.json"
+    with open(webviz_service_file, "w") as f:
+        f.write("webviz-ert info")
+    assert Path(webviz_service_file).exists()
+    SERVICE_NAMES.add(webviz_service_name)
+
+    cleanup_service_files()
+
+    assert not Path(storage_service_file).exists()
+    assert not Path(webviz_service_file).exists()
