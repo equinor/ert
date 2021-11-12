@@ -67,8 +67,10 @@ class MeasuredData(object):
         self._set_data(self._remove_inactive_observations())
 
     def _remove_inactive_observations(self):
-        """Removes columns with one or more NaN values."""
-        filtered_dataset = self.data.dropna(axis=1)
+        """Removes columns with one or more NaN or inf values."""
+        filtered_dataset = self.data.replace([np.inf, -np.inf], np.nan).dropna(
+            axis="columns", how="any"
+        )
         if filtered_dataset.empty:
             raise ValueError(
                 "This operation results in an empty dataset (could be due to one or more failed realizations)"
