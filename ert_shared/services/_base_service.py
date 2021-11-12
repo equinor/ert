@@ -4,6 +4,8 @@ import sys
 import threading
 import json
 import time
+import atexit
+import signal
 
 from select import select, PIPE_BUF
 from subprocess import Popen, TimeoutExpired
@@ -22,6 +24,7 @@ from typing import (
     TypeVar,
     Union,
     TYPE_CHECKING,
+    Set,
 )
 
 if TYPE_CHECKING:
@@ -30,6 +33,21 @@ if TYPE_CHECKING:
 logger = getLogger("ert_shared.storage")
 T = TypeVar("T", bound="BaseService")
 ConnInfo = Union[Mapping[str, Any], Exception, None]
+
+
+SERVICE_NAMES: Set[str] = set()
+
+
+@atexit.register
+def cleanup_service_files():
+    for service_name in SERVICE_NAMES:
+        file = Path(f"{service_name}_server.json")
+        if file.exists():
+            file.unlink()
+
+
+signal.signal(signal.SIGTERM, cleanup_service_files)
+signal.signal(signal.SIGINT, cleanup_service_files)
 
 
 def local_exec_args(script_args: Union[str, List[str]]) -> List[str]:
@@ -94,6 +112,10 @@ class _Proc(threading.Thread):
 
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
+
+        global SERVICE_NAMES
+        SERVICE_NAMES.add(self._service_name)
+
         self._proc = Popen(
             self._exec_args,
             pass_fds=(fd_write,),
