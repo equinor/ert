@@ -148,7 +148,6 @@ config_data_new = {
     ConfigKeys.STD_CUTOFF_KEY: 1e-6,
     ConfigKeys.STOP_LONG_RUNNING: False,
     ConfigKeys.SINGLE_NODE_UPDATE: False,
-    ConfigKeys.STD_CORRELATED_OBS: False,
     ConfigKeys.GLOBAL_STD_SCALING: 1,
     ConfigKeys.MIN_REALIZATIONS: 5,
     # "MIN_REALIZATIONS"  : "50%", percentages need to be fixed or removed

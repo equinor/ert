@@ -35,7 +35,7 @@ class AnalysisConfig(BaseCClass):
     _alloc_full = ResPrototype(
         "void* analysis_config_alloc_full(double, bool, "
         "bool, int, char*, double, bool, bool, "
-        "bool, double, int, int)",
+        "double, int, int)",
         bind=False,
     )
 
@@ -164,7 +164,6 @@ class AnalysisConfig(BaseCClass):
                 config_dict.get(ConfigKeys.STD_CUTOFF_KEY, 1e-6),
                 config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False),
                 config_dict.get(ConfigKeys.SINGLE_NODE_UPDATE, False),
-                config_dict.get(ConfigKeys.STD_CORRELATED_OBS, False),
                 config_dict.get(ConfigKeys.GLOBAL_STD_SCALING, 1.0),
                 config_dict.get(ConfigKeys.MAX_RUNTIME, 0),
                 config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0),

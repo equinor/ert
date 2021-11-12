@@ -131,24 +131,6 @@ class EnKFObsTest(ResTest):
             for t in v1.getStepList():
                 self.assertTrue(local_node.tstepActive(t))
 
-    @tmpdir()
-    def test_obs_block_scale_std(self):
-        with ErtTestContext("obs_test_scale", self.config_file) as test_context:
-            ert = test_context.getErt()
-            fs = ert.getEnkfFsManager().getCurrentFileSystem()
-            active_list = IntVector()
-            active_list.initRange(0, ert.getEnsembleSize(), 1)
-
-            obs = ert.getObservations()
-            obs_data = LocalObsdata("OBSxx", obs)
-            obs_vector = obs["WWCT:OP_1"]
-            obs_data.addObsVector(obs_vector)
-            scale_factor = obs.scaleCorrelatedStd(fs, obs_data, active_list)
-
-            for obs_node in obs_vector:
-                for index in range(len(obs_node)):
-                    self.assertEqual(scale_factor, obs_node.getStdScaling(index))
-
     def test_obs_block_all_active_local(self):
         with ErtTestContext("obs_test_all_active", self.config_file) as test_context:
             ert = test_context.getErt()

@@ -101,10 +101,6 @@ const char *config_keys_get_single_node_update() {
     return SINGLE_NODE_UPDATE_KEY;
 }
 
-const char *config_keys_get_std_scale_correlated_obs() {
-    return STD_SCALE_CORRELATED_OBS_KEY;
-}
-
 const char *config_keys_get_rerun() { return ENKF_RERUN_KEY; }
 
 const char *config_keys_get_rerun_start() { return RERUN_START_KEY; }

@@ -915,16 +915,6 @@ static void enkf_main_update__(
                 double alpha = analysis_config_get_alpha(analysis_config);
                 double std_cutoff =
                     analysis_config_get_std_cutoff(analysis_config);
-
-                if (analysis_config_get_std_scale_correlated_obs(
-                        analysis_config)) {
-                    double scale_factor = enkf_obs_scale_correlated_std(
-                        obs, source_fs, ens_active_list, obsdata, alpha,
-                        std_cutoff, false);
-                    res_log_finfo(
-                        "Scaling standard deviation in obdsata set:%s with %g",
-                        local_obsdata_get_name(obsdata), scale_factor);
-                }
                 enkf_obs_get_obs_and_measure_data(obs, source_fs, obsdata,
                                                   ens_active_list, meas_data,
                                                   obs_data);

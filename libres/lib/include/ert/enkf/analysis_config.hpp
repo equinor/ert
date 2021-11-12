@@ -54,11 +54,12 @@ analysis_config_alloc_module_names(const analysis_config_type *config);
 const char *analysis_config_get_log_path(const analysis_config_type *config);
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config);
-PY_USED analysis_config_type *analysis_config_alloc_full(
-    double alpha, bool merge_observations, bool rerun, int rerun_start,
-    const char *log_path, double std_cutoff, bool stop_long_running,
-    bool single_node_update, bool std_scale_correlated_obs,
-    double global_std_scaling, int max_runtime, int min_realisations);
+PY_USED analysis_config_type *
+analysis_config_alloc_full(double alpha, bool merge_observations, bool rerun,
+                           int rerun_start, const char *log_path,
+                           double std_cutoff, bool stop_long_running,
+                           bool single_node_update, double global_std_scaling,
+                           int max_runtime, int min_realisations);
 analysis_config_type *analysis_config_alloc_default(void);
 analysis_config_type *analysis_config_alloc_load(const char *user_config_file);
 analysis_config_type *
@@ -109,10 +110,6 @@ PY_USED int analysis_config_get_max_runtime(const analysis_config_type *config);
 int analysis_config_get_min_realisations(const analysis_config_type *config);
 PY_USED const char *
 analysis_config_get_active_module_name(const analysis_config_type *config);
-bool analysis_config_get_std_scale_correlated_obs(
-    const analysis_config_type *config);
-void analysis_config_set_std_scale_correlated_obs(
-    analysis_config_type *config, bool std_scale_correlated_obs);
 
 double
 analysis_config_get_global_std_scaling(const analysis_config_type *config);

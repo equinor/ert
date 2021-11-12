@@ -64,7 +64,6 @@ struct analysis_config_struct {
     analysis_iter_config_type *iter_config;
     int min_realisations;
     bool stop_long_running;
-    bool std_scale_correlated_obs;
     int max_runtime;
     double global_std_scaling;
 };
@@ -130,16 +129,6 @@ void analysis_config_set_stop_long_running(analysis_config_type *config,
 
 bool analysis_config_get_stop_long_running(const analysis_config_type *config) {
     return config->stop_long_running;
-}
-
-bool analysis_config_get_std_scale_correlated_obs(
-    const analysis_config_type *config) {
-    return config->std_scale_correlated_obs;
-}
-
-void analysis_config_set_std_scale_correlated_obs(
-    analysis_config_type *config, bool std_scale_correlated_obs) {
-    config->std_scale_correlated_obs = std_scale_correlated_obs;
 }
 
 double
@@ -412,11 +401,6 @@ void analysis_config_init(analysis_config_type *analysis,
             analysis,
             config_content_get_value_as_bool(config, SINGLE_NODE_UPDATE_KEY));
 
-    if (config_content_has_item(config, STD_SCALE_CORRELATED_OBS_KEY))
-        analysis_config_set_std_scale_correlated_obs(
-            analysis, config_content_get_value_as_bool(
-                          config, STD_SCALE_CORRELATED_OBS_KEY));
-
     if (config_content_has_item(config, RERUN_START_KEY))
         analysis_config_set_rerun_start(
             analysis, config_content_get_value_as_int(config, RERUN_START_KEY));
@@ -546,11 +530,12 @@ void analysis_config_free(analysis_config_type *config) {
     delete config;
 }
 
-analysis_config_type *analysis_config_alloc_full(
-    double alpha, bool merge_observations, bool rerun, int rerun_start,
-    const char *log_path, double std_cutoff, bool stop_long_running,
-    bool single_node_update, bool std_scale_correlated_obs,
-    double global_std_scaling, int max_runtime, int min_realisations) {
+analysis_config_type *
+analysis_config_alloc_full(double alpha, bool merge_observations, bool rerun,
+                           int rerun_start, const char *log_path,
+                           double std_cutoff, bool stop_long_running,
+                           bool single_node_update, double global_std_scaling,
+                           int max_runtime, int min_realisations) {
     analysis_config_type *config = new analysis_config_type();
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
@@ -576,7 +561,6 @@ analysis_config_type *analysis_config_alloc_full(
 
     config->analysis_module = NULL;
     config->iter_config = analysis_iter_config_alloc();
-    config->std_scale_correlated_obs = std_scale_correlated_obs;
     config->global_std_scaling = global_std_scaling;
 
     analysis_config_load_internal_modules(config);
@@ -615,7 +599,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
 
     config->analysis_module = NULL;
     config->iter_config = analysis_iter_config_alloc();
-    config->std_scale_correlated_obs = false;
     config->global_std_scaling = 1.0;
     return config;
 }
@@ -665,13 +648,6 @@ void analysis_config_add_config_items(config_parser_type *config) {
     config_add_key_value(config, UPDATE_LOG_PATH_KEY, false, CONFIG_STRING);
     config_add_key_value(config, MIN_REALIZATIONS_KEY, false, CONFIG_STRING);
     config_add_key_value(config, MAX_RUNTIME_KEY, false, CONFIG_INT);
-
-    config_add_key_value(config, STD_SCALE_CORRELATED_OBS_KEY, false,
-                         CONFIG_BOOL);
-    config_parser_deprecate(config, STD_SCALE_CORRELATED_OBS_KEY,
-                            "STD_SCALE_CORRELATED_OBS is deprecated. "
-                            "Use the 'auto_scale' option in the "
-                            "MISFIT_PREPROCESSOR workflow instead.");
 
     item =
         config_add_key_value(config, STOP_LONG_RUNNING_KEY, false, CONFIG_BOOL);

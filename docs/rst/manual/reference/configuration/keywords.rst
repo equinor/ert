@@ -80,7 +80,6 @@ Keyword name                                                            Required
 :ref:`RUNPATH <runpath>`                                                NO                                      simulations/realization%d       Directory to run simulations
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
-:ref:`STD_SCALE_CORRELATED_OBS <std_scale_correlated_obs>`              NO                                      FALSE                           Try to estimate the correlations in the data to inflate the observation std
 :ref:`SCHEDULE_PREDICTION_FILE <schedule_prediction_file>`              NO                                                                      Schedule prediction file
 :ref:`SETENV <setenv>`                                                  NO                                                                      You can modify the UNIX environment with SETENV calls
 :ref:`SIMULATION_JOB <simulation_job>`                                  NO                                                                      Experimental alternative to FORWARD_MODEL
@@ -1310,27 +1309,6 @@ Keywords controlling the ES algorithm
         that setting the truncation factor to 1.00, will recover the Standard-EnKF
         algorithm if and only if the covariance matrix for the observation errors is
         proportional to the identity matrix.
-
-
-.. _std_scale_correlated_obs:
-.. topic:: STD_SCALE_CORRELATED_OBS
-
-        With this keyword you can instruct ERT to use the simulated data to
-        estimate the correlations in the observations, and then inflate the
-        observation standard deviation as a way to estimate the real information
-        content in the observations. The method is based on PCA, the scaling
-        factor is calculated as:
-
-        :math:`\sqrt{\frac{N_{\sigma}}{N_{\mathrm{obs}}}}`
-
-
-        where :math:`N_{\sigma}` is the number of singular components, at (fixed)
-        truncation 0.95 and :math:`N_{\mathrm{obs}}` is the number of observations.
-        The STD_SCALE_CORRELATED_OBS keyword will flatten all your observations,
-        including temporal and spatial correlations. For more fine grained
-        control you can use the STD_CALE_CORRELATED_OBS workflow job, or even
-        write your own plugins.
-
 
 
 .. _update_log_path:

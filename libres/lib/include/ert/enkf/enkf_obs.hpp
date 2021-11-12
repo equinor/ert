@@ -99,12 +99,6 @@ void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
                                         local_obsdata_type *local_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask);
-double enkf_obs_scale_correlated_std(const enkf_obs_type *enkf_obs,
-                                     enkf_fs_type *fs,
-                                     const int_vector_type *ens_active_list,
-                                     const local_obsdata_type *local_obsdata,
-                                     double alpha, double std_cutoff,
-                                     bool verbose);
 local_obsdata_type *
 enkf_obs_alloc_all_active_local_obs(const enkf_obs_type *enkf_obs,
                                     const char *key);
