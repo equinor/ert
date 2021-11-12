@@ -152,13 +152,14 @@ jobs:
         sleep 3
         herbstluftwm &
         sleep 1
-        python -c "import sys; print(sys.path)"
-        pytest tests/ert_tests -sv --durations=0 -m "not integration_test"
+        pushd tests
+        pytest ert_tests -sv --durations=0 -m "not integration_test"
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
-        pytest tests/ert_tests -sv --durations=0 -m "not integration_test"
+        pushd tests
+        pytest ert_tests -sv --durations=0 -m "not integration_test"
 
     - name: Integration Test Ubuntu
       if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
@@ -169,13 +170,14 @@ jobs:
         sleep 3
         herbstluftwm &
         sleep 1
-        python -c "import sys; print(sys.path)"
-        pytest tests/ert_tests -sv --durations=0 -m "integration_test"
+        pushd tests
+        pytest ert_tests -sv --durations=0 -m "integration_test"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
-        pytest tests/ert_tests -sv --durations=0 -m "integration_test"
+        pushd tests
+        pytest ert_tests -sv --durations=0 -m "integration_test"
 
     - name: Test CLI
       run: |
@@ -278,7 +280,8 @@ jobs:
     - name: Run Python tests
       run: |
         # Run tests
-        pytest tests/libres_tests --durations=0
+        pushd tests
+        pytest libres_tests --durations=0
 
 
   publish:
