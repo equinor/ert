@@ -119,7 +119,6 @@ extern "C" {
 #define STOP_LONG_RUNNING_KEY "STOP_LONG_RUNNING"
 #define MAX_RUNTIME_KEY "MAX_RUNTIME"
 #define TIME_MAP_KEY "TIME_MAP"
-#define STD_SCALE_CORRELATED_OBS_KEY "STD_SCALE_CORRELATED_OBS"
 #define UPDATE_SETTING_KEY "UPDATE_SETTINGS"
 #define NUM_CPU_KEY "NUM_CPU"
 
@@ -203,7 +202,6 @@ const char *config_keys_get_alpha();
 const char *config_keys_get_std_cutoff();
 const char *config_keys_get_stop_long_running();
 const char *config_keys_get_single_node_update();
-const char *config_keys_get_std_scale_correlated_obs();
 const char *config_keys_get_rerun();
 const char *config_keys_get_rerun_start();
 const char *config_keys_get_merge_observations();

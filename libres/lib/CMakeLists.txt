@@ -663,7 +663,6 @@ add_config_test(enkf_workflow_job_test_directory enkf_workflow_job_test_director
 
 foreach(test enkf_site_config
              enkf_main_fs_current_file_test
-             enkf_scale_correlated_std
              enkf_plot_gendata_fs
              enkf_state_report_step_compatible
              enkf_state_manual_load_test
@@ -753,11 +752,6 @@ add_equinor_test(enkf_main_fs
 add_equinor_test(enkf_main_fs_current_file_test
                  enkf_main_fs_current_file_test
                  ${CMAKE_SOURCE_DIR}/../test-data/Equinor/config/plotData/config)
-
-add_equinor_test(enkf_scale_correlated_std
-                 enkf_scale_correlated_std
-                 ${CMAKE_SOURCE_DIR}/../test-data/Equinor/config/with_data/config
-                 ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/STD_SCALE_CORRELATED_OBS)
 
 add_equinor_test(enkf_plot_gendata_fs
                  enkf_plot_gendata_fs

@@ -58,9 +58,6 @@ class EnkfObs(BaseCClass):
     _create_all_active_obs = ResPrototype(
         "local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)"
     )
-    _scale_correlated_std = ResPrototype(
-        "double  enkf_obs_scale_correlated_std( enkf_obs , enkf_fs ,       int_vector , local_obsdata)"
-    )
     _local_scale_std = ResPrototype(
         "void  enkf_obs_local_scale_std( enkf_obs ,        local_obsdata , double)"
     )
@@ -178,9 +175,6 @@ class EnkfObs(BaseCClass):
         self._get_obs_and_measure_data(
             fs, local_obsdata, active_list, meas_data, obs_data
         )
-
-    def scaleCorrelatedStd(self, fs, local_obsdata, active_list):
-        return self._scale_correlated_std(fs, active_list, local_obsdata)
 
     def localScaleStd(self, local_obsdata, scale_factor):
         return self._local_scale_std(local_obsdata, scale_factor)
