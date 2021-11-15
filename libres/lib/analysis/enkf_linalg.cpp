@@ -202,24 +202,6 @@ int enkf_linalg_svdS(const matrix_type *S, double truncation, int ncomp,
     return num_significant;
 }
 
-int enkf_linalg_num_PC(const matrix_type *S, double truncation) {
-    int num_singular_values =
-        std::min(matrix_get_rows(S), matrix_get_columns(S));
-    int num_significant;
-    double *sig0 = (double *)util_calloc(num_singular_values, sizeof *sig0);
-
-    {
-        matrix_type *workS = matrix_alloc_copy(S);
-        matrix_dgesvd(DGESVD_NONE, DGESVD_NONE, workS, sig0, NULL, NULL);
-        matrix_free(workS);
-    }
-
-    num_significant =
-        enkf_linalg_num_significant(num_singular_values, sig0, truncation);
-    free(sig0);
-    return num_significant;
-}
-
 /*
  Routine computes X1 and eig corresponding to Eqs 14.54-14.55
  Geir Evensen
@@ -641,62 +623,4 @@ void enkf_linalg_checkX(const matrix_type *X, bool bootstrap) {
                            __func__, icol, col_sum, target_sum);
         }
     }
-}
-
-int enkf_linalg_get_PC(const matrix_type *S0, const matrix_type *dObs,
-                       double truncation, int ncomp, matrix_type *PC,
-                       matrix_type *PC_obs,
-                       double_vector_type *singular_values) {
-
-    const int nrobs = matrix_get_rows(S0);
-    const int nrens = matrix_get_columns(S0);
-    const int nrmin = std::min(nrobs, nrens);
-
-    matrix_type *U0 = matrix_alloc(nrobs, nrens);
-    matrix_type *S = matrix_alloc_copy(S0);
-    double *inv_sig0;
-    int num_PC;
-
-    double_vector_iset(singular_values, nrmin - 1, 0);
-    matrix_subtract_row_mean(S);
-    ncomp = std::min(ncomp, nrmin);
-    inv_sig0 = double_vector_get_ptr(singular_values);
-    {
-        matrix_type *S_mean = matrix_alloc(nrobs, 1);
-        num_PC = enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0,
-                                  U0, NULL);
-
-        matrix_assign(
-            S,
-            S0); // The svd routine will overwrite S - we therefor must pick it up again from S0.
-        matrix_subtract_and_store_row_mean(S, S_mean);
-
-        /* Multiply with inverted singular values. */
-        matrix_resize(U0, nrobs, num_PC, true);
-        for (int i = 0; i < num_PC; i++)
-            matrix_imul_col(U0, i, inv_sig0[i]);
-
-        /* The simulated components / projections */
-        {
-            matrix_resize(PC, num_PC, nrens, false);
-            matrix_dgemm(PC, U0, S, true, false, 1.0, 0.0);
-        }
-
-        /* The observer projections. */
-        {
-            matrix_scale(S_mean, -1.0);
-            matrix_inplace_add_column(S_mean, dObs, 0, 0);
-            matrix_resize(PC_obs, num_PC, 1, false);
-            matrix_dgemm(PC_obs, U0, S_mean, true, false, 1.0, 0.0);
-        }
-
-        for (int i = 0; i < double_vector_size(singular_values); i++)
-            inv_sig0[i] = 1.0 / inv_sig0[i];
-
-        matrix_free(S_mean);
-    }
-    matrix_free(S);
-    matrix_free(U0);
-
-    return num_PC;
 }

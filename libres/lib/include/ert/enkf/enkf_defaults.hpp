@@ -115,10 +115,6 @@ const char *enkf_defaults_get_default_gen_kw_export_name();
 #define DEFAULT_RFTPATH "rft"
 #define DEFAULT_REPORT_TIMEOUT 120
 
-#define DEFAULT_STORE_PC true
-#define DEFAULT_PC_FILENAME "PC_%04d-%04d-%s"
-#define DEFAULT_PC_PATH "PC"
-
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING ":"
 

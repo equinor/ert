@@ -119,13 +119,6 @@ void enkf_main_add_node(enkf_main_type *enkf_main,
 const hook_manager_type *
 enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
 
-void enkf_main_get_PC(const matrix_type *S, const matrix_type *dObs,
-                      double truncation, int ncomp, matrix_type *PC,
-                      matrix_type *PC_obs, double_vector_type *singular_values);
-
-void enkf_main_fprintf_PC(const char *filename, matrix_type *PC,
-                          matrix_type *PC_obs);
-
 void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose);
 
 ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main);

@@ -56,9 +56,6 @@ struct analysis_config_struct {
 
     config_settings_type *update_settings;
 
-    char *PC_filename;
-    char *PC_path;
-    bool store_PC;
     bool
         single_node_update; /* When creating the default ALL_ACTIVE local configuration. */
     analysis_iter_config_type *iter_config;
@@ -167,34 +164,6 @@ analysis_config_alloc_module_names(const analysis_config_type *config) {
         stringlist_append_copy(s, analysis_pair.first.c_str());
 
     return s;
-}
-
-void analysis_config_set_store_PC(analysis_config_type *config, bool store_PC) {
-    config->store_PC = store_PC;
-}
-
-bool analysis_config_get_store_PC(const analysis_config_type *config) {
-    return config->store_PC;
-}
-
-void analysis_config_set_PC_filename(analysis_config_type *config,
-                                     const char *filename) {
-    config->PC_filename =
-        util_realloc_string_copy(config->PC_filename, filename);
-}
-
-const char *
-analysis_config_get_PC_filename(const analysis_config_type *config) {
-    return config->PC_filename;
-}
-
-void analysis_config_set_PC_path(analysis_config_type *config,
-                                 const char *path) {
-    config->PC_path = util_realloc_string_copy(config->PC_path, path);
-}
-
-const char *analysis_config_get_PC_path(const analysis_config_type *config) {
-    return config->PC_path;
 }
 
 void analysis_config_set_alpha(analysis_config_type *config, double alpha) {
@@ -524,8 +493,6 @@ void analysis_config_free(analysis_config_type *config) {
 
     config_settings_free(config->update_settings);
     free(config->log_path);
-    free(config->PC_filename);
-    free(config->PC_path);
 
     delete config;
 }
@@ -549,12 +516,7 @@ analysis_config_alloc_full(double alpha, bool merge_observations, bool rerun,
     config->rerun = rerun;
     config->rerun_start = rerun_start;
     config->log_path = util_realloc_string_copy(config->log_path, log_path);
-    config->PC_filename =
-        util_realloc_string_copy(config->PC_filename, DEFAULT_PC_FILENAME);
-    config->PC_path =
-        util_realloc_string_copy(config->PC_path, DEFAULT_PC_PATH);
     config->single_node_update = single_node_update;
-    config->store_PC = DEFAULT_STORE_PC;
     config->min_realisations = min_realisations;
     config->stop_long_running = stop_long_running;
     config->max_runtime = max_runtime;
@@ -573,8 +535,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
     config->log_path = NULL;
-    config->PC_filename = NULL;
-    config->PC_path = NULL;
     config->update_settings = config_settings_alloc(UPDATE_SETTING_KEY);
     config_settings_add_double_setting(
         config->update_settings, UPDATE_ENKF_ALPHA_KEY, DEFAULT_ENKF_ALPHA);
@@ -588,9 +548,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
     analysis_config_set_single_node_update(config, DEFAULT_SINGLE_NODE_UPDATE);
     analysis_config_set_log_path(config, DEFAULT_UPDATE_LOG_PATH);
 
-    analysis_config_set_store_PC(config, DEFAULT_STORE_PC);
-    analysis_config_set_PC_filename(config, DEFAULT_PC_FILENAME);
-    analysis_config_set_PC_path(config, DEFAULT_PC_PATH);
     analysis_config_set_min_realisations(config,
                                          DEFAULT_ANALYSIS_MIN_REALISATIONS);
     analysis_config_set_stop_long_running(config,

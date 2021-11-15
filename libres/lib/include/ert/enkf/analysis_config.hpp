@@ -91,14 +91,6 @@ void analysis_config_set_single_node_update(analysis_config_type *config,
                                             bool single_node_update);
 bool analysis_config_get_single_node_update(const analysis_config_type *config);
 
-void analysis_config_set_store_PC(analysis_config_type *config, bool store_PC);
-bool analysis_config_get_store_PC(const analysis_config_type *config);
-void analysis_config_set_PC_filename(analysis_config_type *config,
-                                     const char *filename);
-const char *analysis_config_get_PC_filename(const analysis_config_type *config);
-void analysis_config_set_PC_path(analysis_config_type *config,
-                                 const char *path);
-const char *analysis_config_get_PC_path(const analysis_config_type *config);
 bool analysis_config_have_enough_realisations(
     const analysis_config_type *config, int realisations, int ensemble_size);
 void analysis_config_set_stop_long_running(analysis_config_type *config,
