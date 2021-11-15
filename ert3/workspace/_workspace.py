@@ -92,6 +92,7 @@ class Workspace:
             config_dict = yaml.safe_load(f)
         ensemble_config = ert3.config.load_ensemble_config(config_dict)
 
+        _validate_ensemble_size(experiment_config, ensemble_config)
         _validate_inputs(stage_config, ensemble_config)
 
         return experiment_config, stage_config, ensemble_config
@@ -128,6 +129,20 @@ def initialize(path: Union[str, Path]) -> Workspace:
         )
     (path / _WORKSPACE_DATA_ROOT).mkdir()
     return Workspace(path)
+
+
+def _validate_ensemble_size(
+    experiment_config: ert3.config.ExperimentConfig,
+    ensemble_config: ert3.config.EnsembleConfig,
+) -> None:
+    if experiment_config.type == "sensitivity" and ensemble_config.size is not None:
+        raise ert.exceptions.ConfigValidationError(
+            "No ensemble size should be specified for a sensitivity analysis."
+        )
+    if experiment_config.type != "sensitivity" and ensemble_config.size is None:
+        raise ert.exceptions.ConfigValidationError(
+            "An ensemble size must be specified."
+        )
 
 
 def _validate_inputs(
