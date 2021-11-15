@@ -217,8 +217,8 @@ def ensemble(base_ensemble_dict):
 
 
 @pytest.fixture()
-def stages_config():
-    config_list = [
+def stages_config_list():
+    yield [
         {
             "name": "evaluate_polynomial",
             "input": [{"record": "coefficients", "location": "coefficients.json"}],
@@ -232,17 +232,21 @@ def stages_config():
             ],
         }
     ]
+
+
+@pytest.fixture()
+def stages_config(stages_config_list):
     script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(config_list)
+    yield ert3.config.load_stages_config(stages_config_list)
 
 
 @pytest.fixture()
-def double_stages_config():
-    config_list = [
+def double_stages_config_list():
+    yield [
         {
             "name": "evaluate_polynomial",
             "input": [
@@ -268,12 +272,16 @@ def double_stages_config():
             ],
         }
     ]
+
+
+@pytest.fixture()
+def double_stages_config(double_stages_config_list):
     script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(config_list)
+    yield ert3.config.load_stages_config(double_stages_config_list)
 
 
 @pytest.fixture()

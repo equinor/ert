@@ -1,9 +1,12 @@
+import copy
 from pathlib import Path
 
 import pytest
 
 import ert3
 import ert
+
+import yaml
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
@@ -98,3 +101,64 @@ def test_workspace_export_json(tmpdir, ert_storage):
 
     workspace.export_json("test1", {1: "x", 2: "y"}, output_file="test.json")
     assert (experiments_dir / "test1" / "test.json").exists()
+
+
+def test_workspace__validate_inputs(
+    workspace, ensemble, stages_config, double_stages_config, base_ensemble_dict
+):
+    ert3.workspace._workspace._validate_inputs(stages_config, ensemble)
+
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Ensemble and stage inputs do not match.",
+    ):
+        ert3.workspace._workspace._validate_inputs(double_stages_config, ensemble)
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["forward_model"]["stage"] = "foo"
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Invalid stage: 'foo'.",
+    ):
+        ert3.workspace._workspace._validate_inputs(
+            double_stages_config,
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+        )
+
+
+def test_workspace_load_experiment_config_validation(
+    workspace,
+    stages_config,
+    base_ensemble_dict,
+    stages_config_list,
+    double_stages_config_list,
+):
+    experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
+    (experiments_dir / "test").mkdir(parents=True)
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(base_ensemble_dict, f)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "evaluation"}, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+    workspace.load_experiment_config("test")
+
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(double_stages_config_list, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Ensemble and stage inputs do not match.",
+    ):
+        workspace.load_experiment_config("test")
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["forward_model"]["stage"] = "foo"
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Invalid stage: 'foo'.",
+    ):
+        workspace.load_experiment_config("test")
