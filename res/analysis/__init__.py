@@ -21,4 +21,3 @@ import ecl.util
 
 from .enums import AnalysisModuleOptionsEnum
 from .analysis_module import AnalysisModule
-from .linalg import Linalg

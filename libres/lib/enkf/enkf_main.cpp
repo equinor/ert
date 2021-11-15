@@ -765,34 +765,6 @@ static void enkf_main_module_info_free(module_info_type *module_info) {
     free(module_info);
 }
 
-void enkf_main_fprintf_PC(const char *filename, matrix_type *PC,
-                          matrix_type *PC_obs) {
-
-    FILE *stream = util_mkdir_fopen(filename, "w");
-    const int num_PC = matrix_get_rows(PC);
-    const int ens_size = matrix_get_columns(PC);
-    int ipc, iens;
-
-    for (ipc = 0; ipc < num_PC; ipc++)
-        fprintf(stream, "%10.6f ", matrix_iget(PC_obs, ipc, 0));
-    fprintf(stream, "\n");
-
-    for (iens = 0; iens < ens_size; iens++) {
-        for (ipc = 0; ipc < num_PC; ipc++)
-            fprintf(stream, "%10.6f ", matrix_iget(PC, ipc, iens));
-        fprintf(stream, "\n");
-    }
-    fclose(stream);
-}
-
-void enkf_main_get_PC(const matrix_type *S, const matrix_type *dObs,
-                      double truncation, int ncomp, matrix_type *PC,
-                      matrix_type *PC_obs,
-                      double_vector_type *singular_values) {
-
-    enkf_linalg_get_PC(S, dObs, truncation, ncomp, PC, PC_obs, singular_values);
-}
-
 static void assert_matrix_size(const matrix_type *m, const char *name, int rows,
                                int columns) {
     if (m) {
@@ -967,36 +939,6 @@ static void enkf_main_update__(
     bool_vector_free(ens_mask);
 }
 
-static void enkf_main_store_PC(const analysis_config_type *analysis_config,
-                               int step1, int step2, int active_ens_size,
-                               const local_ministep_type *ministep,
-                               const matrix_type *dObs, const matrix_type *S) {
-    double truncation = -1;
-    int ncomp = active_ens_size - 1;
-    matrix_type *PC = matrix_alloc(1, 1);
-    matrix_type *PC_obs = matrix_alloc(1, 1);
-    double_vector_type *singular_values = double_vector_alloc(0, 0);
-    local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
-    const char *obsdata_name = local_obsdata_get_name(obsdata);
-
-    enkf_main_get_PC(S, dObs, truncation, ncomp, PC, PC_obs, singular_values);
-    {
-        char *filename =
-            util_alloc_sprintf(analysis_config_get_PC_filename(analysis_config),
-                               step1, step2, obsdata_name);
-        char *full_path = util_alloc_filename(
-            analysis_config_get_PC_path(analysis_config), filename, NULL);
-
-        enkf_main_fprintf_PC(full_path, PC, PC_obs);
-
-        free(full_path);
-        free(filename);
-    }
-    matrix_free(PC);
-    matrix_free(PC_obs);
-    double_vector_free(singular_values);
-}
-
 static void enkf_main_analysis_update(
     enkf_fs_type *target_fs, const bool_vector_type *ens_mask,
     hash_type *use_count, run_mode_type run_mode, int step1, int step2,
@@ -1056,10 +998,6 @@ static void enkf_main_analysis_update(
             target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
             target_fs, ensemble_config, iens_active_index, 0, ensemble,
             run_mode, step2, A, cpu_threads);
-
-        if (analysis_config_get_store_PC(analysis_config))
-            enkf_main_store_PC(analysis_config, step1, step2, active_ens_size,
-                               ministep, dObs, S);
 
         if (localA == NULL)
             analysis_module_initX(module, X, NULL, S, R, dObs, E, D,

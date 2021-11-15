@@ -10,13 +10,6 @@
 extern "C" {
 #endif
 
-int enkf_linalg_get_PC(const matrix_type *S0, const matrix_type *dObs,
-                       double truncation, int ncomp, matrix_type *PC,
-                       matrix_type *PC_obs,
-                       double_vector_type *singular_values);
-
-int enkf_linalg_num_PC(const matrix_type *S, double truncation);
-
 void enkf_linalg_init_stdX(matrix_type *X, const matrix_type *S,
                            const matrix_type *D, const matrix_type *W,
                            const double *eig, bool bootstrap);
