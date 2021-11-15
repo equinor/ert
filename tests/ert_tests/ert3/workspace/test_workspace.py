@@ -103,6 +103,41 @@ def test_workspace_export_json(tmpdir, ert_storage):
     assert (experiments_dir / "test1" / "test.json").exists()
 
 
+def test_workspace__validate_ensemble_size(
+    workspace, ensemble, stages_config, stages_config_list, base_ensemble_dict
+):
+    ert3.workspace._workspace._validate_ensemble_size(
+        ert3.config.ExperimentConfig(type="evaluation"), ensemble
+    )
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["size"] = None
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="An ensemble size must be specified.",
+    ):
+        ert3.workspace._workspace._validate_ensemble_size(
+            ert3.config.ExperimentConfig(type="evaluation"),
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+        )
+
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="No ensemble size should be specified for a sensitivity analysis.",
+    ):
+        ert3.workspace._workspace._validate_ensemble_size(
+            ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
+            ensemble,
+        )
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["size"] = None
+    ert3.workspace._workspace._validate_ensemble_size(
+        ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
+        ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+    )
+
+
 def test_workspace__validate_inputs(
     workspace, ensemble, stages_config, double_stages_config, base_ensemble_dict
 ):
@@ -143,6 +178,67 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump(stages_config_list, f)
     workspace.load_experiment_config("test")
 
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["size"] = None
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+    workspace.load_experiment_config("test")
+
+
+def test_workspace_load_experiment_config_size_validation(
+    workspace,
+    stages_config,
+    base_ensemble_dict,
+    stages_config_list,
+    double_stages_config_list,
+):
+    experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
+    (experiments_dir / "test").mkdir(parents=True)
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["size"] = None
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "evaluation"}, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="An ensemble size must be specified.",
+    ):
+        workspace.load_experiment_config("test")
+
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(base_ensemble_dict, f)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="No ensemble size should be specified for a sensitivity analysis.",
+    ):
+        workspace.load_experiment_config("test")
+
+
+def test_workspace_load_experiment_config_input_validation(
+    workspace,
+    stages_config,
+    base_ensemble_dict,
+    stages_config_list,
+    double_stages_config_list,
+):
+    experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
+    (experiments_dir / "test").mkdir(parents=True)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "evaluation"}, f)
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(base_ensemble_dict, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(double_stages_config_list, f)
     with pytest.raises(
@@ -153,6 +249,8 @@ def test_workspace_load_experiment_config_validation(
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["forward_model"]["stage"] = "foo"
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "evaluation"}, f)
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with open(workspace._path / "stages.yml", "w") as f:
