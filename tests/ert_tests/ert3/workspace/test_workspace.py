@@ -138,24 +138,27 @@ def test_workspace__validate_ensemble_size(
     )
 
 
-def test_workspace__validate_inputs(
+def test_workspace__validate_stage(
     workspace, ensemble, stages_config, double_stages_config, base_ensemble_dict
 ):
-    ert3.workspace._workspace._validate_inputs(stages_config, ensemble)
+    ert3.workspace._workspace._validate_stage(stages_config, ensemble)
 
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Ensemble and stage inputs do not match.",
     ):
-        ert3.workspace._workspace._validate_inputs(double_stages_config, ensemble)
+        ert3.workspace._workspace._validate_stage(double_stages_config, ensemble)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["forward_model"]["stage"] = "foo"
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
-        match="Invalid stage: 'foo'.",
+        match=(
+            "Invalid stage in forward model: 'foo'. "
+            "Must be one of: 'evaluate_polynomial'"
+        ),
     ):
-        ert3.workspace._workspace._validate_inputs(
+        ert3.workspace._workspace._validate_stage(
             double_stages_config,
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
         )
@@ -226,7 +229,7 @@ def test_workspace_load_experiment_config_size_validation(
         workspace.load_experiment_config("test")
 
 
-def test_workspace_load_experiment_config_input_validation(
+def test_workspace_load_experiment_config_stages_validation(
     workspace,
     stages_config,
     base_ensemble_dict,
@@ -257,6 +260,9 @@ def test_workspace_load_experiment_config_input_validation(
         yaml.dump(stages_config_list, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
-        match="Invalid stage: 'foo'.",
+        match=(
+            "Invalid stage in forward model: 'foo'. "
+            "Must be one of: 'evaluate_polynomial'"
+        ),
     ):
         workspace.load_experiment_config("test")

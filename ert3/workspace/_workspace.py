@@ -93,7 +93,7 @@ class Workspace:
         ensemble_config = ert3.config.load_ensemble_config(config_dict)
 
         _validate_ensemble_size(experiment_config, ensemble_config)
-        _validate_inputs(stage_config, ensemble_config)
+        _validate_stage(stage_config, ensemble_config)
 
         return experiment_config, stage_config, ensemble_config
 
@@ -145,13 +145,16 @@ def _validate_ensemble_size(
         )
 
 
-def _validate_inputs(
+def _validate_stage(
     stage_config: ert3.config.StagesConfig, ensemble_config: ert3.config.EnsembleConfig
 ) -> None:
     stage_name = ensemble_config.forward_model.stage
     stage = next((stage for stage in stage_config if stage.name == stage_name), None)
     if stage is None:
-        raise ert.exceptions.ConfigValidationError(f"Invalid stage: '{stage_name}''.")
+        raise ert.exceptions.ConfigValidationError(
+            f"Invalid stage in forward model: '{stage_name}'. "
+            f"Must be one of: " + ", ".join(f"'{stage.name}'" for stage in stage_config)
+        )
     stage_input_names = set(stage.input.keys())
     ensemble_input_names = set(input.record for input in ensemble_config.input)
     if ensemble_input_names != stage_input_names:
