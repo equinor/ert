@@ -5,6 +5,11 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
+# Other modules depend on the ert shared resources so we explicitly expose their path
+from ert_shared.hook_implementations.jobs import (
+    _resolve_ert_share_path as ert_share_path,
+)
+
 
 def clear_global_state():
     """Deletes the global ERT instance shared as a global variable in the
