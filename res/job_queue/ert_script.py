@@ -110,9 +110,10 @@ class ErtScript(object):
 
     def outputStackTrace(self, error=None):
         stack_trace = error or "".join(traceback.format_exception(*sys.exc_info()))
-        msg = "The script '{}' caused an error while running:\n{}"
-
-        sys.stderr.write(msg.format(self.__class__.__name__, stack_trace))
+        sys.stderr.write(
+            f"The script '{self.__class__.__name__}' caused an "
+            f"error while running:\n{str(stack_trace).strip()}\n"
+        )
         self.__failed = True
 
     @staticmethod
