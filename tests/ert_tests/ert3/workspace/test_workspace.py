@@ -164,6 +164,48 @@ def test_workspace__validate_stage(
         )
 
 
+def test_workspace__validate_resources(workspace, base_ensemble_dict):
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["input"] += [
+        {"source": "resources.coefficients.json", "record": "coefficients"}
+    ]
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Cannot locate resource: 'coefficients.json'",
+    ):
+        workspace._validate_resources(
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+        )
+
+    (workspace.get_resources_dir() / "coefficients.json").mkdir(parents=True)
+    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["is_directory"] = True
+    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["is_directory"] = False
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Resource must be a regular file: 'coefficients.json'",
+    ):
+        workspace._validate_resources(
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict)
+        )
+
+    (workspace.get_resources_dir() / "coefficients.json").rmdir()
+    (workspace.get_resources_dir() / "coefficients.json").touch()
+    ensemble_dict["input"][-1]["is_directory"] = None
+    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["is_directory"] = False
+    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["is_directory"] = True
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Resource must be a directory: 'coefficients.json'",
+    ):
+        workspace._validate_resources(
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict)
+        )
+
+
 def test_workspace_load_experiment_config_validation(
     workspace,
     stages_config,
@@ -264,5 +306,66 @@ def test_workspace_load_experiment_config_stages_validation(
             "Invalid stage in forward model: 'foo'. "
             "Must be one of: 'evaluate_polynomial'"
         ),
+    ):
+        workspace.load_experiment_config("test")
+
+
+def test_workspace_load_experiment_config_resources_validation(
+    workspace,
+    stages_config,
+    base_ensemble_dict,
+    stages_config_list,
+    double_stages_config_list,
+):
+    experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
+    (experiments_dir / "test").mkdir(parents=True)
+    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
+        yaml.dump({"type": "evaluation"}, f)
+    with open(workspace._path / "stages.yml", "w") as f:
+        yaml.dump(stages_config_list, f)
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["input"] += [
+        {"source": "resources.coefficients.json", "record": "coefficients"}
+    ]
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Cannot locate resource: 'coefficients.json'",
+    ):
+        workspace.load_experiment_config("test")
+
+    (workspace.get_resources_dir() / "coefficients.json").mkdir(parents=True)
+    workspace.load_experiment_config("test")
+    ensemble_dict["input"][-1]["is_directory"] = True
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    workspace.load_experiment_config("test")
+    ensemble_dict["input"][-1]["is_directory"] = False
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Resource must be a regular file: 'coefficients.json'",
+    ):
+        workspace.load_experiment_config("test")
+
+    (workspace.get_resources_dir() / "coefficients.json").rmdir()
+    (workspace.get_resources_dir() / "coefficients.json").touch()
+    ensemble_dict["input"][-1]["is_directory"] = None
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    workspace.load_experiment_config("test")
+    ensemble_dict["input"][-1]["is_directory"] = False
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    workspace.load_experiment_config("test")
+    ensemble_dict["input"][-1]["is_directory"] = True
+    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+        yaml.dump(ensemble_dict, f)
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match="Resource must be a directory: 'coefficients.json'",
     ):
         workspace.load_experiment_config("test")

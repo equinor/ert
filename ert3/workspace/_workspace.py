@@ -108,6 +108,7 @@ class Workspace:
 
         _validate_ensemble_size(experiment_config, ensemble_config)
         _validate_stage(stage_config, ensemble_config)
+        self._validate_resources(ensemble_config)
 
         return experiment_config, stage_config, ensemble_config
 
@@ -133,6 +134,29 @@ class Workspace:
         self.assert_experiment_exists(experiment_name)
         with open(experiment_root / output_file, "w", encoding="utf-8") as f:
             json.dump(data, f)
+
+    def _validate_resources(self, ensemble_config: ert3.config.EnsembleConfig) -> None:
+        resource_inputs = [
+            item
+            for item in ensemble_config.input
+            if item.source_namespace == "resources"
+        ]
+        resources_dir = self.get_resources_dir()
+        for resource in resource_inputs:
+            path = resources_dir / resource.source_location
+            if not path.exists():
+                raise ert.exceptions.ConfigValidationError(
+                    f"Cannot locate resource: '{resource.source_location}'"
+                )
+            if resource.is_directory is not None:
+                if resource.is_directory and not path.is_dir():
+                    raise ert.exceptions.ConfigValidationError(
+                        f"Resource must be a directory: '{resource.source_location}'"
+                    )
+                if not resource.is_directory and path.is_dir():
+                    raise ert.exceptions.ConfigValidationError(
+                        f"Resource must be a regular file: '{resource.source_location}'"
+                    )
 
 
 def initialize(path: Union[str, Path]) -> Workspace:
