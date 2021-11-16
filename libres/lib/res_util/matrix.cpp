@@ -1125,6 +1125,21 @@ void matrix_set_row(matrix_type *matrix, const double *data, int row) {
      R -> R - <R>
 */
 
+/**
+ * Subtract mean from each row of matrix.
+ * 
+ * In literature typically defined using the following matrix computations:
+ * 
+ * (I_N - 1/N \bm{1} \times \bm{1}^T)
+ * 
+ * where I_N is the N-dimensional identity matrix and
+ * \bm{1} is an N-vector with all elements equal to 1.
+ * See for example (Eq. 12) in the paper 
+ * Efficient Implementation of an Iterative Ensemble Smoother for 
+ * Data Assimilation and Reservoir History Matching, 2019, Evensen.
+ * 
+ * Also see tests for more details.
+ */
 void matrix_subtract_row_mean(matrix_type *matrix) {
     int i;
     for (i = 0; i < matrix->rows; i++) {
