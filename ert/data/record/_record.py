@@ -1,6 +1,6 @@
+import io
 import pathlib
 import tarfile
-import io
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
@@ -19,7 +19,9 @@ from typing import (
 from beartype import beartype
 from beartype.roar import BeartypeException  # type: ignore
 from pydantic import PositiveInt
+
 from ert.serialization import get_serializer
+from ert_shared.asyncio import get_event_loop
 
 number = Union[int, float]
 numerical_record_data = Union[
@@ -261,8 +263,9 @@ def load_collection_from_file(
                     ensemble_size=ensemble_size,
                     collection_type=RecordCollectionType.UNIFORM,
                 )
-    with open(file_path, "rt", encoding="utf-8") as f:
-        raw_ensrecord = get_serializer(mime).decode_from_file(f)
+    raw_ensrecord = get_event_loop().run_until_complete(
+        get_serializer(mime).decode_from_path(file_path)
+    )
     return RecordCollection(
         records=tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
     )

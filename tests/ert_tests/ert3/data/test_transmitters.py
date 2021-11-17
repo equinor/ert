@@ -3,20 +3,15 @@ import json
 import pathlib
 import pickle
 import tempfile
-
 from typing import Callable, ContextManager
 
+import aiofiles
 import cloudpickle
 import pytest
 from ert_utils import tmp
 
-from ert.data import (
-    RecordTransmitter,
-    NumericalRecord,
-    BlobRecord,
-)
 import ert
-
+from ert.data import BlobRecord, NumericalRecord, RecordTransmitter
 
 simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
@@ -111,13 +106,12 @@ async def test_simple_record_transmit_from_file(
     ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         if mime_type == "application/octet-stream":
-            with open(filename, "wb") as fb:
-                fb.write(expected_data)
+            async with aiofiles.open(filename, "wb") as fb:
+                await fb.write(expected_data)
         else:
-            with open(filename, "wt", encoding="utf-8") as ft:
-                ert.serialization.get_serializer(mime_type).encode_to_file(
-                    expected_data, ft
-                )
+            await ert.serialization.get_serializer(mime_type).encode_to_path(
+                expected_data, filename
+            )
         await transmitter.transmit_file(filename, mime=mime_type)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):

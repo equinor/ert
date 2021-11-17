@@ -9,6 +9,7 @@
 .idea
 .vscode
 .pytest_cache
+__pycache__
 python/lib64
 /libenkf/src/.faultlist
 /develbranch/libenkf/src/.faultlist

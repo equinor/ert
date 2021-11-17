@@ -119,9 +119,8 @@ class RecordTransmitter:
             self._set_transmitted_state(uri, blob_record.record_type)
         else:
             serializer = get_serializer(mime)
-            async with aiofiles.open(str(file), mode="rt", encoding="utf-8") as ft:
-                contents_t: str = await ft.read()
-                num_record = NumericalRecord(data=serializer.decode(contents_t))
+            _record_data = await serializer.decode_from_path(file)
+            num_record = NumericalRecord(data=_record_data)
             uri = await self._transmit_numerical_record(num_record)
             self._set_transmitted_state(uri, num_record.record_type)
 

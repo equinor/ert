@@ -1,7 +1,9 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Any, TextIO
+from pathlib import Path
+from typing import Any, Union
 
+import aiofiles
 import yaml
 
 
@@ -15,11 +17,15 @@ class Serializer(ABC):
         raise NotImplementedError("not implemented")
 
     @abstractmethod
-    def encode_to_file(self, obj: Any, fp: TextIO, *args: Any, **kwargs: Any) -> None:
+    async def encode_to_path(
+        self, obj: Any, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> None:
         raise NotImplementedError("not implemented")
 
     @abstractmethod
-    def decode_from_file(self, fp: TextIO, *args: Any, **kwargs: Any) -> Any:
+    async def decode_from_path(
+        self, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> Any:
         raise NotImplementedError("not implemented")
 
 
@@ -30,11 +36,18 @@ class _json_serializer(Serializer):
     def decode(self, series: str, *args: Any, **kwargs: Any) -> Any:
         return json.loads(series, *args, **kwargs)
 
-    def encode_to_file(self, obj: Any, fp: TextIO, *args: Any, **kwargs: Any) -> None:
-        json.dump(obj, fp)
+    async def encode_to_path(
+        self, obj: Any, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> None:
+        async with aiofiles.open(path, mode="wt", encoding="utf-8") as filehandle:
+            await filehandle.write(json.dumps(obj))
 
-    def decode_from_file(self, fp: TextIO, *args: Any, **kwargs: Any) -> Any:
-        return json.load(fp)
+    async def decode_from_path(
+        self, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> Any:
+        async with aiofiles.open(path, mode="rt", encoding="utf-8") as filehandle:
+            contents = await filehandle.read()
+        return self.decode(contents, *args, **kwargs)
 
 
 class _yaml_serializer(Serializer):
@@ -45,8 +58,15 @@ class _yaml_serializer(Serializer):
     def decode(self, series: str, *args: Any, **kwargs: Any) -> Any:
         return yaml.safe_load(series)
 
-    def encode_to_file(self, obj: Any, fp: TextIO, *args: Any, **kwargs: Any) -> None:
-        yaml.dump(obj, fp)
+    async def encode_to_path(
+        self, obj: Any, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> None:
+        async with aiofiles.open(path, mode="wt", encoding="utf-8") as filehandle:
+            await filehandle.write(yaml.dump(obj))
 
-    def decode_from_file(self, fp: TextIO, *args: Any, **kwargs: Any) -> Any:
-        return yaml.safe_load(fp)
+    async def decode_from_path(
+        self, path: Union[str, Path], *args: Any, **kwargs: Any
+    ) -> Any:
+        async with aiofiles.open(path, mode="rt", encoding="utf-8") as filehandle:
+            contents = await filehandle.read()
+            return self.decode(contents, *args, **kwargs)
