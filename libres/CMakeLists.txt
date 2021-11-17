@@ -67,6 +67,7 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.7
+  eigen/3.4.0
   # Options
   OPTIONS
   catch2:with_main=True
