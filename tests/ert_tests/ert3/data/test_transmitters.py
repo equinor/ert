@@ -57,7 +57,13 @@ simple_records = pytest.mark.parametrize(
 
 mime_types = pytest.mark.parametrize(
     ("mime_type"),
-    tuple(("application/octet-stream",) + ert.serialization.registered_types()),
+    tuple(
+        (
+            "application/octet-stream",
+            "application/json",
+            "application/x-yaml",
+        )
+    ),
 )
 
 
