@@ -6,7 +6,7 @@ from http import HTTPStatus
 
 import websockets
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     InteractionDirection,
     _Narrative,

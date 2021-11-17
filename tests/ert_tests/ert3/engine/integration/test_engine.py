@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from integration_utils import (
     assert_distribution,
     assert_export,

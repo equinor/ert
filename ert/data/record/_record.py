@@ -23,7 +23,7 @@ from beartype.roar import BeartypeException  # type: ignore
 from pydantic import PositiveInt
 
 from ert.serialization import get_serializer
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 
 number = Union[int, float]
 numerical_record_data = Union[

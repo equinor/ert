@@ -13,7 +13,7 @@ import ert
 import ert3
 from ert3.workspace import Workspace
 from ert3.config import DEFAULT_RECORD_MIME_TYPE
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
 
 _ERT3_DESCRIPTION = (

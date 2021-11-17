@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from cloudevents.sdk import types
 from websockets.server import WebSocketServer  # type: ignore
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 try:

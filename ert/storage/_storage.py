@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 
 import ert
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)

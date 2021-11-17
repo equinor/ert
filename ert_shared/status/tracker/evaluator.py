@@ -1,4 +1,4 @@
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.status.utils import tracker_progress
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_CANCELLED,
