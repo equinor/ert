@@ -2,7 +2,7 @@ import io
 import logging
 from functools import partial
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, Optional, Set, Tuple, List
+from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple
 
 import pandas as pd
 import requests
@@ -296,6 +296,18 @@ async def add_record_metadata(
 ) -> None:
     url = f"{record_urls}/{record_name}/userdata?realization_index=0"
     await _put_to_server_async(url, {}, json=metadata)
+
+
+async def transmit_awaitable_record_collection(
+    record_awaitable: Awaitable[ert.data.RecordCollection],
+    record_name: str,
+    workspace_name: str,
+    experiment_name: Optional[str] = None,
+) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
+    record_coll = await record_awaitable
+    return await transmit_record_collection(
+        record_coll, record_name, workspace_name, experiment_name
+    )
 
 
 async def transmit_record_collection(

@@ -214,11 +214,12 @@ def test_inconsistent_size_ensemble_record(
         )
 
 
-def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
+@pytest.mark.asyncio
+async def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
     with open(designed_coeffs_record_file, "r") as f:
         raw_collection = json.load(f)
 
-    collection = ert.data.load_collection_from_file(
+    collection = await ert.data.load_collection_from_file(
         designed_coeffs_record_file, "application/json"
     )
     assert len(collection.records) == len(raw_collection)
@@ -227,9 +228,10 @@ def test_load_numeric_record_collection_from_file(designed_coeffs_record_file):
     assert collection.collection_type != ert.data.RecordCollectionType.UNIFORM
 
 
-def test_load_blob_record_collection_from_file(designed_blob_record_file):
+@pytest.mark.asyncio
+async def test_load_blob_record_collection_from_file(designed_blob_record_file):
     ens_size = 5
-    collection = ert.data.load_collection_from_file(
+    collection = await ert.data.load_collection_from_file(
         designed_blob_record_file, "application/octet-stream", ensemble_size=ens_size
     )
     assert len(collection.records) == ens_size

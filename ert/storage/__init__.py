@@ -15,6 +15,7 @@ from ert.storage._storage import (
     get_record_metadata,
     add_record_metadata,
     get_record_storage_transmitters,
+    transmit_awaitable_record_collection,
     transmit_record_collection,
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     "get_record_metadata",
     "add_record_metadata",
     "get_record_storage_transmitters",
+    "transmit_awaitable_record_collection",
     "transmit_record_collection",
 ]

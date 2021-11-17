@@ -9,7 +9,7 @@ from ert.data.record._record import (
     RecordIndex,
     RecordType,
     RecordValidationError,
-    path_to_bytes,
+    make_tar,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -45,6 +45,6 @@ __all__ = (
     "TarRecordTransformation",
     "ExecutableRecordTransformation",
     "RecordTransformation",
-    "path_to_bytes",
+    "make_tar",
     "transmitter_factory",
 )
