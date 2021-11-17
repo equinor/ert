@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 import ert
 import ert3
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 
 _SOURCE_SEPARATOR = "."
 

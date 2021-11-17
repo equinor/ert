@@ -4,7 +4,7 @@ import numpy as np
 from SALib.analyze import fast
 from SALib.sample import fast_sampler
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert.data import RecordTransmitter, Record, NumericalRecord
 from ert3.stats import Distribution, Gaussian, Uniform
 

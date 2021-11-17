@@ -11,7 +11,7 @@ import prefect
 import pytest
 
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.status.entity import state
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask

@@ -6,7 +6,7 @@ import pytest
 import websockets
 from cloudevents.http import from_json
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 

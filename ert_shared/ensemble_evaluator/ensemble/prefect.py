@@ -21,7 +21,7 @@ from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import (
     EvaluatorServerConfig,

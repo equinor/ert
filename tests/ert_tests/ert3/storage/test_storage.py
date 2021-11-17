@@ -3,7 +3,7 @@ import collections
 import pytest
 
 import ert
-from ert_shared.asyncio import get_event_loop
+from ert_shared.async_utils import get_event_loop
 
 
 @pytest.mark.requires_ert_storage
