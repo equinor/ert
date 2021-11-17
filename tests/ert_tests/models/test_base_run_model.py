@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch
 
 from ert_utils import ErtTest
 
-from ert_gui.ertnotifier import configureErtNotifier
+from ert_gui.ertnotifier import ErtNotifier
+from ert_shared import ERT
 from ert_shared.models import BaseRunModel
 from res.job_queue import JobStatusType
 from res.test import ErtTestContext
@@ -14,9 +15,10 @@ class BaseRunModelTest(ErtTest):
         config_file = self.createTestPath("local/simple_config/minimum_config")
         with ErtTestContext("kjell", config_file) as work_area:
             ert = work_area.getErt()
-            configureErtNotifier(ert, config_file)
-            brm = BaseRunModel(ert.get_queue_config())
-            self.assertFalse(brm.isQueueRunning())
+            notifier = ErtNotifier(ert, config_file)
+            with ERT.adapt(notifier):
+                brm = BaseRunModel(ert.get_queue_config())
+                self.assertFalse(brm.isQueueRunning())
 
 
 class InMemoryBaseRunModelTest(unittest.TestCase):

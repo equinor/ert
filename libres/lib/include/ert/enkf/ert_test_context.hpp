@@ -39,9 +39,6 @@ ert_test_context_type *ert_test_context_alloc(const char *test_name,
 ert_test_context_type *ert_test_context_alloc__(const char *test_name,
                                                 const char *model_config,
                                                 bool store_area);
-PY_USED ert_test_context_type *
-ert_test_context_alloc_python(test_work_area_type *work_area,
-                              res_config_type *res_config);
 void ert_test_context_free(ert_test_context_type *test_context);
 enkf_main_type *ert_test_context_get_main(ert_test_context_type *test_context);
 bool ert_test_context_install_workflow_job(ert_test_context_type *test_context,

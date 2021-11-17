@@ -79,7 +79,7 @@ class SummaryKeySetTest(ResTest):
             summary_key_set.addSummaryKey("FOPT")
             summary_key_set.addSummaryKey("WWCT")
             summary_key_set.addSummaryKey("WOPR")
-            fs.umount()
+            fs.sync()
 
             res_config = ResConfig("config")
             ert = EnKFMain(res_config)

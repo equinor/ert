@@ -212,61 +212,61 @@ def test_tracking(
         os.chdir(res_config.config_path)
         ert = EnKFMain(res_config, strict=True, verbose=parsed.verbose)
         notifier = ErtCliNotifier(ert, parsed.config)
-        ERT.adapt(notifier)
+        with ERT.adapt(notifier):
 
-        model, argument = create_model(parsed)
+            model, argument = create_model(parsed)
 
-        ee_config = None
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
-            argument.update({"ee_config": ee_config})
+            ee_config = None
+            if FeatureToggling.is_enabled("ensemble-evaluator"):
+                ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
+                argument.update({"ee_config": ee_config})
 
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(argument,),
-        )
-        thread.start()
-
-        tracker = create_tracker(
-            model, general_interval=1, detailed_interval=2, ee_config=ee_config
-        )
-
-        snapshots = {}
-
-        for event in tracker.track():
-            if isinstance(event, FullSnapshotEvent):
-                snapshots[event.iteration] = event.snapshot
-            if isinstance(event, SnapshotUpdateEvent):
-                if event.partial_snapshot is not None:
-                    snapshots[event.iteration].merge(event.partial_snapshot.data())
-            if isinstance(event, EndEvent):
-                pass
-
-        assert tracker._progress() == 1.0
-
-        assert len(snapshots) == num_iters
-        for iter_, snapshot in snapshots.items():
-            successful_reals = list(
-                filter(
-                    lambda item: item[1].status == state.REALIZATION_STATE_FINISHED,
-                    snapshot.get_reals().items(),
-                )
+            thread = threading.Thread(
+                name="ert_cli_simulation_thread",
+                target=model.start_simulations_thread,
+                args=(argument,),
             )
-            assert len(successful_reals) == num_successful
+            thread.start()
 
-        for (
-            iter_expression,
-            snapshot_expression,
-            expected,
-        ) in assert_present_in_snapshot:
-            for i, snapshot in snapshots.items():
-                if re.match(iter_expression, str(i)):
-                    check_expression(
-                        snapshot.to_dict(),
-                        snapshot_expression,
-                        expected,
-                        f"Snapshot {i} did not match:\n",
+            tracker = create_tracker(
+                model, general_interval=1, detailed_interval=2, ee_config=ee_config
+            )
+
+            snapshots = {}
+
+            for event in tracker.track():
+                if isinstance(event, FullSnapshotEvent):
+                    snapshots[event.iteration] = event.snapshot
+                if isinstance(event, SnapshotUpdateEvent):
+                    if event.partial_snapshot is not None:
+                        snapshots[event.iteration].merge(event.partial_snapshot.data())
+                if isinstance(event, EndEvent):
+                    pass
+
+            assert tracker._progress() == 1.0
+
+            assert len(snapshots) == num_iters
+            for iter_, snapshot in snapshots.items():
+                successful_reals = list(
+                    filter(
+                        lambda item: item[1].status == state.REALIZATION_STATE_FINISHED,
+                        snapshot.get_reals().items(),
                     )
-        thread.join()
+                )
+                assert len(successful_reals) == num_successful
+
+            for (
+                iter_expression,
+                snapshot_expression,
+                expected,
+            ) in assert_present_in_snapshot:
+                for i, snapshot in snapshots.items():
+                    if re.match(iter_expression, str(i)):
+                        check_expression(
+                            snapshot.to_dict(),
+                            snapshot_expression,
+                            expected,
+                            f"Snapshot {i} did not match:\n",
+                        )
+            thread.join()
     FeatureToggling.reset()

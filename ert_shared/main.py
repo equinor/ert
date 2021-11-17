@@ -12,7 +12,6 @@ from ert_logging._log_util_abort import _log_util_abort
 from ecl import set_abort_handler
 
 from ert_logging import LOGGING_CONFIG
-from ert_shared import clear_global_state
 from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -468,4 +467,3 @@ def main():
         msg += "\n   " + "\n   ".join(logfiles)
 
         sys.exit(msg)
-    clear_global_state()

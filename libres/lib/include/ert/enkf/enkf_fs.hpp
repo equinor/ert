@@ -63,6 +63,8 @@ void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
 
 bool enkf_fs_exists(const char *mount_point);
 
+void enkf_fs_sync(enkf_fs_type *fs);
+
 void enkf_fs_fread_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
                         const char *node_key, enkf_var_type var_type,
                         int report_step, int iens);

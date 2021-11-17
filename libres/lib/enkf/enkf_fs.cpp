@@ -553,11 +553,14 @@ bool enkf_fs_exists(const char *mount_point) {
     return exists;
 }
 
-static void enkf_fs_umount(enkf_fs_type *fs) {
+void enkf_fs_sync(enkf_fs_type *fs) {
     if (!fs->read_only) {
         enkf_fs_fsync(fs);
         enkf_fs_fwrite_misfit(fs);
     }
+}
+
+static void enkf_fs_umount(enkf_fs_type *fs) {
 
     int refcount = fs->refcount;
     if (refcount > 0)

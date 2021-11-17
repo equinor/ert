@@ -1,5 +1,6 @@
 import pkg_resources
-import pytest
+from distutils.errors import DistutilsFileError
+
 from libres_utils import ResTest
 
 from res.test import ErtTestContext
@@ -10,8 +11,9 @@ class ErtTestContextTest(ResTest):
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_raises(self):
-        with self.assertRaises(IOError):
-            testContext = ErtTestContext("ExistTest", "Does/not/exist")
+        with self.assertRaises(DistutilsFileError):
+            with ErtTestContext("ExistTest", "Does/not/exist"):
+                pass
 
     def initFromCaseTest(self, context, root_path):
         ert = context.getErt()

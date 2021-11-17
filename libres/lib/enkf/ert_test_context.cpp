@@ -85,12 +85,6 @@ ert_test_context_type *ert_test_context_alloc(const char *test_name,
     return ert_test_context_alloc__(test_name, model_config, false);
 }
 
-ert_test_context_type *
-ert_test_context_alloc_python(test_work_area_type *work_area,
-                              res_config_type *res_config) {
-    return ert_test_context_alloc_internal(work_area, res_config, "gui");
-}
-
 enkf_main_type *ert_test_context_get_main(ert_test_context_type *test_context) {
     return test_context->enkf_main;
 }

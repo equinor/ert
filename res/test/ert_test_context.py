@@ -14,57 +14,47 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os.path
-
-from ecl.util.test import TestArea
-
-from cwrap import BaseCClass
-from res import ResPrototype
+import pathlib
 from res.enkf import EnKFMain, ResConfig
+from distutils.dir_util import copy_tree
+import tempfile
+import shutil
 
 
-class ErtTest(BaseCClass):
-    TYPE_NAME = "ert_test"
+class ErtTestContext(object):
+    def __init__(self, test_name, model_config):
+        self._tmp_dir = tempfile.mkdtemp()
+        self._model_config = model_config
+        self._res_config = None
+        self._ert = None
+        self._dir_before = None
 
-    _alloc = ResPrototype(
-        "void* ert_test_context_alloc_python( test_area , res_config)", bind=False
-    )
-    _free = ResPrototype("void  ert_test_context_free( ert_test )")
-    _get_cwd = ResPrototype("char* ert_test_context_get_cwd( ert_test )")
-    _get_enkf_main = ResPrototype("enkf_main_ref ert_test_context_get_main( ert_test )")
+    def __enter__(self):
+        self._dir_before = os.getcwd()
+        os.chdir(self._tmp_dir)
+        try:
+            dir = pathlib.Path(self._model_config).parent
+            config = pathlib.Path(self._model_config).name
+            copy_tree(dir, self._tmp_dir)
+            self._res_config = ResConfig(user_config_file=config)
+            self._ert = EnKFMain(self._res_config, strict=True)
+        except Exception:
+            os.chdir(self._dir_before)
+            shutil.rmtree(self._tmp_dir)
+            raise
+        return self
 
-    def __init__(
-        self, test_name, model_config=None, config_dict=None, store_area=False
-    ):
-        if model_config is None and config_dict is None:
-            raise ValueError("Must supply either model_config or config_dict argument")
-
-        work_area = TestArea(test_name, store_area=store_area)
-        work_area.convertToCReference(self)
-
-        if model_config:
-            work_area.copy_parent_content(model_config)
-            res_config = ResConfig(user_config_file=os.path.basename(model_config))
-        else:
-            work_area.copy_directory_content(work_area.get_original_cwd())
-            res_config = ResConfig(config=config_dict)
-
-        res_config.convertToCReference(self)
-        c_ptr = self._alloc(work_area, res_config)
-        super(ErtTest, self).__init__(c_ptr)
-
-        self.__ert = None
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._ert = None
+        self._res_config = None
+        os.chdir(self._dir_before)
+        shutil.rmtree(self._tmp_dir)
 
     def getErt(self):
-        """@rtype: EnKFMain"""
-        if self.__ert is None:
-            self.__ert = self._get_enkf_main()
+        return self._ert
 
-        return self.__ert
-
-    def free(self):
-        ert = self.getErt()
-        ert.umount()
-        self._free()
+    def getCwd(self):
+        return os.getcwd()
 
     def installWorkflowJob(self, job_name, job_path):
         """@rtype: bool"""
@@ -87,44 +77,3 @@ class ErtTest(BaseCClass):
             return True
         else:
             return False
-
-    def getCwd(self):
-        """
-        Returns the current working directory of this context.
-        @rtype: string
-        """
-        return self._get_cwd()
-
-
-class ErtTestContext(object):
-    def __init__(
-        self, test_name, model_config=None, config_dict=None, store_area=False
-    ):
-        self.__test_name = test_name
-        self.__model_config = model_config
-        self.__store_area = store_area
-        self.__config_dict = config_dict
-        self.__test_context = ErtTest(
-            self.__test_name,
-            model_config=self.__model_config,
-            config_dict=config_dict,
-            store_area=self.__store_area,
-        )
-
-    def __enter__(self):
-        """@rtype: ErtTest"""
-        return self.__test_context
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        del self.__test_context
-        return False
-
-    def getErt(self):
-        return self.__test_context.getErt()
-
-    def getCwd(self):
-        """
-        Returns the current working directory of this context.
-        @rtype: string
-        """
-        return self.__test_context.getCwd()

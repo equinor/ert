@@ -7,7 +7,9 @@ import qtpy
 from qtpy.QtCore import Qt
 
 import ert_gui
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.gert_main import _start_window, run_gui
+from ert_shared import ERT
 
 
 @pytest.fixture()
@@ -92,25 +94,29 @@ def patch_enkf_main(monkeypatch, tmpdir):
 def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     args_mock = Mock()
     type(args_mock).config = PropertyMock(return_value="config.ert")
+    notifier = ErtNotifier(patch_enkf_main, args_mock.config)
+    with ERT.adapt(notifier):
+        gui = _start_window(patch_enkf_main, args_mock)
+        qtbot.addWidget(gui)
 
-    gui = _start_window(patch_enkf_main, args_mock)
-    qtbot.addWidget(gui)
+        sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+        single_run_panel = gui.findChild(
+            qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
+        )
+        assert (
+            sim_panel.getCurrentSimulationModel()
+            == single_run_panel.getSimulationModel()
+        )
 
-    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
-    single_run_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
-    )
-    assert (
-        sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
-    )
+        sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+        qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
-    qtbot.keyClick(sim_mode, Qt.Key_Down)
-
-    ensamble_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-    )
-    assert sim_panel.getCurrentSimulationModel() == ensamble_panel.getSimulationModel()
+        ensamble_panel = gui.findChild(
+            qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
+        )
+        assert (
+            sim_panel.getCurrentSimulationModel() == ensamble_panel.getSimulationModel()
+        )
 
 
 @pytest.mark.skipif(
@@ -123,13 +129,15 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
 )
 @pytest.mark.usefixtures("patch_enkf_main")
 def test_gui_full(monkeypatch, tmpdir, qapp):
+    with tmpdir.as_cwd():
+        args_mock = Mock()
+        type(args_mock).config = PropertyMock(return_value="config.ert")
 
-    args_mock = Mock()
-    type(args_mock).config = PropertyMock(return_value="config.ert")
-
-    qapp.exec_ = lambda: None  # exec_ starts the event loop, and will stall the test.
-    monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
-    gui = run_gui(args_mock)
+        qapp.exec_ = (
+            lambda: None
+        )  # exec_ starts the event loop, and will stall the test.
+        monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
+        gui = run_gui(args_mock)
 
 
 def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
@@ -157,23 +165,26 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
         "getRealizationCount",
         Mock(return_value=2),
     )
+    notifier = ErtNotifier(patch_enkf_main, args_mock.config)
+    with ERT.adapt(notifier):
+        gui = _start_window(patch_enkf_main, args_mock)
+        qtbot.addWidget(gui)
 
-    gui = _start_window(patch_enkf_main, args_mock)
-    qtbot.addWidget(gui)
+        sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+        qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
-    qtbot.keyClick(sim_mode, Qt.Key_Down)
+        sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
 
-    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+        ensemble_panel = gui.findChild(
+            qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
+        )
+        # simulate entering number 10 as iter_num
+        qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
+        qtbot.keyClicks(ensemble_panel._iter_field, "10")
+        qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
 
-    ensemble_panel = gui.findChild(
-        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-    )
-    # simulate entering number 10 as iter_num
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
-    qtbot.keyClicks(ensemble_panel._iter_field, "10")
-    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
-
-    start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
-    qtbot.mouseClick(start_simulation, Qt.LeftButton)
-    assert sim_panel.getSimulationArguments()["iter_num"] == 10
+        start_simulation = gui.findChild(
+            qtpy.QtWidgets.QWidget, name="start_simulation"
+        )
+        qtbot.mouseClick(start_simulation, Qt.LeftButton)
+        assert sim_panel.getSimulationArguments()["iter_num"] == 10
