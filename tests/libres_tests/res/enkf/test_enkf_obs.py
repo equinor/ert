@@ -108,7 +108,7 @@ class EnKFObsTest(ResTest):
                 self.assertTrue(isinstance(v, ObsVector))
 
             self.assertEqual(obs[-1].getKey(), "RFT_TEST")
-            self.assertEqual(obs[-1].getDataKey(), "4289383")
+            assert obs[-1].getDataKey().startswith("ensemble_config_random")
             self.assertEqual(obs[-1].getObsKey(), "RFT_TEST")
 
             with self.assertRaises(IndexError):

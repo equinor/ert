@@ -10,6 +10,7 @@ import yaml
 import ert3
 import ert
 from ert_shared.services import Storage
+from ert_utils import chdir
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
@@ -63,14 +64,14 @@ def test_cli_init_twice(tmpdir, ert_storage):
 @pytest.mark.requires_ert_storage
 def test_cli_init_subfolder(workspace):
     (workspace._path / "sub_folder").mkdir()
-    os.chdir(workspace._path / "sub_folder")
-    args = ["ert3", "init"]
-    with patch.object(sys, "argv", args):
-        with pytest.raises(
-            ert.exceptions.IllegalWorkspaceOperation,
-            match="Already inside an ERT workspace",
-        ):
-            ert3.console._console._main()
+    with chdir(workspace._path / "sub_folder"):
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                ert.exceptions.IllegalWorkspaceOperation,
+                match="Already inside an ERT workspace",
+            ):
+                ert3.console._console._main()
 
 
 @pytest.mark.requires_ert_storage
