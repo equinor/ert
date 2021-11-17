@@ -1,19 +1,20 @@
-import pytest
 import contextlib
-import pathlib
 import os
+import pathlib
 from typing import Callable, ContextManager, List
 
+import pytest
 from ert_utils import tmp
+
 from ert.data import (
-    RecordTransformation,
-    FileRecordTransformation,
-    TarRecordTransformation,
-    ExecutableRecordTransformation,
-    path_to_bytes,
-    RecordTransmitter,
     BlobRecord,
+    ExecutableRecordTransformation,
+    FileRecordTransformation,
+    RecordTransformation,
+    RecordTransmitter,
+    TarRecordTransformation,
 )
+from ert.data.record._record import _sync_make_tar
 
 
 @contextlib.contextmanager
@@ -35,7 +36,9 @@ def record_factory_context(tmpdir):
             _files = [dir_path / "a.txt", dir_path / "b.txt"]
             with file_factory_context(tmpdir) as file_factory:
                 file_factory(_files)
-            return BlobRecord(data=path_to_bytes(dir_path))
+            # Using the private sync version for simplicity in tests:
+            tardata = _sync_make_tar(dir_path)
+            return BlobRecord(data=tardata)
         else:
             return BlobRecord(data=b"\xF0\x9F\xA6\x89")
 

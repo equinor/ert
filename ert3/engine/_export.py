@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import ert
 import ert3
 from ert_shared.asyncio import get_event_loop
@@ -46,7 +47,9 @@ def _prepare_export_parameters(
             if record_mime == "application/octet-stream":
                 continue
             file_path = workspace.get_resources_dir() / record_source[1]
-            collection = ert.data.load_collection_from_file(file_path, record_mime)
+            collection = get_event_loop().run_until_complete(
+                ert.data.load_collection_from_file(file_path, record_mime)
+            )
             assert collection.ensemble_size == ensemble_size
             for record in collection.records:
                 inputs[record_name].append(record.data)

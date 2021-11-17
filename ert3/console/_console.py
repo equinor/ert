@@ -268,12 +268,14 @@ def _record(workspace: Workspace, args: Any) -> None:
         if args.blob_record or args.is_directory:
             record_mime = "application/octet-stream"
 
-        ert3.engine.load_record(
-            workspace,
-            args.record_name,
-            args.record_file,
-            record_mime,
-            args.is_directory,
+        get_event_loop().run_until_complete(
+            ert3.engine.load_record(
+                workspace,
+                args.record_name,
+                args.record_file,
+                record_mime,
+                args.is_directory,
+            )
         )
     else:
         raise NotImplementedError(

@@ -4,7 +4,7 @@ import tarfile
 import io
 import stat
 
-from ert.data import RecordTransmitter, BlobRecord, path_to_bytes
+from ert.data import RecordTransmitter, BlobRecord, make_tar
 
 _BIN_FOLDER = "bin"
 
@@ -65,7 +65,7 @@ class TarRecordTransformation(RecordTransformation):
     async def transform_output(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
-        blob_record = BlobRecord(data=path_to_bytes(runpath / location))
+        blob_record = BlobRecord(data=await make_tar(runpath / location))
         await transmitter.transmit_record(blob_record)
 
 

@@ -493,11 +493,13 @@ def test_record_load_and_run(
 ):
     workspace = workspace_integration
     with assert_clean_workspace(workspace):
-        ert3.engine.load_record(
-            workspace,
-            "designed_coefficients",
-            designed_coeffs_record_file_integration,
-            "application/json",
+        get_event_loop().run_until_complete(
+            ert3.engine.load_record(
+                workspace,
+                "designed_coefficients",
+                designed_coeffs_record_file_integration,
+                "application/json",
+            )
         )
 
         experiment_run_config = ert3.config.ExperimentRunConfig(
@@ -510,8 +512,10 @@ def test_record_load_and_run(
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
         ert3.engine.export(workspace, "doe", experiment_run_config)
 
-    designed_collection = ert.data.load_collection_from_file(
-        designed_coeffs_record_file_integration, "application/json"
+    designed_collection = get_event_loop().run_until_complete(
+        ert.data.load_collection_from_file(
+            designed_coeffs_record_file_integration, "application/json"
+        )
     )
     export_data = _load_export_data(workspace, "doe")
     assert designed_collection.ensemble_size == len(export_data)
@@ -524,16 +528,17 @@ def test_record_load_and_run(
 
 
 @pytest.mark.requires_ert_storage
-def test_record_load_twice(workspace, designed_coeffs_record_file):
+@pytest.mark.asyncio
+async def test_record_load_twice(workspace, designed_coeffs_record_file):
     with assert_clean_workspace(workspace):
-        ert3.engine.load_record(
+        await ert3.engine.load_record(
             workspace,
             "designed_coefficients",
             designed_coeffs_record_file,
             "application/json",
         )
         with pytest.raises(ert.exceptions.ElementExistsError):
-            ert3.engine.load_record(
+            await ert3.engine.load_record(
                 workspace,
                 "designed_coefficients",
                 designed_coeffs_record_file,
@@ -625,11 +630,13 @@ def test_partial_sensitivity_run_and_export(
         gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace):
-        ert3.engine.load_record(
-            workspace,
-            "other_coefficients",
-            oat_compatible_record_file,
-            "application/json",
+        get_event_loop().run_until_complete(
+            ert3.engine.load_record(
+                workspace,
+                "other_coefficients",
+                oat_compatible_record_file,
+                "application/json",
+            )
         )
         ert3.engine.run_sensitivity_analysis(
             experiment_run_config, workspace, "partial_sensitivity"
@@ -661,11 +668,13 @@ def test_incompatible_partial_sensitivity_run(
     experiment_dir = workspace._path / _EXPERIMENTS_BASE / "partial_sensitivity"
     assert experiment_dir.is_dir()
     with assert_clean_workspace(workspace):
-        ert3.engine.load_record(
-            workspace,
-            "other_coefficients",
-            oat_incompatible_record_file,
-            "application/json",
+        get_event_loop().run_until_complete(
+            ert3.engine.load_record(
+                workspace,
+                "other_coefficients",
+                oat_incompatible_record_file,
+                "application/json",
+            )
         )
 
     err_msg = "Ensemble size 6 does not match stored record ensemble size 10"

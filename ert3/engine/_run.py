@@ -2,18 +2,20 @@ import asyncio
 import logging
 import tempfile
 from pathlib import Path
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
+
 import ert
 import ert3
 from ert3.config import SourceNS
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
+
+from ._entity import TransmitterCoroutine
 from ._sensitivity import (
     analyze_sensitivity,
-    transmitter_map_sensitivity,
     prepare_sensitivity,
+    transmitter_map_sensitivity,
 )
-from ._entity import TransmitterCoroutine
 
 logger = logging.getLogger(__name__)
 
@@ -79,19 +81,21 @@ def _transmitter_map_resources(
     futures: List[TransmitterCoroutine] = []
     for input_ in inputs:
         file_path = workspace.get_resources_dir() / input_.source_location
-        collection = ert.data.load_collection_from_file(
+
+        collection_awaitable = ert.data.load_collection_from_file(
             file_path,
             input_.source_mime,
             ensemble_size=ensemble_size,
             is_directory=input_.source_is_directory,
         )
-        future = ert.storage.transmit_record_collection(
-            record_coll=collection,
+        future = ert.storage.transmit_awaitable_record_collection(
+            record_awaitable=collection_awaitable,
             record_name=input_.name,
             workspace_name=workspace.name,
             experiment_name=experiment_name,
         )
         futures.append(future)
+
     return futures
 
 
