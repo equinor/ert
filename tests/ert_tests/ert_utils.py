@@ -73,3 +73,11 @@ class ErtTest(ExtendedTestCase):
                 "Trying to create directory rooted in 'SHARE_ROOT' - variable 'SHARE_ROOT' is not set."
             )
         return os.path.realpath(os.path.join(cls.SHARE_ROOT, path))
+
+
+@contextlib.contextmanager
+def chdir(path):
+    dir_before = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(dir_before)

@@ -15,7 +15,7 @@ from ert_shared.main import ert_parser
 
 
 @pytest.fixture(scope="session")
-def poly_example_tmp_dir(
+def poly_example_tmp_dir_shared(
     tmp_path_factory,
     source_root,
 ):
@@ -42,6 +42,12 @@ def poly_example_tmp_dir(
             ],
         )
         run_cli(parsed)
+    return poly_dir
+
+
+@pytest.fixture()
+def poly_example_tmp_dir(poly_example_tmp_dir_shared):
+    with poly_example_tmp_dir_shared.as_cwd():
         yield
 
 

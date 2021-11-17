@@ -87,10 +87,10 @@ def test_workflow_config_write_workflow_config(tmpdir, monkeypatch):
     monkeypatch.setattr(inspect, "getfile", inspect_mock)
     workflow_config.WorkflowConfig(mock_func, tmpdir.strpath)
 
-    tmpdir.chdir()
-    assert os.path.isfile("DEFAULT_NAME")
+    with tmpdir.as_cwd():
+        assert os.path.isfile("DEFAULT_NAME")
 
-    with open("DEFAULT_NAME") as fin:
-        content = fin.read()
+        with open("DEFAULT_NAME") as fin:
+            content = fin.read()
 
-    assert content == expected_config
+        assert content == expected_config

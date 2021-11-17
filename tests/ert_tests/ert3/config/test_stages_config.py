@@ -19,18 +19,18 @@ def create_mock_script(path, data=""):
 
 @pytest.fixture()
 def base_unix_stage_config(tmpdir):
-    tmpdir.chdir()
-    config = [
-        {
-            "name": "unix_stage",
-            "input": [{"record": "some_record", "location": "some_location"}],
-            "output": [{"record": "some_record", "location": "some_location"}],
-            "transportable_commands": [{"name": "poly", "location": "poly.py"}],
-            "script": ["poly --help"],
-        }
-    ]
-    create_mock_script("poly.py")
-    yield config
+    with tmpdir.as_cwd():
+        config = [
+            {
+                "name": "unix_stage",
+                "input": [{"record": "some_record", "location": "some_location"}],
+                "output": [{"record": "some_record", "location": "some_location"}],
+                "transportable_commands": [{"name": "poly", "location": "poly.py"}],
+                "script": ["poly --help"],
+            }
+        ]
+        create_mock_script("poly.py")
+        yield config
 
 
 @pytest.fixture()

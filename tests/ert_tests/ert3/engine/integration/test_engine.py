@@ -306,6 +306,7 @@ def test_export_x_uncertainties_polynomial_evaluation(
     )
 
 
+@pytest.mark.usefixtures("setup_tmpdir")
 def test_gaussian_distribution(
     big_ensemble,
     stages_config,
@@ -340,6 +341,7 @@ def test_gaussian_distribution(
     )
 
 
+@pytest.mark.usefixtures("setup_tmpdir")
 def test_uniform_distribution(
     presampled_big_ensemble,
     stages_config,

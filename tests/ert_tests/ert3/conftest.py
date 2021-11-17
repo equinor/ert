@@ -20,6 +20,8 @@ from ert.storage import StorageRecordTransmitter
 
 import ert3
 
+from ert_utils import chdir
+
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
 POLY_SCRIPT = """#!/usr/bin/env python3
@@ -131,22 +133,28 @@ def workspace_integration(tmpdir):
 
     workspace_dir = pathlib.Path(tmpdir / "polynomial")
     workspace_dir.mkdir()
-    os.chdir(workspace_dir)
+    with chdir(workspace_dir):
 
-    with Storage.start_server():
-        workspace_obj = ert3.workspace.initialize(workspace_dir)
-        ert.storage.init(workspace_name=workspace_obj.name)
-        yield workspace_obj
+        with Storage.start_server():
+            workspace_obj = ert3.workspace.initialize(workspace_dir)
+            ert.storage.init(workspace_name=workspace_obj.name)
+            yield workspace_obj
+
+
+@pytest.fixture()
+def setup_tmpdir(tmpdir):
+    with tmpdir.as_cwd():
+        yield
 
 
 @pytest.fixture()
 def workspace(tmpdir, ert_storage):
     workspace_dir = pathlib.Path(tmpdir / "polynomial")
     workspace_dir.mkdir()
-    os.chdir(workspace_dir)
-    workspace_obj = ert3.workspace.initialize(workspace_dir)
-    ert.storage.init(workspace_name=workspace_obj.name)
-    yield workspace_obj
+    with chdir(workspace_dir):
+        workspace_obj = ert3.workspace.initialize(workspace_dir)
+        ert.storage.init(workspace_name=workspace_obj.name)
+        yield workspace_obj
 
 
 def _create_coeffs_record_file(workspace):

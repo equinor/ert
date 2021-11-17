@@ -15,17 +15,16 @@ from res.enkf import EnKFMain, ResConfig
 from ecl.summary import EclSum
 from res.enkf.export import SummaryObservationCollector
 
+from distutils.dir_util import copy_tree
 
 test_data_root = SOURCE_DIR / "test-data" / "local"
 
 
 @pytest.fixture()
 def copy_snake_oil(tmpdir):
+    test_data_dir = os.path.join(test_data_root, "snake_oil")
+    copy_tree(test_data_dir, str(tmpdir))
     with tmpdir.as_cwd():
-        test_data_dir = os.path.join(test_data_root, "snake_oil")
-
-        shutil.copytree(test_data_dir, "test_data")
-        os.chdir("test_data")
         yield
 
 
