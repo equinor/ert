@@ -60,7 +60,13 @@ with model updates and uncertainty estimation. You can read more about the theor
    :caption: Developer Documentation
 
    developer_documentation/index
-   autoapi/ert3/workspace/index
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: API Reference
+
+   api_reference/index
 
 .. toctree::
    :hidden:

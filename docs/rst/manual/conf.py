@@ -47,26 +47,18 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.ifconfig",
     "sphinx.ext.githubpages",
+    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinxarg.ext",
     "sphinx.ext.todo",
     "sphinxcontrib.datatemplates",
     "ert_jobs",
     "ert_narratives",
-    "autoapi.extension",
 ]
-autoapi_type = "python"
-autoapi_dirs = ["../../../ert3/workspace"]
-autoapi_add_toctree_entry = False
-# Options: https://sphinx-autoapi.readthedocs.io/en/latest/reference/config.html#customisation-options
-autoapi_options = [
-    "members",
-    "inherited-members",
-    "private-members",
-    "special-members",
-    "show-inheritance",
-]
-autoapi_python_class_content = "both"
+
+# Autodoc settings:
+autodoc_class_signature = "separated"
+autodoc_inherit_docstrings = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
