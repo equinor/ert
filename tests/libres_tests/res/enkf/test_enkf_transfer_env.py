@@ -45,9 +45,7 @@ class EnKFTestTransferEnv(ResTest):
             file_ert = os.path.join(dir_ert, "snake_oil.ert")
             assert os.path.isfile(file_ert)
 
-            with ErtTestContext(
-                "transfer_env_var", model_config=file_ert, store_area=True
-            ) as ctx:
+            with ErtTestContext("transfer_env_var", model_config=file_ert) as ctx:
                 ert = ctx.getErt()
                 fs_manager = ert.getEnkfFsManager()
                 result_fs = fs_manager.getCurrentFileSystem()

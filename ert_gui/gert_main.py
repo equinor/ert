@@ -24,7 +24,7 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
-from ert_gui.ertnotifier import configureErtNotifier
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools.export import ExportTool
@@ -35,6 +35,7 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
+from ert_shared import ERT
 
 from res.enkf import EnKFMain, ResConfig
 
@@ -56,12 +57,13 @@ def run_gui(args):
     )
 
     os.chdir(res_config.config_path)
+
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-
-    # window reference must be kept until app.exec returns
-    window = _start_window(ert, args)
-
-    return app.exec_()
+    notifier = ErtNotifier(ert, args.config)
+    with ERT.adapt(notifier):
+        # window reference must be kept until app.exec returns
+        window = _start_window(ert, args)
+        return app.exec_()
 
 
 def _start_window(ert, args):
@@ -72,8 +74,6 @@ def _start_window(ert, args):
     splash.show()
     splash.repaint()
     splash_screen_start_time = time.time()
-
-    configureErtNotifier(ert, args.config)
 
     window = _setup_main_window(ert, args)
 

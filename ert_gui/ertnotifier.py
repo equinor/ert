@@ -44,8 +44,3 @@ class ErtNotifier(QObject):
 
         self._ert = None
         os.execl(python_executable, python_executable, ert_gui_main, "gui", config_file)
-
-
-def configureErtNotifier(ert, config_file):
-    notifier = ErtNotifier(ert, config_file)
-    ERT.adapt(notifier)

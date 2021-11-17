@@ -104,6 +104,7 @@ class EnKFMain(BaseCClass):
     def umount(self):
         if self.__fs_manager is not None:
             self.__fs_manager.umount()
+            self.__fs_manager = None
 
     # --- Overridden methods --------------------
 

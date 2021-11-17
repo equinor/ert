@@ -943,22 +943,20 @@ ensemble_config_add_surface(ensemble_config_type *ensemble_config,
 enkf_config_node_type *
 ensemble_config_add_container(ensemble_config_type *ensemble_config,
                               const char *key) {
-    char *local_key = (char *)key;
+    std::string local_key;
     bool random_key = false;
     if (key == NULL) {
-        local_key = (char *)util_calloc(11, sizeof *local_key);
-        sprintf(local_key, "%ld", random() % 10000000);
+        local_key = std::string("ensemble_config_random") +
+                    std::to_string(random() % 10000000);
         random_key = true;
+    } else {
+        local_key = std::string(key);
     }
 
-    {
-        enkf_config_node_type *config_node =
-            enkf_config_node_new_container(local_key);
-        ensemble_config_add_node(ensemble_config, config_node);
-        if (random_key)
-            free(local_key);
-        return config_node;
-    }
+    enkf_config_node_type *config_node =
+        enkf_config_node_new_container(local_key.c_str());
+    ensemble_config_add_node(ensemble_config, config_node);
+    return config_node;
 }
 
 const summary_key_matcher_type *ensemble_config_get_summary_key_matcher(

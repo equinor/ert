@@ -44,6 +44,7 @@ class FileSystemRotator(object):
         if len(self._fs_list) > 0:
             case_name = self._fs_list[0]
             del self._fs_list[0]
+            self._fs_map[case_name].sync()
             del self._fs_map[case_name]
 
     def atCapacity(self):
@@ -138,7 +139,6 @@ class EnkfFsManager(BaseCClass):
     def __del__(self):
         # This object is a reference, so free() won't be called on it
         # Any clean-up must be done here
-        self.umount()
         super(EnkfFsManager, self).__del__()
 
     def _createFullCaseName(self, mount_root, case_name):

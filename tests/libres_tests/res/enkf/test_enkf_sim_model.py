@@ -45,9 +45,7 @@ class EnKFTestSimModel(ResTest):
             file_ert = os.path.join(dir_ert, "sim_kw.ert")
             assert os.path.isfile(file_ert)
 
-            with ErtTestContext(
-                "sim_kw", model_config=file_ert, store_area=True
-            ) as ctx:
+            with ErtTestContext("sim_kw", model_config=file_ert) as ctx:
                 ert = ctx.getErt()
                 fs_manager = ert.getEnkfFsManager()
                 result_fs = fs_manager.getCurrentFileSystem()

@@ -23,7 +23,7 @@ class WorkflowTest(ErtTest):
         rc.convertToCReference(None)
         ert = EnKFMain(rc)
         notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        args = Namespace(name="test_wf")
-        execute_workflow(args.name)
-        assert os.path.isfile(".ert_runpath_list")
+        with ERT.adapt(notifier):
+            args = Namespace(name="test_wf")
+            execute_workflow(args.name)
+            assert os.path.isfile(".ert_runpath_list")

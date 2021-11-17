@@ -23,9 +23,9 @@ def test_exporter_is_valid():
         rc.convertToCReference(None)
         ert = EnKFMain(rc)
         notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        ex = Exporter()
-        assert ex.is_valid(), "Missing CSV_EXPORT2 or EXPORT_RUNPATH jobs"
+        with ERT.adapt(notifier):
+            ex = Exporter()
+            assert ex.is_valid(), "Missing CSV_EXPORT2 or EXPORT_RUNPATH jobs"
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
@@ -36,9 +36,9 @@ def test_exporter_is_not_valid():
     rc.convertToCReference(None)
     ert = EnKFMain(rc)
     notifier = ErtCliNotifier(ert, config_file)
-    ERT.adapt(notifier)
-    ex = Exporter()
-    assert not ex.is_valid()
+    with ERT.adapt(notifier):
+        ex = Exporter()
+        assert not ex.is_valid()
 
 
 @pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
@@ -50,19 +50,19 @@ def test_run_export():
         rc.convertToCReference(None)
         ert = EnKFMain(rc)
         notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        ex = Exporter()
-        parameters = {
-            "output_file": "export.csv",
-            "time_index": "raw",
-            "column_keys": "FOPR",
-        }
-        ex.run_export(parameters)
-
-        shutil.rmtree("storage")
-        with pytest.raises(UserWarning) as warn:
+        with ERT.adapt(notifier):
+            ex = Exporter()
+            parameters = {
+                "output_file": "export.csv",
+                "time_index": "raw",
+                "column_keys": "FOPR",
+            }
             ex.run_export(parameters)
-        assert ex._export_job in str(warn)
+
+            shutil.rmtree("storage")
+            with pytest.raises(UserWarning) as warn:
+                ex.run_export(parameters)
+            assert ex._export_job in str(warn)
 
 
 @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
@@ -75,27 +75,27 @@ def test_run_export_pathfile(monkeypatch):
         rc = ResConfig(user_config_file=config_file)
         ert = EnKFMain(rc)
         notifier = ErtCliNotifier(ert, config_file)
-        ERT.adapt(notifier)
-        run_mock = MagicMock()
-        run_mock.hasFailed.return_value = False
-        export_mock = MagicMock()
-        export_mock.hasFailed.return_value = False
+        with ERT.adapt(notifier):
+            run_mock = MagicMock()
+            run_mock.hasFailed.return_value = False
+            export_mock = MagicMock()
+            export_mock.hasFailed.return_value = False
 
-        monkeypatch.setattr(
-            ERT.enkf_facade,
-            "get_workflow_job",
-            MagicMock(side_effect=[export_mock, run_mock]),
-        )
-        ex = Exporter()
-        parameters = {
-            "output_file": "export.csv",
-            "time_index": "raw",
-            "column_keys": "FOPR",
-        }
-        ex.run_export(parameters)
-        expected_call = call(
-            arguments=[f"{run_path_file.absolute()}", "export.csv", "raw", "FOPR"],
-            ert=ERT.ert,
-            verbose=True,
-        )
-        assert export_mock.run.call_args == expected_call
+            monkeypatch.setattr(
+                ERT.enkf_facade,
+                "get_workflow_job",
+                MagicMock(side_effect=[export_mock, run_mock]),
+            )
+            ex = Exporter()
+            parameters = {
+                "output_file": "export.csv",
+                "time_index": "raw",
+                "column_keys": "FOPR",
+            }
+            ex.run_export(parameters)
+            expected_call = call(
+                arguments=[f"{run_path_file.absolute()}", "export.csv", "raw", "FOPR"],
+                ert=ERT.ert,
+                verbose=True,
+            )
+            assert export_mock.run.call_args == expected_call

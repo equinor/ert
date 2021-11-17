@@ -24,6 +24,7 @@ class EnkfFs(BaseCClass):
     TYPE_NAME = "enkf_fs"
 
     _mount = ResPrototype("void* enkf_fs_mount(char* )", bind=False)
+    _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
     _exists = ResPrototype("bool  enkf_fs_exists(char*)", bind=False)
     _disk_version = ResPrototype("int   enkf_fs_disk_version(char*)", bind=False)
     _update_disk_version = ResPrototype(
@@ -108,6 +109,9 @@ class EnkfFs(BaseCClass):
         arg = None
         fs = cls._create(path, fs_type, arg, mount)
         return fs
+
+    def sync(self):
+        self._sync()
 
     # The umount( ) method should not normally be called explicitly by
     # downstream code, but in situations where file descriptors is at premium
