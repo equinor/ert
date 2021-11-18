@@ -29,11 +29,6 @@ def package_files(directory):
     return paths
 
 
-extra_files = package_files("ert_gui/resources/")
-logging_configuration = package_files("ert_logging/")
-ert3_example_files = package_files("ert3_examples/")
-share_files = package_files("share/")
-
 with open("README.md") as f:
     long_description = f.read()
 
@@ -52,10 +47,10 @@ setup(
     url="https://github.com/equinor/ert",
     packages=packages,
     package_data={
-        "share": share_files,
-        "ert_gui": extra_files,
-        "ert_logging": logging_configuration,
-        "ert3_examples": ert3_example_files,
+        "ert_shared": package_files("ert_shared/share/"),
+        "ert_gui": package_files("ert_gui/resources/"),
+        "ert_logging": ["logger.conf"],
+        "ert3_examples": package_files("ert3_examples/"),
         "res": [
             "fm/rms/rms_config.yml",
             "fm/ecl/ecl300_config.yml",

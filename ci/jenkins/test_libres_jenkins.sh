@@ -129,7 +129,7 @@ create_virtualenv () {
 run_ctest () {
 	run enable_environment
 	pushd $LIBRES_BUILD
-	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/share/ert/site-config
+	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/ert_shared/share/ert/site-config
 	ctest -j $CTEST_JARG -E Lint --output-on-failure
 	popd
 }

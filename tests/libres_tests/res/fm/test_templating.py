@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import pkg_resources
 
 import jinja2
 from ecl.util.test import TestAreaContext
@@ -198,9 +199,9 @@ class TemplatingTest(ResTest):
                 json_file.write(json.dumps(parameters))
 
             params = " --output_file out_file --template_file template --input_files other.json"
-            template_render_exec = os.path.join(
-                self.SHARE_ROOT,
-                "ert/forward-models/templating/script/template_render",
+            template_render_exec = pkg_resources.resource_filename(
+                "ert_shared",
+                "share/ert/forward-models/templating/script/template_render",
             )
 
             subprocess.call(

@@ -1,4 +1,5 @@
 import os
+import pkg_resources
 
 import pytest
 
@@ -14,7 +15,7 @@ def source_root():
 def class_source_root(request):
     request.cls.SOURCE_ROOT = SOURCE_DIR
     request.cls.TESTDATA_ROOT = SOURCE_DIR / "test-data"
-    request.cls.SHARE_ROOT = SOURCE_DIR / "share"
+    request.cls.SHARE_ROOT = pkg_resources.resource_filename("ert_shared", "share")
     request.cls.EQUINOR_DATA = (request.cls.TESTDATA_ROOT / "Equinor").is_symlink()
     yield
 

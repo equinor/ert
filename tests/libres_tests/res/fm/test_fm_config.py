@@ -1,5 +1,6 @@
 import os
 import unittest
+import pkg_resources
 
 from libres_utils import ResTest
 
@@ -20,7 +21,9 @@ class TestFMValidity(ResTest):
         return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
 
     def test_validate_scripts(self):
-        fm_path = self.SHARE_ROOT / "ert" / "forward-models"
+        fm_path = pkg_resources.resource_filename(
+            "ert_shared", "share/ert/forward-models"
+        )
         for fm_dir in os.listdir(fm_path):
             fm_dir = os.path.join(fm_path, fm_dir)
             # get all sub-folder in forward-models

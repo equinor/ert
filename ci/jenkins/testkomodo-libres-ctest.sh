@@ -41,7 +41,7 @@ build_libres () {
 
 run_libres_ctest() {
     pushd $LIBRES_BUILD
-    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/share/ert/site-config
+    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/ert_shared/share/ert/site-config
 
     ctest -j 6 -E Lint --output-on-failure
     popd

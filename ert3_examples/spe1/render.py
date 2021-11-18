@@ -6,25 +6,13 @@
 # Over time this script should disappear.
 
 import sys
-import pathlib
 import subprocess
-
-import res
-
-
-def _locate_template_render_exec():
-    return (
-        pathlib.Path(res.__file__).parent.parent
-        / "share"
-        / "ert"
-        / "forward-models"
-        / "templating"
-        / "script"
-        / "template_render"
-    )
+import pkg_resources
 
 
 if __name__ == "__main__":
-    render_exec = _locate_template_render_exec()
+    render_exec = pkg_resources.resource_filename(
+        "ert_shared", "share/ert/forward-models/templating/script/template_render"
+    )
     args = tuple(sys.argv[1:])
     subprocess.run(" ".join((str(render_exec),) + args), shell=True, check=True)

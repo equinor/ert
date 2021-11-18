@@ -55,7 +55,7 @@ def _load_lib():
 
     path = Path(__file__).parent
     for p in path.parents:
-        npath = p / "share" / "ert" / "site-config"
+        npath = p / "ert_shared" / "share" / "ert" / "site-config"
         if npath.is_file():
             path = npath
             break
