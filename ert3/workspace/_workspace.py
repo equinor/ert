@@ -1,13 +1,3 @@
-"""
-_workspace.py
-====================================
-The workspace holds all knowledge of config(s) and filesystem.
-It's knowledge does not leak into other parts of the code.
-It may only be employed.
-Is elsewise stateless, and is independent of storage.
-"""
-
-
 import json
 import sys
 import shutil
@@ -32,10 +22,36 @@ def _locate_root(path: Path) -> Optional[Path]:
         path = path.parent
 
 
+ExperimentConfigurations = Tuple[
+    ert3.config.ExperimentConfig,
+    ert3.config.StagesConfig,
+    ert3.config.EnsembleConfig,
+]
+
+
 class Workspace:
-    """A Workspace holds the knowledge of experiments, resources and config"""
+    """The :py:class:`Workspace` class stores the configuration and input data
+    needed to run ERT experiments.
+
+    The workspace object is intended to be created repeatedly from a persistent
+    source. In the current implementation the configuration and input data are
+    persisted on disk in a workspace directory. The workspace object only stores
+    the location of that directory and loads any needed data on demand.
+    """
 
     def __init__(self, path: Union[str, Path]) -> None:
+        """Create a workspace object from a workspace directory path.
+
+        The workspace directory must have been initialized using the
+        :py:func:`ert3.workspace.initialize` function.
+
+        Args:
+            path (Union[str, pathlib.Path]): The path to the workspace.
+
+        Raises:
+            ert.exceptions._exceptions.IllegalWorkspaceOperation:
+                Raised when the workspace has not been initialized.
+        """
         root = _locate_root(Path(path))
         if root is None:
             raise ert.exceptions.IllegalWorkspaceOperation(
@@ -45,9 +61,29 @@ class Workspace:
 
     @property
     def name(self) -> str:
+        """Returns the name of the workspace.
+
+        Returns:
+            str: The workspace name
+        """
         return str(self._path)
 
     def get_experiment_tmp_dir(self, experiment_name: str) -> Path:
+        """Return a path to a temporary directory for an experiment.
+
+        This function does not check if the returned path exists, nor does it
+        create the directory.
+
+        Args:
+            experiment_name (str): Name of the experiment
+
+        Raises:
+            ert.exceptions._exceptions.IllegalWorkspaceOperation:
+                Raised when the experiment does not exist.
+
+        Returns:
+            pathlib.Path: The path to the temporary directory.
+        """
         if experiment_name not in self.get_experiment_names():
             raise ert.exceptions.IllegalWorkspaceOperation(
                 f"experiment {experiment_name} does not exist"
@@ -55,10 +91,23 @@ class Workspace:
         return self._path / _WORKSPACE_DATA_ROOT / "tmp" / experiment_name
 
     def get_resources_dir(self) -> Path:
+        """Return the path to the :file:`resources` directory.
+
+        Returns:
+            pathlib.Path: The path to the :file:`resources` directory.
+        """
         return self._path / "resources"
 
     def assert_experiment_exists(self, experiment_name: str) -> None:
-        """Check if the experiment `experiment_name` exists in workspace."""
+        """Asserts that the given experiment exists.
+
+        Args:
+            experiment_name (str): The name of the experiment.
+
+        Raises:
+            ert.exceptions._exceptions.IllegalWorkspaceOperation:
+                Raised when the experiment does not exist.
+        """
 
         experiment_root = self._path / _EXPERIMENTS_BASE / experiment_name
         if not experiment_root.is_dir():
@@ -68,6 +117,15 @@ class Workspace:
             )
 
     def get_experiment_names(self) -> Set[str]:
+        """Return the names of all experiments in the workspace.
+
+        Raises:
+            ert.exceptions._exceptions.IllegalWorkspaceState:
+                Raised when the workspace is in an illegal state.
+
+        Returns:
+            Set[str]: The names of all experiments.
+        """
         experiment_base = self._path / _EXPERIMENTS_BASE
         if not experiment_base.is_dir():
             raise ert.exceptions.IllegalWorkspaceState(
@@ -79,13 +137,19 @@ class Workspace:
             if experiment.is_dir()
         }
 
-    def load_experiment_config(
-        self, experiment_name: str
-    ) -> Tuple[
-        ert3.config.ExperimentConfig,
-        ert3.config.StagesConfig,
-        ert3.config.EnsembleConfig,
-    ]:
+    def load_experiment_config(self, experiment_name: str) -> ExperimentConfigurations:
+        """Load the configuration objects needed to run an experiment.
+
+        This method loads, validates and returns three configuration objects: an
+        experiment configuration object, a stages configuration object, and an
+        ensemble configuration object.
+
+        Args:
+            experiment_name (str): The name of the experiment.
+
+        Returns:
+            ExperimentConfigurations: The three configuration objects.
+        """
         experiment_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
         )
@@ -113,11 +177,21 @@ class Workspace:
         return experiment_config, stage_config, ensemble_config
 
     def load_parameters_config(self) -> ert3.config.ParametersConfig:
+        """Load the parameters configuration.
+
+        Returns:
+            ert3.config.ParametersConfig: A parameters configuration object.
+        """
         with open(self._path / "parameters.yml", encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         return ert3.config.load_parameters_config(config_dict)
 
     def clean_experiment(self, experiment_name: str) -> None:
+        """Clean up any temporary experiment data.
+
+        Args:
+            experiment_name (str): The name of the experiment.
+        """
         tmp_dir = self.get_experiment_tmp_dir(experiment_name)
         if tmp_dir.exists():
             shutil.rmtree(tmp_dir)
@@ -128,6 +202,16 @@ class Workspace:
         data: Union[Dict[int, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]],
         output_file: Optional[str] = None,
     ) -> None:
+        """Export data generated by an experiment to a JSON file.
+
+        Args:
+            experiment_name (str):
+                The experiment name.
+            data (Union[Dict[int, Dict[str, Any]], List[Dict[str, Dict[str, Any]]]]):
+                The data to export.
+            output_file (Optional[str]):
+                The name of the output file. Defaults to :file:`data.json`.
+        """
         experiment_root = self._path / _EXPERIMENTS_BASE / experiment_name
         if output_file is None:
             output_file = "data.json"
@@ -160,6 +244,18 @@ class Workspace:
 
 
 def initialize(path: Union[str, Path]) -> Workspace:
+    """Initalize a workspace directory
+
+    Args:
+        path (Union[str, pathlib.Path]): Path to the workspace to initialize.
+
+    Raises:
+        ert.exceptions.IllegalWorkspaceOperation:
+            Raised when the workspace is already initialized.
+
+    Returns:
+        Workspace: A corresponding workspace object.
+    """
     path = Path(path)
     if _locate_root(path) is not None:
         raise ert.exceptions.IllegalWorkspaceOperation(
