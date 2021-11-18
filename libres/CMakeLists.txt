@@ -112,7 +112,7 @@ option( ERT_LSF_SUBMIT_TEST "Build and run tests of LSF submit"     OFF)
 if(NOT SKBUILD)
   # We let setuptools handle installing share/ert normally.
 
-  set( SHARE_DIR "../share/ert")
+  set( SHARE_DIR "../ert_shared/share/ert")
   # If the SITE_CONFIG_FILE is not set as -DSITE_CONFIG_FILE switch when invoking
   # cmake we set it here to location of the to-be-installed site-config file. That
   # implies that when testing the binary will have embedded a path to non-existent

@@ -21,6 +21,7 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
+import pkg_resources
 
 import pytest
 from ecl.util.test import TestAreaContext
@@ -275,8 +276,8 @@ class RMSRunTest(ResTest):
                 with open("run_path/action.json", "w") as f:
                     f.write(json.dumps(action))
 
-                rms_exec = os.path.join(
-                    self.SHARE_ROOT, "ert/forward-models/res/script/rms"
+                rms_exec = pkg_resources.resource_filename(
+                    "ert_shared", "share/ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -343,8 +344,8 @@ class RMSRunTest(ResTest):
                 with open("run_path/action.json", "w") as f:
                     f.write(json.dumps(action))
 
-                rms_exec = os.path.join(
-                    self.SHARE_ROOT, "ert/forward-models/res/script/rms"
+                rms_exec = pkg_resources.resource_filename(
+                    "ert_shared", "share/ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -672,8 +673,8 @@ env:
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            rms_exec = os.path.join(
-                self.SHARE_ROOT, "ert/forward-models/res/script/rms"
+            rms_exec = pkg_resources.resource_filename(
+                "ert_shared", "share/ert/forward-models/res/script/rms"
             )
             subprocess.check_call(
                 [
