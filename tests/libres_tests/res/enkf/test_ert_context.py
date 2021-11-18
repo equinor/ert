@@ -5,10 +5,9 @@ from libres_utils import ResTest
 from res.test import ErtTestContext
 
 
-@pytest.mark.equinor_test
 class ErtTestContextTest(ResTest):
     def setUp(self):
-        self.config = self.createTestPath("Equinor/config/with_data/config")
+        self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_raises(self):
         with self.assertRaises(IOError):
