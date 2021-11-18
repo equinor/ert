@@ -6,21 +6,20 @@ from res.enkf.node_id import NodeId
 from res.test import ErtTestContext
 
 
-@pytest.mark.equinor_test
 class GenDataTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")
+        self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_create(self):
         with ErtTestContext("gen_data_test", self.config_file) as test_context:
             ert = test_context.getErt()
             fs1 = ert.getEnkfFsManager().getCurrentFileSystem()
-            config_node = ert.ensembleConfig().getNode("TIMESHIFT")
+            config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
 
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs1, NodeId(60, 0))
+            data_node.tryLoad(fs1, NodeId(199, 0))
 
             gen_data = data_node.asGenData()
             data = gen_data.getData()
 
-            self.assertEqual(len(data), 2560)
+            self.assertEqual(2000, len(data))
