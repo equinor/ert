@@ -81,10 +81,8 @@ void test_mount() {
     test_assert_true(enkf_fs_exists("mnt"));
     {
         enkf_fs_type *fs = enkf_fs_mount("mnt");
-        test_assert_true(fs::exists("mnt/mnt.lock"));
         test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_decref(fs);
-        test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
         enkf_fs_type *fs =

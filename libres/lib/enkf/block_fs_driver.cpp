@@ -40,6 +40,7 @@ struct bfs_config_struct {
     int fsync_interval;
     double fragmentation_limit;
     int block_size;
+    bool preload;
     int max_cache_size;
 };
 
@@ -54,7 +55,7 @@ struct bfs_struct {
     const bfs_config_type *config;
 };
 
-bfs_config_type *bfs_config_alloc(bool preload, bool bfs_lock) {
+bfs_config_type *bfs_config_alloc(bool preload) {
     const int max_cache_size = 512;
     const int fsync_interval =
         10; /* An fsync() call is issued for every 10'th write. */
@@ -66,7 +67,6 @@ bfs_config_type *bfs_config_alloc(bool preload, bool bfs_lock) {
         config->max_cache_size = max_cache_size;
         config->fsync_interval = fsync_interval;
         config->fragmentation_limit = fragmentation_limit;
-        config->bfs_lock = bfs_lock;
         config->preload = preload;
         config->block_size = 64;
         return config;
@@ -259,10 +259,9 @@ ert::block_fs_driver::block_fs_driver(int num_fs) : num_fs(num_fs) {
 
 ert::block_fs_driver *ert::block_fs_driver::new_(bool preload,
                                                  int num_fs,
-                                                 const char *mountfile_fmt,
-                                                 bool block_level_lock) {
+                                                 const char *mountfile_fmt) {
     ert::block_fs_driver *driver = new ert::block_fs_driver(num_fs);
-    driver->config = bfs_config_alloc(preload, block_level_lock);
+    driver->config = bfs_config_alloc(preload);
     {
         for (int ifs = 0; ifs < driver->num_fs; ifs++)
             driver->fs_list[ifs] = bfs_alloc_new(

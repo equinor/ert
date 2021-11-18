@@ -219,7 +219,6 @@ static enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     fs->state_map = state_map_alloc();
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
-    fs->read_only = true;
     fs->mount_point = util_alloc_string_copy(mount_point);
     fs->refcount = 0;
     fs->runcount = 0;
@@ -341,7 +340,7 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
                         preload = false;
 
                     ert::block_fs_driver *driver = ert::block_fs_driver::open(
-                        fstab_stream, mount_point, preload, fs->read_only);
+                        fstab_stream, mount_point, preload);
                     enkf_fs_assign_driver(fs, driver, driver_type);
                 } else
                     block_fs_driver_fskip(fstab_stream);
@@ -659,10 +658,6 @@ void enkf_fs_fwrite_node(enkf_fs_type *enkf_fs, buffer_type *buffer,
 void enkf_fs_fwrite_vector(enkf_fs_type *enkf_fs, buffer_type *buffer,
                            const char *node_key, enkf_var_type var_type,
                            int iens) {
-    if (enkf_fs->read_only)
-        util_abort("%s: attempt to write to read_only filesystem mounted at:%s "
-                   "- aborting. \n",
-                   __func__, enkf_fs->mount_point);
     ert::block_fs_driver *driver =
         enkf_fs_select_driver(enkf_fs, var_type, node_key);
     driver->save_vector(node_key, iens, buffer);
