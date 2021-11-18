@@ -17,9 +17,7 @@
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
 import os.path
-import sys
-import platform
-import ecl
+import ecl  # This needs to be here for ... reasons
 
 import warnings
 
