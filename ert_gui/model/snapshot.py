@@ -1,6 +1,8 @@
+import datetime
 import logging
 from contextlib import ExitStack
 from typing import List, Union
+from dateutil import tz
 
 import ert_shared.status.entity.state as state
 import pyrsistent
@@ -25,8 +27,7 @@ RealIens = Qt.UserRole + 7
 STEP_COLUMN_NAME = "Name"
 STEP_COLUMN_ERROR = "Error"
 STEP_COLUMN_STATUS = "Status"
-STEP_COLUMN_START_TIME = "Start time"
-STEP_COLUMN_END_TIME = "End time"
+STEP_COLUMN_DURATION = "Duration"
 STEP_COLUMN_STDOUT = "STDOUT"
 STEP_COLUMN_STDERR = "STDERR"
 STEP_COLUMN_CURRENT_MEMORY_USAGE = "Current Memory Usage"
@@ -37,6 +38,8 @@ SORTED_JOB_IDS = "_sorted_job_ids"
 REAL_JOB_STATUS_AGGREGATED = "_aggr_job_status_colors"
 REAL_STATUS_COLOR = "_real_status_colors"
 
+DURATION = "Duration"
+
 COLUMNS = {
     NodeType.ROOT: ["Name", "Status"],
     NodeType.ITER: ["Name", "Status", "Active"],
@@ -45,8 +48,10 @@ COLUMNS = {
         (STEP_COLUMN_NAME, ids.NAME),
         (STEP_COLUMN_ERROR, ids.ERROR),
         (STEP_COLUMN_STATUS, ids.STATUS),
-        (STEP_COLUMN_START_TIME, ids.START_TIME),
-        (STEP_COLUMN_END_TIME, ids.END_TIME),
+        (
+            STEP_COLUMN_DURATION,
+            DURATION,
+        ),  # Duration is based on two data fields, not coming directly from ert
         (STEP_COLUMN_STDOUT, ids.STDOUT),
         (STEP_COLUMN_STDERR, ids.STDERR),
         (STEP_COLUMN_CURRENT_MEMORY_USAGE, ids.CURRENT_MEMORY_USAGE),
@@ -64,6 +69,14 @@ _QCOLORS = {
     state.COLOR_FINISHED: QColor(*state.COLOR_FINISHED),
     state.COLOR_NOT_ACTIVE: QColor(*state.COLOR_NOT_ACTIVE),
 }
+
+
+def _estimate_duration(start_time, end_time=None):
+    timezone = None
+    if start_time.tzname() is not None:
+        timezone = tz.gettz(start_time.tzname())
+    end_time = end_time or datetime.datetime.now(timezone)
+    return end_time - start_time
 
 
 class SnapshotModel(QAbstractItemModel):
@@ -366,11 +379,16 @@ class SnapshotModel(QAbstractItemModel):
                     return byte_with_unit(bytes)
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return "OPEN" if node.data.get(data_name) else QVariant()
-            if data_name in [ids.START_TIME, ids.END_TIME]:
-                _time = node.data.get(data_name)
-                if _time is not None:
-                    return str(_time)
-                return QVariant()
+            if data_name in [DURATION]:
+                start_time = node.data.get(ids.START_TIME)
+                if start_time is None:
+                    return QVariant()
+                delta = _estimate_duration(
+                    start_time, end_time=node.data.get(ids.END_TIME)
+                )
+                # There is no method for truncating microseconds, so we remove them
+                delta -= datetime.timedelta(microseconds=delta.microseconds)
+                return str(delta)
             return node.data.get(data_name)
         if role == FileRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
@@ -380,10 +398,18 @@ class SnapshotModel(QAbstractItemModel):
                 )
         if role == Qt.ToolTipRole:
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
-            if data_name in [ids.ERROR, ids.START_TIME, ids.END_TIME]:
+            data = None
+            if data_name == ids.ERROR:
                 data = node.data.get(data_name)
-                if data is not None:
-                    return str(data)
+            elif data_name == DURATION:
+                start_time = node.data.get(ids.START_TIME)
+                if start_time is not None:
+                    delta = _estimate_duration(
+                        start_time, end_time=node.data.get(ids.END_TIME)
+                    )
+                    data = f"Start time: {str(start_time)}\nDuration: {str(delta)}"
+            if data is not None:
+                return str(data)
 
         return QVariant()
 
