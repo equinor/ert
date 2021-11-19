@@ -61,6 +61,19 @@ def full_snapshot() -> Snapshot:
                             MAX_MEMORY_USAGE: "312",
                         },
                     ),
+                    "2": Job(
+                        start_time=dt.now(),
+                        end_time=None,
+                        name="poly_post_mortem",
+                        status=JOB_STATE_START,
+                        error="error",
+                        stdout="std_out_file",
+                        stderr="std_err_file",
+                        data={
+                            CURRENT_MEMORY_USAGE: "123",
+                            MAX_MEMORY_USAGE: "312",
+                        },
+                    ),
                 },
             )
         },

@@ -1,4 +1,7 @@
-from datetime import datetime
+import datetime
+import pytest
+from dateutil import tz
+from unittest.mock import patch
 
 from gui_models_utils import partial_snapshot
 from PyQt5.QtCore import QModelIndex
@@ -7,9 +10,13 @@ from pytestqt.qt_compat import qt_api
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.node import NodeType
-from ert_gui.model.snapshot import COLUMNS, SnapshotModel
+from ert_gui.model.snapshot import COLUMNS, SnapshotModel, DURATION
 from ert_shared.ensemble_evaluator.entity.snapshot import Job, PartialSnapshot
-from ert_shared.status.entity.state import JOB_STATE_FAILURE, JOB_STATE_START
+from ert_shared.status.entity.state import (
+    JOB_STATE_FAILURE,
+    JOB_STATE_START,
+    JOB_STATE_RUNNING,
+)
 
 
 def _id_to_col(identifier):
@@ -57,8 +64,8 @@ def test_changes(full_snapshot):
     )
 
     partial = PartialSnapshot(full_snapshot)
-    start_time = datetime(year=2020, month=10, day=27)
-    end_time = datetime(year=2020, month=10, day=28)
+    start_time = datetime.datetime(year=2020, month=10, day=27, hour=12)
+    end_time = datetime.datetime(year=2020, month=10, day=28, hour=13)
     partial.update_job(
         "0",
         "0",
@@ -70,11 +77,8 @@ def test_changes(full_snapshot):
         ),
     )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
-    assert model.index(0, _id_to_col(ids.START_TIME), QModelIndex()).data() == str(
-        start_time
-    )
-    assert model.index(0, _id_to_col(ids.END_TIME), QModelIndex()).data() == str(
-        end_time
+    assert (
+        model.index(0, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:00:00"
     )
     assert (
         model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data()
@@ -82,7 +86,9 @@ def test_changes(full_snapshot):
     )
 
 
-def test_no_cross_talk(full_snapshot):
+@pytest.mark.parametrize("timezone", [(None), (tz.gettz("UTC"))])
+@patch("ert_gui.model.snapshot.datetime", wraps=datetime)
+def test_duration(mock_datetime, timezone, full_snapshot):
     source_model = SnapshotModel()
 
     model = JobListProxyModel(None, 0, 0, 0, 0)
@@ -92,6 +98,51 @@ def test_no_cross_talk(full_snapshot):
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
         model, reporting_mode
     )
+
+    source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
+    assert (
+        model.index(0, _id_to_col(ids.STATUS), QModelIndex()).data() == JOB_STATE_START
+    )
+
+    partial = PartialSnapshot(full_snapshot)
+    start_time = datetime.datetime(
+        year=2020, month=10, day=27, hour=12, tzinfo=timezone
+    )
+    # mock only datetime.datetime.now()
+    mock_datetime.datetime.now.return_value = datetime.datetime(
+        year=2020,
+        month=10,
+        day=28,
+        hour=13,
+        minute=12,
+        second=11,
+        microsecond=5,  # Note that microseconds are intended to be removed
+        tzinfo=timezone,
+    )
+    partial.update_job(
+        "0",
+        "0",
+        "2",
+        job=Job(
+            status=JOB_STATE_RUNNING,
+            start_time=start_time,
+        ),
+    )
+    source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
+    assert (
+        model.index(2, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:12:11"
+    )
+    mock_datetime.datetime.now.assert_called_once_with(timezone)
+
+
+def test_no_cross_talk(full_snapshot):
+    source_model = SnapshotModel()
+
+    model = JobListProxyModel(None, 0, 0, 0, 0)
+    model.setSourceModel(source_model)
+
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)  # noqa, prevent GC
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 0)
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), 1)
