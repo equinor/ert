@@ -82,7 +82,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
                              testdata.D, rng);
 
         ies_enkf_updateA(ies_data, A1, testdata.S, testdata.R, testdata.dObs,
-                         testdata.E, testdata.D, NULL, rng);
+                         testdata.E, testdata.D, rng);
 
         if (verbose) {
             fprintf(stdout, "IES iteration   = %d %d\n", iter,
@@ -156,7 +156,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
                              testdata.D, rng);
 
         ies_enkf_updateA(ies_data, A1, testdata.S, testdata.R, testdata.dObs,
-                         testdata.E, testdata.D, NULL, rng);
+                         testdata.E, testdata.D, rng);
 
         if (verbose) {
             fprintf(stdout, "IES iteration = %d active realizations= %d\n",
@@ -252,7 +252,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
                              testdata2.E, testdata2.D, rng);
 
         ies_enkf_updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.dObs,
-                         testdata2.E, testdata2.D, NULL, rng);
+                         testdata2.E, testdata2.D, rng);
     }
 
     for (int iter = 1; iter < num_iter; iter++) {
@@ -283,7 +283,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
                              testdata.D, rng);
 
         ies_enkf_updateA(ies_data, A, testdata.S, testdata.R, testdata.dObs,
-                         testdata.E, testdata.D, NULL, rng);
+                         testdata.E, testdata.D, rng);
     }
 
     matrix_free(A);

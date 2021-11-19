@@ -32,23 +32,13 @@
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
-extern analysis_table_type BOOTSTRAP_ENKF;
-extern analysis_table_type CV_ENKF;
 extern analysis_table_type IES_ENKF;
-extern analysis_table_type NULL_ENKF;
-extern analysis_table_type SQRT_ENKF;
 extern analysis_table_type STD_ENKF;
-extern analysis_table_type STD_ENKF_DEBUG;
 
 namespace {
 const std::unordered_map<std::string, analysis_table_type *> analysis_tables{
-    {"BOOTSTRAP_ENKF", &BOOTSTRAP_ENKF},
-    {"CV_ENKF", &CV_ENKF},
     {"IES_ENKF", &IES_ENKF},
-    {"NULL_ENKF", &NULL_ENKF},
-    {"SQRT_ENKF", &SQRT_ENKF},
     {"STD_ENKF", &STD_ENKF},
-    {"STD_ENKF_DEBUG", &STD_ENKF_DEBUG},
 };
 }
 
@@ -183,11 +173,9 @@ void analysis_module_initX(analysis_module_type *module, matrix_type *X,
 void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
                              const matrix_type *S, const matrix_type *R,
                              const matrix_type *dObs, const matrix_type *E,
-                             const matrix_type *D,
-                             const module_info_type *module_info,
-                             rng_type *rng) {
+                             const matrix_type *D, rng_type *rng) {
 
-    module->updateA(module->module_data, A, S, R, dObs, E, D, module_info, rng);
+    module->updateA(module->module_data, A, S, R, dObs, E, D, rng);
 }
 
 void analysis_module_init_update(analysis_module_type *module,

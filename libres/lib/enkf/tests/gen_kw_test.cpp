@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ert/util/vector.hpp>
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 

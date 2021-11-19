@@ -119,7 +119,7 @@ void ies_enkf_updateA(
     const matrix_type *dObs, // Actual observations (not used)
     const matrix_type *Ein,  // Ensemble of observation perturbations
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
-    const module_info_type *module_info, rng_type *rng) {
+    rng_type *rng) {
 
     ies_enkf_data_type *data = ies_enkf_data_safe_cast(module_data);
     const ies_enkf_config_type *ies_config = ies_enkf_data_get_config(data);

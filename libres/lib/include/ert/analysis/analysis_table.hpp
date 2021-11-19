@@ -9,13 +9,10 @@ extern "C" {
 #include <ert/util/rng.hpp>
 #include <ert/util/bool_vector.hpp>
 
-#include <ert/analysis/module_info.hpp>
-
 typedef void(analysis_updateA_ftype)(void *module_data, matrix_type *A,
                                      const matrix_type *S, const matrix_type *R,
                                      const matrix_type *dObs,
                                      const matrix_type *E, const matrix_type *D,
-                                     const module_info_type *module_info,
                                      rng_type *rng);
 
 typedef void(analysis_initX_ftype)(void *module_data, matrix_type *X,

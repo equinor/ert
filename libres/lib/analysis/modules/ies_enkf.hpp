@@ -22,7 +22,6 @@
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/rng.hpp>
 
-#include <ert/analysis/module_info.hpp>
 #include <ert/res_util/matrix.hpp>
 
 void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
@@ -39,6 +38,6 @@ void ies_enkf_updateA(
     const matrix_type *dObs, // Actual observations (not used)
     const matrix_type *Ein,  // Ensemble of observation perturbations
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
-    const module_info_type *module_info, rng_type *rng);
+    rng_type *rng);
 
 #endif
