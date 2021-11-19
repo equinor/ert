@@ -2,6 +2,7 @@
 #include <filesystem>
 
 #include "catch2/catch.hpp"
+#include "stduuid/uuid.h"
 
 #include "ert/analysis/fwd_step_log.hpp"
 
