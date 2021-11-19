@@ -195,11 +195,6 @@ class ModelFactoryTest(ErtTest):
 
         active_name = "STD_ENKF"
         modules = [
-            "BOOTSTRAP_ENKF",
-            "CV_ENKF",
-            "FWD_STEP_ENKF",
-            "NULL_ENKF",
-            "SQRT_ENKF",
             "STD_ENKF",
         ]
         name = model_factory._get_analysis_module_name(

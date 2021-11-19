@@ -45,7 +45,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
                          testdata.D, rng);
 
     ies_enkf_updateA(ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, NULL, rng);
+                     testdata.E, testdata.D, rng);
 
     std_enkf_initX(std_data, X, nullptr, testdata.S, testdata.R, testdata.dObs,
                    testdata.E, testdata.D, rng);

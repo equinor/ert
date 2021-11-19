@@ -62,28 +62,13 @@ add_library(res SHARED
                 sched/history.cpp
 
                 analysis/analysis_module.cpp
-                analysis/bootstrap_enkf.cpp
-                analysis/cv_enkf.cpp
                 analysis/enkf_linalg.cpp
-                analysis/fwd_step_enkf.cpp
-                analysis/fwd_step_log.cpp
-                analysis/module_data_block.cpp
-                analysis/module_data_block_vector.cpp
-                analysis/module_info.cpp
-                analysis/module_obs_block.cpp
-                analysis/module_obs_block_vector.cpp
-                analysis/null_enkf.cpp
-                analysis/sqrt_enkf.cpp
                 analysis/std_enkf.cpp
-                analysis/stepwise.cpp
 
                 # IES_ENKF
                 analysis/modules/ies_enkf.cpp
                 analysis/modules/ies_enkf_config.cpp
                 analysis/modules/ies_enkf_data.cpp
-
-                # STD_ENKF_DEBUG
-                analysis/modules/std_enkf_debug.c
 
                 job_queue/ext_job.cpp
                 job_queue/ext_joblist.cpp
@@ -342,7 +327,7 @@ target_link_libraries(sched_history_summary res)
 add_executable(rms_file_test rms/tests/rms_file_test.cpp)
 target_link_libraries(rms_file_test res)
 
-foreach(name analysis_test_module_info analysis_module_test)
+foreach(name analysis_module_test)
   add_executable(${name} analysis/tests/${name}.cpp)
   target_link_libraries(${name} res)
   add_test(NAME ${name} COMMAND ${name})

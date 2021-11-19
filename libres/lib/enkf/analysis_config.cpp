@@ -324,13 +324,8 @@ analysis_config_get_active_module_name(const analysis_config_type *config) {
 }
 
 void analysis_config_load_internal_modules(analysis_config_type *config) {
-    analysis_config_load_module(config, "BOOTSTRAP_ENKF");
-    analysis_config_load_module(config, "CV_ENKF");
     analysis_config_load_module(config, "IES_ENKF");
-    analysis_config_load_module(config, "NULL_ENKF");
-    analysis_config_load_module(config, "SQRT_ENKF");
     analysis_config_load_module(config, "STD_ENKF");
-    analysis_config_load_module(config, "STD_ENKF_DEBUG");
     analysis_config_select_module(config, DEFAULT_ANALYSIS_MODULE);
 }
 

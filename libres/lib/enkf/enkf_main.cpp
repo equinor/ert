@@ -24,6 +24,7 @@
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>
+#include <ert/util/vector.hpp>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
@@ -707,64 +708,6 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
     return serialize_info;
 }
 
-static module_info_type *enkf_main_module_info_alloc(
-    const local_ministep_type *ministep, const obs_data_type *obs_data,
-    const local_dataset_type *dataset, const local_obsdata_type *local_obsdata,
-    int *active_size, int *row_offset) {
-    // Create and initialize the module_info instance.
-    module_info_type *module_info =
-        module_info_alloc(local_ministep_get_name(ministep));
-
-    { /* Init data blocks in module_info */
-        stringlist_type *update_keys = local_dataset_alloc_keys(dataset);
-        const int num_kw = stringlist_get_size(update_keys);
-        module_data_block_vector_type *module_data_block_vector =
-            module_info_get_data_block_vector(module_info);
-
-        for (int ikw = 0; ikw < num_kw; ikw++) {
-            const char *key = stringlist_iget(update_keys, ikw);
-            const active_list_type *active_list =
-                local_dataset_get_node_active_list(dataset, key);
-            const module_data_block_type *data_block = module_data_block_alloc(
-                key, active_list_get_active(active_list), row_offset[ikw],
-                active_size[ikw]);
-            module_data_block_vector_add_data_block(module_data_block_vector,
-                                                    data_block);
-        }
-        stringlist_free(update_keys);
-    }
-
-    { /* Init obs blocks in module_info */
-        module_obs_block_vector_type *module_obs_block_vector =
-            module_info_get_obs_block_vector(module_info);
-        int current_row = 0;
-        for (int block_nr = 0; block_nr < local_obsdata_get_size(local_obsdata);
-             block_nr++) {
-            const obs_block_type *obs_block =
-                obs_data_iget_block_const(obs_data, block_nr);
-            int total_size = obs_block_get_size(obs_block);
-            local_obsdata_node_type *node =
-                local_obsdata_iget(local_obsdata, block_nr);
-            const char *key = local_obsdata_node_get_key(node);
-            const active_list_type *active_list =
-                local_obsdata_node_get_active_list(node);
-            int n_active = active_list_get_active_size(active_list, total_size);
-            module_obs_block_type *module_obs_block =
-                module_obs_block_alloc(key, active_list_get_active(active_list),
-                                       current_row, n_active);
-            module_obs_block_vector_add_obs_block(module_obs_block_vector,
-                                                  module_obs_block);
-            current_row += n_active;
-        }
-    }
-
-    return module_info;
-}
-
-static void enkf_main_module_info_free(module_info_type *module_info) {
-    free(module_info);
-}
-
 static void assert_matrix_size(const matrix_type *m, const char *name, int rows,
                                int columns) {
     if (m) {
@@ -1028,22 +971,11 @@ static void enkf_main_analysis_update(
                     // Part 1: Parameters which do not have row scaling attached.
                     enkf_main_serialize_dataset(ensemble_config, dataset, step2,
                                                 use_count, tp, serialize_info);
-                    module_info_type *module_info = enkf_main_module_info_alloc(
-                        ministep, obs_data, dataset, local_obsdata,
-                        serialize_info->active_size.data(),
-                        serialize_info->row_offset.data());
 
                     if (analysis_module_check_option(module,
                                                      ANALYSIS_UPDATE_A)) {
-                        if (analysis_module_check_option(module,
-                                                         ANALYSIS_ITERABLE)) {
-                            analysis_module_updateA(module, localA, S, R, dObs,
-                                                    E, D, module_info,
-                                                    shared_rng);
-                        } else
-                            analysis_module_updateA(module, localA, S, R, dObs,
-                                                    E, D, module_info,
-                                                    shared_rng);
+                        analysis_module_updateA(module, localA, S, R, dObs, E,
+                                                D, shared_rng);
                     } else {
                         if (analysis_module_check_option(module,
                                                          ANALYSIS_USE_A)) {
@@ -1055,7 +987,6 @@ static void enkf_main_analysis_update(
 
                     enkf_main_deserialize_dataset(ensemble_config, dataset,
                                                   serialize_info, tp);
-                    enkf_main_module_info_free(module_info);
                 }
 
                 // Part 2: Parameters with row scaling attached - to support distance based localization.

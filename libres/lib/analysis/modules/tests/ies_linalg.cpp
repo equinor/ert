@@ -14,7 +14,7 @@ void update_exact_scheme_subspace_no_truncation_diagR(
                          testdata.D, rng);
 
     ies_enkf_updateA(ies_data, A, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, NULL, rng);
+                     testdata.E, testdata.D, rng);
 }
 
 /*

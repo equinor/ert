@@ -26,8 +26,6 @@ extern "C" {
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
 
-#include <ert/analysis/module_info.hpp>
-
 /*
    These are option flag values which are used by the core ert code to
    query the module of it's needs and capabilities. For instance to to
@@ -65,9 +63,7 @@ void analysis_module_initX(analysis_module_type *module, matrix_type *X,
 void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
                              const matrix_type *S, const matrix_type *R,
                              const matrix_type *dObs, const matrix_type *E,
-                             const matrix_type *D,
-                             const module_info_type *module_info,
-                             rng_type *rng);
+                             const matrix_type *D, rng_type *rng);
 
 void analysis_module_init_update(analysis_module_type *module,
                                  const bool_vector_type *ens_mask,
