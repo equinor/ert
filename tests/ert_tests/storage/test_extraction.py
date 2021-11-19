@@ -97,7 +97,9 @@ class ErtConfigBuilder:
         f.write("INSTALL_JOB job JOB\n" "SIMULATION_JOB job\n")
 
         if self.job_script is None:
-            (path / "JOB").write_text("EXECUTABLE /usr/bin/true\n")
+            # true is an executable which should exist on the path for all normal distros
+            # and it is then reasonable to expect this instead of using hardcoded path
+            (path / "JOB").write_text("EXECUTABLE true\n")
         else:
             (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
             (path / "script").write_text(self.job_script)
