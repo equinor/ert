@@ -21,11 +21,7 @@
 
 #include <ert/enkf/local_dataset.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <ert/util/hash.h>
+#include <unordered_map>
 #include <ert/util/stringlist.h>
 
 #include <ert/analysis/analysis_module.hpp>
@@ -34,6 +30,9 @@ extern "C" {
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/obs_data.hpp>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct local_ministep_struct local_ministep_type;
 
@@ -41,9 +40,10 @@ local_ministep_type *
 local_ministep_alloc(const char *name, analysis_module_type *analysis_module);
 void local_ministep_free(local_ministep_type *ministep);
 void local_ministep_free__(void *arg);
-hash_iter_type *
-local_ministep_alloc_dataset_iter(const local_ministep_type *ministep);
+
 const char *local_ministep_get_name(const local_ministep_type *ministep);
+extern "C++" std::unordered_map<std::string, const local_dataset_type *>
+local_ministep_get_datasets(const local_ministep_type *ministep);
 void local_ministep_summary_fprintf(const local_ministep_type *ministep,
                                     FILE *stream);
 void local_ministep_add_dataset(local_ministep_type *ministep,
@@ -54,7 +54,7 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                      local_obsdata_node_type *obsdatanode);
 local_obsdata_type *
 local_ministep_get_obsdata(const local_ministep_type *ministep);
-local_dataset_type *
+const local_dataset_type *
 local_ministep_get_dataset(const local_ministep_type *ministep,
                            const char *dataset_name);
 bool local_ministep_has_dataset(const local_ministep_type *ministep,
