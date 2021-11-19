@@ -19,8 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/hash.h>
-
 #include <ert/enkf/local_config.hpp>
 
 /*
@@ -43,7 +41,7 @@ struct local_ministep_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
-    hash_type *
+    std::unordered_map<std::string, const local_dataset_type *>
         datasets; /* A hash table of local_dataset_type instances - indexed by the name of the datasets. */
     local_obsdata_type *observations;
     analysis_module_type *analysis_module;
@@ -60,8 +58,7 @@ UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID)
 
 local_ministep_type *
 local_ministep_alloc(const char *name, analysis_module_type *analysis_module) {
-    local_ministep_type *ministep =
-        (local_ministep_type *)util_malloc(sizeof *ministep);
+    auto ministep = new local_ministep_type;
 
     ministep->name = util_alloc_string_copy(name);
 
@@ -72,7 +69,7 @@ local_ministep_alloc(const char *name, analysis_module_type *analysis_module) {
     ministep->observations = local_obsdata_alloc(result);
     free(result);
 
-    ministep->datasets = hash_alloc();
+    // ministep->datasets = hash_alloc();
     ministep->analysis_module = analysis_module;
     ministep->obs_data = NULL;
     UTIL_TYPE_ID_INIT(ministep, LOCAL_MINISTEP_TYPE_ID);
@@ -82,11 +79,11 @@ local_ministep_alloc(const char *name, analysis_module_type *analysis_module) {
 
 void local_ministep_free(local_ministep_type *ministep) {
     free(ministep->name);
-    hash_free(ministep->datasets);
+    //hash_free(ministep->datasets);
     local_obsdata_free(ministep->observations);
     if (ministep->obs_data != NULL)
         obs_data_free(ministep->obs_data);
-    free(ministep);
+    delete ministep;
 }
 
 void local_ministep_free__(void *arg) {
@@ -106,8 +103,7 @@ void local_ministep_free__(void *arg) {
 
 void local_ministep_add_dataset(local_ministep_type *ministep,
                                 const local_dataset_type *dataset) {
-    hash_insert_ref(ministep->datasets, local_dataset_get_name(dataset),
-                    dataset);
+    ministep->datasets[std::string(local_dataset_get_name(dataset))] = dataset;
 }
 
 void local_ministep_add_obsdata(local_ministep_type *ministep,
@@ -143,18 +139,18 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
 
 bool local_ministep_has_dataset(const local_ministep_type *ministep,
                                 const char *dataset_name) {
-    return hash_has_key(ministep->datasets, dataset_name);
+    return ministep->datasets.find(std::string(dataset_name)) !=
+           ministep->datasets.end();
 }
 
 int local_ministep_get_num_dataset(const local_ministep_type *ministep) {
-    return hash_get_size(ministep->datasets);
+    return ministep->datasets.size();
 }
 
-local_dataset_type *
+const local_dataset_type *
 local_ministep_get_dataset(const local_ministep_type *ministep,
                            const char *dataset_name) {
-    return (local_dataset_type *)hash_get(ministep->datasets,
-                                          dataset_name); // CXX_CAST_ERROR
+    return ministep->datasets.find(std::string(dataset_name))->second;
 }
 
 local_obsdata_type *
@@ -171,9 +167,9 @@ const char *local_ministep_get_name(const local_ministep_type *ministep) {
     return ministep->name;
 }
 
-hash_iter_type *
-local_ministep_alloc_dataset_iter(const local_ministep_type *ministep) {
-    return hash_iter_alloc(ministep->datasets);
+std::unordered_map<std::string, const local_dataset_type *>
+local_ministep_get_datasets(const local_ministep_type *ministep) {
+    return ministep->datasets;
 }
 
 bool local_ministep_has_analysis_module(const local_ministep_type *ministep) {
@@ -193,14 +189,9 @@ void local_ministep_summary_fprintf(const local_ministep_type *ministep,
     {
         /* Dumping all the DATASET instances. */
         {
-            hash_iter_type *dataset_iter = hash_iter_alloc(ministep->datasets);
-            while (!hash_iter_is_complete(dataset_iter)) {
-                const local_dataset_type *dataset =
-                    (const local_dataset_type *)hash_iter_get_next_value(
-                        dataset_iter);
+            for (auto &[dataset_name, dataset] : ministep->datasets) {
                 local_dataset_summary_fprintf(dataset, stream);
             }
-            hash_iter_free(dataset_iter);
         }
 
         /* Only one OBSDATA */
