@@ -4,7 +4,11 @@ project(res C CXX)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" "${CMAKE_CURRENT_BINARY_DIR}")
+# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" "${CMAKE_CURRENT_BINARY_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
 if(NOT SKBUILD)
   message(WARNING "This CMakeLists.txt file should not be used directly.\n"
@@ -35,50 +39,40 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "RelWithDebInfo")
 endif()
 
-# -----------------------------------------------------------------
-# Conan: C++ package manager
-# https://docs.conan.io/en/latest/howtos/cmake_launch.html
-# -----------------------------------------------------------------
-
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-  message(
-    STATUS
-      "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-  file(
-    DOWNLOAD
-    "https://raw.githubusercontent.com/conan-io/cmake-conan/master/conan.cmake"
-    "${CMAKE_BINARY_DIR}/conan.cmake")
-endif()
-
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  # set(conan_opts ...)
+  set(compiler gcc)
+  set(libcxx libstdc++11)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  # set(conan_opts ...)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  # set(conan_opts ...)
+  set(compiler apple-clang)
+  set(libcxx libc++)
 else()
   message(
     WARNING "Unknown platform. Conan packages may not be configures correctly.")
 endif()
 
-conan_cmake_run(
-  # Packages
-  REQUIRES
-  catch2/2.13.7
-  # Options
-  OPTIONS
-  catch2:with_main=True
-  ${conan_opts}
-  # Force cppstd to be the same as this CMakeLists.txt's
-  SETTINGS
-  compiler.cppstd=${CMAKE_CXX_STANDARD}
-  # Build from source if there are no pre-compiled binaries
-  BUILD
-  missing
-  GENERATORS
-  cmake_find_package)
+string(REPLACE "." ";" VERSION_LIST ${CMAKE_CXX_COMPILER_VERSION})
+list(GET VERSION_LIST 0 CMAKE_CXX_COMPILER_VERSION_MAJOR)
+list(GET VERSION_LIST 1 CMAKE_CXX_COMPILER_VERSION_MINOR)
+list(GET VERSION_LIST 2 CMAKE_CXX_COMPILER_VERSION_PATCH)
+
+file(COPY ../conanfile.txt
+  DESTINATION ${CMAKE_BINARY_DIR})
+
+execute_process(COMMAND conan install ${CMAKE_BINARY_DIR} 
+                --install-folder ${CMAKE_BINARY_DIR}
+                -s compiler=${compiler}
+                -s compiler.version=${CMAKE_CXX_COMPILER_VERSION_MAJOR}.${CMAKE_CXX_COMPILER_VERSION_MINOR}
+                -s compiler.libcxx=${libcxx}
+                --build=missing)
+
+execute_process(COMMAND conan install ${CMAKE_BINARY_DIR} 
+--install-folder ${CMAKE_BINARY_DIR}
+-s compiler=${compiler}
+-s compiler.cppstd=${CMAKE_CXX_STANDARD}
+-s compiler.version=${CMAKE_CXX_COMPILER_VERSION_MAJOR}.${CMAKE_CXX_COMPILER_VERSION_MINOR}
+-s compiler.libcxx=${libcxx}
+--build=missing)
+                
 
 # -----------------------------------------------------------------
 

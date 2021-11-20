@@ -1,0 +1,8 @@
+[requires]
+catch2/2.13.7
+
+[options]
+catch2:with_main=True
+
+[generators]
+cmake_find_package

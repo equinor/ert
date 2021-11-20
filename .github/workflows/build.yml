@@ -47,9 +47,9 @@ jobs:
     - name: Build libres
       run: |
         mkdir cmake-build
-        cmake -S libres -B cmake-build             \
-            -DBUILD_TESTS=ON                  \
-            -DRES_VERSION=1.2.3               \
+        cmake -S libres -B cmake-build          \
+            -DBUILD_TESTS=ON                    \
+            -DRES_VERSION=1.2.3                 \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo
         cmake --build cmake-build
 
