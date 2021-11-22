@@ -55,11 +55,10 @@ def test_get_invalid_module(setup_case):
         es_update.getModule("STD_ENKF_XXX")
 
 
-@pytest.mark.xfail(sys.platform == "darwin", reason="Different result from update")
 @pytest.mark.parametrize(
     "module, expected_gen_kw",
     [
-        (
+        pytest.param(
             "IES_ENKF",
             [
                 -1.1382059686811712,
@@ -73,8 +72,31 @@ def test_get_invalid_module(setup_case):
                 1.0849199162367573,
                 -0.2026982960301163,
             ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("darwin"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
         ),
-        (
+        pytest.param(
+            "IES_ENKF",
+            [
+                -1.1286562142358219,
+                -0.07357477296944821,
+                -0.5840952488968133,
+                0.3057016147126608,
+                -0.6721257967032032,
+                -1.545169986269137,
+                -0.4528695575362665,
+                -0.3521622538356382,
+                1.0495218946126155,
+                -0.23061011158425496,
+            ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("linux"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
+        ),
+        pytest.param(
             "STD_ENKF",
             [
                 -1.0279886752792073,
@@ -88,6 +110,29 @@ def test_get_invalid_module(setup_case):
                 1.7415219166473932,
                 -0.4014927497171072,
             ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("darwin"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
+        ),
+        pytest.param(
+            "STD_ENKF",
+            [
+                -1.0120724178702936,
+                -0.6708052353109712,
+                -0.2134901157511208,
+                0.01100042142150413,
+                -1.0508759006735606,
+                -1.4270671241428736,
+                -0.8055561977427175,
+                -0.8562129041546276,
+                1.682525213940497,
+                -0.4480124423073352,
+            ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("linux"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
         ),
     ],
 )
@@ -134,11 +179,52 @@ def test_update(setup_case, module, expected_gen_kw):
             0.09549338450036506,
         ]
     )
+
     assert target_gen_kw == pytest.approx(expected_gen_kw)
 
 
-@pytest.mark.xfail(sys.platform == "darwin", reason="Different result from update")
-def test_localization(setup_case):
+@pytest.mark.parametrize(
+    "expected_target_gen_kw",
+    [
+        pytest.param(
+            [
+                -1.3035319087841115,
+                0.6759029719309165,
+                -0.7802509588954853,
+                0.7477534046493867,
+                -0.10400064074767973,
+                -1.7223242794585338,
+                0.0761604027734105,
+                0.4039137216428462,
+                0.10001691562080614,
+                0.09549338450036506,
+            ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("darwin"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
+        ),
+        pytest.param(
+            [
+                -1.3035319087841115,
+                0.867127147787121,
+                -1.2502532947839953,
+                0.7477534046493867,
+                -0.10400064074767973,
+                -1.7223242794585338,
+                0.0761604027734105,
+                0.4039137216428462,
+                0.10001691562080614,
+                0.09549338450036506,
+            ],
+            marks=pytest.mark.skip(
+                sys.platform.startswith("linux"),
+                reason="See https://github.com/equinor/ert/issues/2351",
+            ),
+        ),
+    ],
+)
+def test_localization(setup_case, expected_target_gen_kw):
     """
     Note that this is now a snapshot test, so there is no guarantee that the
     snapshots are correct, they are just documenting the current behavior.
@@ -196,17 +282,4 @@ def test_localization(setup_case):
     assert sim_gen_kw[3:] == target_gen_kw[3:]
     assert sim_gen_kw[0] == target_gen_kw[0]
 
-    assert target_gen_kw == pytest.approx(
-        [
-            -1.3035319087841115,
-            0.6759029719309165,
-            -0.7802509588954853,
-            0.7477534046493867,
-            -0.10400064074767973,
-            -1.7223242794585338,
-            0.0761604027734105,
-            0.4039137216428462,
-            0.10001691562080614,
-            0.09549338450036506,
-        ]
-    )
+    assert target_gen_kw == pytest.approx(expected_target_gen_kw)
