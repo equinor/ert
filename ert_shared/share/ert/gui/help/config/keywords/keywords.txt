@@ -34,7 +34,6 @@ enkf_ncomp	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#
 enkf_rerun	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_RERUN
 enkf_truncation	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_TRUNCATION
 update_log_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#UPDATE_LOG_PATH
-analysis_load	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_LOAD
 analysis_select	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_SELECT
 analysis_set_var	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_SET_VAR
 analysis_copy	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ANALYSIS_COPY

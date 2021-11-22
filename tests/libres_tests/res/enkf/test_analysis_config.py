@@ -83,16 +83,6 @@ class AnalysisConfigTest(ResTest):
                 ConfigKeys.GLOBAL_STD_SCALING: 1,
                 ConfigKeys.MAX_RUNTIME: 0,
                 ConfigKeys.MIN_REALIZATIONS: 0,
-                ConfigKeys.ANALYSIS_LOAD: [
-                    {
-                        ConfigKeys.USER_NAME: "LIB_IES",
-                        ConfigKeys.LIB_NAME: "libies.so",
-                    },
-                    {
-                        ConfigKeys.USER_NAME: "MODULE_ENKF",
-                        ConfigKeys.LIB_NAME: "libies.so",
-                    },
-                ],
                 ConfigKeys.ANALYSIS_COPY: [
                     {
                         ConfigKeys.SRC_NAME: "STD_ENKF",

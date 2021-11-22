@@ -48,7 +48,6 @@ extern "C" {
 #define PRED_KEY "PRED_KEY"
 
 #define ANALYSIS_COPY_KEY "ANALYSIS_COPY"
-#define ANALYSIS_LOAD_KEY "ANALYSIS_LOAD"
 #define ANALYSIS_SET_VAR_KEY "ANALYSIS_SET_VAR"
 #define ANALYSIS_SELECT_KEY "ANALYSIS_SELECT"
 #define CONTAINER_KEY "CONTAINER"
@@ -202,7 +201,6 @@ const char *config_keys_get_stop_long_running();
 const char *config_keys_get_single_node_update();
 const char *config_keys_get_rerun();
 const char *config_keys_get_rerun_start();
-const char *config_keys_get_analysis_load();
 const char *config_keys_get_analysis_copy();
 const char *config_keys_get_analysis_select();
 const char *config_keys_get_analysis_set_var();
