@@ -39,6 +39,10 @@ SERVICE_NAMES: Set[str] = set()
 
 
 @atexit.register
+def atexit_cleanup_service_files():
+    cleanup_service_files()
+
+
 def cleanup_service_files(*args, **kwargs):
     for service_name in SERVICE_NAMES:
         file = Path(f"{service_name}_server.json")
