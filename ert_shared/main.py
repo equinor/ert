@@ -456,7 +456,16 @@ def main():
     except ErtCliError as err:
         logger.exception(str(err))
         sys.exit(str(err))
-    except:
-        logger.exception("ert crashed unexpectedly")
-        sys.exit("ert crashed unexpectedly")
+    except BaseException as err:
+        logger.exception(f'ERT crashed unexpectedly with "{err}"')
+
+        logfiles = set()  # Use set to avoid duplicates...
+        for handler in logging.getLogger().handlers:
+            if isinstance(handler, logging.FileHandler):
+                logfiles.add(handler.baseFilename)
+
+        msg = f'ERT crashed unexpectedly with "{err}".\nSee logfile(s) for details:'
+        msg += "\n   " + "\n   ".join(logfiles)
+
+        sys.exit(msg)
     clear_global_state()

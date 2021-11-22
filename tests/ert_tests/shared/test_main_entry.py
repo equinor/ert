@@ -9,15 +9,18 @@ from ert_shared import main
 
 def test_main_logging(monkeypatch, caplog):
     parser_mock = MagicMock()
-    parser_mock.func.side_effect = ValueError
+    parser_mock.func.side_effect = ValueError("This is a test")
     monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
     monkeypatch.setattr(main, "ert_parser", MagicMock(return_value=parser_mock))
     monkeypatch.setattr(main, "start_ert_server", MagicMock())
     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
     monkeypatch.setattr(sys, "argv", ["ert", "test_run", "config.ert"])
-    with pytest.raises(SystemExit, match="ert crashed unexpectedly"):
+    with pytest.raises(
+        SystemExit, match='ERT crashed unexpectedly with "This is a test"'
+    ):
         main.main()
-    assert "ert crashed unexpectedly\nTraceback" in caplog.text
+    assert 'ERT crashed unexpectedly with "This is a test"' in caplog.text
+    assert "Traceback" in caplog.text
 
 
 def test_main_logging_argparse(monkeypatch, caplog):
