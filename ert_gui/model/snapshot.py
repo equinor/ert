@@ -374,9 +374,9 @@ class SnapshotModel(QAbstractItemModel):
             _, data_name = COLUMNS[NodeType.STEP][index.column()]
             if data_name in [ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE]:
                 data = node.data.get(ids.DATA)
-                bytes = data.get(data_name) if data else None
-                if bytes:
-                    return byte_with_unit(bytes)
+                _bytes = data.get(data_name) if data else None
+                if _bytes:
+                    return byte_with_unit(_bytes)
             if data_name in [ids.STDOUT, ids.STDERR]:
                 return "OPEN" if node.data.get(data_name) else QVariant()
             if data_name in [DURATION]:
