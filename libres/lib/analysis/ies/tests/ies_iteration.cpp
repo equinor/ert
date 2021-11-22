@@ -4,8 +4,8 @@
 #include <ert/res_util/es_testdata.hpp>
 
 #include <ert/analysis/std_enkf.hpp>
-#include <ies_enkf_data.hpp>
-#include <ies_enkf.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf.hpp>
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);

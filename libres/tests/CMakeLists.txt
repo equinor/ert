@@ -7,7 +7,7 @@ find_package(fmt REQUIRED)
 include(Catch)
 
 add_executable(ert_test_suite tmpdir.cpp
-                              analysis/modules/test_ies_enkf_main.cpp
+                              analysis/ies/test_ies_enkf_main.cpp
                               analysis/test_enkf_linalg.cpp
                               res_util/test_matrix.cpp
 							  enkf/enkf_obs_paths_detailed.cpp

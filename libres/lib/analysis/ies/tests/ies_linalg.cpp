@@ -3,8 +3,8 @@
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ies_enkf_data.hpp>
-#include <ies_enkf.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, ies_enkf_data_type *ies_data,

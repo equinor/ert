@@ -33,8 +33,8 @@
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 
-#include <ies_enkf_config.hpp>
-#include <ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_config.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
 
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);

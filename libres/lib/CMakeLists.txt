@@ -66,9 +66,9 @@ add_library(res SHARED
                 analysis/std_enkf.cpp
 
                 # IES_ENKF
-                analysis/modules/ies_enkf.cpp
-                analysis/modules/ies_enkf_config.cpp
-                analysis/modules/ies_enkf_data.cpp
+                analysis/ies/ies_enkf.cpp
+                analysis/ies/ies_enkf_config.cpp
+                analysis/ies/ies_enkf_data.cpp
 
                 job_queue/ext_job.cpp
                 job_queue/ext_joblist.cpp
@@ -190,7 +190,6 @@ find_package(LAPACK REQUIRED)
 target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem)
 target_include_directories(res
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules>
         $<INSTALL_INTERFACE:include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
@@ -217,30 +216,27 @@ if (NOT BUILD_TESTS)
 endif()
 
 foreach(name ies_enkf_config ies_enkf_data)
-  add_executable(${name} analysis/modules/tests/${name}.cpp)
-  target_include_directories(${name} PRIVATE analysis/modules)
+  add_executable(${name} analysis/ies/tests/${name}.cpp)
+  target_include_directories(${name} PRIVATE analysis/ies)
   target_link_libraries(${name} res)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
-add_executable(ies_module analysis/modules/tests/ies_enkf_module.cpp)
+add_executable(ies_module analysis/ies/tests/ies_enkf_module.cpp)
 target_link_libraries(ies_module res)
-add_test(NAME ies_module COMMAND ies_module ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
+add_test(NAME ies_module COMMAND ies_module ${CMAKE_CURRENT_SOURCE_DIR}/analysis/ies/tests/test-data/poly)
 
-add_executable(ies_linalg analysis/modules/tests/ies_linalg.cpp)
-target_include_directories(ies_linalg PRIVATE analysis/modules)
+add_executable(ies_linalg analysis/ies/tests/ies_linalg.cpp)
 target_link_libraries(ies_linalg res)
-add_test(NAME ies_linalg COMMAND ies_linalg ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
+add_test(NAME ies_linalg COMMAND ies_linalg ${CMAKE_CURRENT_SOURCE_DIR}/analysis/ies/tests/test-data/poly)
 
-add_executable(ies_std_compare analysis/modules/tests/ies_std_compare.cpp)
-target_include_directories(ies_std_compare PRIVATE analysis/modules)
+add_executable(ies_std_compare analysis/ies/tests/ies_std_compare.cpp)
 target_link_libraries(ies_std_compare res)
-add_test(NAME ies_std_compare COMMAND ies_std_compare ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly)
+add_test(NAME ies_std_compare COMMAND ies_std_compare ${CMAKE_CURRENT_SOURCE_DIR}/analysis/ies/tests/test-data/poly)
 
-add_executable(ies_iteration analysis/modules/tests/ies_iteration.cpp)
-target_include_directories(ies_iteration PRIVATE analysis/modules)
+add_executable(ies_iteration analysis/ies/tests/ies_iteration.cpp)
 target_link_libraries(ies_iteration res)
-add_test(NAME ies_iteration COMMAND ies_iteration ${CMAKE_CURRENT_SOURCE_DIR}/analysis/modules/tests/test-data/poly_normal)
+add_test(NAME ies_iteration COMMAND ies_iteration ${CMAKE_CURRENT_SOURCE_DIR}/analysis/ies/tests/test-data/poly_normal)
 
 foreach(name ert_util_logh
              ert_util_arg_pack
