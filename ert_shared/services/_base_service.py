@@ -50,8 +50,9 @@ def cleanup_service_files(*args, **kwargs):
             file.unlink()
 
 
-signal.signal(signal.SIGTERM, cleanup_service_files)
-signal.signal(signal.SIGINT, cleanup_service_files)
+if threading.current_thread() is threading.main_thread():
+    signal.signal(signal.SIGTERM, cleanup_service_files)
+    signal.signal(signal.SIGINT, cleanup_service_files)
 
 
 def local_exec_args(script_args: Union[str, List[str]]) -> List[str]:
