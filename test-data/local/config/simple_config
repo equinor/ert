@@ -133,19 +133,11 @@ RUN_TEMPLATE      GEN_DATA_TEMPLATE GEN_DATA_FILE
 
 
 
---ANALYSIS_LOAD       LIB_IES     /project/res/x86_64_RH_5/lib/libies.so
---ANALYSIS_LOAD       LIB_IES     libies.so
-ANALYSIS_LOAD       LIB_IES     /private/joaho/ERT/NR/libanalysis/src/libies.so
-
---ANALYSIS_LOAD       FWD_ENKF   /private/joaho/ERT/NR/tmp-build/libanalysis/src/sqrt_enkf.so  
---ANALYSIS_LOAD       SFWD_ENKF     /private/joaho/ERT/NR/tmp-build/libanalysis/src/std_enkf.so
 ANALYSIS_SET_VAR    STD_ENKF     ENKF_TRUNCATION    0.95
 --ANALYSIS_SET_VAR    SQRT_ENKF    ENKF_TRUNCATION    0.99
 ANALYSIS_SET_VAR    STD_ENKF     ENKF_NCOMP         2
 ANALYSIS_SET_VAR    STD_ENKF     ENKF_TRUNCATION    0.98
 ANALYSIS_SELECT     STD_ENKF
-
-ANALYSIS_LOAD       TEST_ENKF     /private/joaho/ERT/NR/libanalysis/src/test_enkf.so
 
 
 QUEUE_OPTION  LSF  LSF_LOGIN_SHELL  /bin/csh

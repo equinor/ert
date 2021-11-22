@@ -164,7 +164,6 @@ class ConfigKeys:
 
     _rerun_key = ResPrototype("char* config_keys_get_rerun()", bind=False)
     _rerun_start_key = ResPrototype("char* config_keys_get_rerun_start()", bind=False)
-    _analysis_load = ResPrototype("char* config_keys_get_analysis_load()", bind=False)
     _analysis_copy = ResPrototype("char* config_keys_get_analysis_copy()", bind=False)
     _analysis_select = ResPrototype(
         "char* config_keys_get_analysis_select()", bind=False
@@ -215,7 +214,6 @@ class ConfigKeys:
     GLOBAL_STD_SCALING = "GLOBAL_STD_SCALING"
     RERUN_KEY = _rerun_key()
     RERUN_START_KEY = _rerun_start_key()
-    ANALYSIS_LOAD = _analysis_load()
     USER_NAME = "USER_NAME"
     LIB_NAME = "LIB_NAME"
     ANALYSIS_COPY = _analysis_copy()

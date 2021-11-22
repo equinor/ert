@@ -447,9 +447,6 @@ void site_config_add_config_items(config_parser_type *config, bool site_mode) {
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_PATH);
 
-    item = config_add_schema_item(config, ANALYSIS_LOAD_KEY, false);
-    config_schema_item_set_argc_minmax(item, 2, 2);
-
     item = config_add_schema_item(config, HOOK_WORKFLOW_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
     config_schema_item_iset_type(item, 0, CONFIG_STRING);

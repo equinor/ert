@@ -17,7 +17,6 @@ class AnalysisModuleKeywords(object):
         super(AnalysisModuleKeywords, self).__init__()
         self.group = "Analysis Module"
 
-        ert_keywords.addKeyword(self.addAnalysisLoad())
         ert_keywords.addKeyword(self.addAnalysisSelect())
         ert_keywords.addKeyword(self.addAnalysisCopy())
         ert_keywords.addKeyword(self.addAnalysisSetVar())
@@ -26,16 +25,6 @@ class AnalysisModuleKeywords(object):
         ert_keywords.addKeyword(self.addStdCutoff())
         ert_keywords.addKeyword(self.addSingleNodeUpdate())
         ert_keywords.addKeyword(self.addIterRetryCount())
-
-    def addAnalysisLoad(self):
-        analysis_load = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("ANALYSIS_LOAD"),
-            arguments=[StringArgument(), StringArgument()],
-            documentation_link="keywords/analysis_load",
-            required=False,
-            group=self.group,
-        )
-        return analysis_load
 
     def addAnalysisSelect(self):
         analysis_select = ConfigurationLineDefinition(

@@ -682,9 +682,6 @@ class ResConfigTest(ResTest):
             config_data_new[ConfigKeys.JOB_SCRIPT] = os.path.normpath(
                 os.path.realpath(config_data_new[ConfigKeys.JOB_SCRIPT])
             )
-            config_data_new[ConfigKeys.ANALYSIS_LOAD] = [
-                {ConfigKeys.USER_NAME: "LIB_IES", ConfigKeys.LIB_NAME: "libies.so"}
-            ]
 
             # open config via dictionary
             res_config_dict = ResConfig(config_dict=config_data_new)

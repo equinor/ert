@@ -25,7 +25,6 @@ List of keywords
 Keyword name                                                            Required                                Default value                   Purpose
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_COPY <analysis_copy>`                                    NO                                                                      Create new instance of analysis module
-:ref:`ANALYSIS_LOAD <analysis_load>`                                    NO                                                                      Deprecated
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
 :ref:`ANALYSIS_SELECT <analysis_select>`                                NO                                      STD_ENKF                        Select analysis module to use in update
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
@@ -1340,13 +1339,6 @@ Analysis module
 The final EnKF linear algebra is performed in an analysis module. The keywords
 to load, select and modify the analysis modules are documented here.
 
-.. _analysis_load:
-.. topic:: ANALYSIS_LOAD
-
-        `ANALYSIS_LOAD` is deprecated. It used to dynamically load an analysis
-        module from a shared object, but now is a no-op.
-
-
 .. _analysis_select:
 .. topic:: ANALYSIS_SELECT
 
@@ -1356,9 +1348,6 @@ to load, select and modify the analysis modules are documented here.
         ::
 
                 ANALYSIS_SELECT ANAME
-
-        Here ANAME is the name you have assigned to the module when loading it with
-        ANALYSIS_LOAD.
 
 
 .. _analysis_set_var:
@@ -1372,9 +1361,10 @@ to load, select and modify the analysis modules are documented here.
 
                 ANALYSIS_SET_VAR  ANAME  ENKF_TRUNCATION  0.97
 
-        To use this you must know which variables the module supports setting this
-        way. If you try to set an unknown variable you will get an error message on
-        stderr.
+        Here `ANAME` must be one of `IES` and `STD_ENKF` which are the two
+        analysis modules currently available. To use this you must know which
+        variables the module supports setting this way. If you try to set an
+        unknown variable you will get an error message on stderr.
 
 
 .. _analysis_copy:
@@ -1386,12 +1376,12 @@ to load, select and modify the analysis modules are documented here.
 
         ::
 
-                ANALYSIS_LOAD   A1  analysis.so
-                ANALYISIS_COPY  A1  A2
+                ANALYSIS_COPY  A1  A2
 
-        We load a module analysis.so and assign the name A1; then we copy A1 -> A2.
-        The module A1 and A2 are now 100% identical. We then set the truncation to two
-        different values:
+        We copy `A1` -> `A2`, where `A1` must be one of available analysis
+        modules `STD_ENKF` and `IES`. After the copy operation the modules `A1`
+        and `A2` are 100% identical. We then set the truncation to two different
+        values:
 
         ::
 

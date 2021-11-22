@@ -223,12 +223,6 @@ class ErtKeywordTest(ErtTest):
 
     def test_analysis_module_keywords(self):
         self.keywordTest(
-            "ANALYSIS_LOAD",
-            [StringArgument, StringArgument],
-            "keywords/analysis_load",
-            "Analysis Module",
-        )
-        self.keywordTest(
             "ANALYSIS_SELECT",
             [StringArgument],
             "keywords/analysis_select",
