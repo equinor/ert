@@ -1,7 +1,7 @@
 #include <algorithm>
 
-#include <ies_enkf_config.hpp>
-#include <ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_config.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
 
 /*
   The configuration data used by the ies_enkf module is contained in a

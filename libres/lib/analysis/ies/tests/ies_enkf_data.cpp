@@ -2,7 +2,7 @@
 
 #include <ert/util/rng.h>
 
-#include <ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
 
 void test_create() {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);

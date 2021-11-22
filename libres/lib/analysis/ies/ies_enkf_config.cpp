@@ -22,7 +22,7 @@
 #include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ies_enkf_config.hpp>
+#include <ert/analysis/ies/ies_enkf_config.hpp>
 
 #define INVALID_TRUNCATION -1
 #define INVALID_SUBSPACE_DIMENSION -1

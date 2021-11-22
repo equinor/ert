@@ -3,8 +3,8 @@
 #include <ert/util/rng.h>
 #include <ert/util/util.h>
 
-#include <ies_enkf.hpp>
-#include <ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
 
 void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);
