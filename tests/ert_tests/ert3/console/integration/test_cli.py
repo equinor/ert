@@ -361,7 +361,6 @@ def test_cli_clean_all(workspace):
             ensemble_size=42,
             responses=[],
         )
-        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
     assert (
         ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
@@ -372,8 +371,6 @@ def test_cli_clean_all(workspace):
         ert3.console.main()
 
     assert ert.storage.get_experiment_names(workspace_name=workspace.name) == set()
-    for experiment in experiments:
-        assert not workspace.get_experiment_tmp_dir(experiment).exists()
 
 
 @pytest.mark.requires_ert_storage
@@ -388,7 +385,6 @@ def test_cli_clean_one(workspace):
             ensemble_size=42,
             responses=[],
         )
-        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
     assert (
         ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
@@ -403,9 +399,6 @@ def test_cli_clean_one(workspace):
     assert (
         ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
     )
-    for experiment in experiments:
-        assert workspace.get_experiment_tmp_dir(experiment).exists()
-    assert not workspace.get_experiment_tmp_dir(deleted_experiment).exists()
 
 
 @pytest.mark.requires_ert_storage
@@ -422,7 +415,6 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
             ensemble_size=42,
             responses=[],
         )
-        workspace.get_experiment_tmp_dir(experiment).mkdir(parents=True)
 
     assert (
         ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
@@ -437,9 +429,6 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
     assert (
         ert.storage.get_experiment_names(workspace_name=workspace.name) == experiments
     )
-    for experiment in experiments:
-        workspace.get_experiment_tmp_dir(experiment).exists()
-    assert not workspace.get_experiment_tmp_dir(deleted_experiment).exists()
 
     captured = capsys.readouterr()
     assert (

@@ -20,14 +20,9 @@ and input data is initialized via a separate initialization function
 creating workspace objects.
 
 .. note:: The current file-based implementation still leaks some of the
-   underlying representation:
-
-   * Currently some resources in the workspace directory are stored in a
-     :file:`resources` directory, and its path is exposed by the
-     :py:meth:`ert3.workspace.Workspace.get_resources_dir` method.
-   * :py:meth:`ert3.workspace.Workspace.get_experiment_tmp_dir` may be
-     considered leaky and its location in the workspace object may need to be
-     reconsidered.
+   underlying representation: some resources in the workspace directory are
+   stored in a :file:`resources` directory, and its path is exposed by the
+   :py:meth:`ert3.workspace.Workspace.get_resources_dir` method.
 """
 
 from ert3.workspace._workspace import Workspace
