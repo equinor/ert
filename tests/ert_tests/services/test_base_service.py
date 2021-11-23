@@ -320,7 +320,8 @@ def test_cleanup_service_files(tmpdir):
     assert Path(webviz_service_file).exists()
     SERVICE_NAMES.add(webviz_service_name)
 
-    cleanup_service_files()
+    with pytest.raises(OSError):
+        cleanup_service_files(signum=99, frame=None)
 
     assert not Path(storage_service_file).exists()
     assert not Path(webviz_service_file).exists()
