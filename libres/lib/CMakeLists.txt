@@ -492,7 +492,6 @@ endif()
 
 foreach (test   enkf_active_list
                 enkf_analysis_config
-                enkf_cases_config
                 enkf_config_node
                 enkf_enkf_config_node_gen_data
                 enkf_ensemble
