@@ -67,6 +67,7 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.7
+  fmt/8.0.1
   # Options
   OPTIONS
   catch2:with_main=True
