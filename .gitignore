@@ -6,6 +6,9 @@
 *~
 *.user
 *.user.*
+.nfs*
+*.swp
+.pre-commit-config.yaml
 .idea
 .vscode
 .pytest_cache
