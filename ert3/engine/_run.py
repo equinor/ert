@@ -1,4 +1,7 @@
 import asyncio
+import logging
+import tempfile
+from pathlib import Path
 from typing import Dict, Tuple, List
 import ert
 import ert3
@@ -11,6 +14,8 @@ from ._sensitivity import (
     prepare_sensitivity,
 )
 from ._entity import TransmitterCoroutine
+
+logger = logging.getLogger(__name__)
 
 
 def _prepare_experiment(
@@ -122,8 +127,11 @@ def _get_storage_path(
     if ensemble_config.storage_type == "ert_storage":
         return ert.storage.get_records_url(workspace.name, experiment_name)
     else:
-        evaluation_tmp_dir = workspace.get_experiment_tmp_dir(experiment_name)
-        return str(evaluation_tmp_dir / ".my_storage")
+        storage_tmp_dir = str(Path(tempfile.mkdtemp()) / experiment_name / "storage")
+        logger.info(  # pylint: disable=logging-fstring-interpolation
+            f"temporary storage location: {storage_tmp_dir}"
+        )
+        return storage_tmp_dir
 
 
 # pylint: disable=too-many-arguments

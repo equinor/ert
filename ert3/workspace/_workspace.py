@@ -1,6 +1,5 @@
 import json
 import sys
-import shutil
 from pathlib import Path
 from typing import Union, Optional, Set, List, Dict, Any, Tuple
 
@@ -67,28 +66,6 @@ class Workspace:
             str: The workspace name
         """
         return str(self._path)
-
-    def get_experiment_tmp_dir(self, experiment_name: str) -> Path:
-        """Return a path to a temporary directory for an experiment.
-
-        This function does not check if the returned path exists, nor does it
-        create the directory.
-
-        Args:
-            experiment_name (str): Name of the experiment
-
-        Raises:
-            ert.exceptions._exceptions.IllegalWorkspaceOperation:
-                Raised when the experiment does not exist.
-
-        Returns:
-            pathlib.Path: The path to the temporary directory.
-        """
-        if experiment_name not in self.get_experiment_names():
-            raise ert.exceptions.IllegalWorkspaceOperation(
-                f"experiment {experiment_name} does not exist"
-            )
-        return self._path / _WORKSPACE_DATA_ROOT / "tmp" / experiment_name
 
     def get_resources_dir(self) -> Path:
         """Return the path to the :file:`resources` directory.
@@ -185,16 +162,6 @@ class Workspace:
         with open(self._path / "parameters.yml", encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         return ert3.config.load_parameters_config(config_dict)
-
-    def clean_experiment(self, experiment_name: str) -> None:
-        """Clean up any temporary experiment data.
-
-        Args:
-            experiment_name (str): The name of the experiment.
-        """
-        tmp_dir = self.get_experiment_tmp_dir(experiment_name)
-        if tmp_dir.exists():
-            shutil.rmtree(tmp_dir)
 
     def export_json(
         self,

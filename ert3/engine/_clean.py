@@ -20,4 +20,3 @@ def clean(
 
     for name in experiment_names:
         ert.storage.delete_experiment(experiment_name=name)
-        workspace.clean_experiment(name)
