@@ -38,16 +38,12 @@ ConnInfo = Union[Mapping[str, Any], Exception, None]
 SERVICE_NAMES: Set[str] = set()
 
 
-@atexit.register
-def atexit_cleanup_service_files():
-    cleanup_service_files()
-
-
-def cleanup_service_files(*args, **kwargs):
+def cleanup_service_files(signum, frame):
     for service_name in SERVICE_NAMES:
         file = Path(f"{service_name}_server.json")
         if file.exists():
             file.unlink()
+    raise OSError(f"Signal {signum} recieved.")
 
 
 if threading.current_thread() is threading.main_thread():
