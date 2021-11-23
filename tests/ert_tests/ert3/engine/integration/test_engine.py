@@ -180,9 +180,9 @@ def test_run_once_polynomial_evaluation(
     workspace = workspace_integration
     with assert_clean_workspace(workspace):
         ert3.engine.run(
-            ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, ensemble
+            ),
             gaussian_parameters_config,
             workspace,
             "evaluation",
@@ -192,9 +192,9 @@ def test_run_once_polynomial_evaluation(
             ValueError, match="Experiment evaluation has been carried out"
         ):
             ert3.engine.run(
-                ensemble,
-                stages_config,
-                evaluation_experiment_config,
+                ert3.config.ExperimentRunConfig(
+                    evaluation_experiment_config, stages_config, ensemble
+                ),
                 gaussian_parameters_config,
                 workspace,
                 "evaluation",
@@ -229,9 +229,9 @@ def test_export_polynomial_evaluation(
     (workspace._path / _EXPERIMENTS_BASE / "evaluation").mkdir(parents=True)
     with assert_clean_workspace(workspace):
         ert3.engine.run(
-            ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, ensemble
+            ),
             gaussian_parameters_config,
             workspace,
             "evaluation",
@@ -259,9 +259,9 @@ def test_export_uniform_polynomial_evaluation(
     uni_dir.mkdir(parents=True)
     with assert_clean_workspace(workspace):
         ert3.engine.run(
-            uniform_ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, uniform_ensemble
+            ),
             uniform_parameters_config,
             workspace,
             "uniform_evaluation",
@@ -294,9 +294,11 @@ def test_export_x_uncertainties_polynomial_evaluation(
     uni_dir.mkdir(parents=True)
     with assert_clean_workspace(workspace):
         ert3.engine.run(
-            x_uncertainty_ensemble,
-            x_uncertainty_stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config,
+                x_uncertainty_stages_config,
+                x_uncertainty_ensemble,
+            ),
             x_uncertainty_parameters_config,
             workspace,
             "x_uncertainty",
@@ -418,9 +420,9 @@ def test_run_presampled(
                 assert isinstance(real_coeff.data[idx], float)
 
         ert3.engine.run(
-            presampled_ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, presampled_ensemble
+            ),
             gaussian_parameters_config,
             workspace,
             "presampled_evaluation",
@@ -477,9 +479,9 @@ def test_run_uniform_presampled(
                 assert isinstance(real_coeff.data[idx], float)
 
         ert3.engine.run(
-            presampled_uniform_ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, presampled_uniform_ensemble
+            ),
             uniform_parameters_config,
             workspace,
             "presampled_uniform_evaluation",
@@ -528,9 +530,9 @@ def test_record_load_and_run(
         )
 
         ert3.engine.run(
-            doe_ensemble,
-            stages_config,
-            evaluation_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                evaluation_experiment_config, stages_config, doe_ensemble
+            ),
             gaussian_parameters_config,
             workspace,
             "doe",
@@ -583,17 +585,21 @@ def test_sensitivity_oat_run_and_export(
     (workspace._path / _EXPERIMENTS_BASE / "sensitivity").mkdir(parents=True)
     with assert_clean_workspace(workspace):
         ert3.engine.run_sensitivity_analysis(
-            sensitivity_ensemble,
-            stages_config,
-            sensitivity_oat_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                sensitivity_oat_experiment_config,
+                stages_config,
+                sensitivity_ensemble,
+            ),
             gaussian_parameters_config,
             workspace,
             "sensitivity",
         )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble_config=sensitivity_ensemble,
-        stages_config=stages_config,
-        experiment_config=sensitivity_oat_experiment_config,
+        experiment_run_config=ert3.config.ExperimentRunConfig(
+            sensitivity_oat_experiment_config,
+            stages_config,
+            sensitivity_ensemble,
+        ),
         parameters_config=gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
@@ -622,17 +628,21 @@ def test_sensitivity_fast_run_and_export(
     (workspace._path / _EXPERIMENTS_BASE / "sensitivity").mkdir(parents=True)
     with assert_clean_workspace(workspace, allowed_files={"fast_analysis.json"}):
         ert3.engine.run_sensitivity_analysis(
-            sensitivity_ensemble,
-            stages_config,
-            sensitivity_fast_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                sensitivity_fast_experiment_config,
+                stages_config,
+                sensitivity_ensemble,
+            ),
             gaussian_parameters_config,
             workspace,
             "sensitivity",
         )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble_config=sensitivity_ensemble,
-        stages_config=stages_config,
-        experiment_config=sensitivity_fast_experiment_config,
+        experiment_run_config=ert3.config.ExperimentRunConfig(
+            experiment_config=sensitivity_fast_experiment_config,
+            stages_config=stages_config,
+            ensemble_config=sensitivity_ensemble,
+        ),
         parameters_config=gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
@@ -670,17 +680,21 @@ def test_partial_sensitivity_run_and_export(
             "application/json",
         )
         ert3.engine.run_sensitivity_analysis(
-            partial_sensitivity_ensemble,
-            double_stages_config,
-            sensitivity_oat_experiment_config,
+            ert3.config.ExperimentRunConfig(
+                sensitivity_oat_experiment_config,
+                double_stages_config,
+                partial_sensitivity_ensemble,
+            ),
             gaussian_parameters_config,
             workspace,
             "partial_sensitivity",
         )
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble_config=partial_sensitivity_ensemble,
-        stages_config=double_stages_config,
-        experiment_config=sensitivity_oat_experiment_config,
+        experiment_run_config=ert3.config.ExperimentRunConfig(
+            sensitivity_oat_experiment_config,
+            double_stages_config,
+            partial_sensitivity_ensemble,
+        ),
         parameters_config=gaussian_parameters_config,
     )
 
@@ -727,9 +741,11 @@ def test_incompatible_partial_sensitivity_run(
     with assert_clean_workspace(workspace):
         with pytest.raises(ert.exceptions.ErtError, match=err_msg):
             ert3.engine.run_sensitivity_analysis(
-                partial_sensitivity_ensemble,
-                double_stages_config,
-                sensitivity_oat_experiment_config,
+                ert3.config.ExperimentRunConfig(
+                    sensitivity_oat_experiment_config,
+                    double_stages_config,
+                    partial_sensitivity_ensemble,
+                ),
                 gaussian_parameters_config,
                 workspace,
                 "partial_sensitivity",

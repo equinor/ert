@@ -213,49 +213,33 @@ def _init(args: Any) -> None:
 def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
-    (
-        experiment_config,
-        stages_config,
-        ensemble_config,
-    ) = workspace.load_experiment_config(args.experiment_name)
+    experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
     parameters_config = workspace.load_parameters_config()
-    if experiment_config.type == "evaluation":
+    if experiment_run_config.experiment_config.type == "evaluation":
         ert3.engine.run(
-            ensemble_config,
-            stages_config,
-            experiment_config,
-            parameters_config,
-            workspace,
-            args.experiment_name,
+            experiment_run_config, parameters_config, workspace, args.experiment_name
         )
-    elif experiment_config.type == "sensitivity":
+    elif experiment_run_config.experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
-            ensemble_config,
-            stages_config,
-            experiment_config,
-            parameters_config,
-            workspace,
-            args.experiment_name,
+            experiment_run_config, parameters_config, workspace, args.experiment_name
         )
 
 
 def _export(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "export"
-    (
-        experiment_config,
-        stages_config,
-        ensemble_config,
-    ) = workspace.load_experiment_config(args.experiment_name)
+    experiments_run_config = workspace.load_experiment_run_config(args.experiment_name)
     parameters_config = workspace.load_parameters_config()
 
     ensemble_size = ert3.engine.get_ensemble_size(
-        ensemble_config=ensemble_config,
-        stages_config=stages_config,
-        experiment_config=experiment_config,
+        experiment_run_config=experiments_run_config,
         parameters_config=parameters_config,
     )
     ert3.engine.export(
-        workspace, args.experiment_name, ensemble_config, stages_config, ensemble_size
+        workspace,
+        args.experiment_name,
+        experiments_run_config.ensemble_config,
+        experiments_run_config.stages_config,
+        ensemble_size,
     )
 
 
