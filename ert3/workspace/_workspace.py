@@ -1,7 +1,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Union, Optional, Set, List, Dict, Any, Tuple
+from typing import Union, Optional, Set, List, Dict, Any
 
 import yaml
 
@@ -19,13 +19,6 @@ def _locate_root(path: Path) -> Optional[Path]:
         if path == Path(path.root):
             return None
         path = path.parent
-
-
-ExperimentConfigurations = Tuple[
-    ert3.config.ExperimentConfig,
-    ert3.config.StagesConfig,
-    ert3.config.EnsembleConfig,
-]
 
 
 class Workspace:
@@ -114,18 +107,22 @@ class Workspace:
             if experiment.is_dir()
         }
 
-    def load_experiment_config(self, experiment_name: str) -> ExperimentConfigurations:
+    def load_experiment_run_config(
+        self, experiment_name: str
+    ) -> ert3.config.ExperimentRunConfig:
         """Load the configuration objects needed to run an experiment.
 
-        This method loads, validates and returns three configuration objects: an
-        experiment configuration object, a stages configuration object, and an
-        ensemble configuration object.
+        This method loads, validates and returns a configuration object that
+        encapsulates and validates the three specialized configuration objects
+        that are needed for running an experiment: an experiment configuration
+        object, a stages configuration object, and an ensemble configuration
+        object.
 
         Args:
             experiment_name (str): The name of the experiment.
 
-        Returns:
-            ExperimentConfigurations: The three configuration objects.
+        Returns: ert3.config.ExperimentRunConfig: A configuration object for an
+            experiment run.
         """
         experiment_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
@@ -147,11 +144,11 @@ class Workspace:
             config_dict = yaml.safe_load(f)
         ensemble_config = ert3.config.load_ensemble_config(config_dict)
 
-        _validate_ensemble_size(experiment_config, ensemble_config)
-        _validate_stage(stage_config, ensemble_config)
         self._validate_resources(ensemble_config)
 
-        return experiment_config, stage_config, ensemble_config
+        return ert3.config.ExperimentRunConfig(
+            experiment_config, stage_config, ensemble_config
+        )
 
     def load_parameters_config(self) -> ert3.config.ParametersConfig:
         """Load the parameters configuration.
@@ -230,35 +227,3 @@ def initialize(path: Union[str, Path]) -> Workspace:
         )
     (path / _WORKSPACE_DATA_ROOT).mkdir()
     return Workspace(path)
-
-
-def _validate_ensemble_size(
-    experiment_config: ert3.config.ExperimentConfig,
-    ensemble_config: ert3.config.EnsembleConfig,
-) -> None:
-    if experiment_config.type == "sensitivity" and ensemble_config.size is not None:
-        raise ert.exceptions.ConfigValidationError(
-            "No ensemble size should be specified for a sensitivity analysis."
-        )
-    if experiment_config.type != "sensitivity" and ensemble_config.size is None:
-        raise ert.exceptions.ConfigValidationError(
-            "An ensemble size must be specified."
-        )
-
-
-def _validate_stage(
-    stage_config: ert3.config.StagesConfig, ensemble_config: ert3.config.EnsembleConfig
-) -> None:
-    stage_name = ensemble_config.forward_model.stage
-    stage = next((stage for stage in stage_config if stage.name == stage_name), None)
-    if stage is None:
-        raise ert.exceptions.ConfigValidationError(
-            f"Invalid stage in forward model: '{stage_name}'. "
-            f"Must be one of: " + ", ".join(f"'{stage.name}'" for stage in stage_config)
-        )
-    stage_input_names = set(stage.input.keys())
-    ensemble_input_names = set(input.record for input in ensemble_config.input)
-    if ensemble_input_names != stage_input_names:
-        raise ert.exceptions.ConfigValidationError(
-            "Ensemble and stage inputs do not match."
-        )

@@ -103,67 +103,6 @@ def test_workspace_export_json(tmpdir, ert_storage):
     assert (experiments_dir / "test1" / "test.json").exists()
 
 
-def test_workspace__validate_ensemble_size(
-    workspace, ensemble, stages_config, stages_config_list, base_ensemble_dict
-):
-    ert3.workspace._workspace._validate_ensemble_size(
-        ert3.config.ExperimentConfig(type="evaluation"), ensemble
-    )
-
-    ensemble_dict = copy.deepcopy(base_ensemble_dict)
-    ensemble_dict["size"] = None
-    with pytest.raises(
-        ert.exceptions.ConfigValidationError,
-        match="An ensemble size must be specified.",
-    ):
-        ert3.workspace._workspace._validate_ensemble_size(
-            ert3.config.ExperimentConfig(type="evaluation"),
-            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
-        )
-
-    with pytest.raises(
-        ert.exceptions.ConfigValidationError,
-        match="No ensemble size should be specified for a sensitivity analysis.",
-    ):
-        ert3.workspace._workspace._validate_ensemble_size(
-            ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
-            ensemble,
-        )
-
-    ensemble_dict = copy.deepcopy(base_ensemble_dict)
-    ensemble_dict["size"] = None
-    ert3.workspace._workspace._validate_ensemble_size(
-        ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
-        ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
-    )
-
-
-def test_workspace__validate_stage(
-    workspace, ensemble, stages_config, double_stages_config, base_ensemble_dict
-):
-    ert3.workspace._workspace._validate_stage(stages_config, ensemble)
-
-    with pytest.raises(
-        ert.exceptions.ConfigValidationError,
-        match="Ensemble and stage inputs do not match.",
-    ):
-        ert3.workspace._workspace._validate_stage(double_stages_config, ensemble)
-
-    ensemble_dict = copy.deepcopy(base_ensemble_dict)
-    ensemble_dict["forward_model"]["stage"] = "foo"
-    with pytest.raises(
-        ert.exceptions.ConfigValidationError,
-        match=(
-            "Invalid stage in forward model: 'foo'. "
-            "Must be one of: 'evaluate_polynomial'"
-        ),
-    ):
-        ert3.workspace._workspace._validate_stage(
-            double_stages_config,
-            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
-        )
-
-
 def test_workspace__validate_resources(workspace, base_ensemble_dict):
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"] += [
@@ -211,7 +150,6 @@ def test_workspace_load_experiment_config_validation(
     stages_config,
     base_ensemble_dict,
     stages_config_list,
-    double_stages_config_list,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -221,7 +159,7 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["size"] = None
@@ -231,7 +169,7 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
 
 
 def test_workspace_load_experiment_config_size_validation(
@@ -239,7 +177,6 @@ def test_workspace_load_experiment_config_size_validation(
     stages_config,
     base_ensemble_dict,
     stages_config_list,
-    double_stages_config_list,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -256,7 +193,7 @@ def test_workspace_load_experiment_config_size_validation(
         ert.exceptions.ConfigValidationError,
         match="An ensemble size must be specified.",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
@@ -268,7 +205,7 @@ def test_workspace_load_experiment_config_size_validation(
         ert.exceptions.ConfigValidationError,
         match="No ensemble size should be specified for a sensitivity analysis.",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
 
 def test_workspace_load_experiment_config_stages_validation(
@@ -290,7 +227,7 @@ def test_workspace_load_experiment_config_stages_validation(
         ert.exceptions.ConfigValidationError,
         match="Ensemble and stage inputs do not match.",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["forward_model"]["stage"] = "foo"
@@ -307,7 +244,7 @@ def test_workspace_load_experiment_config_stages_validation(
             "Must be one of: 'evaluate_polynomial'"
         ),
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
 
 def test_workspace_load_experiment_config_resources_validation(
@@ -315,7 +252,6 @@ def test_workspace_load_experiment_config_resources_validation(
     stages_config,
     base_ensemble_dict,
     stages_config_list,
-    double_stages_config_list,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -334,14 +270,14 @@ def test_workspace_load_experiment_config_resources_validation(
         ert.exceptions.ConfigValidationError,
         match="Cannot locate resource: 'coefficients.json'",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
     (workspace.get_resources_dir() / "coefficients.json").mkdir(parents=True)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
     ensemble_dict["input"][-1]["is_directory"] = True
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
     ensemble_dict["input"][-1]["is_directory"] = False
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
@@ -349,18 +285,18 @@ def test_workspace_load_experiment_config_resources_validation(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a regular file: 'coefficients.json'",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")
 
     (workspace.get_resources_dir() / "coefficients.json").rmdir()
     (workspace.get_resources_dir() / "coefficients.json").touch()
     ensemble_dict["input"][-1]["is_directory"] = None
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
     ensemble_dict["input"][-1]["is_directory"] = False
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_config("test")
+    workspace.load_experiment_run_config("test")
     ensemble_dict["input"][-1]["is_directory"] = True
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
@@ -368,4 +304,4 @@ def test_workspace_load_experiment_config_resources_validation(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a directory: 'coefficients.json'",
     ):
-        workspace.load_experiment_config("test")
+        workspace.load_experiment_run_config("test")

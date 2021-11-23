@@ -136,29 +136,35 @@ def _get_storage_path(
 
 # pylint: disable=too-many-arguments
 def run(
-    ensemble_config: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
-    experiment_config: ert3.config.ExperimentConfig,
+    experiment_run_config: ert3.config.ExperimentRunConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
 ) -> None:
     # This reassures mypy that the ensemble size is defined
-    assert ensemble_config.size is not None
-    ensemble_size = ensemble_config.size
+    assert experiment_run_config.ensemble_config.size is not None
+    ensemble_size = experiment_run_config.ensemble_config.size
 
-    if experiment_config.type != "evaluation":
+    if experiment_run_config.experiment_config.type != "evaluation":
         raise ValueError("this entry point can only run 'evaluation' experiments")
 
-    _prepare_experiment(workspace.name, experiment_name, ensemble_config, ensemble_size)
-    storage_path = _get_storage_path(ensemble_config, workspace, experiment_name)
+    _prepare_experiment(
+        workspace.name,
+        experiment_name,
+        experiment_run_config.ensemble_config,
+        ensemble_size,
+    )
+    storage_path = _get_storage_path(
+        experiment_run_config.ensemble_config, workspace, experiment_name
+    )
     records_url = ert.storage.get_records_url(workspace.name)
 
-    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+    stage = experiment_run_config.stages_config.step_from_key(
+        experiment_run_config.ensemble_config.forward_model.stage
+    )
     if not stage:
-        raise ValueError(
-            f"No step config for key {ensemble_config.forward_model.stage}"
-        )
+        stage_name = experiment_run_config.ensemble_config.forward_model.stage
+        raise ValueError(f"No step config for key {stage_name}")
     assert stage is not None
 
     step_builder = (
@@ -167,7 +173,7 @@ def run(
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    inputs = ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)
 
     storage_inputs = tuple(inputs[SourceNS.storage].values())
     resource_inputs = tuple(inputs[SourceNS.resources].values())
@@ -194,7 +200,7 @@ def run(
         )
 
     ert3.evaluator.add_step_outputs(
-        ensemble_config.storage_type,
+        experiment_run_config.ensemble_config.storage_type,
         stage,
         storage_path,
         ensemble_size,
@@ -204,14 +210,14 @@ def run(
     if isinstance(stage, ert3.config.Unix):
         ert3.evaluator.add_commands(
             stage.transportable_commands,
-            ensemble_config.storage_type,
+            experiment_run_config.ensemble_config.storage_type,
             storage_path,
             step_builder,
         )
 
     ensemble = ert3.evaluator.build_ensemble(
         stage,
-        ensemble_config.forward_model.driver,
+        experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
         step_builder,
     )
@@ -220,34 +226,41 @@ def run(
 
 # pylint: disable=too-many-arguments
 def run_sensitivity_analysis(
-    ensemble_config: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
-    experiment_config: ert3.config.ExperimentConfig,
+    experiment_run_config: ert3.config.ExperimentRunConfig,
     parameters_config: ert3.config.ParametersConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
 ) -> None:
-    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+    stage = experiment_run_config.stages_config.step_from_key(
+        experiment_run_config.ensemble_config.forward_model.stage
+    )
     if not stage:
         raise ValueError(
-            f"No step config for key {ensemble_config.forward_model.stage}"
+            f"No step config for key {experiment_run_config.ensemble_config.forward_model.stage}"
         )
     assert stage is not None
 
-    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    inputs = ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)
     storage_inputs = tuple(inputs[SourceNS.storage].values())
     resource_inputs = tuple(inputs[SourceNS.resources].values())
     stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
     sensitivity_input_records = prepare_sensitivity(
         stochastic_inputs,
-        experiment_config,
+        experiment_run_config.experiment_config,
         parameters_config,
     )
     ensemble_size = len(sensitivity_input_records)
 
-    _prepare_experiment(workspace.name, experiment_name, ensemble_config, ensemble_size)
+    _prepare_experiment(
+        workspace.name,
+        experiment_name,
+        experiment_run_config.ensemble_config,
+        ensemble_size,
+    )
 
-    storage_path = _get_storage_path(ensemble_config, workspace, experiment_name)
+    storage_path = _get_storage_path(
+        experiment_run_config.ensemble_config, workspace, experiment_name
+    )
     records_url = ert.storage.get_records_url(workspace.name)
 
     step_builder = (
@@ -276,7 +289,7 @@ def run_sensitivity_analysis(
         )
 
     ert3.evaluator.add_step_outputs(
-        ensemble_config.storage_type,
+        experiment_run_config.ensemble_config.storage_type,
         stage,
         storage_path,
         ensemble_size,
@@ -286,14 +299,14 @@ def run_sensitivity_analysis(
     if isinstance(stage, ert3.config.Unix):
         ert3.evaluator.add_commands(
             stage.transportable_commands,
-            ensemble_config.storage_type,
+            experiment_run_config.ensemble_config.storage_type,
             storage_path,
             step_builder,
         )
 
     ensemble = ert3.evaluator.build_ensemble(
         stage,
-        ensemble_config.forward_model.driver,
+        experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
         step_builder,
     )
@@ -301,7 +314,7 @@ def run_sensitivity_analysis(
     output_transmitters = ert3.evaluator.evaluate(ensemble)
     analyze_sensitivity(
         stochastic_inputs,
-        experiment_config,
+        experiment_run_config.experiment_config,
         parameters_config,
         workspace,
         experiment_name,
@@ -310,25 +323,29 @@ def run_sensitivity_analysis(
 
 
 def get_ensemble_size(
-    ensemble_config: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
-    experiment_config: ert3.config.ExperimentConfig,
+    experiment_run_config: ert3.config.ExperimentRunConfig,
     parameters_config: ert3.config.ParametersConfig,
 ) -> int:
-    if experiment_config.type == "sensitivity":
-        stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+    if experiment_run_config.experiment_config.type == "sensitivity":
+        stage = experiment_run_config.stages_config.step_from_key(
+            experiment_run_config.ensemble_config.forward_model.stage
+        )
         if not stage:
             raise ValueError(
-                f"No step config for key {ensemble_config.forward_model.stage}"
+                f"No step config for key {experiment_run_config.ensemble_config.forward_model.stage}"
             )
         stochastic_inputs = tuple(
-            ert3.config.link_inputs(ensemble_config, stage)[
+            ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)[
                 SourceNS.stochastic
             ].values()
         )
         return len(
-            prepare_sensitivity(stochastic_inputs, experiment_config, parameters_config)
+            prepare_sensitivity(
+                stochastic_inputs,
+                experiment_run_config.experiment_config,
+                parameters_config,
+            )
         )
     else:
-        assert ensemble_config.size is not None
-        return ensemble_config.size
+        assert experiment_run_config.ensemble_config.size is not None
+        return experiment_run_config.ensemble_config.size
