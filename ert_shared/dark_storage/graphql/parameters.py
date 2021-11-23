@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-import graphene as gr
 
+import graphene as gr
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
+
     from ert_shared.dark_storage.graphql.unique_responses import UniqueResponse
 
 

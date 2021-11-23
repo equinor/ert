@@ -14,10 +14,11 @@
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
 from cwrap import BaseCClass
+from ecl.grid import EclGrid
 
 from res import ResPrototype
 from res.enkf.enums import EnkfFieldFileFormatEnum
-from ecl.grid import EclGrid
+
 from .field_type_enum import FieldTypeEnum
 
 

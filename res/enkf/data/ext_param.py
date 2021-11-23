@@ -15,7 +15,7 @@
 #  for more details.
 import os.path
 
-from cwrap import BaseCClass, CFILE
+from cwrap import CFILE, BaseCClass
 from six import string_types
 
 from res import ResPrototype

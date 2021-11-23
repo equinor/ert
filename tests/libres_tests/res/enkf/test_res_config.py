@@ -19,7 +19,6 @@ import stat
 from datetime import date
 
 import pytest
-
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 from ecl.util.test import TestAreaContext

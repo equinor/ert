@@ -16,6 +16,7 @@
 import sys
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.enkf.config import FieldConfig
 

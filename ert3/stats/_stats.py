@@ -1,4 +1,4 @@
-from typing import Optional, Callable, cast
+from typing import Callable, Optional, cast
 
 import numpy as np
 import scipy.stats

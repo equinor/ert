@@ -1,12 +1,12 @@
+from ecl.util.util import BoolVector
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import getRunPath
-from ert_shared.models import SingleTestRun
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
-from ecl.util.util import BoolVector
+from ert_shared.models import SingleTestRun
 
 
 class SingleTestRunPanel(SimulationConfigPanel):

@@ -1,25 +1,25 @@
+import asyncio
 import logging
 import time
 import uuid
-import asyncio
 from typing import Optional
 
 from ecl.util.util import BoolVector
 
-from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
-from ert_shared.storage.extraction import (
-    post_ensemble_data,
-    post_ensemble_results,
-    post_update_data,
-)
-from ert_shared.feature_toggling import FeatureToggling, feature_enabled
 from ert_shared import ERT
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.feature_toggling import FeatureToggling, feature_enabled
+from ert_shared.storage.extraction import (
+    post_ensemble_data,
+    post_ensemble_results,
+    post_update_data,
+)
+from res.enkf.enums.realization_state_enum import RealizationStateEnum
+from res.enkf.ert_run_context import ErtRunContext
+from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #

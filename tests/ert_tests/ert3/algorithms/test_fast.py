@@ -1,7 +1,7 @@
 import asyncio
 
-import pytest
 import numpy as np
+import pytest
 
 import ert
 import ert3

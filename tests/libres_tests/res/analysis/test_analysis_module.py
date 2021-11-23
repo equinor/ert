@@ -21,10 +21,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 from libres_utils import ResTest
 
-from res.analysis import (
-    AnalysisModule,
-    AnalysisModuleOptionsEnum,
-)
+from res.analysis import AnalysisModule, AnalysisModuleOptionsEnum
 from res.util import Matrix
 
 

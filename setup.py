@@ -1,8 +1,8 @@
 import os
-from setuptools import find_packages
-from skbuild import setup
-from setuptools_scm import get_version
 
+from setuptools import find_packages
+from setuptools_scm import get_version
+from skbuild import setup
 
 # Corporate networks tend to be behind a proxy server with their own non-public
 # SSL certificates. Conan keeps its own certificates, whose path we can override

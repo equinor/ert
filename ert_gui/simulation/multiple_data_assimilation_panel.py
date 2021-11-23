@@ -16,10 +16,10 @@
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertwidgets import (
-    addHelpToWidget,
-    CaseSelector,
     ActiveLabel,
     AnalysisModuleSelector,
+    CaseSelector,
+    addHelpToWidget,
 )
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
@@ -27,13 +27,13 @@ from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
-    NumberListStringArgument,
-    RangeStringArgument,
-    ProperNameFormatArgument,
-    IntegerArgument,
-)
 from ert_gui.simulation import SimulationConfigPanel
+from ert_shared.ide.keywords.definitions import (
+    IntegerArgument,
+    NumberListStringArgument,
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
 from ert_shared.models import MultipleDataAssimilation
 
 

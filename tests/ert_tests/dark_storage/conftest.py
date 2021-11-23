@@ -1,11 +1,10 @@
 import contextlib
-from argparse import ArgumentParser
-
-import pytest
 import os
 import shutil
-import py
+from argparse import ArgumentParser
 
+import py
+import pytest
 from starlette.testclient import TestClient
 
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE
@@ -74,6 +73,7 @@ def reset_enkf():
 
 def new_storage_client(monkeypatch, ert_storage_client):
     import requests
+
     from ert_shared.storage import extraction
 
     class MockStorage:

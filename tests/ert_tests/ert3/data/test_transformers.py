@@ -1,18 +1,19 @@
-import pytest
 import contextlib
-import pathlib
 import os
+import pathlib
 from typing import Callable, ContextManager, List
 
+import pytest
 from ert_utils import tmp
+
 from ert.data import (
-    RecordTransformation,
-    FileRecordTransformation,
-    TarRecordTransformation,
-    ExecutableRecordTransformation,
-    path_to_bytes,
-    RecordTransmitter,
     BlobRecord,
+    ExecutableRecordTransformation,
+    FileRecordTransformation,
+    RecordTransformation,
+    RecordTransmitter,
+    TarRecordTransformation,
+    path_to_bytes,
 )
 
 

@@ -1,5 +1,7 @@
 import os
-from qtpy.QtCore import Qt, QSize
+from collections import OrderedDict
+
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QComboBox,
     QFrame,
@@ -12,20 +14,20 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
-from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
-from ert_gui.simulation import SingleTestRunPanel
 from ert_gui.simulation import (
+    EnsembleExperimentPanel,
+    EnsembleSmootherPanel,
     IteratedEnsembleSmootherPanel,
     MultipleDataAssimilationPanel,
+    RunDialog,
     SimulationConfigPanel,
+    SingleTestRunPanel,
 )
-from ert_gui.simulation import RunDialog
-from ert_shared.feature_toggling import FeatureToggling
-from collections import OrderedDict
+from ert_shared import ERT
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.feature_toggling import FeatureToggling
 
 
 class SimulationPanel(QWidget):

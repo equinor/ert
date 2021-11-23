@@ -1,4 +1,5 @@
 import re
+
 from ert_shared.ide.keywords.data import Argument, Keyword
 
 

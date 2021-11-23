@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from copy import deepcopy
 
 

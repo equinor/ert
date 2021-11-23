@@ -1,9 +1,9 @@
 import os
 import re
+import sys
 
 import numpy
 import pandas
-import sys
 
 try:
     from PyQt4.QtGui import QCheckBox
@@ -11,14 +11,14 @@ except ImportError:
     from PyQt5.QtWidgets import QCheckBox
 
 from ecl.rft import WellTrajectory
-from res.enkf import ErtPlugin, CancelPluginException
-from res.enkf import RealizationStateEnum
-from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.export import GenDataCollector, ArgLoader
+
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
 from ert_gui.ertwidgets.pathchooser import PathChooser
+from res.enkf import CancelPluginException, ErtPlugin, RealizationStateEnum
+from res.enkf.enums import EnkfObservationImplementationType
+from res.enkf.export import ArgLoader, GenDataCollector
 
 
 class GenDataRFTCSVExportJob(ErtPlugin):

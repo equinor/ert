@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Tuple, no_type_check
 from pydantic import BaseModel, ValidationError, validator
 
 import ert
+
 from ._validator import ensure_mime
 
 if sys.version_info >= (3, 8):

@@ -2,7 +2,7 @@ import json
 import os
 
 from job_runner.job import Job
-from job_runner.reporting.message import Init, Finish
+from job_runner.reporting.message import Finish, Init
 
 
 class JobRunner(object):

@@ -1,6 +1,6 @@
 from ert_shared.ide.keywords.definitions import (
-    KeywordDefinition,
     ConfigurationLineDefinition,
+    KeywordDefinition,
     StringArgument,
 )
 from ert_shared.ide.keywords.definitions.path_argument import PathArgument

@@ -5,9 +5,9 @@ from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
 
-from .plot_style import PlotStyle
-from .plot_limits import PlotLimits
 from .plot_config import PlotConfig
-from .plot_context import PlotContext
-from .plot_config_history import PlotConfigHistory
 from .plot_config_factory import PlotConfigFactory
+from .plot_config_history import PlotConfigHistory
+from .plot_context import PlotContext
+from .plot_limits import PlotLimits
+from .plot_style import PlotStyle

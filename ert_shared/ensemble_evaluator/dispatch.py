@@ -1,6 +1,5 @@
-from collections import defaultdict, deque, OrderedDict
-
 import asyncio
+from collections import OrderedDict, defaultdict, deque
 from typing import Optional
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers

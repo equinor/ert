@@ -15,9 +15,11 @@
 #  for more details.
 
 import os.path
-from res import ResPrototype
-from res.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, SchemaItem
+
 from cwrap import BaseCClass
+
+from res import ResPrototype
+from res.config import ConfigError, ContentTypeEnum, SchemaItem, UnrecognizedEnum
 
 
 class ContentNode(BaseCClass):

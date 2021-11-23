@@ -1,11 +1,11 @@
 import os
+from typing import Any, List, Mapping
 from uuid import UUID, uuid4
-from typing import Any, Mapping, List
 
-from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
+from fastapi import APIRouter, Body, Depends
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_size
+from ert_shared.dark_storage.enkf import LibresFacade, get_id, get_res, get_size
 
 router = APIRouter(tags=["experiment"])
 

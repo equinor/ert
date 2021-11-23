@@ -1,14 +1,6 @@
-from qtpy.QtWidgets import (
-    QWidget,
-    QHBoxLayout,
-    QComboBox,
-    QDoubleSpinBox,
-    QLabel,
-    QHBoxLayout,
-)
+from qtpy.QtWidgets import QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QWidget
 
 from ert_gui.plottery import PlotStyle
-
 
 STYLE_OFF = ("Off", None)
 STYLE_AREA = ("Area", "#")

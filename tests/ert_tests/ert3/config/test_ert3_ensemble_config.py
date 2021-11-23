@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-import ert3
 import ert
+import ert3
 
 
 @pytest.fixture()

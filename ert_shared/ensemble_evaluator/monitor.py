@@ -4,13 +4,13 @@ import uuid
 from contextlib import ExitStack
 from typing import Optional
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
+
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
-
 
 logger = logging.getLogger(__name__)
 

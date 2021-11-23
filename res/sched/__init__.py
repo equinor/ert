@@ -13,12 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import res
 import ecl
 import ecl.util
 import ecl.util.geometry
-
 from cwrap import Prototype
 
-from .history_source_enum import HistorySourceEnum
+import res
+
 from .history import History
+from .history_source_enum import HistorySourceEnum

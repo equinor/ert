@@ -19,10 +19,10 @@ except ImportError:
     from collections import Sequence
 
 from cwrap import PrototypeError
-from res import ResPrototype
 from ecl import EclPrototype
-from res.util import LLSQResultEnum
-from res.util import Matrix
+
+from res import ResPrototype
+from res.util import LLSQResultEnum, Matrix
 
 try:
     _polyfit = ResPrototype(

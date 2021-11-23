@@ -1,4 +1,5 @@
 from ecl.util.util import Version
+
 from res import ResPrototype
 
 

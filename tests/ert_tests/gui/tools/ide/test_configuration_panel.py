@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 import io
+import os
 
-from qtpy.QtWidgets import QMessageBox, QFileDialog
+from qtpy.QtWidgets import QFileDialog, QMessageBox
 
 from ert_gui.tools.ide import ConfigurationPanel
-import os
 
 UNICODE_TEXT = u"""ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
 ᛋᚳᛖᚪᛚ᛫ᚦᛖᚪᚻ᛫ᛗᚪᚾᚾᚪ᛫ᚷᛖᚻᚹᛦᛚᚳ᛫ᛗᛁᚳᛚᚢᚾ᛫ᚻᛦᛏ᛫ᛞᚫᛚᚪᚾ

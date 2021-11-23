@@ -1,7 +1,6 @@
 from pkg_resources import resource_filename
-
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QCursor, QIcon, QPixmap, QMovie
+from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
 from qtpy.QtWidgets import QApplication
 
 
@@ -54,17 +53,17 @@ def resourceMovie(name):
     return movie
 
 
-from .legend import Legend
-from .validationsupport import ValidationSupport
-from .closabledialog import ClosableDialog
-from .analysismoduleselector import AnalysisModuleSelector
 from .activelabel import ActiveLabel
-from .searchbox import SearchBox
-from .caseselector import CaseSelector
+from .analysismoduleselector import AnalysisModuleSelector
 from .caselist import CaseList
+from .caseselector import CaseSelector
 from .checklist import CheckList
-from .stringbox import StringBox
-from .listeditbox import ListEditBox
+from .closabledialog import ClosableDialog
 from .customdialog import CustomDialog
-from .summarypanel import SummaryPanel
+from .legend import Legend
+from .listeditbox import ListEditBox
 from .pathchooser import PathChooser
+from .searchbox import SearchBox
+from .stringbox import StringBox
+from .summarypanel import SummaryPanel
+from .validationsupport import ValidationSupport

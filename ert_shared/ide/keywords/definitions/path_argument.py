@@ -1,5 +1,6 @@
 import os
 import re
+
 from ert_shared.ide.keywords.definitions import ArgumentDefinition
 
 

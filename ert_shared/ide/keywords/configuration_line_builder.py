@@ -1,6 +1,6 @@
 from ert_shared.ide.keywords import ErtKeywords
 from ert_shared.ide.keywords.configuration_line_parser import ConfigurationLineParser
-from ert_shared.ide.keywords.data import ConfigurationLine, Argument, Keyword
+from ert_shared.ide.keywords.data import Argument, ConfigurationLine, Keyword
 
 
 class ConfigurationLineBuilder(object):

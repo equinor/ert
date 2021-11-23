@@ -1,10 +1,9 @@
 import json
 import pathlib
 from contextlib import contextmanager
+from unittest.mock import patch
 
 import pytest
-
-from ert_shared.asyncio import get_event_loop
 from integration_utils import (
     assert_distribution,
     assert_export,
@@ -13,7 +12,7 @@ from integration_utils import (
 
 import ert
 import ert3
-from unittest.mock import patch
+from ert_shared.asyncio import get_event_loop
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 

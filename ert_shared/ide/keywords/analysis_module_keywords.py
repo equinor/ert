@@ -1,11 +1,11 @@
 from ert_shared.ide.keywords.definitions import (
+    BoolArgument,
+    ConfigurationLineDefinition,
+    FloatArgument,
     IntegerArgument,
     KeywordDefinition,
-    ConfigurationLineDefinition,
     PathArgument,
     StringArgument,
-    FloatArgument,
-    BoolArgument,
 )
 from ert_shared.ide.keywords.definitions.proper_name_format_argument import (
     ProperNameFormatArgument,

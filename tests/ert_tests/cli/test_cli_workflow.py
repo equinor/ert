@@ -1,7 +1,8 @@
 import os
 from argparse import Namespace
-from utils import SOURCE_DIR
+
 from ert_utils import ErtTest, tmpdir
+from utils import SOURCE_DIR
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier

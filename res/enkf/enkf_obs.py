@@ -16,15 +16,15 @@
 import os.path
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList, IntVector
-from res.sched import History
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from res import ResPrototype
-from res.enkf import EnkfFs, LocalObsdataNode, LocalObsdata, MeasData, ObsData
-from res.enkf.enums import EnkfObservationImplementationType
+from ecl.util.util import IntVector, StringList
 
+from res import ResPrototype
+from res.enkf import EnkfFs, LocalObsdata, LocalObsdataNode, MeasData, ObsData
+from res.enkf.enums import EnkfObservationImplementationType
 from res.enkf.observations import ObsVector
+from res.sched import History
 
 
 class EnkfObs(BaseCClass):

@@ -7,8 +7,8 @@ The API is typically meant used as part of workflows.
 
 from collections import defaultdict
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from ert_data import loader
 

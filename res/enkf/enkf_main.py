@@ -13,29 +13,37 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import ctypes
 import sys
-import ctypes, warnings
+import warnings
 from os.path import isfile
 
 from cwrap import BaseCClass
+from ecl.util.util import rng
+
 from res import ResPrototype
 from res.enkf import (
     AnalysisConfig,
     EclConfig,
+    EnkfFsManager,
+    EnkfObs,
+    EnkfSimulationRunner,
+    EnKFState,
+    EnsembleConfig,
+    ErtWorkflowList,
+    ESUpdate,
+    HookManager,
+    HookWorkflow,
     LocalConfig,
     ModelConfig,
-    EnsembleConfig,
-    SiteConfig,
-    ResConfig,
     QueueConfig,
+    ResConfig,
+    SiteConfig,
 )
-from res.enkf import EnkfObs, EnKFState, EnkfSimulationRunner, EnkfFsManager
-from res.enkf import ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
 from res.util import Log
 from res.util.substitution_list import SubstitutionList
-from ecl.util.util import rng
 
 
 class EnKFMain(BaseCClass):
@@ -115,8 +123,8 @@ class EnKFMain(BaseCClass):
         # the call to the real method on the real_enkf_main object. That's done
         # via monkey patching, so we don't need to manually keep the classes
         # synchronized
-        from inspect import getmembers, ismethod
         from functools import partial
+        from inspect import getmembers, ismethod
 
         methods = getmembers(self._real_enkf_main(), predicate=ismethod)
         dont_patch = [name for name, _ in getmembers(BaseCClass)]

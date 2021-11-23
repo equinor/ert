@@ -1,5 +1,5 @@
-from ert_gui.tools.load_results import LoadResultsModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
+from ert_gui.tools.load_results import LoadResultsModel
 from ert_shared import ERT
 
 

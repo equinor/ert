@@ -1,9 +1,10 @@
-import websockets
 import asyncio
-import cloudevents
 import ssl
-from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
+
+import cloudevents
+import websockets
 from websockets.datastructures import Headers
+from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 
 
 class Client:

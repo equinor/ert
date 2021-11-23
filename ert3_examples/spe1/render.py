@@ -5,10 +5,10 @@
 # job from share/ert/forward-models/templating/script/
 # Over time this script should disappear.
 
-import sys
 import subprocess
-import pkg_resources
+import sys
 
+import pkg_resources
 
 if __name__ == "__main__":
     render_exec = pkg_resources.resource_filename(

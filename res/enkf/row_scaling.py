@@ -14,9 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import numpy as np
 import ctypes
+
+import numpy as np
 from cwrap import BaseCClass
+
 from res import ResPrototype
 
 

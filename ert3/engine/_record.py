@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import ert
 import ert3
 from ert_shared.asyncio import get_event_loop

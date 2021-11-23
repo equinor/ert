@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
 import pytest
+from qtpy.QtCore import Qt
+
+import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_gui.simulation.run_dialog import RunDialog
 from ert_shared.ensemble_evaluator.entity.snapshot import (
     PartialSnapshot,
@@ -13,7 +15,6 @@ from ert_shared.status.entity.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from qtpy.QtCore import Qt
 
 
 def test_success(runmodel, active_realizations, qtbot, mock_tracker):

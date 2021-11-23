@@ -1,10 +1,11 @@
-from ert_gui.model.node import NodeType
 import typing
 from collections import defaultdict
 
-from ert_gui.model.snapshot import ProgressRole
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+
+from ert_gui.model.node import NodeType
+from ert_gui.model.snapshot import ProgressRole
 
 
 class ProgressProxyModel(QAbstractItemModel):

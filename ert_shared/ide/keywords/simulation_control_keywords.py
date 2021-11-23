@@ -1,10 +1,10 @@
 from ert_shared.ide.keywords.definitions import (
-    IntegerArgument,
     BoolArgument,
-    StringArgument,
     ConfigurationLineDefinition,
+    IntegerArgument,
     KeywordDefinition,
     PercentArgument,
+    StringArgument,
 )
 
 

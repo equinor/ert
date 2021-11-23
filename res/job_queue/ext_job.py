@@ -16,8 +16,9 @@
 import os.path
 
 from cwrap import BaseCClass
+from ecl.util.util import Hash, StringList
+
 from res import ResPrototype
-from ecl.util.util import StringList, Hash
 from res.config import ContentTypeEnum
 
 

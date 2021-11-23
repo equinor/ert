@@ -1,8 +1,9 @@
-from res.job_queue import JobQueueManager, ForwardModelStatus
-from res.enkf import ErtRunContext, EnkfSimulationRunner
-from res.enkf.enums import EnkfRunType, HookRuntime
 from threading import Thread
 from time import sleep
+
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enums import EnkfRunType, HookRuntime
+from res.job_queue import ForwardModelStatus, JobQueueManager
 
 
 class SimulationContext(object):

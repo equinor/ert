@@ -1,20 +1,18 @@
 import logging
 
-from ert_shared.ensemble_evaluator.client import Client
-
-from ert_shared.ensemble_evaluator.entity import serialization
-
 from cloudevents.http import to_json
 
+import ert_shared.status.entity.state as state
+from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-    Snapshot,
     Job,
+    PartialSnapshot,
     Realization,
+    Snapshot,
     SnapshotDict,
     Step,
 )
-import ert_shared.status.entity.state as state
 
 logger = logging.getLogger(__name__)
 

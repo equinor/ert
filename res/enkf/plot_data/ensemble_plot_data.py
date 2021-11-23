@@ -1,8 +1,9 @@
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector
+
 from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
-from ecl.util.util import BoolVector
 
 
 class EnsemblePlotData(BaseCClass):

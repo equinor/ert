@@ -1,6 +1,6 @@
-from ert_shared import ERT
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
+from ert_shared import ERT
 
 
 class TargetCaseModel(ValueModel):

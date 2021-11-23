@@ -13,15 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from qtpy.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
+from qtpy.QtWidgets import QComboBox, QFormLayout, QTextEdit, QWidget
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_gui.tools.load_results import LoadResultsModel
+from ert_shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
 
 
 class LoadResultsPanel(QWidget):

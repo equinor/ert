@@ -1,12 +1,12 @@
 import json
 import os
-import sys
 import os.path
-import time
 import random
 import subprocess
-
+import sys
+import time
 from contextlib import contextmanager
+
 from .rms_config import RMSConfig
 
 

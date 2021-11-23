@@ -1,17 +1,16 @@
 import asyncio
-from typing import Any, Dict
-from pathlib import Path
+import os
 import subprocess
 import tempfile
-import os
+from pathlib import Path
+from typing import Any, Dict
 
 import prefect
 
+from ert.data import RecordTransmitter
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-
-from ert.data import RecordTransmitter
 
 _BIN_FOLDER = "bin"
 

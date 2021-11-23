@@ -1,9 +1,8 @@
 import sys
 
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QSplashScreen, QApplication
-from qtpy.QtGui import QColor, QPen, QFont
-
+from qtpy.QtGui import QColor, QFont, QPen
+from qtpy.QtWidgets import QApplication, QSplashScreen
 
 from ert_gui.ertwidgets import resourceImage
 

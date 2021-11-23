@@ -1,11 +1,10 @@
 from os.path import basename
-
 from weakref import ref
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
 from ert_gui.tools.ide import IdeWindow
+from ert_shared import ERT
 
 
 class IdeTool(Tool):

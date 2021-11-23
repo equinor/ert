@@ -1,31 +1,31 @@
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QToolButton,
-    QTextEdit,
-    QTabWidget,
-    QWidget,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QSpinBox,
+    QTabWidget,
+    QTextEdit,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.caselist import CaseList
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.checklist import CheckList
 from ert_gui.ertwidgets.models.ertmodel import (
-    getRealizationCount,
-    initializeCurrentCaseFromScratch,
     getCaseRealizationStates,
-    getParameterList,
-    getHistoryLength,
-    initializeCurrentCaseFromExisting,
     getCurrentCaseName,
+    getHistoryLength,
+    getParameterList,
+    getRealizationCount,
+    initializeCurrentCaseFromExisting,
+    initializeCurrentCaseFromScratch,
 )
 from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert_shared import ERT
 
 
 def createCheckLists():

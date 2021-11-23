@@ -1,14 +1,14 @@
 import copy
+import os
 import pathlib
 import sys
-import os
 from unittest.mock import patch
 
 import pytest
 import yaml
 
-import ert3
 import ert
+import ert3
 from ert_shared.services import Storage
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE

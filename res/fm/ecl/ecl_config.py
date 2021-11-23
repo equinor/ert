@@ -1,8 +1,9 @@
 import os
-import yaml
+import re
 import subprocess
 import sys
-import re
+
+import yaml
 
 
 def re_getenv(match_obj):

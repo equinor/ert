@@ -2,14 +2,15 @@ import logging
 from contextlib import ExitStack
 from typing import List, Union
 
-import ert_shared.status.entity.state as state
 import pyrsistent
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
+from qtpy.QtGui import QColor, QFont
+
+import ert_shared.status.entity.state as state
 from ert_gui.model.node import Node, NodeType
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.status.utils import byte_with_unit
-from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
-from qtpy.QtGui import QColor, QFont
 
 logger = logging.getLogger(__name__)
 

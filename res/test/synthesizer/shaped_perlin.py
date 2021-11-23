@@ -1,5 +1,6 @@
 import math
-from . import PrimeGenerator, PerlinNoise
+
+from . import PerlinNoise, PrimeGenerator
 
 
 class Interpolator(object):

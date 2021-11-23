@@ -2,11 +2,10 @@ import copy
 from pathlib import Path
 
 import pytest
-
-import ert3
-import ert
-
 import yaml
+
+import ert
+import ert3
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 

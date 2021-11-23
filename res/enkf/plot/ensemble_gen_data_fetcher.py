@@ -13,8 +13,8 @@
 #
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
-from res.enkf.plot_data import EnsemblePlotGenData
 from res.enkf.plot import DataFetcher
+from res.enkf.plot_data import EnsemblePlotGenData
 
 
 class EnsembleGenDataFetcher(DataFetcher):

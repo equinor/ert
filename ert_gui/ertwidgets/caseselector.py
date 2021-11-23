@@ -1,13 +1,13 @@
 from qtpy.QtWidgets import QComboBox
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import (
     getAllCases,
-    selectOrCreateNewCase,
-    getCurrentCaseName,
     getAllInitializedCases,
+    getCurrentCaseName,
+    selectOrCreateNewCase,
 )
+from ert_shared import ERT
 
 
 class CaseSelector(QComboBox):

@@ -1,16 +1,18 @@
 import asyncio
-from typing import Dict, Tuple, List
+from typing import Dict, List, Tuple
+
 import ert
 import ert3
 from ert3.config import SourceNS
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
+
+from ._entity import TransmitterCoroutine
 from ._sensitivity import (
     analyze_sensitivity,
-    transmitter_map_sensitivity,
     prepare_sensitivity,
+    transmitter_map_sensitivity,
 )
-from ._entity import TransmitterCoroutine
 
 
 def _prepare_experiment(

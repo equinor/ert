@@ -1,12 +1,12 @@
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QFrame,
-    QLabel,
-    QVBoxLayout,
-    QHBoxLayout,
-    QScrollArea,
-    QWidget,
     QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary

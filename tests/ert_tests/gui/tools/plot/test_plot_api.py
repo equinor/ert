@@ -3,9 +3,9 @@ import shutil
 from unittest import TestCase
 
 import pytest
-from utils import SOURCE_DIR
 from ert_utils import tmpdir
 from pandas import DataFrame
+from utils import SOURCE_DIR
 
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.libres_facade import LibresFacade

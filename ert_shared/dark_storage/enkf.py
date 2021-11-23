@@ -1,8 +1,10 @@
-import uuid
 import os
+import uuid
 from typing import Optional
-from fastapi import Depends
+
 from ert_storage.security import security
+from fastapi import Depends
+
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 

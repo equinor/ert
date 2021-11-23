@@ -15,9 +15,9 @@
 #  for more details.
 import os.path
 
+from cwrap import BaseCClass
 from ecl.util.test import TestArea
 
-from cwrap import BaseCClass
 from res import ResPrototype
 from res.enkf import EnKFMain, ResConfig
 

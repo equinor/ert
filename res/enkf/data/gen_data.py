@@ -1,5 +1,6 @@
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
+
 from res import ResPrototype
 
 

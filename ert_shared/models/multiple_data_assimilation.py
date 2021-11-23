@@ -13,15 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert_shared.feature_toggling import FeatureToggling
-from res.enkf.enums import HookRuntime
-from res.enkf.enums import RealizationStateEnum
-from res.enkf import ErtRunContext, EnkfSimulationRunner
-
-from ert_shared.models import BaseRunModel, ErtRunError
-from ert_shared import ERT
-
 import logging
+
+from ert_shared import ERT
+from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.models import BaseRunModel, ErtRunError
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 
 logger = logging.getLogger(__file__)
 

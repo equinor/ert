@@ -27,7 +27,8 @@
 # choice.
 
 
-from cwrap import BaseCClass, CFILE
+from cwrap import CFILE, BaseCClass
+
 from res import ResPrototype
 
 

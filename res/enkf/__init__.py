@@ -15,87 +15,73 @@
 #  for more details.
 
 
-from cwrap import Prototype
-import res
-from .config_keys import ConfigKeys
-import ecl.util
-import ecl.util.geometry
 import ecl
 import ecl.eclfile
+import ecl.gravimetry
 import ecl.grid
 import ecl.grid.faults
-import ecl.gravimetry
-import ecl.summary
 import ecl.rft
+import ecl.summary
+import ecl.util
+import ecl.util.geometry
+from cwrap import Prototype
 
+import res
 import res.analysis
-import res.sched
 import res.config
 import res.job_queue
+import res.sched
+from res.job_queue import CancelPluginException as CancelPluginException
+from res.job_queue import ErtPlugin as ErtPlugin
+from res.job_queue import ErtScript as ErtScript
 
-from .enums import *
-
-from .node_id import NodeId
-
-from .util import TimeMap
-from .state_map import StateMap
-from .summary_key_set import SummaryKeySet
-from .summary_key_matcher import SummaryKeyMatcher
-from .enkf_fs import EnkfFs
-
-
-from .row_scaling import RowScaling
 from .active_list import ActiveList
-from .config import *
-from .data import *
-
-from .obs_block import ObsBlock
-from .obs_data import ObsData
-from .local_dataset import LocalDataset
-from .local_obsdata_node import LocalObsdataNode
-from .local_obsdata import LocalObsdata
-from .local_ministep import LocalMinistep
-from .local_updatestep import LocalUpdateStep
-
-from .observations import *
-
-from .meas_block import MeasBlock
-from .meas_data import MeasData
-
-from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
-
-from .enkf_defaults import EnkfDefaults
-
+from .analysis_iter_config import AnalysisIterConfig
+from .config import *
+from .config_keys import ConfigKeys
+from .data import *
 from .ecl_config import EclConfig
-from .queue_config import QueueConfig
-from .ert_workflow_list import ErtWorkflowList
-from .site_config import SiteConfig
-from .subst_config import SubstConfig
-from .ensemble_config import EnsembleConfig
-from .enkf_obs import EnkfObs
-from .ert_template import ErtTemplate
-from .ert_templates import ErtTemplates
-from .local_config import LocalConfig
-from .model_config import ModelConfig
-from .runpath_list import RunpathList, RunpathNode
-from .hook_workflow import HookWorkflow
-from .hook_manager import HookManager
-from .rng_config import RNGConfig
-from .log_config import LogConfig
-from .res_config import ResConfig
-
-from .es_update import ESUpdate
-from .run_arg import RunArg
-from .enkf_state import EnKFState
-from .ert_run_context import ErtRunContext
-from .enkf_simulation_runner import EnkfSimulationRunner
+from .enkf_defaults import EnkfDefaults
+from .enkf_fs import EnkfFs
 from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
+from .enkf_obs import EnkfObs
+from .enkf_simulation_runner import EnkfSimulationRunner
+from .enkf_state import EnKFState
+from .ensemble_config import EnsembleConfig
+from .enums import *
+from .ert_run_context import ErtRunContext
+from .ert_template import ErtTemplate
+from .ert_templates import ErtTemplates
+from .ert_workflow_list import ErtWorkflowList
+from .es_update import ESUpdate
 from .forward_load_context import ForwardLoadContext
-
-from res.job_queue import ErtScript as ErtScript
-from res.job_queue import (
-    ErtPlugin as ErtPlugin,
-    CancelPluginException as CancelPluginException,
-)
+from .hook_manager import HookManager
+from .hook_workflow import HookWorkflow
+from .local_config import LocalConfig
+from .local_dataset import LocalDataset
+from .local_ministep import LocalMinistep
+from .local_obsdata import LocalObsdata
+from .local_obsdata_node import LocalObsdataNode
+from .local_updatestep import LocalUpdateStep
+from .log_config import LogConfig
+from .meas_block import MeasBlock
+from .meas_data import MeasData
+from .model_config import ModelConfig
+from .node_id import NodeId
+from .obs_block import ObsBlock
+from .obs_data import ObsData
+from .observations import *
+from .queue_config import QueueConfig
+from .res_config import ResConfig
+from .rng_config import RNGConfig
+from .row_scaling import RowScaling
+from .run_arg import RunArg
+from .runpath_list import RunpathList, RunpathNode
+from .site_config import SiteConfig
+from .state_map import StateMap
+from .subst_config import SubstConfig
+from .summary_key_matcher import SummaryKeyMatcher
+from .summary_key_set import SummaryKeySet
+from .util import TimeMap

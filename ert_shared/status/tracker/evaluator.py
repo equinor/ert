@@ -1,28 +1,28 @@
-from ert_shared.asyncio import get_event_loop
-from ert_shared.status.utils import tracker_progress
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_STOPPED,
-    ENSEMBLE_STATE_FAILED,
-)
+import asyncio
 import logging
 import queue
 import threading
 import time
-import asyncio
 
 from aiohttp import ClientError
 
-from ert_shared.models.base_run_model import BaseRunModel
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
+from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STOPPED,
+)
+from ert_shared.status.utils import tracker_progress
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):

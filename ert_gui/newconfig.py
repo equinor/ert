@@ -17,14 +17,14 @@
 
 import os
 
-from qtpy.QtCore import Qt, QSize
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QLabel,
-    QDialogButtonBox,
-    QSpinBox,
     QLineEdit,
+    QSpinBox,
     QWidget,
 )
 

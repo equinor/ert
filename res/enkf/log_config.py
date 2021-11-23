@@ -18,10 +18,9 @@ from os.path import isfile, realpath
 
 from cwrap import BaseCClass
 
-from res.util.enums import MessageLevelEnum
-
 from res import ResPrototype
 from res.enkf import ConfigKeys
+from res.util.enums import MessageLevelEnum
 
 
 class LogConfig(BaseCClass):

@@ -1,10 +1,10 @@
 from ert_shared.ide.keywords.definitions import (
+    BoolArgument,
+    ConfigurationLineDefinition,
     IntegerArgument,
     KeywordDefinition,
-    ConfigurationLineDefinition,
     PathArgument,
     StringArgument,
-    BoolArgument,
 )
 
 

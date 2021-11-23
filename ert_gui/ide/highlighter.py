@@ -1,6 +1,6 @@
 import re
 
-from qtpy.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QTextBlockUserData
+from qtpy.QtGui import QColor, QSyntaxHighlighter, QTextBlockUserData, QTextCharFormat
 
 from ert_shared.ide.keywords import ErtKeywords
 from ert_shared.ide.keywords.configuration_line_builder import ConfigurationLineBuilder

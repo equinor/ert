@@ -1,7 +1,8 @@
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from typing import Optional
 
 from pydantic import BaseModel
+
+from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 
 
 class _UpdateEvent(BaseModel):

@@ -10,6 +10,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 
 from packaging import version
+
 from res.util.subprocess import await_process_tee
 
 from .ecl_config import EclConfig

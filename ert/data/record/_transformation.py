@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
-from pathlib import Path
-import tarfile
 import io
 import stat
+import tarfile
+from abc import ABC, abstractmethod
+from pathlib import Path
 
-from ert.data import RecordTransmitter, BlobRecord, path_to_bytes
+from ert.data import BlobRecord, RecordTransmitter, path_to_bytes
 
 _BIN_FOLDER = "bin"
 

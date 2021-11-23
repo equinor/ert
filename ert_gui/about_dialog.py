@@ -15,14 +15,13 @@
 #  for more details.
 import sys
 
-from qtpy.QtCore import Qt, QSize
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
-from qtpy.QtGui import QFont
-
-import res
 import ecl
-import ert_gui
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+import ert_gui
+import res
 from ert_gui.ertwidgets import resourceImage
 
 

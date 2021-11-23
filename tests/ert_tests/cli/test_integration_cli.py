@@ -9,7 +9,7 @@ import pytest
 
 import ert_shared
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
-from ert_shared.cli.main import run_cli, ErtCliError
+from ert_shared.cli.main import ErtCliError, run_cli
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
 

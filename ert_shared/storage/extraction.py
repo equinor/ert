@@ -1,17 +1,16 @@
-from typing import Dict, List, Mapping, Optional, Union, TYPE_CHECKING
+import datetime
+import io
+import logging
+from typing import TYPE_CHECKING, Dict, List, Mapping, Optional, Union
+
+import pandas as pd
+import requests
 
 from ert_data.measured import MeasuredData
-from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from ert_shared.ert_adapter import ERT, LibresFacade
 from ert_shared.feature_toggling import feature_enabled
 from ert_shared.services import Storage
-
-import requests
-import pandas as pd
-import datetime
-import logging
-import io
-
+from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 
 if TYPE_CHECKING:
     from ert_shared.libres_facade import LibresFacade

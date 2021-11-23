@@ -1,8 +1,8 @@
 from ert_shared.ide.keywords.definitions import (
-    StringArgument,
-    KeywordDefinition,
     IntegerArgument,
+    KeywordDefinition,
     PathArgument,
+    StringArgument,
 )
 from ert_shared.ide.keywords.definitions.configuration_line_definition import (
     ConfigurationLineDefinition,

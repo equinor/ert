@@ -5,9 +5,9 @@ import websockets
 from cloudevents.http import CloudEvent, to_json
 
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.entity import identifiers as identifiers
-from ert_shared.ensemble_evaluator.ensemble.builder import _BaseJob, _Realization, _Step
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.ensemble.builder import _BaseJob, _Realization, _Step
+from ert_shared.ensemble_evaluator.entity import identifiers as identifiers
 
 
 def _mock_ws(host, port, messages, delay_startup=0):

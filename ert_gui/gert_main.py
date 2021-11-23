@@ -13,18 +13,19 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
 import logging
+import os
 import sys
 import time
 
-from qtpy.QtCore import Qt, QLocale
+import ecl
+from qtpy.QtCore import QLocale, Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-from ert_gui.ert_splash import ErtSplash
-from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
+from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertnotifier import configureErtNotifier
+from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools.export import ExportTool
@@ -35,10 +36,7 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
-
 from res.enkf import EnKFMain, ResConfig
-
-import ecl
 
 
 def run_gui(args):

@@ -17,9 +17,9 @@
 Ert - Ensemble Reservoir Tool - a package for reservoir modeling.
 """
 import os.path
-import ecl  # This needs to be here for ... reasons
-
 import warnings
+
+import ecl  # This needs to be here for ... reasons
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
@@ -75,8 +75,9 @@ class ResPrototype(Prototype):
 
 RES_LIB = ResPrototype.lib
 
-from res.util import ResVersion
 from ecl.util.util import updateAbortSignals
+
+from res.util import ResVersion
 
 updateAbortSignals()
 

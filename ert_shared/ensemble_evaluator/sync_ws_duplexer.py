@@ -1,12 +1,14 @@
 import asyncio
 import ssl
 import threading
-from typing import Optional, Union
 from concurrent.futures import CancelledError
+from typing import Optional, Union
+
 import websockets
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from websockets.client import WebSocketClientProtocol  # type: ignore
 from websockets.datastructures import Headers
+
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 
 
 class SyncWebsocketDuplexer:

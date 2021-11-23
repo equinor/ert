@@ -1,10 +1,13 @@
-from importlib.abc import Loader
 import importlib.util
-from typing import Callable, Tuple, cast, Union, Dict, Any, Mapping
-from types import MappingProxyType
 from collections import OrderedDict
+from importlib.abc import Loader
+from types import MappingProxyType
+from typing import Any, Callable, Dict, Mapping, Tuple, Union, cast
+
 from pydantic import BaseModel, FilePath, ValidationError, validator
+
 import ert
+
 from ._validator import ensure_mime
 
 

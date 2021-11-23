@@ -2,15 +2,16 @@ import os.path
 import re
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList, BoolVector
+from ecl.util.util import BoolVector, StringList
+
 from res import ResPrototype
 from res.enkf import (
     EnkfFs,
+    EnKFFSType,
+    EnkfInitModeEnum,
+    RealizationStateEnum,
     StateMap,
     TimeMap,
-    RealizationStateEnum,
-    EnkfInitModeEnum,
-    EnKFFSType,
 )
 
 

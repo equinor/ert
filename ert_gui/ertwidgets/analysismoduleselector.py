@@ -1,14 +1,14 @@
 import sys
 
 from qtpy.QtCore import QMargins, Qt
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton
+from qtpy.QtWidgets import QComboBox, QHBoxLayout, QToolButton, QWidget
 
-from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import (
-    getCurrentAnalysisModuleName,
-    getAnalysisModuleNames,
-)
+from ert_gui.ertwidgets import ClosableDialog, addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from ert_gui.ertwidgets.models.ertmodel import (
+    getAnalysisModuleNames,
+    getCurrentAnalysisModuleName,
+)
 
 
 class AnalysisModuleSelector(QWidget):

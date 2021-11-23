@@ -1,16 +1,18 @@
-from ert_gui.model.snapshot import COLUMNS, NodeRole
-from ert_gui.model.node import Node, NodeType
 import typing
+
 from qtpy.QtCore import (
-    QObject,
-    Qt,
-    Signal,
-    Slot,
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
+    QObject,
+    Qt,
     QVariant,
+    Signal,
+    Slot,
 )
+
+from ert_gui.model.node import Node, NodeType
+from ert_gui.model.snapshot import COLUMNS, NodeRole
 
 
 class JobListProxyModel(QAbstractProxyModel):

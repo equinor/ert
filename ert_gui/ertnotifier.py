@@ -2,8 +2,8 @@ import sys
 
 from qtpy.QtCore import QObject, Signal, Slot
 
-from res.enkf import EnKFMain
 from ert_shared import ERT
+from res.enkf import EnKFMain
 
 
 class ErtNotifier(QObject):
@@ -36,8 +36,8 @@ class ErtNotifier(QObject):
         self.ertChanged.emit()
 
     def reloadERT(self, config_file):
-        import sys
         import os
+        import sys
 
         python_executable = sys.executable
         ert_gui_main = sys.argv[0]

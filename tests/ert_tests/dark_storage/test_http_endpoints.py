@@ -1,16 +1,15 @@
+import io
+import uuid
 from argparse import ArgumentParser
 
+import pandas as pd
+import pytest
 from numpy.testing import assert_array_equal
 from requests import Response
-import uuid
 
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_EXPERIMENT_MODE
+from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
-
-import pandas as pd
-import io
-import pytest
 
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):

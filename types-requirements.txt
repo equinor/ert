@@ -1,7 +1,7 @@
 mypy
-types-aiofiles
-types-requests
-types-pkg_resources
 types-PyYAML
+types-aiofiles
+types-pkg_resources
 types-python-dateutil
+types-requests
 types-six

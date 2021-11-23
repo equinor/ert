@@ -1,9 +1,11 @@
 import math
-from pandas import DataFrame, MultiIndex
+
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
-from res.enkf.plot_data import EnsemblePlotGenData
 from ecl.util.util import BoolVector, IntVector
+from pandas import DataFrame, MultiIndex
+
+from res.enkf import EnkfFs, EnKFMain, ErtImplType, GenKwConfig, RealizationStateEnum
+from res.enkf.plot_data import EnsemblePlotGenData
 
 
 class GenDataCollector(object):

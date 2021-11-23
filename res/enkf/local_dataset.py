@@ -1,8 +1,9 @@
 from cwrap import BaseCClass
-from res import ResPrototype
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion
 from ecl.util.util import StringList
+
+from res import ResPrototype
 
 
 class LocalDataset(BaseCClass):

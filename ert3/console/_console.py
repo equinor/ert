@@ -11,8 +11,8 @@ import pkg_resources as pkg
 
 import ert
 import ert3
-from ert3.workspace import Workspace
 from ert3.config import DEFAULT_RECORD_MIME_TYPE
+from ert3.workspace import Workspace
 from ert_shared.asyncio import get_event_loop
 from ert_shared.services import Storage
 

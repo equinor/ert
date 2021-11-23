@@ -1,8 +1,7 @@
+import importlib.util
 import inspect
 import sys
 import traceback
-
-import importlib.util
 
 
 class ErtScript(object):

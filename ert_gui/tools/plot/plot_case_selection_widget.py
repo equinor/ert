@@ -1,6 +1,5 @@
-from qtpy.QtCore import Signal, QSignalMapper, Qt
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QComboBox
-
+from qtpy.QtCore import QSignalMapper, Qt, Signal
+from qtpy.QtWidgets import QComboBox, QHBoxLayout, QToolButton, QVBoxLayout, QWidget
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools.plot import PlotCaseModel

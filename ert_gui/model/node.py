@@ -1,6 +1,7 @@
 from enum import Enum, auto
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, SnapshotDict
+
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, SnapshotDict
 
 
 class NodeType(Enum):

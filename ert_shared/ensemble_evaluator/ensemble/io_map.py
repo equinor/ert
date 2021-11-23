@@ -1,7 +1,8 @@
 from typing import Dict, List, Optional
-import ert
+
 from beartype import beartype
 
+import ert
 
 _transmitter_mapping = Dict[int, Dict[str, Optional[ert.data.RecordTransmitter]]]
 

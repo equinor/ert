@@ -1,4 +1,4 @@
-from . import ShapeFunction, ShapeCreator
+from . import ShapeCreator, ShapeFunction
 
 
 class OilSimulator(object):

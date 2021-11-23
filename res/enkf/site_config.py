@@ -15,10 +15,12 @@
 #  for more details.
 
 import os
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.enkf import ConfigKeys
-from res.job_queue import ExtJob, ExtJoblist, EnvironmentVarlist
+from res.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
 
 
 class SiteConfig(BaseCClass):

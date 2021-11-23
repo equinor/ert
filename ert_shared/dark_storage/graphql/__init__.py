@@ -1,12 +1,13 @@
 from typing import Any
-from starlette.graphql import GraphQLApp
-from fastapi import APIRouter
-import graphene as gr
-from graphql.execution.base import ResolveInfo
 
-from ert_shared.dark_storage.enkf import get_res, get_name
-from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
-from ert_shared.dark_storage.graphql.experiments import Experiment, CreateExperiment
+import graphene as gr
+from fastapi import APIRouter
+from graphql.execution.base import ResolveInfo
+from starlette.graphql import GraphQLApp
+
+from ert_shared.dark_storage.enkf import get_name, get_res
+from ert_shared.dark_storage.graphql.ensembles import CreateEnsemble, Ensemble
+from ert_shared.dark_storage.graphql.experiments import CreateExperiment, Experiment
 
 
 class Query(gr.ObjectType):

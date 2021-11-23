@@ -1,6 +1,7 @@
-from res.enkf import ErtScript
-from functools import partial
 import math
+from functools import partial
+
+from res.enkf import ErtScript
 
 
 def gaussian_decay(obs_pos, length_scale, grid, data_index):

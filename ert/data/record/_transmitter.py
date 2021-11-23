@@ -3,27 +3,18 @@ import uuid
 from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import (
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Union,
-)
+from typing import Callable, Dict, List, Optional, Union
+
 import aiofiles
 
 # Type hinting for wrap must be turned off until (1) is resolved.
 # (1) https://github.com/Tinche/aiofiles/issues/8
 from aiofiles.os import wrap  # type: ignore
-from pydantic import (
-    StrictBytes,
-    StrictFloat,
-    StrictInt,
-    StrictStr,
-)
+from pydantic import StrictBytes, StrictFloat, StrictInt, StrictStr
+
 from ert.serialization import get_serializer
 
-from ._record import Record, RecordType, NumericalRecord, BlobRecord
+from ._record import BlobRecord, NumericalRecord, Record, RecordType
 
 _copy = wrap(shutil.copy)
 

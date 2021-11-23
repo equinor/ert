@@ -1,4 +1,4 @@
-from res.job_queue import ErtScript, ErtPlugin, WorkflowJob
+from res.job_queue import ErtPlugin, ErtScript, WorkflowJob
 
 
 class Plugin(object):

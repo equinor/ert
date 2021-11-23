@@ -6,15 +6,14 @@ import time
 
 import numpy as np
 import pytest
+from ecl.summary import EclSum
 from utils import SOURCE_DIR
 
 from ert_data import loader
 from ert_data.measured import MeasuredData
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
-from ecl.summary import EclSum
 from res.enkf.export import SummaryObservationCollector
-
 
 test_data_root = SOURCE_DIR / "test-data" / "local"
 

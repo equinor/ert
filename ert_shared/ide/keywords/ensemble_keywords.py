@@ -1,7 +1,7 @@
 from ert_shared.ide.keywords.definitions import (
+    ConfigurationLineDefinition,
     IntegerArgument,
     KeywordDefinition,
-    ConfigurationLineDefinition,
     PathArgument,
     StringArgument,
 )

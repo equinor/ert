@@ -1,7 +1,7 @@
-from typing import List
-import pandas as pd
 import io
+from typing import List
 
+import pandas as pd
 from requests import Response
 
 
@@ -27,8 +27,9 @@ def test_openapi(ert_storage_app, dark_storage_app):
 
 def test_graphql(env):
     from ert_storage.graphql import schema as ert_schema
-    from ert_shared.dark_storage.graphql import schema as dark_schema
     from graphql import print_schema
+
+    from ert_shared.dark_storage.graphql import schema as dark_schema
 
     def _sort_schema(schema: str) -> str:
         """

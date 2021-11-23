@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import argparse
-from res.fm.rms import run
 import sys
+
+from res.fm.rms import run
 
 
 def _build_argument_parser():

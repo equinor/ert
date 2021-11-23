@@ -1,7 +1,7 @@
-from ert_shared.status.tracker.legacy import LegacyTracker
-from ert_shared.status.tracker.evaluator import EvaluatorTracker
-from ert_shared.status.utils import scale_intervals
 from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.status.tracker.evaluator import EvaluatorTracker
+from ert_shared.status.tracker.legacy import LegacyTracker
+from ert_shared.status.utils import scale_intervals
 
 
 def create_tracker(

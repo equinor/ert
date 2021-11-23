@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from datetime import datetime
 import os
 import sys
+from datetime import datetime
 
 from ecl.summary import EclSum, EclSumTStep
 from ecl.test import ExtendedTestCase

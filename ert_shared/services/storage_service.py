@@ -1,10 +1,12 @@
-from os import PathLike
 import sys
+from os import PathLike
+from pathlib import Path
+from typing import Any, Mapping, Optional, Tuple
+from urllib.parse import urljoin
+
 import httpx
 import requests
-from urllib.parse import urljoin
-from pathlib import Path
-from typing import Any, Optional, Mapping, Tuple
+
 from ert_shared.services._base_service import BaseService, local_exec_args
 
 

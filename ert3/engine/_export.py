@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import ert
 import ert3
 from ert_shared.asyncio import get_event_loop

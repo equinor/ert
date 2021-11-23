@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from datetime import datetime
 import os
 import sys
+from datetime import datetime
 
 from ecl.summary import EclSum, EclSumTStep
 from ecl.util.test import ExtendedTestCase
@@ -9,7 +9,6 @@ from ecl.util.test import ExtendedTestCase
 print(sys.path)
 print(os.environ["PYTHONPATH"])
 import res
-
 from res.test.synthesizer import OilSimulator
 
 

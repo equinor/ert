@@ -1,16 +1,18 @@
-import os
-import sys
-import uvicorn
-import socket
-import json
 import argparse
+import json
+import os
+import socket
+import sys
 from pathlib import Path
-from ert_shared import port_handler
+from typing import List
+
+import uvicorn
+from uvicorn.supervisors import ChangeReload
+
 from ert_shared import __file__ as ert_shared_path
+from ert_shared import port_handler
 from ert_shared.plugins import ErtPluginContext
 from ert_shared.storage.command import add_parser_options
-from uvicorn.supervisors import ChangeReload
-from typing import List
 
 
 class Server(uvicorn.Server):
@@ -161,8 +163,8 @@ def terminate_on_parent_death():
     if sys.platform != "linux" or "ERT_COMM_FD" not in os.environ:
         return
 
-    from ctypes import CDLL, c_int, c_ulong
     import signal
+    from ctypes import CDLL, c_int, c_ulong
 
     lib = CDLL(None)
 

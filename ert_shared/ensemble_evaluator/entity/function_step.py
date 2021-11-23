@@ -1,13 +1,13 @@
 import asyncio
 import pickle
 from typing import Dict
+
 import prefect
 
+from ert.data import BlobRecord, NumericalRecord, Record, RecordTransmitter
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-
-from ert.data import RecordTransmitter, NumericalRecord, BlobRecord, Record
 
 
 class FunctionTask(prefect.Task):

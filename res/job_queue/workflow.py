@@ -1,7 +1,7 @@
+import logging
 import os
 import sys
 import time
-import logging
 
 from cwrap import BaseCClass  # pylint: disable=import-error
 

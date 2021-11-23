@@ -1,5 +1,7 @@
 from collections import namedtuple
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
 
 RunpathNode = namedtuple(

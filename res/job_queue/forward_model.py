@@ -14,10 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.job_queue import ExtJob, ExtJoblist
-from res.job_queue import EnvironmentVarlist
 from ecl.util.util import StringList
+
+from res import ResPrototype
+from res.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
 from res.util.substitution_list import SubstitutionList
 
 

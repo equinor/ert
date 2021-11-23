@@ -1,31 +1,33 @@
 from datetime import datetime
-from ert_shared.libres_facade import LibresFacade
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List, Optional
 from uuid import UUID
-from fastapi.param_functions import Depends
+
 import graphene as gr
+from fastapi.param_functions import Depends
 from graphene.types.scalars import ID
+
 from ert_shared.dark_storage.common import (
-    ensemble_parameters,
     ensemble_parameter_names,
+    ensemble_parameters,
     get_response_names,
     get_responses,
 )
-
 from ert_shared.dark_storage.enkf import (
+    get_active_realizations,
     get_id,
     get_res,
     get_size,
-    get_active_realizations,
 )
+from ert_shared.libres_facade import LibresFacade
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
+
     from ert_shared.dark_storage.graphql.experiments import Experiment
-    from ert_shared.dark_storage.graphql.updates import Update
     from ert_shared.dark_storage.graphql.parameters import Parameter
-    from ert_shared.dark_storage.graphql.unique_responses import UniqueResponse
     from ert_shared.dark_storage.graphql.responses import Response
+    from ert_shared.dark_storage.graphql.unique_responses import UniqueResponse
+    from ert_shared.dark_storage.graphql.updates import Update
 
 
 class _EnsembleMixin:

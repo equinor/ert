@@ -1,8 +1,8 @@
 import re
 
-from qtpy.QtCore import Qt, QEvent, QStringListModel
-from qtpy.QtWidgets import QPlainTextEdit, QCompleter, QShortcut
-from qtpy.QtGui import QFont, QTextOption, QKeySequence, QTextCursor
+from qtpy.QtCore import QEvent, QStringListModel, Qt
+from qtpy.QtGui import QFont, QKeySequence, QTextCursor, QTextOption
+from qtpy.QtWidgets import QCompleter, QPlainTextEdit, QShortcut
 
 
 class IdePanel(QPlainTextEdit):

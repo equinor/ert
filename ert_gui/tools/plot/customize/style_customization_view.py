@@ -1,10 +1,9 @@
-from qtpy.QtWidgets import QHBoxLayout
 from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QHBoxLayout
 
 from ert_gui.tools.plot import ColorBox
-from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
-
 from ert_gui.tools.plot import style_chooser as sc
+from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 
 
 class StyleCustomizationView(CustomizationView):

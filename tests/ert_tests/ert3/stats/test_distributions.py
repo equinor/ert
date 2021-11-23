@@ -1,7 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 import scipy
-from unittest.mock import patch, MagicMock
 
 import ert3
 

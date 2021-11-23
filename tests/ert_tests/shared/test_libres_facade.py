@@ -1,9 +1,9 @@
 import os
 from unittest import TestCase
 
-from utils import SOURCE_DIR
 from ert_utils import tmpdir
 from pandas.core.base import PandasObject
+from utils import SOURCE_DIR
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig

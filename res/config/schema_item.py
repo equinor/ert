@@ -15,10 +15,11 @@
 #  for more details.
 import ctypes
 
+from cwrap import BaseCClass
 from ecl import EclPrototype
+
 from res import ResPrototype
 from res.config import ContentTypeEnum
-from cwrap import BaseCClass
 
 
 class SchemaItem(BaseCClass):

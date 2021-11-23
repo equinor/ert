@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import sys
 import re
-from typing import Generator
-from pathlib import Path
-from subprocess import check_output, CalledProcessError, STDOUT
+import sys
 from argparse import ArgumentParser
-
+from pathlib import Path
+from subprocess import STDOUT, CalledProcessError, check_output
+from typing import Generator
 
 CLANG_VERSIONS = ("10", "11", "12")
 DIRECTORIES = ["libres"]

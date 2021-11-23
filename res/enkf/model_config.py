@@ -13,18 +13,18 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass
+import os
 
+from cwrap import BaseCClass
 from ecl.summary import EclSum
 from ecl.util.util import StringList
+
 from res import ResPrototype
-from res.job_queue import ForwardModel, ExtJob, ExtJoblist
-from res.sched import HistorySourceEnum
-from res.util import PathFormat
 from res.enkf import ConfigKeys
 from res.enkf.util import TimeMap
-
-import os
+from res.job_queue import ExtJob, ExtJoblist, ForwardModel
+from res.sched import HistorySourceEnum
+from res.util import PathFormat
 
 
 class ModelConfig(BaseCClass):

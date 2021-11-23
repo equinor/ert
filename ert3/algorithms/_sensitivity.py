@@ -1,12 +1,12 @@
-from typing import Set, MutableMapping, List, Dict, Optional, Any
+from typing import Any, Dict, List, MutableMapping, Optional, Set
 
 import numpy as np
 from SALib.analyze import fast
 from SALib.sample import fast_sampler
 
-from ert_shared.asyncio import get_event_loop
-from ert.data import RecordTransmitter, Record, NumericalRecord
 from ert3.stats import Distribution, Gaussian, Uniform
+from ert.data import NumericalRecord, Record, RecordTransmitter
+from ert_shared.asyncio import get_event_loop
 
 
 def _build_base_records(

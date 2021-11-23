@@ -2,7 +2,7 @@ import io
 import logging
 from functools import partial
 from http import HTTPStatus
-from typing import Any, Dict, Iterable, Optional, Set, Tuple, List
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import pandas as pd
 import requests

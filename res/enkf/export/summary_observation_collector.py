@@ -1,15 +1,16 @@
-from pandas import DataFrame, MultiIndex
 import numpy
+from ecl.util.util import BoolVector
+from pandas import DataFrame, MultiIndex
+
 from res.enkf import (
-    ErtImplType,
-    EnKFMain,
     EnkfFs,
-    RealizationStateEnum,
+    EnKFMain,
     EnkfObservationImplementationType,
+    ErtImplType,
+    RealizationStateEnum,
 )
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotData
-from ecl.util.util import BoolVector
 
 
 class SummaryObservationCollector(object):

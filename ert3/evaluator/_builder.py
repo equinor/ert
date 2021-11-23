@@ -8,7 +8,6 @@ from pydantic import FilePath
 import ert
 import ert3
 from ert_shared.asyncio import get_event_loop
-
 from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     StepBuilder,

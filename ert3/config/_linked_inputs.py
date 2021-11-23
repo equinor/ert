@@ -1,7 +1,7 @@
 from typing import Dict, NamedTuple
 
-from ._stages_config import Step
 from ._ensemble_config import EnsembleConfig, SourceNS
+from ._stages_config import Step
 
 
 class LinkedInput(NamedTuple):

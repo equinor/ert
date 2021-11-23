@@ -17,12 +17,12 @@ import sys
 
 from qtpy.QtCore import QDir, Signal
 from qtpy.QtWidgets import (
+    QFileDialog,
     QFormLayout,
-    QWidget,
+    QHBoxLayout,
     QLineEdit,
     QToolButton,
-    QHBoxLayout,
-    QFileDialog,
+    QWidget,
 )
 
 

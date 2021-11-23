@@ -3,16 +3,16 @@ from threading import Thread
 
 from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtWidgets import (
-    QWidget,
+    QComboBox,
     QHBoxLayout,
     QLabel,
-    QToolButton,
     QMessageBox,
-    QComboBox,
+    QToolButton,
+    QWidget,
 )
 
-from ert_gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner
+from ert_gui.ertwidgets import addHelpToWidget, resourceIcon, resourceMovie
+from ert_gui.ertwidgets.models.ertmodel import createWorkflowRunner, getWorkflowNames
 from ert_gui.tools.workflows.workflow_dialog import WorkflowDialog
 
 

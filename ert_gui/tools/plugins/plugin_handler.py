@@ -1,4 +1,5 @@
 from res.job_queue import WorkflowJob
+
 from .plugin import Plugin
 
 

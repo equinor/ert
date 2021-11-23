@@ -1,5 +1,6 @@
-from res.job_queue import JobStatusType
 from collections import OrderedDict
+
+from res.job_queue import JobStatusType
 
 ENSEMBLE_STATE_STARTED = "Starting"
 ENSEMBLE_STATE_STOPPED = "Stopped"

@@ -16,7 +16,9 @@
 
 
 import ctypes
+
 from cwrap import BaseCClass, BaseCEnum
+
 from res import ResPrototype
 from res.job_queue import Job
 

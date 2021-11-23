@@ -1,6 +1,7 @@
-from ert_shared.status.entity import state
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
 import math
+
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.status.entity import state
 
 
 def byte_with_unit(byte_count):

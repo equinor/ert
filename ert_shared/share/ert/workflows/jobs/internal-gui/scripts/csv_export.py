@@ -1,26 +1,25 @@
 import os
 import re
+import sys
 
 import pandas
-import sys
 
 try:
     from PyQt4.QtGui import QCheckBox
 except ImportError:
     from PyQt5.QtWidgets import QCheckBox
 
-
-from res.enkf import ErtPlugin, CancelPluginException
-from res.enkf.export import (
-    SummaryCollector,
-    GenKwCollector,
-    MisfitCollector,
-    DesignMatrixReader,
-)
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
 from ert_gui.ertwidgets.pathchooser import PathChooser
+from res.enkf import CancelPluginException, ErtPlugin
+from res.enkf.export import (
+    DesignMatrixReader,
+    GenKwCollector,
+    MisfitCollector,
+    SummaryCollector,
+)
 
 
 class CSVExportJob(ErtPlugin):

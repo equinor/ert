@@ -1,9 +1,9 @@
+import pytest
 from libres_utils import ResTest
 from pytest import MonkeyPatch
 
 from res.enkf.export import SummaryCollector
 from res.test import ErtTestContext
-import pytest
 
 
 class SummaryCollectorTest(ResTest):

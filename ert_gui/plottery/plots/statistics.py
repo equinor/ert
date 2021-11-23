@@ -1,11 +1,12 @@
-from matplotlib.patches import Rectangle
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from pandas import DataFrame
+
+from ert_gui.plottery.plots.history import plotHistory
+from ert_gui.plottery.plots.refcase import plotRefcase
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
-from ert_gui.plottery.plots.history import plotHistory
-from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class StatisticsPlot(object):

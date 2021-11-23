@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 
-import ert3
 import ert
+import ert3
 
 
 def create_mock_script(path, data=""):

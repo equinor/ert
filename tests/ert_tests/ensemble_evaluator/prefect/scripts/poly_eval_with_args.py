@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import sys
 import json
+import sys
 
 
 def _load_coeffs(filename):

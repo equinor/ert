@@ -1,13 +1,32 @@
-import logging
 import asyncio
+import logging
 from threading import Thread
-from PyQt5.QtWidgets import QAbstractItemView
 
 from ecl.util.util import BoolVector
+from PyQt5.QtWidgets import QAbstractItemView
+from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
+from qtpy.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTableView,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
-from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole
+from ert_gui.model.progress_proxy import ProgressProxyModel
+from ert_gui.model.snapshot import FileRole, RealIens, SnapshotModel
 from ert_gui.simulation.tracker_worker import TrackerWorker
+from ert_gui.simulation.view.legend import LegendView
+from ert_gui.simulation.view.progress import ProgressView
+from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.models import BaseRunModel
@@ -18,26 +37,7 @@ from ert_shared.status.entity.event import (
 )
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
-from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
-from qtpy.QtWidgets import (
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QTableView,
-    QVBoxLayout,
-    QWidget,
-    QTabWidget,
-    QHeaderView,
-    QProgressBar,
-)
 from res.job_queue import JobStatusType
-from ert_gui.simulation.view.progress import ProgressView
-from ert_gui.simulation.view.legend import LegendView
-from ert_gui.simulation.view.realization import RealizationWidget
-from ert_gui.model.progress_proxy import ProgressProxyModel
-
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 

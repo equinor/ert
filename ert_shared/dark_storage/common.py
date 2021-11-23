@@ -1,9 +1,10 @@
+from typing import List, Union
+
+import pandas as pd
+
 from ert_data import loader
 from ert_data.measured import MeasuredData
 from ert_shared.dark_storage.enkf import get_res
-from typing import List, Union
-import pandas as pd
-
 from res.enkf import EnkfObservationImplementationType
 
 

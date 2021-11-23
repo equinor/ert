@@ -15,8 +15,10 @@
 #  for more details.
 
 import ctypes
+
 from cwrap import BaseCEnum
 from ecl import EclPrototype
+
 from res import ResPrototype
 
 

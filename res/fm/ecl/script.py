@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
-from .ecl_run import EclRun
+
 from res.fm.ecl.ecl_config import EclrunConfig
+
+from .ecl_run import EclRun
 
 
 def run(config, argv):

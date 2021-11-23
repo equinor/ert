@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-import os.path
 import argparse
+import os.path
 import re
 
 TARGET_FILE = "realization.number"

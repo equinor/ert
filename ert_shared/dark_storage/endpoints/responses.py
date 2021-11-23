@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
 from ert_shared.dark_storage.common import data_for_key
-from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_name
+from ert_shared.dark_storage.enkf import LibresFacade, get_name, get_res
 
 router = APIRouter(tags=["response"])
 

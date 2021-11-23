@@ -1,16 +1,18 @@
 import math
+
 from PyQt5.QtWidgets import QListView
-from qtpy.QtCore import QSize, QModelIndex, Qt
+from qtpy.QtCore import QModelIndex, QSize, Qt
+from qtpy.QtGui import QColor, QPainter, QPalette
 from qtpy.QtWidgets import (
-    QTreeView,
+    QApplication,
+    QFrame,
     QStyledItemDelegate,
     QStyleOptionViewItem,
-    QFrame,
-    QApplication,
+    QTreeView,
 )
-from qtpy.QtGui import QPainter, QColor, QPalette
-from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
+
 from ert_gui.model.progress_proxy import ProgressRole
+from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
 
 
 class LegendView(QListView):

@@ -1,20 +1,19 @@
 from qtpy.QtCore import QSize
 from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QLabel,
     QListWidget,
     QMessageBox,
-    QAbstractItemView,
-    QWidget,
-    QVBoxLayout,
-    QLabel,
     QToolButton,
-    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
 )
 
-from ert_shared import ERT
-from ert_gui.ertwidgets import addHelpToWidget
+from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase
 from ert_gui.ertwidgets.validateddialog import ValidatedDialog
-from ert_gui.ertwidgets import resourceIcon
+from ert_shared import ERT
 
 
 class AddRemoveWidget(QWidget):

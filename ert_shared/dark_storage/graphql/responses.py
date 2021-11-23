@@ -1,7 +1,8 @@
 import time
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
+
 import graphene as gr
 
 from ert_shared.dark_storage.enkf import get_id

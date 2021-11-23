@@ -1,7 +1,7 @@
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QListView, QHBoxLayout, QToolButton
+from qtpy.QtWidgets import QHBoxLayout, QListView, QToolButton, QVBoxLayout, QWidget
 
-from ert_gui.ertwidgets import SearchBox, resourceIcon, Legend
+from ert_gui.ertwidgets import Legend, SearchBox, resourceIcon
 from ert_gui.tools.plot import DataTypeKeysListModel, DataTypeProxyModel, FilterPopup
 
 

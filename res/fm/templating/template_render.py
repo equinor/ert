@@ -1,6 +1,7 @@
-import jinja2
 import json
 import os
+
+import jinja2
 import yaml
 
 from res import enkf

@@ -14,9 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from six import string_types
-from res import ResPrototype
 from ecl.util.util import StringList
+from six import string_types
+
+from res import ResPrototype
 
 
 class ExtParamConfig(BaseCClass):

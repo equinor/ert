@@ -1,24 +1,24 @@
+import functools
 import json
+import logging
 import os
 import socket
 import time
-import logging
-import functools
 
 from job_runner.io import cond_unlink
+from job_runner.reporting.base import Reporter
 from job_runner.reporting.message import (
+    _JOB_EXIT_FAILED_STRING,
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
     _JOB_STATUS_SUCCESS,
-    _JOB_EXIT_FAILED_STRING,
-    Message,
     Exited,
     Finish,
     Init,
+    Message,
     Running,
     Start,
 )
-from job_runner.reporting.base import Reporter
 from job_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"

@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
-import graphene as gr
+from typing import TYPE_CHECKING, Any
 
+import graphene as gr
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo
+
     from ert_shared.dark_storage.graphql.ensembles import CreateEnsemble
 
 

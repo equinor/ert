@@ -1,13 +1,13 @@
 import json
-import sys
 import shutil
+import sys
 from pathlib import Path
-from typing import Union, Optional, Set, List, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import yaml
 
-import ert3
 import ert
+import ert3
 
 _WORKSPACE_DATA_ROOT = ".ert"
 _EXPERIMENTS_BASE = "experiments"

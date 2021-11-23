@@ -15,9 +15,10 @@
 #  for more details.
 
 from cwrap import BaseCClass
+from ecl.summary import EclSum
+
 from res import ResPrototype
 from res.sched import HistorySourceEnum
-from ecl.summary import EclSum
 
 
 class History(BaseCClass):

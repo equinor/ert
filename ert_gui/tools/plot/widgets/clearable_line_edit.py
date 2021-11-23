@@ -1,4 +1,4 @@
-from qtpy.QtCore import Qt, QSize
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QLineEdit, QPushButton, QStyle
 

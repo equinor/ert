@@ -4,9 +4,9 @@ import threading
 import uuid
 from functools import partial
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from cloudevents.http.event import CloudEvent
 
+import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator

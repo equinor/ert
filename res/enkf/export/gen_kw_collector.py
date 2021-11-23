@@ -1,10 +1,12 @@
 import math
-from pandas import DataFrame, MultiIndex
+
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
+from ecl.util.util import BoolVector
+from pandas import DataFrame, MultiIndex
+
+from res.enkf import EnkfFs, EnKFMain, ErtImplType, GenKwConfig, RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotGenKW
-from ecl.util.util import BoolVector
 
 
 class GenKwCollector(object):

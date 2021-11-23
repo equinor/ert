@@ -1,9 +1,8 @@
-from res.enkf.enums import HookRuntime
-from res.enkf import ErtRunContext, EnkfSimulationRunner
-
-from ert_shared.models import BaseRunModel
 from ert_shared import ERT
 from ert_shared.feature_toggling import FeatureToggling
+from ert_shared.models import BaseRunModel
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enums import HookRuntime
 
 
 class EnsembleExperiment(BaseRunModel):

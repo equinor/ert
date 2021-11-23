@@ -1,11 +1,12 @@
+import logging
+import time
+from threading import Lock, Thread
+
 from cwrap import BaseCClass
 from ecl.util.util import StringList
-from res import ResPrototype
-from res.job_queue import JobStatusType, ThreadStatus, JobSubmitStatusType
-from threading import Thread, Lock
 
-import time
-import logging
+from res import ResPrototype
+from res.job_queue import JobStatusType, JobSubmitStatusType, ThreadStatus
 
 logger = logging.getLogger(__name__)
 

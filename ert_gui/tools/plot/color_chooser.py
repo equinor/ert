@@ -1,6 +1,6 @@
-from qtpy.QtCore import QSize, QRect, Signal
-from qtpy.QtWidgets import QFrame, QColorDialog
-from qtpy.QtGui import QPainter, QColor
+from qtpy.QtCore import QRect, QSize, Signal
+from qtpy.QtGui import QColor, QPainter
+from qtpy.QtWidgets import QColorDialog, QFrame
 
 
 class ColorBox(QFrame):

@@ -1,15 +1,16 @@
-from ert_gui.model.snapshot import SnapshotModel
+import logging
 import typing
-from ert_shared.status.tracker.evaluator import EvaluatorTracker
-from ert_shared.status.tracker.legacy import LegacyTracker
+
+from qtpy.QtCore import QObject, Signal, Slot
+
+from ert_gui.model.snapshot import SnapshotModel
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from qtpy.QtCore import QObject, Signal, Slot
-import logging
-
+from ert_shared.status.tracker.evaluator import EvaluatorTracker
+from ert_shared.status.tracker.legacy import LegacyTracker
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from qtpy.QtCore import Qt, QAbstractItemModel, QModelIndex
+from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
 

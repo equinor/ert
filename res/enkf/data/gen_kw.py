@@ -13,12 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import numbers
 import os.path
 
-from cwrap import BaseCClass, CFILE
-import numbers
-
+from cwrap import CFILE, BaseCClass
 from ecl.util.util import DoubleVector
+
 from res import ResPrototype
 from res.enkf.config import GenKwConfig
 

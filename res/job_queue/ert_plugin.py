@@ -1,6 +1,7 @@
-from .ert_script import ErtScript
-from threading import Thread
 import time
+from threading import Thread
+
+from .ert_script import ErtScript
 
 
 class CancelPluginException(Exception):

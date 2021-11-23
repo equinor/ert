@@ -14,12 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import BaseCClass
-from ecl.util.util.rng import RandomNumberGenerator
-from res import ResPrototype
 from os import path
 
+from cwrap import BaseCClass
+from ecl.util.util.rng import RandomNumberGenerator
+
 import res
+from res import ResPrototype
 from res.util import Matrix
 
 

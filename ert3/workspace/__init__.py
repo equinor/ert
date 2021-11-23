@@ -30,8 +30,7 @@ creating workspace objects.
      reconsidered.
 """
 
-from ert3.workspace._workspace import Workspace
-from ert3.workspace._workspace import initialize
+from ert3.workspace._workspace import Workspace, initialize
 
 __all__ = [
     "Workspace",

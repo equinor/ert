@@ -1,6 +1,7 @@
-import re
-from pyrsistent import freeze
 import collections
+import re
+
+from pyrsistent import freeze
 
 
 def recursive_update(left, right, check_key=True):

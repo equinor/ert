@@ -1,18 +1,16 @@
 from qtpy.QtWidgets import (
-    QWidget,
-    QFormLayout,
-    QSpacerItem,
     QCheckBox,
+    QFormLayout,
     QHBoxLayout,
+    QSpacerItem,
     QSpinBox,
+    QWidget,
 )
-
 
 from ert_gui.plottery import PlotConfig
 from ert_gui.tools.plot import StyleChooser
-from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
-
 from ert_gui.tools.plot import style_chooser as sc
+from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
 
 class CustomizationView(QWidget):

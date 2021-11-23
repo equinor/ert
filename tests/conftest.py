@@ -1,8 +1,7 @@
 import os
+
 import pkg_resources
-
 import pytest
-
 from utils import SOURCE_DIR
 
 

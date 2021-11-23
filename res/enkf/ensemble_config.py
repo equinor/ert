@@ -13,16 +13,18 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
+
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
+from ecl.util.util import StringList
+
 from res import ResPrototype
-from res.enkf import SummaryKeyMatcher, ConfigKeys
 from res.config import ConfigContent
+from res.enkf import ConfigKeys, SummaryKeyMatcher
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfVarType, ErtImplType, LoadFailTypeEnum
-import os
 
 
 def _get_abs_path(file):

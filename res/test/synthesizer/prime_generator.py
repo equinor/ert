@@ -1,4 +1,5 @@
-import random, numbers
+import numbers
+import random
 
 
 def rwh_primes2(n):

@@ -1,20 +1,18 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+from qtpy.QtWidgets import QDockWidget, QMainWindow, QTabWidget, QVBoxLayout, QWidget
 
+from ert_gui.ertwidgets import showWaitCursorWhileWaiting
+from ert_gui.plottery import PlotConfig, PlotContext
 from ert_gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
 from ert_gui.plottery.plots.distribution import DistributionPlot
 from ert_gui.plottery.plots.ensemble import EnsemblePlot
 from ert_gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert_gui.plottery.plots.histogram import HistogramPlot
 from ert_gui.plottery.plots.statistics import StatisticsPlot
-from ert_shared import ERT
-from ert_gui.ertwidgets import showWaitCursorWhileWaiting
-from ert_gui.plottery import PlotContext, PlotConfig
-
-from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidget
+from ert_gui.tools.plot import CaseSelectionWidget, DataTypeKeysWidget, PlotWidget
 from ert_gui.tools.plot.customize import PlotCustomizer
-
 from ert_gui.tools.plot.plot_api import PlotApi
+from ert_shared import ERT
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"

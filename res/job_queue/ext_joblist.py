@@ -14,9 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+from ecl.util.util import StringList
+
 from res import ResPrototype
 from res.job_queue import ExtJob
-from ecl.util.util import StringList
 
 
 class ExtJoblist(BaseCClass):

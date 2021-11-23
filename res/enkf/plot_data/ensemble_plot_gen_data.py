@@ -15,11 +15,12 @@
 #  for more details.
 
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector, DoubleVector
+
 from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums.ert_impl_type_enum import ErtImplType
-from ecl.util.util import BoolVector, DoubleVector
 
 
 class EnsemblePlotGenData(BaseCClass):

@@ -3,16 +3,16 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.models.ertmodel import (
+    get_runnable_realizations_mask,
     getRealizationCount,
     getRunPath,
-    get_runnable_realizations_mask,
 )
+from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
-from ert_shared.models import EnsembleExperiment
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
+from ert_shared.ide.keywords.definitions import IntegerArgument, RangeStringArgument
+from ert_shared.models import EnsembleExperiment
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):

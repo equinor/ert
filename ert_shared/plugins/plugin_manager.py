@@ -7,6 +7,7 @@ import tempfile
 from itertools import chain
 
 import pluggy
+
 from ert_shared.plugins.workflow_config import WorkflowConfigs
 
 _PLUGIN_NAMESPACE = "ert"
@@ -14,9 +15,10 @@ _PLUGIN_NAMESPACE = "ert"
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
+import ert_shared.hook_implementations
+
 # Imports below hook_implementation and hook_specification to avoid circular imports
 import ert_shared.plugins.hook_specifications
-import ert_shared.hook_implementations
 
 
 class ErtPluginManager(pluggy.PluginManager):

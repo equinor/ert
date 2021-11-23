@@ -1,6 +1,6 @@
 import re
-from ert_shared.ide.keywords.definitions import ArgumentDefinition
 
+from ert_shared.ide.keywords.definitions import ArgumentDefinition
 
 """
 Keyword definition for proper names containing a string argument.

@@ -3,10 +3,9 @@ import shutil
 import sys
 
 import pytest
-
 from ecl.util.util import BoolVector
 
-from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig, EnKFMain
+from res.enkf import EnKFMain, EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig
 
 
 @pytest.fixture()

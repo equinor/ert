@@ -1,6 +1,7 @@
 import sys
-from typing import Optional, Dict, Any
-from pydantic import root_validator, BaseModel, ValidationError
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, ValidationError, root_validator
 from pydantic.class_validators import validator
 
 import ert

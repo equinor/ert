@@ -1,11 +1,10 @@
 import argparse
 import json
+import logging
 import os
 import signal
 import sys
-import json
 import typing
-import logging
 
 import job_runner.reporting as reporting
 from job_runner import JOBS_FILE

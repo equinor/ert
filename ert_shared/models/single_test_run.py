@@ -1,5 +1,5 @@
-from ert_shared.models import ErtRunError, EnsembleExperiment
 from ert_shared import ERT
+from ert_shared.models import EnsembleExperiment, ErtRunError
 
 
 class SingleTestRun(EnsembleExperiment):

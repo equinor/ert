@@ -1,6 +1,7 @@
 from ecl.util.util import BoolVector
-from ert_gui.ertwidgets.models.valuemodel import ValueModel
+
 from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
+from ert_gui.ertwidgets.models.valuemodel import ValueModel
 
 
 def mask_to_rangestring(mask):

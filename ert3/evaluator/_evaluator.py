@@ -6,8 +6,7 @@ from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
 from ert_shared.ensemble_evaluator.entity.identifiers import EVTYPE_EE_TERMINATED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-
-from ert_shared.status.entity.state import ENSEMBLE_STATE_STOPPED, ENSEMBLE_STATE_FAILED
+from ert_shared.status.entity.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
 
 
 def _run(

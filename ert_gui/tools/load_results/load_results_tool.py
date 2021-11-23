@@ -16,8 +16,7 @@
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
-from ert_gui.tools.load_results import LoadResultsModel
-from ert_gui.tools.load_results import LoadResultsPanel
+from ert_gui.tools.load_results import LoadResultsModel, LoadResultsPanel
 
 
 class LoadResultsTool(Tool):

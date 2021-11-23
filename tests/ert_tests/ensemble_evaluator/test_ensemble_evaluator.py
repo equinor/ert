@@ -1,4 +1,3 @@
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,6 +13,7 @@ from ert_shared.ensemble_evaluator.narratives import (
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
+from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,

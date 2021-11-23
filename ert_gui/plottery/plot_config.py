@@ -1,5 +1,6 @@
 import itertools
-from ert_gui.plottery import PlotStyle, PlotLimits
+
+from ert_gui.plottery import PlotLimits, PlotStyle
 
 
 class PlotConfig(object):

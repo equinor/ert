@@ -2,32 +2,31 @@ import copy
 import logging
 import pickle
 import uuid
+from collections import defaultdict
+from enum import Enum
+from graphlib import TopologicalSorter
+from pathlib import Path
 from typing import (
     IO,
     TYPE_CHECKING,
     Callable,
     Dict,
-    List,
-    Tuple,
-    Optional,
     Iterator,
+    List,
+    Optional,
+    Tuple,
     Type,
     TypeVar,
 )
-from collections import defaultdict
-from graphlib import TopologicalSorter
-from pathlib import Path
-from enum import Enum
 
+from ert.data import FileRecordTransformation, RecordTransformation
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.ensemble.io_map import InputMap, OutputMap
 from ert_shared.ensemble_evaluator.ensemble.legacy import _LegacyEnsemble
 from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
-from ert_shared.ensemble_evaluator.ensemble.io_map import InputMap, OutputMap
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert.data import RecordTransformation, FileRecordTransformation
-
 from res.enkf import EnKFState, RunArg
 
 if TYPE_CHECKING:

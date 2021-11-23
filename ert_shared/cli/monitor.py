@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
 import sys
 from datetime import datetime
 
-from tqdm import tqdm
 from colors import color as ansi_color
+from tqdm import tqdm
+
 from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
+from ert_shared.status.entity import state
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -17,7 +18,6 @@ from ert_shared.status.entity.state import (
     REAL_STATE_TO_COLOR,
 )
 from ert_shared.status.utils import format_running_time
-from ert_shared.status.entity import state
 
 
 def _ansi_color(*args, **kwargs):

@@ -1,7 +1,7 @@
-from qtpy.QtWidgets import QHBoxLayout, QComboBox
+from qtpy.QtWidgets import QComboBox, QHBoxLayout
 
-from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 from ert_gui.tools.plot import style_chooser as sc
+from ert_gui.tools.plot.customize import CustomizationView, WidgetProperty
 
 
 class StatisticsCustomizationView(CustomizationView):

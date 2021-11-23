@@ -1,7 +1,7 @@
 import os
 import unittest
-import pkg_resources
 
+import pkg_resources
 from libres_utils import ResTest
 
 

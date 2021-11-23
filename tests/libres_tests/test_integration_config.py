@@ -1,5 +1,6 @@
 import pytest
 from ecl.util.util import BoolVector
+
 from res.enkf import ErtRunContext
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig

@@ -1,9 +1,9 @@
 import json
 import os
 import subprocess
-import pkg_resources
 
 import jinja2
+import pkg_resources
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 

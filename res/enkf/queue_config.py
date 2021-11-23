@@ -15,12 +15,11 @@
 #  for more details.
 
 from cwrap import BaseCClass
-
-from ecl.util.util import StringList, Hash
+from ecl.util.util import Hash, StringList
 
 from res import ResPrototype
 from res.enkf import ConfigKeys
-from res.job_queue import JobQueue, ExtJoblist, Driver
+from res.job_queue import Driver, ExtJoblist, JobQueue
 
 
 class QueueConfig(BaseCClass):

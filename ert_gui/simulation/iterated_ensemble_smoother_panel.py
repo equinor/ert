@@ -1,20 +1,20 @@
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
-from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
+from ert_gui.ertwidgets import AnalysisModuleSelector, CaseSelector, addHelpToWidget
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import (
+    getNumberOfIterations,
     getRealizationCount,
     getRunPath,
     setNumberOfIterations,
-    getNumberOfIterations,
 )
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
-    RangeStringArgument,
-    ProperNameFormatArgument,
-)
 from ert_gui.simulation import SimulationConfigPanel
+from ert_shared.ide.keywords.definitions import (
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
 from ert_shared.models import IteratedEnsembleSmoother
 
 

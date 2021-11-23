@@ -14,10 +14,11 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import sys
 import os.path
+import sys
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.config import ConfigContent, UnrecognizedEnum
 

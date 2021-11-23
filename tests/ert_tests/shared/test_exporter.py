@@ -4,8 +4,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from utils import SOURCE_DIR
 from ert_utils import tmpdir
+from utils import SOURCE_DIR
 
 from ert_shared import ERT
 from ert_shared.cli.notifier import ErtCliNotifier

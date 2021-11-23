@@ -5,7 +5,7 @@ import time
 from datetime import datetime as dt
 from subprocess import Popen
 
-from psutil import Process, TimeoutExpired, NoSuchProcess, AccessDenied, ZombieProcess
+from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
 from job_runner.io import assert_file_executable
 from job_runner.reporting.message import Exited, Running, Start

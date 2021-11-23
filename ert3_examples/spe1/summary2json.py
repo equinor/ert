@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import argparse
-import ecl2df
 import json
-import sys
 import pathlib
+import sys
+
+import ecl2df
 
 
 def _build_arg_parser():

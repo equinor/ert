@@ -2,7 +2,7 @@ import copy
 import datetime
 import typing
 from collections import defaultdict
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
 import pyrsistent
 from dateutil.parser import parse

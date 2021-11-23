@@ -1,5 +1,7 @@
 import os
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.job_queue import WorkflowJob
 

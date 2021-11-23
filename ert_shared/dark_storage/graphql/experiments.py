@@ -1,13 +1,12 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, List, Mapping
 from uuid import UUID
-from typing import Any, List, TYPE_CHECKING, Mapping
 
 import graphene as gr
 
-from ert_shared.dark_storage.enkf import get_res, get_id, get_size
-from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
-
+from ert_shared.dark_storage.enkf import get_id, get_res, get_size
+from ert_shared.dark_storage.graphql.ensembles import CreateEnsemble, Ensemble
 
 if TYPE_CHECKING:
     from graphql.execution.base import ResolveInfo

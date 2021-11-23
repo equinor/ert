@@ -14,14 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import Prototype
+
 import res
 
-
-from .config_path_elm import ConfigPathElm
-from .unrecognized_enum import UnrecognizedEnum
-from .content_type_enum import ContentTypeEnum
-from .config_error import ConfigError
-from .schema_item import SchemaItem
 from .config_content import ConfigContent, ContentItem, ContentNode
+from .config_error import ConfigError
 from .config_parser import ConfigParser
+from .config_path_elm import ConfigPathElm
 from .config_settings import ConfigSettings
+from .content_type_enum import ContentTypeEnum
+from .schema_item import SchemaItem
+from .unrecognized_enum import UnrecognizedEnum

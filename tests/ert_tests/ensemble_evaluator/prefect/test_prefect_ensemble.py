@@ -1,9 +1,8 @@
-import sys
 import asyncio
-from itertools import permutations
-from pathlib import Path
 import pickle
 import sys
+from itertools import permutations
+from pathlib import Path
 from typing import Set
 
 import cloudpickle
@@ -13,9 +12,9 @@ import pytest
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.status.entity import state
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.status.entity import state
 
 
 def test_get_flow(

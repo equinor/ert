@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions import KeywordDefinition, ArgumentDefinition
+from ert_shared.ide.keywords.definitions import ArgumentDefinition, KeywordDefinition
 
 
 class ConfigurationLineDefinition(object):

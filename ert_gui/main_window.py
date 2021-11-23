@@ -1,19 +1,18 @@
 import functools
 import os
 import sys
+import webbrowser
 
 import pkg_resources
-import webbrowser
 import yaml
-
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QDockWidget,
     QAction,
+    QDockWidget,
+    QMainWindow,
     QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert_gui.about_dialog import AboutDialog

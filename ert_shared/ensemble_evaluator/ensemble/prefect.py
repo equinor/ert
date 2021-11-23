@@ -1,31 +1,29 @@
 import asyncio
 import contextlib
-from datetime import timedelta
 import functools
 import importlib
 import logging
 import multiprocessing
-from multiprocessing.context import BaseContext
 import os
 import signal
 import threading
 import time
+from datetime import timedelta
+from multiprocessing.context import BaseContext
 from typing import Optional
 
 import cloudpickle
-from cloudevents.http import CloudEvent, to_json
-from dask_jobqueue.lsf import LSFJob
 import prefect
 import prefect.utilities.logging
+from cloudevents.http import CloudEvent, to_json
+from dask_jobqueue.lsf import LSFJob
 from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
 
 from ert_shared.asyncio import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.config import (
-    EvaluatorServerConfig,
-)
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
 from ert_shared.port_handler import find_available_port

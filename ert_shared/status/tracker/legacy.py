@@ -16,10 +16,10 @@ from ert_shared.ensemble_evaluator.entity.identifiers import (
     MAX_MEMORY_USAGE,
 )
 from ert_shared.ensemble_evaluator.entity.snapshot import (
-    PartialSnapshot,
-    Snapshot,
     Job,
+    PartialSnapshot,
     Realization,
+    Snapshot,
     SnapshotDict,
     Step,
 )

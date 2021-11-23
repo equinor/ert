@@ -1,15 +1,15 @@
-import subprocess
+import logging
+import os
+import pathlib
 import shutil
 import signal
+import subprocess
 import sys
-import os
-import logging
 import tempfile
-import yaml
-import pathlib
 from typing import Any, Optional
-from webviz_ert.assets import WEBVIZ_CONFIG
 
+import yaml
+from webviz_ert.assets import WEBVIZ_CONFIG
 
 logger = logging.getLogger()
 
