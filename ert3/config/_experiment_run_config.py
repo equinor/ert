@@ -1,5 +1,27 @@
+from typing import Dict, NamedTuple, cast
+
 import ert
-from . import ExperimentConfig, StagesConfig, EnsembleConfig
+
+from . import EnsembleConfig, ExperimentConfig, SourceNS, StagesConfig, Step
+
+
+class LinkedInput(NamedTuple):
+    """The LinkedInput class provides all necessary information to use the
+    inputs that are needed by an experiment.
+
+    The LinkedInput class collects the needed configuration from the experiment,
+    stages and ensemble configuration objects that are part of an
+    `:py:class:ert3.config.ExperimentRunConfig` configuration object.
+    """
+
+    name: str
+    source_mime: str
+    source_namespace: SourceNS
+    source_location: str
+    source_is_directory: bool
+    dest_location: str
+    dest_mime: str
+    dest_is_directory: bool
 
 
 class ExperimentRunConfig:
@@ -63,6 +85,63 @@ class ExperimentRunConfig:
         """
         return self._ensemble_config
 
+    def get_stage(self) -> Step:
+        """Return the stage used by the forward model in this
+        experiment.
+
+        Returns:
+            str: The name of the stage.
+        """
+        stage = self._stages_config.step_from_key(
+            self._ensemble_config.forward_model.stage
+        )
+        # The stage has already been validated to exist:
+        return cast(Step, stage)
+
+    def get_linked_inputs(self) -> Dict[SourceNS, Dict[str, LinkedInput]]:
+        """Return the linked inputs needed for this experiment run.
+
+        Returns:
+            Dict[SourceNS, Dict[str, LinkedInput]]: A dictionary of linked inputs.
+        """
+        inputs: Dict[SourceNS, Dict[str, LinkedInput]] = {
+            SourceNS.storage: {},
+            SourceNS.resources: {},
+            SourceNS.stochastic: {},
+        }
+        stage = self.get_stage()
+        for ensemble_input in self._ensemble_config.input:
+            name = ensemble_input.record
+            stage_is_directory = stage.input[name].is_directory
+            stage_mime = stage.input[name].mime
+            stage_location = stage.input[name].location
+
+            if stage_mime != ensemble_input.mime:
+                print(
+                    f"Warning: Conflicting ensemble mime '{ensemble_input.mime}' and "
+                    + f"stage mime '{stage_mime}' for input '{name}'."
+                )
+
+            # fall back on stage is_directory
+            ensemble_is_directory = (
+                ensemble_input.is_directory
+                if ensemble_input.is_directory is not None
+                else stage_is_directory
+            )
+
+            input_ = LinkedInput(
+                name=name,
+                source_namespace=ensemble_input.source_namespace,
+                source_mime=ensemble_input.mime,
+                source_is_directory=ensemble_is_directory,
+                source_location=ensemble_input.source_location,
+                dest_mime=stage_mime,
+                dest_location=stage_location,
+                dest_is_directory=stage_is_directory,
+            )
+            inputs[input_.source_namespace][input_.name] = input_
+        return inputs
+
     def _validate_ensemble_size(self) -> None:
         if (
             self._experiment_config.type == "sensitivity"
@@ -81,9 +160,7 @@ class ExperimentRunConfig:
 
     def _validate_stage(self) -> None:
         stage_name = self._ensemble_config.forward_model.stage
-        stage = next(
-            (stage for stage in self._stages_config if stage.name == stage_name), None
-        )
+        stage = self._stages_config.step_from_key(stage_name)
         if stage is None:
             raise ert.exceptions.ConfigValidationError(
                 f"Invalid stage in forward model: '{stage_name}'. "
