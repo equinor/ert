@@ -221,12 +221,6 @@ class ErtKeywordTest(ErtTest):
             "UPDATE_RESULTS", [BoolArgument], "keywords/update_results", "Enkf Control"
         )
         self.keywordTest(
-            "ENKF_CROSS_VALIDATION",
-            [StringArgument],
-            "keywords/enkf_cross_validation",
-            "Enkf Control",
-        )
-        self.keywordTest(
             "ENKF_SCHED_FILE",
             [PathArgument],
             "keywords/enkf_sched_file",

@@ -25,7 +25,6 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addUpdateLogPath())
         ert_keywords.addKeyword(self.addRerunStart())
         ert_keywords.addKeyword(self.addUpdateResults())
-        ert_keywords.addKeyword(self.addEnkfCrossValidation())
         ert_keywords.addKeyword(self.addEnkfSchedFile())
         ert_keywords.addKeyword(self.addCaseTable())
         ert_keywords.addKeyword(self.addContainer())
@@ -139,16 +138,6 @@ class EnkfControlKeywords(object):
             group=self.group,
         )
         return update_results
-
-    def addEnkfCrossValidation(self):
-        cross_validation = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("ENKF_CROSS_VALIDATION"),
-            arguments=[StringArgument()],
-            documentation_link="keywords/enkf_cross_validation",
-            required=False,
-            group=self.group,
-        )
-        return cross_validation
 
     def addEnkfSchedFile(self):
         sched_file = ConfigurationLineDefinition(
