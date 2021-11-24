@@ -224,18 +224,8 @@ def _run(workspace: Workspace, args: Any) -> None:
 
 def _export(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "export"
-    experiments_run_config = workspace.load_experiment_run_config(args.experiment_name)
-
-    ensemble_size = ert3.engine.get_ensemble_size(
-        experiment_run_config=experiments_run_config
-    )
-    ert3.engine.export(
-        workspace,
-        args.experiment_name,
-        experiments_run_config.ensemble_config,
-        experiments_run_config.stages_config,
-        ensemble_size,
-    )
+    experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
+    ert3.engine.export(workspace, args.experiment_name, experiment_run_config)
 
 
 def _record(workspace: Workspace, args: Any) -> None:

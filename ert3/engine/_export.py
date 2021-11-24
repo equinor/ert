@@ -78,9 +78,7 @@ def _prepare_export_responses(
 def export(
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
-    ensemble: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
-    ensemble_size: int,
+    experiment_run_config: ert3.config.ExperimentRunConfig,
 ) -> None:
     workspace.assert_experiment_exists(experiment_name)
 
@@ -89,11 +87,22 @@ def export(
     ):
         raise ValueError("Cannot export experiment that has not been carried out")
 
+    ensemble_size = ert3.engine.get_ensemble_size(
+        experiment_run_config=experiment_run_config
+    )
+
     parameters = _prepare_export_parameters(
-        workspace, experiment_name, ensemble, stages_config, ensemble_size
+        workspace,
+        experiment_name,
+        experiment_run_config.ensemble_config,
+        experiment_run_config.stages_config,
+        ensemble_size,
     )
     responses = _prepare_export_responses(
-        workspace.name, experiment_name, ensemble, ensemble_size
+        workspace.name,
+        experiment_name,
+        experiment_run_config.ensemble_config,
+        ensemble_size,
     )
 
     data: List[Dict[str, Dict[str, Any]]] = []
