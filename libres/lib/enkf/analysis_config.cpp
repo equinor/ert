@@ -593,7 +593,6 @@ void analysis_config_add_config_items(config_parser_type *config) {
     config_add_key_value(config, ENKF_MERGE_OBSERVATIONS_KEY, false,
                          CONFIG_BOOL);
     config_add_key_value(config, SINGLE_NODE_UPDATE_KEY, false, CONFIG_BOOL);
-    config_add_key_value(config, ENKF_CROSS_VALIDATION_KEY, false, CONFIG_BOOL);
 
     config_add_key_value(config, ENKF_RERUN_KEY, false, CONFIG_BOOL);
     config_add_key_value(config, RERUN_START_KEY, false, CONFIG_INT);

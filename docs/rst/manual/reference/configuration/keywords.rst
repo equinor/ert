@@ -36,7 +36,6 @@ Keyword name                                                            Required
 :ref:`ECLBASE <eclbase>`                                                YES\*                                                                   Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
 :ref:`END_DATE <end_date>`                                              NO                                                                      You can tell ERT how long the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_CROSS_VALIDATION <enkf_cross_validation>`                    NO                                                                      Deprecated
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`                NO                                      FALSE                           Should observations from many times be merged together?
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                          NO                                                                      Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
@@ -1207,12 +1206,6 @@ Keywords controlling the ES algorithm
 
         In theory and in practice this has worked well when one uses a small number of
         ensemble members.
-
-
-.. _enkf_cross_validation:
-.. topic:: ENKF_CROSS_VALIDATION
-
-        `ENKF_CROSS_VALIDATION` is deprecated.
 
 
 .. _enkf_force_ncomp:
