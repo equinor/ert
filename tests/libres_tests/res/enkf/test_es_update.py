@@ -72,7 +72,7 @@ def test_get_invalid_module(setup_case):
                 1.0849199162367573,
                 -0.2026982960301163,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
@@ -91,7 +91,7 @@ def test_get_invalid_module(setup_case):
                 1.0495218946126155,
                 -0.23061011158425496,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
@@ -110,7 +110,7 @@ def test_get_invalid_module(setup_case):
                 1.7415219166473932,
                 -0.4014927497171072,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
@@ -129,7 +129,7 @@ def test_get_invalid_module(setup_case):
                 1.682525213940497,
                 -0.4480124423073352,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
@@ -199,7 +199,7 @@ def test_update(setup_case, module, expected_gen_kw):
                 0.10001691562080614,
                 0.09549338450036506,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
@@ -217,7 +217,7 @@ def test_update(setup_case, module, expected_gen_kw):
                 0.10001691562080614,
                 0.09549338450036506,
             ],
-            marks=pytest.mark.skip(
+            marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
                 reason="See https://github.com/equinor/ert/issues/2351",
             ),
