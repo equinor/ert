@@ -159,6 +159,8 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
+    with open(workspace._path / "parameters.yml", "w") as f:
+        yaml.dump([], f)
     workspace.load_experiment_run_config("test")
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
@@ -189,6 +191,8 @@ def test_workspace_load_experiment_config_size_validation(
         yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
+    with open(workspace._path / "parameters.yml", "w") as f:
+        yaml.dump([], f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="An ensemble size must be specified.",
@@ -223,6 +227,8 @@ def test_workspace_load_experiment_config_stages_validation(
         yaml.dump(base_ensemble_dict, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(double_stages_config_list, f)
+    with open(workspace._path / "parameters.yml", "w") as f:
+        yaml.dump([], f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Ensemble and stage inputs do not match.",
@@ -259,6 +265,8 @@ def test_workspace_load_experiment_config_resources_validation(
         yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
+    with open(workspace._path / "parameters.yml", "w") as f:
+        yaml.dump([], f)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"] += [
