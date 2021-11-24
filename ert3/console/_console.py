@@ -214,25 +214,20 @@ def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
     experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
-    parameters_config = workspace.load_parameters_config()
     if experiment_run_config.experiment_config.type == "evaluation":
-        ert3.engine.run(
-            experiment_run_config, parameters_config, workspace, args.experiment_name
-        )
+        ert3.engine.run(experiment_run_config, workspace, args.experiment_name)
     elif experiment_run_config.experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
-            experiment_run_config, parameters_config, workspace, args.experiment_name
+            experiment_run_config, workspace, args.experiment_name
         )
 
 
 def _export(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "export"
     experiments_run_config = workspace.load_experiment_run_config(args.experiment_name)
-    parameters_config = workspace.load_parameters_config()
 
     ensemble_size = ert3.engine.get_ensemble_size(
-        experiment_run_config=experiments_run_config,
-        parameters_config=parameters_config,
+        experiment_run_config=experiments_run_config
     )
     ert3.engine.export(
         workspace,

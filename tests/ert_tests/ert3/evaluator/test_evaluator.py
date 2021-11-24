@@ -49,7 +49,10 @@ def test_evaluator_script(
     ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
 
     experiment_run_config = ert3.config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"), stages_config, ensemble_config
+        ert3.config.ExperimentConfig(type="evaluation"),
+        stages_config,
+        ensemble_config,
+        ert3.config.ParametersConfig.parse_obj([]),
     )
     stage = experiment_run_config.get_stage()
 
@@ -111,6 +114,7 @@ def test_evaluator_function(
         ert3.config.ExperimentConfig(type="evaluation"),
         function_stages_config,
         ensemble_config,
+        ert3.config.ParametersConfig.parse_obj([]),
     )
     stage = experiment_run_config.get_stage()
 

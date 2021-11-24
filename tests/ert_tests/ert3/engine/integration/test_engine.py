@@ -181,9 +181,11 @@ def test_run_once_polynomial_evaluation(
     with assert_clean_workspace(workspace):
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, ensemble
+                evaluation_experiment_config,
+                stages_config,
+                ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "evaluation",
         )
@@ -193,9 +195,11 @@ def test_run_once_polynomial_evaluation(
         ):
             ert3.engine.run(
                 ert3.config.ExperimentRunConfig(
-                    evaluation_experiment_config, stages_config, ensemble
+                    evaluation_experiment_config,
+                    stages_config,
+                    ensemble,
+                    gaussian_parameters_config,
                 ),
-                gaussian_parameters_config,
                 workspace,
                 "evaluation",
             )
@@ -230,9 +234,11 @@ def test_export_polynomial_evaluation(
     with assert_clean_workspace(workspace):
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, ensemble
+                evaluation_experiment_config,
+                stages_config,
+                ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "evaluation",
         )
@@ -260,9 +266,11 @@ def test_export_uniform_polynomial_evaluation(
     with assert_clean_workspace(workspace):
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, uniform_ensemble
+                evaluation_experiment_config,
+                stages_config,
+                uniform_ensemble,
+                uniform_parameters_config,
             ),
-            uniform_parameters_config,
             workspace,
             "uniform_evaluation",
         )
@@ -298,8 +306,8 @@ def test_export_x_uncertainties_polynomial_evaluation(
                 evaluation_experiment_config,
                 x_uncertainty_stages_config,
                 x_uncertainty_ensemble,
+                x_uncertainty_parameters_config,
             ),
-            x_uncertainty_parameters_config,
             workspace,
             "x_uncertainty",
         )
@@ -421,9 +429,11 @@ def test_run_presampled(
 
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, presampled_ensemble
+                evaluation_experiment_config,
+                stages_config,
+                presampled_ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "presampled_evaluation",
         )
@@ -480,9 +490,11 @@ def test_run_uniform_presampled(
 
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, presampled_uniform_ensemble
+                evaluation_experiment_config,
+                stages_config,
+                presampled_uniform_ensemble,
+                uniform_parameters_config,
             ),
-            uniform_parameters_config,
             workspace,
             "presampled_uniform_evaluation",
         )
@@ -531,9 +543,11 @@ def test_record_load_and_run(
 
         ert3.engine.run(
             ert3.config.ExperimentRunConfig(
-                evaluation_experiment_config, stages_config, doe_ensemble
+                evaluation_experiment_config,
+                stages_config,
+                doe_ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "doe",
         )
@@ -589,8 +603,8 @@ def test_sensitivity_oat_run_and_export(
                 sensitivity_oat_experiment_config,
                 stages_config,
                 sensitivity_ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "sensitivity",
         )
@@ -599,8 +613,8 @@ def test_sensitivity_oat_run_and_export(
             sensitivity_oat_experiment_config,
             stages_config,
             sensitivity_ensemble,
+            gaussian_parameters_config,
         ),
-        parameters_config=gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
         ert3.engine.export(
@@ -632,8 +646,8 @@ def test_sensitivity_fast_run_and_export(
                 sensitivity_fast_experiment_config,
                 stages_config,
                 sensitivity_ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "sensitivity",
         )
@@ -642,8 +656,8 @@ def test_sensitivity_fast_run_and_export(
             experiment_config=sensitivity_fast_experiment_config,
             stages_config=stages_config,
             ensemble_config=sensitivity_ensemble,
+            parameters_config=gaussian_parameters_config,
         ),
-        parameters_config=gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
         ert3.engine.export(
@@ -684,8 +698,8 @@ def test_partial_sensitivity_run_and_export(
                 sensitivity_oat_experiment_config,
                 double_stages_config,
                 partial_sensitivity_ensemble,
+                gaussian_parameters_config,
             ),
-            gaussian_parameters_config,
             workspace,
             "partial_sensitivity",
         )
@@ -694,8 +708,8 @@ def test_partial_sensitivity_run_and_export(
             sensitivity_oat_experiment_config,
             double_stages_config,
             partial_sensitivity_ensemble,
+            gaussian_parameters_config,
         ),
-        parameters_config=gaussian_parameters_config,
     )
 
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
@@ -745,8 +759,8 @@ def test_incompatible_partial_sensitivity_run(
                     sensitivity_oat_experiment_config,
                     double_stages_config,
                     partial_sensitivity_ensemble,
+                    gaussian_parameters_config,
                 ),
-                gaussian_parameters_config,
                 workspace,
                 "partial_sensitivity",
             )

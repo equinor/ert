@@ -8,7 +8,10 @@ import ert
 
 def test_experiment_run_config_validate(workspace, ensemble, stages_config):
     ert3.config._experiment_run_config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"), stages_config, ensemble
+        ert3.config.ExperimentConfig(type="evaluation"),
+        stages_config,
+        ensemble,
+        ert3.config.ParametersConfig.parse_obj([]),
     )
 
 
@@ -25,6 +28,7 @@ def test_experiment_run_config_validate_ensemble_size(
             ert3.config.ExperimentConfig(type="evaluation"),
             stages_config,
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+            ert3.config.ParametersConfig.parse_obj([]),
         )
 
     with pytest.raises(
@@ -35,6 +39,7 @@ def test_experiment_run_config_validate_ensemble_size(
             ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
             stages_config,
             ensemble,
+            ert3.config.ParametersConfig.parse_obj([]),
         )
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
@@ -43,6 +48,7 @@ def test_experiment_run_config_validate_ensemble_size(
         ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
         stages_config,
         ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+        ert3.config.ParametersConfig.parse_obj([]),
     )
 
 
@@ -57,6 +63,7 @@ def test_experiment_run_config_validate_stage(
             ert3.config.ExperimentConfig(type="evaluation"),
             double_stages_config,
             ensemble,
+            ert3.config.ParametersConfig.parse_obj([]),
         )
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
@@ -72,4 +79,5 @@ def test_experiment_run_config_validate_stage(
             ert3.config.ExperimentConfig(type="evaluation"),
             double_stages_config,
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+            ert3.config.ParametersConfig.parse_obj([]),
         )

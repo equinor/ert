@@ -137,7 +137,6 @@ def _get_storage_path(
 # pylint: disable=too-many-arguments
 def run(
     experiment_run_config: ert3.config.ExperimentRunConfig,
-    parameters_config: ert3.config.ParametersConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
 ) -> None:
@@ -178,7 +177,7 @@ def run(
         )
         + _transmitter_map_stochastic(
             stochastic_inputs,
-            parameters_config,
+            experiment_run_config.parameters_config,
             ensemble_size,
             experiment_name,
             workspace.name,
@@ -220,7 +219,6 @@ def run(
 # pylint: disable=too-many-arguments
 def run_sensitivity_analysis(
     experiment_run_config: ert3.config.ExperimentRunConfig,
-    parameters_config: ert3.config.ParametersConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
 ) -> None:
@@ -231,7 +229,7 @@ def run_sensitivity_analysis(
     sensitivity_input_records = prepare_sensitivity(
         stochastic_inputs,
         experiment_run_config.experiment_config,
-        parameters_config,
+        experiment_run_config.parameters_config,
     )
     ensemble_size = len(sensitivity_input_records)
 
@@ -300,7 +298,7 @@ def run_sensitivity_analysis(
     analyze_sensitivity(
         stochastic_inputs,
         experiment_run_config.experiment_config,
-        parameters_config,
+        experiment_run_config.parameters_config,
         workspace,
         experiment_name,
         output_transmitters,
@@ -309,7 +307,6 @@ def run_sensitivity_analysis(
 
 def get_ensemble_size(
     experiment_run_config: ert3.config.ExperimentRunConfig,
-    parameters_config: ert3.config.ParametersConfig,
 ) -> int:
     if experiment_run_config.experiment_config.type == "sensitivity":
         stochastic_inputs = tuple(
@@ -319,7 +316,7 @@ def get_ensemble_size(
             prepare_sensitivity(
                 stochastic_inputs,
                 experiment_run_config.experiment_config,
-                parameters_config,
+                experiment_run_config.parameters_config,
             )
         )
     else:

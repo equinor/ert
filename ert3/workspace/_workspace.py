@@ -113,10 +113,10 @@ class Workspace:
         """Load the configuration objects needed to run an experiment.
 
         This method loads, validates and returns a configuration object that
-        encapsulates and validates the three specialized configuration objects
+        encapsulates and validates the specialized configuration objects
         that are needed for running an experiment: an experiment configuration
-        object, a stages configuration object, and an ensemble configuration
-        object.
+        object, a stages configuration object, an ensemble configuration
+        object, and a parameter configuration object.
 
         Args:
             experiment_name (str): The name of the experiment.
@@ -143,11 +143,15 @@ class Workspace:
         with open(ensemble_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         ensemble_config = ert3.config.load_ensemble_config(config_dict)
-
         self._validate_resources(ensemble_config)
 
+        parameters_config_path = self._path / "parameters.yml"
+        with open(parameters_config_path, encoding="utf-8") as f:
+            config_dict = yaml.safe_load(f)
+        parameters_config = ert3.config.load_parameters_config(config_dict)
+
         return ert3.config.ExperimentRunConfig(
-            experiment_config, stage_config, ensemble_config
+            experiment_config, stage_config, ensemble_config, parameters_config
         )
 
     def load_parameters_config(self) -> ert3.config.ParametersConfig:

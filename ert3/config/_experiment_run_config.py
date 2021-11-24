@@ -2,7 +2,14 @@ from typing import Dict, NamedTuple, cast
 
 import ert
 
-from . import EnsembleConfig, ExperimentConfig, SourceNS, StagesConfig, Step
+from . import (
+    EnsembleConfig,
+    ExperimentConfig,
+    ParametersConfig,
+    SourceNS,
+    StagesConfig,
+    Step,
+)
 
 
 class LinkedInput(NamedTuple):
@@ -28,13 +35,13 @@ class ExperimentRunConfig:
     """The :py:class:`ExperimentRunConfig` class encapsulates the configuration
     objects needed to run an experiment.
 
-    It encapsulates three specialized configuration objects: an experiment
-    configuration object, a stages configuration object, and an ensemble
-    configuration object. These objects must already have been constructed
-    and validated when initializing the :py:class:`ExperimentRunConfig`
-    object. These three configuration objects are then cross-validated to
-    ensure that they are valid and consistent for configuring and running an
-    experiment.
+    It encapsulates the specialized configuration objects: an experiment
+    configuration object, a stages configuration object, an ensemble
+    configuration object, and a parameter configuration object. These objects
+    must already have been constructed and validated when initializing the
+    :py:class:`ExperimentRunConfig` object. These configuration objects are then
+    cross-validated to ensure that they are valid and consistent for configuring
+    and running an experiment.
     """
 
     def __init__(
@@ -42,6 +49,7 @@ class ExperimentRunConfig:
         experiment_config: ExperimentConfig,
         stages_config: StagesConfig,
         ensemble_config: EnsembleConfig,
+        parameters_config: ParametersConfig,
     ) -> None:
         """Create and cross-validates an configuration object for running an
         experiment.
@@ -50,10 +58,12 @@ class ExperimentRunConfig:
             experiment_config (ExperimentConfig): Experiment configuration object.
             stages_config (StagesConfig): Stages configuration object.
             ensemble_config (EnsembleConfig): Ensemble configuration object.
+            parameters_config (ParametersConfig): Paramters configuration object.
         """
         self._experiment_config = experiment_config
         self._stages_config = stages_config
         self._ensemble_config = ensemble_config
+        self._parameters_config = parameters_config
 
         self._validate_ensemble_size()
         self._validate_stage()
@@ -84,6 +94,15 @@ class ExperimentRunConfig:
             EnsembleConfig: The encapsulated ensemble configuration object.
         """
         return self._ensemble_config
+
+    @property
+    def parameters_config(self) -> ParametersConfig:
+        """Access the parameters configuration object.
+
+        Returns:
+            ParametersConfig: The encapsulated parameters configuration object.
+        """
+        return self._parameters_config
 
     def get_stage(self) -> Step:
         """Return the stage used by the forward model in this
