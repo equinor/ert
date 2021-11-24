@@ -47,7 +47,11 @@ def test_evaluator_script(
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
     ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
-    stage = stages_config.step_from_key(ensemble_config.forward_model.stage)
+
+    experiment_run_config = ert3.config.ExperimentRunConfig(
+        ert3.config.ExperimentConfig(type="evaluation"), stages_config, ensemble_config
+    )
+    stage = experiment_run_config.get_stage()
 
     step_builder = (
         create_step_builder()
@@ -55,7 +59,7 @@ def test_evaluator_script(
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    inputs = experiment_run_config.get_linked_inputs()
     stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
 
     ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)
@@ -102,7 +106,13 @@ def test_evaluator_function(
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
     ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
-    stage = function_stages_config.step_from_key(ensemble_config.forward_model.stage)
+
+    experiment_run_config = ert3.config.ExperimentRunConfig(
+        ert3.config.ExperimentConfig(type="evaluation"),
+        function_stages_config,
+        ensemble_config,
+    )
+    stage = experiment_run_config.get_stage()
 
     step_builder = (
         create_step_builder()
@@ -110,7 +120,7 @@ def test_evaluator_function(
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    inputs = ert3.config.link_inputs(ensemble_config, stage)
+    inputs = experiment_run_config.get_linked_inputs()
     stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
 
     ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)

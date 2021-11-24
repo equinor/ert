@@ -159,21 +159,14 @@ def run(
     )
     records_url = ert.storage.get_records_url(workspace.name)
 
-    stage = experiment_run_config.stages_config.step_from_key(
-        experiment_run_config.ensemble_config.forward_model.stage
-    )
-    if not stage:
-        stage_name = experiment_run_config.ensemble_config.forward_model.stage
-        raise ValueError(f"No step config for key {stage_name}")
-    assert stage is not None
-
+    stage = experiment_run_config.get_stage()
     step_builder = (
         create_step_builder()
         .set_name(f"{stage.name}-only_step")
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
-    inputs = ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)
+    inputs = experiment_run_config.get_linked_inputs()
 
     storage_inputs = tuple(inputs[SourceNS.storage].values())
     resource_inputs = tuple(inputs[SourceNS.resources].values())
@@ -231,16 +224,7 @@ def run_sensitivity_analysis(
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
 ) -> None:
-    stage = experiment_run_config.stages_config.step_from_key(
-        experiment_run_config.ensemble_config.forward_model.stage
-    )
-    if not stage:
-        raise ValueError(
-            f"No step config for key {experiment_run_config.ensemble_config.forward_model.stage}"
-        )
-    assert stage is not None
-
-    inputs = ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)
+    inputs = experiment_run_config.get_linked_inputs()
     storage_inputs = tuple(inputs[SourceNS.storage].values())
     resource_inputs = tuple(inputs[SourceNS.resources].values())
     stochastic_inputs = tuple(inputs[SourceNS.stochastic].values())
@@ -263,6 +247,7 @@ def run_sensitivity_analysis(
     )
     records_url = ert.storage.get_records_url(workspace.name)
 
+    stage = experiment_run_config.get_stage()
     step_builder = (
         create_step_builder()
         .set_name(f"{stage.name}-only_step")
@@ -327,17 +312,8 @@ def get_ensemble_size(
     parameters_config: ert3.config.ParametersConfig,
 ) -> int:
     if experiment_run_config.experiment_config.type == "sensitivity":
-        stage = experiment_run_config.stages_config.step_from_key(
-            experiment_run_config.ensemble_config.forward_model.stage
-        )
-        if not stage:
-            raise ValueError(
-                f"No step config for key {experiment_run_config.ensemble_config.forward_model.stage}"
-            )
         stochastic_inputs = tuple(
-            ert3.config.link_inputs(experiment_run_config.ensemble_config, stage)[
-                SourceNS.stochastic
-            ].values()
+            experiment_run_config.get_linked_inputs()[SourceNS.stochastic].values()
         )
         return len(
             prepare_sensitivity(
