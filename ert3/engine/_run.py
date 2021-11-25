@@ -73,6 +73,7 @@ def _transmitter_map_storage(
 
 
 def _transmitter_map_resources(
+    experiment_run_config: ert3.config.ExperimentRunConfig,
     inputs: Tuple[ert3.config.LinkedInput, ...],
     ensemble_size: int,
     experiment_name: str,
@@ -80,13 +81,8 @@ def _transmitter_map_resources(
 ) -> List[TransmitterCoroutine]:
     futures: List[TransmitterCoroutine] = []
     for input_ in inputs:
-        file_path = workspace.get_resources_dir() / input_.source_location
-
-        collection_awaitable = ert.data.load_collection_from_file(
-            file_path,
-            input_.source_mime,
-            ensemble_size=ensemble_size,
-            is_directory=input_.source_is_directory,
+        collection_awaitable = workspace.load_resource(
+            experiment_run_config, input_, ensemble_size=ensemble_size
         )
         future = ert.storage.transmit_awaitable_record_collection(
             record_awaitable=collection_awaitable,
@@ -177,7 +173,11 @@ def run(
     transmitters = _gather_transmitter_maps(
         _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
         + _transmitter_map_resources(
-            resource_inputs, ensemble_size, experiment_name, workspace
+            experiment_run_config,
+            resource_inputs,
+            ensemble_size,
+            experiment_name,
+            workspace,
         )
         + _transmitter_map_stochastic(
             stochastic_inputs,
@@ -259,7 +259,11 @@ def run_sensitivity_analysis(
     transmitters = _gather_transmitter_maps(
         _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
         + _transmitter_map_resources(
-            resource_inputs, ensemble_size, experiment_name, workspace
+            experiment_run_config,
+            resource_inputs,
+            ensemble_size,
+            experiment_name,
+            workspace,
         )
         + transmitter_map_sensitivity(
             stochastic_inputs,

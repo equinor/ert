@@ -1,4 +1,5 @@
 import copy
+import os
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ import ert
 import yaml
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
+_RESOURCES_BASE = ert3.workspace._workspace._RESOURCES_BASE
 
 
 @pytest.mark.requires_ert_storage
@@ -103,7 +105,11 @@ def test_workspace_export_json(tmpdir, ert_storage):
     assert (experiments_dir / "test1" / "test.json").exists()
 
 
-def test_workspace__validate_resources(workspace, base_ensemble_dict):
+def test_workspace__validate_resources(tmpdir, base_ensemble_dict):
+    os.chdir(tmpdir)
+
+    workspace = ert3.workspace.initialize(tmpdir)
+
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"] += [
         {"source": "resources.coefficients.json", "record": "coefficients"}
@@ -116,7 +122,9 @@ def test_workspace__validate_resources(workspace, base_ensemble_dict):
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
         )
 
-    (workspace.get_resources_dir() / "coefficients.json").mkdir(parents=True)
+    resources_dir = Path(tmpdir) / _RESOURCES_BASE
+
+    (resources_dir / "coefficients.json").mkdir(parents=True)
     workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
     ensemble_dict["input"][-1]["is_directory"] = True
     workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
@@ -129,8 +137,8 @@ def test_workspace__validate_resources(workspace, base_ensemble_dict):
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict)
         )
 
-    (workspace.get_resources_dir() / "coefficients.json").rmdir()
-    (workspace.get_resources_dir() / "coefficients.json").touch()
+    (resources_dir / "coefficients.json").rmdir()
+    (resources_dir / "coefficients.json").touch()
     ensemble_dict["input"][-1]["is_directory"] = None
     workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
     ensemble_dict["input"][-1]["is_directory"] = False
@@ -254,11 +262,17 @@ def test_workspace_load_experiment_config_stages_validation(
 
 
 def test_workspace_load_experiment_config_resources_validation(
-    workspace,
-    stages_config,
+    tmpdir,
     base_ensemble_dict,
     stages_config_list,
 ):
+    os.chdir(tmpdir)
+    workspace = ert3.workspace.initialize(tmpdir)
+    resources_dir = Path(tmpdir) / _RESOURCES_BASE
+
+    script_file = Path("poly.py")
+    script_file.touch()
+
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
     with open(experiments_dir / "test" / "experiment.yml", "w") as f:
@@ -280,7 +294,7 @@ def test_workspace_load_experiment_config_resources_validation(
     ):
         workspace.load_experiment_run_config("test")
 
-    (workspace.get_resources_dir() / "coefficients.json").mkdir(parents=True)
+    (resources_dir / "coefficients.json").mkdir(parents=True)
     workspace.load_experiment_run_config("test")
     ensemble_dict["input"][-1]["is_directory"] = True
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
@@ -295,8 +309,8 @@ def test_workspace_load_experiment_config_resources_validation(
     ):
         workspace.load_experiment_run_config("test")
 
-    (workspace.get_resources_dir() / "coefficients.json").rmdir()
-    (workspace.get_resources_dir() / "coefficients.json").touch()
+    (resources_dir / "coefficients.json").rmdir()
+    (resources_dir / "coefficients.json").touch()
     ensemble_dict["input"][-1]["is_directory"] = None
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)

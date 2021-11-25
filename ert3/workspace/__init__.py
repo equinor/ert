@@ -18,11 +18,6 @@ as a class (:py:class:`ert3.workspace.Workspace`). The persisted configuration
 and input data is initialized via a separate initialization function
 (:py:func:`ert3.workspace.initialize`), and can be accessed repeatedly by
 creating workspace objects.
-
-.. note:: The current file-based implementation still leaks some of the
-   underlying representation: some resources in the workspace directory are
-   stored in a :file:`resources` directory, and its path is exposed by the
-   :py:meth:`ert3.workspace.Workspace.get_resources_dir` method.
 """
 
 from ert3.workspace._workspace import Workspace
