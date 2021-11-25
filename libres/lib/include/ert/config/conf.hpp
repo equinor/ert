@@ -102,7 +102,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include <stdbool.h>
 
 #include <ert/util/stringlist.hpp>
@@ -247,13 +246,11 @@ time_t
 conf_instance_get_item_value_time_t(const conf_instance_type *conf_instance,
                                     const char *item_name);
 
-bool conf_instance_get_path_error(const conf_instance_type *conf_instance);
+char *conf_instance_get_path_error(const conf_instance_type *conf_instance);
 
 /** V A L I D A T O R S */
 
 bool conf_instance_validate(const conf_instance_type *conf_instance);
-
-bool conf_instance_has_path_error(const conf_instance_type *conf_instance);
 
 /** A L L O C   F R O M   F I L E */
 
