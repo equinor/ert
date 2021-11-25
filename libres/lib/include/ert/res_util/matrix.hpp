@@ -130,8 +130,6 @@ void matrix_isub(matrix_type *matrix, int i, int j, double value);
 void matrix_imul(matrix_type *matrix, int i, int j, double value);
 
 void matrix_inplace_matmul(matrix_type *A, const matrix_type *B);
-void matrix_inplace_matmul_mt1(matrix_type *A, const matrix_type *B,
-                               int num_threads);
 #ifdef HAVE_THREAD_POOL
 void matrix_inplace_matmul_mt2(matrix_type *A, const matrix_type *B,
                                thread_pool_type *thread_pool);

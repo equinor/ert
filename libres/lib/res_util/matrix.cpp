@@ -1052,20 +1052,6 @@ void matrix_inplace_matmul_mt2(matrix_type *A, const matrix_type *B,
     free(arglist);
 }
 
-void matrix_inplace_matmul_mt1(matrix_type *A, const matrix_type *B,
-                               int num_threads) {
-    thread_pool_type *thread_pool = thread_pool_alloc(num_threads, false);
-    matrix_inplace_matmul_mt2(A, B, thread_pool);
-    thread_pool_free(thread_pool);
-}
-
-#else
-
-void matrix_inplace_matmul_mt1(matrix_type *A, const matrix_type *B,
-                               int num_threads) {
-    matrix_inplace_matmul(A, B);
-}
-
 #endif
 
 double matrix_get_row_sum(const matrix_type *matrix, int row) {
