@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <iostream>
 
 #include <assert.h>
 #include <string.h>
@@ -1037,8 +1038,24 @@ conf_instance_validate_sub_instances(const conf_instance_type *conf_instance) {
     return ok;
 }
 
-bool conf_instance_get_path_error(const conf_instance_type *conf_instance) {
-    bool path_errors = false;
+/**
+ * This function resolves paths for each file-keyword in the given
+ * configuration. It returns a set of keywords with corresponding
+ * path for each non-existing path.
+ *
+ * The return type is std::set because this is a simple and efficient
+ * way to avoid duplicates in the end-result: Note that the method
+ * recurses and combines results in the last part of the code.
+ *
+ * Elements in the set are the keyword concatenated with "=>" and its
+ * resolved path. For example
+ *
+ *     "OBS_FILE=>/var/tmp/obs_path/obs.txt"
+ *
+ */
+static std::set<std::string>
+get_path_errors(const conf_instance_type *conf_instance) {
+    std::set<std::string> path_errors;
     {
         int num_items = hash_get_size(conf_instance->items);
         char **item_keys = hash_alloc_keylist(conf_instance->items);
@@ -1050,7 +1067,8 @@ bool conf_instance_get_path_error(const conf_instance_type *conf_instance) {
                 conf_item->conf_item_spec;
             if (conf_item_spec->dt == DT_FILE) {
                 if (!fs::exists(conf_item->value))
-                    path_errors = true;
+                    path_errors.insert(std::string(conf_item_spec->name) +
+                                       "=>" + std::string(conf_item->value));
             }
         }
         util_free_stringlist(item_keys, num_items);
@@ -1067,14 +1085,37 @@ bool conf_instance_get_path_error(const conf_instance_type *conf_instance) {
             const conf_instance_type *sub_conf_instance =
                 (const conf_instance_type *)hash_get(
                     conf_instance->sub_instances, sub_instances_key);
-            if (conf_instance_get_path_error(sub_conf_instance))
-                path_errors = true;
+            std::set<std::string> sub = get_path_errors(sub_conf_instance);
+            path_errors.insert(sub.begin(), sub.end());
         }
 
         util_free_stringlist(sub_instance_keys, num_sub_instances);
     }
 
     return path_errors;
+}
+
+/**
+ * This method returns a single C-style string (zero-terminated char *)
+ * describing keywords and paths to which these resolve, and which does
+ * not exist. For example
+ *
+ * "OBS_FILE=>/var/tmp/obs_path/obs.txt\nINDEX_FILE=>/var/notexisting/file.txt"
+ *
+ * Note newlines - this string is intended for printing.
+ */
+char *conf_instance_get_path_error(const conf_instance_type *conf_instance) {
+    std::set<std::string> errors = get_path_errors(conf_instance);
+
+    if (errors.size() == 0)
+        return NULL;
+
+    std::string retval;
+    for (std::string s : errors) {
+        retval.append(s);
+        retval.append("\n");
+    }
+    return strdup(retval.data());
 }
 
 bool conf_instance_validate(const conf_instance_type *conf_instance) {

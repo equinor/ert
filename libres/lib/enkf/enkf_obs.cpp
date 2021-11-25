@@ -659,18 +659,14 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
     stringlist_free(block_obs_keys);
 }
 
-static void enkf_obs_reinterpret_DT_FILE(const char *config_file) {
+static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
     // clang-format off
-    fprintf(stderr, "**********************************************************************\n");
-    fprintf(stderr, "* In ert version 2.3 we have changed how filepaths are interpreted   *\n");
-    fprintf(stderr, "* in the observation file. When using the keywords OBS_FILE,         *\n");
-    fprintf(stderr, "* ERROR_COVAR and INDEX_FILE in the category GENERAL_OBSERVATION     *\n");
-    fprintf(stderr, "* the filenames will be interpreted relative to the main observation *\n");
-    fprintf(stderr, "* file.                                                              *\n");
-    fprintf(stderr, "*                                                                    *\n");
-    fprintf(stderr, "* Please update the OBS_FILE, ERROR_COVAR and INDEX_FILE keywords    *\n");
-    fprintf(stderr, "* by removing the path to the main observation file.                 *\n");
-    fprintf(stderr, "**********************************************************************\n");
+    fprintf(stderr, "*****************************************\n");
+    fprintf(stderr, "The following keywords in your configuration did not resolve to a valid path: \n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s\n", errors);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "*****************************************\n");
     // clang-format on
 }
 
@@ -693,9 +689,10 @@ void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
     conf_instance_type *enkf_conf = conf_instance_alloc_from_file(
         enkf_conf_class, "enkf_conf", config_file);
 
-    if (conf_instance_get_path_error(enkf_conf)) {
-        enkf_obs_reinterpret_DT_FILE(config_file);
-        exit(1);
+    const char *errors = conf_instance_get_path_error(enkf_conf);
+    if (errors) {
+        enkf_obs_reinterpret_DT_FILE(errors);
+        exit(1); // No need to free errors...
     }
 
     if (!conf_instance_validate(enkf_conf))
