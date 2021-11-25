@@ -193,9 +193,6 @@ void matrix_scalar_set(matrix_type *matrix, double value);
 void matrix_inplace_diag_sqrt(matrix_type *Cd);
 double matrix_trace(const matrix_type *matrix);
 double matrix_diag_std(const matrix_type *Sk, double mean);
-double matrix_det2(const matrix_type *A);
-double matrix_det3(const matrix_type *A);
-double matrix_det4(const matrix_type *A);
 
 #ifdef ERT_HAVE_ISFINITE
 bool matrix_is_finite(const matrix_type *matrix);

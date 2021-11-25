@@ -23,53 +23,6 @@
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
 
-void test_det4() {
-    matrix_type *m = matrix_alloc(4, 4);
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEV_URANDOM);
-    for (int i = 0; i < 10; i++) {
-        matrix_random_init(m, rng);
-        {
-            double det4 = matrix_det4(m);
-            double det = matrix_det(m);
-
-            test_assert_double_equal(det, det4);
-        }
-    }
-
-    matrix_free(m);
-    rng_free(rng);
-}
-
-void test_det3() {
-    matrix_type *m = matrix_alloc(3, 3);
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEV_URANDOM);
-    matrix_random_init(m, rng);
-
-    {
-        double det3 = matrix_det3(m);
-        double det = matrix_det(m);
-
-        test_assert_double_equal(det, det3);
-    }
-
-    matrix_free(m);
-    rng_free(rng);
-}
-
-void test_det2() {
-    matrix_type *m = matrix_alloc(2, 2);
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEV_URANDOM);
-    matrix_random_init(m, rng);
-    {
-        double det2 = matrix_det2(m);
-        double det = matrix_det(m);
-
-        test_assert_double_equal(det, det2);
-    }
-    matrix_free(m);
-    rng_free(rng);
-}
-
 void test_dgesvx() {
     matrix_type *m1 = matrix_alloc(3, 3);
     matrix_type *m2 = matrix_alloc(3, 3);
@@ -139,9 +92,6 @@ void test_matrix_similar() {
 }
 
 int main(int argc, char **argv) {
-    test_det2();
-    test_det3();
-    test_det4();
     test_dgesvx();
     test_matrix_similar();
     exit(0);
