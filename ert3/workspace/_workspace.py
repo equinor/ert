@@ -1,15 +1,16 @@
 import json
 import sys
 from pathlib import Path
-from typing import Union, Optional, Set, List, Dict, Any
+from typing import Any, Dict, List, Optional, Set, Union, cast
 
 import yaml
 
-import ert3
 import ert
+import ert3
 
 _WORKSPACE_DATA_ROOT = ".ert"
 _EXPERIMENTS_BASE = "experiments"
+_RESOURCES_BASE = "resources"
 
 
 def _locate_root(path: Path) -> Optional[Path]:
@@ -59,14 +60,6 @@ class Workspace:
             str: The workspace name
         """
         return str(self._path)
-
-    def get_resources_dir(self) -> Path:
-        """Return the path to the :file:`resources` directory.
-
-        Returns:
-            pathlib.Path: The path to the :file:`resources` directory.
-        """
-        return self._path / "resources"
 
     def assert_experiment_exists(self, experiment_name: str) -> None:
         """Asserts that the given experiment exists.
@@ -164,6 +157,27 @@ class Workspace:
             config_dict = yaml.safe_load(f)
         return ert3.config.load_parameters_config(config_dict)
 
+    async def load_resource(
+        self,
+        experiment_run_config: ert3.config.ExperimentRunConfig,
+        linked_input: ert3.config.LinkedInput,
+        ensemble_size: int = 1,
+    ) -> ert.data.RecordCollection:
+        stage_name = experiment_run_config.ensemble_config.forward_model.stage
+        step = cast(
+            ert3.config.Step,
+            experiment_run_config.stages_config.step_from_key(stage_name),
+        )
+        record_mime = step.input[linked_input.name].mime
+        file_path = self._path / _RESOURCES_BASE / linked_input.source_location
+        resource = await ert.data.load_collection_from_file(
+            file_path,
+            record_mime,
+            ensemble_size,
+            is_directory=linked_input.source_is_directory,
+        )
+        return resource
+
     def export_json(
         self,
         experiment_name: str,
@@ -193,9 +207,8 @@ class Workspace:
             for item in ensemble_config.input
             if item.source_namespace == "resources"
         ]
-        resources_dir = self.get_resources_dir()
         for resource in resource_inputs:
-            path = resources_dir / resource.source_location
+            path = self._path / _RESOURCES_BASE / resource.source_location
             if not path.exists():
                 raise ert.exceptions.ConfigValidationError(
                     f"Cannot locate resource: '{resource.source_location}'"

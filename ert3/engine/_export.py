@@ -11,16 +11,18 @@ _SOURCE_SEPARATOR = "."
 def _prepare_export_parameters(
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
-    ensemble: ert3.config.EnsembleConfig,
-    stages_config: ert3.config.StagesConfig,
+    experiment_run_config: ert3.config.ExperimentRunConfig,
     ensemble_size: int,
 ) -> Dict[str, List[ert.data.record_data]]:
     inputs = defaultdict(list)
-    step = stages_config.step_from_key(ensemble.forward_model.stage)
+    stage_name = experiment_run_config.ensemble_config.forward_model.stage
+    step = experiment_run_config.stages_config.step_from_key(stage_name)
     if not step:
-        raise ValueError(f"No step for key {ensemble.forward_model.stage}")
+        raise ValueError(f"No step for key {stage_name}")
 
-    for input_record in ensemble.input:
+    linked_inputs = experiment_run_config.get_linked_inputs()
+
+    for input_record in experiment_run_config.ensemble_config.input:
         record_name = input_record.record
         record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
         assert len(record_source) == 2
@@ -42,13 +44,14 @@ def _prepare_export_parameters(
                 inputs[record_name].append(record.data)
 
         elif record_source[0] == "resources":
-            record_mime = step.input[record_name].mime
             # DO NOT export blob records as inputs
-            if record_mime == "application/octet-stream":
+            if step.input[record_name].mime == "application/octet-stream":
                 continue
-            file_path = workspace.get_resources_dir() / record_source[1]
             collection = get_event_loop().run_until_complete(
-                ert.data.load_collection_from_file(file_path, record_mime)
+                workspace.load_resource(
+                    experiment_run_config,
+                    linked_inputs[ert3.config.SourceNS.resources][record_name],
+                )
             )
             assert collection.ensemble_size == ensemble_size
             for record in collection.records:
@@ -97,8 +100,7 @@ def export(
     parameters = _prepare_export_parameters(
         workspace,
         experiment_name,
-        experiment_run_config.ensemble_config,
-        experiment_run_config.stages_config,
+        experiment_run_config,
         ensemble_size,
     )
     responses = _prepare_export_responses(
