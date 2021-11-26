@@ -73,13 +73,9 @@ class Session(requests.Session):
         """Resolve which of the candidate base urls to use."""
         for url in self._connection_info["urls"]:
             try:
-                print(f"Testing {url}")
                 # Original code has auth token passed but is it actually used?
                 resp = requests.get(f"{url}/healthcheck")
-                print(f"Response code  {resp.status}")
                 if resp.status_code == 200:
-                    print(f"200 status code for {url}")
-                    print(f"Response {resp.text}")
                     return url
             except requests.ConnectionError:
                 pass
