@@ -58,7 +58,6 @@ extern "C" {
 #define ECLBASE_KEY "ECLBASE"
 #define END_DATE_KEY "END_DATE"
 #define ENKF_ALPHA_KEY "ENKF_ALPHA"
-#define ENKF_MERGE_OBSERVATIONS_KEY "ENKF_MERGE_OBSERVATIONS"
 #define ENKF_RERUN_KEY "ENKF_RERUN"
 #define ENKF_TRUNCATION_KEY "ENKF_TRUNCATION"
 #define ENSPATH_KEY "ENSPATH"
@@ -203,7 +202,6 @@ const char *config_keys_get_stop_long_running();
 const char *config_keys_get_single_node_update();
 const char *config_keys_get_rerun();
 const char *config_keys_get_rerun_start();
-const char *config_keys_get_merge_observations();
 const char *config_keys_get_analysis_load();
 const char *config_keys_get_analysis_copy();
 const char *config_keys_get_analysis_select();

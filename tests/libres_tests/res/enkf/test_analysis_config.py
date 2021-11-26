@@ -76,7 +76,6 @@ class AnalysisConfigTest(ResTest):
                 ConfigKeys.ALPHA_KEY: 3,
                 ConfigKeys.RERUN_KEY: False,
                 ConfigKeys.RERUN_START_KEY: 0,
-                ConfigKeys.MERGE_OBSERVATIONS: False,
                 ConfigKeys.UPDATE_LOG_PATH: "update_log",
                 ConfigKeys.STD_CUTOFF_KEY: 1e-6,
                 ConfigKeys.STOP_LONG_RUNNING: False,

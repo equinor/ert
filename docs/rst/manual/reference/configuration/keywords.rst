@@ -37,7 +37,6 @@ Keyword name                                                            Required
 :ref:`END_DATE <end_date>`                                              NO                                                                      You can tell ERT how long the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
-:ref:`ENKF_MERGE_OBSERVATIONS <enkf_merge_observations>`                NO                                      FALSE                           Should observations from many times be merged together?
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                          NO                                                                      Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
 :ref:`ENKF_RERUN <enkf_rerun>`                                          NO                                      FALSE                           Should the simulations be restarted from time zero after each update?
 :ref:`ENKF_TRUNCATION <enkf_truncation>`                                NO                                      0.99                            Cutoff used on singular value spectrum
@@ -1248,23 +1247,6 @@ Keywords controlling the ES algorithm
         The ENKF_MODE keyword is optional.
 
 
-.. _enkf_merge_observations:
-.. topic:: ENKF_MERGE_OBSERVATIONS
-
-        If you use the ENKF_SCHED_FILE option to jump over several dates at a time you
-        can choose whether you want to use all the observations in between, or just
-        the final. If set to TRUE, all observations will be used. If set to FALSE,
-        only the final observation is used. The default value for
-        ENKF_MERGE_OBSERVATIONS is FALSE.
-
-        *Example:*
-
-        ::
-
-                -- Merge observations
-                ENKF_MERGE_OBSERVATIONS TRUE
-
-
 .. _enkf_ncomp:
 .. topic:: ENKF_NCOMP
 
@@ -1564,8 +1546,7 @@ Keywords related to running the forward model
 
         The FORWARD_MODEL keyword expects a series of keywords, each defined with
         INSTALL_JOB. ERT will execute the jobs sequentially, in the order they
-        are entered. Note that the ENKF_SCHED_FILE keyword can be used to change the
-        FORWARD_MODEL for sub-sequences of the run.
+        are entered.
 
         *Example A:*
 

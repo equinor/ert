@@ -18,14 +18,12 @@ class EnkfControlKeywords(object):
         ert_keywords.addKeyword(self.addEnkfBootstrap())
         ert_keywords.addKeyword(self.addEnkfForceNComp())
         ert_keywords.addKeyword(self.addEnkfMode())
-        ert_keywords.addKeyword(self.addMergeObservations())
         ert_keywords.addKeyword(self.addEnkfNComp())
         ert_keywords.addKeyword(self.addEnkfRerun())
         ert_keywords.addKeyword(self.addEnkfTruncation())
         ert_keywords.addKeyword(self.addUpdateLogPath())
         ert_keywords.addKeyword(self.addRerunStart())
         ert_keywords.addKeyword(self.addUpdateResults())
-        ert_keywords.addKeyword(self.addEnkfSchedFile())
         ert_keywords.addKeyword(self.addCaseTable())
         ert_keywords.addKeyword(self.addContainer())
 
@@ -68,16 +66,6 @@ class EnkfControlKeywords(object):
             group=self.group,
         )
         return enkf_mode
-
-    def addMergeObservations(self):
-        enkf_merge_observations = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("ENKF_MERGE_OBSERVATIONS"),
-            arguments=[BoolArgument()],
-            documentation_link="keywords/enkf_merge_observations",
-            required=False,
-            group=self.group,
-        )
-        return enkf_merge_observations
 
     def addEnkfNComp(self):
         enkf_ncomp = ConfigurationLineDefinition(
@@ -138,16 +126,6 @@ class EnkfControlKeywords(object):
             group=self.group,
         )
         return update_results
-
-    def addEnkfSchedFile(self):
-        sched_file = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("ENKF_SCHED_FILE"),
-            arguments=[PathArgument()],
-            documentation_link="keywords/enkf_sched_file",
-            required=False,
-            group=self.group,
-        )
-        return sched_file
 
     def addCaseTable(self):
         case_table = ConfigurationLineDefinition(

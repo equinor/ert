@@ -1085,11 +1085,6 @@ static void enkf_main_analysis_update(
 bool enkf_main_UPDATE(enkf_main_type *enkf_main,
                       const int_vector_type *step_list, enkf_fs_type *source_fs,
                       enkf_fs_type *target_fs, run_mode_type run_mode) {
-    /*
-     If merge_observations is true all observations in the time
-     interval [step1+1,step2] will be used, otherwise only the last
-     observation at step2 will be used.
-  */
 
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     const analysis_config_type *analysis_config =

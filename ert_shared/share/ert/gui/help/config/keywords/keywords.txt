@@ -5,7 +5,6 @@ grid	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#GRID
 num_realizations	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#NUM_REALIZATIONS
 data_kw	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DATA_KW
 delete_runpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DELETE_RUNPATH
-enkf_sched_file	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_SCHED_FILE
 end_date	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#END_DATE
 enspath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENSPATH
 select_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SELECT_CASE
@@ -31,7 +30,6 @@ enkf_bootstrap	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_
 enkf_force_ncomp	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_FORCE_NCOMP
 enkf_pen_press	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_PEN_PRESS
 enkf_mode	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_MODE
-enkf_merge_observations	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_MERGE_OBSERVATIONS
 enkf_ncomp	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_NCOMP
 enkf_rerun	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_RERUN
 enkf_truncation	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENKF_TRUNCATION

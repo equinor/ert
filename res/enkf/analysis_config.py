@@ -34,7 +34,7 @@ class AnalysisConfig(BaseCClass):
     _alloc_load = ResPrototype("void* analysis_config_alloc_load(char*)", bind=False)
     _alloc_full = ResPrototype(
         "void* analysis_config_alloc_full(double, bool, "
-        "bool, int, char*, double, bool, bool, "
+        "int, char*, double, bool, bool, "
         "double, int, int)",
         bind=False,
     )
@@ -55,12 +55,6 @@ class AnalysisConfig(BaseCClass):
     _get_log_path = ResPrototype("char* analysis_config_get_log_path( analysis_config)")
     _set_log_path = ResPrototype(
         "void analysis_config_set_log_path( analysis_config, char*)"
-    )
-    _get_merge_observations = ResPrototype(
-        "bool analysis_config_get_merge_observations(analysis_config)"
-    )
-    _set_merge_observations = ResPrototype(
-        "void analysis_config_set_merge_observations(analysis_config, bool)"
     )
     _get_iter_config = ResPrototype(
         "analysis_iter_config_ref analysis_config_get_iter_config(analysis_config)"
@@ -154,7 +148,6 @@ class AnalysisConfig(BaseCClass):
         if config_dict is not None:
             c_ptr = self._alloc_full(
                 config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
-                config_dict.get(ConfigKeys.MERGE_OBSERVATIONS, False),
                 config_dict.get(ConfigKeys.RERUN_KEY, False),
                 config_dict.get(ConfigKeys.RERUN_START_KEY, 0),
                 realpath(config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log")),
@@ -221,12 +214,6 @@ class AnalysisConfig(BaseCClass):
 
     def setStdCutoff(self, std_cutoff):
         self._set_std_cutoff(std_cutoff)
-
-    def get_merge_observations(self):
-        return self._get_merge_observations()
-
-    def set_merge_observations(self, merge_observations):
-        return self._set_merge_observations(merge_observations)
 
     def getAnalysisIterConfig(self):
         """@rtype: AnalysisIterConfig"""
@@ -306,9 +293,6 @@ class AnalysisConfig(BaseCClass):
             return False
 
         if self.getEnkfAlpha() != other.getEnkfAlpha():
-            return False
-
-        if self.get_merge_observations() != other.get_merge_observations():
             return False
 
         if self.get_rerun() != other.get_rerun():
