@@ -191,12 +191,6 @@ class ErtKeywordTest(ErtTest):
             "ENKF_MODE", [StringArgument], "keywords/enkf_mode", "Enkf Control"
         )
         self.keywordTest(
-            "ENKF_MERGE_OBSERVATIONS",
-            [BoolArgument],
-            "keywords/enkf_merge_observations",
-            "Enkf Control",
-        )
-        self.keywordTest(
             "ENKF_NCOMP", [IntegerArgument], "keywords/enkf_ncomp", "Enkf Control"
         )
         self.keywordTest(
@@ -219,12 +213,6 @@ class ErtKeywordTest(ErtTest):
         )
         self.keywordTest(
             "UPDATE_RESULTS", [BoolArgument], "keywords/update_results", "Enkf Control"
-        )
-        self.keywordTest(
-            "ENKF_SCHED_FILE",
-            [PathArgument],
-            "keywords/enkf_sched_file",
-            "Enkf Control",
         )
         self.keywordTest(
             "CASE_TABLE", [StringArgument], "keywords/case_table", "Enkf Control"

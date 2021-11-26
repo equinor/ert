@@ -160,10 +160,6 @@ Missing initializer: update_log_path
 #Set: enkf_main_clear_data_kw( enkf_main )
 #     enkf_main_add_data_kw( enkf_main , key , value )
 
-#Get: m = enkf_main_get_model_config( enkf_main )
-#         model_config_get_enkf_sched_file( m )
-#Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
-
 #Get    l = enkf_main_get_local_config( enkf_main );
 #       s = local_config_get_config_files( l )  # Stringlist
 #Set    local_config_clear_config_files( l )

@@ -105,10 +105,6 @@ const char *config_keys_get_rerun() { return ENKF_RERUN_KEY; }
 
 const char *config_keys_get_rerun_start() { return RERUN_START_KEY; }
 
-const char *config_keys_get_merge_observations() {
-    return ENKF_MERGE_OBSERVATIONS_KEY;
-}
-
 const char *config_keys_get_analysis_load() { return ANALYSIS_LOAD_KEY; }
 
 const char *config_keys_get_analysis_copy() { return ANALYSIS_COPY_KEY; }
