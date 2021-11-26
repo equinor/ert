@@ -174,7 +174,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.9]
+        python-version: [3.8, 3.9]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
 
@@ -214,8 +214,7 @@ jobs:
 
     - name: Test docs
       run: |
-        # The -W flag was disabled due to a unavoidable warning on Python 3.6, re-enable when 3.6 is dropped.
-        sphinx-build -n -v -E ./docs/rst/manual ./tmp/ert_docs
+        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 
   tests-libres:
     name: Run libres tests
