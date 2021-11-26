@@ -29,6 +29,7 @@ class Session(requests.Session):
 
     def __init__(self) -> None:
         super().__init__()
+        print("Session init")
         self._base_url: str = ""
         self._headers: Dict[str, str] = {}
         self._connection_info: Dict[str, Any] = {}
@@ -47,11 +48,12 @@ class Session(requests.Session):
         if connection_string is None:
             raise RuntimeError("No Storage Connection configuration found")
 
+        print(f"Session using {connection_string}")
         try:
             self._connection_info = json.loads(connection_string)
         except json.JSONDecodeError:
             raise RuntimeError("Invalid Storage Connection configuration")
-
+        
         if {"urls", "authtoken"} <= self._connection_info.keys():
             self._base_url = self._resolve_url()
             self._headers = {"Token": self._connection_info["authtoken"]}
@@ -59,6 +61,7 @@ class Session(requests.Session):
             raise RuntimeError("Invalid Storage Connection configuration")
 
     def __enter__(self) -> "Session":
+        print("Enter Session")
         return self
 
     def __exit__(  # type: ignore[override]
