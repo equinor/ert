@@ -53,7 +53,7 @@ class Session(requests.Session):
             self._connection_info = json.loads(connection_string)
         except json.JSONDecodeError:
             raise RuntimeError("Invalid Storage Connection configuration")
-        
+
         if {"urls", "authtoken"} <= self._connection_info.keys():
             self._base_url = self._resolve_url()
             self._headers = {"Token": self._connection_info["authtoken"]}
