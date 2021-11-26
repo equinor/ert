@@ -57,7 +57,7 @@ std::string get_username() {
 std::filesystem::path make_numbered_dir(const fs::path &basepath,
                                         const std::string &prefix) {
     auto norm_prefix = clean_prefix(prefix);
-    std::regex re{norm_prefix + "(\\d)+"s};
+    std::regex re{norm_prefix + "(\\d+)"s};
     std::smatch match;
 
     // Find largest entry with the given 'prefix'
