@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4, UUID
 import io
 import numpy as np
@@ -74,6 +75,50 @@ def get_record_by_name(
             .one()
         )
     raise exc.NotFoundError(f"Record not found")
+
+
+def get_records_by_name(
+    *,
+    db: Session = Depends(get_db),
+    ensemble_id: UUID,
+    name: str,
+    realization_index: Optional[int] = None,
+) -> List[ds.Record]:
+    records = (
+        db.query(ds.Record)
+        .filter_by(realization_index=realization_index)
+        .join(ds.RecordInfo)
+        .filter_by(name=name)
+        .join(ds.Ensemble)
+        .filter_by(id=ensemble_id)
+    ).all()
+
+    if not records:
+        records = (
+            db.query(ds.Record)
+            .join(ds.RecordInfo)
+            .filter_by(
+                name=name,
+                record_type=ds.RecordType.f64_matrix,
+            )
+            .join(ds.Ensemble)
+            .filter_by(id=ensemble_id)
+        ).all()
+
+    if not records:
+        records = (
+            db.query(ds.Record)
+            .filter_by(realization_index=None)
+            .join(ds.RecordInfo)
+            .filter_by(name=name)
+            .join(ds.Ensemble)
+            .filter_by(id=ensemble_id)
+        ).all()
+
+    if not records:
+        raise exc.NotFoundError(f"Record not found")
+
+    return records
 
 
 def new_record(
@@ -459,15 +504,19 @@ async def get_ensemble_record(
     *,
     db: Session = Depends(get_db),
     bh: BlobHandler = Depends(get_blob_handler),
-    record: ds.Record = Depends(get_record_by_name),
+    records: List[ds.Record] = Depends(get_records_by_name),
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
+    label: Optional[str] = None,
 ) -> Any:
     """
     Get record with a given `name`. If `realization_index` is not set, look for
     the ensemble-wide record. If it is set, look first for one created by a
     forward-model for the given realization index and then the ensemble-wide
     record.
+    If label is provided it is assumed the record data is of the form {"a": 1, "b": 2}
+    and will return only the data for the provided label (i.e. label = "a" -> return: [[1]])
+
 
     Records support multiple data formats. In particular:
     - Matrix:
@@ -481,10 +530,57 @@ async def get_ensemble_record(
         )
         accept = "text/csv"
 
-    new_realization_index = (
-        realization_index if record.realization_index is None else None
+    _type = records[0].record_info.record_type
+    if _type == ds.RecordType.file:
+        return await bh.get_content(records[0])
+
+    df_list = []
+    for record in records:
+        data_df = _get_record_dataframe(record, realization_index, label)
+        df_list.append(data_df)
+
+    # Combine data for each realization into one dataframe
+    data_frame = pd.concat(df_list, axis=0)
+    # Sort data by realization number
+    data_frame.sort_index(axis=0, inplace=True)
+
+    return await _get_record_resonse(data_frame, accept)
+
+
+@router.get("/ensembles/{ensemble_id}/records/{name}/labels", response_model=List[str])
+async def get_record_labels(
+    *,
+    db: Session = Depends(get_db),
+    ensemble_id: UUID,
+    name: str,
+) -> List[str]:
+    """
+    Get the list of record data labels. If the record is not a group record the list of labels will
+    contain only the name of the record
+
+    Example
+    - Group record:
+      data - {"a": 4, "b":42, "c": 2}
+      return: ["a", "b", "c"]
+    - Ensemble record:
+      data - [4, 42, 2, 32]
+      return: []
+    """
+
+    record = (
+        db.query(ds.Record)
+        .join(ds.RecordInfo)
+        .filter_by(name=name)
+        .join(ds.Ensemble)
+        .filter_by(id=ensemble_id)
+        .first()
     )
-    return await _get_record_data(bh, record, accept, new_realization_index)
+    if record is None:
+        raise exc.NotFoundError(f"Record not found")
+
+    if record.f64_matrix and record.f64_matrix.labels:
+        return record.f64_matrix.labels[0]
+    return []
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
@@ -532,8 +628,12 @@ async def get_record_data(
         accept = "text/csv"
 
     record = db.query(ds.Record).filter_by(id=record_id).one()
-    bh = get_blob_handler_from_record(db, record)
-    return await _get_record_data(bh, record, accept)
+    if record.record_info.record_type == ds.RecordType.file:
+        bh = get_blob_handler_from_record(db, record)
+        return await bh.get_content(record)
+
+    dataframe = _get_record_dataframe(record, None, None)
+    return await _get_record_resonse(dataframe, accept)
 
 
 @router.get(
@@ -555,70 +655,86 @@ def get_ensemble_responses(
     }
 
 
-def _get_dataframe(
-    content: Any, record: ds.Record, realization_index: Optional[int]
+def _get_record_dataframe(
+    record: ds.Record,
+    realization_index: Optional[int],
+    label: Optional[str],
 ) -> pd.DataFrame:
-    data = pd.DataFrame(content)
+    type_ = record.record_info.record_type
+    if type_ != ds.RecordType.f64_matrix:
+        raise exc.ExpectationError("Non matrix record not supported")
+
     labels = record.f64_matrix.labels
-    if labels is not None and realization_index is None:
+    content_is_labeled = labels is not None
+    label_specified = label is not None
+
+    if content_is_labeled and label_specified and label not in labels[0]:
+        raise exc.UnprocessableError(f"Record label '{label}' not found!")
+
+    if realization_index is None or record.realization_index is not None:
+        matrix_content = record.f64_matrix.content
+    elif record.realization_index is None:
+        matrix_content = record.f64_matrix.content[realization_index]
+    if not isinstance(matrix_content[0], List):
+        matrix_content = [matrix_content]
+
+    if content_is_labeled and label_specified:
+        lbl_idx = labels[0].index(label)
+        data = pd.DataFrame([[c[lbl_idx]] for c in matrix_content])
+        data.columns = [label]
+    elif content_is_labeled:
+        data = pd.DataFrame(matrix_content)
         data.columns = labels[0]
-        data.index = labels[1]
-    elif labels is not None and realization_index is not None:
-        # The output is such that rows are realizations. Because
-        # `content` is a 1d list in this case, it treats each element as
-        # its own row. We transpose the data so that all of the data
-        # falls on the same row.
-        data = data.T
-        data.columns = labels[0]
-        data.index = [realization_index]
+    else:
+        data = pd.DataFrame(matrix_content)
+
+    # Set data index for labled content
+    if content_is_labeled:
+        if record.realization_index is not None:
+            data.index = [record.realization_index]
+        elif realization_index is not None:
+            data.index = [realization_index]
+        else:
+            data.index = labels[1]
+
     return data
 
 
-async def _get_record_data(
-    bh: BlobHandler,
-    record: ds.Record,
+async def _get_record_resonse(
+    dataframe: pd.DataFrame,
     accept: Optional[str],
-    realization_index: Optional[int] = None,
 ) -> Response:
-    type_ = record.record_info.record_type
-    if type_ == ds.RecordType.f64_matrix:
-        if realization_index is None:
-            content = record.f64_matrix.content
+    if accept == "application/x-numpy":
+        from numpy.lib.format import write_array
+
+        stream = io.BytesIO()
+        write_array(stream, np.array(dataframe.values.tolist()))
+
+        return Response(
+            content=stream.getvalue(),
+            media_type=accept,
+        )
+    if accept == "text/csv":
+        return Response(
+            content=dataframe.to_csv().encode(),
+            media_type=accept,
+        )
+    if accept == "application/x-parquet":
+        stream = io.BytesIO()
+        dataframe.to_parquet(stream)
+        return Response(
+            content=stream.getvalue(),
+            media_type=accept,
+        )
+    else:
+        if dataframe.values.shape[0] == 1:
+            content = dataframe.values[0].tolist()
         else:
-            content = record.f64_matrix.content[realization_index]
-
-        if accept == "application/x-numpy":
-            from numpy.lib.format import write_array
-
-            stream = io.BytesIO()
-            write_array(stream, np.array(content))
-
-            return Response(
-                content=stream.getvalue(),
-                media_type=accept,
-            )
-        if accept == "text/csv":
-            data = _get_dataframe(content, record, realization_index)
-
-            return Response(
-                content=data.to_csv().encode(),
-                media_type=accept,
-            )
-        if accept == "application/x-parquet":
-            data = _get_dataframe(content, record, realization_index)
-            stream = io.BytesIO()
-            data.to_parquet(stream)
-            return Response(
-                content=stream.getvalue(),
-                media_type=accept,
-            )
-        else:
-            return content
-    if type_ == ds.RecordType.file:
-        return await bh.get_content(record)
-    raise NotImplementedError(
-        f"Getting record data for type {type_} and Accept header {accept} not implemented"
-    )
+            content = dataframe.values.tolist()
+        return Response(
+            content=json.dumps(content),
+            media_type="application/json",
+        )
 
 
 def _create_record(
