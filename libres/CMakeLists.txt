@@ -71,6 +71,7 @@ conan_cmake_run(
   REQUIRES
   catch2/2.13.7
   fmt/8.0.1
+  cjson/1.7.15
   # Options
   OPTIONS
   catch2:with_main=True
@@ -86,12 +87,12 @@ conan_cmake_run(
 
 # -----------------------------------------------------------------
 
-if(NOT DEFINED CMAKE_MACOSX_RPATH)
-  # There is some weirdness around this variable, the default value is different
-  # depending on the cmake version, see policy CMP0042. A more explicit way to
-  # treat this would be `cmake_policy(SET CMP0042 NEW)` but that would fail on
-  # CMake 2.8.12 (the variable exists but the policy doesn't)
-  set(CMAKE_MACOSX_RPATH ON)
+find_package(cJSON REQUIRED)
+find_package(Filesystem REQUIRED)
+
+find_package(Threads)
+if(CMAKE_USE_PTHREADS_INIT)
+  set(HAVE_PTHREAD TRUE)
 endif()
 
 include(GNUInstallDirs)

@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include <ext/json/cJSON.h>
+#include <cjson/cJSON.h>
 
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>
