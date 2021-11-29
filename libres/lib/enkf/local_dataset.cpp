@@ -193,7 +193,6 @@ std::vector<std::string>
 local_dataset_scaled_keys(const local_dataset_type *dataset) {
     std::vector<std::string> keys;
     for (const auto &[key, _] : dataset->scaling) {
-        (void)_;
         keys.push_back(key);
     }
     return keys;
