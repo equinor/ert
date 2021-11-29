@@ -174,14 +174,13 @@ add_library(
   enkf/trans_func.cpp
   enkf/subst_config.cpp
   enkf/log_config.cpp
-  enkf/config_keys.cpp
-  external/JSON/cJSON.c)
+  enkf/config_keys.cpp)
 
 # -----------------------------------------------------------------
 
 find_package(LAPACK REQUIRED)
-target_link_libraries(res PUBLIC ${ECL} ${LAPACK_LIBRARIES}
-                                 ${LAPACK_LINKER_FLAGS} std::filesystem)
+target_link_libraries(
+  res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem cJSON::cJSON)
 target_include_directories(
   res
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

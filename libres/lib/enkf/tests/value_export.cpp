@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <ext/json/cJSON.h>
+#include <cjson/cJSON.h>
 
 #include <ert/util/util.h>
 #include <ert/util/test_util.h>
