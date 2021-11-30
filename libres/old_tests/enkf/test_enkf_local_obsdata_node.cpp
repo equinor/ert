@@ -58,17 +58,6 @@ void test_content(local_obsdata_node_type *node) {
     }
 }
 
-void test_all_active() {
-    local_obsdata_node_type *node = local_obsdata_node_alloc("KEY", true);
-
-    test_assert_true(local_obsdata_node_all_timestep_active(node));
-    test_assert_true(local_obsdata_node_tstep_active(node, 0));
-    test_assert_true(local_obsdata_node_tstep_active(node, 10));
-    test_assert_true(local_obsdata_node_tstep_active(node, 20));
-
-    local_obsdata_node_free(node);
-}
-
 int main(int argc, char **argv) {
     const char *obs_key = "1234";
 
@@ -85,6 +74,5 @@ int main(int argc, char **argv) {
         void *node = local_obsdata_node_alloc(obs_key, true);
         local_obsdata_node_free__(node);
     }
-    test_all_active();
     exit(0);
 }
