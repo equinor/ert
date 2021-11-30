@@ -21,6 +21,18 @@ endif()
 # Set default CMAKE_BUILD_TYPE
 # -----------------------------------------------------------------
 
+if(SKBUILD)
+  # Scikit-Build does not add your site-packages to the search path
+  # automatically, so we need to add it _or_ the pybind11 specific directory
+  # here.
+  execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" -c
+            "import pybind11; print(pybind11.get_cmake_dir())"
+    OUTPUT_VARIABLE _tmp_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+  list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+endif()
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE
       "RelWithDebInfo"
@@ -56,6 +68,10 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+if(NOT SKBUILD)
+  set(conan_opts REQUIRES pybind11/2.8.1)
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # set(conan_opts ...)
@@ -93,7 +109,7 @@ conan_cmake_run(
 
 find_package(cJSON REQUIRED)
 find_package(Filesystem REQUIRED)
-
+find_package(pybind11 REQUIRED)
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
   set(HAVE_PTHREAD TRUE)

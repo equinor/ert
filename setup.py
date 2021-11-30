@@ -121,7 +121,6 @@ setup(
         # everything not OS X. We depend on C++17, which makes our minimum
         # supported OS X release 10.15
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
-        "-DCMAKE_INSTALL_LIBDIR=res/.libs",
     ],
     cmake_source_dir="libres/",
     classifiers=[

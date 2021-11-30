@@ -5,8 +5,9 @@ if(NOT SKBUILD)
   set(RES res)
 endif()
 
-add_library(
-  res SHARED
+pybind11_add_module(
+  _lib
+  SHARED
   res_util/res_log.cpp
   res_util/log.cpp
   res_util/es_testdata.cpp
@@ -28,6 +29,7 @@ add_library(
   res_util/regression.cpp
   res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
+  python/init.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp
@@ -163,15 +165,14 @@ add_library(
   enkf/subst_config.cpp
   enkf/log_config.cpp
   enkf/config_keys.cpp)
-
 # -----------------------------------------------------------------
 
 find_package(LAPACK REQUIRED)
 target_link_libraries(
-  res PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem
-             cJSON::cJSON)
+  _lib PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem
+              cJSON::cJSON)
 target_include_directories(
-  res
+  _lib
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
          $<INSTALL_INTERFACE:include>
   PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
@@ -180,7 +181,7 @@ target_include_directories(
   PRIVATE "${ECL_INCLUDE_DIRS}")
 
 target_compile_definitions(
-  res
+  _lib
   PRIVATE -DGIT_COMMIT=${GIT_COMMIT}
           -DGIT_COMMIT_SHORT=${GIT_COMMIT_SHORT}
           -DRES_VERSION_MAJOR=${RES_VERSION_MAJOR}
@@ -188,8 +189,6 @@ target_compile_definitions(
           -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
           -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}")
 
-install(
-  TARGETS res
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+add_library(res ALIAS _lib)
+set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
+install(TARGETS _lib LIBRARY DESTINATION res)
