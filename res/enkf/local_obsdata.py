@@ -123,16 +123,6 @@ object as:
                 "The observation node: %s is not recognized observation key" % key
             )
 
-    def addNodeAndRange(self, key, step_1, step_2):
-        """@rtype: LocalObsdataNode"""
-        """ The time range will be removed in the future... """
-        assert isinstance(key, str)
-        assert isinstance(step_1, int)
-        assert isinstance(step_2, int)
-        node = self.addNode(key)
-        node.addRange(step_1, step_2)
-        return node
-
     def clear(self):
         self._clear()
 

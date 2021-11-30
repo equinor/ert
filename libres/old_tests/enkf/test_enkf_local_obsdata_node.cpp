@@ -51,10 +51,6 @@ void test_content(local_obsdata_node_type *node) {
         test_assert_true(local_obsdata_node_has_tstep(node, 10));
         test_assert_true(local_obsdata_node_has_tstep(node, 20));
         test_assert_false(local_obsdata_node_has_tstep(node, 15));
-
-        local_obsdata_node_add_range(node, 5, 7);
-        test_assert_true(local_obsdata_node_tstep_active(node, 5));
-        test_assert_true(local_obsdata_node_tstep_active(node, 7));
     }
 }
 
