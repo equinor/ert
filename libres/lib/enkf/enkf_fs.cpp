@@ -176,7 +176,7 @@ struct enkf_fs_struct {
 UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 
-static void enkf_fs_umount(enkf_fs_type *fs);
+extern "C" void enkf_fs_umount(enkf_fs_type *fs);
 
 int enkf_fs_incref(enkf_fs_type *fs) {
     fs->refcount++;
@@ -212,7 +212,7 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
     return fs;
 }
 
-static enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
@@ -291,7 +291,7 @@ int enkf_fs_get_version104(const char *path) {
     return version;
 }
 
-static void enkf_fs_init_path_fmt(enkf_fs_type *fs) {
+void enkf_fs_init_path_fmt(enkf_fs_type *fs) {
     /*
     Installing the path_fmt instances for the storage of arbitrary files.
   */
@@ -472,9 +472,12 @@ static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
     }
 }
 
-static void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
+void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
     if (misfit_ensemble_initialized(fs->misfit_ensemble)) {
-        FILE *stream = enkf_fs_open_case_file(fs, MISFIT_ENSEMBLE_FILE, "w");
+        char *filename = enkf_fs_alloc_case_filename(fs, MISFIT_ENSEMBLE_FILE);
+        FILE *stream = util_mkdir_fopen(filename, "w");
+        free(filename);
+
         misfit_ensemble_fwrite(fs->misfit_ensemble, stream);
         fclose(stream);
     }
@@ -560,7 +563,7 @@ void enkf_fs_sync(enkf_fs_type *fs) {
     }
 }
 
-static void enkf_fs_umount(enkf_fs_type *fs) {
+void enkf_fs_umount(enkf_fs_type *fs) {
 
     int refcount = fs->refcount;
     if (refcount > 0)
@@ -702,6 +705,10 @@ const char *enkf_fs_get_case_name(const enkf_fs_type *fs) {
 
 bool enkf_fs_is_read_only(const enkf_fs_type *fs) { return fs->read_only; }
 
+void enkf_fs_set_read_only(enkf_fs_type *fs, bool read_only) {
+    fs->read_only = read_only;
+}
+
 char *enkf_fs_alloc_case_filename(const enkf_fs_type *fs,
                                   const char *input_name) {
     char *filename =
@@ -723,14 +730,6 @@ char *enkf_fs_alloc_case_tstep_member_filename(const enkf_fs_type *fs,
         path_fmt_alloc_file(fs->case_tstep_member_fmt, false, fs->mount_point,
                             tstep, iens, input_name);
     return filename;
-}
-
-FILE *enkf_fs_open_case_file(const enkf_fs_type *fs, const char *input_name,
-                             const char *mode) {
-    char *filename = enkf_fs_alloc_case_filename(fs, input_name);
-    FILE *stream = util_mkdir_fopen(filename, mode);
-    free(filename);
-    return stream;
 }
 
 FILE *enkf_fs_open_case_tstep_file(const enkf_fs_type *fs,
