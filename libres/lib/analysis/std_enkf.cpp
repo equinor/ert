@@ -29,6 +29,7 @@
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/ies/ies_enkf_config.hpp>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -76,8 +77,11 @@ struct std_enkf_data_struct {
     double truncation; // Controlled by config key: ENKF_TRUNCATION_KEY
     int subspace_dimension; // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
     long option_flags;
-    bool use_EE;
-    bool use_GE;
+    bool
+        __use_EE; // Deprecated flag - see comment above function: update_inversion_enum
+    bool
+        __use_GE; // Deprecated flag - see comment above function: update_inversion_enum
+    ies_inversion_type inversion_type;
     bool analysis_scale_data;
 };
 
@@ -97,8 +101,54 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
     return data->truncation;
 }
 
+/*
+  The std_enkf module originally used two boolean flags use_EE and use_GE to
+  determine how the inversion should be performed. In order to harmonize with
+  the ies_enkf module the code is updated to rather use an enum from the
+  ies_enkf code. Since the use_GE and use_EE flags can be set as a string option
+  from user code it is retained with some ugly code to ensure that both setting
+  based on the USE_EE/USE_GHE settings and the new INVERSION setting should give
+  the same result. The bool flags __use_EE and __use_GE are extremely deprecated
+  and should be removed.
+*/
+
+static void update_inversion_enum(std_enkf_data_type *std_enkf_data) {
+    if (std_enkf_data->__use_EE) {
+        if (std_enkf_data->__use_GE)
+            std_enkf_data->inversion_type = IES_INVERSION_SUBSPACE_RE;
+        else
+            std_enkf_data->inversion_type = IES_INVERSION_SUBSPACE_EE_R;
+    } else
+        std_enkf_data->inversion_type = IES_INVERSION_SUBSPACE_EXACT_R;
+}
+
+static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
+    switch (std_enkf_data->inversion_type) {
+    case IES_INVERSION_SUBSPACE_EXACT_R:
+        std_enkf_data->__use_EE = false;
+        return;
+
+    case IES_INVERSION_SUBSPACE_RE:
+        std_enkf_data->__use_EE = true;
+        std_enkf_data->__use_GE = true;
+        return;
+
+    case IES_INVERSION_SUBSPACE_EE_R:
+        std_enkf_data->__use_EE = true;
+        std_enkf_data->__use_GE = false;
+        return;
+
+    default:
+        return;
+    }
+}
+
 int std_enkf_get_subspace_dimension(std_enkf_data_type *data) {
     return data->subspace_dimension;
+}
+
+ies_inversion_type std_enkf_data_get_inversion(const std_enkf_data_type *data) {
+    return data->inversion_type;
 }
 
 void std_enkf_set_truncation(std_enkf_data_type *data, double truncation) {
@@ -121,9 +171,10 @@ void *std_enkf_data_alloc() {
     std_enkf_set_truncation(data, DEFAULT_ENKF_TRUNCATION_);
     std_enkf_set_subspace_dimension(data, DEFAULT_SUBSPACE_DIMENSION);
     data->option_flags = ANALYSIS_NEED_ED;
-    data->use_EE = DEFAULT_USE_EE;
-    data->use_GE = DEFAULT_USE_GE;
+    data->__use_EE = DEFAULT_USE_EE;
+    data->__use_GE = DEFAULT_USE_GE;
     data->analysis_scale_data = DEFAULT_ANALYSIS_SCALE_DATA;
+    data->inversion_type = IES_INVERSION_SUBSPACE_EXACT_R;
     return data;
 }
 
@@ -132,7 +183,8 @@ void std_enkf_data_free(void *data) { free(data); }
 static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
                              const matrix_type *R, const matrix_type *E,
                              const matrix_type *D, double truncation, int ncomp,
-                             bool bootstrap, bool use_EE, bool use_GE) {
+                             bool bootstrap,
+                             ies_inversion_type inversion_type) {
 
     matrix_type *S = matrix_alloc_copy(S0);
     int nrobs = matrix_get_rows(S);
@@ -144,23 +196,19 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
 
     matrix_subtract_row_mean(S); /* Shift away the mean */
 
-    if (use_EE) {
-        if (use_GE) {
-            enkf_linalg_lowrankE(S, E, W, eig.data(), truncation, ncomp);
-        } else {
-            matrix_type *Et = matrix_alloc_transpose(E);
-            matrix_type *Cee = matrix_alloc_matmul(E, Et);
-            matrix_scale(Cee, 1.0 / (ens_size - 1));
+    if (inversion_type == IES_INVERSION_SUBSPACE_RE)
+        enkf_linalg_lowrankE(S, E, W, eig.data(), truncation, ncomp);
+    else if (inversion_type == IES_INVERSION_SUBSPACE_EE_R) {
+        matrix_type *Et = matrix_alloc_transpose(E);
+        matrix_type *Cee = matrix_alloc_matmul(E, Et);
+        matrix_scale(Cee, 1.0 / (ens_size - 1));
 
-            enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation, ncomp);
+        enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation, ncomp);
 
-            matrix_free(Et);
-            matrix_free(Cee);
-        }
-
-    } else {
+        matrix_free(Et);
+        matrix_free(Cee);
+    } else if (inversion_type == IES_INVERSION_SUBSPACE_EXACT_R)
         enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation, ncomp);
-    }
 
     enkf_linalg_init_stdX(X, S, D, W, eig.data(), bootstrap);
 
@@ -179,8 +227,8 @@ void std_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
         int ncomp = data->subspace_dimension;
         double truncation = data->truncation;
 
-        std_enkf_initX__(X, S, R, E, D, truncation, ncomp, false, data->use_EE,
-                         data->use_GE);
+        std_enkf_initX__(X, S, R, E, D, truncation, ncomp, false,
+                         data->inversion_type);
     }
 }
 
@@ -218,15 +266,40 @@ bool std_enkf_set_bool(void *arg, const char *var_name, bool value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, USE_EE_KEY_) == 0)
-            module_data->use_EE = value;
+            module_data->__use_EE = value;
         else if (strcmp(var_name, USE_GE_KEY_) == 0)
-            module_data->use_GE = value;
+            module_data->__use_GE = value;
         else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0)
             module_data->analysis_scale_data = value;
         else
             name_recognized = false;
 
+        update_inversion_enum(module_data);
         return name_recognized;
+    }
+}
+
+bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
+    std_enkf_data_type *module_data = std_enkf_data_safe_cast(arg);
+    {
+        bool valid_set = true;
+        if (strcmp(var_name, INVERSION_KEY) == 0) {
+            if (strcmp(value, STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
+                module_data->inversion_type = IES_INVERSION_SUBSPACE_EXACT_R;
+
+            else if (strcmp(value, STRING_INVERSION_SUBSPACE_EE_R) == 0)
+                module_data->inversion_type = IES_INVERSION_SUBSPACE_EE_R;
+
+            else if (strcmp(value, STRING_INVERSION_SUBSPACE_RE) == 0)
+                module_data->inversion_type = IES_INVERSION_SUBSPACE_RE;
+
+            else
+                valid_set = false;
+        } else
+            valid_set = false;
+
+        update_inversion_flags(module_data);
+        return valid_set;
     }
 }
 
@@ -278,9 +351,9 @@ bool std_enkf_get_bool(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
         if (strcmp(var_name, USE_EE_KEY_) == 0)
-            return module_data->use_EE;
+            return module_data->__use_EE;
         else if (strcmp(var_name, USE_GE_KEY_) == 0)
-            return module_data->use_GE;
+            return module_data->__use_GE;
         else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0)
             return module_data->analysis_scale_data;
         else
@@ -301,7 +374,7 @@ analysis_table_type STD_ENKF = {
     .set_int = std_enkf_set_int,
     .set_double = std_enkf_set_double,
     .set_bool = std_enkf_set_bool,
-    .set_string = NULL,
+    .set_string = std_enkf_set_string,
     .get_options = std_enkf_get_options,
 
     .has_var = std_enkf_has_var,
