@@ -20,6 +20,7 @@
 #define ERT_OBS_VECTOR_H
 
 #include <time.h>
+#include <vector>
 
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
@@ -74,7 +75,8 @@ void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
 const char *obs_vector_get_state_kw(const obs_vector_type *);
 const char *obs_vector_get_key(const obs_vector_type *);
 obs_impl_type obs_vector_get_impl_type(const obs_vector_type *);
-const int_vector_type *obs_vector_get_step_list(const obs_vector_type *vector);
+extern "C++" const std::vector<int> &
+obs_vector_get_step_list(const obs_vector_type *vector);
 void obs_vector_user_get(const obs_vector_type *obs_vector,
                          const char *index_key, int report_step, double *value,
                          double *std, bool *valid);

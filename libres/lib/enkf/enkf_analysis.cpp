@@ -17,6 +17,7 @@
 */
 
 #include <cmath>
+#include <vector>
 
 #include <ert/util/util.h>
 #include <ert/res_util/matrix.hpp>
@@ -29,7 +30,7 @@
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
                                        const meas_data_type *meas_data,
-                                       const int_vector_type *step_list,
+                                       const std::vector<int> &step_list,
                                        const char *ministep_name,
                                        FILE *stream) {
     const char *float_fmt = "%15.3f";
@@ -39,11 +40,11 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
     fprintf(stream,
             "=================================================================="
             "=============================================================\n");
-    fprintf(stream, "Report step...: %04d", int_vector_iget(step_list, 0));
-    if (int_vector_size(step_list) == 1)
+    fprintf(stream, "Report step...: %04d", step_list.front());
+    if (step_list.size() == 1)
         fprintf(stream, "\n");
     else
-        fprintf(stream, " - %04d \n", int_vector_get_last(step_list));
+        fprintf(stream, " - %04d \n", step_list.back());
 
     fprintf(stream, "Ministep......: %s   \n", ministep_name);
     fprintf(stream,

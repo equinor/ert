@@ -17,6 +17,8 @@
    for more details.
 */
 
+#include <vector>
+
 #include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>
 
@@ -28,41 +30,48 @@ void test_create(enkf_config_node_type *config_node) {
         obs_vector_alloc(SUMMARY_OBS, "OBS", config_node, 100);
     test_assert_true(obs_vector_is_instance(obs_vector));
     {
-        const int_vector_type *step_list = obs_vector_get_step_list(obs_vector);
 
         {
             summary_obs_type *obs_node =
                 summary_obs_alloc("FOPT", "FOPT", 10, 1);
             obs_vector_install_node(obs_vector, 10, obs_node);
-            test_assert_int_equal(1, int_vector_size(step_list));
-            test_assert_int_equal(10, int_vector_iget(step_list, 0));
+            const std::vector<int> step_list =
+                obs_vector_get_step_list(obs_vector);
+            test_assert_int_equal(1, step_list.size());
+            test_assert_int_equal(10, step_list[0]);
         }
 
         {
             summary_obs_type *obs_node =
                 summary_obs_alloc("FOPT", "FOPT", 10, 1);
             obs_vector_install_node(obs_vector, 10, obs_node);
-            test_assert_int_equal(1, int_vector_size(step_list));
-            test_assert_int_equal(10, int_vector_iget(step_list, 0));
+            const std::vector<int> step_list =
+                obs_vector_get_step_list(obs_vector);
+            test_assert_int_equal(1, step_list.size());
+            test_assert_int_equal(10, step_list[0]);
         }
 
         {
             summary_obs_type *obs_node =
                 summary_obs_alloc("FOPT", "FOPT", 10, 1);
             obs_vector_install_node(obs_vector, 5, obs_node);
-            test_assert_int_equal(2, int_vector_size(step_list));
-            test_assert_int_equal(5, int_vector_iget(step_list, 0));
-            test_assert_int_equal(10, int_vector_iget(step_list, 1));
+            const std::vector<int> step_list =
+                obs_vector_get_step_list(obs_vector);
+            test_assert_int_equal(2, step_list.size());
+            test_assert_int_equal(5, step_list[0]);
+            test_assert_int_equal(10, step_list[1]);
         }
 
         {
             summary_obs_type *obs_node =
                 summary_obs_alloc("FOPT", "FOPT", 10, 1);
             obs_vector_install_node(obs_vector, 15, obs_node);
-            test_assert_int_equal(3, int_vector_size(step_list));
-            test_assert_int_equal(5, int_vector_iget(step_list, 0));
-            test_assert_int_equal(10, int_vector_iget(step_list, 1));
-            test_assert_int_equal(15, int_vector_iget(step_list, 2));
+            const std::vector<int> step_list =
+                obs_vector_get_step_list(obs_vector);
+            test_assert_int_equal(3, step_list.size());
+            test_assert_int_equal(5, step_list[0]);
+            test_assert_int_equal(10, step_list[1]);
+            test_assert_int_equal(15, step_list[2]);
         }
     }
     obs_vector_free(obs_vector);

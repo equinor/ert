@@ -21,16 +21,16 @@
 
 #include <stdbool.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_member.hpp>
 
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void misfit_ensemble_fread(misfit_ensemble_type *misfit_ensemble, FILE *stream);
 void misfit_ensemble_clear(misfit_ensemble_type *table);

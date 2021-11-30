@@ -57,7 +57,7 @@ def test_load_general_obs(facade, monkeypatch):
 
     obs_mock = Mock()
     obs_mock.getDataKey.return_value = "test_data_key"
-    obs_mock.getStepList.return_value.asList.return_value = [1]
+    obs_mock.getStepList.return_value = [1]
     facade.get_observations.return_value = {"some_key": obs_mock}
 
     facade.load_gen_data.return_value = pd.DataFrame(data=[9.9, 19.9, 29.9, 39.9])
@@ -94,7 +94,7 @@ def test_load_general_data(facade, monkeypatch, func):
 
     obs_mock = Mock()
     obs_mock.getDataKey.return_value = "test_data_key"
-    obs_mock.getStepList.return_value.asList.return_value = [1]
+    obs_mock.getStepList.return_value = [1]
     facade.get_observations.return_value = {"some_key": obs_mock}
 
     facade.all_data_type_keys.return_value = ["some_key@2", "not_related_key@3"]
@@ -124,7 +124,7 @@ def test_load_general_data(facade, monkeypatch, func):
 @pytest.mark.usefixtures("facade")
 def test_load_block_response(facade, monkeypatch):
     obs_mock = Mock()
-    obs_mock.getStepList.return_value.asList.return_value = [1]
+    obs_mock.getStepList.return_value = [1]
     facade.get_observations.return_value = {"some_key": obs_mock}
 
     mocked_get_block_measured = Mock(
