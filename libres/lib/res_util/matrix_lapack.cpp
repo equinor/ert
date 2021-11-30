@@ -17,6 +17,7 @@
 */
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 #include <ert/util/util.hpp>
 
@@ -87,16 +88,15 @@ void matrix_dgesv(matrix_type *A, matrix_type *B) {
         int lda = matrix_get_column_stride(A);
         int ldb = matrix_get_column_stride(B);
         int nrhs = matrix_get_columns(B);
-        long int *ipivot = (long int *)util_calloc(n, sizeof *ipivot);
+        std::vector<long int> ipivot(n);
         int info;
 
-        dgesv_(&n, &nrhs, matrix_get_data(A), &lda, ipivot, matrix_get_data(B),
-               &ldb, &info);
+        dgesv_(&n, &nrhs, matrix_get_data(A), &lda, ipivot.data(),
+               matrix_get_data(B), &ldb, &info);
         if (info != 0)
             util_abort(
                 "%s: low level lapack routine: dgesv() failed with info:%d \n",
                 __func__, info);
-        free(ipivot);
     }
 }
 
@@ -117,19 +117,20 @@ void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
         char fact = 'N';
         char equed = 'N';
 
-        double *X = (double *)util_calloc(nrhs * n, sizeof *X);
-        double *AF = (double *)util_calloc(n * n, sizeof *AF);
-        double *C = (double *)util_calloc(n, sizeof *C);
-        double *R = (double *)util_calloc(n, sizeof *R);
-        double *work = (double *)util_calloc(4 * n, sizeof *work);
-        double *ferr = (double *)util_calloc(nrhs, sizeof *ferr);
-        double *berr = (double *)util_calloc(nrhs, sizeof *berr);
-        long int *ipivot = (long int *)util_calloc(n, sizeof *ipivot);
-        long int *iwork = (long int *)util_calloc(n, sizeof *iwork);
+        std::vector<double> X(nrhs * n);
+        std::vector<double> AF(n * n);
+        std::vector<double> C(n);
+        std::vector<double> R(n);
+        std::vector<double> work(4 * n);
+        std::vector<double> ferr(nrhs);
+        std::vector<double> berr(nrhs);
+        std::vector<long int> ipivot(n);
+        std::vector<long int> iwork(n);
 
-        dgesvx_(&fact, &trans, &n, &nrhs, matrix_get_data(A), &lda, AF, &ldaf,
-                ipivot, &equed, R, C, matrix_get_data(B), &ldb, X, &ldx, rcond,
-                ferr, berr, work, iwork, &info);
+        dgesvx_(&fact, &trans, &n, &nrhs, matrix_get_data(A), &lda, AF.data(),
+                &ldaf, ipivot.data(), &equed, R.data(), C.data(),
+                matrix_get_data(B), &ldb, X.data(), &ldx, rcond, ferr.data(),
+                berr.data(), work.data(), iwork.data(), &info);
         if (info != 0)
             util_abort(
                 "%s: low level lapack routine: dgesvx() failed with info:%d \n",
@@ -138,16 +139,6 @@ void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
         for (j = 0; j < B->columns; j++)
             for (i = 0; i < B->rows; i++)
                 matrix_iset(B, i, j, X[j * B->rows + i]);
-
-        free(X);
-        free(AF);
-        free(C);
-        free(R);
-        free(work);
-        free(ferr);
-        free(berr);
-        free(ipivot);
-        free(iwork);
     }
 }
 
@@ -198,7 +189,6 @@ void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
     int info = 0;
     int min_worksize = util_int_max(3 * std::min(m, n) + util_int_max(m, n),
                                     5 * std::min(m, n));
-    double *work;
     int worksize;
 
     if (U == NULL) {
@@ -229,7 +219,7 @@ void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
      Query the routine for optimal worksize.
   */
 
-    work = (double *)util_calloc(1, sizeof *work);
+    std::vector<double> work(1);
     worksize = -1;
     dgesvd_(&_jobu,             /* 1  */
             &_jobvt,            /* 2  */
@@ -242,25 +232,16 @@ void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
             &ldu,               /* 9  */
             VT_data,            /* 10 */
             &ldvt,              /* 11 */
-            work,               /* 12 */
+            work.data(),        /* 12 */
             &worksize,          /* 13 */
             &info);             /* 14 */
 
     /* Try to allocate optimal worksize. */
-    worksize = (int)work[0];
-    double *tmp = (double *)realloc(work, sizeof *work * worksize);
-    if (tmp == NULL) {
-        /* Could not allocate optimal worksize - settle for the minimum. This can not fail. */
-        worksize = min_worksize;
-        free(work);
-        work = (double *)util_calloc(worksize, sizeof *work);
-    } else {
-        work = tmp; /* The request for optimal worksize succeeded */
-    }
+    worksize = static_cast<int>(work[0]);
+    work.resize(worksize);
 
     dgesvd_(&_jobu, &_jobvt, &m, &n, matrix_get_data(A), &lda, S, U_data, &ldu,
-            VT_data, &ldvt, work, &worksize, &info);
-    free(work);
+            VT_data, &ldvt, work.data(), &worksize, &info);
 }
 
 int matrix_dsyevx(
@@ -314,9 +295,9 @@ int matrix_dsyevx(
 
     {
         int num_eigenvalues, ldz, info, worksize;
-        int *ifail = (int *)util_calloc(n, sizeof *ifail);
-        int *iwork = (int *)util_calloc(5 * n, sizeof *iwork);
-        double *work = (double *)util_calloc(1, sizeof *work);
+        std::vector<int> ifail(n);
+        std::vector<int> iwork(5 * n);
+        std::vector<double> work(1);
         double *z_data;
         double abstol = 0.0; /* SHopuld */
 
@@ -347,34 +328,21 @@ int matrix_dsyevx(
                 eig_values,         /* 13 */
                 z_data,             /* 14 */
                 &ldz,               /* 15 */
-                work,               /* 16 */
+                work.data(),        /* 16 */
                 &worksize,          /* 17 */
-                iwork,              /* 18 */
-                ifail,              /* 19 */
+                iwork.data(),       /* 18 */
+                ifail.data(),       /* 19 */
                 &info);             /* 20 */
 
-        worksize = (int)work[0];
-        {
-            double *tmp = (double *)realloc(work, sizeof *work * worksize);
-            if (tmp == NULL) {
-                /*
-           OK - we could not get the optimal worksize,
-           try again with the minimum.
-        */
-                worksize = 8 * n;
-                work = (double *)util_realloc(work, sizeof *work * worksize);
-            } else
-                work = tmp; /* The request for optimal worksize succeeded */
-        }
+        worksize = static_cast<int>(work[0]);
+        work.resize(worksize);
+
         /* Second call: do the job */
         info = 0;
         dsyevx_(&jobz, &range, &uplo_c, &n, matrix_get_data(A), &lda, &VL, &VU,
                 &IL, &IU, &abstol, &num_eigenvalues, eig_values, z_data, &ldz,
-                work, &worksize, iwork, ifail, &info);
+                work.data(), &worksize, iwork.data(), ifail.data(), &info);
 
-        free(ifail);
-        free(work);
-        free(iwork);
         return num_eigenvalues;
     }
 }
@@ -383,34 +351,24 @@ void matrix_dgeqrf(matrix_type *A, double *tau) {
     int lda = matrix_get_column_stride(A);
     int m = matrix_get_rows(A);
     int n = matrix_get_columns(A);
-    double *work = (double *)util_calloc(1, sizeof *work);
+    std::vector<double> work(1);
     int worksize;
     int info;
 
     /* Determine optimal worksize. */
     worksize = -1;
-    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work, &worksize, &info);
+    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work.data(), &worksize,
+            &info);
     if (info != 0)
         util_abort("%s: dgerqf routine failed with info:%d \n", __func__, info);
-    worksize = (int)work[0];
-    {
-        double *tmp = (double *)realloc(work, sizeof *work * worksize);
-        if (tmp == NULL) {
-            /*
-         OK - we could not get the optimal worksize,
-         try again with the minimum.
-      */
-            worksize = n;
-            work = (double *)util_realloc(work, sizeof *work * worksize);
-        } else
-            work = tmp; /* The request for optimal worksize succeeded */
-    }
+    worksize = static_cast<int>(work[0]);
+    work.resize(worksize);
 
     /* Second call - do the actual computation. */
-    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work, &worksize, &info);
+    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work.data(), &worksize,
+            &info);
     if (info != 0)
         util_abort("%s: dgerqf routine failed with info:%d \n", __func__, info);
-    free(work);
 }
 
 /*
@@ -422,36 +380,24 @@ void matrix_dorgqr(matrix_type *A, double *tau,
     int lda = matrix_get_column_stride(A);
     int m = matrix_get_rows(A);
     int n = matrix_get_columns(A);
-    double *work = (double *)util_malloc(sizeof *work);
+    std::vector<double> work(1);
     int worksize;
     int info;
 
     /* Determine optimal worksize. */
     worksize = -1;
-    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work,
+    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work.data(),
             &worksize, &info);
     if (info != 0)
         util_abort("%s: dorgqf routine failed with info:%d \n", __func__, info);
-    worksize = (int)work[0];
-    {
-        double *tmp = (double *)realloc(work, sizeof *work * worksize);
-        if (tmp == NULL) {
-            /*
-         OK - we could not get the optimal worksize,
-         try again with the minimum.
-      */
-            worksize = n;
-            work = (double *)util_realloc(work, sizeof *work * worksize);
-        } else
-            work = tmp; /* The request for optimal worksize succeeded */
-    }
+    worksize = static_cast<int>(work[0]);
+    work.resize(worksize);
 
     /* Second call - do the actual computation. */
-    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work,
+    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work.data(),
             &worksize, &info);
     if (info != 0)
         util_abort("%s: dorqf routine failed with info:%d \n", __func__, info);
-    free(work);
 }
 
 /* Currently only used as 'support' function for the matrix_det function. */
@@ -476,8 +422,8 @@ double matrix_det(matrix_type *A) {
         double det = 1;
         double det_scale = 0;
         int n = matrix_get_columns(A);
-        int *ipiv = (int *)util_malloc(n * sizeof *ipiv);
-        matrix_dgetrf__(A, ipiv, &dgetrf_info);
+        std::vector<int> ipiv(n);
+        matrix_dgetrf__(A, ipiv.data(), &dgetrf_info);
         {
             int i;
             for (i = 0; i < n; i++) {
@@ -501,7 +447,6 @@ double matrix_det(matrix_type *A) {
             }
         }
 
-        free(ipiv);
         return det * pow(10, det_scale);
     }
 }
@@ -521,29 +466,26 @@ int matrix_inv(matrix_type *A) {
         int dgetrf_info;
         int info;
         int n = matrix_get_columns(A);
-        int *ipiv = (int *)util_malloc(n * sizeof *ipiv);
-        matrix_dgetrf__(A, ipiv, &dgetrf_info);
+        std::vector<int> ipiv(n);
+        matrix_dgetrf__(A, ipiv.data(), &dgetrf_info);
         {
             int lda = matrix_get_column_stride(A);
-            double *work = (double *)util_malloc(sizeof *work);
+            std::vector<double> work(1);
             int work_size;
 
             /* First call: determine optimal worksize: */
             work_size = -1;
-            dgetri_(&n, matrix_get_data(A), &lda, ipiv, work, &work_size,
-                    &info);
+            dgetri_(&n, matrix_get_data(A), &lda, ipiv.data(), work.data(),
+                    &work_size, &info);
 
             if (info == 0) {
-                work_size = (int)work[0];
-                work = (double *)util_realloc(work, sizeof *work * work_size);
-                dgetri_(&n, matrix_get_data(A), &lda, ipiv, work, &work_size,
-                        &info);
+                work_size = static_cast<int>(work[0]);
+                work.resize(work_size);
+                dgetri_(&n, matrix_get_data(A), &lda, ipiv.data(), work.data(),
+                        &work_size, &info);
             } else
                 util_abort("%s: dgetri_ returned info:%d \n", __func__, info);
-
-            free(work);
         }
-        free(ipiv);
         return info;
     }
 }

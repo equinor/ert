@@ -16,6 +16,7 @@
    for more details.
 */
 #include <algorithm>
+#include <vector>
 
 #include <stdlib.h>
 #include <string.h>
@@ -139,33 +140,32 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
     int nrmin = std::min(ens_size, nrobs);
 
     matrix_type *W = matrix_alloc(nrobs, nrmin);
-    double *eig = (double *)util_calloc(nrmin, sizeof *eig);
+    std::vector<double> eig(nrmin);
 
     matrix_subtract_row_mean(S); /* Shift away the mean */
 
     if (use_EE) {
         if (use_GE) {
-            enkf_linalg_lowrankE(S, E, W, eig, truncation, ncomp);
+            enkf_linalg_lowrankE(S, E, W, eig.data(), truncation, ncomp);
         } else {
             matrix_type *Et = matrix_alloc_transpose(E);
             matrix_type *Cee = matrix_alloc_matmul(E, Et);
             matrix_scale(Cee, 1.0 / (ens_size - 1));
 
-            enkf_linalg_lowrankCinv(S, Cee, W, eig, truncation, ncomp);
+            enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation, ncomp);
 
             matrix_free(Et);
             matrix_free(Cee);
         }
 
     } else {
-        enkf_linalg_lowrankCinv(S, R, W, eig, truncation, ncomp);
+        enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation, ncomp);
     }
 
-    enkf_linalg_init_stdX(X, S, D, W, eig, bootstrap);
+    enkf_linalg_init_stdX(X, S, D, W, eig.data(), bootstrap);
 
     matrix_free(W);
     matrix_free(S);
-    free(eig);
     enkf_linalg_checkX(X, bootstrap);
 }
 

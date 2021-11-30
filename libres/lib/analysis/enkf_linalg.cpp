@@ -1,5 +1,6 @@
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -235,17 +236,18 @@ void enkf_linalg_lowrankE(
     const int nrens = matrix_get_columns(S);
     const int nrmin = std::min(nrobs, nrens);
 
+    std::vector<double> inv_sig0(nrmin);
     matrix_type *U0 = matrix_alloc(nrobs, nrmin);
-    double *inv_sig0 = (double *)util_calloc(nrmin, sizeof *inv_sig0);
     matrix_type *X0 = matrix_alloc(nrmin, nrens);
 
     matrix_type *U1 = matrix_alloc(nrmin, nrmin);
-    double *sig1 = (double *)util_calloc(nrmin, sizeof *sig1);
+    std::vector<double> sig1(nrmin);
 
     int i, j;
 
     /* Compute SVD of S=HA`  ->  U0, invsig0=sig0^(-1) */
-    enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0, U0, NULL);
+    enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0.data(), U0,
+                     NULL);
 
     /* X0(nrmin x nrens) =  Sigma0^(+) * U0'* E  (14.51)  */
     matrix_dgemm(X0, U0, E, true, false, 1.0,
@@ -257,7 +259,7 @@ void enkf_linalg_lowrankE(
             matrix_imul(X0, i, j, inv_sig0[i]);
 
     /* Compute SVD of X0->  U1*eig*V1   14.52 */
-    matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, X0, sig1, U1, NULL);
+    matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, X0, sig1.data(), U1, NULL);
 
     /* Lambda1 = 1/(I + Lambda^2)  in 14.56 */
     for (i = 0; i < nrmin; i++)
@@ -273,10 +275,7 @@ void enkf_linalg_lowrankE(
 
     matrix_free(X0);
     matrix_free(U0);
-    free(inv_sig0);
-
     matrix_free(U1);
-    free(sig1);
 }
 
 void enkf_linalg_Cee(matrix_type *B, int nrens, const matrix_type *R,
@@ -315,20 +314,21 @@ void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
     const int nrmin = std::min(nrobs, nrens);
-
-    double *inv_sig0 = (double *)util_calloc(nrmin, sizeof *inv_sig0);
+    std::vector<double> inv_sig0(nrmin);
 
     if (V0T != NULL)
-        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_MIN_RETURN, inv_sig0, U0,
-                         V0T);
+        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_MIN_RETURN,
+                         inv_sig0.data(), U0, V0T);
     else
-        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0, U0, NULL);
+        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0.data(), U0,
+                         NULL);
 
     {
         matrix_type *B = matrix_alloc(nrmin, nrmin);
         enkf_linalg_Cee(
             B, nrens, R, U0,
-            inv_sig0); /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
+            inv_sig0
+                .data()); /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
         matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, B, eig, Z, NULL);
         matrix_free(B);
     }
@@ -344,7 +344,6 @@ void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
             for (i = 0; i < nrmin; i++)
                 matrix_imul(Z, i, j, inv_sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
     }
-    free(inv_sig0);
 }
 
 void enkf_linalg_lowrankCinv(
@@ -374,8 +373,7 @@ void enkf_linalg_meanX5(const matrix_type *S, const matrix_type *W,
     const int nrens = matrix_get_columns(S);
     const int nrobs = matrix_get_rows(S);
     const int nrmin = std::min(nrobs, nrens);
-    double *work =
-        (double *)util_calloc((2 * nrmin + nrobs + nrens), sizeof *work);
+    std::vector<double> work(2 * nrmin + nrobs + nrens);
     matrix_type *innov = enkf_linalg_alloc_innov(dObs, S);
     {
         double *y1 = &work[0];
@@ -404,7 +402,6 @@ void enkf_linalg_meanX5(const matrix_type *S, const matrix_type *W,
 
         matrix_shift(X5, 1.0 / nrens);
     }
-    free(work);
     matrix_free(innov);
 }
 
@@ -413,10 +410,10 @@ void enkf_linalg_X5sqrt(matrix_type *X2, matrix_type *X5,
     const int nrens = matrix_get_columns(X5);
     const int nrmin = std::min(nrobs, nrens);
     matrix_type *VT = matrix_alloc(nrens, nrens);
-    double *sig = (double *)util_calloc(nrmin, sizeof *sig);
-    double *isig = (double *)util_calloc(nrmin, sizeof *sig);
+    std::vector<double> sig(nrmin);
+    std::vector<double> isig(nrmin);
 
-    matrix_dgesvd(DGESVD_NONE, DGESVD_ALL, X2, sig, NULL, VT);
+    matrix_dgesvd(DGESVD_NONE, DGESVD_ALL, X2, sig.data(), NULL, VT);
     {
         matrix_type *X3 = matrix_alloc(nrens, nrens);
         matrix_type *X33 = matrix_alloc(nrens, nrens);
@@ -452,9 +449,6 @@ void enkf_linalg_X5sqrt(matrix_type *X2, matrix_type *X5,
         matrix_free(X4);
         matrix_free(IenN);
     }
-
-    free(sig);
-    free(isig);
     matrix_free(VT);
 }
 
@@ -527,27 +521,24 @@ void enkf_linalg_init_sqrtX(matrix_type *X5, const matrix_type *S,
 */
 void enkf_linalg_set_randrot(matrix_type *Q, rng_type *rng) {
     int ens_size = matrix_get_rows(Q);
-    double *tau = (double *)util_calloc(ens_size, sizeof *tau);
-    int *sign = (int *)util_calloc(ens_size, sizeof *sign);
+    std::vector<double> tau(ens_size);
+    std::vector<int> sign(ens_size);
 
     for (int i = 0; i < ens_size; i++)
         for (int j = 0; j < ens_size; j++)
             matrix_iset(Q, i, j, rng_std_normal(rng));
 
-    matrix_dgeqrf(Q, tau); /* QR factorization */
+    matrix_dgeqrf(Q, tau.data()); /* QR factorization */
     for (int i = 0; i < ens_size; i++) {
         double Qii = matrix_iget(Q, i, i);
         sign[i] = (Qii > 0) ? 1 : -1;
     }
 
-    matrix_dorgqr(Q, tau, ens_size);
+    matrix_dorgqr(Q, tau.data(), ens_size);
     for (int i = 0; i < ens_size; i++) {
         if (sign[i] < 0)
             matrix_scale_column(Q, i, -1);
     }
-
-    free(sign);
-    free(tau);
 }
 
 /*
