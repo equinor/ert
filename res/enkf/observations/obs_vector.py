@@ -18,6 +18,7 @@ from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfObservationImplementationType
 from res.enkf.observations import BlockObservation, SummaryObservation, GenObservation
+from res import _lib
 
 
 class ObsVector(BaseCClass):
@@ -52,7 +53,6 @@ class ObsVector(BaseCClass):
         "double obs_vector_total_chi2(obs_vector, enkf_fs, int)"
     )
     _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
-    _get_step_list = ResPrototype("int_vector_ref obs_vector_get_step_list(obs_vector)")
     _create_local_node = ResPrototype(
         "local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)"
     )
@@ -111,7 +111,7 @@ class ObsVector(BaseCClass):
         """
         Will return an IntVector with the active report steps.
         """
-        return self._get_step_list()
+        return _lib.obs_vector_get_step_list(self)
 
     def activeStep(self):
         """Assuming the observation is only active for one report step, this

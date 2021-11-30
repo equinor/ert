@@ -149,7 +149,7 @@ def _load_block_response(facade, obs_key, case_name):
     loader = facade.create_plot_block_data_loader(obs_vector)
 
     data = pd.DataFrame()
-    for report_step in obs_vector.getStepList().asList():
+    for report_step in obs_vector.getStepList():
 
         block_data = loader.load(facade.get_current_fs(), report_step)
         data = data.append(_get_block_measured(facade.get_ensemble_size(), block_data))
@@ -175,7 +175,7 @@ def _load_block_obs(facade, observation_keys, case_name):
         loader = facade.create_plot_block_data_loader(obs_vector)
 
         data = pd.DataFrame()
-        for report_step in obs_vector.getStepList().asList():
+        for report_step in obs_vector.getStepList():
             obs_block = loader.getBlockObservation(report_step)
             index_list = [i for i in obs_block]
             index = _create_multi_index(index_list, index_list)
@@ -224,7 +224,7 @@ def _load_general_obs(facade, observation_keys, case_name):
     for observation_key in observation_keys:
         obs_vector = facade.get_observations()[observation_key]
         data = []
-        for time_step in obs_vector.getStepList().asList():
+        for time_step in obs_vector.getStepList():
             # Observations and its standard deviation are a subset of the simulation data.
             # The index_list refers to indices in the simulation data. In order to
             # join these data in a DataFrame, pandas inserts the obs/std

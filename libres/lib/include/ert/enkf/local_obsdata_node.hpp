@@ -18,14 +18,16 @@
 #ifndef ERT_LOCAL_OBSDATA_NODE_H
 #define ERT_LOCAL_OBSDATA_NODE_H
 
+#include <ert/util/type_macros.h>
+#include <ert/util/int_vector.h>
+#include <vector>
+#include <algorithm>
+
+#include <ert/enkf/active_list.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <ert/util/type_macros.h>
-#include <ert/util/int_vector.h>
-
-#include <ert/enkf/active_list.hpp>
 
 typedef struct local_obsdata_node_struct local_obsdata_node_type;
 
@@ -40,8 +42,9 @@ active_list_type *
 local_obsdata_node_get_active_list(const local_obsdata_node_type *node);
 active_list_type *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node);
-void local_obsdata_node_copy_active_list(local_obsdata_node_type *node,
-                                         const active_list_type *active_list);
+extern "C++" void
+local_obsdata_node_copy_active_list(local_obsdata_node_type *node,
+                                    const active_list_type *active_list);
 void local_obsdata_node_add_tstep(local_obsdata_node_type *node, int tstep);
 void local_obsdata_node_add_range(local_obsdata_node_type *node, int step1,
                                   int step2);
@@ -50,10 +53,11 @@ bool local_obsdata_node_tstep_active(const local_obsdata_node_type *node,
                                      int tstep);
 bool local_obsdata_node_all_timestep_active(
     const local_obsdata_node_type *node);
-bool local_obsdata_node_has_tstep(const local_obsdata_node_type *node,
-                                  int tstep);
-void local_obsdata_node_reset_tstep_list(local_obsdata_node_type *node,
-                                         const int_vector_type *step_list);
+extern "C++" bool
+local_obsdata_node_has_tstep(const local_obsdata_node_type *node, int tstep);
+extern "C++" void
+local_obsdata_node_reset_tstep_list(local_obsdata_node_type *node,
+                                    const std::vector<int> &step_list);
 void local_obsdata_node_set_all_timestep_active(local_obsdata_node_type *node,
                                                 bool flag);
 

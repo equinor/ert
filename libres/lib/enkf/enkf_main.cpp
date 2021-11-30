@@ -22,6 +22,7 @@
 #include <thread>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 #define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>
@@ -726,15 +727,15 @@ static void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
 
 // Opens and returns a log file.  A subroutine of enkf_main_smoother_update.
 static FILE *enkf_main_log_step_list(const char *log_path,
-                                     const int_vector_type *step_list) {
+                                     const std::vector<int> &step_list) {
     char *log_file;
-    if (int_vector_size(step_list) == 1)
+    if (step_list.size() == 1)
         log_file = util_alloc_sprintf("%s%c%04d", log_path, UTIL_PATH_SEP_CHAR,
-                                      int_vector_iget(step_list, 0));
+                                      step_list.front());
     else
-        log_file = util_alloc_sprintf(
-            "%s%c%04d-%04d", log_path, UTIL_PATH_SEP_CHAR,
-            int_vector_iget(step_list, 0), int_vector_get_last(step_list));
+        log_file =
+            util_alloc_sprintf("%s%c%04d-%04d", log_path, UTIL_PATH_SEP_CHAR,
+                               step_list.front(), step_list.back());
     FILE *log_stream = util_fopen(log_file, "w");
 
     free(log_file);
@@ -1127,9 +1128,9 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
         last_step = model_config_get_last_history_restart(
             enkf_main_get_model_config(enkf_main));
 
-    int_vector_type *step_list = int_vector_alloc(0, 0);
+    std::vector<int> step_list;
     for (int i = 0; i <= last_step; i++)
-        int_vector_append(step_list, i);
+        step_list.push_back(i);
 
     local_config_type *local_config = enkf_main->local_config;
     const local_updatestep_type *updatestep =
@@ -1177,7 +1178,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
 
         {
             hash_type *use_count = hash_alloc();
-            int current_step = int_vector_get_last(step_list);
+            int current_step = step_list.back();
 
             /* Looping over local analysis ministep */
             for (int ministep_nr = 0;
@@ -1209,11 +1210,6 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                 enkf_analysis_deactivate_outliers(obs_data, meas_data,
                                                   std_cutoff, alpha, verbose);
                 local_ministep_add_obs_data(ministep, obs_data);
-
-                if (verbose)
-                    enkf_analysis_fprintf_obs_summary(
-                        obs_data, meas_data, step_list,
-                        local_ministep_get_name(ministep), stdout);
 
                 enkf_analysis_fprintf_obs_summary(
                     obs_data, meas_data, step_list,
@@ -1309,8 +1305,6 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
         fclose(log_stream);
     }
     bool_vector_free(ens_mask);
-
-    int_vector_free(step_list);
 
     return true;
 }

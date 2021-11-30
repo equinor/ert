@@ -16,6 +16,7 @@
    for more details.
 */
 #include <stdlib.h>
+#include <vector>
 
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
@@ -126,7 +127,7 @@ bool local_obsdata_has_node(const local_obsdata_type *data, const char *key) {
 }
 
 void local_obsdata_reset_tstep_list(local_obsdata_type *data,
-                                    const int_vector_type *step_list) {
+                                    const std::vector<int> &step_list) {
     int i;
     for (i = 0; i < local_obsdata_get_size(data); i++) {
         local_obsdata_node_type *node = local_obsdata_iget(data, i);
