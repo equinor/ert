@@ -90,8 +90,6 @@ char *enkf_fs_alloc_case_tstep_member_filename(const enkf_fs_type *fs,
                                                int tstep, int iens,
                                                const char *input_name);
 
-FILE *enkf_fs_open_case_file(const enkf_fs_type *fs, const char *input_name,
-                             const char *mode);
 FILE *enkf_fs_open_case_tstep_file(const enkf_fs_type *fs,
                                    const char *input_name, int tstep,
                                    const char *mode);
