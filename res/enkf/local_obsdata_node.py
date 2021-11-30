@@ -8,9 +8,6 @@ class LocalObsdataNode(BaseCClass):
     _alloc = ResPrototype("void* local_obsdata_node_alloc(char* , bool)", bind=False)
     _free = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
     _get_key = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
-    _add_range = ResPrototype(
-        "void  local_obsdata_node_add_range(local_obsdata_node, int, int)"
-    )
     _add_step = ResPrototype(
         "void  local_obsdata_node_add_tstep(local_obsdata_node, int)"
     )
@@ -46,11 +43,6 @@ class LocalObsdataNode(BaseCClass):
 
     def getKey(self):
         return self.key()
-
-    def addRange(self, step_1, step_2):
-        assert isinstance(step_1, int)
-        assert isinstance(step_2, int)
-        self._add_range(step_1, step_2)
 
     def addTimeStep(self, step):
         self._add_step(step)

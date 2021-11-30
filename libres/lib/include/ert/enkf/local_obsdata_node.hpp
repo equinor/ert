@@ -46,8 +46,6 @@ extern "C++" void
 local_obsdata_node_copy_active_list(local_obsdata_node_type *node,
                                     const active_list_type *active_list);
 void local_obsdata_node_add_tstep(local_obsdata_node_type *node, int tstep);
-void local_obsdata_node_add_range(local_obsdata_node_type *node, int step1,
-                                  int step2);
 
 bool local_obsdata_node_tstep_active(const local_obsdata_node_type *node,
                                      int tstep);

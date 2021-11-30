@@ -67,13 +67,12 @@ class LocalConfigTest(ResTest):
             # Try to add existing obsdata
             with self.assertRaises(ValueError):
                 local_config.createObsdata("OBSSET_1")
-
-            # Add node with range
-            with self.assertRaises(KeyError):
-                local_obs_data_1.addNodeAndRange("MISSING_KEY", 0, 1)
-
-            local_obs_data_1.addNodeAndRange("GEN_PERLIN_1", 0, 1)
-            local_obs_data_1.addNodeAndRange("GEN_PERLIN_2", 0, 1)
+            local_obs_data_1.addNode("GEN_PERLIN_1")
+            local_obs_data_1["GEN_PERLIN_1"].addTimeStep(0)
+            local_obs_data_1["GEN_PERLIN_1"].addTimeStep(1)
+            local_obs_data_1.addNode("GEN_PERLIN_2")
+            local_obs_data_1["GEN_PERLIN_2"].addTimeStep(0)
+            local_obs_data_1["GEN_PERLIN_2"].addTimeStep(1)
             self.assertEqual(len(local_obs_data_1), 2)
 
             # Delete node
@@ -100,10 +99,12 @@ class LocalConfigTest(ResTest):
             local_obs_data_2 = local_config.createObsdata("OBSSET_2")
             self.assertTrue(isinstance(local_obs_data_2, LocalObsdata))
 
-            # Obsdata
-            local_obs_data_2.addNodeAndRange("GEN_PERLIN_1", 0, 1)
-            local_obs_data_2.addNodeAndRange("GEN_PERLIN_2", 0, 1)
-
+            local_obs_data_2.addNode("GEN_PERLIN_1")
+            local_obs_data_2["GEN_PERLIN_1"].addTimeStep(0)
+            local_obs_data_2["GEN_PERLIN_1"].addTimeStep(1)
+            local_obs_data_2.addNode("GEN_PERLIN_2")
+            local_obs_data_2["GEN_PERLIN_2"].addTimeStep(0)
+            local_obs_data_2["GEN_PERLIN_2"].addTimeStep(1)
             # Ministep
             ministep = local_config.createMinistep("MINISTEP")
             self.assertTrue(isinstance(ministep, LocalMinistep))

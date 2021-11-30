@@ -94,7 +94,7 @@ ERT script function                                                        Purpo
 :ref:`attachObsset                     <attach_obsset>`                    Attaches observation set to mini step
 :ref:`addNode                          <add_data>`                         Adds data node to dataset
 :ref:`del (data)                       <del_data>`                         Deletes observation node from dataset
-:ref:`addNode, addNodeAndRange         <add_obs>`                          Adds observation node to observation set for all times or in a given time range
+:ref:`addNode                          <add_obs>`                          Adds observation node to observation set
 :ref:`del (obs)                        <del_obs>`                          Deletes observation node from observation set
 :ref:`clear                            <dataset_del_all_data>`             Delete all the data keys from a dataset
 :ref:`addActiveIndex (data)            <active_list_add_data_index>`       Adds several data indices to the list of active indices
