@@ -1,20 +1,14 @@
-from libres_utils import ResTest
-
 from res.enkf import LocalObsdataNode
 
 
-class LocalObsdataNodeTest(ResTest):
-    def setUp(self):
-        pass
+def test_tstep():
+    node = LocalObsdataNode("KEY")
+    assert node.allTimeStepActive()
+    assert not node.tstepActive(10)
+    assert not node.tstepActive(0)
 
-    def test_tstep(self):
-        node = LocalObsdataNode("KEY")
-        self.assertTrue(node.allTimeStepActive())
-        self.assertTrue(node.tstepActive(10))
-        self.assertTrue(node.tstepActive(0))
+    node.addTimeStep(10)
+    assert not node.allTimeStepActive()
 
-        node.addTimeStep(10)
-        self.assertFalse(node.allTimeStepActive())
-
-        self.assertTrue(node.tstepActive(10))
-        # self.assertFalse(node.tstepActive(0))
+    assert node.tstepActive(10)
+    assert not node.tstepActive(0)

@@ -54,7 +54,6 @@ local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key,
         local_obsdata_node_alloc__(obs_key, all_timestep_active);
 
     node->active_list = active_list_alloc();
-    node->tstep_list = std::vector<int>({0});
 
     return node;
 }
@@ -104,10 +103,7 @@ local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node) {
 
 bool local_obsdata_node_tstep_active(const local_obsdata_node_type *node,
                                      int tstep) {
-    if (node->all_timestep_active)
-        return true;
-    else
-        return local_obsdata_node_has_tstep(node, tstep);
+    return local_obsdata_node_has_tstep(node, tstep);
 }
 
 /*
