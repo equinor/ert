@@ -4,21 +4,21 @@
 #include <ert/util/util.h>
 
 #include <ert/analysis/ies/ies_enkf.hpp>
-#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_state.hpp>
 
-void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active(const ies_enkf_state_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);
 
 TEST_CASE("ies_enkf_linalg_extract_active", "[analysis]") {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    ies_enkf_data_type *data = (ies_enkf_data_type *)ies_enkf_data_alloc();
+    ies_enkf_state_type *data = (ies_enkf_state_type *)ies_enkf_state_alloc();
 
     int state_size = 3;
     int ens_size = 2;
 
     // Initialising masks such that all observations and realizations are active
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-    ies_enkf_data_update_ens_mask(data, ens_mask);
+    ies_enkf_state_update_ens_mask(data, ens_mask);
 
     bool_vector_type *obs_mask = bool_vector_alloc(state_size, true);
     ies_enkf_update_obs_mask(data, obs_mask);
@@ -38,12 +38,12 @@ TEST_CASE("ies_enkf_linalg_extract_active", "[analysis]") {
     matrix_iset(Ein, 2, 1, 3.5);
 
     // minimal config needed to set initial data of `iens_enkf_data_type`
-    ies_enkf_config_set_ies_debug(ies_enkf_data_get_config(data), false);
-    ies_enkf_config_set_ies_logfile(ies_enkf_data_get_config(data),
+    ies_enkf_config_set_ies_debug(ies_enkf_state_get_config(data), false);
+    ies_enkf_config_set_ies_logfile(ies_enkf_state_get_config(data),
                                     "log_test_ies_enkf_linalg_extract_active");
-    FILE *test_log = ies_enkf_data_open_log(data);
-    ies_enkf_data_store_initialE(data, Ein);
-    ies_enkf_data_fclose_log(data);
+    FILE *test_log = ies_enkf_state_open_log(data);
+    ies_enkf_state_store_initialE(data, Ein);
+    ies_enkf_state_fclose_log(data);
 
     // Test that `ies_enkf_linalg_extract_active` does nothing when all observations and realizations are active
     matrix_type *E = matrix_alloc(state_size, ens_size);
@@ -52,7 +52,7 @@ TEST_CASE("ies_enkf_linalg_extract_active", "[analysis]") {
 
     // Test that `ies_enkf_linalg_extract_active` can deactivate an ensemble
     bool_vector_iset(ens_mask, 1, false);
-    ies_enkf_data_update_ens_mask(data, ens_mask);
+    ies_enkf_state_update_ens_mask(data, ens_mask);
 
     matrix_type *E_ens_deactivate = matrix_alloc(state_size, ens_size);
     ies_enkf_linalg_extract_active(data, E_ens_deactivate, stdout, false);
@@ -83,6 +83,6 @@ TEST_CASE("ies_enkf_linalg_extract_active", "[analysis]") {
     matrix_free(E);
     matrix_free(E_ens_deactivate);
     matrix_free(E_obs_deactivate);
-    ies_enkf_data_free(data);
+    ies_enkf_state_free(data);
     rng_free(rng);
 }

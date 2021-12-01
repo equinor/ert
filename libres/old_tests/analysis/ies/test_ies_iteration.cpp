@@ -4,7 +4,7 @@
 #include <ert/res_util/es_testdata.hpp>
 
 #include <ert/analysis/std_enkf.hpp>
-#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_state.hpp>
 #include <ert/analysis/ies/ies_enkf.hpp>
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
@@ -59,9 +59,9 @@ void cmp_std_ies(res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
-    ies_enkf_data_type *ies_data =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(ies_data);
+    ies_enkf_state_type *ies_data =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(ies_data);
 
     forward_model(testdata, A1);
     ies_enkf_config_set_truncation(ies_config, 1.0);
@@ -90,7 +90,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
             matrix_pretty_fprint(A1, "Aies", "%11.5f", stdout);
             matrix_pretty_fprint(A2, "Astdenkf", "%11.5f", stdout);
         }
-        test_assert_int_equal(ies_enkf_data_get_iteration_nr(ies_data),
+        test_assert_int_equal(ies_enkf_state_get_iteration_nr(ies_data),
                               iter + 1);
 
         if (matrix_similar(A1, A2, 1e-5))
@@ -101,7 +101,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
 
     matrix_free(A1);
     matrix_free(A2);
-    ies_enkf_data_free(ies_data);
+    ies_enkf_state_free(ies_data);
     rng_free(rng);
 }
 
@@ -113,9 +113,9 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *A1c = matrix_alloc_copy(A1);
     matrix_type *A2c = matrix_alloc_copy(A2);
-    ies_enkf_data_type *ies_data =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(ies_data);
+    ies_enkf_state_type *ies_data =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(ies_data);
 
     forward_model(testdata, A1);
     ies_enkf_config_set_truncation(ies_config, 1.0);
@@ -201,7 +201,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_free(A2c);
     matrix_free(A1);
     matrix_free(A2);
-    ies_enkf_data_free(ies_data);
+    ies_enkf_state_free(ies_data);
     rng_free(rng);
 }
 
@@ -226,9 +226,9 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    ies_enkf_data_type *ies_data =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(ies_data);
+    ies_enkf_state_type *ies_data =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(ies_data);
 
     matrix_type *A0 = testdata.alloc_state("prior");
     matrix_type *A = matrix_alloc_copy(A0);
@@ -289,7 +289,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     matrix_free(A);
     matrix_free(A0);
 
-    ies_enkf_data_free(ies_data);
+    ies_enkf_state_free(ies_data);
     rng_free(rng);
 }
 

@@ -34,15 +34,15 @@
 #include <ert/analysis/enkf_linalg.hpp>
 
 #include <ert/analysis/ies/ies_enkf_config.hpp>
-#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_state.hpp>
 
-void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active(const ies_enkf_state_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg);
 
 void ies_enkf_linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y,
                                            FILE *log_fp, bool dbg);
 
-void ies_enkf_linalg_extract_active_W(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active_W(const ies_enkf_state_type *data,
                                       matrix_type *W0, FILE *log_fp, bool dbg);
 
 void ies_linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
@@ -58,11 +58,11 @@ void ies_enkf_linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                                      double ies_steplength, FILE *log_fp,
                                      bool dbg);
 
-void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
+void ies_enkf_linalg_store_active_W(ies_enkf_state_type *data,
                                     const matrix_type *W0, FILE *log_fp,
                                     bool dbg);
 
-void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active_A0(const ies_enkf_state_type *data,
                                        matrix_type *A0, FILE *log_fp, bool dbg);
 
 #define ENKF_SUBSPACE_DIMENSION_KEY "ENKF_SUBSPACE_DIMENSION"
@@ -100,10 +100,10 @@ void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
                           const matrix_type *S, const matrix_type *R,
                           const matrix_type *dObs, const matrix_type *E,
                           const matrix_type *D, rng_type *rng) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
 
     /* Store current ens_mask in module_data->ens_mask for each iteration */
-    ies_enkf_data_update_ens_mask(module_data, ens_mask);
+    ies_enkf_state_update_ens_mask(module_data, ens_mask);
 
     /* Store obs_mask for initial iteration in module_data->obs_mask0,
 *  for each subsequent iteration we store the current mask in module_data->obs_mask */
@@ -121,16 +121,16 @@ void ies_enkf_updateA(
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
     rng_type *rng) {
 
-    ies_enkf_data_type *data = ies_enkf_data_safe_cast(module_data);
-    const ies_enkf_config_type *ies_config = ies_enkf_data_get_config(data);
+    ies_enkf_state_type *data = ies_enkf_state_safe_cast(module_data);
+    const ies_enkf_config_type *ies_config = ies_enkf_state_get_config(data);
 
     int nrobs_msk =
-        ies_enkf_data_get_obs_mask_size(data); // Total number of observations
+        ies_enkf_state_get_obs_mask_size(data); // Total number of observations
     int nrobs_inp = matrix_get_rows(
         Yin); // Number of active observations input in current iteration
 
     int ens_size_msk =
-        ies_enkf_data_get_ens_mask_size(data); // Total number of realizations
+        ies_enkf_state_get_ens_mask_size(data); // Total number of realizations
     int ens_size = matrix_get_columns(
         Yin); // Number of active realizations in current iteration
     int state_size = matrix_get_rows(A);
@@ -143,10 +143,10 @@ void ies_enkf_updateA(
         ies_enkf_config_get_enkf_subspace_dimension(ies_config);
     double rcond = 0;
     int nrsing = 0;
-    int iteration_nr = ies_enkf_data_inc_iteration_nr(data);
+    int iteration_nr = ies_enkf_state_inc_iteration_nr(data);
     FILE *log_fp;
 
-    ies_enkf_data_update_state_size(data, state_size);
+    ies_enkf_state_update_state_size(data, state_size);
 
     double ies_max_step = ies_enkf_config_get_ies_max_steplength(ies_config);
     double ies_min_step = ies_enkf_config_get_ies_min_steplength(ies_config);
@@ -158,7 +158,7 @@ void ies_enkf_updateA(
         ies_min_step + (ies_max_step - ies_min_step) *
                            pow(2, -(iteration_nr - 1) / (ies_decline_step - 1));
 
-    log_fp = ies_enkf_data_open_log(data);
+    log_fp = ies_enkf_state_open_log(data);
 
     fprintf(log_fp, "\n\n\n****************************************************"
                     "*******************\n");
@@ -174,8 +174,8 @@ void ies_enkf_updateA(
     /* Counting number of active observations for current iteration.
    If the observations have been used in previous iterations they are contained in data->E0.
    If they are introduced in the current iteration they will be augmented to data->E.  */
-    ies_enkf_data_store_initialE(data, Ein);
-    ies_enkf_data_augment_initialE(data, Ein);
+    ies_enkf_state_store_initialE(data, Ein);
+    ies_enkf_state_augment_initialE(data, Ein);
 
     double nsc = 1.0 / sqrt(ens_size - 1.0);
 
@@ -184,8 +184,8 @@ void ies_enkf_updateA(
     int m_ens_size = std::min(ens_size - 1, 16);
     int m_state_size = std::min(state_size - 1, 3);
 
-    ies_enkf_data_allocateW(data, ens_size_msk);
-    ies_enkf_data_store_initialA(data, A);
+    ies_enkf_state_allocateW(data, ens_size_msk);
+    ies_enkf_state_store_initialA(data, A);
 
     fprintf(log_fp, "----active ens_size  = %d, total ens_size_msk = %d\n",
             ens_size, ens_size_msk);
@@ -194,13 +194,13 @@ void ies_enkf_updateA(
     fprintf(log_fp, "----active state_size= %d\n", state_size);
 
     /* Print initial observation mask */
-    printf_mask(log_fp, "obsmask_0:", ies_enkf_data_get_obs_mask0(data));
+    printf_mask(log_fp, "obsmask_0:", ies_enkf_state_get_obs_mask0(data));
 
     /* Print Current observation mask */
-    printf_mask(log_fp, "obsmask_i:", ies_enkf_data_get_obs_mask(data));
+    printf_mask(log_fp, "obsmask_i:", ies_enkf_state_get_obs_mask(data));
 
     /* Print Current ensemble mask */
-    printf_mask(log_fp, "ensmask_i:", ies_enkf_data_get_ens_mask(data));
+    printf_mask(log_fp, "ensmask_i:", ies_enkf_state_get_ens_mask(data));
 
     /*
      * Re-structure input matrices according to new active obs_mask and ens_size.
@@ -351,7 +351,7 @@ void ies_enkf_updateA(
            nrobs_inp);
     teccost(W, D, "costf.dat", ens_size, iteration_nr);
 
-    ies_enkf_data_fclose_log(data);
+    ies_enkf_state_fclose_log(data);
 
     matrix_free(Y);
     matrix_free(D);
@@ -374,18 +374,18 @@ void ies_enkf_updateA(
 *  Additionally we may loose realizations during the iteratitions, and we extract measurement perturbations for
 *  only the active realizations.
 */
-void ies_enkf_linalg_extract_active(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active(const ies_enkf_state_type *data,
                                     matrix_type *E, FILE *log_fp, bool dbg) {
 
-    const bool_vector_type *obs_mask = ies_enkf_data_get_obs_mask(data);
-    const bool_vector_type *ens_mask = ies_enkf_data_get_ens_mask(data);
+    const bool_vector_type *obs_mask = ies_enkf_state_get_obs_mask(data);
+    const bool_vector_type *ens_mask = ies_enkf_state_get_ens_mask(data);
 
     int obs_size_msk =
-        ies_enkf_data_get_obs_mask_size(data); // Total number of observations
+        ies_enkf_state_get_obs_mask_size(data); // Total number of observations
     int ens_size_msk =
-        ies_enkf_data_get_ens_mask_size(data); // Total number of realizations
+        ies_enkf_state_get_ens_mask_size(data); // Total number of realizations
 
-    const matrix_type *dataE = ies_enkf_data_getE(data);
+    const matrix_type *dataE = ies_enkf_state_getE(data);
 
     int m = -1; // counter for currently active measurements
     for (int iobs = 0; iobs < obs_size_msk; iobs++) {
@@ -450,12 +450,12 @@ void ies_enkf_linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y,
 * W is stored for each iteration in data->W. If we loose realizations we copy only the active rows and cols from
 * data->W to W0 which is then used in the algorithm.
 */
-void ies_enkf_linalg_extract_active_W(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active_W(const ies_enkf_state_type *data,
                                       matrix_type *W0, FILE *log_fp, bool dbg) {
 
-    const bool_vector_type *ens_mask = ies_enkf_data_get_ens_mask(data);
-    const matrix_type *dataW = ies_enkf_data_getW(data);
-    int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
+    const bool_vector_type *ens_mask = ies_enkf_state_get_ens_mask(data);
+    const matrix_type *dataW = ies_enkf_state_getW(data);
+    int ens_size_msk = ies_enkf_state_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(W0);
     int m_ens_size = std::min(ens_size - 1, 16);
     int i = -1;
@@ -681,15 +681,15 @@ void ies_enkf_linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
 * the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */
-void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
+void ies_enkf_linalg_store_active_W(ies_enkf_state_type *data,
                                     const matrix_type *W0, FILE *log_fp,
                                     bool dbg) {
-    int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
+    int ens_size_msk = ies_enkf_state_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(W0);
     int i = 0;
     int j;
-    matrix_type *dataW = ies_enkf_data_getW(data);
-    const bool_vector_type *ens_mask = ies_enkf_data_get_ens_mask(data);
+    matrix_type *dataW = ies_enkf_state_getW(data);
+    const bool_vector_type *ens_mask = ies_enkf_state_get_ens_mask(data);
     matrix_set(dataW, 0.0);
     for (int iens = 0; iens < ens_size_msk; iens++) {
         if (bool_vector_iget(ens_mask, iens)) {
@@ -713,17 +713,17 @@ void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
 /*
 * Extract active realizations from the initially stored ensemble.
 */
-void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
+void ies_enkf_linalg_extract_active_A0(const ies_enkf_state_type *data,
                                        matrix_type *A0, FILE *log_fp,
                                        bool dbg) {
-    int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
+    int ens_size_msk = ies_enkf_state_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(A0);
     int state_size = matrix_get_rows(A0);
     int m_ens_size = std::min(ens_size - 1, 16);
     int m_state_size = std::min(state_size - 1, 3);
     int i = -1;
-    const bool_vector_type *ens_mask = ies_enkf_data_get_ens_mask(data);
-    const matrix_type *dataA0 = ies_enkf_data_getA0(data);
+    const bool_vector_type *ens_mask = ies_enkf_state_get_ens_mask(data);
+    const matrix_type *dataA0 = ies_enkf_state_getA0(data);
     matrix_pretty_fprint_submat(dataA0, "data->A0", "%11.5f", log_fp, 0,
                                 m_state_size, 0, m_ens_size);
     for (int iens = 0; iens < ens_size_msk; iens++) {
@@ -740,15 +740,15 @@ void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
 }
 
 bool ies_enkf_set_int(void *arg, const char *var_name, int value) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
-    ies_enkf_config_type *config = ies_enkf_data_get_config(module_data);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
+    ies_enkf_config_type *config = ies_enkf_state_get_config(module_data);
     {
         bool name_recognized = true;
 
         if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0)
             ies_enkf_config_set_enkf_subspace_dimension(config, value);
         else if (strcmp(var_name, ITER_KEY) == 0)
-            ies_enkf_data_set_iteration_nr(module_data, value);
+            ies_enkf_state_set_iteration_nr(module_data, value);
         else if (
             strcmp(var_name, IES_INVERSION_KEY) ==
             0) // This should probably translate string value - now it goes directly on the value of the ies_inversion_type enum.
@@ -762,12 +762,13 @@ bool ies_enkf_set_int(void *arg, const char *var_name, int value) {
 }
 
 int ies_enkf_get_int(const void *arg, const char *var_name) {
-    const ies_enkf_data_type *module_data = ies_enkf_data_safe_cast_const(arg);
+    const ies_enkf_state_type *module_data =
+        ies_enkf_state_safe_cast_const(arg);
     const ies_enkf_config_type *ies_config =
-        ies_enkf_data_get_config(module_data);
+        ies_enkf_state_get_config(module_data);
     {
         if (strcmp(var_name, ITER_KEY) == 0)
-            return ies_enkf_data_get_iteration_nr(module_data);
+            return ies_enkf_state_get_iteration_nr(module_data);
         else if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0)
             return ies_enkf_config_get_enkf_subspace_dimension(ies_config);
         else if (strcmp(var_name, IES_INVERSION_KEY) == 0)
@@ -778,8 +779,8 @@ int ies_enkf_get_int(const void *arg, const char *var_name) {
 }
 
 bool ies_enkf_set_string(void *arg, const char *var_name, const char *value) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(module_data);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(module_data);
     {
         bool name_recognized = true;
 
@@ -793,8 +794,8 @@ bool ies_enkf_set_string(void *arg, const char *var_name, const char *value) {
 }
 
 bool ies_enkf_set_bool(void *arg, const char *var_name, bool value) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(module_data);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(module_data);
     {
         bool name_recognized = true;
 
@@ -812,9 +813,10 @@ bool ies_enkf_set_bool(void *arg, const char *var_name, bool value) {
 }
 
 bool ies_enkf_get_bool(const void *arg, const char *var_name) {
-    const ies_enkf_data_type *module_data = ies_enkf_data_safe_cast_const(arg);
+    const ies_enkf_state_type *module_data =
+        ies_enkf_state_safe_cast_const(arg);
     const ies_enkf_config_type *ies_config =
-        ies_enkf_data_get_config(module_data);
+        ies_enkf_state_get_config(module_data);
     {
         if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
             return ies_enkf_config_get_ies_subspace(ies_config);
@@ -828,8 +830,8 @@ bool ies_enkf_get_bool(const void *arg, const char *var_name) {
 }
 
 bool ies_enkf_set_double(void *arg, const char *var_name, double value) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
-    ies_enkf_config_type *ies_config = ies_enkf_data_get_config(module_data);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
+    ies_enkf_config_type *ies_config = ies_enkf_state_get_config(module_data);
     {
         bool name_recognized = true;
 
@@ -849,9 +851,10 @@ bool ies_enkf_set_double(void *arg, const char *var_name, double value) {
 }
 
 double ies_enkf_get_double(const void *arg, const char *var_name) {
-    const ies_enkf_data_type *module_data = ies_enkf_data_safe_cast_const(arg);
+    const ies_enkf_state_type *module_data =
+        ies_enkf_state_safe_cast_const(arg);
     const ies_enkf_config_type *ies_config =
-        ies_enkf_data_get_config(module_data);
+        ies_enkf_state_get_config(module_data);
     {
         if (strcmp(var_name, ENKF_TRUNCATION_KEY) == 0)
             return ies_enkf_config_get_truncation(ies_config);
@@ -866,9 +869,9 @@ double ies_enkf_get_double(const void *arg, const char *var_name) {
 }
 
 long ies_enkf_get_options(void *arg, long flag) {
-    ies_enkf_data_type *module_data = ies_enkf_data_safe_cast(arg);
+    ies_enkf_state_type *module_data = ies_enkf_state_safe_cast(arg);
     const ies_enkf_config_type *ies_config =
-        ies_enkf_data_get_config(module_data);
+        ies_enkf_state_get_config(module_data);
     { return ies_enkf_config_get_option_flags(ies_config); }
 }
 
@@ -902,9 +905,10 @@ bool ies_enkf_has_var(const void *arg, const char *var_name) {
 }
 
 void *ies_enkf_get_ptr(const void *arg, const char *var_name) {
-    const ies_enkf_data_type *module_data = ies_enkf_data_safe_cast_const(arg);
+    const ies_enkf_state_type *module_data =
+        ies_enkf_state_safe_cast_const(arg);
     const ies_enkf_config_type *ies_config =
-        ies_enkf_data_get_config(module_data);
+        ies_enkf_state_get_config(module_data);
     {
         if (strcmp(var_name, IES_LOGFILE_KEY) == 0)
             return (void *)ies_enkf_config_get_ies_logfile(ies_config);
@@ -919,8 +923,8 @@ analysis_table_type IES_ENKF = {
     .initX = NULL,
     .init_update = ies_enkf_init_update,
     .complete_update = NULL,
-    .freef = ies_enkf_data_free,
-    .alloc = ies_enkf_data_alloc,
+    .freef = ies_enkf_state_free,
+    .alloc = ies_enkf_state_alloc,
     .set_int = ies_enkf_set_int,
     .set_double = ies_enkf_set_double,
     .set_bool = ies_enkf_set_bool,

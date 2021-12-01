@@ -3,11 +3,11 @@
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_enkf_state.hpp>
 #include <ert/analysis/ies/ies_enkf.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
-    const res::es_testdata &testdata, ies_enkf_data_type *ies_data,
+    const res::es_testdata &testdata, ies_enkf_state_type *ies_data,
     matrix_type *A, rng_type *rng) {
     ies_enkf_init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.dObs, testdata.E,
@@ -36,13 +36,13 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
 
-    ies_enkf_data_type *ies_data1 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config1 = ies_enkf_data_get_config(ies_data1);
+    ies_enkf_state_type *ies_data1 =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config1 = ies_enkf_state_get_config(ies_data1);
 
-    ies_enkf_data_type *ies_data2 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config2 = ies_enkf_data_get_config(ies_data2);
+    ies_enkf_state_type *ies_data2 =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config2 = ies_enkf_state_get_config(ies_data2);
 
     ies_enkf_config_set_truncation(ies_config1, 1.0);
     ies_enkf_config_set_ies_max_steplength(ies_config1, 0.6);
@@ -62,8 +62,8 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
 
     matrix_free(A1);
     matrix_free(A2);
-    ies_enkf_data_free(ies_data1);
-    ies_enkf_data_free(ies_data2);
+    ies_enkf_state_free(ies_data1);
+    ies_enkf_state_free(ies_data2);
     rng_free(rng);
 }
 
@@ -85,13 +85,13 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
 
-    ies_enkf_data_type *ies_data1 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config1 = ies_enkf_data_get_config(ies_data1);
+    ies_enkf_state_type *ies_data1 =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config1 = ies_enkf_state_get_config(ies_data1);
 
-    ies_enkf_data_type *ies_data2 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config2 = ies_enkf_data_get_config(ies_data2);
+    ies_enkf_state_type *ies_data2 =
+        static_cast<ies_enkf_state_type *>(ies_enkf_state_alloc());
+    ies_enkf_config_type *ies_config2 = ies_enkf_state_get_config(ies_data2);
 
     ies_enkf_config_set_truncation(ies_config1, 0.95);
     ies_enkf_config_set_ies_max_steplength(ies_config1, 0.6);
@@ -111,8 +111,8 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
 
     matrix_free(A1);
     matrix_free(A2);
-    ies_enkf_data_free(ies_data1);
-    ies_enkf_data_free(ies_data2);
+    ies_enkf_state_free(ies_data1);
+    ies_enkf_state_free(ies_data2);
     rng_free(rng);
 }
 

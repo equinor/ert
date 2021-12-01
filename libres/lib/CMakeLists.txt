@@ -55,7 +55,7 @@ pybind11_add_module(
   # IES_ENKF
   analysis/ies/ies_enkf.cpp
   analysis/ies/ies_enkf_config.cpp
-  analysis/ies/ies_enkf_data.cpp
+  analysis/ies/ies_enkf_state.cpp
   job_queue/ext_job.cpp
   job_queue/ext_joblist.cpp
   job_queue/forward_model.cpp

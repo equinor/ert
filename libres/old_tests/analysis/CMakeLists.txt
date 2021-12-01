@@ -1,4 +1,4 @@
-foreach(name ies_enkf_config ies_enkf_data)
+foreach(name ies_enkf_config ies_enkf_state)
   add_executable(${name} ies/test_${name}.cpp)
   target_link_libraries(${name} res)
   add_test(NAME ${name} COMMAND ${name})
