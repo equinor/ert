@@ -108,6 +108,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         os: [ubuntu-latest, macos-latest]
+        test-type: ['integration-tests', 'unit-tests']
         # Excluded to keep build times down on Github actions
         exclude:
           - os: macos-latest
@@ -143,7 +144,7 @@ jobs:
         pip install -r dev-requirements.txt
 
     - name: Test Ubuntu
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'unit-tests'
       env:
         DISPLAY: ':99.0'
       run: |
@@ -152,12 +153,29 @@ jobs:
         herbstluftwm &
         sleep 1
         python -c "import sys; print(sys.path)"
-        pytest tests/ert_tests -sv --durations=0
+        pytest tests/ert_tests -sv --durations=0 -m "not integration_test"
 
     - name: Test MacOS
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
-        pytest tests/ert_tests -sv --durations=0
+        pytest tests/ert_tests -sv --durations=0 -m "not integration_test"
+
+    - name: Integration Test Ubuntu
+      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
+      env:
+        DISPLAY: ':99.0'
+      run: |
+        /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
+        sleep 3
+        herbstluftwm &
+        sleep 1
+        python -c "import sys; print(sys.path)"
+        pytest tests/ert_tests -sv --durations=0 -m "integration_test"
+
+    - name: Integration Test MacOS
+      if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
+      run: |
+        pytest tests/ert_tests -sv --durations=0 -m "integration_test"
 
     - name: Test CLI
       run: |

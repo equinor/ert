@@ -169,6 +169,7 @@ def assert_clean_workspace(workspace, allowed_files=None):
         assert set(item.name for item in new_files) == set(allowed_files)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_run_once_polynomial_evaluation(
     workspace_integration,
@@ -217,6 +218,7 @@ def _load_export_data(workspace, experiment_name):
         return json.load(f)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_export_polynomial_evaluation(
     workspace_integration,
@@ -243,6 +245,7 @@ def test_export_polynomial_evaluation(
     assert_export(export_data, ensemble, stages_config, gaussian_parameters_config)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_export_uniform_polynomial_evaluation(
     workspace_integration,
@@ -271,6 +274,7 @@ def test_export_uniform_polynomial_evaluation(
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_export_x_uncertainties_polynomial_evaluation(
     workspace_integration,
@@ -372,6 +376,7 @@ def test_uniform_distribution(
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_run_presampled(
     workspace_integration,
@@ -420,6 +425,7 @@ def test_run_presampled(
             assert coeff.data[key] == export_coeff[key]
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_run_uniform_presampled(
     workspace_integration,
@@ -482,6 +488,7 @@ def test_sample_unknown_parameter_group(uniform_parameters_config):
         ert3.engine.sample_record(uniform_parameters_config, "coeffs", 100)
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_record_load_and_run(
     workspace_integration,
@@ -546,6 +553,7 @@ async def test_record_load_twice(workspace, designed_coeffs_record_file):
             )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_sensitivity_oat_run_and_export(
     workspace_integration,
@@ -578,6 +586,7 @@ def test_sensitivity_oat_run_and_export(
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_sensitivity_fast_run_and_export(
     workspace_integration,
@@ -611,6 +620,7 @@ def test_sensitivity_fast_run_and_export(
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_partial_sensitivity_run_and_export(
     workspace_integration,
@@ -655,6 +665,7 @@ def test_partial_sensitivity_run_and_export(
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_incompatible_partial_sensitivity_run(
     workspace_integration,
