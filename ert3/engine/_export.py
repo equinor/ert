@@ -53,7 +53,7 @@ def _prepare_export_parameters(
                     linked_inputs[ert3.config.SourceNS.resources][record_name],
                 )
             )
-            assert collection.ensemble_size == ensemble_size
+            assert len(collection) == ensemble_size
             for record in collection.records:
                 inputs[record_name].append(record.data)
         else:

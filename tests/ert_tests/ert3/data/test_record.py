@@ -126,7 +126,7 @@ def test_valid_ensemble_record(raw_ensrec, raw_ensrec_to_records, record_type):
     ensrecord = ert.data.RecordCollection(records=raw_ensrec_to_records(raw_ensrec))
     assert ensrecord.record_type == record_type
     assert ensrecord.collection_type != ert.data.RecordCollectionType.UNIFORM
-    assert len(raw_ensrec) == len(ensrecord.records) == ensrecord.ensemble_size
+    assert len(raw_ensrec) == len(ensrecord.records) == len(ensrecord)
     for raw_record, record in zip(raw_ensrec, ensrecord.records):
         raw_record = raw_record["data"]
         assert len(raw_record) == len(record.data)
@@ -150,12 +150,12 @@ def test_valid_uniform_ensemble_record(raw_ensrec, raw_ensrec_to_records, record
     ens_size = 5
     ensrecord = ert.data.RecordCollection(
         records=raw_ensrec_to_records(raw_ensrec),
-        ensemble_size=ens_size,
+        length=ens_size,
         collection_type=ert.data.RecordCollectionType.UNIFORM,
     )
     assert ensrecord.record_type == record_type
     assert ensrecord.collection_type == ert.data.RecordCollectionType.UNIFORM
-    assert len(ensrecord.records) == ensrecord.ensemble_size == ens_size
+    assert len(ensrecord.records) == len(ensrecord) == ens_size
     raw_record = raw_ensrec[0]["data"]
     assert len(raw_record) == len(ensrecord.records[0].data)
     for raw_elem, elem in zip(raw_record, ensrecord.records[0].data):
@@ -165,9 +165,22 @@ def test_valid_uniform_ensemble_record(raw_ensrec, raw_ensrec_to_records, record
         assert record is ensrecord.records[0]
 
 
-def test_ensemble_record_not_empty():
+@pytest.mark.parametrize(
+    "length, collection_type",
+    [
+        (None, ert.data.RecordCollectionType.UNIFORM),
+        (None, ert.data.RecordCollectionType.NON_UNIFORM),
+        (0, ert.data.RecordCollectionType.UNIFORM),
+        (0, ert.data.RecordCollectionType.NON_UNIFORM),
+        (None, None),
+        (0, None),
+    ],
+)
+def test_empty_record_collection(length, collection_type):
     with pytest.raises(ValueError):
-        ert.data.RecordCollection(records=tuple())
+        ert.data.RecordCollection(
+            records=tuple(), length=length, collection_type=collection_type
+        )
 
 
 def test_invalid_ensemble_record(raw_ensrec_to_records):
@@ -210,7 +223,7 @@ def test_inconsistent_size_ensemble_record(
 ):
     with pytest.raises(ValueError):
         ert.data.RecordCollection(
-            records=raw_ensrec_to_records(raw_ensrec), ensemble_size=ensemble_size
+            records=raw_ensrec_to_records(raw_ensrec), length=ensemble_size
         )
 
 
@@ -223,7 +236,7 @@ async def test_load_numeric_record_collection_from_file(designed_coeffs_record_f
         designed_coeffs_record_file, "application/json"
     )
     assert len(collection.records) == len(raw_collection)
-    assert collection.ensemble_size == len(raw_collection)
+    assert len(collection) == len(raw_collection)
     assert collection.record_type != ert.data.RecordType.BYTES
     assert collection.collection_type != ert.data.RecordCollectionType.UNIFORM
 
@@ -232,10 +245,10 @@ async def test_load_numeric_record_collection_from_file(designed_coeffs_record_f
 async def test_load_blob_record_collection_from_file(designed_blob_record_file):
     ens_size = 5
     collection = await ert.data.load_collection_from_file(
-        designed_blob_record_file, "application/octet-stream", ensemble_size=ens_size
+        designed_blob_record_file, "application/octet-stream", length=ens_size
     )
     assert len(collection.records) == ens_size
-    assert collection.ensemble_size == ens_size
+    assert len(collection) == ens_size
     assert collection.record_type == ert.data.RecordType.BYTES
     assert collection.collection_type == ert.data.RecordCollectionType.UNIFORM
     # All records must be references to the same object:

@@ -190,10 +190,17 @@ _RecordTupleType = Union[Tuple[NumericalRecord, ...], Tuple[BlobRecord, ...]]
 
 
 class RecordCollection:
+    """Storage container for records of the same record-type, always non-empty.
+
+    If the collection type is uniform, all records are identical. The typical
+    use case for a uniform collection is a record that is constant over an
+    ensemble.
+    """
+
     def __init__(
         self,
         records: Tuple[Record, ...],
-        ensemble_size: Optional[PositiveInt] = None,
+        length: Optional[PositiveInt] = None,
         collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
     ):
         if len(records) < 1:
@@ -201,18 +208,22 @@ class RecordCollection:
         if collection_type == RecordCollectionType.UNIFORM:
             if len(records) > 1:
                 raise ValueError("Multiple records provided for a uniform record")
-            if ensemble_size is None:
-                raise ValueError("Ensemble size missing for uniform record")
-            self._records = cast(_RecordTupleType, records * ensemble_size)
-            self._ensemble_size = ensemble_size
+            if length is None:
+                raise ValueError("Length missing for uniform record")
+            self._records = cast(_RecordTupleType, records * length)
+            self._length = length
         else:
-            if ensemble_size is not None and ensemble_size != len(records):
-                raise ValueError("Ensemble size does not match the record count")
+            if length is not None and length != len(records):
+                raise ValueError(
+                    f"Requested length ({length}) does not match the record count ({len(records)})"
+                )
             for record in records:
                 if record.record_type != records[0].record_type:
-                    raise ValueError("Ensemble records must have a uniform record type")
+                    raise ValueError(
+                        "Record collections must have a uniform record type"
+                    )
             self._records = cast(_RecordTupleType, records)
-            self._ensemble_size = len(self._records)
+            self._length = len(self._records)
         self._collection_type = collection_type
 
     def __eq__(self, other: object) -> bool:
@@ -220,13 +231,12 @@ class RecordCollection:
             return self.__dict__ == other.__dict__
         return False
 
+    def __len__(self) -> int:
+        return self._length
+
     @property
     def records(self) -> _RecordTupleType:
         return self._records
-
-    @property
-    def ensemble_size(self) -> int:
-        return self._ensemble_size
 
     @property
     def record_type(self) -> RecordType:
@@ -255,21 +265,21 @@ def _sync_make_tar(file_path: pathlib.Path) -> bytes:
 async def load_collection_from_file(
     file_path: pathlib.Path,
     mime: str,
-    ensemble_size: int = 1,
+    length: int = 1,
     is_directory: bool = False,
 ) -> RecordCollection:
     if mime == "application/octet-stream":
         if is_directory:
             return RecordCollection(
                 records=(BlobRecord(data=await make_tar(file_path)),),
-                ensemble_size=ensemble_size,
+                length=length,
                 collection_type=RecordCollectionType.UNIFORM,
             )
         else:
             async with aiofiles.open(file_path, "rb") as filebinary:
                 return RecordCollection(
                     records=(BlobRecord(data=await filebinary.read()),),
-                    ensemble_size=ensemble_size,
+                    length=length,
                     collection_type=RecordCollectionType.UNIFORM,
                 )
     raw_ensrecord = await get_serializer(mime).decode_from_path(file_path)
