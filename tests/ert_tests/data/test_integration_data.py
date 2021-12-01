@@ -56,6 +56,7 @@ def test_summary_obs(monkeypatch, facade_snake_oil):
     ] == np.datetime64("2011-12-21")
 
 
+@pytest.mark.integration_test
 def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     """
     This is mostly a regression test, as reading SUMMARY_OBS was very slow when using
@@ -121,6 +122,7 @@ def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
     ]
 
 
+@pytest.mark.integration_test
 def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="a") as fin:
