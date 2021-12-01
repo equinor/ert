@@ -327,7 +327,7 @@ def test_gaussian_distribution(
             gaussian_parameters_config, "coefficients", 1000
         )
 
-        assert 1000 == coefficients.ensemble_size
+        assert 1000 == len(coefficients)
         assert 1000 == len(sample_calls.call_args_list)
         assert 1000 == len(returned_samples)
 
@@ -364,7 +364,7 @@ def test_uniform_distribution(
             1000,
         )
 
-        assert 1000 == coefficients.ensemble_size
+        assert 1000 == len(coefficients)
         assert 1000 == len(sample_calls.call_args_list)
         assert 1000 == len(returned_samples)
 
@@ -401,7 +401,7 @@ def test_run_presampled(
         )
         get_event_loop().run_until_complete(future)
 
-        assert 10 == coeff0.ensemble_size
+        assert 10 == len(coeff0)
         for real_coeff in coeff0.records:
             assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
             for idx in real_coeff.index:
@@ -418,7 +418,7 @@ def test_run_presampled(
         ert3.engine.export(workspace, "presampled_evaluation", experiment_run_config)
 
     export_data = _load_export_data(workspace, "presampled_evaluation")
-    assert coeff0.ensemble_size == len(export_data)
+    assert len(coeff0) == len(export_data)
     for coeff, real in zip(coeff0.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
@@ -454,7 +454,7 @@ def test_run_uniform_presampled(
             workspace_name=workspace.name,
         )
         get_event_loop().run_until_complete(future)
-        assert 10 == uniform_coeff0.ensemble_size
+        assert 10 == len(uniform_coeff0)
         for real_coeff in uniform_coeff0.records:
             assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
             for idx in real_coeff.index:
@@ -475,7 +475,7 @@ def test_run_uniform_presampled(
         )
 
     export_data = _load_export_data(workspace, "presampled_uniform_evaluation")
-    assert uniform_coeff0.ensemble_size == len(export_data)
+    assert len(uniform_coeff0) == len(export_data)
     for coeff, real in zip(uniform_coeff0.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
@@ -527,7 +527,7 @@ def test_record_load_and_run(
         )
     )
     export_data = _load_export_data(workspace, "doe")
-    assert designed_collection.ensemble_size == len(export_data)
+    assert len(designed_collection) == len(export_data)
     for coeff, real in zip(designed_collection.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]

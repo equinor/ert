@@ -316,7 +316,6 @@ async def transmit_record_collection(
     workspace_name: str,
     experiment_name: Optional[str] = None,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    assert record_coll.ensemble_size is not None
     record: ert.data.Record
     metadata: Dict[Any, Any] = {
         "record_type": record_coll.record_type,
@@ -329,12 +328,12 @@ async def transmit_record_collection(
         ensemble_id = await _get_ensemble_id_async(workspace_name, experiment_name)
         ensemble_size = await _get_ensemble_size(ensemble_id=ensemble_id)
     else:
-        ensemble_size = record_coll.ensemble_size
+        ensemble_size = len(record_coll)
 
-    if record_coll.ensemble_size != ensemble_size:
+    if len(record_coll) != ensemble_size:
         raise ert.exceptions.ErtError(
             f"Experiment ensemble size {ensemble_size} does not match"
-            f" data size {record_coll.ensemble_size}"
+            f" data size {len(record_coll)}"
         )
 
     # Handle special case of a uniform record collection
@@ -610,7 +609,7 @@ def get_ensemble_record(
         for transmitter in transmitters
     )
     return ert.data.RecordCollection(
-        records=records, ensemble_size=ensemble_size, collection_type=collection_type
+        records=records, length=ensemble_size, collection_type=collection_type
     )
 
 

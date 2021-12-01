@@ -172,7 +172,7 @@ def test_add_and_get_uniform_ensemble_record(
     ens_size = 5
     ensrecord = ert.data.RecordCollection(
         records=raw_ensrec_to_records(raw_ensrec),
-        ensemble_size=ens_size,
+        length=ens_size,
         collection_type=ert.data.RecordCollectionType.UNIFORM,
     )
     future = ert.storage.transmit_record_collection(
