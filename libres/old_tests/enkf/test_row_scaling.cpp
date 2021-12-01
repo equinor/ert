@@ -87,7 +87,7 @@ void test_multiply(const row_scaling_type *row_scaling, const matrix_type *A0,
 }
 
 void test_multiply() {
-    const int data_size = 200000;
+    const int data_size = 200;
     const int ens_size = 100;
     matrix_type *A0 = matrix_alloc(data_size, ens_size);
     matrix_type *X0 = matrix_alloc(ens_size, ens_size);
