@@ -155,12 +155,12 @@ jobs:
         herbstluftwm &
         sleep 1
         python -c "import sys; print(sys.path)"
-        pytest tests/ert_tests -sv
+        pytest tests/ert_tests -sv --durations=0
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest'
       run: |
-        pytest tests/ert_tests -sv
+        pytest tests/ert_tests -sv --durations=0
 
     - name: Test CLI
       run: |
@@ -263,7 +263,7 @@ jobs:
     - name: Run Python tests
       run: |
         # Run tests
-        pytest tests/libres_tests
+        pytest tests/libres_tests --durations=0
 
 
   publish:
