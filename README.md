@@ -7,6 +7,7 @@
 [![GitHub contributors](https://img.shields.io/github/contributors-anon/equinor/ert)](https://img.shields.io/github/contributors-anon/equinor/ert)
 [![Code Style](https://github.com/equinor/ert/actions/workflows/style.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/style.yml)
 [![Type checking](https://github.com/equinor/ert/actions/workflows/typing.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/typing.yml)
+[![codecov](https://codecov.io/gh/equinor/ert/branch/add_code_coverage/graph/badge.svg?token=keVAcWavZ1)](https://codecov.io/gh/equinor/ert)
 [![Run test-data](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_ert2_test_data_setups.yml)
 [![Run polynomial demo](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_polynomial.yml)
 [![Run SPE1 demo](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml/badge.svg)](https://github.com/equinor/ert/actions/workflows/run_examples_spe1.yml)

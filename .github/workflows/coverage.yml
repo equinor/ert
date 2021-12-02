@@ -1,0 +1,61 @@
+name: Python coverage
+
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+   tags: "*"
+ pull_request:
+
+jobs:
+  python-test-coverage:
+    name: Python Coverage
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        system-under-test: ['res', 'ert']
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ubuntu-latest
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install with dependencies
+      run: |
+        pip install -r dev-requirements.txt
+        pip install .
+
+    - name: Run ert tests
+      if: matrix.system-under-test == 'ert'
+      env:
+        DISPLAY: ':99.0'
+      run: |
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
+        # We run the tests from the test directory as pytest-cov (at least as
+        # of 3.0.0) will create an incorrect report when a directory matches
+        # the package name
+        cd tests
+        pytest ert_tests --cov=ert --cov=ert3 --cov=ert_data --cov=ert_gui --cov=ert_shared --cov=ert_logging --cov=res --cov-report=xml:cov.xml
+
+    - name: Run res tests
+      if: matrix.system-under-test == 'res'
+      run: |
+        cd tests
+        pytest libres_tests --cov=res --cov-report=xml:cov.xml
+
+    - name: Upload python coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: tests/cov.xml
