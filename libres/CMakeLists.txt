@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6.1)
 project(res C CXX)
 
 option(BUILD_TESTS "Should the tests be built" OFF)
+option(COVERAGE "Should binaries record coverage information" OFF)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
@@ -50,6 +51,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "Release"
       "MinSizeRel"
       "RelWithDebInfo")
+endif()
+
+if(COVERAGE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Wall")
 endif()
 
 # -----------------------------------------------------------------

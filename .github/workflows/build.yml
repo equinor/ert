@@ -47,7 +47,7 @@ jobs:
     - name: Build libres
       run: |
         mkdir cmake-build
-        cmake -S libres -B cmake-build -DBUILD_TESTS=ON
+        cmake -S libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON
         cmake --build cmake-build
 
     - name: Run tests
@@ -55,6 +55,20 @@ jobs:
         cd cmake-build
         export PATH=$PWD/bin:$PATH
         ctest --output-on-failure
+
+    - name: Install gcovr
+      run: |
+        python3 -m pip install gcovr
+
+    - name: generate coverage report
+      run: |
+        gcovr -r libres/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
+
+    - name: Upload c coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: cmake-build/cov.xml
 
   build-wheels:
     timeout-minutes: 30
@@ -71,11 +85,13 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ matrix.os }}
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
 
     - name: Build Linux Wheel
       uses: docker://quay.io/pypa/manylinux2014_x86_64
@@ -83,11 +99,6 @@ jobs:
         entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
         args: ${{ matrix.python-version }}
       if: matrix.os == 'ubuntu-latest'
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
 
     - name: Build macOS Wheel
       run: pip wheel . --no-deps -w dist
@@ -118,18 +129,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
-
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ matrix.os }}
+
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -148,10 +156,8 @@ jobs:
       env:
         DISPLAY: ':99.0'
       run: |
-        /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
-        sleep 3
-        herbstluftwm &
-        sleep 1
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
         pushd tests
         pytest ert_tests -sv --durations=0 -m "not integration_test"
 
@@ -166,10 +172,8 @@ jobs:
       env:
         DISPLAY: ':99.0'
       run: |
-        /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX
-        sleep 3
-        herbstluftwm &
-        sleep 1
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
         pushd tests
         pytest ert_tests -sv --durations=0 -m "integration_test"
 
@@ -196,18 +200,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
-
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ matrix.os }}
+
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -252,18 +253,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install libxcb-image0 libxcb-icccm4 libxcb-keysyms1 libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-xfixes0 libxcb-xinerama0 libfontconfig1 libxcb-xkb1 libxkbcommon-x11-0 libdbus-1-3 x11-xserver-utils herbstluftwm
-
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ matrix.os }}
+    - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
