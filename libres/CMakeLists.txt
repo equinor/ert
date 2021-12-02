@@ -120,26 +120,6 @@ include(CheckFunctionExists)
 check_function_exists(regexec ERT_HAVE_REGEXP)
 
 # -----------------------------------------------------------------
-# Get version from git
-# -----------------------------------------------------------------
-
-set(RES_VERSION
-    "0.0.0-unset"
-    CACHE STRING "libres version")
-
-string(REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\1" RES_VERSION_MAJOR
-                     "${RES_VERSION}")
-string(REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\2" RES_VERSION_MINOR
-                     "${RES_VERSION}")
-string(REGEX REPLACE "^([^.]+)\\.([^.]+)\\.(.+)$" "\\3" RES_VERSION_MICRO
-                     "${RES_VERSION}")
-
-message(
-  STATUS
-    "libres version: ${RES_VERSION_MAJOR}.${RES_VERSION_MINOR}.${RES_VERSION_MICRO}"
-)
-
-# -----------------------------------------------------------------
 # Hack to get libres to compile without providing libecl on macOS
 # -----------------------------------------------------------------
 

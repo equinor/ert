@@ -70,7 +70,6 @@ class ResPrototype(Prototype):
 
 RES_LIB = ResPrototype.lib
 
-from res.util import ResVersion
 from ecl.util.util import updateAbortSignals
 
 updateAbortSignals()
