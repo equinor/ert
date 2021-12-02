@@ -70,9 +70,6 @@ void enkf_main_exit(enkf_main_type *enkf_main);
 void enkf_main_init_run(enkf_main_type *enkf_main,
                         const ert_run_context_type *run_context);
 
-bool enkf_main_UPDATE(enkf_main_type *enkf_main,
-                      const int_vector_type *step_list, enkf_fs_type *source_fs,
-                      enkf_fs_type *target_fs, run_mode_type run_mode);
 bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                                enkf_fs_type *source_fs,
                                enkf_fs_type *target_fs);
