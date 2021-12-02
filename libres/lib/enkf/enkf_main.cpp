@@ -724,7 +724,7 @@ static void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
                    __func__, ens_size, bool_vector_size(ens_mask));
 }
 
-// Opens and returns a log file.  A subroutine of enkf_main_UPDATE.
+// Opens and returns a log file.  A subroutine of enkf_main_smoother_update.
 static FILE *enkf_main_log_step_list(const char *log_path,
                                      const int_vector_type *step_list) {
     char *log_file;
@@ -1055,25 +1055,110 @@ static void enkf_main_analysis_update_with_rowscaling(
     matrix_free(X);
 }
 
-/*
- * This is THE ENKF update function.  It should only be called from enkf_main_UPDATE.
- */
-static void enkf_main_update__(
-    const int_vector_type *step_list, enkf_fs_type *source_fs,
-    enkf_fs_type *target_fs, run_mode_type run_mode,
-    const analysis_config_type *analysis_config,
-    const local_updatestep_type *updatestep, const int total_ens_size,
-    ensemble_config_type *ensemble_config, enkf_obs_type *obs, bool verbose,
-    rng_type *shared_rng, enkf_state_type **ensemble) {
-    /*
-   Observations and measurements are collected in these temporary
-   structures. obs_data is a precursor for the 'd' vector, and
-   meas_data is a precursor for the 'S' matrix'.
+static void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
+                            const ensemble_config_type *ensemble_config,
+                            const int total_ens_size,
+                            const int_vector_type *ens_active_list) {
 
-   The reason for going via these temporary structures is to support
-   deactivating observations which should not be used in the update
-   process.
-  */
+    /*
+      Copy all the parameter nodes from source case to target case;
+      nodes which are updated will be fetched from the new target
+      case, and nodes which are not updated will be manually copied
+      over there.
+    */
+
+    if (target_fs != source_fs) {
+        stringlist_type *param_keys =
+            ensemble_config_alloc_keylist_from_var_type(ensemble_config,
+                                                        PARAMETER);
+        for (int i = 0; i < stringlist_get_size(param_keys); i++) {
+            const char *key = stringlist_iget(param_keys, i);
+            enkf_config_node_type *config_node =
+                ensemble_config_get_node(ensemble_config, key);
+            enkf_node_type *data_node = enkf_node_alloc(config_node);
+            for (int j = 0; j < int_vector_size(ens_active_list); j++) {
+                node_id_type node_id;
+                node_id.iens = int_vector_iget(ens_active_list, j);
+                node_id.report_step = 0;
+
+                enkf_node_load(data_node, source_fs, node_id);
+                enkf_node_store(data_node, target_fs, node_id);
+            }
+            enkf_node_free(data_node);
+        }
+        stringlist_free(param_keys);
+    }
+}
+
+static bool assert_update_viable(const analysis_config_type *analysis_config,
+                                 const enkf_fs_type *source_fs,
+                                 const int total_ens_size,
+                                 const local_updatestep_type *updatestep) {
+    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
+    const int active_ens_size =
+        state_map_count_matching(source_state_map, STATE_HAS_DATA);
+
+    if (!analysis_config_have_enough_realisations(
+            analysis_config, active_ens_size, total_ens_size)) {
+        fprintf(stderr,
+                "** ERROR ** There are %d active realisations left, which is "
+                "less than the minimum specified - stopping assimilation.\n",
+                active_ens_size);
+        return false;
+    }
+
+    // exit if multi step update
+    if ((local_updatestep_get_num_ministep(updatestep) > 1) &&
+        (analysis_config_get_module_option(analysis_config,
+                                           ANALYSIS_ITERABLE))) {
+        util_exit("** ERROR: Can not combine iterable modules with multi step "
+                  "updates - sorry\n");
+    }
+    return true;
+}
+
+bool enkf_main_smoother_update(enkf_main_type *enkf_main,
+                               enkf_fs_type *source_fs,
+                               enkf_fs_type *target_fs) {
+    time_map_type *time_map = enkf_fs_get_time_map(source_fs);
+
+    int last_step = time_map_get_last_step(time_map);
+    if (last_step < 0)
+        last_step = model_config_get_last_history_restart(
+            enkf_main_get_model_config(enkf_main));
+
+    int_vector_type *step_list = int_vector_alloc(0, 0);
+    for (int i = 0; i <= last_step; i++)
+        int_vector_append(step_list, i);
+
+    local_config_type *local_config = enkf_main->local_config;
+    const local_updatestep_type *updatestep =
+        local_config_get_updatestep(local_config);
+    const analysis_config_type *analysis_config =
+        enkf_main_get_analysis_config(enkf_main);
+
+    if (!assert_update_viable(analysis_config, source_fs, enkf_main->ens_size,
+                              updatestep))
+        return false;
+
+    run_mode_type run_mode = SMOOTHER_RUN;
+    const int total_ens_size = enkf_main->ens_size;
+    enkf_obs_type *obs = enkf_main->obs;
+    bool verbose = enkf_main->verbose;
+    rng_type *shared_rng = enkf_main->shared_rng;
+    ensemble_config_type *ensemble_config =
+        enkf_main_get_ensemble_config(enkf_main);
+    enkf_state_type **ensemble = enkf_main->ensemble;
+
+    /*
+    Observations and measurements are collected in these temporary
+    structures. obs_data is a precursor for the 'd' vector, and
+    meas_data is a precursor for the 'S' matrix'.
+
+    The reason for going via these temporary structures is to support
+    deactivating observations which should not be used in the update
+    process.
+    */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
 
@@ -1087,33 +1172,8 @@ static void enkf_main_update__(
         int_vector_type *ens_active_list =
             bool_vector_alloc_active_list(ens_mask);
 
-        /*
-      Copy all the parameter nodes from source case to target case;
-      nodes which are updated will be fetched from the new target
-      case, and nodes which are not updated will be manually copied
-      over there.
-    */
-        if (target_fs != source_fs) {
-            stringlist_type *param_keys =
-                ensemble_config_alloc_keylist_from_var_type(ensemble_config,
-                                                            PARAMETER);
-            for (int i = 0; i < stringlist_get_size(param_keys); i++) {
-                const char *key = stringlist_iget(param_keys, i);
-                enkf_config_node_type *config_node =
-                    ensemble_config_get_node(ensemble_config, key);
-                enkf_node_type *data_node = enkf_node_alloc(config_node);
-                for (int j = 0; j < int_vector_size(ens_active_list); j++) {
-                    node_id_type node_id;
-                    node_id.iens = int_vector_iget(ens_active_list, j);
-                    node_id.report_step = 0;
-
-                    enkf_node_load(data_node, source_fs, node_id);
-                    enkf_node_store(data_node, target_fs, node_id);
-                }
-                enkf_node_free(data_node);
-            }
-            stringlist_free(param_keys);
-        }
+        copy_parameters(source_fs, target_fs, ensemble_config, total_ens_size,
+                        ens_active_list);
 
         {
             hash_type *use_count = hash_alloc();
@@ -1154,6 +1214,7 @@ static void enkf_main_update__(
                     enkf_analysis_fprintf_obs_summary(
                         obs_data, meas_data, step_list,
                         local_ministep_get_name(ministep), stdout);
+
                 enkf_analysis_fprintf_obs_summary(
                     obs_data, meas_data, step_list,
                     local_ministep_get_name(ministep), log_stream);
@@ -1248,72 +1309,10 @@ static void enkf_main_update__(
         fclose(log_stream);
     }
     bool_vector_free(ens_mask);
-}
 
-/*
- * This is  T H E  EnKF update routine.
- */
-bool enkf_main_UPDATE(enkf_main_type *enkf_main,
-                      const int_vector_type *step_list, enkf_fs_type *source_fs,
-                      enkf_fs_type *target_fs, run_mode_type run_mode) {
-
-    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
-    const analysis_config_type *analysis_config =
-        enkf_main_get_analysis_config(enkf_main);
-    const int active_ens_size =
-        state_map_count_matching(source_state_map, STATE_HAS_DATA);
-    const int total_ens_size = enkf_main_get_ensemble_size(enkf_main);
-
-    // exit if not enough realisations
-    if (!analysis_config_have_enough_realisations(
-            analysis_config, active_ens_size, total_ens_size)) {
-        fprintf(stderr,
-                "** ERROR ** There are %d active realisations left, which is "
-                "less than the minimum specified - stopping assimilation.\n",
-                active_ens_size);
-        return false;
-    }
-
-    local_config_type *local_config = enkf_main->local_config;
-    const local_updatestep_type *updatestep =
-        local_config_get_updatestep(local_config);
-
-    // exit if multi step update
-    if ((local_updatestep_get_num_ministep(updatestep) > 1) &&
-        (analysis_config_get_module_option(analysis_config,
-                                           ANALYSIS_ITERABLE))) {
-        util_exit("** ERROR: Can not combine iterable modules with multi step "
-                  "updates - sorry\n");
-    }
-
-    enkf_main_update__(step_list, source_fs, target_fs, run_mode,
-                       analysis_config, updatestep, total_ens_size,
-                       enkf_main_get_ensemble_config(enkf_main), enkf_main->obs,
-                       enkf_main->verbose, enkf_main->shared_rng,
-                       enkf_main->ensemble);
-
-    return true;
-}
-
-bool enkf_main_smoother_update(enkf_main_type *enkf_main,
-                               enkf_fs_type *source_fs,
-                               enkf_fs_type *target_fs) {
-    time_map_type *time_map = enkf_fs_get_time_map(source_fs);
-
-    int last_step = time_map_get_last_step(time_map);
-    if (last_step < 0)
-        last_step = model_config_get_last_history_restart(
-            enkf_main_get_model_config(enkf_main));
-
-    int_vector_type *step_list = int_vector_alloc(0, 0);
-    for (int i = 0; i <= last_step; i++)
-        int_vector_append(step_list, i);
-
-    bool update_done = enkf_main_UPDATE(enkf_main, step_list, source_fs,
-                                        target_fs, SMOOTHER_RUN);
     int_vector_free(step_list);
 
-    return update_done;
+    return true;
 }
 
 static void enkf_main_write_run_path(enkf_main_type *enkf_main,
