@@ -19,7 +19,6 @@ import res
 from .substitution_list import SubstitutionList
 from .enums import LLSQResultEnum
 from .log import Log
-from .res_version import ResVersion
 from .ui_return import UIReturn
 from .path_format import PathFormat
 from .matrix import Matrix

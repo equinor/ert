@@ -115,7 +115,6 @@ setup(
         ]
     },
     cmake_args=[
-        "-DRES_VERSION=" + get_version(),
         "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
         # everything not OS X. We depend on C++17, which makes our minimum

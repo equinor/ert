@@ -25,7 +25,6 @@ pybind11_add_module(
   res_util/res_portability.cpp
   res_util/util_printf.cpp
   res_util/block_fs.cpp
-  res_util/res_version.cpp
   res_util/regression.cpp
   res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
@@ -179,15 +178,6 @@ target_include_directories(
   PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
   PRIVATE "${ECL_INCLUDE_DIRS}")
-
-target_compile_definitions(
-  _lib
-  PRIVATE -DGIT_COMMIT=${GIT_COMMIT}
-          -DGIT_COMMIT_SHORT=${GIT_COMMIT_SHORT}
-          -DRES_VERSION_MAJOR=${RES_VERSION_MAJOR}
-          -DRES_VERSION_MINOR=${RES_VERSION_MINOR}
-          -DRES_VERSION_MICRO=${RES_VERSION_MICRO}
-          -DCOMPILE_TIME_STAMP="${RES_BUILD_TIME}")
 
 add_library(res ALIAS _lib)
 set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
