@@ -61,6 +61,9 @@ def _load_lib():
     return lib
 
 
+from res._lib.exports import ResPrototype2
+
+
 class ResPrototype(Prototype):
     lib = _load_lib()
 
