@@ -5,3 +5,4 @@
   exceptions
   config
   workspace
+  data
