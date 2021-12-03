@@ -856,10 +856,11 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
         if (!complete) {
             new_jobs = submit_new_jobs(queue);
             run_handlers(queue);
-        } else
+        } else {
             /* print an updated status to stdout before exiting. */
             if (verbose)
-            job_queue_print_summary(queue, true);
+                job_queue_print_summary(queue, true);
+        }
 
         job_list_unlock(queue->job_list);
 

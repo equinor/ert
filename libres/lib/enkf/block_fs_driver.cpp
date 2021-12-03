@@ -40,9 +40,7 @@ struct bfs_config_struct {
     int fsync_interval;
     double fragmentation_limit;
     bool read_only;
-    bool preload;
     int block_size;
-    int max_cache_size;
     bool bfs_lock;
 };
 
@@ -57,8 +55,7 @@ struct bfs_struct {
     const bfs_config_type *config;
 };
 
-bfs_config_type *bfs_config_alloc(bool preload, bool read_only, bool bfs_lock) {
-    const int max_cache_size = 512;
+bfs_config_type *bfs_config_alloc(bool read_only, bool bfs_lock) {
     const int fsync_interval =
         10; /* An fsync() call is issued for every 10'th write. */
     const double fragmentation_limit = 1.0; /* 1.0 => NO defrag is run. */
@@ -66,12 +63,10 @@ bfs_config_type *bfs_config_alloc(bool preload, bool read_only, bool bfs_lock) {
     {
         bfs_config_type *config =
             (bfs_config_type *)util_malloc(sizeof *config);
-        config->max_cache_size = max_cache_size;
         config->fsync_interval = fsync_interval;
         config->fragmentation_limit = fragmentation_limit;
         config->read_only = read_only;
         config->bfs_lock = bfs_lock;
-        config->preload = preload;
         config->block_size = 64;
         return config;
     }
@@ -117,9 +112,8 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 static void bfs_mount(bfs_type *bfs) {
     const bfs_config_type *config = bfs->config;
     bfs->block_fs = block_fs_mount(
-        bfs->mountfile, config->block_size, config->max_cache_size,
-        config->fragmentation_limit, config->fsync_interval, config->preload,
-        config->read_only, config->bfs_lock);
+        bfs->mountfile, config->block_size, config->fragmentation_limit,
+        config->fsync_interval, config->read_only, config->bfs_lock);
 }
 
 static void *bfs_mount__(void *arg) {
@@ -262,12 +256,11 @@ ert::block_fs_driver::block_fs_driver(int num_fs) : num_fs(num_fs) {
     this->fs_list = (bfs_type **)util_calloc(this->num_fs, sizeof(bfs_type *));
 }
 
-ert::block_fs_driver *ert::block_fs_driver::new_(bool preload, bool read_only,
-                                                 int num_fs,
+ert::block_fs_driver *ert::block_fs_driver::new_(bool read_only, int num_fs,
                                                  const char *mountfile_fmt,
                                                  bool block_level_lock) {
     ert::block_fs_driver *driver = new ert::block_fs_driver(num_fs);
-    driver->config = bfs_config_alloc(preload, read_only, block_level_lock);
+    driver->config = bfs_config_alloc(read_only, block_level_lock);
     {
         for (int ifs = 0; ifs < driver->num_fs; ifs++)
             driver->fs_list[ifs] = bfs_alloc_new(
@@ -321,7 +314,7 @@ void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
 
 ert::block_fs_driver *ert::block_fs_driver::open(FILE *fstab_stream,
                                                  const char *mount_point,
-                                                 bool preload, bool read_only) {
+                                                 bool read_only) {
     int num_fs = util_fread_int(fstab_stream);
     char *tmp_fmt = util_fread_alloc_string(fstab_stream);
     char *mountfile_fmt =
@@ -329,7 +322,7 @@ ert::block_fs_driver *ert::block_fs_driver::open(FILE *fstab_stream,
     const bool block_level_lock = false;
 
     ert::block_fs_driver *driver = ert::block_fs_driver::new_(
-        preload, read_only, num_fs, mountfile_fmt, block_level_lock);
+        read_only, num_fs, mountfile_fmt, block_level_lock);
 
     driver->mount();
 
