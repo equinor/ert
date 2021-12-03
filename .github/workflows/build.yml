@@ -68,7 +68,7 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: cmake-build/cov.xml
+        files: cov.xml
 
   build-wheels:
     timeout-minutes: 30
