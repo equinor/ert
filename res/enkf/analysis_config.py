@@ -19,12 +19,9 @@ from os.path import realpath
 
 from cwrap import BaseCClass
 
-from ecl.util.util import StringList
 
 from res import ResPrototype
 from res.enkf import ConfigKeys
-from res.enkf import AnalysisIterConfig
-from res.analysis import AnalysisModule
 
 
 class AnalysisConfig(BaseCClass):

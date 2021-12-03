@@ -15,10 +15,6 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.job_queue import ExtJob, ExtJoblist
-from res.job_queue import EnvironmentVarlist
-from ecl.util.util import StringList
-from res.util.substitution_list import SubstitutionList
 
 
 class ForwardModel(BaseCClass):

@@ -15,8 +15,6 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.job_queue import ExtJob
-from ecl.util.util import StringList
 
 
 class ExtJoblist(BaseCClass):

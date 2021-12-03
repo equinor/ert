@@ -1,8 +1,5 @@
-import os
-import sys
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import RunpathList
 
 
 class HookWorkflow(BaseCClass):

@@ -19,7 +19,6 @@ Module implementing a queue for managing external jobs.
 """
 
 import asyncio
-import copy
 import json
 import logging
 import time

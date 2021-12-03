@@ -1,4 +1,3 @@
-from res.enkf.plot_data import PlotBlockVector
 from ecl.util.util import DoubleVector
 
 

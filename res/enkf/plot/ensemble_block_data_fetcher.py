@@ -16,7 +16,7 @@
 
 from res.enkf.enums import ErtImplType
 from res.enkf.plot import DataFetcher
-from res.enkf.plot_data import PlotBlockDataLoader, PlotBlockData
+from res.enkf.plot_data import PlotBlockDataLoader
 
 
 class EnsembleBlockDataFetcher(DataFetcher):

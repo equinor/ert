@@ -1,7 +1,6 @@
-import ecl.util
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset, ObsData
+from res.enkf import LocalDataset, LocalObsdata, LocalObsdataNode
 
 
 class LocalMinistep(BaseCClass):

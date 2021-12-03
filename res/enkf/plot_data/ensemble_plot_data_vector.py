@@ -1,6 +1,5 @@
 from cwrap import BaseCClass
 from res import ResPrototype
-from ecl.util.util import CTime
 
 
 class EnsemblePlotDataVector(BaseCClass):

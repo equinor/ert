@@ -1,6 +1,6 @@
 from pandas import DataFrame, MultiIndex
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum
+from res.enkf import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotData
 from ecl.util.util import BoolVector

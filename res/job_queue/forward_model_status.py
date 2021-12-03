@@ -17,7 +17,6 @@ import os.path
 import json
 import datetime
 import time
-import sys
 from job_runner.reporting.file import File
 from job_runner import JOBS_FILE
 

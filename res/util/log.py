@@ -17,7 +17,6 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
-from res.util.enums import MessageLevelEnum
 
 
 class Log(BaseCClass):

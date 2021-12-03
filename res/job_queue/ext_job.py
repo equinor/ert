@@ -17,8 +17,6 @@ import os.path
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from ecl.util.util import StringList, Hash
-from res.config import ContentTypeEnum
 
 
 class ExtJob(BaseCClass):

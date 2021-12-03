@@ -15,8 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from ecl.grid import EclGrid
-from ecl.util.util import StringList, IntVector
+from ecl.util.util import IntVector
 
 from res import ResPrototype
 from res.enkf.config import (

@@ -1,6 +1,6 @@
 from pandas import DataFrame
 import numpy
-from res.enkf import EnKFMain, EnkfFs, RealizationStateEnum
+from res.enkf import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from ecl.util.util import BoolVector
 

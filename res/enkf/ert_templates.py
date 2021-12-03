@@ -15,8 +15,7 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import ErtTemplate, ConfigKeys
-from ecl.util.util import StringList
+from res.enkf import ConfigKeys
 import os
 
 

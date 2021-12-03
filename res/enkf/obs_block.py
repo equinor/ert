@@ -1,6 +1,5 @@
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.util import Matrix
 
 
 class ObsBlock(BaseCClass):

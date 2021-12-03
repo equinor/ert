@@ -16,8 +16,6 @@
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.sched import HistorySourceEnum
-from ecl.summary import EclSum
 
 
 class History(BaseCClass):

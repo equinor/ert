@@ -1,4 +1,3 @@
-from res.job_queue import Workflow
 from res.util.substitution_list import SubstitutionList
 from concurrent import futures
 

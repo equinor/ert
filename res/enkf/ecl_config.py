@@ -17,9 +17,7 @@
 from cwrap import BaseCClass
 from res import ResPrototype
 from ecl.grid import EclGrid
-from ecl.summary import EclSum
 from ecl.util.util import StringList, CTime
-from res.util import UIReturn
 from res.enkf import ConfigKeys
 import os
 from datetime import datetime

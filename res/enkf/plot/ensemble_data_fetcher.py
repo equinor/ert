@@ -1,4 +1,3 @@
-from res.enkf import EnsembleConfig
 from res.enkf.plot_data import EnsemblePlotData
 from res.enkf.enums import ErtImplType
 from res.enkf.plot.data_fetcher import DataFetcher

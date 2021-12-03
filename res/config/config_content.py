@@ -16,7 +16,7 @@
 
 import os.path
 from res import ResPrototype
-from res.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, SchemaItem
+from res.config import ContentTypeEnum, SchemaItem
 from cwrap import BaseCClass
 
 

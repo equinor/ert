@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from res.enkf import EnKFMain, EnkfFs, EnkfObservationImplementationType
+from res.enkf import EnkfObservationImplementationType
 
 
 class GenDataObservationCollector(object):

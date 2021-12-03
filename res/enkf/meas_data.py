@@ -1,8 +1,6 @@
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.enkf.obs_data import ObsData
-from ecl.util.util import IntVector
-from res.util import Matrix
 
 
 class MeasData(BaseCClass):

@@ -1,16 +1,10 @@
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector
 from res import ResPrototype
-from res.enkf import EnkfFs
-from res.enkf import ErtRunContext
 from res.enkf import EnKFState
-from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import RunStatusType, JobQueueManager, JobQueueNode, JobStatusType
+from res.job_queue import JobQueueManager, RunStatusType
 
 from functools import partial
-import time
-import threading
 
 
 class EnkfSimulationRunner(BaseCClass):

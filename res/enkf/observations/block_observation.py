@@ -15,8 +15,6 @@
 #  for more details.
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.enkf import NodeId, FieldConfig
-from res.enkf.observations import BlockDataConfig
 
 
 class BlockObservation(BaseCClass):

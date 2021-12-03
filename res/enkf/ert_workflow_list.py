@@ -1,8 +1,6 @@
 from cwrap import BaseCClass
 from res import ResPrototype
-from ecl.util.util import StringList
-from res.util.substitution_list import SubstitutionList
-from res.job_queue import Workflow, WorkflowJob, WorkflowJoblist
+from res.job_queue import WorkflowJob, WorkflowJoblist
 from res.enkf import ConfigKeys
 import os
 

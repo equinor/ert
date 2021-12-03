@@ -17,8 +17,6 @@ from cwrap import BaseCClass
 
 from res import ResPrototype
 from res.enkf.enums import EnkfFieldFileFormatEnum
-from ecl.grid import EclGrid
-from .field_type_enum import FieldTypeEnum
 
 
 class FieldConfig(BaseCClass):

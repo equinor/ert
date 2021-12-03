@@ -19,7 +19,7 @@ import os.path
 
 from cwrap import BaseCClass
 from res import ResPrototype
-from res.config import ConfigContent, UnrecognizedEnum
+from res.config import UnrecognizedEnum
 
 
 class ConfigParser(BaseCClass):

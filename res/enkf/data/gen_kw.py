@@ -15,12 +15,11 @@
 #  for more details.
 import os.path
 
-from cwrap import BaseCClass, CFILE
+from cwrap import BaseCClass
 import numbers
 
 from ecl.util.util import DoubleVector
 from res import ResPrototype
-from res.enkf.config import GenKwConfig
 
 
 class GenKw(BaseCClass):

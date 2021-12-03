@@ -15,11 +15,8 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ecl.util.util.rng import RandomNumberGenerator
 from res import ResPrototype
-from os import path
 
-import res
 from res.util import Matrix
 
 

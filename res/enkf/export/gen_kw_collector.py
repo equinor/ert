@@ -1,7 +1,7 @@
 import math
-from pandas import DataFrame, MultiIndex
+from pandas import DataFrame
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
+from res.enkf import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotGenKW
 from ecl.util.util import BoolVector

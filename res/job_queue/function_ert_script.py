@@ -1,4 +1,3 @@
-import ecl
 import cwrap
 
 from res.job_queue import ErtScript

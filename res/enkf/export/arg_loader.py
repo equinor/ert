@@ -1,9 +1,5 @@
-import math
-from pandas import DataFrame, MultiIndex
+from pandas import DataFrame
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
-from res.enkf.plot_data import EnsemblePlotGenData
-from ecl.util.util import BoolVector
 
 
 class ArgLoader(object):

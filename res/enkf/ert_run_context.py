@@ -15,11 +15,8 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from ecl.util.util import StringList
 
-from res.util import PathFormat
 from res import ResPrototype
-from res.enkf import TimeMap, StateMap, RunArg
 from res.enkf.enums import EnkfInitModeEnum
 
 

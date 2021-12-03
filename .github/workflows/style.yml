@@ -47,3 +47,4 @@ jobs:
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
         pylint ert ert3
+        pylint --diable=all --enable=unused-import res

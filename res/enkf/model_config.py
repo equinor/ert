@@ -16,11 +16,9 @@
 from cwrap import BaseCClass
 
 from ecl.summary import EclSum
-from ecl.util.util import StringList
 from res import ResPrototype
-from res.job_queue import ForwardModel, ExtJob, ExtJoblist
+from res.job_queue import ForwardModel
 from res.sched import HistorySourceEnum
-from res.util import PathFormat
 from res.enkf import ConfigKeys
 from res.enkf.util import TimeMap
 

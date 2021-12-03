@@ -13,9 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os.path
 
-from cwrap import BaseCClass, CFILE
+from cwrap import BaseCClass
 from six import string_types
 
 from res import ResPrototype
