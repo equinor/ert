@@ -174,6 +174,7 @@ async def get_ensemble_record(
     ensemble_id: UUID,
     accept: str = Header("application/json"),
     realization_index: Optional[int] = None,
+    label: Optional[str] = None,
 ) -> Any:
     ensemble_name = get_name("ensemble", ensemble_id)
     dataframe = data_for_key(ensemble_name, name, realization_index)
@@ -195,6 +196,16 @@ async def get_ensemble_record(
             content=dataframe.to_csv().encode(),
             media_type="text/csv",
         )
+
+
+@router.get("/ensembles/{ensemble_id}/records/{name}/labels", response_model=List[str])
+async def get_record_labels(
+    *,
+    res: LibresFacade = Depends(get_res),
+    ensemble_id: UUID,
+    name: str,
+) -> List[str]:
+    return []
 
 
 @router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])

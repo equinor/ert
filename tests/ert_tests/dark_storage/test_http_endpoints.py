@@ -176,3 +176,17 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
 
     assert_array_equal(misfit.columns, ["0", "2", "4", "6", "8"])
     assert misfit.shape == (3, 5)
+
+
+def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post(
+        "/gql", json={"query": "{experiments{ensembles{id}}}"}
+    )
+    answer_json = resp.json()
+    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+    resp: Response = dark_storage_client.get(
+        f"/ensembles/{ensemble_id}/records/POLY_RES@0/labels"
+    )
+    labels = resp.json()
+
+    assert labels == []
