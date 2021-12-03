@@ -17,6 +17,7 @@
 */
 
 #include <filesystem>
+#include <vector>
 
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,6 @@
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/util/buffer.hpp>
-#include <ert/util/long_vector.hpp>
 
 #include <ert/res_util/block_fs.hpp>
 
@@ -727,15 +727,13 @@ static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
 */
 
 static void block_fs_fix_nodes(block_fs_type *block_fs,
-                               long_vector_type *offset_list) {
+                               const std::vector<long> &offset_list) {
     if (block_fs->data_owner) {
         fsync(block_fs->data_fd);
         {
             char *key = NULL;
-            for (int inode = 0; inode < long_vector_size(offset_list);
-                 inode++) {
+            for (const auto &node_offset : offset_list) {
                 bool new_node = false;
-                long int node_offset = long_vector_iget(offset_list, inode);
                 file_node_type *file_node;
                 block_fs_fseek(block_fs, node_offset);
                 file_node = file_node_fread_alloc(block_fs->data_stream, &key);
@@ -771,7 +769,7 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
 }
 
 static void block_fs_build_index(block_fs_type *block_fs,
-                                 long_vector_type *error_offset) {
+                                 std::vector<long> &error_offset) {
     char *filename = NULL;
     file_node_type *file_node;
 
@@ -795,7 +793,7 @@ static void block_fs_build_index(block_fs_type *block_fs,
                         "while writing node in %s/%ld - will be discarded.\n",
                         block_fs->data_file, file_node->node_offset);
 
-                long_vector_append(error_offset, file_node->node_offset);
+                error_offset.push_back(file_node->node_offset);
                 file_node_free(file_node);
                 block_fs_fseek_valid_node(block_fs);
             } else {
@@ -827,7 +825,7 @@ static void block_fs_build_index(block_fs_type *block_fs,
                             "** Warning found node:%s at offset:%ld which was "
                             "incomplete - discarded.\n",
                             filename, file_node->node_offset);
-                    long_vector_append(error_offset, file_node->node_offset);
+                    error_offset.push_back(file_node->node_offset);
                     file_node_free(file_node);
                     block_fs_fseek_valid_node(block_fs);
                 }
@@ -920,7 +918,7 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
             /* This is a brand new filesystem - create the mount map first. */
             block_fs_fwrite_mount_info__(mount_file, 0);
         {
-            long_vector_type *fix_nodes = long_vector_alloc(0, 0);
+            std::vector<long> fix_nodes;
             block_fs = block_fs_alloc_empty(mount_file, block_size,
                                             fragmentation_limit, fsync_interval,
                                             read_only, use_lockfile);
@@ -938,7 +936,6 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
                 block_fs
                     ->data_owner); /* The data_stream is opened for reading AND writing (IFF we are data_owner - otherwise it is still read only) */
             block_fs_fix_nodes(block_fs, fix_nodes);
-            long_vector_free(fix_nodes);
         }
     }
     return block_fs;
