@@ -19,6 +19,9 @@
 #ifndef ERT_ANALYSIS_CONFIG_H
 #define ERT_ANALYSIS_CONFIG_H
 
+#include <string>
+#include <vector>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,8 +52,9 @@ void analysis_config_load_module(analysis_config_type *config,
 bool analysis_config_get_module_option(const analysis_config_type *config,
                                        long flag);
 
-PY_USED stringlist_type *
-analysis_config_alloc_module_names(const analysis_config_type *config);
+extern "C++" PY_USED std::vector<std::string>
+analysis_config_module_names(const analysis_config_type *config);
+
 const char *analysis_config_get_log_path(const analysis_config_type *config);
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config);

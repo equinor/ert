@@ -16,15 +16,15 @@
    for more details.
 */
 
-#include <stdbool.h>
-#include <stdlib.h>
-
-#include <math.h>
-
+#include <string>
+#include <vector>
 #include <unordered_map>
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <math.h>
+
 #include <ert/util/util.h>
-#include <ert/util/stringlist.h>
 
 #include <ert/config/config_parser.hpp>
 #include <ert/config/config_settings.hpp>
@@ -154,12 +154,12 @@ int analysis_config_get_min_realisations(const analysis_config_type *config) {
     return config->min_realisations;
 }
 
-stringlist_type *
-analysis_config_alloc_module_names(const analysis_config_type *config) {
-    stringlist_type *s = stringlist_alloc_new();
+std::vector<std::string>
+analysis_config_module_names(const analysis_config_type *config) {
+    std::vector<std::string> s;
 
     for (const auto &analysis_pair : config->analysis_modules)
-        stringlist_append_copy(s, analysis_pair.first.c_str());
+        s.push_back(analysis_pair.first);
 
     return s;
 }

@@ -15,10 +15,11 @@
 #  for more details.
 
 from os.path import isfile, realpath
-from typing import Optional
+from typing import List, Optional
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
+
+from res import _lib
 
 from res import ResPrototype
 from res.analysis import AnalysisModule
@@ -73,9 +74,6 @@ class AnalysisConfig(BaseCClass):
     )
     _get_active_module_name = ResPrototype(
         "char* analysis_config_get_active_module_name(analysis_config)"
-    )
-    _get_module_list = ResPrototype(
-        "stringlist_obj analysis_config_alloc_module_names(analysis_config)"
     )
     _get_module = ResPrototype(
         "analysis_module_ref analysis_config_get_module(analysis_config, char*)"
@@ -245,9 +243,8 @@ class AnalysisConfig(BaseCClass):
         """:rtype: str"""
         return self._get_active_module_name()
 
-    def getModuleList(self) -> StringList:
-        """:rtype: StringList"""
-        return self._get_module_list()
+    def getModuleList(self) -> List[str]:
+        return _lib.analysis_config_module_names(self)
 
     def getModule(self, module_name) -> AnalysisModule:
         """@rtype: AnalysisModule"""
@@ -316,7 +313,7 @@ class AnalysisConfig(BaseCClass):
             return False
 
         # compare each module
-        for a in list(self.getModuleList()):
+        for a in self.getModuleList():
             if self.getModule(a) != other.getModule(a):
                 return False
 
