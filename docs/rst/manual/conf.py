@@ -59,7 +59,10 @@ extensions = [
 # Autodoc settings:
 autodoc_class_signature = "separated"
 autodoc_inherit_docstrings = False
-nitpick_ignore = [("py:class", "pydantic.types.FilePath")]
+nitpick_ignore = [
+    ("py:class", "pydantic.types.FilePath"),
+    ("py:class", "pydantic.types.PositiveInt"),
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
