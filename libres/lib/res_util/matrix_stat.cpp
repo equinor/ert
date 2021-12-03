@@ -83,26 +83,3 @@ llsq_result_enum matrix_stat_llsq_estimate(matrix_type *beta,
 
     return LLSQ_SUCCESS;
 }
-
-llsq_result_enum matrix_stat_polyfit(matrix_type *beta, const matrix_type *X0,
-                                     const matrix_type *Y0,
-                                     const matrix_type *S) {
-    int num_data = matrix_get_rows(X0);
-    int num_var = matrix_get_rows(beta);
-    llsq_result_enum result;
-    matrix_type *X = matrix_alloc(num_data, num_var);
-    int row, col;
-
-    for (row = 0; row < matrix_get_rows(X0); row++) {
-        double x1 = matrix_iget(X0, row, 0);
-        double xp = 1;
-        for (col = 0; col < num_var; col++) {
-            matrix_iset(X, row, col, xp);
-            xp *= x1;
-        }
-    }
-
-    result = matrix_stat_llsq_estimate(beta, X, Y0, S);
-    matrix_free(X);
-    return result;
-}

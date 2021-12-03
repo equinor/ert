@@ -33,7 +33,6 @@ from res.enkf import EnkfObs, EnKFState, EnkfSimulationRunner, EnkfFsManager
 from res.enkf import ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.key_manager import KeyManager
-from res.util import Log
 from res.util.substitution_list import SubstitutionList
 from ecl.util.util import rng
 

@@ -120,44 +120,10 @@ void test_with_sigma() {
     matrix_free(X);
 }
 
-void test_polyfit() {
-    const double A = 4.00;
-    const double B = -2;
-    const double C = 0.25;
-
-    const double xmin = 0;
-    const double xmax = 1;
-    int size = 20;
-    int P = 3;
-    matrix_type *X = matrix_alloc(size, 1);
-    matrix_type *Y = matrix_alloc(size, 1);
-    matrix_type *beta = matrix_alloc(P, 1);
-
-    int i;
-    for (i = 0; i < size; i++) {
-        double x = xmin + i * (xmax - xmin) / (size - 1);
-
-        double y = A + B * x + C * x * x;
-        matrix_iset(X, i, 0, x);
-        matrix_iset(Y, i, 0, y);
-    }
-
-    test_assert_true(matrix_stat_polyfit(beta, X, Y, NULL) == LLSQ_SUCCESS);
-
-    test_assert_double_equal(A, matrix_iget(beta, 0, 0));
-    test_assert_double_equal(B, matrix_iget(beta, 1, 0));
-    test_assert_double_equal(C, matrix_iget(beta, 2, 0));
-
-    matrix_free(Y);
-    matrix_free(beta);
-    matrix_free(X);
-}
-
 int main() {
     util_install_signals();
     test_invalid_dimensions();
     test_no_sigma();
     test_with_sigma();
-    test_polyfit();
     exit(0);
 }
