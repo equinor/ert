@@ -348,13 +348,8 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
             fs_driver_enum driver_type;
             if (fread(&driver_type, sizeof driver_type, 1, fstab_stream) == 1) {
                 if (fs_types_valid(driver_type)) {
-                    // Enable preloading for dynamic blockfs-es only
-                    bool preload = false;
-                    if (driver_type == DRIVER_DYNAMIC_FORECAST)
-                        preload = false;
-
                     ert::block_fs_driver *driver = ert::block_fs_driver::open(
-                        fstab_stream, mount_point, preload, fs->read_only);
+                        fstab_stream, mount_point, fs->read_only);
                     enkf_fs_assign_driver(fs, driver, driver_type);
                 } else
                     block_fs_driver_fskip(fstab_stream);
