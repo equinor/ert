@@ -88,36 +88,43 @@ This section contains a list of epics suggested to be carried out to continue
 realizing the development strategy. It is expected that a section is
 turned into an epic issue before it is launched.
 
-Logging
-~~~~~~~
-Currently there are numerous ways of logging in ert and libres. Furthermore,
-the Kibana instance that used to be active on-premise was decommissioned. We
-should get a new central logger up and running on-premise and make sure that
-relevant loggig is forwarded to this central instance. This will allow us to
-monitor usage of ERT and act upon it.
-
-Implement a backend of the storage API using EnKFMain + file storage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To utilise strangulation techniques and to make the new visualisation solution
-available to a larger set of users we intend to implement the storage API using
-EnKFMain and file storage. It will rely heavily on shared disk access to user
-configuration and will loose all data if the storage files are deleted from
-disk. All in all, is should behave similarly to what EnKFMain and file storage
-does today.
-
-Make all data exposed to users pass through the storage API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Make all data exposed to users pass through the storage API [in progress]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 With an implementation of the storage API backed on EnKFMain and file storage
 we are again ready to aim for all user facing data (visualisation and export)
-to pass through the storage API.
+to pass through the storage API. Ensure that this can be done while ERT is
+running. Deprecate the collectors so that we can make them private later.
 
-Move the responsibility of fetching and storing data out of the analysis module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Move the responsibility of fetching and storing data out of the analysis module [in progress]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As a first step towards further isolating the analysis pipeline of ERT and
 opening up for the possiblity of a stateless Python API for analysis we are to
 separate the responsibility of data fetching and storing (including the
 knowledge of EnKFMain and storage) and all logic for how analysis is done. In
 addition, we should improve the test base and seek local code improvements.
+
+Data record maturation [in progress]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Extend the functionality of the records to be able to carry blob data,
+hierarchical data (including summary data), support transformations and
+serialization of record data.
+
+Act upon feedback on new data visualiser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Actively seek feedback on webviz-ert and act upon the feedback such that
+webviz-ert can replace the Qt-plotter as the standard visualisation tool.
+
+Drop the Qt-plotter
+~~~~~~~~~~~~~~~~~~~
+With the webviz backed plotter available to all users we should drop the Qt
+based plotter.
+
+ERT-storage discrepancies
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Currently, there is a difference in how ERT2 and ERT3 stores data in
+ERT-storage. They should unify such that webviz-ert can visualise data from
+both tools. Furthermore, we should abandon all usage of `userdata` from both
+ERT2 and ERT3.
 
 Delete the deprecated interaction with the queue system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,22 +132,11 @@ After production setting the ensemble evaluator, we should phase out the
 possibility of interacting with the queue system bypassing the legacy
 evaluator.
 
-Run ERT2 forward models using prefect evaluator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Transpile the ERT2 forward model into a single Unix Step that can be executed
-by the prefect evaluator. This should be introduced via a feature flag, that is
-later made default, before the legacy evaluator is removed.
-
-Drop the Qt-plotter
-~~~~~~~~~~~~~~~~~~~
-With the webviz backed plotter available to all users we should drop the Qt
-based plotter.
-
-Increase visual scalability of the new visualiser
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The product owner has a list of improvements to make the visualiser scale
-better visually for large cases. We should gather these into a milestone of
-issues.
+ERT3 monitoring
+~~~~~~~~~~~~~~~
+Make it possible to monitor the progress of the realisations when running
+experiments in ERT3. The solution can be cli- or gui-based, but it should be
+shared between ERT2 and ERT3.
 
 Introduce an experiment concept
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,6 +145,17 @@ experiment should be introduced - with the responsibility of executing a single
 experiment. This implementation should contain the logic of the current run
 models in ERT2 and parts of the engine logic in ERT3.
 
+Run ERT2 forward models using prefect evaluator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Transpile the ERT2 forward model into a single Unix Step that can be executed
+by the prefect evaluator. This should be introduced via a feature flag, that is
+later made default, before the legacy evaluator is removed.
+
+Handle failing realisations in ERT3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ERT3 needs to handle failing realizations, both when running and persisting the
+information.
+
 Configurable compute environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The compute environment used, in particular for unix steps, should be
@@ -156,6 +163,16 @@ configurable in a natural manner. It should be possible to configure an
 extension of a komodo environment on-premise. As in, additional Python packages
 and single-file scripts should be possible to configure. This should also be
 possible to do in a setup without Komodo.
+
+Pilot ready storage backend in Azure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Before ERT3 can run in the cloud we need to implement and set up deploy of a
+pilot ready storage solution in Azure.
+
+Pilot ready new evaluator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Before ERT3 can run in the cloud we need to prepare the new ensemble evaluator
+for pilot in Azure.
 
 Plugged-in sensitivity
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -172,15 +189,16 @@ Implement an as simple as possible optimisation algorithm, together with an
 introduction of optimization to the configuration in ert3, necessary business
 logic in the engine and the capability to store control variables in storage.
 
-Pilot ready storage backend in Azure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Before ERT3 can run in the cloud we need to implement and set up deploy of a
-pilot ready storage solution in Azure.
+Implement Everest-based plugin for optimization and sensitivity analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With support for plugin optimization and sensitivity algorithms we should
+provide a plugin for each based on the current Everest algorithm.
 
-Pilot ready new evaluator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Before ERT3 can run in the cloud we need to prepare the new ensemble evaluator
-for pilot in Azure.
+Revise FMU-FAQ
+~~~~~~~~~~~~~~
+The FMU FAQ currently contains some issues or frequently asked questions that
+could be solved via implementation in ERT. We should collect those and act upon
+them.
 
 Temporary storage for evaluator and analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
