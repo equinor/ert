@@ -188,17 +188,16 @@ int enkf_fs_incref(enkf_fs_type *fs) {
 }
 
 int enkf_fs_decref(enkf_fs_type *fs) {
-    int refcount;
     fs->refcount--;
-    refcount = fs->refcount;
+    int refcount = fs->refcount;
 
-    if (fs->refcount < 0)
+    if (refcount < 0)
         util_abort("%s: Internal inconsistency in file system. The filesystem "
                    "refcount:%d is < 0 \n",
-                   __func__, fs->refcount);
+                   __func__, refcount);
 
     res_log_fdebug("Calling decref on: %s . Refcount after decref:%d",
-                   fs->mount_point, fs->refcount);
+                   fs->mount_point, refcount);
     if (refcount == 0)
         enkf_fs_umount(fs);
 
