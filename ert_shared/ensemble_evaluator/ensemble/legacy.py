@@ -53,7 +53,7 @@ class _LegacyEnsemble(_Ensemble):
             )
             timeout_queue.put_nowait(timeout_cloudevent)
 
-        dispatch_url = self._config.dispatch_uri
+        local_dispatch_url = self._get_local_dispatch_url()
         cert = self._config.cert
         token = self._config.token
 
@@ -63,7 +63,10 @@ class _LegacyEnsemble(_Ensemble):
                 if timeout_cloudevent is None:
                     break
                 await self.send_cloudevent(
-                    dispatch_url, timeout_cloudevent, token=token, cert=cert
+                    local_dispatch_url,
+                    timeout_cloudevent,
+                    token=token,
+                    cert=cert,
                 )
 
         send_timeout_future = get_event_loop().create_task(send_timeout_message())
@@ -83,10 +86,14 @@ class _LegacyEnsemble(_Ensemble):
         self._evaluate_thread = threading.Thread(target=self._evaluate)
         self._evaluate_thread.start()
 
+    def _get_local_dispatch_url(self) -> str:
+        return f"{self._config.protocol}://127.0.0.1:{self._config.port}/dispatch"
+
     def _evaluate(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
         dispatch_url = self._config.dispatch_uri
+        local_dispatch_url = self._get_local_dispatch_url()
         cert = self._config.cert
         token = self._config.token
         try:
@@ -99,7 +106,7 @@ class _LegacyEnsemble(_Ensemble):
             )
             get_event_loop().run_until_complete(
                 self.send_cloudevent(
-                    dispatch_url, out_cloudevent, token=token, cert=cert
+                    local_dispatch_url, out_cloudevent, token=token, cert=cert
                 )
             )
 
@@ -140,7 +147,7 @@ class _LegacyEnsemble(_Ensemble):
 
                 async def _run_queue():
                     await self._job_queue.execute_queue_async(
-                        dispatch_url,
+                        local_dispatch_url,
                         self._ee_id,
                         threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
                         queue_evaluators,
@@ -165,7 +172,7 @@ class _LegacyEnsemble(_Ensemble):
                 )
                 get_event_loop().run_until_complete(
                     self.send_cloudevent(
-                        dispatch_url, out_cloudevent, token=token, cert=cert
+                        local_dispatch_url, out_cloudevent, token=token, cert=cert
                     )
                 )
         except Exception:
@@ -182,7 +189,7 @@ class _LegacyEnsemble(_Ensemble):
             )
             get_event_loop().run_until_complete(
                 self.send_cloudevent(
-                    dispatch_url, out_cloudevent, token=token, cert=cert
+                    local_dispatch_url, out_cloudevent, token=token, cert=cert
                 )
             )
 

@@ -92,6 +92,10 @@ def _generate_certificate(
                     x509.DNSName("{}".format(cert_name)),
                     x509.DNSName(ip_address),
                     x509.IPAddress(ipaddress.ip_address(ip_address)),
+                    x509.DNSName("localhost"),
+                    x509.DNSName("*.localhost"),
+                    x509.DNSName("127.0.0.1"),
+                    x509.IPAddress(ipaddress.ip_address("127.0.0.1")),
                 ]
             ),
             critical=False,
@@ -142,7 +146,7 @@ class EvaluatorServerConfig:
         generate_cert: bool = True,
     ) -> None:
         self.host, self.port, self._socket_handle = port_handler.find_available_port(
-            custom_range=custom_port_range, reuse_addr=True
+            custom_range=custom_port_range, reuse_addr=True, bind_all_interfaces=True
         )
         self.protocol = "wss" if generate_cert else "ws"
         self.url = f"{self.protocol}://{self.host}:{self.port}"

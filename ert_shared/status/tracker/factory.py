@@ -1,3 +1,4 @@
+from typing import Optional
 from ert_shared.status.tracker.legacy import LegacyTracker
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
 from ert_shared.status.utils import scale_intervals
@@ -6,10 +7,13 @@ from ert_shared.feature_toggling import FeatureToggling
 
 def create_tracker(
     model,
-    general_interval=5,
-    detailed_interval=10,
-    num_realizations=None,
-    ee_config=None,
+    general_interval: int = 5,
+    detailed_interval: int = 10,
+    num_realizations: Optional[int] = None,
+    ee_host: Optional[str] = None,
+    ee_port: Optional[int] = None,
+    ee_token: Optional[str] = None,
+    ee_cert: Optional[str] = None,
 ):
     """Creates a tracker tracking a @model. The provided model
     is updated either purely event-driven, or in two tiers: @general_interval,
@@ -30,12 +34,12 @@ def create_tracker(
     if FeatureToggling.is_enabled("ensemble-evaluator"):
         return EvaluatorTracker(
             model,
-            ee_config.host,
-            ee_config.port,
-            general_interval,
-            detailed_interval,
-            token=ee_config.token,
-            cert=ee_config.cert,
+            host=ee_host,
+            port=ee_port,
+            general_interval=general_interval,
+            detailed_interval=detailed_interval,
+            token=ee_token,
+            cert=ee_cert,
         )
     return LegacyTracker(
         model,

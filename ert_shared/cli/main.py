@@ -74,7 +74,17 @@ def run_cli(args):
         )
         thread.start()
 
-        tracker = create_tracker(model, detailed_interval=0, ee_config=ee_config)
+        if ee_config is None:
+            tracker = create_tracker(model, detailed_interval=0)
+        else:
+            tracker = create_tracker(
+                model,
+                detailed_interval=0,
+                ee_host="127.0.0.1",
+                ee_port=ee_config.port,
+                ee_cert=ee_config.cert,
+                ee_token=ee_config.token,
+            )
 
         out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)

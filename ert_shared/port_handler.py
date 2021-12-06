@@ -19,18 +19,20 @@ def find_available_port(
     custom_host: Optional[str] = None,
     custom_range: Optional[range] = None,
     reuse_addr: bool = False,
+    bind_all_interfaces: bool = False,
 ) -> Tuple[str, int, socket.socket]:
     current_host = custom_host if custom_host is not None else _get_ip_address()
     current_range = (
         custom_range if custom_range is not None else range(51820, 51840 + 1)
     )
+    bind_host = "0.0.0.0" if bind_all_interfaces else current_host
     if current_range.start == current_range.stop:
         try:
             return (
                 current_host,
                 current_range.start,
                 _bind_socket(
-                    host=current_host, port=current_range.start, reuse_addr=reuse_addr
+                    host=bind_host, port=current_range.start, reuse_addr=reuse_addr
                 ),
             )
         except PortAlreadyInUseException:
@@ -44,7 +46,7 @@ def find_available_port(
                 return (
                     current_host,
                     num,
-                    _bind_socket(host=current_host, port=num, reuse_addr=reuse_addr),
+                    _bind_socket(host=bind_host, port=num, reuse_addr=reuse_addr),
                 )
             except PortAlreadyInUseException:
                 continue

@@ -285,11 +285,25 @@ class RunDialog(QDialog):
 
         self._ticker.start(1000)
 
-        tracker = create_tracker(
-            self._run_model,
-            num_realizations=self._simulations_argments["active_realizations"].count(),
-            ee_config=self._simulations_argments.get("ee_config", None),
-        )
+        ee_config = self._simulations_argments.get("ee_config", None)
+        if ee_config is None:
+            tracker = create_tracker(
+                self._run_model,
+                num_realizations=self._simulations_argments[
+                    "active_realizations"
+                ].count(),
+            )
+        else:
+            tracker = create_tracker(
+                self._run_model,
+                num_realizations=self._simulations_argments[
+                    "active_realizations"
+                ].count(),
+                ee_host="127.0.0.1",
+                ee_port=ee_config.port,
+                ee_cert=ee_config.cert,
+                ee_token=ee_config.token,
+            )
 
         worker = TrackerWorker(tracker)
         worker_thread = QThread()

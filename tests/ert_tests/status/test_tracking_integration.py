@@ -228,9 +228,18 @@ def test_tracking(
             )
             thread.start()
 
-            tracker = create_tracker(
-                model, general_interval=1, detailed_interval=2, ee_config=ee_config
-            )
+            if ee_config is None:
+                tracker = create_tracker(model, general_interval=1, detailed_interval=2)
+            else:
+                tracker = create_tracker(
+                    model,
+                    general_interval=1,
+                    detailed_interval=2,
+                    ee_host="localhost",
+                    ee_port=ee_config.port,
+                    ee_cert=ee_config.cert,
+                    ee_token=ee_config.token,
+                )
 
             snapshots = {}
 
