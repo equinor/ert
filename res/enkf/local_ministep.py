@@ -1,7 +1,10 @@
-import ecl.util
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import LocalObsdata, LocalObsdataNode, LocalDataset, ObsData
+from res.enkf.local_dataset import LocalDataset
+from res.enkf.local_obsdata import LocalObsdata
+from res.enkf.local_obsdata_node import LocalObsdataNode
+from res.enkf.obs_data import ObsData
 
 
 class LocalMinistep(BaseCClass):
@@ -73,7 +76,7 @@ class LocalMinistep(BaseCClass):
         """@rtype: str"""
         return self.name()
 
-    def get_obs_data(self):
+    def get_obs_data(self) -> ObsData:
         """@rtype: ObsData"""
         return self._get_obs_data()
 

@@ -16,7 +16,7 @@
 
 from res.enkf.enums import ErtImplType
 from res.enkf.plot import DataFetcher
-from res.enkf.plot_data import PlotBlockDataLoader, PlotBlockData
+from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader
 
 
 class EnsembleBlockDataFetcher(DataFetcher):
@@ -24,7 +24,7 @@ class EnsembleBlockDataFetcher(DataFetcher):
         super(EnsembleBlockDataFetcher, self).__init__(ert)
         self.__selected_report_step_index = None
 
-    def __fetchSimulationData(self, block_data):
+    def __fetchSimulationData(self, block_data) -> PlotBlockData:
         """
         @type block_data: PlotBlockData
         @rtype dict

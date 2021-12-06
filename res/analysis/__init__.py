@@ -15,9 +15,7 @@
 #  for more details.
 
 
-import res
-from cwrap import Prototype
-import ecl.util
-
-from .enums import AnalysisModuleOptionsEnum
 from .analysis_module import AnalysisModule
+from .enums import AnalysisModuleOptionsEnum
+
+__all__ = ["AnalysisModuleOptionsEnum", "AnalysisModule"]

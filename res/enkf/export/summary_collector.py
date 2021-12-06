@@ -1,9 +1,11 @@
-from pandas import DataFrame, MultiIndex
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum
+from ecl.util.util import BoolVector
+from pandas import DataFrame, MultiIndex
+
+from res.enkf import EnKFMain
+from res.enkf.enums import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotData
-from ecl.util.util import BoolVector
 
 
 class SummaryCollector(object):
@@ -23,7 +25,7 @@ class SummaryCollector(object):
         return key_manager.summaryKeys()
 
     @staticmethod
-    def loadAllSummaryData(ert, case_name, keys=None, realization_index=None):
+    def loadAllSummaryData(ert: EnKFMain, case_name, keys=None, realization_index=None):
         """
         @type ert: EnKFMain
         @type case_name: str

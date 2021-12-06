@@ -1,11 +1,13 @@
+import logging
 import os
 import sys
 import time
-import logging
+from typing import Any, Dict
 
 from cwrap import BaseCClass  # pylint: disable=import-error
 
 from res import ResPrototype
+from res.job_queue.workflow_joblist import WorkflowJoblist
 
 
 class Workflow(BaseCClass):
@@ -20,7 +22,7 @@ class Workflow(BaseCClass):
     _get_last_error = ResPrototype("config_error_ref workflow_get_last_error(workflow)")
     _get_src_file = ResPrototype("char* worflow_get_src_file(workflow)")
 
-    def __init__(self, src_file, job_list):
+    def __init__(self, src_file, job_list: WorkflowJoblist):
         """
         @type src_file: str
         @type job_list: WorkflowJoblist
@@ -31,7 +33,7 @@ class Workflow(BaseCClass):
         self.__running = False
         self.__cancelled = False
         self.__current_job = None
-        self.__status = {}
+        self.__status: Dict[str, Any] = {}
 
     def __len__(self):
         return self._count()

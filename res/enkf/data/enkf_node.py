@@ -14,12 +14,18 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import sys
-from res.enkf.enums import ErtImplType
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import EnkfFs, NodeId
-from res.enkf.data import GenKw, GenData, Field, ExtParam
+from res.enkf.data.ext_param import ExtParam
+from res.enkf.data.field import Field
+from res.enkf.data.gen_data import GenData
+from res.enkf.data.gen_kw import GenKw
 from res.enkf.data.summary import Summary
+from res.enkf.enkf_fs import EnkfFs
+from res.enkf.enums import ErtImplType
+from res.enkf.node_id import NodeId
 
 
 class EnkfNode(BaseCClass):

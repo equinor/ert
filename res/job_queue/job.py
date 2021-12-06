@@ -15,10 +15,12 @@
 #  for more details.
 
 
-import time
 import datetime
+import time
+
 from cwrap import BaseCClass
-from res.job_queue import JobStatusType
+
+from .job_status_type_enum import JobStatusType
 
 # This class and the interplay between this class and the Driver and
 # JobQueue classes is quite fragile; in particular the Job class

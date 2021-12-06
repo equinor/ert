@@ -18,10 +18,9 @@ from os.path import isfile, realpath
 
 from cwrap import BaseCClass
 
-from res.util.enums import MessageLevelEnum
-
 from res import ResPrototype
-from res.enkf import ConfigKeys
+from res.enkf.config_keys import ConfigKeys
+from res.util.enums import MessageLevelEnum
 
 
 class LogConfig(BaseCClass):
@@ -91,7 +90,7 @@ class LogConfig(BaseCClass):
         return self._log_file()
 
     @property
-    def log_level(self):
+    def log_level(self) -> MessageLevelEnum:
         return self._log_level()
 
     def __eq__(self, other):

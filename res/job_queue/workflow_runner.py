@@ -1,10 +1,11 @@
+from concurrent import futures
+
 from res.job_queue import Workflow
 from res.util.substitution_list import SubstitutionList
-from concurrent import futures
 
 
 class WorkflowRunner(object):
-    def __init__(self, workflow, ert=None, context=None):
+    def __init__(self, workflow: Workflow, ert=None, context: SubstitutionList = None):
         """
         @type workflow: Workflow
         @type ert: res.enkf.EnKFMain

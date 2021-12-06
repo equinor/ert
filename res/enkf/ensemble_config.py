@@ -13,16 +13,20 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
+from typing import Optional
+
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
+from ecl.util.util import StringList
+
 from res import ResPrototype
-from res.enkf import SummaryKeyMatcher, ConfigKeys
 from res.config import ConfigContent
 from res.enkf.config import EnkfConfigNode
-from res.enkf.enums import EnkfVarType, ErtImplType, LoadFailTypeEnum
-import os
+from res.enkf.config_keys import ConfigKeys
+from res.enkf.enums import EnkfVarType, ErtImplType
+from res.enkf.summary_key_matcher import SummaryKeyMatcher
 
 
 def _get_abs_path(file):
@@ -80,7 +84,13 @@ class EnsembleConfig(BaseCClass):
         "void ensemble_config_init_SUMMARY_full(ens_config, char*, ecl_sum)"
     )
 
-    def __init__(self, config_content=None, grid=None, refcase=None, config_dict=None):
+    def __init__(
+        self,
+        config_content: Optional[ConfigContent] = None,
+        grid: Optional[EclGrid] = None,
+        refcase: Optional[EclSum] = None,
+        config_dict=None,
+    ):
         if config_content is not None and config_dict is not None:
             raise ValueError(
                 "Attempting to create EnsembleConfig object with multiple config objects"
@@ -220,32 +230,32 @@ class EnsembleConfig(BaseCClass):
     def getNode(self, key):
         return self[key]
 
-    def alloc_keylist(self):
+    def alloc_keylist(self) -> StringList:
         """@rtype: StringList"""
         return self._alloc_keylist()
 
-    def add_summary(self, key):
+    def add_summary(self, key) -> EnkfConfigNode:
         """@rtype: EnkfConfigNode"""
         return self._add_summary(key, 2).setParent(self)
 
-    def add_summary_full(self, key, refcase):
+    def add_summary_full(self, key, refcase) -> EnkfConfigNode:
         """@rtype: EnkfConfigNode"""
         return self._add_summary_full(key, refcase)
 
-    def add_gen_kw(self, key):
+    def add_gen_kw(self, key) -> EnkfConfigNode:
         """@rtype: EnkfConfigNode"""
         return self._add_gen_kw(key).setParent(self)
 
-    def addNode(self, config_node):
+    def addNode(self, config_node: EnkfConfigNode):
         assert isinstance(config_node, EnkfConfigNode)
         self._add_node(config_node)
         config_node.convertToCReference(self)
 
-    def add_field(self, key, eclipse_grid):
+    def add_field(self, key, eclipse_grid: EclGrid) -> EnkfConfigNode:
         """@rtype: EnkfConfigNode"""
         return self._add_field(key, eclipse_grid).setParent(self)
 
-    def getKeylistFromVarType(self, var_mask):
+    def getKeylistFromVarType(self, var_mask: EnkfVarType) -> StringList:
         """@rtype: StringList"""
         assert isinstance(var_mask, EnkfVarType)
         return self._alloc_keylist_from_var_type(var_mask)
@@ -258,7 +268,7 @@ class EnsembleConfig(BaseCClass):
     def __contains__(self, key):
         return self._has_key(key)
 
-    def getSummaryKeyMatcher(self):
+    def getSummaryKeyMatcher(self) -> SummaryKeyMatcher:
         """@rtype: SummaryKeyMatcher"""
         return self._summary_key_matcher()
 

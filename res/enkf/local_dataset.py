@@ -1,8 +1,9 @@
 from cwrap import BaseCClass
-from res import ResPrototype
 from ecl.grid import EclRegion
 from ecl.util.geometry import GeoRegion
-from ecl.util.util import StringList
+
+from res import ResPrototype
+from res.enkf.row_scaling import RowScaling
 
 
 class LocalDataset(BaseCClass):
@@ -43,7 +44,7 @@ class LocalDataset(BaseCClass):
         else:
             raise KeyError('Unknown key "%s"' % key)
 
-    def row_scaling(self, key):
+    def row_scaling(self, key) -> RowScaling:
         if key not in self:
             raise KeyError(f"Unknown key: {key}")
 

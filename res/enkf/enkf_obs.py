@@ -16,15 +16,20 @@
 import os.path
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList, IntVector
-from res.sched import History
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from res import ResPrototype
-from res.enkf import EnkfFs, LocalObsdataNode, LocalObsdata, MeasData, ObsData
-from res.enkf.enums import EnkfObservationImplementationType
+from ecl.util.util import IntVector, StringList
 
+from res import ResPrototype
+from res.enkf.enkf_fs import EnkfFs
+from res.enkf.ensemble_config import EnsembleConfig
+from res.enkf.enums import EnkfObservationImplementationType
+from res.enkf.local_obsdata import LocalObsdata
+from res.enkf.meas_data import MeasData
+from res.enkf.obs_data import ObsData
 from res.enkf.observations import ObsVector
+from res.enkf.util import TimeMap
+from res.sched import History
 
 
 class EnkfObs(BaseCClass):
@@ -69,11 +74,11 @@ class EnkfObs(BaseCClass):
 
     def __init__(
         self,
-        ensemble_config,
-        history=None,
-        external_time_map=None,
-        grid=None,
-        refcase=None,
+        ensemble_config: EnsembleConfig,
+        history: History = None,
+        external_time_map: TimeMap = None,
+        grid: EclGrid = None,
+        refcase: EclSum = None,
     ):
         c_ptr = self._alloc(history, external_time_map, grid, refcase, ensemble_config)
         super(EnkfObs, self).__init__(c_ptr)
@@ -125,7 +130,9 @@ class EnkfObs(BaseCClass):
     def getAllActiveLocalObsdata(self, key="ALL-OBS"):
         return self._create_all_active_obs(key)
 
-    def getTypedKeylist(self, observation_implementation_type):
+    def getTypedKeylist(
+        self, observation_implementation_type: EnkfObservationImplementationType
+    ) -> StringList:
         """
         @type observation_implementation_type: EnkfObservationImplementationType
         @rtype: StringList

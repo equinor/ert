@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
-from res import ResPrototype
 from ecl.util.util import StringList
+
+from res import ResPrototype
 
 
 class SummaryKeySet(BaseCClass):
@@ -40,7 +41,7 @@ class SummaryKeySet(BaseCClass):
     def __contains__(self, key):
         return self._has_key(key)
 
-    def keys(self):
+    def keys(self) -> StringList:
         """@rtype: StringList"""
         return self._keys()
 

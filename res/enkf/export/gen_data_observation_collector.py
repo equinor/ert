@@ -1,10 +1,12 @@
 from pandas import DataFrame
-from res.enkf import EnKFMain, EnkfFs, EnkfObservationImplementationType
+
+from res.enkf import EnKFMain
+from res.enkf.enums import EnkfObservationImplementationType
 
 
 class GenDataObservationCollector(object):
     @staticmethod
-    def getAllObservationKeys(ert):
+    def getAllObservationKeys(ert: EnKFMain):
         """
         @type ert: EnKFMain
         @rtype: list of str
@@ -16,7 +18,7 @@ class GenDataObservationCollector(object):
         return [key for key in observation_keys]
 
     @staticmethod
-    def getObservationKeyForDataKey(ert, data_key, data_report_step):
+    def getObservationKeyForDataKey(ert: EnKFMain, data_key, data_report_step):
         """
         @type ert: EnKFMain
         @rtype: str
@@ -35,7 +37,7 @@ class GenDataObservationCollector(object):
         return observation_key
 
     @staticmethod
-    def loadGenDataObservations(ert, case_name, key):
+    def loadGenDataObservations(ert: EnKFMain, case_name, key):
         """
         @type ert: EnKFMain
         @type case_name: str

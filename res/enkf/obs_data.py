@@ -15,7 +15,9 @@
 #  for more details.
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
+from res.enkf.obs_block import ObsBlock
 from res.util import Matrix
 
 
@@ -70,7 +72,7 @@ class ObsData(BaseCClass):
     def __repr__(self):
         return "ObsData(total_size = %d) at 0x%x" % (len(self), self._address())
 
-    def addBlock(self, obs_key, obs_size):
+    def addBlock(self, obs_key, obs_size) -> ObsBlock:
         error_covar = None
         error_covar_owner = False
         return self._add_block(obs_key, obs_size, error_covar, error_covar_owner)

@@ -14,10 +14,11 @@
 # See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 # for more details.
 from cwrap import BaseCClass
+from ecl.grid import EclGrid
 
 from res import ResPrototype
 from res.enkf.enums import EnkfFieldFileFormatEnum
-from ecl.grid import EclGrid
+
 from .field_type_enum import FieldTypeEnum
 
 
@@ -83,7 +84,7 @@ class FieldConfig(BaseCClass):
     def guessFiletype(cls, filename):
         return cls._guess_filetype(filename)
 
-    def get_type(self):
+    def get_type(self) -> FieldTypeEnum:
         return self._get_type()
 
     def get_truncation_mode(self):
@@ -113,7 +114,7 @@ class FieldConfig(BaseCClass):
     def get_data_size(self):
         return self._get_data_size()
 
-    def get_grid(self):
+    def get_grid(self) -> EclGrid:
         return self._get_grid()
 
     def ijk_active(self, i, j, k):

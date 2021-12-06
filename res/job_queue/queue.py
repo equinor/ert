@@ -19,21 +19,22 @@ Module implementing a queue for managing external jobs.
 """
 
 import asyncio
-import copy
 import json
 import logging
-import time
 import ssl
+import time
 import typing
 
 import websockets
-from websockets.datastructures import Headers
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
-from job_runner import JOBS_FILE, CERT_FILE
+from job_runner import CERT_FILE, JOBS_FILE
 from res import ResPrototype
-from res.job_queue import JobQueueNode, JobStatusType, ThreadStatus
+from res.job_queue.job_queue_node import JobQueueNode
+from res.job_queue.job_status_type_enum import JobStatusType
 from res.job_queue.queue_differ import QueueDiffer
+from res.job_queue.thread_status_type_enum import ThreadStatus
+from websockets.datastructures import Headers
 
 logger = logging.getLogger(__name__)
 

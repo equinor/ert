@@ -1,4 +1,7 @@
+from typing import Optional
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.util import Matrix
 
@@ -19,7 +22,7 @@ class ObsBlock(BaseCClass):
     _iget_is_active = ResPrototype("bool obs_block_iget_is_active( obs_block , int)")
 
     def __init__(self, obs_key, obs_size, global_std_scaling=1.0):
-        error_covar = None
+        error_covar: Optional[Matrix] = None
         error_covar_owner = False
         c_pointer = self._alloc(
             obs_key, obs_size, error_covar, error_covar_owner, global_std_scaling

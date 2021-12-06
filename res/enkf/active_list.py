@@ -15,8 +15,9 @@
 #  for more details.
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import ActiveMode
+from res.enkf.enums import ActiveMode
 
 
 class ActiveList(BaseCClass):

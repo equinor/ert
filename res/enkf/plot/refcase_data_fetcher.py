@@ -1,4 +1,6 @@
-from ecl.summary import EclSum, EclSumVector, EclSumNode
+from ecl.summary import EclSum
+from ecl.util.util import StringList
+
 from res.enkf.enums import ErtImplType
 from res.enkf.plot.data_fetcher import DataFetcher
 
@@ -8,15 +10,15 @@ class RefcaseDataFetcher(DataFetcher):
         super(RefcaseDataFetcher, self).__init__(ert)
         self.report_times = {}
 
-    def hasRefcase(self):
+    def hasRefcase(self) -> bool:
         """@rtype: bool"""
         return self.ert().eclConfig().hasRefcase()
 
-    def getRefCase(self):
+    def getRefCase(self) -> EclSum:
         """@rtype: EclSum"""
         return self.ert().eclConfig().getRefcase()
 
-    def getSummaryKeys(self):
+    def getSummaryKeys(self) -> StringList:
         """@rtype: StringList"""
         return self.ert().ensembleConfig().getKeylistFromImplType(ErtImplType.SUMMARY)
 

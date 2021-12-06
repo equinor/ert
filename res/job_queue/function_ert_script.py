@@ -1,8 +1,7 @@
-import ecl
 import cwrap
+from ecl.util.util.stringlist import StringList
 
 from res.job_queue import ErtScript
-from ecl.util.util.stringlist import StringList
 
 
 class _NonePrototype(cwrap.Prototype):

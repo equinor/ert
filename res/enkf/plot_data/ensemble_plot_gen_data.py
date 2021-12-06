@@ -15,11 +15,12 @@
 #  for more details.
 
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector, DoubleVector
 from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums.ert_impl_type_enum import ErtImplType
-from ecl.util.util import BoolVector, DoubleVector
+from res.enkf.enums import ErtImplType
+from res.enkf.plot_data.ensemble_plot_gen_data_vector import EnsemblePlotGenDataVector
 
 
 class EnsemblePlotGenData(BaseCClass):
@@ -66,7 +67,7 @@ class EnsemblePlotGenData(BaseCClass):
         """@rtype: int"""
         return self._size()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> EnsemblePlotGenDataVector:
         """@rtype: EnsemblePlotGenDataVector"""
         return self._get(index)
 
@@ -76,11 +77,11 @@ class EnsemblePlotGenData(BaseCClass):
             yield self[cur]
             cur += 1
 
-    def getMaxValues(self):
+    def getMaxValues(self) -> DoubleVector:
         """@rtype: DoubleVector"""
         return self._max_values().setParent(self)
 
-    def getMinValues(self):
+    def getMinValues(self) -> DoubleVector:
         """@rtype: DoubleVector"""
         return self._min_values().setParent(self)
 

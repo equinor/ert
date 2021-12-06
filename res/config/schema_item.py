@@ -13,12 +13,11 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ctypes
 
-from ecl import EclPrototype
-from res import ResPrototype
-from res.config import ContentTypeEnum
 from cwrap import BaseCClass
+
+from res import ResPrototype
+from res.config.content_type_enum import ContentTypeEnum
 
 
 class SchemaItem(BaseCClass):
@@ -46,7 +45,7 @@ class SchemaItem(BaseCClass):
         c_ptr = self._alloc(keyword, required)
         super(SchemaItem, self).__init__(c_ptr)
 
-    def iget_type(self, index):
+    def iget_type(self, index) -> ContentTypeEnum:
         """@rtype: ContentTypeEnum"""
         return self._iget_type(index)
 

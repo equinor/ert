@@ -2,16 +2,14 @@ import os.path
 import re
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList, BoolVector
+from ecl.util.util import BoolVector, StringList
+
 from res import ResPrototype
-from res.enkf import (
-    EnkfFs,
-    StateMap,
-    TimeMap,
-    RealizationStateEnum,
-    EnkfInitModeEnum,
-    EnKFFSType,
-)
+from res.enkf.enkf_fs import EnkfFs
+from res.enkf.enums import RealizationStateEnum
+from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.state_map import StateMap
+from res.enkf.util import TimeMap
 
 
 def naturalSortKey(s, _nsre=re.compile("([0-9]+)")):
@@ -57,7 +55,7 @@ class FileSystemRotator(object):
         fs = self._fs_map[name]
         return fs.copy()
 
-    def __getitem__(self, case):
+    def __getitem__(self, case) -> EnkfFs:
         """@rtype: EnkfFs"""
         if isinstance(case, str):
             return self.__get_fs(case)
@@ -151,7 +149,7 @@ class EnkfFsManager(BaseCClass):
     # The return value from the getFileSystem will be a weak reference to the
     # underlying enkf_fs object. That implies that the fs manager must be in
     # scope for the return value to be valid.
-    def getFileSystem(self, case_name, mount_root=None):
+    def getFileSystem(self, case_name, mount_root=None) -> EnkfFs:
         """
         @rtype: EnkfFs
         """
@@ -198,7 +196,7 @@ class EnkfFsManager(BaseCClass):
 
         return case_has_data
 
-    def getCurrentFileSystem(self):
+    def getCurrentFileSystem(self) -> EnkfFs:
         """Returns the currently selected file system
         @rtype: EnkfFs
         """
@@ -221,7 +219,7 @@ class EnkfFsManager(BaseCClass):
         """@rtype: int"""
         return self._ensemble_size()
 
-    def switchFileSystem(self, file_system):
+    def switchFileSystem(self, file_system: EnkfFs):
         """
         @type file_system: EnkfFs
         """
@@ -240,7 +238,11 @@ class EnkfFsManager(BaseCClass):
         return sorted(caselist, key=naturalSortKey)
 
     def customInitializeCurrentFromExistingCase(
-        self, source_case, source_report_step, member_mask, node_list
+        self,
+        source_case,
+        source_report_step,
+        member_mask: BoolVector,
+        node_list: StringList,
     ):
         """
         @type source_case: str
@@ -268,7 +270,7 @@ class EnkfFsManager(BaseCClass):
         """
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
-    def initializeFromScratch(self, parameter_list, run_context):
+    def initializeFromScratch(self, parameter_list, run_context: ErtRunContext):
         self._initialize_from_scratch(parameter_list, run_context)
 
     def isCaseMounted(self, case_name, mount_root=None):
@@ -284,7 +286,7 @@ class EnkfFsManager(BaseCClass):
 
         return full_case_name in self._fs_rotator
 
-    def getStateMapForCase(self, case):
+    def getStateMapForCase(self, case) -> StateMap:
         """
         @type case: str
         @rtype: StateMap
@@ -295,7 +297,7 @@ class EnkfFsManager(BaseCClass):
         else:
             return self._alloc_readonly_state_map(case)
 
-    def getTimeMapForCase(self, case):
+    def getTimeMapForCase(self, case) -> TimeMap:
         """
         @type case: str
         @rtype: TimeMap

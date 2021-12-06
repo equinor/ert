@@ -14,11 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res import ResPrototype
+from res import ResPrototype, _lib
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.observations import BlockObservation, SummaryObservation, GenObservation
-from res import _lib
+from res.enkf.observations.block_observation import BlockObservation
+from res.enkf.observations.gen_observation import GenObservation
+from res.enkf.observations.summary_observation import SummaryObservation
 
 
 class ObsVector(BaseCClass):

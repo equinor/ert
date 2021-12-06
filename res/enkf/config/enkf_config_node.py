@@ -13,27 +13,26 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
+
 from cwrap import BaseCClass
-
 from ecl.grid import EclGrid
-from ecl.util.util import StringList, IntVector
-
+from ecl.util.util import IntVector, StringList
 from res import ResPrototype
 from res.enkf.config import (
+    ExtParamConfig,
     FieldConfig,
     GenDataConfig,
     GenKwConfig,
     SummaryConfig,
-    ExtParamConfig,
 )
+from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import (
     EnkfTruncationType,
+    EnkfVarType,
     ErtImplType,
     LoadFailTypeEnum,
-    EnkfVarType,
 )
-from res.enkf import ConfigKeys
-import os
 
 
 class EnkfConfigNode(BaseCClass):
@@ -237,7 +236,7 @@ class EnkfConfigNode(BaseCClass):
     def get_init_file_fmt(self):
         return self._get_init_file_fmt()
 
-    def getObservationKeys(self):
+    def getObservationKeys(self) -> StringList:
         """@rtype:  StringList"""
         return self._get_obs_keys().setParent(self)
 
@@ -253,7 +252,9 @@ class EnkfConfigNode(BaseCClass):
         return cls._alloc_summary_node(key, load_fail_type)
 
     @classmethod
-    def createFieldConfigNode(cls, key, grid, trans_table=None, forward_init=False):
+    def createFieldConfigNode(
+        cls, key, grid: EclGrid, trans_table=None, forward_init=False
+    ):
         """
         @type grid: EclGrid
         @rtype: EnkfConfigNode

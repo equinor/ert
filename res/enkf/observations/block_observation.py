@@ -13,9 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import Union
+
 from cwrap import BaseCClass
+from ecl.grid import EclGrid
+
 from res import ResPrototype
-from res.enkf import NodeId, FieldConfig
+from res.enkf.config import FieldConfig
+from res.enkf.node_id import NodeId
 from res.enkf.observations import BlockDataConfig
 
 
@@ -49,7 +54,9 @@ class BlockObservation(BaseCClass):
         "double block_obs_iget_data(block_obs, void*, int, node_id)"
     )
 
-    def __init__(self, obs_key, data_config, grid):
+    def __init__(
+        self, obs_key, data_config: Union[BlockDataConfig, FieldConfig], grid: EclGrid
+    ):
         c_ptr = self._alloc(obs_key, data_config, grid)
         super(BlockObservation, self).__init__(c_ptr)
 
@@ -95,7 +102,7 @@ class BlockObservation(BaseCClass):
         """@rtype: float"""
         return self._get_depth(index)
 
-    def getData(self, state, obs_index, node_id):
+    def getData(self, state, obs_index, node_id: NodeId):
         """
         @type state: c_void_p
         @type obs_index: int

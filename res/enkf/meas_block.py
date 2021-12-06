@@ -1,8 +1,7 @@
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector
+
 from res import ResPrototype
-from res.enkf.obs_data import ObsData
-from ecl.util.util import IntVector, BoolVector
-from res.util import Matrix
 
 
 class MeasBlock(BaseCClass):

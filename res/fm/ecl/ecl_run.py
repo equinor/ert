@@ -10,14 +10,10 @@ from collections import namedtuple
 from contextlib import contextmanager
 
 from packaging import version
+from res.fm.ecl.ecl_config import EclrunConfig
 from res.util.subprocess import await_process_tee
 
-from .ecl_config import EclConfig
-
-try:
-    from ecl.summary import EclSum
-except ImportError:
-    from ert.ecl import EclSum
+from ecl.summary import EclSum
 
 EclipseResult = namedtuple("EclipseResult", "errors bugs")
 body_sub_pattern = r"(\s^\s@.+$)*"
@@ -256,7 +252,7 @@ class EclRun(object):
             for host in machine_list:
                 fileH.write("%s\n" % host)
 
-    def _get_run_command(self, eclrun_config):
+    def _get_run_command(self, eclrun_config: EclrunConfig):
         summary_conversion = "yes" if self.summary_conversion else "no"
         return [
             "eclrun",

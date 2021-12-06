@@ -1,8 +1,10 @@
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector
+
 from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
-from ecl.util.util import BoolVector
+from res.enkf.plot_data.ensemble_plot_data_vector import EnsemblePlotDataVector
 
 
 class EnsemblePlotData(BaseCClass):
@@ -40,7 +42,7 @@ class EnsemblePlotData(BaseCClass):
         """@rtype: int"""
         return self._size()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> EnsemblePlotDataVector:
         """@rtype: EnsemblePlotDataVector"""
         return self._get(index)
 

@@ -14,8 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import LoadFailTypeEnum
+from res.enkf.enums import LoadFailTypeEnum
 
 
 class SummaryConfig(BaseCClass):

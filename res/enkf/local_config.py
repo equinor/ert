@@ -15,10 +15,11 @@
 #  for more details.
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import LocalUpdateStep
-from res.enkf.local_ministep import LocalMinistep
 from res.analysis import AnalysisModule
+from res.enkf.local_ministep import LocalMinistep
+from res.enkf.local_updatestep import LocalUpdateStep
 
 
 class LocalConfig(BaseCClass):

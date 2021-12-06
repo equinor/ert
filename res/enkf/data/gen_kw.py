@@ -13,12 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import numbers
 import os.path
 
-from cwrap import BaseCClass, CFILE
-import numbers
-
+from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
+
 from res import ResPrototype
 from res.enkf.config import GenKwConfig
 
@@ -41,7 +41,7 @@ class GenKw(BaseCClass):
     )
     _iget_key = ResPrototype("char*  gen_kw_get_name(gen_kw, int)")
 
-    def __init__(self, gen_kw_config):
+    def __init__(self, gen_kw_config: GenKwConfig):
         """
         @type gen_kw_config: GenKwConfig
         """
@@ -49,12 +49,14 @@ class GenKw(BaseCClass):
 
         if c_ptr:
             super(GenKw, self).__init__(c_ptr)
-            self.__str__ = self.__repr__
         else:
             raise ValueError(
                 "Cannot issue a GenKw from the given keyword config: %s."
                 % str(gen_kw_config)
             )
+
+    def __str__(self):
+        return repr(self)
 
     def exportParameters(self, file_name):
         """@type: str"""

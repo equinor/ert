@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import LocalMinistep
+from res.enkf.local_ministep import LocalMinistep
 
 
 class LocalUpdateStep(BaseCClass):

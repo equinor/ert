@@ -14,10 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os.path
+from typing import List
 
 from cwrap import BaseCClass
+from ecl.util.util import StringHash, StringList
+
 from res import ResPrototype
-from ecl.util.util import StringList, Hash
 from res.config import ContentTypeEnum
 
 
@@ -173,7 +175,7 @@ class ExtJob(BaseCClass):
         return self._max_arg()
 
     @property
-    def arg_types(self):
+    def arg_types(self) -> List[ContentTypeEnum]:
         """@rtype: list of type"""
 
         result = []
@@ -190,7 +192,7 @@ class ExtJob(BaseCClass):
                 return False
             return True
 
-    def get_environment(self):
+    def get_environment(self) -> StringHash:
         return self._get_environment()
 
     def set_environment(self, key, value):
@@ -207,7 +209,7 @@ class ExtJob(BaseCClass):
         # The return type is cast from a <StringList> to a regular Python list.
         return list(self._get_argvalues())
 
-    def set_arglist(self, args):
+    def set_arglist(self, args: StringList):
         return self._set_arglist(args)
 
     def clear_environment(self):

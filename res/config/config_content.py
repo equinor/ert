@@ -15,9 +15,14 @@
 #  for more details.
 
 import os.path
-from res import ResPrototype
-from res.config import UnrecognizedEnum, ContentTypeEnum, ConfigError, SchemaItem
+
 from cwrap import BaseCClass
+
+from res import ResPrototype
+from res.config.config_error import ConfigError
+from res.config.config_path_elm import ConfigPathElm
+from res.config.content_type_enum import ContentTypeEnum
+from res.config.schema_item import SchemaItem
 
 
 class ContentNode(BaseCClass):
@@ -238,7 +243,7 @@ class ConfigContent(BaseCClass):
     def free(self):
         self._free()
 
-    def getErrors(self):
+    def getErrors(self) -> ConfigError:
         """@rtype: ConfigError"""
         return self._get_errors()
 
@@ -249,7 +254,7 @@ class ConfigContent(BaseCClass):
     def get_config_path(self):
         return self._get_config_path()
 
-    def create_path_elm(self, path):
+    def create_path_elm(self, path) -> ConfigPathElm:
         return self._create_path_elm(path)
 
     def add_define(self, key, value):
