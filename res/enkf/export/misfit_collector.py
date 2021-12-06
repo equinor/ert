@@ -1,8 +1,10 @@
-from pandas import DataFrame
 import numpy
-from res.enkf import EnKFMain, EnkfFs, RealizationStateEnum
-from res.enkf.key_manager import KeyManager
 from ecl.util.util import BoolVector
+from pandas import DataFrame
+
+from res.enkf import EnKFMain
+from res.enkf.enums import RealizationStateEnum
+from res.enkf.key_manager import KeyManager
 
 
 class MisfitCollector(object):
@@ -22,7 +24,7 @@ class MisfitCollector(object):
         return key_manager.misfitKeys(sort_keys=sort_keys)
 
     @staticmethod
-    def loadAllMisfitData(ert, case_name):
+    def loadAllMisfitData(ert: EnKFMain, case_name) -> DataFrame:
         """
         @type ert: EnKFMain
         @type case_name: str

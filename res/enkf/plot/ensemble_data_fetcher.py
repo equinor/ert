@@ -1,7 +1,7 @@
 from res.enkf import EnsembleConfig
-from res.enkf.plot_data import EnsemblePlotData
 from res.enkf.enums import ErtImplType
 from res.enkf.plot.data_fetcher import DataFetcher
+from res.enkf.plot_data import EnsemblePlotData
 
 
 class EnsembleDataFetcher(DataFetcher):
@@ -17,7 +17,7 @@ class EnsembleDataFetcher(DataFetcher):
             .getKeylistFromImplType(ErtImplType.SUMMARY)
         ]
 
-    def getEnsembleConfigNode(self, key):
+    def getEnsembleConfigNode(self, key) -> EnsembleConfig:
         """@rtype: EnsembleConfig"""
         ensemble_config = self.ert().ensembleConfig()
         assert key in ensemble_config

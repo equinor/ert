@@ -1,14 +1,15 @@
-import math
-from pandas import DataFrame, MultiIndex
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
+from ecl.util.util import IntVector
+from pandas import DataFrame
+
+from res.enkf import EnKFMain
+from res.enkf.enums import RealizationStateEnum
 from res.enkf.plot_data import EnsemblePlotGenData
-from ecl.util.util import BoolVector, IntVector
 
 
 class GenDataCollector(object):
     @staticmethod
-    def loadGenData(ert, case_name, key, report_step, realization_index=None):
+    def loadGenData(ert: EnKFMain, case_name, key, report_step, realization_index=None):
         """@type ert: EnKFMain
         @type case_name: str
         @type key: str

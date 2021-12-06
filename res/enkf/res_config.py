@@ -18,26 +18,23 @@ import os
 from os.path import isfile
 
 from cwrap import BaseCClass
-
 from ecl.util.util import StringList
-from res import ResPrototype
-from res.config import ConfigParser, ConfigContent
 
-from res.enkf import (
-    SiteConfig,
-    AnalysisConfig,
-    SubstConfig,
-    ModelConfig,
-    EclConfig,
-    QueueConfig,
-    EnsembleConfig,
-    RNGConfig,
-    ConfigKeys,
-    ErtWorkflowList,
-    HookManager,
-    ErtTemplates,
-    LogConfig,
-)
+from res import ResPrototype
+from res.config import ConfigContent, ConfigParser
+from res.enkf.analysis_config import AnalysisConfig
+from res.enkf.config_keys import ConfigKeys
+from res.enkf.ecl_config import EclConfig
+from res.enkf.ensemble_config import EnsembleConfig
+from res.enkf.ert_templates import ErtTemplates
+from res.enkf.ert_workflow_list import ErtWorkflowList
+from res.enkf.hook_manager import HookManager
+from res.enkf.log_config import LogConfig
+from res.enkf.model_config import ModelConfig
+from res.enkf.queue_config import QueueConfig
+from res.enkf.rng_config import RNGConfig
+from res.enkf.site_config import SiteConfig
+from res.enkf.subst_config import SubstConfig
 
 
 class ResConfig(BaseCClass):

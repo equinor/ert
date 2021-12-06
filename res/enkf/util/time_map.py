@@ -13,12 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os
 import errno
+import os
 
 from cwrap import BaseCClass
-from res import ResPrototype
+from ecl.summary import EclSum
 from ecl.util.util import CTime
+
+from res import ResPrototype
 
 
 class TimeMap(BaseCClass):
@@ -199,5 +201,5 @@ class TimeMap(BaseCClass):
     def getLastStep(self):
         return self._last_step()
 
-    def upgrade107(self, refcase):
+    def upgrade107(self, refcase: EclSum):
         self._upgrade107(refcase)

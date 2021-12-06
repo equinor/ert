@@ -1,16 +1,12 @@
-from cwrap import BaseCClass
-from ecl.util.util import BoolVector
-from res import ResPrototype
-from res.enkf import EnkfFs
-from res.enkf import ErtRunContext
-from res.enkf import EnKFState
-from res.enkf.enums import EnkfInitModeEnum
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import RunStatusType, JobQueueManager, JobQueueNode, JobStatusType
-
 from functools import partial
-import time
-import threading
+
+from cwrap import BaseCClass
+
+from res import ResPrototype
+from res.enkf.enkf_state import EnKFState
+from res.enkf.enums import RealizationStateEnum
+from res.enkf.ert_run_context import ErtRunContext
+from res.job_queue import JobQueueManager, RunStatusType
 
 
 class EnkfSimulationRunner(BaseCClass):
@@ -77,7 +73,7 @@ class EnkfSimulationRunner(BaseCClass):
 
         return totalOk
 
-    def createRunPath(self, run_context):
+    def createRunPath(self, run_context: ErtRunContext):
         """@rtype: bool"""
         return self._create_run_path(run_context)
 

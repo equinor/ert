@@ -1,20 +1,12 @@
-from pandas import DataFrame, MultiIndex
-import numpy
-from res.enkf import (
-    ErtImplType,
-    EnKFMain,
-    EnkfFs,
-    RealizationStateEnum,
-    EnkfObservationImplementationType,
-)
+from pandas import DataFrame
+
+from res.enkf import EnKFMain
 from res.enkf.key_manager import KeyManager
-from res.enkf.plot_data import EnsemblePlotData
-from ecl.util.util import BoolVector
 
 
 class SummaryObservationCollector(object):
     @staticmethod
-    def getAllObservationKeys(ert):
+    def getAllObservationKeys(ert: EnKFMain):
         """
         @type ert: EnKFMain
         @rtype: list of str
@@ -23,7 +15,7 @@ class SummaryObservationCollector(object):
         return key_manager.summaryKeysWithObservations()
 
     @staticmethod
-    def loadObservationData(ert, case_name, keys=None):
+    def loadObservationData(ert: EnKFMain, case_name, keys=None):
         """
         @type ert: EnKFMain
         @type case_name: str
@@ -59,5 +51,5 @@ class SummaryObservationCollector(object):
         return df
 
     @classmethod
-    def summaryKeyHasObservations(cls, ert, key):
+    def summaryKeyHasObservations(cls, ert: EnKFMain, key):
         return len(ert.ensembleConfig().getNode(key).getObservationKeys()) > 0

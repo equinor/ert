@@ -14,17 +14,17 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from os.path import isfile
-from os.path import realpath
+from os.path import isfile, realpath
+from typing import Optional
 
 from cwrap import BaseCClass
-
 from ecl.util.util import StringList
 
 from res import ResPrototype
-from res.enkf import ConfigKeys
-from res.enkf import AnalysisIterConfig
 from res.analysis import AnalysisModule
+from res.config import ConfigContent
+from res.enkf.analysis_iter_config import AnalysisIterConfig
+from res.enkf.config_keys import ConfigKeys
 
 
 class AnalysisConfig(BaseCClass):
@@ -104,7 +104,12 @@ class AnalysisConfig(BaseCClass):
         "int analysis_config_get_min_realisations(analysis_config)"
     )
 
-    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
+    def __init__(
+        self,
+        user_config_file=None,
+        config_content: Optional[ConfigContent] = None,
+        config_dict=None,
+    ):
         configs = sum(
             [
                 1
@@ -215,7 +220,7 @@ class AnalysisConfig(BaseCClass):
     def setStdCutoff(self, std_cutoff):
         self._set_std_cutoff(std_cutoff)
 
-    def getAnalysisIterConfig(self):
+    def getAnalysisIterConfig(self) -> AnalysisIterConfig:
         """@rtype: AnalysisIterConfig"""
         return self._get_iter_config().setParent(self)
 
@@ -240,11 +245,11 @@ class AnalysisConfig(BaseCClass):
         """:rtype: str"""
         return self._get_active_module_name()
 
-    def getModuleList(self):
+    def getModuleList(self) -> StringList:
         """:rtype: StringList"""
         return self._get_module_list()
 
-    def getModule(self, module_name):
+    def getModule(self, module_name) -> AnalysisModule:
         """@rtype: AnalysisModule"""
         return self._get_module(module_name)
 

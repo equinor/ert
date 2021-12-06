@@ -1,8 +1,8 @@
-import os
-import sys
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import RunpathList
+from res.enkf.enums import HookRuntime
+from res.job_queue import Workflow
 
 
 class HookWorkflow(BaseCClass):
@@ -18,11 +18,11 @@ class HookWorkflow(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def getWorkflow(self):
+    def getWorkflow(self) -> Workflow:
         """@rtype: Workflow"""
         return self._get_workflow()
 
-    def getRunMode(self):
+    def getRunMode(self) -> HookRuntime:
         return self._get_runmode()
 
     def __eq__(self, other):

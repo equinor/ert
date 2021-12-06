@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
-from res import ResPrototype
 from ecl.util.util import StringList
+
+from res import ResPrototype
 
 
 class SummaryKeyMatcher(BaseCClass):
@@ -41,7 +42,7 @@ class SummaryKeyMatcher(BaseCClass):
         """@rtype: bool"""
         return self._is_required(key)
 
-    def keys(self):
+    def keys(self) -> StringList:
         """@rtype: StringList"""
         return self._keys()
 

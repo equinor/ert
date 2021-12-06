@@ -1,10 +1,14 @@
+import ctypes
 import os
 import sys
-import ctypes
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import ConfigKeys
+from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import HookRuntime
+from res.enkf.hook_workflow import HookWorkflow
+from res.enkf.runpath_list import RunpathList
 
 
 class HookManager(BaseCClass):
@@ -95,8 +99,7 @@ class HookManager(BaseCClass):
     def __repr__(self):
         return "HookManager({})".format(", ".join([str(x) for x in self]))
 
-    def __getitem__(self, index):
-        """@rtype: Hook workflow"""
+    def __getitem__(self, index) -> HookWorkflow:
         assert isinstance(index, int)
         if index < 0:
             index += len(self)
@@ -119,7 +122,7 @@ class HookManager(BaseCClass):
                 " - hook workflow will probably fail.\n"
             )
 
-    def getRunpathList(self):
+    def getRunpathList(self) -> RunpathList:
         """@rtype: RunpathList"""
         return self._get_runpath_list()
 

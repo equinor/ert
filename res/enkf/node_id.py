@@ -1,4 +1,5 @@
 from ctypes import Structure, c_int
+
 from cwrap import Prototype
 
 

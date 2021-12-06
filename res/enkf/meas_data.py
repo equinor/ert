@@ -1,7 +1,8 @@
 from cwrap import BaseCClass
+
 from res import ResPrototype
+from res.enkf.meas_block import MeasBlock
 from res.enkf.obs_data import ObsData
-from ecl.util.util import IntVector
 from res.util import Matrix
 
 
@@ -87,7 +88,7 @@ class MeasData(BaseCClass):
     def __str__(self):
         return "\n".join([str(block) for block in self])
 
-    def createS(self):
+    def createS(self) -> Matrix:
         """@rtype: Matrix"""
         S = self._allocS()
         if S is None:
@@ -101,7 +102,7 @@ class MeasData(BaseCClass):
         assert isinstance(obs_data, ObsData)
         self._deactivate_outliers(obs_data, self)
 
-    def addBlock(self, obs_key, report_step, obs_size):
+    def addBlock(self, obs_key, report_step, obs_size) -> MeasBlock:
         return self._add_block(obs_key, report_step, obs_size)
 
     def activeObsSize(self):

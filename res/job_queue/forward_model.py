@@ -14,10 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.job_queue import ExtJob, ExtJoblist
-from res.job_queue import EnvironmentVarlist
 from ecl.util.util import StringList
+
+from res import ResPrototype
+from res.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist
 from res.util.substitution_list import SubstitutionList
 
 
@@ -43,7 +43,7 @@ class ForwardModel(BaseCClass):
                                               env_varlist)"
     )
 
-    def __init__(self, ext_joblist):
+    def __init__(self, ext_joblist: ExtJoblist):
         c_ptr = self._alloc(ext_joblist)
         if c_ptr:
             super(ForwardModel, self).__init__(c_ptr)
@@ -56,11 +56,11 @@ class ForwardModel(BaseCClass):
     def __len__(self):
         return self._get_length()
 
-    def joblist(self):
+    def joblist(self) -> StringList:
         """@rtype: StringList"""
         return self._alloc_joblist()
 
-    def iget_job(self, index):
+    def iget_job(self, index) -> ExtJob:
         """@rtype: ExtJob"""
         return self._iget_job(index).setParent(self)
 
@@ -75,7 +75,13 @@ class ForwardModel(BaseCClass):
         self._free()
 
     def formatted_fprintf(
-        self, run_id, path, data_root, global_args, umask, env_varlist
+        self,
+        run_id,
+        path,
+        data_root,
+        global_args: SubstitutionList,
+        umask,
+        env_varlist: EnvironmentVarlist,
     ):
         self._formatted_fprintf(
             run_id, path, data_root, global_args, umask, env_varlist

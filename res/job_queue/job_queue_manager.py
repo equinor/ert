@@ -17,8 +17,9 @@
 Module implementing a queue for managing external jobs.
 
 """
-from res.job_queue import JobStatusType
 from threading import BoundedSemaphore
+
+from res.job_queue.job_status_type_enum import JobStatusType
 
 CONCURRENT_INTERNALIZATION = 1
 

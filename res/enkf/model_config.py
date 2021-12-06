@@ -13,18 +13,16 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass
+import os
 
+from cwrap import BaseCClass
 from ecl.summary import EclSum
-from ecl.util.util import StringList
 from res import ResPrototype
-from res.job_queue import ForwardModel, ExtJob, ExtJoblist
+from res.enkf.config_keys import ConfigKeys
+from res.enkf.util import TimeMap
+from res.job_queue import ForwardModel
 from res.sched import HistorySourceEnum
 from res.util import PathFormat
-from res.enkf import ConfigKeys
-from res.enkf.util import TimeMap
-
-import os
 
 
 class ModelConfig(BaseCClass):
@@ -278,7 +276,7 @@ class ModelConfig(BaseCClass):
         """@rtype: str"""
         return self._get_enspath()
 
-    def getRunpathFormat(self):
+    def getRunpathFormat(self) -> PathFormat:
         """@rtype: PathFormat"""
         return self._get_runpath_fmt()
 

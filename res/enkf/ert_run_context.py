@@ -14,13 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector, StringList
 
-from ecl.util.util import StringList
-
-from res.util import PathFormat
 from res import ResPrototype
-from res.enkf import TimeMap, StateMap, RunArg
+from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfInitModeEnum
+from res.enkf.run_arg import RunArg
+from res.util import PathFormat, SubstitutionList
 
 
 class ErtRunContext(BaseCClass):
@@ -102,12 +102,12 @@ class ErtRunContext(BaseCClass):
     def __init__(
         self,
         run_type,
-        sim_fs,
-        target_fs,
+        sim_fs: EnkfFs,
+        target_fs: EnkfFs,
         mask,
-        path_fmt,
+        path_fmt: PathFormat,
         jobname_fmt,
-        subst_list,
+        subst_list: SubstitutionList,
         itr,
         init_mode=EnkfInitModeEnum.INIT_CONDITIONAL,
     ):
@@ -179,7 +179,7 @@ class ErtRunContext(BaseCClass):
     def __len__(self):
         return self._get_size()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> RunArg:
         if not isinstance(index, int):
             raise TypeError("Invalid type - expetected integer")
 
@@ -198,28 +198,36 @@ class ErtRunContext(BaseCClass):
         return "ErtRunContext(size = %d) %s" % (len(self), self._ad_str())
 
     @classmethod
-    def createRunpathList(cls, mask, runpath_fmt, subst_list, iter=0):
+    def createRunpathList(
+        cls,
+        mask: BoolVector,
+        runpath_fmt: PathFormat,
+        subst_list: SubstitutionList,
+        iter=0,
+    ) -> StringList:
         """@rtype: ecl.util.stringlist.StringList"""
         return cls._alloc_runpath_list(mask, runpath_fmt, subst_list, iter)
 
     @classmethod
-    def createRunpath(cls, iens, runpath_fmt, subst_list, iter=0):
+    def createRunpath(
+        cls, iens, runpath_fmt: PathFormat, subst_list: SubstitutionList, iter=0
+    ):
         """@rtype: str"""
         return cls._alloc_runpath(iens, runpath_fmt, subst_list, iter)
 
     def get_id(self):
         return self._get_id()
 
-    def get_mask(self):
+    def get_mask(self) -> BoolVector:
         return self._get_mask()
 
     def get_iter(self):
         return self._get_iter()
 
-    def get_target_fs(self):
+    def get_target_fs(self) -> EnkfFs:
         return self._get_target_fs()
 
-    def get_sim_fs(self):
+    def get_sim_fs(self) -> EnkfFs:
         return self._get_sim_fs()
 
     def get_init_mode(self):

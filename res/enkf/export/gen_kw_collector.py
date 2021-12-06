@@ -1,10 +1,13 @@
 import math
-from pandas import DataFrame, MultiIndex
+
 import numpy
-from res.enkf import ErtImplType, EnKFMain, EnkfFs, RealizationStateEnum, GenKwConfig
+from ecl.util.util import BoolVector
+from pandas import DataFrame
+
+from res.enkf import EnKFMain
+from res.enkf.enums import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotGenKW
-from ecl.util.util import BoolVector
 
 
 class GenKwCollector(object):
@@ -28,7 +31,7 @@ class GenKwCollector(object):
         return key_manager.genKwKeys()
 
     @staticmethod
-    def loadAllGenKwData(ert, case_name, keys=None, realization_index=None):
+    def loadAllGenKwData(ert: EnKFMain, case_name, keys=None, realization_index=None):
         """
         @type ert: EnKFMain
         @type case_name: str

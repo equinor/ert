@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
-from res import ResPrototype
 from ecl.util.util import CTime
+
+from res import ResPrototype
 
 
 class EnsemblePlotDataVector(BaseCClass):
@@ -28,7 +29,7 @@ class EnsemblePlotDataVector(BaseCClass):
         """@rtype: float"""
         return self._get_value(index)
 
-    def getTime(self, index):
+    def getTime(self, index) -> CTime:
         """@rtype: CTime"""
         return self._get_time(index)
 

@@ -1,7 +1,7 @@
 import weakref
 
-from res.enkf import ErtImplType, GenKwConfig
-from res.enkf.enums import EnkfObservationImplementationType
+from res.enkf.config import GenKwConfig
+from res.enkf.enums import EnkfObservationImplementationType, ErtImplType
 
 
 class KeyManager(object):

@@ -14,10 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import Optional
+
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.sched import HistorySourceEnum
 from ecl.summary import EclSum
+
+from res import ResPrototype
+from res.sched.history_source_enum import HistorySourceEnum
 
 
 class History(BaseCClass):
@@ -31,7 +34,9 @@ class History(BaseCClass):
     )
     _free = ResPrototype("void  history_free( history )")
 
-    def __init__(self, refcase=None, use_history=False, sched_file=None):
+    def __init__(
+        self, refcase: Optional[EclSum] = None, use_history=False, sched_file=None
+    ):
         """
         @type refcase: EclSum
         @type use_history: bool
@@ -52,7 +57,7 @@ class History(BaseCClass):
             raise ValueError("Invalid input.  Failed to create History.")
 
     @staticmethod
-    def get_source_string(history_source_type):
+    def get_source_string(history_source_type: HistorySourceEnum):
         """
         @type history_source_type: HistorySourceEnum
         @rtype: str

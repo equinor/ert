@@ -13,11 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import TimeMap, StateMap, SummaryKeySet
 from res.enkf.enums import EnKFFSType
+from res.enkf.state_map import StateMap
+from res.enkf.summary_key_set import SummaryKeySet
+from res.enkf.util import TimeMap
 
 
 class EnkfFs(BaseCClass):
@@ -65,11 +67,11 @@ class EnkfFs(BaseCClass):
         fs = self.createCReference(self._address())
         return fs
 
-    def getTimeMap(self):
+    def getTimeMap(self) -> TimeMap:
         """@rtype: TimeMap"""
         return self._get_time_map().setParent(self)
 
-    def getStateMap(self):
+    def getStateMap(self) -> StateMap:
         """@rtype: StateMap"""
         return self._get_state_map().setParent(self)
 
@@ -142,7 +144,7 @@ class EnkfFs(BaseCClass):
     def fsync(self):
         self._fsync()
 
-    def getSummaryKeySet(self):
+    def getSummaryKeySet(self) -> SummaryKeySet:
         """@rtype: SummaryKeySet"""
         return self._summary_key_set().setParent(self)
 

@@ -14,13 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import Optional
+
 from cwrap import BaseCClass
+from ecl.util.util import BoolVector
 from res import ResPrototype
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums.ert_impl_type_enum import ErtImplType
-from ecl.util.util import BoolVector
-from res.enkf.plot_data import EnsemblePlotGenKWVector
+from res.enkf.plot_data.ensemble_plot_gen_kw_vector import EnsemblePlotGenKWVector
 
 
 class EnsemblePlotGenKW(BaseCClass):
@@ -45,7 +47,9 @@ class EnsemblePlotGenKW(BaseCClass):
     )
     _free = ResPrototype("void  enkf_plot_gen_kw_free(ensemble_plot_gen_kw)")
 
-    def __init__(self, ensemble_config_node, file_system, input_mask=None):
+    def __init__(
+        self, ensemble_config_node: EnkfConfigNode, file_system, input_mask=None
+    ):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
         assert ensemble_config_node.getImplementationType() == ErtImplType.GEN_KW
 
@@ -54,7 +58,7 @@ class EnsemblePlotGenKW(BaseCClass):
 
         self.__load(file_system, input_mask)
 
-    def __load(self, file_system, input_mask=None):
+    def __load(self, file_system: EnkfFs, input_mask: Optional[BoolVector] = None):
         assert isinstance(file_system, EnkfFs)
         if input_mask is not None:
             assert isinstance(input_mask, BoolVector)
@@ -65,7 +69,7 @@ class EnsemblePlotGenKW(BaseCClass):
         """@rtype: int"""
         return self._size()
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> EnsemblePlotGenKWVector:
         """@rtype: EnsemblePlotGenKWVector"""
         return self._get(index)
 

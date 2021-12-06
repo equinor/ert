@@ -14,15 +14,18 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from cwrap import BaseCClass
-from res import ResPrototype
-from ecl.grid import EclGrid
-from ecl.summary import EclSum
-from ecl.util.util import StringList, CTime
-from res.util import UIReturn
-from res.enkf import ConfigKeys
 import os
 from datetime import datetime
+
+from cwrap import BaseCClass
+from ecl.grid import EclGrid
+from ecl.summary import EclSum
+from ecl.util.util import CTime, StringList
+
+from res import ResPrototype
+from res.util import UIReturn
+
+from .config_keys import ConfigKeys
 
 
 class EclConfig(BaseCClass):
@@ -145,7 +148,7 @@ class EclConfig(BaseCClass):
     def setDataFile(self, datafile):
         self._set_data_file(datafile)
 
-    def validateDataFile(self, datafile):
+    def validateDataFile(self, datafile) -> UIReturn:
         """@rtype: UIReturn"""
         return self._validate_data_file(datafile)
 
@@ -170,7 +173,7 @@ class EclConfig(BaseCClass):
     def loadRefcase(self, refcase):
         self._load_refcase(refcase)
 
-    def getRefcase(self):
+    def getRefcase(self) -> EclSum:
         """@rtype: EclSum"""
         refcase = self._get_refcase()
         if refcase is not None:

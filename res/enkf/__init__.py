@@ -14,88 +14,166 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from res.job_queue import CancelPluginException, ErtPlugin, ErtScript
 
-from cwrap import Prototype
-import res
-from .config_keys import ConfigKeys
-import ecl.util
-import ecl.util.geometry
-import ecl
-import ecl.eclfile
-import ecl.grid
-import ecl.grid.faults
-import ecl.gravimetry
-import ecl.summary
-import ecl.rft
-
-import res.analysis
-import res.sched
-import res.config
-import res.job_queue
-
-from .enums import *
-
-from .node_id import NodeId
-
-from .util import TimeMap
-from .state_map import StateMap
-from .summary_key_set import SummaryKeySet
-from .summary_key_matcher import SummaryKeyMatcher
-from .enkf_fs import EnkfFs
-
-
-from .row_scaling import RowScaling
 from .active_list import ActiveList
-from .config import *
-from .data import *
-
-from .obs_block import ObsBlock
-from .obs_data import ObsData
-from .local_dataset import LocalDataset
-from .local_obsdata_node import LocalObsdataNode
-from .local_obsdata import LocalObsdata
-from .local_ministep import LocalMinistep
-from .local_updatestep import LocalUpdateStep
-
-from .observations import *
-
-from .meas_block import MeasBlock
-from .meas_data import MeasData
-
-from .analysis_iter_config import AnalysisIterConfig
 from .analysis_config import AnalysisConfig
-
-from .enkf_defaults import EnkfDefaults
-
+from .analysis_iter_config import AnalysisIterConfig
+from .config import (
+    EnkfConfigNode,
+    ExtParamConfig,
+    FieldConfig,
+    FieldTypeEnum,
+    GenDataConfig,
+    GenKwConfig,
+    SummaryConfig,
+)
+from .config_keys import ConfigKeys
+from .data import EnkfNode, ExtParam, Field, GenData, GenKw
 from .ecl_config import EclConfig
-from .queue_config import QueueConfig
-from .ert_workflow_list import ErtWorkflowList
-from .site_config import SiteConfig
-from .subst_config import SubstConfig
-from .ensemble_config import EnsembleConfig
-from .enkf_obs import EnkfObs
-from .ert_template import ErtTemplate
-from .ert_templates import ErtTemplates
-from .local_config import LocalConfig
-from .model_config import ModelConfig
-from .runpath_list import RunpathList, RunpathNode
-from .hook_workflow import HookWorkflow
-from .hook_manager import HookManager
-from .rng_config import RNGConfig
-from .log_config import LogConfig
-from .res_config import ResConfig
-
-from .es_update import ESUpdate
-from .run_arg import RunArg
-from .enkf_state import EnKFState
-from .ert_run_context import ErtRunContext
-from .enkf_simulation_runner import EnkfSimulationRunner
+from .enkf_defaults import EnkfDefaults
+from .enkf_fs import EnkfFs
 from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
-from .forward_load_context import ForwardLoadContext
-
-from res.job_queue import ErtScript as ErtScript
-from res.job_queue import (
-    ErtPlugin as ErtPlugin,
-    CancelPluginException as CancelPluginException,
+from .enkf_obs import EnkfObs
+from .enkf_simulation_runner import EnkfSimulationRunner
+from .enkf_state import EnKFState
+from .ensemble_config import EnsembleConfig
+from .enums import (
+    ActiveMode,
+    EnkfFieldFileFormatEnum,
+    EnKFFSType,
+    EnkfInitModeEnum,
+    EnkfObservationImplementationType,
+    EnkfRunType,
+    EnkfTruncationType,
+    EnkfVarType,
+    ErtImplType,
+    GenDataFileType,
+    HookRuntime,
+    LoadFailTypeEnum,
+    RealizationStateEnum,
 )
+from .ert_run_context import ErtRunContext
+from .ert_template import ErtTemplate
+from .ert_templates import ErtTemplates
+from .ert_workflow_list import ErtWorkflowList
+from .es_update import ESUpdate
+from .forward_load_context import ForwardLoadContext
+from .hook_manager import HookManager
+from .hook_workflow import HookWorkflow
+from .local_config import LocalConfig
+from .local_dataset import LocalDataset
+from .local_ministep import LocalMinistep
+from .local_obsdata import LocalObsdata
+from .local_obsdata_node import LocalObsdataNode
+from .local_updatestep import LocalUpdateStep
+from .log_config import LogConfig
+from .meas_block import MeasBlock
+from .meas_data import MeasData
+from .model_config import ModelConfig
+from .node_id import NodeId
+from .obs_block import ObsBlock
+from .obs_data import ObsData
+from .observations import (
+    BlockDataConfig,
+    BlockObservation,
+    GenObservation,
+    ObsVector,
+    SummaryObservation,
+)
+from .queue_config import QueueConfig
+from .res_config import ResConfig
+from .rng_config import RNGConfig
+from .row_scaling import RowScaling
+from .run_arg import RunArg
+from .runpath_list import RunpathList, RunpathNode
+from .site_config import SiteConfig
+from .state_map import StateMap
+from .subst_config import SubstConfig
+from .summary_key_matcher import SummaryKeyMatcher
+from .summary_key_set import SummaryKeySet
+from .util import TimeMap
+
+__all__ = [
+    "SummaryObservation",
+    "GenObservation",
+    "BlockDataConfig",
+    "BlockObservation",
+    "ObsVector",
+    "Field",
+    "GenKw",
+    "GenData",
+    "ExtParam",
+    "EnkfNode",
+    "CancelPluginException",
+    "ErtPlugin",
+    "ErtScript",
+    "FieldConfig",
+    "FieldTypeEnum",
+    "GenKwConfig",
+    "GenDataConfig",
+    "EnkfConfigNode",
+    "SummaryConfig",
+    "ExtParamConfig",
+    "NodeId",
+    "TimeMap",
+    "StateMap",
+    "SummaryKeySet",
+    "SummaryKeyMatcher",
+    "EnkfFs",
+    "RowScaling",
+    "ActiveList",
+    "ObsBlock",
+    "ObsData",
+    "LocalDataset",
+    "LocalObsdataNode",
+    "LocalObsdata",
+    "LocalMinistep",
+    "LocalUpdateStep",
+    "MeasBlock",
+    "MeasData",
+    "EnkfFieldFileFormatEnum",
+    "LoadFailTypeEnum",
+    "EnkfVarType",
+    "EnkfRunType",
+    "EnkfObservationImplementationType",
+    "ErtImplType",
+    "EnkfInitModeEnum",
+    "RealizationStateEnum",
+    "EnkfTruncationType",
+    "EnKFFSType",
+    "GenDataFileType",
+    "ActiveMode",
+    "HookRuntime",
+    "AnalysisIterConfig",
+    "AnalysisConfig",
+    "ConfigKeys",
+    "EnkfDefaults",
+    "EclConfig",
+    "QueueConfig",
+    "ErtWorkflowList",
+    "SiteConfig",
+    "SubstConfig",
+    "EnsembleConfig",
+    "EnkfObs",
+    "ErtTemplate",
+    "ErtTemplates",
+    "LocalConfig",
+    "ModelConfig",
+    "RunpathList",
+    "RunpathNode",
+    "HookWorkflow",
+    "HookManager",
+    "RNGConfig",
+    "LogConfig",
+    "ResConfig",
+    "ESUpdate",
+    "RunArg",
+    "EnKFState",
+    "ErtRunContext",
+    "EnkfSimulationRunner",
+    "EnkfFsManager",
+    "EnKFMain",
+    "ForwardLoadContext",
+]

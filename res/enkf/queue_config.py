@@ -14,13 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import Optional
+
 from cwrap import BaseCClass
-
-from ecl.util.util import StringList, Hash
-
 from res import ResPrototype
-from res.enkf import ConfigKeys
-from res.job_queue import JobQueue, ExtJoblist, Driver
+from res.config import ConfigContent
+from res.enkf.config_keys import ConfigKeys
+from res.job_queue import Driver, JobQueue
 
 
 class QueueConfig(BaseCClass):
@@ -53,7 +53,12 @@ class QueueConfig(BaseCClass):
     _lsf_resource_opt = ResPrototype("char* queue_config_lsf_resource()", bind=False)
     _lsf_driver_opt = ResPrototype("char* queue_config_lsf_driver_name()", bind=False)
 
-    def __init__(self, user_config_file=None, config_content=None, config_dict=None):
+    def __init__(
+        self,
+        user_config_file=None,
+        config_content: Optional[ConfigContent] = None,
+        config_dict=None,
+    ):
         configs = sum(
             [
                 1
@@ -131,7 +136,7 @@ class QueueConfig(BaseCClass):
         return self._get_job_script()
 
     @property
-    def driver(self):
+    def driver(self) -> Driver:
         return self._queue_driver(self.queue_system).setParent(self)
 
     def _assert_lsf(self, key="driver"):

@@ -1,4 +1,5 @@
 from cwrap import BaseCClass
+
 from res import ResPrototype
 
 

@@ -1,5 +1,6 @@
-from res.enkf.plot_data import PlotBlockVector
 from ecl.util.util import DoubleVector
+
+from res.enkf.plot_data.plot_block_vector import PlotBlockVector
 
 
 class PlotBlockData(object):
@@ -15,7 +16,7 @@ class PlotBlockData(object):
         """@rtype: int"""
         return len(self.__plot_block_vectors)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> PlotBlockVector:
         """
         @type index: int
         @rtype: PlotBlockVector
@@ -33,7 +34,7 @@ class PlotBlockData(object):
         """@rtype: DoubleVector"""
         return self.__depth_vector
 
-    def addPlotBlockVector(self, vector):
+    def addPlotBlockVector(self, vector: PlotBlockVector):
         """
         @type vector: PlotBlockVector
         """

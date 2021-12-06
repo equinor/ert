@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.enkf import LocalObsdataNode
+from res.enkf.local_obsdata_node import LocalObsdataNode
 
 
 class LocalObsdata(BaseCClass):

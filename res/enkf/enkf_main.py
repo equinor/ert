@@ -13,28 +13,28 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
-import ctypes, warnings
-from os.path import isfile
 
 from cwrap import BaseCClass
+from ecl.util.util import RandomNumberGenerator
+
 from res import ResPrototype
-from res.enkf import (
-    AnalysisConfig,
-    EclConfig,
-    LocalConfig,
-    ModelConfig,
-    EnsembleConfig,
-    SiteConfig,
-    ResConfig,
-    QueueConfig,
-)
-from res.enkf import EnkfObs, EnKFState, EnkfSimulationRunner, EnkfFsManager
-from res.enkf import ErtWorkflowList, HookManager, HookWorkflow, ESUpdate
-from res.enkf.enums import EnkfInitModeEnum
+from res.enkf.analysis_config import AnalysisConfig
+from res.enkf.ecl_config import EclConfig
+from res.enkf.enkf_fs_manager import EnkfFsManager
+from res.enkf.enkf_obs import EnkfObs
+from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
+from res.enkf.enkf_state import EnKFState
+from res.enkf.ensemble_config import EnsembleConfig
+from res.enkf.ert_workflow_list import ErtWorkflowList
+from res.enkf.es_update import ESUpdate
+from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
+from res.enkf.local_config import LocalConfig
+from res.enkf.model_config import ModelConfig
+from res.enkf.queue_config import QueueConfig
+from res.enkf.res_config import ResConfig
+from res.enkf.site_config import SiteConfig
 from res.util.substitution_list import SubstitutionList
-from ecl.util.util import rng
 
 
 class EnKFMain(BaseCClass):
@@ -115,8 +115,8 @@ class EnKFMain(BaseCClass):
         # the call to the real method on the real_enkf_main object. That's done
         # via monkey patching, so we don't need to manually keep the classes
         # synchronized
-        from inspect import getmembers, ismethod
         from functools import partial
+        from inspect import getmembers, ismethod
 
         methods = getmembers(self._real_enkf_main(), predicate=ismethod)
         dont_patch = [name for name, _ in getmembers(BaseCClass)]
@@ -296,10 +296,10 @@ class _RealEnKFMain(BaseCClass):
 
         raise TypeError("Expected ResConfig, received: %r" % config)
 
-    def get_queue_config(self):
+    def get_queue_config(self) -> QueueConfig:
         return self._get_queue_config()
 
-    def getRealisation(self, iens):
+    def getRealisation(self, iens) -> EnKFState:
         """@rtype: EnKFState"""
         if 0 <= iens < self.getEnsembleSize():
             return self._iget_state(iens).setParent(self)
@@ -318,26 +318,26 @@ class _RealEnKFMain(BaseCClass):
         cnt = "ensemble_size = %d, config_file = %s" % (ens, cfg)
         return self._create_repr(cnt)
 
-    def getEnsembleSize(self):
+    def getEnsembleSize(self) -> int:
         """@rtype: int"""
         return self._get_ensemble_size()
 
     def resizeEnsemble(self, value):
         self._resize_ensemble(value)
 
-    def ensembleConfig(self):
+    def ensembleConfig(self) -> EnsembleConfig:
         """@rtype: EnsembleConfig"""
         return self._get_ens_config().setParent(self)
 
-    def analysisConfig(self):
+    def analysisConfig(self) -> AnalysisConfig:
         """@rtype: AnalysisConfig"""
         return self._get_analysis_config().setParent(self)
 
-    def getModelConfig(self):
+    def getModelConfig(self) -> ModelConfig:
         """@rtype: ModelConfig"""
         return self._get_model_config().setParent(self)
 
-    def getLocalConfig(self):
+    def getLocalConfig(self) -> LocalConfig:
         """@rtype: LocalConfig"""
         config = self._get_local_config().setParent(self)
         config.initAttributes(
@@ -345,14 +345,14 @@ class _RealEnKFMain(BaseCClass):
         )
         return config
 
-    def siteConfig(self):
+    def siteConfig(self) -> SiteConfig:
         """@rtype: SiteConfig"""
         return self._get_site_config().setParent(self)
 
     def resConfig(self):
         return self._get_res_config().setParent(self)
 
-    def eclConfig(self):
+    def eclConfig(self) -> EclConfig:
         """@rtype: EclConfig"""
         return self._get_ecl_config().setParent(self)
 
@@ -360,7 +360,7 @@ class _RealEnKFMain(BaseCClass):
         schedule_prediction_file = self._get_schedule_prediction_file()
         return schedule_prediction_file
 
-    def getDataKW(self):
+    def getDataKW(self) -> SubstitutionList:
         """@rtype: SubstitutionList"""
         return self._get_data_kw()
 
@@ -373,7 +373,7 @@ class _RealEnKFMain(BaseCClass):
     def getMountPoint(self):
         return self._get_mount_point()
 
-    def getObservations(self):
+    def getObservations(self) -> EnkfObs:
         """@rtype: EnkfObs"""
         return self._get_obs().setParent(self)
 
@@ -411,11 +411,11 @@ class _RealEnKFMain(BaseCClass):
         """:rtype: KeyManager"""
         return self.__key_manager
 
-    def getWorkflowList(self):
+    def getWorkflowList(self) -> ErtWorkflowList:
         """@rtype: ErtWorkflowList"""
         return self._get_workflow_list().setParent(self)
 
-    def getHookManager(self):
+    def getHookManager(self) -> HookManager:
         """@rtype: HookManager"""
         return self._get_hook_manager()
 
@@ -462,6 +462,6 @@ class _RealEnKFMain(BaseCClass):
     def addNode(self, enkf_config_node):
         self._add_node(enkf_config_node)
 
-    def rng(self):
+    def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."
         return self._get_shared_rng()

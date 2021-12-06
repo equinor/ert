@@ -17,8 +17,7 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
-from res.config import ContentTypeEnum
-from res.config import SchemaItem
+from res.config.content_type_enum import ContentTypeEnum
 
 
 class ConfigSettings(BaseCClass):

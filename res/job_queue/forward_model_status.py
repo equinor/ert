@@ -13,13 +13,13 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os.path
-import json
 import datetime
+import json
+import os.path
 import time
-import sys
-from job_runner.reporting.file import File
+
 from job_runner import JOBS_FILE
+from job_runner.reporting.file import File
 
 
 def _serialize_date(dt):

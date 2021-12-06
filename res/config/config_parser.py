@@ -14,12 +14,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import sys
 import os.path
+import sys
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.config import ConfigContent, UnrecognizedEnum
+from res.config.config_content import ConfigContent
+from res.config.unrecognized_enum import UnrecognizedEnum
 
 
 class ConfigParser(BaseCClass):
@@ -92,7 +94,7 @@ class ConfigParser(BaseCClass):
         pre_defined_kw_map=None,
         unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_WARN,
         validate=True,
-    ):
+    ) -> ConfigContent:
         """@rtype: ConfigContent"""
 
         assert isinstance(unrecognized, UnrecognizedEnum)

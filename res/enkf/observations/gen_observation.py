@@ -19,8 +19,10 @@ import os.path
 import numpy as np
 from cwrap import BaseCClass
 from ecl.util.util import IntVector
+
 from res import ResPrototype
-from res.enkf import GenDataConfig
+from res.enkf import ActiveList
+from res.enkf.config import GenDataConfig
 
 
 class GenObservation(BaseCClass):
@@ -48,7 +50,12 @@ class GenObservation(BaseCClass):
     _get_std_vector = ResPrototype("void   gen_obs_load_std(gen_obs, int, double*)")
 
     def __init__(
-        self, obs_key, data_config, scalar_value=None, obs_file=None, data_index=None
+        self,
+        obs_key,
+        data_config: GenDataConfig,
+        scalar_value=None,
+        obs_file=None,
+        data_index=None,
     ):
         c_ptr = self._alloc(data_config, obs_key)
         if c_ptr:
@@ -110,7 +117,7 @@ class GenObservation(BaseCClass):
         """@rtype: float"""
         return self._get_std_scaling(obs_index)
 
-    def updateStdScaling(self, factor, active_list):
+    def updateStdScaling(self, factor, active_list: ActiveList):
         self._update_std_scaling(factor, active_list)
 
     def get_data_points(self):

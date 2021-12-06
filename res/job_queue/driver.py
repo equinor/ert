@@ -15,10 +15,10 @@
 #  for more details.
 
 
-import ctypes
 from cwrap import BaseCClass, BaseCEnum
 from res import ResPrototype
-from res.job_queue import Job
+
+from .job import Job
 
 
 class QueueDriverEnum(BaseCEnum):
@@ -88,7 +88,7 @@ class Driver(BaseCClass):
     def is_driver_instance(self):
         return True
 
-    def free_job(self, job):
+    def free_job(self, job: Job):
         self._free_job(job)
 
     def get_status(self, job):

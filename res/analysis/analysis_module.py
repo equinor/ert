@@ -15,12 +15,12 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ecl.util.util.rng import RandomNumberGenerator
-from res import ResPrototype
-from os import path
+from ecl.util.util import BoolVector, RandomNumberGenerator
 
-import res
+from res import ResPrototype
 from res.util import Matrix
+
+from .enums import AnalysisModuleOptionsEnum
 
 
 class AnalysisModule(BaseCClass):
@@ -200,7 +200,7 @@ class AnalysisModule(BaseCClass):
     def name(self):
         return self._get_name()
 
-    def checkOption(self, flag):
+    def checkOption(self, flag: AnalysisModuleOptionsEnum):
         return self._check_option(flag)
 
     def hasVar(self, var):
@@ -227,7 +227,17 @@ class AnalysisModule(BaseCClass):
         self.__assertVar(var)
         return self._get_str(var)
 
-    def initUpdate(self, ens_mask, obs_mask, S, R, dObs, E, D, rng):
+    def initUpdate(
+        self,
+        ens_mask: BoolVector,
+        obs_mask: BoolVector,
+        S: Matrix,
+        R: Matrix,
+        dObs: Matrix,
+        E: Matrix,
+        D: Matrix,
+        rng: RandomNumberGenerator,
+    ):
         self._init_update(ens_mask, obs_mask, S, R, dObs, E, D, rng)
 
     def updateA(self, A, S, R, dObs, E, D, rng):

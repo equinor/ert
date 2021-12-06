@@ -13,11 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from cwrap import BaseCClass
-from res import ResPrototype
-from res.enkf import ErtTemplate, ConfigKeys
-from ecl.util.util import StringList
 import os
+
+from cwrap import BaseCClass
+from ecl.util.util import StringList
+
+from res import ResPrototype
+from res.enkf.config_keys import ConfigKeys
+from res.enkf.ert_template import ErtTemplate
 
 
 class ErtTemplates(BaseCClass):
@@ -80,18 +83,18 @@ class ErtTemplates(BaseCClass):
                 raise ValueError("Failed to construct ErtTemplates instance")
             super(ErtTemplates, self).__init__(c_ptr)
 
-    def getTemplateNames(self):
+    def getTemplateNames(self) -> StringList:
         """@rtype: StringList"""
         return self._alloc_list().setParent(self)
 
     def clear(self):
         self._clear()
 
-    def get_template(self, key):
+    def get_template(self, key) -> ErtTemplate:
         """@rtype: ErtTemplate"""
         return self._get_template(key).setParent(self)
 
-    def add_template(self, key, template_file, target_file, arg_string):
+    def add_template(self, key, template_file, target_file, arg_string) -> ErtTemplate:
         """@rtype: ErtTemplate"""
         return self._add_template(
             key, template_file, target_file, arg_string
