@@ -64,7 +64,8 @@ class WorkflowRunner(object):
         return None
 
     def wait(self):
-        # This returns a tuple (done, pending), since we run only one job we don't need to use it
+        # This returns a tuple (done, pending), since we run only one job we don't
+        # need to use it
         _, _ = futures.wait(
             [self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION
         )

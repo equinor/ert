@@ -21,7 +21,7 @@ class GenDataFileType(BaseCEnum):
     GEN_DATA_UNDEFINED = None
     ASCII = None  # The file is ASCII file with a vector of numbers formatted with "%g"
     ASCII_TEMPLATE = None  # The data is inserted into a user defined template file.
-    BINARY_DOUBLE = None  #  The data is in a binary file with doubles.
+    BINARY_DOUBLE = None  # The data is in a binary file with doubles.
     BINARY_FLOAT = None  # The data is in a binary file with floats.
 
 

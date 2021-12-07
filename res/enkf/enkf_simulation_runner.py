@@ -70,7 +70,6 @@ class EnkfSimulationRunner(BaseCClass):
 
         run_context.get_sim_fs().fsync()
 
-        ## Should be converted tp a looger
         if totalFailed == 0:
             print("All {} active jobs complete and data loaded.".format(totalOk))
         else:

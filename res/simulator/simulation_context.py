@@ -93,7 +93,8 @@ class SimulationContext(object):
         return self._queue_manager.didJobSucceed(queue_index)
 
     def didRealizationFail(self, iens):
-        # For the purposes of this class, a failure should be anything (killed job, etc) that is not an explicit success.
+        # For the purposes of this class, a failure should be anything (killed
+        # job, etc) that is not an explicit success.
         return not self.didRealizationSucceed(iens)
 
     def isRealizationQueued(self, iens):
