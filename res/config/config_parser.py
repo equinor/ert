@@ -60,7 +60,7 @@ class ConfigParser(BaseCClass):
 
     def __init__(self):
         c_ptr = self._alloc()
-        super(ConfigParser, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __contains__(self, keyword):
         return self._has_schema_item(keyword)

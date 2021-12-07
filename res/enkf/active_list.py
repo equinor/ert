@@ -31,7 +31,7 @@ class ActiveList(BaseCClass):
 
     def __init__(self):
         c_ptr = self._alloc()
-        super(ActiveList, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def getMode(self):
         return self._get_mode()

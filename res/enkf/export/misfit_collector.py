@@ -7,7 +7,7 @@ from res.enkf.enums import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
 
 
-class MisfitCollector(object):
+class MisfitCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()

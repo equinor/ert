@@ -48,7 +48,7 @@ class GenKw(BaseCClass):
         c_ptr = self._alloc(gen_kw_config)
 
         if c_ptr:
-            super(GenKw, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Cannot issue a GenKw from the given keyword config: %s."

@@ -162,7 +162,7 @@ class JobQueue(BaseCClass):
         self.job_list = []
         self._stopped = False
         c_ptr = self._alloc(max_submit, OK_file, status_file, exit_file)
-        super(JobQueue, self).__init__(c_ptr)
+        super().__init__(c_ptr)
         self.size = size
 
         self.driver = driver

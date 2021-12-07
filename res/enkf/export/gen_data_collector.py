@@ -7,7 +7,7 @@ from res.enkf.enums import RealizationStateEnum
 from res.enkf.plot_data import EnsemblePlotGenData
 
 
-class GenDataCollector(object):
+class GenDataCollector:
     @staticmethod
     def loadGenData(ert: EnKFMain, case_name, key, report_step, realization_index=None):
         """@type ert: EnKFMain

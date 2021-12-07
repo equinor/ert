@@ -122,7 +122,7 @@ class ErtRunContext(BaseCClass):
             subst_list,
             itr,
         )
-        super(ErtRunContext, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
         # The C object ert_run_context uses a shared object for the
         # path_fmt and subst_list objects. We therefor hold on

@@ -26,7 +26,7 @@ class SummaryKeyMatcher(BaseCClass):
     def __init__(self):
         c_ptr = self._alloc()
 
-        super(SummaryKeyMatcher, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def addSummaryKey(self, key):
         assert isinstance(key, str)

@@ -43,7 +43,7 @@ class SchemaItem(BaseCClass):
 
     def __init__(self, keyword, required=False):
         c_ptr = self._alloc(keyword, required)
-        super(SchemaItem, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def iget_type(self, index) -> ContentTypeEnum:
         """@rtype: ContentTypeEnum"""

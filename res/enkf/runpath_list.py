@@ -29,7 +29,7 @@ class RunpathList(BaseCClass):
     def __init__(self, export_file):
         c_ptr = self._alloc(export_file)
         if c_ptr:
-            super(RunpathList, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise IOError(
                 'Could not construct RunpathList with export_file "%s".' % export_file

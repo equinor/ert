@@ -1,4 +1,4 @@
-class MockedBlockObservation(object):
+class MockedBlockObservation:
     def __init__(self, data):
         self.values = data["values"]
         self.stds = data["stds"]

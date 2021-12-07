@@ -104,7 +104,7 @@ class EnsembleConfig(BaseCClass):
                     "Failed to construct EnsembleConfig instance from dict"
                 )
 
-            super(EnsembleConfig, self).__init__(c_ptr)
+            super().__init__(c_ptr)
 
             gen_param_list = config_dict.get(ConfigKeys.GEN_PARAM, [])
             for gene_param in gen_param_list:
@@ -215,7 +215,7 @@ class EnsembleConfig(BaseCClass):
         c_ptr = self._alloc(config_content, grid, refcase)
         if c_ptr is None:
             raise ValueError("Failed to construct EnsembleConfig instance")
-        super(EnsembleConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __len__(self):
         return self._size()

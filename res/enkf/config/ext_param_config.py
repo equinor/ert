@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from six import string_types
+
 from res import ResPrototype
 from ecl.util.util import StringList
 
@@ -64,7 +64,7 @@ class ExtParamConfig(BaseCClass):
 
         keys = StringList(initial=input_keys)
         c_ptr = self._alloc(key, keys)
-        super(ExtParamConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
         for k, suffixes in suffixmap:
             suffixlist = StringList(initial=suffixes)
@@ -115,7 +115,7 @@ class ExtParamConfig(BaseCClass):
         that index
         An IndexError is raised if the item is not found
         """
-        if isinstance(index, string_types):
+        if isinstance(index, str):
             index = self._key_index(index)
             if index < 0:
                 raise IndexError('Key "{}" not found'.format(index))

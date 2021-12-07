@@ -5,7 +5,7 @@ from job_runner.job import Job
 from job_runner.reporting.message import Init, Finish
 
 
-class JobRunner(object):
+class JobRunner:
     def __init__(self, jobs_data):
         os.umask(int(jobs_data["umask"], 8))
 

@@ -4,7 +4,7 @@ from res.enkf import EnKFMain
 from res.enkf.key_manager import KeyManager
 
 
-class SummaryObservationCollector(object):
+class SummaryObservationCollector:
     @staticmethod
     def getAllObservationKeys(ert: EnKFMain):
         """

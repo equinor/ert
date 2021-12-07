@@ -121,7 +121,7 @@ class SubstConfig(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct Substonfig instance")
 
-        super(SubstConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __getitem__(self, key):
         subst_list = self._get_subst_list()

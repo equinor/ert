@@ -52,7 +52,7 @@ class EnkfNode(BaseCClass):
             c_pointer = self._alloc(config_node)
 
         if c_pointer:
-            super(EnkfNode, self).__init__(c_pointer, config_node, True)
+            super().__init__(c_pointer, config_node, True)
         else:
             p_err = "private " if private else ""
             raise ValueError(

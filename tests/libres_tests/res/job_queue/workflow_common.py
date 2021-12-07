@@ -2,7 +2,7 @@ import os
 import stat
 
 
-class WorkflowCommon(object):
+class WorkflowCommon:
     @staticmethod
     def createExternalDumpJob():
         with open("dump_job", "w") as f:

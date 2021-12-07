@@ -95,7 +95,7 @@ class QueueConfig(BaseCClass):
         if not c_ptr:
             raise ValueError("Unable to create QueueConfig instance")
 
-        super(QueueConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
         # Need to create
         if config_dict is not None:

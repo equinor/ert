@@ -4,14 +4,14 @@ from res.job_queue import Workflow
 from res.util.substitution_list import SubstitutionList
 
 
-class WorkflowRunner(object):
+class WorkflowRunner:
     def __init__(self, workflow: Workflow, ert=None, context: SubstitutionList = None):
         """
         @type workflow: Workflow
         @type ert: res.enkf.EnKFMain
         @type context: SubstitutionList
         """
-        super(WorkflowRunner, self).__init__()
+        super().__init__()
 
         self.__workflow = workflow
         self.__ert = ert

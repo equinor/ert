@@ -34,7 +34,7 @@ class Job(BaseCClass):
     def __init__(self, c_ptr, driver):
         self.driver = driver
         self.submit_time = datetime.datetime.now()
-        super(Job, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def free(self):
         pass

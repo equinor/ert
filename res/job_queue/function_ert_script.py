@@ -8,12 +8,12 @@ class _NonePrototype(cwrap.Prototype):
     lib = cwrap.load(None)
 
     def __init__(self, prototype, bind=True):
-        super(_NonePrototype, self).__init__(_NonePrototype.lib, prototype, bind=bind)
+        super().__init__(_NonePrototype.lib, prototype, bind=bind)
 
 
 class FunctionErtScript(ErtScript):
     def __init__(self, ert, function_name, argument_types, argument_count):
-        super(FunctionErtScript, self).__init__(ert)
+        super().__init__(ert)
 
         parsed_argument_types = []
 

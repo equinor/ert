@@ -28,7 +28,7 @@ class Workflow(BaseCClass):
         @type job_list: WorkflowJoblist
         """
         c_ptr = self._alloc(src_file, job_list)
-        super(Workflow, self).__init__(c_ptr)  # pylint: disable=super-with-arguments
+        super().__init__(c_ptr)
 
         self.__running = False
         self.__cancelled = False
@@ -138,7 +138,7 @@ class Workflow(BaseCClass):
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):
-        workflow = super(Workflow, cls).createCReference(c_pointer, parent)
+        workflow = super().createCReference(c_pointer, parent)
         workflow.__running = False
         workflow.__cancelled = False
         workflow.__current_job = None

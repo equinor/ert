@@ -4,9 +4,9 @@ from res.enkf.config import GenKwConfig
 from res.enkf.enums import EnkfObservationImplementationType, ErtImplType
 
 
-class KeyManager(object):
+class KeyManager:
     def __init__(self, ert):
-        super(KeyManager, self).__init__()
+        super().__init__()
         """
         @type ert: res.enkf.EnKFMain
         """

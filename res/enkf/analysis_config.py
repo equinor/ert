@@ -134,7 +134,7 @@ class AnalysisConfig(BaseCClass):
 
             c_ptr = self._alloc_load(user_config_file)
             if c_ptr:
-                super(AnalysisConfig, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ValueError(
                     "Failed to construct AnalysisConfig instance from config file %s."
@@ -144,7 +144,7 @@ class AnalysisConfig(BaseCClass):
         if config_content is not None:
             c_ptr = self._alloc(config_content)
             if c_ptr:
-                super(AnalysisConfig, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ValueError("Failed to construct AnalysisConfig instance.")
 
@@ -162,7 +162,7 @@ class AnalysisConfig(BaseCClass):
                 config_dict.get(ConfigKeys.MIN_REALIZATIONS, 0),
             )
             if c_ptr:
-                super(AnalysisConfig, self).__init__(c_ptr)
+                super().__init__(c_ptr)
 
                 # copy modules
                 analysis_copy_list = config_dict.get(ConfigKeys.ANALYSIS_COPY, [])

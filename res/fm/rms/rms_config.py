@@ -4,7 +4,7 @@ import yaml
 import shutil
 
 
-class RMSConfig(object):
+class RMSConfig:
     DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "rms_config.yml")
 
     def __init__(self):

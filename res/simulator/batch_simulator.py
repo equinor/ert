@@ -12,7 +12,7 @@ def _slug(entity):
     return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
 
-class BatchSimulator(object):
+class BatchSimulator:
     def __init__(self, res_config, controls, results, callback=None):
         """Will create simulator which can be used to run multiple simulations.
 

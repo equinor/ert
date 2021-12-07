@@ -54,7 +54,7 @@ class WorkflowJob(BaseCClass):
 
     def __init__(self, name, internal=True):
         c_ptr = self._alloc(name, internal)
-        super(WorkflowJob, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
         self.__script = None
         """ :type: ErtScript """
@@ -211,7 +211,7 @@ class WorkflowJob(BaseCClass):
 
     @classmethod
     def createCReference(cls, c_pointer, parent=None):
-        workflow = super(WorkflowJob, cls).createCReference(c_pointer, parent)
+        workflow = super().createCReference(c_pointer, parent)
         workflow.__script = None
         workflow.__running = False
         return workflow

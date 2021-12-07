@@ -29,7 +29,7 @@ class Summary(BaseCClass):
     def __init__(self, config):
         c_ptr = self._alloc(config)
         self._config = config
-        super(Summary, self).__init__(c_ptr)
+        super().__init__(c_ptr)
         self._undefined_value = self._get_undef_value()
 
     def __len__(self):

@@ -56,7 +56,7 @@ class ErtTemplates(BaseCClass):
             c_ptr = self._alloc_default(parent_subst)
             if c_ptr is None:
                 raise ValueError("Failed to construct ErtTemplates instance")
-            super(ErtTemplates, self).__init__(c_ptr)
+            super().__init__(c_ptr)
             run_template = config_dict.get(ConfigKeys.RUN_TEMPLATE)
             if isinstance(run_template, list):
                 for template_file_name, target_file, arguments in run_template:
@@ -81,7 +81,7 @@ class ErtTemplates(BaseCClass):
             c_ptr = self._alloc(parent_subst, config_content)
             if c_ptr is None:
                 raise ValueError("Failed to construct ErtTemplates instance")
-            super(ErtTemplates, self).__init__(c_ptr)
+            super().__init__(c_ptr)
 
     def getTemplateNames(self) -> StringList:
         """@rtype: StringList"""

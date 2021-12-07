@@ -18,7 +18,7 @@ class MockedQIcon(QIcon):
 
 class RunAnalysisTests(ErtTest):
     def __init__(self, *args, **kwargs):
-        super(ErtTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         with patch("ert_gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
             rs.return_value = MockedQIcon()

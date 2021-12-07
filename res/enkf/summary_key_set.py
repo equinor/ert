@@ -29,7 +29,7 @@ class SummaryKeySet(BaseCClass):
         else:
             c_ptr = self._alloc_from_file(filename, read_only)
 
-        super(SummaryKeySet, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def addSummaryKey(self, key):
         assert isinstance(key, str)

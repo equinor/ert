@@ -77,7 +77,7 @@ class LogConfig(BaseCClass):
 
         if c_ptr is None:
             raise ValueError("Failed to construct LogConfig instance")
-        super(LogConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __repr__(self):
         return "LogConfig(log_file=%s, log_level=%r)" % (self.log_file, self.log_level)

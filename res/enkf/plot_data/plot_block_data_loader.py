@@ -7,7 +7,7 @@ from res.enkf.plot_data.plot_block_data import PlotBlockData
 from res.enkf.plot_data.plot_block_vector import PlotBlockVector
 
 
-class PlotBlockDataLoader(object):
+class PlotBlockDataLoader:
     def __init__(self, obs_vector):
         """
         @type obs_vector: ObsVector
@@ -16,7 +16,7 @@ class PlotBlockDataLoader(object):
             raise ArgumentError(
                 "Cannot construct PlotBlockDataLoader without obs_vector.  Was None."
             )
-        super(PlotBlockDataLoader, self).__init__()
+        super().__init__()
         self.__obs_vector = obs_vector
         self.__permutation_vector = None
 

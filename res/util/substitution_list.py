@@ -20,7 +20,7 @@ class SubstitutionList(BaseCClass):
         c_ptr = self._alloc(None)
 
         if c_ptr:
-            super(SubstitutionList, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError("Failed to construct subst_list instance.")
 

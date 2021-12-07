@@ -20,7 +20,7 @@ class EnkfSimulationRunner(BaseCClass):
         assert isinstance(enkf_main, BaseCClass)
         # enkf_main should be an EnKFMain, get the _RealEnKFMain object
         real_enkf_main = enkf_main.parent()
-        super(EnkfSimulationRunner, self).__init__(
+        super().__init__(
             real_enkf_main.from_param(real_enkf_main).value,
             parent=real_enkf_main,
             is_reference=True,

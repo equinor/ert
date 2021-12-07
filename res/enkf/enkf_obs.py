@@ -81,7 +81,7 @@ class EnkfObs(BaseCClass):
         refcase: EclSum = None,
     ):
         c_ptr = self._alloc(history, external_time_map, grid, refcase, ensemble_config)
-        super(EnkfObs, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __len__(self):
         return self._get_size()

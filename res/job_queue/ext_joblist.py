@@ -34,7 +34,7 @@ class ExtJoblist(BaseCClass):
 
     def __init__(self):
         c_ptr = self._alloc()
-        super(ExtJoblist, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def get_jobs(self):
         """@rtype: Hash"""

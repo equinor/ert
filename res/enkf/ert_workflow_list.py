@@ -112,7 +112,7 @@ class ErtWorkflowList(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct ErtWorkflowList instance")
 
-        super(ErtWorkflowList, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
         if config_dict is not None:
             for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):

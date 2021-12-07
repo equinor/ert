@@ -73,7 +73,7 @@ class GenKwConfig(BaseCClass):
 
         c_ptr = self._alloc_empty(key, tag_fmt)
         if c_ptr:
-            super(GenKwConfig, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 'Could not instantiate GenKwConfig with key="%s" and tag_fmt="%s"'

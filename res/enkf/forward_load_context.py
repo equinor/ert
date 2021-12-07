@@ -14,9 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res import ResPrototype
 from cwrap import BaseCClass
-
+from res import ResPrototype
 
 # The Python wrapping of the forward_load_context is extremely
 # minimal; when creating the Python implementation the only purpose
@@ -47,8 +46,8 @@ class ForwardLoadContext(BaseCClass):
         report_step=None,
     ):
         c_ptr = self._alloc(run_arg, load_summary, ecl_config, ecl_base, messages)
-        super(ForwardLoadContext, self).__init__(c_ptr)
-        if report_step is not None:
+        super().__init__(c_ptr)
+        if not report_step is None:
             self.selectStep(report_step)
 
     def getLoadStep(self):

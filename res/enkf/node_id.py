@@ -15,7 +15,7 @@ class NodeId(Structure):
         @type report_step: int
         @type realization_number: int
         """
-        super(NodeId, self).__init__(report_step, realization_number)
+        super().__init__(report_step, realization_number)
 
     def __repr__(self):
         rs = self.report_step

@@ -212,7 +212,7 @@ class ModelConfig(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct ModelConfig instance.")
 
-        super(ModelConfig, self).__init__(c_ptr, is_reference=is_reference)
+        super().__init__(c_ptr, is_reference=is_reference)
 
     def hasHistory(self):
         return self._has_history()

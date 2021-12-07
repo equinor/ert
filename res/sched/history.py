@@ -52,7 +52,7 @@ class History(BaseCClass):
         self._init_val = str(refcase)
         c_ptr = self._alloc_from_refcase(refcase, use_history)
         if c_ptr:
-            super(History, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError("Invalid input.  Failed to create History.")
 

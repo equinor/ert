@@ -2,7 +2,7 @@ import numpy
 from pandas import DataFrame
 
 
-class ArgLoader(object):
+class ArgLoader:
     @staticmethod
     def load(filename, column_names=None):
         rows = 0

@@ -65,7 +65,7 @@ class ResPrototype(Prototype):
     lib = _load_lib()
 
     def __init__(self, prototype, bind=True):
-        super(ResPrototype, self).__init__(ResPrototype.lib, prototype, bind=bind)
+        super().__init__(ResPrototype.lib, prototype, bind=bind)
 
 
 RES_LIB = ResPrototype.lib

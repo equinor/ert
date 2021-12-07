@@ -58,7 +58,7 @@ class BlockObservation(BaseCClass):
         self, obs_key, data_config: Union[BlockDataConfig, FieldConfig], grid: EclGrid
     ):
         c_ptr = self._alloc(obs_key, data_config, grid)
-        super(BlockObservation, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def getCoordinate(self, index):
         """@rtype: tuple of (int, int, int)"""

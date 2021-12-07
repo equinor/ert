@@ -21,7 +21,7 @@ def rwh_primes2(n):
     return [2, 3] + [3 * i + 1 | 1 for i in range(1, n // 3 - correction) if sieve[i]]
 
 
-class PrimeGenerator(object):
+class PrimeGenerator:
     LIST_OF_PRIMES = rwh_primes2(10000)
 
     def __init__(self, seed=None):

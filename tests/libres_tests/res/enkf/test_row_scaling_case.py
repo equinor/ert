@@ -107,7 +107,7 @@ def init_data(main):
 # This is an example callable which decays as a gaussian away from a position
 # obs_pos; this is (probaly) a simplified version of tapering function which
 # will be interesting to use.
-class GaussianDecay(object):
+class GaussianDecay:
     def __init__(self, obs_pos, length_scale, grid):
         self.obs_pos = obs_pos
         self.length_scale = length_scale
@@ -123,7 +123,7 @@ class GaussianDecay(object):
         return math.exp(exp_arg)
 
 
-class SelectLayer(object):
+class SelectLayer:
     def __init__(self, layer, grid):
         self.layer = layer
         self.grid = grid
@@ -156,7 +156,7 @@ class SelectLayer(object):
 # these constraints.
 
 
-class ScalingTest(object):
+class ScalingTest:
     def __init__(self, grid):
         self.grid = grid
 

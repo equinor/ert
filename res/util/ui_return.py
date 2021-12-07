@@ -36,7 +36,7 @@ class UIReturn(BaseCClass):
     def __init__(self, status):
         c_ptr = self._alloc(status)
         if c_ptr:
-            super(UIReturn, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Unable to construct UIReturn with status = %s" % str(status)

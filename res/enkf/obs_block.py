@@ -27,7 +27,7 @@ class ObsBlock(BaseCClass):
         c_pointer = self._alloc(
             obs_key, obs_size, error_covar, error_covar_owner, global_std_scaling
         )
-        super(ObsBlock, self).__init__(c_pointer)
+        super().__init__(c_pointer)
 
     def totalSize(self):
         return self._total_size()
