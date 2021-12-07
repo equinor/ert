@@ -59,7 +59,6 @@ variables of size nrobs_active:
 -------------------------------
 Matrices: S, D, E and various internal variables.
 */
-
 #include <stdlib.h>
 #include <stdio.h>
 
