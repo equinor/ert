@@ -133,7 +133,7 @@ class ExtParam(BaseCClass):
         - key has suffixes but suffix is None
         - key has suffixes but suffix is not among them
         """
-        if not key in self:
+        if key not in self:
             raise KeyError("No such key: {}".format(key))
         suffixes = self.config[key]
         if not suffixes:

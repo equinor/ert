@@ -80,7 +80,7 @@ class ErtWorkflowList(BaseCClass):
                         )
                     )
                     continue
-                if not new_job is None:
+                if new_job is not None:
                     workflow_joblist.addJob(new_job)
                     new_job.convertToCReference(None)
 
@@ -125,7 +125,7 @@ class ErtWorkflowList(BaseCClass):
 
     def __getitem__(self, item):
         """@rtype: Workflow"""
-        if not item in self:
+        if item not in self:
             raise KeyError(
                 "Item '%s' is not in the list of available workflows." % item
             )

@@ -32,7 +32,7 @@ class PrimeGenerator(object):
         if not isinstance(index, numbers.Rational) or index < 0:
             raise IndexError("Index must be a positive integer: %d" % index)
 
-        if not index in self.__primes:
+        if index not in self.__primes:
             p1 = self.randomPrime()
             self.__primes[index] = p1
 

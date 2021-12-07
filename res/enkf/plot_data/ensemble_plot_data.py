@@ -26,12 +26,12 @@ class EnsemblePlotData(BaseCClass):
         c_pointer = self._alloc(ensemble_config_node)
         super(EnsemblePlotData, self).__init__(c_pointer)
 
-        if not file_system is None:
+        if file_system is not None:
             self.load(file_system, user_index, input_mask)
 
     def load(self, file_system, user_index=None, input_mask=None):
         assert isinstance(file_system, EnkfFs)
-        if not input_mask is None:
+        if input_mask is not None:
             assert isinstance(input_mask, BoolVector)
 
         self._load(file_system, user_index, input_mask)

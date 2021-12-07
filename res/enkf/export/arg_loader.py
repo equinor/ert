@@ -16,7 +16,7 @@ class ArgLoader(object):
                 rows += 1
                 columns = max(columns, len(line.split()))
 
-        if not column_names is None:
+        if column_names is not None:
             if len(column_names) <= columns:
                 columns = len(column_names)
             else:

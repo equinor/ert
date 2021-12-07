@@ -353,7 +353,7 @@ class ResConfig(BaseCClass):
 
         queue_system_filter = [ConfigKeys.QUEUE_OPTION]
         for key, value in qc.items():
-            if not key in queue_system_filter:
+            if key not in queue_system_filter:
                 queue_config.append((key, self._parse_value(value)))
 
         return queue_config
@@ -525,7 +525,7 @@ class ResConfig(BaseCClass):
 
         # Others
         for key, value in sc.items():
-            if not key in sim_filter:
+            if key not in sim_filter:
                 simulation_config.append((key, self._parse_value(value)))
 
         return simulation_config

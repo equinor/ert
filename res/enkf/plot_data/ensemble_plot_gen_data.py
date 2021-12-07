@@ -57,7 +57,7 @@ class EnsemblePlotGenData(BaseCClass):
 
     def __load(self, file_system, report_step, input_mask=None):
         assert isinstance(file_system, EnkfFs)
-        if not input_mask is None:
+        if input_mask is not None:
             assert isinstance(input_mask, BoolVector)
 
         self._load(file_system, report_step, input_mask)

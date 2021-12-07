@@ -17,7 +17,7 @@ def simulate(simulator, version, data_file, num_cpu=1, check=True):
 
     argv = [data_file, "--num-cpu={}".format(num_cpu)]
 
-    if not version is None:
+    if version is not None:
         argv.append("--version={}".format(version))
 
     if not check:
