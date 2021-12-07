@@ -51,6 +51,7 @@ pybind11_add_module(
   analysis/analysis_module.cpp
   analysis/enkf_linalg.cpp
   analysis/std_enkf.cpp
+  analysis/update.cpp
   # IES_ENKF
   analysis/ies/ies_enkf.cpp
   analysis/ies/ies_enkf_config.cpp
