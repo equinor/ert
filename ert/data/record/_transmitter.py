@@ -63,6 +63,13 @@ def _unflatten_record_dict(
 
 
 class RecordTransmitter:
+    """:class:`RecordTransmitter` represents the base class for loading
+    and transmitting :class:`Record`. The Transmitter is one of the
+    following implementations :class:`SharedDiskRecordTransmitter`,
+    :class:`InMemoryRecordTransmitter` or
+    `StorageRecordTransmitter`.
+    """
+
     def __init__(self, transmitter_type: RecordTransmitterType) -> None:
         self._state = RecordTransmitterState.not_transmitted
         self._uri: str = ""
@@ -123,6 +130,14 @@ class RecordTransmitter:
         return BlobRecordTree(record_dict=record_dict)
 
     async def load(self) -> Record:
+        """Loads the transmitted Record to the memory.
+        Based on the :class:`RecordType` it creates :class:`BlobRecord`,
+        :class:`NumericalRecord`, :class:`NumericalRecordTree` or
+        :class:`BlobRecordTree` instance.
+
+        Raises:
+            RuntimeError: Raises when the Record was not transmitted yet.
+        """
         if not self.is_transmitted():
             raise RuntimeError("cannot load untransmitted record")
         if self._record_type == RecordType.NUMERICAL_TREE:
@@ -158,6 +173,18 @@ class RecordTransmitter:
         raise NotImplementedError("not implemented")
 
     async def transmit_record(self, record: Record) -> None:
+        """Transmits a Record object.
+
+        Args:
+            record: Record object needs to be of :class:`BlobRecord`,
+                :class:`NumericalRecord`, :class:`NumericalRecordTree`
+                or :class:`BlobRecordTree` type.
+
+        Raises:
+            RuntimeError: Raises when the Record was already transmitted.
+            TypeError: Raises when the Record is of a different type then
+                types listed in args.
+        """
         if self.is_transmitted():
             raise RuntimeError("Record already transmitted")
         if isinstance(record, NumericalRecord):
@@ -172,9 +199,19 @@ class RecordTransmitter:
 
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
+    """:class:`SharedDiskRecordTransmitter` represents :class:`RecordTransmitter`
+    implementation that handles transmitting Records to a disk and back.
+    """
+
     _INTERNAL_MIME_TYPE = "application/x-yaml"
 
     def __init__(self, name: str, storage_path: Path):
+        """Creates instance of `SharedDiskRecordTransmitter`.
+
+        Args:
+            name: Represents the Record name
+            storage_path: Location for handling record-disk operations
+        """
         super().__init__(RecordTransmitterType.shared_disk)
         self._storage_path = storage_path
         self._storage_path.mkdir(parents=True, exist_ok=True)
@@ -242,7 +279,16 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):
+    """:class:`InMemoryRecordTransmitter` represents :class:`RecordTransmitter`
+    implementation that handles transmitting Records to memory and back.
+    """
+
     def __init__(self, name: str):
+        """Creates instance of `InMemoryRecordTransmitter`.
+
+        Args:
+            name: Represents the Record name
+        """
         super().__init__(RecordTransmitterType.in_memory)
         self._name = name
         self._record: Record
