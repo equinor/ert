@@ -124,7 +124,7 @@ def pushd(run_path):
     os.chdir(starting_directory)
 
 
-class EclRun(object):
+class EclRun:
     """Wrapper class to run Eclipse simulations.
 
     The EclRun class is a small wrapper class which is used to run Eclipse

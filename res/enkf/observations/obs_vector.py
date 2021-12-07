@@ -70,7 +70,7 @@ class ObsVector(BaseCClass):
         assert isinstance(config_node, EnkfConfigNode)
         assert isinstance(num_reports, int)
         c_ptr = self._alloc(observation_type, observation_key, config_node, num_reports)
-        super(ObsVector, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def getDataKey(self):
         """@rtype: str"""

@@ -32,7 +32,7 @@ from res.config import (
 
 class TestConfigPrototype(ResPrototype):
     def __init__(self, prototype, bind=False):
-        super(TestConfigPrototype, self).__init__(prototype, bind=bind)
+        super().__init__(prototype, bind=bind)
 
 
 # Adding extra functions to the ConfigContent object for the ability

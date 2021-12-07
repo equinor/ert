@@ -86,7 +86,7 @@ class ExtJob(BaseCClass):
                 name, license_root_path, private, config_file, search_PATH
             )
             if c_ptr:
-                super(ExtJob, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ValueError(
                     "Unable to construct ExtJob(name=%s, config_file=%s, private=%s)"

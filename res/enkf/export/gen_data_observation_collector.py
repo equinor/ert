@@ -4,7 +4,7 @@ from res.enkf import EnKFMain
 from res.enkf.enums import EnkfObservationImplementationType
 
 
-class GenDataObservationCollector(object):
+class GenDataObservationCollector:
     @staticmethod
     def getAllObservationKeys(ert: EnKFMain):
         """

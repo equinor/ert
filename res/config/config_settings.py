@@ -79,7 +79,7 @@ class ConfigSettings(BaseCClass):
         if c_ptr is None:
             c_ptr = ConfigSettings._alloc(root_key)
 
-        super(ConfigSettings, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __contains__(self, key):
         return self._has_key(key)

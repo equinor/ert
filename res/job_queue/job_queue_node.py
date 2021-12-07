@@ -97,7 +97,7 @@ class JobQueueNode(BaseCClass):
         )
 
         if c_ptr is not None:
-            super(JobQueueNode, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError("Unable to create job node object")
 

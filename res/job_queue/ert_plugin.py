@@ -5,7 +5,7 @@ import time
 
 class CancelPluginException(Exception):
     def __init__(self, cancel_message):
-        super(CancelPluginException, self).__init__(cancel_message)
+        super().__init__(cancel_message)
 
 
 class ErtPlugin(ErtScript):

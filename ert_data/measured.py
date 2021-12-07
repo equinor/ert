@@ -13,7 +13,7 @@ import numpy as np
 from ert_data import loader
 
 
-class MeasuredData(object):
+class MeasuredData:
     def __init__(self, facade, keys, index_lists=None, load_data=True, case_name=None):
         self._facade = facade
 

@@ -135,7 +135,7 @@ class EclConfig(BaseCClass):
                 grid.convertToCReference(None)
 
         if c_ptr:
-            super(EclConfig, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise RuntimeError("Internal error: Failed constructing EclConfig!")
 

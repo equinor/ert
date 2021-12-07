@@ -130,7 +130,7 @@ class ResConfig(BaseCClass):
         c_ptr = self._alloc_full(config_dir, user_config_file, *configs)
 
         if c_ptr:
-            super(ResConfig, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Failed to construct ResConfig instance from %r."

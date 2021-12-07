@@ -15,7 +15,6 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from six import string_types
 
 from res import ResPrototype
 from res.enkf.config import ExtParamConfig
@@ -40,7 +39,7 @@ class ExtParam(BaseCClass):
 
     def __init__(self, config):
         c_ptr = self._alloc(config)
-        super(ExtParam, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __contains__(self, key):
         return key in self.config
@@ -52,15 +51,13 @@ class ExtParam(BaseCClass):
         if isinstance(index, tuple):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
-            if not isinstance(key, string_types) or not isinstance(
-                suffix, string_types
-            ):
+            if not isinstance(key, str) or not isinstance(suffix, str):
                 raise TypeError("Expected a pair of strings, got {}".format(index))
             self._check_key_suffix(key, suffix)
             return self._key_suffix_get(key, suffix)
 
         # index is just the key, it can be either a string or an int
-        if isinstance(index, string_types):
+        if isinstance(index, str):
             self._check_key_suffix(index)
             return self._key_get(index)
 
@@ -72,16 +69,14 @@ class ExtParam(BaseCClass):
         if isinstance(index, tuple):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
-            if not isinstance(key, string_types) or not isinstance(
-                suffix, string_types
-            ):
+            if not isinstance(key, str) or not isinstance(suffix, str):
                 raise TypeError("Expected a pair of strings, got {}".format(index))
             self._check_key_suffix(key, suffix)
             self._key_suffix_set(key, suffix, value)
             return
 
         # index is just the key, it can be either a string or an int
-        if isinstance(index, string_types):
+        if isinstance(index, str):
             self._check_key_suffix(index)
             self._key_set(index, value)
         else:

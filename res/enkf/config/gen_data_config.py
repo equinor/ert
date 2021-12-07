@@ -62,7 +62,7 @@ class GenDataConfig(BaseCClass):
         # Can currently only create GEN_DATA instances which should be used
         # as result variables.
         c_pointer = self._alloc(key, input_format)
-        super(GenDataConfig, self).__init__(c_pointer)
+        super().__init__(c_pointer)
 
     def get_template_file(self):
         return self._get_template_file()

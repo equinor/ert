@@ -3,7 +3,7 @@ import math
 from .prime_generator import PrimeGenerator
 
 
-class PerlinNoise(object):
+class PerlinNoise:
     def __init__(self, persistence=0.5, number_of_octaves=4, prime_generator=None):
         self.persistence = persistence
         self.number_of_octaves = number_of_octaves

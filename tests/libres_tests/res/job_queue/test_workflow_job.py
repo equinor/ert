@@ -8,7 +8,7 @@ from res.job_queue import WorkflowJob
 
 class _TestWorkflowJobPrototype(ResPrototype):
     def __init__(self, prototype, bind=True):
-        super(_TestWorkflowJobPrototype, self).__init__(prototype, bind=bind)
+        super().__init__(prototype, bind=bind)
 
 
 class WorkflowJobTest(ResTest):

@@ -6,7 +6,7 @@ from res.job_queue import ErtScript
 
 class ExternalErtScript(ErtScript):
     def __init__(self, ert, executable):
-        super(ExternalErtScript, self).__init__(ert)
+        super().__init__(ert)
 
         self.__executable = executable
         self.__job = None
@@ -31,7 +31,7 @@ class ExternalErtScript(ErtScript):
         return None
 
     def cancel(self):
-        super(ExternalErtScript, self).cancel()
+        super().cancel()
         if self.__job is not None:
             self.__job.terminate()
 

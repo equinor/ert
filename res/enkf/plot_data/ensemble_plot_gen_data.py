@@ -48,7 +48,7 @@ class EnsemblePlotGenData(BaseCClass):
 
         c_ptr = self._alloc(ensemble_config_node)
         if c_ptr:
-            super(EnsemblePlotGenData, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Unable to construct EnsemplePlotGenData from given config node!"

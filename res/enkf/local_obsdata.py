@@ -53,7 +53,7 @@ object as:
 
         c_ptr = self._alloc(name)
         if c_ptr:
-            super(LocalObsdata, self).__init__(c_ptr)
+            super().__init__(c_ptr)
             self.initObservations(obs)
         else:
             raise ValueError(

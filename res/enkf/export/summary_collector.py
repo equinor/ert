@@ -8,7 +8,7 @@ from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotData
 
 
-class SummaryCollector(object):
+class SummaryCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()

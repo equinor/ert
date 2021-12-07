@@ -134,7 +134,7 @@ class AnalysisModule(BaseCClass):
         if not c_ptr:
             raise KeyError("Failed to load internal module:%s" % name)
 
-        super(AnalysisModule, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def getVariableNames(self):
         """@rtype: list of str"""

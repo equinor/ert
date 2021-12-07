@@ -32,7 +32,7 @@ class MeasBlock(BaseCClass):
         assert isinstance(ens_mask, BoolVector)
         c_ptr = self._alloc(obs_key, ens_mask, obs_size)
         if c_ptr:
-            super(MeasBlock, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError("Unable to construct MeasBlock.")
 

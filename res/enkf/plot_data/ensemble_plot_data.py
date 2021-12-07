@@ -26,7 +26,7 @@ class EnsemblePlotData(BaseCClass):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
 
         c_pointer = self._alloc(ensemble_config_node)
-        super(EnsemblePlotData, self).__init__(c_pointer)
+        super().__init__(c_pointer)
 
         if file_system is not None:
             self.load(file_system, user_index, input_mask)

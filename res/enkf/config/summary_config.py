@@ -29,7 +29,7 @@ class SummaryConfig(BaseCClass):
 
     def __init__(self, key, load_fail=LoadFailTypeEnum.LOAD_FAIL_WARN):
         c_ptr = self._alloc(key, load_fail)
-        super(SummaryConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __repr__(self):
         return "SummaryConfig() %s" % self._ad_str()

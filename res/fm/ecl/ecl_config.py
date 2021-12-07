@@ -24,7 +24,7 @@ def _replace_env(env):
     return new_env
 
 
-class Keys(object):
+class Keys:
     default_version = "default_version"
     default = "default"
     versions = "versions"
@@ -35,7 +35,7 @@ class Keys(object):
     scalar = "scalar"
 
 
-class Simulator(object):
+class Simulator:
     """Small 'struct' with the config information for one simulator."""
 
     def __init__(self, version, executable, env, mpirun=None):
@@ -67,7 +67,7 @@ class Simulator(object):
         )
 
 
-class EclConfig(object):
+class EclConfig:
     """Represent the eclipse configuration at a site.
 
     The EclConfig class internalizes information of where the various eclipse
@@ -182,7 +182,7 @@ class Ecl100Config(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("ECL100_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
-        super(Ecl100Config, self).__init__(config_file, simulator_name="eclipse")
+        super().__init__(config_file, simulator_name="eclipse")
 
 
 class Ecl300Config(EclConfig):
@@ -191,7 +191,7 @@ class Ecl300Config(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("ECL300_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
-        super(Ecl300Config, self).__init__(config_file, simulator_name="e300")
+        super().__init__(config_file, simulator_name="e300")
 
 
 class FlowConfig(EclConfig):
@@ -200,7 +200,7 @@ class FlowConfig(EclConfig):
 
     def __init__(self):
         config_file = os.getenv("FLOW_SITE_CONFIG", default=self.DEFAULT_CONFIG_FILE)
-        super(FlowConfig, self).__init__(config_file, simulator_name="flow")
+        super().__init__(config_file, simulator_name="flow")
 
 
 class EclrunConfig:

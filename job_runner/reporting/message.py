@@ -44,7 +44,7 @@ class Message(metaclass=_MetaMessage):
 
 class Init(Message):
     def __init__(self, jobs, run_id, ert_pid, ee_id=None, real_id=None, step_id=None):
-        super(Init, self).__init__()
+        super().__init__()
         self.jobs = jobs
         self.run_id = run_id
         self.ert_pid = ert_pid
@@ -55,7 +55,7 @@ class Init(Message):
 
 class Finish(Message):
     def __init__(self):
-        super(Finish, self).__init__()
+        super().__init__()
 
 
 # job level messages
@@ -63,17 +63,17 @@ class Finish(Message):
 
 class Start(Message):
     def __init__(self, job):
-        super(Start, self).__init__(job)
+        super().__init__(job)
 
 
 class Running(Message):
     def __init__(self, job, max_memory_usage, current_memory_usage):
-        super(Running, self).__init__(job)
+        super().__init__(job)
         self.max_memory_usage = max_memory_usage
         self.current_memory_usage = current_memory_usage
 
 
 class Exited(Message):
     def __init__(self, job, exit_code):
-        super(Exited, self).__init__(job)
+        super().__init__(job)
         self.exit_code = exit_code

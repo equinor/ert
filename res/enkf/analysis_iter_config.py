@@ -54,7 +54,7 @@ class AnalysisIterConfig(BaseCClass):
         if config_dict is None:
             c_ptr = self._alloc()
             if c_ptr:
-                super(AnalysisIterConfig, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ValueError("Failed to construct AnalysisIterConfig instance.")
         else:
@@ -64,7 +64,7 @@ class AnalysisIterConfig(BaseCClass):
                 config_dict[ConfigKeys.ITER_RETRY_COUNT],
             )
             if c_ptr:
-                super(AnalysisIterConfig, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ValueError(
                     "Failed to construct AnalysisIterConfig instance for dictionary."

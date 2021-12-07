@@ -10,7 +10,7 @@ from ert_gui.simulation.view.realization import RealizationWidget
 
 class MockDelegate(QStyledItemDelegate):
     def __init__(self, parent=None) -> None:
-        super(MockDelegate, self).__init__(parent)
+        super().__init__(parent)
         self._size = QSize(50, 50)
         self._max_id = 0
 

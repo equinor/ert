@@ -75,7 +75,7 @@ class EnKFMain(BaseCClass):
         self._monkey_patch_methods(real_enkf_main)
 
     def _init_from_real_enkf_main(self, real_enkf_main):
-        super(EnKFMain, self).__init__(
+        super().__init__(
             real_enkf_main.from_param(real_enkf_main).value,
             parent=real_enkf_main,
             is_reference=True,
@@ -274,7 +274,7 @@ class _RealEnKFMain(BaseCClass):
 
         c_ptr = self._alloc(res_config, strict, verbose)
         if c_ptr:
-            super(_RealEnKFMain, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Failed to construct EnKFMain instance from config %s." % res_config

@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-class DesignMatrixReader(object):
+class DesignMatrixReader:
     @staticmethod
     def loadDesignMatrix(filename):
         """@rtype: DataFrame"""

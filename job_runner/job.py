@@ -11,7 +11,7 @@ from job_runner.io import assert_file_executable
 from job_runner.reporting.message import Exited, Running, Start
 
 
-class Job(object):
+class Job:
     MEMORY_POLL_PERIOD = 5  # Seconds between memory polls
 
     def __init__(self, job_data, index, sleep_interval=1):

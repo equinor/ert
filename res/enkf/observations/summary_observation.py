@@ -59,7 +59,7 @@ class SummaryObservation(BaseCClass):
             summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param
         )
         if c_ptr:
-            super(SummaryObservation, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Unable to construct SummaryObservation with given configuration!"

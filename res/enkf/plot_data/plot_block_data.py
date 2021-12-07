@@ -3,7 +3,7 @@ from ecl.util.util import DoubleVector
 from res.enkf.plot_data.plot_block_vector import PlotBlockVector
 
 
-class PlotBlockData(object):
+class PlotBlockData:
     def __init__(self, depth_vector):
         """
         @type depth_vector: DoubleVector

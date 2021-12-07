@@ -59,7 +59,7 @@ class GenObservation(BaseCClass):
     ):
         c_ptr = self._alloc(data_config, obs_key)
         if c_ptr:
-            super(GenObservation, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Unable to construct GenObservation with given obs_key and data_config!"

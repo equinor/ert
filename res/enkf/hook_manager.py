@@ -85,7 +85,7 @@ class HookManager(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct RNGConfig instance")
 
-        super(HookManager, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def _to_c_string_arr(self, L):
         arr = (ctypes.c_char_p * len(L))()

@@ -12,7 +12,7 @@ from res.job_queue import JobStatusType
 from res.simulator import BatchContext, BatchSimulator
 
 
-class MockMonitor(object):
+class MockMonitor:
     def __init__(self):
         self.sim_context = None
 

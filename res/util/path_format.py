@@ -32,7 +32,7 @@ class PathFormat(BaseCClass):
     def __init__(self, path_fmt):
         c_ptr = self._alloc(path_fmt)
         if c_ptr:
-            super(PathFormat, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError('Unable to construct path format "%s"' % path_fmt)
 

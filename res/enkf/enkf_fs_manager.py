@@ -18,9 +18,9 @@ def naturalSortKey(s, _nsre=re.compile("([0-9]+)")):
     ]
 
 
-class FileSystemRotator(object):
+class FileSystemRotator:
     def __init__(self, capacity):
-        super(FileSystemRotator, self).__init__()
+        super().__init__()
         self._capacity = capacity
         """:type: int"""
         self._fs_list = []
@@ -129,7 +129,7 @@ class EnkfFsManager(BaseCClass):
         # enkf_main should be an EnKFMain, get the _RealEnKFMain object
         real_enkf_main = enkf_main.parent()
 
-        super(EnkfFsManager, self).__init__(
+        super().__init__(
             real_enkf_main.from_param(real_enkf_main).value,
             parent=real_enkf_main,
             is_reference=True,
@@ -141,7 +141,7 @@ class EnkfFsManager(BaseCClass):
     def __del__(self):
         # This object is a reference, so free() won't be called on it
         # Any clean-up must be done here
-        super(EnkfFsManager, self).__del__()
+        super().__del__()
 
     def _createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)

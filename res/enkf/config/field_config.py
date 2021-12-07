@@ -65,7 +65,7 @@ class FieldConfig(BaseCClass):
 
     def __init__(self, kw, grid):
         c_ptr = self._alloc(kw, grid, None, False)
-        super(FieldConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     @classmethod
     def exportFormat(cls, filename):

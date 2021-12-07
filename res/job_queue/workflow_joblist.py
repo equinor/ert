@@ -25,7 +25,7 @@ class WorkflowJoblist(BaseCClass):
 
     def __init__(self):
         c_ptr = self._alloc()
-        super(WorkflowJoblist, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def addJob(self, job):
         """@type job: WorkflowJob"""

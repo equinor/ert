@@ -37,7 +37,7 @@ def _deserialize_date(serial_dt):
     return datetime.datetime(*time_struct[0:6])
 
 
-class ForwardModelJobStatus(object):
+class ForwardModelJobStatus:
     def __init__(
         self,
         name,
@@ -103,7 +103,7 @@ class ForwardModelJobStatus(object):
         }
 
 
-class ForwardModelStatus(object):
+class ForwardModelStatus:
     def __init__(self, run_id, start_time, end_time=None):
         self.run_id = run_id
         self.start_time = start_time

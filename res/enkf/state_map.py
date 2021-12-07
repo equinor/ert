@@ -42,7 +42,7 @@ class StateMap(BaseCClass):
 
     def __init__(self, filename=None):
         c_ptr = self._alloc()
-        super(StateMap, self).__init__(c_ptr)
+        super().__init__(c_ptr)
         if filename:
             self.load(filename)
 

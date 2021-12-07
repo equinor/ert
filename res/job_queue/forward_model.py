@@ -46,7 +46,7 @@ class ForwardModel(BaseCClass):
     def __init__(self, ext_joblist: ExtJoblist):
         c_ptr = self._alloc(ext_joblist)
         if c_ptr:
-            super(ForwardModel, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Failed to construct forward model from provided ext_joblist %s"

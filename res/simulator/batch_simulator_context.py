@@ -17,7 +17,7 @@ class BatchContext(SimulationContext):
         """
         Handle which can be used to query status and results for batch simulation.
         """
-        super(BatchContext, self).__init__(ert, fs, mask, itr, case_data)
+        super().__init__(ert, fs, mask, itr, case_data)
         self.result_keys = result_keys
         self.res_config = ert.resConfig()
 

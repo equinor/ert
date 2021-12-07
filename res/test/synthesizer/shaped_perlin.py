@@ -4,7 +4,7 @@ from .perlin import PerlinNoise
 from .prime_generator import PrimeGenerator
 
 
-class Interpolator(object):
+class Interpolator:
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -33,7 +33,7 @@ class Interpolator(object):
         return a * (1 - f) + b * f
 
 
-class ShapeFunction(object):
+class ShapeFunction:
     def __init__(self, x, y, scale=1.0):
         self.scale = scale
         self.interpolator = Interpolator(x, y)
@@ -47,10 +47,10 @@ class ShapeFunction(object):
 
 class ConstantShapeFunction(ShapeFunction):
     def __init__(self, value):
-        super(ConstantShapeFunction, self).__init__([0.0], [value])
+        super().__init__([0.0], [value])
 
 
-class ShapedNoise(object):
+class ShapedNoise:
     def __init__(
         self, noiseFunction, shapeFunction, divergenceFunction, offset=0.0, cutoff=None
     ):
@@ -71,7 +71,7 @@ class ShapedNoise(object):
         return result
 
 
-class ShapeCreator(object):
+class ShapeCreator:
     @staticmethod
     def createShapeFunction(count=1000, persistence=0.2, octaves=8, seed=1):
         """@rtype: ShapeFunction"""

@@ -24,7 +24,7 @@ class RMSRunException(Exception):
     pass
 
 
-class RMSRun(object):
+class RMSRun:
     _single_seed_file = "RMS_SEED"
     _multi_seed_file = "random.seeds"
     _max_seed = 2146483648

@@ -75,7 +75,7 @@ class Matrix(BaseCClass):
 
     def __init__(self, rows, columns, value=0):
         c_ptr = self._matrix_alloc(rows, columns)
-        super(Matrix, self).__init__(c_ptr)
+        super().__init__(c_ptr)
         self.setAll(value)
 
     def copy(self):

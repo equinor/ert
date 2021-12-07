@@ -54,7 +54,7 @@ class EnsemblePlotGenKW(BaseCClass):
         assert ensemble_config_node.getImplementationType() == ErtImplType.GEN_KW
 
         c_pointer = self._alloc(ensemble_config_node)
-        super(EnsemblePlotGenKW, self).__init__(c_pointer)
+        super().__init__(c_pointer)
 
         self.__load(file_system, input_mask)
 

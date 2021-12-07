@@ -10,7 +10,7 @@ from res.enkf.key_manager import KeyManager
 from res.enkf.plot_data import EnsemblePlotGenKW
 
 
-class GenKwCollector(object):
+class GenKwCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()

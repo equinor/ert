@@ -65,7 +65,7 @@ class Driver(BaseCClass):
         Creates a new driver instance
         """
         c_ptr = self._alloc(driver_type)
-        super(Driver, self).__init__(c_ptr)
+        super().__init__(c_ptr)
         if options:
             for (key, value) in options:
                 self.set_option(key, value)

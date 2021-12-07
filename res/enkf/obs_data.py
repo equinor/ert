@@ -46,7 +46,7 @@ class ObsData(BaseCClass):
 
     def __init__(self, global_std_scaling=1.0):
         c_pointer = self._alloc(global_std_scaling)
-        super(ObsData, self).__init__(c_pointer)
+        super().__init__(c_pointer)
 
     def __len__(self):
         """@rtype: int"""

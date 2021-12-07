@@ -21,7 +21,7 @@ import tempfile
 import shutil
 
 
-class ErtTestContext(object):
+class ErtTestContext:
     def __init__(self, test_name, model_config):
         self._tmp_dir = tempfile.mkdtemp()
         self._model_config = model_config

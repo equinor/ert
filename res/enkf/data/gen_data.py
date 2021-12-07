@@ -17,7 +17,7 @@ class GenData(BaseCClass):
     def __init__(self):
         c_ptr = self._alloc()
         if c_ptr:
-            super(GenData, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError("Unable to construct GenData object.")
 

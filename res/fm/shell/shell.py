@@ -5,7 +5,7 @@ import sys
 import distutils.dir_util
 
 
-class Shell(object):
+class Shell:
     """
     Utility class to simplify common shell operations.
     """

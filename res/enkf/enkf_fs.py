@@ -51,7 +51,7 @@ class EnkfFs(BaseCClass):
 
     def __init__(self, mount_point):
         c_ptr = self._mount(mount_point)
-        super(EnkfFs, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def copy(self):
         fs = self.createPythonObject(self._address())

@@ -5,7 +5,7 @@ from threading import Thread
 from time import sleep
 
 
-class SimulationContext(object):
+class SimulationContext:
     def __init__(self, ert, sim_fs, mask, itr, case_data):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """

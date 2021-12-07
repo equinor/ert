@@ -148,7 +148,7 @@ class SiteConfig(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct SiteConfig instance.")
 
-        super(SiteConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __repr__(self):
         return "Site Config {}".format(SiteConfig.getLocation())

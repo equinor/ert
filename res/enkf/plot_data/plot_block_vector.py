@@ -1,13 +1,13 @@
 from ecl.util.util import DoubleVector
 
 
-class PlotBlockVector(object):
+class PlotBlockVector:
     def __init__(self, realization_number, data):
         """
         @type realization_number: int
         @type data: DoubleVector
         """
-        super(PlotBlockVector, self).__init__()
+        super().__init__()
 
         assert isinstance(data, DoubleVector)
 

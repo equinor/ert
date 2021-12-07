@@ -4,7 +4,7 @@ import sys
 import traceback
 
 
-class ImportTester(object):
+class ImportTester:
     @staticmethod
     def testImport(module):
         try:

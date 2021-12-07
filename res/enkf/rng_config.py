@@ -49,7 +49,7 @@ class RNGConfig(BaseCClass):
         if c_ptr is None:
             raise ValueError("Failed to construct RNGConfig instance")
 
-        super(RNGConfig, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     @property
     def alg_type(self):

@@ -139,7 +139,7 @@ class ContentItem(BaseCClass):
     def __init__(self, schema_item):
         path_elm = None
         c_ptr = self._alloc(schema_item, path_elm)
-        super(ContentItem, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def __len__(self):
         return self._size()
@@ -202,7 +202,7 @@ class ConfigContent(BaseCClass):
         c_ptr = self._alloc(filename)
 
         if c_ptr:
-            super(ConfigContent, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Failed to construct ConfigContent instance from config file %s."

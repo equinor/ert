@@ -5,12 +5,12 @@ import traceback
 import importlib.util
 
 
-class ErtScript(object):
+class ErtScript:
     def __init__(self, ert):
         """
         @type ert: EnKFMain
         """
-        super(ErtScript, self).__init__()
+        super().__init__()
 
         if not hasattr(self, "run"):
             raise UserWarning(

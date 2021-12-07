@@ -29,7 +29,7 @@ class LocalObsdataNode(BaseCClass):
         if isinstance(obs_key, str):
             c_ptr = self._alloc(obs_key, all_timestep_active)
             if c_ptr:
-                super(LocalObsdataNode, self).__init__(c_ptr)
+                super().__init__(c_ptr)
             else:
                 raise ArgumentError(
                     'Unable to construct LocalObsdataNode with key = "%s".' % obs_key

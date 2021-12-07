@@ -38,7 +38,7 @@ class RowScaling(BaseCClass):
 
     def __init__(self):
         c_ptr = self._alloc()
-        super(RowScaling, self).__init__(c_ptr)
+        super().__init__(c_ptr)
 
     def free(self):
         self._free()

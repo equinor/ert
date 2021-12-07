@@ -36,7 +36,7 @@ class MeasData(BaseCClass):
     def __init__(self, ens_mask):
         c_ptr = self._alloc(ens_mask)
         if c_ptr:
-            super(MeasData, self).__init__(c_ptr)
+            super().__init__(c_ptr)
         else:
             raise ValueError(
                 "Unable to construct MeasData from given ensemble mask of type %s."
