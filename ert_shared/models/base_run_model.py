@@ -234,8 +234,8 @@ class BaseRunModel(object):
         return self._job_queue.isRunning()
 
     @staticmethod
-    def is_forward_model_finished(progress):
-        return not (any((job.status != "Success" for job in progress)))
+    def is_forward_model_finished(progress) -> bool:
+        return all(job.status == "Success" for job in progress)
 
     def update_progress_for_index(self, iteration, idx, run_arg):
         try:
