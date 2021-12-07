@@ -58,7 +58,7 @@ class WorkflowJoblist(BaseCClass):
         @rtype: WorkflowJob
         """
 
-        if not item in self:
+        if item not in self:
             return None
 
         return self._get_job(item)

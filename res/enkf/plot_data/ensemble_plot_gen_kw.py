@@ -56,7 +56,7 @@ class EnsemblePlotGenKW(BaseCClass):
 
     def __load(self, file_system, input_mask=None):
         assert isinstance(file_system, EnkfFs)
-        if not input_mask is None:
+        if input_mask is not None:
             assert isinstance(input_mask, BoolVector)
 
         self._load(file_system, True, 0, input_mask)

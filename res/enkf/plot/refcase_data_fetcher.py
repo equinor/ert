@@ -63,7 +63,7 @@ class RefcaseDataFetcher(DataFetcher):
         return data
 
     def getReportStepTimeFromRefcase(self, refcase, report_step):
-        if not report_step in self.report_times:
+        if report_step not in self.report_times:
             self.report_times[report_step] = (
                 EclSum.cNamespace().get_report_time(refcase, report_step).ctime()
             )

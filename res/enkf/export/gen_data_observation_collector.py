@@ -47,7 +47,7 @@ class GenDataObservationCollector(object):
         available_observation_keys = GenDataObservationCollector.getAllObservationKeys(
             ert
         )
-        if not key in available_observation_keys:
+        if key not in available_observation_keys:
             raise KeyError("Key '%s' is not a valid observation key")
 
         columns = [key]

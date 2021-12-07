@@ -42,7 +42,7 @@ class PlotBlockDataLoader(object):
         state_map = fs.getStateMap()
         ensemble_size = len(state_map)
 
-        if not input_mask is None:
+        if input_mask is not None:
             mask = BoolVector.copy(input_mask)
         else:
             mask = BoolVector(False, ensemble_size)

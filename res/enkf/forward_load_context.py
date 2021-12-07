@@ -48,7 +48,7 @@ class ForwardLoadContext(BaseCClass):
     ):
         c_ptr = self._alloc(run_arg, load_summary, ecl_config, ecl_base, messages)
         super(ForwardLoadContext, self).__init__(c_ptr)
-        if not report_step is None:
+        if report_step is not None:
             self.selectStep(report_step)
 
     def getLoadStep(self):

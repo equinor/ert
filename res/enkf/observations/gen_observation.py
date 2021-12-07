@@ -79,7 +79,7 @@ class GenObservation(BaseCClass):
             obs_value, obs_std = scalar_value
             self._scalar_set(obs_value, obs_std)
 
-        if not data_index is None:
+        if data_index is not None:
             if os.path.isfile(data_index):
                 self._load_data_index(data_index)
             else:

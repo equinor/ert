@@ -64,7 +64,7 @@ class SubstitutionList(BaseCClass):
             raise KeyError("No such key:%s" % key)
 
     def indexForKey(self, key):
-        if not key in self:
+        if key not in self:
             raise KeyError("Key '%s' not in substitution list!" % key)
 
         for index, key_val_doc in enumerate(self):

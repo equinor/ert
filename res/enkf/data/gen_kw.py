@@ -71,7 +71,7 @@ class GenKw(BaseCClass):
         """
         do_transform = False
         if isinstance(key, str):
-            if not key in self:
+            if key not in self:
                 raise KeyError("Key %s does not exist" % (key))
             return self._data_get(key, do_transform)
         elif isinstance(key, int):
@@ -89,7 +89,7 @@ class GenKw(BaseCClass):
         @type value: float
         """
         if isinstance(key, str):
-            if not key in self:
+            if key not in self:
                 raise KeyError("Key %s does not exist" % (key))
             self._data_set(key, value)
         elif isinstance(key, int):
@@ -109,7 +109,7 @@ class GenKw(BaseCClass):
         return v
 
     def eclWrite(self, path, filename):
-        if not path is None:
+        if path is not None:
             if not os.path.isdir(path):
                 raise IOError("The directory:%s does not exist" % path)
 

@@ -156,7 +156,7 @@ class EnkfFsManager(BaseCClass):
 
         full_case_name = self._createFullCaseName(mount_root, case_name)
 
-        if not full_case_name in self._fs_rotator:
+        if full_case_name not in self._fs_rotator:
             if not EnkfFs.exists(full_case_name):
                 if self._fs_rotator.atCapacity():
                     self._fs_rotator.dropOldestFileSystem()
@@ -202,7 +202,7 @@ class EnkfFsManager(BaseCClass):
         case_name = current_fs.getCaseName()
         full_name = self._createFullCaseName(self._mount_root, case_name)
 
-        if not full_name in self._fs_rotator:
+        if full_name not in self._fs_rotator:
             self._fs_rotator.addFileSystem(current_fs, full_name)
 
         return self.getFileSystem(case_name, self._mount_root)

@@ -173,7 +173,7 @@ class EclConfig(BaseCClass):
     def getRefcase(self):
         """@rtype: EclSum"""
         refcase = self._get_refcase()
-        if not refcase is None:
+        if refcase is not None:
             refcase.setParent(self)
 
         return refcase

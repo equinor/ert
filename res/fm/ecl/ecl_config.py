@@ -50,7 +50,7 @@ class Simulator(object):
         self.mpirun = mpirun
         self.name = "simulator"
 
-        if not mpirun is None:
+        if mpirun is not None:
             if not os.access(mpirun, os.X_OK):
                 raise OSError(
                     "The mpirun argument: '{}' is not executable by user".format(
