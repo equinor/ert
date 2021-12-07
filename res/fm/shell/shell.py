@@ -147,7 +147,6 @@ class Shell(object):
         if os.path.isdir(src_path):
             src_basename = os.path.basename(src_path)
             target_root, target_basename = os.path.split(target_path)
-            full_target = os.path.join(target_path, src_basename)
 
             if target_root:
                 if not os.path.isdir(target_root):
