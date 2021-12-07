@@ -23,6 +23,7 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/res_config.hpp>
+#include <ert/res_util/cpp_logger.hpp>
 
 struct res_config_struct {
 
@@ -210,6 +211,11 @@ res_config_type *res_config_alloc_full(
     ert_templates_type *templates, ecl_config_type *ecl_config,
     ensemble_config_type *ensemble_config, model_config_type *model_config,
     log_config_type *log_config, queue_config_type *queue_config) {
+
+    cpp_logger::Logger logger("res_config");
+    logger.debug("Allocate res-config from " +
+                 std::string(user_config_file ? user_config_file : "<none>"));
+
     res_config_type *res_config = res_config_alloc_empty();
 
     res_config->user_config_file = util_alloc_string_copy(user_config_file);

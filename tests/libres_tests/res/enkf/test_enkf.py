@@ -51,6 +51,9 @@ from res.enkf.enums import (
 )
 from res.enkf.observations.summary_observation import SummaryObservation
 
+from res._lib.logger import _Logger
+from unittest.mock import MagicMock
+
 
 class EnKFTest(ResTest):
     def setUp(self):
@@ -73,6 +76,30 @@ class EnKFTest(ResTest):
             res_config = ResConfig("simple_config/minimum_config")
             main = EnKFMain(res_config)
             self.assertTrue(main, "Load failed")
+
+    @tmpdir()
+    def test_logging(self):
+        with TestAreaContext("enkf_test", store_area=True) as work_area:
+            mock = MagicMock()
+            _Logger.set_callback(mock)
+
+            work_area.copy_directory(self.case_directory)
+            res_config = ResConfig("simple_config/minimum_config")
+
+            self.assertGreaterEqual(
+                len(mock.call_args_list), 1, "Expected log-callbacks"
+            )
+            logcalls_from_resconfig = [
+                c
+                for c in mock.call_args_list
+                if "simple_config/minimum_config"
+                in c[0][2]  # the args-property of call()-object was introduced in 3.8
+            ]
+            self.assertGreaterEqual(
+                len(logcalls_from_resconfig),
+                1,
+                "Expected to see debug-msg from allocator",
+            )
 
     @tmpdir()
     def test_site_condif(self):

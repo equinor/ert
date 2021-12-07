@@ -35,6 +35,8 @@ from ert_shared.storage.command import add_parser_options as ert_api_add_parser_
 from ert_shared.services import Storage, WebvizErt
 import ert_shared
 
+from res._lib.logger import _Logger, _Levels
+
 
 def run_ert_storage(args):
     with Storage.start_server(res_config=args.config) as server:
@@ -434,6 +436,20 @@ def start_ert_server(mode: str):
         yield
 
 
+def log_callback(level: int, name: str, msg: str):
+    log = logging.getLogger(name)  # Python logging-system ensures singletons
+    if level == _Levels.DEBUG:
+        log.debug(msg)
+    elif level == _Levels.INFO:
+        log.info(msg)
+    elif level == _Levels.WARNING:
+        log.warning(msg)
+    elif level == _Levels.ERROR:
+        log.error(msg)
+    else:
+        log.error(f"Unknown log-level {level}")
+
+
 def main():
     with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
         logging.config.dictConfig(yaml.safe_load(conf_file))
@@ -447,6 +463,8 @@ def main():
     if args.verbose:
         logger.setLevel("DEBUG")
     FeatureToggling.update_from_args(args)
+    _Logger.set_callback(log_callback)
+
     try:
         with start_ert_server(args.mode), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())

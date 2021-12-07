@@ -29,6 +29,7 @@ pybind11_add_module(
   res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
   python/init.cpp
+  python/cpp_logger.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp

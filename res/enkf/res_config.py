@@ -15,6 +15,7 @@
 #  for more details.
 
 import os
+import logging
 from os.path import isfile
 
 from cwrap import BaseCClass
@@ -101,6 +102,8 @@ class ResConfig(BaseCClass):
     _init_parser = ResPrototype(
         "void res_config_init_config_parser(config_parser)", bind=False
     )
+
+    _logger = logging.getLogger("ResConfig")
 
     def __init__(
         self, user_config_file=None, config=None, throw_on_error=True, config_dict=None

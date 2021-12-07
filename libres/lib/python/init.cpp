@@ -2,7 +2,6 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/analysis_config.hpp>
 
@@ -40,4 +39,7 @@ PYBIND11_MODULE(_lib, m) {
             return analysis_config_module_names(analysis_config);
         },
         py::arg("self"));
+
+    void init_logger(py::module_);
+    init_logger(m.def_submodule("logger"));
 }
