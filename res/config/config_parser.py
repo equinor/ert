@@ -31,7 +31,14 @@ class ConfigParser(BaseCClass):
     )
     _free = ResPrototype("void config_free(config_parser)")
     _parse = ResPrototype(
-        "config_content_obj config_parse(config_parser, char*, char*, char*, char*, hash, config_unrecognized_enum, bool)"
+        "config_content_obj config_parse(config_parser, \
+                                         char*, \
+                                         char*, \
+                                         char*, \
+                                         char*, \
+                                         hash, \
+                                         config_unrecognized_enum, \
+                                         bool)"
     )
     _size = ResPrototype("int config_get_schema_size(config_parser)")
     _get_schema_item = ResPrototype(
@@ -39,7 +46,13 @@ class ConfigParser(BaseCClass):
     )
     _has_schema_item = ResPrototype("bool config_has_schema_item(config_parser, char*)")
     _add_key_value = ResPrototype(
-        "bool config_parser_add_key_values(config_parser, config_content, char*, stringlist, config_path_elm, char*, config_unrecognized_enum)"
+        "bool config_parser_add_key_values(config_parser, \
+                                           config_content, \
+                                           char*, \
+                                           stringlist, \
+                                           config_path_elm, \
+                                           char*, \
+                                           config_unrecognized_enum)"
     )
     _validate = ResPrototype("void config_validate(config_parser, config_content)")
 

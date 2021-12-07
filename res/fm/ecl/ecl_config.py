@@ -166,9 +166,8 @@ class EclConfig(object):
                     # https://github.com/equinor/ert/issues/1955
                     except Exception:
                         sys.stderr.write(
-                            "Failed to create simulator object for: version:{version} {exe_type}\n".format(
-                                version=version, exe_type=exe_type
-                            )
+                            "Failed to create simulator object for: "
+                            f"version:{version} {exe_type}\n"
                         )
                         sim = None
 

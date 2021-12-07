@@ -36,7 +36,8 @@ class SubstConfig(BaseCClass):
     def __init__(self, config_content=None, config_dict=None):
         if not ((config_content is not None) ^ (config_dict is not None)):
             raise ValueError(
-                "SubstConfig must be instansiated with exactly one of config_content or config_dict"
+                "SubstConfig must be instansiated with exactly one"
+                " of config_content or config_dict"
             )
 
         if config_dict is not None:
@@ -48,12 +49,14 @@ class SubstConfig(BaseCClass):
                 subst_list.addItem(
                     "<CWD>",
                     config_directory,
-                    "The current working directory we are running from - the location of the config file.",
+                    "The current working directory we are running from"
+                    " - the location of the config file.",
                 )
                 subst_list.addItem(
                     "<CONFIG_PATH>",
                     config_directory,
-                    "The current working directory we are running from - the location of the config file.",
+                    "The current working directory we are running from"
+                    " - the location of the config file.",
                 )
             else:
                 raise ValueError(

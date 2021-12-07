@@ -72,30 +72,37 @@ class RowScaling(BaseCClass):
         variable and we will scale the update with the function exp( -r/r0 )
         where r is the distance from some point and r0 is length scale.
 
-            def sqr(x):
-                return x*x
+            >>> def sqr(x):
+            ...     return x*x
 
-            def exp_decay(grid, pos, r0, data_index):
-                x,y,z = grid.get_xyz( active_index = data_index)
-                r = math.sqrt( sqr(pos[0] - x) + sqr(pos[1] - y) + sqr(pos[2] - z))
-                return math.exp( -r/r0 )
+            >>> def exp_decay(grid, pos, r0, data_index):
+            ...     x,y,z = grid.get_xyz( active_index = data_index)
+            ...     r = math.sqrt( sqr(pos[0] - x) + sqr(pos[1] - y) + sqr(pos[2] - z))
+            ...     return math.exp( -r/r0 )
 
 
-            ens_config = ert.ensembleConfig()
-            config_node = ens_config["PORO"]
-            field_config = config.node.getFieldModelConfig()
-            grid = ert.eclConfig().getGrid()
-            pos = grid.get_xyz(ijk=(10,10,1))
-            r0 = 10
+            >>> ens_config = ert.ensembleConfig()
+            >>> config_node = ens_config["PORO"]
+            >>> field_config = config.node.getFieldModelConfig()
+            >>> grid = ert.eclConfig().getGrid()
+            >>> pos = grid.get_xyz(ijk=(10,10,1))
+            >>> r0 = 10
 
-            if grid.get_num_active() != field_config.get_data_size():
-                raise ValuError("Fatal error - inconsistent field size for: {}".format(config_node.getKey())
+            >>> if grid.get_num_active() != field_config.get_data_size():
+            ...     raise ValuError(
+            ...         "Fatal error - inconsistent field size for: {}".format(
+            ...             config_node.getKey()
+            ...         )
+            ...     )
 
-            # Some local configuration boilerplate has been skipped here.
-            local_config = main.getLocalConfig()
-            local_data = local_config.createDataset("LOCAL")
-            row_scaling = local_data.row_scaling("PORO")
-            row_scaling.assign( field_config.get_data_size(), functools.partial(exp_decay, grid, pos, r0))
+            >>> # Some local configuration boilerplate has been skipped here.
+            >>> local_config = main.getLocalConfig()
+            >>> local_data = local_config.createDataset("LOCAL")
+            >>> row_scaling = local_data.row_scaling("PORO")
+            >>> row_scaling.assign(
+            ...     field_config.get_data_size(),
+            ...     functools.partial(exp_decay, grid, pos, r0)
+            ... )
 
 
         In the example below functools.partial() is used to create a callable
@@ -154,11 +161,13 @@ class RowScaling(BaseCClass):
                 ptr = scaling_vector.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
             else:
                 raise TypeError(
-                    f"The scaling_vector must be float32/float64, not {type(scaling_vector.dtype)}"
+                    "The scaling_vector must be float32/float64,"
+                    f" not {type(scaling_vector.dtype)}"
                 )
 
             func(ptr, len(scaling_vector))
         else:
             raise TypeError(
-                f"The assign_vector method expects a numpy vector as argument, not {type(scaling_vector)}"
+                "The assign_vector method expects a numpy vector as argument,"
+                f" not {type(scaling_vector)}"
             )

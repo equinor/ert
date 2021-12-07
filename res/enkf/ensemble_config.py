@@ -62,10 +62,12 @@ class EnsembleConfig(BaseCClass):
         "enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)"
     )
     _alloc_keylist_from_var_type = ResPrototype(
-        "stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, enkf_var_type_enum)"
+        "stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, \
+                                                                    enkf_var_type_enum)"
     )
     _alloc_keylist_from_impl_type = ResPrototype(
-        "stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, ert_impl_type_enum)"
+        "stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, \
+                                                                     ert_impl_type_enum)"
     )
     _add_node = ResPrototype(
         "void ensemble_config_add_node( ens_config , enkf_config_node )"

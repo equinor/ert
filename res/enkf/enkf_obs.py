@@ -53,7 +53,12 @@ class EnkfObs(BaseCClass):
     _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
     _get_obs_and_measure_data = ResPrototype(
-        "void enkf_obs_get_obs_and_measure_data(enkf_obs, enkf_fs, local_obsdata, int_vector, meas_data, obs_data)"
+        "void enkf_obs_get_obs_and_measure_data(enkf_obs, \
+                                                enkf_fs, \
+                                                local_obsdata, \
+                                                int_vector, \
+                                                meas_data, \
+                                                obs_data)"
     )
     _create_all_active_obs = ResPrototype(
         "local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)"

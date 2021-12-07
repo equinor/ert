@@ -34,7 +34,13 @@ class ForwardModel(BaseCClass):
     _iget_job = ResPrototype("ext_job_ref forward_model_iget_job( forward_model, int)")
     _get_length = ResPrototype("int forward_model_get_length(forward_model)")
     _formatted_fprintf = ResPrototype(
-        "void forward_model_formatted_fprintf(forward_model, char*, char*, char*, subst_list, int, env_varlist)"
+        "void forward_model_formatted_fprintf(forward_model, \
+                                              char*, \
+                                              char*, \
+                                              char*, \
+                                              subst_list, \
+                                              int, \
+                                              env_varlist)"
     )
 
     def __init__(self, ext_joblist):

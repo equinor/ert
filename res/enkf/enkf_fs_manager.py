@@ -104,7 +104,11 @@ class EnkfFsManager(BaseCClass):
         "void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)"
     )
     _custom_initialize_from_existing = ResPrototype(
-        "void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, enkf_fs, int, stringlist, bool_vector)"
+        "void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, \
+                                                               enkf_fs, \
+                                                               int, \
+                                                               stringlist, \
+                                                               bool_vector)"
     )
     _initialize_current_case_from_existing = ResPrototype(
         "void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)"

@@ -142,16 +142,16 @@ class SimulationContext(object):
         jobs which have not yet started the method will return None.
 
         When the method succeeds in reading the progress file from the file
-        system the return value will be an object with properties like this:|
+        system the return value will be an object with properties like this:
 
-           progress.start_time
-           progress.end_time
-           progress.run_id
-           progress.jobs =[ (job1.name, job1.start_time, job1.end_time, job1.status, job1.error_msg),
-                             (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
-                              ....
-                             (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg) ]
-
+            progress.start_time
+            progress.end_time
+            progress.run_id
+            progress.jobs = [
+                (job1.name, job1.start_time, job1.end_time, job1.status, job1.error_msg),
+                (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
+                (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg)
+            ]
         """
         run_arg = self.get_run_args(iens)
 
