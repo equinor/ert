@@ -18,7 +18,7 @@ class HookManager(BaseCClass):
     _alloc_full = ResPrototype(
         "void* hook_manager_alloc_full(ert_workflow_list, char*)", bind=False
     )
-    _free = ResPrototype("void hook_manager_free(subst_config)")
+    _free = ResPrototype("void hook_manager_free(hook_manager)")
     _get_runpath_list_file = ResPrototype(
         "char* hook_manager_get_runpath_list_file(hook_manager)"
     )
