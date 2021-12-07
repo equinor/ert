@@ -61,6 +61,15 @@ class RecordType(str, Enum):
 
 
 class Record(ABC):
+    """The :class:`Record` class is an abstract class that
+    includes record data and the record type. It represents a
+    basic data `unit` used in ert.
+
+    The record needs be either :class:`BlobRecord`,
+    :class:`NumericalRecord`, :class:`NumericalRecordTree` or
+    :class:`BlobRecordTree` type derived from `Record` class.
+    """
+
     @property
     @abstractmethod
     def data(self) -> record_data:
@@ -73,7 +82,21 @@ class Record(ABC):
 
 
 class BlobRecord(Record):
+    """The :class:`BlobRecord` is an implementation of the Record class
+    that treats any stream of bytes as binary data.
+    """
+
     def __init__(self, data: blob_record_data) -> None:
+        """Creates a BlobRecord instance from the binary record data.
+        It automatically assigns :class:`RecordType` as :class:`RecordType.BYTES`
+
+        Args:
+            data: bytes type object
+
+        Raises:
+            RecordValidationError: Raises when data is of wrong type; ie.
+                not bytes type object.
+        """
         self._record_type = RecordType.BYTES
 
         try:
@@ -91,6 +114,7 @@ class BlobRecord(Record):
 
     @property
     def record_type(self) -> RecordType:
+        """Returns :class:`RecordType` set to :class:`RecordType.BYTES`."""
         return RecordType.BYTES
 
     def __eq__(self, o: object) -> bool:
@@ -100,9 +124,30 @@ class BlobRecord(Record):
 
 
 class NumericalRecord(Record):
+    """The :class:`NumericalRecord` is an implementation of the Record class
+    that handles an indexed list of numerical data.
+    """
+
     def __init__(
         self, data: numerical_record_data, index: Optional[RecordIndex] = None
     ) -> None:
+        """Creates a NumericalRecord instance.
+        It automatically assigns :class:`RecordType` as either
+        :class:`RecordType.LIST_FLOAT`, :class:`RecordType.MAPPING_INT_FLOAT` or
+        :class:`RecordType.MAPPING_STR_FLOAT`.
+        The data index is either automatically inferred from the data or
+        can be provided as a parameter.
+
+        Args:
+            data: numerics that cannot be None
+            index: data indices. If None is given, then the index will
+                be an 0-indexed enumeration of the elements in the data
+
+        Raises:
+            RecordValidationError: Raises when
+                data is a wrong type, or index was not build
+                or provided correctly
+        """
         if isinstance(data, (set, frozenset, deque, tuple)):
             data = [val for _, val in enumerate(data)]
         try:
@@ -175,6 +220,10 @@ class NumericalRecord(Record):
 
     @property
     def record_type(self) -> RecordType:
+        """Returns the :class:`RecordType` of the record data, which is either
+        :class:`RecordType.LIST_FLOAT`, :class:`RecordType.MAPPING_INT_FLOAT` or
+        :class:`RecordType.MAPPING_STR_FLOAT`.
+        """
         return self._type
 
     def __eq__(self, o: object) -> bool:
@@ -187,7 +236,37 @@ RecordGen = TypeVar("RecordGen", BlobRecord, NumericalRecord)
 
 
 class RecordTree(Record, Generic[RecordGen]):
+    """The :class:`RecordTree` represents a base abstract class for manipulating
+    multiple Record objects represented as a hierarchical structure of records
+    where the leaves are the actual records (ie. BlobRecords or NumericalRecords)
+    and the internal nodes are in essence namespaces for the particular subtree.
+
+    There are two implementations: :class:`BlobRecordTree`
+    and :class:`NumericalRecordTree`. For instance to initialize BlobRecordTree one can use:
+    ert.data.BlobRecordTree(record_tree={
+            "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            "key_B:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            "group_OP2": {
+                "key_AA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+                "key_BA:OP2": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
+            },
+            },
+    )
+    """
+
     def __init__(self, record_dict: Dict[str, Any]) -> None:
+        """Create instance of the RecordTree from a dictionary.
+        The flattened version of the dict is retrieved via
+        :func:`RecordTree.flat_record_dict` property.
+
+        Args:
+            record_dict: hierarchical representation of records,
+                see :class:`RecordTree`.
+
+        Raises:
+            RecordValidationError: Raises when leaf Records
+                are not of the same type.
+        """
         self._record_type = RecordType.BYTES
         self._flat_record_dict: Dict[str, RecordGen] = self._flatten_record_dict(
             record_dict
@@ -236,27 +315,56 @@ class RecordTree(Record, Generic[RecordGen]):
 
     @property
     def data(self) -> record_data:
-        # internally, recordtree is represented as BlobRecord; we don't need data here
+        """Internally RecordTree is represented as BlobRecord; therefore
+        this property in RecordTree shouldn't be used.
+        The actual BlobRecord data contains URIs for its leaf node records,
+        but this implementation is to be regarded as private.
+
+        Returns:
+            record_data: binary encoded json string containing `RECORD_TREE`
+        """
+        #
         return json.dumps("RECORD_TREE").encode("utf-8")
 
     @property
     def record_type(self) -> RecordType:
+        """Returns either :class:`RecordType.BLOB_TREE` or
+        :class:`RecordType.NUMERICAL_TREE`
+
+        Returns:
+            RecordType: RecordType.BLOB_TREE or RecordType.NUMERICAL_TREE
+        """
         return RecordType.BYTES
 
     @property
     def flat_record_dict(self) -> Dict[str, RecordGen]:
+        """Returns a flattened dictionary, where each `key` represents a path
+        and `value` represents the actual Record object. Character `/` is used
+        to delineate branches in the original tree in the `key`.
+        """
         return self._flat_record_dict
 
 
 class BlobRecordTree(RecordTree[BlobRecord]):
+    """The :class:`BlobRecordTree` is an implementation of the RecordTree class
+    that handles a hierarchical representation of BlobRecords.
+    """
+
     @property
     def record_type(self) -> RecordType:
+        """Returns :class:`RecordType` set to :class:`RecordType.BLOB_TREE`."""
+
         return RecordType.BLOB_TREE
 
 
 class NumericalRecordTree(RecordTree[NumericalRecord]):
+    """The :class:`NumericalRecordTree` is an implementation of the RecordTree class
+    that handles a hierarchical representation of NumericalRecords.
+    """
+
     @property
     def record_type(self) -> RecordType:
+        """Returns :class:`RecordType` set to :class:`RecordType.NUMERICAL_TREE`."""
         return RecordType.NUMERICAL_TREE
 
 
@@ -282,6 +390,23 @@ class RecordCollection:
         length: Optional[PositiveInt] = None,
         collection_type: RecordCollectionType = RecordCollectionType.NON_UNIFORM,
     ):
+        """Create RecordCollection instance from the given tuple of records.
+        In case of UNIFORM collections the length must be provided.
+
+        Args:
+            records: Input tuple of records
+            length: The size of collection, which defaults to None
+            collection_type: Type of collection, which
+                defaults to :py:class:`RecordCollectionType.NON_UNIFORM`
+
+        Raises:
+            ValueError: Raises value error in case when: 1) there are no records
+                provided, 2) multiple records are given or length is missing when
+                type is :class:`RecordCollectionType.UNIFORM`, 3) length of record
+                list does not match the length provided in case of
+                :class:`RecordCollectionType.NON_UNIFORM` collection,
+                4) the record type varies within collection.
+        """
         if len(records) < 1:
             raise ValueError("At least one record must be provided")
         if collection_type == RecordCollectionType.UNIFORM:
@@ -319,11 +444,16 @@ class RecordCollection:
 
     @property
     def record_type(self) -> RecordType:
+        """Returns the type of the record(s) within the collection."""
         assert self._records[0].record_type is not None  # mypy needs this
         return self._records[0].record_type
 
     @property
     def collection_type(self) -> RecordCollectionType:
+        """Returns the collection type, which is either
+        :class:`RecordCollectionType.NON_UNIFORM` or
+        :class:`RecordCollectionType.UNIFORM`.
+        """
         return self._collection_type
 
 
@@ -333,6 +463,14 @@ async def load_collection_from_file(
     length: int = 1,
     is_directory: bool = False,
 ) -> RecordCollection:
+    """Creates :py:class:`RecordCollection` from the given path.
+
+    Args:
+        file_path: input location to load the collection from.
+        mime: mime type for the loading the collection subrecords.
+        length: the number of records in the resulting collection. Defaults to 1.
+        is_directory: specifies whether `file_path` is directory. Defaults to False.
+    """
     if mime == "application/octet-stream":
         if is_directory:
             return RecordCollection(
