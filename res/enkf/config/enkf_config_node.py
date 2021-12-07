@@ -40,11 +40,20 @@ class EnkfConfigNode(BaseCClass):
     TYPE_NAME = "enkf_config_node"
 
     _alloc = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc(enkf_var_type_enum, ert_impl_type_enum, bool, char*, char* , char*, char*, void*)",
+        "enkf_config_node_obj enkf_config_node_alloc(enkf_var_type_enum, \
+                                                     ert_impl_type_enum, \
+                                                     bool, \
+                                                     char*, \
+                                                     char*, \
+                                                     char*, \
+                                                     char*, \
+                                                     void*)",
         bind=False,
     )
     _alloc_gen_data_everest = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, char* , int_vector)",
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_everest(char*, \
+                                                                      char*, \
+                                                                      int_vector)",
         bind=False,
     )
     _alloc_summary_node = ResPrototype(
@@ -52,7 +61,10 @@ class EnkfConfigNode(BaseCClass):
         bind=False,
     )
     _alloc_field_node = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_field(char*, ecl_grid, void*, bool)",
+        "enkf_config_node_obj enkf_config_node_alloc_field(char*, \
+                                                           ecl_grid, \
+                                                           void*, \
+                                                           bool)",
         bind=False,
     )
     _get_ref = ResPrototype(
@@ -87,49 +99,49 @@ class EnkfConfigNode(BaseCClass):
 
     # ensemble config aux
     _alloc_gen_param_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_PARAM_full( char*,\
-                                                                                                      bool, \
-                                                                                                      gen_data_file_format_type, \
-                                                                                                      gen_data_file_format_type, \
-                                                                                                      char*, \
-                                                                                                      char*, \
-                                                                                                      char*, \
-                                                                                                      char*, \
-                                                                                                      char*)",
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_PARAM_full(char*, \
+                                                                    bool, \
+                                                                    gen_data_file_format_type, \
+                                                                    gen_data_file_format_type, \
+                                                                    char*, \
+                                                                    char*, \
+                                                                    char*, \
+                                                                    char*, \
+                                                                    char*)",
         bind=False,
     )
 
     _alloc_gen_data_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full( char*,\
-                                                                                                    char*, \
-                                                                                                    gen_data_file_format_type, \
-                                                                                                    int_vector, \
-                                                                                                    char*, \
-                                                                                                    char*, \
-                                                                                                    char*, \
-                                                                                                    char*)",
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_DATA_full(char*, \
+                                                                   char*, \
+                                                                   gen_data_file_format_type, \
+                                                                   int_vector, \
+                                                                   char*, \
+                                                                   char*, \
+                                                                   char*, \
+                                                                   char*)",
         bind=False,
     )
 
     _alloc_gen_kw_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full( char*,\
-                                                                                                bool, \
-                                                                                                char*, \
-                                                                                                char*, \
-                                                                                                char*, \
-                                                                                                char*, \
-                                                                                                char*, \
-                                                                                                char*)",
+        "enkf_config_node_obj enkf_config_node_alloc_GEN_KW_full(char*, \
+                                                                 bool, \
+                                                                 char*, \
+                                                                 char*, \
+                                                                 char*, \
+                                                                 char*, \
+                                                                 char*, \
+                                                                 char*)",
         bind=False,
     )
 
     _alloc_surface_full = ResPrototype(
-        "enkf_config_node_obj enkf_config_node_alloc_SURFACE_full( char*,\
-                                                                                                  bool, \
-                                                                                                  char*, \
-                                                                                                  char*, \
-                                                                                                  char*, \
-                                                                                                  char*)",
+        "enkf_config_node_obj enkf_config_node_alloc_SURFACE_full(char*, \
+                                                                  bool, \
+                                                                  char*, \
+                                                                  char*, \
+                                                                  char*, \
+                                                                  char*)",
         bind=False,
     )
 
@@ -147,28 +159,28 @@ class EnkfConfigNode(BaseCClass):
     )
     _update_parameter_field = ResPrototype(
         "void enkf_config_node_update_parameter_field(enkf_config_node, \
-                                                                                         char*, \
-                                                                                         char*, \
-                                                                                         char*, \
-                                                                                         enkf_truncation_type_enum, \
-                                                                                         double, \
-                                                                                         double, \
-                                                                                         char*, \
-                                                                                         char*)",
+                                                      char*, \
+                                                      char*, \
+                                                      char*, \
+                                                      enkf_truncation_type_enum, \
+                                                      double, \
+                                                      double, \
+                                                      char*, \
+                                                      char*)",
         bind=True,
     )
     _update_general_field = ResPrototype(
         "void enkf_config_node_update_general_field(enkf_config_node, \
-                                                                                     char*, \
-                                                                                     char*, \
-                                                                                     char*, \
-                                                                                     char*, \
-                                                                                     enkf_truncation_type_enum, \
-                                                                                     double, \
-                                                                                     double, \
-                                                                                     char*, \
-                                                                                     char*, \
-                                                                                     char*)",
+                                                    char*, \
+                                                    char*, \
+                                                    char*, \
+                                                    char*, \
+                                                    enkf_truncation_type_enum, \
+                                                    double, \
+                                                    double, \
+                                                    char*, \
+                                                    char*, \
+                                                    char*)",
         bind=True,
     )
 

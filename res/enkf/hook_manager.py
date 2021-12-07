@@ -114,8 +114,9 @@ class HookManager(BaseCClass):
 
         if not os.path.exists(runpath_list_file):
             sys.stderr.write(
-                "** Warning: the file: %s with a list of runpath directories was not found - hook workflow will probably fail.\n"
-                % runpath_list_file
+                f"** Warning: the file: {runpath_list_file}"
+                " with a list of runpath directories was not found"
+                " - hook workflow will probably fail.\n"
             )
 
     def getRunpathList(self):

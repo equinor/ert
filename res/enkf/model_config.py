@@ -31,26 +31,26 @@ class ModelConfig(BaseCClass):
     TYPE_NAME = "model_config"
 
     _alloc = ResPrototype(
-        "void*  model_config_alloc( config_content, \
-                                                                            char*, ext_joblist, \
-                                                                            int, ecl_sum)",
+        "void*  model_config_alloc(config_content, \
+                                   char*, ext_joblist, \
+                                   int, ecl_sum)",
         bind=False,
     )
     _alloc_full = ResPrototype(
-        "void*  model_config_alloc_full( int, \
-                                                                                int, \
-                                                                                char*, \
-                                                                                char*, \
-                                                                                char*, \
-                                                                                char*, \
-                                                                                forward_model, \
-                                                                                char*, \
-                                                                                time_map, \
-                                                                                char*, \
-                                                                                char*, \
-                                                                                history_source_enum, \
-                                                                                ext_joblist, \
-                                                                                ecl_sum)",
+        "void*  model_config_alloc_full(int, \
+                                        int, \
+                                        char*, \
+                                        char*, \
+                                        char*, \
+                                        char*, \
+                                        forward_model, \
+                                        char*, \
+                                        time_map, \
+                                        char*, \
+                                        char*, \
+                                        history_source_enum, \
+                                        ext_joblist, \
+                                        ecl_sum)",
         bind=False,
     )
     _free = ResPrototype("void  model_config_free( model_config )")

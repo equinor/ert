@@ -26,15 +26,34 @@ from res.enkf.enums import EnkfInitModeEnum
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
     _alloc = ResPrototype(
-        "void* ert_run_context_alloc( enkf_run_mode_enum , enkf_init_mode_enum, enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)",
+        "void* ert_run_context_alloc(enkf_run_mode_enum , \
+                                     enkf_init_mode_enum, \
+                                     enkf_fs, \
+                                     enkf_fs, \
+                                     bool_vector, \
+                                     path_fmt, \
+                                     char*, \
+                                     subst_list, \
+                                     int)",
         bind=False,
     )
     _alloc_ensemble_experiment = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT( enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)",
+        "ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs, \
+                                                                       bool_vector, \
+                                                                       path_fmt, \
+                                                                       char*, \
+                                                                       subst_list, \
+                                                                       int)",
         bind=False,
     )
     _alloc_ensemble_smoother = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN( enkf_fs , enkf_fs, bool_vector, path_fmt ,char*, subst_list, int)",
+        "ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN(enkf_fs, \
+                                                                enkf_fs, \
+                                                                bool_vector, \
+                                                                path_fmt, \
+                                                                char*, \
+                                                                subst_list, \
+                                                                int)",
         bind=False,
     )
     _alloc_ensemble_smoother_update = ResPrototype(
@@ -46,7 +65,10 @@ class ErtRunContext(BaseCClass):
         bind=False,
     )
     _alloc_runpath_list = ResPrototype(
-        "stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, path_fmt, subst_list, int)",
+        "stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, \
+                                                           path_fmt, \
+                                                           subst_list, \
+                                                           int)",
         bind=False,
     )
     _alloc_runpath = ResPrototype(

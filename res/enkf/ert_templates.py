@@ -35,13 +35,18 @@ class ErtTemplates(BaseCClass):
     )
     _clear = ResPrototype("void ert_templates_clear(ert_templates)")
     _add_template = ResPrototype(
-        "ert_template_ref ert_templates_add_template(ert_templates, char*, char*, char*, char*)"
+        "ert_template_ref ert_templates_add_template(ert_templates, \
+                                                     char*, \
+                                                     char*, \
+                                                     char*, \
+                                                     char*)"
     )
 
     def __init__(self, parent_subst, config_content=None, config_dict=None):
         if not ((config_content is not None) ^ (config_dict is not None)):
             raise ValueError(
-                "ErtTemplates must be instantiated with exactly one of config_content or config_dict"
+                "ErtTemplates must be instantiated with exactly"
+                " one of config_content or config_dict"
             )
 
         if config_dict is not None:

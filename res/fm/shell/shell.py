@@ -30,9 +30,8 @@ class Shell(object):
 
         if not os.path.exists(target_check):
             raise IOError(
-                "{} (target) and {} (link_name) requested, which implies that {} must exist, but it does not.".format(
-                    target, link_name, target_check
-                )
+                f"{target} (target) and {link_name} (link_name) requested, "
+                f"which implies that {target_check} must exist, but it does not."
             )
 
         if os.path.islink(link_name):

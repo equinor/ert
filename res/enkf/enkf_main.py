@@ -206,7 +206,12 @@ class _RealEnKFMain(BaseCClass):
     )
     _get_history_length = ResPrototype("int enkf_main_get_history_length(enkf_main)")
     _get_observations = ResPrototype(
-        "void enkf_main_get_observations(enkf_main, char*, int, long*, double*, double*)"
+        "void enkf_main_get_observations(enkf_main, \
+                                         char*, \
+                                         int, \
+                                         long*, \
+                                         double*, \
+                                         double*)"
     )
     _get_observation_count = ResPrototype(
         "int enkf_main_get_observation_count(enkf_main, char*)"
@@ -224,7 +229,13 @@ class _RealEnKFMain(BaseCClass):
     )
     _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
     _export_field_with_fs = ResPrototype(
-        "bool enkf_main_export_field_with_fs(enkf_main, char*, char*, bool_vector, enkf_field_file_format_enum, int, enkf_fs_manager)"
+        "bool enkf_main_export_field_with_fs(enkf_main, \
+                                             char*, \
+                                             char*, \
+                                             bool_vector, \
+                                             enkf_field_file_format_enum, \
+                                             int, \
+                                             enkf_fs_manager)"
     )
     _load_from_forward_model = ResPrototype(
         "int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)"
@@ -236,7 +247,10 @@ class _RealEnKFMain(BaseCClass):
         "void enkf_main_create_run_path(enkf_main , ert_run_context)"
     )
     _alloc_run_context_ENSEMBLE_EXPERIMENT = ResPrototype(
-        "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT( enkf_main , enkf_fs , bool_vector , int)"
+        "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main , \
+                                                                                 enkf_fs , \
+                                                                                 bool_vector , \
+                                                                                 int)"
     )
     _get_runpath_list = ResPrototype(
         "runpath_list_ref enkf_main_get_runpath_list(enkf_main)"

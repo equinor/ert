@@ -22,7 +22,13 @@ class RunArg(BaseCClass):
     TYPE_NAME = "run_arg"
 
     _alloc_ENSEMBLE_EXPERIMENT = ResPrototype(
-        "run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, enkf_fs, int, int, char*, char*, subst_list)",
+        "run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, \
+                                                       enkf_fs, \
+                                                       int, \
+                                                       int, \
+                                                       char*, \
+                                                       char*, \
+                                                       subst_list)",
         bind=False,
     )
     _free = ResPrototype("void run_arg_free(run_arg)")

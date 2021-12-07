@@ -27,7 +27,10 @@ class ConfigSettings(BaseCClass):
     _free = ResPrototype("void  config_settings_free(config_settings)")
 
     _add_setting = ResPrototype(
-        "bool config_settings_add_setting(config_settings , char* , config_content_type_enum, char*)"
+        "bool config_settings_add_setting(config_settings, \
+                                          char*, \
+                                          config_content_type_enum, \
+                                          char*)"
     )
     _add_double_setting = ResPrototype(
         "void config_settings_add_double_setting(config_settings , char* , double)"
