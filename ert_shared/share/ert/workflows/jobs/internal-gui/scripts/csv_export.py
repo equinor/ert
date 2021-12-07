@@ -1,8 +1,9 @@
 import os
 import re
+import warnings
 
 import pandas
-import sys
+import deprecation
 
 try:
     from PyQt4.QtGui import QCheckBox
@@ -21,6 +22,9 @@ from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
 from ert_gui.ertwidgets.pathchooser import PathChooser
+from ert_shared import __version__
+
+warnings.filterwarnings("default", category=DeprecationWarning, module=__name__)
 
 
 class CSVExportJob(ErtPlugin):
@@ -79,6 +83,16 @@ class CSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
+    @deprecation.deprecated(
+        deprecated_in="2.30",
+        removed_in="2.37",
+        current_version=__version__,
+        details=(
+            f"This CSV_EXPORT is deprecated, if you rely on this functionality "
+            f"please contact the ert team by creating an issue at "
+            f"www.github.com/equinor/ert",
+        ),
+    )
     def run(
         self,
         output_file,

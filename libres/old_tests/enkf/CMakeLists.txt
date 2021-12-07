@@ -115,7 +115,7 @@ add_config_test(
 add_config_test(
   enkf_select_case_job enkf_select_case_job
   "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert"
-  "${SHARE_DIR}/workflows/jobs/internal-tui/config/SELECT_CASE")
+  "${SHARE_DIR}/workflows/jobs/internal-gui/config/SELECT_CASE")
 add_config_test(
   enkf_forward_init_GEN_KW_TRUE enkf_forward_init_GEN_KW
   "${TEST_DATA_DIR}/enkf/config/forward/ert" config_GEN_KW_true TRUE)
@@ -263,8 +263,8 @@ add_equinor_test(
   enkf_workflow_job
   "${EQUINOR_TEST_DATA_DIR}/config/with_data/config"
   "${EQUINOR_TEST_DATA_DIR}/config/enkf_state_runpath/config_runpath_multiple_iterations"
-  "${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE"
-  "${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING"
+  "${SHARE_DIR}/workflows/jobs/internal-gui/config/CREATE_CASE"
+  "${SHARE_DIR}/workflows/jobs/internal-gui/config/INIT_CASE_FROM_EXISTING"
   "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS"
   "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS_ITER"
   "${SHARE_DIR}/workflows/jobs/internal/config/OBSERVATION_RANKING"

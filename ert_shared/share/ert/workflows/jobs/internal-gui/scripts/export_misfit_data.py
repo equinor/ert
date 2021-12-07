@@ -1,14 +1,28 @@
+import warnings
 from collections import OrderedDict
 import os
 from res.enkf import ErtScript, RealizationStateEnum
 from ecl.util.util import BoolVector
+import deprecation
+from ert_shared import __version__
 
 """
 This job exports misfit data into a chosen file or to the default gen_kw export file (parameters.txt)
 """
+warnings.filterwarnings("default", category=DeprecationWarning, module=__name__)
 
 
 class ExportMisfitDataJob(ErtScript):
+    @deprecation.deprecated(
+        deprecated_in="2.30",
+        removed_in="2.37",
+        current_version=__version__,
+        details=(
+            f"EXPORT_MISFIT_DATA is deprecated, if you rely on this functionality "
+            f"please contact the ert team by creating an issue at "
+            f"www.github.com/equinor/ert",
+        ),
+    )
     def run(self, target_file=None):
         ert = self.ert()
         fs = ert.getEnkfFsManager().getCurrentFileSystem()

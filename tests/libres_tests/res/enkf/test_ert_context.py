@@ -73,56 +73,6 @@ class ErtTestContextTest(ResTest):
         context.installWorkflowJob("LOAD_RESULTS_JOB", resource_file)
         self.assertTrue(context.runWorkflowJob("LOAD_RESULTS_JOB", 0, 1))
 
-    def rankRealizationsOnObservationsTest(self, context):
-        rank_job = pkg_resources.resource_filename(
-            "ert_shared", "share/ert/workflows/jobs/internal/config/OBSERVATION_RANKING"
-        )
-        context.installWorkflowJob("OBS_RANK_JOB", rank_job)
-
-        self.assertTrue(
-            context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking1", "|", "WOPR:*")
-        )
-        self.assertTrue(
-            context.runWorkflowJob(
-                "OBS_RANK_JOB",
-                "NameOfObsRanking2",
-                "1-5",
-                "55",
-                "|",
-                "WWCT:*",
-                "WOPR:*",
-            )
-        )
-        self.assertTrue(
-            context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking3", "5", "55", "|")
-        )
-        self.assertTrue(
-            context.runWorkflowJob(
-                "OBS_RANK_JOB", "NameOfObsRanking4", "1,3,5-10", "55"
-            )
-        )
-        self.assertTrue(context.runWorkflowJob("OBS_RANK_JOB", "NameOfObsRanking5"))
-        self.assertTrue(
-            context.runWorkflowJob(
-                "OBS_RANK_JOB", "NameOfObsRanking6", "|", "UnrecognizableObservation"
-            )
-        )
-
-    def test_workflow_function_jobs(self):
-
-        with ErtTestContext(
-            "python/enkf/ert_test_context_workflow_function_job", self.config
-        ) as context:
-            internal_config = "share/ert/workflows/jobs/internal-tui/config"
-            self.createCaseTest(context, root_path=internal_config)
-            self.selectCaseTest(context, root_path=internal_config)
-
-            # Due to EnKFFs caching and unmonitored C functions this will fail
-            # self.initFromCaseTest(context, root_path=internal_config)
-
-            self.loadResultsTest(context)
-            self.rankRealizationsOnObservationsTest(context)
-
     def test_workflow_ert_script_jobs(self):
 
         with ErtTestContext(

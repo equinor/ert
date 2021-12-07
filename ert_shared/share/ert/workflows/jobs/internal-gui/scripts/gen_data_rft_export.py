@@ -1,9 +1,10 @@
 import os
 import re
+import warnings
 
 import numpy
 import pandas
-import sys
+import deprecation
 
 try:
     from PyQt4.QtGui import QCheckBox
@@ -14,11 +15,16 @@ from ecl.rft import WellTrajectory
 from res.enkf import ErtPlugin, CancelPluginException
 from res.enkf import RealizationStateEnum
 from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.export import GenDataCollector, ArgLoader
+from res.enkf.export import GenDataCollector
 from ert_gui.ertwidgets.customdialog import CustomDialog
 from ert_gui.ertwidgets.listeditbox import ListEditBox
 from ert_gui.ertwidgets.models.path_model import PathModel
 from ert_gui.ertwidgets.pathchooser import PathChooser
+
+from .arg_loader import ArgLoader
+from ert_shared import __version__
+
+warnings.filterwarnings("default", category=DeprecationWarning, module=__name__)
 
 
 class GenDataRFTCSVExportJob(ErtPlugin):
@@ -76,6 +82,16 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             return int(match.group(1))
         return 0
 
+    @deprecation.deprecated(
+        deprecated_in="2.30",
+        removed_in="2.37",
+        current_version=__version__,
+        details=(
+            f"GEN_DATA_RFT_CSV_EXPORT is deprecated, if you rely on this functionality "
+            f"please contact the ert team by creating an issue at "
+            f"www.github.com/equinor/ert",
+        ),
+    )
     def run(
         self,
         output_file,

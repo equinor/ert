@@ -1,3 +1,6 @@
+import deprecation
+import warnings
+from ert_shared import __version__
 from res.enkf import ErtScript
 
 """
@@ -5,8 +8,20 @@ This job is useful if you are running a workflow that requires the hook_manager 
 to be populated but your are not running any simulations.
 """
 
+warnings.filterwarnings("default", category=DeprecationWarning, module=__name__)
+
 
 class UpdateRunpathListJob(ErtScript):
+    @deprecation.deprecated(
+        deprecated_in="2.30",
+        removed_in="2.37",
+        current_version=__version__,
+        details=(
+            f"UPDATE_RUNPATH_LIST is deprecated, if you rely on this functionality "
+            f"please contact the ert team by creating an issue at "
+            f"www.github.com/equinor/ert",
+        ),
+    )
     def run(self):
         ert = self.ert()
 
