@@ -102,8 +102,6 @@ class ObsVector(BaseCClass):
 
     def __iter__(self):
         """Iterate over active report steps; return node"""
-        cur = -1
-        run = True
         for step in self.getStepList():
             yield self.getNode(step)
 

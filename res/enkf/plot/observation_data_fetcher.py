@@ -73,7 +73,6 @@ class ObservationDataFetcher(DataFetcher):
 
     def fetchData(self, key, case=None):
         obs_keys = self.ert().ensembleConfig().getNode(key).getObservationKeys()
-        history_length = self.ert().getHistoryLength()
 
         data = {
             "continuous": True,
