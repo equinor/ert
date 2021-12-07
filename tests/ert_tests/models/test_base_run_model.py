@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
+import pytest
 
 from ert_utils import ErtTest
 
@@ -54,3 +55,21 @@ class InMemoryBaseRunModelTest(unittest.TestCase):
         jobs, status = brm.realization_progress[0][0]
         self.assertEqual(len(jobs), 1)
         self.assertIn("name", jobs[0])
+
+
+class MockJob:
+    def __init__(self, status):
+        self.status = status
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ([MockJob("Success")], True),
+        ([MockJob("Failure")], False),
+        ([MockJob("Success"), MockJob("Success")], True),
+        ([MockJob("Failure"), MockJob("Success")], False),
+    ],
+)
+def test_is_forward_model_finished(test_input, expected):
+    assert BaseRunModel.is_forward_model_finished(test_input) is expected
