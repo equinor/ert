@@ -60,7 +60,7 @@ class EnKFState(BaseCClass):
         if param_list is None:
             ens_config = self.ensembleConfig()
             param_list = ens_config.getKeylistFromVarType(EnkfVarType.PARAMETER)
-        self._initialize(fs, param_list, init_mode)
+        self._initialize(fs, StringList(param_list), init_mode)
 
     @classmethod
     def forward_model_exit_callback(cls, args):

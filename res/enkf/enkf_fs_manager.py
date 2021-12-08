@@ -1,10 +1,14 @@
 import os.path
 import re
+import warnings
+
+from typing import List
 
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector, StringList
 
 from res import ResPrototype
+from res import _lib
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.ert_run_context import ErtRunContext
@@ -95,18 +99,8 @@ class EnkfFsManager(BaseCClass):
     _is_case_initialized = ResPrototype(
         "bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)"
     )
-    _initialize_from_scratch = ResPrototype(
-        "void enkf_main_initialize_from_scratch(enkf_fs_manager, stringlist, ert_run_context)"
-    )
     _initialize_case_from_existing = ResPrototype(
         "void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)"
-    )
-    _custom_initialize_from_existing = ResPrototype(
-        "void enkf_main_init_current_case_from_existing_custom(enkf_fs_manager, \
-                                                               enkf_fs, \
-                                                               int, \
-                                                               stringlist, \
-                                                               bool_vector)"
     )
     _initialize_current_case_from_existing = ResPrototype(
         "void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)"
@@ -241,8 +235,8 @@ class EnkfFsManager(BaseCClass):
         self,
         source_case,
         source_report_step,
-        member_mask: BoolVector,
-        node_list: StringList,
+        member_mask: List[str],
+        node_list: List[str],
     ):
         """
         @type source_case: str
@@ -250,9 +244,25 @@ class EnkfFsManager(BaseCClass):
         @type member_mask: ecl.util.BoolVector
         @type node_list: ecl.util.StringList
         """
+        if source_case not in self.getCaseList():
+            raise KeyError(
+                f"No such source case: {source_case} in {self.getCaseList()}"
+            )
+        if isinstance(member_mask, BoolVector):
+            warnings.warn(
+                "Using BoolVector for member_mask is deprecated, use a python list of bool",
+                DeprecationWarning,
+            )
+            member_mask = list(member_mask)
+        if isinstance(node_list, StringList):
+            warnings.warn(
+                "Using StringList for node_list is deprecated, use a python list of bool",
+                DeprecationWarning,
+            )
+            node_list = list(node_list)
         source_case_fs = self.getFileSystem(source_case)
-        self._custom_initialize_from_existing(
-            source_case_fs, source_report_step, node_list, member_mask
+        _lib.enkf_fs_manager.init_current_case_from_existing_custom(
+            self, source_case_fs, source_report_step, node_list, member_mask
         )
 
     def initializeCurrentCaseFromExisting(self, source_fs, source_report_step):
@@ -270,8 +280,18 @@ class EnkfFsManager(BaseCClass):
         """
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
-    def initializeFromScratch(self, parameter_list, run_context: ErtRunContext):
-        self._initialize_from_scratch(parameter_list, run_context)
+    def initializeFromScratch(
+        self, parameter_list: List[str], run_context: ErtRunContext
+    ):
+        if isinstance(parameter_list, StringList):
+            warnings.warn(
+                "Using StringList for node_list is deprecated, use a python list of bools instead",
+                DeprecationWarning,
+            )
+            parameter_list = list(parameter_list)
+        _lib.enkf_fs_manager.initialize_from_scratch(
+            self, list(parameter_list), run_context
+        )
 
     def isCaseMounted(self, case_name, mount_root=None):
         """

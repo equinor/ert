@@ -29,7 +29,7 @@ void test_load(const char *config_file) {
         ert_test_context_alloc("GEN_KW", config_file);
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
     int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type *param_list = stringlist_alloc_new();
+    std::vector<std::string> param_list;
     enkf_fs_type *init_fs =
         enkf_fs_create_fs("fs", BLOCK_FS_DRIVER_ID, NULL, true);
     bool_vector_type *iens_mask = bool_vector_alloc(ens_size, true);
@@ -38,7 +38,7 @@ void test_load(const char *config_file) {
     ert_run_context_type *run_context = ert_run_context_alloc_INIT_ONLY(
         init_fs, INIT_CONDITIONAL, iens_mask, runpath_fmt, NULL, 0);
 
-    stringlist_append_copy(param_list, "GEN_KW");
+    param_list.push_back("GEN_KW");
     enkf_main_initialize_from_scratch(enkf_main, param_list, run_context);
     {
         ensemble_config_type *ensemble_config =
@@ -70,7 +70,6 @@ void test_load(const char *config_file) {
     }
 
     bool_vector_free(iens_mask);
-    stringlist_free(param_list);
     enkf_fs_decref(init_fs);
     ert_test_context_free(test_context);
 }

@@ -1,3 +1,6 @@
+#include <vector>
+#include <string>
+
 #include "ert/analysis/update.hpp"
 #include <ert/util/type_vector_functions.h>
 #include <ert/res_util/thread_pool.hpp>
@@ -639,13 +642,11 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     */
 
     if (target_fs != source_fs) {
-        stringlist_type *param_keys =
-            ensemble_config_alloc_keylist_from_var_type(ensemble_config,
-                                                        PARAMETER);
-        for (int i = 0; i < stringlist_get_size(param_keys); i++) {
-            const char *key = stringlist_iget(param_keys, i);
+        std::vector<std::string> param_keys =
+            ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
+        for (auto &key : param_keys) {
             enkf_config_node_type *config_node =
-                ensemble_config_get_node(ensemble_config, key);
+                ensemble_config_get_node(ensemble_config, key.c_str());
             enkf_node_type *data_node = enkf_node_alloc(config_node);
             for (int j = 0; j < int_vector_size(ens_active_list); j++) {
                 node_id_type node_id;
@@ -657,7 +658,6 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
             }
             enkf_node_free(data_node);
         }
-        stringlist_free(param_keys);
     }
 }
 

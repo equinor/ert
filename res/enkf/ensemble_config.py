@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from typing import Optional
+from typing import Optional, List
 
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
@@ -27,6 +27,7 @@ from res.enkf.config import EnkfConfigNode
 from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import EnkfVarType, ErtImplType
 from res.enkf.summary_key_matcher import SummaryKeyMatcher
+from res import _lib
 
 
 def _get_abs_path(file):
@@ -64,10 +65,6 @@ class EnsembleConfig(BaseCClass):
     )
     _add_field = ResPrototype(
         "enkf_config_node_ref ensemble_config_add_field( ens_config, char*, ecl_grid)"
-    )
-    _alloc_keylist_from_var_type = ResPrototype(
-        "stringlist_obj ensemble_config_alloc_keylist_from_var_type(ens_config, \
-                                                                    enkf_var_type_enum)"
     )
     _alloc_keylist_from_impl_type = ResPrototype(
         "stringlist_obj ensemble_config_alloc_keylist_from_impl_type(ens_config, \
@@ -255,10 +252,12 @@ class EnsembleConfig(BaseCClass):
         """@rtype: EnkfConfigNode"""
         return self._add_field(key, eclipse_grid).setParent(self)
 
-    def getKeylistFromVarType(self, var_mask: EnkfVarType) -> StringList:
+    def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
         """@rtype: StringList"""
         assert isinstance(var_mask, EnkfVarType)
-        return self._alloc_keylist_from_var_type(var_mask)
+        return _lib.ensemble_config.ensemble_config_keylist_from_var_type(
+            self, int(var_mask)
+        )
 
     def getKeylistFromImplType(self, ert_impl_type):
         """@rtype: StringList"""

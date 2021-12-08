@@ -30,6 +30,9 @@ pybind11_add_module(
   res_util/template_loop.cpp # Highly deprecated
   python/init.cpp
   python/logging.cpp
+  python/ensemble_config.cpp
+  python/enkf_fs_manager.cpp
+  python/py_conversion.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp

@@ -20,6 +20,9 @@
 #define ERT_ENSEMBLE_CONFIG_H
 #include <stdbool.h>
 
+#include <vector>
+#include <string>
+
 #include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
 
@@ -99,9 +102,9 @@ enkf_config_node_type *ensemble_config_get_node(const ensemble_config_type *,
 enkf_config_node_type *ensemble_config_get_or_create_summary_node(
     ensemble_config_type *ensemble_config, const char *key);
 stringlist_type *ensemble_config_alloc_keylist(const ensemble_config_type *);
-stringlist_type *
-ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *,
-                                            int var_mask);
+extern "C++" std::vector<std::string>
+ensemble_config_keylist_from_var_type(const ensemble_config_type *,
+                                      int var_mask);
 stringlist_type *
 ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type *,
                                              ert_impl_type);

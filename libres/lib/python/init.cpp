@@ -5,6 +5,7 @@
 
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/analysis_config.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 
 namespace py = pybind11;
 
@@ -40,7 +41,10 @@ PYBIND11_MODULE(_lib, m) {
             return analysis_config_module_names(analysis_config);
         },
         py::arg("self"));
-
     void init_logging(py::module_ m);
     init_logging(m);
+    void ensemble_config(py::module_);
+    ensemble_config(m.def_submodule("ensemble_config"));
+    void enkf_fs_manager(py::module_);
+    enkf_fs_manager(m.def_submodule("enkf_fs_manager"));
 }
