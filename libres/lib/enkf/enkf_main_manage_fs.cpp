@@ -16,9 +16,11 @@
    for more details.
 */
 #include <filesystem>
-
+#include <vector>
+#include <string>
 #include <dirent.h>
 
+#include <ert/util/bool_vector.h>
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 
@@ -111,57 +113,28 @@ stringlist_type *enkf_main_alloc_caselist(const enkf_main_type *enkf_main) {
     return case_list;
 }
 
-static void *enkf_main_initialize_from_scratch_mt(void *void_arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(void_arg);
-    enkf_main_type *enkf_main =
-        (enkf_main_type *)arg_pack_iget_ptr(arg_pack, 0);
-    enkf_fs_type *init_fs = (enkf_fs_type *)arg_pack_iget_ptr(arg_pack, 1);
-    const stringlist_type *param_list =
-        (const stringlist_type *)arg_pack_iget_const_ptr(arg_pack, 2);
-    int iens = arg_pack_iget_int(arg_pack, 3);
-    init_mode_type init_mode = (init_mode_type)arg_pack_iget_int(arg_pack, 4);
-    enkf_state_type *state = enkf_main_iget_state(enkf_main, iens);
-    rng_type *rng = rng_manager_iget(enkf_main->rng_manager, iens);
-
-    enkf_state_initialize(state, rng, init_fs, param_list, init_mode);
-    return NULL;
-}
-
 void enkf_main_initialize_from_scratch(
-    enkf_main_type *enkf_main, const stringlist_type *param_list,
+    enkf_main_type *enkf_main, const std::vector<std::string> &param_list,
     const ert_run_context_type *run_context) {
     int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    arg_pack_type **arg_list =
-        (arg_pack_type **)util_calloc(ens_size, sizeof *arg_list);
-
     for (int iens = 0; iens < ens_size; iens++) {
-        arg_list[iens] = arg_pack_alloc();
         if (ert_run_context_iactive(run_context, iens)) {
-            arg_pack_append_ptr(arg_list[iens], enkf_main);
-            arg_pack_append_ptr(arg_list[iens],
-                                ert_run_context_get_sim_fs(run_context));
-            arg_pack_append_const_ptr(arg_list[iens], param_list);
-            arg_pack_append_int(arg_list[iens], iens);
-            arg_pack_append_int(arg_list[iens],
-                                ert_run_context_get_init_mode(run_context));
-
-            enkf_main_initialize_from_scratch_mt(arg_list[iens]);
+            enkf_state_type *state = enkf_main_iget_state(enkf_main, iens);
+            rng_type *rng = rng_manager_iget(enkf_main->rng_manager, iens);
+            enkf_state_initialize(
+                state, rng, ert_run_context_get_sim_fs(run_context), param_list,
+                ert_run_context_get_init_mode(run_context));
         }
     }
-    for (int iens = 0; iens < ens_size; iens++) {
-        arg_pack_free(arg_list[iens]);
-    }
-    free(arg_list);
 }
 
 static void enkf_main_copy_ensemble(
     const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
     int source_report_step, enkf_fs_type *target_case_fs,
-    int target_report_step, const bool_vector_type *iens_mask,
+    int target_report_step, const std::vector<bool> &iens_mask,
     const char *
         ranking_key, /* It is OK to supply NULL - but if != NULL it must exist */
-    const stringlist_type *node_list) {
-
+    const std::vector<std::string> &node_list) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
 
@@ -181,14 +154,13 @@ static void enkf_main_copy_ensemble(
                 ranking_permutation[src_iens] = src_iens;
         }
 
-        for (inode = 0; inode < stringlist_get_size(node_list); inode++) {
+        for (auto &node : node_list) {
             enkf_config_node_type *config_node = ensemble_config_get_node(
-                enkf_main_get_ensemble_config(enkf_main),
-                stringlist_iget(node_list, inode));
+                enkf_main_get_ensemble_config(enkf_main), node.c_str());
             for (src_iens = 0;
                  src_iens < enkf_main_get_ensemble_size(enkf_main);
                  src_iens++) {
-                if (bool_vector_safe_iget(iens_mask, src_iens)) {
+                if (src_iens < iens_mask.size() && iens_mask[src_iens]) {
                     int target_iens = ranking_permutation[src_iens];
                     node_id_type src_id = {.report_step = source_report_step,
                                            .iens = src_iens};
@@ -225,11 +197,10 @@ void enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
 
 void enkf_main_init_current_case_from_existing_custom(
     enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, stringlist_type *node_list,
-    bool_vector_type *iactive) {
+    int source_report_step, std::vector<std::string> &node_list,
+    std::vector<bool> &iactive) {
 
     enkf_fs_type *current_fs = enkf_main_get_fs(enkf_main);
-
     enkf_main_init_case_from_existing_custom(enkf_main, source_case_fs,
                                              source_report_step, current_fs,
                                              node_list, iactive);
@@ -240,28 +211,22 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
                                        int source_report_step,
                                        enkf_fs_type *target_case_fs) {
 
-    stringlist_type *param_list = ensemble_config_alloc_keylist_from_var_type(
+    std::vector<std::string> param_list = ensemble_config_keylist_from_var_type(
         enkf_main_get_ensemble_config(enkf_main),
         PARAMETER); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
     int target_report_step = 0;
-    bool_vector_type *iactive = bool_vector_alloc(0, true);
-
+    std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
     enkf_main_copy_ensemble(enkf_main, source_case_fs, source_report_step,
                             target_case_fs, target_report_step, iactive, NULL,
                             param_list);
 
     enkf_fs_fsync(target_case_fs);
-
-    bool_vector_free(iactive);
-    stringlist_free(param_list);
 }
 
-void enkf_main_init_case_from_existing_custom(const enkf_main_type *enkf_main,
-                                              enkf_fs_type *source_case_fs,
-                                              int source_report_step,
-                                              enkf_fs_type *target_case_fs,
-                                              stringlist_type *node_list,
-                                              bool_vector_type *iactive) {
+void enkf_main_init_case_from_existing_custom(
+    const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
+    int source_report_step, enkf_fs_type *target_case_fs,
+    std::vector<std::string> &node_list, std::vector<bool> &iactive) {
 
     int target_report_step = 0;
 
@@ -285,8 +250,8 @@ static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
                                             bool_vector_type *__mask) {
     ensemble_config_type *ensemble_config =
         enkf_main_get_ensemble_config(enkf_main);
-    stringlist_type *parameter_keys =
-        ensemble_config_alloc_keylist_from_var_type(ensemble_config, PARAMETER);
+    std::vector<std::string> parameter_keys =
+        ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
     bool_vector_type *mask;
     bool initialized = true;
     int ikey = 0;
@@ -294,10 +259,9 @@ static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
         mask = __mask;
     else
         mask = bool_vector_alloc(0, true);
-
-    while ((ikey < stringlist_get_size(parameter_keys)) && (initialized)) {
+    while ((ikey < parameter_keys.size()) && (initialized)) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
-            ensemble_config, stringlist_iget(parameter_keys, ikey));
+            ensemble_config, parameter_keys[ikey].c_str());
         int iens = 0;
         do {
             if (bool_vector_safe_iget(mask, iens)) {
@@ -310,7 +274,6 @@ static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
         ikey++;
     }
 
-    stringlist_free(parameter_keys);
     if (__mask == NULL)
         bool_vector_free(mask);
     return initialized;

@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
+#include <string>
+#include <vector>
 
 #include <ert/util/hash.h>
 #include <ert/res_util/arg_pack.hpp>
@@ -98,7 +100,8 @@ static void shared_info_free(shared_info_type *shared_info) {
   This function does not acces the nodes of the enkf_state object.
 */
 void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
-                           enkf_fs_type *fs, const stringlist_type *param_list,
+                           enkf_fs_type *fs,
+                           const std::vector<std::string> &param_list,
                            init_mode_type init_mode) {
     if (init_mode != INIT_NONE) {
         int iens = enkf_state->__iens;
@@ -110,10 +113,9 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
         else {
             const ensemble_config_type *ensemble_config =
                 enkf_state->ensemble_config;
-            for (int ip = 0; ip < stringlist_get_size(param_list); ip++) {
+            for (auto &param : param_list) {
                 const enkf_config_node_type *config_node =
-                    ensemble_config_get_node(ensemble_config,
-                                             stringlist_iget(param_list, ip));
+                    ensemble_config_get_node(ensemble_config, param.c_str());
                 enkf_node_type *param_node = enkf_node_alloc(config_node);
                 node_id_type node_id = {.report_step = 0, .iens = iens};
                 bool has_data = enkf_node_has_data(param_node, fs, node_id);
@@ -734,11 +736,11 @@ static void enkf_state_internal_retry(const res_config_type *res_config,
     if (run_arg_can_retry(run_arg)) {
         res_log_ferror("[%03d] Resampling and resubmitting realization.", iens);
 
-        stringlist_type *init_keys =
-            ensemble_config_alloc_keylist_from_var_type(ens_config, PARAMETER);
-        for (int ikey = 0; ikey < stringlist_get_size(init_keys); ikey++) {
-            const enkf_config_node_type *config_node = ensemble_config_get_node(
-                ens_config, stringlist_iget(init_keys, ikey));
+        std::vector<std::string> init_keys =
+            ensemble_config_keylist_from_var_type(ens_config, PARAMETER);
+        for (auto &key : init_keys) {
+            const enkf_config_node_type *config_node =
+                ensemble_config_get_node(ens_config, key.c_str());
             enkf_node_type *node = enkf_node_alloc(config_node);
             if (enkf_node_initialize(node, iens, rng)) {
                 node_id_type node_id = {.report_step = 0, .iens = iens};
@@ -746,7 +748,6 @@ static void enkf_state_internal_retry(const res_config_type *res_config,
             }
             enkf_node_free(node);
         }
-        stringlist_free(init_keys);
 
         /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
         enkf_state_init_eclipse(res_config, run_arg);
@@ -795,11 +796,11 @@ void enkf_state_ecl_write(const ensemble_config_type *ens_config,
     value_export_type *export_value =
         value_export_alloc(run_arg_get_runpath(run_arg), base_name);
 
-    stringlist_type *key_list = ensemble_config_alloc_keylist_from_var_type(
+    std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
         ens_config, PARAMETER + EXT_PARAMETER);
-    for (int ikey = 0; ikey < stringlist_get_size(key_list); ikey++) {
-        enkf_config_node_type *config_node = ensemble_config_get_node(
-            ens_config, stringlist_iget(key_list, ikey));
+    for (auto &key : key_list) {
+        enkf_config_node_type *config_node =
+            ensemble_config_get_node(ens_config, key.c_str());
         enkf_node_type *enkf_node = enkf_node_alloc(config_node);
         bool forward_init = enkf_node_use_forward_init(enkf_node);
         node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
@@ -821,7 +822,6 @@ void enkf_state_ecl_write(const ensemble_config_type *ens_config,
     value_export(export_value);
 
     value_export_free(export_value);
-    stringlist_free(key_list);
 }
 
 #include "enkf_state_nodes.cpp"

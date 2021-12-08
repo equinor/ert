@@ -1,3 +1,5 @@
+from typing import List
+
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from res.enkf import RealizationStateEnum, EnkfVarType
@@ -135,21 +137,16 @@ def initializeCurrentCaseFromExisting(
         total_member_count = getRealizationCount()
 
         member_mask = BoolVector.createFromList(total_member_count, members)
-        selected_parameters = StringList(parameters)
 
         ERT.ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
-            source_case, source_report_step, member_mask, selected_parameters
+            source_case, source_report_step, member_mask, parameters
         )
 
         ERT.emitErtChange()
 
 
-def getParameterList():
-    """@rtype: list[str]"""
-    return [
-        str(p)
-        for p in ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
-    ]
+def getParameterList() -> List[str]:
+    return ERT.ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
 
 
 def getRunPath():

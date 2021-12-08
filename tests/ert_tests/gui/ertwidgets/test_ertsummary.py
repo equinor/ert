@@ -18,10 +18,10 @@ def mock_ert_summary(monkeypatch, autouse=True):
         string_list
     )
 
-    string_list = StringList(["param_1", "param_2"])
-    ERT_mock.ert.ensembleConfig.return_value.getKeylistFromVarType.return_value = (
-        string_list
-    )
+    ERT_mock.ert.ensembleConfig.return_value.getKeylistFromVarType.return_value = [
+        "param_1",
+        "param_2",
+    ]
 
 
 @pytest.mark.usefixtures("mock_ert_summary")

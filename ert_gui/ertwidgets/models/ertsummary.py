@@ -14,7 +14,7 @@ class ErtSummary:
         parameters = ERT.ert.ensembleConfig().getKeylistFromVarType(
             EnkfVarType.PARAMETER
         )
-        return sorted(list(parameters), key=lambda k: k.lower())
+        return sorted(parameters, key=lambda k: k.lower())
 
     def getObservations(self) -> List[str]:
         gen_obs = ERT.ert.getObservations().getTypedKeylist(

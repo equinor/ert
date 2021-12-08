@@ -31,7 +31,7 @@
 namespace fs = std::filesystem;
 
 void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
-    stringlist_type *key_list = ensemble_config_alloc_keylist_from_var_type(
+    std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
         enkf_main_get_ensemble_config(enkf_main), PARAMETER);
     enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
     enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
@@ -41,7 +41,6 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
         "run_id", init_fs, 0, 0, "simulations/run0", subst_list);
     rng_manager_type *rng_manager = enkf_main_get_rng_manager(enkf_main);
     rng_type *rng = rng_manager_iget(rng_manager, run_arg_get_iens(run_arg));
-
     enkf_state_initialize(state, rng, init_fs, key_list, INIT_FORCE);
     enkf_state_ecl_write(enkf_main_get_ensemble_config(enkf_main),
                          enkf_main_get_model_config(enkf_main), run_arg,
@@ -49,8 +48,6 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     test_assert_true(fs::exists("simulations/run0/parameters.txt"));
     test_assert_true(fs::exists("simulations/run0/parameters.json"));
     run_arg_free(run_arg);
-
-    stringlist_free(key_list);
 }
 
 static void read_erroneous_gen_kw_file(void *arg) {

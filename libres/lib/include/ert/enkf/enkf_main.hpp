@@ -19,6 +19,9 @@
 #ifndef ERT_ENKF_MAIN_H
 #define ERT_ENKF_MAIN_H
 
+#include <string>
+#include <vector>
+
 #include <stdbool.h>
 
 #include <ert/util/util.h>
@@ -170,9 +173,10 @@ bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
 char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main);
 stringlist_type *enkf_main_alloc_caselist(const enkf_main_type *enkf_main);
 
-void enkf_main_initialize_from_scratch(enkf_main_type *enkf_main,
-                                       const stringlist_type *param_list,
-                                       const ert_run_context_type *run_context);
+extern "C++" void
+enkf_main_initialize_from_scratch(enkf_main_type *enkf_main,
+                                  const std::vector<std::string> &param_list,
+                                  const ert_run_context_type *run_context);
 
 void enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
                                                enkf_fs_type *source_case_fs,
@@ -180,20 +184,18 @@ void enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
 
 PY_USED void enkf_main_init_current_case_from_existing_custom(
     enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, stringlist_type *node_list,
-    bool_vector_type *iactive);
+    int source_report_step, std::vector<std::string> &node_list,
+    std::vector<bool> &iactive);
 
 void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
                                        enkf_fs_type *source_case_fs,
                                        int source_report_step,
                                        enkf_fs_type *target_case);
 
-void enkf_main_init_case_from_existing_custom(const enkf_main_type *enkf_main,
-                                              enkf_fs_type *source_case_fs,
-                                              int source_report_step,
-                                              enkf_fs_type *target_case,
-                                              stringlist_type *node_list,
-                                              bool_vector_type *iactive);
+extern "C++" void enkf_main_init_case_from_existing_custom(
+    const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
+    int source_report_step, enkf_fs_type *target_case,
+    std::vector<std::string> &node_list, std::vector<bool> &iactive);
 
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
                                    const char *case_name,

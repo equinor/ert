@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <map>
 #include <string>
+#include <vector>
 #include <filesystem>
 
 #include <stdlib.h>
@@ -779,22 +780,22 @@ ensemble_config_alloc_keylist(const ensemble_config_type *config) {
    observe that var_type here is an integer - naturally written as a
    sum of enkf_var_type values:
 
-     ensemble_config_alloc_keylist_from_var_type( config , parameter + dynamic_state);
+     ensemble_config_keylist_from_var_type( config , parameter + dynamic_state);
 
 */
 
-stringlist_type *
-ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type *config,
-                                            int var_mask) {
-    stringlist_type *key_list = stringlist_alloc_new();
+std::vector<std::string>
+ensemble_config_keylist_from_var_type(const ensemble_config_type *config,
+                                      int var_mask) {
+    std::vector<std::string> key_list;
 
     for (const auto &config_pair : config->config_nodes) {
-        const char *key = config_pair.first.c_str();
+        const std::string key = config_pair.first;
         enkf_var_type var_type =
             enkf_config_node_get_var_type(config_pair.second);
 
         if (var_type & var_mask)
-            stringlist_append_copy(key_list, key);
+            key_list.push_back(key);
     }
 
     return key_list;
