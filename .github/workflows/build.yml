@@ -159,13 +159,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv -n4 --dist=loadscope --durations=0 -m "not integration_test"
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv  -n4 --durations=0 -m "not integration_test"
 
     - name: Integration Test Ubuntu
       if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
@@ -175,13 +175,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests -sv  -n4 --durations=0 -m "integration_test"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests -sv  -n4 --durations=0 -m "integration_test"
 
     - name: Test CLI
       run: |
@@ -276,7 +276,7 @@ jobs:
       run: |
         # Run tests
         pushd tests
-        pytest libres_tests --durations=0
+        pytest libres_tests  -n4 --durations=0
 
 
   publish:
