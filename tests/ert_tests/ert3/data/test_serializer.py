@@ -1,6 +1,7 @@
 import datetime
 import os
 
+import numpy as np
 import pytest
 from ecl.summary import EclSum
 
@@ -44,6 +45,10 @@ async def test_ecl_sum_serializer(tmp_path):
     result = await _serializer._ecl_sum_serializer().decode_from_path(
         tmp_path / "TEST", key="FOPT"
     )
+    for date, value in result.items():
+        assert isinstance(date, str)
+        assert isinstance(value, float)
+        assert not isinstance(value, np.floating)
     assert result == {
         "2000-01-01 00:00:00": 0,
         "2000-01-02 00:00:00": 1,

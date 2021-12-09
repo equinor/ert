@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 import aiofiles
 import yaml
@@ -87,10 +87,14 @@ class _ecl_sum_serializer(Serializer):
 
     async def decode_from_path(
         self, path: Union[str, Path], *args: Any, **kwargs: Any
-    ) -> Any:
+    ) -> Dict[str, float]:
+        """Extract a given summary vector (time series) from Eclipse output files.
+
+        Args:
+            key (str): Name of summary vector, e.g. FOPT"""
         key = kwargs.get("key", None)
         if key is None:
             raise ValueError("key must be provided as a keyword argument")
 
         eclsum = EclSum(str(path))
-        return dict(zip(map(str, eclsum.dates), eclsum.numpy_vector(key)))
+        return dict(zip(map(str, eclsum.dates), map(float, eclsum.numpy_vector(key))))
