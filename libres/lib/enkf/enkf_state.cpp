@@ -35,7 +35,6 @@
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/res_util/res_log.hpp>
-#include <ert/enkf/callback_arg.hpp>
 
 #define ENKF_STATE_TYPE_ID 78132
 

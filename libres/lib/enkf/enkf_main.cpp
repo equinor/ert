@@ -54,7 +54,6 @@
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/callback_arg.hpp>
 
 /*
    This object should contain **everything** needed to run a enkf
