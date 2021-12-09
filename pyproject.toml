@@ -20,5 +20,4 @@ markers = [
     "consumer_driven_contract_test",
     "unstable",
     "consumer_driven_contract_verification",
-    "integration_test"
 ]

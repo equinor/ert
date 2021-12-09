@@ -37,7 +37,6 @@ def check_expression(original, path_expression, expected, msg_start):
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "experiment_folder,cmd_line_arguments,num_successful,num_iters,assert_present_in_snapshot",
     [

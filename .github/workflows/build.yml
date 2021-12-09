@@ -110,179 +110,40 @@ jobs:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
         path: dist/*
 
-  tests-ert:
-    name: Run ert tests
-    needs: [build-wheels]
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        os: [ubuntu-latest, macos-latest]
-        test-type: ['integration-tests', 'unit-tests']
-        # Excluded to keep build times down on Github actions
-        exclude:
-          - os: macos-latest
-            python-version: 3.7
-          - os: macos-latest
-            python-version: 3.9
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - uses: './.github/actions/install_dependencies'
-      with:
-        os: ${{ matrix.os }}
-
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
     - name: Install wheel and test dependencies
       run: |
         find . -name "*.whl" -exec pip install {} \;
         pip install -r dev-requirements.txt
 
     - name: Test Ubuntu
-      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'unit-tests'
+      if: matrix.os == 'ubuntu-latest'
       env:
         DISPLAY: ':99.0'
       run: |
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest -sv -n4 --dist=loadscope --durations=0
 
     - name: Test MacOS
-      if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
+      if: matrix.os == 'macos-latest' && contains(fromJSON('[3.6, 3.9]'), matrix.python-version)
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
-
-    - name: Integration Test Ubuntu
-      if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
-      env:
-        DISPLAY: ':99.0'
-      run: |
-        ci/github/start_herbstluftwm.sh &
-        sleep 5
-        pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
-
-    - name: Integration Test MacOS
-      if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
-      run: |
-        pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
+        pytest -sv -n4 --dist=loadscope --durations=0
 
     - name: Test CLI
       run: |
         ert --help
 
-
-  docs-ert:
-    name: Test ert docs
-    needs: [build-wheels]
-    timeout-minutes: 3
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8, 3.9]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - uses: './.github/actions/install_dependencies'
-      with:
-        os: ${{ matrix.os }}
-
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
-
-    - name: Make test directory
-      run: |
-        mkdir tmp_tests
-        mv tests tmp_tests/tests
-        mv test-data tmp_tests/test-data
-        mv setup.cfg tmp_tests/setup.cfg
-        mkdir tmp_tests/.git
-
     - name: Test docs
+      if: matrix.os == 'ubuntu-latest' && contains(fromJSON('[3.8, 3.9]'), matrix.python-version)
       run: |
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
-
-  tests-libres:
-    name: Run libres tests
-    needs: [build-wheels]
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        os: [ubuntu-latest, macos-latest]
-        # Excluded to keep build times down on Github actions
-        exclude:
-          - os: macos-latest
-            python-version: 3.7
-          - os: macos-latest
-            python-version: 3.9
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - uses: './.github/actions/install_dependencies'
-      with:
-        os: ${{ matrix.os }}
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Get wheels
-      uses: actions/download-artifact@v2
-      with:
-        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
-
-    - name: Install wheel and test dependencies
-      run: |
-        find . -name "*.whl" -exec pip install {} \;
-        pip install -r dev-requirements.txt
-
-    - name: Run Python tests
-      run: |
-        # Run tests
-        pushd tests
-        pytest libres_tests --durations=0
-
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-test-cmake, tests-libres, tests-ert, docs-ert]
+    needs: [build-test-cmake, build-wheels]
 
     # If this is a tagged release
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')

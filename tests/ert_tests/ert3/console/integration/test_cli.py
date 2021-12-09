@@ -565,7 +565,6 @@ def test_failing_check_service(tmpdir):
                 ert3.console._console._main()
 
 
-@pytest.mark.integration_test
 def test_check_service(tmpdir, monkeypatch):
     with tmpdir.as_cwd():
         with patch.object(

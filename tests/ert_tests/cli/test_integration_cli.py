@@ -25,7 +25,6 @@ def mock_cli_run(monkeypatch):
     yield mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
-@pytest.mark.integration_test
 def test_target_case_equal_current_case(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -51,7 +50,6 @@ def test_target_case_equal_current_case(tmpdir, source_root):
             run_cli(parsed)
 
 
-@pytest.mark.integration_test
 def test_runpath_file(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -89,7 +87,6 @@ def test_runpath_file(tmpdir, source_root):
         assert os.path.isfile("RUNPATH_WORKFLOW_1.OK")
 
 
-@pytest.mark.integration_test
 def test_ensemble_evaluator(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -120,7 +117,6 @@ def test_ensemble_evaluator(tmpdir, source_root):
         FeatureToggling.reset()
 
 
-@pytest.mark.integration_test
 def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -152,7 +148,6 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
         FeatureToggling.reset()
 
 
-@pytest.mark.integration_test
 def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
@@ -178,7 +173,6 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     thread_start_mock.assert_has_calls([[call(), call()]])
 
 
-@pytest.mark.integration_test
 def test_cli_test_connection_error(tmpdir, source_root, capsys):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
