@@ -29,6 +29,7 @@ pybind11_add_module(
   res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
   python/init.cpp
+  python/logging.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp
@@ -169,7 +170,7 @@ pybind11_add_module(
 find_package(LAPACK REQUIRED)
 target_link_libraries(
   _lib PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem
-              cJSON::cJSON)
+              cJSON::cJSON fmt::fmt)
 target_include_directories(
   _lib
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

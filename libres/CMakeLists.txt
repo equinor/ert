@@ -115,6 +115,7 @@ conan_cmake_run(
 find_package(cJSON REQUIRED)
 find_package(Filesystem REQUIRED)
 find_package(pybind11 REQUIRED)
+find_package(fmt REQUIRED)
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
   set(HAVE_PTHREAD TRUE)
