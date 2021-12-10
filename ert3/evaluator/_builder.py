@@ -25,16 +25,22 @@ def add_step_inputs(
     step: StepBuilder,
 ) -> None:
     for input_ in inputs:
+        transformation: ert.data.RecordTransformation
+        if input_.dest_is_directory:
+            transformation = ert.data.TarRecordTransformation()
+        elif input_.dest_smry_keys:
+            transformation = ert.data.SummaryInputTransformation(
+                keys=input_.dest_smry_keys
+            )
+        else:
+            transformation = ert.data.FileRecordTransformation()
+
         step_input = (
             create_file_io_builder()
             .set_name(input_.name)
             .set_mime(input_.dest_mime)
             .set_path(pathlib.Path(input_.dest_location))
-            .set_transformation(
-                ert.data.TarRecordTransformation()
-                if input_.dest_is_directory
-                else ert.data.FileRecordTransformation()
-            )
+            .set_transformation(transformation)
         )
 
         for iens, io_to_transmitter in transmitters.items():

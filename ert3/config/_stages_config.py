@@ -1,6 +1,6 @@
 from importlib.abc import Loader
 import importlib.util
-from typing import Callable, Tuple, cast, Union, Dict, Any, Mapping
+from typing import Callable, Tuple, cast, Union, Dict, Any, Mapping, Optional
 from types import MappingProxyType
 from collections import OrderedDict
 from pydantic import BaseModel, FilePath, ValidationError, validator
@@ -39,6 +39,7 @@ class Record(_StagesConfig):
     location: str
     mime: str = ""
     is_directory: bool = False
+    smry_keys: Optional[Tuple[str, ...]] = None
 
     _ensure_record_mime = validator("mime", allow_reuse=True)(ensure_mime("location"))
 

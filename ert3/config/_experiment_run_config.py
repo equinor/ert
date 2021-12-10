@@ -1,4 +1,5 @@
-from typing import Dict, NamedTuple, cast
+from pickle import NONE
+from typing import Dict, NamedTuple, cast, Optional, Tuple
 
 import ert
 
@@ -29,6 +30,7 @@ class LinkedInput(NamedTuple):
     dest_location: str
     dest_mime: str
     dest_is_directory: bool
+    dest_smry_keys: Optional[Tuple[str, ...]] = None
 
 
 class ExperimentRunConfig:
@@ -134,6 +136,7 @@ class ExperimentRunConfig:
             stage_is_directory = stage.input[name].is_directory
             stage_mime = stage.input[name].mime
             stage_location = stage.input[name].location
+            stage_smry_keys = stage.input[name].smry_keys
 
             if stage_mime != ensemble_input.mime:
                 print(
@@ -157,6 +160,7 @@ class ExperimentRunConfig:
                 dest_mime=stage_mime,
                 dest_location=stage_location,
                 dest_is_directory=stage_is_directory,
+                dest_smry_keys=stage_smry_keys,
             )
             inputs[input_.source_namespace][input_.name] = input_
         return inputs
