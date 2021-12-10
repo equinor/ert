@@ -99,7 +99,7 @@ class QueueConfig(BaseCClass):
 
         # Need to create
         if config_dict is not None:
-            queue_options = config_dict.get(ConfigKeys.QUEUE_OPTION)
+            queue_options = config_dict.get(ConfigKeys.QUEUE_OPTION, [])
             for option in queue_options:
                 self.driver.set_option(
                     option[ConfigKeys.NAME], option[ConfigKeys.VALUE]
@@ -164,6 +164,16 @@ class QueueConfig(BaseCClass):
     @property
     def num_cpu(self):
         return self._get_num_cpu()
+
+    def __repr__(self):
+        return (
+            "QueueConfig(config_dict={"
+            f"{ConfigKeys.JOB_SCRIPT}: {self.job_script}, "
+            f"{ConfigKeys.MAX_SUBMIT}: {self.max_submit}, "
+            f"{ConfigKeys.NUM_CPU}: {self.num_cpu}, "
+            f"{ConfigKeys.QUEUE_SYSTEM}: {self.queue_system}, "
+            "})"
+        )
 
     def __eq__(self, other):
 

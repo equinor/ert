@@ -278,6 +278,23 @@ class AnalysisConfig(BaseCClass):
     def __ne__(self, other):
         return not self == other
 
+    def __repr__(self):
+        return (
+            "AnalysisConfig(config_dict={"
+            f"'UPDATE_LOG_PATH'={realpath(self.get_log_path())}, "
+            f"'MAX_RUNTIME': {self.get_max_runtime()}, "
+            f"'GLOBAL_STD_SCALING': {self.getGlobalStdScaling()}, "
+            f"'STOP_LONG_RUNNING': {self.get_stop_long_running()}, "
+            f"'STD_CUTOFF': {self.getStdCutoff()}, "
+            f"'ENKF_ALPHA': {self.getEnkfAlpha()}, "
+            f"'RERUN': {self.get_rerun()}, "
+            f"'RERUN_START': {self.get_rerun_start()}, "
+            f"'ANALYSIS_SELECT': {self.activeModuleName()}, "
+            f"'MODULE_LIST': {self.getModuleList()}, "
+            f"'ITER_CONFIG': {self.getAnalysisIterConfig()}, "
+            "})"
+        )
+
     def __eq__(self, other):
         if realpath(self.get_log_path()) != realpath(other.get_log_path()):
             return False

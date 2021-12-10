@@ -16,84 +16,30 @@
 
 import os
 
-from ecl.util.test import TestAreaContext
+import pytest
+from hypothesis import given
 from libres_utils import ResTest, tmpdir
-from pytest import MonkeyPatch
+from res.enkf import ConfigKeys, SiteConfig
 
-from res.enkf import ConfigKeys, ResConfig, SiteConfig
+from config_dict_generator import config_dicts, to_config_file
+
+
+def test_site_nonexistent_file():
+    with pytest.raises(IOError):
+        SiteConfig("does/not/exist")
+
+
+@pytest.mark.usefixtures("setup_tmpdir")
+@given(config_dicts())
+def test_site_config_dict_same_as_from_file(config_dict):
+    cwd = os.getcwd()
+    filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    to_config_file(filename, config_dict)
+    config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
+    assert SiteConfig(filename) == SiteConfig(config_dict=config_dict)
 
 
 class SiteConfigTest(ResTest):
-    def setUp(self):
-        self.case_directory = self.createTestPath("local/simple_config/")
-        self.snake_case_directory = self.createTestPath("local/snake_oil/")
-
-        self.monkeypatch = MonkeyPatch()
-
-    def tearDown(self):
-        self.monkeypatch.undo()
-
-    def test_invalid_user_config(self):
-        with TestAreaContext("void land"):
-            with self.assertRaises(IOError):
-                SiteConfig("this/is/not/a/file")
-
-    def test_init(self):
-        with TestAreaContext("site_config_init_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            config_file = "simple_config/minimum_config"
-            site_config = SiteConfig(user_config_file=config_file)
-            self.assertIsNotNone(site_config)
-
-    def test_constructors(self):
-        with TestAreaContext("site_config_constructor_test") as work_area:
-            work_area.copy_directory(self.snake_case_directory)
-            config_file = "snake_oil/snake_oil.ert"
-
-            ERT_SITE_CONFIG = SiteConfig.getLocation()
-            ERT_SHARE_PATH = os.path.dirname(ERT_SITE_CONFIG)
-            snake_config_dict = {
-                ConfigKeys.INSTALL_JOB: [
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_SIMULATOR",
-                        ConfigKeys.PATH: os.getcwd()
-                        + "/snake_oil/jobs/SNAKE_OIL_SIMULATOR",
-                    },
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_NPV",
-                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_NPV",
-                    },
-                    {
-                        ConfigKeys.NAME: "SNAKE_OIL_DIFF",
-                        ConfigKeys.PATH: os.getcwd() + "/snake_oil/jobs/SNAKE_OIL_DIFF",
-                    },
-                ],
-                ConfigKeys.INSTALL_JOB_DIRECTORY: [
-                    ERT_SHARE_PATH + "/forward-models/res",
-                    ERT_SHARE_PATH + "/forward-models/shell",
-                    ERT_SHARE_PATH + "/forward-models/templating",
-                    ERT_SHARE_PATH + "/forward-models/old_style",
-                ],
-                ConfigKeys.SETENV: [
-                    {ConfigKeys.NAME: "SILLY_VAR", ConfigKeys.VALUE: "silly-value"},
-                    {
-                        ConfigKeys.NAME: "OPTIONAL_VAR",
-                        ConfigKeys.VALUE: "optional-value",
-                    },
-                ],
-                ConfigKeys.LICENSE_PATH: "some/random/path",
-                ConfigKeys.UMASK: 18,
-            }
-
-            site_config_user_file = SiteConfig(user_config_file=config_file)
-            site_config_dict = SiteConfig(config_dict=snake_config_dict)
-            self.assertEqual(site_config_dict, site_config_user_file)
-
-            with self.assertRaises(ValueError):
-                site_config = SiteConfig(
-                    user_config_file=config_file, config_dict=snake_config_dict
-                )
-
     @tmpdir()
     def test_site_config_hook_workflow(self):
         site_config_filename = "test_site_config"

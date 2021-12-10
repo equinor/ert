@@ -1,9 +1,17 @@
 import os
-import pkg_resources
 
+import pkg_resources
 import pytest
+from hypothesis import HealthCheck, settings
 
 from utils import SOURCE_DIR
+
+# CI runners produce unreliable test timings
+# so too_slow healthcheck and deadline has to
+# be supressed to avoid flaky behavior
+settings.register_profile(
+    "ci", max_examples=10, deadline=None, suppress_health_check=[HealthCheck.too_slow]
+)
 
 
 @pytest.fixture(scope="session")

@@ -17,11 +17,24 @@
 import itertools
 import os
 
+import pytest
 from ecl.util.test import TestAreaContext
+from hypothesis import given
 from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, LogConfig, ResConfig
 from res.util.enums import MessageLevelEnum
+
+from config_dict_generator import config_dicts, to_config_file
+
+
+@pytest.mark.usefixtures("setup_tmpdir")
+@given(config_dicts())
+def test_log_config_dict_same_as_from_file(config_dict):
+    cwd = os.getcwd()
+    filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    to_config_file(filename, config_dict)
+    config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
+    assert LogConfig(filename) == LogConfig(config_dict=config_dict)
 
 
 class LogConfigTest(ResTest):

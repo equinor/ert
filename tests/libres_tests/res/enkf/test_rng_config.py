@@ -14,53 +14,19 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
+import os
 
+import pytest
+from config_dict_generator import config_dicts, to_config_file
+from hypothesis import given
 from res.enkf import ConfigKeys, ResConfig, RNGConfig
 
 
-class RNGConfigTest(ResTest):
-    def create_base_config(self):
-        return {
-            "INTERNALS": {
-                "CONFIG_DIRECTORY": "simple_config",
-            },
-            "SIMULATION": {
-                "QUEUE_SYSTEM": {
-                    "JOBNAME": "Job%d",
-                },
-                "RUNPATH": "/tmp/simulations/run%d",
-                "NUM_REALIZATIONS": 1,
-                "JOB_SCRIPT": "script.sh",
-                "ENSPATH": "Ensemble",
-                "LOGGING": {"LOG_LEVEL": "DEBUG"},
-            },
-        }
-
-    def test_dict_constructor(self):
-        config = self.create_base_config()
-
-        case_directory = self.createTestPath("local/simple_config")
-        with TestAreaContext("rng_config") as work_area:
-            work_area.copy_directory(case_directory)
-
-            random_seed = "abcdefghijklmnop"
-            config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed}
-
-            rng_config = RNGConfig(config_dict=config["SIMULATION"]["SEED"])
-            res_config = ResConfig(config=config)
-            self.assertEqual(rng_config, res_config.rng_config)
-
-    def test_random_seed(self):
-        config = self.create_base_config()
-
-        random_seed = "abcdefghijklmnop"
-        config["SIMULATION"]["SEED"] = {ConfigKeys.RANDOM_SEED: random_seed}
-
-        case_directory = self.createTestPath("local/simple_config")
-        with TestAreaContext("rng_config") as work_area:
-            work_area.copy_directory(case_directory)
-            res_config = ResConfig(config=config)
-
-            self.assertEqual(random_seed, res_config.rng_config.random_seed)
+@pytest.mark.usefixtures("setup_tmpdir")
+@given(config_dicts())
+def test_site_config_config_same_as_from_file(config_dict):
+    cwd = os.getcwd()
+    filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    to_config_file(filename, config_dict)
+    config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
+    assert ResConfig(filename).rng_config == RNGConfig(config_dict=config_dict)

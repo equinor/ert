@@ -15,11 +15,14 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import os
 import os.path
 
 import pytest
+from config_dict_generator import config_dicts, to_config_file
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
+from hypothesis import given
 from libres_utils import ResTest
 
 from res.enkf import ConfigKeys, EclConfig, ResConfig
@@ -30,6 +33,17 @@ SMSPEC_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
 DATA_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
 INIT_file = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
 DATA_INIT_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
+
+
+@pytest.mark.usefixtures("setup_tmpdir")
+@given(config_dicts())
+def test_ecl_config_dict_creates_equal_config(config_dict):
+    cwd = os.getcwd()
+    filename = config_dict[ConfigKeys.CONFIG_FILE_KEY]
+    to_config_file(filename, config_dict)
+    res_config = ResConfig(user_config_file=filename)
+    config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
+    assert res_config.ecl_config == EclConfig(config_dict=config_dict)
 
 
 class EclConfigTest(ResTest):

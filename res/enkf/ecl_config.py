@@ -111,11 +111,13 @@ class EclConfig(BaseCClass):
                 refcase_list.append(refcase)
 
             # END_DATE_KEY
-            end_date = CTime(
-                datetime.strptime(
-                    config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"
+            default_date = datetime.strptime("1969-12-31 23:59:59", "%Y-%m-%d %H:%M:%S")
+            if ConfigKeys.END_DATE in config_dict:
+                end_date = CTime(
+                    datetime.strptime(config_dict[ConfigKeys.END_DATE], "%d/%m/%Y")
                 )
-            )
+            else:
+                end_date = CTime(default_date)
 
             # SCHEDULE_PREDICTION_FILE_KEY
             schedule_prediction_file = config_dict.get(
@@ -216,6 +218,16 @@ class EclConfig(BaseCClass):
         Returns numbers cpu to be used defined in a DATA file
         """
         return self._get_num_cpu()
+
+    def __repr__(self):
+        return (
+            "EclConfig(config_dict={"
+            f"'{ConfigKeys.DATA_FILE}: {self.getDataFile()}, "
+            f"'{ConfigKeys.GRID}: {self.get_gridfile()}, "
+            f"'{ConfigKeys.REFCASE}: {self.getRefcaseName()}, "
+            f"'{ConfigKeys.END_DATE}: {self.getEndDate()}, "
+            "})"
+        )
 
     def __eq__(self, other):
         if self.getDataFile() != other.getDataFile():

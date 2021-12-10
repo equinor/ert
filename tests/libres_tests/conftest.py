@@ -4,6 +4,12 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture()
+def setup_tmpdir(tmpdir):
+    with tmpdir.as_cwd():
+        yield
+
+
 def source_dir():
     src = Path("@CMAKE_CURRENT_SOURCE_DIR@/../..")
     if src.is_dir():
