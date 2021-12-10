@@ -320,7 +320,7 @@ jobs:
       run: |
         # Run tests
         pushd tests
-        pytest libres_tests --durations=0
+        pytest libres_tests test_config_parsing --hypothesis-profile=ci --durations=0
         git status --porcelain | sed '/ert.*.whl$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
 
