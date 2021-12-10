@@ -3,7 +3,6 @@ if(NOT BUILD_TESTS)
 endif()
 
 find_package(Catch2 REQUIRED)
-find_package(fmt REQUIRED)
 include(Catch)
 
 add_executable(

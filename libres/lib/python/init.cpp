@@ -40,4 +40,7 @@ PYBIND11_MODULE(_lib, m) {
             return analysis_config_module_names(analysis_config);
         },
         py::arg("self"));
+
+    void init_logging(py::module_ m);
+    init_logging(m);
 }
