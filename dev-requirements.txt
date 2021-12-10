@@ -6,6 +6,7 @@ flake8>=4.0.0
 grpcio-tools
 jsonpath_ng
 jupytext
+hypothesis
 oil_reservoir_synthesizer
 pylint
 pytest-asyncio

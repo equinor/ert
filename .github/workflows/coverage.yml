@@ -52,7 +52,7 @@ jobs:
       if: matrix.system-under-test == 'res'
       run: |
         cd tests
-        pytest libres_tests --cov=ert --cov-report=xml:cov.xml
+        pytest libres_tests test_config_parsing  --hypothesis-profile=ci --cov=ert --cov-report=xml:cov.xml
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v2

@@ -162,6 +162,17 @@ class ErtWorkflowList(BaseCClass):
     def __ne__(self, other):
         return not (self == other)
 
+    def __repr__(self):
+        job_dicts = [
+            {ConfigKeys.NAME: name, ConfigKeys.PATH: self.getJob(name).executable()}
+            for name in self.getJobNames()
+        ]
+        return (
+            "ErtWorkflowList(config_dict={"
+            f"'{ConfigKeys.LOAD_WORKFLOW_JOB}': {job_dicts}, "
+            "})"
+        )
+
     def __eq__(self, other):
         if set(self.getJobNames()) != set(other.getJobNames()):
             return False

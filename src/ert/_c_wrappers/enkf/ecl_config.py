@@ -193,6 +193,15 @@ class EclConfig(BaseCClass):
         """
         return self._get_num_cpu()
 
+    def __repr__(self):
+        return (
+            "EclConfig(config_dict={"
+            f"'{ConfigKeys.DATA_FILE}': {self.getDataFile()}, "
+            f"'{ConfigKeys.GRID}': {self.get_gridfile()}, "
+            f"'{ConfigKeys.REFCASE}': {self.getRefcaseName()}, "
+            "})"
+        )
+
     def __eq__(self, other):
         if self.getDataFile() != other.getDataFile():
             return False
