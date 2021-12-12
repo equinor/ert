@@ -39,7 +39,7 @@ class ContentTypeEnum(BaseCEnum):
     _valid_string = ResPrototype(
         "bool config_schema_item_valid_string(config_content_type_enum ,  char*, bool)"
     )
-    _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind=False)
+    # _sscanf_bool = EclPrototype("bool util_sscanf_bool( char* , bool*)", bind=False)
 
     def valid_string(self, string, runtime=False):
         return self._valid_string(string, runtime)

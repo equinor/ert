@@ -499,8 +499,8 @@ site_config_alloc_content(config_parser_type *config_parser) {
 
 static std::string _site_config;
 
-extern "C" void set_site_config(const char *site_config) {
-    auto path = realpath(site_config, NULL);
+void set_site_config(const std::string& site_config) {
+    auto path = realpath(site_config.c_str(), NULL);
     if (!path) {
         perror("Failed to set default site config file");
     } else {

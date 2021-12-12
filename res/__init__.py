@@ -23,27 +23,16 @@ import warnings
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
-from cwrap import Prototype
-
 try:
     from ._version import version as __version__
 except ImportError:
     pass
 
 
-def _load_lib():
-    import res._lib
-    import ctypes
+from res._lib.exports import ResPrototype
 
-    lib = ctypes.CDLL(res._lib.__file__, ctypes.RTLD_GLOBAL)
-
-    # Configure site_config to be a ctypes.CFUNCTION with type:
-    # void set_site_config(char *);
-    site_config = lib.set_site_config
-    site_config.restype = None
-    site_config.argtypes = (ctypes.c_char_p,)
-
-    # Find share/ert
+def _setup_site_config():
+    from res._lib import set_site_config
     from pathlib import Path
 
     path = Path(__file__).parent
@@ -54,24 +43,10 @@ def _load_lib():
             break
     else:
         raise ImportError("Could not find `share/ert/site-config`")
+    set_site_config(str(path))
 
-    # Set site-config to point to [PREFIX]/share/ert/site-config
-    site_config(str(path).encode("utf-8"))
+_setup_site_config()
 
-    return lib
-
-
-from res._lib.exports import ResPrototype2
-
-
-class ResPrototype(Prototype):
-    lib = _load_lib()
-
-    def __init__(self, prototype, bind=True):
-        super().__init__(ResPrototype.lib, prototype, bind=bind)
-
-
-RES_LIB = ResPrototype.lib
 
 from ecl.util.util import updateAbortSignals
 
@@ -83,3 +58,6 @@ def root():
     Will print the filesystem root of the current ert package.
     """
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+
+
+__all__ = ["ResPrototype"]

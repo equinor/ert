@@ -205,14 +205,6 @@ class _RealEnKFMain(BaseCClass):
         "char* enkf_main_get_site_config_file(enkf_main)"
     )
     _get_history_length = ResPrototype("int enkf_main_get_history_length(enkf_main)")
-    _get_observations = ResPrototype(
-        "void enkf_main_get_observations(enkf_main, \
-                                         char*, \
-                                         int, \
-                                         long*, \
-                                         double*, \
-                                         double*)"
-    )
     _get_observation_count = ResPrototype(
         "int enkf_main_get_observation_count(enkf_main, char*)"
     )
@@ -400,9 +392,6 @@ class _RealEnKFMain(BaseCClass):
     def getMemberRunningState(self, ensemble_member):
         """@rtype: EnKFState"""
         return self._iget_state(ensemble_member).setParent(self)
-
-    def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
-        return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)
 
     def get_observation_count(self, user_key):
         return self._get_observation_count(user_key)

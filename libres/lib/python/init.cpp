@@ -41,15 +41,10 @@ PYBIND11_MODULE(_lib, m) {
             return analysis_config_module_names(analysis_config);
         },
         py::arg("self"));
-    void init_logging(py::module_ m);
-    init_logging(m);
-    void ensemble_config(py::module_);
-    ensemble_config(m.def_submodule("ensemble_config"));
-    void enkf_fs_manager(py::module_);
-    enkf_fs_manager(m.def_submodule("enkf_fs_manager"));
 
-    void init_config_keys(py::module_ m);
-    init_config_keys(m.def_submodule("config_keys"));
-    void enkf_defaults(py::module_ m);
-    enkf_defaults(m.def_submodule("enkf_defaults"));
+    void set_site_config(const std::string &);
+    m.def("set_site_config", &set_site_config, py::arg{"site_config"});
+
+    void init_exports(py::module_);
+    init_exports(m.def_submodule("exports"));
 }
