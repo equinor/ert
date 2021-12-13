@@ -1,4 +1,3 @@
-import shutil
 import uuid
 import json
 from abc import abstractmethod
@@ -7,9 +6,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union, Any
 import aiofiles
 
-# Type hinting for wrap must be turned off until (1) is resolved.
-# (1) https://github.com/Tinche/aiofiles/issues/8
-from aiofiles.os import wrap  # type: ignore
 from pydantic import (
     StrictBytes,
     StrictFloat,
@@ -27,7 +23,6 @@ from ._record import (
     BlobRecordTree,
 )
 
-_copy = wrap(shutil.copy)
 
 strict_number = Union[StrictInt, StrictFloat]
 numerical_record_data = Union[
@@ -195,22 +190,6 @@ class RecordTransmitter:
             uri = await self._transmit_numerical_record(num_record)
             self._set_transmitted_state(uri, num_record.record_type)
 
-    async def dump(self, location: Path, mime: str) -> None:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot dump untransmitted record")
-        if self._record_type in (RecordType.NUMERICAL_TREE, RecordType.BLOB_TREE):
-            record_blob = await self._load_blob_record()
-            async with aiofiles.open(str(location), mode="wb") as fb:
-                await fb.write(record_blob.data)
-                return
-        record = await self.load()
-        if isinstance(record, NumericalRecord):
-            async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
-                await ft.write(get_serializer(mime).encode(record.data))
-        else:
-            async with aiofiles.open(str(location), mode="wb") as fb:
-                await fb.write(record.data)  # type: ignore
-
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
     _INTERNAL_MIME_TYPE = "application/x-yaml"
@@ -280,20 +259,6 @@ class SharedDiskRecordTransmitter(RecordTransmitter):
         async with aiofiles.open(str(self._uri), mode="rb") as f:
             data = await f.read()
         return BlobRecord(data=data)
-
-    async def dump(self, location: Path, mime: str) -> None:
-        if not self.is_transmitted():
-            raise RuntimeError("cannot dump untransmitted record")
-        if (
-            self._record_type == RecordType.BYTES
-            or mime == SharedDiskRecordTransmitter._INTERNAL_MIME_TYPE
-        ):
-            await _copy(self._uri, str(location))
-        else:
-            record = await self._load_numerical_record()
-            contents = get_serializer(mime).encode(record.data)
-            async with aiofiles.open(location, mode="wt", encoding="utf-8") as f:
-                await f.write(contents)
 
 
 class InMemoryRecordTransmitter(RecordTransmitter):

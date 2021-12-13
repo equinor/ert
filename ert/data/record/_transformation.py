@@ -3,8 +3,10 @@ from pathlib import Path
 import tarfile
 import io
 import stat
+import aiofiles
 
-from ert.data import RecordTransmitter, BlobRecord, make_tar
+from ert.data import RecordTransmitter, BlobRecord, make_tar, Record, NumericalRecord
+from ert.serialization import get_serializer
 
 _BIN_FOLDER = "bin"
 
@@ -42,7 +44,8 @@ class FileRecordTransformation(RecordTransformation):
         location: Path,
     ) -> None:
         _prepare_location(runpath, location)
-        await transmitter.dump(runpath / location, mime)
+        record = await transmitter.load()
+        await _dump(record, runpath / location, mime)
 
     async def transform_output(
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
@@ -79,7 +82,8 @@ class ExecutableRecordTransformation(RecordTransformation):
 
         # create file(s)
         _prepare_location(base_path, location)
-        await transmitter.dump(base_path / location, mime)
+        record = await transmitter.load()
+        await _dump(record, base_path / location, mime)
 
         # post-proccess if neccessary
         path = base_path / location
@@ -90,3 +94,12 @@ class ExecutableRecordTransformation(RecordTransformation):
         self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
     ) -> None:
         await transmitter.transmit_file(runpath / location, mime)
+
+
+async def _dump(record: Record, location: Path, mime: str) -> None:
+    if isinstance(record, NumericalRecord):
+        async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
+            await ft.write(get_serializer(mime).encode(record.data))
+    else:
+        async with aiofiles.open(str(location), mode="wb") as fb:
+            await fb.write(record.data)  # type: ignore

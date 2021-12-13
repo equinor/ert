@@ -22,6 +22,7 @@ from ert.data import (
 from ert.data.record import _transmitter
 
 record123 = NumericalRecord(data=[1, 2, 3])
+from ert.data import FileRecordTransformation
 
 simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
@@ -225,8 +226,10 @@ async def test_simple_record_transmit_and_dump(
     ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_record(record_in)
-
-        await transmitter.dump("record", mime_type)
+        transformation = FileRecordTransformation()
+        await transformation.transform_input(
+            transmitter, mime_type, pathlib.Path("."), pathlib.Path("record")
+        )
         if mime_type == "application/octet-stream":
             with open("record", "rb") as f:
                 assert expected_data == f.read()
@@ -289,8 +292,14 @@ async def test_dump_untransmitted_record(
         storage_path=None
     ) as record_transmitter_factory:
         transmitter = record_transmitter_factory(name="some_name")
-        with pytest.raises(RuntimeError, match="cannot dump untransmitted record"):
-            await transmitter.dump("some.file", "text/whatever")
+        with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
+            transformation = FileRecordTransformation()
+            await transformation.transform_input(
+                transmitter,
+                "text/whatever",
+                pathlib.Path("."),
+                pathlib.Path("some.file"),
+            )
 
 
 @pytest.mark.parametrize(
