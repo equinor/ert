@@ -460,8 +460,8 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
     const analysis_config_type *analysis_config =
         enkf_main_get_analysis_config(enkf_main);
 
-    if (!analysis_assert_update_viable(analysis_config, source_fs, enkf_main->ens_size,
-                              updatestep))
+    if (!analysis_assert_update_viable(analysis_config, source_fs,
+                                       enkf_main->ens_size, updatestep))
         return false;
 
     const int total_ens_size = enkf_main->ens_size;
@@ -494,8 +494,8 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
         int_vector_type *ens_active_list =
             bool_vector_alloc_active_list(ens_mask);
 
-        analysis_copy_parameters(source_fs, target_fs, ensemble_config, total_ens_size,
-                        ens_active_list);
+        analysis_copy_parameters(source_fs, target_fs, ensemble_config,
+                                 total_ens_size, ens_active_list);
 
         {
             hash_type *use_count = hash_alloc();
@@ -566,21 +566,24 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                     // Part 1: Parameters which do not have row scaling attached.
                     auto parameters = analysis_load_parameters(
                         target_fs, ensemble_config, iens_active_index,
-                        current_step, run_mode, meas_data, ensemble, use_count,
-                        obs_data, ministep);
-                    analysis_run_analysis_update(module, ens_mask, meas_data, obs_data,
-                                        shared_rng, E, parameters);
+                        current_step, meas_data, ensemble, use_count, obs_data,
+                        ministep);
+                    analysis_run_analysis_update(module, ens_mask, meas_data,
+                                                 obs_data, shared_rng, E,
+                                                 parameters);
                     analysis_save_parameters(target_fs, ensemble_config,
-                                    iens_active_index, current_step, run_mode,
-                                    ensemble, use_count, ministep, parameters);
+                                             iens_active_index, current_step,
+                                             ensemble, use_count, ministep,
+                                             parameters);
                     for (auto &[_, A] : parameters)
                         matrix_free(A);
 
                     // Part 2: Parameters which do have row scaling attached.
-                    auto row_scaling_parameters = analysis_load_row_scaling_parameters(
-                        target_fs, ensemble_config, iens_active_index,
-                        current_step, run_mode, meas_data, ensemble, use_count,
-                        obs_data, ministep);
+                    auto row_scaling_parameters =
+                        analysis_load_row_scaling_parameters(
+                            target_fs, ensemble_config, iens_active_index,
+                            current_step, meas_data, ensemble, use_count,
+                            obs_data, ministep);
                     analysis_run_analysis_update_with_rowscaling(
                         module, ens_mask, meas_data, obs_data, shared_rng, E,
                         row_scaling_parameters);

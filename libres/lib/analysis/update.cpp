@@ -30,7 +30,6 @@ typedef struct {
     int iens2; /* NOT inclusive upper limit. */
     int report_step;
     int target_step;
-    run_mode_type run_mode;
     matrix_type *A;
     const int_vector_type *iens_active_index;
 
@@ -273,8 +272,8 @@ static serialize_info_type *
 serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
                      const int_vector_type *iens_active_index, int target_step,
-                     enkf_state_type **ensemble, run_mode_type run_mode,
-                     int report_step, matrix_type *A, int num_cpu_threads) {
+                     enkf_state_type **ensemble, int report_step,
+                     matrix_type *A, int num_cpu_threads) {
 
     serialize_info_type *serialize_info =
         new serialize_info_type[num_cpu_threads];
@@ -284,7 +283,6 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
     for (icpu = 0; icpu < num_cpu_threads; icpu++) {
         serialize_info[icpu].ensemble_config = ensemble_config;
         serialize_info[icpu].iens_active_index = iens_active_index;
-        serialize_info[icpu].run_mode = run_mode;
         serialize_info[icpu].src_fs = src_fs;
         serialize_info[icpu].target_fs = target_fs;
         serialize_info[icpu].target_step = target_step;
@@ -300,12 +298,11 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
     return serialize_info;
 }
 
-std::unordered_map<std::string, matrix_type *>
-analysis_load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-                int_vector_type *iens_active_index, int last_step,
-                run_mode_type run_mode, meas_data_type *forecast,
-                enkf_state_type **ensemble, hash_type *use_count,
-                obs_data_type *obs_data, const local_ministep_type *ministep) {
+std::unordered_map<std::string, matrix_type *> analysis_load_parameters(
+    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+    int_vector_type *iens_active_index, int last_step, meas_data_type *forecast,
+    enkf_state_type **ensemble, hash_type *use_count, obs_data_type *obs_data,
+    const local_ministep_type *ministep) {
 
     int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
@@ -315,8 +312,8 @@ analysis_load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble
 
     serialize_info_type *serialize_info = serialize_info_alloc(
         target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-        target_fs, ensemble_config, iens_active_index, 0, ensemble, run_mode,
-        last_step, A, cpu_threads);
+        target_fs, ensemble_config, iens_active_index, 0, ensemble, last_step,
+        A, cpu_threads);
 
     std::unordered_map<std::string, matrix_type *> parameters;
     for (auto &[dataset_name, dataset] :
@@ -342,9 +339,9 @@ analysis_load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble
     return parameters;
 }
 
-void analysis_analysis_save_parameters(
+void analysis_save_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
+    int_vector_type *iens_active_index, int last_step,
     enkf_state_type **ensemble, hash_type *use_count,
     const local_ministep_type *ministep,
     std::unordered_map<std::string, matrix_type *> parameters) {
@@ -367,7 +364,7 @@ void analysis_analysis_save_parameters(
         serialize_info_type *serialize_info = serialize_info_alloc(
             target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
             target_fs, ensemble_config, iens_active_index, 0, ensemble,
-            run_mode, last_step, A, cpu_threads);
+            last_step, A, cpu_threads);
 
         deserialize_dataset(ensemble_config, dataset, last_step, serialize_info,
                             tp);
@@ -379,13 +376,11 @@ void analysis_analysis_save_parameters(
 std::unordered_map<
     std::string,
     std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
-analysis_load_row_scaling_parameters(enkf_fs_type *target_fs,
-                            ensemble_config_type *ensemble_config,
-                            int_vector_type *iens_active_index, int last_step,
-                            run_mode_type run_mode, meas_data_type *forecast,
-                            enkf_state_type **ensemble, hash_type *use_count,
-                            obs_data_type *obs_data,
-                            const local_ministep_type *ministep) {
+analysis_load_row_scaling_parameters(
+    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+    int_vector_type *iens_active_index, int last_step, meas_data_type *forecast,
+    enkf_state_type **ensemble, hash_type *use_count, obs_data_type *obs_data,
+    const local_ministep_type *ministep) {
 
     int matrix_start_size = 250000;
     int active_ens_size = meas_data_get_active_ens_size(forecast);
@@ -617,9 +612,9 @@ void analysis_run_analysis_update_with_rowscaling(
 }
 
 bool analysis_assert_update_viable(const analysis_config_type *analysis_config,
-                          const enkf_fs_type *source_fs,
-                          const int total_ens_size,
-                          const local_updatestep_type *updatestep) {
+                                   const enkf_fs_type *source_fs,
+                                   const int total_ens_size,
+                                   const local_updatestep_type *updatestep) {
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     const int active_ens_size =
         state_map_count_matching(source_state_map, STATE_HAS_DATA);
@@ -644,9 +639,9 @@ bool analysis_assert_update_viable(const analysis_config_type *analysis_config,
 }
 
 void analysis_copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
-                     const ensemble_config_type *ensemble_config,
-                     const int total_ens_size,
-                     const int_vector_type *ens_active_list) {
+                              const ensemble_config_type *ensemble_config,
+                              const int total_ens_size,
+                              const int_vector_type *ens_active_list) {
 
     /*
       Copy all the parameter nodes from source case to target case;
