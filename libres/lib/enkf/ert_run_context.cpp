@@ -325,10 +325,6 @@ int ert_run_context_get_size(const ert_run_context_type *context) {
     return vector_get_size(context->run_args);
 }
 
-run_mode_type ert_run_context_get_mode(const ert_run_context_type *context) {
-    return context->run_mode;
-}
-
 int ert_run_context_get_iter(const ert_run_context_type *context) {
     return context->iter;
 }
