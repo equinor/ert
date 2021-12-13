@@ -41,7 +41,9 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         mock_delegate = MockDelegate()
         widget._real_view.setItemDelegate(mock_delegate)
 
-        widget.show()
+        with qtbot.waitActive(widget, timeout=30000):
+            widget.show()
+
         qtbot.wait(1000)
         print(mock_delegate._max_id)
         qtbot.waitUntil(
