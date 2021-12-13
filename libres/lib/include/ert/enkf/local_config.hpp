@@ -60,8 +60,6 @@ local_config_get_updatestep(const local_config_type *local_config);
 local_ministep_type *
 local_config_get_ministep(const local_config_type *local_config,
                           const char *key);
-PY_USED void local_config_summary_fprintf(const local_config_type *local_config,
-                                          const char *config_file);
 local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
                                                const char *obsdata_name);
 bool local_config_has_obsdata(const local_config_type *local_config,
