@@ -76,10 +76,9 @@ static int __get_active_size(const ensemble_config_type *ensemble_config,
                 enkf_config_node_get_data_size(config_node, report_step);
         else if (active_mode == PARTLY_ACTIVE)
             active_size = active_list_get_active_size(active_list, -1);
-        else {
+        else
             util_abort("%s: internal error .. \n", __func__);
-            active_size = -1; /* Compiler shut up */
-        }
+
         return active_size;
     }
 }
@@ -112,11 +111,10 @@ static void *serialize_nodes_mt(void *arg) {
     return NULL;
 }
 
-static void enkf_main_serialize_node(const char *node_key,
-                                     const active_list_type *active_list,
-                                     int row_offset,
-                                     thread_pool_type *work_pool,
-                                     serialize_info_type *serialize_info) {
+static void serialize_node(const char *node_key,
+                           const active_list_type *active_list, int row_offset,
+                           thread_pool_type *work_pool,
+                           serialize_info_type *serialize_info) {
 
     /* Multithreaded serializing*/
     const int num_cpu_threads = thread_pool_get_max_running(work_pool);
@@ -143,11 +141,10 @@ static void enkf_main_serialize_node(const char *node_key,
    The return value is the number of rows in the serialized
    A matrix.
 */
-static int enkf_main_serialize_dataset(const ensemble_config_type *ens_config,
-                                       const local_dataset_type *dataset,
-                                       int report_step, hash_type *use_count,
-                                       thread_pool_type *work_pool,
-                                       serialize_info_type *serialize_info) {
+static int serialize_dataset(const ensemble_config_type *ens_config,
+                             const local_dataset_type *dataset, int report_step,
+                             hash_type *use_count, thread_pool_type *work_pool,
+                             serialize_info_type *serialize_info) {
 
     matrix_type *A = serialize_info->A;
     int ens_size = matrix_get_columns(A);
@@ -174,9 +171,9 @@ static int enkf_main_serialize_dataset(const ensemble_config_type *ens_config,
         }
 
         if (serialize_info->active_size[ikw] > 0) {
-            enkf_main_serialize_node(key.c_str(), active_list,
-                                     serialize_info->row_offset[ikw], work_pool,
-                                     serialize_info);
+            serialize_node(key.c_str(), active_list,
+                           serialize_info->row_offset[ikw], work_pool,
+                           serialize_info);
             current_row += serialize_info->active_size[ikw];
         }
     }
@@ -230,11 +227,11 @@ static void assert_matrix_size(const matrix_type *m, const char *name, int rows,
         util_abort("%s: matrix:%s is NULL \n", __func__, name);
 }
 
-static void enkf_main_deserialize_dataset(ensemble_config_type *ensemble_config,
-                                          const local_dataset_type *dataset,
-                                          int report_step,
-                                          serialize_info_type *serialize_info,
-                                          thread_pool_type *work_pool) {
+static void deserialize_dataset(ensemble_config_type *ensemble_config,
+                                const local_dataset_type *dataset,
+                                int report_step,
+                                serialize_info_type *serialize_info,
+                                thread_pool_type *work_pool) {
 
     const int num_cpu_threads = thread_pool_get_max_running(work_pool);
     const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
@@ -304,11 +301,11 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
 }
 
 std::unordered_map<std::string, matrix_type *>
-enkf_main_load_parameters_from_ministep(
-    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
-    meas_data_type *forecast, enkf_state_type **ensemble, hash_type *use_count,
-    obs_data_type *obs_data, const local_ministep_type *ministep) {
+analysis_load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+                int_vector_type *iens_active_index, int last_step,
+                run_mode_type run_mode, meas_data_type *forecast,
+                enkf_state_type **ensemble, hash_type *use_count,
+                obs_data_type *obs_data, const local_ministep_type *ministep) {
 
     int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
@@ -333,8 +330,8 @@ enkf_main_load_parameters_from_ministep(
         if (unscaled_keys.size() == 0)
             continue;
 
-        enkf_main_serialize_dataset(ensemble_config, dataset, last_step,
-                                    use_count, tp, serialize_info);
+        serialize_dataset(ensemble_config, dataset, last_step, use_count, tp,
+                          serialize_info);
 
         parameters[std::string(dataset_name)] =
             matrix_alloc_copy(serialize_info->A);
@@ -345,7 +342,7 @@ enkf_main_load_parameters_from_ministep(
     return parameters;
 }
 
-void enkf_main_save_parameters_from_ministep(
+void analysis_analysis_save_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
     enkf_state_type **ensemble, hash_type *use_count,
@@ -372,8 +369,8 @@ void enkf_main_save_parameters_from_ministep(
             target_fs, ensemble_config, iens_active_index, 0, ensemble,
             run_mode, last_step, A, cpu_threads);
 
-        enkf_main_deserialize_dataset(ensemble_config, dataset, last_step,
-                                      serialize_info, tp);
+        deserialize_dataset(ensemble_config, dataset, last_step, serialize_info,
+                            tp);
         delete[] serialize_info;
     }
     thread_pool_free(tp);
@@ -382,11 +379,13 @@ void enkf_main_save_parameters_from_ministep(
 std::unordered_map<
     std::string,
     std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
-enkf_main_load_row_scaling_parameters(
-    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
-    meas_data_type *forecast, enkf_state_type **ensemble, hash_type *use_count,
-    obs_data_type *obs_data, const local_ministep_type *ministep) {
+analysis_load_row_scaling_parameters(enkf_fs_type *target_fs,
+                            ensemble_config_type *ensemble_config,
+                            int_vector_type *iens_active_index, int last_step,
+                            run_mode_type run_mode, meas_data_type *forecast,
+                            enkf_state_type **ensemble, hash_type *use_count,
+                            obs_data_type *obs_data,
+                            const local_ministep_type *ministep) {
 
     int matrix_start_size = 250000;
     int active_ens_size = meas_data_get_active_ens_size(forecast);
@@ -442,7 +441,7 @@ enkf_main_load_row_scaling_parameters(
     return parameters;
 }
 
-void enkf_main_save_row_scaling_parameters(
+void analysis_save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, int last_step,
     const local_ministep_type *ministep,
@@ -483,7 +482,7 @@ void enkf_main_save_row_scaling_parameters(
     }
 }
 
-void enkf_main_analysis_update_no_rowscaling(
+void analysis_run_analysis_update(
     analysis_module_type *module, const bool_vector_type *ens_mask,
     const meas_data_type *forecast, obs_data_type *obs_data,
     rng_type *shared_rng, matrix_type *E,
@@ -546,7 +545,7 @@ void enkf_main_analysis_update_no_rowscaling(
     thread_pool_free(tp);
 }
 
-void enkf_main_analysis_update_with_rowscaling(
+void analysis_run_analysis_update_with_rowscaling(
     analysis_module_type *module, const bool_vector_type *ens_mask,
     const meas_data_type *forecast, obs_data_type *obs_data,
     rng_type *shared_rng, matrix_type *E,
@@ -617,7 +616,7 @@ void enkf_main_analysis_update_with_rowscaling(
     matrix_free(X);
 }
 
-bool assert_update_viable(const analysis_config_type *analysis_config,
+bool analysis_assert_update_viable(const analysis_config_type *analysis_config,
                           const enkf_fs_type *source_fs,
                           const int total_ens_size,
                           const local_updatestep_type *updatestep) {
@@ -644,7 +643,7 @@ bool assert_update_viable(const analysis_config_type *analysis_config,
     return true;
 }
 
-void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
+void analysis_copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
                      const int total_ens_size,
                      const int_vector_type *ens_active_list) {
