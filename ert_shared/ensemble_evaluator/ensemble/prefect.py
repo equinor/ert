@@ -14,7 +14,6 @@ from typing import Optional
 
 import cloudpickle
 from cloudevents.http import CloudEvent, to_json
-from dask_jobqueue.lsf import LSFJob
 import prefect
 import prefect.utilities.logging
 from prefect import Flow
@@ -57,6 +56,10 @@ async def _eq_submit_job(self, script_filename):
 
 
 def _get_executor(custom_port_range, name="local"):
+    # Local import, because this import requires a running loop
+    get_event_loop()
+    from dask_jobqueue.lsf import LSFJob
+
     _, port, _ = find_available_port(custom_range=custom_port_range, reuse_addr=True)
     if name == "local":
         cluster_kwargs = {
