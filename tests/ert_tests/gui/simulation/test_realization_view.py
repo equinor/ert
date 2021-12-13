@@ -29,25 +29,26 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
     qtbot.addWidget(widget)
 
     with qtbot.waitActive(widget, timeout=30000):
-        model = SnapshotModel()
-        model._add_snapshot(SnapshotModel.prerender(small_snapshot), iter)
-
-        widget.setSnapshotModel(model)
-
-        widget.move(0, 0)
-        widget.resize(640, 480)
-
-        # mock delegate for counting how many times we draw delegates
-        mock_delegate = MockDelegate()
-        widget._real_view.setItemDelegate(mock_delegate)
-
         widget.show()
-        qtbot.wait(1000)
-        print(mock_delegate._max_id)
-        qtbot.waitUntil(
-            lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
-            timeout=30000,
-        )
+
+    model = SnapshotModel()
+    model._add_snapshot(SnapshotModel.prerender(small_snapshot), iter)
+
+    widget.setSnapshotModel(model)
+
+    widget.move(0, 0)
+    widget.resize(640, 480)
+
+    # mock delegate for counting how many times we draw delegates
+    mock_delegate = MockDelegate()
+    widget._real_view.setItemDelegate(mock_delegate)
+
+    qtbot.wait(1000)
+    print(mock_delegate._max_id)
+    qtbot.waitUntil(
+        lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
+        timeout=30000,
+    )
 
 
 @pytest.mark.requires_window_manager
