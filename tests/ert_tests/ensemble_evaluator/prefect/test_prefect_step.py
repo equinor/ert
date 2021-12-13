@@ -67,9 +67,12 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
 @pytest.fixture()
 def step_test_script_transmitter(test_data_path, transmitter_factory, script_name):
     script_transmitter = transmitter_factory("script")
+    transformation = ert.data.ExecutableRecordTransformation()
     get_event_loop().run_until_complete(
-        script_transmitter.transmit_file(
-            test_data_path / script_name, mime="application/octet-stream"
+        transformation.transform_output(
+            transmitter=script_transmitter,
+            mime="application/octet-stream",
+            location=test_data_path / script_name,
         )
     )
     return script_transmitter

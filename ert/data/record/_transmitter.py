@@ -170,26 +170,6 @@ class RecordTransmitter:
             raise TypeError(f"Record type not supported {type(record)}")
         self._set_transmitted_state(uri, record_type=record.record_type)
 
-    async def transmit_file(
-        self,
-        file: Path,
-        mime: str,
-    ) -> None:
-        if self.is_transmitted():
-            raise RuntimeError("Record already transmitted")
-        if mime == "application/octet-stream":
-            async with aiofiles.open(str(file), mode="rb") as fb:
-                contents_b: bytes = await fb.read()
-                blob_record = BlobRecord(data=contents_b)
-            uri = await self._transmit_blob_record(blob_record)
-            self._set_transmitted_state(uri, blob_record.record_type)
-        else:
-            serializer = get_serializer(mime)
-            _record_data = await serializer.decode_from_path(file)
-            num_record = NumericalRecord(data=_record_data)
-            uri = await self._transmit_numerical_record(num_record)
-            self._set_transmitted_state(uri, num_record.record_type)
-
 
 class SharedDiskRecordTransmitter(RecordTransmitter):
     _INTERNAL_MIME_TYPE = "application/x-yaml"

@@ -71,8 +71,13 @@ def add_commands(
             )
         else:
             raise ValueError(f"Unsupported transmitter type: {storage_type}")
+        transformation = ert.data.ExecutableRecordTransformation()
         get_event_loop().run_until_complete(
-            transmitter.transmit_file(command.location, mime="application/octet-stream")
+            transformation.transform_output(
+                transmitter=transmitter,
+                mime="application/octet-stream",
+                location=command.location,
+            )
         )
         step.add_input(
             create_file_io_builder()

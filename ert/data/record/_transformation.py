@@ -30,7 +30,7 @@ class RecordTransformation(ABC):
 
     @abstractmethod
     async def transform_output(
-        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+        self, transmitter: RecordTransmitter, mime: str, location: Path
     ) -> None:
         raise NotImplementedError("not implemented")
 
@@ -45,12 +45,13 @@ class FileRecordTransformation(RecordTransformation):
     ) -> None:
         _prepare_location(runpath, location)
         record = await transmitter.load()
-        await _dump(record, runpath / location, mime)
+        await _save_record(record, runpath / location, mime)
 
     async def transform_output(
-        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+        self, transmitter: RecordTransmitter, mime: str, location: Path
     ) -> None:
-        await transmitter.transmit_file(runpath / location, mime)
+        record = await _load_record(location, mime)
+        await transmitter.transmit_record(record)
 
 
 class TarRecordTransformation(RecordTransformation):
@@ -66,9 +67,9 @@ class TarRecordTransformation(RecordTransformation):
             raise TypeError("Record needs to be a BlobRecord type!")
 
     async def transform_output(
-        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+        self, transmitter: RecordTransmitter, mime: str, location: Path
     ) -> None:
-        blob_record = BlobRecord(data=await make_tar(runpath / location))
+        blob_record = BlobRecord(data=await make_tar(location))
         await transmitter.transmit_record(blob_record)
 
 
@@ -83,7 +84,7 @@ class ExecutableRecordTransformation(RecordTransformation):
         # create file(s)
         _prepare_location(base_path, location)
         record = await transmitter.load()
-        await _dump(record, base_path / location, mime)
+        await _save_record(record, base_path / location, mime)
 
         # post-proccess if neccessary
         path = base_path / location
@@ -91,12 +92,29 @@ class ExecutableRecordTransformation(RecordTransformation):
         path.chmod(st.st_mode | stat.S_IEXEC)
 
     async def transform_output(
-        self, transmitter: RecordTransmitter, mime: str, runpath: Path, location: Path
+        self, transmitter: RecordTransmitter, mime: str, location: Path
     ) -> None:
-        await transmitter.transmit_file(runpath / location, mime)
+        record = await _load_record(location, mime)
+        await transmitter.transmit_record(record)
 
 
-async def _dump(record: Record, location: Path, mime: str) -> None:
+async def _load_record(
+    file: Path,
+    mime: str,
+) -> Record:
+    if mime == "application/octet-stream":
+        async with aiofiles.open(str(file), mode="rb") as fb:
+            contents_b: bytes = await fb.read()
+            blob_record = BlobRecord(data=contents_b)
+        return blob_record
+    else:
+        serializer = get_serializer(mime)
+        _record_data = await serializer.decode_from_path(file)
+        num_record = NumericalRecord(data=_record_data)
+        return num_record
+
+
+async def _save_record(record: Record, location: Path, mime: str) -> None:
     if isinstance(record, NumericalRecord):
         async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
             await ft.write(get_serializer(mime).encode(record.data))

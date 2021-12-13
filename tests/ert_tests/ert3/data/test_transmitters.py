@@ -169,10 +169,15 @@ async def test_simple_record_transmit_from_file(
             await ert.serialization.get_serializer(mime_type).encode_to_path(
                 expected_data, filename
             )
-        await transmitter.transmit_file(filename, mime=mime_type)
+        transformation = ert.data.FileRecordTransformation()
+        await transformation.transform_output(
+            transmitter=transmitter, location=filename, mime=mime_type
+        )
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            await transmitter.transmit_file(filename, mime=mime_type)
+            await transformation.transform_output(
+                transmitter=transmitter, location=filename, mime=mime_type
+            )
 
 
 @pytest.mark.asyncio
