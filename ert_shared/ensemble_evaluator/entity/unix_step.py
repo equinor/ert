@@ -116,8 +116,7 @@ class UnixTask(prefect.Task):
                         output.get_transformation().transform_output(
                             transmitter=outputs[output.get_name()],
                             mime=output.get_mime(),
-                            runpath=run_path,
-                            location=output.get_path(),
+                            location=run_path / output.get_path(),
                         )
                     )
                 get_event_loop().run_until_complete(asyncio.gather(*futures))

@@ -60,8 +60,11 @@ def input_transmitter_factory(transmitter_factory):
 
 def create_script_transmitter(name: str, location: Path, transmitter_factory):
     script_transmitter = transmitter_factory(name)
+    transformation = ert.data.ExecutableRecordTransformation()
     get_event_loop().run_until_complete(
-        script_transmitter.transmit_file(location, mime="application/octet-stream")
+        transformation.transform_output(
+            script_transmitter, mime="application/octet-stream", location=location
+        )
     )
     return script_transmitter
 
