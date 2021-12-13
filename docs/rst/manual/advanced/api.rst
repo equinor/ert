@@ -74,10 +74,6 @@ config commands by writing a Python script, and invoking it from a workflow.
          # Then attach the ministep to the update step
          updatestep.attachMinistep(ministep)
 
-         # Write a .csv file for debugging.  The generated file can be imported
-         # into Excel for better tabulation of the setup
-         local_config.writeSummaryFile("tmp/summary_local_config.csv")
-
 =========================================================================  ===================================================================================
 ERT script function                                                        Purpose
 =========================================================================  ===================================================================================

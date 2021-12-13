@@ -73,9 +73,6 @@ class LocalConfig(BaseCClass):
     _copy_dataset = ResPrototype(
         "local_dataset_ref    local_config_alloc_dataset_copy(local_config, char*, char*)"
     )
-    _smry_fprintf = ResPrototype(
-        "void local_config_summary_fprintf(local_config, char*)"
-    )
 
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
@@ -178,15 +175,6 @@ class LocalConfig(BaseCClass):
         assert isinstance(mini_step, LocalMinistep)
         assert isinstance(update_step, LocalUpdateStep)
         self._attach_ministep(update_step, mini_step)
-
-    def writeSummaryFile(self, filename):
-        """
-        Writes a summary of the local config object
-        The summary contains the Obsset with their respective
-        number of observations and the Datasets with the number of active indices
-        """
-        assert isinstance(filename, str)
-        self._smry_fprintf(filename)
 
     def __repr__(self):
         return self._create_repr()

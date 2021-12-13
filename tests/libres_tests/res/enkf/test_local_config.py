@@ -31,16 +31,6 @@ class LocalConfigTest(ResTest):
         self.config = self.createTestPath("local/mini_ert/mini_config")
         self.local_conf_path = "python/enkf/data/local_config"
 
-    def test_write_summary(self):
-        with ErtTestContext(self.local_conf_path, self.config) as test_context:
-            main = test_context.getErt()
-
-            local_config = main.getLocalConfig()
-
-            fname = "local_config_summary.txt"
-            local_config.writeSummaryFile(fname)
-            self.assertTrue(os.path.isfile(fname))
-
     def test_get_grid(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
