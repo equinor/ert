@@ -104,7 +104,7 @@ struct enkf_main_struct {
     bool verbose;
 };
 
-void enkf_main_init_internalization(enkf_main_type *, run_mode_type);
+void enkf_main_init_internalization(enkf_main_type *);
 void enkf_main_update_local_updates(enkf_main_type *enkf_main);
 static void enkf_main_close_fs(enkf_main_type *enkf_main);
 static void enkf_main_init_fs(enkf_main_type *enkf_main);
@@ -680,8 +680,8 @@ static serialize_info_type *
 serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
                      const int_vector_type *iens_active_index, int target_step,
-                     enkf_state_type **ensemble, run_mode_type run_mode,
-                     int report_step, matrix_type *A, int num_cpu_threads) {
+                     enkf_state_type **ensemble, int report_step,
+                     matrix_type *A, int num_cpu_threads) {
 
     serialize_info_type *serialize_info =
         new serialize_info_type[num_cpu_threads];
@@ -691,7 +691,7 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
     for (icpu = 0; icpu < num_cpu_threads; icpu++) {
         serialize_info[icpu].ensemble_config = ensemble_config;
         serialize_info[icpu].iens_active_index = iens_active_index;
-        serialize_info[icpu].run_mode = run_mode;
+        serialize_info[icpu].run_mode = SMOOTHER_RUN;
         serialize_info[icpu].src_fs = src_fs;
         serialize_info[icpu].target_fs = target_fs;
         serialize_info[icpu].target_step = target_step;
@@ -745,9 +745,9 @@ static FILE *enkf_main_log_step_list(const char *log_path,
 static std::unordered_map<std::string, matrix_type *>
 enkf_main_load_parameters_from_ministep(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
-    meas_data_type *forecast, enkf_state_type **ensemble, hash_type *use_count,
-    obs_data_type *obs_data, const local_ministep_type *ministep) {
+    int_vector_type *iens_active_index, int last_step, meas_data_type *forecast,
+    enkf_state_type **ensemble, hash_type *use_count, obs_data_type *obs_data,
+    const local_ministep_type *ministep) {
 
     int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
@@ -757,8 +757,8 @@ enkf_main_load_parameters_from_ministep(
 
     serialize_info_type *serialize_info = serialize_info_alloc(
         target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-        target_fs, ensemble_config, iens_active_index, 0, ensemble, run_mode,
-        last_step, A, cpu_threads);
+        target_fs, ensemble_config, iens_active_index, 0, ensemble, last_step,
+        A, cpu_threads);
 
     std::unordered_map<std::string, matrix_type *> parameters;
     for (auto &[dataset_name, dataset] :
@@ -786,7 +786,7 @@ enkf_main_load_parameters_from_ministep(
 
 static void enkf_main_save_parameters_from_ministep(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
+    int_vector_type *iens_active_index, int last_step,
     enkf_state_type **ensemble, hash_type *use_count,
     const local_ministep_type *ministep,
     std::unordered_map<std::string, matrix_type *> parameters) {
@@ -809,7 +809,7 @@ static void enkf_main_save_parameters_from_ministep(
         serialize_info_type *serialize_info = serialize_info_alloc(
             target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
             target_fs, ensemble_config, iens_active_index, 0, ensemble,
-            run_mode, last_step, A, cpu_threads);
+            last_step, A, cpu_threads);
 
         enkf_main_deserialize_dataset(ensemble_config, dataset, last_step,
                                       serialize_info, tp);
@@ -823,9 +823,9 @@ static std::unordered_map<
     std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
 enkf_main_load_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step, run_mode_type run_mode,
-    meas_data_type *forecast, enkf_state_type **ensemble, hash_type *use_count,
-    obs_data_type *obs_data, const local_ministep_type *ministep) {
+    int_vector_type *iens_active_index, int last_step, meas_data_type *forecast,
+    enkf_state_type **ensemble, hash_type *use_count, obs_data_type *obs_data,
+    const local_ministep_type *ministep) {
 
     int matrix_start_size = 250000;
     int active_ens_size = meas_data_get_active_ens_size(forecast);
@@ -1142,7 +1142,6 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                               updatestep))
         return false;
 
-    run_mode_type run_mode = SMOOTHER_RUN;
     const int total_ens_size = enkf_main->ens_size;
     enkf_obs_type *obs = enkf_main->obs;
     bool verbose = enkf_main->verbose;
@@ -1245,14 +1244,14 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                     // Part 1: Parameters which do not have row scaling attached.
                     auto parameters = enkf_main_load_parameters_from_ministep(
                         target_fs, ensemble_config, iens_active_index,
-                        current_step, run_mode, meas_data, ensemble, use_count,
-                        obs_data, ministep);
+                        current_step, meas_data, ensemble, use_count, obs_data,
+                        ministep);
                     enkf_main_analysis_update_no_rowscaling(
                         module, ens_mask, meas_data, obs_data, shared_rng, E,
                         parameters);
                     enkf_main_save_parameters_from_ministep(
                         target_fs, ensemble_config, iens_active_index,
-                        current_step, run_mode, ensemble, use_count, ministep,
+                        current_step, ensemble, use_count, ministep,
                         parameters);
                     for (auto &[_, A] : parameters)
                         matrix_free(A);
@@ -1261,8 +1260,8 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                     auto row_scaling_parameters =
                         enkf_main_load_row_scaling_parameters(
                             target_fs, ensemble_config, iens_active_index,
-                            current_step, run_mode, meas_data, ensemble,
-                            use_count, obs_data, ministep);
+                            current_step, meas_data, ensemble, use_count,
+                            obs_data, ministep);
                     enkf_main_analysis_update_with_rowscaling(
                         module, ens_mask, meas_data, obs_data, shared_rng, E,
                         row_scaling_parameters);
@@ -1345,8 +1344,7 @@ void enkf_main_create_run_path(enkf_main_type *enkf_main,
 
 void enkf_main_init_run(enkf_main_type *enkf_main,
                         const ert_run_context_type *run_context) {
-    enkf_main_init_internalization(enkf_main,
-                                   ert_run_context_get_mode(run_context));
+    enkf_main_init_internalization(enkf_main);
     {
         stringlist_type *param_list =
             ensemble_config_alloc_keylist_from_var_type(
@@ -1650,8 +1648,7 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
    __load_state variable for the actual report step to true.
 */
 
-void enkf_main_init_internalization(enkf_main_type *enkf_main,
-                                    run_mode_type run_mode) {
+void enkf_main_init_internalization(enkf_main_type *enkf_main) {
     /* Clearing old internalize flags. */
     model_config_init_internalization(enkf_main_get_model_config(enkf_main));
 
