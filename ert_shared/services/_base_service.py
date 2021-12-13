@@ -350,7 +350,7 @@ class BaseService:
 
         self._conn_info_event.set()
 
-    def fetch_conn_info(self, timeout: float = 20) -> Mapping[str, Any]:
+    def fetch_conn_info(self, timeout: float = 30) -> Mapping[str, Any]:
         self.wait_until_ready(timeout)
         if self._conn_info is None:
             raise ValueError("conn_info is None")
