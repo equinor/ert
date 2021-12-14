@@ -58,6 +58,13 @@ def add_commands(
             pathlib.Path(name),
         )
 
+    async def transform_output(
+        transmitter: ert.data.RecordTransmitter, mime: str, location: pathlib.Path
+    ) -> None:
+        transformation = ert.data.ExecutableRecordTransformation()
+        record = await transformation.transform_output(mime, location)
+        await transmitter.transmit_record(record)
+
     for command in transportable_commands:
         transmitter: ert.data.RecordTransmitter
         if storage_type == "shared_disk":
@@ -71,9 +78,8 @@ def add_commands(
             )
         else:
             raise ValueError(f"Unsupported transmitter type: {storage_type}")
-        transformation = ert.data.ExecutableRecordTransformation()
         get_event_loop().run_until_complete(
-            transformation.transform_output(
+            transform_output(
                 transmitter=transmitter,
                 mime="application/octet-stream",
                 location=command.location,
