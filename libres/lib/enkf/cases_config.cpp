@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include <ert/util/util.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/cases_config.hpp>
 
@@ -59,7 +60,7 @@ bool cases_config_set_int(cases_config_type *cases_config, const char *var_name,
 }
 
 void cases_config_fwrite(cases_config_type *config, const char *filename) {
-    FILE *stream = util_mkdir_fopen(filename, "w");
+    auto stream = mkdir_fopen(fs::path(filename), "w");
     int iteration_no = cases_config_get_iteration_number(config);
     util_fwrite_int(iteration_no, stream);
     fclose(stream);

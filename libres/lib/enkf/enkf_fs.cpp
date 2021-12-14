@@ -29,6 +29,7 @@
 #include <ert/util/util.h>
 #include <ert/util/type_macros.h>
 
+#include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/res_log.hpp>
 
@@ -469,9 +470,8 @@ static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
 void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
     if (misfit_ensemble_initialized(fs->misfit_ensemble)) {
         char *filename = enkf_fs_alloc_case_filename(fs, MISFIT_ENSEMBLE_FILE);
-        FILE *stream = util_mkdir_fopen(filename, "w");
+        auto stream = mkdir_fopen(fs::path(filename), "w");
         free(filename);
-
         misfit_ensemble_fwrite(fs->misfit_ensemble, stream);
         fclose(stream);
     }
@@ -730,7 +730,7 @@ FILE *enkf_fs_open_case_tstep_file(const enkf_fs_type *fs,
                                    const char *input_name, int tstep,
                                    const char *mode) {
     char *filename = enkf_fs_alloc_case_tstep_filename(fs, tstep, input_name);
-    FILE *stream = util_mkdir_fopen(filename, mode);
+    auto stream = mkdir_fopen(fs::path(filename), mode);
     free(filename);
     return stream;
 }

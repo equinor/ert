@@ -60,7 +60,9 @@ void test_pre_simulation_copy(ert_test_context_type *test_context,
                                "target");
 
     {
-        FILE *f = util_mkdir_fopen("input/path/xxx/model/file", "w");
+        fs::create_directories(
+            fs::path("input/path/xxx/model/file").remove_filename());
+        FILE *f = fopen(fs::path("input/path/xxx/model/file").c_str(), "w");
         fprintf(f, "File \n");
         fclose(f);
     }

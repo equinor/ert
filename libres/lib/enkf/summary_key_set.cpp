@@ -22,6 +22,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/summary_key_set.hpp>
 
@@ -121,7 +122,7 @@ bool summary_key_set_is_read_only(const summary_key_set_type *set) {
 void summary_key_set_fwrite(summary_key_set_type *set, const char *filename) {
     pthread_rwlock_rdlock(&set->rw_lock);
     {
-        FILE *stream = util_mkdir_fopen(filename, "w");
+        auto stream = mkdir_fopen(fs::path(filename), "w");
         if (stream) {
             stringlist_type *keys = hash_alloc_stringlist(set->key_set);
             stringlist_fwrite(keys, stream);

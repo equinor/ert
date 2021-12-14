@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <cmath>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +25,7 @@
 #include <ert/util/util.h>
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>
@@ -32,6 +35,8 @@
 #include <ert/rms/rms_util.hpp>
 
 #include <ert/enkf/field.hpp>
+
+namespace fs = std::filesystem;
 
 GET_DATA_SIZE_HEADER(field);
 
@@ -739,7 +744,7 @@ void field_export(const field_type *__field, const char *file,
         fortio_fclose(fortio);
     } else if (file_type == ECL_GRDECL_FILE) {
         /* Writes the field to a new grdecl file. */
-        FILE *stream = util_mkdir_fopen(file, "w");
+        auto stream = mkdir_fopen(fs::path(file), "w");
         field_ecl_grdecl_export(field, stream, init_file);
         fclose(stream);
     } else if (file_type == RMS_ROFF_FILE)

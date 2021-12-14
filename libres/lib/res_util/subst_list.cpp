@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,9 +27,12 @@
 #include <ert/util/vector.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/parser.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 #include <ert/res_util/subst_list.hpp>
+
+namespace fs = std::filesystem;
 
 /*
    This file implements a small support struct for search-replace
@@ -670,7 +675,8 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
 
     /* Writing updated file */
     {
-        FILE *stream = util_mkdir_fopen(target_file, "w");
+        auto stream = mkdir_fopen(fs::path(target_file), "w");
+
         buffer_stream_fwrite_n(buffer, 0, -1,
                                stream); /* -1: Do not write the trailing \0. */
         fclose(stream);

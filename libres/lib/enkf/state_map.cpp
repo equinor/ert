@@ -23,6 +23,7 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/state_map.hpp>
@@ -175,7 +176,7 @@ void state_map_update_undefined(state_map_type *map, int index,
 void state_map_fwrite(const state_map_type *map, const char *filename) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
-        FILE *stream = util_mkdir_fopen(filename, "w");
+        auto stream = mkdir_fopen(fs::path(filename), "w");
         if (stream) {
             int_vector_fwrite(map->state, stream);
             fclose(stream);

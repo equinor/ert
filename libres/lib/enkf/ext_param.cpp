@@ -16,16 +16,21 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
 
 #include <ert/util/util.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/ext_param.hpp>
+
+namespace fs = std::filesystem;
 
 GET_DATA_SIZE_HEADER(ext_param);
 
@@ -159,7 +164,7 @@ double ext_param_iiget(const ext_param_type *param, int ikey, int isuffix) {
 
 void ext_param_json_export(const ext_param_type *ext_param,
                            const char *json_file) {
-    FILE *stream = util_mkdir_fopen(json_file, "w");
+    auto stream = mkdir_fopen(fs::path(json_file), "w");
     fprintf(stream, "{\n");
     for (int ikey = 0; ikey < ext_param->data.size(); ikey++) {
         auto const key = ext_param_config_iget_key(ext_param->config, ikey);

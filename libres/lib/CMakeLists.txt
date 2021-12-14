@@ -11,6 +11,7 @@ pybind11_add_module(
   res_util/res_log.cpp
   res_util/log.cpp
   res_util/es_testdata.cpp
+  res_util/file_utils.cpp
   res_util/arg_pack.cpp
   res_util/ui_return.cpp
   res_util/subst_list.cpp

@@ -15,6 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -26,6 +29,8 @@
 
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/config_keys.hpp>
+
+namespace fs = std::filesystem;
 
 analysis_config_type *create_analysis_config() {
     analysis_config_type *ac = analysis_config_alloc_default();
@@ -43,7 +48,7 @@ void test_min_realizations(const char *num_realizations_str,
                            int min_realizations_expected_needed) {
     ecl::util::TestArea ta("min_realizations");
     {
-        FILE *config_file_stream = util_mkdir_fopen("config_file", "w");
+        FILE *config_file_stream = fopen("config_file", "w");
         test_assert_not_NULL(config_file_stream);
 
         fputs(num_realizations_str, config_file_stream);

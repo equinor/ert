@@ -23,6 +23,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/time_t_vector.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 
@@ -304,7 +305,7 @@ void time_map_fwrite(time_map_type *map, const char *filename) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
         if (map->modified) {
-            FILE *stream = util_mkdir_fopen(filename, "w");
+            auto stream = mkdir_fopen(fs::path(filename), "w");
             time_t_vector_fwrite(map->map, stream);
             fclose(stream);
         }

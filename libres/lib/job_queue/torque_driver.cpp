@@ -24,6 +24,7 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
 
@@ -100,7 +101,7 @@ static void torque_driver_set_debug_output(torque_driver_type *driver,
         fclose(driver->debug_stream);
 
     if (debug_file)
-        driver->debug_stream = util_mkdir_fopen(debug_file, "w");
+        driver->debug_stream = mkdir_fopen(fs::path(debug_file), "w");
     else
         driver->debug_stream = NULL;
 }

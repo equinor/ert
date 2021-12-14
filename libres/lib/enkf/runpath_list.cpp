@@ -15,14 +15,19 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
 #include <ert/util/vector.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/runpath_list.hpp>
+
+namespace fs = std::filesystem;
 
 typedef struct runpath_node_struct runpath_node_type;
 
@@ -192,7 +197,7 @@ char *runpath_list_iget_basename(runpath_list_type *list, int index) {
 void runpath_list_fprintf(runpath_list_type *list) {
     pthread_rwlock_rdlock(&list->lock);
     {
-        FILE *stream = util_mkdir_fopen(list->export_file, "w");
+        auto stream = mkdir_fopen(fs::path(list->export_file), "w");
         const char *line_fmt = runpath_list_get_line_fmt(list);
         int index;
         vector_sort(list->list, runpath_node_cmp);

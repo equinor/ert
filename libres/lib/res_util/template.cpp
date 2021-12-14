@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -23,10 +25,13 @@
 
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/template.hpp>
 #include <ert/res_util/template_type.hpp>
+
+namespace fs = std::filesystem;
 
 /*
    Iff the template is set up with internaliz_template == false the
@@ -181,7 +186,7 @@ void template_instantiate(const template_type *template_,
 
         /* Write the content out. */
         {
-            FILE *stream = util_mkdir_fopen(target_file, "w");
+            auto stream = mkdir_fopen(fs::path(target_file), "w");
             fprintf(stream, "%s", char_buffer);
             fclose(stream);
         }

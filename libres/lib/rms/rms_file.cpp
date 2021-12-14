@@ -16,17 +16,22 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_util.hpp>
 #include <ert/rms/rms_tag.hpp>
 #include <ert/rms/rms_file.hpp>
+
+namespace fs = std::filesystem;
 
 static const char *rms_ascii_header = "roff-asc";
 static const char *rms_binary_header = "roff-bin";
@@ -242,7 +247,8 @@ FILE *rms_file_fopen_r(rms_file_type *rms_file) {
 }
 
 FILE *rms_file_fopen_w(rms_file_type *rms_file) {
-    rms_file->stream = util_mkdir_fopen(rms_file->filename, "w");
+    rms_file->stream = mkdir_fopen(fs::path(rms_file->filename), "w");
+
     return rms_file->stream;
 }
 
