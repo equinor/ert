@@ -38,10 +38,10 @@ class FileRecordTransformation(RecordTransformation):
         self, record: Record, mime: str, runpath: Path, location: Path
     ) -> None:
         _prepare_location(runpath, location)
-        await _save_record(record, runpath / location, mime)
+        await _save_record_to_file(record, runpath / location, mime)
 
     async def transform_output(self, mime: str, location: Path) -> Record:
-        return await _load_record(location, mime)
+        return await _load_record_from_file(location, mime)
 
 
 class TarRecordTransformation(RecordTransformation):
@@ -69,7 +69,7 @@ class ExecutableRecordTransformation(RecordTransformation):
 
         # create file(s)
         _prepare_location(base_path, location)
-        await _save_record(record, base_path / location, mime)
+        await _save_record_to_file(record, base_path / location, mime)
 
         # post-proccess if necessary
         path = base_path / location
@@ -77,10 +77,10 @@ class ExecutableRecordTransformation(RecordTransformation):
         path.chmod(st.st_mode | stat.S_IEXEC)
 
     async def transform_output(self, mime: str, location: Path) -> Record:
-        return await _load_record(location, mime)
+        return await _load_record_from_file(location, mime)
 
 
-async def _load_record(
+async def _load_record_from_file(
     file: Path,
     mime: str,
 ) -> Record:
@@ -94,7 +94,7 @@ async def _load_record(
         return NumericalRecord(data=_record_data)
 
 
-async def _save_record(record: Record, location: Path, mime: str) -> None:
+async def _save_record_to_file(record: Record, location: Path, mime: str) -> None:
     if isinstance(record, NumericalRecord):
         async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
             await ft.write(get_serializer(mime).encode(record.data))
