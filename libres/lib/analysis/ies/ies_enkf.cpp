@@ -55,15 +55,13 @@ void ies_enkf_linalg_subspace_inversion(
 
 void ies_enkf_linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                                      const matrix_type *S, const matrix_type *H,
-                                     double ies_steplength, FILE *log_fp,
-                                     bool dbg);
+                                     double ies_steplength, FILE *log_fp);
 
 void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
-                                    const matrix_type *W0, FILE *log_fp,
-                                    bool dbg);
+                                    const matrix_type *W0, FILE *log_fp);
 
 void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
-                                       matrix_type *A0, FILE *log_fp, bool dbg);
+                                       matrix_type *A0, FILE *log_fp);
 
 #define ENKF_SUBSPACE_DIMENSION_KEY "ENKF_SUBSPACE_DIMENSION"
 #define ENKF_TRUNCATION_KEY "ENKF_TRUNCATION"
@@ -313,7 +311,7 @@ void ies_enkf_updateA(
                 "Exact inversion using diagonal R=I. (ies_inversion=%d)\n",
                 ies_inversion);
         ies_enkf_linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength,
-                                        log_fp, dbg);
+                                        log_fp);
     }
 
     if (dbg)
@@ -321,7 +319,7 @@ void ies_enkf_updateA(
                                     m_ens_size, 0, m_ens_size);
 
     /* Store active realizations from W0 to data->W */
-    ies_enkf_linalg_store_active_W(data, W0, log_fp, dbg);
+    ies_enkf_linalg_store_active_W(data, W0, log_fp);
 
     /*
      * CONSTRUCT TRANFORM MATRIX X FOR CURRENT ITERATION (Line 10)
@@ -339,7 +337,7 @@ void ies_enkf_updateA(
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
     matrix_pretty_fprint_submat(A, "A^f", "%11.5f", log_fp, 0, m_state_size, 0,
                                 m_ens_size);
-    ies_enkf_linalg_extract_active_A0(data, A0, log_fp, dbg);
+    ies_enkf_linalg_extract_active_A0(data, A0, log_fp);
     matrix_matmul(A, A0, X);
     matrix_pretty_fprint_submat(A, "A^a", "%11.5f", log_fp, 0, m_state_size, 0,
                                 m_ens_size);
@@ -635,8 +633,7 @@ void ies_enkf_linalg_subspace_inversion(
 */
 void ies_enkf_linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                                      const matrix_type *S, const matrix_type *H,
-                                     double ies_steplength, FILE *log_fp,
-                                     bool dbg) {
+                                     double ies_steplength, FILE *log_fp) {
     int ens_size = matrix_get_columns(S);
 
     fprintf(log_fp, "Exact inversion using diagonal R=I. (ies_inversion=%d)\n",
@@ -682,8 +679,7 @@ void ies_enkf_linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */
 void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
-                                    const matrix_type *W0, FILE *log_fp,
-                                    bool dbg) {
+                                    const matrix_type *W0, FILE *log_fp) {
     int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(W0);
     int i = 0;
@@ -714,8 +710,7 @@ void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
 * Extract active realizations from the initially stored ensemble.
 */
 void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
-                                       matrix_type *A0, FILE *log_fp,
-                                       bool dbg) {
+                                       matrix_type *A0, FILE *log_fp) {
     int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
     int ens_size = matrix_get_columns(A0);
     int state_size = matrix_get_rows(A0);
