@@ -1,3 +1,4 @@
+import sys
 import os
 from setuptools import find_packages
 from skbuild import setup
@@ -120,6 +121,7 @@ setup(
         # everything not OS X. We depend on C++17, which makes our minimum
         # supported OS X release 10.15
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
+        f"-DPYTHON_EXECUTABLE={sys.executable}",
     ],
     cmake_source_dir="libres/",
     classifiers=[
