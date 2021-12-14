@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 project(res C CXX)
 
 option(BUILD_TESTS "Should the tests be built" OFF)
@@ -111,7 +111,7 @@ conan_cmake_run(
 # -----------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------
-
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(cJSON REQUIRED)
 find_package(Filesystem REQUIRED)
 find_package(pybind11 REQUIRED)
