@@ -71,7 +71,7 @@ class ExecutableRecordTransformation(RecordTransformation):
         _prepare_location(base_path, location)
         await _save_record_to_file(record, base_path / location, mime)
 
-        # post-proccess if necessary
+        # post-process if necessary
         path = base_path / location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
