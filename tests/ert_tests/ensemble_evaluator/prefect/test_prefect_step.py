@@ -66,10 +66,15 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
 
 @pytest.fixture()
 def step_test_script_transmitter(test_data_path, transmitter_factory, script_name):
+    async def transform_output(transmitter, mime, location):
+        transformation = ert.data.ExecutableRecordTransformation()
+        record = await transformation.transform_output(mime, location)
+        await transmitter.transmit_record(record)
+
     script_transmitter = transmitter_factory("script")
     transformation = ert.data.ExecutableRecordTransformation()
     get_event_loop().run_until_complete(
-        transformation.transform_output(
+        transform_output(
             transmitter=script_transmitter,
             mime="application/octet-stream",
             location=test_data_path / script_name,

@@ -75,19 +75,29 @@ class UnixTask(prefect.Task):
         transmitters: Dict[int, RecordTransmitter],
         runpath: Path,
     ):
+        async def transform_input(input_):
+            record = await transmitters[input_.get_name()].load()
+            await input_.get_transformation().transform_input(
+                record=record,
+                mime=input_.get_mime(),
+                runpath=runpath,
+                location=input_.get_path(),
+            )
+
         futures = []
         for input_ in self._step.get_inputs():
-            futures.append(
-                input_.get_transformation().transform_input(
-                    transmitter=transmitters[input_.get_name()],
-                    mime=input_.get_mime(),
-                    runpath=runpath,
-                    location=input_.get_path(),
-                )
-            )
+            futures.append(transform_input(input_))
         get_event_loop().run_until_complete(asyncio.gather(*futures))
 
     def run(self, inputs=None):
+        async def transform_output(output):
+            record = await output.get_transformation().transform_output(
+                mime=output.get_mime(),
+                location=run_path / output.get_path(),
+            )
+            transmitter = outputs[output.get_name()]
+            await transmitter.transmit_record(record)
+
         with tempfile.TemporaryDirectory() as run_path:
             run_path = Path(run_path)
             self._load_and_dump_input(transmitters=inputs, runpath=run_path)
@@ -112,13 +122,7 @@ class UnixTask(prefect.Task):
                     outputs[output.get_name()] = self._output_transmitters[
                         output.get_name()
                     ]
-                    futures.append(
-                        output.get_transformation().transform_output(
-                            transmitter=outputs[output.get_name()],
-                            mime=output.get_mime(),
-                            location=run_path / output.get_path(),
-                        )
-                    )
+                    futures.append(transform_output(output))
                 get_event_loop().run_until_complete(asyncio.gather(*futures))
                 ee_client.send_event(
                     ev_type=ids.EVTYPE_FM_STEP_SUCCESS,

@@ -98,8 +98,9 @@ async def test_atomic_transformation_input(
         await transmitter.transmit_record(record_in)
         assert transmitter.is_transmitted()
         transformation = transformation_class()
+        record = await transmitter.load()
         await transformation.transform_input(
-            transmitter, mime, runpath, pathlib.Path(location)
+            record, mime, runpath, pathlib.Path(location)
         )
 
         for file in res_files_dumped:
@@ -132,7 +133,9 @@ async def test_atomic_transformation_output(
         transformation = transformation_class()
         if not is_dir:
             location = res_files_dumped[0]
-        await transformation.transform_output(transmitter, mime, runpath / location)
+
+        record = await transformation.transform_output(mime, runpath / location)
+        await transmitter.transmit_record(record)
         assert transmitter.is_transmitted()
 
         blob_record = await transmitter.load()

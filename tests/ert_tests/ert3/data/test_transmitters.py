@@ -170,14 +170,13 @@ async def test_simple_record_transmit_from_file(
                 expected_data, filename
             )
         transformation = ert.data.FileRecordTransformation()
-        await transformation.transform_output(
-            transmitter=transmitter, location=filename, mime=mime_type
+        record = await transformation.transform_output(
+            location=filename, mime=mime_type
         )
+        await transmitter.transmit_record(record)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
-            await transformation.transform_output(
-                transmitter=transmitter, location=filename, mime=mime_type
-            )
+            await transmitter.transmit_record(record)
 
 
 @pytest.mark.asyncio
@@ -232,8 +231,9 @@ async def test_simple_record_transmit_and_dump(
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_record(record_in)
         transformation = FileRecordTransformation()
+        record = await transmitter.load()
         await transformation.transform_input(
-            transmitter, mime_type, pathlib.Path("."), pathlib.Path("record")
+            record, mime_type, pathlib.Path("."), pathlib.Path("record")
         )
         if mime_type == "application/octet-stream":
             with open("record", "rb") as f:
@@ -285,26 +285,6 @@ async def test_load_untransmitted_record(
         transmitter = record_transmitter_factory(name="some_name")
         with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
             _ = await transmitter.load()
-
-
-@pytest.mark.asyncio
-async def test_dump_untransmitted_record(
-    record_transmitter_factory_context: ContextManager[
-        Callable[[str], RecordTransmitter]
-    ],
-):
-    with record_transmitter_factory_context(
-        storage_path=None
-    ) as record_transmitter_factory:
-        transmitter = record_transmitter_factory(name="some_name")
-        with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
-            transformation = FileRecordTransformation()
-            await transformation.transform_input(
-                transmitter,
-                "text/whatever",
-                pathlib.Path("."),
-                pathlib.Path("some.file"),
-            )
 
 
 @pytest.mark.parametrize(

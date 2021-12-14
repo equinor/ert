@@ -59,10 +59,14 @@ def input_transmitter_factory(transmitter_factory):
 
 
 def create_script_transmitter(name: str, location: Path, transmitter_factory):
+    async def transform_output(transmitter, mime, location):
+        transformation = ert.data.ExecutableRecordTransformation()
+        record = await transformation.transform_output(mime, location)
+        await transmitter.transmit_record(record)
+
     script_transmitter = transmitter_factory(name)
-    transformation = ert.data.ExecutableRecordTransformation()
     get_event_loop().run_until_complete(
-        transformation.transform_output(
+        transform_output(
             script_transmitter, mime="application/octet-stream", location=location
         )
     )
