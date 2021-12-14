@@ -27,6 +27,7 @@
 #include <ert/util/hash.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/config/config_parser.hpp>
 
@@ -926,7 +927,7 @@ void ext_job_json_fprintf(const ext_job_type *ext_job, int job_index,
 */
 
 void ext_job_save(const ext_job_type *ext_job) {
-    FILE *stream = util_mkdir_fopen(ext_job->config_file, "w");
+    auto stream = mkdir_fopen(fs::path(ext_job->config_file), "w");
 
     PRINT_KEY_STRING(stream, "EXECUTABLE", ext_job->executable);
     PRINT_KEY_STRING(stream, "STDIN", ext_job->stdin_file);

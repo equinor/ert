@@ -16,16 +16,21 @@
    for more details.
 */
 
+#include <filesystem>
+
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/res_util/file_utils.hpp>
 
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/data_ranking.hpp>
 #include <ert/enkf/misfit_ranking.hpp>
 #include <ert/enkf/ranking_table.hpp>
+
+namespace fs = std::filesystem;
 
 struct ranking_table_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -101,7 +106,7 @@ bool ranking_table_fwrite_ranking(const ranking_table_type *ranking_table,
         void *ranking =
             (void *)hash_get(ranking_table->ranking_table, ranking_key);
 
-        FILE *file = util_mkdir_fopen(filename, "w");
+        auto file = mkdir_fopen(fs::path(filename), "w");
 
         if (data_ranking_is_instance(ranking)) {
             data_ranking_type *data_ranking = data_ranking_safe_cast(ranking);
