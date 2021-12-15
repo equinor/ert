@@ -300,7 +300,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
     FILE *log_stream = enkf_main_log_step_list(
         analysis_config_get_log_path(analysis_config), step_list);
 
-    bool ok = analysis_smoother_update(
+    bool ok = analysis::smoother_update(
         step_list, updatestep, total_ens_size, obs, shared_rng, analysis_config,
         ensemble_config, ensemble, source_fs, target_fs, log_stream, verbose);
 
