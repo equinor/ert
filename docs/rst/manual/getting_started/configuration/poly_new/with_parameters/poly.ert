@@ -4,7 +4,7 @@ NUM_REALIZATIONS 100
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 50
 
-RUNPATH poly_out/real_%d/iter_%d
+RUNPATH poly_out/realization-%d/iter-%d
 
 GEN_KW COEFFS coeff.tmpl coeffs.json coeff_priors
 

@@ -6,7 +6,7 @@ DEFINE <STORAGE> storage/snake_oil
 RANDOM_SEED 3593114179000630026631423308983283277868
 
 RUNPATH_FILE directory/test_runpath_list.txt
-RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
+RUNPATH <STORAGE>/runpath/realization-%d/iter-%d
 ENSPATH <STORAGE>/ensemble_GEN_DATA
 ECLBASE SNAKE_OIL_FIELD
 

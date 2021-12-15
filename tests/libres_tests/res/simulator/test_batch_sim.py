@@ -490,7 +490,7 @@ class BatchSimulatorTest(ResTest):
             self.assertEqual(status.complete, 0)
             self.assertEqual(status.running, 0)
 
-            runpath = "storage/batch_sim/runpath/%s/realisation-0" % case_name
+            runpath = "storage/batch_sim/runpath/%s/realization-0" % case_name
             self.assertTrue(os.path.exists(runpath))
 
     @tmpdir()
@@ -533,7 +533,7 @@ class BatchSimulatorTest(ResTest):
             self.assertEqual(status.complete, 0)
             self.assertEqual(status.running, 0)
             for idx, _ in enumerate(case_data):
-                path = "storage/batch_sim/runpath/{}/realisation-{}/iter-0/realization.number".format(
+                path = "storage/batch_sim/runpath/{}/realization-{}/iter-0/realization.number".format(
                     case_name, idx
                 )
                 self.assertTrue(os.path.isfile(path))

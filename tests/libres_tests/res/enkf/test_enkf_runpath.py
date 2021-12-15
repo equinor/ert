@@ -45,7 +45,7 @@ class EnKFRunpathTest(ResTest):
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
             self.assertFileExists(
-                "snake_oil_no_data/storage/snake_oil/runpath/realisation-0/iter-0/parameters.txt"
+                "snake_oil_no_data/storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
             )
             self.assertEqual(
                 len(os.listdir("snake_oil_no_data/storage/snake_oil/runpath")), 1
@@ -53,7 +53,7 @@ class EnKFRunpathTest(ResTest):
             self.assertEqual(
                 len(
                     os.listdir(
-                        "snake_oil_no_data/storage/snake_oil/runpath/realisation-0"
+                        "snake_oil_no_data/storage/snake_oil/runpath/realization-0"
                     )
                 ),
                 1,
@@ -79,10 +79,10 @@ class EnKFRunpathTest(ResTest):
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
             main.createRunpath(run_context)
             self.assertDirectoryExists(
-                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0"
+                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realization-0/iter-0"
             )
             self.assertFileDoesNotExist(
-                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0/iter-0/parameters.txt"
+                "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realization-0/iter-0/parameters.txt"
             )
             self.assertEqual(
                 len(
@@ -93,7 +93,7 @@ class EnKFRunpathTest(ResTest):
             self.assertEqual(
                 len(
                     os.listdir(
-                        "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realisation-0"
+                        "snake_oil_no_data/storage/snake_oil_no_gen_kw/runpath/realization-0"
                     )
                 ),
                 1,

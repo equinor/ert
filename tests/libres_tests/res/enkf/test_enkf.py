@@ -311,7 +311,7 @@ class EnKFTest(ResTest):
             )
             self.assertTrue(
                 os.path.isdir(
-                    "snake_oil/storage/snake_oil/runpath/realisation-0/iter-0"
+                    "snake_oil/storage/snake_oil/runpath/realization-0/iter-0"
                 )
             )
             self.assertEqual(num, 1)

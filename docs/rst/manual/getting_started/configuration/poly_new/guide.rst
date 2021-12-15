@@ -121,7 +121,7 @@ We need to have each iteration run in a different folder, so that they won't
 step on each others toes. Add to the config (``poly.ert``) file the following
 line::
 
-    RUNPATH poly_out/real_%d/iter_%d
+    RUNPATH poly_out/realization-%d/iter-%d
 
 The second ``%d`` in the runpath is replaced by the iteration number of the
 algorithm. This is needed since the algorithm may run several iterations during
@@ -192,8 +192,8 @@ earlier. After it has finished, close all ERT windows.
 
 In you project folder you should now see a new folder called ``poly_out`` as
 you defined in the ``RUNPATH`` configuration. Inside the folder you will see
-folders named ``real_0``, ``real_1``, and so on, for each realization. Inside
-these folders you will see a new level of folders named ``iter_0``, where the
+folders named ``realization-0``, ``realization-1``, and so on, for each realization. Inside
+these folders you will see a new level of folders named ``iter-0``, where the
 realization simulation has run. Inside this folder, you will see some new files
 in addition to those you saw before.
 
@@ -209,7 +209,7 @@ poly_0.out
     different jobs.
 
 If you look at the ``poly_0.out`` file in each of the runpaths (e.g. run
-``cat poly_out/real_0/iter_0/poly_0.out``), you should see the following in all
+``cat poly_out/realization-0/iter-0/poly_0.out``), you should see the following in all
 the files::
 
     3
@@ -332,7 +332,7 @@ Inspecting the parameters and results
 
 Inside each of the runpaths you should now be able to find the instantiated
 parameter template files ``coeffs.json``. Looking at them (e.g. with
-``cat poly_out/real_4/iter_0/coeffs.json``) you should see something like
+``cat poly_out/realization-4/iter-0/coeffs.json``) you should see something like
 this::
 
     {
@@ -343,7 +343,7 @@ this::
 
 If you now look at the generated file ``poly_0.out`` in the runpaths you should
 also see that each simulation has yielded different results. Here is one
-possible output from running ``cat poly_out/real_0/iter_0/poly_0.out``::
+possible output from running ``cat poly_out/realization-0/iter-0/poly_0.out``::
 
     2.23622
     4.288035

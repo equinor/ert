@@ -5,7 +5,7 @@ NUM_REALIZATIONS 25
 
 DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>
 
-RUNPATH <STORAGE>/runpath/<CASE_NAME>/realisation-%d/iter-%d
+RUNPATH <STORAGE>/runpath/<CASE_NAME>/realization-%d/iter-%d
 ENSPATH <STORAGE>/ensemble
 JOBNAME SNAKE_OIL_FIELD
 

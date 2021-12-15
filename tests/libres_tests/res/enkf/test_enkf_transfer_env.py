@@ -60,7 +60,7 @@ class EnKFTestTransferEnv(ResTest):
                     result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
                 )
                 ert.getEnkfSimulationRunner().createRunPath(run_context)
-                os.chdir("storage/snake_oil/runpath/realisation-0/iter-0")
+                os.chdir("storage/snake_oil/runpath/realization-0/iter-0")
                 assert os.path.isfile("jobs.json")
                 with open("jobs.json", "r") as f:
                     data = json.load(f)

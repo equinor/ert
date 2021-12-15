@@ -556,13 +556,13 @@ possible to do with ERT.
         When running workflows based on external scripts it is necessary to 'tell' the
         external script in some way or another were all the realisations are located in
         the filesystem. Since the number of realisations can be quite high this will
-        easily overflow the commandline buffer; the solution which is used is therefor
-        to let ERT write a reagular file which looks like this::
+        easily overflow the commandline buffer; the solution which is used is therefore
+        to let ERT write a regular file which looks like this::
 
-                0   /path/to/realisation0   CASE0   iter
-                1   /path/to/realisation1   CASE1   iter
+                0   /path/to/realization-0   CASE0   iter
+                1   /path/to/realization-1   CASE1   iter
                 ...
-                N   /path/to/realisationN   CASEN   iter
+                N   /path/to/realization-N   CASEN   iter
 
         The path to this file can then be passed to the scripts using the
         magic string <RUNPATH_FILE>. The RUNPATH_FILE will by default be
