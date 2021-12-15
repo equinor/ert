@@ -279,17 +279,20 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
     int ens_size = int_vector_size(iens_active_index);
     int iens_offset = 0;
     for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
-        serialize_info[icpu].ensemble_config = ensemble_config;
-        serialize_info[icpu].iens_active_index = iens_active_index;
-        serialize_info[icpu].src_fs = src_fs;
-        serialize_info[icpu].target_fs = target_fs;
-        serialize_info[icpu].target_step = target_step;
-        serialize_info[icpu].report_step = report_step;
-        serialize_info[icpu].A = A;
-        serialize_info[icpu].iens1 = iens_offset;
-        serialize_info[icpu].iens2 =
-            iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
-        serialize_info[icpu].node_info = nullptr;
+        int iens_increment =
+            (ens_size - iens_offset) / (num_cpu_threads - icpu);
+        serialize_info[icpu] = (serialize_info_type){
+            .src_fs = src_fs,
+            .target_fs = target_fs,
+            .ensemble_config = ensemble_config,
+            .iens1 = iens_offset,
+            .iens2 = iens_offset + iens_increment,
+            .report_step = report_step,
+            .target_step = target_step,
+            .A = A,
+            .iens_active_index = iens_active_index,
+            .node_info = nullptr,
+        };
         iens_offset = serialize_info[icpu].iens2;
     }
     serialize_info[num_cpu_threads - 1].iens2 = ens_size;
