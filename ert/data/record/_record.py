@@ -1,11 +1,8 @@
-import io
 import pathlib
-import tarfile
 import json
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
-from concurrent import futures
 from typing import (
     Any,
     Dict,
@@ -20,13 +17,11 @@ from typing import (
     TypeVar,
 )
 
-import aiofiles
 from beartype import beartype
 from beartype.roar import BeartypeException  # type: ignore
 from pydantic import PositiveInt
 
-from ert.serialization import get_serializer
-from ert_shared.async_utils import get_event_loop
+import ert
 
 number = Union[int, float]
 numerical_record_data = Union[List[number], Dict[str, number], Dict[int, number]]
@@ -332,20 +327,6 @@ class RecordCollection:
         return self._collection_type
 
 
-async def make_tar(file_path: pathlib.Path) -> bytes:
-    """Walk the files under a filepath and encapsulate the file(s)
-    in a tar package."""
-    _executor = futures.ThreadPoolExecutor()
-    return await get_event_loop().run_in_executor(_executor, _sync_make_tar, file_path)
-
-
-def _sync_make_tar(file_path: pathlib.Path) -> bytes:
-    tar_obj = io.BytesIO()
-    with tarfile.open(fileobj=tar_obj, mode="w") as tar:
-        tar.add(file_path, arcname="")
-    return tar_obj.getvalue()
-
-
 async def load_collection_from_file(
     file_path: pathlib.Path,
     mime: str,
@@ -355,18 +336,27 @@ async def load_collection_from_file(
     if mime == "application/octet-stream":
         if is_directory:
             return RecordCollection(
-                records=(BlobRecord(data=await make_tar(file_path)),),
+                records=(
+                    await ert.data.TarRecordTransformation().transform_output(
+                        mime, file_path
+                    ),
+                ),
                 length=length,
                 collection_type=RecordCollectionType.UNIFORM,
             )
         else:
-            async with aiofiles.open(file_path, "rb") as filebinary:
-                return RecordCollection(
-                    records=(BlobRecord(data=await filebinary.read()),),
-                    length=length,
-                    collection_type=RecordCollectionType.UNIFORM,
-                )
-    raw_ensrecord = await get_serializer(mime).decode_from_path(file_path)
+            return RecordCollection(
+                records=(
+                    await ert.data.FileRecordTransformation().transform_output(
+                        mime, file_path
+                    ),
+                ),
+                length=length,
+                collection_type=RecordCollectionType.UNIFORM,
+            )
+
     return RecordCollection(
-        records=tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
+        records=await ert.data.FileRecordTransformation().transform_output_sequence(
+            mime, file_path
+        )
     )

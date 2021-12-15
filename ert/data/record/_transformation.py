@@ -1,12 +1,15 @@
-from abc import ABC, abstractmethod
-from pathlib import Path
-import tarfile
 import io
 import stat
-import aiofiles
+import tarfile
+from abc import ABC, abstractmethod
+from concurrent import futures
+from pathlib import Path
+from typing import Tuple
 
-from ert.data import BlobRecord, make_tar, Record, NumericalRecord
+import aiofiles
+from ert.data import BlobRecord, NumericalRecord, Record
 from ert.serialization import get_serializer
+from ert_shared.async_utils import get_event_loop
 
 _BIN_FOLDER = "bin"
 
@@ -19,6 +22,19 @@ def _prepare_location(base_path: Path, location: Path) -> None:
     abs_path = base_path / location
     if not abs_path.parent.exists():
         abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _sync_make_tar(file_path: Path) -> bytes:
+    tar_obj = io.BytesIO()
+    with tarfile.open(fileobj=tar_obj, mode="w") as tar:
+        tar.add(file_path, arcname="")
+    return tar_obj.getvalue()
+
+
+async def _make_tar(file_path: Path) -> bytes:
+    # Walk the files under a filepath and encapsulate them in a tar package.
+    executor = futures.ThreadPoolExecutor()
+    return await get_event_loop().run_in_executor(executor, _sync_make_tar, file_path)
 
 
 class RecordTransformation(ABC):
@@ -46,6 +62,14 @@ class FileRecordTransformation(RecordTransformation):
     async def transform_output(self, mime: str, location: Path) -> Record:
         return await _load_record_from_file(location, mime)
 
+    async def transform_output_sequence(
+        self, mime: str, location: Path
+    ) -> Tuple[Record, ...]:
+        if mime == "application/octet-stream":
+            raise TypeError("Output record types must be NumericalRecord")
+        raw_ensrecord = await get_serializer(mime).decode_from_path(location)
+        return tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
+
 
 class TarRecordTransformation(RecordTransformation):
     async def transform_input(
@@ -59,7 +83,8 @@ class TarRecordTransformation(RecordTransformation):
             tar.extractall(runpath / location)
 
     async def transform_output(self, mime: str, location: Path) -> Record:
-        return BlobRecord(data=await make_tar(location))
+
+        return BlobRecord(data=await _make_tar(location))
 
 
 class ExecutableRecordTransformation(RecordTransformation):

@@ -1,6 +1,9 @@
+import io
 import contextlib
 import os
 import pathlib
+import tarfile
+import json
 from typing import Callable, ContextManager, List
 
 import pytest
@@ -8,13 +11,13 @@ from ert_utils import tmp
 
 from ert.data import (
     BlobRecord,
+    NumericalRecord,
     ExecutableRecordTransformation,
     FileRecordTransformation,
     RecordTransformation,
     RecordTransmitter,
     TarRecordTransformation,
 )
-from ert.data.record._record import _sync_make_tar
 
 
 @contextlib.contextmanager
@@ -36,8 +39,10 @@ def record_factory_context(tmpdir):
             _files = [dir_path / "a.txt", dir_path / "b.txt"]
             with file_factory_context(tmpdir) as file_factory:
                 file_factory(_files)
-            # Using the private sync version for simplicity in tests:
-            tardata = _sync_make_tar(dir_path)
+            tar_obj = io.BytesIO()
+            with tarfile.open(fileobj=tar_obj, mode="w") as tar:
+                tar.add(dir_path, arcname="")
+            tardata = tar_obj.getvalue()
             return BlobRecord(data=tardata)
         else:
             return BlobRecord(data=b"\xF0\x9F\xA6\x89")
@@ -140,3 +145,23 @@ async def test_atomic_transformation_output(
 
         blob_record = await transmitter.load()
         assert isinstance(blob_record, BlobRecord)
+
+
+@pytest.mark.asyncio
+async def test_transform_output_sequence(tmpdir):
+    test_data = [
+        {"a": 1.0, "b": 2.0},
+        {"a": 3.0, "b": 4.0},
+        {"a": 5.0, "b": 6.0},
+    ]
+    file = pathlib.Path(tmpdir) / "test.json"
+    with open(file, "w", encoding="utf-8") as fp:
+        json.dump(test_data, fp)
+
+    records = await FileRecordTransformation().transform_output_sequence(
+        "application/json", file
+    )
+    assert len(records) == 3
+    for record, data in zip(records, test_data):
+        assert isinstance(record, NumericalRecord)
+        assert data == record.data
