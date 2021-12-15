@@ -691,9 +691,8 @@ static vector_type *alloc_node_ensemble(const ensemble_config_type *ens_config,
     const enkf_config_node_type *config_node =
         ensemble_config_get_node(ens_config, key);
     node_id_type node_id = {.report_step = report_step, .iens = -1};
-    int iens;
 
-    for (iens = 0; iens < ens_size; iens++) {
+    for (int iens = 0; iens < ens_size; iens++) {
         enkf_node_type *node = enkf_node_alloc(config_node);
         node_id.iens = iens;
         enkf_node_load(node, src_fs, node_id);
@@ -735,15 +734,12 @@ static void node_mean(const vector_type *ensemble, enkf_node_type *mean) {
     if (vector_get_size(ensemble) == 0)
         util_abort("%s: internal error - calculation average of empty list\n",
                    __func__);
-    {
-        int iens;
-        enkf_node_clear(mean);
-        for (iens = 0; iens < vector_get_size(ensemble); iens++)
-            enkf_node_iadd(mean, (const enkf_node_type *)vector_iget_const(
-                                     ensemble, iens));
+    enkf_node_clear(mean);
+    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
+        enkf_node_iadd(
+            mean, (const enkf_node_type *)vector_iget_const(ensemble, iens));
 
-        enkf_node_scale(mean, 1.0 / vector_get_size(ensemble));
-    }
+    enkf_node_scale(mean, 1.0 / vector_get_size(ensemble));
 }
 
 void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
@@ -754,7 +750,6 @@ void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
     enkf_node_type *mean =
         enkf_node_copyc((const enkf_node_type *)vector_iget_const(ensemble, 0));
     enkf_node_type *std = enkf_node_copyc(mean);
-    int iens;
 
     /* Shifting away the mean */
     node_mean(ensemble, mean);
@@ -773,7 +768,7 @@ void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
     enkf_node_type *inflation = enkf_node_copyc(mean);
     enkf_node_set_inflation(inflation, std, min_std);
 
-    for (iens = 0; iens < vector_get_size(ensemble); iens++)
+    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
         enkf_node_imul((enkf_node_type *)vector_iget(ensemble, iens),
                        inflation);
 
