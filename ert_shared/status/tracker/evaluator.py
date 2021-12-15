@@ -12,6 +12,7 @@ import time
 import asyncio
 
 from aiohttp import ClientError
+from websockets.exceptions import ConnectionClosedError
 
 from ert_shared.models.base_run_model import BaseRunModel
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
@@ -109,6 +110,9 @@ class EvaluatorTracker:
             except (ConnectionRefusedError, ClientError) as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
+            except (ConnectionClosedError) as e:
+                # The monitor connection closed unexpectedly
+                drainer_logger.debug(f"connection closed error: {e}")
 
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
