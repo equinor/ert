@@ -77,7 +77,7 @@ static int __get_active_size(const ensemble_config_type *ensemble_config,
        enkf_node_free(node);
    }
    active_mode_type active_mode = active_list_get_mode(active_list);
-   int active_size;
+   int active_size = 0;
    if (active_mode == INACTIVE)
        active_size = 0;
    else if (active_mode == ALL_ACTIVE)
