@@ -408,7 +408,6 @@ analysis_load_row_scaling_parameters(
             const auto &key = scaled_keys[ikw];
             const active_list_type *active_list =
                 local_dataset_get_node_active_list(dataset, key.c_str());
-            const int matrix_rows = matrix_get_rows(A);
             const auto *config_node =
                 ensemble_config_get_node(ensemble_config, key.c_str());
             const int node_size =
