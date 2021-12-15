@@ -496,8 +496,6 @@ void analysis_run_analysis_update(
     matrix_type *dObs = obs_data_allocdObs(obs_data);
 
     matrix_type *D = NULL;
-    int_vector_type *iens_active_index =
-        bool_vector_alloc_active_index_list(ens_mask, -1);
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
 
     if (analysis_module_check_option(module, ANALYSIS_NEED_ED)) {
@@ -530,7 +528,6 @@ void analysis_run_analysis_update(
         }
     }
 
-    int_vector_free(iens_active_index);
     matrix_safe_free(D);
     matrix_free(S);
     matrix_free(R);
@@ -562,8 +559,6 @@ void analysis_run_analysis_update_with_rowscaling(
     matrix_type *dObs = obs_data_allocdObs(obs_data);
 
     matrix_type *D = NULL;
-    int_vector_type *iens_active_index =
-        bool_vector_alloc_active_index_list(ens_mask, -1);
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
 
     if (analysis_module_check_option(module, ANALYSIS_NEED_ED)) {
@@ -601,7 +596,6 @@ void analysis_run_analysis_update_with_rowscaling(
         }
     }
 
-    int_vector_free(iens_active_index);
     matrix_safe_free(D);
     matrix_free(S);
     matrix_free(R);
