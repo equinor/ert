@@ -20,7 +20,7 @@ DEFINE <TO_BE_DEFINED> <ARGUMENTB>
 DEFINE <ARGUMENTC> DEFINED_ARGC_VALUE
 
 RUNPATH_FILE directory/test_runpath_list.txt
-RUNPATH <STORAGE>/runpath/realisation-%d/iter-%d
+RUNPATH <STORAGE>/runpath/realization-%d/iter-%d
 ENSPATH <STORAGE>/ensemble
 
 INSTALL_JOB NEW_TYPE_A jobs/NEW_TYPE_A

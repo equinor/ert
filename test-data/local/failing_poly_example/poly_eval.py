@@ -17,7 +17,7 @@ def _evaluate(coeffs, x):
 if __name__ == "__main__":
     coeffs = _load_coeffs("coeffs.json")
     output = [_evaluate(coeffs, x) for x in range(10)]
-    if os.getcwd().split("/")[-2].split("_")[1] == "0":
+    if os.getcwd().split("/")[-2].split("-")[1] == "0":
         sys.exit(1)
     with open("poly_0.out", "w") as f:
         f.write("\n".join(map(str, output)))

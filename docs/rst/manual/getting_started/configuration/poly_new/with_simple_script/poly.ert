@@ -3,7 +3,7 @@ NUM_REALIZATIONS 5
 
 QUEUE_SYSTEM LOCAL
 
-RUNPATH poly_out/real_%d/iter_%d
+RUNPATH poly_out/realization-%d/iter-%d
 
 INSTALL_JOB poly_eval POLY_EVAL 
 SIMULATION_JOB poly_eval

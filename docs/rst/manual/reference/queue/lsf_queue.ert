@@ -8,7 +8,7 @@ QUEUE_OPTION LSF LSF_SERVER be-grid01 -- Change this to a server you have access
 QUEUE_OPTION LSF LSF_QUEUE mr
 QUEUE_OPTION LSF PROJECT_CODE user:$USER
 
-RUNPATH lsf_testing/real_%d/iter_%d
+RUNPATH lsf_testing/realization-%d/iter-%d
 
 NUM_REALIZATIONS 1
 MIN_REALIZATIONS 1

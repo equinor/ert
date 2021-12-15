@@ -90,7 +90,7 @@ def apply_customized_config(
         f"QUEUE_OPTION LSF  MAX_RUNNING {max_running}\n",
         "QUEUE_OPTION  LSF  BJOBS_CMD   mocked_commands/mock_bjobs\n",
         f"QUEUE_OPTION LSF  BSUB_CMD    mocked_commands/{mocked_bsub}\n",
-        "RUNPATH poly_out/real_%d/iter_%d\n",
+        "RUNPATH poly_out/realization-%d/iter-%d\n",
         "OBS_CONFIG observations\n",
         "TIME_MAP time_map\n",
         f"NUM_REALIZATIONS {num_realizations}\n",

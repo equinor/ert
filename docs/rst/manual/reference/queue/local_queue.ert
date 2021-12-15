@@ -3,7 +3,7 @@ JOBNAME queue_test_%d
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 50
 
-RUNPATH local_testing/real_%d/iter_%d
+RUNPATH local_testing/realization-%d/iter-%d
 
 NUM_REALIZATIONS 100
 MIN_REALIZATIONS 1

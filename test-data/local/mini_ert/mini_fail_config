@@ -7,7 +7,7 @@ DEFINE <STORAGE> fail_storage
 NUM_REALIZATIONS 10
 MAX_SUBMIT 1
 
-RUNPATH <STORAGE>/Run/realisation-%d/iter-%d
+RUNPATH <STORAGE>/Run/realization-%d/iter-%d
 ENSPATH <STORAGE>/ertensemble
 
 INSTALL_JOB AGGREGATOR jobs/AGGREGATOR

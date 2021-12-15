@@ -179,7 +179,7 @@ NUM_REALIZATIONS 20
 QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 4
 
-RUNPATH      output/simulations/runpath/realisation-%d/iter-%d
+RUNPATH      output/simulations/runpath/realization-%d/iter-%d
 ENSPATH      output/storage
 
 ECLBASE   EXAMPLE%d

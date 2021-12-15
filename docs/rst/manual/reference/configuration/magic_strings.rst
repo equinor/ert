@@ -239,4 +239,4 @@ Experiment Dependent Variables
 
    ::
 
-      FORWARD_MODEL JOB_NAME(<ARG0>="/your/run/path/real_4/iter_1")
+      FORWARD_MODEL JOB_NAME(<ARG0>="/your/run/path/realization-4/iter-1")

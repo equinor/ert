@@ -60,7 +60,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
         "QUEUE_SYSTEM LOCAL\n"
         "QUEUE_OPTION LOCAL MAX_RUNNING 50\n"
         "NUM_REALIZATIONS 1\n"
-        "RUNPATH test/real_%d/iter_%d\n"
+        "RUNPATH test/realization-%d/iter-%d\n"
         "INSTALL_JOB dump DUMP\n"
         "FORWARD_MODEL dump\n" + append
     )
@@ -72,5 +72,5 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
     run_context = _create_runpath(enkf_main)
     _evaluate_ensemble(enkf_main, run_context)
 
-    with open("test/real_0/iter_0/dump.stdout.0") as f:
+    with open("test/realization-0/iter-0/dump.stdout.0") as f:
         assert f.read() == f"{numcpu}\n"

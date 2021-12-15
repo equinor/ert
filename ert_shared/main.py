@@ -340,8 +340,8 @@ def get_ert_parser(parser=None):
         type=valid_name_format,
         help="The es_mda creates multiple cases for the different "
         "iterations. The case names will follow the specified format. "
-        "For example, 'Target case format: iter_%%d' will generate "
-        "cases with the names iter_0, iter_1, iter_2, iter_3, ....",
+        "For example, 'Target case format: iter-%%d' will generate "
+        "cases with the names iter-0, iter-1, iter-2, iter-3, ....",
     )
     es_mda_parser.add_argument(
         "--realizations",
