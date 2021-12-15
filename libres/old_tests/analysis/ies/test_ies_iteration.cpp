@@ -20,6 +20,7 @@ void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
 
     matrix_inplace_matmul(A2, X);
 
+    matrix_free(X);
     std_enkf_data_free(std_data);
     rng_free(rng);
 }
