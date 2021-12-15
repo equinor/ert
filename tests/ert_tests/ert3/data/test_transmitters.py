@@ -20,9 +20,9 @@ from ert.data import (
     RecordType,
 )
 from ert.data.record import _transmitter
+from ert.data import FileRecordTransformation
 
 record123 = NumericalRecord(data=[1, 2, 3])
-from ert.data import FileRecordTransformation
 
 simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
