@@ -87,7 +87,8 @@ int get_active_size(const ensemble_config_type *ensemble_config,
     else if (active_mode == PARTLY_ACTIVE)
         active_size = active_list_get_active_size(active_list, -1);
     else
-        util_abort("%s: internal error .. \n", __func__);
+        throw std::logic_error("Unexpected active_mode: " +
+                               std::to_string(active_mode));
 
     return active_size;
 }
@@ -220,11 +221,13 @@ void assert_matrix_size(const matrix_type *m, const char *name, int rows,
                         int columns) {
     if (m) {
         if (!matrix_check_dims(m, rows, columns))
-            util_abort("%s: matrix mismatch %s:[%d,%d]   - expected:[%d, %d]",
-                       __func__, name, matrix_get_rows(m),
-                       matrix_get_columns(m), rows, columns);
+            throw std::invalid_argument(
+                "matrix mismatch " + std::string(name) + ":[" +
+                std::to_string(matrix_get_rows(m)) + "," +
+                std::to_string(matrix_get_columns(m)) + "   - expected:[" +
+                std::to_string(rows) + "," + std::to_string(columns) + "]");
     } else
-        util_abort("%s: matrix:%s is NULL \n", __func__, name);
+        throw std::invalid_argument("matrix: " + std::string(name) + "is NULL");
 }
 
 void deserialize_dataset(ensemble_config_type *ensemble_config,
@@ -736,8 +739,8 @@ vector_type *alloc_node_ensemble(const ensemble_config_type *ens_config,
 void node_std(const vector_type *ensemble, const enkf_node_type *mean,
               enkf_node_type *std) {
     if (vector_get_size(ensemble) == 0)
-        util_abort("%s: internal error - calculation std of empty list\n",
-                   __func__);
+        throw std::logic_error(
+            "internal error - calculation std of empty list");
     {
         int iens;
         enkf_node_clear(std);
@@ -758,8 +761,8 @@ void node_std(const vector_type *ensemble, const enkf_node_type *mean,
 
 void node_mean(const vector_type *ensemble, enkf_node_type *mean) {
     if (vector_get_size(ensemble) == 0)
-        util_abort("%s: internal error - calculation average of empty list\n",
-                   __func__);
+        throw std::logic_error(
+            "internal error - calculation average of empty list");
     enkf_node_clear(mean);
     for (int iens = 0; iens < vector_get_size(ensemble); iens++)
         enkf_node_iadd(
@@ -838,9 +841,10 @@ void inflate(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
 
 void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
     if (bool_vector_size(ens_mask) != ens_size)
-        util_abort("%s: fundamental inconsistency detected. Total ens_size:%d  "
-                   "mask_size:%d \n",
-                   __func__, ens_size, bool_vector_size(ens_mask));
+        throw std::logic_error(
+            "fundamental inconsistency detected. Total ens_size:" +
+            std::to_string(ens_size) +
+            ", mask_size:" + std::to_string(bool_vector_size(ens_mask)));
 }
 
 bool smoother_update(std::vector<int> step_list,
