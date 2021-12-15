@@ -127,10 +127,8 @@ static void serialize_node(const char *node_key,
     /* Multithreaded serializing*/
     const int num_cpu_threads = thread_pool_get_max_running(work_pool);
     serialize_node_info_type node_info[num_cpu_threads];
-    int icpu;
-
     thread_pool_restart(work_pool);
-    for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+    for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
         node_info[icpu].key = node_key;
         node_info[icpu].active_list = active_list;
         node_info[icpu].row_offset = row_offset;
@@ -141,7 +139,7 @@ static void serialize_node(const char *node_key,
     }
     thread_pool_join(work_pool);
 
-    for (icpu = 0; icpu < num_cpu_threads; icpu++)
+    for (int icpu = 0; icpu < num_cpu_threads; icpu++)
         serialize_info[icpu].node_info = nullptr;
 }
 
@@ -499,7 +497,6 @@ void analysis_run_analysis_update(
     matrix_type *dObs = obs_data_allocdObs(obs_data);
 
     matrix_type *D = NULL;
-    matrix_type *localA = NULL;
     int_vector_type *iens_active_index =
         bool_vector_alloc_active_index_list(ens_mask, -1);
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
@@ -566,7 +563,6 @@ void analysis_run_analysis_update_with_rowscaling(
     matrix_type *dObs = obs_data_allocdObs(obs_data);
 
     matrix_type *D = NULL;
-    matrix_type *localA = NULL;
     int_vector_type *iens_active_index =
         bool_vector_alloc_active_index_list(ens_mask, -1);
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
@@ -859,139 +855,137 @@ bool analysis_smoother_update(std::vector<int> step_list,
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
 
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
-    {
-        double global_std_scaling =
-            analysis_config_get_global_std_scaling(analysis_config);
-        meas_data_type *meas_data = meas_data_alloc(ens_mask);
-        int_vector_type *ens_active_list =
-            bool_vector_alloc_active_list(ens_mask);
+    double global_std_scaling =
+        analysis_config_get_global_std_scaling(analysis_config);
+    meas_data_type *meas_data = meas_data_alloc(ens_mask);
+    int_vector_type *ens_active_list =
+        bool_vector_alloc_active_list(ens_mask);
 
-        analysis_copy_parameters(source_fs, target_fs, ensemble_config,
-                                 total_ens_size, ens_active_list);
+    analysis_copy_parameters(source_fs, target_fs, ensemble_config,
+                             total_ens_size, ens_active_list);
 
-        hash_type *use_count = hash_alloc();
-        int current_step = step_list.back();
+    hash_type *use_count = hash_alloc();
+    int current_step = step_list.back();
 
-        /* Looping over local analysis ministep */
-        for (int ministep_nr = 0;
-             ministep_nr < local_updatestep_get_num_ministep(updatestep);
-             ministep_nr++) {
-            local_ministep_type *ministep =
-                local_updatestep_iget_ministep(updatestep, ministep_nr);
-            local_obsdata_type *obsdata =
-                local_ministep_get_obsdata(ministep);
+    /* Looping over local analysis ministep */
+    for (int ministep_nr = 0;
+         ministep_nr < local_updatestep_get_num_ministep(updatestep);
+         ministep_nr++) {
+        local_ministep_type *ministep =
+            local_updatestep_iget_ministep(updatestep, ministep_nr);
+        local_obsdata_type *obsdata =
+            local_ministep_get_obsdata(ministep);
 
-            obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
-            obs_data_reset(obs_data);
-            meas_data_reset(meas_data);
+        obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
+        obs_data_reset(obs_data);
+        meas_data_reset(meas_data);
+
+        /*
+        Temporarily we will just force the timestep from the input
+        argument onto the obsdata instance; in the future the
+        obsdata should hold it's own here.
+        */
+        local_obsdata_reset_tstep_list(obsdata, step_list);
+
+        double alpha = analysis_config_get_alpha(analysis_config);
+        double std_cutoff =
+            analysis_config_get_std_cutoff(analysis_config);
+        enkf_obs_get_obs_and_measure_data(obs, source_fs, obsdata,
+                                          ens_active_list, meas_data,
+                                          obs_data);
+
+        enkf_analysis_deactivate_outliers(obs_data, meas_data,
+                                          std_cutoff, alpha, verbose);
+        local_ministep_add_obs_data(ministep, obs_data);
+
+        enkf_analysis_fprintf_obs_summary(
+            obs_data, meas_data, step_list,
+            local_ministep_get_name(ministep), log_stream);
+
+        if ((obs_data_get_active_size(obs_data) > 0) &&
+            (meas_data_get_active_obs_size(meas_data) > 0)) {
+            int_vector_type *iens_active_index =
+                bool_vector_alloc_active_index_list(ens_mask, -1);
 
             /*
-            Temporarily we will just force the timestep from the input
-            argument onto the obsdata instance; in the future the
-            obsdata should hold it's own here.
+            The update for one local_dataset instance consists of two main chunks:
+
+            1. The first chunk updates all the parameters which don't have row
+                scaling attached. These parameters are serialized together to the A
+                matrix and all the parameters are updated in one go.
+
+            2. The second chunk is loop over all the parameters which have row
+                scaling attached. These parameters are updated one at a time.
             */
-            local_obsdata_reset_tstep_list(obsdata, step_list);
 
-            double alpha = analysis_config_get_alpha(analysis_config);
-            double std_cutoff =
-                analysis_config_get_std_cutoff(analysis_config);
-            enkf_obs_get_obs_and_measure_data(obs, source_fs, obsdata,
-                                              ens_active_list, meas_data,
-                                              obs_data);
+            analysis_module_type *module =
+                analysis_config_get_active_module(analysis_config);
+            if (local_ministep_has_analysis_module(ministep))
+                module = local_ministep_get_analysis_module(ministep);
+            assert_size_equal(total_ens_size, ens_mask);
+            // E matrix is generated with shared rng, thus only creating it once for identical results
+            int active_ens_size =
+                meas_data_get_active_ens_size(meas_data);
+            matrix_type *E =
+                obs_data_allocE(obs_data, shared_rng, active_ens_size);
 
-            enkf_analysis_deactivate_outliers(obs_data, meas_data,
-                                              std_cutoff, alpha, verbose);
-            local_ministep_add_obs_data(ministep, obs_data);
-
-            enkf_analysis_fprintf_obs_summary(
-                obs_data, meas_data, step_list,
-                local_ministep_get_name(ministep), log_stream);
-
-            if ((obs_data_get_active_size(obs_data) > 0) &&
-                (meas_data_get_active_obs_size(meas_data) > 0)) {
-                int_vector_type *iens_active_index =
-                    bool_vector_alloc_active_index_list(ens_mask, -1);
-
-                /*
-                The update for one local_dataset instance consists of two main chunks:
-
-                1. The first chunk updates all the parameters which don't have row
-                    scaling attached. These parameters are serialized together to the A
-                    matrix and all the parameters are updated in one go.
-
-                2. The second chunk is loop over all the parameters which have row
-                    scaling attached. These parameters are updated one at a time.
-                */
-
-                analysis_module_type *module =
-                    analysis_config_get_active_module(analysis_config);
-                if (local_ministep_has_analysis_module(ministep))
-                    module = local_ministep_get_analysis_module(ministep);
-                assert_size_equal(total_ens_size, ens_mask);
-                // E matrix is generated with shared rng, thus only creating it once for identical results
-                int active_ens_size =
-                    meas_data_get_active_ens_size(meas_data);
-                matrix_type *E =
-                    obs_data_allocE(obs_data, shared_rng, active_ens_size);
-
-                // Part 1: Parameters which do not have row scaling attached.
-                auto parameters = analysis_load_parameters(
-                    target_fs, ensemble_config, iens_active_index,
-                    current_step, meas_data, ensemble, use_count, obs_data,
-                    ministep);
-                analysis_run_analysis_update(module, ens_mask, meas_data,
-                                             obs_data, shared_rng, E,
-                                             parameters);
-                analysis_save_parameters(target_fs, ensemble_config,
-                                         iens_active_index, current_step,
-                                         ensemble, use_count, ministep,
+            // Part 1: Parameters which do not have row scaling attached.
+            auto parameters = analysis_load_parameters(
+                target_fs, ensemble_config, iens_active_index,
+                current_step, meas_data, ensemble, use_count, obs_data,
+                ministep);
+            analysis_run_analysis_update(module, ens_mask, meas_data,
+                                         obs_data, shared_rng, E,
                                          parameters);
-                for (auto &[_, A] : parameters)
+            analysis_save_parameters(target_fs, ensemble_config,
+                                     iens_active_index, current_step,
+                                     ensemble, use_count, ministep,
+                                     parameters);
+            for (auto &[_, A] : parameters)
+                matrix_free(A);
+
+            // Part 2: Parameters which do have row scaling attached.
+            auto row_scaling_parameters =
+                analysis_load_row_scaling_parameters(
+                    target_fs, ensemble_config, iens_active_index,
+                    current_step, meas_data, ensemble, use_count,
+                    obs_data, ministep);
+            analysis_run_analysis_update_with_rowscaling(
+                module, ens_mask, meas_data, obs_data, shared_rng, E,
+                row_scaling_parameters);
+
+            analysis_save_row_scaling_parameters(
+                target_fs, ensemble_config, iens_active_index,
+                current_step, ministep, row_scaling_parameters);
+            for (auto &[_, row_scale_A_list] : row_scaling_parameters)
+                for (auto [A, _] : row_scale_A_list)
                     matrix_free(A);
 
-                // Part 2: Parameters which do have row scaling attached.
-                auto row_scaling_parameters =
-                    analysis_load_row_scaling_parameters(
-                        target_fs, ensemble_config, iens_active_index,
-                        current_step, meas_data, ensemble, use_count,
-                        obs_data, ministep);
-                analysis_run_analysis_update_with_rowscaling(
-                    module, ens_mask, meas_data, obs_data, shared_rng, E,
-                    row_scaling_parameters);
+            matrix_safe_free(E);
 
-                analysis_save_row_scaling_parameters(
-                    target_fs, ensemble_config, iens_active_index,
-                    current_step, ministep, row_scaling_parameters);
-                for (auto &[_, row_scale_A_list] : row_scaling_parameters)
-                    for (auto [A, _] : row_scale_A_list)
-                        matrix_free(A);
+            analysis_module_complete_update(module);
 
-                matrix_safe_free(E);
-
-                analysis_module_complete_update(module);
-
-            } else if (target_fs != source_fs)
-                res_log_ferror(
-                    "No active observations/parameters for MINISTEP: %s.",
-                    local_ministep_get_name(ministep));
-        }
-        inflate(ensemble_config, source_fs, target_fs, total_ens_size,
-                current_step, use_count);
-        hash_free(use_count);
-
-        state_map_type *target_state_map = enkf_fs_get_state_map(target_fs);
-
-        if (target_state_map != source_state_map) {
-            state_map_set_from_inverted_mask(target_state_map, ens_mask,
-                                             STATE_PARENT_FAILURE);
-            state_map_set_from_mask(target_state_map, ens_mask,
-                                    STATE_INITIALIZED);
-            enkf_fs_fsync(target_fs);
-        }
-
-        int_vector_free(ens_active_list);
-        meas_data_free(meas_data);
+        } else if (target_fs != source_fs)
+            res_log_ferror(
+                "No active observations/parameters for MINISTEP: %s.",
+                local_ministep_get_name(ministep));
     }
+    inflate(ensemble_config, source_fs, target_fs, total_ens_size,
+            current_step, use_count);
+    hash_free(use_count);
+
+    state_map_type *target_state_map = enkf_fs_get_state_map(target_fs);
+
+    if (target_state_map != source_state_map) {
+        state_map_set_from_inverted_mask(target_state_map, ens_mask,
+                                         STATE_PARENT_FAILURE);
+        state_map_set_from_mask(target_state_map, ens_mask,
+                                STATE_INITIALIZED);
+        enkf_fs_fsync(target_fs);
+    }
+
+    int_vector_free(ens_active_list);
+    meas_data_free(meas_data);
     bool_vector_free(ens_mask);
 
     return true;
