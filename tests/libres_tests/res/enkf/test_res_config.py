@@ -44,7 +44,7 @@ from res.util.enums import MessageLevelEnum
 #
 #    setenv( "DATA_ROOT" , ...)
 #
-# call in the res_config C code. We therefor create a wrapper to the
+# call in the res_config C code. We therefore create a wrapper to the
 # underlying libc getenv() function to be used for testing.
 
 

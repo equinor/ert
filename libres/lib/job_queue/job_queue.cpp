@@ -889,7 +889,7 @@ static void handle_run_jobs(job_queue_type *queue, int num_total_run,
 
     /*
     The number of threads in the thread pool running callbacks. Memory consumption can
-    potentially be quite high while running the DONE callback - should therefor not use
+    potentially be quite high while running the DONE callback - should therefore not use
     too many threads.
   */
     const int NUM_WORKER_THREADS = 1;

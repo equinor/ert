@@ -24,7 +24,7 @@ external commands.
 #   1. The LSF libraries are accessed from the libjob_queue.so
 #      library, but observe that the dependancy on the liblsf and
 #      libbat libraries is through dlopen(), i.e. runtime. This module
-#      will therefor load happily without access to the lsf libraries.
+#      will therefore load happily without access to the lsf libraries.
 #
 #      If you at a later stage create a lsf driver the runtime
 #      environment must be able to locate the liblsf.so, libbat.so and

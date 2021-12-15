@@ -84,7 +84,7 @@ void local_driver_kill_job(void *__driver, void *__job) {
 
 /*
   This function needs to dereference the job pointer after the waitpid() call is
-  complete, it is therefor essential that no other threads have called free(job)
+  complete, it is therefore essential that no other threads have called free(job)
   while the external process is running.
 */
 

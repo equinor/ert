@@ -230,7 +230,7 @@ static file_node_type *file_node_fread_alloc(FILE *stream, char **key) {
             /*
         A case has occured with an invalid node with size 0. That
         resulted in a deadlock, because the reader never got beyond
-        the broken node. We therefor explicitly check for this
+        the broken node. We therefore explicitly check for this
         condition.
       */
 

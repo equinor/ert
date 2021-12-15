@@ -99,7 +99,7 @@ bool time_map_attach_refcase(time_map_type *time_map,
           As part of the refactoring when the unsmry_loader was added to the
           ecl_sum implementation ecl_sum will return the start date for report
           step 0, then this test will fail for existing time_maps created prior
-          to this change of behaviour. We therefor special case the step 0 here.
+          to this change of behaviour. We therefore special case the step 0 here.
 
           July 2018.
         */

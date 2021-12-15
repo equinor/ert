@@ -135,7 +135,7 @@
    memory, that just means that the object is not active or
    something (and the function should just return). On the other
    hand trying to read a NULL pointer does indicate that program
-   logic is not fully up to it? And should therefor maybe be
+   logic is not fully up to it? And should therefore maybe be
    punished?
 
    o The only memory operation which is exported to 'user-space'

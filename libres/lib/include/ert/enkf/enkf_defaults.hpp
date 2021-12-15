@@ -60,7 +60,7 @@ const char *enkf_defaults_get_default_gen_kw_export_name();
 /**
    This is the format used for tagging the internal variables like
    IENS, and ECLBASE. These values are written into the various job
-   description files, care should therefor be taken before changing
+   description files, care should therefore be taken before changing
    the value of this variable. It is not user modifiable, and can only
    be changed by recompiling.
 
