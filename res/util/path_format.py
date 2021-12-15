@@ -20,7 +20,7 @@ import os
 
 # The path_fmt implementation hinges strongly on variable length
 # argument lists in C  not clear if/how that maps over to Python,
-# this Python class therefor has *very* limited functionality.
+# this Python class therefore has *very* limited functionality.
 
 
 class PathFormat(BaseCClass):

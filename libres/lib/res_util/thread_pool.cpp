@@ -159,7 +159,7 @@ static UTIL_SAFE_CAST_FUNCTION(thread_pool, THREAD_POOL_TYPE_ID)
 /*
    This function updates an element in the queue, the function is
    called by the executing threads, on the same time the main thread
-   might be resizing the thread, we therefor take a read lock during
+   might be resizing the thread, we therefore take a read lock during
    execution of this function. (Write lock is not necessary because we
    will not change the queue pointer itself, only something it points
    to.)

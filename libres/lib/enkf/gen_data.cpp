@@ -510,8 +510,8 @@ void gen_data_export_data(const gen_data_type *gen_data,
 
 /*
    The filesystem will (currently) store gen_data instances which do
-   not hold any data. Therefor it will be quite common to enter this
-   function with an empty instance, we therefor just set valid =>
+   not hold any data. Therefore it will be quite common to enter this
+   function with an empty instance, we therefore just set valid =>
    false, and return silently in that case.
 */
 

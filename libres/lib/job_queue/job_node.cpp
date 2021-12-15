@@ -623,7 +623,7 @@ bool job_queue_node_kill(job_queue_node_type *node,
     if (current_status & JOB_QUEUE_CAN_KILL) {
         /*
       If the job is killed before it is even started no driver
-      specific job data has been assigned; we therefor must check
+      specific job data has been assigned; we therefore must check
       the node->job_data pointer before entering.
     */
         if (node->job_data) {
@@ -652,7 +652,7 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
     if (current_status & JOB_QUEUE_CAN_KILL) {
         /*
       If the job is killed before it is even started no driver
-      specific job data has been assigned; we therefor must check
+      specific job data has been assigned; we therefore must check
       the node->job_data pointer before entering.
     */
         if (node->job_data) {

@@ -64,7 +64,7 @@ static int __get_active_size(const ensemble_config_type *ensemble_config,
      This is very awkward; the problem is that for the GEN_DATA
      type the config object does not really own the size. Instead
      the size is pushed (on load time) from gen_data instances to
-     the gen_data_config instance. Therefor we have to assert
+     the gen_data_config instance. Therefore we have to assert
      that at least one gen_data instance has been loaded (and
      consequently updated the gen_data_config instance) before we
      query for the size.

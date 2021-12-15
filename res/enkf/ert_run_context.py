@@ -125,7 +125,7 @@ class ErtRunContext(BaseCClass):
         super().__init__(c_ptr)
 
         # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefor hold on
+        # path_fmt and subst_list objects. We therefore hold on
         # to a reference here - to inhibt Python GC of these objects.
         self._path_fmt = path_fmt
         self._subst_list = subst_list
@@ -141,7 +141,7 @@ class ErtRunContext(BaseCClass):
         )
 
         # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefor hold on
+        # path_fmt and subst_list objects. We therefore hold on
         # to a reference here - to inhibt Python GC of these objects.
         run_context._path_fmt = path_fmt
         run_context._subst_list = subst_list
@@ -157,7 +157,7 @@ class ErtRunContext(BaseCClass):
         )
 
         # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefor hold on
+        # path_fmt and subst_list objects. We therefore hold on
         # to a reference here - to inhibt Python GC of these objects.
         run_context._path_fmt = path_fmt
         run_context._subst_list = subst_list
