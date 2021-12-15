@@ -31,7 +31,6 @@ from .config import (
 from .config_keys import ConfigKeys
 from .data import EnkfNode, ExtParam, Field, GenData, GenKw
 from .ecl_config import EclConfig
-from .enkf_defaults import EnkfDefaults
 from .enkf_fs import EnkfFs
 from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
@@ -149,7 +148,6 @@ __all__ = [
     "AnalysisIterConfig",
     "AnalysisConfig",
     "ConfigKeys",
-    "EnkfDefaults",
     "EclConfig",
     "QueueConfig",
     "ErtWorkflowList",

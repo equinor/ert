@@ -24,19 +24,6 @@
 #define DEFAULT_GEN_KW_TAG_FORMAT "<%s>"
 
 /**
-  Default file name for export file for GEN_KW parameters
-*/
-#ifdef __cplusplus
-extern "C" {
-#endif
-#define DEFAULT_GEN_KW_EXPORT_NAME "parameters"
-
-const char *enkf_defaults_get_default_gen_kw_export_name();
-
-#ifdef __cplusplus
-}
-#endif
-/**
    The format string used when creating search strings from user input
    with the 'DATA_KW' keyword. The format string must contain one '%s'
    placeholder which will be replaced with the user supplied key; can

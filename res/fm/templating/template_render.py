@@ -5,7 +5,7 @@ import yaml
 
 from res import enkf
 
-DEFAULT_GEN_KW_EXPORT_NAME = enkf.EnkfDefaults.DEFAULT_GEN_KW_EXPORT_NAME
+DEFAULT_GEN_KW_EXPORT_NAME = "parameters"
 
 
 def load_data(filename):
