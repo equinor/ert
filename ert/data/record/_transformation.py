@@ -37,8 +37,11 @@ class FileRecordTransformation(RecordTransformation):
     async def transform_input(
         self, record: Record, mime: str, runpath: Path, location: Path
     ) -> None:
-        _prepare_location(runpath, location)
-        await _save_record_to_file(record, runpath / location, mime)
+        if isinstance(record, (NumericalRecord, BlobRecord)):
+            _prepare_location(runpath, location)
+            await _save_record_to_file(record, runpath / location, mime)
+        else:
+            TypeError("Record type must be a NumericalRecord or BlobRecord")
 
     async def transform_output(self, mime: str, location: Path) -> Record:
         return await _load_record_from_file(location, mime)
@@ -53,7 +56,7 @@ class TarRecordTransformation(RecordTransformation):
                 _prepare_location(runpath, location)
                 tar.extractall(runpath / location)
         else:
-            raise TypeError("Record needs to be a BlobRecord type!")
+            raise TypeError("Record type must be a BlobRecord")
 
     async def transform_output(self, mime: str, location: Path) -> Record:
         return BlobRecord(data=await make_tar(location))
@@ -63,18 +66,21 @@ class ExecutableRecordTransformation(RecordTransformation):
     async def transform_input(
         self, record: Record, mime: str, runpath: Path, location: Path
     ) -> None:
-        # pre-make bin folder if necessary
-        base_path = Path(runpath / _BIN_FOLDER)
-        base_path.mkdir(parents=True, exist_ok=True)
+        if isinstance(record, BlobRecord):
+            # pre-make bin folder if necessary
+            base_path = Path(runpath / _BIN_FOLDER)
+            base_path.mkdir(parents=True, exist_ok=True)
 
-        # create file(s)
-        _prepare_location(base_path, location)
-        await _save_record_to_file(record, base_path / location, mime)
+            # create file(s)
+            _prepare_location(base_path, location)
+            await _save_record_to_file(record, base_path / location, mime)
 
-        # post-process if necessary
-        path = base_path / location
-        st = path.stat()
-        path.chmod(st.st_mode | stat.S_IEXEC)
+            # post-process if necessary
+            path = base_path / location
+            st = path.stat()
+            path.chmod(st.st_mode | stat.S_IEXEC)
+        else:
+            TypeError("Record type must be a BlobRecord")
 
     async def transform_output(self, mime: str, location: Path) -> Record:
         return await _load_record_from_file(location, mime)
