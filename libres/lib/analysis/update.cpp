@@ -142,14 +142,10 @@ void serialize_node(const char *node_key, const active_list_type *active_list,
         serialize_info[icpu].node_info = nullptr;
 }
 
-/*
-   The return value is the number of rows in the serialized
-   A matrix.
-*/
-int serialize_dataset(const ensemble_config_type *ens_config,
-                      const local_dataset_type *dataset, int report_step,
-                      hash_type *use_count, thread_pool_type *work_pool,
-                      serialize_info_type *serialize_info) {
+void serialize_dataset(const ensemble_config_type *ens_config,
+                       const local_dataset_type *dataset, int report_step,
+                       hash_type *use_count, thread_pool_type *work_pool,
+                       serialize_info_type *serialize_info) {
 
     matrix_type *A = serialize_info->A;
     int ens_size = matrix_get_columns(A);
@@ -180,7 +176,6 @@ int serialize_dataset(const ensemble_config_type *ens_config,
         }
     }
     matrix_shrink_header(A, current_row, ens_size);
-    return matrix_get_rows(A);
 }
 
 void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
