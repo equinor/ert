@@ -18,7 +18,7 @@ from typing import (
 )
 
 from beartype import beartype
-from beartype.roar import BeartypeException  # type: ignore
+from beartype.roar import BeartypeException
 from pydantic import PositiveInt
 
 import ert

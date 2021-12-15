@@ -68,7 +68,7 @@ setup(
         "ansicolors==1.1.8",
         "async-exit-stack; python_version < '3.7'",
         "async-generator",
-        "beartype >= 0.8.0, <0.9.0",
+        "beartype>=0.9.0",
         "cloudevents",
         "cloudpickle",
         "tqdm>=4.62.0",
