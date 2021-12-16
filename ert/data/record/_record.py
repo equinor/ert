@@ -1,27 +1,34 @@
-import pathlib
 import json
+import pathlib
+import warnings
 from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
 from typing import (
     Any,
     Dict,
+    Generic,
     List,
     Mapping,
     MutableMapping,
     Optional,
     Tuple,
+    TypeVar,
     Union,
     cast,
-    Generic,
-    TypeVar,
 )
 
 from beartype import beartype
-from beartype.roar import BeartypeException  # type: ignore
+from beartype.roar import (  # type: ignore
+    BeartypeDecorHintPepDeprecatedWarning,
+    BeartypeException,
+)
 from pydantic import PositiveInt
 
 import ert
+
+# Mute PEP-585 warnings from Python 3.9:
+warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecatedWarning)
 
 number = Union[int, float]
 numerical_record_data = Union[List[number], Dict[str, number], Dict[int, number]]
