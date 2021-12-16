@@ -38,7 +38,7 @@ class FileRecordTransformation(RecordTransformation):
         self, record: Record, mime: str, runpath: Path, location: Path
     ) -> None:
         if not isinstance(record, (NumericalRecord, BlobRecord)):
-            TypeError("Record type must be a NumericalRecord or BlobRecord")
+            raise TypeError("Record type must be a NumericalRecord or BlobRecord")
 
         _prepare_location(runpath, location)
         await _save_record_to_file(record, runpath / location, mime)
