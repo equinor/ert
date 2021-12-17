@@ -17,4 +17,5 @@ bool smoother_update(std::vector<int> step_list,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      FILE *log_stream, bool verbose);
-}
+
+} // namespace analysis

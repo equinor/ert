@@ -209,20 +209,6 @@ static void obs_block_init_scaling(const obs_block_type *obs_block,
     *__obs_offset = obs_offset;
 }
 
-/*
-static void obs_block_init_innov( const obs_block_type * obs_block , const meas_block_type * meas_block , matrix_type * innov , int * __obs_offset) {
-  int obs_offset = *__obs_offset;
-  int iobs;
-  for (iobs =0; iobs < obs_block->size; iobs++) {
-    if (obs_block->active_mode[iobs] == ACTIVE) {
-      matrix_iset( innov , obs_offset , 0 , obs_block->value[ iobs ] - meas_block_iget_ens_mean( meas_block , iobs ));
-      obs_offset++;
-    }
-  }
-  *__obs_offset = obs_offset;
-}
-*/
-
 static void obs_block_initdObs(const obs_block_type *obs_block,
                                matrix_type *dObs, int *__obs_offset) {
     int obs_offset = *__obs_offset;
@@ -425,7 +411,6 @@ matrix_type *obs_data_allocE(const obs_data_type *obs_data, rng_type *rng,
             obs_block_initE(obs_block, E, pert_var.data(), &obs_offset);
         }
     }
-
     matrix_set_name(E, "E");
     matrix_assert_finite(E);
     return E;
@@ -485,6 +470,7 @@ matrix_type *obs_data_allocdObs(const obs_data_type *obs_data) {
             obs_block_initdObs(obs_block, dObs, &obs_offset);
         }
     }
+    matrix_set_name(dObs, "dObs");
     return dObs;
 }
 

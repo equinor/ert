@@ -415,32 +415,36 @@ void save_row_scaling_parameters(
     }
 }
 
-/*
-Run the update algorithm on a set of A matrices without row-scaling
-*/
-void run_analysis_update(analysis_module_type *module,
-                         const bool_vector_type *ens_mask,
-                         const meas_data_type *forecast,
-                         obs_data_type *obs_data, rng_type *shared_rng,
-                         matrix_type *E, matrix_type *A) {
+void run_analysis_update_without_rowscaling(analysis_module_type *module,
+                                            const bool_vector_type *ens_mask,
+                                            const meas_data_type *forecast,
+                                            obs_data_type *obs_data,
+                                            rng_type *shared_rng,
+                                            matrix_type *E, matrix_type *A) {
 
     assert(A != nullptr);
     const int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
+
     int active_ens_size = meas_data_get_active_ens_size(forecast);
     int active_obs_size = obs_data_get_active_size(obs_data);
+
     matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
+
     matrix_type *S = meas_data_allocS(forecast);
     assert_matrix_size(S, "S", active_obs_size, active_ens_size);
+
     matrix_type *R = obs_data_allocR(obs_data);
     assert_matrix_size(R, "R", active_obs_size, active_obs_size);
+
     matrix_type *dObs = obs_data_allocdObs(obs_data);
+    assert_matrix_size(dObs, "dObs", active_obs_size, 2);
 
     matrix_type *D = NULL;
     const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
 
     if (analysis_module_check_option(module, ANALYSIS_NEED_ED)) {
-
+        // D = dObs[:, 0] + E - S
         D = obs_data_allocD(obs_data, E, S);
 
         assert_matrix_size(E, "E", active_obs_size, active_ens_size);
@@ -651,6 +655,7 @@ bool smoother_update(std::vector<int> step_list,
         local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
 
         obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
+
         obs_data_reset(obs_data);
         meas_data_reset(meas_data);
 
@@ -668,6 +673,7 @@ bool smoother_update(std::vector<int> step_list,
 
         enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff,
                                           alpha, verbose);
+
         local_ministep_add_obs_data(ministep, obs_data);
 
         enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list,
@@ -705,8 +711,8 @@ bool smoother_update(std::vector<int> step_list,
                 load_parameters(target_fs, ensemble_config, iens_active_index,
                                 current_step, meas_data, obs_data, ministep);
             if (A != nullptr) {
-                run_analysis_update(module, ens_mask, meas_data, obs_data,
-                                    shared_rng, E, A);
+                run_analysis_update_without_rowscaling(
+                    module, ens_mask, meas_data, obs_data, shared_rng, E, A);
                 save_parameters(target_fs, ensemble_config, iens_active_index,
                                 current_step, ministep, A);
                 matrix_free(A);
