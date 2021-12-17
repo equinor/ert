@@ -4,10 +4,12 @@ import tarfile
 from abc import ABC, abstractmethod
 from concurrent import futures
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple
 
 import aiofiles
-from ert.data import BlobRecord, NumericalRecord, Record
+from ecl.summary import EclSum
+
+from ert.data import BlobRecord, NumericalRecord, NumericalRecordTree, Record
 from ert.serialization import get_serializer
 from ert_shared.async_utils import get_event_loop
 
@@ -227,3 +229,69 @@ async def _save_record_to_file(record: Record, location: Path, mime: str) -> Non
     else:
         async with aiofiles.open(str(location), mode="wb") as fb:
             await fb.write(record.data)  # type: ignore
+
+
+class RecordTreeTransformation(RecordTransformation):
+    """
+    Write all leaf records of a NumericalRecordTree to individual files.
+    """
+
+    def __init__(self, sub_path: Optional[str] = None):
+        if sub_path is not None:
+            raise NotImplementedError("Extracting sub-trees not implemented")
+
+    async def transform_input(
+        self,
+        record: Record,
+        mime: str,
+        runpath: Path,
+        location: Path,
+    ) -> None:
+        if not isinstance(record, NumericalRecordTree):
+            raise TypeError("Only NumericalRecordTrees can be transformed.")
+        for key, leaf_record in record.flat_record_dict.items():
+            location_key = f"{key}-{location}"
+            await get_serializer(mime).encode_to_path(
+                leaf_record.data, path=runpath / location_key
+            )
+
+    async def transform_output(self, mime: str, location: Path) -> Record:
+        raise NotImplementedError
+
+
+class EclSumTransformation(RecordTreeTransformation):
+    """Transform binary output from Eclipse into a NumericalRecordTree."""
+
+    def __init__(self, smry_keys: List[str]):
+        """
+        Args:
+            smry_keys: List (non-empty) of Eclipse summary vectors (must be present) to
+                include when transforming from Eclipse binary files. Wildcards are not
+                supported.
+        """
+        if not smry_keys:
+            raise ValueError("smry_keys must be non-empty")
+        self._smry_keys = smry_keys
+
+    async def transform_output(
+        self,
+        mime: str,
+        location: Path,
+    ) -> Record:
+        executor = futures.ThreadPoolExecutor()
+        record_dict = await get_event_loop().run_in_executor(
+            executor, _sync_eclsum_transform_output, location, self._smry_keys
+        )
+        return NumericalRecordTree(record_dict=record_dict)
+
+
+def _sync_eclsum_transform_output(
+    location: Path, smry_keys: List[str]
+) -> Dict[str, NumericalRecord]:
+    eclsum = EclSum(str(location))
+    record_dict = {}
+    for key in smry_keys:
+        record_dict[key] = NumericalRecord(
+            data=dict(zip(map(str, eclsum.dates), map(float, eclsum.numpy_vector(key))))
+        )
+    return record_dict

@@ -246,7 +246,8 @@ class RecordTree(Record, Generic[RecordGen]):
     and the internal nodes are in essence namespaces for the particular subtree.
 
     There are two implementations: :class:`BlobRecordTree`
-    and :class:`NumericalRecordTree`. For instance to initialize BlobRecordTree one can use:
+    and :class:`NumericalRecordTree`. For instance to initialize BlobRecordTree
+    one can use:
     ert.data.BlobRecordTree(record_tree={
             "key_A:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
             "key_B:OP1": ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89"),
@@ -289,7 +290,8 @@ class RecordTree(Record, Generic[RecordGen]):
             for val in flat_record_dict.values():
                 if val.record_type != _record_type:
                     raise RecordValidationError(
-                        f"RecordTree needs same record types {_record_type}!={val.record_type}"
+                        "RecordTree needs same record types "
+                        f"{_record_type}!={val.record_type}"
                     )
         else:
             raise RecordValidationError("No records found in RecordTree")
@@ -313,7 +315,8 @@ class RecordTree(Record, Generic[RecordGen]):
                 flat_record_dict[f"{root}{record_name}"] = record
             else:
                 raise RecordValidationError(
-                    f"RecordTree needs same record types {type(record)}!={self.record_type}"
+                    "RecordTree needs same record types "
+                    f"_{type(record)}!={self.record_type}"
                 )
         return flat_record_dict
 
@@ -423,7 +426,8 @@ class RecordCollection:
         else:
             if length is not None and length != len(records):
                 raise ValueError(
-                    f"Requested length ({length}) does not match the record count ({len(records)})"
+                    f"Requested length ({length}) does not match "
+                    f"the record count ({len(records)})"
                 )
             for record in records:
                 if record.record_type != records[0].record_type:
@@ -466,8 +470,12 @@ async def load_collection_from_file(
     mime: str,
     length: int = 1,
     is_directory: bool = False,
+    smry_keys: Optional[List[str]] = None,
 ) -> RecordCollection:
     """Creates :py:class:`RecordCollection` from the given path.
+
+    If the mime type is octet-stream, the RecordCollection will be uniform.  If
+    not, the file_path should deserialize into a list of records.
 
     Args:
         file_path: input location to load the collection from.
@@ -476,27 +484,18 @@ async def load_collection_from_file(
         is_directory: specifies whether `file_path` is directory. Defaults to False.
     """
     if mime == "application/octet-stream":
-        if is_directory:
-            return RecordCollection(
-                records=(
-                    await ert.data.TarRecordTransformation().transform_output(
-                        mime, file_path
-                    ),
-                ),
-                length=length,
-                collection_type=RecordCollectionType.UNIFORM,
-            )
+        transformation: ert.data.RecordTransformation
+        if smry_keys:
+            transformation = ert.data.EclSumTransformation(smry_keys)
+        elif is_directory:
+            transformation = ert.data.TarRecordTransformation()
         else:
-            return RecordCollection(
-                records=(
-                    await ert.data.FileRecordTransformation().transform_output(
-                        mime, file_path
-                    ),
-                ),
-                length=length,
-                collection_type=RecordCollectionType.UNIFORM,
-            )
-
+            transformation = ert.data.FileRecordTransformation()
+        return RecordCollection(
+            records=(await transformation.transform_output(mime, file_path),),
+            length=length,
+            collection_type=RecordCollectionType.UNIFORM,
+        )
     return RecordCollection(
         records=await ert.data.FileRecordTransformation().transform_output_sequence(
             mime, file_path

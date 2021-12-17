@@ -14,24 +14,11 @@
 
   output:
     -
-      record: wopt_prod
-      location: WOPT:PROD.json
-    -
-      record: wwpt_prod
-      location: WWPT:PROD.json
-    -
-      record: wgpt_prod
-      location: WGPT:PROD.json
-    -
-      record: wwit_inj
-      location: WWIT:INJ.json
-
-
+      record: eclsum
+      location: case/SPE1
+      keys: [WOPT:PROD, WWPT:PROD, WGPT:PROD, WWIT:INJ]
 
   transportable_commands:
-    -
-      name: summary2json
-      location: summary2json.py
     -
       name: render
       location: render.py
@@ -39,5 +26,4 @@
   script:
     - render -t case/SPE1CASE2.DATA.jinja2 -i field_properties.json wells.json -o case/SPE1.DATA
     - flow case/SPE1
-    - summary2json --datafile case/SPE1.DATA --keywords WOPT:PROD WWPT:PROD WGPT:PROD WWIT:INJ
 

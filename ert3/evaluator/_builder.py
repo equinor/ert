@@ -8,7 +8,6 @@ from pydantic import FilePath
 import ert
 import ert3
 from ert_shared.async_utils import get_event_loop
-
 from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     StepBuilder,
@@ -25,16 +24,13 @@ def add_step_inputs(
     step: StepBuilder,
 ) -> None:
     for input_ in inputs:
+        transformation = _get_input_recordtransformation(input_)
         step_input = (
             create_file_io_builder()
             .set_name(input_.name)
             .set_mime(input_.dest_mime)
             .set_path(pathlib.Path(input_.dest_location))
-            .set_transformation(
-                ert.data.TarRecordTransformation()
-                if input_.dest_is_directory
-                else ert.data.FileRecordTransformation()
-            )
+            .set_transformation(transformation)
         )
 
         for iens, io_to_transmitter in transmitters.items():
@@ -106,16 +102,13 @@ def add_step_outputs(
     step: StepBuilder,
 ) -> None:
     for record_name, output in step_config.output.items():
+        transformation = _get_output_recordtransformation(output)
         output = (
             create_file_io_builder()
             .set_name(record_name)
             .set_path(pathlib.Path(output.location))
             .set_mime(output.mime)
-            .set_transformation(
-                ert.data.TarRecordTransformation()
-                if output.is_directory
-                else ert.data.FileRecordTransformation()
-            )
+            .set_transformation(transformation)
         )
         for iens in range(0, ensemble_size):
             factory: Callable[
@@ -188,3 +181,27 @@ def build_ensemble(
     )
 
     return builder.build()
+
+
+def _get_input_recordtransformation(
+    input_config: ert3.config.LinkedInput,
+) -> ert.data.RecordTransformation:
+    """Determine and configure the RecordTransformation to be used, by sniffing the
+    provided inputs."""
+    if input_config.dest_is_directory:
+        return ert.data.TarRecordTransformation()
+    elif input_config.dest_smry_keys:
+        return ert.data.EclSumTransformation(input_config.dest_smry_keys)
+    return ert.data.FileRecordTransformation()
+
+
+def _get_output_recordtransformation(
+    output_config: ert3.config.Record,
+) -> ert.data.RecordTransformation:
+    """Determine (by sniffing the requested configuration) and configure a
+    RecordTransformation for the output from a step."""
+    if output_config.is_directory:
+        return ert.data.TarRecordTransformation()
+    elif output_config.smry_keys:
+        return ert.data.EclSumTransformation(output_config.smry_keys)
+    return ert.data.FileRecordTransformation()
