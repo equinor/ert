@@ -57,40 +57,23 @@ typedef struct {
         *node_info; /* mutable: For the serialization of one node */
 } serialize_info_type;
 
-int get_active_size(const ensemble_config_type *ensemble_config,
-                    enkf_fs_type *fs, const char *key, int report_step,
-                    const active_list_type *active_list) {
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(ensemble_config, key);
-    /*
-     This is very awkward; the problem is that for the GEN_DATA
-     type the config object does not really own the size. Instead
-     the size is pushed (on load time) from gen_data instances to
-     the gen_data_config instance. Therefore we have to assert
-     that at least one gen_data instance has been loaded (and
-     consequently updated the gen_data_config instance) before we
-     query for the size.
-  */
+/*
+ This is very awkward; the problem is that for the GEN_DATA type the config
+ object does not really own the size. Instead the size is pushed (on load time)
+ from gen_data instances to the gen_data_config instance. Therefore we have to
+ assert that at least one gen_data instance has been loaded (and consequently
+ updated the gen_data_config instance) before calling enkf_config_node_get_data_size.
+*/
+void ensure_node_loaded(const enkf_config_node_type *config_node,
+                        enkf_fs_type *fs, int report_step) {
     if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
         enkf_node_type *node = enkf_node_alloc(config_node);
         node_id_type node_id = {.report_step = report_step, .iens = 0};
 
         enkf_node_load(node, fs, node_id);
+
         enkf_node_free(node);
     }
-    active_mode_type active_mode = active_list_get_mode(active_list);
-    int active_size = 0;
-    if (active_mode == INACTIVE)
-        active_size = 0;
-    else if (active_mode == ALL_ACTIVE)
-        active_size = enkf_config_node_get_data_size(config_node, report_step);
-    else if (active_mode == PARTLY_ACTIVE)
-        active_size = active_list_get_active_size(active_list, -1);
-    else
-        throw std::logic_error("Unexpected active_mode: " +
-                               std::to_string(active_mode));
-
-    return active_size;
 }
 
 void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
@@ -158,9 +141,13 @@ void serialize_dataset(const ensemble_config_type *ens_config,
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
             local_dataset_get_node_active_list(dataset, key.c_str());
-        enkf_fs_type *src_fs = serialize_info->src_fs;
-        serialize_info->active_size[ikw] = get_active_size(
-            ens_config, src_fs, key.c_str(), report_step, active_list);
+        const enkf_config_node_type *config_node =
+            ensemble_config_get_node(ens_config, key.c_str());
+
+        ensure_node_loaded(config_node, serialize_info->src_fs, report_step);
+        serialize_info->active_size[ikw] = active_list_get_active_size(
+            active_list,
+            enkf_config_node_get_data_size(config_node, report_step));
         serialize_info->row_offset[ikw] = current_row;
 
         int matrix_rows = matrix_get_rows(A);
@@ -239,9 +226,11 @@ void deserialize_dataset(ensemble_config_type *ensemble_config,
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
             local_dataset_get_node_active_list(dataset, key.c_str());
-        serialize_info->active_size[ikw] =
-            get_active_size(ensemble_config, serialize_info->src_fs,
-                            key.c_str(), 0, active_list);
+        const enkf_config_node_type *config_node =
+            ensemble_config_get_node(ensemble_config, key.c_str());
+        ensure_node_loaded(config_node, serialize_info->src_fs, 0);
+        serialize_info->active_size[ikw] = active_list_get_active_size(
+            active_list, enkf_config_node_get_data_size(config_node, 0));
         if (serialize_info->active_size[ikw] > 0) {
             serialize_info->row_offset[ikw] = current_row;
             current_row += serialize_info->active_size[ikw];
