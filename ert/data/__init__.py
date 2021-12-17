@@ -1,16 +1,25 @@
 from ert.data.record._record import (
-    BlobRecordTree,
-    NumericalRecordTree,
     BlobRecord,
-    load_collection_from_file,
+    BlobRecordTree,
     NumericalRecord,
-    record_data,
+    NumericalRecordTree,
     Record,
     RecordCollection,
     RecordCollectionType,
     RecordIndex,
     RecordType,
     RecordValidationError,
+    load_collection_from_file,
+    record_data,
+)
+
+from .record._transformation import (
+    EclSumTransformation,
+    ExecutableRecordTransformation,
+    FileRecordTransformation,
+    RecordTransformation,
+    RecordTreeTransformation,
+    TarRecordTransformation,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -18,13 +27,6 @@ from .record._transmitter import (
     RecordTransmitterType,
     SharedDiskRecordTransmitter,
     transmitter_factory,
-)
-
-from .record._transformation import (
-    FileRecordTransformation,
-    TarRecordTransformation,
-    ExecutableRecordTransformation,
-    RecordTransformation,
 )
 
 __all__ = (
@@ -44,6 +46,7 @@ __all__ = (
     "RecordType",
     "RecordValidationError",
     "SharedDiskRecordTransmitter",
+    "EclSumTransformation",
     "FileRecordTransformation",
     "TarRecordTransformation",
     "ExecutableRecordTransformation",

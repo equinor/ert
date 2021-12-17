@@ -3,18 +3,12 @@ from typing import Tuple
 from pyrsistent import pmap
 from pyrsistent.typing import PMap
 
-from ._serializer import (
-    Serializer,
-    _ecl_sum_serializer,
-    _json_serializer,
-    _yaml_serializer,
-)
+from ._serializer import Serializer, _json_serializer, _yaml_serializer
 
 _registry: PMap[str, Serializer] = pmap(
     {
         "application/json": _json_serializer(),
         "application/x-yaml": _yaml_serializer(),
-        "multipart/x-eclipse.sum": _ecl_sum_serializer(),
     }
 )
 

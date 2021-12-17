@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 import pytest
-from ecl.summary import EclSum
 
 from ert.serialization import _serializer
 
@@ -11,58 +10,6 @@ OBJECTS = [None, {}, {"foo": "bar"}]
 OBJECTS_JSON = ["null", "{}", '{"foo": "bar"}']
 OBJECTS_YAML = ["null\n...", "{}", "foo: bar"]
 assert len(OBJECTS) == len(OBJECTS_JSON) == len(OBJECTS_YAML)
-
-
-def _create_bin_data(path, length=3):
-    """Create synthetic UNSMRY+SMSPEC files in a specified directory"""
-    sum_keys = {
-        "FOPT": [i for i in range(length)],
-        "FOPR": [1] * length,
-    }
-    dimensions = [10, 10, 10]
-    ecl_sum = EclSum.writer("TEST", datetime.date(2000, 1, 1), *dimensions)
-
-    for key in sum_keys:
-        ecl_sum.add_variable(key)
-
-    for val, idx in enumerate(range(0, length, 1)):
-        t_step = ecl_sum.add_t_step(idx, val)
-        for key, item in sum_keys.items():
-            t_step[key] = item[idx]
-
-    # libecl can only write UNSMRY+SMSPEC files to current working directory
-    old_dir = os.getcwd()
-    try:
-        os.chdir(path)
-        ecl_sum.fwrite()
-    finally:
-        os.chdir(old_dir)
-
-
-@pytest.mark.asyncio
-async def test_ecl_sum_serializer(tmp_path):
-    _create_bin_data(tmp_path, length=3)
-    result = await _serializer._ecl_sum_serializer().decode_from_path(
-        tmp_path / "TEST", key="FOPT"
-    )
-    for date, value in result.items():
-        assert isinstance(date, str)
-        assert isinstance(value, float)
-        assert not isinstance(value, np.floating)
-    assert result == {
-        "2000-01-01 00:00:00": 0,
-        "2000-01-02 00:00:00": 1,
-        "2000-01-03 00:00:00": 2,
-    }
-
-
-@pytest.mark.asyncio
-async def test_ecl_sum_serializer_wrongkey(tmp_path):
-    _create_bin_data(tmp_path, length=3)
-    with pytest.raises(KeyError):
-        await _serializer._ecl_sum_serializer().decode_from_path(
-            tmp_path / "TEST", key="BOGUS"
-        )
 
 
 @pytest.mark.parametrize("obj, obj_json", zip(OBJECTS, OBJECTS_JSON))

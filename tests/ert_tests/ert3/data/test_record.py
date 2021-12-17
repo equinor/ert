@@ -301,6 +301,11 @@ async def test_load_numeric_record_collection_from_file(designed_coeffs_record_f
 
 @pytest.mark.asyncio
 async def test_load_blob_record_collection_from_file(designed_blob_record_file):
+    """A single file with random binary content, should be possible to use
+    to build a RecordCollection of arbitrary size. For performance reasons,
+    each reference in the collection should point to the same object.
+
+    When a single binary file is loaded, a uniform collection is implicit."""
     ens_size = 5
     collection = await ert.data.load_collection_from_file(
         designed_blob_record_file, "application/octet-stream", length=ens_size
@@ -309,6 +314,5 @@ async def test_load_blob_record_collection_from_file(designed_blob_record_file):
     assert len(collection) == ens_size
     assert collection.record_type == ert.data.RecordType.BYTES
     assert collection.collection_type == ert.data.RecordCollectionType.UNIFORM
-    # All records must be references to the same object:
     for record in collection.records[1:]:
         assert record is collection.records[0]

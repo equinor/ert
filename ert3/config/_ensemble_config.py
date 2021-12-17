@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple, no_type_check
+from typing import Any, Dict, List, Optional, Tuple, no_type_check
 
 from pydantic import BaseModel, ValidationError, validator
 
@@ -41,6 +41,7 @@ class Input(_EnsembleConfig):
     record: str
     mime: str = ""
     is_directory: Optional[bool]
+    smry_keys: Optional[List[str]]
 
     @no_type_check
     def __init__(self, **data: Any) -> None:
