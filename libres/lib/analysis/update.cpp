@@ -102,29 +102,6 @@ void *serialize_nodes_mt(void *arg) {
     return NULL;
 }
 
-void serialize_node(const char *node_key, const active_list_type *active_list,
-                    int row_offset, thread_pool_type *work_pool,
-                    serialize_info_type *serialize_info) {
-
-    /* Multithreaded serializing*/
-    const int num_cpu_threads = thread_pool_get_max_running(work_pool);
-    serialize_node_info_type node_info[num_cpu_threads];
-    thread_pool_restart(work_pool);
-    for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
-        node_info[icpu].key = node_key;
-        node_info[icpu].active_list = active_list;
-        node_info[icpu].row_offset = row_offset;
-        serialize_info[icpu].node_info = &node_info[icpu];
-
-        thread_pool_add_job(work_pool, serialize_nodes_mt,
-                            &serialize_info[icpu]);
-    }
-    thread_pool_join(work_pool);
-
-    for (int icpu = 0; icpu < num_cpu_threads; icpu++)
-        serialize_info[icpu].node_info = nullptr;
-}
-
 void serialize_dataset(const ensemble_config_type *ens_config,
                        const local_dataset_type *dataset, int report_step,
                        hash_type *use_count, thread_pool_type *work_pool,
@@ -156,9 +133,23 @@ void serialize_dataset(const ensemble_config_type *ens_config,
                           ens_size, true);
 
         if (serialize_info->active_size[ikw] > 0) {
-            serialize_node(key.c_str(), active_list,
-                           serialize_info->row_offset[ikw], work_pool,
-                           serialize_info);
+            const int num_cpu_threads = thread_pool_get_max_running(work_pool);
+            serialize_node_info_type node_info[num_cpu_threads];
+            thread_pool_restart(work_pool);
+            for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
+                node_info[icpu].key = key.c_str();
+                node_info[icpu].active_list = active_list;
+                node_info[icpu].row_offset = serialize_info->row_offset[ikw];
+                serialize_info[icpu].node_info = &node_info[icpu];
+
+                thread_pool_add_job(work_pool, serialize_nodes_mt,
+                                    &serialize_info[icpu]);
+            }
+            thread_pool_join(work_pool);
+
+            for (int icpu = 0; icpu < num_cpu_threads; icpu++)
+                serialize_info[icpu].node_info = nullptr;
+
             current_row += serialize_info->active_size[ikw];
         }
     }
