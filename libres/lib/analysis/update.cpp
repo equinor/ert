@@ -137,7 +137,7 @@ void serialize_dataset(const ensemble_config_type *ens_config,
     const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
     serialize_info->active_size.resize(unscaled_keys.size());
     serialize_info->row_offset.resize(unscaled_keys.size());
-    for (int ikw = 0; ikw < unscaled_keys.size(); ikw++) {
+    for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
             local_dataset_get_node_active_list(dataset, key.c_str());
@@ -222,7 +222,7 @@ void deserialize_dataset(ensemble_config_type *ensemble_config,
     serialize_info->active_size.resize(unscaled_keys.size());
     serialize_info->row_offset.resize(unscaled_keys.size());
     int current_row = 0;
-    for (int ikw = 0; ikw < unscaled_keys.size(); ikw++) {
+    for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
             local_dataset_get_node_active_list(dataset, key.c_str());
@@ -402,8 +402,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 
         std::vector<std::pair<matrix_type *, const row_scaling_type *>>
             row_scaling_list;
-        for (int ikw = 0; ikw < scaled_keys.size(); ikw++) {
-            const auto &key = scaled_keys[ikw];
+        for (const auto &key : scaled_keys) {
             const active_list_type *active_list =
                 local_dataset_get_node_active_list(dataset, key.c_str());
             const auto *config_node =
@@ -459,7 +458,7 @@ void save_row_scaling_parameters(
 
         std::vector<std::pair<matrix_type *, const row_scaling_type *>>
             row_scaling_list = parameters[dataset_name];
-        for (int ikw = 0; ikw < scaled_keys.size(); ikw++) {
+        for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
             const auto &key = scaled_keys[ikw];
             const active_list_type *active_list =
                 local_dataset_get_node_active_list(dataset, key.c_str());
