@@ -13,6 +13,7 @@
 #include <ert/util/vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
+#include <memory>
 
 namespace analysis {
 
@@ -668,9 +669,15 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
         stringlist_free(param_keys);
     }
 }
+
+struct enkf_node_deleter {
+    void operator()(enkf_node_type *p) const { enkf_node_free(p); };
+};
+using node = std::unique_ptr<enkf_node_type, enkf_node_deleter>;
+
 /*
-   This function returns a (enkf_node_type ** ) pointer, which points
-   to all the instances with the same keyword, i.e.
+   This function returns a vector holding all the instances with the same
+   keyword, i.e.
 
    alloc_node_ensemble(enkf_main , "PRESSURE");
 
@@ -684,22 +691,20 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
    // Do something with the pressure nodes ...
 
    free(pressure_nodes);
-
 */
-
-vector_type *alloc_node_ensemble(const ensemble_config_type *ens_config,
-                                 const int ens_size, enkf_fs_type *src_fs,
-                                 const char *key, int report_step) {
-    vector_type *node_ensemble = vector_alloc_new();
+std::vector<node> alloc_node_ensemble(const ensemble_config_type *ens_config,
+                                      const int ens_size, enkf_fs_type *src_fs,
+                                      const char *key, int report_step) {
+    std::vector<node> node_ensemble;
     const enkf_config_node_type *config_node =
         ensemble_config_get_node(ens_config, key);
     node_id_type node_id = {.report_step = report_step, .iens = -1};
 
     for (int iens = 0; iens < ens_size; iens++) {
-        enkf_node_type *node = enkf_node_alloc(config_node);
+        node n { enkf_node_alloc(config_node) };
         node_id.iens = iens;
-        enkf_node_load(node, src_fs, node_id);
-        vector_append_owned_ref(node_ensemble, node, enkf_node_free__);
+        enkf_node_load(n.get(), src_fs, node_id);
+        node_ensemble.push_back(std::move(n));
     }
 
     return node_ensemble;
@@ -710,18 +715,16 @@ vector_type *alloc_node_ensemble(const ensemble_config_type *ens_config,
    ensemble. The mean can be NULL, in which case it is assumed that
    the mean has already been shifted away from the ensemble.
 */
-void node_std(const vector_type *ensemble, const enkf_node_type *mean,
+void node_std(std::vector<node> &ensemble, const enkf_node_type *mean,
               enkf_node_type *std) {
-    if (vector_get_size(ensemble) == 0)
+    if (ensemble.size() == 0)
         throw std::logic_error(
             "internal error - calculation std of empty list");
     {
-        int iens;
         enkf_node_clear(std);
-        for (iens = 0; iens < vector_get_size(ensemble); iens++)
-            enkf_node_iaddsqr(
-                std, (const enkf_node_type *)vector_iget_const(ensemble, iens));
-        enkf_node_scale(std, 1.0 / vector_get_size(ensemble));
+        for (const auto &node : ensemble)
+            enkf_node_iaddsqr(std, node.get());
+        enkf_node_scale(std, 1.0 / ensemble.size());
 
         if (mean != NULL) {
             enkf_node_scale(std, -1);
@@ -733,33 +736,31 @@ void node_std(const vector_type *ensemble, const enkf_node_type *mean,
     }
 }
 
-void node_mean(const vector_type *ensemble, enkf_node_type *mean) {
-    if (vector_get_size(ensemble) == 0)
+void node_mean(std::vector<node> &ensemble, enkf_node_type *mean) {
+    if (ensemble.size() == 0)
         throw std::logic_error(
             "internal error - calculation average of empty list");
     enkf_node_clear(mean);
-    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
-        enkf_node_iadd(
-            mean, (const enkf_node_type *)vector_iget_const(ensemble, iens));
+    for (const auto &node : ensemble)
+        enkf_node_iadd(mean, node.get());
 
-    enkf_node_scale(mean, 1.0 / vector_get_size(ensemble));
+    enkf_node_scale(mean, 1.0 / ensemble.size());
 }
 
 void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
                   enkf_fs_type *target_fs, const int ens_size, int report_step,
                   const char *key, const enkf_node_type *min_std) {
-    vector_type *ensemble = alloc_node_ensemble(
+    std::vector<node> ensemble = alloc_node_ensemble(
         ens_config, ens_size, src_fs, key, report_step); // Was ANALYZED
-    enkf_node_type *mean =
-        enkf_node_copyc((const enkf_node_type *)vector_iget_const(ensemble, 0));
+    enkf_node_type *mean = enkf_node_copyc(ensemble.at(0).get());
     enkf_node_type *std = enkf_node_copyc(mean);
 
     /* Shifting away the mean */
     node_mean(ensemble, mean);
     node_std(ensemble, mean, std);
     enkf_node_scale(mean, -1);
-    for (int iens = 0; iens < ens_size; iens++)
-        enkf_node_iadd((enkf_node_type *)vector_iget(ensemble, iens), mean);
+    for (const auto &node : ensemble)
+        enkf_node_iadd(node.get(), mean);
 
     enkf_node_scale(mean, -1);
 
@@ -771,23 +772,21 @@ void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
     enkf_node_type *inflation = enkf_node_copyc(mean);
     enkf_node_set_inflation(inflation, std, min_std);
 
-    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
-        enkf_node_imul((enkf_node_type *)vector_iget(ensemble, iens),
-                       inflation);
+    for (const auto &node : ensemble)
+        enkf_node_imul(node.get(), inflation);
 
     enkf_node_free(inflation);
 
     /* Add the mean back in - and store the updated node to disk.*/
     for (int iens = 0; iens < ens_size; iens++) {
         node_id_type node_id = {.report_step = report_step, .iens = iens};
-        enkf_node_iadd((enkf_node_type *)vector_iget(ensemble, iens), mean);
-        enkf_node_store((enkf_node_type *)vector_iget(ensemble, iens),
-                        target_fs, node_id);
+        enkf_node_iadd((enkf_node_type *)ensemble.at(iens).get(), mean);
+        enkf_node_store((enkf_node_type *)ensemble.at(iens).get(), target_fs,
+                        node_id);
     }
 
     enkf_node_free(mean);
     enkf_node_free(std);
-    vector_free(ensemble);
 }
 
 void inflate(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
