@@ -21,70 +21,56 @@
 
 #include <stdbool.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace ies {
 
 typedef enum {
     IES_INVERSION_EXACT = 0,
     IES_INVERSION_SUBSPACE_EXACT_R = 1,
     IES_INVERSION_SUBSPACE_EE_R = 2,
     IES_INVERSION_SUBSPACE_RE = 3
-} ies_inversion_type;
+} inversion_type;
 
-typedef struct ies_enkf_config_struct ies_enkf_config_type;
+typedef struct enkf_config_struct enkf_config_type;
 
-ies_enkf_config_type *ies_enkf_config_alloc();
-void ies_enkf_config_free(ies_enkf_config_type *config);
+enkf_config_type *enkf_config_alloc();
+void enkf_config_free(enkf_config_type *config);
 
-int ies_enkf_config_get_enkf_subspace_dimension(
-    const ies_enkf_config_type *config);
-void ies_enkf_config_set_enkf_subspace_dimension(ies_enkf_config_type *config,
-                                                 int subspace_dimension);
+int enkf_config_get_enkf_subspace_dimension(const enkf_config_type *config);
+void enkf_config_set_enkf_subspace_dimension(enkf_config_type *config,
+                                             int subspace_dimension);
 
-double ies_enkf_config_get_truncation(const ies_enkf_config_type *config);
-void ies_enkf_config_set_truncation(ies_enkf_config_type *config,
-                                    double truncation);
+double enkf_config_get_truncation(const enkf_config_type *config);
+void enkf_config_set_truncation(enkf_config_type *config, double truncation);
 
-void ies_enkf_config_set_option_flags(ies_enkf_config_type *config, long flags);
-long ies_enkf_config_get_option_flags(const ies_enkf_config_type *config);
+void enkf_config_set_option_flags(enkf_config_type *config, long flags);
+long enkf_config_get_option_flags(const enkf_config_type *config);
 
-double
-ies_enkf_config_get_ies_max_steplength(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_max_steplength(ies_enkf_config_type *config,
-                                            double ies_max_steplength);
+double enkf_config_get_max_steplength(const enkf_config_type *config);
+void enkf_config_set_max_steplength(enkf_config_type *config,
+                                    double max_steplength);
 
-double
-ies_enkf_config_get_ies_min_steplength(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_min_steplength(ies_enkf_config_type *config,
-                                            double ies_min_steplength);
+double enkf_config_get_min_steplength(const enkf_config_type *config);
+void enkf_config_set_min_steplength(enkf_config_type *config,
+                                    double min_steplength);
 
-double
-ies_enkf_config_get_ies_dec_steplength(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_dec_steplength(ies_enkf_config_type *config,
-                                            double ies_dec_steplength);
+double enkf_config_get_dec_steplength(const enkf_config_type *config);
+void enkf_config_set_dec_steplength(enkf_config_type *config,
+                                    double dec_steplength);
 
-ies_inversion_type
-ies_enkf_config_get_ies_inversion(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_inversion(ies_enkf_config_type *config,
-                                       ies_inversion_type ies_inversion);
+inversion_type enkf_config_get_inversion(const enkf_config_type *config);
+void enkf_config_set_inversion(enkf_config_type *config,
+                               inversion_type inversion);
 
-bool ies_enkf_config_get_ies_subspace(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_subspace(ies_enkf_config_type *config,
-                                      bool ies_subspace);
+bool enkf_config_get_subspace(const enkf_config_type *config);
+void enkf_config_set_subspace(enkf_config_type *config, bool subspace);
 
-bool ies_enkf_config_get_ies_aaprojection(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_aaprojection(ies_enkf_config_type *config,
-                                          bool ies_aaprojection);
+bool enkf_config_get_aaprojection(const enkf_config_type *config);
+void enkf_config_set_aaprojection(enkf_config_type *config, bool aaprojection);
 
-char *ies_enkf_config_get_ies_logfile(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_logfile(ies_enkf_config_type *config,
-                                     const char *ies_logfile);
+char *enkf_config_get_logfile(const enkf_config_type *config);
+void enkf_config_set_logfile(enkf_config_type *config, const char *logfile);
 
-double
-ies_enkf_config_calculate_steplength(const ies_enkf_config_type *ies_config,
-                                     int iteration_nr);
-#ifdef __cplusplus
-}
-#endif
+double enkf_config_calculate_steplength(const enkf_config_type *config,
+                                        int iteration_nr);
+} // namespace ies
 #endif

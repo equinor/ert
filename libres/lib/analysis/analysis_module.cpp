@@ -29,15 +29,18 @@
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>
+#include <ert/analysis/ies/ies_enkf.hpp>
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
+namespace ies {
 extern analysis_table_type IES_ENKF;
+};
 extern analysis_table_type STD_ENKF;
 
 namespace {
 const std::unordered_map<std::string, analysis_table_type *> analysis_tables{
-    {"IES_ENKF", &IES_ENKF},
+    {"IES_ENKF", &ies::IES_ENKF},
     {"STD_ENKF", &STD_ENKF},
 };
 }

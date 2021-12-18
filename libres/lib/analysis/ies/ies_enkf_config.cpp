@@ -37,13 +37,13 @@
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
 #define DEFAULT_IES_SUBSPACE false
-#define DEFAULT_IES_INVERSION IES_INVERSION_SUBSPACE_EXACT_R
+#define DEFAULT_IES_INVERSION ies::IES_INVERSION_SUBSPACE_EXACT_R
 #define DEFAULT_IES_LOGFILE "ies.log"
 #define DEFAULT_IES_AAPROJECTION false
 
 #define IES_ENKF_CONFIG_TYPE_ID 196402021
 
-struct ies_enkf_config_struct {
+struct ies::enkf_config_struct {
     UTIL_TYPE_ID_DECLARATION;
     double truncation;      // Controlled by config key: ENKF_TRUNCATION_KEY
     int subspace_dimension; // Controlled by config key: ENKF_SUBSPACE_DIMENSION_KEY (-1: use Truncation instead)
@@ -60,36 +60,36 @@ struct ies_enkf_config_struct {
     bool ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
 };
 
-ies_enkf_config_type *ies_enkf_config_alloc() {
-    ies_enkf_config_type *config =
-        static_cast<ies_enkf_config_type *>(util_malloc(sizeof *config));
+ies::enkf_config_type *ies::enkf_config_alloc() {
+    ies::enkf_config_type *config =
+        static_cast<ies::enkf_config_type *>(util_malloc(sizeof *config));
     UTIL_TYPE_ID_INIT(config, IES_ENKF_CONFIG_TYPE_ID);
     config->ies_logfile = NULL;
-    ies_enkf_config_set_truncation(config, DEFAULT_ENKF_TRUNCATION);
-    ies_enkf_config_set_enkf_subspace_dimension(
+    ies::enkf_config_set_truncation(config, DEFAULT_ENKF_TRUNCATION);
+    ies::enkf_config_set_enkf_subspace_dimension(
         config, DEFAULT_ENKF_SUBSPACE_DIMENSION);
-    ies_enkf_config_set_option_flags(
+    ies::enkf_config_set_option_flags(
         config, ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE +
                     ANALYSIS_SCALE_DATA);
-    ies_enkf_config_set_ies_max_steplength(config, DEFAULT_IES_MAX_STEPLENGTH);
-    ies_enkf_config_set_ies_min_steplength(config, DEFAULT_IES_MIN_STEPLENGTH);
-    ies_enkf_config_set_ies_dec_steplength(config, DEFAULT_IES_DEC_STEPLENGTH);
-    ies_enkf_config_set_ies_subspace(config, DEFAULT_IES_SUBSPACE);
-    ies_enkf_config_set_ies_inversion(config, DEFAULT_IES_INVERSION);
-    ies_enkf_config_set_ies_logfile(config, DEFAULT_IES_LOGFILE);
-    ies_enkf_config_set_ies_aaprojection(config, DEFAULT_IES_AAPROJECTION);
+    ies::enkf_config_set_max_steplength(config, DEFAULT_IES_MAX_STEPLENGTH);
+    ies::enkf_config_set_min_steplength(config, DEFAULT_IES_MIN_STEPLENGTH);
+    ies::enkf_config_set_dec_steplength(config, DEFAULT_IES_DEC_STEPLENGTH);
+    ies::enkf_config_set_subspace(config, DEFAULT_IES_SUBSPACE);
+    ies::enkf_config_set_inversion(config, DEFAULT_IES_INVERSION);
+    ies::enkf_config_set_logfile(config, DEFAULT_IES_LOGFILE);
+    ies::enkf_config_set_aaprojection(config, DEFAULT_IES_AAPROJECTION);
 
     return config;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* TRUNCATION -> SUBSPACE_DIMENSION */
-double ies_enkf_config_get_truncation(const ies_enkf_config_type *config) {
+double ies::enkf_config_get_truncation(const enkf_config_type *config) {
     return config->truncation;
 }
 
-void ies_enkf_config_set_truncation(ies_enkf_config_type *config,
-                                    double truncation) {
+void ies::enkf_config_set_truncation(enkf_config_type *config,
+                                     double truncation) {
     config->truncation = truncation;
     if (truncation > 0.0)
         config->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
@@ -97,13 +97,13 @@ void ies_enkf_config_set_truncation(ies_enkf_config_type *config,
 
 /*------------------------------------------------------------------------------------------------*/
 /* SUBSPACE_DIMENSION -> TRUNCATION */
-int ies_enkf_config_get_enkf_subspace_dimension(
-    const ies_enkf_config_type *config) {
+int ies::enkf_config_get_enkf_subspace_dimension(
+    const ies::enkf_config_type *config) {
     return config->subspace_dimension;
 }
 
-void ies_enkf_config_set_enkf_subspace_dimension(ies_enkf_config_type *config,
-                                                 int subspace_dimension) {
+void ies::enkf_config_set_enkf_subspace_dimension(enkf_config_type *config,
+                                                  int subspace_dimension) {
     config->subspace_dimension = subspace_dimension;
     if (subspace_dimension > 0)
         config->truncation = INVALID_TRUNCATION;
@@ -112,44 +112,43 @@ void ies_enkf_config_set_enkf_subspace_dimension(ies_enkf_config_type *config,
 /*------------------------------------------------------------------------------------------------*/
 /* OPTION_FLAGS */
 
-long ies_enkf_config_get_option_flags(const ies_enkf_config_type *config) {
+long ies::enkf_config_get_option_flags(const ies::enkf_config_type *config) {
     return config->option_flags;
 }
 
-void ies_enkf_config_set_option_flags(ies_enkf_config_type *config,
-                                      long flags) {
+void ies::enkf_config_set_option_flags(enkf_config_type *config, long flags) {
     config->option_flags = flags;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_MAX_STEPLENGTH */
 double
-ies_enkf_config_get_ies_max_steplength(const ies_enkf_config_type *config) {
+ies::enkf_config_get_max_steplength(const ies::enkf_config_type *config) {
     return config->ies_max_steplength;
 }
-void ies_enkf_config_set_ies_max_steplength(ies_enkf_config_type *config,
-                                            double ies_max_steplength) {
+void ies::enkf_config_set_max_steplength(ies::enkf_config_type *config,
+                                         double ies_max_steplength) {
     config->ies_max_steplength = ies_max_steplength;
 }
 /*------------------------------------------------------------------------------------------------*/
 /* IES_MIN_STEPLENGTH */
 double
-ies_enkf_config_get_ies_min_steplength(const ies_enkf_config_type *config) {
+ies::enkf_config_get_min_steplength(const ies::enkf_config_type *config) {
     return config->ies_min_steplength;
 }
-void ies_enkf_config_set_ies_min_steplength(ies_enkf_config_type *config,
-                                            double ies_min_steplength) {
+void ies::enkf_config_set_min_steplength(ies::enkf_config_type *config,
+                                         double ies_min_steplength) {
     config->ies_min_steplength = ies_min_steplength;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_DEC_STEPLENGTH */
 double
-ies_enkf_config_get_ies_dec_steplength(const ies_enkf_config_type *config) {
+ies::enkf_config_get_dec_steplength(const ies::enkf_config_type *config) {
     return config->ies_dec_steplength;
 }
-void ies_enkf_config_set_ies_dec_steplength(ies_enkf_config_type *config,
-                                            double ies_dec_steplength) {
+void ies::enkf_config_set_dec_steplength(ies::enkf_config_type *config,
+                                         double ies_dec_steplength) {
 
     // The formula used to calculate step length has a hard assumption that the
     // steplength is reduced for every step - here that is silently enforced
@@ -160,57 +159,56 @@ void ies_enkf_config_set_ies_dec_steplength(ies_enkf_config_type *config,
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_INVERSION          */
-ies_inversion_type
-ies_enkf_config_get_ies_inversion(const ies_enkf_config_type *config) {
-    return static_cast<ies_inversion_type>(config->ies_inversion);
+ies::inversion_type
+ies::enkf_config_get_inversion(const ies::enkf_config_type *config) {
+    return static_cast<ies::inversion_type>(config->ies_inversion);
 }
-void ies_enkf_config_set_ies_inversion(ies_enkf_config_type *config,
-                                       ies_inversion_type ies_inversion) {
+void ies::enkf_config_set_inversion(ies::enkf_config_type *config,
+                                    ies::inversion_type ies_inversion) {
     config->ies_inversion = ies_inversion;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_SUBSPACE      */
-bool ies_enkf_config_get_ies_subspace(const ies_enkf_config_type *config) {
+bool ies::enkf_config_get_subspace(const ies::enkf_config_type *config) {
     return config->ies_subspace;
 }
-void ies_enkf_config_set_ies_subspace(ies_enkf_config_type *config,
-                                      bool ies_subspace) {
+void ies::enkf_config_set_subspace(ies::enkf_config_type *config,
+                                   bool ies_subspace) {
     config->ies_subspace = ies_subspace;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_AAPROJECTION         */
-bool ies_enkf_config_get_ies_aaprojection(const ies_enkf_config_type *config) {
+bool ies::enkf_config_get_aaprojection(const ies::enkf_config_type *config) {
     return config->ies_aaprojection;
 }
-void ies_enkf_config_set_ies_aaprojection(ies_enkf_config_type *config,
-                                          bool ies_aaprojection) {
+void ies::enkf_config_set_aaprojection(enkf_config_type *config,
+                                       bool ies_aaprojection) {
     config->ies_aaprojection = ies_aaprojection;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_LOGFILE       */
-char *ies_enkf_config_get_ies_logfile(const ies_enkf_config_type *config) {
+char *ies::enkf_config_get_logfile(const ies::enkf_config_type *config) {
     return config->ies_logfile;
 }
-void ies_enkf_config_set_ies_logfile(ies_enkf_config_type *config,
-                                     const char *ies_logfile) {
+void ies::enkf_config_set_logfile(ies::enkf_config_type *config,
+                                  const char *ies_logfile) {
     config->ies_logfile =
         util_realloc_string_copy(config->ies_logfile, ies_logfile);
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* FREE_CONFIG */
-void ies_enkf_config_free(ies_enkf_config_type *config) { free(config); }
+void ies::enkf_config_free(ies::enkf_config_type *config) { free(config); }
 
 double
-ies_enkf_config_calculate_steplength(const ies_enkf_config_type *ies_config,
-                                     int iteration_nr) {
-    double ies_max_step = ies_enkf_config_get_ies_max_steplength(ies_config);
-    double ies_min_step = ies_enkf_config_get_ies_min_steplength(ies_config);
-    double ies_decline_step =
-        ies_enkf_config_get_ies_dec_steplength(ies_config);
+ies::enkf_config_calculate_steplength(const ies::enkf_config_type *ies_config,
+                                      int iteration_nr) {
+    double ies_max_step = ies::enkf_config_get_max_steplength(ies_config);
+    double ies_min_step = ies::enkf_config_get_min_steplength(ies_config);
+    double ies_decline_step = ies::enkf_config_get_dec_steplength(ies_config);
 
     /*
       This is an implementation of Eq. (49) from:

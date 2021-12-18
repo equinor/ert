@@ -22,7 +22,7 @@ SCENARIO("Can set inversion method", "[std_enkf]") {
             REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
                                         STRING_INVERSION_SUBSPACE_EXACT_R));
             REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    IES_INVERSION_SUBSPACE_EXACT_R);
+                    ies::IES_INVERSION_SUBSPACE_EXACT_R);
         }
 
         WHEN("Inversion is set to SUBSPACE_EE_R") {
@@ -30,7 +30,7 @@ SCENARIO("Can set inversion method", "[std_enkf]") {
             REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
                                         STRING_INVERSION_SUBSPACE_EE_R));
             REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    IES_INVERSION_SUBSPACE_EE_R);
+                    ies::IES_INVERSION_SUBSPACE_EE_R);
         }
 
         WHEN("Inversion is set to SUBSPACE_RE") {
@@ -38,21 +38,21 @@ SCENARIO("Can set inversion method", "[std_enkf]") {
             REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
                                         STRING_INVERSION_SUBSPACE_RE));
             REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    IES_INVERSION_SUBSPACE_RE);
+                    ies::IES_INVERSION_SUBSPACE_RE);
         }
 
         WHEN("Deprecated bool flags are set to true") {
             std_enkf_set_bool(std_enkf_data, USE_EE_KEY_, false);
             std_enkf_set_bool(std_enkf_data, USE_GE_KEY_, false);
             REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    IES_INVERSION_SUBSPACE_EXACT_R);
+                    ies::IES_INVERSION_SUBSPACE_EXACT_R);
         }
 
         WHEN("Deprecated bool flags aere set to false") {
             std_enkf_set_bool(std_enkf_data, USE_EE_KEY_, true);
             std_enkf_set_bool(std_enkf_data, USE_GE_KEY_, true);
             REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    IES_INVERSION_SUBSPACE_RE);
+                    ies::IES_INVERSION_SUBSPACE_RE);
         }
 
         std_enkf_data_free(std_enkf_data);

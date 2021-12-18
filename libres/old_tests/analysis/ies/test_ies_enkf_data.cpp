@@ -6,9 +6,9 @@
 
 void test_create() {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    ies_enkf_data_type *data = (ies_enkf_data_type *)ies_enkf_data_alloc();
+    auto *data = static_cast<ies::enkf_data_type *>(ies::enkf_data_alloc());
     test_assert_not_NULL(data);
-    ies_enkf_data_free(data);
+    ies::enkf_data_free(data);
     rng_free(rng);
 }
 
