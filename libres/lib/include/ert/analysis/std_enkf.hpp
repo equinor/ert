@@ -1,10 +1,6 @@
 #ifndef ERT_STD_ENKF_H
 #define ERT_STD_ENKF_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <ert/res_util/matrix.hpp>
@@ -32,7 +28,7 @@ void std_enkf_set_truncation(std_enkf_data_type *data, double truncation);
 void std_enkf_set_subspace_dimension(std_enkf_data_type *data,
                                      int subspace_dimension);
 bool std_enkf_has_var(const void *arg, const char *var_name);
-ies_inversion_type std_enkf_data_get_inversion(const std_enkf_data_type *data);
+ies::inversion_type std_enkf_data_get_inversion(const std_enkf_data_type *data);
 
 double std_enkf_get_truncation(std_enkf_data_type *data);
 void *std_enkf_data_alloc();
@@ -51,9 +47,5 @@ void std_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
                     const matrix_type *S, const matrix_type *R,
                     const matrix_type *dObs, const matrix_type *E,
                     const matrix_type *D, rng_type *rng);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

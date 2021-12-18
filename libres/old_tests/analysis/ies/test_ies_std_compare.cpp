@@ -25,27 +25,27 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    ies_enkf_data_type *ies_data1 =
-        static_cast<ies_enkf_data_type *>(ies_enkf_data_alloc());
-    ies_enkf_config_type *ies_config1 = ies_enkf_data_get_config(ies_data1);
+    auto *ies_data1 =
+        static_cast<ies::enkf_data_type *>(ies::enkf_data_alloc());
+    auto *ies_config1 = ies::enkf_data_get_config(ies_data1);
     std_enkf_data_type *std_data =
         static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
 
-    ies_enkf_config_set_truncation(ies_config1, 0.95);
-    ies_enkf_config_set_ies_min_steplength(ies_config1, 1.0);
-    ies_enkf_config_set_ies_max_steplength(ies_config1, 1.0);
-    ies_enkf_config_set_ies_inversion(ies_config1,
-                                      IES_INVERSION_SUBSPACE_EXACT_R);
-    ies_enkf_config_set_ies_aaprojection(ies_config1, false);
+    ies::enkf_config_set_truncation(ies_config1, 0.95);
+    ies::enkf_config_set_min_steplength(ies_config1, 1.0);
+    ies::enkf_config_set_max_steplength(ies_config1, 1.0);
+    ies::enkf_config_set_inversion(ies_config1,
+                                   ies::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies::enkf_config_set_aaprojection(ies_config1, false);
 
     std_enkf_set_truncation(std_data, 0.95);
 
-    ies_enkf_init_update(ies_data1, testdata.ens_mask, testdata.obs_mask,
-                         testdata.S, testdata.R, testdata.dObs, testdata.E,
-                         testdata.D, rng);
+    ies::enkf_init_update(ies_data1, testdata.ens_mask, testdata.obs_mask,
+                          testdata.S, testdata.R, testdata.dObs, testdata.E,
+                          testdata.D, rng);
 
-    ies_enkf_updateA(ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, rng);
+    ies::enkf_updateA(ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
+                      testdata.E, testdata.D, rng);
 
     std_enkf_initX(std_data, X, nullptr, testdata.S, testdata.R, testdata.dObs,
                    testdata.E, testdata.D, rng);
@@ -56,7 +56,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     matrix_free(A1);
     matrix_free(A2);
     std_enkf_data_free(std_data);
-    ies_enkf_data_free(ies_data1);
+    ies::enkf_data_free(ies_data1);
     rng_free(rng);
 }
 

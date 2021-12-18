@@ -9,10 +9,9 @@
   module is quite simple; with only a few scalar variables, but there
   are essentially no limits to what you can pack into such a datatype.
 
-  All the functions in the module have a void pointer as the first
-  argument, this will immediately be casted to an ies_enkf_data_type
-  instance, to get some type safety the UTIL_TYPE_ID system should be
-  used.
+  All the functions in the module have a void pointer as the first argument,
+  this will immediately be cast to an ies::enkf_data_type instance, to get some
+  type safety the UTIL_TYPE_ID system should be used.
 
   The data structure holding the data for your analysis module should
   be created and initialized by a constructor, which should be
@@ -24,7 +23,7 @@
 
 #define IES_ENKF_DATA_TYPE_ID 6635831
 
-struct ies_enkf_data_struct {
+struct ies::enkf_data_struct {
     UTIL_TYPE_ID_DECLARATION;
     int iteration_nr; // Keep track of the outer iteration loop
     int state_size;   // Initial state_size used for checks in subsequent calls
@@ -38,17 +37,17 @@ struct ies_enkf_data_struct {
     matrix_type *
         E; // Prior ensemble of measurement perturations (should be the same for all iterations)
     bool converged; // GN has converged
-    ies_enkf_config_type *
+    ies::enkf_config_type *
         config; // This I don't understand but I assume I include data from the ies_enkf_config_type defined in ies_enkf_config.cpp
     FILE *log_fp; // logfile id
 };
 
-UTIL_SAFE_CAST_FUNCTION(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(ies_enkf_data, IES_ENKF_DATA_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(ies::enkf_data, IES_ENKF_DATA_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(ies::enkf_data, IES_ENKF_DATA_TYPE_ID)
 
-void *ies_enkf_data_alloc() {
-    ies_enkf_data_type *data =
-        static_cast<ies_enkf_data_type *>(util_malloc(sizeof *data));
+void *ies::enkf_data_alloc() {
+    ies::enkf_data_type *data =
+        static_cast<ies::enkf_data_type *>(util_malloc(sizeof *data));
     UTIL_TYPE_ID_INIT(data, IES_ENKF_DATA_TYPE_ID);
     data->iteration_nr = 0;
     data->state_size = 0;
@@ -59,63 +58,64 @@ void *ies_enkf_data_alloc() {
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
-    data->config = ies_enkf_config_alloc();
+    data->config = ies::enkf_config_alloc();
     data->log_fp = NULL;
     return data;
 }
 
-void ies_enkf_data_free(void *arg) {
-    ies_enkf_data_type *data = ies_enkf_data_safe_cast(arg);
-    ies_enkf_config_free(data->config);
+void ies::enkf_data_free(void *arg) {
+    ies::enkf_data_type *data = ies::enkf_data_safe_cast(arg);
+    ies::enkf_config_free(data->config);
     free(data);
 }
 
-void ies_enkf_data_set_iteration_nr(ies_enkf_data_type *data,
-                                    int iteration_nr) {
+void ies::enkf_data_set_iteration_nr(ies::enkf_data_type *data,
+                                     int iteration_nr) {
     data->iteration_nr = iteration_nr;
 }
 
-int ies_enkf_data_inc_iteration_nr(ies_enkf_data_type *data) {
+int ies::enkf_data_inc_iteration_nr(ies::enkf_data_type *data) {
     data->iteration_nr++;
     return data->iteration_nr;
 }
 
-int ies_enkf_data_get_iteration_nr(const ies_enkf_data_type *data) {
+int ies::enkf_data_get_iteration_nr(const ies::enkf_data_type *data) {
     return data->iteration_nr;
 }
 
-ies_enkf_config_type *ies_enkf_data_get_config(const ies_enkf_data_type *data) {
+ies::enkf_config_type *
+ies::enkf_data_get_config(const ies::enkf_data_type *data) {
     return data->config;
 }
 
-void ies_enkf_data_update_ens_mask(ies_enkf_data_type *data,
-                                   const bool_vector_type *ens_mask) {
+void ies::enkf_data_update_ens_mask(ies::enkf_data_type *data,
+                                    const bool_vector_type *ens_mask) {
     if (data->ens_mask)
         bool_vector_free(data->ens_mask);
 
     data->ens_mask = bool_vector_alloc_copy(ens_mask);
 }
 
-void ies_enkf_store_initial_obs_mask(ies_enkf_data_type *data,
-                                     const bool_vector_type *obs_mask) {
+void ies::enkf_store_initial_obs_mask(ies::enkf_data_type *data,
+                                      const bool_vector_type *obs_mask) {
     if (!data->obs_mask0)
         data->obs_mask0 = bool_vector_alloc_copy(obs_mask);
 }
 
-void ies_enkf_update_obs_mask(ies_enkf_data_type *data,
-                              const bool_vector_type *obs_mask) {
+void ies::enkf_update_obs_mask(ies::enkf_data_type *data,
+                               const bool_vector_type *obs_mask) {
     if (data->obs_mask)
         bool_vector_free(data->obs_mask);
 
     data->obs_mask = bool_vector_alloc_copy(obs_mask);
 }
 
-int ies_enkf_data_get_obs_mask_size(const ies_enkf_data_type *data) {
+int ies::enkf_data_get_obs_mask_size(const ies::enkf_data_type *data) {
     return bool_vector_size(data->obs_mask);
 }
 
-int ies_enkf_data_active_obs_count(const ies_enkf_data_type *data) {
-    int nrobs_msk = ies_enkf_data_get_obs_mask_size(data);
+int ies::enkf_data_active_obs_count(const ies::enkf_data_type *data) {
+    int nrobs_msk = ies::enkf_data_get_obs_mask_size(data);
     int nrobs = 0;
     for (int i = 0; i < nrobs_msk; i++) {
         if (bool_vector_iget(data->obs_mask, i)) {
@@ -125,17 +125,18 @@ int ies_enkf_data_active_obs_count(const ies_enkf_data_type *data) {
     return nrobs;
 }
 
-int ies_enkf_data_get_ens_mask_size(const ies_enkf_data_type *data) {
+int ies::enkf_data_get_ens_mask_size(const ies::enkf_data_type *data) {
     return bool_vector_size(data->ens_mask);
 }
 
-void ies_enkf_data_update_state_size(ies_enkf_data_type *data, int state_size) {
+void ies::enkf_data_update_state_size(ies::enkf_data_type *data,
+                                      int state_size) {
     if (data->state_size == 0)
         data->state_size = state_size;
 }
 
-FILE *ies_enkf_data_open_log(ies_enkf_data_type *data) {
-    const char *ies_logfile = ies_enkf_config_get_ies_logfile(data->config);
+FILE *ies::enkf_data_open_log(ies::enkf_data_type *data) {
+    const char *ies_logfile = ies::enkf_config_get_logfile(data->config);
     FILE *fp;
     if (data->iteration_nr == 1) {
         fp = fopen(ies_logfile, "w");
@@ -146,18 +147,18 @@ FILE *ies_enkf_data_open_log(ies_enkf_data_type *data) {
     return fp;
 }
 
-void ies_enkf_data_fclose_log(ies_enkf_data_type *data) {
+void ies::enkf_data_fclose_log(ies::enkf_data_type *data) {
     fflush(data->log_fp);
     fclose(data->log_fp);
 }
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
-void ies_enkf_data_store_initialE(ies_enkf_data_type *data,
-                                  const matrix_type *E0) {
+void ies::enkf_data_store_initialE(ies::enkf_data_type *data,
+                                   const matrix_type *E0) {
     if (!data->E) {
-        int obs_size_msk = ies_enkf_data_get_obs_mask_size(data);
-        int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
+        int obs_size_msk = ies::enkf_data_get_obs_mask_size(data);
+        int ens_size_msk = ies::enkf_data_get_ens_mask_size(data);
         data->E = matrix_alloc(obs_size_msk, ens_size_msk);
         matrix_set(data->E, -999.9);
         int m = 0;
@@ -179,11 +180,11 @@ void ies_enkf_data_store_initialE(ies_enkf_data_type *data,
 
 /* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
    in data->E. */
-void ies_enkf_data_augment_initialE(ies_enkf_data_type *data,
-                                    const matrix_type *E0) {
+void ies::enkf_data_augment_initialE(ies::enkf_data_type *data,
+                                     const matrix_type *E0) {
     if (data->E) {
-        int obs_size_msk = ies_enkf_data_get_obs_mask_size(data);
-        int ens_size_msk = ies_enkf_data_get_ens_mask_size(data);
+        int obs_size_msk = ies::enkf_data_get_obs_mask_size(data);
+        int ens_size_msk = ies::enkf_data_get_ens_mask_size(data);
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
             if (!bool_vector_iget(data->obs_mask0, iobs) &&
@@ -205,14 +206,14 @@ void ies_enkf_data_augment_initialE(ies_enkf_data_type *data,
     }
 }
 
-void ies_enkf_data_store_initialA(ies_enkf_data_type *data,
-                                  const matrix_type *A) {
+void ies::enkf_data_store_initialA(ies::enkf_data_type *data,
+                                   const matrix_type *A) {
     // We store the initial ensemble to use it in final update equation                     (Line 11)
     if (!data->A0)
         data->A0 = matrix_alloc_copy(A);
 }
 
-void ies_enkf_data_allocateW(ies_enkf_data_type *data) {
+void ies::enkf_data_allocateW(ies::enkf_data_type *data) {
     if (!data->W) {
         // We initialize data->W which will store W for use in next iteration                    (Line 9)
         int ens_size = bool_vector_size(data->ens_mask);
@@ -222,28 +223,28 @@ void ies_enkf_data_allocateW(ies_enkf_data_type *data) {
 }
 
 const bool_vector_type *
-ies_enkf_data_get_obs_mask0(const ies_enkf_data_type *data) {
+ies::enkf_data_get_obs_mask0(const ies::enkf_data_type *data) {
     return data->obs_mask0;
 }
 
 const bool_vector_type *
-ies_enkf_data_get_obs_mask(const ies_enkf_data_type *data) {
+ies::enkf_data_get_obs_mask(const ies::enkf_data_type *data) {
     return data->obs_mask;
 }
 
 const bool_vector_type *
-ies_enkf_data_get_ens_mask(const ies_enkf_data_type *data) {
+ies::enkf_data_get_ens_mask(const ies::enkf_data_type *data) {
     return data->ens_mask;
 }
 
-const matrix_type *ies_enkf_data_getE(const ies_enkf_data_type *data) {
+const matrix_type *ies::enkf_data_getE(const ies::enkf_data_type *data) {
     return data->E;
 }
 
-matrix_type *ies_enkf_data_getW(const ies_enkf_data_type *data) {
+matrix_type *ies::enkf_data_getW(const ies::enkf_data_type *data) {
     return data->W;
 }
 
-const matrix_type *ies_enkf_data_getA0(const ies_enkf_data_type *data) {
+const matrix_type *ies::enkf_data_getA0(const ies::enkf_data_type *data) {
     return data->A0;
 }
