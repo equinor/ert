@@ -676,41 +676,6 @@ struct enkf_node_deleter {
 using node = std::unique_ptr<enkf_node_type, enkf_node_deleter>;
 
 /*
-   This function returns a vector holding all the instances with the same
-   keyword, i.e.
-
-   alloc_node_ensemble(enkf_main , "PRESSURE");
-
-   Will return an ensemble of pressure nodes. The enkf_node instances
-   must be free'd with enkf_node_free( ) afterwards.
-
-   Example:
-
-   vector_type * pressure_nodes = alloc_node_ensemble(enkf_main , "PRESSURE");
-
-   // Do something with the pressure nodes ...
-
-   free(pressure_nodes);
-*/
-std::vector<node> alloc_node_ensemble(const ensemble_config_type *ens_config,
-                                      const int ens_size, enkf_fs_type *src_fs,
-                                      const char *key, int report_step) {
-    std::vector<node> node_ensemble;
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(ens_config, key);
-    node_id_type node_id = {.report_step = report_step, .iens = -1};
-
-    for (int iens = 0; iens < ens_size; iens++) {
-        node n { enkf_node_alloc(config_node) };
-        node_id.iens = iens;
-        enkf_node_load(n.get(), src_fs, node_id);
-        node_ensemble.push_back(std::move(n));
-    }
-
-    return node_ensemble;
-}
-
-/*
    This function calculates the node standard deviation from the
    ensemble. The mean can be NULL, in which case it is assumed that
    the mean has already been shifted away from the ensemble.
@@ -747,21 +712,16 @@ void node_mean(std::vector<node> &ensemble, enkf_node_type *mean) {
     enkf_node_scale(mean, 1.0 / ensemble.size());
 }
 
-void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
-                  enkf_fs_type *target_fs, const int ens_size, int report_step,
-                  const char *key, const enkf_node_type *min_std) {
-    std::vector<node> ensemble = alloc_node_ensemble(
-        ens_config, ens_size, src_fs, key, report_step); // Was ANALYZED
+void inflate_node(std::vector<node> &ensemble, const enkf_node_type *min_std) {
     enkf_node_type *mean = enkf_node_copyc(ensemble.at(0).get());
     enkf_node_type *std = enkf_node_copyc(mean);
-
-    /* Shifting away the mean */
     node_mean(ensemble, mean);
     node_std(ensemble, mean, std);
+
+    /* Shifting away the mean */
     enkf_node_scale(mean, -1);
     for (const auto &node : ensemble)
         enkf_node_iadd(node.get(), mean);
-
     enkf_node_scale(mean, -1);
 
     /*
@@ -777,12 +737,9 @@ void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
 
     enkf_node_free(inflation);
 
-    /* Add the mean back in - and store the updated node to disk.*/
-    for (int iens = 0; iens < ens_size; iens++) {
-        node_id_type node_id = {.report_step = report_step, .iens = iens};
-        enkf_node_iadd((enkf_node_type *)ensemble.at(iens).get(), mean);
-        enkf_node_store((enkf_node_type *)ensemble.at(iens).get(), target_fs,
-                        node_id);
+    /* Add the mean back in*/
+    for (const auto &node : ensemble) {
+        enkf_node_iadd(node.get(), mean);
     }
 
     enkf_node_free(mean);
@@ -803,10 +760,21 @@ void inflate(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
                 ensemble_config_get_node(ens_config, key);
             const enkf_node_type *min_std =
                 enkf_config_node_get_min_std(config_node);
-
-            if (min_std != NULL)
-                inflate_node(ens_config, src_fs, target_fs, ens_size,
-                             report_step, key, min_std);
+            if (min_std != NULL) {
+                std::vector<node> ensemble;
+                for (int iens = 0; iens < ens_size; iens++) {
+                    ensemble.emplace_back(enkf_node_alloc(config_node));
+                    enkf_node_load(ensemble.back().get(), src_fs,
+                                   {.report_step = report_step, .iens = iens});
+                }
+                inflate_node(ensemble, min_std);
+                for (int iens = 0; iens < ens_size; iens++) {
+                    node_id_type node_id = {.report_step = report_step,
+                                            .iens = iens};
+                    enkf_node_store(ensemble.at(iens).get(), target_fs,
+                                    node_id);
+                }
+            }
         }
     }
     stringlist_free(keys);
