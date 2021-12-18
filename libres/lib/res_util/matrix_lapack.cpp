@@ -126,11 +126,12 @@ void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
         std::vector<double> berr(nrhs);
         std::vector<long int> ipivot(n);
         std::vector<long int> iwork(n);
+        double local_rcond;
 
         dgesvx_(&fact, &trans, &n, &nrhs, matrix_get_data(A), &lda, AF.data(),
                 &ldaf, ipivot.data(), &equed, R.data(), C.data(),
-                matrix_get_data(B), &ldb, X.data(), &ldx, rcond, ferr.data(),
-                berr.data(), work.data(), iwork.data(), &info);
+                matrix_get_data(B), &ldb, X.data(), &ldx, &local_rcond,
+                ferr.data(), berr.data(), work.data(), iwork.data(), &info);
         if (info != 0)
             util_abort(
                 "%s: low level lapack routine: dgesvx() failed with info:%d \n",
@@ -139,6 +140,9 @@ void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
         for (j = 0; j < B->columns; j++)
             for (i = 0; i < B->rows; i++)
                 matrix_iset(B, i, j, X[j * B->rows + i]);
+
+        if (rcond)
+            *rcond = local_rcond;
     }
 }
 
