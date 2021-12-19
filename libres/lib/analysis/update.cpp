@@ -104,7 +104,7 @@ void *serialize_nodes_mt(void *arg) {
 
 void serialize_dataset(const ensemble_config_type *ens_config,
                        const local_dataset_type *dataset, int report_step,
-                       hash_type *use_count, thread_pool_type *work_pool,
+                       thread_pool_type *work_pool,
                        serialize_info_type *serialize_info) {
 
     matrix_type *A = serialize_info->A;
@@ -204,7 +204,7 @@ void assert_matrix_size(const matrix_type *m, const char *name, int rows,
 }
 
 void deserialize_dataset(ensemble_config_type *ensemble_config,
-                         const local_dataset_type *dataset, int report_step,
+                         const local_dataset_type *dataset,
                          serialize_info_type *serialize_info,
                          thread_pool_type *work_pool) {
 
@@ -246,8 +246,7 @@ serialize_info_type *
 serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
                      const int_vector_type *iens_active_index, int target_step,
-                     enkf_state_type **ensemble, int report_step,
-                     matrix_type *A, int num_cpu_threads) {
+                     int report_step, matrix_type *A, int num_cpu_threads) {
 
     serialize_info_type *serialize_info =
         new serialize_info_type[num_cpu_threads];
@@ -281,8 +280,7 @@ matrices.
 std::unordered_map<std::string, matrix_type *>
 load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
                 int_vector_type *iens_active_index, int last_step,
-                meas_data_type *forecast, enkf_state_type **ensemble,
-                hash_type *use_count, obs_data_type *obs_data,
+                meas_data_type *forecast, obs_data_type *obs_data,
                 const local_ministep_type *ministep) {
 
     int cpu_threads = 4;
@@ -293,8 +291,8 @@ load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
 
     serialize_info_type *serialize_info = serialize_info_alloc(
         target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-        target_fs, ensemble_config, iens_active_index, 0, ensemble, last_step,
-        A, cpu_threads);
+        target_fs, ensemble_config, iens_active_index, 0, last_step, A,
+        cpu_threads);
 
     std::unordered_map<std::string, matrix_type *> parameters;
     for (auto &[dataset_name, dataset] :
@@ -308,7 +306,7 @@ load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
         if (unscaled_keys.size() == 0)
             continue;
 
-        serialize_dataset(ensemble_config, dataset, last_step, use_count, tp,
+        serialize_dataset(ensemble_config, dataset, last_step, tp,
                           serialize_info);
 
         parameters[std::string(dataset_name)] =
@@ -326,7 +324,6 @@ Store a set of parameters into a enkf_fs_type storage
 void save_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, int last_step,
-    enkf_state_type **ensemble, hash_type *use_count,
     const local_ministep_type *ministep,
     std::unordered_map<std::string, matrix_type *> parameters) {
 
@@ -347,11 +344,10 @@ void save_parameters(
         matrix_type *A = parameters[std::string(dataset_name)];
         serialize_info_type *serialize_info = serialize_info_alloc(
             target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-            target_fs, ensemble_config, iens_active_index, 0, ensemble,
-            last_step, A, cpu_threads);
+            target_fs, ensemble_config, iens_active_index, 0, last_step, A,
+            cpu_threads);
 
-        deserialize_dataset(ensemble_config, dataset, last_step, serialize_info,
-                            tp);
+        deserialize_dataset(ensemble_config, dataset, serialize_info, tp);
         delete[] serialize_info;
     }
     thread_pool_free(tp);
@@ -368,8 +364,6 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             int_vector_type *iens_active_index, int last_step,
                             meas_data_type *forecast,
-                            enkf_state_type **ensemble, hash_type *use_count,
-                            obs_data_type *obs_data,
                             const local_ministep_type *ministep) {
 
     int matrix_start_size = 250000;
@@ -429,8 +423,7 @@ Store a set of row-scaled parameters into a enkf_fs_type storage
 */
 void save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step,
-    const local_ministep_type *ministep,
+    int_vector_type *iens_active_index, const local_ministep_type *ministep,
     std::unordered_map<
         std::string,
         std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
@@ -636,7 +629,6 @@ Copy all parameters from source_fs to target_fs
 */
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
-                     const int total_ens_size,
                      const int_vector_type *ens_active_list) {
 
     /*
@@ -668,150 +660,6 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
         stringlist_free(param_keys);
     }
 }
-/*
-   This function returns a (enkf_node_type ** ) pointer, which points
-   to all the instances with the same keyword, i.e.
-
-   alloc_node_ensemble(enkf_main , "PRESSURE");
-
-   Will return an ensemble of pressure nodes. The enkf_node instances
-   must be free'd with enkf_node_free( ) afterwards.
-
-   Example:
-
-   vector_type * pressure_nodes = alloc_node_ensemble(enkf_main , "PRESSURE");
-
-   // Do something with the pressure nodes ...
-
-   free(pressure_nodes);
-
-*/
-
-vector_type *alloc_node_ensemble(const ensemble_config_type *ens_config,
-                                 const int ens_size, enkf_fs_type *src_fs,
-                                 const char *key, int report_step) {
-    vector_type *node_ensemble = vector_alloc_new();
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(ens_config, key);
-    node_id_type node_id = {.report_step = report_step, .iens = -1};
-
-    for (int iens = 0; iens < ens_size; iens++) {
-        enkf_node_type *node = enkf_node_alloc(config_node);
-        node_id.iens = iens;
-        enkf_node_load(node, src_fs, node_id);
-        vector_append_owned_ref(node_ensemble, node, enkf_node_free__);
-    }
-
-    return node_ensemble;
-}
-
-/*
-   This function calculates the node standard deviation from the
-   ensemble. The mean can be NULL, in which case it is assumed that
-   the mean has already been shifted away from the ensemble.
-*/
-void node_std(const vector_type *ensemble, const enkf_node_type *mean,
-              enkf_node_type *std) {
-    if (vector_get_size(ensemble) == 0)
-        throw std::logic_error(
-            "internal error - calculation std of empty list");
-    {
-        int iens;
-        enkf_node_clear(std);
-        for (iens = 0; iens < vector_get_size(ensemble); iens++)
-            enkf_node_iaddsqr(
-                std, (const enkf_node_type *)vector_iget_const(ensemble, iens));
-        enkf_node_scale(std, 1.0 / vector_get_size(ensemble));
-
-        if (mean != NULL) {
-            enkf_node_scale(std, -1);
-            enkf_node_iaddsqr(std, mean);
-            enkf_node_scale(std, -1);
-        }
-
-        enkf_node_sqrt(std);
-    }
-}
-
-void node_mean(const vector_type *ensemble, enkf_node_type *mean) {
-    if (vector_get_size(ensemble) == 0)
-        throw std::logic_error(
-            "internal error - calculation average of empty list");
-    enkf_node_clear(mean);
-    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
-        enkf_node_iadd(
-            mean, (const enkf_node_type *)vector_iget_const(ensemble, iens));
-
-    enkf_node_scale(mean, 1.0 / vector_get_size(ensemble));
-}
-
-void inflate_node(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
-                  enkf_fs_type *target_fs, const int ens_size, int report_step,
-                  const char *key, const enkf_node_type *min_std) {
-    vector_type *ensemble = alloc_node_ensemble(
-        ens_config, ens_size, src_fs, key, report_step); // Was ANALYZED
-    enkf_node_type *mean =
-        enkf_node_copyc((const enkf_node_type *)vector_iget_const(ensemble, 0));
-    enkf_node_type *std = enkf_node_copyc(mean);
-
-    /* Shifting away the mean */
-    node_mean(ensemble, mean);
-    node_std(ensemble, mean, std);
-    enkf_node_scale(mean, -1);
-    for (int iens = 0; iens < ens_size; iens++)
-        enkf_node_iadd((enkf_node_type *)vector_iget(ensemble, iens), mean);
-
-    enkf_node_scale(mean, -1);
-
-    /*
-     * Now we have the ensemble represented as a mean and an ensemble of
-     * deviations from the mean. This is the form suitable for actually
-     * doing the inflation.
-     */
-    enkf_node_type *inflation = enkf_node_copyc(mean);
-    enkf_node_set_inflation(inflation, std, min_std);
-
-    for (int iens = 0; iens < vector_get_size(ensemble); iens++)
-        enkf_node_imul((enkf_node_type *)vector_iget(ensemble, iens),
-                       inflation);
-
-    enkf_node_free(inflation);
-
-    /* Add the mean back in - and store the updated node to disk.*/
-    for (int iens = 0; iens < ens_size; iens++) {
-        node_id_type node_id = {.report_step = report_step, .iens = iens};
-        enkf_node_iadd((enkf_node_type *)vector_iget(ensemble, iens), mean);
-        enkf_node_store((enkf_node_type *)vector_iget(ensemble, iens),
-                        target_fs, node_id);
-    }
-
-    enkf_node_free(mean);
-    enkf_node_free(std);
-    vector_free(ensemble);
-}
-
-void inflate(const ensemble_config_type *ens_config, enkf_fs_type *src_fs,
-             enkf_fs_type *target_fs, const int ens_size, int report_step,
-             hash_type *use_count) {
-
-    stringlist_type *keys =
-        ensemble_config_alloc_keylist_from_var_type(ens_config, PARAMETER);
-
-    for (int ikey = 0; ikey < stringlist_get_size(keys); ikey++) {
-        const char *key = stringlist_iget(keys, ikey);
-        if (hash_get_counter(use_count, key) > 0) {
-            const enkf_config_node_type *config_node =
-                ensemble_config_get_node(ens_config, key);
-            const enkf_node_type *min_std =
-                enkf_config_node_get_min_std(config_node);
-
-            if (min_std != NULL)
-                inflate_node(ens_config, src_fs, target_fs, ens_size,
-                             report_step, key, min_std);
-        }
-    }
-    stringlist_free(keys);
-}
 
 void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
     if (bool_vector_size(ens_mask) != ens_size)
@@ -827,8 +675,8 @@ bool smoother_update(std::vector<int> step_list,
                      rng_type *shared_rng,
                      const analysis_config_type *analysis_config,
                      ensemble_config_type *ensemble_config,
-                     enkf_state_type **ensemble, enkf_fs_type *source_fs,
-                     enkf_fs_type *target_fs, FILE *log_stream, bool verbose) {
+                     enkf_fs_type *source_fs, enkf_fs_type *target_fs,
+                     FILE *log_stream, bool verbose) {
     if (!assert_update_viable(analysis_config, source_fs, total_ens_size,
                               updatestep))
         return false;
@@ -851,10 +699,8 @@ bool smoother_update(std::vector<int> step_list,
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
     int_vector_type *ens_active_list = bool_vector_alloc_active_list(ens_mask);
 
-    copy_parameters(source_fs, target_fs, ensemble_config, total_ens_size,
-                    ens_active_list);
+    copy_parameters(source_fs, target_fs, ensemble_config, ens_active_list);
 
-    hash_type *use_count = hash_alloc();
     int current_step = step_list.back();
 
     /* Looping over local analysis ministep */
@@ -916,28 +762,27 @@ bool smoother_update(std::vector<int> step_list,
                 obs_data_allocE(obs_data, shared_rng, active_ens_size);
 
             // Part 1: Parameters which do not have row scaling attached.
-            auto parameters = load_parameters(
-                target_fs, ensemble_config, iens_active_index, current_step,
-                meas_data, ensemble, use_count, obs_data, ministep);
+            auto parameters =
+                load_parameters(target_fs, ensemble_config, iens_active_index,
+                                current_step, meas_data, obs_data, ministep);
             run_analysis_update(module, ens_mask, meas_data, obs_data,
                                 shared_rng, E, parameters);
             save_parameters(target_fs, ensemble_config, iens_active_index,
-                            current_step, ensemble, use_count, ministep,
-                            parameters);
+                            current_step, ministep, parameters);
             for (auto &[_, A] : parameters)
                 matrix_free(A);
 
             // Part 2: Parameters which do have row scaling attached.
             auto row_scaling_parameters = load_row_scaling_parameters(
                 target_fs, ensemble_config, iens_active_index, current_step,
-                meas_data, ensemble, use_count, obs_data, ministep);
+                meas_data, ministep);
             run_analysis_update_with_rowscaling(module, ens_mask, meas_data,
                                                 obs_data, shared_rng, E,
                                                 row_scaling_parameters);
 
             save_row_scaling_parameters(target_fs, ensemble_config,
-                                        iens_active_index, current_step,
-                                        ministep, row_scaling_parameters);
+                                        iens_active_index, ministep,
+                                        row_scaling_parameters);
             for (auto &[_, row_scale_A_list] : row_scaling_parameters)
                 for (auto [A, _] : row_scale_A_list)
                     matrix_free(A);
@@ -951,9 +796,6 @@ bool smoother_update(std::vector<int> step_list,
                 "No active observations/parameters for MINISTEP: %s.",
                 local_ministep_get_name(ministep));
     }
-    inflate(ensemble_config, source_fs, target_fs, total_ens_size, current_step,
-            use_count);
-    hash_free(use_count);
 
     state_map_type *target_state_map = enkf_fs_get_state_map(target_fs);
 
