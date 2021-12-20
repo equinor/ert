@@ -140,45 +140,6 @@ bool surface_user_get(const surface_type *surface, const char *index_key,
     return false;
 }
 
-C_USED void surface_set_inflation(surface_type *inflation,
-                                  const surface_type *std,
-                                  const surface_type *min_std) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        inflation->data[i] =
-            util_double_max(1.0, min_std->data[i] / std->data[i]);
-}
-
-C_USED void surface_iadd(surface_type *surface, const surface_type *delta) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        surface->data[i] += delta->data[i];
-}
-
-C_USED void surface_iaddsqr(surface_type *surface, const surface_type *delta) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        surface->data[i] += delta->data[i] * delta->data[i];
-}
-
-C_USED void surface_imul(surface_type *surface, const surface_type *delta) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        surface->data[i] *= delta->data[i];
-}
-
-C_USED void surface_scale(surface_type *surface, double scale_factor) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        surface->data[i] *= scale_factor;
-}
-
-C_USED void surface_isqrt(surface_type *surface) {
-    int size = 1;
-    for (int i = 0; i < size; i++)
-        surface->data[i] = sqrt(surface->data[i]);
-}
-
 UTIL_SAFE_CAST_FUNCTION(surface, SURFACE)
 UTIL_SAFE_CAST_FUNCTION_CONST(surface, SURFACE)
 VOID_ALLOC(surface)
@@ -191,11 +152,5 @@ VOID_READ_FROM_BUFFER(surface)
 VOID_SERIALIZE(surface)
 VOID_DESERIALIZE(surface)
 VOID_INITIALIZE(surface)
-VOID_SET_INFLATION(surface)
 VOID_CLEAR(surface)
-VOID_IADD(surface)
-VOID_SCALE(surface)
-VOID_IMUL(surface)
-VOID_IADDSQR(surface)
-VOID_ISQRT(surface)
 VOID_FLOAD(surface)

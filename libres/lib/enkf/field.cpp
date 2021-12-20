@@ -1141,94 +1141,6 @@ bool field_fload_keep_inactive(field_type *field, const char *filename) {
     return field_fload_custom__(field, filename, keep_inactive);
 }
 
-C_USED void field_iadd(field_type *field1, const field_type *field2) {
-    field_config_assert_binary(field1->config, field2->config, __func__);
-    {
-        const int data_size = field_config_get_data_size(field1->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field1->config);
-        int i;
-
-        if (ecl_type_is_float(data_type)) {
-            float *data1 = (float *)field1->data;
-            const float *data2 = (const float *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i];
-        } else if (ecl_type_is_double(data_type)) {
-            double *data1 = (double *)field1->data;
-            const double *data2 = (const double *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i];
-        }
-    }
-}
-
-C_USED void field_imul(field_type *field1, const field_type *field2) {
-    field_config_assert_binary(field1->config, field2->config, __func__);
-    {
-        const int data_size = field_config_get_data_size(field1->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field1->config);
-        int i;
-
-        if (ecl_type_is_float(data_type)) {
-            float *data1 = (float *)field1->data;
-            const float *data2 = (const float *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] *= data2[i];
-        } else if (ecl_type_is_double(data_type)) {
-            double *data1 = (double *)field1->data;
-            const double *data2 = (const double *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] *= data2[i];
-        }
-    }
-}
-
-C_USED void field_iaddsqr(field_type *field1, const field_type *field2) {
-    field_config_assert_binary(field1->config, field2->config, __func__);
-    {
-        const int data_size = field_config_get_data_size(field1->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field1->config);
-        int i;
-
-        if (ecl_type_is_float(data_type)) {
-            float *data1 = (float *)field1->data;
-            const float *data2 = (const float *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i] * data2[i];
-        } else if (ecl_type_is_double(data_type)) {
-            double *data1 = (double *)field1->data;
-            const double *data2 = (const double *)field2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i] * data2[i];
-        }
-    }
-}
-
-void field_scale(field_type *field, double scale_factor) {
-    field_config_assert_unary(field->config, __func__);
-    {
-        const int data_size = field_config_get_data_size(field->config);
-        const ecl_data_type data_type =
-            field_config_get_ecl_data_type(field->config);
-        int i;
-
-        if (ecl_type_is_float(data_type)) {
-            float *data = (float *)field->data;
-            for (i = 0; i < data_size; i++)
-                data[i] *= scale_factor;
-        } else if (ecl_type_is_double(data_type)) {
-            double *data = (double *)field->data;
-            for (i = 0; i < data_size; i++)
-                data[i] *= scale_factor;
-        }
-    }
-}
-
-C_USED void field_isqrt(field_type *field) { field_apply(field, sqrtf); }
-
 /*
   Here, index_key is i a tree digit string with the i, j and k indicies of
   the requested block separated by comma. E.g., 1,1,1.
@@ -1276,40 +1188,6 @@ C_USED bool field_user_get(const field_type *field, const char *index_key,
     return valid;
 }
 
-#define INFLATE(inf, std, min)                                                 \
-    {                                                                          \
-        for (int i = 0; i < data_size; i++) {                                  \
-            if (std_data[i] > 0)                                               \
-                inflation_data[i] =                                            \
-                    util_float_max(1.0, min_std_data[i] / std_data[i]);        \
-            else                                                               \
-                inflation_data[i] = 1.0;                                       \
-        }                                                                      \
-    }
-
-C_USED void field_set_inflation(field_type *inflation, const field_type *std,
-                                const field_type *min_std) {
-    const field_config_type *config = inflation->config;
-    ecl_data_type data_type = field_config_get_ecl_data_type(config);
-    const int data_size = field_config_get_data_size(config);
-
-    if (ecl_type_is_float(data_type)) {
-        float *inflation_data = (float *)inflation->data;
-        const float *std_data = (const float *)std->data;
-        const float *min_std_data = (const float *)min_std->data;
-
-        INFLATE(inflation_data, std_data, min_std_data);
-
-    } else if (ecl_type_is_double(data_type)) {
-        double *inflation_data = (double *)inflation->data;
-        const double *std_data = (const double *)std->data;
-        const double *min_std_data = (const double *)min_std->data;
-
-        INFLATE(inflation_data, std_data, min_std_data);
-    }
-}
-#undef INFLATE
-
 /*
   These two functions assume float/double storage; will not work with
   field which is internally based on char *.
@@ -1330,10 +1208,4 @@ VOID_WRITE_TO_BUFFER(field)
 VOID_CLEAR(field)
 VOID_SERIALIZE(field)
 VOID_DESERIALIZE(field)
-VOID_SET_INFLATION(field)
-VOID_IADD(field)
-VOID_SCALE(field)
-VOID_IADDSQR(field)
-VOID_IMUL(field)
-VOID_ISQRT(field)
 VOID_FLOAD(field)

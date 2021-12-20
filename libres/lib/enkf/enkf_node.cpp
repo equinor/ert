@@ -190,7 +190,6 @@ struct enkf_node_struct {
     free_data_ftype *free_data;
     user_get_ftype *user_get;
     user_get_vector_ftype *user_get_vector;
-    set_inflation_ftype *set_inflation;
     fload_ftype *fload;
     has_data_ftype *has_data;
 
@@ -202,11 +201,6 @@ struct enkf_node_struct {
     node_free_ftype *freef;
     clear_ftype *clear;
     node_copy_ftype *copy;
-    scale_ftype *scale;
-    iadd_ftype *iadd;
-    imul_ftype *imul;
-    isqrt_ftype *isqrt;
-    iaddsqr_ftype *iaddsqr;
 
     bool vector_storage;
 
@@ -640,44 +634,6 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
     enkf_node_store(enkf_node, fs, node_id);
 }
 
-void enkf_node_set_inflation(enkf_node_type *inflation,
-                             const enkf_node_type *std,
-                             const enkf_node_type *min_std) {
-    {
-        enkf_node_type *enkf_node = inflation;
-        FUNC_ASSERT(enkf_node->set_inflation);
-    }
-    inflation->set_inflation(inflation->data, std->data, min_std->data);
-}
-
-void enkf_node_sqrt(enkf_node_type *enkf_node) {
-    FUNC_ASSERT(enkf_node->isqrt);
-    enkf_node->isqrt(enkf_node->data);
-}
-
-void enkf_node_scale(enkf_node_type *enkf_node, double scale_factor) {
-    FUNC_ASSERT(enkf_node->scale);
-    enkf_node->scale(enkf_node->data, scale_factor);
-}
-
-void enkf_node_iadd(enkf_node_type *enkf_node,
-                    const enkf_node_type *delta_node) {
-    FUNC_ASSERT(enkf_node->iadd);
-    enkf_node->iadd(enkf_node->data, delta_node->data);
-}
-
-void enkf_node_iaddsqr(enkf_node_type *enkf_node,
-                       const enkf_node_type *delta_node) {
-    FUNC_ASSERT(enkf_node->iaddsqr);
-    enkf_node->iaddsqr(enkf_node->data, delta_node->data);
-}
-
-void enkf_node_imul(enkf_node_type *enkf_node,
-                    const enkf_node_type *delta_node) {
-    FUNC_ASSERT(enkf_node->imul);
-    enkf_node->imul(enkf_node->data, delta_node->data);
-}
-
 /*
    The return value is whether any initialization has actually taken
    place. If the function returns false it is for instance not
@@ -754,15 +710,7 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
     node->serialize = NULL;
     node->deserialize = NULL;
     node->clear = NULL;
-    node->set_inflation = NULL;
     node->has_data = NULL;
-
-    /* Math operations: */
-    node->iadd = NULL;
-    node->scale = NULL;
-    node->isqrt = NULL;
-    node->iaddsqr = NULL;
-    node->imul = NULL;
 
     switch (impl_type) {
     case (CONTAINER):
@@ -781,12 +729,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->serialize = gen_kw_serialize__;
         node->deserialize = gen_kw_deserialize__;
         node->clear = gen_kw_clear__;
-        node->iadd = gen_kw_iadd__;
-        node->scale = gen_kw_scale__;
-        node->iaddsqr = gen_kw_iaddsqr__;
-        node->imul = gen_kw_imul__;
-        node->isqrt = gen_kw_isqrt__;
-        node->set_inflation = gen_kw_set_inflation__;
         node->fload = gen_kw_fload__;
         break;
     case (SUMMARY):
@@ -803,13 +745,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->deserialize = summary_deserialize__;
         node->clear = summary_clear__;
         node->has_data = summary_has_data__;
-        /*
-      node->iadd               = summary_iadd__;
-      node->scale              = summary_scale__;
-      node->iaddsqr            = summary_iaddsqr__;
-      node->imul               = summary_imul__;
-      node->isqrt              = summary_isqrt__;
-    */
         break;
     case (SURFACE):
         node->initialize = surface_initialize__;
@@ -823,11 +758,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->serialize = surface_serialize__;
         node->deserialize = surface_deserialize__;
         node->clear = surface_clear__;
-        node->iadd = surface_iadd__;
-        node->scale = surface_scale__;
-        node->iaddsqr = surface_iaddsqr__;
-        node->imul = surface_imul__;
-        node->isqrt = surface_isqrt__;
         node->fload = surface_fload__;
         break;
     case (FIELD):
@@ -843,12 +773,6 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->deserialize = field_deserialize__;
 
         node->clear = field_clear__;
-        node->set_inflation = field_set_inflation__;
-        node->iadd = field_iadd__;
-        node->scale = field_scale__;
-        node->iaddsqr = field_iaddsqr__;
-        node->imul = field_imul__;
-        node->isqrt = field_isqrt__;
         node->fload = field_fload__;
         break;
     case (GEN_DATA):
@@ -863,14 +787,8 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
         node->write_to_buffer = gen_data_write_to_buffer__;
         node->serialize = gen_data_serialize__;
         node->deserialize = gen_data_deserialize__;
-        node->set_inflation = gen_data_set_inflation__;
 
         node->clear = gen_data_clear__;
-        node->iadd = gen_data_iadd__;
-        node->scale = gen_data_scale__;
-        node->iaddsqr = gen_data_iaddsqr__;
-        node->imul = gen_data_imul__;
-        node->isqrt = gen_data_isqrt__;
         break;
     case (EXT_PARAM):
         node->alloc = ext_param_alloc__;

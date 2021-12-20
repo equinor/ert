@@ -237,17 +237,6 @@ extern "C" {
 #define VOID_INITIALIZE_HEADER(prefix)                                         \
     bool prefix##_initialize__(void *, int, const char *, rng_type *);
 
-#define VOID_SET_INFLATION(prefix)                                             \
-    void prefix##_set_inflation__(void *void_inflation, const void *void_std,  \
-                                  const void *void_min_std) {                  \
-        prefix##_set_inflation(prefix##_safe_cast(void_inflation),             \
-                               prefix##_safe_cast_const(void_std),             \
-                               prefix##_safe_cast_const(void_min_std));        \
-    }
-#define VOID_SET_INFLATION_HEADER(prefix)                                      \
-    void prefix##_set_inflation__(void *void_inflation, const void *void_std,  \
-                                  const void *void_min_std);
-
 #define VOID_GET_OBS(prefix)                                                   \
     void prefix##_get_observations__(                                          \
         const void *void_arg, obs_data_type *obs_data, enkf_fs_type *fs,       \
@@ -312,51 +301,11 @@ extern "C" {
     }
 #define VOID_TRUNCATE_HEADER(prefix) void prefix##_truncate__(void *)
 
-#define VOID_SCALE(prefix)                                                     \
-    void prefix##_scale__(void *void_arg, double scale_factor) {               \
-        prefix##_scale(prefix##_safe_cast(void_arg), scale_factor);            \
-    }
-#define VOID_SCALE_HEADER(prefix) void prefix##_scale__(void *, double);
-
 #define VOID_CLEAR(prefix)                                                     \
     void prefix##_clear__(void *void_arg) {                                    \
         prefix##_clear(prefix##_safe_cast(void_arg));                          \
     }
 #define VOID_CLEAR_HEADER(prefix) void prefix##_clear__(void *)
-
-#define VOID_ISQRT(prefix)                                                     \
-    void prefix##_isqrt__(void *void_arg) {                                    \
-        prefix##_isqrt(prefix##_safe_cast(void_arg));                          \
-    }
-#define VOID_ISQRT_HEADER(prefix) void prefix##_isqrt__(void *)
-
-#define VOID_IADD(prefix)                                                      \
-    void prefix##_iadd__(void *void_arg, const void *void_delta) {             \
-        prefix##_iadd(prefix##_safe_cast(void_arg),                            \
-                      prefix##_safe_cast_const(void_delta));                   \
-    }
-
-#define VOID_IADD_HEADER(prefix)                                               \
-    void prefix##_iadd__(void *void_arg, const void *void_delta);
-
-#define VOID_IMUL(prefix)                                                      \
-    void prefix##_imul__(void *void_arg, const void *void_delta) {             \
-        prefix##_imul(prefix##_safe_cast(void_arg),                            \
-                      prefix##_safe_cast_const(void_delta));                   \
-    }
-
-#define VOID_IMUL_HEADER(prefix)                                               \
-    void prefix##_imul__(void *void_arg, const void *void_delta);
-
-#define VOID_IADDSQR(prefix)                                                   \
-    void prefix##_iaddsqr__(void *void_arg, const void *void_delta) {          \
-        prefix##_iaddsqr(prefix##_safe_cast(void_arg),                         \
-                         prefix##_safe_cast_const(void_delta));                \
-    }
-
-#define VOID_IADDSQR_HEADER(prefix)                                            \
-    void prefix##_iaddsqr__(void *void_arg, const void *void_delta);
-
 #ifdef __cplusplus
 }
 #endif

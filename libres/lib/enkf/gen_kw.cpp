@@ -410,54 +410,6 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
     }
 }
 
-C_USED void gen_kw_set_inflation(gen_kw_type *inflation, const gen_kw_type *std,
-                                 const gen_kw_type *min_std) {
-    const int data_size = gen_kw_config_get_data_size(std->config);
-    const double *std_data = std->data;
-    const double *min_std_data = min_std->data;
-    double *inflation_data = inflation->data;
-
-    {
-        for (int i = 0; i < data_size; i++) {
-            if (std_data[i] > 0)
-                inflation_data[i] =
-                    util_double_max(1.0, min_std_data[i] / std_data[i]);
-            else
-                inflation_data[i] = 1;
-        }
-    }
-}
-
-C_USED void gen_kw_iadd(gen_kw_type *gen_kw, const gen_kw_type *delta) {
-    const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-    for (int i = 0; i < data_size; i++)
-        gen_kw->data[i] += delta->data[i];
-}
-
-C_USED void gen_kw_iaddsqr(gen_kw_type *gen_kw, const gen_kw_type *delta) {
-    const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-    for (int i = 0; i < data_size; i++)
-        gen_kw->data[i] += (delta->data[i] * delta->data[i]);
-}
-
-C_USED void gen_kw_imul(gen_kw_type *gen_kw, const gen_kw_type *delta) {
-    const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-    for (int i = 0; i < data_size; i++)
-        gen_kw->data[i] *= delta->data[i];
-}
-
-C_USED void gen_kw_scale(gen_kw_type *gen_kw, double scale_factor) {
-    const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-    for (int i = 0; i < data_size; i++)
-        gen_kw->data[i] *= scale_factor;
-}
-
-C_USED void gen_kw_isqrt(gen_kw_type *gen_kw) {
-    const int data_size = gen_kw_config_get_data_size(gen_kw->config);
-    for (int i = 0; i < data_size; i++)
-        gen_kw->data[i] = sqrt(gen_kw->data[i]);
-}
-
 UTIL_SAFE_CAST_FUNCTION(gen_kw, GEN_KW);
 UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw, GEN_KW);
 VOID_ALLOC(gen_kw);
@@ -470,11 +422,5 @@ VOID_WRITE_TO_BUFFER(gen_kw)
 VOID_READ_FROM_BUFFER(gen_kw)
 VOID_SERIALIZE(gen_kw)
 VOID_DESERIALIZE(gen_kw)
-VOID_SET_INFLATION(gen_kw)
 VOID_CLEAR(gen_kw)
-VOID_IADD(gen_kw)
-VOID_SCALE(gen_kw)
-VOID_IMUL(gen_kw)
-VOID_IADDSQR(gen_kw)
-VOID_ISQRT(gen_kw)
 VOID_FLOAD(gen_kw)
