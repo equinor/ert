@@ -69,21 +69,9 @@ int job_list_get_size(const job_list_type *job_list) {
 */
 void job_list_add_job(job_list_type *job_list, job_queue_node_type *job_node) {
     if (job_list->alloc_size == job_list->active_size) {
-
-#ifdef QUEUE_DEBUG
-        int new_alloc_size = job_list->alloc_size + 1;
-        job_queue_node_type **new_jobs = (job_queue_node_type **)util_malloc(
-            sizeof *new_jobs * new_alloc_size);
-        memcpy(new_jobs, job_list->jobs,
-               sizeof *new_jobs * job_list->active_size);
-        free(job_list->jobs);
-        job_list->jobs = new_jobs;
-#else
         int new_alloc_size = util_int_max(16, job_list->alloc_size * 2);
         job_list->jobs = (job_queue_node_type **)util_realloc(
             job_list->jobs, sizeof *job_list->jobs * new_alloc_size);
-#endif
-
         job_list->alloc_size = new_alloc_size;
     }
 
