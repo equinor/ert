@@ -556,117 +556,6 @@ C_USED void gen_data_clear(gen_data_type *gen_data) {
     }
 }
 
-C_USED void gen_data_isqrt(gen_data_type *gen_data) {
-    const int data_size = gen_data_config_get_data_size(
-        gen_data->config, gen_data->current_report_step);
-    const ecl_data_type internal_type =
-        gen_data_config_get_internal_data_type(gen_data->config);
-
-    if (ecl_type_is_float(internal_type)) {
-        float *data = (float *)gen_data->data;
-        for (int i = 0; i < data_size; i++)
-            data[i] = sqrtf(data[i]);
-    } else if (ecl_type_is_double(internal_type)) {
-        double *data = (double *)gen_data->data;
-        for (int i = 0; i < data_size; i++)
-            data[i] = sqrt(data[i]);
-    }
-}
-
-C_USED void gen_data_iadd(gen_data_type *gen_data1,
-                          const gen_data_type *gen_data2) {
-    //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
-    {
-        const int data_size = gen_data_config_get_data_size(
-            gen_data1->config, gen_data1->current_report_step);
-        const ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data1->config);
-        int i;
-
-        if (ecl_type_is_float(internal_type)) {
-            float *data1 = (float *)gen_data1->data;
-            const float *data2 = (const float *)gen_data2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i];
-        } else if (ecl_type_is_double(internal_type)) {
-            double *data1 = (double *)gen_data1->data;
-            const double *data2 = (const double *)gen_data2->data;
-            for (i = 0; i < data_size; i++) {
-                data1[i] += data2[i];
-            }
-        }
-    }
-}
-
-C_USED void gen_data_imul(gen_data_type *gen_data1,
-                          const gen_data_type *gen_data2) {
-    //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
-    {
-        const int data_size = gen_data_config_get_data_size(
-            gen_data1->config, gen_data1->current_report_step);
-        const ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data1->config);
-        int i;
-
-        if (ecl_type_is_float(internal_type)) {
-            float *data1 = (float *)gen_data1->data;
-            const float *data2 = (const float *)gen_data2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] *= data2[i];
-        } else if (ecl_type_is_double(internal_type)) {
-            double *data1 = (double *)gen_data1->data;
-            const double *data2 = (const double *)gen_data2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] *= data2[i];
-        }
-    }
-}
-
-void gen_data_iaddsqr(gen_data_type *gen_data1,
-                      const gen_data_type *gen_data2) {
-    //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__);
-    {
-        const int data_size = gen_data_config_get_data_size(
-            gen_data1->config, gen_data1->current_report_step);
-        const ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data1->config);
-        int i;
-
-        if (ecl_type_is_float(internal_type)) {
-            float *data1 = (float *)gen_data1->data;
-            const float *data2 = (const float *)gen_data2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i] * data2[i];
-        } else if (ecl_type_is_double(internal_type)) {
-            double *data1 = (double *)gen_data1->data;
-            const double *data2 = (const double *)gen_data2->data;
-            for (i = 0; i < data_size; i++)
-                data1[i] += data2[i] * data2[i];
-        }
-    }
-}
-
-void gen_data_scale(gen_data_type *gen_data, double scale_factor) {
-    //gen_data_config_assert_unary(gen_data->config, __func__);
-    {
-        const int data_size = gen_data_config_get_data_size(
-            gen_data->config, gen_data->current_report_step);
-        const ecl_data_type internal_type =
-            gen_data_config_get_internal_data_type(gen_data->config);
-        int i;
-
-        if (ecl_type_is_float(internal_type)) {
-            float *data = (float *)gen_data->data;
-            for (i = 0; i < data_size; i++)
-                data[i] *= scale_factor;
-        } else if (ecl_type_is_double(internal_type)) {
-            double *data = (double *)gen_data->data;
-            for (i = 0; i < data_size; i++)
-                data[i] *= scale_factor;
-        }
-    }
-}
-
 void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
                                     double_vector_type *vector) {
     const ecl_data_type internal_type =
@@ -684,47 +573,6 @@ void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
     }
 }
 
-#define INFLATE(inf, std, min)                                                 \
-    {                                                                          \
-        for (int i = 0; i < data_size; i++) {                                  \
-            if (std_data[i] > 0)                                               \
-                inflation_data[i] =                                            \
-                    util_float_max(1.0, min_std_data[i] / std_data[i]);        \
-            else                                                               \
-                inflation_data[i] = 1.0;                                       \
-        }                                                                      \
-    }
-
-/*
-   If the size changes during the simulation this will go 100% belly
-   up.
-*/
-
-C_USED void gen_data_set_inflation(gen_data_type *inflation,
-                                   const gen_data_type *std,
-                                   const gen_data_type *min_std) {
-    const gen_data_config_type *config = inflation->config;
-    ecl_data_type data_type = gen_data_config_get_internal_data_type(config);
-    const int data_size =
-        gen_data_config_get_data_size(std->config, std->current_report_step);
-
-    if (ecl_type_is_float(data_type)) {
-        float *inflation_data = (float *)inflation->data;
-        const float *std_data = (const float *)std->data;
-        const float *min_std_data = (const float *)min_std->data;
-
-        INFLATE(inflation_data, std_data, min_std_data);
-
-    } else {
-        double *inflation_data = (double *)inflation->data;
-        const double *std_data = (const double *)std->data;
-        const double *min_std_data = (const double *)min_std->data;
-
-        INFLATE(inflation_data, std_data, min_std_data);
-    }
-}
-#undef INFLATE
-
 UTIL_SAFE_CAST_FUNCTION_CONST(gen_data, GEN_DATA)
 UTIL_SAFE_CAST_FUNCTION(gen_data, GEN_DATA)
 VOID_USER_GET(gen_data)
@@ -738,10 +586,4 @@ VOID_READ_FROM_BUFFER(gen_data);
 VOID_WRITE_TO_BUFFER(gen_data);
 VOID_SERIALIZE(gen_data)
 VOID_DESERIALIZE(gen_data)
-VOID_SET_INFLATION(gen_data)
 VOID_CLEAR(gen_data)
-VOID_SCALE(gen_data)
-VOID_IMUL(gen_data)
-VOID_IADD(gen_data)
-VOID_IADDSQR(gen_data)
-VOID_ISQRT(gen_data)

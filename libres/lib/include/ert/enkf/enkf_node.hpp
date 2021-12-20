@@ -65,12 +65,6 @@ typedef void(read_from_buffer_ftype)(void *, buffer_type *, enkf_fs_type *,
 typedef bool(write_to_buffer_ftype)(const void *, buffer_type *, int);
 typedef bool(has_data_ftype)(const void *, int);
 
-typedef void(set_inflation_ftype)(
-    void *,
-    const void *, /* Node object with the ensemble standard deviation. */
-    const void
-        *); /* Node object with the minimum standard deviation - supplied by the user. */
-
 typedef void(user_get_vector_ftype)(void *, const char *, double_vector_type *);
 typedef bool(user_get_ftype)(void *, const char *, int, double *);
 typedef void *(alloc_ftype)(const void *);
@@ -84,11 +78,6 @@ typedef void(free_data_ftype)(void *);
 typedef void(node_free_ftype)(void *);
 typedef void(clear_ftype)(void *);
 typedef void(node_copy_ftype)(const void *, void *);
-typedef void(isqrt_ftype)(void *);
-typedef void(scale_ftype)(void *, double);
-typedef void(iadd_ftype)(void *, const void *);
-typedef void(imul_ftype)(void *, const void *);
-typedef void(iaddsqr_ftype)(void *, const void *);
 typedef void(ensemble_mulX_vector_ftype)(void *, int, const void **,
                                          const double *);
 
@@ -179,15 +168,6 @@ enkf_node_alloc_shared_container(const enkf_config_node_type *config,
                                  hash_type *node_hash);
 enkf_node_type *
 enkf_node_alloc_private_container(const enkf_config_node_type *config);
-
-void enkf_node_set_inflation(enkf_node_type *inflation,
-                             const enkf_node_type *std,
-                             const enkf_node_type *min_std);
-void enkf_node_sqrt(enkf_node_type *enkf_node);
-void enkf_node_scale(enkf_node_type *, double);
-void enkf_node_iadd(enkf_node_type *, const enkf_node_type *);
-void enkf_node_iaddsqr(enkf_node_type *, const enkf_node_type *);
-void enkf_node_imul(enkf_node_type *, const enkf_node_type *);
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 const char *enkf_node_get_key(const enkf_node_type *);
 bool enkf_node_has_func(const enkf_node_type *, node_function_type);

@@ -68,13 +68,7 @@ VOID_READ_FROM_BUFFER_HEADER(gen_data);
 VOID_WRITE_TO_BUFFER_HEADER(gen_data);
 VOID_SERIALIZE_HEADER(gen_data)
 VOID_DESERIALIZE_HEADER(gen_data)
-VOID_SET_INFLATION_HEADER(gen_data);
 VOID_CLEAR_HEADER(gen_data);
-VOID_IMUL_HEADER(gen_data);
-VOID_IADD_HEADER(gen_data);
-VOID_IADDSQR_HEADER(gen_data);
-VOID_SCALE_HEADER(gen_data);
-VOID_ISQRT_HEADER(gen_data);
 #ifdef __cplusplus
 }
 #endif

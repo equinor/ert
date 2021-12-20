@@ -168,7 +168,6 @@ int main(int argc, char **argv) {
         forward_initialize_node(enkf_main, init_file, field_node);
         node_id_type node_id = {.report_step = 0, .iens = iens};
         test_assert_true(enkf_node_try_load(field_node, fs, node_id));
-        field_scale(field, 3.0);
     }
 
     int nx, ny, nz;
