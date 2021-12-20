@@ -1,3 +1,8 @@
 fixes:
     - "*/site-packages/::"
     - "/home/runner/work/ert/ert/::"
+comment:
+    # The code coverage is made up of 4 separate
+    # test runs so only after all coverage reports have
+    # been uploaded will the comparison be sane
+    after_n_builds: 4
