@@ -1,9 +1,9 @@
-import sys
 import os
-from setuptools import find_packages
-from skbuild import setup
-from setuptools_scm import get_version
+import sys
 
+from setuptools import find_packages
+from setuptools_scm import get_version
+from skbuild import setup
 
 # Corporate networks tend to be behind a proxy server with their own non-public
 # SSL certificates. Conan keeps its own certificates, whose path we can override
@@ -68,7 +68,7 @@ setup(
         "ansicolors==1.1.8",
         "async-exit-stack; python_version < '3.7'",
         "async-generator",
-        "beartype >= 0.8.0, <0.9.0",
+        "beartype >= 0.9.1",
         "cloudevents",
         "cloudpickle",
         "tqdm>=4.62.0",
