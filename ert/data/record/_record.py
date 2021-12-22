@@ -19,16 +19,13 @@ from typing import (
 )
 
 from beartype import beartype
-from beartype.roar import (  # type: ignore
-    BeartypeDecorHintPepDeprecatedWarning,
-    BeartypeException,
-)
+from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
 from pydantic import PositiveInt
 
 import ert
 
 # Mute PEP-585 warnings from Python 3.9:
-warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecatedWarning)
+warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecationWarning)
 
 number = Union[int, float]
 numerical_record_data = Union[List[number], Dict[str, number], Dict[int, number]]
