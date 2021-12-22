@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+import sys
+import argparse
+import json
+import subprocess
+import re
+from typing import Set
+
+
+try:
+    # Use ripgrep: 'rg {} libres/ | wc -l'
+    subprocess.check_output(["rg", "--version"])
+
+    def count_occurences(name: str) -> int:
+        return len(subprocess.check_output(("rg", name, "libres/")).split(b"\n"))
+
+except:
+    # Fall back to 'grep -R {} libres/ | wc -l'
+    def count_occurences(name: str) -> int:
+        return len(
+            subprocess.check_output(("grep", "-R", name, "libres/")).split(b"\n")
+        )
+
+
+def get_symbols(path: str, *, undefined: bool) -> Set[str]:
+    # Lines look like:
+    #
+    #   000000000006f72c T _workflow_joblist_get_job_names
+    #   000000000006f6a4 T _workflow_joblist_has_job
+    #
+    # We care about the name, which is the last token
+    symbol_types = "uU" if undefined else "tT"
+
+    if sys.platform == "linux":
+        args = ["nm", "-C", "-D"]
+    elif sys.platform == "darwin":
+        args = ["nm", "-C"]
+    else:
+        raise AssertionError("Unknown platform")
+
+    syms = set()
+    for line in subprocess.check_output([*args, path]).decode().split("\n"):
+        match = re.match(r"[ 0-9a-f]{16} ([A-Z]) (.+)", line)
+        if match is None:
+            continue
+
+        if match[1] not in symbol_types:
+            continue
+
+        # C symbols are prefixed with '_' when compiled. Remove it here to avoid
+        # confusion.
+        sym = match[2]
+        if sym[0] == "_":
+            sym = sym[1:]
+
+        syms.add(sym)
+    return syms
+
+
+def parse_args() -> argparse.Namespace:
+    ap = argparse.ArgumentParser(
+        description="""\
+    Script that finds symbols used by libres that are implemented in libecl.
+    """
+    )
+    ap.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output as a JSON document",
+    )
+
+    return ap.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    import ecl
+    import res
+
+    res_syms = get_symbols(res.ResPrototype.lib._name, undefined=True)
+    ecl_syms = get_symbols(ecl.EclPrototype.lib._name, undefined=False)
+    shared_syms = ecl_syms & res_syms
+
+    sym_count = {}
+    total = 0
+    for sym in shared_syms:
+        try:
+            match = re.search(r"([a-zA-Z0-9_]+)\(", sym)
+            if match is not None:
+                # Demangled C++ symbol
+                name = match[1]
+            else:
+                # C symbol
+                name = sym
+            count = count_occurences(name)
+            total += count
+        except subprocess.CalledProcessError:
+            count = 0
+
+        sym_count[sym] = count
+
+    if args.json:
+        print(json.dumps(sym_count))
+        return
+
+    # `sorted` uses a stable sorting algorithm, so we can sort on each element
+    sym_count = list(sym_count.items())
+    # Sort by name
+    sym_count = sorted(sym_count, key=lambda x: x[0])
+    # Sort by count in decreasing order
+    sym_count = sorted(sym_count, key=lambda x: x[1], reverse=True)
+
+    for sym, count in sym_count:
+        print(f"{count or '???'} \tinstances of '{sym}'")
+    print(f"\n    Total: {total}\n", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
