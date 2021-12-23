@@ -16,6 +16,9 @@
    for more details.
 */
 
+#include <algorithm>
+#include <cmath>
+
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
 
@@ -32,10 +35,10 @@
 #define DEFAULT_IES_MAX_STEPLENGTH 0.60
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
+#define MIN_IES_DEC_STEPLENGTH 1.1
 #define DEFAULT_IES_SUBSPACE false
 #define DEFAULT_IES_INVERSION IES_INVERSION_SUBSPACE_EXACT_R
 #define DEFAULT_IES_LOGFILE "ies.log"
-#define DEFAULT_IES_DEBUG true
 #define DEFAULT_IES_AAPROJECTION false
 
 #define IES_ENKF_CONFIG_TYPE_ID 196402021
@@ -54,7 +57,6 @@ struct ies_enkf_config_struct {
     bool ies_subspace;     // Controlled by config key: DEFAULT_IES_SUBSPACE
     int ies_inversion;     // Controlled by config key: DEFAULT_IES_INVERSION
     char *ies_logfile;     // Controlled by config key: DEFAULT_IES_LOGFILE
-    bool ies_debug;        // Controlled by config key: DEFAULT_IES_DEBUG
     bool ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
 };
 
@@ -75,7 +77,6 @@ ies_enkf_config_type *ies_enkf_config_alloc() {
     ies_enkf_config_set_ies_subspace(config, DEFAULT_IES_SUBSPACE);
     ies_enkf_config_set_ies_inversion(config, DEFAULT_IES_INVERSION);
     ies_enkf_config_set_ies_logfile(config, DEFAULT_IES_LOGFILE);
-    ies_enkf_config_set_ies_debug(config, DEFAULT_IES_DEBUG);
     ies_enkf_config_set_ies_aaprojection(config, DEFAULT_IES_AAPROJECTION);
 
     return config;
@@ -149,7 +150,12 @@ ies_enkf_config_get_ies_dec_steplength(const ies_enkf_config_type *config) {
 }
 void ies_enkf_config_set_ies_dec_steplength(ies_enkf_config_type *config,
                                             double ies_dec_steplength) {
-    config->ies_dec_steplength = ies_dec_steplength;
+
+    // The formula used to calculate step length has a hard assumption that the
+    // steplength is reduced for every step - here that is silently enforced
+    // with the std::max(1.1, ....).
+    config->ies_dec_steplength =
+        std::max(ies_dec_steplength, MIN_IES_DEC_STEPLENGTH);
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -171,16 +177,6 @@ bool ies_enkf_config_get_ies_subspace(const ies_enkf_config_type *config) {
 void ies_enkf_config_set_ies_subspace(ies_enkf_config_type *config,
                                       bool ies_subspace) {
     config->ies_subspace = ies_subspace;
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* IES_DEBUG         */
-bool ies_enkf_config_get_ies_debug(const ies_enkf_config_type *config) {
-    return config->ies_debug;
-}
-void ies_enkf_config_set_ies_debug(ies_enkf_config_type *config,
-                                   bool ies_debug) {
-    config->ies_debug = ies_debug;
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -207,3 +203,25 @@ void ies_enkf_config_set_ies_logfile(ies_enkf_config_type *config,
 /*------------------------------------------------------------------------------------------------*/
 /* FREE_CONFIG */
 void ies_enkf_config_free(ies_enkf_config_type *config) { free(config); }
+
+double
+ies_enkf_config_calculate_steplength(const ies_enkf_config_type *ies_config,
+                                     int iteration_nr) {
+    double ies_max_step = ies_enkf_config_get_ies_max_steplength(ies_config);
+    double ies_min_step = ies_enkf_config_get_ies_min_steplength(ies_config);
+    double ies_decline_step =
+        ies_enkf_config_get_ies_dec_steplength(ies_config);
+
+    /*
+      This is an implementation of Eq. (49) from:
+
+      Geir Evensen, Formulating the history matching problem with consistent error statistics,
+      Computational Geosciences (2021) 25:945 –970: https://doi.org/10.1007/s10596-021-10032-7
+    */
+
+    double ies_steplength =
+        ies_min_step + (ies_max_step - ies_min_step) *
+                           pow(2, -(iteration_nr - 1) / (ies_decline_step - 1));
+
+    return ies_steplength;
+}

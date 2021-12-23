@@ -23,12 +23,29 @@
 #include <ert/util/rng.hpp>
 
 #include <ert/res_util/matrix.hpp>
+#include <ert/analysis/ies/ies_enkf_data.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ies_enkf_linalg_store_active_W(ies_enkf_data_type *data,
+                                    const matrix_type *W0);
+
+matrix_type *ies_enkf_alloc_activeE(const ies_enkf_data_type *data);
+matrix_type *ies_enkf_alloc_activeW(const ies_enkf_data_type *data);
+matrix_type *ies_enkf_alloc_activeA(const ies_enkf_data_type *data);
 
 void ies_enkf_init_update(void *arg, const bool_vector_type *ens_mask,
                           const bool_vector_type *obs_mask,
                           const matrix_type *S, const matrix_type *R,
                           const matrix_type *dObs, const matrix_type *E,
                           const matrix_type *D, rng_type *rng);
+
+void ies_enkf_initX(double truncation, int subspace_dimension,
+                    ies_inversion_type ies_inversion, const matrix_type *Y0,
+                    const matrix_type *R, const matrix_type *E,
+                    const matrix_type *D, matrix_type *X);
 
 void ies_enkf_updateA(
     void *module_data,
@@ -39,5 +56,9 @@ void ies_enkf_updateA(
     const matrix_type *Ein,  // Ensemble of observation perturbations
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
     rng_type *rng);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
