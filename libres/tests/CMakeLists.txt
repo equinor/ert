@@ -19,9 +19,11 @@ add_executable(
   enkf/test_obs_data.cpp
   res_util/test_matrix.cpp
   res_util/test_memory.cpp
+  res_util/test_string.cpp
   analysis/test_std_enkf.cpp
   analysis/test_compare_initX.cpp
-  analysis/test_update.cpp)
+  analysis/test_update.cpp
+  job_queue/test_lsf_driver.cpp)
 
 target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt)
 

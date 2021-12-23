@@ -112,43 +112,9 @@ void test_submit() {
     }
 }
 
-void test_bjobs_parse_hosts() {
-    const char *full_hostnames =
-        "hname1:4*hname2:13*st-rst666-01-42.st.example.org:1*hname4:hname5\n";
-    const char *hostnames =
-        "hname1:hname2:st-rst666-01-42.st.example.org:hname4:hname5";
-    stringlist_type *expected = stringlist_alloc_from_split(hostnames, ":");
-    if (stringlist_get_size(expected) != 5) {
-        printf("Even expected has wrong size.\n");
-        exit(1);
-    }
-
-    char *fname = util_alloc_tmp_file("/tmp", "ert_job_exec_host", true);
-
-    FILE *fptr;
-    fptr = fopen(fname, "w");
-    fputs(full_hostnames, fptr); // : is std bjobs delimiter
-    fclose(fptr);
-
-    stringlist_type *hosts = lsf_job_alloc_parse_hostnames(fname);
-
-    if (!stringlist_equal(expected, hosts)) {
-        printf("hosts differ: expected [%s] got [%s]\n",
-               stringlist_alloc_joined_string(expected, ":"),
-               stringlist_alloc_joined_string(hosts, ":"));
-        exit(1);
-    }
-
-    util_unlink_existing(fname);
-    free(fname);
-    stringlist_free(hosts);
-}
-
 int main(int argc, char **argv) {
     test_submit();
     test_submit_with_resources();
     test_submit_with_select_resources();
-
-    test_bjobs_parse_hosts();
     exit(0);
 }

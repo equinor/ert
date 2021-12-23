@@ -21,6 +21,7 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
+#include <fstream>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@
 #include <ert/util/hash.hpp>
 #include <ert/res_util/res_log.hpp>
 #include <ert/res_util/res_env.hpp>
+#include <ert/res_util/string.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
@@ -222,39 +224,6 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file) {
     return jobid;
 }
 
-/*
- * Assumes fname points to a file with content "hname1:hname2:hname3" as written by lsf_job_write_bjobs_to_file
- */
-stringlist_type *lsf_job_alloc_parse_hostnames(const char *fname) {
-    FILE *stream = util_fopen(fname, "r");
-
-    bool at_eof = false;
-    while (!at_eof) {
-        char *line = util_fscanf_alloc_line(stream, &at_eof);
-        if (line != NULL) {
-            stringlist_type *hosts = stringlist_alloc_from_split(
-                line, ":"); // bjobs uses : as std. delimiter
-
-            for (int i = 0; i < stringlist_get_size(hosts); i++) {
-                const char *host = stringlist_iget(hosts, i);
-                stringlist_type *h = stringlist_alloc_from_split(host, "*");
-                stringlist_iset_copy(
-                    hosts, i,
-                    stringlist_iget(h,
-                                    stringlist_get_size(h) -
-                                        1)); // hostname 4*be-lsf01 -> be-lsf01
-                stringlist_free(h);
-            }
-
-            free(line);
-            fclose(stream);
-            return hosts;
-        }
-    }
-    fclose(stream);
-    return stringlist_alloc_new();
-}
-
 char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
                                   lsf_driver_type *driver, const long jobid) {
     // will typically run "bjobs -noheader -o 'EXEC_HOST' jobid"
@@ -366,20 +335,6 @@ static void lsf_driver_assert_submit_method(const lsf_driver_type *driver) {
     }
 }
 
-static std::string join_strings(const std::vector<std::string> &strings,
-                                const std::string &sep) {
-    if (strings.empty())
-        return "";
-
-    std::stringstream s;
-    s << strings[0];
-    for (int i = 1; i < strings.size(); i++) {
-        s << sep;
-        s << strings[i];
-    }
-    return s.str();
-}
-
 /*
   A resource string can be "span[host=1] select[A && B] bla[xyz]".
   The blacklisting feature is to have select[hname!=bad1 && hname!=bad2].
@@ -391,7 +346,7 @@ char *
 alloc_composed_resource_request(const lsf_driver_type *driver,
                                 const std::vector<std::string> &select_list) {
     char *resreq = util_alloc_string_copy(driver->resource_request);
-    std::string excludes_string = join_strings(select_list, " && ");
+    std::string excludes_string = ert::join(select_list, " && ");
 
     char *req = NULL;
     char *pos = strstr(resreq, "select["); // find select[...]
@@ -449,7 +404,7 @@ static char *alloc_quoted_resource_string(const lsf_driver_type *driver) {
         if (driver->resource_request != NULL) {
             req = alloc_composed_resource_request(driver, select_list);
         } else {
-            std::string select_string = join_strings(select_list, " && ");
+            std::string select_string = ert::join(select_list, " && ");
             req = util_alloc_sprintf("select[%s]", select_string.c_str());
         }
     }
@@ -959,24 +914,47 @@ void lsf_driver_free_job(void *__job) {
     lsf_job_free(job);
 }
 
+/*
+ * Parses the given file containing colon separated hostnames, ie.
+ * "hname1:hname2:hname3". This is the same format as
+ * written by lsf_job_write_bjobs_to_file().
+ */
+namespace detail {
+std::vector<std::string> parse_hostnames(const char *fname) {
+    std::ifstream stream(fname);
+
+    std::string line;
+    if (std::getline(stream, line)) { //just read the first line
+        std::vector<std::string> hosts;
+
+        // bjobs uses : as delimiter
+        ert::split(line, ':', [&](auto host) {
+            // Get everything after '*'. bjobs use the syntax 'N*hostname' where
+            // N is an integer, specifying how many jobs should be assigned to
+            // 'hostname'
+            hosts.emplace_back(ert::back_element(host, '*'));
+        });
+        return hosts;
+    }
+    return {};
+}
+} // namespace detail
+
 static void lsf_driver_node_failure(lsf_driver_type *driver,
                                     const lsf_job_type *job) {
     long lsf_job_id = lsf_job_get_jobnr(job);
     char *fname =
         lsf_job_write_bjobs_to_file(driver->bjobs_cmd, driver, lsf_job_id);
-    stringlist_type *hosts = lsf_job_alloc_parse_hostnames(fname);
-    char *hostnames = stringlist_alloc_joined_string(hosts, ", ");
+    auto hostnames = ert::join(detail::parse_hostnames(fname), ",");
 
     res_log_ferror("The job:%ld/%s never started - the nodes: "
                    "%s will be excluded, the job will be resubmitted to LSF.\n",
-                   lsf_job_id, job->job_name, hostnames);
-    lsf_driver_add_exclude_hosts(driver, hostnames);
+                   lsf_job_id, job->job_name, hostnames.c_str());
+    lsf_driver_add_exclude_hosts(driver, hostnames.c_str());
     if (!driver->debug_output) {
         driver->debug_output = true;
         res_log_info("Have turned lsf debug info ON.");
     }
-    free(hostnames);
-    stringlist_free(hosts);
     free(fname);
 }
 
