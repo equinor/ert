@@ -45,6 +45,18 @@ class TimeMapTest(ResTest):
 
         with TestAreaContext("timemap/fload1") as work_area:
             with open("map.txt", "w") as fileH:
+                fileH.write("2000-10-10\n")
+                fileH.write("2000-10-12\n")
+                fileH.write("2000-10-14\n")
+                fileH.write("2000-10-16\n")
+
+            tm.fload("map.txt")
+            self.assertEqual(4, len(tm))
+            self.assertEqual(datetime.date(2000, 10, 10), tm[0])
+            self.assertEqual(datetime.date(2000, 10, 16), tm[3])
+
+        with TestAreaContext("timemap/fload2") as work_area:
+            with open("map.txt", "w") as fileH:
                 fileH.write("10/10/2000\n")
                 fileH.write("12/10/2000\n")
                 fileH.write("14/10/2000\n")
@@ -55,7 +67,7 @@ class TimeMapTest(ResTest):
             self.assertEqual(datetime.date(2000, 10, 10), tm[0])
             self.assertEqual(datetime.date(2000, 10, 16), tm[3])
 
-        with TestAreaContext("timemap/fload2") as work_area:
+        with TestAreaContext("timemap/fload3") as work_area:
             with open("map.txt", "w") as fileH:
                 fileH.write("10/10/200X\n")
 

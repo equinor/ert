@@ -111,11 +111,18 @@ class EclConfig(BaseCClass):
                 refcase_list.append(refcase)
 
             # END_DATE_KEY
-            end_date = CTime(
-                datetime.strptime(
-                    config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"
+            try:
+                end_date = CTime(
+                    datetime.strptime(
+                        config_dict.get(ConfigKeys.END_DATE, "1969-12-31"), "%Y-%m-%d"
+                    )
                 )
-            )
+            except ValueError:
+                end_date = CTime(
+                    datetime.strptime(
+                        config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"
+                    )
+                )
 
             # SCHEDULE_PREDICTION_FILE_KEY
             schedule_prediction_file = config_dict.get(

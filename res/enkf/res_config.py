@@ -563,9 +563,7 @@ class ResConfig(BaseCClass):
 
         # Insert key values
         if not os.path.exists(config_dir):
-            raise IOError(
-                "The configuration direcetory: %s does not exist" % config_dir
-            )
+            raise IOError("The configuration directory: %s does not exist" % config_dir)
 
         path_elm = config_content.create_path_elm(config_dir)
         add_key_value = lambda key, value: config_parser.add_key_value(

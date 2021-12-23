@@ -88,10 +88,12 @@ bool conf_data_validate_string_as_dt_value(dt_enum dt, const char *str) {
     }
     case (DT_DATE): {
         time_t date;
+        if (util_sscanf_isodate(str, &date))
+            return true;
         return util_sscanf_date_utc(str, &date);
     }
     default:
-        util_abort("%s: Internal error.\n", __func__);
+        util_abort("%s: Error parsing \"%s\".\n", __func__, str);
     }
     return true;
 }
@@ -150,7 +152,10 @@ time_t conf_data_get_time_t_from_string(dt_enum dt, const char *str) {
 
     switch (dt) {
     case (DT_DATE):
-        ok = util_sscanf_date_utc(str, &value);
+        ok = util_sscanf_isodate(str, &value);
+        if (!ok) {
+            ok = util_sscanf_date_utc(str, &value);
+        }
         break;
     default:
         ok = false;

@@ -2,7 +2,7 @@ ECLBASE                         input/<ECLIPSE_NAME>-%d
 DATA_FILE                       input/SPE1.DATA
 REFCASE                         input/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
-END_DATE                        10/10/2010
+END_DATE                        2010-10-10
 SCHEDULE_PREDICTION_FILE        input/schedule.sch
 
 RUNPATH /tmp/simulations/run%d
@@ -14,4 +14,3 @@ QUEUE_OPTION LOCAL MAX_RUNNING 50
 
 -- This is not strictly necessary, a sensible default will be used if not given.
 ENSPATH  Ensemble
-

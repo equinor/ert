@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-from datetime import datetime
 import os
 import sys
+from datetime import datetime
 
 from ecl.summary import EclSum, EclSumTStep
+
 from res.test.synthesizer import OilSimulator
 
 
@@ -86,7 +87,7 @@ def runSimulator(simulator, history_simulator, time_step_count):
                 report_step + 1, sim_days=report_step * mini_step_count + mini_step
             )
 
-            time_map.append(t_step.getSimTime().datetime().strftime("%d/%m/%Y"))
+            time_map.append(t_step.getSimTime().datetime().strftime("%Y-%m-%d"))
 
             simulator.step(scale=1.0 / total_step_count)
             history_simulator.step(scale=1.0 / total_step_count)
@@ -148,6 +149,7 @@ def runSimulator(simulator, history_simulator, time_step_count):
 
             t_step["WWCTH:OP1"] = history_simulator.wct("OP1")
             t_step["WWCTH:OP2"] = history_simulator.wct("OP2")
+        print(f"RESTART REPORT {report_step+1} written at {time_map[-1]}")
 
     return ecl_sum, time_map
 

@@ -367,12 +367,15 @@ static void handle_has_end_date_key(ecl_config_type *ecl_config,
                                     const config_content_type *config) {
     const char *date_string = config_content_get_value(config, END_DATE_KEY);
     time_t end_date;
-    if (util_sscanf_date_utc(date_string, &end_date))
+    bool end_date_parsed_ok = util_sscanf_isodate(date_string, &end_date);
+    if (!end_date_parsed_ok)
+        end_date_parsed_ok = util_sscanf_date_utc(date_string, &end_date);
+    if (end_date_parsed_ok)
         ecl_config_set_end_date(ecl_config, end_date);
     else
         fprintf(stderr,
                 "** WARNING **: Failed to parse %s as a date - should be in "
-                "format dd/mm/yyyy \n",
+                "format YYYY-MM-DD or DD/MM/YYYY.\n",
                 date_string);
 }
 
