@@ -96,7 +96,6 @@ int lsf_job_parse_bsub_stdout(const char *bsub_cmd, const char *stdout_file);
 char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
                                   lsf_driver_type *driver, const long jobid);
 
-stringlist_type *lsf_job_alloc_parse_hostnames(const char *fname);
 UTIL_SAFE_CAST_HEADER(lsf_driver);
 
 #ifdef __cplusplus
