@@ -4,7 +4,7 @@ SUMMARY_OBSERVATION WOPR_OP1_9
 {
     VALUE   = 0.1;
     ERROR   = 0.05;
-    RESTART = 9;
+    DATE    = 2010-03-31;  -- (RESTART = 9)
     KEY     = WOPR:OP1;
 };
 
@@ -12,7 +12,7 @@ SUMMARY_OBSERVATION WOPR_OP1_36
 {
     VALUE   = 0.7;
     ERROR   = 0.07;
-    RESTART = 36;
+    DATE    = 26/12/2010;  -- (RESTART = 36)
     KEY     = WOPR:OP1;
 };
 
@@ -20,7 +20,7 @@ SUMMARY_OBSERVATION WOPR_OP1_72
 {
     VALUE   = 0.5;
     ERROR   = 0.05;
-    RESTART = 72;
+    RESTART = 72;  -- (DATE = 2011-12-21)
     KEY     = WOPR:OP1;
 };
 

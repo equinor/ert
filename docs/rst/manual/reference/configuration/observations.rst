@@ -69,7 +69,7 @@ created as follows:
  {
     VALUE = 100.0;
     ERROR =     5;
-    DATE  = 21/08/2005;  -- DD/MM/YYYY or DD.MM.YYYY
+    DATE  = 2005-08-21;
     KEY   = GOPR:BRENT;
  };
 
@@ -77,6 +77,9 @@ This will create an observation of group oil production for the Brent
 group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
 label for the observation within the ERT and must be unique.
+
+The recommended date format is YYYY-MM-DD (ISO 8601) while DD/MM/YYYY
+and DD.MM.YYYY are still supported.
 
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
 from the summary file. To condition on the summary key VAR in well, group or
@@ -133,7 +136,7 @@ block observation:
   BLOCK_OBSERVATION RFT_2006
   {
      FIELD = PRESSURE;
-     DATE  = 22/10/2006;
+     DATE  = 2006-10-22;
 
     OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
     OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
@@ -154,8 +157,8 @@ summary vector as source of the data:
 
  BLOCK_OBSERVATION RFT_2006
  {
-    FIELD = PRESSURE;
-    DATE  = 22/10/2006;
+    FIELD  = PRESSURE;
+    DATE   = 2006-10-22;
     SOURCE = SUMMARY;
 
     OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
@@ -532,4 +535,3 @@ where the parameter *x* is given as:
 .. math::
 
   x = \frac{t_2 - t_1}{\texttt{AUTO_CORRF_PARAM}}
-

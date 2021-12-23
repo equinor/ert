@@ -152,7 +152,12 @@ bool time_map_fscanf(time_map_type *map, const char *filename) {
                 char date_string[128];
                 if (fscanf(stream, "%s", date_string) == 1) {
                     time_t date;
-                    if (util_sscanf_date_utc(date_string, &date)) {
+                    bool date_parsed_ok =
+                        util_sscanf_isodate(date_string, &date);
+                    if (!date_parsed_ok)
+                        date_parsed_ok =
+                            util_sscanf_date_utc(date_string, &date);
+                    if (date_parsed_ok) {
                         if (date > last_date)
                             time_t_vector_append(time_vector, date);
                         else {
@@ -166,7 +171,8 @@ bool time_map_fscanf(time_map_type *map, const char *filename) {
                     } else {
                         fprintf(stderr,
                                 "** ERROR: The string \'%s\' was not correctly "
-                                "parsed as a date (format: DD/MM/YYYY) ",
+                                "parsed as a date (format: YYYY-MM-DD or "
+                                "DD/MM/YYYY) ",
                                 date_string);
                         fscanf_ok = false;
                         break;

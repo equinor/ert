@@ -66,7 +66,7 @@ class TimeMap(BaseCClass):
 
     def fload(self, filename):
         """
-        Will load a timemap as a formatted file consisting of a list of dates: DD/MM/YYYY
+        Will load a timemap as a formatted file consisting of a list of dates: YYYY-MM-DD
         """
         if os.path.isfile(filename):
             OK = self._fload(filename)

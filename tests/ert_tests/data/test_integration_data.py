@@ -3,19 +3,18 @@ import pathlib
 import random
 import shutil
 import time
+from distutils.dir_util import copy_tree
 
 import numpy as np
 import pytest
+from ecl.summary import EclSum
 from utils import SOURCE_DIR
 
 from ert_data import loader
 from ert_data.measured import MeasuredData
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
-from ecl.summary import EclSum
 from res.enkf.export import SummaryObservationCollector
-
-from distutils.dir_util import copy_tree
 
 test_data_root = SOURCE_DIR / "test-data" / "local"
 
@@ -93,20 +92,20 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     assert summary_obs_time < 10 * history_obs_time
 
 
-def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
+@pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
+def test_summary_obs_last_entry(monkeypatch, copy_snake_oil, formatted_date):
 
     obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
     with obs_file.open(mode="w") as fin:
         fin.write(
-            """
-            \nSUMMARY_OBSERVATION LAST_DATE
-{
-    VALUE   = 10;
-    ERROR   = 0.1;
-    DATE    = 23/06/2015;
-    KEY     = FOPR;
-};
-            """
+            "\n"
+            "SUMMARY_OBSERVATION LAST_DATE\n"
+            "{\n"
+            "   VALUE   = 10;\n"
+            "   ERROR   = 0.1;\n"
+            f"   DATE    = {formatted_date};\n"
+            "   KEY     = FOPR;\n"
+            "};\n"
         )
 
     res_config = ResConfig("snake_oil.ert")
@@ -137,7 +136,8 @@ def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
     snapshot.assert_match(df.data.to_csv(), "snake_oil_gendata_output.csv")
 
 
-def test_gen_obs(monkeypatch, facade_snake_oil):
+@pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015", "23.06.2015"])
+def test_gen_obs(monkeypatch, facade_snake_oil, formatted_date):
     df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1"])
     df.remove_inactive_observations()
 
@@ -149,7 +149,8 @@ def test_gen_obs(monkeypatch, facade_snake_oil):
     )
 
 
-def test_block_obs(monkeypatch, tmpdir):
+@pytest.mark.parametrize("formatted_date", ["2010-01-10", "10/1/2010", "10.1.2010"])
+def test_block_obs(monkeypatch, tmpdir, formatted_date):
     """
     This test causes util_abort on some runs, so it will not be run by default
     as it is too flaky. I have chosen to leave it here as it could be useful when
@@ -164,17 +165,17 @@ def test_block_obs(monkeypatch, tmpdir):
             shutil.copytree(test_data_dir, "test_data")
             os.chdir("test_data")
 
-            block_obs = """
-            \nBLOCK_OBSERVATION RFT_2006
-            {
-               FIELD = PRESSURE;
-               DATE  = 10/01/2010;
-               SOURCE = SUMMARY;
-
-               OBS P1 { I = 5;  J = 5;  K = 5;   VALUE = 100;  ERROR = 5; };
-               OBS P2 { I = 1;  J = 3;  K = 8;   VALUE = 50;  ERROR = 2; };
-            };
-            """
+            block_obs = (
+                "\n"
+                "BLOCK_OBSERVATION RFT_2006\n"
+                "{\n"
+                "   FIELD = PRESSURE;\n"
+                f"   DATE  = {formatted_date};\n"
+                "   SOURCE = SUMMARY;\n"
+                "   OBS P1 { I = 5;  J = 5;  K = 5;   VALUE = 100;  ERROR = 5; };\n"
+                "   OBS P2 { I = 1;  J = 3;  K = 8;   VALUE = 50;  ERROR = 2; };\n"
+                "};\n"
+            )
             obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
             with obs_file.open(mode="a") as fin:
                 fin.write(block_obs)

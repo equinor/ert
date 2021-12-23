@@ -332,7 +332,7 @@ possible to do with ERT.
 .. topic:: END_DATE
 
         When running a set of models from beginning to end ERT does
-        not now in advance how long the simulation is supposed to be,
+        not know in advance how long the simulation is supposed to be,
         it is therefore impossible beforehand to determine which
         restart file number should be used as target file, and the
         procedure used for Smoother runs can not be used to verify that an
@@ -343,16 +343,17 @@ possible to do with ERT.
         END_DATE, otherwise they will be regarded as failed. The
         END_DATE does not need to correspond exactly to the end date
         of the simulation, it must just be set so that all simulations
-        which go to or beyond END_DATE are regarded as successfull.
+        which go to or beyond END_DATE are regarded as successful.
 
         *Example:*
 
         ::
 
-                END_DATE  10/05/2010
+                END_DATE  2010-05-10
 
         With this END_DATE setting all simulations which have gone to
-        at least May 10th 2010 are OK.
+        at least May 10th 2010 are OK. Date format YYYY-MM-DD is
+        recommended, but DD.MM.YYYY is also supported.
 
 
 .. _enspath:

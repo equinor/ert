@@ -83,7 +83,7 @@ class EclConfigTest(ResTest):
             ConfigKeys.ECLBASE: "configuration_tests/input/<ECLIPSE_NAME>-%d",
             ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
             ConfigKeys.REFCASE: "configuration_tests/input/SNAKE_OIL_FIELD",
-            ConfigKeys.END_DATE: "10/10/2010",
+            ConfigKeys.END_DATE: "2010-10-10",
             ConfigKeys.SCHEDULE_PREDICTION_FILE: "configuration_tests/input/schedule.sch",
         }
 
