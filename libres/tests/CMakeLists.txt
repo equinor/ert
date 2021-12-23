@@ -16,7 +16,8 @@ add_executable(
   enkf/test_analysis_config.cpp
   enkf/test_obs_data.cpp
   res_util/test_matrix.cpp
-  analysis/test_std_enkf.cpp)
+  analysis/test_std_enkf.cpp
+  analysis/test_compare_initX.cpp)
 
 target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt)
 

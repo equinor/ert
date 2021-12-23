@@ -73,10 +73,6 @@ bool ies_enkf_config_get_ies_subspace(const ies_enkf_config_type *config);
 void ies_enkf_config_set_ies_subspace(ies_enkf_config_type *config,
                                       bool ies_subspace);
 
-bool ies_enkf_config_get_ies_debug(const ies_enkf_config_type *config);
-void ies_enkf_config_set_ies_debug(ies_enkf_config_type *config,
-                                   bool ies_debug);
-
 bool ies_enkf_config_get_ies_aaprojection(const ies_enkf_config_type *config);
 void ies_enkf_config_set_ies_aaprojection(ies_enkf_config_type *config,
                                           bool ies_aaprojection);
@@ -85,6 +81,9 @@ char *ies_enkf_config_get_ies_logfile(const ies_enkf_config_type *config);
 void ies_enkf_config_set_ies_logfile(ies_enkf_config_type *config,
                                      const char *ies_logfile);
 
+double
+ies_enkf_config_calculate_steplength(const ies_enkf_config_type *ies_config,
+                                     int iteration_nr);
 #ifdef __cplusplus
 }
 #endif
