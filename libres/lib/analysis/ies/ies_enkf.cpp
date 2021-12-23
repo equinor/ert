@@ -76,8 +76,6 @@ void ies_enkf_linalg_extract_active_A0(const ies_enkf_data_type *data,
 #define IES_DEBUG_KEY "IES_DEBUG"
 #define IES_AAPROJECTION_KEY "IES_AAPROJECTION"
 
-#include "tecplot.c"
-
 //#define DEFAULT_ANALYSIS_SCALE_DATA true
 
 static void printf_mask(FILE *log_fp, const char *name,
@@ -345,9 +343,6 @@ void ies_enkf_updateA(
     /* COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE (Line 12)*/
     matrix_type *DW = matrix_alloc(ens_size, ens_size);
     matrix_sub(DW, W0, W);
-    teclog(W, D, DW, "iesteclog.dat", ens_size, iteration_nr, rcond, nrsing,
-           nrobs_inp);
-    teccost(W, D, "costf.dat", ens_size, iteration_nr);
 
     ies_enkf_data_fclose_log(data);
 
