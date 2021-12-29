@@ -29,7 +29,7 @@ class Distribution:
         elif index is not None:
             self._size = len(tuple(index))
             self._as_array = False
-            self._index = cast(ert.data.RecordIndex, tuple(idx for idx in index))
+            self._index = cast(ert.data.RecordIndex, tuple(index))
 
         self._raw_rvs = rvs
         self._raw_ppf = ppf
@@ -43,14 +43,11 @@ class Distribution:
         return self._index
 
     def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
-        if self._as_array:
-            return ert.data.NumericalRecord(data=x.tolist())
-        else:
-            return ert.data.NumericalRecord(
-                data={
-                    idx: float(val) for idx, val in zip(self.index, x)  # type: ignore
-                }
-            )
+        return ert.data.NumericalRecord(
+            x.tolist()  # type: ignore
+            if self._as_array
+            else {idx: float(val) for idx, val in zip(self.index, x)}
+        )
 
     def sample(self) -> ert.data.Record:
         return self._to_record(self._raw_rvs(self._size))
