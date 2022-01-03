@@ -4,10 +4,8 @@ import json
 from functools import partial
 from http import HTTPStatus
 from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple, Union
-
+import httpx
 import pandas as pd
-import requests
-
 import ert
 from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
@@ -175,7 +173,7 @@ async def get_record_storage_transmitters(
     }
 
 
-def _get(url: str, headers: Dict[str, Any]) -> requests.Response:
+def _get(url: str, headers: Dict[str, Any]) -> httpx.Response:
     with Storage.session() as session:
         return session.get(url, headers=headers)
 
@@ -184,7 +182,7 @@ async def _get_from_server_async(
     url: str,
     headers: Dict[str, str],
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
 
     loop = get_event_loop()
 
@@ -205,7 +203,7 @@ async def _get_from_server_async(
     return resp
 
 
-def _post(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
+def _post(url: str, headers: Dict[str, Any], **kwargs: Any) -> httpx.Response:
     with Storage.session() as session:
         return session.post(url=url, headers=headers, **kwargs)
 
@@ -214,7 +212,7 @@ async def _post_to_server_async(
     url: str,
     headers: Optional[Dict[str, str]] = None,
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
     if headers is None:
         headers = {}
 
@@ -236,7 +234,7 @@ async def _post_to_server_async(
     return resp
 
 
-def _put(url: str, headers: Dict[str, Any], **kwargs: Any) -> requests.Response:
+def _put(url: str, headers: Dict[str, Any], **kwargs: Any) -> httpx.Response:
     with Storage.session() as session:
         return session.put(url=url, headers=headers, **kwargs)
 
@@ -245,7 +243,7 @@ async def _put_to_server_async(
     url: str,
     headers: Dict[str, str],
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
     loop = get_event_loop()
 
     # Using sync code because one of the httpx dependencies (anyio) throws an
@@ -416,7 +414,7 @@ def _get_from_server(
     headers: Optional[Dict[Any, Any]] = None,
     status_code: int = 200,
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
     if not headers:
         headers = {}
 
@@ -450,7 +448,7 @@ async def get_records_url_async(
 
 def _delete_on_server(
     path: str, headers: Optional[Dict[Any, Any]] = None, status_code: int = 200
-) -> requests.Response:
+) -> httpx.Response:
     if not headers:
         headers = {}
     with Storage.session() as session:
@@ -469,7 +467,7 @@ def _post_to_server(
     headers: Optional[Dict[Any, Any]] = None,
     status_code: int = 200,
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
     if not headers:
         headers = {}
     with Storage.session() as session:
@@ -485,7 +483,7 @@ def _put_to_server(
     headers: Optional[Dict[Any, Any]] = None,
     status_code: int = 200,
     **kwargs: Any,
-) -> requests.Response:
+) -> httpx.Response:
     if not headers:
         headers = {}
     with Storage.session() as session:

@@ -6,20 +6,7 @@ from urllib.parse import urljoin
 from pathlib import Path
 from typing import Any, Optional, Mapping, Tuple
 from ert_shared.services._base_service import BaseService, local_exec_args
-
-
-class _Session(requests.Session):
-    def __init__(self, base_url: str, headers: Mapping[str, str]):
-        super().__init__()
-        self._headers = headers
-        self._base_url = base_url
-
-    def request(  # type: ignore[override]
-        self, method: str, url: str, *args: Any, **kwargs: Any
-    ) -> requests.Response:
-        kwargs.setdefault("headers", {})
-        kwargs["headers"].update(self._headers)
-        return super().request(method, urljoin(self._base_url, url), *args, **kwargs)
+from ert_storage.client import Client, ConnInfo
 
 
 class Storage(BaseService):
@@ -68,14 +55,16 @@ class Storage(BaseService):
         raise RuntimeError("Server started, but none of the URLs provided worked")
 
     @classmethod
-    def session(cls, timeout=None) -> requests.Session:
+    def session(cls, timeout=None) -> Client:
         """
         Start a HTTP transaction with the server
         """
         inst = cls.connect(timeout=timeout)
-        base_url = inst.fetch_url()
-        token = inst.fetch_auth()[1]
-        return _Session(base_url=base_url, headers={"Token": token})
+        return Client(
+            conn_info=ConnInfo(
+                base_url=inst.fetch_url(), auth_token=inst.fetch_auth()[1]
+            )
+        )
 
     @classmethod
     async def async_session(cls, timeout=None) -> httpx.AsyncClient:
