@@ -153,7 +153,7 @@ config_data_new = {
     ConfigKeys.RUNPATH: "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",  # model
     ConfigKeys.NUM_REALIZATIONS: 10,  # model
     ConfigKeys.MAX_RUNTIME: 23400,
-    ConfigKeys.END_DATE: "10/10/2010",
+    ConfigKeys.END_DATE: "10-10-2010",
     ConfigKeys.JOB_SCRIPT: "../../../script.sh",
     ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
     ConfigKeys.USER_MODE: True,
@@ -634,7 +634,7 @@ class ResConfigTest(ResTest):
             # add a missing entries to config file
             with open(self.config_file, "a+") as ert_file:
                 ert_file.write("JOB_SCRIPT ../../../script.sh\n")
-                ert_file.write("END_DATE 10/10/2010\n")
+                ert_file.write("END_DATE 10-10-2010\n")
 
             # split config_file to path and filename
             cfg_path, cfg_file = os.path.split(os.path.realpath(self.config_file))

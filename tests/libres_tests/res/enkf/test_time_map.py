@@ -47,7 +47,7 @@ class TimeMapTest(ResTest):
             with open("map.txt", "w") as fileH:
                 fileH.write("10/10/2000\n")
                 fileH.write("12/10/2000\n")
-                fileH.write("14/10/2000\n")
+                fileH.write("14-10-2000\n")
                 fileH.write("16/10/2000\n")
 
             tm.fload("map.txt")

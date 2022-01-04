@@ -4,7 +4,7 @@ SUMMARY_OBSERVATION WOPR_OP1_9
 {
     VALUE   = 0.1;
     ERROR   = 0.05;
-    RESTART = 9;
+    DATE    = 31-03-2010;
     KEY     = WOPR:OP1;
 };
 
