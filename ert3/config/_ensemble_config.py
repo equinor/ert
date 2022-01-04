@@ -42,9 +42,7 @@ class Input(_EnsembleConfig):
     mime: str = ""
     is_directory: Optional[bool]
 
-    # This is copied from the pydantic documentation, but is apparently not
-    # popular with mypy, so ignore entire block.
-    @no_type_check  # type: ignore
+    @no_type_check
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
         parts = data["source"].split(".", maxsplit=1)
