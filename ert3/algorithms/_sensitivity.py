@@ -21,7 +21,7 @@ def _build_salib_problem(
     # SALib problem structure is described in
     # https://salib.readthedocs.io/en/latest/basics.html
 
-    problem = {}
+    problem: Dict[str, Any] = {}
     dists = parameters.values()
     num_vars = sum(dist.size for dist in dists)
     names = [str(name) for idx in (list(dist.index) for dist in dists) for name in idx]
@@ -42,9 +42,9 @@ def _build_salib_problem(
             raise ValueError(f"Unsupported distribution type {dist.type}")
 
     problem["num_vars"] = num_vars
-    problem["names"] = names  # type: ignore
-    problem["bounds"] = bounds  # type: ignore
-    problem["dists"] = types  # type: ignore
+    problem["names"] = names
+    problem["bounds"] = bounds
+    problem["dists"] = types
 
     return problem
 
@@ -106,7 +106,7 @@ def fast_sample(
             data = dict(zip(dist.index, sample[: dist.size]))
             record = NumericalRecord(data=data, index=dist.index)  # type: ignore
             records.append(record)
-        samples = np.delete(samples, list(range(dist.size)), axis=1)
+        samples = np.delete(samples, list(range(dist.size)), axis=1)  # type: ignore
         group_records.append(records)
 
     evaluations = []

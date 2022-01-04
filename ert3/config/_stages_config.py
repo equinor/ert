@@ -57,11 +57,13 @@ class TransportableCommand(_StagesConfig):
     )
 
 
-# mypy ignore missing parameter for generic type
-class IndexedOrderedDict(OrderedDict):  # type: ignore
+_T = TypeVar("_T")
+
+
+class IndexedOrderedDict(OrderedDict[str, _T]):
     """Extend OrderedDict to add support for accessing elements by their index."""
 
-    def __getitem__(self, attr: Union[str, int]) -> Any:
+    def __getitem__(self, attr: Union[str, int]) -> _T:
         if isinstance(attr, str):
             return super().__getitem__(attr)
         return self[list(self.keys())[attr]]
@@ -77,8 +79,8 @@ def _create_record_mapping(records: Tuple[Dict[str, str], ...]) -> Mapping[str, 
 
 class _Step(_StagesConfig):
     name: str
-    input: MappingProxyType  # type: ignore
-    output: MappingProxyType  # type: ignore
+    input: MappingProxyType[str, Record]
+    output: MappingProxyType[str, Record]
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
         _create_record_mapping
@@ -89,10 +91,10 @@ class _Step(_StagesConfig):
 
 
 class Function(_Step):
-    function: Callable  # type: ignore
+    function: Callable[..., Any]
 
     @validator("function", pre=True)
-    def function_is_callable(cls, value) -> Callable:  # type: ignore
+    def function_is_callable(cls, value: str) -> Callable[..., Any]:
         return _import_from(value)
 
 
@@ -105,15 +107,19 @@ class StagesConfig(BaseModel):
     __root__: Tuple[Union[Function, Unix], ...]
 
     def step_from_key(self, key: str) -> Union[Function, Unix, None]:
-        return next((step for step in self if step.name == key), None)
+        return next((step for step in self.__root__ if step.name == key), None)
 
-    def __iter__(self):  # type: ignore
+    # `pydantic.BaseModel` defines `__iter__` with a different type. However,
+    # overriding this function is intended when used in conjuction with
+    # `__root__`. Disable type checking.
+    @no_type_check
+    def __iter__(self) -> Iterator[Union[Function, Unix]]:
         return iter(self.__root__)
 
-    def __getitem__(self, item):  # type: ignore
+    def __getitem__(self, item: int) -> Union[Function, Unix]:
         return self.__root__[item]
 
-    def __len__(self):  # type: ignore
+    def __len__(self) -> int:
         return len(self.__root__)
 
 

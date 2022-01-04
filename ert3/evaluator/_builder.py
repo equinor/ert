@@ -132,8 +132,8 @@ def add_step_outputs(
                 raise ValueError(
                     f"unexpected storage type{storage_type} for {record_name} record"
                 )
-            output.set_transmitter_factory(factory, iens)
-        step.add_output(output)
+            io_output.set_transmitter_factory(factory, iens)
+        step.add_output(io_output)
 
 
 def build_ensemble(

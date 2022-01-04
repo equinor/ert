@@ -4,6 +4,15 @@ from typing import Callable, List, Optional, cast
 import numpy as np
 import scipy.stats
 
+if sys.version_info >= (3, 7):
+    import numpy.typing as _npt
+
+    NDArrayF64 = _npt.NDArray[np.float64]
+else:
+    # Workaround for Python 3.6: numpy.typing was introduced in numpy 1.20,
+    # which does not support it.
+    NDArrayF64 = np.ndarray
+
 import ert
 
 
@@ -29,8 +38,8 @@ class Distribution:
         *,
         size: Optional[int],
         index: Optional[ert.data.RecordIndex],
-        rvs: Callable[[int], np.ndarray],  # type: ignore
-        ppf: Callable[[np.ndarray], np.ndarray],  # type: ignore
+        rvs: Callable[[int], NDArrayF64],
+        ppf: Callable[[NDArrayF64], NDArrayF64]
     ) -> None:
         if size is None and index is None:
             raise ValueError("Cannot create distribution with neither size nor index")
@@ -59,7 +68,7 @@ class Distribution:
     def index(self) -> ert.data.RecordIndex:
         return self._index
 
-    def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
+    def _to_record(self, x: NDArrayF64) -> ert.data.Record:
         if self._as_array:
             return ert.data.NumericalRecord(data=x.tolist())
         else:
@@ -90,12 +99,12 @@ class Gaussian(Distribution):
         self._mean = mean
         self._std = std
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> NDArrayF64:
             return np.array(
                 scipy.stats.norm.rvs(loc=self._mean, scale=self._std, size=size)
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: NDArrayF64) -> NDArrayF64:
             return np.array(scipy.stats.norm.ppf(x, loc=self._mean, scale=self._std))
 
         super().__init__(
@@ -131,14 +140,14 @@ class Uniform(Distribution):
         self._upper_bound = upper_bound
         self._scale = upper_bound - lower_bound
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> NDArrayF64:
             return np.array(
                 scipy.stats.uniform.rvs(
                     loc=self._lower_bound, scale=self._scale, size=self._size
                 )
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: NDArrayF64) -> NDArrayF64:
             return np.array(
                 scipy.stats.uniform.ppf(x, loc=self._lower_bound, scale=self._scale)
             )

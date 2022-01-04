@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, Iterator, List, Union, Optional
+from typing import Any, Dict, Iterator, List, Union, Optional, no_type_check
 from pydantic import (
     BaseModel,
     ValidationError,
@@ -47,7 +47,7 @@ class _GaussianInput(_ParametersConfig):
     std: float
 
     @validator("std")
-    def _ensure_positive_std(cls, value):  # type: ignore
+    def _ensure_positive_std(cls, value: float) -> Optional[float]:
         if value is None:
             return None
 
@@ -61,7 +61,7 @@ class _UniformInput(_ParametersConfig):
     upper_bound: float
 
     @root_validator
-    def _ensure_lower_upper(cls, values):  # type: ignore
+    def _ensure_lower_upper(cls, values: Dict[str, float]) -> Dict[str, float]:
         low = values.get("lower_bound")
         up = values.get("upper_bound")
 
@@ -117,7 +117,7 @@ class _VariablesConfig(_ParametersConfig):
     __root__: List[str]
 
     @validator("__root__")
-    def _ensure_variables(cls, variables):  # type: ignore
+    def _ensure_variables(cls, variables: List[str]) -> List[str]:
         if len(variables) > 0:
             return variables
 
@@ -228,14 +228,18 @@ class _ParameterConfig(_ParametersConfig):
 class ParametersConfig(_ParametersConfig):
     __root__: List[_ParameterConfig]
 
-    def __iter__(self) -> Iterator[_ParameterConfig]:  # type: ignore
+    # `pydantic.BaseModel` defines `__iter__` with a different type. However,
+    # overriding this function is intended when used in conjuction with
+    # `__root__`. Disable type checking.
+    @no_type_check
+    def __iter__(self) -> Iterator[_ParameterConfig]:
         return iter(self.__root__)
 
     def __getitem__(self, item: Union[int, str]) -> _ParameterConfig:
         if isinstance(item, int):
             return self.__root__[item]
         elif isinstance(item, str):
-            for group in self:
+            for group in self.__root__:
                 if group.name == item:
                     return group
             raise ValueError(f"No parameter group found named: {item}")
