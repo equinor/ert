@@ -106,7 +106,7 @@ def fast_sample(
             data = dict(zip(dist.index, sample[: dist.size]))
             record = NumericalRecord(data=data, index=dist.index)  # type: ignore
             records.append(record)
-        samples = np.delete(samples, list(range(dist.size)), axis=1)  # type: ignore
+        samples = np.delete(samples, list(range(dist.size)), axis=1)
         group_records.append(records)
 
     evaluations = []
