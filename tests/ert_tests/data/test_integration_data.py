@@ -103,7 +103,7 @@ def test_summary_obs_last_entry(monkeypatch, copy_snake_oil):
 {
     VALUE   = 10;
     ERROR   = 0.1;
-    DATE    = 23/06/2015;
+    DATE    = 23-06-2015;
     KEY     = FOPR;
 };
             """
