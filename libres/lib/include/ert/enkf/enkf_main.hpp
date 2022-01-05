@@ -192,11 +192,6 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
                                        int source_report_step,
                                        enkf_fs_type *target_case);
 
-extern "C++" void enkf_main_init_case_from_existing_custom(
-    const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, enkf_fs_type *target_case,
-    std::vector<std::string> &node_list, std::vector<bool> &iactive);
-
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
                                    const char *case_name,
                                    bool_vector_type *__mask);
