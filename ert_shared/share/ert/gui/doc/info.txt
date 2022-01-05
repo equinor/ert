@@ -63,18 +63,7 @@ analysis_config_set_log_path( analysis_config , log_path );
 INITIALIZED
 -----------
 
-enkf_main_is_initialized(enkf_main , active_mask);
-
-active_mask er nå en vector av typen: bool_vector som er implementert i
-libutil. Dersom alle elemementene er aktive kan du sende inn None /
-NULL, ellers må allokere og initialisere en active_mask instans:
-
-mask = bool_vector_alloc(0 , false)
-for index in selectedMembers:
-    bool_vector_iset( mask , index , true )
-
-enkf_main_is_initialized( enkf_main , mask )
-bool_vector_free( mask )
+enkf_main_is_initialized(enkf_main);
 
 
 

@@ -198,11 +198,9 @@ extern "C++" void enkf_main_init_case_from_existing_custom(
     std::vector<std::string> &node_list, std::vector<bool> &iactive);
 
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                   const char *case_name,
-                                   bool_vector_type *__mask);
+                                   const char *case_name);
 
-bool enkf_main_is_initialized(const enkf_main_type *enkf_main,
-                              bool_vector_type *__mask);
+bool enkf_main_is_initialized(const enkf_main_type *enkf_main);
 
 char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                                   const char *case_path);
