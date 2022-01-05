@@ -128,26 +128,22 @@ void enkf_main_initialize_from_scratch(
     }
 }
 
-static void enkf_main_copy_ensemble(const enkf_main_type *enkf_main,
-                                    enkf_fs_type *source_case_fs,
-                                    int source_report_step,
-                                    enkf_fs_type *target_case_fs,
-                                    int target_report_step,
-                                    const std::vector<bool> &iens_mask,
-                                    const std::vector<std::string> &node_list) {
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
+static void enkf_main_copy_ensemble(
+    const ensemble_config_type *ensemble_config, enkf_fs_type *source_case_fs,
+    int source_report_step, enkf_fs_type *target_case_fs,
+    int target_report_step, const std::vector<bool> &iens_mask,
+    const std::vector<std::string> &node_list, int ens_size) {
     state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
 
     {
         int inode, src_iens;
 
         for (auto &node : node_list) {
-            enkf_config_node_type *config_node = ensemble_config_get_node(
-                enkf_main_get_ensemble_config(enkf_main), node.c_str());
-            for (src_iens = 0;
-                 src_iens < enkf_main_get_ensemble_size(enkf_main);
-                 src_iens++) {
+            enkf_config_node_type *config_node =
+                ensemble_config_get_node(ensemble_config, node.c_str());
+            for (src_iens = 0; src_iens < ens_size; src_iens++) {
                 if (src_iens < iens_mask.size() && iens_mask[src_iens]) {
+
                     node_id_type src_id = {.report_step = source_report_step,
                                            .iens = src_iens};
                     node_id_type target_id = {.report_step = target_report_step,
@@ -199,9 +195,10 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
         PARAMETER); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
     int target_report_step = 0;
     std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
-    enkf_main_copy_ensemble(enkf_main, source_case_fs, source_report_step,
-                            target_case_fs, target_report_step, iactive,
-                            param_list);
+    enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
+                            source_case_fs, source_report_step, target_case_fs,
+                            target_report_step, iactive, param_list,
+                            enkf_main_get_ensemble_size(enkf_main));
 
     enkf_fs_fsync(target_case_fs);
 }
@@ -213,9 +210,10 @@ void enkf_main_init_case_from_existing_custom(
 
     int target_report_step = 0;
 
-    enkf_main_copy_ensemble(enkf_main, source_case_fs, source_report_step,
-                            target_case_fs, target_report_step, iactive,
-                            node_list);
+    enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
+                            source_case_fs, source_report_step, target_case_fs,
+                            target_report_step, iactive, node_list,
+                            enkf_main_get_ensemble_size(enkf_main));
 
     enkf_fs_fsync(target_case_fs);
 }
