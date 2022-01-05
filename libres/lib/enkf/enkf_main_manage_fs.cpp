@@ -245,10 +245,9 @@ void enkf_main_init_case_from_existing_custom(
    all realizations will be checked).
 */
 
-static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
-                                            enkf_fs_type *fs) {
-    ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+static bool
+enkf_main_case_is_initialized__(const ensemble_config_type *ensemble_config,
+                                enkf_fs_type *fs, const int ens_size) {
     std::vector<std::string> parameter_keys =
         ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
     bool initialized = true;
@@ -257,8 +256,7 @@ static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
             ensemble_config, parameter_keys[ikey].c_str());
         initialized = enkf_config_node_has_node(config_node, fs,
                                                 {.report_step = 0, .iens = 0});
-        for (int iens = 0; (iens < enkf_main->ens_size) && initialized;
-             iens++) {
+        for (int iens = 0; (iens < ens_size) && initialized; iens++) {
             initialized = enkf_config_node_has_node(
                 config_node, fs, {.report_step = 0, .iens = iens});
         }
@@ -271,7 +269,8 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
                                    const char *case_name) {
     enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, case_name, false);
     if (fs) {
-        bool initialized = enkf_main_case_is_initialized__(enkf_main, fs);
+        bool initialized = enkf_main_case_is_initialized__(
+            enkf_main_get_ensemble_config(enkf_main), fs, enkf_main->ens_size);
         enkf_fs_decref(fs);
         return initialized;
     } else
@@ -279,7 +278,9 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
 }
 
 bool enkf_main_is_initialized(const enkf_main_type *enkf_main) {
-    return enkf_main_case_is_initialized__(enkf_main, enkf_main->dbase);
+    return enkf_main_case_is_initialized__(
+        enkf_main_get_ensemble_config(enkf_main), enkf_main->dbase,
+        enkf_main->ens_size);
 }
 
 static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
