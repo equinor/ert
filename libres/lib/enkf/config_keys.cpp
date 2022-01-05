@@ -1,262 +1,132 @@
-/*
-   Copyright (C) 2017  Equinor ASA, Norway.
-
-   The file 'config_keys.c' is part of ERT - Ensemble based Reservoir Tool.
-
-   ERT is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.
-
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-   for more details.
-*/
-
+#include <ert/python.hpp>
 #include <ert/enkf/config_keys.hpp>
-
-const char *config_keys_get_config_directory_key() {
-    return CONFIG_DIRECTORY_KEY;
-}
-
-const char *config_keys_get_config_file_key() { return RES_CONFIG_FILE_KEY; }
-
-const char *config_keys_get_queue_system_key() { return QUEUE_SYSTEM_KEY; }
-
-const char *config_keys_get_run_template_key() { return RUN_TEMPLATE_KEY; }
-
-const char *config_keys_get_gen_kw_key() { return GEN_KW_KEY; }
-
-const char *config_keys_get_queue_option_key() { return QUEUE_OPTION_KEY; }
-
-const char *config_keys_get_install_job_key() { return INSTALL_JOB_KEY; }
-
-const char *config_keys_get_log_file_key() { return LOG_FILE_KEY; }
-
-const char *config_keys_get_log_level_key() { return LOG_LEVEL_KEY; }
-
-const char *config_keys_get_update_log_path_key() {
-    return UPDATE_LOG_PATH_KEY;
-}
-
-const char *config_keys_get_summary_key() { return SUMMARY_KEY; }
-
-const char *config_keys_get_max_runtime_key() { return MAX_RUNTIME_KEY; }
-
-const char *config_keys_get_min_realizations_key() {
-    return MIN_REALIZATIONS_KEY;
-}
-
-const char *config_keys_get_max_submit_key() { return MAX_SUBMIT_KEY; }
-
-const char *config_keys_get_umask_key() { return UMASK_KEY; }
-
-const char *config_keys_get_data_kw_key() { return DATA_KW_KEY; }
-
-const char *config_keys_get_runpath_file_key() { return RUNPATH_FILE_KEY; }
-
-const char *config_keys_get_gen_data_key() { return GEN_DATA_KEY; }
-
-const char *config_keys_get_eclbase_key() { return ECLBASE_KEY; }
-
-const char *config_keys_get_data_file_key() { return DATA_FILE_KEY; }
-
-const char *config_keys_get_grid_key() { return GRID_KEY; }
-
-const char *config_keys_get_refcase_key() { return REFCASE_KEY; }
-
-const char *config_keys_get_refcase_list_key() { return REFCASE_LIST_KEY; }
-
-const char *config_keys_get_end_date_key() { return END_DATE_KEY; }
-
-const char *config_keys_get_schedule_prediction_file_key() {
-    return SCHEDULE_PREDICTION_FILE_KEY;
-}
-
-const char *config_keys_get_result_file() { return RESULT_FILE_KEY; }
-
-const char *config_keys_get_report_steps() { return REPORT_STEPS_KEY; }
-
-const char *config_keys_get_input_format() { return INPUT_FORMAT_KEY; }
-
-const char *config_keys_get_ecl_file() { return ECL_FILE_KEY; }
-
-const char *config_keys_get_output_format() { return OUTPUT_FORMAT_KEY; }
-
-const char *config_keys_get_init_files() { return INIT_FILES_KEY; }
-
-const char *config_keys_get_random_seed() { return RANDOM_SEED_KEY; }
-
-const char *config_keys_get_alpha() { return ENKF_ALPHA_KEY; }
-
-const char *config_keys_get_std_cutoff() { return STD_CUTOFF_KEY; }
-const char *config_keys_get_stop_long_running() {
-    return STOP_LONG_RUNNING_KEY;
-}
-
-const char *config_keys_get_single_node_update() {
-    return SINGLE_NODE_UPDATE_KEY;
-}
-
-const char *config_keys_get_rerun() { return ENKF_RERUN_KEY; }
-
-const char *config_keys_get_rerun_start() { return RERUN_START_KEY; }
-
-const char *config_keys_get_analysis_copy() { return ANALYSIS_COPY_KEY; }
-
-const char *config_keys_get_analysis_select() { return ANALYSIS_SELECT_KEY; }
-
-const char *config_keys_get_analysis_set_var() { return ANALYSIS_SET_VAR_KEY; }
-
-const char *config_keys_get_install_job_directory_key() {
-    return INSTALL_JOB_DIRECTORY_KEY;
-}
-
-const char *config_keys_get_license_path_key() { return LICENSE_PATH_KEY; }
-
-const char *config_keys_get_setenv_key() { return SETENV_KEY; }
-
-const char *config_keys_get_job_script_key() { return JOB_SCRIPT_KEY; }
-
-const char *config_keys_get_num_cpu_key() { return NUM_CPU_KEY; }
-
-const char *config_keys_get_define_key() { return DEFINE_KEY; }
-
-const char *config_keys_get_iter_case_key() { return ITER_CASE_KEY; }
-
-const char *config_keys_get_iter_count_key() { return ITER_COUNT_KEY; }
-
-const char *config_keys_get_iter_retry_count_key() {
-    return ITER_RETRY_COUNT_KEY;
-}
-
-const char *config_keys_get_load_workflow_key() { return LOAD_WORKFLOW_KEY; }
-
-const char *config_keys_get_load_workflow_job_key() {
-    return LOAD_WORKFLOW_JOB_KEY;
-}
-
-const char *config_keys_get_workflow_job_directory_key() {
-    return WORKFLOW_JOB_DIRECTORY_KEY;
-}
-
-const char *config_keys_get_hook_workflow_key() { return HOOK_WORKFLOW_KEY; }
-
-const char *config_keys_get_max_resample_key() { return MAX_RESAMPLE_KEY; }
-
-const char *config_keys_get_num_realizations_key() {
-    return NUM_REALIZATIONS_KEY;
-}
-
-const char *config_keys_get_runpath_key() { return RUNPATH_KEY; }
-
-const char *config_keys_get_data_root_key() { return DATA_ROOT_KEY; }
-
-const char *config_keys_get_enspath_key() { return ENSPATH_KEY; }
-
-const char *config_keys_get_jobname_key() { return JOBNAME_KEY; }
-
-const char *config_keys_get_forward_model_key() { return FORWARD_MODEL_KEY; }
-
-const char *config_keys_get_simulation_job_key() { return SIMULATION_JOB_KEY; }
-
-const char *config_keys_get_rftpath_key() { return RFTPATH_KEY; }
-
-const char *config_keys_get_gen_kw_export_name_key() {
-    return GEN_KW_EXPORT_NAME_KEY;
-}
-
-const char *config_keys_get_history_source_key() { return HISTORY_SOURCE_KEY; }
-
-const char *config_keys_get_obs_config_key() { return OBS_CONFIG_KEY; }
-
-const char *config_keys_get_time_map_key() { return TIME_MAP_KEY; }
-
-const char *config_keys_get_gen_param_key() { return GEN_PARAM_KEY; }
-
-const char *config_keys_get_forward_init_key() { return FORWARD_INIT_KEY; }
-
-const char *config_keys_get_min_std_key() { return MIN_STD_KEY; }
-
-const char *config_keys_get_template_key() { return TEMPLATE_KEY; }
-
-const char *config_keys_get_key_key() { return KEY_KEY; }
-
-const char *config_keys_get_kw_tag_format_key() {
-    return GEN_KW_TAG_FORMAT_KEY;
-}
-
-const char *config_keys_get_surface_key() { return SURFACE_KEY; }
-
-const char *config_keys_get_base_surface_key() { return BASE_SURFACE_KEY; }
-
-const char *config_keys_get_field_key() { return FIELD_KEY; }
-
-const char *config_keys_get_init_transform_key() { return INIT_TRANSFORM_KEY; }
-
-const char *config_keys_get_input_transform_key() {
-    return INPUT_TRANSFORM_KEY;
-}
-
-const char *config_keys_get_output_transform_key() {
-    return OUTPUT_TRANSFORM_KEY;
-}
-
-const char *config_keys_get_min_key() { return MIN_KEY; }
-
-const char *config_keys_get_max_key() { return MAX_KEY; }
-
-const char *config_keys_get_parameter_key() { return PARAMETER_KEY; }
-
-const char *config_keys_get_general_key() { return GENERAL_KEY; }
-
-const char *config_keys_get_pred_key() { return PRED_KEY; }
-
-const char *config_keys_get_container_key() { return CONTAINER_KEY; }
-
-const char *config_keys_get_slurm_sbatch_option() {
-    return SLURM_SBATCH_OPTION;
-}
-
-const char *config_keys_get_slurm_scancel_option() {
-    return SLURM_SCANCEL_OPTION;
-}
-
-const char *config_keys_get_slurm_scontrol_option() {
-    return SLURM_SCONTROL_OPTION;
-}
-
-const char *config_keys_get_slurm_squeue_option() {
-    return SLURM_SQUEUE_OPTION;
-}
-
-const char *config_keys_get_slurm_partition_option() {
-    return SLURM_PARTITION_OPTION;
-}
-
-const char *config_keys_get_slurm_squeue_timeout_option() {
-    return SLURM_SQUEUE_TIMEOUT_OPTION;
-}
-
-const char *config_keys_get_slurm_max_runtime_option() {
-    return SLURM_MAX_RUNTIME_OPTION;
-}
-
-const char *config_keys_get_slurm_memory_option() {
-    return SLURM_MEMORY_OPTION;
-}
-
-const char *config_keys_get_slurm_memory_per_cpu_option() {
-    return SLURM_MEMORY_PER_CPU_OPTION;
-}
-
-const char *config_keys_get_slurm_exclude_host_option() {
-    return SLURM_EXCLUDE_HOST_OPTION;
-}
-
-const char *config_keys_get_slurm_include_host_option() {
-    return SLURM_INCLUDE_HOST_OPTION;
+#include <pybind11/pytypes.h>
+
+void init_config_keys(py::module_ m) {
+    struct ConfigKeys {};
+
+    py::class_<ConfigKeys> cls(m, "ConfigKeys");
+
+    cls.attr("ALPHA_KEY") = ENKF_ALPHA_KEY;
+    cls.attr("ANALYSIS_COPY") = ANALYSIS_COPY_KEY;
+    cls.attr("ANALYSIS_SELECT") = ANALYSIS_SELECT_KEY;
+    cls.attr("ANALYSIS_SET_VAR") = ANALYSIS_SET_VAR_KEY;
+    cls.attr("ARGLIST") = "ARGLIST";
+    cls.attr("BASE_SURFACE_KEY") = BASE_SURFACE_KEY;
+    cls.attr("CONFIG_DIRECTORY") = CONFIG_DIRECTORY_KEY;
+    cls.attr("CONFIG_FILE_KEY") = RES_CONFIG_FILE_KEY;
+    cls.attr("CONTAINER_KEY") = CONTAINER_KEY;
+    cls.attr("DATAROOT") = DATA_ROOT_KEY;
+    cls.attr("DATA_FILE") = DATA_FILE_KEY;
+    cls.attr("DATA_KW_KEY") = DATA_KW_KEY;
+    cls.attr("DEFINES") = "DEFINES";
+    cls.attr("DEFINE_KEY") = DEFINE_KEY;
+    cls.attr("DRIVER_NAME") = "DRIVER_NAME";
+    cls.attr("DST_NAME") = "DST_NAME";
+    cls.attr("ECLBASE") = ECLBASE_KEY;
+    cls.attr("ECL_FILE") = ECL_FILE_KEY;
+    cls.attr("END_DATE") = END_DATE_KEY;
+    cls.attr("ENKF_INFILE") = "ENKF_INFILE";
+    cls.attr("ENSPATH") = ENSPATH_KEY;
+    cls.attr("EXPORT") = "EXPORT";
+    cls.attr("FIELD_KEY") = FIELD_KEY;
+    cls.attr("FORWARD_INIT") = FORWARD_INIT_KEY;
+    cls.attr("FORWARD_MODEL") = FORWARD_MODEL_KEY;
+    cls.attr("GENERAL_KEY") = GENERAL_KEY;
+    cls.attr("GEN_DATA") = GEN_DATA_KEY;
+    cls.attr("GEN_KW") = GEN_KW_KEY;
+    cls.attr("GEN_KW_EXPORT_NAME") = GEN_KW_EXPORT_NAME_KEY;
+    cls.attr("GEN_KW_TAG_FORMAT") = GEN_KW_TAG_FORMAT_KEY;
+    cls.attr("GEN_PARAM") = GEN_PARAM_KEY;
+    cls.attr("GLOBAL_STD_SCALING") = "GLOBAL_STD_SCALING";
+    cls.attr("GRID") = GRID_KEY;
+    cls.attr("HISTORY_SOURCE") = HISTORY_SOURCE_KEY;
+    cls.attr("HOOK_WORKFLOW_KEY") = HOOK_WORKFLOW_KEY;
+    cls.attr("INIT_FILES") = INIT_FILES_KEY;
+    cls.attr("INIT_TRANSFORM") = INIT_TRANSFORM_KEY;
+    cls.attr("INPUT_FORMAT") = INPUT_FORMAT_KEY;
+    cls.attr("INPUT_TRANSFORM") = INPUT_TRANSFORM_KEY;
+    cls.attr("INSTALL_JOB") = INSTALL_JOB_KEY;
+    cls.attr("INSTALL_JOB_DIRECTORY") = INSTALL_JOB_DIRECTORY_KEY;
+    cls.attr("INTERNALS") = "INTERNALS";
+    cls.attr("ITER_CASE") = ITER_CASE_KEY;
+    cls.attr("ITER_COUNT") = ITER_COUNT_KEY;
+    cls.attr("ITER_RETRY_COUNT") = ITER_RETRY_COUNT_KEY;
+    cls.attr("JOBNAME") = JOBNAME_KEY;
+    cls.attr("JOB_SCRIPT") = JOB_SCRIPT_KEY;
+    cls.attr("KEY_KEY") = KEY_KEY;
+    cls.attr("LIB_NAME") = "LIB_NAME";
+    cls.attr("LICENSE_PATH") = LICENSE_PATH_KEY;
+    cls.attr("LOAD_WORKFLOW") = LOAD_WORKFLOW_KEY;
+    cls.attr("LOAD_WORKFLOW_JOB") = LOAD_WORKFLOW_JOB_KEY;
+    cls.attr("LOGGING") = "LOGGING";
+    cls.attr("LOG_FILE") = LOG_FILE_KEY;
+    cls.attr("LOG_LEVEL") = LOG_LEVEL_KEY;
+    cls.attr("MAX_KEY") = MAX_KEY;
+    cls.attr("MAX_RESAMPLE") = MAX_RESAMPLE_KEY;
+    cls.attr("MAX_RUNNING") = "MAX_RUNNING";
+    cls.attr("MAX_RUNTIME") = MAX_RUNTIME_KEY;
+    cls.attr("MAX_SUBMIT") = MAX_SUBMIT_KEY;
+    cls.attr("MIN_KEY") = MIN_KEY;
+    cls.attr("MIN_REALIZATIONS") = MIN_REALIZATIONS_KEY;
+    cls.attr("MIN_STD") = MIN_STD_KEY;
+    cls.attr("MODULE_NAME") = "MODULE_NAME";
+    cls.attr("NAME") = "NAME";
+    cls.attr("NUM_CPU") = NUM_CPU_KEY;
+    cls.attr("NUM_REALIZATIONS") = NUM_REALIZATIONS_KEY;
+    cls.attr("OBS_CONFIG") = OBS_CONFIG_KEY;
+    cls.attr("OPTION") = "OPTION";
+    cls.attr("OUTPUT_FORMAT") = OUTPUT_FORMAT_KEY;
+    cls.attr("OUTPUT_TRANSFORM") = OUTPUT_TRANSFORM_KEY;
+    cls.attr("OUT_FILE") = "OUT_FILE";
+    cls.attr("PARAMETER_FILE") = "PARAMETER_FILE";
+    cls.attr("PARAMETER_KEY") = PARAMETER_KEY;
+    cls.attr("PATH") = "PATH";
+    cls.attr("PRED_KEY") = PRED_KEY;
+    cls.attr("QUEUE_OPTION") = QUEUE_OPTION_KEY;
+    cls.attr("QUEUE_SYSTEM") = QUEUE_SYSTEM_KEY;
+    cls.attr("RANDOM_SEED") = RANDOM_SEED_KEY;
+    cls.attr("REFCASE") = REFCASE_KEY;
+    cls.attr("REFCASE_LIST") = REFCASE_LIST_KEY;
+    cls.attr("REPORT_STEPS") = REPORT_STEPS_KEY;
+    cls.attr("RERUN_KEY") = ENKF_RERUN_KEY;
+    cls.attr("RERUN_START_KEY") = RERUN_START_KEY;
+    cls.attr("RESULT_FILE") = RESULT_FILE_KEY;
+    cls.attr("RFTPATH") = RFTPATH_KEY;
+    cls.attr("RUNPATH") = RUNPATH_KEY;
+    cls.attr("RUNPATH_FILE") = RUNPATH_FILE_KEY;
+    cls.attr("RUNPATH_LIST_FILE") = ".ert_runpath_list";
+    cls.attr("RUN_TEMPLATE") = RUN_TEMPLATE_KEY;
+    cls.attr("SCHEDULE_PREDICTION_FILE") = SCHEDULE_PREDICTION_FILE_KEY;
+    cls.attr("SEED") = "SEED";
+    cls.attr("SETENV") = SETENV_KEY;
+    cls.attr("SIMULATION") = "SIMULATION";
+    cls.attr("SIMULATION_JOB") = SIMULATION_JOB_KEY;
+    cls.attr("SINGLE_NODE_UPDATE") = SINGLE_NODE_UPDATE_KEY;
+    cls.attr("SLURM_EXCLUDE_HOST_OPTION") = SLURM_EXCLUDE_HOST_OPTION;
+    cls.attr("SLURM_INCLUDE_HOST_OPTION") = SLURM_INCLUDE_HOST_OPTION;
+    cls.attr("SLURM_MAX_RUNTIME_OPTION") = SLURM_MAX_RUNTIME_OPTION;
+    cls.attr("SLURM_MEMORY_OPTION") = SLURM_MEMORY_OPTION;
+    cls.attr("SLURM_MEMORY_PER_CPU_OPTION") = SLURM_MEMORY_PER_CPU_OPTION;
+    cls.attr("SLURM_PARTITION_OPTION") = SLURM_PARTITION_OPTION;
+    cls.attr("SLURM_SBATCH_OPTION") = SLURM_SBATCH_OPTION;
+    cls.attr("SLURM_SCANCEL_OPTION") = SLURM_SCANCEL_OPTION;
+    cls.attr("SLURM_SCONTROL_OPTION") = SLURM_SCONTROL_OPTION;
+    cls.attr("SLURM_SQUEUE_OPTION") = SLURM_SQUEUE_OPTION;
+    cls.attr("SLURM_SQUEUE_TIMEOUT_OPTION") = SLURM_SQUEUE_TIMEOUT_OPTION;
+    cls.attr("SRC_NAME") = "SRC_NAME";
+    cls.attr("STD_CUTOFF_KEY") = STD_CUTOFF_KEY;
+    cls.attr("STOP_LONG_RUNNING") = STOP_LONG_RUNNING_KEY;
+    cls.attr("SUMMARY") = SUMMARY_KEY;
+    cls.attr("SURFACE_KEY") = SURFACE_KEY;
+    cls.attr("TEMPLATE") = TEMPLATE_KEY;
+    cls.attr("TIME_MAP") = TIME_MAP_KEY;
+    cls.attr("UMASK") = UMASK_KEY;
+    cls.attr("UPDATE_LOG_PATH") = UPDATE_LOG_PATH_KEY;
+    cls.attr("USER_MODE") = "USER_MODE";
+    cls.attr("USER_NAME") = "USER_NAME";
+    cls.attr("VALUE") = "VALUE";
+    cls.attr("VAR_NAME") = "VAR_NAME";
+    cls.attr("VAR_TYPE") = "VAR_TYPE";
+    cls.attr("WORKFLOW_JOB_DIRECTORY") = WORKFLOW_JOB_DIRECTORY_KEY;
 }

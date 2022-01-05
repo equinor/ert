@@ -89,6 +89,7 @@ pybind11_add_module(
   enkf/block_obs.cpp
   enkf/callback_arg.cpp
   enkf/cases_config.cpp
+  enkf/config_keys.cpp
   enkf/container.cpp
   enkf/container_config.cpp
   enkf/data_ranking.cpp
@@ -167,8 +168,7 @@ pybind11_add_module(
   enkf/surface_config.cpp
   enkf/trans_func.cpp
   enkf/subst_config.cpp
-  enkf/log_config.cpp
-  enkf/config_keys.cpp)
+  enkf/log_config.cpp)
 # -----------------------------------------------------------------
 
 find_package(LAPACK REQUIRED)
