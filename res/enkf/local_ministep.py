@@ -1,10 +1,10 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
-from res.enkf.local_dataset import LocalDataset
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
 from res.enkf.obs_data import ObsData
+from res.enkf.row_scaling import RowScaling
 
 
 class LocalMinistep(BaseCClass):
@@ -16,42 +16,58 @@ class LocalMinistep(BaseCClass):
     _get_local_obs_data = ResPrototype(
         "local_obsdata_ref local_ministep_get_obsdata(local_ministep)"
     )
-    _get_local_data = ResPrototype(
-        "local_dataset_ref local_ministep_get_dataset(local_ministep , char*)"
-    )
     _get_obs_data = ResPrototype(
         "obs_data_ref local_ministep_get_obs_data( local_ministep )"
-    )
-    _has_local_data = ResPrototype(
-        "bool              local_ministep_has_dataset(local_ministep , char*)"
     )
     _free = ResPrototype("void local_ministep_free(local_ministep)")
     _attach_obsdata = ResPrototype(
         "void local_ministep_add_obsdata(local_ministep, local_obsdata)"
     )
-    _attach_dataset = ResPrototype(
-        "void local_ministep_add_dataset(local_ministep, local_dataset)"
-    )
     _name = ResPrototype("char* local_ministep_get_name(local_ministep)")
-    _data_size = ResPrototype("int local_ministep_get_num_dataset(local_ministep)")
+    _data_size = ResPrototype("int local_ministep_num_active_data(local_ministep)")
+    _active_data_list = ResPrototype(
+        "active_list_ref local_ministep_get_active_data_list(local_ministep, char*)"
+    )
+    _has_active_data = ResPrototype(
+        "bool local_ministep_data_is_active(local_ministep, char*)"
+    )
+    _add_active_data = ResPrototype(
+        "void local_ministep_activate_data(local_ministep, char*)"
+    )
+    _get_or_create_row_scaling = ResPrototype(
+        "row_scaling_ref local_ministep_get_or_create_row_scaling(local_ministep, char*)"
+    )
 
     def __init__(self, ministep_key):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    # Will used the data keys; and ignore observation keys.
-    def __getitem__(self, data_key):
-        if isinstance(data_key, int):
-            raise TypeError("Keys must be strings, not int!")
-        if data_key in self:
-            return self._get_local_data(data_key)
+    def set_ensemble_config(self, config):
+        self.ensemble_config = config
+
+    def hasActiveData(self, key):
+        assert isinstance(key, str)
+        return self._has_active_data(key)
+
+    def addActiveData(self, key):
+        assert isinstance(key, str)
+        if key in self.ensemble_config:
+            # TODO: Why bother? Why not make it idempotent?
+            if not self._has_active_data(key):
+                self._add_active_data(key)
+            else:
+                raise KeyError('Tried to add existing data key "%s".' % key)
         else:
-            raise KeyError('No such data key: "%s"' % data_key)
+            raise KeyError('Tried to add data key "%s" not in ensemble.' % key)
 
-    def __len__(self):
+    def getActiveList(self, key):
+        """@rtype: ActiveList"""
+        if self._has_active_data(key):
+            return self._active_data_list(key)
+        else:
+            raise KeyError('Local key "%s" not recognized.' % key)
+
+    def numActiveData(self):
         return self._data_size()
-
-    def __contains__(self, data_key):
-        return self._has_local_data(data_key)
 
     def addNode(self, node):
         assert isinstance(node, LocalObsdataNode)
@@ -61,9 +77,11 @@ class LocalMinistep(BaseCClass):
         assert isinstance(obs_set, LocalObsdata)
         self._attach_obsdata(obs_set)
 
-    def attachDataset(self, dataset):
-        assert isinstance(dataset, LocalDataset)
-        self._attach_dataset(dataset)
+    def row_scaling(self, key) -> RowScaling:
+        if not self._has_active_data(key):
+            raise KeyError(f"Unknown key: {key}")
+
+        return self._get_or_create_row_scaling(key)
 
     def getLocalObsData(self):
         """@rtype: LocalObsdata"""

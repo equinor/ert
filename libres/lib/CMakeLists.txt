@@ -134,7 +134,6 @@ pybind11_add_module(
   enkf/hook_manager.cpp
   enkf/hook_workflow.cpp
   enkf/local_config.cpp
-  enkf/local_dataset.cpp
   enkf/local_ministep.cpp
   enkf/local_obsdata.cpp
   enkf/local_obsdata_node.cpp

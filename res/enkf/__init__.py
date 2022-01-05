@@ -63,7 +63,6 @@ from .forward_load_context import ForwardLoadContext
 from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
 from .local_config import LocalConfig
-from .local_dataset import LocalDataset
 from .local_ministep import LocalMinistep
 from .local_obsdata import LocalObsdata
 from .local_obsdata_node import LocalObsdataNode

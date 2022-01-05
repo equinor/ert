@@ -117,7 +117,6 @@ struct local_config_struct {
     hash_type *
         updatestep_storage; /* These three hash tables are the 'holding area' for the local_updatestep, */
     hash_type *ministep_storage; /* local_ministep instances. */
-    hash_type *dataset_storage;
     hash_type *obsdata_storage;
 };
 
@@ -143,7 +142,6 @@ void local_config_clear(local_config_type *local_config) {
     local_config->default_updatestep = NULL;
     hash_clear(local_config->updatestep_storage);
     hash_clear(local_config->ministep_storage);
-    hash_clear(local_config->dataset_storage);
     hash_clear(local_config->obsdata_storage);
     local_config->default_updatestep =
         local_config_alloc_updatestep(local_config, "DEFAULT");
@@ -169,7 +167,6 @@ local_config_type *local_config_alloc() {
     local_config->default_updatestep = NULL;
     local_config->updatestep_storage = hash_alloc();
     local_config->ministep_storage = hash_alloc();
-    local_config->dataset_storage = hash_alloc();
     local_config->obsdata_storage = hash_alloc();
 
     local_config_clear(local_config);
@@ -179,7 +176,6 @@ local_config_type *local_config_alloc() {
 void local_config_free(local_config_type *local_config) {
     hash_free(local_config->updatestep_storage);
     hash_free(local_config->ministep_storage);
-    hash_free(local_config->dataset_storage);
     hash_free(local_config->obsdata_storage);
     free(local_config);
 }
@@ -213,36 +209,6 @@ bool local_config_has_obsdata(const local_config_type *local_config,
     return hash_has_key(local_config->obsdata_storage, key);
 }
 
-local_dataset_type *local_config_alloc_dataset(local_config_type *local_config,
-                                               const char *key) {
-    if (local_config_has_dataset(local_config, key))
-        util_abort("%s: tried to add existing dataset node key:%s \n", __func__,
-                   key);
-
-    local_dataset_type *dataset = local_dataset_alloc(key);
-    hash_insert_hash_owned_ref(local_config->dataset_storage, key, dataset,
-                               local_dataset_free__);
-    return dataset;
-}
-
-bool local_config_has_dataset(const local_config_type *local_config,
-                              const char *key) {
-    return hash_has_key(local_config->dataset_storage, key);
-}
-
-local_dataset_type *
-local_config_alloc_dataset_copy(local_config_type *local_config,
-                                const char *src_key, const char *target_key) {
-    local_dataset_type *src_dataset =
-        (local_dataset_type *)hash_get(local_config->dataset_storage, src_key);
-    local_dataset_type *copy_dataset =
-        local_dataset_alloc_copy(src_dataset, target_key);
-
-    hash_insert_hash_owned_ref(local_config->dataset_storage, target_key,
-                               copy_dataset, local_dataset_free__);
-    return copy_dataset;
-}
-
 local_obsdata_type *
 local_config_alloc_obsdata_copy(local_config_type *local_config,
                                 const char *src_key, const char *target_key) {
@@ -270,14 +236,6 @@ local_config_get_obsdata(const local_config_type *local_config,
     local_obsdata_type *obsdata =
         (local_obsdata_type *)hash_get(local_config->obsdata_storage, key);
     return obsdata;
-}
-
-local_dataset_type *
-local_config_get_dataset(const local_config_type *local_config,
-                         const char *key) {
-    local_dataset_type *dataset =
-        (local_dataset_type *)hash_get(local_config->dataset_storage, key);
-    return dataset;
 }
 
 local_updatestep_type *

@@ -15,7 +15,6 @@ class LocalObsdata(BaseCClass):
         "bool  local_obsdata_add_node(local_obsdata, local_obsdata_node)"
     )
     _del_node = ResPrototype("void  local_obsdata_del_node(local_obsdata, char*)")
-    _clear = ResPrototype("void  local_dataset_clear(local_obsdata)")
     _name = ResPrototype("char* local_obsdata_get_name(local_obsdata)")
     _iget_node = ResPrototype(
         "local_obsdata_node_ref local_obsdata_iget(local_obsdata, int)"
@@ -123,9 +122,6 @@ object as:
             raise KeyError(
                 "The observation node: %s is not recognized observation key" % key
             )
-
-    def clear(self):
-        self._clear()
 
     def addObsVector(self, obs_vector):
         self.addNode(obs_vector.getObservationKey())

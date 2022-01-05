@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <assert.h>
 
 #include "ert/analysis/update.hpp"
 #include <ert/util/type_vector_functions.h>
@@ -9,7 +10,6 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.hpp>
 #include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/res_util/res_log.hpp>
@@ -105,22 +105,22 @@ void *serialize_nodes_mt(void *arg) {
     return NULL;
 }
 
-void serialize_dataset(const ensemble_config_type *ens_config,
-                       const local_dataset_type *dataset, int report_step,
-                       thread_pool_type *work_pool,
-                       serialize_info_type *serialize_info) {
+void serialize_ministep(const ensemble_config_type *ens_config,
+                        const local_ministep_type *ministep, int report_step,
+                        thread_pool_type *work_pool,
+                        serialize_info_type *serialize_info) {
 
     matrix_type *A = serialize_info->A;
     int ens_size = matrix_get_columns(A);
     int current_row = 0;
 
-    const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
+    const auto &unscaled_keys = ministep->unscaled_keys();
     serialize_info->active_size.resize(unscaled_keys.size());
     serialize_info->row_offset.resize(unscaled_keys.size());
     for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
-            local_dataset_get_node_active_list(dataset, key.c_str());
+            ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key.c_str());
 
@@ -206,20 +206,20 @@ void assert_matrix_size(const matrix_type *m, const char *name, int rows,
         throw std::invalid_argument("matrix: " + std::string(name) + "is NULL");
 }
 
-void deserialize_dataset(ensemble_config_type *ensemble_config,
-                         const local_dataset_type *dataset,
-                         serialize_info_type *serialize_info,
-                         thread_pool_type *work_pool) {
+void deserialize_ministep(ensemble_config_type *ensemble_config,
+                          const local_ministep_type *ministep,
+                          serialize_info_type *serialize_info,
+                          thread_pool_type *work_pool) {
 
     const int num_cpu_threads = thread_pool_get_max_running(work_pool);
-    const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
+    const auto &unscaled_keys = ministep->unscaled_keys();
     serialize_info->active_size.resize(unscaled_keys.size());
     serialize_info->row_offset.resize(unscaled_keys.size());
     int current_row = 0;
     for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
         const active_list_type *active_list =
-            local_dataset_get_node_active_list(dataset, key.c_str());
+            ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, key.c_str());
         ensure_node_loaded(config_node, serialize_info->src_fs, 0);
@@ -280,79 +280,57 @@ serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices.
 */
-std::unordered_map<std::string, matrix_type *>
-load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-                int_vector_type *iens_active_index, int last_step,
-                meas_data_type *forecast, obs_data_type *obs_data,
-                const local_ministep_type *ministep) {
+matrix_type *load_parameters(enkf_fs_type *target_fs,
+                             ensemble_config_type *ensemble_config,
+                             int_vector_type *iens_active_index, int last_step,
+                             meas_data_type *forecast, obs_data_type *obs_data,
+                             const local_ministep_type *ministep) {
 
-    int cpu_threads = 4;
-    thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
-    int matrix_start_size = 250000;
-    int active_ens_size = meas_data_get_active_ens_size(forecast);
-    matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
+    matrix_type *parameters = nullptr;
+    const auto &unscaled_keys = ministep->unscaled_keys();
+    if (unscaled_keys.size() != 0) {
+        int cpu_threads = 4;
+        thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
+        int matrix_start_size = 250000;
+        int active_ens_size = meas_data_get_active_ens_size(forecast);
+        matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
-    serialize_info_type *serialize_info = serialize_info_alloc(
-        target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-        target_fs, ensemble_config, iens_active_index, 0, last_step, A,
-        cpu_threads);
+        serialize_info_type *serialize_info = serialize_info_alloc(
+            target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
+            target_fs, ensemble_config, iens_active_index, 0, last_step, A,
+            cpu_threads);
 
-    std::unordered_map<std::string, matrix_type *> parameters;
-    for (auto &[dataset_name, dataset] :
-         local_ministep_get_datasets(ministep)) {
+        serialize_ministep(ensemble_config, ministep, last_step, tp,
+                           serialize_info);
 
-        if (!(local_dataset_get_size(dataset)))
-            continue;
+        parameters = matrix_alloc_copy(serialize_info->A);
 
-        const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
-
-        if (unscaled_keys.size() == 0)
-            continue;
-
-        serialize_dataset(ensemble_config, dataset, last_step, tp,
-                          serialize_info);
-
-        parameters[std::string(dataset_name)] =
-            matrix_alloc_copy(serialize_info->A);
+        delete[] serialize_info;
+        matrix_free(A);
+        thread_pool_free(tp);
     }
-    delete[] serialize_info;
-    matrix_free(A);
-    thread_pool_free(tp);
+
     return parameters;
 }
 
 /*
 Store a set of parameters into a enkf_fs_type storage
 */
-void save_parameters(
-    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, int last_step,
-    const local_ministep_type *ministep,
-    std::unordered_map<std::string, matrix_type *> parameters) {
+void save_parameters(enkf_fs_type *target_fs,
+                     ensemble_config_type *ensemble_config,
+                     int_vector_type *iens_active_index, int last_step,
+                     const local_ministep_type *ministep, matrix_type *A) {
 
+    assert(A != nullptr);
     int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
+    serialize_info_type *serialize_info = serialize_info_alloc(
+        target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
+        target_fs, ensemble_config, iens_active_index, 0, last_step, A,
+        cpu_threads);
 
-    for (auto &[dataset_name, dataset] :
-         local_ministep_get_datasets(ministep)) {
-
-        if (!(local_dataset_get_size(dataset)))
-            continue;
-
-        const auto &unscaled_keys = local_dataset_unscaled_keys(dataset);
-
-        if (unscaled_keys.size() == 0)
-            continue;
-
-        matrix_type *A = parameters[std::string(dataset_name)];
-        serialize_info_type *serialize_info = serialize_info_alloc(
-            target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-            target_fs, ensemble_config, iens_active_index, 0, last_step, A,
-            cpu_threads);
-
-        deserialize_dataset(ensemble_config, dataset, serialize_info, tp);
-        delete[] serialize_info;
-    }
+    deserialize_ministep(ensemble_config, ministep, serialize_info, tp);
+    delete[] serialize_info;
     thread_pool_free(tp);
 }
 
@@ -360,9 +338,7 @@ void save_parameters(
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices with the corresponding row-scaling object.
 */
-std::unordered_map<
-    std::string,
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
+std::vector<std::pair<matrix_type *, const row_scaling_type *>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             int_vector_type *iens_active_index, int last_step,
@@ -371,28 +347,16 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 
     int matrix_start_size = 250000;
     int active_ens_size = meas_data_get_active_ens_size(forecast);
-    matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
-    std::unordered_map<
-        std::string,
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
-        parameters;
-    for (auto &[dataset_name, dataset] :
-         local_ministep_get_datasets(ministep)) {
+    std::vector<std::pair<matrix_type *, const row_scaling_type *>> parameters;
 
-        if (!(local_dataset_get_size(dataset)))
-            continue;
+    const auto &scaled_keys = ministep->scaled_keys();
+    if (scaled_keys.size() > 0) {
+        matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
-        const auto &scaled_keys = local_dataset_scaled_keys(dataset);
-
-        if (scaled_keys.size() == 0)
-            continue;
-
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-            row_scaling_list;
         for (const auto &key : scaled_keys) {
             const active_list_type *active_list =
-                local_dataset_get_node_active_list(dataset, key.c_str());
+                ministep->get_active_data_list(key.data());
             const auto *config_node =
                 ensemble_config_get_node(ensemble_config, key.c_str());
             const int node_size =
@@ -409,15 +373,16 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                 }
             }
             const row_scaling_type *row_scaling =
-                local_dataset_get_row_scaling(dataset, key.c_str());
+                ministep->get_row_scaling(key);
+
             matrix_shrink_header(A, row_scaling->size(), matrix_get_columns(A));
-            row_scaling_list.push_back(
+            parameters.push_back(
                 std::pair<matrix_type *, const row_scaling_type *>(
                     matrix_alloc_copy(A), row_scaling));
         }
-        parameters[std::string(dataset_name)] = row_scaling_list;
+        matrix_free(A);
     }
-    matrix_free(A);
+
     return parameters;
 }
 
@@ -427,38 +392,24 @@ Store a set of row-scaled parameters into a enkf_fs_type storage
 void save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, const local_ministep_type *ministep,
-    std::unordered_map<
-        std::string,
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
-        parameters) {
+    std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+        row_scaling_list) {
 
-    for (auto &[dataset_name, dataset] :
-         local_ministep_get_datasets(ministep)) {
+    assert(row_scaling_list.size() > 0);
+    const auto &scaled_keys = ministep->scaled_keys();
 
-        if (!(local_dataset_get_size(dataset)))
-            continue;
-
-        const auto &scaled_keys = local_dataset_scaled_keys(dataset);
-
-        if (scaled_keys.size() == 0)
-            continue;
-
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-            row_scaling_list = parameters[dataset_name];
-        for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
-            const auto &key = scaled_keys[ikw];
-            const active_list_type *active_list =
-                local_dataset_get_node_active_list(dataset, key.c_str());
-            matrix_type *A = row_scaling_list[ikw].first;
-            for (int iens = 0; iens < int_vector_size(iens_active_index);
-                 iens++) {
-                int column = int_vector_iget(iens_active_index, iens);
-                if (column >= 0) {
-                    deserialize_node(
-                        target_fs, target_fs,
-                        ensemble_config_get_node(ensemble_config, key.c_str()),
-                        iens, 0, 0, column, active_list, A);
-                }
+    for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
+        const auto &key = scaled_keys[ikw];
+        const active_list_type *active_list =
+            ministep->get_active_data_list(key.data());
+        matrix_type *A = row_scaling_list[ikw].first;
+        for (int iens = 0; iens < int_vector_size(iens_active_index); iens++) {
+            int column = int_vector_iget(iens_active_index, iens);
+            if (column >= 0) {
+                deserialize_node(
+                    target_fs, target_fs,
+                    ensemble_config_get_node(ensemble_config, key.c_str()),
+                    iens, 0, 0, column, active_list, A);
             }
         }
     }
@@ -467,13 +418,13 @@ void save_row_scaling_parameters(
 /*
 Run the update algorithm on a set of A matrices without row-scaling
 */
-void run_analysis_update(
-    analysis_module_type *module, const bool_vector_type *ens_mask,
-    const meas_data_type *forecast, obs_data_type *obs_data,
-    rng_type *shared_rng, matrix_type *E,
-    std::unordered_map<std::string, matrix_type *> parameters) {
-    if (parameters.size() == 0)
-        return;
+void run_analysis_update(analysis_module_type *module,
+                         const bool_vector_type *ens_mask,
+                         const meas_data_type *forecast,
+                         obs_data_type *obs_data, rng_type *shared_rng,
+                         matrix_type *E, matrix_type *A) {
+
+    assert(A != nullptr);
     const int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
     int active_ens_size = meas_data_get_active_ens_size(forecast);
@@ -506,16 +457,13 @@ void run_analysis_update(
     analysis_module_init_update(module, ens_mask, obs_mask, S, R, dObs, E, D,
                                 shared_rng);
 
-    for (const auto &[dataset_name, A] : parameters) {
-        if (analysis_module_check_option(module, ANALYSIS_UPDATE_A)) {
-            analysis_module_updateA(module, A, S, R, dObs, E, D, shared_rng);
-        } else {
-            if (analysis_module_check_option(module, ANALYSIS_USE_A)) {
-                analysis_module_initX(module, X, A, S, R, dObs, E, D,
-                                      shared_rng);
-            }
-            matrix_inplace_matmul_mt2(A, X, tp);
+    if (analysis_module_check_option(module, ANALYSIS_UPDATE_A)) {
+        analysis_module_updateA(module, A, S, R, dObs, E, D, shared_rng);
+    } else {
+        if (analysis_module_check_option(module, ANALYSIS_USE_A)) {
+            analysis_module_initX(module, X, A, S, R, dObs, E, D, shared_rng);
         }
+        matrix_inplace_matmul_mt2(A, X, tp);
     }
 
     matrix_safe_free(D);
@@ -533,13 +481,11 @@ void run_analysis_update_with_rowscaling(
     analysis_module_type *module, const bool_vector_type *ens_mask,
     const meas_data_type *forecast, obs_data_type *obs_data,
     rng_type *shared_rng, matrix_type *E,
-    std::unordered_map<
-        std::string,
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>>
+    std::vector<std::pair<matrix_type *, const row_scaling_type *>>
         parameters) {
 
-    if (parameters.size() == 0)
-        return;
+    assert(parameters.size() > 0);
+
     int active_ens_size = meas_data_get_active_ens_size(forecast);
     int active_obs_size = obs_data_get_active_size(obs_data);
     matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
@@ -576,17 +522,11 @@ void run_analysis_update_with_rowscaling(
     analysis_module_init_update(module, ens_mask, obs_mask, S, R, dObs, E, D,
                                 shared_rng);
 
-    for (const auto &[dataset_name, row_scaling_list] : parameters) {
-        for (const auto &row_scaling_A_pair : row_scaling_list) {
-            matrix_type *A = row_scaling_A_pair.first;
-            const row_scaling_type *row_scaling = row_scaling_A_pair.second;
+    for (auto &[A, row_scaling] : parameters) {
+        if (analysis_module_check_option(module, ANALYSIS_USE_A))
+            analysis_module_initX(module, X, A, S, R, dObs, E, D, shared_rng);
 
-            if (analysis_module_check_option(module, ANALYSIS_USE_A))
-                analysis_module_initX(module, X, A, S, R, dObs, E, D,
-                                      shared_rng);
-
-            row_scaling_multiply(row_scaling, A, X);
-        }
+        row_scaling_multiply(row_scaling, A, X);
     }
 
     matrix_safe_free(D);
@@ -680,7 +620,6 @@ bool smoother_update(std::vector<int> step_list,
     if (!assert_update_viable(analysis_config, source_fs, total_ens_size,
                               updatestep))
         return false;
-
     /*
     Observations and measurements are collected in these temporary
     structures. obs_data is a precursor for the 'd' vector, and
@@ -762,30 +701,32 @@ bool smoother_update(std::vector<int> step_list,
                 obs_data_allocE(obs_data, shared_rng, active_ens_size);
 
             // Part 1: Parameters which do not have row scaling attached.
-            auto parameters =
+            auto A =
                 load_parameters(target_fs, ensemble_config, iens_active_index,
                                 current_step, meas_data, obs_data, ministep);
-            run_analysis_update(module, ens_mask, meas_data, obs_data,
-                                shared_rng, E, parameters);
-            save_parameters(target_fs, ensemble_config, iens_active_index,
-                            current_step, ministep, parameters);
-            for (auto &[_, A] : parameters)
+            if (A != nullptr) {
+                run_analysis_update(module, ens_mask, meas_data, obs_data,
+                                    shared_rng, E, A);
+                save_parameters(target_fs, ensemble_config, iens_active_index,
+                                current_step, ministep, A);
                 matrix_free(A);
+            }
 
             // Part 2: Parameters which do have row scaling attached.
             auto row_scaling_parameters = load_row_scaling_parameters(
                 target_fs, ensemble_config, iens_active_index, current_step,
                 meas_data, ministep);
-            run_analysis_update_with_rowscaling(module, ens_mask, meas_data,
-                                                obs_data, shared_rng, E,
-                                                row_scaling_parameters);
 
-            save_row_scaling_parameters(target_fs, ensemble_config,
-                                        iens_active_index, ministep,
-                                        row_scaling_parameters);
-            for (auto &[_, row_scale_A_list] : row_scaling_parameters)
-                for (auto [A, _] : row_scale_A_list)
+            if (row_scaling_parameters.size() > 0) {
+                run_analysis_update_with_rowscaling(module, ens_mask, meas_data,
+                                                    obs_data, shared_rng, E,
+                                                    row_scaling_parameters);
+                save_row_scaling_parameters(target_fs, ensemble_config,
+                                            iens_active_index, ministep,
+                                            row_scaling_parameters);
+                for (auto [A, _] : row_scaling_parameters)
                     matrix_free(A);
+            }
 
             matrix_safe_free(E);
 
