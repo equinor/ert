@@ -252,17 +252,16 @@ static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
     std::vector<std::string> parameter_keys =
         ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
     bool initialized = true;
-    int ikey = 0;
-    while ((ikey < parameter_keys.size()) && (initialized)) {
+    for (int ikey = 0; (ikey < parameter_keys.size()) && initialized; ikey++) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
             ensemble_config, parameter_keys[ikey].c_str());
-        int iens = 0;
-        do {
-            node_id_type node_id = {.report_step = 0, .iens = iens};
-            initialized = enkf_config_node_has_node(config_node, fs, node_id);
-            iens++;
-        } while ((iens < enkf_main->ens_size) && (initialized));
-        ikey++;
+        initialized = enkf_config_node_has_node(config_node, fs,
+                                                {.report_step = 0, .iens = 0});
+        for (int iens = 0; (iens < enkf_main->ens_size) && initialized;
+             iens++) {
+            initialized = enkf_config_node_has_node(
+                config_node, fs, {.report_step = 0, .iens = iens});
+        }
     }
 
     return initialized;
