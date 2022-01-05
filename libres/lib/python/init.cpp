@@ -47,4 +47,7 @@ PYBIND11_MODULE(_lib, m) {
     ensemble_config(m.def_submodule("ensemble_config"));
     void enkf_fs_manager(py::module_);
     enkf_fs_manager(m.def_submodule("enkf_fs_manager"));
+
+    void init_config_keys(py::module_ m);
+    init_config_keys(m.def_submodule("config_keys"));
 }
