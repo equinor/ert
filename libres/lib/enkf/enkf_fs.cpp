@@ -447,18 +447,6 @@ state_map_type *enkf_fs_alloc_readonly_state_map(const char *mount_point) {
     return state_map;
 }
 
-time_map_type *enkf_fs_alloc_readonly_time_map(const char *mount_point) {
-    path_fmt_type *path_fmt = path_fmt_alloc_directory_fmt(DEFAULT_CASE_PATH);
-    char *filename =
-        path_fmt_alloc_file(path_fmt, false, mount_point, TIME_MAP_FILE);
-
-    time_map_type *time_map = time_map_fread_alloc_readonly(filename);
-
-    path_fmt_free(path_fmt);
-    free(filename);
-    return time_map;
-}
-
 static void enkf_fs_fread_misfit(enkf_fs_type *fs) {
     FILE *stream = enkf_fs_open_excase_file(fs, MISFIT_ENSEMBLE_FILE);
     if (stream != NULL) {

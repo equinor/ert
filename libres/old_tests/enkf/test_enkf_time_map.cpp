@@ -336,30 +336,6 @@ void test_read_only() {
         time_map_fwrite(tm, "case/files/time-map");
         time_map_free(tm);
     }
-    {
-        time_map_type *tm =
-            time_map_fread_alloc_readonly("case/files/time-map");
-        test_assert_time_t_equal(0, time_map_iget(tm, 0));
-        test_assert_time_t_equal(10, time_map_iget(tm, 1));
-        test_assert_time_t_equal(20, time_map_iget(tm, 2));
-        test_assert_int_equal(3, time_map_get_size(tm));
-        time_map_free(tm);
-    }
-    {
-        time_map_type *tm = enkf_fs_alloc_readonly_time_map("case");
-        test_assert_time_t_equal(0, time_map_iget(tm, 0));
-        test_assert_time_t_equal(10, time_map_iget(tm, 1));
-        test_assert_time_t_equal(20, time_map_iget(tm, 2));
-        test_assert_int_equal(3, time_map_get_size(tm));
-        time_map_free(tm);
-    }
-    {
-        time_map_type *tm = time_map_fread_alloc_readonly("DoesNotExist");
-        test_assert_true(time_map_is_instance(tm));
-        test_assert_true(time_map_is_readonly(tm));
-        test_assert_int_equal(0, time_map_get_size(tm));
-        time_map_free(tm);
-    }
 }
 
 int main(int argc, char **argv) {

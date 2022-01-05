@@ -239,12 +239,6 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
         return false;
 }
 
-bool enkf_main_is_initialized(const enkf_main_type *enkf_main) {
-    return enkf_main_case_is_initialized__(
-        enkf_main_get_ensemble_config(enkf_main), enkf_main->dbase,
-        enkf_main->ens_size);
-}
-
 static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
     /*  : Update a small text file with the name of the host currently
         running ert, the pid number of the process, the active case
@@ -576,15 +570,6 @@ enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
     state_map_type *state_map = enkf_fs_alloc_readonly_state_map(mount_point);
     free(mount_point);
     return state_map;
-}
-
-time_map_type *
-enkf_main_alloc_readonly_time_map(const enkf_main_type *enkf_main,
-                                  const char *case_path) {
-    char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-    time_map_type *time_map = enkf_fs_alloc_readonly_time_map(mount_point);
-    free(mount_point);
-    return time_map;
 }
 
 void enkf_main_close_fs(enkf_main_type *enkf_main) {

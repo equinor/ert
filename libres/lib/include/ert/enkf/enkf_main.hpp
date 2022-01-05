@@ -195,8 +195,6 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
                                    const char *case_name);
 
-bool enkf_main_is_initialized(const enkf_main_type *enkf_main);
-
 char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                                   const char *case_path);
 enkf_fs_type *enkf_main_get_fs(const enkf_main_type *);
@@ -215,9 +213,6 @@ const char *enkf_main_get_mount_root(const enkf_main_type *enkf_main);
 state_map_type *
 enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path);
-PY_USED time_map_type *
-enkf_main_alloc_readonly_time_map(const enkf_main_type *enkf_main,
-                                  const char *case_path);
 
 runpath_list_type *
 enkf_main_alloc_runpath_list(const enkf_main_type *enkf_main);
