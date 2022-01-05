@@ -58,16 +58,6 @@ log_path = analysis_config_get_log_path( analysis_config );
 analysis_config_set_log_path( analysis_config , log_path );
 
 
-
-
-INITIALIZED
------------
-
-enkf_main_is_initialized(enkf_main);
-
-
-
-
 TEMPLATES:
 ----------
 Get:

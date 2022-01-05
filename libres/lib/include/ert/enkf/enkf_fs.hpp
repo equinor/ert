@@ -98,7 +98,6 @@ FILE *enkf_fs_open_excase_file(const enkf_fs_type *fs, const char *input_name);
 FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
                                      const char *input_name, int tstep);
 
-time_map_type *enkf_fs_alloc_readonly_time_map(const char *mount_point);
 state_map_type *enkf_fs_alloc_readonly_state_map(const char *mount_point);
 state_map_type *enkf_fs_get_state_map(const enkf_fs_type *fs);
 time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs);

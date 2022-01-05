@@ -13,7 +13,6 @@ from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.state_map import StateMap
-from res.enkf.util import TimeMap
 
 
 def naturalSortKey(s, _nsre=re.compile("([0-9]+)")):
@@ -93,7 +92,6 @@ class EnkfFsManager(BaseCClass):
     )
     _ensemble_size = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
-    _is_initialized = ResPrototype("bool enkf_main_is_initialized(enkf_fs_manager)")
     _is_case_initialized = ResPrototype(
         "bool enkf_main_case_is_initialized(enkf_fs_manager, char*)"
     )
@@ -106,9 +104,6 @@ class EnkfFsManager(BaseCClass):
 
     _alloc_readonly_state_map = ResPrototype(
         "state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)"
-    )
-    _alloc_readonly_time_map = ResPrototype(
-        "time_map_obj enkf_main_alloc_readonly_time_map(enkf_fs_manager, char*)"
     )
 
     DEFAULT_CAPACITY = 5
@@ -220,10 +215,6 @@ class EnkfFsManager(BaseCClass):
     def isCaseInitialized(self, case):
         return self._is_case_initialized(case)
 
-    def isInitialized(self):
-        """@rtype: bool"""
-        return self._is_initialized()
-
     def getCaseList(self):
         """@rtype: list[str]"""
         caselist = [case for case in self._alloc_caselist()]
@@ -314,13 +305,6 @@ class EnkfFsManager(BaseCClass):
             return fs.getStateMap()
         else:
             return self._alloc_readonly_state_map(case)
-
-    def getTimeMapForCase(self, case) -> TimeMap:
-        """
-        @type case: str
-        @rtype: TimeMap
-        """
-        return self._alloc_readonly_time_map(case)
 
     def isCaseHidden(self, case_name):
         """
