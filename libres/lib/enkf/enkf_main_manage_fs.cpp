@@ -128,31 +128,18 @@ void enkf_main_initialize_from_scratch(
     }
 }
 
-static void enkf_main_copy_ensemble(
-    const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, enkf_fs_type *target_case_fs,
-    int target_report_step, const std::vector<bool> &iens_mask,
-    const char *
-        ranking_key, /* It is OK to supply NULL - but if != NULL it must exist */
-    const std::vector<std::string> &node_list) {
+static void enkf_main_copy_ensemble(const enkf_main_type *enkf_main,
+                                    enkf_fs_type *source_case_fs,
+                                    int source_report_step,
+                                    enkf_fs_type *target_case_fs,
+                                    int target_report_step,
+                                    const std::vector<bool> &iens_mask,
+                                    const std::vector<std::string> &node_list) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
 
     {
-        int *ranking_permutation;
         int inode, src_iens;
-
-        if (ranking_key != NULL) {
-            ranking_table_type *ranking_table =
-                enkf_main_get_ranking_table(enkf_main);
-            ranking_permutation = (int *)ranking_table_get_permutation(
-                ranking_table, ranking_key);
-        } else {
-            ranking_permutation =
-                (int *)util_calloc(ens_size, sizeof *ranking_permutation);
-            for (src_iens = 0; src_iens < ens_size; src_iens++)
-                ranking_permutation[src_iens] = src_iens;
-        }
 
         for (auto &node : node_list) {
             enkf_config_node_type *config_node = ensemble_config_get_node(
@@ -161,11 +148,10 @@ static void enkf_main_copy_ensemble(
                  src_iens < enkf_main_get_ensemble_size(enkf_main);
                  src_iens++) {
                 if (src_iens < iens_mask.size() && iens_mask[src_iens]) {
-                    int target_iens = ranking_permutation[src_iens];
                     node_id_type src_id = {.report_step = source_report_step,
                                            .iens = src_iens};
                     node_id_type target_id = {.report_step = target_report_step,
-                                              .iens = target_iens};
+                                              .iens = src_iens};
 
                     /* The copy is careful ... */
                     if (enkf_config_node_has_node(config_node, source_case_fs,
@@ -174,14 +160,11 @@ static void enkf_main_copy_ensemble(
                                        target_case_fs, src_id, target_id);
 
                     if (0 == target_report_step)
-                        state_map_iset(target_state_map, target_iens,
+                        state_map_iset(target_state_map, src_iens,
                                        STATE_INITIALIZED);
                 }
             }
         }
-
-        if (ranking_permutation == NULL)
-            free(ranking_permutation);
     }
 }
 
@@ -217,7 +200,7 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
     int target_report_step = 0;
     std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
     enkf_main_copy_ensemble(enkf_main, source_case_fs, source_report_step,
-                            target_case_fs, target_report_step, iactive, NULL,
+                            target_case_fs, target_report_step, iactive,
                             param_list);
 
     enkf_fs_fsync(target_case_fs);
@@ -231,7 +214,7 @@ void enkf_main_init_case_from_existing_custom(
     int target_report_step = 0;
 
     enkf_main_copy_ensemble(enkf_main, source_case_fs, source_report_step,
-                            target_case_fs, target_report_step, iactive, NULL,
+                            target_case_fs, target_report_step, iactive,
                             node_list);
 
     enkf_fs_fsync(target_case_fs);
