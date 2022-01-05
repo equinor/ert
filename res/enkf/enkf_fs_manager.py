@@ -93,11 +93,9 @@ class EnkfFsManager(BaseCClass):
     )
     _ensemble_size = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
-    _is_initialized = ResPrototype(
-        "bool enkf_main_is_initialized(enkf_fs_manager, bool_vector)"
-    )
+    _is_initialized = ResPrototype("bool enkf_main_is_initialized(enkf_fs_manager)")
     _is_case_initialized = ResPrototype(
-        "bool enkf_main_case_is_initialized(enkf_fs_manager, char*, bool_vector)"
+        "bool enkf_main_case_is_initialized(enkf_fs_manager, char*)"
     )
     _initialize_case_from_existing = ResPrototype(
         "void enkf_main_init_case_from_existing(enkf_fs_manager, enkf_fs, int, enkf_fs)"
@@ -220,11 +218,11 @@ class EnkfFsManager(BaseCClass):
         self._switch_fs(file_system, None)
 
     def isCaseInitialized(self, case):
-        return self._is_case_initialized(case, None)
+        return self._is_case_initialized(case)
 
     def isInitialized(self):
         """@rtype: bool"""
-        return self._is_initialized(None)  # what is the bool_vector mask???
+        return self._is_initialized()
 
     def getCaseList(self):
         """@rtype: list[str]"""

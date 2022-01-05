@@ -246,55 +246,41 @@ void enkf_main_init_case_from_existing_custom(
 */
 
 static bool enkf_main_case_is_initialized__(const enkf_main_type *enkf_main,
-                                            enkf_fs_type *fs,
-                                            bool_vector_type *__mask) {
+                                            enkf_fs_type *fs) {
     ensemble_config_type *ensemble_config =
         enkf_main_get_ensemble_config(enkf_main);
     std::vector<std::string> parameter_keys =
         ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
-    bool_vector_type *mask;
     bool initialized = true;
     int ikey = 0;
-    if (__mask != NULL)
-        mask = __mask;
-    else
-        mask = bool_vector_alloc(0, true);
     while ((ikey < parameter_keys.size()) && (initialized)) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
             ensemble_config, parameter_keys[ikey].c_str());
         int iens = 0;
         do {
-            if (bool_vector_safe_iget(mask, iens)) {
-                node_id_type node_id = {.report_step = 0, .iens = iens};
-                initialized =
-                    enkf_config_node_has_node(config_node, fs, node_id);
-            }
+            node_id_type node_id = {.report_step = 0, .iens = iens};
+            initialized = enkf_config_node_has_node(config_node, fs, node_id);
             iens++;
         } while ((iens < enkf_main->ens_size) && (initialized));
         ikey++;
     }
 
-    if (__mask == NULL)
-        bool_vector_free(mask);
     return initialized;
 }
 
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                   const char *case_name,
-                                   bool_vector_type *__mask) {
+                                   const char *case_name) {
     enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, case_name, false);
     if (fs) {
-        bool initialized =
-            enkf_main_case_is_initialized__(enkf_main, fs, __mask);
+        bool initialized = enkf_main_case_is_initialized__(enkf_main, fs);
         enkf_fs_decref(fs);
         return initialized;
     } else
         return false;
 }
 
-bool enkf_main_is_initialized(const enkf_main_type *enkf_main,
-                              bool_vector_type *__mask) {
-    return enkf_main_case_is_initialized__(enkf_main, enkf_main->dbase, __mask);
+bool enkf_main_is_initialized(const enkf_main_type *enkf_main) {
+    return enkf_main_case_is_initialized__(enkf_main, enkf_main->dbase);
 }
 
 static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {

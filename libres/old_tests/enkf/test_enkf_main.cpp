@@ -36,9 +36,8 @@ void test_case_initialized(const char *config_path, const char *config_file) {
         enkf_fs_create_fs(mount_point, BLOCK_FS_DRIVER_ID, NULL, false);
 
         test_assert_false(
-            enkf_main_case_is_initialized(enkf_main, "does/not/exist", NULL));
-        test_assert_true(
-            enkf_main_case_is_initialized(enkf_main, new_case, NULL));
+            enkf_main_case_is_initialized(enkf_main, "does/not/exist"));
+        test_assert_true(enkf_main_case_is_initialized(enkf_main, new_case));
 
         enkf_main_free(enkf_main);
         res_config_free(res_config);
