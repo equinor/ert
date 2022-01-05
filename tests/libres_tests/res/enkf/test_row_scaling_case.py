@@ -226,18 +226,16 @@ class RowScalingTest(ResTest):
 
             local_config = main.getLocalConfig()
             local_config.clear()
-            local_data = local_config.createDataset("LOCAL")
-            local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
             obs.addNode("WBHP0")
             obs.addNode("WWCT0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.attachDataset(local_data)
+            ministep.addActiveData("PORO")
             ministep.attachObsset(obs)
             updatestep = local_config.getUpdatestep()
             updatestep.attachMinistep(ministep)
 
-            row_scaling = local_data.row_scaling("PORO")
+            row_scaling = ministep.row_scaling("PORO")
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -277,19 +275,17 @@ class RowScalingTest(ResTest):
             # Configure the local updates
             local_config = main.getLocalConfig()
             local_config.clear()
-            local_data = local_config.createDataset("LOCAL")
-            local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
             obs.addNode("WWCT0")
             obs.addNode("WBHP0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.attachDataset(local_data)
+            ministep.addActiveData("PORO")
             ministep.attachObsset(obs)
             updatestep = local_config.getUpdatestep()
             updatestep.attachMinistep(ministep)
 
             # Apply the row scaling
-            row_scaling = local_data.row_scaling("PORO")
+            row_scaling = ministep.row_scaling("PORO")
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -343,19 +339,17 @@ class RowScalingTest(ResTest):
             # Configure the local updates
             local_config = main.getLocalConfig()
             local_config.clear()
-            local_data = local_config.createDataset("LOCAL")
-            local_data.addNode("PORO")
             obs = local_config.createObsdata("OBSSET_LOCAL")
             obs.addNode("WWCT0")
             obs.addNode("WBHP0")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.attachDataset(local_data)
+            ministep.addActiveData("PORO")
             ministep.attachObsset(obs)
             updatestep = local_config.getUpdatestep()
             updatestep.attachMinistep(ministep)
 
             # Apply the row scaling
-            row_scaling = local_data.row_scaling("PORO")
+            row_scaling = ministep.row_scaling("PORO")
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -420,17 +414,13 @@ class RowScalingTest(ResTest):
             obs.addNode("WBHP0")
 
             ministep1 = local_config.createMinistep("MINISTEP1")
-            local_data1 = local_config.createDataset("LOCAL1")
-            local_data1.addNode("PORO")
-            row_scaling1 = local_data1.row_scaling("PORO")
-            ministep1.attachDataset(local_data1)
+            ministep1.addActiveData("PORO")
+            row_scaling1 = ministep1.row_scaling("PORO")
             ministep1.attachObsset(obs)
 
             ministep2 = local_config.createMinistep("MINISTEP2")
-            local_data2 = local_config.createDataset("LOCAL2")
-            local_data2.addNode("PORO")
-            row_scaling2 = local_data2.row_scaling("PORO")
-            ministep2.attachDataset(local_data2)
+            ministep2.addActiveData("PORO")
+            row_scaling2 = ministep2.row_scaling("PORO")
             ministep2.attachObsset(obs)
 
             updatestep = local_config.getUpdatestep()
@@ -499,18 +489,16 @@ TIME_MAP timemap.txt
         # Configure the local updates
         local_config = main.getLocalConfig()
         local_config.clear()
-        local_data = local_config.createDataset("LOCAL")
-        local_data.addNode("PORO")
         obs = local_config.createObsdata("OBSSET_LOCAL")
         obs.addNode("WBHP0")
         ministep = local_config.createMinistep("MINISTEP_LOCAL")
-        ministep.attachDataset(local_data)
+        ministep.addActiveData("PORO")
         ministep.attachObsset(obs)
         updatestep = local_config.getUpdatestep()
         updatestep.attachMinistep(ministep)
 
         # Apply the row scaling
-        row_scaling = local_data.row_scaling("PORO")
+        row_scaling = ministep.row_scaling("PORO")
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]
         field_config = poro_config.getFieldModelConfig()
@@ -551,11 +539,9 @@ TIME_MAP timemap.txt
             with self.assertRaises(KeyError):
                 obs_data = local_config.copyObsdata("NO_SUCH_OBS", "my_obs")
 
-            local_data = local_config.createDataset("LOCAL")
-            local_data.addNode("PORO")
             obs_data = local_config.copyObsdata("ALL_OBS", "my_obs")
             ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.attachDataset(local_data)
+            ministep.addActiveData("PORO")
             ministep.attachObsset(obs_data)
             updatestep = local_config.getUpdatestep()
             updatestep.attachMinistep(ministep)
@@ -570,7 +556,7 @@ TIME_MAP timemap.txt
             ministep2 = local_config.createMinistep("MINISTEP_LOCAL2")
             obs_data2 = local_config.createObsdata("OBSDATA2")
             obs_data2.addNode("WBHP0")
-            ministep2.attachDataset(local_data)
+            ministep2.addActiveData("PORO")
             ministep2.attachObsset(obs_data2)
             updatestep.attachMinistep(ministep2)
             update_fs3 = main.getEnkfFsManager().getFileSystem("target3")

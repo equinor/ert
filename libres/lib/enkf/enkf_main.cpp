@@ -297,6 +297,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
     rng_type *shared_rng = enkf_main->shared_rng;
     ensemble_config_type *ensemble_config =
         enkf_main_get_ensemble_config(enkf_main);
+
     FILE *log_stream = enkf_main_log_step_list(
         analysis_config_get_log_path(analysis_config), step_list);
 
@@ -371,8 +372,6 @@ ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
 
 void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
 
-    bool single_node_update = analysis_config_get_single_node_update(
-        enkf_main_get_analysis_config(enkf_main));
     local_config_type *local_config = enkf_main->local_config;
     local_config_clear(local_config);
     {
@@ -380,8 +379,6 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             local_config_get_updatestep(local_config);
         local_obsdata_type *obsdata =
             local_config_alloc_obsdata(local_config, "ALL_OBS");
-        local_dataset_type *all_active_dataset =
-            local_config_alloc_dataset(local_config, "ALL_DATA");
         local_ministep_type *ministep =
             local_config_alloc_ministep(local_config, "ALL_ACTIVE", NULL);
         if (!ministep)
@@ -408,30 +405,14 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             std::vector<std::string> keylist =
                 ensemble_config_keylist_from_var_type(
                     enkf_main_get_ensemble_config(enkf_main), PARAMETER);
-
-            for (auto &key : keylist) {
-                bool add_node = true;
+            for (auto &key : keylist)
                 /*
           Make sure the funny GEN_KW instance masquerading as
           SCHEDULE_PREDICTION_FILE is not added to the soup.
-        */
-                if (key == "PRED")
-                    add_node = false;
-
-                if (add_node) {
-                    if (single_node_update) {
-                        local_dataset_type *this_dataset =
-                            local_config_alloc_dataset(local_config,
-                                                       key.c_str());
-                        local_dataset_add_node(this_dataset, key.c_str());
-                        local_ministep_add_dataset(ministep, this_dataset);
-                    }
-                    local_dataset_add_node(all_active_dataset, key.c_str());
-                }
-            }
+                */
+                if (key != "PRED")
+                    ministep->add_active_data(key.data());
         }
-        if (!single_node_update)
-            local_ministep_add_dataset(ministep, all_active_dataset);
     }
 }
 

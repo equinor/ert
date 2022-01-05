@@ -35,14 +35,8 @@ extern "C" {
 #endif
 
 typedef struct local_config_struct local_config_type;
-PY_USED local_dataset_type *
-local_config_alloc_dataset_copy(local_config_type *local_config,
-                                const char *src_key, const char *target_key);
 local_obsdata_type *
 local_config_get_obsdata(const local_config_type *local_config,
-                         const char *key);
-local_dataset_type *
-local_config_get_dataset(const local_config_type *local_config,
                          const char *key);
 PY_USED local_obsdata_type *
 local_config_alloc_obsdata_copy(local_config_type *local_config,
@@ -64,10 +58,6 @@ local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
                                                const char *obsdata_name);
 bool local_config_has_obsdata(const local_config_type *local_config,
                               const char *obsdata_name);
-local_dataset_type *local_config_alloc_dataset(local_config_type *local_config,
-                                               const char *key);
-bool local_config_has_dataset(const local_config_type *local_config,
-                              const char *key);
 #ifdef __cplusplus
 }
 #endif

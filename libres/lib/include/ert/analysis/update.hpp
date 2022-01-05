@@ -3,7 +3,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/local_dataset.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 
 #include <ert/enkf/enkf_state.hpp>

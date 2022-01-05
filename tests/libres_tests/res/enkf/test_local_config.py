@@ -114,9 +114,8 @@ class LocalConfigTest(ResTest):
 
             updatestep = local_config.getUpdatestep()
             ministep = updatestep[0]
-            self.assertEqual(1, len(ministep))
-            dataset = ministep["ALL_DATA"]
-            self.assertTrue("PERLIN_PARAM" in dataset)
+            self.assertEqual(1, ministep.numActiveData())
+            self.assertTrue(ministep.hasActiveData("PERLIN_PARAM"))
 
             obsdata = ministep.getLocalObsData()
             self.assertEqual(len(obsdata), 3)
@@ -137,9 +136,9 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 _ = local_config.createMinistep("MINISTEP", None)
 
-            self.assertFalse("DATA" in ministep)
+            self.assertFalse(ministep.hasActiveData("DATA"))
             with self.assertRaises(KeyError):
-                _ = ministep["DATA"]
+                _ = ministep.getActiveList("DATA")
 
             self.assertIsNone(ministep.get_obs_data())
 
