@@ -133,19 +133,18 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     int source_report_step,
                                     enkf_fs_type *target_case_fs,
                                     const std::vector<bool> &iens_mask,
-                                    const std::vector<std::string> &node_list,
-                                    int ens_size) {
+                                    const std::vector<std::string> &node_list) {
     state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
 
     {
-        int inode, src_iens;
 
         for (auto &node : node_list) {
             enkf_config_node_type *config_node =
                 ensemble_config_get_node(ensemble_config, node.c_str());
-            for (src_iens = 0; src_iens < ens_size; src_iens++) {
-                if (src_iens < iens_mask.size() && iens_mask[src_iens]) {
 
+            int src_iens = 0;
+            for (auto mask : iens_mask) {
+                if (mask) {
                     node_id_type src_id = {.report_step = source_report_step,
                                            .iens = src_iens};
                     node_id_type target_id = {.report_step = 0,
@@ -160,6 +159,7 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                     state_map_iset(target_state_map, src_iens,
                                    STATE_INITIALIZED);
                 }
+                src_iens++;
             }
         }
     }
@@ -184,8 +184,7 @@ void enkf_main_init_current_case_from_existing_custom(
 
     enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
                             source_case_fs, source_report_step, current_fs,
-                            iactive, node_list,
-                            enkf_main_get_ensemble_size(enkf_main));
+                            iactive, node_list);
     enkf_fs_fsync(current_fs);
 }
 
@@ -200,8 +199,7 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
     std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
     enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
                             source_case_fs, source_report_step, target_case_fs,
-                            iactive, param_list,
-                            enkf_main_get_ensemble_size(enkf_main));
+                            iactive, param_list);
 
     enkf_fs_fsync(target_case_fs);
 }
