@@ -95,10 +95,10 @@ void ies::init_update(void *arg, const bool_vector_type *ens_mask,
 void ies_initX__(const matrix_type *A, const matrix_type *Y0,
                  const matrix_type *R, const matrix_type *E,
                  const matrix_type *D, matrix_type *X,
-                 const ies::config::inversion_type ies_inversion, double truncation,
-                 int subspace_dimension, bool use_aa_projection,
-                 ies::data_type *data, double ies_steplength, int iteration_nr,
-                 double *costf)
+                 const ies::config::inversion_type ies_inversion,
+                 double truncation, int subspace_dimension,
+                 bool use_aa_projection, ies::data_type *data,
+                 double ies_steplength, int iteration_nr, double *costf)
 
 {
     const int ens_size = matrix_get_columns(Y0);
@@ -236,7 +236,7 @@ void ies::updateA(
     int iteration_nr = ies::data_inc_iteration_nr(data);
 
     const double ies_steplength =
-        ies::config::config_calculate_steplength(ies_config, iteration_nr);
+        ies::config::calculate_steplength(ies_config, iteration_nr);
 
     ies::data_update_state_size(data, state_size);
 
@@ -268,11 +268,11 @@ void ies::updateA(
     matrix_inplace_add(D, E);
 
     double costf;
-    ies_initX__(ies::config::config_get_aaprojection(ies_config) ? A : nullptr, Y, R, E,
-                D, X, ies::config::config_get_inversion(ies_config),
-                ies::config::config_get_truncation(ies_config),
-                ies::config::config_get_subspace_dimension(ies_config),
-                ies::config::config_get_aaprojection(ies_config), data, ies_steplength,
+    ies_initX__(ies::config::get_aaprojection(ies_config) ? A : nullptr, Y, R,
+                E, D, X, ies::config::get_inversion(ies_config),
+                ies::config::get_truncation(ies_config),
+                ies::config::get_subspace_dimension(ies_config),
+                ies::config::get_aaprojection(ies_config), data, ies_steplength,
                 iteration_nr, &costf);
     logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
 
@@ -570,14 +570,14 @@ bool set_int(void *arg, const char *var_name, int value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0)
-            ies::config::config_set_subspace_dimension(config, value);
+            ies::config::set_subspace_dimension(config, value);
         else if (strcmp(var_name, ITER_KEY) == 0)
             ies::data_set_iteration_nr(module_data, value);
         else if (
-                 strcmp(var_name, IES_INVERSION_KEY) ==
+            strcmp(var_name, IES_INVERSION_KEY) ==
             0) // This should probably translate string value - now it goes directly on the value of the inversion_type enum.
-            ies::config::config_set_inversion(config,
-                                              static_cast<ies::config::inversion_type>(value));
+            ies::config::set_inversion(
+                config, static_cast<ies::config::inversion_type>(value));
         else
             name_recognized = false;
 
@@ -587,14 +587,15 @@ bool set_int(void *arg, const char *var_name, int value) {
 
 int get_int(const void *arg, const char *var_name) {
     const ies::data_type *module_data = ies::data_safe_cast_const(arg);
-    const ies::config::config_type *ies_config = ies::data_get_config(module_data);
+    const ies::config::config_type *ies_config =
+        ies::data_get_config(module_data);
     {
         if (strcmp(var_name, ITER_KEY) == 0)
             return ies::data_get_iteration_nr(module_data);
         else if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0)
-            return ies::config::config_get_subspace_dimension(ies_config);
+            return ies::config::get_subspace_dimension(ies_config);
         else if (strcmp(var_name, IES_INVERSION_KEY) == 0)
-            return ies::config::config_get_inversion(ies_config);
+            return ies::config::get_inversion(ies_config);
         else
             return -1;
     }
@@ -607,7 +608,7 @@ bool set_string(void *arg, const char *var_name, const char *value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, IES_LOGFILE_KEY) == 0)
-            ies::config::config_set_logfile(ies_config, value);
+            ies::config::set_logfile(ies_config, value);
         else
             name_recognized = false;
 
@@ -622,9 +623,9 @@ bool set_bool(void *arg, const char *var_name, bool value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
-            ies::config::config_set_subspace(ies_config, value);
+            ies::config::set_subspace(ies_config, value);
         else if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
-            ies::config::config_set_aaprojection(ies_config, value);
+            ies::config::set_aaprojection(ies_config, value);
         else if (strcmp(var_name, IES_DEBUG_KEY) == 0)
             logger->warning("The key {} is ignored", IES_DEBUG_KEY);
         else
@@ -636,12 +637,13 @@ bool set_bool(void *arg, const char *var_name, bool value) {
 
 bool get_bool(const void *arg, const char *var_name) {
     const ies::data_type *module_data = ies::data_safe_cast_const(arg);
-    const ies::config::config_type *ies_config = ies::data_get_config(module_data);
+    const ies::config::config_type *ies_config =
+        ies::data_get_config(module_data);
     {
         if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
-            return ies::config::config_get_subspace(ies_config);
+            return ies::config::get_subspace(ies_config);
         else if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
-            return ies::config::config_get_aaprojection(ies_config);
+            return ies::config::get_aaprojection(ies_config);
         else
             return false;
     }
@@ -654,13 +656,13 @@ bool set_double(void *arg, const char *var_name, double value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, ENKF_TRUNCATION_KEY) == 0)
-            ies::config::config_set_truncation(ies_config, value);
+            ies::config::set_truncation(ies_config, value);
         else if (strcmp(var_name, IES_MAX_STEPLENGTH_KEY) == 0)
-            ies::config::config_set_max_steplength(ies_config, value);
+            ies::config::set_max_steplength(ies_config, value);
         else if (strcmp(var_name, IES_MIN_STEPLENGTH_KEY) == 0)
-            ies::config::config_set_min_steplength(ies_config, value);
+            ies::config::set_min_steplength(ies_config, value);
         else if (strcmp(var_name, IES_DEC_STEPLENGTH_KEY) == 0)
-            ies::config::config_set_dec_steplength(ies_config, value);
+            ies::config::set_dec_steplength(ies_config, value);
         else
             name_recognized = false;
 
@@ -670,24 +672,26 @@ bool set_double(void *arg, const char *var_name, double value) {
 
 double get_double(const void *arg, const char *var_name) {
     const ies::data_type *module_data = ies::data_safe_cast_const(arg);
-    const ies::config::config_type *ies_config = ies::data_get_config(module_data);
+    const ies::config::config_type *ies_config =
+        ies::data_get_config(module_data);
     {
         if (strcmp(var_name, ENKF_TRUNCATION_KEY) == 0)
-            return ies::config::config_get_truncation(ies_config);
+            return ies::config::get_truncation(ies_config);
         if (strcmp(var_name, IES_MAX_STEPLENGTH_KEY) == 0)
-            return ies::config::config_get_max_steplength(ies_config);
+            return ies::config::get_max_steplength(ies_config);
         if (strcmp(var_name, IES_MIN_STEPLENGTH_KEY) == 0)
-            return ies::config::config_get_min_steplength(ies_config);
+            return ies::config::get_min_steplength(ies_config);
         if (strcmp(var_name, IES_DEC_STEPLENGTH_KEY) == 0)
-            return ies::config::config_get_dec_steplength(ies_config);
+            return ies::config::get_dec_steplength(ies_config);
         return -1;
     }
 }
 
 long get_options(void *arg, long flag) {
     ies::data_type *module_data = ies::data_safe_cast(arg);
-    const ies::config::config_type *ies_config = ies::data_get_config(module_data);
-    { return ies::config::config_get_option_flags(ies_config); }
+    const ies::config::config_type *ies_config =
+        ies::data_get_config(module_data);
+    { return ies::config::get_option_flags(ies_config); }
 }
 
 bool has_var(const void *arg, const char *var_name) {
@@ -724,7 +728,7 @@ void *get_ptr(const void *arg, const char *var_name) {
     const auto *ies_config = ies::data_get_config(module_data);
     {
         if (strcmp(var_name, IES_LOGFILE_KEY) == 0)
-            return (void *)ies::config::config_get_logfile(ies_config);
+            return (void *)ies::config::get_logfile(ies_config);
         else
             return NULL;
     }
