@@ -8,7 +8,7 @@
 #include <ert/util/bool_vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
-#include <ert/analysis/ies/ies_enkf.hpp>
+#include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/std_enkf.hpp>
 
 struct model {
@@ -72,10 +72,10 @@ TEST_CASE("compare_initX", "[analysis]") {
 
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
-            ies::enkf_initX(std_enkf_get_truncation(std_enkf_data),
-                            std_enkf_get_subspace_dimension(std_enkf_data),
-                            std_enkf_data_get_inversion(std_enkf_data), S, R, E,
-                            D, X2);
+            ies::initX(std_enkf_get_truncation(std_enkf_data),
+                       std_enkf_get_subspace_dimension(std_enkf_data),
+                       std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
+                       X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
             std_enkf_data_free(std_enkf_data);
@@ -96,10 +96,10 @@ TEST_CASE("compare_initX", "[analysis]") {
 
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
-            ies::enkf_initX(std_enkf_get_truncation(std_enkf_data),
-                            std_enkf_get_subspace_dimension(std_enkf_data),
-                            std_enkf_data_get_inversion(std_enkf_data), S, R, E,
-                            D, X2);
+            ies::initX(std_enkf_get_truncation(std_enkf_data),
+                       std_enkf_get_subspace_dimension(std_enkf_data),
+                       std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
+                       X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
             std_enkf_data_free(std_enkf_data);

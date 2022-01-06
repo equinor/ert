@@ -2,13 +2,13 @@
 
 #include <ert/util/rng.h>
 
-#include <ert/analysis/ies/ies_enkf_data.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 void test_create() {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *data = static_cast<ies::enkf_data_type *>(ies::enkf_data_alloc());
+    auto *data = static_cast<ies::data_type *>(ies::data_alloc());
     test_assert_not_NULL(data);
-    ies::enkf_data_free(data);
+    ies::data_free(data);
     rng_free(rng);
 }
 
