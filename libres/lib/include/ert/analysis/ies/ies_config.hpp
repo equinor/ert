@@ -33,40 +33,40 @@ typedef enum {
 
 typedef struct config_struct config_type;
 
-config_type *config_alloc();
-void config_free(config_type *config);
+config_type *alloc();
+void free(config_type *config);
 
-int config_get_subspace_dimension(const config_type *config);
-void config_set_subspace_dimension(config_type *config, int subspace_dimension);
+int get_subspace_dimension(const config_type *config);
+void set_subspace_dimension(config_type *config, int subspace_dimension);
 
-double config_get_truncation(const config_type *config);
-void config_set_truncation(config_type *config, double truncation);
+double get_truncation(const config_type *config);
+void set_truncation(config_type *config, double truncation);
 
-void config_set_option_flags(config_type *config, long flags);
-long config_get_option_flags(const config_type *config);
+void set_option_flags(config_type *config, long flags);
+long get_option_flags(const config_type *config);
 
-double config_get_max_steplength(const config_type *config);
-void config_set_max_steplength(config_type *config, double max_steplength);
+double get_max_steplength(const config_type *config);
+void set_max_steplength(config_type *config, double max_steplength);
 
-double config_get_min_steplength(const config_type *config);
-void config_set_min_steplength(config_type *config, double min_steplength);
+double get_min_steplength(const config_type *config);
+void set_min_steplength(config_type *config, double min_steplength);
 
-double config_get_dec_steplength(const config_type *config);
-void config_set_dec_steplength(config_type *config, double dec_steplength);
+double get_dec_steplength(const config_type *config);
+void set_dec_steplength(config_type *config, double dec_steplength);
 
-inversion_type config_get_inversion(const config_type *config);
-void config_set_inversion(config_type *config, inversion_type inversion);
+inversion_type get_inversion(const config_type *config);
+void set_inversion(config_type *config, inversion_type inversion);
 
-bool config_get_subspace(const config_type *config);
-void config_set_subspace(config_type *config, bool subspace);
+bool get_subspace(const config_type *config);
+void set_subspace(config_type *config, bool subspace);
 
-bool config_get_aaprojection(const config_type *config);
-void config_set_aaprojection(config_type *config, bool aaprojection);
+bool get_aaprojection(const config_type *config);
+void set_aaprojection(config_type *config, bool aaprojection);
 
-char *config_get_logfile(const config_type *config);
-void config_set_logfile(config_type *config, const char *logfile);
+char *get_logfile(const config_type *config);
+void set_logfile(config_type *config, const char *logfile);
 
-double config_calculate_steplength(const config_type *config, int iteration_nr);
-}
+double calculate_steplength(const config_type *config, int iteration_nr);
+} // namespace config
 } // namespace ies
 #endif

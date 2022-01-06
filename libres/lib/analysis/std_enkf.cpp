@@ -115,11 +115,14 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
 static void update_inversion_enum(std_enkf_data_type *std_enkf_data) {
     if (std_enkf_data->__use_EE) {
         if (std_enkf_data->__use_GE)
-            std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_RE;
+            std_enkf_data->inversion_type =
+                ies::config::IES_INVERSION_SUBSPACE_RE;
         else
-            std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EE_R;
+            std_enkf_data->inversion_type =
+                ies::config::IES_INVERSION_SUBSPACE_EE_R;
     } else
-        std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
+        std_enkf_data->inversion_type =
+            ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
 }
 
 static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
@@ -290,10 +293,12 @@ bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
                     ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_EE_R) == 0)
-                module_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EE_R;
+                module_data->inversion_type =
+                    ies::config::IES_INVERSION_SUBSPACE_EE_R;
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_RE) == 0)
-                module_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_RE;
+                module_data->inversion_type =
+                    ies::config::IES_INVERSION_SUBSPACE_RE;
 
             else
                 valid_set = false;

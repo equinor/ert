@@ -58,14 +58,14 @@ void *ies::data_alloc() {
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
-    data->config = ies::config::config_alloc();
+    data->config = ies::config::alloc();
     data->log_fp = NULL;
     return data;
 }
 
 void ies::data_free(void *arg) {
     ies::data_type *data = ies::data_safe_cast(arg);
-    ies::config::config_free(data->config);
+    ies::config::free(data->config);
     free(data);
 }
 
@@ -133,7 +133,7 @@ void ies::data_update_state_size(ies::data_type *data, int state_size) {
 }
 
 FILE *ies::data_open_log(ies::data_type *data) {
-    const char *ies_logfile = ies::config::config_get_logfile(data->config);
+    const char *ies_logfile = ies::config::get_logfile(data->config);
     FILE *fp;
     if (data->iteration_nr == 1) {
         fp = fopen(ies_logfile, "w");
