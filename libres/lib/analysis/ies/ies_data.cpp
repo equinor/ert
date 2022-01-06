@@ -37,7 +37,7 @@ struct ies::data_struct {
     matrix_type *
         E; // Prior ensemble of measurement perturations (should be the same for all iterations)
     bool converged; // GN has converged
-    ies::config_type *
+    ies::config::config_type *
         config; // This I don't understand but I assume I include data from the ies_config_type defined in ies_config.cpp
     FILE *log_fp; // logfile id
 };
@@ -58,14 +58,14 @@ void *ies::data_alloc() {
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
-    data->config = ies::config_alloc();
+    data->config = ies::config::config_alloc();
     data->log_fp = NULL;
     return data;
 }
 
 void ies::data_free(void *arg) {
     ies::data_type *data = ies::data_safe_cast(arg);
-    ies::config_free(data->config);
+    ies::config::config_free(data->config);
     free(data);
 }
 
@@ -82,7 +82,7 @@ int ies::data_get_iteration_nr(const ies::data_type *data) {
     return data->iteration_nr;
 }
 
-ies::config_type *ies::data_get_config(const ies::data_type *data) {
+ies::config::config_type *ies::data_get_config(const ies::data_type *data) {
     return data->config;
 }
 
@@ -133,7 +133,7 @@ void ies::data_update_state_size(ies::data_type *data, int state_size) {
 }
 
 FILE *ies::data_open_log(ies::data_type *data) {
-    const char *ies_logfile = ies::config_get_logfile(data->config);
+    const char *ies_logfile = ies::config::config_get_logfile(data->config);
     FILE *fp;
     if (data->iteration_nr == 1) {
         fp = fopen(ies_logfile, "w");

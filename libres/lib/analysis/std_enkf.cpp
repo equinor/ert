@@ -81,7 +81,7 @@ struct std_enkf_data_struct {
         __use_EE; // Deprecated flag - see comment above function: update_inversion_enum
     bool
         __use_GE; // Deprecated flag - see comment above function: update_inversion_enum
-    ies::inversion_type inversion_type;
+    ies::config::inversion_type inversion_type;
     bool analysis_scale_data;
 };
 
@@ -115,25 +115,25 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
 static void update_inversion_enum(std_enkf_data_type *std_enkf_data) {
     if (std_enkf_data->__use_EE) {
         if (std_enkf_data->__use_GE)
-            std_enkf_data->inversion_type = ies::IES_INVERSION_SUBSPACE_RE;
+            std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_RE;
         else
-            std_enkf_data->inversion_type = ies::IES_INVERSION_SUBSPACE_EE_R;
+            std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EE_R;
     } else
-        std_enkf_data->inversion_type = ies::IES_INVERSION_SUBSPACE_EXACT_R;
+        std_enkf_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
 }
 
 static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
     switch (std_enkf_data->inversion_type) {
-    case ies::IES_INVERSION_SUBSPACE_EXACT_R:
+    case ies::config::IES_INVERSION_SUBSPACE_EXACT_R:
         std_enkf_data->__use_EE = false;
         return;
 
-    case ies::IES_INVERSION_SUBSPACE_RE:
+    case ies::config::IES_INVERSION_SUBSPACE_RE:
         std_enkf_data->__use_EE = true;
         std_enkf_data->__use_GE = true;
         return;
 
-    case ies::IES_INVERSION_SUBSPACE_EE_R:
+    case ies::config::IES_INVERSION_SUBSPACE_EE_R:
         std_enkf_data->__use_EE = true;
         std_enkf_data->__use_GE = false;
         return;
@@ -147,7 +147,7 @@ int std_enkf_get_subspace_dimension(std_enkf_data_type *data) {
     return data->subspace_dimension;
 }
 
-ies::inversion_type
+ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data) {
     return data->inversion_type;
 }
@@ -175,7 +175,7 @@ void *std_enkf_data_alloc() {
     data->__use_EE = DEFAULT_USE_EE;
     data->__use_GE = DEFAULT_USE_GE;
     data->analysis_scale_data = DEFAULT_ANALYSIS_SCALE_DATA;
-    data->inversion_type = ies::IES_INVERSION_SUBSPACE_EXACT_R;
+    data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
     return data;
 }
 
@@ -185,7 +185,7 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
                              const matrix_type *R, const matrix_type *E,
                              const matrix_type *D, double truncation, int ncomp,
                              bool bootstrap,
-                             ies::inversion_type inversion_type) {
+                             ies::config::inversion_type inversion_type) {
 
     matrix_type *S = matrix_alloc_copy(S0);
     int nrobs = matrix_get_rows(S);
@@ -197,9 +197,9 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
 
     matrix_subtract_row_mean(S); /* Shift away the mean */
 
-    if (inversion_type == ies::IES_INVERSION_SUBSPACE_RE)
+    if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_RE)
         enkf_linalg_lowrankE(S, E, W, eig.data(), truncation, ncomp);
-    else if (inversion_type == ies::IES_INVERSION_SUBSPACE_EE_R) {
+    else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EE_R) {
         matrix_type *Et = matrix_alloc_transpose(E);
         matrix_type *Cee = matrix_alloc_matmul(E, Et);
         matrix_scale(Cee, 1.0 / (ens_size - 1));
@@ -208,7 +208,7 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
 
         matrix_free(Et);
         matrix_free(Cee);
-    } else if (inversion_type == ies::IES_INVERSION_SUBSPACE_EXACT_R)
+    } else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EXACT_R)
         enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation, ncomp);
 
     enkf_linalg_init_stdX(X, S, D, W, eig.data(), bootstrap);
@@ -287,13 +287,13 @@ bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
         if (strcmp(var_name, INVERSION_KEY) == 0) {
             if (strcmp(value, STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
                 module_data->inversion_type =
-                    ies::IES_INVERSION_SUBSPACE_EXACT_R;
+                    ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_EE_R) == 0)
-                module_data->inversion_type = ies::IES_INVERSION_SUBSPACE_EE_R;
+                module_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EE_R;
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_RE) == 0)
-                module_data->inversion_type = ies::IES_INVERSION_SUBSPACE_RE;
+                module_data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_RE;
 
             else
                 valid_set = false;

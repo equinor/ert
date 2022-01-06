@@ -19,7 +19,7 @@ void data_set_iteration_nr(data_type *data, int iteration_nr);
 int data_get_iteration_nr(const data_type *data);
 int data_inc_iteration_nr(data_type *data);
 
-config_type *data_get_config(const data_type *data);
+config::config_type *data_get_config(const data_type *data);
 
 void data_update_ens_mask(data_type *data, const bool_vector_type *ens_mask);
 void store_initial_obs_mask(data_type *data, const bool_vector_type *obs_mask);
