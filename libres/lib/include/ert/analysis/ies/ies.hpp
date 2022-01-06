@@ -39,7 +39,7 @@ void init_update(void *arg, const bool_vector_type *ens_mask,
                  const matrix_type *E, const matrix_type *D, rng_type *rng);
 
 void initX(double truncation, int subspace_dimension,
-           inversion_type ies_inversion, const matrix_type *Y0,
+           config::inversion_type ies_inversion, const matrix_type *Y0,
            const matrix_type *R, const matrix_type *E, const matrix_type *D,
            matrix_type *X);
 

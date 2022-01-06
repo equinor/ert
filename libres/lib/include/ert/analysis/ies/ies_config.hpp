@@ -22,6 +22,7 @@
 #include <stdbool.h>
 
 namespace ies {
+namespace config {
 
 typedef enum {
     IES_INVERSION_EXACT = 0,
@@ -66,5 +67,6 @@ char *config_get_logfile(const config_type *config);
 void config_set_logfile(config_type *config, const char *logfile);
 
 double config_calculate_steplength(const config_type *config, int iteration_nr);
+}
 } // namespace ies
 #endif

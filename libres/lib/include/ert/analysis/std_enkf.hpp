@@ -28,7 +28,7 @@ void std_enkf_set_truncation(std_enkf_data_type *data, double truncation);
 void std_enkf_set_subspace_dimension(std_enkf_data_type *data,
                                      int subspace_dimension);
 bool std_enkf_has_var(const void *arg, const char *var_name);
-ies::inversion_type std_enkf_data_get_inversion(const std_enkf_data_type *data);
+ies::config::inversion_type std_enkf_data_get_inversion(const std_enkf_data_type *data);
 
 double std_enkf_get_truncation(std_enkf_data_type *data);
 void *std_enkf_data_alloc();
