@@ -282,6 +282,7 @@ def _get_from_server(url, headers={}, status_code=200) -> requests.Response:
         url,
         headers=headers,
     )
+
     if resp.status_code != status_code:
         logger.error(f"Failed to fetch from {url}. Response: {resp.text}")
     return resp

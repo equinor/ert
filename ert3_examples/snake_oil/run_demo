@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# This script serves both as an example, and for CI purposes
+
+set -e
+
+ert3 clean --all  # Only relevant when run manually
+
+# Let ERT draw and run a stochastic ensemble:
+ert3 run evaluation
+ert3 export evaluation
+# Assert that we have requested summary vectors exported
+grep FOPT experiments/evaluation/data.json >/dev/null
+grep FOPR experiments/evaluation/data.json >/dev/null
+
+
+# DOE (design of experiment)
+design2params 0 resources/designmatrix.xlsx designsheet defaults  # [semeio]
+python designmatrixtxt2json.py  # [hack]
+ert3 record load BPR_138_PERSISTENCE resources/designed_bpr_138_persistence.json
+ert3 record load BPR_555_PERSISTENCE resources/designed_bpr_555_persistence.json
+ert3 record load OP1_DIVERGENCE_SCALE resources/designed_op1_divergence_scale.json
+ert3 record load OP1_OCTAVES resources/designed_op1_octaves.json
+ert3 record load OP1_OFFSET resources/designed_op1_offset.json
+ert3 record load OP1_PERSISTENCE resources/designed_op1_persistence.json
+ert3 record load OP2_DIVERGENCE_SCALE resources/designed_op2_divergence_scale.json
+ert3 record load OP2_OCTAVES resources/designed_op2_octaves.json
+ert3 record load OP2_OFFSET resources/designed_op2_offset.json
+ert3 record load OP2_PERSISTENCE resources/designed_op2_persistence.json
+ert3 run doe
+ert3 export doe
+grep FOPT experiments/doe/data.json >/dev/null
+grep FOPR experiments/doe/data.json >/dev/null
+
+# Sensitivity run
+ert3 run sensitivity
+ert3 export sensitivity
+grep FOPT experiments/sensitivity/data.json >/dev/null
+grep FOPR experiments/sensitivity/data.json >/dev/null

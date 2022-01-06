@@ -1,0 +1,49 @@
+input:
+  -
+    source: stochastic.OP1_PERSISTENCE
+    record: op1_persistence
+  -
+    source: stochastic.OP1_OCTAVES
+    record: op1_octaves
+  -
+    source: stochastic.OP1_DIVERGENCE_SCALE
+    record: op1_divergence_scale
+  -
+    source: stochastic.OP1_OFFSET
+    record: op1_offset
+  -
+    source: stochastic.OP2_PERSISTENCE
+    record: op2_persistence
+  -
+    source: stochastic.OP2_OCTAVES
+    record: op2_octaves
+  -
+    source: stochastic.OP2_DIVERGENCE_SCALE
+    record: op2_divergence_scale
+  -
+    source: stochastic.OP2_OFFSET
+    record: op2_offset
+  -
+    source: stochastic.BPR_555_PERSISTENCE
+    record: bpr_555_persistence
+  -
+    source: stochastic.BPR_138_PERSISTENCE
+    record: bpr_138_persistence
+  -
+    # Single files as records must reside in a directory, here "resources"
+    # and cannot contain dots.
+    source: resources.seedtxt
+    record: seedtxt
+  -
+    source: resources.snake_oil_txt_tmpl
+    record: snake_oil_params_txt_tmpl
+
+output:
+  -
+    record: FOPR
+  -
+    record: FOPT
+
+forward_model:
+  driver: local
+  stage: run_simulator
