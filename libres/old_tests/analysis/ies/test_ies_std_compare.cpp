@@ -30,11 +30,12 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     std_enkf_data_type *std_data =
         static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
 
-    ies::config_set_truncation(ies_config1, 0.95);
-    ies::config_set_min_steplength(ies_config1, 1.0);
-    ies::config_set_max_steplength(ies_config1, 1.0);
-    ies::config_set_inversion(ies_config1, ies::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies::config_set_aaprojection(ies_config1, false);
+    ies::config::set_truncation(ies_config1, 0.95);
+    ies::config::set_min_steplength(ies_config1, 1.0);
+    ies::config::set_max_steplength(ies_config1, 1.0);
+    ies::config::set_inversion(ies_config1,
+                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies::config::set_aaprojection(ies_config1, false);
 
     std_enkf_set_truncation(std_data, 0.95);
 

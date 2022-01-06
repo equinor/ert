@@ -101,7 +101,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
 
-    ies::config_set_logfile(ies::data_get_config(data), "log");
+    ies::config::set_logfile(ies::data_get_config(data), "log");
     ies::data_open_log(data);
     ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                      nullptr, nullptr, nullptr);

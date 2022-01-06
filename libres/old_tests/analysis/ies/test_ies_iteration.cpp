@@ -64,11 +64,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
     auto *ies_config = ies::data_get_config(ies_data);
 
     forward_model(testdata, A1);
-    ies::config_set_truncation(ies_config, 1.0);
-    ies::config_set_max_steplength(ies_config, 0.6);
-    ies::config_set_min_steplength(ies_config, 0.6);
-    ies::config_set_inversion(ies_config, ies::IES_INVERSION_EXACT);
-    ies::config_set_aaprojection(ies_config, false);
+    ies::config::set_truncation(ies_config, 1.0);
+    ies::config::set_max_steplength(ies_config, 0.6);
+    ies::config::set_min_steplength(ies_config, 0.6);
+    ies::config::set_inversion(ies_config, ies::config::IES_INVERSION_EXACT);
+    ies::config::set_aaprojection(ies_config, false);
 
     /* ES solution */
 
@@ -116,11 +116,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     auto *ies_config = ies::data_get_config(ies_data);
 
     forward_model(testdata, A1);
-    ies::config_set_truncation(ies_config, 1.0);
-    ies::config_set_min_steplength(ies_config, 0.6);
-    ies::config_set_max_steplength(ies_config, 0.6);
-    ies::config_set_inversion(ies_config, ies::IES_INVERSION_EXACT);
-    ies::config_set_aaprojection(ies_config, false);
+    ies::config::set_truncation(ies_config, 1.0);
+    ies::config::set_min_steplength(ies_config, 0.6);
+    ies::config::set_max_steplength(ies_config, 0.6);
+    ies::config::set_inversion(ies_config, ies::config::IES_INVERSION_EXACT);
+    ies::config::set_aaprojection(ies_config, false);
     int iens_deact = testdata.active_ens_size / 2;
 
     if (verbose) {
@@ -230,11 +230,12 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     matrix_type *A0 = testdata.alloc_state("prior");
     matrix_type *A = matrix_alloc_copy(A0);
 
-    ies::config_set_truncation(ies_config, 1.00);
-    ies::config_set_max_steplength(ies_config, 0.50);
-    ies::config_set_min_steplength(ies_config, 0.50);
-    ies::config_set_inversion(ies_config, ies::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies::config_set_aaprojection(ies_config, false);
+    ies::config::set_truncation(ies_config, 1.00);
+    ies::config::set_max_steplength(ies_config, 0.50);
+    ies::config::set_min_steplength(ies_config, 0.50);
+    ies::config::set_inversion(ies_config,
+                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies::config::set_aaprojection(ies_config, false);
 
     for (int iter = 0; iter < 1; iter++) {
         printf("test_deactivate_observations_and_realizations: iter= %d\n",
