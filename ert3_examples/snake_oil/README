@@ -1,0 +1,22 @@
+Introduction
+============
+
+Snake oil is a synthetic reservoir simulator that creates
+Eclipse summary output based on random processes.
+
+How to run in ERT3
+==================
+
+1. Start storage server
+
+  ert3 service start storage
+
+2. In a (different) terminal window, in the same directory, run
+
+  ert3 init --example snake_oil
+  cd snake_oil
+
+3. Look in `run_demo` to see relevant example commands, or run it in
+   its entirety using:
+
+  sh run_demo
