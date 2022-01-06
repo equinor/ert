@@ -29,7 +29,7 @@
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/std_enkf.hpp>
-#include <ert/analysis/ies/ies_enkf_config.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 /*
   A random 'magic' integer id which is used for run-time type checking

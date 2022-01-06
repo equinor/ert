@@ -5,7 +5,7 @@
 
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/rng.hpp>
-#include <ert/analysis/ies/ies_enkf_config.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 #define DEFAULT_ENKF_TRUNCATION_ 0.98
 #define ENKF_TRUNCATION_KEY_ "ENKF_TRUNCATION"

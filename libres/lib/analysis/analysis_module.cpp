@@ -29,7 +29,7 @@
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/analysis_table.hpp>
-#include <ert/analysis/ies/ies_enkf.hpp>
+#include <ert/analysis/ies/ies.hpp>
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
