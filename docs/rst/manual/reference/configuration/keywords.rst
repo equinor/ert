@@ -1432,17 +1432,6 @@ to load, select and modify the analysis modules are documented here.
         Splits the dataset into individual parameters.
 
 
-**Developing analysis modules**
-
-In the analysis module the update equations are formulated based on familiar
-matrix expressions, and no knowledge of the innards of the ERT program are
-required. Some more details of how modules work can be found here modules.txt.
-In principle a module is 'just' a shared library following some conventions, and
-if you are sufficiently savvy with gcc you can build them manually, but along
-with the ERT installation you should have utility script ert_module which can be
-used to build a module; just write ert_module without any arguments to get a
-brief usage description.
-
 Advanced optional keywords
 --------------------------
 .. _advanced_optional_keywords:
