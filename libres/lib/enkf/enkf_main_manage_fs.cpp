@@ -136,31 +136,26 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     const std::vector<std::string> &node_list) {
     state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
 
-    {
+    for (auto &node : node_list) {
+        enkf_config_node_type *config_node =
+            ensemble_config_get_node(ensemble_config, node.c_str());
 
-        for (auto &node : node_list) {
-            enkf_config_node_type *config_node =
-                ensemble_config_get_node(ensemble_config, node.c_str());
+        int src_iens = 0;
+        for (auto mask : iens_mask) {
+            if (mask) {
+                node_id_type src_id = {.report_step = source_report_step,
+                                       .iens = src_iens};
+                node_id_type target_id = {.report_step = 0, .iens = src_iens};
 
-            int src_iens = 0;
-            for (auto mask : iens_mask) {
-                if (mask) {
-                    node_id_type src_id = {.report_step = source_report_step,
-                                           .iens = src_iens};
-                    node_id_type target_id = {.report_step = 0,
-                                              .iens = src_iens};
+                /* The copy is careful ... */
+                if (enkf_config_node_has_node(config_node, source_case_fs,
+                                              src_id))
+                    enkf_node_copy(config_node, source_case_fs, target_case_fs,
+                                   src_id, target_id);
 
-                    /* The copy is careful ... */
-                    if (enkf_config_node_has_node(config_node, source_case_fs,
-                                                  src_id))
-                        enkf_node_copy(config_node, source_case_fs,
-                                       target_case_fs, src_id, target_id);
-
-                    state_map_iset(target_state_map, src_iens,
-                                   STATE_INITIALIZED);
-                }
-                src_iens++;
+                state_map_iset(target_state_map, src_iens, STATE_INITIALIZED);
             }
+            src_iens++;
         }
     }
 }
