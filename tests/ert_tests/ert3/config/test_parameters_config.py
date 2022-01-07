@@ -201,10 +201,15 @@ def test_invalid_uniform(input_):
 @pytest.mark.parametrize(
     ("name", "err_msg"),
     (
-        ("no.go", "Names are expected to only contain characters"),
-        ("no-go", "Names are expected to only contain characters"),
-        ("no???", "Names are expected to only contain characters"),
-        ("no:go", "Names are expected to only contain characters"),
+        (
+            "no.go",
+            "Names must consist of only characters, numbers and `_`, was: no.go",
+        ),
+        ("no-go", "Names must consist of only characters"),
+        ("no???", "Names must consist of only characters"),
+        ("no:go", "Names must consist of only characters"),
+        ("1nogo", "First character in a name"),
+        ("_nogo", "First character in a name"),
         ("", "Names cannot be of zero length"),
     ),
 )
@@ -263,10 +268,12 @@ def test_valid_variables(variables):
 @pytest.mark.parametrize(
     ("name", "err_msg"),
     (
-        ("no.go", "Names are expected to only contain characters"),
-        ("no-go", "Names are expected to only contain characters"),
-        ("no???", "Names are expected to only contain characters"),
-        ("no:go", "Names are expected to only contain characters"),
+        ("no-go", "Names must consist of only characters"),
+        ("no.go", "Names must consist of only characters"),
+        ("no???", "Names must consist of only characters"),
+        ("no:go", "Names must consist of only characters"),
+        ("1nogo", "First character in a name"),
+        ("_nogo", "First character in a name"),
         ("", "Names cannot be of zero length"),
     ),
 )

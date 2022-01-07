@@ -29,9 +29,14 @@ def _ensure_valid_name(name: str) -> str:
     if not name:
         raise ValueError("Names cannot be of zero length")
 
-    if not all(c.isalpha() or c == "_" for c in name):
+    if not all(c.isalnum() or c == "_" for c in name):
         raise ValueError(
-            "Names are expected to only contain characters and `_`, was: {name}"
+            "Names must consist of only characters, numbers " f"and `_`, was: {name}"
+        )
+
+    if not name[0].isalpha():
+        raise ValueError(
+            f"First character in a name must be a character. Name was {name}"
         )
 
     return name
