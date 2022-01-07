@@ -16,7 +16,7 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
+from libres_utils import ResTest, tmpdir
 
 from res import ResPrototype
 from res.config import (
@@ -117,14 +117,23 @@ class ConfigTest(ResTest):
             self.assertIn("ConfigParser", repr(conf))
             self.assertIn("size=1", repr(conf))
 
+    @tmpdir(None)
     def test_parse(self):
+        config_file = """
+RSH_HOST some-hostname:2 other-hostname:2
+FIELD    PRESSURE      DYNAMIC
+FIELD    SWAT          DYNAMIC   MIN:0   MAX:1
+FIELD    SGAS          DYNAMIC   MIN:0   MAX:1
+FIELD    RS            DYNAMIC   MIN:0
+FIELD    RV            DYNAMIC   MIN:0.0034"""
+        with open("simple_config", "w") as fout:
+            fout.write(config_file)
         conf = ConfigParser()
         conf.add("FIELD", False)
         schema_item = conf.add("RSH_HOST", False)
         self.assertIsInstance(schema_item, SchemaItem)
-        test_path = self.createTestPath("local/config/simple_config")
         content = conf.parse(
-            test_path, unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE
+            "simple_config", unrecognized=UnrecognizedEnum.CONFIG_UNRECOGNIZED_IGNORE
         )
         self.assertTrue(content.isValid())
 
@@ -140,9 +149,11 @@ class ConfigTest(ResTest):
         content_node = content_item[0]
         self.assertIsInstance(content_node, ContentNode)
         self.assertEqual(len(content_node), 2)
-        self.assertEqual(content_node[1], "be-lx633214:2")
-        self.assertEqual(content_node.content(sep=","), "be-lx655082:2,be-lx633214:2")
-        self.assertEqual(content_node.content(), "be-lx655082:2 be-lx633214:2")
+        self.assertEqual(content_node[1], "other-hostname:2")
+        self.assertEqual(
+            content_node.content(sep=","), "some-hostname:2,other-hostname:2"
+        )
+        self.assertEqual(content_node.content(), "some-hostname:2 other-hostname:2")
 
         content_item = content["FIELD"]
         self.assertEqual(len(content_item), 5)
