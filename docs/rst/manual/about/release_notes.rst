@@ -27,6 +27,70 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.31
+------------
+
+
+Breaking changes:
+  - Remove support for config keyword ANALYSIS_LOAD (`#2407 <https://github.com/equinor/ert/pull/2407>`_)
+
+Bugfixes:
+  - [ert3] Fix forgotten transformation raise statement (`#2608 <https://github.com/equinor/ert/pull/2608>`_)
+
+New features:
+  - [ert3] Introduction of RecordTree (`#2255 <https://github.com/equinor/ert/pull/2255>`_)
+
+Improvements:
+  - Timeout by default when fetching storage connection information (`#2541 <https://github.com/equinor/ert/pull/2541>`_)
+  - Handle connection closed errors in EvaluatorTracker (`#2597 <https://github.com/equinor/ert/pull/2597>`_)
+  - Add logging to Python from C (`#2550 <https://github.com/equinor/ert/pull/2550>`_)
+  - Add docstrings for ``ert3.data`` module (`#2521 <https://github.com/equinor/ert/pull/2521>`_)
+  - [ert3] Return native floats when decoding EclSum files (`#2540 <https://github.com/equinor/ert/pull/2540>`_)
+  - [ert3] Refactor transmissions and transformations in order to decouple them (`#2566 <https://github.com/equinor/ert/pull/2566>`_)
+  - [ert3] Make Workspace use transformations (`#2604 <https://github.com/equinor/ert/pull/2604>`_)
+  - Add dark storage record labels endpoints (`#2491 <https://github.com/equinor/ert/pull/2491>`_)
+
+Dependencies:
+  - Ensure compatibility with `beartype==0.9.1` (`#2633 <https://github.com/equinor/ert/pull/2633>`_)
+
+Miscellaneous:
+  - Various improvements to analysis module (
+    `#2504 <https://github.com/equinor/ert/pull/2504>`_,
+    `#2568 <https://github.com/equinor/ert/pull/2568>`_,
+    `#2530 <https://github.com/equinor/ert/pull/2530>`_,
+    `#2463 <https://github.com/equinor/ert/pull/2463>`_,
+    `#2469 <https://github.com/equinor/ert/pull/2469>`_,
+    `#2591 <https://github.com/equinor/ert/pull/2591>`_,
+    `#2598 <https://github.com/equinor/ert/pull/2598>`_,
+    `#2599 <https://github.com/equinor/ert/pull/2599>`_,
+    `#2611 <https://github.com/equinor/ert/pull/2611>`_,
+    `#2617 <https://github.com/equinor/ert/pull/2617>`_
+    )
+  - Remove unused code (
+    `#2499 <https://github.com/equinor/ert/pull/2499>`_,
+    `#2509 <https://github.com/equinor/ert/pull/2509>`_,
+    `#2518 <https://github.com/equinor/ert/pull/2518>`_,
+    `#2532 <https://github.com/equinor/ert/pull/2532>`_,
+    `#2533 <https://github.com/equinor/ert/pull/2533>`_,
+    `#2519 <https://github.com/equinor/ert/pull/2519>`_,
+    `#2564 <https://github.com/equinor/ert/pull/2564>`_,
+    `#2595 <https://github.com/equinor/ert/pull/2595>`_,
+    `#2593 <https://github.com/equinor/ert/pull/2593>`_,
+    `#2618 <https://github.com/equinor/ert/pull/2618>`_,
+    `#2620 <https://github.com/equinor/ert/pull/2620>`_
+    )
+  - Consistently use realizations, iter and ``-`` as separator (`#2603 <https://github.com/equinor/ert/pull/2603>`_)
+  - Improve res imports to satisfy pylint checking (`#2502 <https://github.com/equinor/ert/pull/2502>`_)
+  - Reduce calls to fs->refcount at decref (`#2501 <https://github.com/equinor/ert/pull/2501>`_)
+  - Cleanup unnecessary use of run_mode (`#2563 <https://github.com/equinor/ert/pull/2563>`_)
+  - Pass python executable to cmake (`#2569 <https://github.com/equinor/ert/pull/2569>`_)
+  - Add release notes configuration (`#2570 <https://github.com/equinor/ert/pull/2570>`_)
+  - Replace util_mkdir_fopen with standard C++ (`#2590 <https://github.com/equinor/ert/pull/2590>`_)
+  - Fix spelling of therefore (`#2600 <https://github.com/equinor/ert/pull/2600>`_)
+  - Only comment coverage after all reports are sent (`#2623 <https://github.com/equinor/ert/pull/2623>`_)
+  - Mute PEP-585 warnings from BearType in Py39 (`#2610 <https://github.com/equinor/ert/pull/2610>`_)
+
+
 Version 2.30
 ------------
 
