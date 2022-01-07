@@ -10,6 +10,7 @@ add_executable(
   tmpdir.cpp
   analysis/ies/test_ies_enkf_main.cpp
   analysis/test_enkf_linalg.cpp
+  analysis/test_save_parameters.cpp
   enkf/enkf_obs_paths_detailed.cpp
   enkf/test_cases_config.cpp
   enkf/test_enkf_fs.cpp

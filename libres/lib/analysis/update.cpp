@@ -285,8 +285,8 @@ matrices.
 */
 matrix_type *load_parameters(enkf_fs_type *target_fs,
                              ensemble_config_type *ensemble_config,
-                             int_vector_type *iens_active_index, int last_step,
-                             meas_data_type *forecast, obs_data_type *obs_data,
+                             const int_vector_type *iens_active_index,
+                             int last_step, int active_ens_size,
                              const local_ministep_type *ministep) {
 
     matrix_type *parameters = nullptr;
@@ -295,7 +295,6 @@ matrix_type *load_parameters(enkf_fs_type *target_fs,
         int cpu_threads = 4;
         thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
         int matrix_start_size = 250000;
-        int active_ens_size = meas_data_get_active_ens_size(forecast);
         matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
         serialize_info_type *serialize_info = serialize_info_alloc(
@@ -321,7 +320,7 @@ Store a set of parameters into a enkf_fs_type storage
 */
 void save_parameters(enkf_fs_type *target_fs,
                      ensemble_config_type *ensemble_config,
-                     int_vector_type *iens_active_index, int last_step,
+                     const int_vector_type *iens_active_index, int last_step,
                      const local_ministep_type *ministep, matrix_type *A) {
 
     assert(A != nullptr);
@@ -714,7 +713,7 @@ bool smoother_update(std::vector<int> step_list,
             // Part 1: Parameters which do not have row scaling attached.
             auto A =
                 load_parameters(target_fs, ensemble_config, iens_active_index,
-                                current_step, meas_data, obs_data, ministep);
+                                current_step, active_ens_size, ministep);
             if (A != nullptr) {
                 run_analysis_update_without_rowscaling(
                     module, ens_mask, meas_data, obs_data, shared_rng, E, A);
