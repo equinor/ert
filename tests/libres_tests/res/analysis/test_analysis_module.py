@@ -14,8 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import sys
-from os.path import basename
 
 from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
@@ -39,7 +37,7 @@ class AnalysisModuleTest(ResTest):
 
         self.assertTrue(am.setVar("ITER", "1"))
 
-        self.assertEqual(am.getTableName(), "IES_ENKF")
+        self.assertEqual(am.name(), "IES_ENKF")
 
         self.assertTrue(am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE))
 
@@ -62,50 +60,6 @@ class AnalysisModuleTest(ResTest):
             mod = AnalysisModule("STD_ENKFXXX")
 
         mod = AnalysisModule("STD_ENKF")
-
-    def test_initX_enkf_linalg_lowrankCinv(self):
-        """Test AnalysisModule.initX with EE=False and GE=False"""
-        mod = AnalysisModule("STD_ENKF")
-        A, S, R, dObs, E, D = self._n_identity_mcs()
-        self.assertFalse(mod.getBool("USE_EE"))
-        self.assertFalse(mod.getBool("USE_GE"))
-
-        elt_a, elt_b = 1.222, -0.111
-        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
-        expected = self.construct_matrix(3, vals)
-
-        X = mod.initX(A, S, R, dObs, E, D, self.rng)
-        self._matrix_close(X, expected)
-
-    def test_initX_enkf_linalg_lowrank_EE(self):
-        """Test AnalysisModule.initX with EE=True and GE=False"""
-        mod = AnalysisModule("STD_ENKF")
-        A, S, R, dObs, E, D = self._n_identity_mcs()
-        mod.setVar("USE_EE", True)
-        self.assertTrue(mod.getBool("USE_EE"))
-        self.assertFalse(mod.getBool("USE_GE"))
-
-        elt_a, elt_b = 1.33, -0.167
-        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
-        expected = self.construct_matrix(3, vals)
-        X = mod.initX(A, S, R, dObs, E, D, self.rng)
-        self._matrix_close(X, expected)
-
-    def test_initX_subspace_inversion_algorithm(self):
-        """Test AnalysisModule.initX with EE=True and GE=True, the subspace inversion algorithm"""
-        mod = AnalysisModule("STD_ENKF")
-        A, S, R, dObs, E, D = self._n_identity_mcs()
-
-        mod.setVar("USE_EE", True)
-        mod.setVar("USE_GE", True)
-        self.assertTrue(mod.getBool("USE_EE"))
-        self.assertTrue(mod.getBool("USE_GE"))
-
-        elt_a, elt_b = 1.33, -0.167
-        vals = (elt_a, elt_b, elt_b, elt_b, elt_a, elt_b, elt_b, elt_b, elt_a)
-        expected = self.construct_matrix(3, vals)
-        X = mod.initX(A, S, R, dObs, E, D, self.rng)
-        self._matrix_close(X, expected)
 
     def construct_matrix(self, n, vals):
         """Constructs n*n matrix with vals as entries"""

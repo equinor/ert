@@ -15,10 +15,8 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
-from res.util import Matrix
 
 from .enums import AnalysisModuleOptionsEnum
 
@@ -45,42 +43,7 @@ class AnalysisModule(BaseCClass):
     _get_int = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
     _get_bool = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
     _get_str = ResPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
-    _init_update = ResPrototype(
-        "void analysis_module_init_update(analysis_module, \
-                                          bool_vector, \
-                                          bool_vector, \
-                                          matrix, \
-                                          matrix, \
-                                          matrix, \
-                                          matrix, \
-                                          matrix, \
-                                          rng)"
-    )
-    _updateA = ResPrototype(
-        "void analysis_module_updateA(analysis_module, \
-                                      matrix, \
-                                      matrix, \
-                                      matrix, \
-                                      matrix, \
-                                      matrix, \
-                                      matrix, \
-                                      void*, \
-                                      rng)"
-    )
-    _initX = ResPrototype(
-        "void analysis_module_initX(analysis_module, \
-                                    matrix, \
-                                    matrix, \
-                                    matrix, \
-                                    matrix, \
-                                    matrix, \
-                                    matrix, \
-                                    matrix, \
-                                    rng)"
-    )
 
-    # The VARIABLE_NAMES field is a completly broken special case
-    # which only applies to the rml module.
     VARIABLE_NAMES = {
         "IES_MAX_STEPLENGTH": {
             "type": float,
@@ -160,26 +123,13 @@ class AnalysisModule(BaseCClass):
         """:rtype: type"""
         return AnalysisModule.VARIABLE_NAMES[name]["type"]
 
-    def getVariableDescription(self, name):
-        """:rtype: str"""
-        return AnalysisModule.VARIABLE_NAMES[name]["description"]
-
-    def getVar(self, name):
-        return self.getVariableValue(name)
-
     def free(self):
         self._free()
 
     def __repr__(self):
         if not self:
             return repr(None)
-        nm = self.name()
-        tn = self.getTableName()
-        ln = self.getLibName()
-        mi = "internal" if self.getInternal() else "external"
-        ad = self._ad_str()
-        fmt = "AnalysisModule(name = %s, table = %s, lib = %s, %s) %s"
-        return fmt % (nm, tn, ln, mi, ad)
+        return f"AnalysisModule(name = {self.name()}, ad = {self._ad_str()})"
 
     def __assertVar(self, var_name):
         if not self.hasVar(var_name):
@@ -189,9 +139,6 @@ class AnalysisModule(BaseCClass):
         self.__assertVar(var_name)
         string_value = str(value)
         return self._set_var(var_name, string_value)
-
-    def getTableName(self):
-        return self._get_table_name()
 
     def getName(self):
         """:rtype: str"""
@@ -227,27 +174,6 @@ class AnalysisModule(BaseCClass):
         self.__assertVar(var)
         return self._get_str(var)
 
-    def initUpdate(
-        self,
-        ens_mask: BoolVector,
-        obs_mask: BoolVector,
-        S: Matrix,
-        R: Matrix,
-        dObs: Matrix,
-        E: Matrix,
-        D: Matrix,
-        rng: RandomNumberGenerator,
-    ):
-        self._init_update(ens_mask, obs_mask, S, R, dObs, E, D, rng)
-
-    def updateA(self, A, S, R, dObs, E, D, rng):
-        self._updateA(A, S, R, dObs, E, D, None, rng)
-
-    def initX(self, A, S, R, dObs, E, D, rng):
-        X = Matrix(A.columns(), A.columns())
-        self._initX(X, A, S, R, dObs, E, D, rng)
-        return X
-
     def __ne__(self, other):
         """
         not equal operator between two modules
@@ -264,8 +190,6 @@ class AnalysisModule(BaseCClass):
         """
 
         if self.getName() != other.getName():
-            return False
-        if self.getTableName() != other.getTableName():
             return False
 
         var_name_local = self.getVariableNames()
