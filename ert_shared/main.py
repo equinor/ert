@@ -197,18 +197,6 @@ def get_ert_parser(parser=None):
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
     FeatureToggling.add_feature_toggling_args(gui_parser)
-    gui_url_or_bind = gui_parser.add_mutually_exclusive_group()
-    gui_url_or_bind.add_argument(
-        "--storage-api-url",
-        type=str,
-        help="Storage API URL. If not provided, ERT will start a server for you.",
-    )
-    gui_url_or_bind.add_argument(
-        "--storage-api-bind",
-        type=str,
-        help="Bind the Storage API to this server socket.",
-        default="127.0.0.1:0",
-    )
 
     # ert_api
     ert_api_parser = subparsers.add_parser(
