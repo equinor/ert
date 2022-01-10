@@ -105,52 +105,57 @@ def test_workspace_export_json(tmpdir, ert_storage):
     assert (experiments_dir / "test1" / "test.json").exists()
 
 
-def test_workspace__validate_resources(tmpdir, base_ensemble_dict):
+def test_workspace_validate_resources(tmpdir, base_ensemble_dict, plugin_registry):
     os.chdir(tmpdir)
 
     workspace = ert3.workspace.initialize(tmpdir)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"] += [
-        {"source": "resources.coefficients.json", "record": "coefficients"}
+        {
+            "source": "resources.coefficients.json",
+            "record": "coefficients",
+            "transformation": {"type": "serialization"},
+        }
     ]
+    ensemble_config = ert3.config.create_ensemble_config(
+        plugin_registry=plugin_registry
+    )
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Cannot locate resource: 'coefficients.json'",
     ):
         workspace._validate_resources(
-            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+            ensemble_config.parse_obj(ensemble_dict),
         )
 
     resources_dir = Path(tmpdir) / _RESOURCES_BASE
 
     (resources_dir / "coefficients.json").mkdir(parents=True)
-    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
-    ensemble_dict["input"][-1]["is_directory"] = True
-    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
-    ensemble_dict["input"][-1]["is_directory"] = False
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "directory",
+    }
+    workspace._validate_resources(ensemble_config.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "serialization",
+    }
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a regular file: 'coefficients.json'",
     ):
-        workspace._validate_resources(
-            ert3.config.EnsembleConfig.parse_obj(ensemble_dict)
-        )
+        workspace._validate_resources(ensemble_config.parse_obj(ensemble_dict))
 
     (resources_dir / "coefficients.json").rmdir()
     (resources_dir / "coefficients.json").touch()
-    ensemble_dict["input"][-1]["is_directory"] = None
-    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
-    ensemble_dict["input"][-1]["is_directory"] = False
-    workspace._validate_resources(ert3.config.EnsembleConfig.parse_obj(ensemble_dict))
-    ensemble_dict["input"][-1]["is_directory"] = True
+    workspace._validate_resources(ensemble_config.parse_obj(ensemble_dict))
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "directory",
+    }
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a directory: 'coefficients.json'",
     ):
-        workspace._validate_resources(
-            ert3.config.EnsembleConfig.parse_obj(ensemble_dict)
-        )
+        workspace._validate_resources(ensemble_config.parse_obj(ensemble_dict))
 
 
 def test_workspace_load_experiment_config_validation(
@@ -158,6 +163,7 @@ def test_workspace_load_experiment_config_validation(
     stages_config,
     base_ensemble_dict,
     stages_config_list,
+    plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -169,7 +175,7 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump(stages_config_list, f)
     with open(workspace._path / "parameters.yml", "w") as f:
         yaml.dump([], f)
-    workspace.load_experiment_run_config("test")
+    workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["size"] = None
@@ -179,7 +185,7 @@ def test_workspace_load_experiment_config_validation(
         yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
-    workspace.load_experiment_run_config("test")
+    workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
 
 def test_workspace_load_experiment_config_size_validation(
@@ -187,6 +193,7 @@ def test_workspace_load_experiment_config_size_validation(
     stages_config,
     base_ensemble_dict,
     stages_config_list,
+    plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -205,7 +212,7 @@ def test_workspace_load_experiment_config_size_validation(
         ert.exceptions.ConfigValidationError,
         match="An ensemble size must be specified.",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
@@ -217,7 +224,7 @@ def test_workspace_load_experiment_config_size_validation(
         ert.exceptions.ConfigValidationError,
         match="No ensemble size should be specified for a sensitivity analysis.",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
 
 def test_workspace_load_experiment_config_stages_validation(
@@ -226,6 +233,7 @@ def test_workspace_load_experiment_config_stages_validation(
     base_ensemble_dict,
     stages_config_list,
     double_stages_config_list,
+    plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
     (experiments_dir / "test").mkdir(parents=True)
@@ -241,7 +249,7 @@ def test_workspace_load_experiment_config_stages_validation(
         ert.exceptions.ConfigValidationError,
         match="Ensemble and stage inputs do not match.",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["forward_model"]["stage"] = "foo"
@@ -258,13 +266,14 @@ def test_workspace_load_experiment_config_stages_validation(
             "Must be one of: 'evaluate_polynomial'"
         ),
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
 
 def test_workspace_load_experiment_config_resources_validation(
     tmpdir,
     base_ensemble_dict,
     stages_config_list,
+    plugin_registry,
 ):
     os.chdir(tmpdir)
     workspace = ert3.workspace.initialize(tmpdir)
@@ -284,7 +293,13 @@ def test_workspace_load_experiment_config_resources_validation(
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"] += [
-        {"source": "resources.coefficients.json", "record": "coefficients"}
+        {
+            "source": "resources.coefficients.json",
+            "record": "coefficients",
+            "transformation": {
+                "type": "serialization",
+            },
+        }
     ]
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
@@ -292,41 +307,41 @@ def test_workspace_load_experiment_config_resources_validation(
         ert.exceptions.ConfigValidationError,
         match="Cannot locate resource: 'coefficients.json'",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
     (resources_dir / "coefficients.json").mkdir(parents=True)
-    workspace.load_experiment_run_config("test")
-    ensemble_dict["input"][-1]["is_directory"] = True
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "directory",
+    }
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_run_config("test")
-    ensemble_dict["input"][-1]["is_directory"] = False
+    workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "serialization",
+    }
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a regular file: 'coefficients.json'",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
     (resources_dir / "coefficients.json").rmdir()
     (resources_dir / "coefficients.json").touch()
-    ensemble_dict["input"][-1]["is_directory"] = None
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_run_config("test")
-    ensemble_dict["input"][-1]["is_directory"] = False
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
-        yaml.dump(ensemble_dict, f)
-    workspace.load_experiment_run_config("test")
-    ensemble_dict["input"][-1]["is_directory"] = True
+    workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
+    ensemble_dict["input"][-1]["transformation"] = {
+        "type": "directory",
+    }
     with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="Resource must be a directory: 'coefficients.json'",
     ):
-        workspace.load_experiment_run_config("test")
+        workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
 
 def test_suggest_local_run_path(tmpdir):

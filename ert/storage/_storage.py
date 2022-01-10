@@ -553,7 +553,8 @@ def assert_storage_initialized(workspace_name: str) -> None:
     for special_key in _SPECIAL_KEYS:
         if f"{workspace_name}.{special_key}" not in experiment_names:
             raise ert.exceptions.StorageError(
-                "Storage is not initialized properly. The workspace needs to be reinitialized"
+                "Storage is not initialized properly. "
+                + "The workspace needs to be reinitialized"
             )
 
 

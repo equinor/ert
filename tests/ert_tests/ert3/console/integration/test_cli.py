@@ -469,13 +469,15 @@ def test_cli_clean_non_Existent_experiment(workspace, capsys):
     )
 
 
-def test_cli_validation_ensemble_function(base_ensemble_dict, capsys):
-    ert3.config.load_ensemble_config(base_ensemble_dict)
+def test_cli_validation_ensemble_function(base_ensemble_dict, capsys, plugin_registry):
+    ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
     config = copy.deepcopy(base_ensemble_dict)
     config["size"] = "a"
     with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
-        ert3.config.load_ensemble_config(config)
+        ert3.config.load_ensemble_config(config, plugin_registry=plugin_registry)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
     assert "Error while loading ensemble configuration data:" in capture.out
@@ -512,9 +514,9 @@ def test_cli_validation_experiment_function(capsys):
         ),
     ],
 )
-def test_cli_validation_stages_function(config, expected, capsys):
+def test_cli_validation_stages_function(config, expected, capsys, plugin_registry):
     with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
-        ert3.config.load_stages_config(config)
+        ert3.config.load_stages_config(config, plugin_registry=plugin_registry)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
@@ -522,8 +524,12 @@ def test_cli_validation_stages_function(config, expected, capsys):
 
 
 @pytest.mark.requires_ert_storage
-def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
-    ert3.config.load_ensemble_config(base_ensemble_dict)
+def test_cli_validation_ensemble_command(
+    base_ensemble_dict, workspace, capsys, plugin_registry
+):
+    ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
     (experiments_folder / "E0").mkdir(parents=True)
     config = copy.deepcopy(base_ensemble_dict)

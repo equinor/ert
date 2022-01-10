@@ -59,16 +59,14 @@ def input_transmitter_factory(transmitter_factory):
 
 
 def create_script_transmitter(name: str, location: Path, transmitter_factory):
-    async def transform_output(transmitter, mime, location):
-        transformation = ert.data.ExecutableRecordTransformation()
-        record = await transformation.transform_output(mime, location)
+    async def transform_output(transmitter, location):
+        transformation = ert.data.ExecutableTransformation(location=location)
+        record = await transformation.to_record()
         await transmitter.transmit_record(record)
 
     script_transmitter = transmitter_factory(name)
     get_event_loop().run_until_complete(
-        transform_output(
-            script_transmitter, mime="application/octet-stream", location=location
-        )
+        transform_output(script_transmitter, location=location)
     )
     return script_transmitter
 
@@ -103,11 +101,13 @@ def get_degree_step(
 
     input_name = f"generate_{degree_spelled}_degree"
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name(input_name)
-        .set_path(Path("evaluate_coeffs.py"))
-        .set_mime("text/x-python")
-        .set_transformation(ert.data.ExecutableRecordTransformation())
+        .set_transformation(
+            ert.data.ExecutableTransformation(
+                location=Path("evaluate_coeffs.py"), mime="text/x-python"
+            )
+        )
         .set_transmitter_factory(
             partial(
                 create_script_transmitter,
@@ -119,10 +119,13 @@ def get_degree_step(
     )
 
     coeffs_input = (
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name("coeffs")
-        .set_path(Path("coeffs.json"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("coeffs.json"), mime="application/json"
+            )
+        )
     )
     for iens, values in enumerate(coefficients):
         transmitter = create_input_transmitter(values, transmitter_factory("coeffs"))
@@ -131,10 +134,13 @@ def get_degree_step(
 
     output_name = f"input{degree}"
     step_builder.add_output(
-        ee.create_file_io_builder()
+        ee.create_output_builder()
         .set_name(output_name)
-        .set_path(Path(f"poly_{degree}.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path(f"poly_{degree}.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, output_name))
     )
     step_builder.add_job(
@@ -157,10 +163,13 @@ def zero_degree_step(transmitter_factory, test_data_path, coefficients):
     )
 
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name("input2")
-        .set_path(Path("poly_2.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("poly_2.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "input2"))
     )
     return step_builder
@@ -191,13 +200,14 @@ def second_degree_step(transmitter_factory, test_data_path, coefficients):
 @pytest.fixture()
 def sum_coeffs_step(test_data_path, transmitter_factory):
     step_builder = ee.create_step_builder().set_name("add_coeffs").set_type("unix")
-
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name("sum_up")
-        .set_path(Path("sum_coeffs.py"))
-        .set_mime("text/x-python")
-        .set_transformation(ert.data.ExecutableRecordTransformation())
+        .set_transformation(
+            ert.data.ExecutableTransformation(
+                location=Path("sum_coeffs.py"), mime="text/x-python"
+            )
+        )
         .set_transmitter_factory(
             partial(
                 create_script_transmitter,
@@ -209,34 +219,49 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_output_builder()
         .set_name("input0")
-        .set_path(Path("poly_0.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("poly_0.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "input0"))
     )
+
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_output_builder()
         .set_name("input1")
-        .set_path(Path("poly_1.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("poly_1.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "input1"))
     )
+
     step_builder.add_input(
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name("input2")
-        .set_path(Path("poly_2.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("poly_2.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "input2"))
     )
 
     step_builder.add_output(
-        ee.create_file_io_builder()
+        ee.create_output_builder()
         .set_name("sum_output")
-        .set_path(Path("poly_sum.out"))
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("poly_sum.out"), mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "sum_output"))
     )
+
     step_builder.add_job(
         ee.create_job_builder()
         .set_name("sum_up")
@@ -290,10 +315,13 @@ def function_ensemble_builder_factory(
     )
 
     coeffs_input = (
-        ee.create_file_io_builder()
+        ee.create_input_builder()
         .set_name("coeffs")
-        .set_path("coeffs")
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location=Path("coeffs"), mime="application/json"
+            )
+        )
     )
 
     for iens, values in enumerate(coefficients):
@@ -302,10 +330,13 @@ def function_ensemble_builder_factory(
     step_builder.add_input(coeffs_input)
 
     step_builder.add_output(
-        ee.create_file_io_builder()
+        ee.create_output_builder()
         .set_name("function_output")
-        .set_path("output")
-        .set_mime("application/json")
+        .set_transformation(
+            ert.data.SerializationTransformation(
+                location="output", mime="application/json"
+            )
+        )
         .set_transmitter_factory(partial(transmitter_factory, "function_output"))
     )
     step_builder.add_job(job_builder)

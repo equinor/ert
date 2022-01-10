@@ -2,42 +2,70 @@
   name: run_simulator
 
   input:
-    - record: SEED
-      location: seed.json
+    - name: SEED
+      transformation:
+        type: serialization
+        location: seed.json
 
-    - record: op1_persistence
-      location: op1_persistence.json
-    - record: op1_octaves
-      location: op1_octaves.json
-    - record: op1_divergence_scale
-      location: op1_divergence_scale.json
-    - record: op1_offset
-      location: op1_offset.json
-    - record: op2_persistence
-      location: op2_persistence.json
-    - record: op2_octaves
-      location: op2_octaves.json
-    - record: op2_divergence_scale
-      location: op2_divergence_scale.json
-    - record: op2_offset
-      location: op2_offset.json
-    - record: bpr_555_persistence
-      location: bpr_555_persistence.json
-    - record: bpr_138_persistence
-      location: bpr_138_persistence.json
+    - name: op1_persistence
+      transformation:
+        type: serialization
+        location: op1_persistence.json
+    - name: op1_octaves
+      transformation:
+        type: serialization
+        location: op1_octaves.json
+    - name: op1_divergence_scale
+      transformation:
+        type: serialization
+        location: op1_divergence_scale.json
+    - name: op1_offset
+      transformation:
+        type: serialization
+        location: op1_offset.json
+    - name: op2_persistence
+      transformation:
+        type: serialization
+        location: op2_persistence.json
+    - name: op2_octaves
+      transformation:
+        type: serialization
+        location: op2_octaves.json
+    - name: op2_divergence_scale
+      transformation:
+        type: serialization
+        location: op2_divergence_scale.json
+    - name: op2_offset
+      transformation:
+        type: serialization
+        location: op2_offset.json
+    - name: bpr_555_persistence
+      transformation:
+        type: serialization
+        location: bpr_555_persistence.json
+    - name: bpr_138_persistence
+      transformation:
+        type: serialization
+        location: bpr_138_persistence.json
 
     -
-      record: seed_tmpl
-      location: seed_tmpl
+      name: seed_tmpl
+      transformation:
+        type: serialization
+        location: seed_tmpl
     -
-      record: snake_oil_params_txt_tmpl
-      location: snake_oil_params.txt.tmpl
+      name: snake_oil_params_txt_tmpl
+      transformation:
+        type: serialization
+        location: snake_oil_params.txt.tmpl
 
   output:
     -
-      record: summary
-      location: SNAKE_OIL_FIELD.SMSPEC
-      smry_keys: ["FOPT", "FOPR"]
+      name: summary
+      transformation:
+        type: summary
+        location: SNAKE_OIL_FIELD.SMSPEC
+        smry_keys: ["FOPT", "FOPR"]
 
   transportable_commands:
     - name: render

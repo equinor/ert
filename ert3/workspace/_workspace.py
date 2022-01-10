@@ -2,7 +2,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union
 
 import yaml
 
@@ -102,7 +102,9 @@ class Workspace:
         }
 
     def load_experiment_run_config(
-        self, experiment_name: str
+        self,
+        experiment_name: str,
+        plugin_registry: ert3.config.ConfigPluginRegistry,
     ) -> ert3.config.ExperimentRunConfig:
         """Load the configuration objects needed to run an experiment.
 
@@ -118,6 +120,7 @@ class Workspace:
         Returns: ert3.config.ExperimentRunConfig: A configuration object for an
             experiment run.
         """
+
         experiment_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
         )
@@ -129,14 +132,18 @@ class Workspace:
         with open(stages_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         sys.path.append(str(self._path))
-        stage_config = ert3.config.load_stages_config(config_dict)
+        stage_config = ert3.config.load_stages_config(
+            config_dict, plugin_registry=plugin_registry
+        )
 
         ensemble_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"
         )
         with open(ensemble_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
-        ensemble_config = ert3.config.load_ensemble_config(config_dict)
+        ensemble_config = ert3.config.load_ensemble_config(
+            config_dict, plugin_registry=plugin_registry
+        )
         self._validate_resources(ensemble_config)
 
         parameters_config_path = self._path / "parameters.yml"
@@ -164,20 +171,19 @@ class Workspace:
         linked_input: ert3.config.LinkedInput,
         ensemble_size: int = 1,
     ) -> ert.data.RecordCollection:
-        stage_name = experiment_run_config.ensemble_config.forward_model.stage
-        step = cast(
-            ert3.config.Step,
-            experiment_run_config.stages_config.step_from_key(stage_name),
+        transformation = linked_input.source_transformation
+        assert (
+            transformation
+        ), f"cannot load resource: no source transformation for '{linked_input.name}'"
+        assert isinstance(transformation, ert.data.FileTransformation), (
+            f"cannot load resource for '{linked_input.name}': not a file-based "
+            + f"transformation, was {transformation.__class__.__name__}"
         )
-        record_mime = step.input[linked_input.name].mime
-        file_path = self._path / _RESOURCES_BASE / linked_input.source_location
-        resource = await ert.data.load_collection_from_file(
-            file_path,
-            record_mime,
-            ensemble_size,
-            is_directory=linked_input.source_is_directory,
+        return await ert.data.load_collection_from_file(
+            transformation=transformation,
+            length=ensemble_size,
+            root_path=self._path / _RESOURCES_BASE,
         )
-        return resource
 
     def export_json(
         self,
@@ -209,7 +215,7 @@ class Workspace:
         resource_inputs = [
             item
             for item in ensemble_config.input
-            if item.source_namespace == "resources"
+            if item.source_namespace == ert3.config.SourceNS.resources
         ]
         for resource in resource_inputs:
             path = self._path / _RESOURCES_BASE / resource.source_location
@@ -217,15 +223,23 @@ class Workspace:
                 raise ert.exceptions.ConfigValidationError(
                     f"Cannot locate resource: '{resource.source_location}'"
                 )
-            if resource.is_directory is not None:
-                if resource.is_directory and not path.is_dir():
-                    raise ert.exceptions.ConfigValidationError(
-                        f"Resource must be a directory: '{resource.source_location}'"
-                    )
-                if not resource.is_directory and path.is_dir():
-                    raise ert.exceptions.ConfigValidationError(
-                        f"Resource must be a regular file: '{resource.source_location}'"
-                    )
+            # dynamically created so type must be ignored
+            if not resource.transformation:  # type: ignore  # dynamically created
+                return
+            transformation_instance = resource.get_transformation_instance()  # type: ignore  # noqa
+            if (
+                isinstance(transformation_instance, ert.data.TarTransformation)
+                and not path.is_dir()
+            ):
+                raise ert.exceptions.ConfigValidationError(
+                    f"Resource must be a directory: '{resource.source_location}'"
+                )
+            if path.is_dir() and not isinstance(
+                transformation_instance, ert.data.TarTransformation
+            ):
+                raise ert.exceptions.ConfigValidationError(
+                    f"Resource must be a regular file: '{resource.source_location}'"
+                )
 
     def suggest_local_run_path(
         self, basename: str = "local-test-run", run_id: str = "abcdef"

@@ -290,9 +290,12 @@ async def test_load_numeric_record_collection_from_file(designed_coeffs_record_f
     with open(designed_coeffs_record_file, "r") as f:
         raw_collection = json.load(f)
 
-    collection = await ert.data.load_collection_from_file(
-        designed_coeffs_record_file, "application/json"
+    transformation = ert.data.SerializationTransformation(
+        location=designed_coeffs_record_file,
+        mime="application/json",
+        direction=ert.data.TransformationDirection.TO_RECORD,
     )
+    collection = await ert.data.load_collection_from_file(transformation)
     assert len(collection.records) == len(raw_collection)
     assert len(collection) == len(raw_collection)
     assert collection.record_type != ert.data.RecordType.BYTES
@@ -307,8 +310,14 @@ async def test_load_blob_record_collection_from_file(designed_blob_record_file):
 
     When a single binary file is loaded, a uniform collection is implicit."""
     ens_size = 5
+    transformation = ert.data.SerializationTransformation(
+        location=designed_blob_record_file,
+        mime="application/octet-stream",
+        direction=ert.data.TransformationDirection.TO_RECORD,
+    )
     collection = await ert.data.load_collection_from_file(
-        designed_blob_record_file, "application/octet-stream", length=ens_size
+        transformation,
+        length=ens_size,
     )
     assert len(collection.records) == ens_size
     assert len(collection) == ens_size

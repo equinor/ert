@@ -5,9 +5,11 @@ input:
   -
     source: stochastic.wells
     record: wells
-  
-  - source: resources.case
+  -
+    source: resources.case
     record: spe1_template
+    transformation:
+      type: directory
 
 output:
     -

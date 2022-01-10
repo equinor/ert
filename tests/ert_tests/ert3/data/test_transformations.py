@@ -1,11 +1,11 @@
 import contextlib
 import datetime
 import io
-import json
 import os
 import pathlib
+import re
 import tarfile
-from typing import Callable, ContextManager, List
+from typing import Callable, ContextManager, List, Type
 
 import numpy as np
 import pytest
@@ -13,16 +13,19 @@ from ecl.summary import EclSum
 from ert_utils import tmp
 
 from ert.data import (
+    Record,
     BlobRecord,
+    CopyTransformation,
     EclSumTransformation,
-    ExecutableRecordTransformation,
-    FileRecordTransformation,
+    ExecutableTransformation,
+    SerializationTransformation,
     NumericalRecord,
     NumericalRecordTree,
     RecordTransformation,
+    TransformationDirection,
     RecordTransmitter,
-    RecordTreeTransformation,
-    TarRecordTransformation,
+    TreeSerializationTransformation,
+    TarTransformation,
 )
 
 
@@ -71,51 +74,93 @@ def record_factory_context(tmpdir):
     yield record_factory
 
 
-transformation_params = pytest.mark.parametrize(
+from_record_params = pytest.mark.parametrize(
+    ("cls,args,type,files"),
     (
-        "transformation_class, transformation_args, "
-        "location, mime, type, res_files_dumped"
-    ),
-    (
-        (
-            FileRecordTransformation,
-            [],
-            "test.blob",
-            "application/octet-stream",
+        pytest.param(
+            CopyTransformation,
+            [pathlib.Path("test.blob")],
             "blob",
             ["test.blob"],
         ),
-        (
-            TarRecordTransformation,
-            [],
-            "test_dir",
-            "application/octet-stream",
+        pytest.param(
+            SerializationTransformation,
+            [pathlib.Path("test.blob"), "application/octet-stream"],
+            "blob",
+            ["test.blob"],
+        ),
+        pytest.param(
+            TarTransformation,
+            [pathlib.Path("test_dir")],
             "dir",
             ["test_dir/a.txt", "test_dir/b.txt"],
         ),
-        (
-            ExecutableRecordTransformation,
-            [],
-            "test.blob",
-            "application/octet-stream",
+        pytest.param(
+            ExecutableTransformation,
+            [pathlib.Path("test.blob"), "application/octet-stream"],
             "blob",
             ["bin/test.blob"],
         ),
-        (
-            RecordTreeTransformation,
-            [],
-            "leaf.json",
-            "application/json",
+        pytest.param(
+            TreeSerializationTransformation,
+            [pathlib.Path("leaf.json"), "application/json"],
             "tree",
             ["a-leaf.json", "b-leaf.json"],
         ),
-        (
+        pytest.param(
             EclSumTransformation,
-            [["FOPT", "FOPR"]],
-            None,
-            None,
+            ["TEST.UNSMRY", ["FOPT", "FOPR"]],
             "eclsum",
+            None,
+            marks=pytest.mark.raises(
+                exception=ValueError,
+                match=r".+cannot transform in direction: from_record",
+                match_flags=(re.MULTILINE | re.DOTALL),
+            ),
+        ),
+    ),
+)
+to_record_params = pytest.mark.parametrize(
+    ("cls,args,files,record_cls"),
+    (
+        pytest.param(
+            CopyTransformation,
+            [pathlib.Path("test.blob")],
+            ["test.blob"],
+            BlobRecord,
+        ),
+        pytest.param(
+            SerializationTransformation,
+            [pathlib.Path("test.blob"), "application/octet-stream"],
+            ["test.blob"],
+            BlobRecord,
+        ),
+        pytest.param(
+            TarTransformation,
+            [pathlib.Path("test_dir")],
+            ["test_dir/a.txt", "test_dir/b.txt"],
+            BlobRecord,
+        ),
+        pytest.param(
+            ExecutableTransformation,
+            [pathlib.Path("bin/test.blob"), "application/octet-stream"],
+            ["bin/test.blob"],
+            BlobRecord,
+        ),
+        pytest.param(
+            TreeSerializationTransformation,
+            [pathlib.Path("a-leaf.json"), "application/json"],
+            ["a-leaf.json", "b-leaf.json"],
+            None,
+            marks=pytest.mark.skip(
+                "bare TreeSerializationTransformation isn't testable"
+            ),
+        ),
+        pytest.param(
+            EclSumTransformation,
+            ["TEST.UNSMRY", ["FOPT", "FOPR"]],
             ["TEST.UNSMRY", "TEST.SMSPEC"],
+            NumericalRecordTree,
         ),
     ),
 )
@@ -148,17 +193,15 @@ def _create_synthetic_smry(directory_path: pathlib.Path, length: int = 3):
 
 
 @pytest.mark.asyncio
-@transformation_params
-async def test_atomic_transformation_input(
+@from_record_params
+async def test_atomic_from_record_transformation(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
-    transformation_class: RecordTransformation,
-    transformation_args: list,
-    location: str,
-    mime: str,
+    cls: Type[RecordTransformation],
+    args: list,
     type: str,
-    res_files_dumped: List[str],
+    files: List[str],
     storage_path,
     tmp_path,
 ):
@@ -168,34 +211,31 @@ async def test_atomic_transformation_input(
     ) as record_transmitter_factory, record_factory_context(
         tmp_path
     ) as record_factory, tmp():
-        transformation = transformation_class(*transformation_args)
-        if isinstance(transformation, EclSumTransformation):
-            return  # Not supposed to be implemented
+        # TODO: https://github.com/python/mypy/issues/6799
+        transformation = cls(
+            *args, direction=TransformationDirection.FROM_RECORD
+        )  # type: ignore
+
         record_in = record_factory(type=type)
         transmitter = record_transmitter_factory(name="trans_custom")
         await transmitter.transmit_record(record_in)
         assert transmitter.is_transmitted()
         record = await transmitter.load()
-        await transformation.transform_input(
-            record, mime, runpath, pathlib.Path(location)
-        )
-
-        for file in res_files_dumped:
+        await transformation.from_record(record)
+        for file in files:
             assert (runpath / file).exists()
 
 
 @pytest.mark.asyncio
-@transformation_params
-async def test_atomic_transformation_output(
+@to_record_params
+async def test_atomic_to_record_transformation(
     record_transmitter_factory_context: ContextManager[
         Callable[[str], RecordTransmitter]
     ],
-    transformation_class: RecordTransformation,
-    transformation_args: list,
-    location: str,
-    mime: str,
-    type: str,
-    res_files_dumped: List[str],
+    cls: Type[RecordTransformation],
+    args: list,
+    files: List[str],
+    record_cls: Type[Record],
     storage_path,
     tmp_path,
 ):
@@ -204,55 +244,32 @@ async def test_atomic_transformation_output(
     ) as record_transmitter_factory, file_factory_context(
         tmp_path
     ) as file_factory, tmp():
-        runpath = tmp_path
-        file_factory(files=res_files_dumped)
+        runpath = pathlib.Path(tmp_path)
+        file_factory(files=files)
         transmitter = record_transmitter_factory(name="trans_custom")
         assert transmitter.is_transmitted() is False
-        transformation = transformation_class(*transformation_args)
-        if type != "dir":
-            location = res_files_dumped[0]
 
-        if isinstance(transformation, RecordTreeTransformation) and not isinstance(
-            transformation, EclSumTransformation
-        ):
-            return  # Not implemented
-        record = await transformation.transform_output(mime, runpath / location)
+        # TODO: https://github.com/python/mypy/issues/6799
+        transformation = cls(
+            *args, direction=TransformationDirection.TO_RECORD
+        )  # type: ignore
+
+        record = await transformation.to_record(root_path=runpath)
         await transmitter.transmit_record(record)
         assert transmitter.is_transmitted()
 
         loaded_record = await transmitter.load()
-        if isinstance(transformation, EclSumTransformation):
-            assert isinstance(loaded_record, NumericalRecordTree)
-        else:
-            assert isinstance(loaded_record, BlobRecord)
-
-
-@pytest.mark.asyncio
-async def test_transform_output_sequence(tmpdir):
-    test_data = [
-        {"a": 1.0, "b": 2.0},
-        {"a": 3.0, "b": 4.0},
-        {"a": 5.0, "b": 6.0},
-    ]
-    file = pathlib.Path(tmpdir) / "test.json"
-    with open(file, "w", encoding="utf-8") as fp:
-        json.dump(test_data, fp)
-
-    records = await FileRecordTransformation().transform_output_sequence(
-        "application/json", file
-    )
-    assert len(records) == 3
-    for record, data in zip(records, test_data):
-        assert isinstance(record, NumericalRecord)
-        assert data == record.data
+        assert isinstance(loaded_record, record_cls)
 
 
 @pytest.mark.asyncio
 async def test_eclsum_transformation(tmp_path):
     _create_synthetic_smry(tmp_path, length=3)
-    numrecordtree = await EclSumTransformation(smry_keys=["FOPT"]).transform_output(
-        location=tmp_path / "TEST", mime=None
-    )
+    numrecordtree = await EclSumTransformation(
+        location=tmp_path / "TEST",
+        smry_keys=["FOPT"],
+        direction=TransformationDirection.TO_RECORD,
+    ).to_record()
     data = numrecordtree.flat_record_dict["FOPT"].data
     assert data == {
         "2000-01-01 00:00:00": 0,
@@ -269,15 +286,33 @@ async def test_eclsum_transformation(tmp_path):
 async def test_eclsum_transformation_wrongkey(tmp_path):
     _create_synthetic_smry(tmp_path, length=3)
     with pytest.raises(KeyError):
-        await EclSumTransformation(smry_keys=["BOGUS"]).transform_output(
-            location=tmp_path / "TEST", mime=None
-        )
+        await EclSumTransformation(
+            location=tmp_path / "TEST",
+            smry_keys=["BOGUS"],
+            direction=TransformationDirection.TO_RECORD,
+        ).to_record()
 
 
 @pytest.mark.asyncio
 async def test_eclsum_transformation_emptykeys(tmp_path):
     _create_synthetic_smry(tmp_path, length=3)
     with pytest.raises(ValueError):
-        await EclSumTransformation(smry_keys=[]).transform_output(
-            location=tmp_path / "TEST", mime=None
-        )
+        await EclSumTransformation(
+            location=tmp_path / "TEST",
+            smry_keys=[],
+            direction=TransformationDirection.TO_RECORD,
+        ).to_record()
+
+
+@pytest.mark.asyncio
+async def test_copy_with_directory(tmp_path):
+    with pytest.raises(
+        RuntimeError, match="use the 'directory' transformation instead"
+    ):
+        await CopyTransformation(location=tmp_path)
+    with pytest.raises(
+        RuntimeError, match="use the 'directory' transformation instead"
+    ):
+        transformation = CopyTransformation(location=pathlib.Path("foo"))
+        pathlib.Path(tmp_path / "foo").mkdir()
+        await transformation.to_record(root_path=tmp_path)

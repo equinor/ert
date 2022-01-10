@@ -14,12 +14,16 @@ from ert.data.record._record import (
 )
 
 from .record._transformation import (
+    CopyTransformation,
     EclSumTransformation,
-    ExecutableRecordTransformation,
-    FileRecordTransformation,
+    ExecutableTransformation,
+    FileTransformation,
     RecordTransformation,
-    RecordTreeTransformation,
-    TarRecordTransformation,
+    SerializationTransformation,
+    TarTransformation,
+    TransformationDirection,
+    TransformationType,
+    TreeSerializationTransformation,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -30,26 +34,30 @@ from .record._transmitter import (
 )
 
 __all__ = (
-    "BlobRecordTree",
-    "NumericalRecordTree",
     "BlobRecord",
+    "BlobRecordTree",
+    "CopyTransformation",
+    "EclSumTransformation",
+    "ExecutableTransformation",
+    "FileTransformation",
     "InMemoryRecordTransmitter",
     "load_collection_from_file",
     "NumericalRecord",
+    "NumericalRecordTree",
     "record_data",
     "Record",
     "RecordCollection",
     "RecordCollectionType",
     "RecordIndex",
+    "RecordTransformation",
     "RecordTransmitter",
     "RecordTransmitterType",
     "RecordType",
     "RecordValidationError",
+    "SerializationTransformation",
     "SharedDiskRecordTransmitter",
-    "EclSumTransformation",
-    "FileRecordTransformation",
-    "TarRecordTransformation",
-    "ExecutableRecordTransformation",
-    "RecordTransformation",
+    "TarTransformation",
+    "TransformationDirection",
+    "TransformationType",
     "transmitter_factory",
 )

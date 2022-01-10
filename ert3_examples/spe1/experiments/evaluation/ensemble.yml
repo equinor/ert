@@ -10,6 +10,8 @@ input:
   -
     source: resources.case
     record: spe1_template
+    transformation:
+      type: directory
 
 output:
     -
