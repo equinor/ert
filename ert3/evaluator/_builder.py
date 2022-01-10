@@ -197,7 +197,7 @@ def _get_input_recordtransformation(
 
 
 def _get_output_recordtransformation(
-    output_config: ert3.config.Record,
+    output_config: ert3.config.StageIO,
 ) -> ert.data.RecordTransformation:
     """Determine (by sniffing the requested configuration) and configure a
     RecordTransformation for the output from a step."""

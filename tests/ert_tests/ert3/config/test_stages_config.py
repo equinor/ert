@@ -75,12 +75,12 @@ def test_check_loaded_mime_types_new_default(base_unix_stage_config):
     the `_ensure_mime` validator will not modify the mime,
     which may lead to an invalid mime.
     """
-    from ert3.config._stages_config import Record
+    from ert3.config._stages_config import StageIO
 
     raw_config = base_unix_stage_config
 
     with patch.object(
-        Record.__dict__["__fields__"]["mime"], "default", "application/not_a_valid_mime"
+        StageIO.__dict__["__fields__"]["mime"], "default", "application/not_a_valid_mime"
     ):
         with pytest.raises(ert.exceptions.ConfigValidationError):
             _ = ert3.config.load_stages_config(raw_config)

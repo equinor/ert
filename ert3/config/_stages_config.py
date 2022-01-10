@@ -4,7 +4,7 @@ from importlib.abc import Loader
 from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union, cast
 
-from pydantic import BaseModel, FilePath, ValidationError, validator
+from pydantic import BaseModel, FilePath, ValidationError, validator, Field, Model
 
 import ert
 
@@ -37,7 +37,7 @@ class _StagesConfig(BaseModel):
         arbitrary_types_allowed = True
 
 
-class Record(_StagesConfig):
+class StageIO(_StagesConfig):
     record: str
     location: str
     mime: str = ""
@@ -67,9 +67,9 @@ class IndexedOrderedDict(OrderedDict):  # type: ignore
         return self[list(self.keys())[attr]]
 
 
-def _create_record_mapping(records: Tuple[Dict[str, str], ...]) -> Mapping[str, Record]:
+def _create_io_mapping(ios: Tuple[Dict[str, str], ...]) -> Mapping[str, StageIO]:
     ordered_dict = IndexedOrderedDict(
-        {record["record"]: Record(**record) for record in records}
+        {io["record"]: StageIO(**io) for io in ios}
     )
     proxy = MappingProxyType(ordered_dict)
     return proxy
@@ -81,10 +81,10 @@ class _Step(_StagesConfig):
     output: MappingProxyType  # type: ignore
 
     _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
-        _create_record_mapping
+        _create_io_mapping
     )
     _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
-        _create_record_mapping
+        _create_io_mapping
     )
 
 

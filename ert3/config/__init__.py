@@ -2,7 +2,7 @@ from ._ensemble_config import load_ensemble_config, EnsembleConfig, SourceNS
 from ._stages_config import (
     load_stages_config,
     StagesConfig,
-    Record,
+    StageIO,
     Function,
     Unix,
     IndexedOrderedDict,
@@ -19,7 +19,7 @@ __all__ = [
     "EnsembleConfig",
     "load_stages_config",
     "StagesConfig",
-    "Record",
+    "StageIO",
     "Step",
     "Unix",
     "Function",
