@@ -36,7 +36,6 @@
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
-#define DEFAULT_IES_SUBSPACE false
 #define DEFAULT_IES_INVERSION ies::config::IES_INVERSION_SUBSPACE_EXACT_R
 #define DEFAULT_IES_LOGFILE "ies.log"
 #define DEFAULT_IES_AAPROJECTION false
@@ -54,8 +53,8 @@ struct ies::config::config_struct {
         ies_min_steplength; // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
     double
         ies_dec_steplength; // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
-    bool ies_subspace;     // Controlled by config key: DEFAULT_IES_SUBSPACE
-    int ies_inversion;     // Controlled by config key: DEFAULT_IES_INVERSION
+    inversion_type
+        ies_inversion;     // Controlled by config key: DEFAULT_IES_INVERSION
     char *ies_logfile;     // Controlled by config key: DEFAULT_IES_LOGFILE
     bool ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
 };
@@ -72,7 +71,6 @@ ies::config::config_type *ies::config::alloc() {
     ies::config::set_max_steplength(config, DEFAULT_IES_MAX_STEPLENGTH);
     ies::config::set_min_steplength(config, DEFAULT_IES_MIN_STEPLENGTH);
     ies::config::set_dec_steplength(config, DEFAULT_IES_DEC_STEPLENGTH);
-    ies::config::set_subspace(config, DEFAULT_IES_SUBSPACE);
     ies::config::set_inversion(config, DEFAULT_IES_INVERSION);
     ies::config::set_logfile(config, DEFAULT_IES_LOGFILE);
     ies::config::set_aaprojection(config, DEFAULT_IES_AAPROJECTION);
@@ -117,6 +115,22 @@ void ies::config::set_option_flags(config_type *config, long flags) {
     config->option_flags = flags;
 }
 
+bool ies::config::get_option(const config_type *config,
+                             analysis_module_flag_enum option) {
+    return ((config->option_flags & option) == option);
+}
+
+void ies::config::set_option(config_type *config,
+                             analysis_module_flag_enum option) {
+    config->option_flags |= option;
+}
+
+void ies::config::del_option(config_type *config,
+                             analysis_module_flag_enum option) {
+    if (ies::config::get_option(config, option))
+        config->option_flags -= option;
+}
+
 /*------------------------------------------------------------------------------------------------*/
 /* IES_MAX_STEPLENGTH */
 double ies::config::get_max_steplength(const ies::config::config_type *config) {
@@ -155,21 +169,11 @@ void ies::config::set_dec_steplength(ies::config::config_type *config,
 /* IES_INVERSION          */
 ies::config::inversion_type
 ies::config::get_inversion(const ies::config::config_type *config) {
-    return static_cast<ies::config::inversion_type>(config->ies_inversion);
+    return config->ies_inversion;
 }
 void ies::config::set_inversion(ies::config::config_type *config,
                                 ies::config::inversion_type ies_inversion) {
     config->ies_inversion = ies_inversion;
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* IES_SUBSPACE      */
-bool ies::config::get_subspace(const ies::config::config_type *config) {
-    return config->ies_subspace;
-}
-void ies::config::set_subspace(ies::config::config_type *config,
-                               bool ies_subspace) {
-    config->ies_subspace = ies_subspace;
 }
 
 /*------------------------------------------------------------------------------------------------*/
