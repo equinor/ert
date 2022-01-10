@@ -10,6 +10,7 @@ pybind11_add_module(
   SHARED
   res_util/res_log.cpp
   res_util/log.cpp
+  res_util/memory.cpp
   res_util/es_testdata.cpp
   res_util/file_utils.cpp
   res_util/arg_pack.cpp
