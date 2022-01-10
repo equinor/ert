@@ -4,7 +4,7 @@ from importlib.abc import Loader
 from types import MappingProxyType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union, cast
 
-from pydantic import BaseModel, FilePath, ValidationError, validator, Field, Model
+from pydantic import BaseModel, FilePath, ValidationError, validator
 
 import ert
 
