@@ -1,8 +1,6 @@
 #ifndef ERT_STD_ENKF_H
 #define ERT_STD_ENKF_H
 
-#include <stdbool.h>
-
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
