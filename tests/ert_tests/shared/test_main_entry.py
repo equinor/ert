@@ -33,3 +33,73 @@ def test_main_logging_argparse(monkeypatch, caplog):
     with caplog.at_level(logging.INFO):
         main.main()
     assert "mode='test_run'" in caplog.text
+
+
+def test_api_database_default(monkeypatch):
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+
+    monkeypatch.setattr(main, "start_ert_server", MagicMock())
+    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
+    mocked_start_server = MagicMock()
+    monkeypatch.setattr(
+        "ert_shared.services.storage_service.BaseService.start_server",
+        mocked_start_server,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["ert", "api"],
+    )
+
+    main.main()
+    # We expect default value from Storage class, validate that no explicit
+    # value is given for database_url
+    mocked_start_server.assert_called_once_with(res_config=None)
+
+
+def test_api_database_url_forwarded(monkeypatch):
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+
+    monkeypatch.setattr(main, "start_ert_server", MagicMock())
+    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
+    mocked_start_server = MagicMock()
+    monkeypatch.setattr(
+        "ert_shared.services.storage_service.BaseService.start_server",
+        mocked_start_server,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["ert", "api", "--database-url", "TEST_DATABASE_URL"],
+    )
+
+    main.main()
+    mocked_start_server.assert_called_once_with(
+        res_config=None, database_url="TEST_DATABASE_URL"
+    )
+
+
+def test_vis_database_url_forwarded(monkeypatch):
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+
+    monkeypatch.setattr(main, "start_ert_server", MagicMock())
+    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
+    mocked_connect_or_start_server = MagicMock()
+    monkeypatch.setattr(
+        "ert_shared.services.storage_service.BaseService.connect_or_start_server",
+        mocked_connect_or_start_server,
+    )
+    monkeypatch.setattr(
+        "ert_shared.services.storage_service.BaseService.start_server",
+        MagicMock,
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["ert", "vis", "--database-url", "TEST_DATABASE_URL"],
+    )
+
+    main.main()
+    mocked_connect_or_start_server.assert_called_once_with(
+        res_config=None, database_url="TEST_DATABASE_URL"
+    )
