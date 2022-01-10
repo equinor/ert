@@ -19,8 +19,6 @@
 #ifndef IES_CONFIG_H
 #define IES_CONFIG_H
 
-#include <stdbool.h>
-
 namespace ies {
 namespace config {
 
