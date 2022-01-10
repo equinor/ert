@@ -37,12 +37,22 @@ import ert_shared
 
 
 def run_ert_storage(args):
-    with Storage.start_server(res_config=args.config) as server:
+    kwargs = {"res_config": args.config}
+
+    if args.database_url is not None:
+        kwargs["database_url"] = args.database_url
+
+    with Storage.start_server(**kwargs) as server:
         server.wait()
 
 
 def run_webviz_ert(args):
-    with Storage.connect_or_start_server(res_config=args.config) as storage:
+    kwargs = {"res_config": args.config}
+
+    if args.database_url is not None:
+        kwargs["database_url"] = args.database_url
+
+    with Storage.connect_or_start_server(**kwargs) as storage:
         storage.wait_until_ready()
         with WebvizErt.start_server() as webviz_ert:
             webviz_ert.wait()
@@ -446,6 +456,7 @@ def main():
     logger = logging.getLogger(__name__)
     if args.verbose:
         logger.setLevel("DEBUG")
+
     FeatureToggling.update_from_args(args)
     try:
         with start_ert_server(args.mode), ErtPluginContext() as context:
