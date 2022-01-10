@@ -20,7 +20,7 @@ from ert.data import (
     RecordType,
 )
 from ert.data.record import _transmitter
-from ert.data import FileRecordTransformation
+from ert.data import SerializationTransformation
 
 record123 = NumericalRecord(data=[1, 2, 3])
 
@@ -149,9 +149,9 @@ async def test_simple_record_transmit_from_file(
     storage_path,
 ):
     if isinstance(record_in, (NumericalRecordTree, BlobRecordTree)):
-        pytest.skip("unsupported serialization of opaque RecordTree")
+        pytest.skip("unsupported serialization of binary RecordTree")
     if isinstance(record_in, BlobRecord) and mime_type != "application/octet-stream":
-        pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
+        pytest.skip(f"unsupported serialization of binary record to {mime_type}")
     if (
         isinstance(record_in, NumericalRecord)
         and mime_type == "application/octet-stream"
@@ -169,10 +169,12 @@ async def test_simple_record_transmit_from_file(
             await ert.serialization.get_serializer(mime_type).encode_to_path(
                 expected_data, filename
             )
-        transformation = ert.data.FileRecordTransformation()
-        record = await transformation.transform_output(
-            location=filename, mime=mime_type
+        transformation = ert.data.SerializationTransformation(
+            location=filename,
+            mime=mime_type,
+            direction=ert.data.TransformationDirection.TO_RECORD,
         )
+        record = await transformation.to_record()
         await transmitter.transmit_record(record)
         assert transmitter.is_transmitted()
         with pytest.raises(RuntimeError, match="Record already transmitted"):
@@ -217,9 +219,9 @@ async def test_simple_record_transmit_and_dump(
     storage_path,
 ):
     if isinstance(record_in, (NumericalRecordTree, BlobRecordTree)):
-        pytest.skip("unsupported serialization of opaque RecordTree")
+        pytest.skip("unsupported serialization of binary RecordTree")
     if isinstance(record_in, BlobRecord) and mime_type != "application/octet-stream":
-        pytest.skip(f"unsupported serialization of opaque record to {mime_type}")
+        pytest.skip(f"unsupported serialization of binary record to {mime_type}")
     if (
         isinstance(record_in, NumericalRecord)
         and mime_type == "application/octet-stream"
@@ -230,19 +232,21 @@ async def test_simple_record_transmit_and_dump(
     ) as record_transmitter_factory, tmp():
         transmitter = record_transmitter_factory(name="some_name")
         await transmitter.transmit_record(record_in)
-        transformation = FileRecordTransformation()
-        record = await transmitter.load()
-        await transformation.transform_input(
-            record, mime_type, pathlib.Path("."), pathlib.Path("record")
+        transformation = SerializationTransformation(
+            location=pathlib.Path("record"),
+            mime=mime_type,
+            direction=ert.data.TransformationDirection.FROM_RECORD,
         )
+        record = await transmitter.load()
+        await transformation.from_record(record)
         if mime_type == "application/octet-stream":
-            with open("record", "rb") as f:
-                assert expected_data == f.read()
+            with open("record", "rb") as fb:
+                assert expected_data == fb.read()
         else:
-            with open("record", "rt", encoding="utf-8") as f:
+            with open("record", "rt", encoding="utf-8") as ft:
                 assert (
                     ert.serialization.get_serializer(mime_type).encode(expected_data)
-                    == f.read()
+                    == ft.read()
                 )
 
 

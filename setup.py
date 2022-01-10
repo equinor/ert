@@ -91,7 +91,7 @@ setup(
         "pluggy",
         "prefect",
         "psutil",
-        "pydantic >= 1.8.1",
+        "pydantic >= 1.9",
         "PyQt5",
         "pyrsistent",
         "python-dateutil",

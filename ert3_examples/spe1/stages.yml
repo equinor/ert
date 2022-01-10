@@ -2,21 +2,28 @@
   name: simulate_SPE1
   input:
     -
-      record: field_properties
-      location: field_properties.json
+      name: field_properties
+      transformation:
+        type: serialization
+        location: field_properties.json
     -
-      record: wells
-      location: wells.json
+      name: wells
+      transformation:
+        type: serialization
+        location: wells.json
 
-    - record: spe1_template
-      is_directory: true
-      location: case
+    - name: spe1_template
+      transformation:
+        type: directory
+        location: case
 
   output:
     -
-      record: eclsum
-      location: case/SPE1.SMSPEC
-      smry_keys: [WOPT:PROD, WWPT:PROD, WGPT:PROD, WWIT:INJ]
+      name: eclsum
+      transformation:
+        type: summary
+        location: case/SPE1.SMSPEC
+        smry_keys: [WOPT:PROD, WWPT:PROD, WGPT:PROD, WWIT:INJ]
 
   transportable_commands:
     -

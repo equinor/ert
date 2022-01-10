@@ -11,7 +11,7 @@ import pkg_resources as pkg
 
 import ert
 import ert3
-from ert3.config import DEFAULT_RECORD_MIME_TYPE
+from ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
 from ert3.workspace import Workspace
 from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
@@ -28,7 +28,7 @@ def _build_init_argparser(subparsers: Any) -> None:
     init_parser.add_argument(
         "--example",
         help="Name of the example that would be copied "
-        "to the working directory and initialised.\n"
+        "to the working directory and initialized.\n"
         f"The available examples are: {', '.join(_get_ert3_example_names())}",
     )
 
@@ -91,7 +91,8 @@ def _build_record_argparser(subparsers: Any) -> None:
         default="guess",
         help="MIME type of file. If type is 'guess', a guess is made. If a "
         + f"guess is unsuccessful, it defaults to {DEFAULT_RECORD_MIME_TYPE}. "
-        + "A provided value is ignored if --blob-record is passed, as it is "
+        + "A provided value is ignored if one of--blob-record or "
+        + "--is-directory is passed, as it is "
         + "then assumed that the type is 'application/octet-stream'. "
         + "Default: guess.",
         choices=tuple(("guess",) + ert.serialization.registered_types()),
@@ -185,7 +186,7 @@ def _get_ert3_examples_path() -> Path:
 
 def _get_ert3_example_names() -> List[str]:
     pkg_examples_path = _get_ert3_examples_path()
-    ert_example_names = []
+    ert_example_names: List[str] = []
     for example in pkg_examples_path.iterdir():
         if example.is_dir() and "__" not in example.name:
             ert_example_names.append(example.name)
@@ -244,6 +245,7 @@ def _init(args: Any) -> None:
 
 def _build_local_test_run_config(
     experiment_run_config: ert3.config.ExperimentRunConfig,
+    plugin_registry: ConfigPluginRegistry,
 ) -> ert3.config.ExperimentRunConfig:
     """Validate and modify a run configuration for a local test run scenario.
 
@@ -256,41 +258,45 @@ def _build_local_test_run_config(
         )
 
     for input_record in experiment_run_config.ensemble_config.input:
-        if not (
-            input_record.source.startswith("stochastic.")
-            or input_record.source.startswith("resources.")
+        if input_record.source_namespace not in (
+            ert3.config.SourceNS.resources,
+            ert3.config.SourceNS.stochastic,
         ):
             raise NotImplementedError(
                 "Local test runs are currently only supported for "
                 "stochastic and resources input sources. "
-                f"Found:\n'{input_record.source}'."
+                f"Found:\n'{input_record.source_namespace}'."
             )
 
     raw_ensemble_config = experiment_run_config.ensemble_config.dict()
     raw_ensemble_config["size"] = 1
     raw_ensemble_config["forward_model"]["driver"] = "local"
 
-    # Mime types do not make sense when data is not read from
-    # files, see issue #2764
-    for input_ in raw_ensemble_config["input"]:
-        input_.pop("mime")
-
     return ert3.config.ExperimentRunConfig(
         experiment_run_config.experiment_config,
         experiment_run_config.stages_config,
-        ert3.config.load_ensemble_config(raw_ensemble_config),
+        ert3.config.load_ensemble_config(
+            raw_ensemble_config, plugin_registry=plugin_registry
+        ),
         experiment_run_config.parameters_config,
     )
 
 
-def _run(workspace: Workspace, args: Any) -> None:
+def _run(
+    workspace: Workspace, args: Any, plugin_registry: ert3.config.ConfigPluginRegistry
+) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
     ert.storage.assert_storage_initialized(workspace_name=workspace.name)
-    experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
+
+    experiment_run_config = workspace.load_experiment_run_config(
+        args.experiment_name, plugin_registry=plugin_registry
+    )
 
     if args.local_test_run:
-        experiment_run_config = _build_local_test_run_config(experiment_run_config)
+        experiment_run_config = _build_local_test_run_config(
+            experiment_run_config, plugin_registry=plugin_registry
+        )
 
     if experiment_run_config.experiment_config.type == "evaluation":
         ert3.engine.run(
@@ -305,9 +311,13 @@ def _run(workspace: Workspace, args: Any) -> None:
         )
 
 
-def _export(workspace: Workspace, args: Any) -> None:
+def _export(
+    workspace: Workspace, args: Any, plugin_registry: ert3.config.ConfigPluginRegistry
+) -> None:
     assert args.sub_cmd == "export"
-    experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
+    experiment_run_config = workspace.load_experiment_run_config(
+        args.experiment_name, plugin_registry=plugin_registry
+    )
     ert3.engine.export(workspace, args.experiment_name, experiment_run_config)
 
 
@@ -328,37 +338,35 @@ def _record(workspace: Workspace, args: Any) -> None:
         get_event_loop().run_until_complete(future)
 
     elif args.sub_record_cmd == "load":
-        if args.mime_type == "guess" and not args.blob_record:
-            guess = mimetypes.guess_type(str(args.record_file))[0]
-            if guess:
-                if ert.serialization.has_serializer(guess):
-                    record_mime = guess
+        transformation: ert.data.RecordTransformation
+        if args.is_directory:
+            transformation = ert.data.TarTransformation(args.record_file)
+        else:
+            if args.mime_type == "guess":
+                guess = mimetypes.guess_type(str(args.record_file))[0]
+                if guess:
+                    if ert.serialization.has_serializer(guess):
+                        mime = guess
+                    else:
+                        print(
+                            f"Unsupported type '{guess}', defaulting to "
+                            + f"'{DEFAULT_RECORD_MIME_TYPE}'."
+                        )
+                        mime = DEFAULT_RECORD_MIME_TYPE
                 else:
                     print(
-                        f"Unsupported type '{guess}', defaulting to "
-                        + f"'{DEFAULT_RECORD_MIME_TYPE}'."
+                        f"Unable to guess what type '{args.record_file}' is, "
+                        + f"defaulting to '{DEFAULT_RECORD_MIME_TYPE}'."
                     )
-                    record_mime = DEFAULT_RECORD_MIME_TYPE
+                    mime = DEFAULT_RECORD_MIME_TYPE
             else:
-                print(
-                    f"Unable to guess what type '{args.record_file}' is, "
-                    + f"defaulting to '{DEFAULT_RECORD_MIME_TYPE}'."
-                )
-                record_mime = DEFAULT_RECORD_MIME_TYPE
-        else:
-            record_mime = args.mime_type
-
-        if args.blob_record or args.is_directory:
-            record_mime = "application/octet-stream"
+                mime = args.mime_type
+            transformation = ert.data.SerializationTransformation(
+                args.record_file, mime
+            )
 
         get_event_loop().run_until_complete(
-            ert3.engine.load_record(
-                workspace,
-                args.record_name,
-                args.record_file,
-                record_mime,
-                args.is_directory,
-            )
+            ert3.engine.load_record(workspace, args.record_name, transformation)
         )
     else:
         raise NotImplementedError(
@@ -441,10 +449,15 @@ def _main() -> None:
     # The remaining commands require an existing ert workspace:
     workspace = Workspace(pathlib.Path.cwd())
 
+    plugin_registry = ert3.config.ConfigPluginRegistry()
+    plugin_registry.register_category(category="transformation", optional=True)
+    plugin_manager = ert3.plugins.ErtPluginManager()
+    plugin_manager.collect(registry=plugin_registry)
+
     if args.sub_cmd == "run":
-        _run(workspace, args)
+        _run(workspace, args, plugin_registry=plugin_registry)
     elif args.sub_cmd == "export":
-        _export(workspace, args)
+        _export(workspace, args, plugin_registry=plugin_registry)
     elif args.sub_cmd == "record":
         _record(workspace, args)
     elif args.sub_cmd == "status":
@@ -453,3 +466,9 @@ def _main() -> None:
         _clean(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
+
+
+if __name__ == "__main__":
+    workspace_ = Workspace(pathlib.Path.cwd())
+    ert3.console.clean(workspace_, set(), True)
+    _main()

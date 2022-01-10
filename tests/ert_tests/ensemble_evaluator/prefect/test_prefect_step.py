@@ -42,20 +42,22 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
             .set_parent_source(step_source)
         )
     for name, path, mime, factory in inputs:
+        transformation = ert.data.ExecutableTransformation(
+            location=Path(path), mime=mime
+        )
         step_builder.add_input(
-            ee.create_file_io_builder()
+            ee.create_input_builder()
             .set_name(name)
-            .set_path(Path(path))
-            .set_mime(mime)
-            .set_transformation(ert.data.ExecutableRecordTransformation())
+            .set_transformation(transformation)
             .set_transmitter_factory(factory)
         )
     for name, path, mime, factory in outputs:
         step_builder.add_output(
-            ee.create_file_io_builder()
+            ee.create_output_builder()
             .set_name(name)
-            .set_path(path)
-            .set_mime(mime)
+            .set_transformation(
+                ert.data.SerializationTransformation(location=path, mime=mime)
+            )
             .set_transmitter_factory(factory)
         )
 
@@ -70,17 +72,15 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
 
 @pytest.fixture()
 def step_test_script_transmitter(test_data_path, transmitter_factory, script_name):
-    async def transform_output(transmitter, mime, location):
-        transformation = ert.data.ExecutableRecordTransformation()
-        record = await transformation.transform_output(mime, location)
+    async def transform_output(transmitter, location):
+        transformation = ert.data.ExecutableTransformation(location=location)
+        record = await transformation.to_record()
         await transmitter.transmit_record(record)
 
     script_transmitter = transmitter_factory("script")
-    transformation = ert.data.ExecutableRecordTransformation()
     get_event_loop().run_until_complete(
         transform_output(
             transmitter=script_transmitter,
-            mime="application/octet-stream",
             location=test_data_path / script_name,
         )
     )

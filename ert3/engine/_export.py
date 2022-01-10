@@ -5,8 +5,6 @@ import ert
 import ert3
 from ert_shared.async_utils import get_event_loop
 
-_SOURCE_SEPARATOR = "."
-
 
 def _prepare_export_parameters(
     workspace: ert3.workspace.Workspace,
@@ -23,16 +21,16 @@ def _prepare_export_parameters(
     linked_inputs = experiment_run_config.get_linked_inputs()
 
     for input_record in experiment_run_config.ensemble_config.input:
-        record_name = input_record.record
-        record_source = input_record.source.split(_SOURCE_SEPARATOR, maxsplit=1)
-        assert len(record_source) == 2
+        name = input_record.record
+        namespace = input_record.source_namespace
+        location = input_record.source_location
 
-        if record_source[0] == "storage" or record_source[0] == "stochastic":
-            exp_name = None if record_source[0] == "storage" else experiment_name
-            source = record_source[1] if record_source[0] == "storage" else None
+        if namespace in (ert3.config.SourceNS.storage, ert3.config.SourceNS.stochastic):
+            exp_name = None if namespace == "storage" else experiment_name
+            source = location if namespace == "storage" else None
             collection = ert.storage.get_ensemble_record(
                 workspace_name=workspace.name,
-                record_name=record_name,
+                record_name=name,
                 experiment_name=exp_name,
                 source=source,
                 ensemble_size=ensemble_size,
@@ -41,23 +39,29 @@ def _prepare_export_parameters(
             if collection.record_type == ert.data.RecordType.BYTES:
                 continue
             for record in collection.records:
-                inputs[record_name].append(record.data)
+                inputs[name].append(record.data)
 
-        elif record_source[0] == "resources":
-            # DO NOT export blob records as inputs
-            if step.input[record_name].mime == "application/octet-stream":
+        elif namespace == ert3.config.SourceNS.resources:
+            linked_input = linked_inputs[ert3.config.SourceNS.resources][name]
+
+            if not linked_input.source_transformation:
                 continue
+
+            # DO NOT export blob records as inputs
+            if (
+                linked_input.source_transformation.type
+                == ert.data.TransformationType.BINARY
+            ):
+                continue
+
             collection = get_event_loop().run_until_complete(
-                workspace.load_resource(
-                    experiment_run_config,
-                    linked_inputs[ert3.config.SourceNS.resources][record_name],
-                )
+                workspace.load_resource(experiment_run_config, linked_input)
             )
             assert len(collection) == ensemble_size
             for record in collection.records:
-                inputs[record_name].append(record.data)
+                inputs[name].append(record.data)
         else:
-            raise ValueError(f"Unknown record source location {record_source[0]}")
+            raise ValueError(f"Unknown record source {input_record.source}")
 
     return inputs
 

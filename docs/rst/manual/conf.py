@@ -60,6 +60,7 @@ extensions = [
 autodoc_class_signature = "separated"
 autodoc_inherit_docstrings = False
 nitpick_ignore = [
+    ("py:class", "pydantic.main.BaseModel"),
     ("py:class", "pydantic.types.FilePath"),
     ("py:class", "pydantic.types.PositiveInt"),
 ]
