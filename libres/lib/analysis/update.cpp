@@ -16,8 +16,11 @@
 #include <ert/util/vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
+#include <ert/res_util/memory.hpp>
 
 namespace analysis {
+
+auto logger = ert::get_logger("analysis");
 
 /*
    Helper structs used to pass information to the multithreaded serialize and
@@ -624,6 +627,8 @@ bool smoother_update(std::vector<int> step_list,
     if (!assert_update_viable(analysis_config, source_fs, total_ens_size,
                               updatestep))
         return false;
+
+    ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
     /*
     Observations and measurements are collected in these temporary
     structures. obs_data is a precursor for the 'd' vector, and
