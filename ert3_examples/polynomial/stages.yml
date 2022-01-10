@@ -2,13 +2,18 @@
   name: evaluate_polynomial
   input:
     -
-      record: coefficients
-      location: coefficients.json
+      name: coefficients
+      transformation:
+        type: serialization
+        location: coefficients.json
 
   output:
     -
-      record: polynomial_output
-      location: output.json
+      name: polynomial_output
+      transformation:
+        type: serialization
+        location: output.json
+
 
   transportable_commands:
     -
@@ -23,13 +28,11 @@
   name: function_polynomial
   input:
     -
-      record: coefficients
-      location: coeffs
+      name: coefficients
 
   output:
     -
-      record: polynomial_output
-      location: output
+      name: polynomial_output
 
   function: function_steps.functions:polynomial
 
@@ -37,16 +40,22 @@
   name: evaluate_x_uncertainty_polynomial
   input:
     -
-      record: coefficients
-      location: coefficients.json
+      name: coefficients
+      transformation:
+        type: serialization
+        location: coefficients.json
     -
-      record: x_uncertainties
-      location: x_uncertainties.json
+      name: x_uncertainties
+      transformation:
+        type: serialization
+        location: x_uncertainties.json
   
   output:
     -
-      record: polynomial_output
-      location: output.json
+      name: polynomial_output
+      transformation:
+        type: serialization
+        location: output.json
 
   transportable_commands:
     -
@@ -60,19 +69,27 @@
   name: evaluate_two_polynomials
   input:
     -
-      record: coefficients
-      location: coefficients.json
+      name: coefficients
+      transformation:
+        type: serialization
+        location: coefficients.json
     -
-      record: other_coefficients
-      location: other_coefficients.json
+      name: other_coefficients
+      transformation:
+        type: serialization
+        location: other_coefficients.json
   
   output:
     -
-      record: polynomial_output
-      location: output.json
+      name: polynomial_output
+      transformation:
+        type: serialization
+        location: output.json
     -
-      record: other_polynomial_output
-      location: other_output.json
+      name: other_polynomial_output
+      transformation:
+        type: serialization
+        location: other_output.json
 
   transportable_commands:
     -

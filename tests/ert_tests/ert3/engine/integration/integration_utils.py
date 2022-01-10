@@ -48,7 +48,7 @@ def assert_output_records(config, export_data):
     for stage in config["stages"]:
         if stage.name == config["ensemble"].forward_model.stage:
             output_records += [
-                output_data.record for output_data in stage.output.values()
+                output_data.name for output_data in stage.output.values()
             ]
     for realisation in export_data:
         assert sorted(output_records) == sorted(realisation["output"].keys())

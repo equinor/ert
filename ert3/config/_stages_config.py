@@ -2,11 +2,30 @@ import importlib.util
 from collections import OrderedDict
 from importlib.abc import Loader
 from types import MappingProxyType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Tuple,
+    Union,
+    cast,
+    Type,
+    Optional,
+)
 
-from pydantic import BaseModel, FilePath, ValidationError, validator
+from pydantic import (
+    BaseModel,
+    FilePath,
+    ValidationError,
+    root_validator,
+    validator,
+)
+
 
 import ert
+from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 
 from ._validator import ensure_mime
 
@@ -37,16 +56,6 @@ class _StagesConfig(BaseModel):
         arbitrary_types_allowed = True
 
 
-class Record(_StagesConfig):
-    record: str
-    location: str
-    mime: str = ""
-    is_directory: bool = False
-    smry_keys: Optional[List[str]] = None
-
-    _ensure_record_mime = validator("mime", allow_reuse=True)(ensure_mime("location"))
-
-
 class TransportableCommand(_StagesConfig):
     name: str
     location: FilePath
@@ -67,25 +76,107 @@ class IndexedOrderedDict(OrderedDict):  # type: ignore
         return self[list(self.keys())[attr]]
 
 
-def _create_record_mapping(records: Tuple[Dict[str, str], ...]) -> Mapping[str, Record]:
-    ordered_dict = IndexedOrderedDict(
-        {record["record"]: Record(**record) for record in records}
+def _default_transformation_discriminator(
+    category: str,
+    discriminator: str,
+    default_for_category: Optional[str],
+) -> Callable[[Type[BaseModel], Dict[str, Any]], Dict[str, Any]]:
+    """Create a validator such that default_for_category for category is injected into
+    the configuration if it was not provided to the discriminator field and if
+    default_for_category is not empty."""
+
+    def _validator(cls: Type[BaseModel], values: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            config = values[category]
+        except KeyError:
+            return values
+        if discriminator not in config and default_for_category:
+            config[discriminator] = default_for_category
+        return values
+
+    return _validator
+
+
+class StageIO(_StagesConfig):
+    name: str
+    direction: ert.data.TransformationDirection
+
+    @validator("direction", pre=True)
+    def _valid_direction(cls, v: str) -> ert.data.TransformationDirection:
+        return ert.data.TransformationDirection.from_direction(v)
+
+
+def create_stages_config(plugin_registry: ConfigPluginRegistry) -> "Type[StagesConfig]":
+    """Return a :class:`StagesConfig` with plugged-in configurations."""
+    discriminator = plugin_registry.get_descriminator("transformation")
+    default_discriminator = plugin_registry.get_default_for_category("transformation")
+
+    stage_io = create_plugged_model(
+        model_name="PluggedStageIO",
+        categories=["transformation"],
+        plugin_registry=plugin_registry,
+        model_base=StageIO,
+        model_module=__name__,
+        validators={
+            "discriminator_default": root_validator(pre=True, allow_reuse=True)(
+                _default_transformation_discriminator(
+                    category="transformation",
+                    discriminator=discriminator,
+                    default_for_category=default_discriminator,
+                )
+            ),
+        },
     )
-    proxy = MappingProxyType(ordered_dict)
-    return proxy
+
+    # duck punching _Step to bridge static and dynamic config definitions. StageIO
+    # exists only at run-time, but _Step (and subclasses) should be static.
+    _Step._stageio_cls = stage_io
+
+    # Returning the StagesConfig class to underline that it needs some dynamic mutation.
+    return StagesConfig
 
 
 class _Step(_StagesConfig):
+
+    # See create_stages_config
+    _stageio_cls: Any
     name: str
     input: MappingProxyType  # type: ignore
     output: MappingProxyType  # type: ignore
 
-    _set_input = validator("input", pre=True, always=True, allow_reuse=True)(
-        _create_record_mapping
-    )
-    _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
-        _create_record_mapping
-    )
+    @classmethod
+    def _create_io_mapping(
+        cls,
+        ios: List[Dict[str, str]],
+        direction: str,
+    ) -> Mapping[str, Type[_StagesConfig]]:
+        if not hasattr(cls, "_stageio_cls"):
+            raise RuntimeError(
+                "Step configuration must be obtained through 'create_stages_config'."
+            )
+
+        for io in ios:
+            if "direction" not in io:
+                io["direction"] = direction
+
+        ordered_dict = IndexedOrderedDict(
+            {io["name"]: cls._stageio_cls(**io) for io in ios}
+        )
+
+        proxy = MappingProxyType(ordered_dict)
+        return proxy
+
+    @validator("input", pre=True, always=True, allow_reuse=True)
+    def _create_input_mapping(
+        cls, ios: List[Dict[str, str]]
+    ) -> Mapping[str, Type[_StagesConfig]]:
+        return cls._create_io_mapping(ios, direction="from_record")
+
+    @validator("output", pre=True, always=True, allow_reuse=True)
+    def _create_output_mapping(
+        cls, ios: List[Dict[str, str]]
+    ) -> Mapping[str, Type[_StagesConfig]]:
+        return cls._create_io_mapping(ios, direction="to_record")
 
 
 class Function(_Step):
@@ -99,6 +190,19 @@ class Function(_Step):
 class Unix(_Step):
     script: Tuple[str, ...]
     transportable_commands: Tuple[TransportableCommand, ...]
+
+    @root_validator
+    def _ensure_ios_has_transformation(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        for io in ("input", "output"):
+            if io not in values:
+                continue
+            for name, io_ in values[io].items():
+                if not io_.transformation:
+                    raise ValueError(f"io '{name}' had no transformation")
+        return values
+
+
+Step = Union[Function, Unix]
 
 
 class StagesConfig(BaseModel):
@@ -117,11 +221,11 @@ class StagesConfig(BaseModel):
         return len(self.__root__)
 
 
-def load_stages_config(config_dict: Dict[str, Any]) -> StagesConfig:
+def load_stages_config(
+    config_dict: Dict[str, Any], plugin_registry: ConfigPluginRegistry
+) -> StagesConfig:
+    stages_config = create_stages_config(plugin_registry=plugin_registry)
     try:
-        return StagesConfig.parse_obj(config_dict)
+        return stages_config.parse_obj(config_dict)
     except ValidationError as err:
         raise ert.exceptions.ConfigValidationError(str(err), source="stages")
-
-
-Step = Union[Function, Unix]

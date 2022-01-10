@@ -18,11 +18,16 @@ from typing import (
     cast,
 )
 
+import typing
+
 from beartype import beartype
 from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
 from pydantic import PositiveInt
 
 import ert
+
+if typing.TYPE_CHECKING:
+    from ._transformation import RecordTransformation
 
 # Mute PEP-585 warnings from Python 3.9:
 warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecationWarning)
@@ -466,38 +471,31 @@ class RecordCollection:
 
 
 async def load_collection_from_file(
-    file_path: pathlib.Path,
-    mime: str,
+    transformation: "RecordTransformation",
     length: int = 1,
-    is_directory: bool = False,
-    smry_keys: Optional[List[str]] = None,
+    root_path: pathlib.Path = pathlib.Path(),
 ) -> RecordCollection:
     """Creates :py:class:`RecordCollection` from the given path.
 
-    If the mime type is octet-stream, the RecordCollection will be uniform.  If
-    not, the file_path should deserialize into a list of records.
-
     Args:
-        file_path: input location to load the collection from.
-        mime: mime type for the loading the collection subrecords.
+        transformation: the transformation that will be used to get the
+            record(s) from disk
         length: the number of records in the resulting collection. Defaults to 1.
-        is_directory: specifies whether `file_path` is directory. Defaults to False.
     """
-    if mime == "application/octet-stream":
-        transformation: ert.data.RecordTransformation
-        if smry_keys:
-            transformation = ert.data.EclSumTransformation(smry_keys)
-        elif is_directory:
-            transformation = ert.data.TarRecordTransformation()
-        else:
-            transformation = ert.data.FileRecordTransformation()
+    assert isinstance(
+        transformation, ert.data.FileTransformation
+    ), f"file operation must have file transformation: '{type(transformation)}'"
+    if transformation.type == ert.data.TransformationType.NUMERICAL:
+        raw_ensrecord = await ert.serialization.get_serializer(
+            transformation.mime
+        ).decode_from_path(root_path / transformation.location)
         return RecordCollection(
-            records=(await transformation.transform_output(mime, file_path),),
-            length=length,
-            collection_type=RecordCollectionType.UNIFORM,
+            records=tuple(
+                NumericalRecord(data=raw_record) for raw_record in raw_ensrecord
+            )
         )
     return RecordCollection(
-        records=await ert.data.FileRecordTransformation().transform_output_sequence(
-            mime, file_path
-        )
+        records=(await transformation.to_record(root_path),),
+        length=length,
+        collection_type=RecordCollectionType.UNIFORM,
     )

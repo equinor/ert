@@ -1,25 +1,14 @@
-from pathlib import Path
-from typing import List, Optional
-
 import ert
 import ert3
 
 
-# pylint: disable=too-many-arguments
 async def load_record(
     workspace: ert3.workspace.Workspace,
     record_name: str,
-    record_file: Path,
-    record_mime: str,
-    record_is_directory: bool = False,
-    smry_keys: Optional[List[str]] = None,
+    transformation: ert.data.RecordTransformation,
 ) -> None:
-
     collection = await ert.data.load_collection_from_file(
-        file_path=record_file,
-        mime=record_mime,
-        is_directory=record_is_directory,
-        smry_keys=smry_keys,
+        transformation=transformation,
     )
     await ert.storage.transmit_record_collection(
         collection, record_name, workspace.name

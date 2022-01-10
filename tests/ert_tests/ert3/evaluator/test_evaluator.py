@@ -45,14 +45,23 @@ def get_inputs(coeffs):
     [["stages_config", True], ["function_stages_config", False]],
 )
 def test_evaluator(
-    workspace, config, base_ensemble_dict, coeffs, expected, request, has_unix_config
+    workspace,
+    config,
+    base_ensemble_dict,
+    coeffs,
+    expected,
+    request,
+    has_unix_config,
+    plugin_registry,
 ):
     stages_config = request.getfixturevalue(config)
     storage_path = workspace._path / ".ert" / "tmp" / "test"
     input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
     base_ensemble_dict["storage_type"] = "shared_disk"
-    ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
+    ensemble_config = ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
     experiment_run_config = ert3.config.ExperimentRunConfig(
         ert3.config.ExperimentConfig(type="evaluation"),
@@ -119,9 +128,13 @@ def test_evaluator(
         ),
     ],
 )
-def test_inline_script(commandline, parsed_name, parsed_args):
+def test_inline_script(commandline, parsed_name, parsed_args, plugin_registry):
     """Verify that the ensemble builder will obey quotations in order
     to support inlined shell scripts"""
+
+    # ert3.config.Unix contains plugged-in configurations, so load those first.
+    ert3.config.create_stages_config(plugin_registry=plugin_registry)
+
     step = ert3.config.Unix(
         name="step with inlined script",
         input=[],

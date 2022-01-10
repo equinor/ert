@@ -1,6 +1,7 @@
 import json
 import pathlib
 from contextlib import contextmanager
+import resource
 
 import pytest
 
@@ -16,70 +17,89 @@ import ert3
 from unittest.mock import patch
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
+_RESOURCES_BASE = ert3.workspace._workspace._RESOURCES_BASE
 
 
 @pytest.fixture()
-def sensitivity_ensemble(base_ensemble_dict):
+def sensitivity_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict.pop("size")
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def uniform_ensemble(base_ensemble_dict):
+def uniform_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "stochastic.uniform_coefficients"
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def x_uncertainty_ensemble(base_ensemble_dict):
+def x_uncertainty_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["forward_model"]["stage"] = "evaluate_x_uncertainty_polynomial"
     base_ensemble_dict["input"].append(
         {"record": "x_uncertainties", "source": "stochastic.x_normals"}
     )
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def presampled_uniform_ensemble(base_ensemble_dict):
+def presampled_uniform_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def presampled_ensemble(base_ensemble_dict):
+def presampled_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def doe_ensemble(base_ensemble_dict):
+def doe_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.designed_coefficients"
     base_ensemble_dict["size"] = 10
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def big_ensemble(base_ensemble_dict):
+def big_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
     base_ensemble_dict["size"] = 1000
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def presampled_big_ensemble(base_ensemble_dict):
+def presampled_big_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.uniform_coefficients0"
     base_ensemble_dict["size"] = 1000
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def partial_sensitivity_ensemble(base_ensemble_dict):
+def partial_sensitivity_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict.pop("size")
     base_ensemble_dict["input"].append(
         {"record": "other_coefficients", "source": "storage.other_coefficients"}
     )
     base_ensemble_dict["output"].append({"record": "other_polynomial_output"})
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
@@ -503,12 +523,14 @@ def test_record_load_and_run(
 ):
     workspace = workspace_integration
     with assert_clean_workspace(workspace):
+        transformation = ert.data.SerializationTransformation(
+            location=designed_coeffs_record_file_integration, mime="application/json"
+        )
         get_event_loop().run_until_complete(
             ert3.engine.load_record(
                 workspace,
                 "designed_coefficients",
-                designed_coeffs_record_file_integration,
-                "application/json",
+                transformation,
             )
         )
 
@@ -522,10 +544,12 @@ def test_record_load_and_run(
     with assert_clean_workspace(workspace, allowed_files={"data.json"}):
         ert3.engine.export(workspace, "doe", experiment_run_config)
 
+    transformation = ert.data.SerializationTransformation(
+        location=designed_coeffs_record_file_integration,
+        mime="application/json",
+    )
     designed_collection = get_event_loop().run_until_complete(
-        ert.data.load_collection_from_file(
-            designed_coeffs_record_file_integration, "application/json"
-        )
+        ert.data.load_collection_from_file(transformation)
     )
     export_data = _load_export_data(workspace, "doe")
     assert len(designed_collection) == len(export_data)
@@ -541,18 +565,20 @@ def test_record_load_and_run(
 @pytest.mark.asyncio
 async def test_record_load_twice(workspace, designed_coeffs_record_file):
     with assert_clean_workspace(workspace):
+        transformation = ert.data.SerializationTransformation(
+            location=designed_coeffs_record_file,
+            mime="application/json",
+        )
         await ert3.engine.load_record(
             workspace,
             "designed_coefficients",
-            designed_coeffs_record_file,
-            "application/json",
+            transformation,
         )
         with pytest.raises(ert.exceptions.ElementExistsError):
             await ert3.engine.load_record(
                 workspace,
                 "designed_coefficients",
-                designed_coeffs_record_file,
-                "application/json",
+                transformation,
             )
 
 
@@ -643,12 +669,15 @@ def test_partial_sensitivity_run_and_export(
         gaussian_parameters_config,
     )
     with assert_clean_workspace(workspace):
+        transformation = ert.data.SerializationTransformation(
+            location=oat_compatible_record_file,
+            mime="application/json",
+        )
         get_event_loop().run_until_complete(
             ert3.engine.load_record(
                 workspace,
                 "other_coefficients",
-                oat_compatible_record_file,
-                "application/json",
+                transformation,
             )
         )
         ert3.engine.run_sensitivity_analysis(
@@ -682,12 +711,15 @@ def test_incompatible_partial_sensitivity_run(
     experiment_dir = workspace._path / _EXPERIMENTS_BASE / "partial_sensitivity"
     assert experiment_dir.is_dir()
     with assert_clean_workspace(workspace):
+        transformation = ert.data.SerializationTransformation(
+            location=oat_incompatible_record_file,
+            mime="application/json",
+        )
         get_event_loop().run_until_complete(
             ert3.engine.load_record(
                 workspace,
                 "other_coefficients",
-                oat_incompatible_record_file,
-                "application/json",
+                transformation,
             )
         )
 
@@ -708,3 +740,87 @@ def test_incompatible_partial_sensitivity_run(
                 workspace,
                 "partial_sensitivity",
             )
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_ert_storage
+def test_export_resources(
+    workspace_integration,
+    evaluation_experiment_config,
+    plugin_registry,
+    gaussian_parameters_config,
+):
+    """Test that resources will be exported if they are numerical."""
+    workspace = workspace_integration
+    (workspace._path / _EXPERIMENTS_BASE / "evaluation").mkdir(parents=True)
+
+    resources = workspace._path / _RESOURCES_BASE
+    resources.mkdir(parents=True)
+    with open(resources / "coefficients.json", "w") as f:
+        json.dump([{"a": 0, "b": 0, "c": 0}], f)
+
+    with open(resources / "my_blob", "w") as f:
+        f.write("blob blobb")
+
+    stages = ert3.config.load_stages_config(
+        [
+            {
+                "name": "noop",
+                "input": [
+                    {
+                        "name": "coefficients",
+                        "transformation": {
+                            "location": "coefficients.json",
+                            "type": "serialization",
+                        },
+                    },
+                    {
+                        "name": "my_blob",
+                        "transformation": {
+                            "location": "my_blob",
+                        },
+                    },
+                ],
+                "output": [],
+                "script": [],
+                "transportable_commands": [],
+            },
+        ],
+        plugin_registry=plugin_registry,
+    )
+
+    ensemble = ert3.config.load_ensemble_config(
+        {
+            "size": 1,
+            "input": [
+                {
+                    "source": "resources.coefficients.json",
+                    "record": "coefficients",
+                    "transformation": {"type": "serialization"},
+                },
+                {
+                    "source": "resources.my_blob",
+                    "record": "my_blob",
+                },
+            ],
+            "output": [],
+            "forward_model": {"driver": "local", "stage": "noop"},
+        },
+        plugin_registry=plugin_registry,
+    )
+
+    experiment_run_config = ert3.config.ExperimentRunConfig(
+        evaluation_experiment_config,
+        stages,
+        ensemble,
+        gaussian_parameters_config,
+    )
+    with assert_clean_workspace(workspace):
+        ert3.engine.run(experiment_run_config, workspace, "evaluation")
+
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(workspace, "evaluation", experiment_run_config)
+
+    export_data = _load_export_data(workspace, "evaluation")
+    assert "coefficients" in export_data[0]["input"]
+    assert "my_blob" not in export_data[0]["input"]

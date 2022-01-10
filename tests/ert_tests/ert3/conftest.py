@@ -220,8 +220,10 @@ def base_ensemble_dict():
 
 
 @pytest.fixture()
-def ensemble(base_ensemble_dict):
-    yield ert3.config.load_ensemble_config(base_ensemble_dict)
+def ensemble(base_ensemble_dict, plugin_registry):
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
@@ -229,8 +231,24 @@ def stages_config_list():
     yield [
         {
             "name": "evaluate_polynomial",
-            "input": [{"record": "coefficients", "location": "coefficients.json"}],
-            "output": [{"record": "polynomial_output", "location": "output.json"}],
+            "input": [
+                {
+                    "name": "coefficients",
+                    "transformation": {
+                        "location": "coefficients.json",
+                        "type": "serialization",
+                    },
+                }
+            ],
+            "output": [
+                {
+                    "name": "polynomial_output",
+                    "transformation": {
+                        "location": "output.json",
+                        "type": "serialization",
+                    },
+                }
+            ],
             "script": ["poly --coefficients coefficients.json --output output.json"],
             "transportable_commands": [
                 {
@@ -243,13 +261,15 @@ def stages_config_list():
 
 
 @pytest.fixture()
-def stages_config(stages_config_list):
+def stages_config(stages_config_list, plugin_registry):
     script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(stages_config_list)
+    yield ert3.config.load_stages_config(
+        stages_config_list, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
@@ -258,12 +278,36 @@ def double_stages_config_list():
         {
             "name": "evaluate_polynomial",
             "input": [
-                {"record": "coefficients", "location": "coefficients.json"},
-                {"record": "other_coefficients", "location": "other_coefficients.json"},
+                {
+                    "name": "coefficients",
+                    "transformation": {
+                        "location": "coefficients.json",
+                        "type": "serialization",
+                    },
+                },
+                {
+                    "name": "other_coefficients",
+                    "transformation": {
+                        "location": "other_coefficients.json",
+                        "type": "serialization",
+                    },
+                },
             ],
             "output": [
-                {"record": "polynomial_output", "location": "output.json"},
-                {"record": "other_polynomial_output", "location": "other_output.json"},
+                {
+                    "name": "polynomial_output",
+                    "transformation": {
+                        "location": "output.json",
+                        "type": "serialization",
+                    },
+                },
+                {
+                    "name": "other_polynomial_output",
+                    "transformation": {
+                        "location": "other_output.json",
+                        "type": "serialization",
+                    },
+                },
             ],
             "script": [
                 "poly --coefficients coefficients.json --output output.json",
@@ -283,25 +327,47 @@ def double_stages_config_list():
 
 
 @pytest.fixture()
-def double_stages_config(double_stages_config_list):
+def double_stages_config(double_stages_config_list, plugin_registry):
     script_file = pathlib.Path("poly.py")
     script_file.write_text(POLY_SCRIPT)
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(double_stages_config_list)
+    yield ert3.config.load_stages_config(
+        double_stages_config_list, plugin_registry=plugin_registry
+    )
 
 
 @pytest.fixture()
-def x_uncertainty_stages_config():
+def x_uncertainty_stages_config(plugin_registry):
     config_list = [
         {
             "name": "evaluate_x_uncertainty_polynomial",
             "input": [
-                {"record": "coefficients", "location": "coefficients.json"},
-                {"record": "x_uncertainties", "location": "x_uncertainties.json"},
+                {
+                    "name": "coefficients",
+                    "transformation": {
+                        "location": "coefficients.json",
+                        "type": "serialization",
+                    },
+                },
+                {
+                    "name": "x_uncertainties",
+                    "transformation": {
+                        "location": "x_uncertainties.json",
+                        "type": "serialization",
+                    },
+                },
             ],
-            "output": [{"record": "polynomial_output", "location": "output.json"}],
+            "output": [
+                {
+                    "name": "polynomial_output",
+                    "transformation": {
+                        "location": "output.json",
+                        "type": "serialization",
+                    },
+                }
+            ],
             "script": [
                 "poly --coefficients coefficients.json \
                     --x_uncertainties x_uncertainties.json --output output.json"
@@ -319,16 +385,24 @@ def x_uncertainty_stages_config():
     st = os.stat(script_file)
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
-    yield ert3.config.load_stages_config(config_list)
+    yield ert3.config.load_stages_config(config_list, plugin_registry=plugin_registry)
 
 
 @pytest.fixture()
-def function_stages_config():
+def function_stages_config(plugin_registry):
     config_list = [
         {
             "name": "evaluate_polynomial",
-            "input": [{"record": "coefficients", "location": "coeffs"}],
-            "output": [{"record": "polynomial_output", "location": "output"}],
+            "input": [
+                {
+                    "name": "coefficients",
+                }
+            ],
+            "output": [
+                {
+                    "name": "polynomial_output",
+                }
+            ],
             "function": "function_steps.functions:polynomial",
         }
     ]
@@ -338,7 +412,7 @@ def function_stages_config():
     (func_dir / "functions.py").write_text(POLY_FUNCTION)
     sys.path.append(os.getcwd())
 
-    yield ert3.config.load_stages_config(config_list)
+    yield ert3.config.load_stages_config(config_list, plugin_registry=plugin_registry)
 
 
 @pytest.fixture
@@ -368,8 +442,8 @@ def ert_storage(ert_storage_client, monkeypatch):
 
 @pytest.fixture
 def raw_ensrec_to_records():
-    def _coerce_raw_ensrec(spec) -> typing.Tuple[ert.data.Record]:
-        recs = []
+    def _coerce_raw_ensrec(spec) -> typing.Tuple[ert.data.Record, ...]:
+        recs: typing.List[ert.data.Record] = []
         for rec in spec:
             data = rec["data"]
             if isinstance(data, bytes):
@@ -379,3 +453,16 @@ def raw_ensrec_to_records():
         return tuple(recs)
 
     return _coerce_raw_ensrec
+
+
+@pytest.fixture()
+def plugin_registry():
+    plugin_registry = ert3.config.ConfigPluginRegistry()
+    plugin_registry.register_category(
+        category="transformation", descriminator="type", optional=True
+    )
+    plugin_manager = ert3.plugins.ErtPluginManager(
+        plugins=[ert3.config.plugins.implementations]
+    )
+    plugin_manager.collect(registry=plugin_registry)
+    yield plugin_registry

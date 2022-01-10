@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, cast
+from typing import Dict, NamedTuple, Optional, cast
 
 import ert
 
@@ -22,14 +22,10 @@ class LinkedInput(NamedTuple):
     """
 
     name: str
-    source_mime: str
     source_namespace: SourceNS
     source_location: str
-    source_is_directory: bool
-    dest_location: str
-    dest_mime: str
-    dest_is_directory: bool
-    dest_smry_keys: List[str]
+    source_transformation: Optional[ert.data.RecordTransformation]
+    stage_transformation: Optional[ert.data.RecordTransformation]
 
 
 class ExperimentRunConfig:
@@ -132,34 +128,37 @@ class ExperimentRunConfig:
         stage = self.get_stage()
         for ensemble_input in self._ensemble_config.input:
             name = ensemble_input.record
-            stage_is_directory = stage.input[name].is_directory
-            stage_mime = stage.input[name].mime
-            stage_location = stage.input[name].location
-            stage_smry_keys = stage.input[name].smry_keys
 
-            if stage_mime != ensemble_input.mime:
-                print(
-                    f"Warning: Conflicting ensemble mime '{ensemble_input.mime}' and "
-                    + f"stage mime '{stage_mime}' for input '{name}'."
-                )
-
-            # fall back on stage is_directory
-            ensemble_is_directory = (
-                ensemble_input.is_directory
-                if ensemble_input.is_directory is not None
-                else stage_is_directory
+            # Ignore typing errors caused by dynamic attributes. mypy docs
+            # suggest overriding __getattr__ and __setattr__, but that's not
+            # feasible considering the object to fix is a pydantic model.
+            stage_transformation: Optional[ert.data.RecordTransformation] = (
+                stage.input[name].get_transformation_instance()
+                if stage.input[name].transformation
+                else None
             )
+            source_transformation: Optional[ert.data.RecordTransformation] = (
+                ensemble_input.get_transformation_instance()  # type: ignore
+                if ensemble_input.transformation  # type: ignore
+                else None
+            )
+
+            # check type (binary vs numerical) for transformations
+            if source_transformation and stage_transformation:
+                if source_transformation.type != stage_transformation.type:
+                    raise ert.exceptions.ConfigValidationError(
+                        f"transformation mismatch for input {name}: source prefers "
+                        + f"{source_transformation.type} data and stage prefers "
+                        + f"{stage_transformation.type} data.",
+                        source="experiment_run_config",
+                    )
 
             input_ = LinkedInput(
                 name=name,
                 source_namespace=ensemble_input.source_namespace,
-                source_mime=ensemble_input.mime,
-                source_is_directory=ensemble_is_directory,
                 source_location=ensemble_input.source_location,
-                dest_mime=stage_mime,
-                dest_location=stage_location,
-                dest_is_directory=stage_is_directory,
-                dest_smry_keys=stage_smry_keys,
+                source_transformation=source_transformation,
+                stage_transformation=stage_transformation,
             )
             inputs[input_.source_namespace][input_.name] = input_
         return inputs

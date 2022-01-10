@@ -1,9 +1,16 @@
+import pathlib
+import re
 from graphlib import CycleError
 from unittest.mock import MagicMock, Mock
 
-import pytest
-
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
+import pytest
+from ert.data import (
+    SerializationTransformation,
+    CopyTransformation,
+    EclSumTransformation,
+    TransformationDirection,
+)
 
 
 def test_build_ensemble():
@@ -184,12 +191,18 @@ def test_topological_sort(steps, expected, ambiguous):
                 ee.create_input_builder()
                 .set_name(input_)
                 .set_transmitter_factory(transmitted_factory)
+                .set_transformation(
+                    SerializationTransformation(location=pathlib.Path())
+                )
             )
         for output in step_def["outputs"]:
             step.add_output(
                 ee.create_output_builder()
                 .set_name(output)
                 .set_transmitter_factory(non_transmitted_factory)
+                .set_transformation(
+                    SerializationTransformation(location=pathlib.Path())
+                )
             )
         real.add_step(step)
 
@@ -209,3 +222,58 @@ def test_topological_sort(steps, expected, ambiguous):
             for step in real.get_steps_sorted_topologically()
             if step.get_name() not in ambiguous
         ]
+
+
+def test_io_transformation_required_for_unix():
+    with pytest.raises(ValueError, match="has no transformation"):
+        (
+            ee.create_step_builder()
+            .add_input(ee.create_input_builder().set_name("input"))
+            .set_type("unix")
+            .set_name("stage")
+            .set_parent_source("/")
+            .build()
+        )
+
+
+@pytest.mark.parametrize(
+    "builder,transformation",
+    [
+        pytest.param(
+            ee.create_input_builder(),
+            CopyTransformation(pathlib.Path("foo"), TransformationDirection.TO_RECORD),
+            marks=pytest.mark.raises(
+                exception=ValueError,
+                match=(
+                    f".+does not allow 'from_record', only "
+                    + f"'{TransformationDirection.TO_RECORD}'"
+                ),
+                match_flags=(re.MULTILINE | re.DOTALL),
+            ),
+        ),
+        pytest.param(
+            ee.create_output_builder(),
+            CopyTransformation(
+                pathlib.Path("foo"), TransformationDirection.FROM_RECORD
+            ),
+            marks=pytest.mark.raises(
+                exception=ValueError,
+                match=(
+                    f".+does not allow 'to_record', only "
+                    + f"'{TransformationDirection.FROM_RECORD}'"
+                ),
+                match_flags=(re.MULTILINE | re.DOTALL),
+            ),
+        ),
+        pytest.param(
+            ee.create_input_builder(),
+            CopyTransformation(pathlib.Path("foo")),
+        ),
+        pytest.param(
+            ee.create_output_builder(),
+            CopyTransformation(pathlib.Path("foo")),
+        ),
+    ],
+)
+def test_io_direction_constraints(builder, transformation):
+    builder.set_transformation(transformation)

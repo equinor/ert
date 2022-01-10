@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 import prefect
 
-from ert.data import RecordTransmitter
+from ert.data import RecordTransmitter, FileTransformation
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
@@ -100,11 +100,9 @@ class UnixTask(prefect.Task):
     ):
         async def transform_input(input_):
             record = await transmitters[input_.get_name()].load()
-            await input_.get_transformation().transform_input(
+            await input_.get_transformation().from_record(
                 record=record,
-                mime=input_.get_mime(),
-                runpath=runpath,
-                location=input_.get_path(),
+                root_path=runpath,
             )
 
         futures = []
@@ -114,9 +112,8 @@ class UnixTask(prefect.Task):
 
     def run(self, inputs=None):
         async def transform_output(output):
-            record = await output.get_transformation().transform_output(
-                mime=output.get_mime(),
-                location=run_path / output.get_path(),
+            record = await output.get_transformation().to_record(
+                root_path=run_path,
             )
             transmitter = outputs[output.get_name()]
             await transmitter.transmit_record(record)
@@ -133,9 +130,18 @@ class UnixTask(prefect.Task):
 
             futures = []
             for output in self._step.get_outputs():
-                if not (run_path / output.get_path()).exists():
+                transformation = output.get_transformation()
+                if not transformation:
+                    raise ValueError(
+                        f"no transformation for output '{output.get_name()}'"
+                    )
+                if not isinstance(transformation, FileTransformation):
+                    raise ValueError(
+                        f"got unexpected transformation {transformation} for '{output.get_name()}'"
+                    )
+                if not (run_path / transformation.location).exists():
                     raise FileNotFoundError(
-                        f"Output file {output.get_path()} was not generated!"
+                        f"Output '{output.get_name()}' file {transformation.location} was not generated!"
                     )
 
                 outputs[output.get_name()] = self._output_transmitters[
