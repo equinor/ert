@@ -68,7 +68,6 @@ auto logger = ert::get_logger("ies");
 #define ITER_KEY "ITER"
 #define IES_DEBUG_KEY "IES_DEBUG"
 
-#define IES_SUBSPACE_KEY "IES_SUBSPACE"
 #define IES_INVERSION_KEY "IES_INVERSION"
 #define IES_LOGFILE_KEY "IES_LOGFILE"
 #define IES_AAPROJECTION_KEY "IES_AAPROJECTION"
@@ -622,9 +621,7 @@ bool set_bool(void *arg, const char *var_name, bool value) {
     {
         bool name_recognized = true;
 
-        if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
-            ies::config::set_subspace(ies_config, value);
-        else if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
+        if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
             ies::config::set_aaprojection(ies_config, value);
         else if (strcmp(var_name, IES_DEBUG_KEY) == 0)
             logger->warning("The key {} is ignored", IES_DEBUG_KEY);
@@ -640,9 +637,7 @@ bool get_bool(const void *arg, const char *var_name) {
     const ies::config::config_type *ies_config =
         ies::data_get_config(module_data);
     {
-        if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
-            return ies::config::get_subspace(ies_config);
-        else if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
+        if (strcmp(var_name, IES_AAPROJECTION_KEY) == 0)
             return ies::config::get_aaprojection(ies_config);
         else
             return false;
@@ -703,8 +698,6 @@ bool has_var(const void *arg, const char *var_name) {
         else if (strcmp(var_name, IES_MIN_STEPLENGTH_KEY) == 0)
             return true;
         else if (strcmp(var_name, IES_DEC_STEPLENGTH_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, IES_SUBSPACE_KEY) == 0)
             return true;
         else if (strcmp(var_name, IES_INVERSION_KEY) == 0)
             return true;

@@ -19,6 +19,8 @@
 #ifndef IES_CONFIG_H
 #define IES_CONFIG_H
 
+#include <ert/analysis/analysis_module.hpp>
+
 namespace ies {
 namespace config {
 
@@ -42,6 +44,9 @@ void set_truncation(config_type *config, double truncation);
 
 void set_option_flags(config_type *config, long flags);
 long get_option_flags(const config_type *config);
+bool get_option(const config_type *config, analysis_module_flag_enum option);
+void set_option(config_type *config, analysis_module_flag_enum option);
+void del_option(config_type *config, analysis_module_flag_enum option);
 
 double get_max_steplength(const config_type *config);
 void set_max_steplength(config_type *config, double max_steplength);

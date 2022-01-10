@@ -51,7 +51,6 @@
 #define DEFAULT_SUBSPACE_DIMENSION INVALID_SUBSPACE_DIMENSION
 #define DEFAULT_USE_EE false
 #define DEFAULT_USE_GE false
-#define DEFAULT_ANALYSIS_SCALE_DATA true
 
 /*
   The configuration data used by the std_enkf module is contained in a
@@ -74,15 +73,12 @@
 
 struct std_enkf_data_struct {
     UTIL_TYPE_ID_DECLARATION;
-    double truncation; // Controlled by config key: ENKF_TRUNCATION_KEY
-    int subspace_dimension; // Controlled by config key: ENKF_NCOMP_KEY (-1: use Truncation instead)
-    long option_flags;
+    ies::config::config_type *ies_config;
+
     bool
         __use_EE; // Deprecated flag - see comment above function: update_inversion_enum
     bool
         __use_GE; // Deprecated flag - see comment above function: update_inversion_enum
-    ies::config::inversion_type inversion_type;
-    bool analysis_scale_data;
 };
 
 static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
@@ -98,7 +94,7 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
     static UTIL_SAFE_CAST_FUNCTION(std_enkf_data, STD_ENKF_TYPE_ID)
 
         double std_enkf_get_truncation(std_enkf_data_type *data) {
-    return data->truncation;
+    return ies::config::get_truncation(data->ies_config);
 }
 
 /*
@@ -113,20 +109,20 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
 */
 
 static void update_inversion_enum(std_enkf_data_type *std_enkf_data) {
+    auto inversion = ies::config::get_inversion(std_enkf_data->ies_config);
     if (std_enkf_data->__use_EE) {
         if (std_enkf_data->__use_GE)
-            std_enkf_data->inversion_type =
-                ies::config::IES_INVERSION_SUBSPACE_RE;
+            inversion = ies::config::IES_INVERSION_SUBSPACE_RE;
         else
-            std_enkf_data->inversion_type =
-                ies::config::IES_INVERSION_SUBSPACE_EE_R;
+            inversion = ies::config::IES_INVERSION_SUBSPACE_EE_R;
     } else
-        std_enkf_data->inversion_type =
-            ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
+        inversion = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
+
+    ies::config::set_inversion(std_enkf_data->ies_config, inversion);
 }
 
 static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
-    switch (std_enkf_data->inversion_type) {
+    switch (ies::config::get_inversion(std_enkf_data->ies_config)) {
     case ies::config::IES_INVERSION_SUBSPACE_EXACT_R:
         std_enkf_data->__use_EE = false;
         return;
@@ -147,42 +143,50 @@ static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
 }
 
 int std_enkf_get_subspace_dimension(std_enkf_data_type *data) {
-    return data->subspace_dimension;
+    return ies::config::get_subspace_dimension(data->ies_config);
 }
 
 ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data) {
-    return data->inversion_type;
+    return ies::config::get_inversion(data->ies_config);
 }
 
 void std_enkf_set_truncation(std_enkf_data_type *data, double truncation) {
-    data->truncation = truncation;
+    ies::config::set_truncation(data->ies_config, truncation);
     if (truncation > 0.0)
-        data->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
+        ies::config::set_subspace_dimension(data->ies_config,
+                                            INVALID_SUBSPACE_DIMENSION);
 }
 
 void std_enkf_set_subspace_dimension(std_enkf_data_type *data,
                                      int subspace_dimension) {
-    data->subspace_dimension = subspace_dimension;
+    ies::config::set_subspace_dimension(data->ies_config, subspace_dimension);
     if (subspace_dimension > 0)
-        data->truncation = INVALID_TRUNCATION;
+        ies::config::set_truncation(data->ies_config, INVALID_TRUNCATION);
 }
 
 void *std_enkf_data_alloc() {
     std_enkf_data_type *data = (std_enkf_data_type *)util_malloc(sizeof *data);
     UTIL_TYPE_ID_INIT(data, STD_ENKF_TYPE_ID);
+    data->ies_config = ies::config::alloc();
+    ies::config::set_truncation(data->ies_config, DEFAULT_ENKF_TRUNCATION_);
+    ies::config::set_subspace_dimension(data->ies_config,
+                                        DEFAULT_SUBSPACE_DIMENSION);
+    ies::config::set_inversion(data->ies_config,
+                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies::config::set_option_flags(data->ies_config,
+                                  ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA);
 
-    std_enkf_set_truncation(data, DEFAULT_ENKF_TRUNCATION_);
-    std_enkf_set_subspace_dimension(data, DEFAULT_SUBSPACE_DIMENSION);
-    data->option_flags = ANALYSIS_NEED_ED;
     data->__use_EE = DEFAULT_USE_EE;
     data->__use_GE = DEFAULT_USE_GE;
-    data->analysis_scale_data = DEFAULT_ANALYSIS_SCALE_DATA;
-    data->inversion_type = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
     return data;
 }
 
-void std_enkf_data_free(void *data) { free(data); }
+void std_enkf_data_free(void *data) {
+    std_enkf_data_type *module_data = std_enkf_data_safe_cast(data);
+    ies::config::free(module_data->ies_config);
+    free(data);
+}
 
 static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
                              const matrix_type *R, const matrix_type *E,
@@ -228,11 +232,11 @@ void std_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
 
     std_enkf_data_type *data = std_enkf_data_safe_cast(module_data);
     {
-        int ncomp = data->subspace_dimension;
-        double truncation = data->truncation;
+        auto ncomp = ies::config::get_subspace_dimension(data->ies_config);
+        auto truncation = ies::config::get_truncation(data->ies_config);
+        auto inversion = ies::config::get_inversion(data->ies_config);
 
-        std_enkf_initX__(X, S, R, E, D, truncation, ncomp, false,
-                         data->inversion_type);
+        std_enkf_initX__(X, S, R, E, D, truncation, ncomp, false, inversion);
     }
 }
 
@@ -242,7 +246,7 @@ bool std_enkf_set_double(void *arg, const char *var_name, double value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, ENKF_TRUNCATION_KEY_) == 0)
-            std_enkf_set_truncation(module_data, value);
+            ies::config::set_truncation(module_data->ies_config, value);
         else
             name_recognized = false;
 
@@ -256,7 +260,7 @@ bool std_enkf_set_int(void *arg, const char *var_name, int value) {
         bool name_recognized = true;
 
         if (strcmp(var_name, ENKF_NCOMP_KEY_) == 0)
-            std_enkf_set_subspace_dimension(module_data, value);
+            ies::config::set_subspace_dimension(module_data->ies_config, value);
         else
             name_recognized = false;
 
@@ -273,9 +277,14 @@ bool std_enkf_set_bool(void *arg, const char *var_name, bool value) {
             module_data->__use_EE = value;
         else if (strcmp(var_name, USE_GE_KEY_) == 0)
             module_data->__use_GE = value;
-        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0)
-            module_data->analysis_scale_data = value;
-        else
+        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
+            if (value)
+                ies::config::set_option(module_data->ies_config,
+                                        ANALYSIS_SCALE_DATA);
+            else
+                ies::config::del_option(module_data->ies_config,
+                                        ANALYSIS_SCALE_DATA);
+        } else
             name_recognized = false;
 
         update_inversion_enum(module_data);
@@ -289,16 +298,19 @@ bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
         bool valid_set = true;
         if (strcmp(var_name, INVERSION_KEY) == 0) {
             if (strcmp(value, STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
-                module_data->inversion_type =
-                    ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
+                ies::config::set_inversion(
+                    module_data->ies_config,
+                    ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_EE_R) == 0)
-                module_data->inversion_type =
-                    ies::config::IES_INVERSION_SUBSPACE_EE_R;
+                ies::config::set_inversion(
+                    module_data->ies_config,
+                    ies::config::IES_INVERSION_SUBSPACE_EE_R);
 
             else if (strcmp(value, STRING_INVERSION_SUBSPACE_RE) == 0)
-                module_data->inversion_type =
-                    ies::config::IES_INVERSION_SUBSPACE_RE;
+                ies::config::set_inversion(
+                    module_data->ies_config,
+                    ies::config::IES_INVERSION_SUBSPACE_RE);
 
             else
                 valid_set = false;
@@ -312,9 +324,7 @@ bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
 
 long std_enkf_get_options(void *arg, long flag) {
     std_enkf_data_type *module_data = std_enkf_data_safe_cast(arg);
-    int scale_option =
-        (module_data->analysis_scale_data) ? ANALYSIS_SCALE_DATA : 0;
-    return module_data->option_flags + scale_option;
+    return ies::config::get_option_flags(module_data->ies_config);
 }
 
 bool std_enkf_has_var(const void *arg, const char *var_name) {
@@ -338,7 +348,7 @@ double std_enkf_get_double(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
         if (strcmp(var_name, ENKF_TRUNCATION_KEY_) == 0)
-            return module_data->truncation;
+            return ies::config::get_truncation(module_data->ies_config);
         else
             return -1;
     }
@@ -348,7 +358,7 @@ int std_enkf_get_int(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
         if (strcmp(var_name, ENKF_NCOMP_KEY_) == 0)
-            return module_data->subspace_dimension;
+            return ies::config::get_subspace_dimension(module_data->ies_config);
         else
             return -1;
     }
@@ -361,9 +371,10 @@ bool std_enkf_get_bool(const void *arg, const char *var_name) {
             return module_data->__use_EE;
         else if (strcmp(var_name, USE_GE_KEY_) == 0)
             return module_data->__use_GE;
-        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0)
-            return module_data->analysis_scale_data;
-        else
+        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
+            auto flags = ies::config::get_option_flags(module_data->ies_config);
+            return (flags & ANALYSIS_SCALE_DATA);
+        } else
             return false;
     }
 }
