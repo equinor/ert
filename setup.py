@@ -80,7 +80,7 @@ setup(
         "dnspython >= 2",
         "ecl >= 2.12.0",
         "ert-storage >= 0.3.7",
-        "fastapi",
+        "fastapi==0.70.1",
         "graphene",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
