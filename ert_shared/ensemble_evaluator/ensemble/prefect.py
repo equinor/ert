@@ -100,6 +100,23 @@ def _get_executor(custom_port_range, name="local"):
         raise ValueError(f"Unknown executor name {name}")
 
 
+def _on_task_failure(task, state, ee_id):
+    if prefect_context.task_run_count > task.max_retries:
+        url = prefect_context.url
+        token = prefect_context.token
+        cert = prefect_context.cert
+        with Client(url, token, cert) as c:
+            event = CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_STEP_FAILURE,
+                    "source": task.get_step().get_source(ee_id),
+                    "datacontenttype": "application/json",
+                },
+                {"error_msg": state.message},
+            )
+            c.send(to_json(event).decode())
+
+
 class PrefectEnsemble(_Ensemble):
     def __init__(
         self,
@@ -135,22 +152,6 @@ class PrefectEnsemble(_Ensemble):
         self._iens_to_task = {}
         self._allow_cancel = multiprocessing.Event()
 
-    def _on_task_failure(self, task, state):
-        if prefect_context.task_run_count > task.max_retries:
-            url = prefect_context.url
-            token = prefect_context.token
-            cert = prefect_context.cert
-            with Client(url, token, cert) as c:
-                event = CloudEvent(
-                    {
-                        "type": ids.EVTYPE_FM_STEP_FAILURE,
-                        "source": task.get_step().get_source(self._ee_id),
-                        "datacontenttype": "application/json",
-                    },
-                    {"error_msg": state.message},
-                )
-                c.send(to_json(event).decode())
-
     def get_flow(self, ee_id, real_range):
         with Flow(f"Realization range {real_range}") as flow:
             transmitter_map = {}
@@ -173,7 +174,7 @@ class PrefectEnsemble(_Ensemble):
                         name=str(iens),
                         max_retries=self._max_retries,
                         retry_delay=retry_delay,
-                        on_failure=self._on_task_failure,
+                        on_failure=functools.partial(_on_task_failure, ee_id=ee_id),
                     )
                     result = step_task(inputs=inputs)
                     if iens not in self._iens_to_task:

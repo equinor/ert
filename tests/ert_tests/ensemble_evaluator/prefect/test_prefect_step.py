@@ -1,6 +1,7 @@
+import functools
+import pickle
 from datetime import timedelta
 from pathlib import Path
-import pickle
 from typing import Type, Dict
 
 import cloudpickle
@@ -13,7 +14,10 @@ from ert_utils import tmp
 import ert_shared.ensemble_evaluator.ensemble.builder as ee
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.ensemble.prefect import PrefectEnsemble
+from ert_shared.ensemble_evaluator.ensemble.prefect import (
+    PrefectEnsemble,
+    _on_task_failure,
+)
 
 
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):
@@ -244,13 +248,6 @@ def test_function_step(
     )
 
 
-class _MockedPrefectEnsemble:
-    def __init__(self):
-        self._ee_id = "test_ee_id"
-
-    _on_task_failure = PrefectEnsemble._on_task_failure
-
-
 @pytest.mark.parametrize("retries,nfails,expect", [(3, 0, True), (1, 1, False)])
 @pytest.mark.parametrize("script_name", [("unix_test_retry_script.py")])
 def test_on_task_failure(
@@ -261,7 +258,6 @@ def test_on_task_failure(
     expect,
 ):
     """Test both job and task failure of prefect-flow-run"""
-    mock_ensemble = _MockedPrefectEnsemble()
     with tmp() as runpath:
         step, input_map, output_map = get_step(
             step_name="test_step",
@@ -284,7 +280,7 @@ def test_on_task_failure(
             output_map=output_map,
             max_retries=retries,
             retry_delay=timedelta(seconds=1),
-            on_failure=mock_ensemble._on_task_failure,
+            on_failure=functools.partial(_on_task_failure, ee_id="test_ee_id"),
         )
     task_result = flow_run.result[result]
     assert task_result.is_successful() == expect
