@@ -88,8 +88,8 @@ def _get_executor(custom_port_range, name="local"):
             "project": "ERT-TEST",
             "local_directory": "$TMPDIR",
             "cores": 4,
-            "memory": "16GB",
-            "resource_spec": "select=1:ncpus=4:mem=16GB",
+            "memory": "16gb",
+            "resource_spec": "select=1:ncpus=4:mem=16gb",
         }
         return DaskExecutor(
             cluster_class="dask_jobqueue.PBSCluster",
