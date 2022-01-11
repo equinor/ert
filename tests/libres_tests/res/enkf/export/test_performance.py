@@ -1,8 +1,7 @@
 import pytest
-import time
 import py
 from pandas.core.frame import DataFrame
-from libres_utils import ResTest, tmpdir
+from libres_utils import ResTest
 from res.enkf.export import GenDataCollector, GenKwCollector
 from res.test import ErtTestContext
 from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE
@@ -18,6 +17,10 @@ class TestPerformance(ResTest):
 
     def tearDown(self):
         pass
+
+    @pytest.fixture(autouse=True)
+    def setupBenchmark(self, benchmark):
+        self.benchmark = benchmark
 
     def run_poly_example(self, poly_dir: py.path) -> None:
         with poly_dir.as_cwd():
@@ -37,19 +40,18 @@ class TestPerformance(ResTest):
             )
             run_cli(parsed)
 
-    def test_gen_data_collector_performance_snake_oil(self):
+    def test_gen_data_collector_snake_oil(self):
         with ErtTestContext(
             "python/enkf/export/gen_data_collector", self.snake_oil_config
         ) as context:
             ert = context.getErt()
 
-            start = time.perf_counter()
-            df: DataFrame = GenDataCollector.loadGenData(
-                ert, "default_0", "SNAKE_OIL_OPR_DIFF", 199
-            )
-            stop = time.perf_counter()
-            print(
-                f"test_gen_data_collector_performance_snake_oil - Time used: {stop-start} sec"
+            df: DataFrame = self.benchmark(
+                GenDataCollector.loadGenData,
+                ert,
+                "default_0",
+                "SNAKE_OIL_OPR_DIFF",
+                199,
             )
 
             print(df.head(10))
@@ -61,10 +63,9 @@ class TestPerformance(ResTest):
         ) as context:
             ert = context.getErt()
 
-            start = time.perf_counter()
-            df: DataFrame = GenKwCollector.loadAllGenKwData(ert, "default_0")
-            stop = time.perf_counter()
-            print(f"test_gen_kw_collector_snake_oil - Time used: {stop-start} sec")
+            df: DataFrame = self.benchmark(
+                GenKwCollector.loadAllGenKwData, ert, "default_0"
+            )
 
             print(df.head(10))
             print(df.info(memory_usage="deep"))
@@ -77,11 +78,9 @@ class TestPerformance(ResTest):
 
             self.run_poly_example(py.path.local(context._tmp_dir))
 
-            start = time.perf_counter()
-            df: DataFrame = GenDataCollector.loadGenData(ert, "default", "POLY_RES", 0)
-
-            stop = time.perf_counter()
-            print(f"test_gen_kw_collector_poly_example - Time used: {stop-start} sec")
+            df: DataFrame = self.benchmark(
+                GenDataCollector.loadGenData, ert, "default", "POLY_RES", 0
+            )
 
             print(df.head(10))
             print(df.info(memory_usage="deep"))
@@ -94,10 +93,9 @@ class TestPerformance(ResTest):
 
             self.run_poly_example(py.path.local(context._tmp_dir))
 
-            start = time.perf_counter()
-            df: DataFrame = GenKwCollector.loadAllGenKwData(ert, "default")
-            stop = time.perf_counter()
-            print(f"test_gen_kw_collector_poly_example - Time used: {stop-start} sec")
+            df: DataFrame = self.benchmark(
+                GenKwCollector.loadAllGenKwData, ert, "default"
+            )
 
             print(df.head(10))
             print(df.info(memory_usage="deep"))

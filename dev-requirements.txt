@@ -21,3 +21,4 @@ pytest-snapshot
 flake8>=4.0.0
 cmake-format
 pytest-cov
+pytest-benchmark
