@@ -5,6 +5,7 @@
 */
 
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/enkf/enkf_plot_gendata.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -59,6 +60,19 @@ ensemble_config_type *to_ensemble_config_type(py::object obj) {
     void *pointer = PyLong_AsVoidPtr(address.ptr());
 
     return reinterpret_cast<ensemble_config_type *>(pointer);
+}
+
+enkf_plot_gendata_type *to_enkf_plot_gendata_type(py::object obj) {
+    static py::object class_ =
+        py::module_::import("res.enkf.plot_data.ensemble_plot_gen_data")
+            .attr("EnsemblePlotGenData");
+    if (!py::isinstance(obj, class_))
+        throw py::type_error("Not of type EnsemblePlotGenData");
+
+    py::int_ address = obj.attr("_BaseCClass__c_pointer");
+    void *pointer = PyLong_AsVoidPtr(address.ptr());
+
+    return reinterpret_cast<enkf_plot_gendata_type *>(pointer);
 }
 
 } // namespace py_conversion

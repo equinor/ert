@@ -17,6 +17,7 @@
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector, DoubleVector
 from res import ResPrototype
+from res import _lib
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import ErtImplType
@@ -84,6 +85,9 @@ class EnsemblePlotGenData(BaseCClass):
     def getMinValues(self) -> DoubleVector:
         """@rtype: DoubleVector"""
         return self._min_values().setParent(self)
+
+    def getRealizations(self, realizations):
+        return _lib.enkf_fs_general_data.gendata_get_realizations(self, realizations)
 
     def free(self):
         self._free()

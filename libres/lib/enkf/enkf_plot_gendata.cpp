@@ -15,8 +15,6 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-
-#include <time.h>
 #include <float.h>
 
 #include <ert/util/double_vector.h>
@@ -32,6 +30,7 @@
 struct enkf_plot_gendata_struct {
     UTIL_TYPE_ID_DECLARATION;
     int size;
+    int report_step;
     const enkf_config_node_type *enkf_config_node;
     enkf_plot_genvector_type **ensemble;
     arg_pack_type **work_arg;
@@ -78,6 +77,28 @@ void enkf_plot_gendata_free(enkf_plot_gendata_type *data) {
 
 int enkf_plot_gendata_get_size(const enkf_plot_gendata_type *data) {
     return data->size;
+}
+
+int enkf_plot_gendata_get_data_size(const enkf_plot_gendata_type *data) {
+    gen_data_config_type *gen_data_config =
+        (gen_data_config_type *)enkf_config_node_get_ref(
+            data->enkf_config_node);
+
+    return gen_data_config_get_data_size__(gen_data_config, data->report_step);
+}
+
+std::vector<bool>
+enkf_plot_gendata_active_mask(const enkf_plot_gendata_type *data) {
+    gen_data_config_type *gen_data_config =
+        (gen_data_config_type *)enkf_config_node_get_ref(
+            data->enkf_config_node);
+    const bool_vector_type *mask =
+        gen_data_config_get_active_mask(gen_data_config);
+    std::vector<bool> result;
+    for (int i = 0; i < bool_vector_size(mask); i++) {
+        result.push_back(bool_vector_iget(mask, i));
+    }
+    return result;
 }
 
 enkf_plot_genvector_type *
@@ -142,7 +163,7 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
 
     enkf_plot_gendata_resize(plot_data, ens_size);
     enkf_plot_gendata_reset(plot_data, report_step);
-
+    plot_data->report_step = report_step;
     {
         const int num_cpu = 4;
         thread_pool_type *tp = thread_pool_alloc(num_cpu, true);
@@ -155,7 +176,6 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
                 arg_pack_append_ptr(work_arg, vector);
                 arg_pack_append_ptr(work_arg, fs);
                 arg_pack_append_int(work_arg, report_step);
-
                 thread_pool_add_job(tp, enkf_plot_genvector_load__, work_arg);
             }
         }
