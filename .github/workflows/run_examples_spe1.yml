@@ -56,10 +56,6 @@ jobs:
         export CXX=g++-10
         pip install .[storage]
 
-    - name: Install spe1 dependencies
-      run: |
-        pip install ecl2df
-
     - name: Setup postgres ert-storage
       if: matrix.data-base == 'postgres'
       env:

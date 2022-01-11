@@ -15,8 +15,8 @@
   output:
     -
       record: eclsum
-      location: case/SPE1
-      keys: [WOPT:PROD, WWPT:PROD, WGPT:PROD, WWIT:INJ]
+      location: case/SPE1.SMSPEC
+      smry_keys: [WOPT:PROD, WWPT:PROD, WGPT:PROD, WWIT:INJ]
 
   transportable_commands:
     -
@@ -26,4 +26,3 @@
   script:
     - render -t case/SPE1CASE2.DATA.jinja2 -i field_properties.json wells.json -o case/SPE1.DATA
     - flow case/SPE1
-

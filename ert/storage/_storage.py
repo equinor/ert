@@ -85,17 +85,20 @@ class StorageRecordTransmitter(ert.data.RecordTransmitter):
         storage_url = self._uri[: self._uri.rfind("/")]
         for record_path in record.flat_record_dict:
             record_name = record_path.split("/")[-1]
-            transmitter = StorageRecordTransmitter(record_name, storage_url)
+            transmitter = StorageRecordTransmitter(
+                record_name, storage_url, iens=self._real_id
+            )
             await transmitter.transmit_record(record.flat_record_dict[record_path])
             data[record_path] = transmitter._uri
         await self._transmit_blob_record(
             ert.data.BlobRecord(data=json.dumps(data).encode("utf-8"))
         )
-        if self._real_id:
-            url = f"{self._uri}/userdata?realization_index=0"
-        else:
-            url = f"{self._uri}/userdata?"
-        await _put_to_server_async(url, {}, json={"record_type": record._record_type})
+        # Since metadata is stored only for record with real_id == 0, within async
+        # processing we make sure that only the same realization write the metadata
+        if self._real_id == 0:
+            await add_record_metadata(
+                storage_url, self._name, {"record_type": record.record_type}
+            )
         return self._uri
 
     async def _load_numerical_record(self) -> ert.data.NumericalRecord:

@@ -508,7 +508,8 @@ def test_cli_validation_ensemble_command(base_ensemble_dict, workspace, capsys):
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
-        ert3.console.main()
+        with pytest.raises(SystemExit):
+            ert3.console.main()
     capture = capsys.readouterr()
     assert "Error while loading ensemble configuration data:" in capture.out
     assert "not a valid integer" in capture.out
@@ -528,7 +529,8 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
-        ert3.console.main()
+        with pytest.raises(SystemExit):
+            ert3.console.main()
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
 
@@ -547,7 +549,8 @@ def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
         yaml.dump(config, f)
     args = ["ert3", "run", "E0"]
     with patch.object(sys, "argv", args):
-        ert3.console.main()
+        with pytest.raises(SystemExit):
+            ert3.console.main()
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
     assert "str type expected" in capture.out

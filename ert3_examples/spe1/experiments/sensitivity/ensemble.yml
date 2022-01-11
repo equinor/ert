@@ -11,13 +11,13 @@ input:
 
 output:
     -
-      record: wopt_prod
+      record: WOPT:PROD
     -
-      record: wwpt_prod
+      record: WWPT:PROD
     -
-      record: wgpt_prod
+      record: WGPT:PROD
     -
-      record: wwit_inj
+      record: WWIT:INJ
 
 forward_model:
   driver: local
