@@ -61,7 +61,7 @@ def _main():
     args = parser.parse_args()
     result = _evaluate_polynomial(args.coefficients, args.x_uncertainties)
     with open(args.output, "w") as f:
-        json.dump(result, f)
+        json.dump(result, f, indent=4)
 
 
 if __name__ == "__main__":

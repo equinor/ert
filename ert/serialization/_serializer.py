@@ -31,6 +31,8 @@ class Serializer(ABC):
 
 class _json_serializer(Serializer):
     def encode(self, obj: Any, *args: Any, **kwargs: Any) -> str:
+        if "indent" not in kwargs:
+            kwargs["indent"] = 4
         return json.dumps(obj, *args, **kwargs)
 
     def decode(self, series: str, *args: Any, **kwargs: Any) -> Any:
@@ -40,7 +42,7 @@ class _json_serializer(Serializer):
         self, obj: Any, path: Union[str, Path], *args: Any, **kwargs: Any
     ) -> None:
         async with aiofiles.open(path, mode="wt", encoding="utf-8") as filehandle:
-            await filehandle.write(json.dumps(obj))
+            await filehandle.write(json.dumps(obj, indent=4))
 
     async def decode_from_path(
         self, path: Union[str, Path], *args: Any, **kwargs: Any
