@@ -22,10 +22,6 @@ void enkf_linalg_init_sqrtX(matrix_type *X5, const matrix_type *S,
 void enkf_linalg_Cee(matrix_type *B, int nrens, const matrix_type *R,
                      const matrix_type *U0, const double *inv_sig0);
 
-int enkf_linalg_svd_truncation(const matrix_type *S, double truncation,
-                               int ncomp, dgesvd_vector_enum store_V0T,
-                               double *sig0, matrix_type *U0, matrix_type *V0T);
-
 int enkf_linalg_svdS(const matrix_type *S, double truncation, int ncomp,
                      dgesvd_vector_enum jobVT, double *sig0, matrix_type *U0,
                      matrix_type *V0T);
