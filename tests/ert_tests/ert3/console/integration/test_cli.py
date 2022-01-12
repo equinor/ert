@@ -2,7 +2,7 @@ import copy
 import pathlib
 import sys
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -575,16 +575,26 @@ def test_check_service(tmpdir, monkeypatch):
                 ert3.console._console._main()
 
 
-def _assert_start_storage_command(*args):
-    assert args == ("ert", ["ert", "api", "--enable-new-storage"])
-
-
-def test_start_service(tmpdir, monkeypatch):
+@pytest.mark.parametrize(
+    "call_args, expected_call_args",
+    [
+        (
+            ["ert3", "service", "start", "storage"],
+            ["ert", "api", "--enable-new-storage"],
+        ),
+        (
+            ["ert3", "service", "start", "storage", "--database-url", "DATABASE_URL"],
+            ["ert", "api", "--database-url", "DATABASE_URL"],
+        ),
+    ],
+)
+def test_start_service(tmpdir, monkeypatch, call_args, expected_call_args):
     with tmpdir.as_cwd():
-        with patch.object(sys, "argv", ["ert3", "service", "start", "storage"]):
+        with patch.object(sys, "argv", call_args):
+            mock_execvp = MagicMock()
             monkeypatch.setattr(
-                ert3.console._console.os,
-                "execvp",
-                _assert_start_storage_command,
+                "os.execvp",
+                mock_execvp,
             )
             ert3.console._console._main()
+            mock_execvp.assert_called_once_with("ert", expected_call_args)
