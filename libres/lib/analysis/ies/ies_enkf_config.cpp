@@ -211,7 +211,7 @@ ies::enkf_config_calculate_steplength(const ies::enkf_config_type *ies_config,
     double ies_decline_step = ies::enkf_config_get_dec_steplength(ies_config);
 
     /*
-      This is an implementation of Eq. (49) from:
+      This is an implementation of Eq. (49) from the book:
 
       Geir Evensen, Formulating the history matching problem with consistent error statistics,
       Computational Geosciences (2021) 25:945 –970: https://doi.org/10.1007/s10596-021-10032-7
