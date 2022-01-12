@@ -54,7 +54,7 @@ jobs:
       run: |
         export CC=gcc-10
         export CXX=g++-10
-        pip install .[storage]
+        pip install .
 
     - name: Install spe1 dependencies
       run: |
