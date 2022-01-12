@@ -690,7 +690,10 @@ def test_incompatible_partial_sensitivity_run(
             )
         )
 
-    err_msg = "Ensemble size 6 does not match stored record ensemble size 10"
+    err_msg = (
+        "Ensemble size 6 does not match stored record ensemble "
+        "for other_coefficients of size 10"
+    )
     experiment_run_config = ert3.config.ExperimentRunConfig(
         sensitivity_oat_experiment_config,
         double_stages_config,

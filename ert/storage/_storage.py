@@ -142,7 +142,7 @@ async def _get_record_storage_transmitters(
         ):
             raise ert.exceptions.ErtError(
                 f"Ensemble size {ensemble_size} does not match stored record ensemble "
-                + f"size {len(uris)}"
+                + f"for {record_name} of size {len(uris)}"
             )
 
     transmitters = []

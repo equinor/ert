@@ -194,6 +194,18 @@ class ExperimentRunConfig:
             input.record for input in self._ensemble_config.input
         )
         if ensemble_input_names != stage_input_names:
+            msg: str = ""
+
+            missing_in_ensemble = set(stage_input_names) - set(ensemble_input_names)
+            if missing_in_ensemble:
+                msg += (
+                    f"\nMissing record names in ensemble input: {missing_in_ensemble}."
+                )
+
+            missing_in_stage = set(ensemble_input_names) - set(stage_input_names)
+            if missing_in_stage:
+                msg += f"\nMissing record names in stage input: {missing_in_stage}."
+
             raise ert.exceptions.ConfigValidationError(
-                "Ensemble and stage inputs do not match."
+                f"Ensemble and stage inputs do not match.{msg}"
             )

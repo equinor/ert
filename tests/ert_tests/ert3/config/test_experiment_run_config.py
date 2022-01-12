@@ -57,7 +57,10 @@ def test_experiment_run_config_validate_stage(
 ):
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
-        match="Ensemble and stage inputs do not match.",
+        match=(
+            "Ensemble and stage inputs do not match.\n"
+            "Missing record names in ensemble input: {'other_coefficients'}."
+        ),
     ):
         ert3.config.ExperimentRunConfig(
             ert3.config.ExperimentConfig(type="evaluation"),
@@ -78,6 +81,29 @@ def test_experiment_run_config_validate_stage(
         ert3.config.ExperimentRunConfig(
             ert3.config.ExperimentConfig(type="evaluation"),
             double_stages_config,
+            ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
+            ert3.config.ParametersConfig.parse_obj([]),
+        )
+
+
+def test_experiment_run_config_validate_stage_missing_stage_record(
+    stages_config, base_ensemble_dict
+):
+
+    ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["input"].append(
+        {"source": "stochastic.other_coefficients", "record": "other_coefficients"}
+    )
+    with pytest.raises(
+        ert.exceptions.ConfigValidationError,
+        match=(
+            "Ensemble and stage inputs do not match.\n"
+            "Missing record names in stage input: {'other_coefficients'}."
+        ),
+    ):
+        ert3.config.ExperimentRunConfig(
+            ert3.config.ExperimentConfig(type="evaluation"),
+            stages_config,
             ert3.config.EnsembleConfig.parse_obj(ensemble_dict),
             ert3.config.ParametersConfig.parse_obj([]),
         )
