@@ -9,6 +9,7 @@
 #include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/res_util/matrix_blas.hpp>
+#include <ert/enkf/row_scaling.hpp>
 
 #include <ert/analysis/update.hpp>
 #include <ert/analysis/std_enkf.hpp>
@@ -20,7 +21,13 @@ void run_analysis_update_without_rowscaling(analysis_module_type *module,
                                             obs_data_type *obs_data,
                                             rng_type *shared_rng,
                                             matrix_type *E, matrix_type *A);
-}
+
+void run_analysis_update_with_rowscaling(
+    analysis_module_type *module, const bool_vector_type *ens_mask,
+    const meas_data_type *forecast, obs_data_type *obs_data,
+    rng_type *shared_rng, matrix_type *E,
+    std::vector<std::pair<matrix_type *, const row_scaling_type *>> parameters);
+} // namespace analysis
 
 const double a_true = 1.0;
 const double b_true = 5.0;
@@ -46,20 +53,20 @@ struct model {
     int size() { return 2; }
 };
 
-SCENARIO("Running analysis update without row scaling on linear model",
+SCENARIO("Running analysis update with and without row scaling on linear model",
          "[analysis]") {
 
     GIVEN("Fixed prior and measurements") {
 
-        analysis_module_type *enkf_module = analysis_module_alloc("STD_ENKF");
+        auto enkf_module = analysis_module_alloc("STD_ENKF");
         analysis_module_set_var(enkf_module, ENKF_TRUNCATION_KEY_, "1.0");
-        rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
+        auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-        int ens_size = GENERATE(10, 100, 1000);
+        int ens_size = GENERATE(200, 100, 1000);
 
-        bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-        meas_data_type *meas_data = meas_data_alloc(ens_mask);
-        obs_data_type *obs_data = obs_data_alloc(1.0);
+        auto ens_mask = bool_vector_alloc(ens_size, true);
+        auto meas_data = meas_data_alloc(ens_mask);
+        auto obs_data = obs_data_alloc(1.0);
 
         model true_model{a_true, b_true};
 
@@ -69,7 +76,7 @@ SCENARIO("Running analysis update without row scaling on linear model",
 
         // prior
         int nparam = true_model.size();
-        matrix_type *A = matrix_alloc(nparam, ens_size);
+        auto A = matrix_alloc(nparam, ens_size);
         for (int iens = 0; iens < ens_size; iens++) {
             const auto &model = ens[iens];
             matrix_iset(A, 0, iens, model.a);
@@ -136,7 +143,7 @@ SCENARIO("Running analysis update without row scaling on linear model",
         std::vector<double> d_posterior_ml(n_sd);
         std::vector<double> d_prior_posterior(n_sd);
 
-        WHEN("Iterating over belief in measurements") {
+        WHEN("Iterating over belief in measurements without row scaling") {
             for (int i_sd = 0; i_sd < n_sd; i_sd++) {
                 double obs_std = sd_obs_values[i_sd];
                 for (int iobs = 0; iobs < obs_size; iobs++) {
@@ -146,7 +153,7 @@ SCENARIO("Running analysis update without row scaling on linear model",
                 }
                 matrix_type *E =
                     obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
-                matrix_type *A_iter = matrix_alloc_copy(A);   // Preserve prior
+                auto A_iter = matrix_alloc_copy(A);           // Preserve prior
 
                 // Create posterior sample (exact estimate, sample covariance)
                 analysis::run_analysis_update_without_rowscaling(
@@ -200,6 +207,182 @@ SCENARIO("Running analysis update without row scaling on linear model",
                 REQUIRE(d_posterior_ml[n_sd - 1] < eps);
             }
         }
+
+        WHEN("Row scaling factor is 0 for both parameters") {
+            auto row_scaling = row_scaling_alloc();
+            for (int row = 0; row < nparam; row++)
+                row_scaling_iset(row_scaling, row, 0.0);
+
+            auto A_with_scaling = matrix_alloc_copy(A);
+
+            std::pair pair{A_with_scaling, row_scaling};
+            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+                parameters{pair};
+
+            for (int iobs = 0; iobs < obs_size; iobs++) {
+                obs_block_iset(ob, iobs, measurements[iobs], 1.0);
+            }
+            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
+
+            analysis::run_analysis_update_with_rowscaling(
+                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
+
+            THEN("Updated parameter matrix should equal prior parameter "
+                 "matrix") {
+                REQUIRE(matrix_equal(A, A_with_scaling));
+            }
+            row_scaling_free(row_scaling);
+            matrix_free(A_with_scaling);
+            matrix_free(E);
+        }
+
+        WHEN("Row scaling factor is 1 for both parameters") {
+            auto row_scaling = row_scaling_alloc();
+            for (int row = 0; row < nparam; row++)
+                row_scaling_iset(row_scaling, row, 1.0);
+
+            auto A_with_scaling = matrix_alloc_copy(A);
+            auto A_no_scaling = matrix_alloc_copy(A);
+
+            std::pair pair{A_with_scaling, row_scaling};
+            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+                parameters{pair};
+
+            for (int iobs = 0; iobs < obs_size; iobs++) {
+                obs_block_iset(ob, iobs, measurements[iobs], 1.0);
+            }
+            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
+
+            analysis::run_analysis_update_with_rowscaling(
+                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
+            analysis::run_analysis_update_without_rowscaling(
+                enkf_module, ens_mask, meas_data, obs_data, rng, E,
+                A_no_scaling);
+
+            THEN("Updated parameter matrix with row scaling should equal "
+                 "updated parameter matrix without row scaling") {
+                REQUIRE(matrix_equal(A_no_scaling, A_with_scaling));
+            }
+            row_scaling_free(row_scaling);
+            matrix_free(A_with_scaling);
+            matrix_free(A_no_scaling);
+            matrix_free(E);
+        }
+
+        WHEN("Row scaling factor is 0 for one parameter and 1 for the other") {
+            auto row_scaling = row_scaling_alloc();
+            row_scaling_iset(row_scaling, 0, 1.0);
+            row_scaling_iset(row_scaling, 1, 0.0);
+
+            auto A_with_scaling = matrix_alloc_copy(A);
+            auto A_no_scaling = matrix_alloc_copy(A);
+
+            std::pair pair{A_with_scaling, row_scaling};
+            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+                parameters{pair};
+
+            for (int iobs = 0; iobs < obs_size; iobs++) {
+                obs_block_iset(ob, iobs, measurements[iobs], 1.0);
+            }
+            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
+
+            analysis::run_analysis_update_with_rowscaling(
+                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
+            analysis::run_analysis_update_without_rowscaling(
+                enkf_module, ens_mask, meas_data, obs_data, rng, E,
+                A_no_scaling);
+
+            THEN("First row of scaled parameters should equal first row of "
+                 "unscaled parameters, while second row of scaled parameters "
+                 "should equal prior") {
+                auto A_with_scaling_T = matrix_alloc_transpose(A_with_scaling);
+                auto A_no_scaling_T = matrix_alloc_transpose(A_no_scaling);
+                auto A_prior_T = matrix_alloc_transpose(A);
+                REQUIRE(matrix_columns_equal(A_with_scaling_T, 0,
+                                             A_no_scaling_T, 0));
+                REQUIRE(
+                    matrix_columns_equal(A_with_scaling_T, 1, A_prior_T, 1));
+
+                matrix_free(A_with_scaling_T);
+                matrix_free(A_no_scaling_T);
+                matrix_free(A_prior_T);
+            }
+            row_scaling_free(row_scaling);
+            matrix_free(A_with_scaling);
+            matrix_free(A_no_scaling);
+            matrix_free(E);
+        }
+
+        WHEN("Iterating over belief in measurements with row scaling") {
+            for (int i_sd = 0; i_sd < n_sd; i_sd++) {
+                double obs_std = sd_obs_values[i_sd];
+                for (int iobs = 0; iobs < obs_size; iobs++) {
+                    // The improtant part: measurement observations stay the same
+                    // What is iterated is the belief in them
+                    obs_block_iset(ob, iobs, measurements[iobs], obs_std);
+                }
+                matrix_type *E =
+                    obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
+                auto A_with_scaling = matrix_alloc_copy(A);
+
+                auto row_scaling = row_scaling_alloc();
+                row_scaling_iset(row_scaling, 0, 1.0);
+                row_scaling_iset(row_scaling, 1, 0.7);
+
+                std::pair pair{A_with_scaling, row_scaling};
+                std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+                    parameters{pair};
+
+                analysis::run_analysis_update_with_rowscaling(
+                    enkf_module, ens_mask, meas_data, obs_data, rng, E,
+                    parameters);
+
+                // Extract estimates
+                a_avg_posterior[i_sd] =
+                    matrix_get_row_sum(A_with_scaling, 0) / ens_size;
+                b_avg_posterior[i_sd] =
+                    matrix_get_row_sum(A_with_scaling, 1) / ens_size;
+
+                // Calculate distances
+                d_posterior_ml[i_sd] =
+                    std::sqrt(std::pow((a_avg_posterior[i_sd] - a_ml), 2) +
+                              std::pow((b_avg_posterior[i_sd] - b_ml), 2));
+                d_prior_posterior[i_sd] = std::sqrt(
+                    std::pow((a_avg_prior - a_avg_posterior[i_sd]), 2) +
+                    std::pow((b_avg_prior - b_avg_posterior[i_sd]), 2));
+
+                matrix_free(E);
+                matrix_free(A_with_scaling);
+                row_scaling_free(row_scaling);
+            }
+
+            // Test everything to some small (but generous) numeric precision
+            double eps = 1e-2;
+
+            // Compare with the prior-ml distance
+            double d_prior_ml = std::sqrt(std::pow((a_avg_prior - a_ml), 2) +
+                                          std::pow((b_avg_prior - b_ml), 2));
+
+            THEN("All posterior estimates lie between prior and ml estimate") {
+                for (int i_sd = 0; i_sd < n_sd; i_sd++) {
+                    REQUIRE(d_posterior_ml[i_sd] - d_prior_ml < eps);
+                    REQUIRE(d_prior_posterior[i_sd] - d_prior_ml < eps);
+                }
+            }
+
+            THEN("Posterior parameter estimates improve with increased "
+                 "trust in observations") {
+                for (int i_sd = 1; i_sd < n_sd; i_sd++) {
+                    REQUIRE(d_posterior_ml[i_sd] - d_posterior_ml[i_sd - 1] <
+                            eps);
+                }
+            }
+
+            THEN("At week beliefs, we should be close to the prior estimate") {
+                REQUIRE(d_prior_posterior[0] < eps);
+            }
+        }
+
         matrix_free(A);
         rng_free(rng);
         obs_data_free(obs_data);
