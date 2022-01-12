@@ -13,6 +13,11 @@
 #include <ert/analysis/update.hpp>
 #include <ert/analysis/std_enkf.hpp>
 
+/**
+ * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html  
+ * 
+ */
+
 namespace analysis {
 void run_analysis_update_without_rowscaling(analysis_module_type *module,
                                             const bool_vector_type *ens_mask,
