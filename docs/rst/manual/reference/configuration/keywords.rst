@@ -1500,14 +1500,14 @@ but required when installing ERT at a new site.
                 TIME_MAP time_map.txt
 
         The format of the TIME_MAP file should just be a list of dates formatted as
-        dd/mm/yyyy. The example file below has four dates:
+        YYYY-MM-DD. The example file below has four dates:
 
         ::
 
-                01/01/2000
-                01/07/2000
-                01/01/2001
-                01/07/2001
+                2000-01-01
+                2000-07-01
+                2001-01-01
+                2001-07-01
 
 
 
