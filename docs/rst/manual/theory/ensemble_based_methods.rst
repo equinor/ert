@@ -397,9 +397,99 @@ Iterative Ensemble Smoother - Ensemble subspace version
 The algorithm implemented is described in the article [Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching]( https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full ).
 
 
+Kalman Posterior Properties
+---------------------------
 
+The updating from the prior :math:`p(\psi)=N\left(\mu_\psi,\Sigma_\psi\right)` 
+to the posterior :math:`p(\psi|d)=N\left(\mu_{\psi|d},\Sigma_{\psi|d}\right)`, 
+in the process assimilating measurements :math:`d` that are linear in :math:`\psi`,
+is performed by the Kalman methods by employing the following equations
 
+.. math::
+   \begin{align}
+   \mu_{\psi|d} &= \mu_{\psi} + K(d-M\mu_{\psi}),\\
+   \Sigma_{\psi|d} &= (I-KM) \Sigma_{\psi}
+   \end{align}
 
+where
 
+.. math::
+   \begin{align}
+   K = \Sigma_{\psi}M^\top (M\Sigma_{\psi}M^\top + \Sigma_{d})^{-1}
+   \end{align}
 
+is called tha Kalman gain, and :math:`M` is the linear measurement operator (i.e., a matrix), so that
 
+.. math::
+   \begin{align}
+   \hat{d} = M\mu_{\psi}
+   \end{align}
+
+is the best estimate of :math:`d` under the prior knowledge, and the error is assumed Gaussian with covariance :math:`\Sigma_d`. 
+The ensemble variants draw an :math:`N`-sample :math:`\{\psi\}_{i=1}^N` from the prior, 
+and perturb observations :math:`d` using the distributions of measurements creating a corresponding observation-sample :math:`\{d\}_{i=1}^N`.
+The perturbations are guaranteed to sum to zero over the sample.
+A posterior sample is then formed from updating the prior with the equation for the posterior mean above
+
+.. math::
+   \begin{align}
+   \{\psi_i | d_i\} = \psi_i + \hat{K}(d_i-M \psi_i),
+   \end{align}
+
+where the estimated Kalman gain :math:`\hat{K}` is found by exchanging the prior covariance with an estimate based on its sample.
+Thus, the ensemble methods combine a sample from the prior with a sample from the likelihood of observed data, to form a new sample from the posterior.
+The posterior distribution that the posterior sample is conceptually sampled from, has mean and covariance found by
+
+.. math::
+   \begin{align}
+   \hat{\mu}_{\psi|d} &= \bar{\psi} + \hat{K}(\bar{d}-M\bar{\psi}),\\
+   \hat{\Sigma}_{\psi|d} &= (I-\hat{K}M) \hat{\Sigma}_{\psi}
+   \end{align}
+
+From this, it is seen that when the sample size tends to infinity and estimates converge to the corresponding population quantities,
+then the ensemble variants converge to the standard Kalman filter in the linear Gaussian case.
+This convergence is however of a stochastic nature.
+
+More deterministic properties of the posterior are observed when the belief in measurements :math:`d` is varied. 
+Intuitively, when measurements have zero belief, i.e. unbounded variance, then the posterior should equal the prior.
+At the other end of the spectrum, if the measurements are perfect with zero variance,
+then the posterior estimate should equal the maximum-likelihood estimate, corresponding to a flat prior, 
+and as we are certain of the belief in this estimate (because the measurements are so amazing), 
+the determinant of the posterior covariance tends to zero from above.
+The maximum likelihood estimate is found by minimizing the relevant part of the negative log-likelihood of the data
+
+.. math::
+   \begin{align}
+   \hat{\mu}_{ml} = \arg\min_{\mu} |d-M\mu|_2
+   \end{align}
+
+Furthermore, for a strictly decreasing sequence in belief in measurements, the distance between the
+posterior and the maximum likelihood estimate will be strictly decreasing as well.
+To summarize: 
+
+- For the posterior estimate, we require that
+  
+  a. The information in :math:`d` has been assimilated, creating a better estimate, so that :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{ml}|_2<|\hat{\mu}_{\psi}-\hat{\mu}_{ml}|_2` and :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{\psi}|_2<|\hat{\mu}_{\psi}-\hat{\mu}_{ml}|_2`.
+  b. The estimate improves at better quality data: Let :math:`\Sigma_d=\sigma_d I`. If a sequence of :math:`\sigma_d` decreases strictly, then so will the corresponding sequence of :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{ml}|_2`.
+  c. The estimate does not move from the prior at no information: When :math:`\sigma_d\to \infty` then :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{\psi}|_2\to 0`.
+  d. The estimate sequence converges to the ml-estimate:  When :math:`\sigma_d\to 0` then :math:`|\hat{\mu}_{\psi|d}-\hat{\mu}_{ml}|_2\to 0`.
+
+- For the posterior covariance, we require for the `generalized variance <https://en.wikipedia.org/wiki/Generalized_variance>`_ that
+
+  a. We become more certain of our estimates as informative data is assimilated, thus :math:`0<\det(\Sigma_{\psi|d})<\det(\Sigma_{\psi})`.
+  b. We become increasingly certain in our estimates when increasingly informative data is assimilated: When a sequence of :math:`\sigma_d` decreases strictly, then so will the corresponding sequence of :math:`\det(\Sigma_{\psi|d})`.
+  c. The certainty of our estimate does not move from the priors when assimilated data contains no information: When :math:`\sigma_d\to \infty` then :math:`\det(\Sigma_{\psi|d})\to\det(\Sigma_{\psi})` from below.
+  d. If assimilated data is perfect, i.e., without noise, then we are fully certain of the posterior estiamte: When :math:`\sigma_d\to 0` then :math:`\det(\Sigma_{\psi|d})\to 0` from above.
+
+In ert, the exact moments of the posterior are not calculated but can instead be estimated from the updated ensemble. 
+The sample mean from the updated ensemble is guaranteed to equal the exact first moment of the posterior, due to the perturbations of :math:`d` summing to zero.
+As a consequence, the maximum likelihood estimate is preserved.
+This guarantees the path of the posterior estimate as below in Figure :numref:`posterior_path`.
+Note however that this adjusts the sample slightly in both the case of measurements and posterior, but that this error is asymptotically negligible. 
+
+.. _posterior_path:
+.. figure:: images/posterior_path.png
+   :scale: 100%
+
+   Illustration of the deterministic path of the posterior estimate from 
+   the priors to the likelihood estimate for :math:`\psi=[a,b]^\top`.
