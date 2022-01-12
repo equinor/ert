@@ -1,0 +1,179 @@
+import numpy
+from jinja2 import Environment, FileSystemLoader
+import tempfile
+import shutil
+import contextlib
+
+from ert_shared.dark_storage import enkf
+import os
+from ecl.summary import EclSum
+import datetime
+import time
+import py
+import ecl_data_io as eclio
+from numpy import array
+
+
+def f(x):
+    return "{0: <8}".format(x)
+
+
+def write_summary_spec(file, keywords):
+    content = [
+        ("INTEHEAD", [1, 100]),
+        ("RESTART ", [b"        "] * 8),
+        ("DIMENS  ", [1 + len(keywords), 10, 10, 10, 0, -1]),
+        ("KEYWORDS", [f(x) for x in ["TIME"] + keywords]),
+        ("WGNAMES ", [b":+:+:+:+"] * (len(keywords) + 1)),
+        ("NUMS    ", [-32676] + ([0] * len(keywords))),
+        ("UNITS   ", [f(x) for x in ["DAYS"] + ["None"] * len(keywords)]),
+        ("STARTDAT", [1, 1, 2010, 0, 0, 0]),
+    ]
+    eclio.write(file, content)
+
+
+def write_summary_data(file, x_size, keywords, ministeps):
+    num_keys = len(keywords)
+
+    def content_generator():
+        for x in range(x_size):
+            yield f("SEQHDR"), [0]
+            for m in range(ministeps):
+                step = x * ministeps + m
+                day = float(step + 1)
+                values = [5.0] * num_keys
+                yield f("MINISTEP"), [step]
+                yield f("PARAMS"), array([day] + values, dtype=numpy.float32)
+
+    eclio.write(file, content_generator())
+
+
+def render_template(folder, template, target, **kwargs):
+    output = template.render(kwargs)
+    file = folder / target
+    with open(file, "w") as f:
+        f.write(output)
+
+
+def make_poly_example(folder, source, **kwargs):
+    folder = folder / "poly"
+    gen_data_count = kwargs["gen_data_count"]
+    summary_count = kwargs["summary_data_count"]
+    gen_obs_count = kwargs["gen_obs_count"]
+    gen_data_entries = kwargs["gen_data_entries"]
+    summary_data_entries = kwargs["summary_data_entries"]
+    ministeps = kwargs["ministeps"]
+    file_loader = FileSystemLoader(str(folder))  # directory of template file
+    env = Environment(loader=file_loader)
+    shutil.copytree(source, folder)
+
+    render_template(
+        folder, env.get_template("coeff_priors.j2"), "coeff_priors", **kwargs
+    )
+    render_template(folder, env.get_template("coeff.tmpl.j2"), "coeff.tmpl", **kwargs)
+    render_template(
+        folder, env.get_template("observations.j2"), "observations", **kwargs
+    )
+    render_template(folder, env.get_template("poly.ert.j2"), "poly.ert", **kwargs)
+    render_template(
+        folder, env.get_template("poly_eval.py.j2"), "poly_eval.py", **kwargs
+    )
+    os.chmod(folder / "poly_eval.py", 0o775)
+    for r in range(gen_obs_count):
+        render_template(
+            folder,
+            env.get_template("poly_obs_data.txt.j2"),
+            f"poly_obs_data_{r}.txt",
+            **kwargs,
+        )
+
+    if not os.path.exists(folder / "refcase"):
+        os.mkdir(folder / "refcase")
+
+    use_ecl_data_io = True
+
+    if use_ecl_data_io:
+        keywords = [f"PSUM{s}" for s in range(summary_count)]
+        print(keywords)
+        write_summary_spec(str(folder) + "/refcase/REFCASE.SMSPEC", keywords)
+        write_summary_data(
+            str(folder) + "/refcase/REFCASE.UNSMRY",
+            summary_data_entries,
+            keywords,
+            ministeps,
+        )
+    else:
+        ecl_sum = EclSum.writer(
+            str(folder) + "/refcase/REFCASE", datetime.datetime(2010, 1, 1), 10, 10, 10
+        )
+        for s in range(summary_count):
+
+            ecl_sum.addVariable(f"PSUM{s}")
+            render_template(
+                folder,
+                env.get_template("poly_obs_data.txt.j2"),
+                f"poly_sum_obs_data_{s}.txt",
+                **kwargs,
+            )
+
+        for x in range(summary_data_entries * ministeps):
+            t_step = ecl_sum.addTStep(x // ministeps + 1, sim_days=x + 1)
+            for s in range(summary_count):
+                t_step[f"PSUM{s}"] = 5.0
+
+        if summary_count > 0:
+            ecl_sum.fwrite()
+
+    return folder
+
+
+def make_poly_template(folder, source_folder, **kwargs):
+    return make_poly_example(
+        folder, source_folder / "test-data" / "local" / "poly_template", **kwargs
+    )
+
+
+def reset_enkf():
+    enkf.ids = {}
+    enkf._config = None
+    enkf._ert = None
+    enkf._libres_facade = None
+
+
+@contextlib.contextmanager
+def dark_storage_app(monkeypatch):
+    monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
+    monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
+    monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
+    from ert_shared.dark_storage.app import app
+
+    yield app
+    reset_enkf()
+
+
+import sys
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        folder = py.path.local(sys.argv[1])
+        if folder.exists():
+            folder.remove()
+    else:
+        folder = py.path.local(tempfile.mkdtemp())
+    make_poly_example(
+        folder,
+        "../../test-data/local/poly_template",
+        gen_data_count=34,
+        gen_data_entries=15,
+        summary_data_entries=30000,
+        reals=200,
+        summary_data_count=8000,
+        sum_obs_count=850,
+        gen_obs_count=34,
+        sum_obs_every=10000,
+        gen_obs_every=1,
+        parameter_entries=8,
+        parameter_count=400,
+        ministeps=1,  # how many ministeps are used, should probably be 1
+    )
+    print(folder)

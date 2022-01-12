@@ -1,0 +1,6 @@
+COEFF_0 UNIFORM 0 1
+COEFF_1 UNIFORM 0 2
+COEFF_2 UNIFORM 0 5
+{%- for p in range(parameter_entries - 3) %}
+COEFF_{{p+3}} UNIFORM 0 5
+{%- endfor %}
