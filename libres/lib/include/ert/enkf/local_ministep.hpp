@@ -98,7 +98,6 @@ public:
             const char *key = hash_iter_get_next_key(node_iter);
             if (scaling.count(key) == 0) {
                 keys.emplace_back(key);
-                printf("==> unscaled: %s\n", key);
             }
         }
         hash_iter_free(node_iter);
