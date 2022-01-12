@@ -70,7 +70,7 @@ class Job:
                 os.path.basename(self.job_data.get("executable"))
             )
             with open("{}_exec_env.json".format(exec_name), "w") as f:
-                f.write(json.dumps(exec_env))
+                f.write(json.dumps(exec_env, indent=4))
 
         max_running_minutes = self.job_data.get("max_running_minutes")
         run_start_time = dt.now()

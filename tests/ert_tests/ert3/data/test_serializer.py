@@ -1,9 +1,6 @@
-import datetime
-import os
+import json
 
-import numpy as np
 import pytest
-
 from ert.serialization import _serializer
 
 OBJECTS = [None, {}, {"foo": "bar"}]
@@ -16,14 +13,16 @@ assert len(OBJECTS) == len(OBJECTS_JSON) == len(OBJECTS_YAML)
 def test_json_serializer_encode_decode(obj, obj_json):
     json_serializer = _serializer._json_serializer()
 
-    assert json_serializer.encode(obj) == obj_json
+    assert json.loads(json_serializer.encode(obj)) == json.loads(obj_json)
     assert json_serializer.decode(obj_json) == obj
 
     # Test that keyword arguments are passed through
     assert json_serializer.decode(json_serializer.encode(obj, indent=True)) == obj
-    assert json_serializer.encode(obj, separators=(",", ":")) == obj_json.replace(
-        " ", ""
-    )
+
+    # Most compact json serialization:
+    assert json_serializer.encode(
+        obj, indent=None, separators=(",", ":")
+    ) == obj_json.replace(" ", "")
 
 
 @pytest.mark.asyncio

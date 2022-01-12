@@ -346,7 +346,7 @@ class BaseService:
 
         if isinstance(info, Mapping):
             with open(f"{self.service_name}_server.json", "w") as f:
-                json.dump(info, f)
+                json.dump(info, f, indent=4)
 
         self._conn_info_event.set()
 

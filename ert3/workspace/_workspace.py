@@ -199,7 +199,7 @@ class Workspace:
             output_file = "data.json"
         self.assert_experiment_exists(experiment_name)
         with open(experiment_root / output_file, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4, sort_keys=True)
 
     def _validate_resources(self, ensemble_config: ert3.config.EnsembleConfig) -> None:
         resource_inputs = [
