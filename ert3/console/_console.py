@@ -113,6 +113,20 @@ def _build_clean_argparser(subparsers: Any) -> None:
     )
 
 
+def _build_start_storage_argparser(subparsers: Any) -> None:
+    start_storage_parser = subparsers.add_parser(
+        "storage",
+        help="ert3 storage service",
+    )
+    start_storage_parser.add_argument(
+        "--database-url",
+        type=str,
+        default=None,
+        help="Database URL that the server should connect to. Will use the default "
+        + "of ert-storage if not specified",
+    )
+
+
 def _build_service_argparser(subparsers: Any) -> None:
     service_parser = subparsers.add_parser("service", help="ert3 services")
 
@@ -122,11 +136,10 @@ def _build_service_argparser(subparsers: Any) -> None:
 
     start_parser = sub_service_parser.add_parser("start", help="Start ert3 service")
     check_parser = sub_service_parser.add_parser("check", help="Check ert3 service")
-    start_parser.add_argument(
-        dest="service_name",
-        choices=["storage"],
-        help="ert3 storage service",
-    )
+
+    sub_start_parser = start_parser.add_subparsers(dest="sub_start_cmd")
+    _build_start_storage_argparser(sub_start_parser)
+
     check_parser.add_argument(
         dest="service_name",
         choices=["storage"],
@@ -305,8 +318,13 @@ def _service_check(args: Any) -> None:
 
 
 def _service_start(args: Any) -> None:
-    if args.service_name == "storage":
-        os.execvp("ert", ["ert", "api", "--enable-new-storage"])
+    if args.sub_start_cmd == "storage":
+        arglist = ["ert", "api"]
+        if args.database_url is not None:
+            arglist.extend(["--database-url", args.database_url])
+        else:
+            arglist.append("--enable-new-storage")
+        os.execvp("ert", arglist)
     else:
         raise SystemExit(f"{args.service_name} not implemented")
 
