@@ -36,7 +36,7 @@ jobs:
 
     - name: Install ERT
       run: |
-        pip install .[storage]
+        pip install .
 
     - name: Start ert-storage
       run: |
@@ -84,7 +84,7 @@ jobs:
 
     - name: Install ERT
       run: |
-        pip install .[storage]
+        pip install .
 
     - name: Start postgres ert-storage
       env:
