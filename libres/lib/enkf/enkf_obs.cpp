@@ -840,7 +840,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
 
         const char *help_item_spec_date =
             "The DATE item gives the observation time as the date date it "
-            "occured. Format is dd/mm/yyyy.";
+            "occured. Format is YYYY-MM-DD.";
         conf_item_spec_type *item_spec_date =
             conf_item_spec_alloc("DATE", false, DT_DATE, help_item_spec_date);
 
@@ -935,7 +935,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
 
         const char *help_item_spec_date =
             "The DATE item gives the observation time as the date date it "
-            "occured. Format is dd/mm/yyyy.";
+            "occured. Format is YYYY-MM-DD.";
         conf_item_spec_type *item_spec_date =
             conf_item_spec_alloc("DATE", false, DT_DATE, help_item_spec_date);
 
@@ -1062,7 +1062,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "The item DATA gives the observed GEN_DATA instance.";
         const char *help_item_spec_date =
             "The DATE item gives the observation time as the date date it "
-            "occured. Format is dd/mm/yyyy.";
+            "occured. Format is YYYY-MM-DD.";
         const char *help_item_spec_days =
             "The DAYS item gives the observation time as days after simulation "
             "start.";
