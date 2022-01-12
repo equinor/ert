@@ -18,11 +18,12 @@ def test_workspace_initialize(tmpdir, ert_storage):
     ert3.workspace.initialize(tmpdir)
     ert.storage.init(workspace_name=tmpdir)
 
-    assert (Path(tmpdir) / ert3.workspace._workspace._WORKSPACE_DATA_ROOT).is_dir()
+    data_root = Path(tmpdir) / ert3.workspace._workspace._WORKSPACE_DATA_ROOT
+    assert data_root.is_dir()
 
     with pytest.raises(
         ert.exceptions.IllegalWorkspaceOperation,
-        match="Already inside an ERT workspace.",
+        match=f"Already inside an ERT workspace, found {data_root}",
     ):
         ert3.workspace.initialize(tmpdir)
         ert.storage.init(workspace_name=tmpdir)

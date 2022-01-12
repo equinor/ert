@@ -238,9 +238,10 @@ def initialize(path: Union[str, Path]) -> Workspace:
         Workspace: A corresponding workspace object.
     """
     path = Path(path)
-    if _locate_root(path) is not None:
+    root = _locate_root(path)
+    if root is not None:
         raise ert.exceptions.IllegalWorkspaceOperation(
-            "Already inside an ERT workspace."
+            f"Already inside an ERT workspace, found {root}/.ert"
         )
     (path / _WORKSPACE_DATA_ROOT).mkdir()
     return Workspace(path)
