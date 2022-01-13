@@ -32,7 +32,7 @@
 
 #include <ert/job_queue/workflow.hpp>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/config_keys.hpp>
@@ -41,6 +41,7 @@
 #include <ert/enkf/model_config.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("enkf");
 
 #define ERT_WORKFLOW_LIST_TYPE_ID 8856275
 
@@ -231,7 +232,7 @@ void ert_workflow_list_add_jobs_in_directory(
             continue;
 
         names.insert(root_name);
-        res_log_finfo("Adding workflow job:%s", full_path);
+        logger->info("Adding workflow job:{}", full_path);
         ert_workflow_list_add_job(workflow_list, root_name, full_path);
         free(full_path);
     }

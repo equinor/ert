@@ -22,11 +22,13 @@
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/model_config.hpp>
+
+static auto logger = ert::get_logger("enkf");
 
 struct rng_config_struct {
     rng_alg_type type;
@@ -144,6 +146,6 @@ void rng_config_init(rng_config_type *rng_config,
         const char *random_seed =
             config_content_get_value(config_content, RANDOM_SEED_KEY);
         rng_config_set_random_seed(rng_config, random_seed);
-        res_log_fcritical("Using RANDOM_SEED: %s", random_seed);
+        logger->critical("Using RANDOM_SEED: {}", random_seed);
     }
 }

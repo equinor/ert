@@ -137,16 +137,6 @@ Missing initializer: enspath
 Missing initializer: select_case
 
 
-#Missing initializer: log_file
-#Missing initializer: log_level
-#   lg = enkf_main_get_logh( enkf_main );
-#   log_reset_filename( lg , "/some/path/to/FILENAME" );
-#   log_get_filename( lg );
-#
-#   log_get_level( lg );
-#   log_set_level( lg , LOG_LEVEL)
-
-
 
 Missing initializer: update_log_path
 

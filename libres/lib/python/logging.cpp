@@ -104,7 +104,9 @@ void Logger::log(Logger::Level level, fmt::string_view f,
     }
 }
 
-std::shared_ptr<ert::ILogger> ert::get_logger(const std::string &name) {
+/* Declare weak so it's possible to override in tests */
+[[gnu::weak]] std::shared_ptr<ert::ILogger>
+ert::get_logger(const std::string &name) {
     auto it = loggers().find(name);
     if (it != loggers().end())
         return it->second;

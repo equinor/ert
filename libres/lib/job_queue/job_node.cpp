@@ -26,11 +26,12 @@
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/job_queue/job_node.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("job_queue");
 
 #define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX -999
@@ -360,8 +361,8 @@ void job_queue_node_set_status(job_queue_node_type *node,
     if (new_status == node->job_status)
         return;
 
-    res_log_fdebug("Set %s(%d) to %s", node->job_name, node->queue_index,
-                   job_status_get_name(new_status));
+    logger->debug("Set {}({}) to {}", node->job_name, node->queue_index,
+                  job_status_get_name(new_status));
     node->job_status = new_status;
 
     /*
@@ -405,16 +406,16 @@ submit_status_type job_queue_node_submit(job_queue_node_type *node,
       to submit it will be performed in the next round.
     */
         submit_status = SUBMIT_DRIVER_FAIL;
-        res_log_fwarning("Failed to submit job %s (attempt %d)", node->job_name,
-                         node->submit_attempt);
+        logger->warning("Failed to submit job {} (attempt {})", node->job_name,
+                        node->submit_attempt);
         goto cleanup;
     }
 
     old_status = node->job_status;
     new_status = JOB_QUEUE_SUBMITTED;
 
-    res_log_finfo("Submitted job %s (attempt %d)", node->job_name,
-                  node->submit_attempt);
+    logger->info("Submitted job {} (attempt {})", node->job_name,
+                 node->submit_attempt);
 
     node->job_data = job_data;
     node->submit_attempt++;
@@ -453,8 +454,8 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
       to submit it will be performed in the next round.
     */
         submit_status = SUBMIT_DRIVER_FAIL;
-        res_log_fwarning("Failed to submit job %s (attempt %d)", node->job_name,
-                         node->submit_attempt);
+        logger->warning("Failed to submit job {} (attempt {})", node->job_name,
+                        node->submit_attempt);
         pthread_mutex_unlock(&node->data_mutex);
         return submit_status;
     }
@@ -462,8 +463,8 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     old_status = node->job_status;
     new_status = JOB_QUEUE_SUBMITTED;
 
-    res_log_finfo("Submitted job %s (attempt %d)", node->job_name,
-                  node->submit_attempt);
+    logger->info("Submitted job {} (attempt {})", node->job_name,
+                 node->submit_attempt);
 
     node->job_data = job_data;
     node->submit_attempt++;
@@ -531,10 +532,10 @@ bool job_queue_node_update_status(job_queue_node_type *node,
         // it's running, but not confirmed running.
         double runtime = job_queue_node_time_since_sim_start(node);
         if (runtime >= node->max_confirm_wait) {
-            res_log_finfo("max_confirm_wait (%d) has passed since sim_start"
-                          "without success; %s is dead (attempt %d)",
-                          node->max_confirm_wait, node->job_name,
-                          node->submit_attempt);
+            logger->info("max_confirm_wait ({}) has passed since sim_start"
+                         "without success; {} is dead (attempt {})",
+                         node->max_confirm_wait, node->job_name,
+                         node->submit_attempt);
             job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
             status_change =
                 job_queue_status_transition(status, current_status, new_status);
@@ -578,10 +579,10 @@ bool job_queue_node_update_status_simple(job_queue_node_type *node,
         // it's running, but not confirmed running.
         double runtime = job_queue_node_time_since_sim_start(node);
         if (runtime >= node->max_confirm_wait) {
-            res_log_finfo("max_confirm_wait (%d) has passed since sim_start"
-                          "without success; %s is dead (attempt %d)",
-                          node->max_confirm_wait, node->job_name,
-                          node->submit_attempt);
+            logger->info("max_confirm_wait ({}) has passed since sim_start"
+                         "without success; {} is dead (attempt {})",
+                         node->max_confirm_wait, node->job_name,
+                         node->submit_attempt);
             job_status_type new_status = JOB_QUEUE_DO_KILL_NODE_FAILURE;
             job_queue_node_set_status(node, new_status);
         }
@@ -634,10 +635,10 @@ bool job_queue_node_kill(job_queue_node_type *node,
         job_queue_status_transition(status, current_status,
                                     JOB_QUEUE_IS_KILLED);
         job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        res_log_finfo("job %s set to killed", node->job_name);
+        logger->info("job {} set to killed", node->job_name);
         result = true;
     } else {
-        res_log_fwarning("node_kill called but cannot kill %s", node->job_name);
+        logger->warning("node_kill called but cannot kill {}", node->job_name);
     }
 
     pthread_mutex_unlock(&node->data_mutex);
@@ -661,10 +662,10 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
             node->job_data = NULL;
         }
         job_queue_node_set_status(node, JOB_QUEUE_IS_KILLED);
-        res_log_finfo("job %s set to killed", node->job_name);
+        logger->info("job {} set to killed", node->job_name);
         result = true;
     } else {
-        res_log_fwarning("node_kill called but cannot kill %s", node->job_name);
+        logger->warning("node_kill called but cannot kill {}", node->job_name);
     }
     pthread_mutex_unlock(&node->data_mutex);
     return result;

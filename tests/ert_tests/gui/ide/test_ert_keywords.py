@@ -106,8 +106,6 @@ class ErtKeywordTest(ErtTest):
             "keywords/run_template",
             "Run",
         )
-        self.keywordTest("LOG_LEVEL", [StringArgument], "keywords/log_level", "Run")
-        self.keywordTest("LOG_FILE", [PathArgument], "keywords/log_file", "Run")
         self.keywordTest("MAX_SUBMIT", [IntegerArgument], "keywords/max_submit", "Run")
         self.keywordTest(
             "MAX_RESAMPLE", [IntegerArgument], "keywords/max_resample", "Run"

@@ -50,16 +50,19 @@ foreach(
   obs_vector
   measured
   obs_mask_deactivate
-  log_config_level_parse
   row_scaling
   rng_manager
-  rng_config
   trans_func
   value_export)
   add_executable(${test} test_${test}.cpp)
   target_link_libraries(${test} res)
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
+
+# rng_config test is unique in that it requires mocking of logs
+add_executable(rng_config test_rng_config.cpp ../../tests/logging.cpp)
+target_link_libraries(rng_config res)
+add_test(NAME rng_config COMMAND rng_config)
 
 foreach(
   test

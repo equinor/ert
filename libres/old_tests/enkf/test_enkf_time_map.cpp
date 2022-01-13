@@ -29,7 +29,6 @@
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/enkf/time_map.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/res_util/res_log.hpp>
 #include <ert/enkf/enkf_main.hpp>
 
 void ecl_test(const char *ecl_case) {
@@ -341,8 +340,6 @@ void test_read_only() {
 int main(int argc, char **argv) {
 
     enkf_main_install_SIGNALS();
-    res_log_init_log(LOG_CRITICAL, NULL,
-                     false); // Make sure there will be no logging.
 
     if (argc == 1) {
         simple_test();

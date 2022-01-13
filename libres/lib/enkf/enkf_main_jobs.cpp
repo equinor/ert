@@ -21,9 +21,11 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/util/type_vector_functions.hpp>
+
+static auto logger = ert::get_logger("enkf");
 
 extern "C" {
 
@@ -473,19 +475,16 @@ C_USED void *enkf_main_pre_simulation_copy_JOB(void *self,
     const char *source_path = stringlist_iget(args, 0);
 
     if (!util_entry_exists(source_path)) {
-        char *msg =
-            util_alloc_sprintf("Error in workflow job PRE_SIMULATION_COPY"
-                               "- source argument: %s not existing\n",
-                               source_path);
-        res_log_error(msg);
-        free(msg);
+        logger->error("Error in workflow job PRE_SIMULATION_COPY"
+                      "- source argument: {} not existing\n",
+                      source_path);
         return NULL;
     }
 
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     model_config_type *model_config = enkf_main_get_model_config(enkf_main);
     if (!model_config_data_root_is_set(model_config)) {
-        res_log_error(
+        logger->error(
             "Error in workflow job PRE_SIMULATION_COPY DATA_ROOT not set");
         return NULL;
     }
@@ -502,13 +501,13 @@ C_USED void *enkf_main_pre_simulation_copy_JOB(void *self,
     util_make_path(target_path);
     if (util_is_directory(source_path)) {
         util_copy_directory(source_path, target_path);
-        res_log_finfo("Copying directory %s -> %s", source_path, target_path);
+        logger->info("Copying directory {} -> {}", source_path, target_path);
     } else {
         char *base_name = util_split_alloc_filename(source_path);
         char *target_file = util_alloc_filename(target_path, base_name, NULL);
 
         util_copy_file(source_path, target_file);
-        res_log_finfo("Copying file %s -> %s", source_path, target_path);
+        logger->info("Copying file {} -> {}", source_path, target_path);
 
         free(base_name);
         free(target_file);

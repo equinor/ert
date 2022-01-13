@@ -14,10 +14,11 @@
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
-#include <ert/res_util/res_log.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
+
+static auto logger = ert::get_logger("analysis.update");
 
 namespace analysis {
 
@@ -36,8 +37,6 @@ namespace analysis {
    The members explicitly marked with a mutable: comment will vary in the
    lifetime of the serialization_info, the other members will be constant. 
 */
-
-auto logger = ert::get_logger("update");
 
 typedef struct {
     int row_offset;
@@ -741,9 +740,8 @@ bool smoother_update(std::vector<int> step_list,
 
             matrix_safe_free(E);
         } else if (target_fs != source_fs)
-            res_log_ferror(
-                "No active observations/parameters for MINISTEP: %s.",
-                local_ministep_get_name(ministep));
+            logger->error("No active observations/parameters for MINISTEP: {}.",
+                          local_ministep_get_name(ministep));
     }
 
     state_map_type *target_state_map = enkf_fs_get_state_map(target_fs);

@@ -2,7 +2,6 @@ find_library(VALGRIND NAMES valgr)
 
 foreach(
   name
-  ert_util_logh
   ert_util_arg_pack
   ert_util_matrix
   es_testdata
