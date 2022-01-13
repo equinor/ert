@@ -77,20 +77,15 @@ def _prepare_export_responses(
             uri = f"{records_url}/{record_name}"
             future = ert.storage.get_record_metadata(uri)
             metadata = get_event_loop().run_until_complete(future)
+            url = f"{records_url}/{record_name}?realization_index={iens}"
             if metadata.get("record_type") == ert.data.RecordType.NUMERICAL_TREE:
-                transmitter = ert.storage.StorageRecordTransmitter(
-                    record_name, records_url, iens=iens
+                future = ert.storage.load_recordtree_data(
+                    url, ert.data.RecordType.NUMERICAL_TREE
                 )
-                transmitter.set_transmitted(
-                    f"{uri}?realization_index={iens}",
-                    ert.data.RecordType.NUMERICAL_TREE,
-                )
-                future = transmitter.load()
-                record = get_event_loop().run_until_complete(future)
-                for key, leaf_record in record.flat_record_dict.items():
-                    outputs[key].append(leaf_record.data)
+                record_data = get_event_loop().run_until_complete(future)
+                for key, data in record_data.items():
+                    outputs[key].append(data)
             else:
-                url = f"{records_url}/{record_name}?realization_index={iens}"
                 future = ert.storage.load_record(url, ert.data.RecordType.LIST_FLOAT)
                 record = get_event_loop().run_until_complete(future)
                 outputs[record_name].append(record.data)

@@ -1,9 +1,21 @@
 import io
 import logging
 import json
+import asyncio
 from functools import partial
 from http import HTTPStatus
-from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Awaitable,
+    Coroutine,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 import httpx
 import pandas as pd
 import ert
@@ -330,6 +342,33 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
                 data=_interpret_series(row=row, record_type=record_type)
             )
     return ert.data.BlobRecord(data=content)
+
+
+async def load_recordtree_data(
+    url: str, record_type: ert.data.RecordType
+) -> Dict[str, Any]:
+    if record_type == ert.data.RecordType.BLOB_TREE:
+        record_subtype = ert.data.RecordType.BYTES
+    elif record_type == ert.data.RecordType.NUMERICAL_TREE:
+        record_subtype = ert.data.RecordType.MAPPING_STR_FLOAT
+    else:
+        raise TypeError(f"Expected RecordTree but got {record_type}")
+
+    record = await load_record(url, record_type)
+    records_info = json.loads(record.data.decode("utf-8"))
+
+    async def _load_key(
+        key: str, coro: Coroutine[str, ert.data.RecordType, ert.data.Record]
+    ) -> Tuple[str, Any]:
+        return key, await coro
+
+    results = await asyncio.gather(
+        *(
+            _load_key(rec_path, load_record(uri, record_subtype))
+            for rec_path, uri in records_info.items()
+        )
+    )
+    return {rec_path: sub_record.data for rec_path, sub_record in results}
 
 
 async def get_record_metadata(record_url: str) -> Dict[Any, Any]:

@@ -13,13 +13,7 @@ input:
 
 output:
     -
-      record: WOPT:PROD
-    -
-      record: WWPT:PROD
-    -
-      record: WGPT:PROD
-    -
-      record: WWIT:INJ
+      record: eclsum
 
 forward_model:
   driver: local
