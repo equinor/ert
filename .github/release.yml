@@ -3,12 +3,21 @@ changelog:
     - title: Breaking Changes 🛠
       labels:
         - breaking-change
+      exclude:
+        labels:
+          - ert3
     - title: New Features 🎉
       labels:
         - enhancement
+      exclude:
+        labels:
+          - ert3
     - title: Bug Fixes
       labels:
         - bug
+      exclude:
+        labels:
+          - ert3
     - title: ert3
       labels:
         - ert3
