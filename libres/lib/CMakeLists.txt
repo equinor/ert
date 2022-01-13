@@ -8,8 +8,6 @@ endif()
 pybind11_add_module(
   _lib
   SHARED
-  res_util/res_log.cpp
-  res_util/log.cpp
   res_util/memory.cpp
   res_util/es_testdata.cpp
   res_util/file_utils.cpp
@@ -169,8 +167,7 @@ pybind11_add_module(
   enkf/surface.cpp
   enkf/surface_config.cpp
   enkf/trans_func.cpp
-  enkf/subst_config.cpp
-  enkf/log_config.cpp)
+  enkf/subst_config.cpp)
 # -----------------------------------------------------------------
 
 find_package(LAPACK REQUIRED)

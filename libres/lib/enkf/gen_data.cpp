@@ -28,7 +28,7 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_macros.hpp>
@@ -38,6 +38,7 @@
 #include <ert/enkf/gen_common.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("enkf");
 
 /*
    The file implements a general data type which can be used to update
@@ -281,12 +282,11 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
                                    __func__, active_file);
                 }
                 fclose(stream);
-                res_log_finfo(
-                    "GEN_DATA(%s): active information loaded from:%s.",
-                    gen_data_get_key(gen_data), active_file);
+                logger->info("GEN_DATA({}): active information loaded from:{}.",
+                             gen_data_get_key(gen_data), active_file);
             } else
-                res_log_finfo("GEN_DATA(%s): active information NOT loaded.",
-                              gen_data_get_key(gen_data));
+                logger->info("GEN_DATA({}): active information NOT loaded.",
+                             gen_data_get_key(gen_data));
             free(active_file);
         }
     }
@@ -324,8 +324,8 @@ bool gen_data_fload_with_report_step(
         int size = 0;
         buffer = gen_common_fload_alloc(filename, input_format, internal_type,
                                         &load_type, &size);
-        res_log_finfo("GEN_DATA(%s): loading from: %s   size:%d",
-                      gen_data_get_key(gen_data), filename, size);
+        logger->info("GEN_DATA({}): loading from: {}   size:{}",
+                     gen_data_get_key(gen_data), filename, size);
         if (size > 0) {
             gen_data_fload_active__(gen_data, filename, size);
         } else {
@@ -335,8 +335,8 @@ bool gen_data_fload_with_report_step(
                             ecl_type_create_from_type(load_type), buffer);
         free(buffer);
     } else
-        res_log_fwarning("GEN_DATA(%s): missing file: %s",
-                         gen_data_get_key(gen_data), filename);
+        logger->warning("GEN_DATA({}): missing file: {}",
+                        gen_data_get_key(gen_data), filename);
 
     return file_exists;
 }

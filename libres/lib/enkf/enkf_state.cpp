@@ -36,9 +36,10 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 #include <ert/enkf/callback_arg.hpp>
 
+static auto logger = ert::get_logger("enkf");
 #define ENKF_STATE_TYPE_ID 78132
 
 /*
@@ -241,14 +242,14 @@ static void enkf_state_check_for_missing_eclipse_summary_data(
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key);
         if (enkf_config_node_get_num_obs(config_node) == 0) {
-            res_log_finfo(
-                "[%03d:----] Unable to find Eclipse data for summary key: "
-                "%s, but have no observations either, so will continue.",
+            logger->info(
+                "[{:03d}:----] Unable to find Eclipse data for summary key: "
+                "{}, but have no observations either, so will continue.",
                 iens, key);
         } else {
-            res_log_ferror(
-                "[%03d:----] Unable to find Eclipse data for summary key: "
-                "%s, but have observation for this, job will fail.",
+            logger->error(
+                "[{:03d}:----] Unable to find Eclipse data for summary key: "
+                "{}, but have observation for this, job will fail.",
                 iens, key);
             forward_load_context_update_result(load_context, LOAD_FAILURE);
             if (forward_load_context_accept_messages(load_context)) {
@@ -349,10 +350,9 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
 
                 return true;
             } else {
-                res_log_fwarning(
-                    "Could not load ECLIPSE summary data from %s - "
-                    "this will probably fail later ... ",
-                    run_arg_get_runpath(run_arg));
+                logger->warning("Could not load ECLIPSE summary data from {} - "
+                                "this will probably fail later ... ",
+                                run_arg_get_runpath(run_arg));
                 return false;
             }
         }
@@ -378,8 +378,9 @@ static void enkf_state_load_gen_data_node(
             enkf_state_log_GEN_DATA_load(node, report_step, load_context);
         } else {
             forward_load_context_update_result(load_context, LOAD_FAILURE);
-            res_log_ferror("[%03d:%04d] Failed load data for GEN_DATA node:%s.",
-                           iens, report_step, enkf_node_get_key(node));
+            logger->error(
+                "[{:03d}:{:04d}] Failed load data for GEN_DATA node:{}.", iens,
+                report_step, enkf_node_get_key(node));
 
             if (forward_load_context_accept_messages(load_context)) {
                 char *msg =
@@ -406,9 +407,9 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
 
     if (numkeys > 0)
         if (last_report <= 0)
-            res_log_fwarning(
+            logger->warning(
                 "Trying to load GEN_DATA without properly "
-                "set last_report (was %d) - will only look for step 0 data: %s",
+                "set last_report (was {}) - will only look for step 0 data: {}",
                 last_report, stringlist_iget(keylist_GEN_DATA, 0));
 
     const run_arg_type *run_arg =
@@ -650,9 +651,9 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
      in this scope whether the results can be loaded back; if that
      is OK the final status is updated, otherwise: restart.
   */
-    res_log_finfo(
-        "[%03d:%04d-%04d] Forward model complete - starting to load results.",
-        iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+    logger->info("[{:03d}:{:04d}-{:04d}] Forward model complete - starting to "
+                 "load results.",
+                 iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
     result = enkf_state_load_from_forward_model__(ens_config, model_config,
                                                   ecl_config, run_arg, NULL);
@@ -674,8 +675,9 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
       (should be avoided) to JOB_RUN_OK.
     */
         run_arg_set_run_status(run_arg, JOB_RUN_OK);
-        res_log_finfo("[%03d:%04d-%04d] Results loaded successfully.", iens,
-                      run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+        logger->info("[{:03d}:{:04d}-{:04d}] Results loaded successfully.",
+                     iens, run_arg_get_step1(run_arg),
+                     run_arg_get_step2(run_arg));
     }
 
     return result == 0;
@@ -690,8 +692,8 @@ bool enkf_state_complete_forward_modelOK__(void *arg) {
 
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     const int iens = run_arg_get_iens(run_arg);
-    res_log_ferror("[%03d:%04d-%04d] FAILED COMPLETELY.", iens,
-                   run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+    logger->error("[{:03d}:{:04d}-{:04d}] FAILED COMPLETELY.", iens,
+                  run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
     if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
         run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
@@ -731,10 +733,11 @@ static void enkf_state_internal_retry(const res_config_type *res_config,
         res_config_get_ensemble_config(res_config);
     const int iens = run_arg_get_iens(run_arg);
 
-    res_log_ferror("[%03d:%04d - %04d] Forward model failed.", iens,
-                   run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
+    logger->error("[{:03d}:{:04d} - {:04d}] Forward model failed.", iens,
+                  run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
     if (run_arg_can_retry(run_arg)) {
-        res_log_ferror("[%03d] Resampling and resubmitting realization.", iens);
+        logger->error("[{:03d}] Resampling and resubmitting realization.",
+                      iens);
 
         std::vector<std::string> init_keys =
             ensemble_config_keylist_from_var_type(ens_config, PARAMETER);

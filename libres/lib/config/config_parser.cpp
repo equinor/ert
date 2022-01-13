@@ -28,9 +28,11 @@
 #include <ert/util/path_stack.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/res_env.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/config/config_parser.hpp>
+
+static auto logger = ert::get_logger("config");
 
 namespace fs = std::filesystem;
 
@@ -177,8 +179,8 @@ static config_content_node_type *config_content_item_set_arg__(
                                                       new_value);
                         } else {
                             env_offset += 1;
-                            res_log_fwarning(
-                                "Environment variable: %s is not defined",
+                            logger->warning(
+                                "Environment variable: {} is not defined",
                                 env_var);
                         }
                     }

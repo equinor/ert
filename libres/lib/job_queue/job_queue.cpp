@@ -31,14 +31,15 @@
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/res_util/res_log.hpp>
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/res_portability.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/job_list.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("job_queue");
 
 /*
 
@@ -665,8 +666,8 @@ static void job_queue_check_expired(job_queue_type *queue) {
         if (max_duration > 0) {
             double elapsed = difftime(now, job_queue_node_get_sim_start(node));
             if (elapsed > max_duration) {
-                res_log_finfo(
-                    "Time limit exceeded, %fs > %fs. Scheduled for kill.",
+                logger->info(
+                    "Time limit exceeded, {} > {}. Scheduled for kill.",
                     elapsed, max_duration);
                 job_queue_change_node_status(queue, node, JOB_QUEUE_DO_KILL);
             }
@@ -814,7 +815,7 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
                 ->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we should kill
                                all jobs, do some clearing up and go home. Observe that we will go through the
                                queue handling codeblock below ONE LAST TIME before exiting. */
-            res_log_info("Received queue->user_exit in inner loop of "
+            logger->info("Received queue->user_exit in inner loop of "
                          "job_queue_run_jobs, exiting");
             job_queue_user_exit__(queue);
             exit = true;
@@ -894,7 +895,7 @@ static void handle_run_jobs(job_queue_type *queue, int num_total_run,
   */
     const int NUM_WORKER_THREADS = 1;
     queue->work_pool = thread_pool_alloc(NUM_WORKER_THREADS, true);
-    res_log_debug("Allocated thread pool in job_queue_run_jobs");
+    logger->debug("Allocated thread pool in job_queue_run_jobs");
 
     queue->running = true;
     job_queue_loop(queue, num_total_run, verbose);
@@ -932,7 +933,7 @@ void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
     if (!queue->user_exit)
         handle_run_jobs(queue, num_total_run, verbose);
     else
-        res_log_info("queue->user_exit = true in job_queue, received external "
+        logger->info("queue->user_exit = true in job_queue, received external "
                      "signal to abandon the whole thing");
 
     /*

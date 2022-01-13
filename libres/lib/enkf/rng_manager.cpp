@@ -24,9 +24,10 @@
 #include <ert/util/rng.h>
 #include <ert/util/vector.h>
 #include <ert/enkf/rng_manager.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("enkf");
 
 #define RNG_MANAGER_TYPE_ID 77250451
 
@@ -149,7 +150,7 @@ void rng_manager_log_state(const rng_manager_type *rng_manager) {
     }
     free(uint_fmt);
 
-    res_log_info("To repeat this experiment, add the following random seed to "
+    logger->info("To repeat this experiment, add the following random seed to "
                  "your config file:");
-    res_log_finfo("RANDOM_SEED %s", random_seed_str);
+    logger->info("RANDOM_SEED {}", random_seed_str);
 }

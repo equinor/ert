@@ -185,7 +185,6 @@ double analysis_config_get_std_cutoff(const analysis_config_type *config) {
     return config_settings_get_double_value(config->update_settings,
                                             UPDATE_STD_CUTOFF_KEY);
 }
-
 void analysis_config_set_log_path(analysis_config_type *config,
                                   const char *log_path) {
     config->log_path = util_realloc_string_copy(config->log_path, log_path);
@@ -487,6 +486,7 @@ analysis_config_type *analysis_config_alloc_full(
     analysis_config_type *config = new analysis_config_type();
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
+    config->log_path = NULL;
     config->update_settings = config_settings_alloc(UPDATE_SETTING_KEY);
     config_settings_add_double_setting(config->update_settings,
                                        UPDATE_ENKF_ALPHA_KEY, alpha);
@@ -514,7 +514,6 @@ analysis_config_type *analysis_config_alloc_default(void) {
     analysis_config_type *config = new analysis_config_type();
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
-    config->log_path = NULL;
     config->update_settings = config_settings_alloc(UPDATE_SETTING_KEY);
     config_settings_add_double_setting(
         config->update_settings, UPDATE_ENKF_ALPHA_KEY, DEFAULT_ENKF_ALPHA);

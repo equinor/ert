@@ -33,12 +33,14 @@
 #include <unordered_set>
 #include <vector>
 
+#include <ert/logging.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/res_util/res_log.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
+
+static auto logger = ert::get_logger("job_queue.slurm_driver");
 
 struct SlurmJob {
     SlurmJob(int job_id) : job_id(job_id), string_id(std::to_string(job_id)) {}
@@ -170,7 +172,7 @@ static std::string load_stdout(const char *cmd, int argc, const char **argv) {
     auto file_content = load_file(stdout);
 
     if (exit_status != 0)
-        res_log_fwarning(
+        logger->warning(
             "Calling shell command %s ... returned non zero exitcode: %d", cmd,
             exit_status);
 
@@ -480,8 +482,8 @@ slurm_driver_translate_status(const std::string &status_string,
     if (status_string == SLURM_CANCELED_STATUS)
         return JOB_QUEUE_IS_KILLED;
 
-    res_log_fwarning("The job status: \'%s\' for job:%s is not recognized",
-                     status_string.c_str(), string_id.c_str());
+    logger->warning("The job status: '{}' for job:{} is not recognized",
+                    status_string, string_id);
     return JOB_QUEUE_UNKNOWN;
 }
 
@@ -525,9 +527,9 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     should be picked up the libres post run checking.
   */
     if (status_iter == values.end()) {
-        res_log_fwarning("The command \'scontrol show jobid %s\' gave no "
-                         "output for job:%s - assuming it is COMPLETED",
-                         string_id.c_str(), string_id.c_str());
+        logger->warning("The command 'scontrol show jobid {}' gave no "
+                        "output for job:{} - assuming it is COMPLETED",
+                        string_id, string_id);
         return JOB_QUEUE_DONE;
     }
 
@@ -535,9 +537,9 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     auto status = slurm_driver_translate_status(status_string, string_id);
 
     if (status == JOB_QUEUE_UNKNOWN) {
-        res_log_fwarning("The job status: \'%s\' for job:%s is not recognized "
-                         "- assuming it is RUNNING",
-                         status_string.c_str(), string_id.c_str());
+        logger->warning("The job status: '{}' for job:{} is not recognized "
+                        "- assuming it is RUNNING",
+                        status_string, string_id);
         status = JOB_QUEUE_RUNNING;
     }
 

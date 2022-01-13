@@ -208,9 +208,7 @@ class ProgrammaticResConfigTest(ResTest):
                     }
                 ],
                 "LOGGING": {
-                    "LOG_LEVEL": "INFO",
                     "UPDATE_LOG_PATH": "../output/update_log/<CASE_DIR>",
-                    "LOG_FILE": "../output/log/ert_<CASE_DIR>.log",
                 },
             },
         }
@@ -337,11 +335,6 @@ class ProgrammaticResConfigTest(ResTest):
     def assert_equal_hook_manager(self, loaded_hook_manager, prog_hook_manager):
         self.assertEqual(loaded_hook_manager, prog_hook_manager)
 
-    def assert_equal_log_config(self, loaded_log_config, prog_log_config):
-        self.assertEqual(loaded_log_config.log_file, prog_log_config.log_file)
-
-        self.assertEqual(loaded_log_config.log_level, prog_log_config.log_level)
-
     def assert_equal_ensemble_config(self, loaded_config, prog_config):
         self.assertEqual(
             set(loaded_config.alloc_keylist()), set(prog_config.alloc_keylist())
@@ -411,10 +404,6 @@ class ProgrammaticResConfigTest(ResTest):
 
             self.assert_equal_hook_manager(
                 loaded_res_config.hook_manager, prog_res_config.hook_manager
-            )
-
-            self.assert_equal_log_config(
-                loaded_res_config.log_config, prog_res_config.log_config
             )
 
             self.assert_equal_ensemble_config(

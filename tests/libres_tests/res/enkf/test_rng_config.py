@@ -34,7 +34,6 @@ class RNGConfigTest(ResTest):
                 "NUM_REALIZATIONS": 1,
                 "JOB_SCRIPT": "script.sh",
                 "ENSPATH": "Ensemble",
-                "LOGGING": {"LOG_LEVEL": "DEBUG"},
             },
         }
 

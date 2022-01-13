@@ -66,7 +66,6 @@ from .local_ministep import LocalMinistep
 from .local_obsdata import LocalObsdata
 from .local_obsdata_node import LocalObsdataNode
 from .local_updatestep import LocalUpdateStep
-from .log_config import LogConfig
 from .meas_block import MeasBlock
 from .meas_data import MeasData
 from .model_config import ModelConfig

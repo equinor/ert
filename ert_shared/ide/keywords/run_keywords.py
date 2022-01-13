@@ -21,8 +21,6 @@ class RunKeywords(object):
         ert_keywords.addKeyword(self.addForwardModel())
         ert_keywords.addKeyword(self.addJobScript())
         ert_keywords.addKeyword(self.addRunTemplate())
-        ert_keywords.addKeyword(self.addLogLevel())
-        ert_keywords.addKeyword(self.addLogFile())
         ert_keywords.addKeyword(self.addMaxSubmit())
         ert_keywords.addKeyword(self.addMaxResample())
         ert_keywords.addKeyword(self.addPreClearRunpath())
@@ -106,26 +104,6 @@ class RunKeywords(object):
             group=self.group,
         )
         return run_template
-
-    def addLogLevel(self):
-        log_level = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("LOG_LEVEL"),
-            arguments=[StringArgument()],
-            documentation_link="keywords/log_level",
-            required=False,
-            group=self.group,
-        )
-        return log_level
-
-    def addLogFile(self):
-        log_file = ConfigurationLineDefinition(
-            keyword=KeywordDefinition("LOG_FILE"),
-            arguments=[PathArgument()],
-            documentation_link="keywords/log_file",
-            required=False,
-            group=self.group,
-        )
-        return log_file
 
     def addMaxSubmit(self):
         max_submit = ConfigurationLineDefinition(

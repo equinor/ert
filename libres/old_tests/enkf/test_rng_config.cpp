@@ -1,26 +1,25 @@
 /*
    Copyright (C) 2017  Equinor ASA, Norway.
-
    The file 'rng_config.c' is part of ERT - Ensemble based Reservoir Tool.
-
    ERT is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
-
    ERT is distributed in the hope that it will be useful, but WITHOUT ANY
    WARRANTY; without even the implied warranty of MERCHANTABILITY or
    FITNESS FOR A PARTICULAR PURPOSE.
-
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+
+#include <optional>
+#include <regex>
 
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/rng_config.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <../../tests/logging.hpp>
 
 #define MAX_INT 999999
 
@@ -34,21 +33,21 @@ static void create_config(const char *user_config_file,
 }
 
 static char *alloc_read_random_seed(const char *log_file) {
-    FILE *stream = util_fopen(log_file, "r");
-    char word[256];
-    char random_seed[256];
-    while (fscanf(stream, "%s", word) == 1)
-        if (strcmp("RANDOM_SEED", word) == 0)
-            fscanf(stream, "%s", random_seed);
+    std::regex re{"RANDOM_SEED (\\d+)"};
+    std::optional<std::string> result;
 
-    fclose(stream);
-
-    return util_alloc_string_copy(random_seed);
+    for (const auto &[level, line] : ert::get_logger_entries("enkf")) {
+        std::smatch smatch;
+        if (std::regex_search(line, smatch, re)) {
+            result = smatch[1];
+        }
+    }
+    return result ? strdup(result->c_str()) : nullptr;
 }
 
 void test_init() {
     ecl::util::TestArea ta("rng_init");
-    res_log_init_log(LOG_DEBUG, "log", true);
+    ert::reset_loggers();
 
     const char *config_file = "my_rng_config";
     const char *random_seed = "13371338";
@@ -77,7 +76,7 @@ static void alloc_reproduced_rng_config(const char *random_seed,
                                         rng_manager_type **orig_rng_man,
                                         rng_manager_type **rep_rng_man) {
     ecl::util::TestArea ta("rng_conifg");
-    res_log_init_log(LOG_DEBUG, "log", true);
+    ert::reset_loggers();
 
     const char *config_file = "my_rng_config";
     create_config(config_file, random_seed);
