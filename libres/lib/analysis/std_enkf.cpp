@@ -46,9 +46,6 @@
   you have repeated calls to both of these functions the end result
   might be a surprise.
 */
-#define INVALID_SUBSPACE_DIMENSION -1
-#define INVALID_TRUNCATION -1
-#define DEFAULT_SUBSPACE_DIMENSION INVALID_SUBSPACE_DIMENSION
 #define DEFAULT_USE_EE false
 #define DEFAULT_USE_GE false
 
@@ -93,7 +90,8 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
 */
     static UTIL_SAFE_CAST_FUNCTION(std_enkf_data, STD_ENKF_TYPE_ID)
 
-        double std_enkf_get_truncation(std_enkf_data_type *data) {
+        const std::variant<double, int> &std_enkf_get_truncation(
+            std_enkf_data_type *data) {
     return ies::config::get_truncation(data->ies_config);
 }
 
@@ -142,10 +140,6 @@ static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
     }
 }
 
-int std_enkf_get_subspace_dimension(std_enkf_data_type *data) {
-    return ies::config::get_subspace_dimension(data->ies_config);
-}
-
 ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data) {
     return ies::config::get_inversion(data->ies_config);
@@ -153,16 +147,11 @@ std_enkf_data_get_inversion(const std_enkf_data_type *data) {
 
 void std_enkf_set_truncation(std_enkf_data_type *data, double truncation) {
     ies::config::set_truncation(data->ies_config, truncation);
-    if (truncation > 0.0)
-        ies::config::set_subspace_dimension(data->ies_config,
-                                            INVALID_SUBSPACE_DIMENSION);
 }
 
 void std_enkf_set_subspace_dimension(std_enkf_data_type *data,
                                      int subspace_dimension) {
     ies::config::set_subspace_dimension(data->ies_config, subspace_dimension);
-    if (subspace_dimension > 0)
-        ies::config::set_truncation(data->ies_config, INVALID_TRUNCATION);
 }
 
 void *std_enkf_data_alloc() {
@@ -170,8 +159,6 @@ void *std_enkf_data_alloc() {
     UTIL_TYPE_ID_INIT(data, STD_ENKF_TYPE_ID);
     data->ies_config = ies::config::alloc();
     ies::config::set_truncation(data->ies_config, DEFAULT_ENKF_TRUNCATION_);
-    ies::config::set_subspace_dimension(data->ies_config,
-                                        DEFAULT_SUBSPACE_DIMENSION);
     ies::config::set_inversion(data->ies_config,
                                ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
     ies::config::set_option_flags(data->ies_config,
@@ -190,7 +177,8 @@ void std_enkf_data_free(void *data) {
 
 static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
                              const matrix_type *R, const matrix_type *E,
-                             const matrix_type *D, double truncation, int ncomp,
+                             const matrix_type *D,
+                             const std::variant<double, int> &truncation,
                              bool bootstrap,
                              ies::config::inversion_type inversion_type) {
 
@@ -205,18 +193,18 @@ static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
     matrix_subtract_row_mean(S); /* Shift away the mean */
 
     if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_RE)
-        enkf_linalg_lowrankE(S, E, W, eig.data(), truncation, ncomp);
+        enkf_linalg_lowrankE(S, E, W, eig.data(), truncation);
     else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EE_R) {
         matrix_type *Et = matrix_alloc_transpose(E);
         matrix_type *Cee = matrix_alloc_matmul(E, Et);
         matrix_scale(Cee, 1.0 / (ens_size - 1));
 
-        enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation, ncomp);
+        enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation);
 
         matrix_free(Et);
         matrix_free(Cee);
     } else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EXACT_R)
-        enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation, ncomp);
+        enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation);
 
     enkf_linalg_init_stdX(X, S, D, W, eig.data(), bootstrap);
 
@@ -232,11 +220,10 @@ void std_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
 
     std_enkf_data_type *data = std_enkf_data_safe_cast(module_data);
     {
-        auto ncomp = ies::config::get_subspace_dimension(data->ies_config);
         auto truncation = ies::config::get_truncation(data->ies_config);
         auto inversion = ies::config::get_inversion(data->ies_config);
 
-        std_enkf_initX__(X, S, R, E, D, truncation, ncomp, false, inversion);
+        std_enkf_initX__(X, S, R, E, D, truncation, false, inversion);
     }
 }
 
@@ -347,9 +334,14 @@ bool std_enkf_has_var(const void *arg, const char *var_name) {
 double std_enkf_get_double(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
-        if (strcmp(var_name, ENKF_TRUNCATION_KEY_) == 0)
-            return ies::config::get_truncation(module_data->ies_config);
-        else
+        if (strcmp(var_name, ENKF_TRUNCATION_KEY_) == 0) {
+            const auto &truncation =
+                ies::config::get_truncation(module_data->ies_config);
+            if (std::holds_alternative<double>(truncation))
+                return std::get<double>(truncation);
+            else
+                return -1;
+        } else
             return -1;
     }
 }
@@ -357,9 +349,14 @@ double std_enkf_get_double(const void *arg, const char *var_name) {
 int std_enkf_get_int(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
-        if (strcmp(var_name, ENKF_NCOMP_KEY_) == 0)
-            return ies::config::get_subspace_dimension(module_data->ies_config);
-        else
+        if (strcmp(var_name, ENKF_NCOMP_KEY_) == 0) {
+            const auto &truncation =
+                ies::config::get_truncation(module_data->ies_config);
+            if (std::holds_alternative<int>(truncation))
+                return std::get<int>(truncation);
+            else
+                return -1;
+        } else
             return -1;
     }
 }

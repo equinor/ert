@@ -18,6 +18,7 @@
 
 #ifndef IES_ENKF_H
 #define IES_ENKF_H
+#include <variant>
 
 #include <ert/util/bool_vector.hpp>
 #include <ert/util/rng.hpp>
@@ -38,7 +39,7 @@ void init_update(void *arg, const bool_vector_type *ens_mask,
                  const matrix_type *R, const matrix_type *dObs,
                  const matrix_type *E, const matrix_type *D, rng_type *rng);
 
-void initX(double truncation, int subspace_dimension,
+void initX(const std::variant<double, int> &truncation,
            config::inversion_type ies_inversion, const matrix_type *Y0,
            const matrix_type *R, const matrix_type *E, const matrix_type *D,
            matrix_type *X);

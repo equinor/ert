@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
+#include <variant>
 
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
@@ -27,11 +29,7 @@
 
 #include <ert/analysis/ies/ies_config.hpp>
 
-#define INVALID_TRUNCATION -1
-#define INVALID_SUBSPACE_DIMENSION -1
 #define DEFAULT_TRUNCATION 0.98
-#define DEFAULT_SUBSPACE_DIMENSION INVALID_SUBSPACE_DIMENSION
-
 #define DEFAULT_IES_MAX_STEPLENGTH 0.60
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
@@ -44,8 +42,7 @@
 
 struct ies::config::config_struct {
     UTIL_TYPE_ID_DECLARATION;
-    double truncation; // Controlled by config key: TRUNCATION_KEY
-    int subspace_dimension; // Controlled by config key: SUBSPACE_DIMENSION_KEY (-1: use Truncation instead)
+    std::variant<double, int> truncation;
     long option_flags;
     double
         ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
@@ -64,7 +61,6 @@ ies::config::config_type *ies::config::alloc() {
     UTIL_TYPE_ID_INIT(config, IES_CONFIG_TYPE_ID);
     config->ies_logfile = NULL;
     ies::config::set_truncation(config, DEFAULT_TRUNCATION);
-    ies::config::set_subspace_dimension(config, DEFAULT_SUBSPACE_DIMENSION);
     ies::config::set_option_flags(config, ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A +
                                               ANALYSIS_ITERABLE +
                                               ANALYSIS_SCALE_DATA);
@@ -80,28 +76,19 @@ ies::config::config_type *ies::config::alloc() {
 
 /*------------------------------------------------------------------------------------------------*/
 /* TRUNCATION -> SUBSPACE_DIMENSION */
-double ies::config::get_truncation(const config_type *config) {
+
+const std::variant<double, int> &
+ies::config::get_truncation(const config_type *config) {
     return config->truncation;
 }
 
 void ies::config::set_truncation(config_type *config, double truncation) {
     config->truncation = truncation;
-    if (truncation > 0.0)
-        config->subspace_dimension = INVALID_SUBSPACE_DIMENSION;
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* SUBSPACE_DIMENSION -> TRUNCATION */
-int ies::config::get_subspace_dimension(
-    const ies::config::config_type *config) {
-    return config->subspace_dimension;
 }
 
 void ies::config::set_subspace_dimension(config_type *config,
                                          int subspace_dimension) {
-    config->subspace_dimension = subspace_dimension;
-    if (subspace_dimension > 0)
-        config->truncation = INVALID_TRUNCATION;
+    config->truncation = subspace_dimension;
 }
 
 /*------------------------------------------------------------------------------------------------*/

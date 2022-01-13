@@ -16,6 +16,7 @@
    for more details.
 */
 #include <algorithm>
+#include <variant>
 #include <vector>
 
 #include <math.h>
@@ -48,8 +49,8 @@ void linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
 void linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
                                const matrix_type *E, const matrix_type *R,
                                const matrix_type *S, const matrix_type *H,
-                               double truncation, double ies_steplength,
-                               int subspace_dimension);
+                               const std::variant<double, int> &truncation,
+                               double ies_steplength);
 
 void linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                             const matrix_type *S, const matrix_type *H,
@@ -95,7 +96,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
                  const matrix_type *R, const matrix_type *E,
                  const matrix_type *D, matrix_type *X,
                  const ies::config::inversion_type ies_inversion,
-                 double truncation, int subspace_dimension,
+                 const std::variant<double, int> &truncation,
                  bool use_aa_projection, ies::data_type *data,
                  double ies_steplength, int iteration_nr, double *costf)
 
@@ -172,8 +173,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
 
     if (ies_inversion != ies::config::IES_INVERSION_EXACT) {
         ies::linalg_subspace_inversion(W0, ies_inversion, E, R, S, H,
-                                       truncation, ies_steplength,
-                                       subspace_dimension);
+                                       truncation, ies_steplength);
     } else if (ies_inversion == ies::config::IES_INVERSION_EXACT) {
         ies::linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength);
     }
@@ -270,7 +270,6 @@ void ies::updateA(
     ies_initX__(ies::config::get_aaprojection(ies_config) ? A : nullptr, Y, R,
                 E, D, X, ies::config::get_inversion(ies_config),
                 ies::config::get_truncation(ies_config),
-                ies::config::get_subspace_dimension(ies_config),
                 ies::config::get_aaprojection(ies_config), data, ies_steplength,
                 iteration_nr, &costf);
     logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
@@ -417,8 +416,8 @@ void ies::linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
 void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
                                     const matrix_type *E, const matrix_type *R,
                                     const matrix_type *S, const matrix_type *H,
-                                    double truncation, double ies_steplength,
-                                    int subspace_dimension) {
+                                    const std::variant<double, int> &truncation,
+                                    double ies_steplength) {
 
     int ens_size = matrix_get_columns(S);
     int nrobs = matrix_get_rows(S);
@@ -431,8 +430,7 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         matrix_type *scaledE = matrix_alloc_copy(E);
         matrix_scale(scaledE, nsc);
 
-        enkf_linalg_lowrankE(S, scaledE, X1, eig.data(), truncation,
-                             subspace_dimension);
+        enkf_linalg_lowrankE(S, scaledE, X1, eig.data(), truncation);
 
         matrix_free(scaledE);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
@@ -440,16 +438,14 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         matrix_type *Cee = matrix_alloc_matmul(E, Et);
         matrix_scale(Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
 
-        enkf_linalg_lowrankCinv(S, Cee, X1, eig.data(), truncation,
-                                subspace_dimension);
+        enkf_linalg_lowrankCinv(S, Cee, X1, eig.data(), truncation);
 
         matrix_free(Et);
         matrix_free(Cee);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
         matrix_type *scaledR = matrix_alloc_copy(R);
         matrix_scale(scaledR, nsc * nsc);
-        enkf_linalg_lowrankCinv(S, scaledR, X1, eig.data(), truncation,
-                                subspace_dimension);
+        enkf_linalg_lowrankCinv(S, scaledR, X1, eig.data(), truncation);
         matrix_free(scaledR);
     }
 
@@ -534,7 +530,7 @@ void ies::linalg_store_active_W(ies::data_type *data, const matrix_type *W0) {
     }
 }
 
-void ies::initX(double truncation, int subspace_dimension,
+void ies::initX(const std::variant<double, int> &truncation,
                 config::inversion_type ies_inversion, const matrix_type *Y0,
                 const matrix_type *R, const matrix_type *E,
                 const matrix_type *D, matrix_type *X) {
@@ -552,8 +548,7 @@ void ies::initX(double truncation, int subspace_dimension,
     int iteration_nr = 1;
 
     ies_initX__(nullptr, Y0, R, E, D, X, ies_inversion, truncation,
-                subspace_dimension, use_aa_projection, data, steplength,
-                iteration_nr, nullptr);
+                use_aa_projection, data, steplength, iteration_nr, nullptr);
 
     bool_vector_free(obs_mask);
     bool_vector_free(ens_mask);
@@ -591,9 +586,13 @@ int get_int(const void *arg, const char *var_name) {
     {
         if (strcmp(var_name, ITER_KEY) == 0)
             return ies::data_get_iteration_nr(module_data);
-        else if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0)
-            return ies::config::get_subspace_dimension(ies_config);
-        else if (strcmp(var_name, IES_INVERSION_KEY) == 0)
+        else if (strcmp(var_name, ENKF_SUBSPACE_DIMENSION_KEY) == 0) {
+            const auto &truncation = ies::config::get_truncation(ies_config);
+            if (std::holds_alternative<int>(truncation))
+                return std::get<int>(truncation);
+            else
+                return -1;
+        } else if (strcmp(var_name, IES_INVERSION_KEY) == 0)
             return ies::config::get_inversion(ies_config);
         else
             return -1;
@@ -670,8 +669,13 @@ double get_double(const void *arg, const char *var_name) {
     const ies::config::config_type *ies_config =
         ies::data_get_config(module_data);
     {
-        if (strcmp(var_name, ENKF_TRUNCATION_KEY) == 0)
-            return ies::config::get_truncation(ies_config);
+        if (strcmp(var_name, ENKF_TRUNCATION_KEY) == 0) {
+            const auto &truncation = ies::config::get_truncation(ies_config);
+            if (std::holds_alternative<double>(truncation))
+                return std::get<double>(truncation);
+            else
+                return -1;
+        }
         if (strcmp(var_name, IES_MAX_STEPLENGTH_KEY) == 0)
             return ies::config::get_max_steplength(ies_config);
         if (strcmp(var_name, IES_MIN_STEPLENGTH_KEY) == 0)

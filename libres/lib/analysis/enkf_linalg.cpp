@@ -92,43 +92,38 @@ static int enkf_linalg_num_significant(int num_singular_values,
     return num_significant;
 }
 
-int enkf_linalg_svdS(const matrix_type *S, double truncation, int ncomp,
+int enkf_linalg_svdS(const matrix_type *S,
+                     const std::variant<double, int> &truncation,
                      dgesvd_vector_enum store_V0T, double *inv_sig0,
                      matrix_type *U0, matrix_type *V0T) {
 
     double *sig0 = inv_sig0;
     int num_significant = 0;
 
-    if (((truncation > 0) && (ncomp < 0)) ||
-        ((truncation < 0) && (ncomp > 0))) {
-        int num_singular_values =
-            std::min(matrix_get_rows(S), matrix_get_columns(S));
-        {
-            matrix_type *workS = matrix_alloc_copy(S);
-            matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
-            matrix_free(workS);
-        }
+    int num_singular_values =
+        std::min(matrix_get_rows(S), matrix_get_columns(S));
+    {
+        matrix_type *workS = matrix_alloc_copy(S);
+        matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
+        matrix_free(workS);
+    }
 
-        if (ncomp > 0)
-            num_significant = ncomp;
-        else
-            num_significant = enkf_linalg_num_significant(num_singular_values,
-                                                          sig0, truncation);
+    if (std::holds_alternative<int>(truncation))
+        num_significant = std::get<int>(truncation);
+    else
+        num_significant = enkf_linalg_num_significant(
+            num_singular_values, sig0, std::get<double>(truncation));
 
-        {
-            int i;
-            /* Inverting the significant singular values */
-            for (i = 0; i < num_significant; i++)
-                inv_sig0[i] = 1.0 / sig0[i];
+    {
+        int i;
+        /* Inverting the significant singular values */
+        for (i = 0; i < num_significant; i++)
+            inv_sig0[i] = 1.0 / sig0[i];
 
-            /* Explicitly setting the insignificant singular values to zero. */
-            for (i = num_significant; i < num_singular_values; i++)
-                inv_sig0[i] = 0;
-        }
-    } else
-
-        util_abort("%s:  truncation:%g  ncomp:%d  - invalid ambigous input.\n",
-                   __func__, truncation, ncomp);
+        /* Explicitly setting the insignificant singular values to zero. */
+        for (i = num_significant; i < num_singular_values; i++)
+            inv_sig0[i] = 0;
+    }
 
     return num_significant;
 }
@@ -144,7 +139,7 @@ void enkf_linalg_lowrankE(
         *W, /* (nrobs x nrmin) Corresponding to X1 from Eqs. 14.54-14.55 */
     double
         *eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
-    double truncation, int ncomp) {
+    const std::variant<double, int> &truncation) {
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
@@ -160,8 +155,7 @@ void enkf_linalg_lowrankE(
     int i, j;
 
     /* Compute SVD of S=HA`  ->  U0, invsig0=sig0^(-1) */
-    enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0.data(), U0,
-                     NULL);
+    enkf_linalg_svdS(S, truncation, DGESVD_NONE, inv_sig0.data(), U0, NULL);
 
     /* X0(nrmin x nrens) =  Sigma0^(+) * U0'* E  (14.51)  */
     matrix_dgemm(X0, U0, E, true, false, 1.0,
@@ -223,7 +217,8 @@ void enkf_linalg_Cee(matrix_type *B, int nrens, const matrix_type *R,
 
 void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
                                matrix_type *V0T, matrix_type *Z, double *eig,
-                               matrix_type *U0, double truncation, int ncomp) {
+                               matrix_type *U0,
+                               const std::variant<double, int> &truncation) {
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
@@ -231,11 +226,10 @@ void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
     std::vector<double> inv_sig0(nrmin);
 
     if (V0T != NULL)
-        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_MIN_RETURN,
-                         inv_sig0.data(), U0, V0T);
+        enkf_linalg_svdS(S, truncation, DGESVD_MIN_RETURN, inv_sig0.data(), U0,
+                         V0T);
     else
-        enkf_linalg_svdS(S, truncation, ncomp, DGESVD_NONE, inv_sig0.data(), U0,
-                         NULL);
+        enkf_linalg_svdS(S, truncation, DGESVD_NONE, inv_sig0.data(), U0, NULL);
 
     {
         matrix_type *B = matrix_alloc(nrmin, nrmin);
@@ -264,7 +258,7 @@ void enkf_linalg_lowrankCinv(
     const matrix_type *S, const matrix_type *R,
     matrix_type *W, /* Corresponding to X1 from Eq. 14.29 */
     double *eig,    /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
-    double truncation, int ncomp) {
+    const std::variant<double, int> &truncation) {
 
     const int nrobs = matrix_get_rows(S);
     const int nrens = matrix_get_columns(S);
@@ -273,7 +267,7 @@ void enkf_linalg_lowrankCinv(
     matrix_type *U0 = matrix_alloc(nrobs, nrmin);
     matrix_type *Z = matrix_alloc(nrmin, nrmin);
 
-    enkf_linalg_lowrankCinv__(S, R, NULL, Z, eig, U0, truncation, ncomp);
+    enkf_linalg_lowrankCinv__(S, R, NULL, Z, eig, U0, truncation);
     matrix_matmul(W, U0, Z); /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
 
     matrix_free(U0);

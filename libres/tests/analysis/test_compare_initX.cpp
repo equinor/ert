@@ -73,7 +73,6 @@ TEST_CASE("compare_initX", "[analysis]") {
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
             ies::initX(std_enkf_get_truncation(std_enkf_data),
-                       std_enkf_get_subspace_dimension(std_enkf_data),
                        std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
                        X2);
 
@@ -97,7 +96,6 @@ TEST_CASE("compare_initX", "[analysis]") {
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
             ies::initX(std_enkf_get_truncation(std_enkf_data),
-                       std_enkf_get_subspace_dimension(std_enkf_data),
                        std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
                        X2);
 

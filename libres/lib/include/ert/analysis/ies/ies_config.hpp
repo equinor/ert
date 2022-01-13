@@ -20,6 +20,7 @@
 #define IES_CONFIG_H
 
 #include <ert/analysis/analysis_module.hpp>
+#include <variant>
 
 namespace ies {
 namespace config {
@@ -36,11 +37,9 @@ typedef struct config_struct config_type;
 config_type *alloc();
 void free(config_type *config);
 
-int get_subspace_dimension(const config_type *config);
-void set_subspace_dimension(config_type *config, int subspace_dimension);
-
-double get_truncation(const config_type *config);
+const std::variant<double, int> &get_truncation(const config_type *config);
 void set_truncation(config_type *config, double truncation);
+void set_subspace_dimension(config_type *config, int subspace_dimension);
 
 void set_option_flags(config_type *config, long flags);
 long get_option_flags(const config_type *config);
