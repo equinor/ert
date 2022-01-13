@@ -90,7 +90,6 @@ config_data = {
     "ENSPATH": "../output/storage/<CASE_DIR>",
     "PLOT_PATH": "../output/results/plot/<CASE_DIR>",
     "UPDATE_LOG_PATH": "../output/update_log/<CASE_DIR>",
-    "LOG_FILE": "../output/log/ert_<CASE_DIR>.log",
     "RUNPATH_FILE": "../output/run_path_file/.ert-runpath-list_<CASE_DIR>",
     "REFCASE": "../input/refcase/SNAKE_OIL_FIELD",
     "SIGMA": {
@@ -126,7 +125,6 @@ config_data = {
     "LOAD_WORKFLOW_JOB": {
         "UBER_PRINT": "../bin/workflows/workflowjobs/bin/uber_print.py"
     },
-    "LOG_LEVEL": MessageLevelEnum.LOG_INFO,
     "RNG_ALG_TYPE": RngAlgTypeEnum.MZRAN,
     "GRID": "../../eclipse/include/grid/CASE.EGRID",
     "RUN_TEMPLATE": {
@@ -211,7 +209,6 @@ config_data_new = {
     ConfigKeys.ENSPATH: "../output/storage/<CASE_DIR>",  # model
     "PLOT_PATH": "../output/results/plot/<CASE_DIR>",  # removed, previously plot config
     ConfigKeys.UPDATE_LOG_PATH: "../output/update_log/<CASE_DIR>",  # analysis
-    ConfigKeys.LOG_FILE: "../output/log/ert_<CASE_DIR>.log",  # log
     ConfigKeys.RUNPATH_FILE: "../output/run_path_file/.ert-runpath-list_<CASE_DIR>",  # subst
     ConfigKeys.DEFINE_KEY: {
         "<USER>": "TEST_USER",
@@ -263,7 +260,6 @@ config_data_new = {
             ConfigKeys.PATH: "../bin/workflows/MAGIC_PRINT",
         }  # workflow_list
     ],
-    ConfigKeys.LOG_LEVEL: MessageLevelEnum.LOG_INFO,  # model, log
     "RNG_ALG_TYPE": RngAlgTypeEnum.MZRAN,
     ConfigKeys.RANDOM_SEED: "3593114179000630026631423308983283277868",  # rng
     ConfigKeys.GRID: "../../eclipse/include/grid/CASE.EGRID",  # ecl
@@ -553,13 +549,6 @@ class ResConfigTest(ResTest):
                 working_dir,
             )
 
-    def assert_log_config(self, log_config, config_data, working_dir):
-        self.assert_same_config_file(
-            config_data["LOG_FILE"], log_config.log_file, working_dir
-        )
-
-        self.assertEqual(config_data["LOG_LEVEL"], log_config.log_level)
-
     @tmpdir()
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
@@ -590,7 +579,6 @@ class ResConfigTest(ResTest):
             )
             self.assert_rng_config(res_config.rng_config, config_data, work_dir)
             self.assert_ert_templates(res_config.ert_templates, config_data, work_dir)
-            self.assert_log_config(res_config.log_config, config_data, work_dir)
 
             # TODO: Not tested
             # - MIN_REALIZATIONS

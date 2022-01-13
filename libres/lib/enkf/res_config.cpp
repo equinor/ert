@@ -39,7 +39,6 @@ struct res_config_struct {
     ecl_config_type *ecl_config;
     ensemble_config_type *ensemble_config;
     model_config_type *model_config;
-    log_config_type *log_config;
     queue_config_type *queue_config;
 };
 
@@ -61,7 +60,6 @@ static res_config_type *res_config_alloc_empty() {
     res_config->ecl_config = NULL;
     res_config->ensemble_config = NULL;
     res_config->model_config = NULL;
-    res_config->log_config = NULL;
     res_config->queue_config = NULL;
 
     return res_config;
@@ -195,8 +193,6 @@ res_config_type *res_config_alloc(const config_content_type *config_content) {
         ecl_config_get_last_history_restart(res_config->ecl_config),
         ecl_config_get_refcase(res_config->ecl_config));
 
-    res_config->log_config = log_config_alloc(config_content);
-
     res_config->queue_config = queue_config_alloc(config_content);
 
     return res_config;
@@ -209,7 +205,7 @@ res_config_type *res_config_alloc_full(
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
     ert_templates_type *templates, ecl_config_type *ecl_config,
     ensemble_config_type *ensemble_config, model_config_type *model_config,
-    log_config_type *log_config, queue_config_type *queue_config) {
+    queue_config_type *queue_config) {
     res_config_type *res_config = res_config_alloc_empty();
 
     res_config->user_config_file = util_alloc_string_copy(user_config_file);
@@ -224,7 +220,6 @@ res_config_type *res_config_alloc_full(
     res_config->ecl_config = ecl_config;
     res_config->ensemble_config = ensemble_config;
     res_config->model_config = model_config;
-    res_config->log_config = log_config;
     res_config->queue_config = queue_config;
     return res_config;
 }
@@ -243,7 +238,6 @@ void res_config_free(res_config_type *res_config) {
     ecl_config_free(res_config->ecl_config);
     ensemble_config_free(res_config->ensemble_config);
     model_config_free(res_config->model_config);
-    log_config_free(res_config->log_config);
 
     free(res_config->user_config_file);
     free(res_config->config_dir);
@@ -298,11 +292,6 @@ res_config_get_ensemble_config(const res_config_type *res_config) {
 model_config_type *
 res_config_get_model_config(const res_config_type *res_config) {
     return res_config->model_config;
-}
-
-const log_config_type *
-res_config_get_log_config(const res_config_type *res_config) {
-    return res_config->log_config;
 }
 
 queue_config_type *

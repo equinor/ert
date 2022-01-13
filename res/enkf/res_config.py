@@ -29,7 +29,6 @@ from res.enkf.ensemble_config import EnsembleConfig
 from res.enkf.ert_templates import ErtTemplates
 from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.hook_manager import HookManager
-from res.enkf.log_config import LogConfig
 from res.enkf.model_config import ModelConfig
 from res.enkf.queue_config import QueueConfig
 from res.enkf.rng_config import RNGConfig
@@ -55,7 +54,6 @@ class ResConfig(BaseCClass):
         "ecl_config, "
         "ens_config, "
         "model_config, "
-        "log_config, "
         "queue_config)",
         bind=False,
     )
@@ -94,7 +92,6 @@ class ResConfig(BaseCClass):
     _ert_templates = ResPrototype(
         "ert_templates_ref res_config_get_templates(res_config)"
     )
-    _log_config = ResPrototype("log_config_ref res_config_get_log_config(res_config)")
     _queue_config = ResPrototype(
         "queue_config_ref res_config_get_queue_config(res_config)"
     )
@@ -188,7 +185,6 @@ class ResConfig(BaseCClass):
         rng_config = RNGConfig(config_content=config_content)
         analysis_config = AnalysisConfig(config_content=config_content)
         ecl_config = EclConfig(config_content=config_content)
-        log_config = LogConfig(config_content=config_content)
         queue_config = QueueConfig(config_content=config_content)
 
         ert_workflow_list = ErtWorkflowList(
@@ -228,7 +224,6 @@ class ResConfig(BaseCClass):
             ecl_config,
             ensemble_config,
             model_config,
-            log_config,
             queue_config,
         ], config_dir
 
@@ -245,7 +240,6 @@ class ResConfig(BaseCClass):
         rng_config = RNGConfig(config_dict=config_dict)
         analysis_config = AnalysisConfig(config_dict=config_dict)
         ecl_config = EclConfig(config_dict=config_dict)
-        log_config = LogConfig(config_dict=config_dict)
         queue_config = QueueConfig(config_dict=config_dict)
 
         ert_workflow_list = ErtWorkflowList(
@@ -285,7 +279,6 @@ class ResConfig(BaseCClass):
             ecl_config,
             ensemble_config,
             model_config,
-            log_config,
             queue_config,
         ], config_dir
 
@@ -657,10 +650,6 @@ class ResConfig(BaseCClass):
         return self._ert_templates()
 
     @property
-    def log_config(self):
-        return self._log_config()
-
-    @property
     def queue_config(self):
         return self._queue_config()
 
@@ -677,7 +666,6 @@ class ResConfig(BaseCClass):
             (self.ecl_config == other.ecl_config),
             (self.ensemble_config == other.ensemble_config),
             (self.model_config == other.model_config),
-            (self.log_config == other.log_config),
             (self.queue_config == other.queue_config),
         )
 

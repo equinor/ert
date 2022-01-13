@@ -31,7 +31,7 @@
 
 #include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/enkf_fs.hpp>
@@ -39,6 +39,7 @@
 #include <ert/enkf/misfit_ensemble.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("enkf");
 
 /*
   The interface
@@ -182,8 +183,8 @@ extern "C" void enkf_fs_umount(enkf_fs_type *fs);
 int enkf_fs_incref(enkf_fs_type *fs) {
     fs->refcount++;
 
-    res_log_fdebug("Calling incref on: %s . Refcount after incref:%d",
-                   fs->mount_point, fs->refcount);
+    logger->debug("Calling incref on: {} . Refcount after incref:{}",
+                  fs->mount_point, fs->refcount);
 
     return fs->refcount;
 }
@@ -197,8 +198,8 @@ int enkf_fs_decref(enkf_fs_type *fs) {
                    "refcount:%d is < 0 \n",
                    __func__, refcount);
 
-    res_log_fdebug("Calling decref on: %s . Refcount after decref:%d",
-                   fs->mount_point, refcount);
+    logger->debug("Calling decref on: {} . Refcount after decref:{}",
+                  fs->mount_point, refcount);
     if (refcount == 0)
         enkf_fs_umount(fs);
 
@@ -510,7 +511,7 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
     switch (driver_id) {
     case (BLOCK_FS_DRIVER_ID):
         fs = enkf_fs_mount_block_fs(stream, mount_point, read_only);
-        res_log_fdebug("Mounting (block_fs) point %s.", mount_point);
+        logger->debug("Mounting (block_fs) point {}.", mount_point);
         break;
     default:
         util_abort("%s: unrecognized driver_id:%d \n", __func__, driver_id);
@@ -555,7 +556,7 @@ void enkf_fs_umount(enkf_fs_type *fs) {
                    "tried to umount a filesystem with refcount:%d\n",
                    __func__, refcount);
 
-    res_log_fdebug("%s umount filesystem %s", __func__, fs->mount_point);
+    logger->debug("{} umount filesystem {}", __func__, fs->mount_point);
 
     if (fs->lock_fd > 0) {
         close(

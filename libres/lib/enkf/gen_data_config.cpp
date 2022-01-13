@@ -24,7 +24,7 @@
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/ecl/ecl_util.h>
 
@@ -33,6 +33,8 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+
+static auto logger = ert::get_logger("enkf");
 
 /*
    About deactivating by the forward model
@@ -527,8 +529,8 @@ void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                                "suitable active_mask\n",
                                __func__);
                 } else {
-                    res_log_finfo(
-                        "Could not locate active data elements file %s, "
+                    logger->info(
+                        "Could not locate active data elements file {}, "
                         "filling active vector with true all elements active.",
                         filename);
                     bool_vector_reset(config->active_mask);

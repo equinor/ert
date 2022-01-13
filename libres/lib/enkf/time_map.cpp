@@ -27,10 +27,11 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 #include <ert/enkf/time_map.hpp>
 
 namespace fs = std::filesystem;
+static auto logger = ert::get_logger("enkf");
 
 #define DEFAULT_TIME -1
 
@@ -217,7 +218,7 @@ static bool time_map_update__(time_map_type *map, int step,
 
                 if (ref_time != update_time) {
                     updateOK = false;
-                    res_log_error("Tried to load data where report step/data "
+                    logger->error("Tried to load data where report step/data "
                                   "is incompatible with refcase - ignored");
                 }
             }
@@ -371,7 +372,7 @@ bool time_map_update(time_map_type *map, int step, time_t time) {
         if (map->strict)
             time_map_update_abort(map, step, time);
         else
-            res_log_error(
+            logger->error(
                 "Report step/true time inconsistency - data will be ignored");
     }
     return updateOK;
@@ -393,7 +394,7 @@ bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
         if (map->strict)
             time_map_summary_update_abort(map, ecl_sum);
         else
-            res_log_error(
+            logger->error(
                 "Report step/true time inconsistency - data will be ignored");
     }
 
@@ -679,7 +680,7 @@ int_vector_type *time_map_alloc_index_map(time_map_type *map,
         }
 
         if (sum_index > ecl_sum_get_last_report_step(ecl_sum)) {
-            res_log_error("Inconsistency in time_map - data will be ignored");
+            logger->error("Inconsistency in time_map - data will be ignored");
             break;
         }
 

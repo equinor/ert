@@ -63,7 +63,6 @@ class AnalysisModule(BaseCClass):
             "type": str,
             "description": "Include projection Y (A^+A) for n<N-1",
         },
-        "LOG_FILE": {"type": str, "description": "Log File"},
         "ENKF_TRUNCATION": {"type": float, "description": "Singular value truncation"},
         "ENKF_SUBSPACE_DIMENSION": {
             "type": int,

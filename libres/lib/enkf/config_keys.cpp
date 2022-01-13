@@ -60,8 +60,6 @@ RES_LIB_SUBMODULE("config_keys", m) {
     cls.attr("LOAD_WORKFLOW") = LOAD_WORKFLOW_KEY;
     cls.attr("LOAD_WORKFLOW_JOB") = LOAD_WORKFLOW_JOB_KEY;
     cls.attr("LOGGING") = "LOGGING";
-    cls.attr("LOG_FILE") = LOG_FILE_KEY;
-    cls.attr("LOG_LEVEL") = LOG_LEVEL_KEY;
     cls.attr("MAX_KEY") = MAX_KEY;
     cls.attr("MAX_RESAMPLE") = MAX_RESAMPLE_KEY;
     cls.attr("MAX_RUNNING") = "MAX_RUNNING";

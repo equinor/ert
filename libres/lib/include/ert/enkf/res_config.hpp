@@ -31,8 +31,6 @@
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/model_config.hpp>
-#include <ert/enkf/log_config.hpp>
-#include <ert/enkf/log_config.hpp>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +49,7 @@ PY_USED res_config_type *res_config_alloc_full(
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
     ert_templates_type *templates, ecl_config_type *ecl_config,
     ensemble_config_type *ensemble_config, model_config_type *model_config,
-    log_config_type *log_config, queue_config_type *queue_config);
+    queue_config_type *queue_config);
 void res_config_free(res_config_type *);
 void res_config_add_config_items(config_parser_type *config_parser);
 
@@ -74,8 +72,6 @@ ensemble_config_type *
 res_config_get_ensemble_config(const res_config_type *res_config);
 model_config_type *
 res_config_get_model_config(const res_config_type *res_config);
-const log_config_type *
-res_config_get_log_config(const res_config_type *res_config);
 queue_config_type *
 res_config_get_queue_config(const res_config_type *res_config);
 

@@ -29,7 +29,7 @@ def poly_case_context(tmpdir, source_root, mock_start_server):
 
 
 def test_run_mocked_lsf_queue(poly_case_context):
-    apply_customized_config(log_level="WARNING")
+    apply_customized_config()
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
         parser,
@@ -56,7 +56,7 @@ def test_mock_bsub_fail_random(poly_case_context):
         script_name=bsub_random_fail_name, fraction_successful_submits=0.3
     )
 
-    apply_customized_config(mocked_bsub=bsub_random_fail_name, log_level="WARNING")
+    apply_customized_config(mocked_bsub=bsub_random_fail_name)
 
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(
@@ -76,7 +76,6 @@ def apply_customized_config(
     max_running: int = 10,
     num_realizations: int = 10,
     min_realizations: int = 1,
-    log_level: str = "INFO",
     mocked_bsub: str = "mock_bsub",
 ):
 
@@ -99,7 +98,6 @@ def apply_customized_config(
         "GEN_DATA POLY_RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII\n",
         "INSTALL_JOB poly_eval POLY_EVAL\n",
         "SIMULATION_JOB poly_eval\n",
-        f"LOG_LEVEL {log_level}\n",
     ]
     with open("poly_example/poly.ert", "w") as fh:
         fh.writelines(config)

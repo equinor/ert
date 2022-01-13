@@ -23,6 +23,7 @@
 #include <ert/util/bool_vector.h>
 #include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
 
@@ -419,10 +420,10 @@ enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
                     if (time_map_attach_refcase(time_map, refcase))
                         time_map_set_strict(time_map, false);
                     else
-                        res_log_ferror("Warning mismatch between refcase:%s "
-                                       "and existing case:%s",
-                                       ecl_sum_get_case(refcase),
-                                       new_mount_point);
+                        logger->error("Warning mismatch between refcase:{} "
+                                      "and existing case:{}",
+                                      ecl_sum_get_case(refcase),
+                                      new_mount_point);
                 }
             }
 

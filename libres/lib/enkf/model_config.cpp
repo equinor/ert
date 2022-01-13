@@ -30,7 +30,7 @@
 
 #include <ert/job_queue/forward_model.hpp>
 
-#include <ert/res_util/res_log.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
@@ -41,6 +41,8 @@
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/site_config.hpp>
+
+static auto logger = ert::get_logger("enkf");
 
 /*
    This struct contains configuration which is specific to this
@@ -521,7 +523,7 @@ void model_config_init(model_config_type *model_config,
         model_config_set_jobname_fmt(
             model_config, config_content_get_value(config, JOBNAME_KEY));
         if (config_content_has_item(config, ECLBASE_KEY))
-            res_log_warning("Can not have both JOBNAME and ECLBASE keywords. "
+            logger->warning("Can not have both JOBNAME and ECLBASE keywords. "
                             "The ECLBASE keyword will be ignored.");
     }
 
@@ -685,10 +687,6 @@ static void model_config_init_user_config(config_parser_type *config) {
     ensemble_config_add_config_items(config);
     ecl_config_add_config_items(config);
     rng_config_add_config_items(config);
-
-    /* Required keywords from the ordinary model_config file */
-    config_add_key_value(config, LOG_LEVEL_KEY, false, CONFIG_STRING);
-    config_add_key_value(config, LOG_FILE_KEY, false, CONFIG_PATH);
 
     config_add_key_value(config, MAX_RESAMPLE_KEY, false, CONFIG_INT);
 

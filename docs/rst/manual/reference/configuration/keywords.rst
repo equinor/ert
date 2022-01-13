@@ -58,8 +58,8 @@ Keyword name                                                            Required
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LICENSE_PATH <license_path>`                                      NO                                                                      A path where ert-licenses to e.g. RMS are stored
-:ref:`LOG_FILE <log_file>`                                              NO                                      log                             Name of log file
-:ref:`LOG_LEVEL <log_level>`                                            NO                                      WARNING                         How much logging? CRITICAL|DEBUG|ERROR|INFO|WARNING
+:ref:`LOG_FILE <log_file>`                                              NO                                      -                               Ignored
+:ref:`LOG_LEVEL <log_level>`                                            NO                                      -                               Ignored
 :ref:`MAX_RESAMPLE <max_resample>`                                      NO                                      1                               How many times should ERT resample & retry a simulation
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times should the queue system retry a simulation
@@ -278,21 +278,14 @@ possible to do with ERT.
 .. _log_file:
 .. topic:: LOG_FILE
 
-        Name of log file
+        Ignored. Was used to specify log output file.
 
 
 .. _log_level:
 .. topic:: LOG_LEVEL
 
-        What level should be logged. Can be one of:
-                        - `CRITICAL`
-                        - `ERROR`
-                        - `WARNING`
-                        - `INFO`
-                        - `DEBUG`
-
-                Default is `WARNING`.
-
+        Ignored. Was used to specify log level to output. Today this is
+        controlled via Python's logging module.
 
 .. _delete_runpath:
 .. topic:: DELETE_RUNPATH

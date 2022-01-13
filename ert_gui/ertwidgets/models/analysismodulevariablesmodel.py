@@ -64,7 +64,6 @@ class AnalysisModuleVariablesModel(object):
             "labelname": "Include AA projection",
             "pos": 11,
         },
-        "LOG_FILE": {"type": str, "labelname": "Log File", "pos": 5},
         "ENKF_TRUNCATION": {
             "type": float,
             "min": -2.0,

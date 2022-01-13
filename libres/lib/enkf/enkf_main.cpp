@@ -37,8 +37,8 @@
 
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/res_log.hpp>
 #include <ert/res_util/matrix.hpp>
+#include <ert/logging.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
 
@@ -57,6 +57,8 @@
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/callback_arg.hpp>
+
+static auto logger = ert::get_logger("enkf");
 
 /*
    This object should contain **everything** needed to run a enkf
@@ -143,11 +145,6 @@ enkf_main_get_site_config(const enkf_main_type *enkf_main) {
 const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main) {
     return enkf_main->res_config;
-}
-
-const log_config_type *
-enkf_main_get_log_config(const enkf_main_type *enkf_main) {
-    return res_config_get_log_config(enkf_main->res_config);
 }
 
 subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main) {
@@ -243,7 +240,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     ranking_table_free(enkf_main->ranking_table);
     enkf_main_free_ensemble(enkf_main);
     enkf_main_close_fs(enkf_main);
-    res_log_close();
 
     local_config_free(enkf_main->local_config);
 
@@ -502,12 +498,6 @@ void enkf_main_update_local_updates(enkf_main_type *enkf_main) {
     }
 }
 
-static void enkf_main_init_log(const enkf_main_type *enkf_main) {
-    const log_config_type *log_config = enkf_main_get_log_config(enkf_main);
-    res_log_init_log(log_config_get_log_level(log_config),
-                     log_config_get_log_file(log_config), enkf_main->verbose);
-}
-
 static void enkf_main_init_obs(enkf_main_type *enkf_main) {
     enkf_main_alloc_obs(enkf_main);
 
@@ -555,7 +545,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     enkf_main->res_config = res_config;
 
     enkf_main_set_verbose(enkf_main, verbose);
-    enkf_main_init_log(enkf_main);
     enkf_main_rng_init(enkf_main);
     enkf_main_user_select_initial_fs(enkf_main, read_only);
     enkf_main_init_obs(enkf_main);

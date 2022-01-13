@@ -30,7 +30,6 @@
 #include <ert/util/int_vector.h>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/ui_return.hpp>
-#include <ert/res_util/log.hpp>
 #include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_settings.hpp>
@@ -98,7 +97,6 @@ enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 const analysis_config_type *
 enkf_main_get_analysis_config(const enkf_main_type *);
-const log_config_type *enkf_main_get_log_config(const enkf_main_type *);
 
 subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main);
 subst_list_type *enkf_main_get_data_kw(const enkf_main_type *enkf_main);
