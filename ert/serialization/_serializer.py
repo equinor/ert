@@ -33,6 +33,7 @@ class _json_serializer(Serializer):
     def encode(
         self, obj: Any, *args: Any, indent: Optional[int] = 4, **kwargs: Any
     ) -> str:
+        # pylint: disable=arguments-differ
         return json.dumps(obj, *args, indent=indent, **kwargs)
 
     def decode(self, series: str, *args: Any, **kwargs: Any) -> Any:
