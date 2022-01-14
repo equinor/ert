@@ -355,6 +355,8 @@ async def load_recordtree_data(
         raise TypeError(f"Expected RecordTree but got {record_type}")
 
     record = await load_record(url, record_type)
+    if not isinstance(record, ert.data.BlobRecord):
+        raise TypeError(f"Expected BlobRecord as main RecordTree object!")
     records_info = json.loads(record.data.decode("utf-8"))
 
     async def _load_key(
