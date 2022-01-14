@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import aiofiles
 import yaml
@@ -30,10 +30,10 @@ class Serializer(ABC):
 
 
 class _json_serializer(Serializer):
-    def encode(self, obj: Any, *args: Any, **kwargs: Any) -> str:
-        if "indent" not in kwargs:
-            kwargs["indent"] = 4
-        return json.dumps(obj, *args, **kwargs)
+    def encode(
+        self, obj: Any, *args: Any, indent: Optional[int] = 4, **kwargs: Any
+    ) -> str:
+        return json.dumps(obj, *args, indent=indent, **kwargs)
 
     def decode(self, series: str, *args: Any, **kwargs: Any) -> Any:
         return json.loads(series, *args, **kwargs)
