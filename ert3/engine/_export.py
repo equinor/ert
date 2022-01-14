@@ -73,19 +73,21 @@ def _prepare_export_responses(
     records_url = ert.storage.get_records_url(workspace_name, experiment_name)
 
     for record_name in responses:
-        for iens in range(ensemble_size):
-            uri = f"{records_url}/{record_name}"
-            future = ert.storage.get_record_metadata(uri)
-            metadata = get_event_loop().run_until_complete(future)
-            url = f"{records_url}/{record_name}?realization_index={iens}"
-            if metadata.get("record_type") == ert.data.RecordType.NUMERICAL_TREE:
-                future = ert.storage.load_recordtree_data(
+        metadata = get_event_loop().run_until_complete(
+            ert.storage.get_record_metadata(f"{records_url}/{record_name}")
+        )
+        if metadata.get("record_type") == ert.data.RecordType.NUMERICAL_TREE:
+            for iens in range(ensemble_size):
+                url = f"{records_url}/{record_name}?realization_index={iens}"
+                future_data = ert.storage.load_recordtree_data(
                     url, ert.data.RecordType.NUMERICAL_TREE
                 )
-                record_data = get_event_loop().run_until_complete(future)
+                record_data = get_event_loop().run_until_complete(future_data)
                 for key, data in record_data.items():
                     outputs[key].append(data)
-            else:
+        else:
+            for iens in range(ensemble_size):
+                url = f"{records_url}/{record_name}?realization_index={iens}"
                 future = ert.storage.load_record(url, ert.data.RecordType.LIST_FLOAT)
                 record = get_event_loop().run_until_complete(future)
                 outputs[record_name].append(record.data)
