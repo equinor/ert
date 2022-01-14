@@ -10,6 +10,12 @@ set -e
 ert3 run evaluation
 ert3 export evaluation
 
+# we will check that data contains the recordtree subrecords
+grep "WOPT:PROD" types-requirements.txt >/dev/null
+grep "WWPT:PROD" types-requirements.txt >/dev/null
+grep "WGPT:PROD" types-requirements.txt >/dev/null
+grep "WWIT:INJ" types-requirements.txt >/dev/null
+
 ert3 record load designed_field_properties resources/field_properties.json
 ert3 run doe
 ert3 export doe
