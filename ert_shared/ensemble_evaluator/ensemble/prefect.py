@@ -90,6 +90,8 @@ def _get_executor(custom_port_range, name="local"):
             "cores": 4,
             "memory": "16gb",
             "resource_spec": "select=1:ncpus=4:mem=16gb",
+            "scheduler_options": {"port": port},
+            "extra": ["--worker-port", "51820:51840"],
         }
         return DaskExecutor(
             cluster_class="dask_jobqueue.PBSCluster",
