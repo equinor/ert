@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <fmt/format.h>
 
 #include <ert/util/util.h>
 
@@ -252,7 +253,12 @@ void analysis_config_add_module_copy(analysis_config_type *config,
 analysis_module_type *
 analysis_config_get_module(const analysis_config_type *config,
                            const char *module_name) {
-    return config->analysis_modules.at(module_name);
+    if (analysis_config_has_module(config, module_name)) {
+        return config->analysis_modules.at(module_name);
+    } else {
+        throw std::invalid_argument(
+            fmt::format("Analysis module named {} not found", module_name));
+    }
 }
 
 bool analysis_config_has_module(const analysis_config_type *config,
@@ -428,8 +434,12 @@ void analysis_config_init(analysis_config_type *analysis,
                 const char *module_name =
                     config_content_node_iget(assign_node, 0);
                 const char *var_name = config_content_node_iget(assign_node, 1);
-                analysis_module_type *module =
-                    analysis_config_get_module(analysis, module_name);
+                analysis_module_type *module;
+                try {
+                    module = analysis_config_get_module(analysis, module_name);
+                } catch (std::invalid_argument &e) {
+                    util_abort("Error loading config file: %s", e.what());
+                }
                 {
                     char *value = NULL;
 
