@@ -13,16 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import ecl
-import ecl.util
-import ecl.util.geometry
-import res
-from cwrap import Prototype
 
-from .history import History
 from .history_source_enum import HistorySourceEnum
 
 __all__ = [
     "HistorySourceEnum",
-    "History",
 ]

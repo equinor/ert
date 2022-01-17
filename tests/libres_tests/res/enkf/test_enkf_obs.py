@@ -1,21 +1,15 @@
 import pytest
-from ecl.grid import EclGrid
-from ecl.summary import EclSum
 from ecl.util.util import BoolVector, IntVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import (
     ActiveList,
     ActiveMode,
-    EnkfObs,
-    EnsembleConfig,
     LocalObsdata,
     MeasData,
     ObsData,
     ObsVector,
-    TimeMap,
 )
-from res.sched import History
 from res.test import ErtTestContext
 
 
@@ -148,42 +142,6 @@ class EnKFObsTest(ResTest):
 
                 active_list = local_node.getActiveList()
                 self.assertEqual(active_list.getMode(), ActiveMode.ALL_ACTIVE)
-
-    def test_create(self):
-        ensemble_config = EnsembleConfig()
-        obs = EnkfObs(ensemble_config)
-        self.assertEqual(len(obs), 0)
-
-        self.assertFalse(obs.valid)
-        with self.assertRaises(ValueError):
-            obs.load(self.obs_config)
-        self.assertEqual(len(obs), 0)
-
-        time_map = TimeMap()
-        obs = EnkfObs(ensemble_config, external_time_map=time_map)
-        self.assertEqual(len(obs), 0)
-
-        grid = EclGrid(self.grid)
-        refcase = EclSum(self.refcase)
-
-        history = History(refcase, False)
-        obs = EnkfObs(ensemble_config, grid=grid, history=history)
-        self.assertTrue(obs.valid)
-        with self.assertRaises(IOError):
-            obs.load("/does/not/exist")
-
-        obs.load(self.obs_config)
-        self.assertTrue(obs.valid)
-        self.assertEqual(len(obs), 33)
-        obs.clear()
-        self.assertEqual(len(obs), 0)
-
-        obs.load(self.obs_config)
-        self.assertEqual(len(obs), 33)
-        self.assertNotIn("RFT2", obs)
-        obs.load(self.obs_config2)
-        self.assertEqual(len(obs), 35)
-        self.assertIn("RFT2", obs)
 
     def test_hookmanager_runpathlist(self):
         with ErtTestContext("obs_test", self.config_file) as test_context:
