@@ -15,18 +15,18 @@ from ert_shared.main import ert_parser
 
 
 @pytest.fixture()
-def mock_cli_run(monkeypatch):
+def mock_cli_run(monkeypatch, mock_start_server):
     mocked_monitor = Mock()
     mocked_thread_start = Mock()
     mocked_thread_join = Mock()
     monkeypatch.setattr(threading.Thread, "start", mocked_thread_start)
     monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
     monkeypatch.setattr(ert_shared.cli.monitor.Monitor, "monitor", mocked_monitor)
-    yield mocked_monitor, mocked_thread_join, mocked_thread_start
+    yield mocked_monitor, mocked_thread_join, mocked_thread_start, mock_start_server
 
 
 @pytest.mark.integration_test
-def test_target_case_equal_current_case(tmpdir, source_root):
+def test_target_case_equal_current_case(tmpdir, source_root, mock_start_server):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -52,7 +52,8 @@ def test_target_case_equal_current_case(tmpdir, source_root):
 
 
 @pytest.mark.integration_test
-def test_runpath_file(tmpdir, source_root):
+def test_runpath_file(tmpdir, source_root, mock_start_server):
+
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -90,7 +91,7 @@ def test_runpath_file(tmpdir, source_root):
 
 
 @pytest.mark.integration_test
-def test_ensemble_evaluator(tmpdir, source_root):
+def test_ensemble_evaluator(tmpdir, source_root, mock_start_server):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -121,7 +122,7 @@ def test_ensemble_evaluator(tmpdir, source_root):
 
 
 @pytest.mark.integration_test
-def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root):
+def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root, mock_start_server):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
@@ -172,7 +173,8 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
         )
         run_cli(parsed)
 
-    monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
+    monitor_mock, thread_join_mock, thread_start_mock, mock_start_server = mock_cli_run
     monitor_mock.assert_called_once()
     thread_join_mock.assert_called_once()
+    mock_start_server.assert_called_once_with(res_config="poly.ert")
     thread_start_mock.assert_has_calls([[call(), call()]])
