@@ -13,8 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import os.path
-
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
@@ -29,20 +27,18 @@ from res.enkf.meas_data import MeasData
 from res.enkf.obs_data import ObsData
 from res.enkf.observations import ObsVector
 from res.enkf.util import TimeMap
-from res.sched import History
 
 
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
     _alloc = ResPrototype(
-        "void* enkf_obs_alloc( history , time_map , ecl_grid , ecl_sum , ens_config )",
+        "void* enkf_obs_alloc( void* , time_map , ecl_grid , ecl_sum , ens_config )",
         bind=False,
     )
     _free = ResPrototype("void enkf_obs_free( enkf_obs )")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
-    _load = ResPrototype("void enkf_obs_load(enkf_obs, char*, double)")
 
     _clear = ResPrototype("void enkf_obs_clear( enkf_obs )")
     _alloc_typed_keylist = ResPrototype(
@@ -75,12 +71,11 @@ class EnkfObs(BaseCClass):
     def __init__(
         self,
         ensemble_config: EnsembleConfig,
-        history: History = None,
         external_time_map: TimeMap = None,
         grid: EclGrid = None,
         refcase: EclSum = None,
     ):
-        c_ptr = self._alloc(history, external_time_map, grid, refcase, ensemble_config)
+        c_ptr = self._alloc(None, external_time_map, grid, refcase, ensemble_config)
         super().__init__(c_ptr)
 
     def __len__(self):
@@ -194,15 +189,6 @@ class EnkfObs(BaseCClass):
     @property
     def valid(self):
         return self._valid()
-
-    def load(self, config_file, std_cutoff=0.0):
-        if not os.path.isfile(config_file):
-            raise IOError(
-                'The observation config file "%s" does not exist.' % config_file
-            )
-        if not self.valid:
-            raise ValueError("Invalid enkf_obs instance.  Cannot load config file.")
-        self._load(config_file, std_cutoff)
 
     def clear(self):
         self._clear()
