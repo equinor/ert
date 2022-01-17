@@ -3,9 +3,7 @@ import json
 import os
 import yaml
 
-from res import enkf
-
-DEFAULT_GEN_KW_EXPORT_NAME = enkf.EnkfDefaults.DEFAULT_GEN_KW_EXPORT_NAME
+from res._lib.enkf_defaults import DEFAULT_GEN_KW_EXPORT_NAME
 
 
 def load_data(filename):
