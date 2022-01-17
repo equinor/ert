@@ -32,7 +32,7 @@ def _run(
 def evaluate(
     ensemble: Ensemble,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
+    config = EvaluatorServerConfig()
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
     return result
