@@ -345,11 +345,10 @@ std::vector<std::pair<matrix_type *, const row_scaling_type *>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             int_vector_type *iens_active_index, int last_step,
-                            meas_data_type *forecast,
+                            int active_ens_size,
                             const local_ministep_type *ministep) {
 
     int matrix_start_size = 250000;
-    int active_ens_size = meas_data_get_active_ens_size(forecast);
 
     std::vector<std::pair<matrix_type *, const row_scaling_type *>> parameters;
 
@@ -731,7 +730,7 @@ bool smoother_update(std::vector<int> step_list,
             // Part 2: Parameters which do have row scaling attached.
             auto row_scaling_parameters = load_row_scaling_parameters(
                 target_fs, ensemble_config, iens_active_index, current_step,
-                meas_data, ministep);
+                active_ens_size, ministep);
 
             if (row_scaling_parameters.size() > 0) {
                 run_analysis_update_with_rowscaling(module, ens_mask, meas_data,
