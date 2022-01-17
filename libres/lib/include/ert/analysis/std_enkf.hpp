@@ -28,6 +28,9 @@ bool std_enkf_has_var(const void *arg, const char *var_name);
 ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data);
 
+const ies::config::config_type *
+std_enkf_data_get_config(const std_enkf_data_type *data);
+
 const std::variant<double, int> &
 std_enkf_get_truncation(std_enkf_data_type *data);
 void *std_enkf_data_alloc();
