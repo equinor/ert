@@ -20,6 +20,7 @@ add_executable(
   res_util/test_matrix.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp
+  res_util/test_metric.cpp
   analysis/test_std_enkf.cpp
   analysis/test_compare_initX.cpp
   analysis/test_update.cpp
