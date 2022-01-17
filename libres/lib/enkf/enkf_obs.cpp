@@ -1266,27 +1266,6 @@ hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
     return hash_iter_alloc(enkf_obs->obs_hash);
 }
 
-void enkf_obs_scale_std(enkf_obs_type *enkf_obs, double scale_factor) {
-    local_obsdata_type *local_obs =
-        enkf_obs_alloc_all_active_local_obs(enkf_obs, "ALL-OBS");
-    enkf_obs_local_scale_std(enkf_obs, local_obs, scale_factor);
-    local_obsdata_free(local_obs);
-}
-
-void enkf_obs_local_scale_std(const enkf_obs_type *enkf_obs,
-                              const local_obsdata_type *local_obsdata,
-                              double scale_factor) {
-    int num_nodes = local_obsdata_get_size(local_obsdata);
-    int node_nr;
-    for (node_nr = 0; node_nr < num_nodes; node_nr++) {
-        const local_obsdata_node_type *node =
-            local_obsdata_iget(local_obsdata, node_nr);
-        obs_vector_type *obs_vector =
-            enkf_obs_get_vector(enkf_obs, local_obsdata_node_get_key(node));
-        obs_vector_scale_std(obs_vector, node, scale_factor);
-    }
-}
-
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
                                         local_obsdata_type *local_obs,
                                         enkf_fs_type *fs,
@@ -1304,23 +1283,4 @@ void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
         }
     }
     hash_iter_free(iter);
-}
-
-local_obsdata_type *
-enkf_obs_alloc_all_active_local_obs(const enkf_obs_type *enkf_obs,
-                                    const char *key) {
-    local_obsdata_type *local_obs = local_obsdata_alloc(key);
-    {
-        hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
-        while (!hash_iter_is_complete(iter)) {
-            const char *key = hash_iter_get_next_key(iter);
-            obs_vector_type *obs_vector =
-                (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-            local_obsdata_node_type *node =
-                obs_vector_alloc_local_node(obs_vector);
-            local_obsdata_add_node(local_obs, node);
-        }
-        hash_iter_free(iter);
-    }
-    return local_obs;
 }

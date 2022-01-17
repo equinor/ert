@@ -57,8 +57,6 @@ int main(int argc, char **argv) {
     enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     enkf_obs_add_obs_vector(enkf_obs, obs_vector2);
 
-    enkf_obs_scale_std(enkf_obs, 3.3);
-
     enkf_obs_free(enkf_obs);
 
     exit(0);
