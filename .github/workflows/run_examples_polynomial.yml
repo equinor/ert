@@ -9,7 +9,7 @@ on:
 
 jobs:
   run-ert3-polynomial-local:
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +51,7 @@ jobs:
         popd
 
   run-ert3-polynomial-postgres:
-    timeout-minutes: 20
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:10.8
