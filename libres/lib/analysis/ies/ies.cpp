@@ -530,8 +530,17 @@ void ies::linalg_store_active_W(ies::data_type *data, const matrix_type *W0) {
     }
 }
 
-void ies::initX(const std::variant<double, int> &truncation,
-                config::inversion_type ies_inversion, const matrix_type *Y0,
+/*
+  In the inner loop of the ies implementation is a function ies_initX__() which
+  calculates the X matrix based on the fundamental matrices Y/S, R, E and D and
+  additional arguments from the iterative state, including the steplength.
+
+  Here the ies_initX__() function can be called without any iteration state, the
+  minimum required iteration state - including steplength = 1 - is initialized
+  as temporary local variables.
+*/
+
+void ies::initX(const config::config_type *ies_config, const matrix_type *Y0,
                 const matrix_type *R, const matrix_type *E,
                 const matrix_type *D, matrix_type *X) {
     ies::data_type *data = static_cast<ies::data_type *>(ies::data_alloc());
@@ -547,8 +556,9 @@ void ies::initX(const std::variant<double, int> &truncation,
     double steplength = 1;
     int iteration_nr = 1;
 
-    ies_initX__(nullptr, Y0, R, E, D, X, ies_inversion, truncation,
-                use_aa_projection, data, steplength, iteration_nr, nullptr);
+    ies_initX__(nullptr, Y0, R, E, D, X, config::get_inversion(ies_config),
+                config::get_truncation(ies_config), use_aa_projection, data,
+                steplength, iteration_nr, nullptr);
 
     bool_vector_free(obs_mask);
     bool_vector_free(ens_mask);

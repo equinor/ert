@@ -30,6 +30,7 @@
 #include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/ies/ies.hpp>
 
 /*
   A random 'magic' integer id which is used for run-time type checking
@@ -154,6 +155,11 @@ void std_enkf_set_subspace_dimension(std_enkf_data_type *data,
     ies::config::set_subspace_dimension(data->ies_config, subspace_dimension);
 }
 
+const ies::config::config_type *
+std_enkf_data_get_config(const std_enkf_data_type *data) {
+    return data->ies_config;
+}
+
 void *std_enkf_data_alloc() {
     std_enkf_data_type *data = (std_enkf_data_type *)util_malloc(sizeof *data);
     UTIL_TYPE_ID_INIT(data, STD_ENKF_TYPE_ID);
@@ -175,56 +181,13 @@ void std_enkf_data_free(void *data) {
     free(data);
 }
 
-static void std_enkf_initX__(matrix_type *X, const matrix_type *S0,
-                             const matrix_type *R, const matrix_type *E,
-                             const matrix_type *D,
-                             const std::variant<double, int> &truncation,
-                             bool bootstrap,
-                             ies::config::inversion_type inversion_type) {
-
-    matrix_type *S = matrix_alloc_copy(S0);
-    int nrobs = matrix_get_rows(S);
-    int ens_size = matrix_get_columns(S);
-    int nrmin = std::min(ens_size, nrobs);
-
-    matrix_type *W = matrix_alloc(nrobs, nrmin);
-    std::vector<double> eig(nrmin);
-
-    matrix_subtract_row_mean(S); /* Shift away the mean */
-
-    if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_RE)
-        enkf_linalg_lowrankE(S, E, W, eig.data(), truncation);
-    else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EE_R) {
-        matrix_type *Et = matrix_alloc_transpose(E);
-        matrix_type *Cee = matrix_alloc_matmul(E, Et);
-        matrix_scale(Cee, 1.0 / (ens_size - 1));
-
-        enkf_linalg_lowrankCinv(S, Cee, W, eig.data(), truncation);
-
-        matrix_free(Et);
-        matrix_free(Cee);
-    } else if (inversion_type == ies::config::IES_INVERSION_SUBSPACE_EXACT_R)
-        enkf_linalg_lowrankCinv(S, R, W, eig.data(), truncation);
-
-    enkf_linalg_init_stdX(X, S, D, W, eig.data(), bootstrap);
-
-    matrix_free(W);
-    matrix_free(S);
-    enkf_linalg_checkX(X, bootstrap);
-}
-
 void std_enkf_initX(void *module_data, matrix_type *X, const matrix_type *A,
                     const matrix_type *S, const matrix_type *R,
                     const matrix_type *dObs, const matrix_type *E,
                     const matrix_type *D, rng_type *rng) {
 
     std_enkf_data_type *data = std_enkf_data_safe_cast(module_data);
-    {
-        auto truncation = ies::config::get_truncation(data->ies_config);
-        auto inversion = ies::config::get_inversion(data->ies_config);
-
-        std_enkf_initX__(X, S, R, E, D, truncation, false, inversion);
-    }
+    ies::initX(data->ies_config, S, R, E, D, X);
 }
 
 bool std_enkf_set_double(void *arg, const char *var_name, double value) {

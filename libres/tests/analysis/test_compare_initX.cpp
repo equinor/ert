@@ -72,9 +72,7 @@ TEST_CASE("compare_initX", "[analysis]") {
 
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
-            ies::initX(std_enkf_get_truncation(std_enkf_data),
-                       std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
-                       X2);
+            ies::initX(std_enkf_data_get_config(std_enkf_data), S, R, E, D, X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
             std_enkf_data_free(std_enkf_data);
@@ -95,9 +93,7 @@ TEST_CASE("compare_initX", "[analysis]") {
 
             std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
                            rng);
-            ies::initX(std_enkf_get_truncation(std_enkf_data),
-                       std_enkf_data_get_inversion(std_enkf_data), S, R, E, D,
-                       X2);
+            ies::initX(std_enkf_data_get_config(std_enkf_data), S, R, E, D, X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
             std_enkf_data_free(std_enkf_data);

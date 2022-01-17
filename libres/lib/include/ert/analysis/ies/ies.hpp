@@ -39,8 +39,12 @@ void init_update(void *arg, const bool_vector_type *ens_mask,
                  const matrix_type *R, const matrix_type *dObs,
                  const matrix_type *E, const matrix_type *D, rng_type *rng);
 
-void initX(const std::variant<double, int> &truncation,
-           config::inversion_type ies_inversion, const matrix_type *Y0,
+/*
+  Internally in the ies algorithm there is a standard ES update step, that
+  functionality is exported so that it can be utilised in ES updates which are
+  not iterative.
+*/
+void initX(const config::config_type *ies_config, const matrix_type *S,
            const matrix_type *R, const matrix_type *E, const matrix_type *D,
            matrix_type *X);
 
