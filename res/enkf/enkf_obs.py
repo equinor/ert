@@ -14,28 +14,20 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from ecl.grid import EclGrid
-from ecl.summary import EclSum
 from ecl.util.util import IntVector, StringList
 
 from res import ResPrototype
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf.ensemble_config import EnsembleConfig
 from res.enkf.enums import EnkfObservationImplementationType
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.meas_data import MeasData
 from res.enkf.obs_data import ObsData
 from res.enkf.observations import ObsVector
-from res.enkf.util import TimeMap
 
 
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
-    _alloc = ResPrototype(
-        "void* enkf_obs_alloc( void* , time_map , ecl_grid , ecl_sum , ens_config )",
-        bind=False,
-    )
     _free = ResPrototype("void enkf_obs_free( enkf_obs )")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
@@ -67,16 +59,6 @@ class EnkfObs(BaseCClass):
     _local_scale_std = ResPrototype(
         "void  enkf_obs_local_scale_std( enkf_obs ,        local_obsdata , double)"
     )
-
-    def __init__(
-        self,
-        ensemble_config: EnsembleConfig,
-        external_time_map: TimeMap = None,
-        grid: EclGrid = None,
-        refcase: EclSum = None,
-    ):
-        c_ptr = self._alloc(None, external_time_map, grid, refcase, ensemble_config)
-        super().__init__(c_ptr)
 
     def __len__(self):
         return self._get_size()
