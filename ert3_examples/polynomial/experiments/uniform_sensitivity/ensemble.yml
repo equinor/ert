@@ -2,6 +2,7 @@ input:
   -
     source: stochastic.uniform_coefficients
     record: coefficients
+    mime: application/json
 
 output:
   -

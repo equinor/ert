@@ -4,9 +4,11 @@ input:
   -
     source: stochastic.coefficients
     record: coefficients
+    mime: application/json
   -
     source: stochastic.x_normals
     record: x_uncertainties
+    mime: application/json
 
 output:
   -

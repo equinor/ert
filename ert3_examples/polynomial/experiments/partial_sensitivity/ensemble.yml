@@ -2,9 +2,11 @@ input:
   -
     source: stochastic.coefficients
     record: coefficients
+    mime: application/json
   -
     source: storage.coefficients
     record: other_coefficients
+    mime: application/json
 
 output:
   -

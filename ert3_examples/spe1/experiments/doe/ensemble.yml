@@ -4,6 +4,7 @@ input:
   -
     source: storage.designed_field_properties
     record: field_properties
+    mime: application/json
   -
     source: resources.wells.json
     record: wells

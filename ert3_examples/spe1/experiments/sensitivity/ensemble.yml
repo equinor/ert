@@ -2,10 +2,12 @@ input:
   -
     source: stochastic.field_properties
     record: field_properties
+    mime: application/json
   -
     source: stochastic.wells
     record: wells
-  
+    mime: application/json
+
   - source: resources.case
     record: spe1_template
 

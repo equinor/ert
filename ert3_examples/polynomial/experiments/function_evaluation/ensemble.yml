@@ -4,6 +4,7 @@ input:
   -
     source: stochastic.coefficients
     record: coefficients
+    mime: application/json
 
 output:
   -
