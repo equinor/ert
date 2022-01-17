@@ -54,9 +54,6 @@ class ObsVector(BaseCClass):
         "double obs_vector_total_chi2(obs_vector, enkf_fs, int)"
     )
     _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
-    _create_local_node = ResPrototype(
-        "local_obsdata_node_obj obs_vector_alloc_local_node(obs_vector)"
-    )
 
     def __init__(self, observation_type, observation_key, config_node, num_reports):
         """
@@ -162,12 +159,6 @@ class ObsVector(BaseCClass):
     def getConfigNode(self):
         """@rtype: EnkfConfigNode"""
         return self._get_config_node().setParent(self)
-
-    def createLocalObs(self):
-        """
-        Will create a LocalObsDataNode instance with all timesteps set.
-        """
-        return self._create_local_node()
 
     def hasData(self, active_mask, fs):
         """@rtype: bool"""

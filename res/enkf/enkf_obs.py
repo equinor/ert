@@ -14,14 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import BaseCClass
-from ecl.util.util import IntVector, StringList
+from ecl.util.util import StringList
 
 from res import ResPrototype
-from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.local_obsdata import LocalObsdata
-from res.enkf.meas_data import MeasData
-from res.enkf.obs_data import ObsData
 from res.enkf.observations import ObsVector
 
 
@@ -45,20 +41,6 @@ class EnkfObs(BaseCClass):
     _iget_vector = ResPrototype("obs_vector_ref enkf_obs_iget_vector(enkf_obs, int)")
     _iget_obs_time = ResPrototype("time_t enkf_obs_iget_obs_time(enkf_obs, int)")
     _add_obs_vector = ResPrototype("void enkf_obs_add_obs_vector(enkf_obs, obs_vector)")
-    _get_obs_and_measure_data = ResPrototype(
-        "void enkf_obs_get_obs_and_measure_data(enkf_obs, \
-                                                enkf_fs, \
-                                                local_obsdata, \
-                                                int_vector, \
-                                                meas_data, \
-                                                obs_data)"
-    )
-    _create_all_active_obs = ResPrototype(
-        "local_obsdata_obj enkf_obs_alloc_all_active_local_obs( enkf_obs , char*)"
-    )
-    _local_scale_std = ResPrototype(
-        "void  enkf_obs_local_scale_std( enkf_obs ,        local_obsdata , double)"
-    )
 
     def __len__(self):
         return self._get_size()
@@ -97,15 +79,6 @@ class EnkfObs(BaseCClass):
                 "Key or index must be of type str or int, not %s."
                 % str(type(key_or_index))
             )
-
-    def createLocalObsdata(self, key, add_active_steps=True):
-        # Use getAllActiveLocalObsdata()
-        raise NotImplementedError(
-            "Hmmm C function: enkf_obs_alloc_all_active_local_obs() removed"
-        )
-
-    def getAllActiveLocalObsdata(self, key="ALL-OBS"):
-        return self._create_all_active_obs(key)
 
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
@@ -151,22 +124,6 @@ class EnkfObs(BaseCClass):
         observation_vector.convertToCReference(self)
 
         self._add_obs_vector(observation_vector)
-
-    def getObservationAndMeasureData(
-        self, fs, local_obsdata, active_list, meas_data, obs_data
-    ):
-        assert isinstance(fs, EnkfFs)
-        assert isinstance(local_obsdata, LocalObsdata)
-        assert isinstance(active_list, IntVector)
-        assert isinstance(meas_data, MeasData)
-        assert isinstance(obs_data, ObsData)
-
-        self._get_obs_and_measure_data(
-            fs, local_obsdata, active_list, meas_data, obs_data
-        )
-
-    def localScaleStd(self, local_obsdata, scale_factor):
-        return self._local_scale_std(local_obsdata, scale_factor)
 
     @property
     def valid(self):

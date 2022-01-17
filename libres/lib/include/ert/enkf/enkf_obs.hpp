@@ -91,17 +91,10 @@ hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs);
 stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
                                                  const char *input_string);
 time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step);
-void enkf_obs_scale_std(enkf_obs_type *enkf_obs, double scale_factor);
-void enkf_obs_local_scale_std(const enkf_obs_type *enkf_obs,
-                              const local_obsdata_type *local_obsdata,
-                              double scale_factor);
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
                                         local_obsdata_type *local_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask);
-local_obsdata_type *
-enkf_obs_alloc_all_active_local_obs(const enkf_obs_type *enkf_obs,
-                                    const char *key);
 conf_class_type *enkf_obs_get_obs_conf_class();
 UTIL_IS_INSTANCE_HEADER(enkf_obs);
 
