@@ -118,7 +118,7 @@ std::shared_ptr<ert::ILogger> ert::get_logger(const std::string &name) {
     return logger;
 }
 
-void init_logging(py::module_ m) {
+RES_LIB_SUBMODULE("", m) {
     has_init_logging = true;
 
     // Initialise all loggers that were created before Python initialised

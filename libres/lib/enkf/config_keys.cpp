@@ -2,7 +2,7 @@
 #include <ert/enkf/config_keys.hpp>
 #include <pybind11/pytypes.h>
 
-void init_config_keys(py::module_ m) {
+RES_LIB_SUBMODULE("config_keys", m) {
     struct ConfigKeys {};
 
     py::class_<ConfigKeys> cls(m, "ConfigKeys");

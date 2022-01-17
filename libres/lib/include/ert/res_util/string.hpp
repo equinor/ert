@@ -30,7 +30,7 @@ void split(std::string_view str, char delimiter, Func &&func) {
  *
  * Equivalent to Python's: `s.split(delim)[-1]`
  */
-std::string_view back_element(std::string_view str, char delimiter) {
+inline std::string_view back_element(std::string_view str, char delimiter) {
     auto pos = str.rfind(delimiter);
     return pos == str.npos ? str : str.substr(pos + 1);
 }
