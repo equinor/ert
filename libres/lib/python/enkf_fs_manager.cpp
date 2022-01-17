@@ -1,11 +1,7 @@
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/python.hpp>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
-namespace py = pybind11;
-
-void enkf_fs_manager(py::module_ m) {
+RES_LIB_SUBMODULE("enkf_fs_manager", m) {
     m.def(
         "initialize_from_scratch",
         [](py::object self, std::vector<std::string> param_list,

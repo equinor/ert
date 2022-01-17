@@ -5,7 +5,7 @@
 
 namespace py = pybind11;
 
-void ensemble_config(py::module_ m) {
+RES_LIB_SUBMODULE("ensemble_config", m) {
     m.def(
         "ensemble_config_keylist_from_var_type",
         [](py::object self, int var_mask) {
