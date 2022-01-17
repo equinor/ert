@@ -178,7 +178,7 @@ async def get_record_storage_transmitters(
 
 def _get(url: str, headers: Dict[str, Any]) -> httpx.Response:
     with Storage.session() as session:
-        return session.get(url, headers=headers)
+        return session.get(url, headers=headers, timeout=60)
 
 
 async def _get_from_server_async(
@@ -208,7 +208,7 @@ async def _get_from_server_async(
 
 def _post(url: str, headers: Dict[str, Any], **kwargs: Any) -> httpx.Response:
     with Storage.session() as session:
-        return session.post(url=url, headers=headers, **kwargs)
+        return session.post(url=url, headers=headers, timeout=60, **kwargs)
 
 
 async def _post_to_server_async(
@@ -239,7 +239,7 @@ async def _post_to_server_async(
 
 def _put(url: str, headers: Dict[str, Any], **kwargs: Any) -> httpx.Response:
     with Storage.session() as session:
-        return session.put(url=url, headers=headers, **kwargs)
+        return session.put(url=url, headers=headers, timeout=60, **kwargs)
 
 
 async def _put_to_server_async(
@@ -422,7 +422,7 @@ def _get_from_server(
         headers = {}
 
     with Storage.session() as session:
-        resp = session.get(path, headers=headers, **kwargs)
+        resp = session.get(path, headers=headers, timeout=60, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to fetch from %s. Response: %s", path, resp.text)
 
@@ -458,6 +458,7 @@ def _delete_on_server(
         resp = session.delete(
             path,
             headers=headers,
+            timeout=60,
         )
     if resp.status_code != status_code:
         logger.error("Failed to delete %s. Response: %s", path, resp.text)
@@ -474,7 +475,7 @@ def _post_to_server(
     if not headers:
         headers = {}
     with Storage.session() as session:
-        resp = session.post(path, headers=headers, **kwargs)
+        resp = session.post(path, headers=headers, timeout=60, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to post to %s. Response: %s", path, resp.text)
 
@@ -490,7 +491,7 @@ def _put_to_server(
     if not headers:
         headers = {}
     with Storage.session() as session:
-        resp = session.put(path, headers=headers, **kwargs)
+        resp = session.put(path, headers=headers, timeout=60, **kwargs)
     if resp.status_code != status_code:
         logger.error("Failed to put to %s. Response: %s", path, resp.text)
     return resp
