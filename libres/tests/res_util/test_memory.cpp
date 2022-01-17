@@ -2,8 +2,8 @@
 #include <fmt/format.h>
 #include "catch2/catch.hpp"
 
-#include <ert/logging.hpp>
 #include <ert/res_util/memory.hpp>
+#include "../logger_mock.hpp"
 
 static int callno = 0;
 
@@ -71,18 +71,6 @@ nonvoluntary_ctxt_switches:	4)";
 }
 } // namespace utils
 } // namespace ert
-
-class MockLogger : public ert::ILogger {
-public:
-    std::vector<std::string> calls;
-
-protected:
-    void log(ert::ILogger::Level level, fmt::string_view f,
-             fmt::format_args args) override {
-        std::string s = fmt::vformat(f, args);
-        calls.push_back(s);
-    }
-};
 
 TEST_CASE("simple memory logger test", "[res_util]") {
     auto logger = std::make_shared<MockLogger>();

@@ -6,6 +6,8 @@
 #include <ert/util/type_vector_functions.h>
 #include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/matrix.hpp>
+#include <ert/res_util/metric.hpp>
+#include <ert/res_util/memory.hpp>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.hpp>
@@ -16,11 +18,8 @@
 #include <ert/util/vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
-#include <ert/res_util/memory.hpp>
 
 namespace analysis {
-
-auto logger = ert::get_logger("analysis");
 
 /*
    Helper structs used to pass information to the multithreaded serialize and
@@ -37,6 +36,8 @@ auto logger = ert::get_logger("analysis");
    The members explicitly marked with a mutable: comment will vary in the
    lifetime of the serialization_info, the other members will be constant. 
 */
+
+auto logger = ert::get_logger("update");
 
 typedef struct {
     int row_offset;
@@ -424,7 +425,10 @@ void run_analysis_update_without_rowscaling(analysis_module_type *module,
                                             rng_type *shared_rng,
                                             matrix_type *E, matrix_type *A) {
 
+    ert::utils::Benchmark benchmark(logger,
+                                    "run_analysis_update_without_rowscaling");
     assert(A != nullptr);
+
     const int cpu_threads = 4;
     thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
 
@@ -490,6 +494,8 @@ void run_analysis_update_with_rowscaling(
     std::vector<std::pair<matrix_type *, const row_scaling_type *>>
         parameters) {
 
+    ert::utils::Benchmark benchmark(logger,
+                                    "run_analysis_update_with_rowscaling");
     assert(parameters.size() > 0);
 
     int active_ens_size = meas_data_get_active_ens_size(forecast);
