@@ -50,4 +50,6 @@ PYBIND11_MODULE(_lib, m) {
 
     void init_config_keys(py::module_ m);
     init_config_keys(m.def_submodule("config_keys"));
+    void enkf_defaults(py::module_ m);
+    enkf_defaults(m.def_submodule("enkf_defaults"));
 }

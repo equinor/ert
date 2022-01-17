@@ -34,6 +34,7 @@ pybind11_add_module(
   python/ensemble_config.cpp
   python/enkf_fs_manager.cpp
   python/py_conversion.cpp
+  python/enkf_defaults.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp
@@ -97,7 +98,6 @@ pybind11_add_module(
   enkf/ecl_refcase_list.cpp
   enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
-  enkf/enkf_defaults.cpp
   enkf/enkf_fs.cpp
   enkf/enkf_main.cpp
   enkf/enkf_main_jobs.cpp
