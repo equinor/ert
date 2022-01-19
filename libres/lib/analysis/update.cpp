@@ -378,11 +378,9 @@ void run_analysis_update_with_rowscaling(
 Check whether the current state and config allows the update algorithm
 to be executed
 */
-bool assert_update_viable(const analysis_config_type *analysis_config,
-                          const enkf_fs_type *source_fs,
-                          const int total_ens_size,
-                          const local_updatestep_type *updatestep) {
-    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
+bool is_valid(const analysis_config_type *analysis_config,
+              const state_map_type *source_state_map, const int total_ens_size,
+              const local_updatestep_type *updatestep) {
     const int active_ens_size =
         state_map_count_matching(source_state_map, STATE_HAS_DATA);
 
@@ -397,10 +395,9 @@ bool assert_update_viable(const analysis_config_type *analysis_config,
 
     // exit if multi step update with iterable modules
     if (local_updatestep_get_num_ministep(updatestep) > 1 &&
-        analysis_config_get_module_option(analysis_config, ANALYSIS_ITERABLE)) {
+        analysis_config_module_flag_is_set(analysis_config, ANALYSIS_ITERABLE))
         util_exit("** ERROR: Can not combine iterable modules with multi step "
                   "updates - sorry\n");
-    }
     return true;
 }
 
@@ -472,10 +469,11 @@ bool smoother_update(std::vector<int> step_list,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      bool verbose) {
+    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     FILE *log_stream =
         log_step_list(analysis_config_get_log_path(analysis_config), step_list);
-    if (!assert_update_viable(analysis_config, source_fs, total_ens_size,
-                              updatestep))
+    if (!is_valid(analysis_config, source_state_map, total_ens_size,
+                  updatestep))
         return false;
 
     ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
@@ -489,7 +487,6 @@ bool smoother_update(std::vector<int> step_list,
     process.
     */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
-    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     double global_std_scaling =
         analysis_config_get_global_std_scaling(analysis_config);
