@@ -566,10 +566,9 @@ bool assert_update_viable(const analysis_config_type *analysis_config,
         return false;
     }
 
-    // exit if multi step update
-    if ((local_updatestep_get_num_ministep(updatestep) > 1) &&
-        (analysis_config_get_module_option(analysis_config,
-                                           ANALYSIS_ITERABLE))) {
+    // exit if multi step update with iterable modules
+    if (local_updatestep_get_num_ministep(updatestep) > 1 &&
+        analysis_config_get_module_option(analysis_config, ANALYSIS_ITERABLE)) {
         util_exit("** ERROR: Can not combine iterable modules with multi step "
                   "updates - sorry\n");
     }
@@ -642,7 +641,6 @@ bool smoother_update(std::vector<int> step_list,
     */
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
-
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
     double global_std_scaling =
         analysis_config_get_global_std_scaling(analysis_config);

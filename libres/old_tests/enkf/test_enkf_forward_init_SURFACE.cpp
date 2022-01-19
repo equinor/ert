@@ -81,14 +81,13 @@ int main(int argc, char **argv) {
     {
 
         bool forward_init;
-        bool strict = true;
         enkf_main_type *enkf_main;
 
         test_assert_true(util_sscanf_bool(forward_init_string, &forward_init));
 
         util_clear_directory("Storage", true, true);
         res_config_type *res_config = res_config_alloc_load(config_file);
-        enkf_main = enkf_main_alloc(res_config, strict, true);
+        enkf_main = enkf_main_alloc(res_config);
         ensemble_config_type *ens_config =
             enkf_main_get_ensemble_config(enkf_main);
         {
