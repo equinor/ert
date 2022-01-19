@@ -1,4 +1,5 @@
 import pathlib
+import shlex
 from functools import partial
 from typing import Callable, Dict, Tuple, Type, cast
 
@@ -161,7 +162,7 @@ def build_ensemble(
             )
 
         for script in stage.script:
-            name, *args = script.split()
+            name, *args = shlex.split(script)
             step_builder.add_job(
                 create_job_builder()
                 .set_name(name)
