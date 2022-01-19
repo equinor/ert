@@ -146,8 +146,8 @@ void analysis_config_set_max_runtime(analysis_config_type *config,
     config->max_runtime = max_runtime;
 }
 
-static void analysis_config_set_min_realisations(analysis_config_type *config,
-                                                 int min_realisations) {
+void analysis_config_set_min_realisations(analysis_config_type *config,
+                                          int min_realisations) {
     config->min_realisations = min_realisations;
 }
 
@@ -261,8 +261,8 @@ bool analysis_config_has_module(const analysis_config_type *config,
     return (config->analysis_modules.count(module_name) > 0);
 }
 
-bool analysis_config_get_module_option(const analysis_config_type *config,
-                                       analysis_module_flag_enum flag) {
+bool analysis_config_module_flag_is_set(const analysis_config_type *config,
+                                        analysis_module_flag_enum flag) {
     if (config->analysis_module)
         return analysis_module_check_option(config->analysis_module, flag);
     else
