@@ -100,9 +100,8 @@ int main(int argc, char **argv) {
     ta.copy_directory_content(root_path);
     install_file(ta, init_file);
 
-    bool strict = true;
     res_config_type *res_config = res_config_alloc_load(config_file);
-    enkf_main_type *enkf_main = enkf_main_alloc(res_config, strict, true);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config);
     ensemble_config_type *ens_config = enkf_main_get_ensemble_config(enkf_main);
     enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
     const subst_list_type *subst_list =

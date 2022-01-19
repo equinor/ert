@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     ta.copy_parent_content(config_file);
     {
         res_config_type *res_config = res_config_alloc_load(model_config);
-        enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+        enkf_main_type *enkf_main = enkf_main_alloc(res_config);
 
         enkf_main_select_fs(enkf_main, "enkf");
         test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));

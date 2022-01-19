@@ -31,7 +31,7 @@ void test_current_file_not_present_symlink_present(const char *model_config) {
     test_assert_true(fs::exists("Storage/enkf"));
     util_make_slink("enkf", "Storage/current");
     res_config_type *res_config = res_config_alloc_load(model_config);
-    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config);
     test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
     test_assert_false(fs::exists("Storage/current"));
     test_assert_true(fs::exists("Storage/current_case"));
@@ -45,7 +45,7 @@ void test_current_file_not_present_symlink_present(const char *model_config) {
 void test_current_file_present(const char *model_config) {
     test_assert_true(fs::exists("Storage/current_case"));
     res_config_type *res_config = res_config_alloc_load(model_config);
-    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config);
     test_assert_true(enkf_main_case_is_current(enkf_main, "enkf"));
     test_assert_false(fs::exists("Storage/current"));
     char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
@@ -57,7 +57,7 @@ void test_current_file_present(const char *model_config) {
 
 void test_change_case(const char *model_config) {
     res_config_type *res_config = res_config_alloc_load(model_config);
-    enkf_main_type *enkf_main = enkf_main_alloc(res_config, false, false);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config);
     enkf_main_select_fs(enkf_main, "default");
     test_assert_true(enkf_main_case_is_current(enkf_main, "default"));
     test_assert_false(enkf_main_case_is_current(enkf_main, "enkf"));

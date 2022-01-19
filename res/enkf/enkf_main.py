@@ -164,7 +164,7 @@ class _RealEnKFMain(BaseCClass):
 
     """
 
-    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool, bool)", bind=False)
+    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_queue_config = ResPrototype(

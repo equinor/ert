@@ -57,9 +57,8 @@ int main(int argc, char **argv) {
     ecl::util::TestArea ta("compatible");
     ta.copy_directory_content(root_path);
 
-    bool strict = true;
     res_config_type *res_config = res_config_alloc_load(config_file);
-    enkf_main_type *enkf_main = enkf_main_alloc(res_config, strict, true);
+    enkf_main_type *enkf_main = enkf_main_alloc(res_config);
 
     test_assert_bool_equal(check_compatible,
                            check_ecl_sum_compatible(enkf_main));
