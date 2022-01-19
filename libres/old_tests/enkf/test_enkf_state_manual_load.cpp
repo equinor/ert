@@ -61,9 +61,8 @@ int main(int argc, char **argv) {
     ecl::util::TestArea ta(config_file);
     ta.copy_directory_content(root_path);
     {
-        bool strict = true;
         res_config_type *res_config = res_config_alloc_load(config_file);
-        enkf_main_type *enkf_main = enkf_main_alloc(res_config, strict, true);
+        enkf_main_type *enkf_main = enkf_main_alloc(res_config);
 
         test_assert_int_equal(0, test_load_manually_to_new_case(enkf_main));
 

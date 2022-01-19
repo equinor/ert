@@ -440,7 +440,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
         (enkf_main_type *)util_malloc(sizeof *enkf_main);
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
     enkf_main->ensemble = NULL;
-    enkf_main->local_config = NULL;
     enkf_main->rng_manager = NULL;
     enkf_main->shared_rng = NULL;
     enkf_main->ens_size = 0;
@@ -537,12 +536,6 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
   file. This also applies if the command_line argument given is a
   symlink.
 
-
-  If the parameter @strict is set to false a configuration with some
-  missing parameters will validate; this is to support bootstrapping
-  from a minimal configuration created by the GUI. The parameters
-  which become optional in a non-strict mode are:
-
     FORWARD_MODEL
     DATA_FILE
     SCHEDULE_FILE
@@ -556,7 +549,7 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
    is mainly to be able to test that the site config file is valid.
 */
 
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config, bool strict,
+enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
                                 bool verbose, bool read_only) {
     enkf_main_type *enkf_main = enkf_main_alloc_empty();
     enkf_main->res_config = res_config;
@@ -566,7 +559,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config, bool strict,
     enkf_main_rng_init(enkf_main);
     enkf_main_user_select_initial_fs(enkf_main, read_only);
     enkf_main_init_obs(enkf_main);
-
     enkf_main_add_ensemble_members(enkf_main);
 
     return enkf_main;
