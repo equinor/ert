@@ -4,8 +4,8 @@ import pytest
 
 import ert
 import ert3
-from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 from ert_shared.async_utils import get_event_loop
+from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 
 TEST_PARAMETRIZATION = [
     ([(0, 0, 0)], [[0] * 10]),
@@ -159,3 +159,38 @@ def test_evaluator_function(
 
     expected = {iens: {"polynomial_output": data} for iens, data in enumerate(expected)}
     assert expected == evaluation_records
+
+
+@pytest.mark.parametrize(
+    "commandline, parsed_name, parsed_args",
+    [
+        ("echo inline", "echo", ["inline"]),
+        ("sh -c 'echo inline'", "sh", ["-c", "echo inline"]),
+        ('bash -c "echo inline"', "bash", ["-c", "echo inline"]),
+        ("bash -c echo inline", "bash", ["-c", "echo", "inline"]),  # (user error)
+        (
+            "sh -c " + '"' + "echo '[0, 1, 2, 3]' > some_numbers.json" + '"',
+            "sh",
+            ["-c", "echo '[0, 1, 2, 3]' > some_numbers.json"],
+        ),
+    ],
+)
+def test_inline_script(commandline, parsed_name, parsed_args):
+    """Verify that the ensemble builder will obey quotations in order
+    to support inlined shell scripts"""
+    step = ert3.config.Unix(
+        name="step with inlined script",
+        input=[],
+        script=tuple([commandline]),
+        output=[],
+        transportable_commands=tuple(),
+    )
+    step_builder = create_step_builder().set_name("inline_script_test").set_type("unix")
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage=step, driver="local", ensemble_size=1, step_builder=step_builder
+    )
+
+    job = ensemble.get_reals()[0].get_steps()[0].get_jobs()[0]
+    assert job.get_name() == parsed_name
+    assert job.get_args() == tuple(parsed_args)
