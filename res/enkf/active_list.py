@@ -29,8 +29,6 @@ class ActiveList(BaseCClass):
     _add_index = ResPrototype("void  active_list_add_index(active_list , int)")
     _asize = ResPrototype("int   active_list_get_active_size(active_list, int)")
     _get_mode = ResPrototype("active_mode_enum active_list_get_mode(active_list)")
-    _get_active_index_list = ResPrototype("int*  active_list_get_active(active_list)")
-    _is_active = ResPrototype("bool active_list_iget(active_list, int)")
 
     def __init__(self):
         c_ptr = self._alloc()
@@ -38,21 +36,6 @@ class ActiveList(BaseCClass):
 
     def getMode(self):
         return self._get_mode()
-
-    def get_active_index_list(self):
-        """
-        Returns a list of indices corresponding to active parameters for a parameter node
-        Requires PARTLY_ACTIVE as ActiveMode, else return empty list.
-        """
-        mode = self.getMode()
-        index_list = []
-        if mode == ActiveMode.PARTLY_ACTIVE:
-            size = self._asize(0)
-            c_ptr = self._get_active_index_list()
-            index_list = [c_ptr[i] for i in range(size)]
-            return index_list
-        else:
-            return index_list
 
     def addActiveIndex(self, index):
         self._add_index(index)

@@ -55,7 +55,6 @@ class Matrix(BaseCClass):
     _columns = ResPrototype("int matrix_get_columns(matrix)")
     _equal = ResPrototype("bool matrix_equal(matrix, matrix)")
     _pretty_print = ResPrototype("void matrix_pretty_print(matrix, char*, char*)")
-    _fprint = ResPrototype("void matrix_fprintf(matrix, char*, FILE)")
     _random_init = ResPrototype("void matrix_random_init(matrix, rng)")
     _dump_csv = ResPrototype("void matrix_dump_csv(matrix, char*)")
 
@@ -190,32 +189,6 @@ class Matrix(BaseCClass):
 
     def prettyPrint(self, name, fmt="%6.3g"):
         self._pretty_print(name, fmt)
-
-    def fprint(self, fileH, fmt="%g "):
-        """Will print ASCII representation of matrix.
-
-        The fileH argument should point to an open Python
-        filehandle. If you supply a fmt string it is important that it
-        contains a separator, otherwise you might risk that elements
-        overlap in the output. For the matrix:
-
-                  [0 1 2]
-              m = [3 4 5]
-                  [6 7 8]
-
-        The code:
-
-        with open("matrix.txt" , "w") as f:
-           m.fprintf( f )
-
-         The file 'matrix.txt' will look like:
-
-         0 1 2
-         3 4 5
-         6 7 8
-
-        """
-        self._fprint(fmt, CFILE(fileH))
 
     def randomInit(self, rng):
         self._random_init(rng)

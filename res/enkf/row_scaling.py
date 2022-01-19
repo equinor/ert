@@ -29,12 +29,12 @@ class RowScaling(BaseCClass):
     _iset = ResPrototype("double row_scaling_iset(row_scaling, int, double)")
     _iget = ResPrototype("double row_scaling_iget(row_scaling, int)")
     _clamp = ResPrototype("double row_scaling_clamp(row_scaling, double)")
-    _assign_double_vector = ResPrototype(
-        "void row_scaling_assign_double(row_scaling, double*, int)"
-    )
-    _assign_float_vector = ResPrototype(
-        "void row_scaling_assign_float(row_scaling, float*, int)"
-    )
+    # _assign_double_vector = ResPrototype(
+    #     "void row_scaling_assign_double(row_scaling, double*, int)"
+    # )
+    # _assign_float_vector = ResPrototype(
+    #     "void row_scaling_assign_float(row_scaling, float*, int)"
+    # )
 
     def __init__(self):
         c_ptr = self._alloc()

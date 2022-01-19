@@ -24,13 +24,6 @@ class LocalMinistep(BaseCClass):
         "void local_ministep_add_obsdata(local_ministep, local_obsdata)"
     )
     _name = ResPrototype("char* local_ministep_get_name(local_ministep)")
-    _data_size = ResPrototype("int local_ministep_num_active_data(local_ministep)")
-    _active_data_list = ResPrototype(
-        "active_list_ref local_ministep_get_active_data_list(local_ministep, char*)"
-    )
-    _has_active_data = ResPrototype(
-        "bool local_ministep_data_is_active(local_ministep, char*)"
-    )
     _add_active_data = ResPrototype(
         "void local_ministep_activate_data(local_ministep, char*)"
     )
@@ -44,10 +37,6 @@ class LocalMinistep(BaseCClass):
     def set_ensemble_config(self, config):
         self.ensemble_config = config
 
-    def hasActiveData(self, key):
-        assert isinstance(key, str)
-        return self._has_active_data(key)
-
     def addActiveData(self, key):
         assert isinstance(key, str)
         if key in self.ensemble_config:
@@ -58,16 +47,6 @@ class LocalMinistep(BaseCClass):
                 raise KeyError('Tried to add existing data key "%s".' % key)
         else:
             raise KeyError('Tried to add data key "%s" not in ensemble.' % key)
-
-    def getActiveList(self, key):
-        """@rtype: ActiveList"""
-        if self._has_active_data(key):
-            return self._active_data_list(key)
-        else:
-            raise KeyError('Local key "%s" not recognized.' % key)
-
-    def numActiveData(self):
-        return self._data_size()
 
     def addNode(self, node):
         assert isinstance(node, LocalObsdataNode)

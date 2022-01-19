@@ -44,10 +44,10 @@ class GenObservation(BaseCClass):
     _update_std_scaling = ResPrototype(
         "void   gen_obs_update_std_scale(gen_obs , double , active_list)"
     )
-    _get_value_vector = ResPrototype(
-        "void   gen_obs_load_values(gen_obs, int, double*)"
-    )
-    _get_std_vector = ResPrototype("void   gen_obs_load_std(gen_obs, int, double*)")
+    # _get_value_vector = ResPrototype(
+    #     "void   gen_obs_load_values(gen_obs, int, double*)"
+    # )
+    # _get_std_vector = ResPrototype("void   gen_obs_load_std(gen_obs, int, double*)")
 
     def __init__(
         self,
