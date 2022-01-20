@@ -31,6 +31,11 @@
 #include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/ies/ies.hpp>
 
+#include <fmt/format.h>
+#include <ert/logging.hpp>
+
+auto logger = ert::get_logger("analysis");
+
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
 namespace ies {
@@ -269,6 +274,8 @@ static bool analysis_module_set_string(analysis_module_type *module,
 
 bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
                              const char *string_value) {
+    logger->info(
+        fmt::format("Setting '{}' to value: '{}'", var_name, string_value));
     bool set_ok = false;
     {
         int int_value;
