@@ -64,50 +64,7 @@ class AnalysisModuleVariablesModel(object):
             "labelname": "Include AA projection",
             "pos": 11,
         },
-        "LAMBDA0": {
-            "type": float,
-            "min": -1,
-            "max": 2147483647,
-            "step": 1.0,
-            "labelname": "Initial Lambda",
-            "pos": 0,
-        },
-        "USE_PRIOR": {
-            "type": bool,
-            "labelname": "Use both Prior and Observation Variability",
-            "pos": 1,
-        },
-        "LAMBDA_REDUCE": {
-            "type": float,
-            "min": 0,
-            "max": 1,
-            "step": 0.1,
-            "labelname": "Lambda Reduction Factor",
-            "pos": 2,
-        },
-        "LAMBDA_INCREASE": {
-            "type": float,
-            "min": 1,
-            "max": 10,
-            "step": 0.1,
-            "labelname": "Lambda Incremental Factor",
-            "pos": 3,
-        },
-        "LAMBDA_MIN": {
-            "type": float,
-            "min": 0,
-            "max": 10,
-            "step": 0.1,
-            "labelname": "Minimum Lambda",
-            "pos": 4,
-        },
         "LOG_FILE": {"type": str, "labelname": "Log File", "pos": 5},
-        "CLEAR_LOG": {"type": bool, "labelname": "Clear Existing Log File", "pos": 6},
-        "LAMBDA_RECALCULATE": {
-            "type": bool,
-            "labelname": "Recalculate Lambda after each Iteration",
-            "pos": 7,
-        },
         "ENKF_TRUNCATION": {
             "type": float,
             "min": -2.0,
@@ -132,23 +89,6 @@ class AnalysisModuleVariablesModel(object):
             "labelname": "Number of singular values",
             "pos": 10,
         },
-        "CV_NFOLDS": {
-            "type": int,
-            "min": 2,
-            "max": 9999,
-            "step": 1.0,
-            "labelname": "CV_NFOLDS",
-            "pos": 11,
-        },
-        "FWD_STEP_R2_LIMIT": {
-            "type": float,
-            "min": -1,
-            "max": 100,
-            "step": 1.0,
-            "labelname": "FWD_STEP_R2_LIMIT",
-            "pos": 12,
-        },
-        "CV_PEN_PRESS": {"type": bool, "labelname": "CV_PEN_PRESS", "pos": 13},
     }
 
     @classmethod
@@ -168,9 +108,6 @@ class AnalysisModuleVariablesModel(object):
 
     @classmethod
     def getVariableMaximumValue(cls, name):
-        if name == "CV_NFOLDS":
-            return getRealizationCount() - 1
-
         return cls._VARIABLE_NAMES[name]["max"]
 
     @classmethod

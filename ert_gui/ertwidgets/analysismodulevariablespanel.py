@@ -90,11 +90,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                     )
 
                 layout.addRow(label_name, spinner)
-                if variable_name == "LAMBDA0":
-                    label = QLabel(
-                        '<span style="font-size:12pt; font-weight:300;font-style:italic;"> Initial Lambda of -1.00 signifies that the value will be calculated</span>'
-                    )
-                    layout.addRow(label, None)
 
                 if variable_name == "IES_INVERSION":
                     label = QLabel(
