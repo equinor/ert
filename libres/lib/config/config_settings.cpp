@@ -174,32 +174,11 @@ bool config_settings_add_setting(config_settings_type *settings,
         return false;
 }
 
-void config_settings_add_bool_setting(config_settings_type *settings,
-                                      const char *key, bool initial_value) {
-    if (initial_value)
-        config_settings_add_setting(settings, key, CONFIG_BOOL, "True");
-    else
-        config_settings_add_setting(settings, key, CONFIG_BOOL, "False");
-}
-
-void config_settings_add_int_setting(config_settings_type *settings,
-                                     const char *key, int initial_value) {
-    char *string_value = (char *)util_alloc_sprintf("%d", initial_value);
-    config_settings_add_setting(settings, key, CONFIG_INT, string_value);
-    free(string_value);
-}
-
 void config_settings_add_double_setting(config_settings_type *settings,
                                         const char *key, double initial_value) {
     char *string_value = (char *)util_alloc_sprintf("%g", initial_value);
     config_settings_add_setting(settings, key, CONFIG_FLOAT, string_value);
     free(string_value);
-}
-
-void config_settings_add_string_setting(config_settings_type *settings,
-                                        const char *key,
-                                        const char *initial_value) {
-    config_settings_add_setting(settings, key, CONFIG_STRING, initial_value);
 }
 
 bool config_settings_has_key(const config_settings_type *settings,
@@ -213,37 +192,11 @@ config_settings_get_node(const config_settings_type *config_settings,
     return (setting_node_type *)hash_get(config_settings->settings, key);
 }
 
-const char *
-config_settings_get_value(const config_settings_type *config_settings,
-                          const char *key) {
-    setting_node_type *node = config_settings_get_node(config_settings, key);
-    return setting_node_get_value(node);
-}
-
 double
 config_settings_get_double_value(const config_settings_type *config_settings,
                                  const char *key) {
     setting_node_type *node = config_settings_get_node(config_settings, key);
     return setting_node_get_double_value(node);
-}
-
-int config_settings_get_int_value(const config_settings_type *config_settings,
-                                  const char *key) {
-    setting_node_type *node = config_settings_get_node(config_settings, key);
-    return setting_node_get_int_value(node);
-}
-
-bool config_settings_get_bool_value(const config_settings_type *config_settings,
-                                    const char *key) {
-    setting_node_type *node = config_settings_get_node(config_settings, key);
-    return setting_node_get_bool_value(node);
-}
-
-config_item_types
-config_settings_get_value_type(const config_settings_type *config_settings,
-                               const char *key) {
-    setting_node_type *node = config_settings_get_node(config_settings, key);
-    return node->value_type;
 }
 
 bool config_settings_set_value(const config_settings_type *config_settings,
@@ -257,18 +210,6 @@ bool config_settings_set_value(const config_settings_type *config_settings,
     return false;
 }
 
-bool config_settings_set_int_value(const config_settings_type *config_settings,
-                                   const char *key, int value) {
-    if (config_settings_has_key(config_settings, key)) {
-        setting_node_type *node =
-            config_settings_get_node(config_settings, key);
-        setting_node_set_int_value(node, value);
-        return true;
-    }
-
-    return false;
-}
-
 bool config_settings_set_double_value(
     const config_settings_type *config_settings, const char *key,
     double value) {
@@ -276,18 +217,6 @@ bool config_settings_set_double_value(
         setting_node_type *node =
             config_settings_get_node(config_settings, key);
         setting_node_set_double_value(node, value);
-        return true;
-    }
-
-    return false;
-}
-
-bool config_settings_set_bool_value(const config_settings_type *config_settings,
-                                    const char *key, bool value) {
-    if (config_settings_has_key(config_settings, key)) {
-        setting_node_type *node =
-            config_settings_get_node(config_settings, key);
-        setting_node_set_bool_value(node, value);
         return true;
     }
 
