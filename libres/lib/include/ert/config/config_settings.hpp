@@ -36,9 +36,6 @@ config_settings_type *config_settings_alloc(const char *root_key);
 void config_settings_free(config_settings_type *settings);
 bool config_settings_has_key(const config_settings_type *settings,
                              const char *key);
-config_item_types
-config_settings_get_value_type(const config_settings_type *config_settings,
-                               const char *key);
 bool config_settings_set_value(const config_settings_type *config_settings,
                                const char *key, const char *value);
 void config_settings_init_parser(const config_settings_type *config_settings,
@@ -53,35 +50,17 @@ config_settings_alloc_keys(const config_settings_type *config_settings);
 bool config_settings_add_setting(config_settings_type *settings,
                                  const char *key, config_item_types value_type,
                                  const char *initial_value);
-void config_settings_add_int_setting(config_settings_type *settings,
-                                     const char *key, int initial_value);
 void config_settings_add_double_setting(config_settings_type *settings,
                                         const char *key, double initial_value);
-void config_settings_add_string_setting(config_settings_type *settings,
-                                        const char *key,
-                                        const char *initial_value);
-void config_settings_add_bool_setting(config_settings_type *settings,
-                                      const char *key, bool initial_value);
 
-const char *
-config_settings_get_value(const config_settings_type *config_settings,
-                          const char *key);
-int config_settings_get_int_value(const config_settings_type *config_settings,
-                                  const char *key);
-bool config_settings_get_bool_value(const config_settings_type *config_settings,
-                                    const char *key);
 double
 config_settings_get_double_value(const config_settings_type *config_settings,
                                  const char *key);
 
 bool config_settings_set_value(const config_settings_type *config_settings,
                                const char *key, const char *value);
-bool config_settings_set_int_value(const config_settings_type *config_settings,
-                                   const char *key, int value);
 bool config_settings_set_double_value(
     const config_settings_type *config_settings, const char *key, double value);
-bool config_settings_set_bool_value(const config_settings_type *config_settings,
-                                    const char *key, bool value);
 
 #ifdef __cplusplus
 }
