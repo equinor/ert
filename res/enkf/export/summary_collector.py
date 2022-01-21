@@ -1,11 +1,9 @@
-import numpy
 from ecl.util.util import BoolVector
 from pandas import DataFrame, MultiIndex
-
+from res import _lib
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
-from res.enkf.plot_data import EnsemblePlotData
 
 
 class SummaryCollector:
@@ -32,13 +30,13 @@ class SummaryCollector:
         @type keys: list of str
         @rtype: DataFrame
         """
+
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         time_map = fs.getTimeMap()
         dates = [time_map[index].datetime() for index in range(1, len(time_map))]
 
         realizations = SummaryCollector.createActiveList(ert, fs)
-
         if realization_index is not None:
             if realization_index not in realizations:
                 raise IndexError(f"No such realization {realization_index}")
@@ -50,32 +48,14 @@ class SummaryCollector:
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
-        summary_array = numpy.empty(
-            shape=(len(summary_keys), len(realizations) * len(dates)),
-            dtype=numpy.float64,
+        summary_data = _lib.enkf_fs_summary_data.get_summary_data(
+            ert.ensembleConfig(), fs, summary_keys, realizations, len(dates)
         )
-        summary_array.fill(numpy.nan)
-
-        for key_index, key in enumerate(summary_keys):
-            ensemble_config_node = ert.ensembleConfig().getNode(key)
-            ensemble_data = EnsemblePlotData(ensemble_config_node, fs)
-            summary_row = summary_array[key_index]
-
-            for realization_index, realization_number in enumerate(realizations):
-                realization_vector = ensemble_data[realization_number]
-                column_index = realization_index * len(dates)
-
-                for index in range(1, len(realization_vector)):
-                    if realization_vector.isActive(index):
-                        # assert time_map[index] == realization_vector.getTime(index)
-                        # assert time_map[index].datetime() == dates[index - 1]
-                        value = realization_vector.getValue(index)
-                        summary_row[column_index + index - 1] = value
 
         multi_index = MultiIndex.from_product(
             [realizations, dates], names=["Realization", "Date"]
         )
-        summary_data = DataFrame(
-            data=numpy.transpose(summary_array), index=multi_index, columns=summary_keys
-        )
-        return summary_data
+
+        df = DataFrame(data=summary_data, index=multi_index, columns=summary_keys)
+
+        return df
