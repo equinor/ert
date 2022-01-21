@@ -101,6 +101,10 @@ RES_LIB_SUBMODULE("config_keys", m) {
     cls.attr("SEED") = "SEED";
     cls.attr("SETENV") = SETENV_KEY;
     cls.attr("SIMULATION") = "SIMULATION";
+    // SIMULATION_JOB is a lightweight version of FORWARD_MODEL that allows passing
+    // raw command line arguments to executable.
+    // It is heavily used in Everest as the Everest configuration transpiles all jobs
+    // into SIMULATION_JOB.
     cls.attr("SIMULATION_JOB") = SIMULATION_JOB_KEY;
     cls.attr("SINGLE_NODE_UPDATE") = SINGLE_NODE_UPDATE_KEY;
     cls.attr("SLURM_EXCLUDE_HOST_OPTION") = SLURM_EXCLUDE_HOST_OPTION;
