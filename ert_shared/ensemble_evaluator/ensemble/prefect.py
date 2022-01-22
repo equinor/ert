@@ -57,11 +57,13 @@ async def _eq_submit_job(self, script_filename):
 
 
 def _get_executor(custom_port_range, name="local"):
-    _, port, _ = find_available_port(custom_range=custom_port_range, reuse_addr=True)
+    # See https://github.com/equinor/ert/pull/2757#discussion_r794368854
+    _, port, sock = find_available_port(custom_range=custom_port_range)
+    sock.close()  # do this explicitly, not relying on GC
+
     if name == "local":
         cluster_kwargs = {
             "silence_logs": "debug",
-            "scheduler_options": {"port": port},
         }
         return LocalDaskExecutor(**cluster_kwargs)
     elif name == "lsf":

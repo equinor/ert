@@ -111,9 +111,7 @@ def run_server(args=None, debug=False):
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    _, _, sock = port_handler.find_available_port(
-        custom_host=args.host, reuse_addr=True
-    )
+    _, _, sock = port_handler.find_available_port(custom_host=args.host)
 
     connection_info = _create_connection_info(sock, authtoken)
 

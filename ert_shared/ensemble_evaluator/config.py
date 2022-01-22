@@ -142,7 +142,7 @@ class EvaluatorServerConfig:
         generate_cert: bool = True,
     ) -> None:
         self.host, self.port, self._socket_handle = port_handler.find_available_port(
-            custom_range=custom_port_range, reuse_addr=True
+            custom_range=custom_port_range
         )
         self.protocol = "wss" if generate_cert else "ws"
         self.url = f"{self.protocol}://{self.host}:{self.port}"
