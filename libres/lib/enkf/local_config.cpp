@@ -188,7 +188,7 @@ local_config_alloc_ministep(local_config_type *local_config, const char *key,
 
     local_ministep_type *ministep = local_ministep_alloc(key, analysis_module);
     hash_insert_hash_owned_ref(local_config->ministep_storage, key, ministep,
-                               local_ministep_free__);
+                               reinterpret_cast<void (*)(void*)>(local_ministep_free));
     return ministep;
 }
 

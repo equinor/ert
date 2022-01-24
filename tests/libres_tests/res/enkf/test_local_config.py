@@ -137,8 +137,6 @@ class LocalConfigTest(ResTest):
                 _ = local_config.createMinistep("MINISTEP", None)
 
             self.assertFalse(ministep.hasActiveData("DATA"))
-            with self.assertRaises(KeyError):
-                _ = ministep.getActiveList("DATA")
 
             self.assertIsNone(ministep.get_obs_data())
 

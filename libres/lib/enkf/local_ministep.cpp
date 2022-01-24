@@ -37,20 +37,12 @@
    to the internals of the underlying enkf_node / obs_node objects.
 */
 
-UTIL_SAFE_CAST_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
-
 local_ministep_type *
 local_ministep_alloc(const char *name, analysis_module_type *analysis_module) {
     return new local_ministep_type(name, analysis_module);
 }
 
 void local_ministep_free(local_ministep_type *ministep) { delete ministep; }
-
-void local_ministep_free__(void *arg) {
-    local_ministep_type *ministep = local_ministep_safe_cast(arg);
-    local_ministep_free(ministep);
-}
 
 /*
    When adding observations and update nodes here observe the following:
@@ -111,7 +103,7 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key) {
     auto scaling_iter = ministep->scaling.find(key);
     if (scaling_iter == ministep->scaling.end()) {
-        if (ministep->active_size.count(key) > 0)
+        if (ministep->active_size.count(key) == 0)
             throw std::invalid_argument(
                 "Tried to create row_scaling object for unknown key");
 

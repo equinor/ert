@@ -7,6 +7,7 @@ import pytest
 from ecl.util.util import BoolVector
 
 from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig, EnKFMain
+from res._lib.test_support import local_ministep_activate_indices
 
 
 @pytest.fixture()
@@ -244,9 +245,8 @@ def test_localization(setup_case, expected_target_gen_kw):
     obs.addNode("WOPR_OP1_72")
     ministep = local_config.createMinistep("MINISTEP_LOCA")
     ministep.addActiveData("SNAKE_OIL_PARAM")  # replace dataset.addNode()
-    active_list = ministep.getActiveList("SNAKE_OIL_PARAM")
-    for i in localized_idxs:
-        active_list.addActiveIndex(i)
+    local_ministep_activate_indices(ministep, "SNAKE_OIL_PARAM", localized_idxs)
+
     ministep.attachObsset(obs)
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)

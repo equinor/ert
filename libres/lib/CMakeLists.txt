@@ -33,6 +33,7 @@ pybind11_add_module(
   python/logging.cpp
   python/ensemble_config.cpp
   python/enkf_fs_manager.cpp
+  python/test_support.cpp
   python/py_conversion.cpp
   python/enkf_defaults.cpp
   config/conf_util.cpp

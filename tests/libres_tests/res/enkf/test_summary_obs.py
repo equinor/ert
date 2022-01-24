@@ -16,7 +16,7 @@
 
 from libres_utils import ResTest
 
-from res.enkf import ActiveList, SummaryObservation
+from res.enkf import SummaryObservation
 
 
 class SummaryObsTest(ResTest):
@@ -26,11 +26,3 @@ class SummaryObsTest(ResTest):
         self.assertEqual(sum_obs.getValue(), 0.25)
         self.assertEqual(sum_obs.getStandardDeviation(), 0.12)
         self.assertEqual(sum_obs.getStdScaling(), 1.0)
-
-    def test_std_scaling(self):
-        sum_obs = SummaryObservation("WWCT:OP_X", "WWCT:OP_X", 0.25, 0.12)
-
-        active_list = ActiveList()
-        sum_obs.updateStdScaling(0.50, active_list)
-        sum_obs.updateStdScaling(0.125, active_list)
-        self.assertEqual(sum_obs.getStdScaling(), 0.125)

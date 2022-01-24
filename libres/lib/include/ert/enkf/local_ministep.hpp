@@ -33,11 +33,8 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
 
-#define LOCAL_MINISTEP_TYPE_ID 661066
-
 class local_ministep_type {
 public:
-    UTIL_TYPE_ID_DECLARATION;
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
     local_obsdata_type *observations;
@@ -51,7 +48,6 @@ public:
     local_ministep_type(const char *name, analysis_module_type *analysis_module)
         : name(strdup(name)), analysis_module(analysis_module),
           obs_data(nullptr) {
-        UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
         observations =
             local_obsdata_alloc(std::string("OBSDATA_" + this->name).data());
     }
@@ -62,17 +58,21 @@ public:
             obs_data_free(obs_data);
     }
 
-    inline bool data_is_active(const char *key) const {
+    bool data_is_active(const char *key) const {
         return active_size.count(key) > 0;
     }
 
-    inline int num_active_data() const { return active_size.size(); }
+    int num_active_data() const { return active_size.size(); }
 
     void add_active_data(const char *node_key) {
         if (data_is_active(node_key) > 0)
             util_abort("%s: tried to add existing node key:%s \n", __func__,
                        node_key);
         active_size[node_key] = {};
+    }
+
+    enkf::ActiveList& get_active_data_list(const char *node_key) {
+        return active_size.at(node_key);
     }
 
     const enkf::ActiveList& get_active_data_list(const char *node_key) const {
@@ -114,7 +114,6 @@ extern "C" {
 local_ministep_type *
 local_ministep_alloc(const char *name, analysis_module_type *analysis_module);
 void local_ministep_free(local_ministep_type *ministep);
-void local_ministep_free__(void *arg);
 
 row_scaling_type *
 local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
@@ -123,9 +122,6 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
 int local_ministep_num_active_data(const local_ministep_type *ministep);
 void local_ministep_activate_data(local_ministep_type *ministep,
                                   const char *key);
-// enkf::ActiveList *
-// local_ministep_get_active_data_list(const local_ministep_type *ministep,
-//                                     const char *key);
 bool local_ministep_data_is_active(const local_ministep_type *ministep,
                                    const char *key);
 
@@ -142,9 +138,6 @@ local_ministep_get_analysis_module(const local_ministep_type *ministep);
 void local_ministep_add_obs_data(local_ministep_type *ministep,
                                  obs_data_type *obs_data);
 obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);
-
-UTIL_SAFE_CAST_HEADER(local_ministep);
-UTIL_IS_INSTANCE_HEADER(local_ministep);
 
 #ifdef __cplusplus
 }

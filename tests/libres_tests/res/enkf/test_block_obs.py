@@ -17,7 +17,7 @@
 from ecl.grid import EclGridGenerator
 from libres_utils import ResTest
 
-from res.enkf import ActiveList, BlockObservation, FieldConfig
+from res.enkf import BlockObservation, FieldConfig
 
 
 class BlockObsTest(ResTest):
@@ -39,13 +39,3 @@ class BlockObsTest(ResTest):
         self.assertEqual(block_obs.getValue(1), 200)
         self.assertEqual(block_obs.getStd(1), 50)
         self.assertEqual(block_obs.getStdScaling(1), 1)
-
-        active_list = ActiveList()
-        block_obs.updateStdScaling(0.50, active_list)
-        self.assertEqual(block_obs.getStdScaling(0), 0.50)
-        self.assertEqual(block_obs.getStdScaling(1), 0.50)
-
-        active_list.addActiveIndex(1)
-        block_obs.updateStdScaling(2.00, active_list)
-        self.assertEqual(block_obs.getStdScaling(0), 0.50)
-        self.assertEqual(block_obs.getStdScaling(1), 2.00)

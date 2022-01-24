@@ -21,7 +21,6 @@ from cwrap import BaseCClass
 from ecl.util.util import IntVector
 
 from res import ResPrototype
-from res.enkf import ActiveList
 from res.enkf.config import GenDataConfig
 
 
@@ -41,9 +40,6 @@ class GenObservation(BaseCClass):
     _add_data_index = ResPrototype(
         "void   gen_obs_attach_data_index(gen_obs , int_vector)"
     )
-    # _update_std_scaling = ResPrototype(
-    #     "void   gen_obs_update_std_scale(gen_obs , double , active_list)"
-    # )
     _get_value_vector = ResPrototype(
         "void   gen_obs_load_values(gen_obs, int, double*)"
     )
@@ -116,9 +112,6 @@ class GenObservation(BaseCClass):
     def getStdScaling(self, obs_index):
         """@rtype: float"""
         return self._get_std_scaling(obs_index)
-
-    def updateStdScaling(self, factor, active_list: ActiveList):
-        self._update_std_scaling(factor, active_list)
 
     def get_data_points(self):
         np_vector = np.zeros(len(self))
