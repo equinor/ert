@@ -248,30 +248,30 @@ void block_obs_free(block_obs_type *block_obs) {
 void block_obs_get_observations(const block_obs_type *block_obs,
                                 obs_data_type *obs_data, enkf_fs_type *fs,
                                 int report_step,
-                                const active_list_type *__active_list) {
+                                const enkf::ActiveList &active_list) {
     int i;
     int obs_size = block_obs_get_size(block_obs);
-    int active_size = active_list_get_active_size(__active_list, obs_size);
-    active_mode_type active_mode = active_list_get_mode(__active_list);
+    int active_size = active_list.active_size(obs_size);
+    auto active_mode = active_list.mode();
     obs_block_type *obs_block =
         obs_data_add_block(obs_data, block_obs->obs_key, obs_size, NULL, false);
 
-    if (active_mode == ALL_ACTIVE) {
+    if (active_mode == enkf::ActiveMode::all_active) {
         for (i = 0; i < obs_size; i++) {
             const point_obs_type *point_obs =
                 block_obs_iget_point_const(block_obs, i);
             obs_block_iset(obs_block, i, point_obs->value,
                            point_obs->std * point_obs->std_scaling);
         }
-    } else if (active_mode == PARTLY_ACTIVE) {
-        const int *active_list = active_list_get_active(__active_list);
-        for (i = 0; i < active_size; i++) {
-            int iobs = active_list[i];
-            const point_obs_type *point_obs =
-                block_obs_iget_point_const(block_obs, i);
-            obs_block_iset(obs_block, iobs, point_obs->value,
-                           point_obs->std * point_obs->std_scaling);
-        }
+    } else if (active_mode == enkf::ActiveMode::partly_active) {
+        // const int *active_list = active_list_get_active(__active_list);
+        // for (i = 0; i < active_size; i++) {
+        //     int iobs = active_list[i];
+        //     const point_obs_type *point_obs =
+        //         block_obs_iget_point_const(block_obs, i);
+        //     obs_block_iset(obs_block, iobs, point_obs->value,
+        //                    point_obs->std * point_obs->std_scaling);
+        // }
     }
 }
 
@@ -297,32 +297,38 @@ double block_obs_iget_data(const block_obs_type *block_obs, const void *state,
 
 void block_obs_measure(const block_obs_type *block_obs, const void *state,
                        node_id_type node_id, meas_data_type *meas_data,
-                       const active_list_type *__active_list) {
+                       const enkf::ActiveList &__active_list) {
     block_obs_assert_data(block_obs, state);
     {
         int obs_size = block_obs_get_size(block_obs);
-        int active_size = active_list_get_active_size(__active_list, obs_size);
+        int active_size = __active_list.active_size(obs_size);
         meas_block_type *meas_block = meas_data_add_block(
             meas_data, block_obs->obs_key, node_id.report_step, obs_size);
         int iobs;
 
-        active_mode_type active_mode = active_list_get_mode(__active_list);
-        if (active_mode == ALL_ACTIVE) {
+        switch (__active_list.mode()) {
+        case enkf::ActiveMode::all_active:
             for (iobs = 0; iobs < obs_size; iobs++) {
                 double value =
                     block_obs_iget_data(block_obs, state, iobs, node_id);
                 meas_block_iset(meas_block, node_id.iens, iobs, value);
             }
-        } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = active_list_get_active(__active_list);
-            for (int i = 0; i < active_size; i++) {
-                iobs = active_list[i];
-                {
-                    double value =
-                        block_obs_iget_data(block_obs, state, iobs, node_id);
-                    meas_block_iset(meas_block, node_id.iens, i, value);
-                }
-            }
+            break;
+
+        case enkf::ActiveMode::partly_active:
+            // const int *active_list = active_list_get_active(__active_list);
+            // for (int i = 0; i < active_size; i++) {
+            //     iobs = active_list[i];
+            //     {
+            //         double value =
+            //             block_obs_iget_data(block_obs, state, iobs, node_id);
+            //         meas_block_iset(meas_block, node_id.iens, i, value);
+            //     }
+            // }
+            break;
+
+        case enkf::ActiveMode::inactive:
+            break;
         }
     }
 }
@@ -416,23 +422,26 @@ int block_obs_get_size(const block_obs_type *block_obs) {
 }
 
 void block_obs_update_std_scale(block_obs_type *block_obs, double scale_factor,
-                                const active_list_type *active_list) {
+                                const enkf::ActiveList &active_list) {
     int obs_size = block_obs_get_size(block_obs);
-    if (active_list_get_mode(active_list) == ALL_ACTIVE) {
+    switch (active_list.mode()) {
+    case enkf::ActiveMode::all_active:
         for (int i = 0; i < obs_size; i++) {
             point_obs_type *point_observation =
                 block_obs_iget_point(block_obs, i);
             point_observation->std_scaling = scale_factor;
         }
-    } else {
-        const int *active_index = active_list_get_active(active_list);
-        int size = active_list_get_active_size(active_list, obs_size);
-        for (int i = 0; i < size; i++) {
-            int obs_index = active_index[i];
+        break;
+    case enkf::ActiveMode::partly_active:
+        for (auto obs_index : active_list) {
             point_obs_type *point_observation =
                 block_obs_iget_point(block_obs, obs_index);
             point_observation->std_scaling = scale_factor;
         }
+        break;
+
+    case enkf::ActiveMode::inactive:
+        break;
     }
 }
 

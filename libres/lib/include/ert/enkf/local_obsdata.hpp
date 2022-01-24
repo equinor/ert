@@ -49,14 +49,11 @@ local_obsdata_node_type *local_obsdata_get(const local_obsdata_type *data,
 void local_obsdata_del_node(local_obsdata_type *data, const char *key);
 void local_obsdata_reset_tstep_list(local_obsdata_type *data,
                                     const std::vector<int> &step_list);
-active_list_type *
+enkf::ActiveList *
 local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
                                    const char *obs_key);
 void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
                                    FILE *stream);
-PY_USED active_list_type *
-local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
-                                        const char *obs_key);
 
 UTIL_IS_INSTANCE_HEADER(local_obsdata);
 

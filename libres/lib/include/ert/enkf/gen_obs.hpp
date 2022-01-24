@@ -42,7 +42,7 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
 
 PY_USED void gen_obs_update_std_scale(gen_obs_type *gen_obs,
                                       double std_multiplier,
-                                      const active_list_type *active_list);
+                                      const enkf::ActiveList &active_list);
 int gen_obs_get_size(const gen_obs_type *gen_obs);
 double gen_obs_iget_std(const gen_obs_type *gen_obs, int index);
 void gen_obs_load_std(const gen_obs_type *gen_obs, int size, double *data);

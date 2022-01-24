@@ -68,7 +68,7 @@ void test_measure(ert_test_context_type *test_context) {
     enkf_obs_type *enkf_obs = enkf_main_get_obs(enkf_main);
     obs_vector_type *rft_obs = enkf_obs_get_vector(enkf_obs, "RFT_TEST");
     int_vector_type *ens_active_list = int_vector_alloc(0, 0);
-    active_list_type *active_list = active_list_alloc();
+    enkf::ActiveList active_list;
     meas_data_type *meas_data_RFT;
 
     for (int i = 0; i < enkf_main_get_ensemble_size(enkf_main); i++)
@@ -85,7 +85,6 @@ void test_measure(ert_test_context_type *test_context) {
                        active_list);
 
     int_vector_free(ens_active_list);
-    active_list_free(active_list);
     meas_data_free(meas_data_RFT);
 }
 

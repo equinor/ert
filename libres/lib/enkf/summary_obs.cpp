@@ -88,9 +88,9 @@ const char *summary_obs_get_summary_key(const summary_obs_type *summary_obs) {
 void summary_obs_get_observations(const summary_obs_type *summary_obs,
                                   obs_data_type *obs_data, enkf_fs_type *fs,
                                   int report_step,
-                                  const active_list_type *__active_list) {
+                                  const enkf::ActiveList &active_list) {
 
-    int active_size = active_list_get_active_size(__active_list, OBS_SIZE);
+    int active_size = active_list.active_size(OBS_SIZE);
     if (active_size == 1) {
         obs_block_type *obs_block = obs_data_add_block(
             obs_data, summary_obs->obs_key, OBS_SIZE, NULL, false);
@@ -102,8 +102,8 @@ void summary_obs_get_observations(const summary_obs_type *summary_obs,
 void summary_obs_measure(const summary_obs_type *obs,
                          const summary_type *summary, node_id_type node_id,
                          meas_data_type *meas_data,
-                         const active_list_type *__active_list) {
-    int active_size = active_list_get_active_size(__active_list, OBS_SIZE);
+                         const enkf::ActiveList &active_list) {
+    int active_size = active_list.active_size(OBS_SIZE);
     if (active_size == 1) {
         meas_block_type *meas_block = meas_data_add_block(
             meas_data, obs->obs_key, node_id.report_step, active_size);
@@ -142,14 +142,9 @@ double summary_obs_get_std_scaling(const summary_obs_type *summary_obs) {
 
 void summary_obs_update_std_scale(summary_obs_type *summary_obs,
                                   double std_multiplier,
-                                  const active_list_type *active_list) {
-    if (active_list_get_mode(active_list) == ALL_ACTIVE)
+                                  const enkf::ActiveList &active_list) {
+    if (active_list.active_size(OBS_SIZE) > 0)
         summary_obs->std_scaling = std_multiplier;
-    else {
-        int size = active_list_get_active_size(active_list, OBS_SIZE);
-        if (size > 0)
-            summary_obs->std_scaling = std_multiplier;
-    }
 }
 
 void summary_obs_set_std_scale(summary_obs_type *summary_obs,

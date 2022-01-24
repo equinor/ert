@@ -56,7 +56,7 @@ summary_obs_get_summary_key(const summary_obs_type *summary_obs);
 
 void summary_obs_update_std_scale(summary_obs_type *summary_obs,
                                   double std_multiplier,
-                                  const active_list_type *active_list);
+                                  const enkf::ActiveList &active_list);
 
 void summary_obs_set_std_scale(summary_obs_type *summary_obs,
                                double std_multiplier);

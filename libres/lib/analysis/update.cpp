@@ -41,7 +41,7 @@ auto logger = ert::get_logger("update");
 
 typedef struct {
     int row_offset;
-    const active_list_type *active_list;
+    const enkf::ActiveList *active_list;
     const char *key;
 } serialize_node_info_type;
 
@@ -85,7 +85,7 @@ void ensure_node_loaded(const enkf_config_node_type *config_node,
 
 void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
                     int iens, int report_step, int row_offset, int column,
-                    const active_list_type *active_list, matrix_type *A) {
+                    const enkf::ActiveList &active_list, matrix_type *A) {
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = report_step, .iens = iens};
@@ -103,7 +103,7 @@ void *serialize_nodes_mt(void *arg) {
         if (column >= 0) {
             serialize_node(info->src_fs, config_node, iens, info->report_step,
                            node_info->row_offset, column,
-                           node_info->active_list, info->A);
+                           *node_info->active_list, info->A);
         }
     }
     return NULL;
@@ -123,14 +123,13 @@ void serialize_ministep(const ensemble_config_type *ens_config,
     serialize_info->row_offset.resize(unscaled_keys.size());
     for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
-        const active_list_type *active_list =
+        const auto& active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key.c_str());
 
         ensure_node_loaded(config_node, serialize_info->src_fs, report_step);
-        serialize_info->active_size[ikw] = active_list_get_active_size(
-            active_list,
+        serialize_info->active_size[ikw] = active_list.active_size(
             enkf_config_node_get_data_size(config_node, report_step));
         serialize_info->row_offset[ikw] = current_row;
 
@@ -145,7 +144,7 @@ void serialize_ministep(const ensemble_config_type *ens_config,
             thread_pool_restart(work_pool);
             for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
                 node_info[icpu].key = key.c_str();
-                node_info[icpu].active_list = active_list;
+                node_info[icpu].active_list = &active_list;
                 node_info[icpu].row_offset = serialize_info->row_offset[ikw];
                 serialize_info[icpu].node_info = &node_info[icpu];
 
@@ -166,7 +165,7 @@ void serialize_ministep(const ensemble_config_type *ens_config,
 void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
                       const enkf_config_node_type *config_node, int iens,
                       int target_step, int row_offset, int column,
-                      const active_list_type *active_list, matrix_type *A) {
+                      const enkf::ActiveList &active_list, matrix_type *A) {
 
     node_id_type node_id = {.report_step = target_step, .iens = iens};
     enkf_node_type *node = enkf_node_alloc(config_node);
@@ -192,7 +191,7 @@ void *deserialize_nodes_mt(void *arg) {
         if (column >= 0)
             deserialize_node(info->target_fs, info->src_fs, config_node, iens,
                              info->target_step, node_info->row_offset, column,
-                             node_info->active_list, info->A);
+                             *node_info->active_list, info->A);
     }
     return NULL;
 }
@@ -222,13 +221,13 @@ void deserialize_ministep(ensemble_config_type *ensemble_config,
     int current_row = 0;
     for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
         const auto &key = unscaled_keys[ikw];
-        const active_list_type *active_list =
+        const auto& active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, key.c_str());
         ensure_node_loaded(config_node, serialize_info->src_fs, 0);
-        serialize_info->active_size[ikw] = active_list_get_active_size(
-            active_list, enkf_config_node_get_data_size(config_node, 0));
+        serialize_info->active_size[ikw] = active_list.active_size(
+            enkf_config_node_get_data_size(config_node, 0));
         if (serialize_info->active_size[ikw] > 0) {
             serialize_info->row_offset[ikw] = current_row;
             current_row += serialize_info->active_size[ikw];
@@ -237,7 +236,7 @@ void deserialize_ministep(ensemble_config_type *ensemble_config,
             thread_pool_restart(work_pool);
             for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
                 node_info[icpu].key = key.c_str();
-                node_info[icpu].active_list = active_list;
+                node_info[icpu].active_list = &active_list;
                 node_info[icpu].row_offset = serialize_info->row_offset[ikw];
                 serialize_info[icpu].node_info = &node_info[icpu];
 
@@ -358,7 +357,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
         matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
         for (const auto &key : scaled_keys) {
-            const active_list_type *active_list =
+            const enkf::ActiveList &active_list =
                 ministep->get_active_data_list(key.data());
             const auto *config_node =
                 ensemble_config_get_node(ensemble_config, key.c_str());
@@ -403,7 +402,7 @@ void save_row_scaling_parameters(
 
     for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
         const auto &key = scaled_keys[ikw];
-        const active_list_type *active_list =
+        const auto &active_list =
             ministep->get_active_data_list(key.data());
         matrix_type *A = row_scaling_list[ikw].first;
         for (int iens = 0; iens < int_vector_size(iens_active_index); iens++) {

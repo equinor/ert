@@ -22,22 +22,16 @@
 #include <ert/enkf/local_obsdata_node.hpp>
 
 void test_content(local_obsdata_node_type *node) {
-    const active_list_type *active_list =
+    const enkf::ActiveList &active_list =
         local_obsdata_node_get_active_list(node);
 
-    test_assert_not_NULL(active_list);
-    test_assert_true(active_list_is_instance(active_list));
-
     {
-        active_list_type *new_active_list = active_list_alloc();
+        enkf::ActiveList new_active_list;
 
-        active_list_add_index(new_active_list, 1098);
+        new_active_list.add_index(1098);
 
-        test_assert_false(active_list_equal(
-            new_active_list, local_obsdata_node_get_active_list(node)));
-        local_obsdata_node_copy_active_list(node, new_active_list);
-        test_assert_true(active_list_equal(
-            new_active_list, local_obsdata_node_get_active_list(node)));
+        test_assert_false(
+            new_active_list == local_obsdata_node_get_active_list(node));
     }
     {
 
