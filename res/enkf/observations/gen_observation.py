@@ -41,9 +41,9 @@ class GenObservation(BaseCClass):
     _add_data_index = ResPrototype(
         "void   gen_obs_attach_data_index(gen_obs , int_vector)"
     )
-    _update_std_scaling = ResPrototype(
-        "void   gen_obs_update_std_scale(gen_obs , double , active_list)"
-    )
+    # _update_std_scaling = ResPrototype(
+    #     "void   gen_obs_update_std_scale(gen_obs , double , active_list)"
+    # )
     _get_value_vector = ResPrototype(
         "void   gen_obs_load_values(gen_obs, int, double*)"
     )

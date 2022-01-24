@@ -30,9 +30,9 @@ class SummaryObservation(BaseCClass):
     _get_std = ResPrototype("double summary_obs_get_std(summary_obs)")
     _get_std_scaling = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
     _get_summary_key = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
-    _update_std_scale = ResPrototype(
-        "void   summary_obs_update_std_scale(summary_obs , double , active_list)"
-    )
+    # _update_std_scale = ResPrototype(
+    #     "void   summary_obs_update_std_scale(summary_obs , double , active_list)"
+    # )
     _set_std_scale = ResPrototype(
         "void   summary_obs_set_std_scale(summary_obs , double)"
     )

@@ -39,9 +39,9 @@ class BlockObservation(BaseCClass):
     _get_std_scaling = ResPrototype(
         "double block_obs_iget_std_scaling( block_obs, int )"
     )
-    _update_std_scaling = ResPrototype(
-        "void   block_obs_update_std_scale(block_obs , double , active_list)"
-    )
+    # _update_std_scaling = ResPrototype(
+    #     "void   block_obs_update_std_scale(block_obs , double , active_list)"
+    # )
     _get_value = ResPrototype("double block_obs_iget_value( block_obs, int)")
     _get_depth = ResPrototype("double block_obs_iget_depth( block_obs, int)")
     _add_field_point = ResPrototype(

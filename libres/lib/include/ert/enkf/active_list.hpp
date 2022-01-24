@@ -29,7 +29,3 @@ public:
     auto end() const { return m_indices.end(); }
 };
 }
-
-// void active_list_summary_fprintf(const enkf::ActiveList &active_list,
-//                                  const char *dataset_key, const char *key,
-//                                  FILE *stream);

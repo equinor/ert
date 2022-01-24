@@ -1,4 +1,5 @@
 #include <ert/enkf/active_list.hpp>
+#include <ert/python.hpp>
 
 void enkf::ActiveList::add_index(int new_index) {
     m_indices.emplace(new_index);
@@ -21,6 +22,7 @@ int enkf::ActiveList::active_size(int total_size) const {
     case ActiveMode::all_active:
         return total_size;
     }
+    __builtin_unreachable();
 }
 
 bool enkf::ActiveList::operator[](int index) const {
@@ -31,21 +33,6 @@ bool enkf::ActiveList::operator[](int index) const {
     return m_indices.count(index) > 0;
 }
 
-// void active_list_summary_fprintf(const enkf::ActiveList &active_list,
-//                                  const char *dataset_key, const char *key,
-//                                  FILE *stream) {
-//     int number_of_active = int_vector_size(active_list->index_list);
-//     if (active_list->mode == ALL_ACTIVE) {
-//         fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-//                 "ALL_ACTIVE");
-//     } else if (active_list->mode == PARTLY_ACTIVE) {
-//         fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-//                 "PARTLY_ACTIVE");
-//     } else
-//         fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-//                 "INACTIVE");
-// }
-
 bool enkf::ActiveList::operator==(const enkf::ActiveList& other) const {
     if (m_mode != other.m_mode)
         return false;
@@ -54,4 +41,29 @@ bool enkf::ActiveList::operator==(const enkf::ActiveList& other) const {
         return m_indices == other.m_indices;
 
     return true;
+}
+
+namespace {
+    std::vector<int> to_list(const enkf::ActiveList& active_list) {
+        std::vector<int> list;
+        for (auto x : active_list)
+            list.push_back(x);
+        return list;
+    }
+}
+
+RES_LIB_SUBMODULE("active_list", m) {
+    using namespace py::literals;
+
+    py::enum_<enkf::ActiveMode>(m, "ActiveMode")
+        .value("ALL_ACTIVE", enkf::ActiveMode::all_active)
+        .value("INACTIVE", enkf::ActiveMode::inactive)
+        .value("PARTY_ACTIVE", enkf::ActiveMode::partly_active);
+
+    py::class_<enkf::ActiveList, std::shared_ptr<enkf::ActiveList>>(m, "ActiveList")
+        .def(py::init<>())
+        .def("getMode", &enkf::ActiveList::mode)
+        .def("get_active_index_list", &to_list)
+        .def("addActiveIndex", &enkf::ActiveList::add_index, "index"_a)
+        .def("getActiveSize", &enkf::ActiveList::active_size, "default_value"_a);
 }

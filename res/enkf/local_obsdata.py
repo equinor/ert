@@ -22,12 +22,6 @@ class LocalObsdata(BaseCClass):
     _get_node = ResPrototype(
         "local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)"
     )
-    _copy_active_list = ResPrototype(
-        "active_list_ref local_obsdata_get_copy_node_active_list(local_obsdata, char*)"
-    )
-    _active_list = ResPrototype(
-        "active_list_ref local_obsdata_get_node_active_list(local_obsdata, char*)"
-    )
 
     def __init__(self, name, obs=None):
         # The obs instance should be a EnkFObs instance; some circular dependency problems
@@ -132,20 +126,6 @@ object as:
     def getName(self):
         """@rtype: str"""
         return self.name()
-
-    def getActiveList(self, key):
-        """@rtype: ActiveList"""
-        if key in self:
-            return self._active_list(key)
-        else:
-            raise KeyError('Local key "%s" not recognized.' % key)
-
-    def copy_active_list(self, key):
-        """@rtype: ActiveList"""
-        if key in self:
-            return self._copy_active_list(key)
-        else:
-            raise KeyError('Local key "%s" not recognized.' % key)
 
     def free(self):
         self._free()

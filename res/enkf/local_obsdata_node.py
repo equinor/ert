@@ -21,9 +21,6 @@ class LocalObsdataNode(BaseCClass):
     _set_all_timestep_active = ResPrototype(
         "void  local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)"
     )
-    _get_active_list = ResPrototype(
-        "active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)"
-    )
 
     def __init__(self, obs_key, all_timestep_active=True):
         if isinstance(obs_key, str):
@@ -56,9 +53,6 @@ class LocalObsdataNode(BaseCClass):
 
     def tstepActive(self, tstep):
         return self._tstep_active(tstep)
-
-    def getActiveList(self):
-        return self._get_active_list()
 
     def allTimeStepActive(self):
         return self._all_timestep_active()
