@@ -13,7 +13,7 @@ class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
 
     _create_run_path = ResPrototype(
-        "bool enkf_main_create_run_path(enkf_simulation_runner, ert_run_context)"
+        "void enkf_main_create_run_path(enkf_simulation_runner, ert_run_context)"
     )
 
     def __init__(self, enkf_main):
@@ -74,8 +74,7 @@ class EnkfSimulationRunner(BaseCClass):
         return totalOk
 
     def createRunPath(self, run_context: ErtRunContext):
-        """@rtype: bool"""
-        return self._create_run_path(run_context)
+        self._create_run_path(run_context)
 
     def runEnsembleExperiment(self, job_queue, run_context):
         """@rtype: int"""
