@@ -196,3 +196,29 @@ class TestEnsemble(_Ensemble):
     def with_failure(self):
         self.fails = True
         return self
+
+
+class AutorunTestEnsemble(TestEnsemble):
+    def _evaluate(self, client_url, dispatch_url, ee_id):
+        super()._evaluate(dispatch_url, ee_id)
+        with Client(client_url) as client:
+            client.send(
+                to_json(
+                    CloudEvent(
+                        {
+                            "type": identifiers.EVTYPE_EE_USER_DONE,
+                            "source": f"/ert/ee/{ee_id}",
+                            "id": f"event-user-done",
+                        }
+                    )
+                )
+            )
+
+    def evaluate(self, config, ee_id):
+        self._eval_thread = threading.Thread(
+            target=self._evaluate,
+            args=(config.client_uri, config.dispatch_uri, ee_id),
+            name="AutorunTestEnsemble",
+        )
+
+        self._eval_thread.start()
