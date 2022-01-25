@@ -2,6 +2,7 @@ import asyncio
 import logging
 import threading
 import sys
+import time
 from contextlib import contextmanager
 import pickle
 from typing import Set
@@ -14,6 +15,7 @@ import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
+from websockets.exceptions import ConnectionClosedError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
@@ -28,6 +30,8 @@ else:
     from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
+
+_MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
 class EnsembleEvaluator:
@@ -234,20 +238,44 @@ class EnsembleEvaluator:
         self._ws_thread.join()
 
     def run_and_get_successful_realizations(self):
-        try:
-            with self.run() as mon:
-                for _ in mon.track():
-                    pass
-        except ConnectionRefusedError as e:
-            logger.debug(
-                f"run_and_get_successful_realizations caught {e}, cancelling or stopping ensemble..."
-            )
-            if self._ensemble.is_cancellable():
-                self._ensemble.cancel()
-            else:
-                self._stop()
-            self._ws_thread.join()
-            raise
+        monitor_context = self.run()
+        unsuccessfull_connection_attempts = 0
+        while True:
+            try:
+                with monitor_context as mon:
+                    for _ in mon.track():
+                        unsuccessfull_connection_attempts = 0
+                break
+            except ConnectionClosedError as e:
+                logger.debug(
+                    f"Connection closed unexpectedly in run_and_get_successful_realizations: {e}"
+                )
+            except ConnectionRefusedError as e:
+                unsuccessfull_connection_attempts += 1
+                logger.debug(
+                    f"run_and_get_successful_realizations caught {e}."
+                    f"{unsuccessfull_connection_attempts} unsuccessfull attempts"
+                )
+                if (
+                    unsuccessfull_connection_attempts
+                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
+                ):
+                    logger.debug("Max connection attempts reached")
+                    if self._ensemble.is_cancellable():
+                        logger.debug("Cancelling current ensemble")
+                        self._ensemble.cancel()
+                    else:
+                        logger.debug("Stopping current ensemble")
+                        self._stop()
+                    break
+                sleep_time = 0.25 * 2 ** unsuccessfull_connection_attempts
+                logger.debug(
+                    f"Sleeping for {sleep_time} seconds before attempting to reconnect"
+                )
+                time.sleep(sleep_time)
+        logger.debug("Waiting for evaluator shutdown")
+        self._ws_thread.join()
+        logger.debug("Evaluator is done")
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
