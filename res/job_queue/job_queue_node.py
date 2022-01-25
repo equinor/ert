@@ -33,7 +33,7 @@ class JobQueueNode(BaseCClass):
     _submit = ResPrototype(
         "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"
     )
-    _kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
+    _run_kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
 
     _get_status = ResPrototype(
         "job_status_type_enum job_queue_node_get_status(job_queue_node)"
@@ -74,6 +74,7 @@ class JobQueueNode(BaseCClass):
         self._thread_status = ThreadStatus.READY
         self._thread = None
         self._mutex = Lock()
+        self._tried_killing = 0
 
         self.run_path = run_path
         self._max_runtime = max_runtime
@@ -179,7 +180,16 @@ class JobQueueNode(BaseCClass):
             if self._should_be_killed():
                 self._kill(driver)
                 if self._max_runtime and self.runtime >= self._max_runtime:
-                    logger.error(f"MAX_RUNTIME reached in run path {self.run_path}")
+                    # We sometimes end up in a state where we are not able to kill it,
+                    # so we end up flooding the logs with identical statements, so we
+                    # check before we log.
+                    if self._tried_killing == 1:
+                        logger.info(f"MAX_RUNTIME reached in run path {self.run_path}")
+                    elif self._tried_killing % 100 == 0:
+                        logger.warning(
+                            f"Tried killing with MAX_RUNTIME {self._tried_killing} "
+                            f"times without success in {self.run_path}"
+                        )
                     if self.callback_timeout:
                         self.callback_timeout(self.callback_arguments)
                     with self._mutex:
@@ -212,6 +222,10 @@ class JobQueueNode(BaseCClass):
                 )
 
             self._set_thread_status(ThreadStatus.DONE)
+
+    def _kill(self, driver):
+        self._run_kill(driver)
+        self._tried_killing += 1
 
     def run(self, driver, pool_sema, max_submit=2):
         # Prevent multiple threads working on the same object
