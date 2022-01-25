@@ -1,8 +1,17 @@
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from ensemble_evaluator_utils import TestEnsemble, send_dispatch_event
+from websockets.exceptions import ConnectionClosedError
+from websockets.version import version as websockets_version
+from ensemble_evaluator_utils import (
+    TestEnsemble,
+    AutorunTestEnsemble,
+    send_dispatch_event,
+)
+
+from ert_shared.ensemble_evaluator.monitor import _Monitor
+
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.client import Client
@@ -241,3 +250,89 @@ def test_verify_dispatch_failing_job(make_ee_config, event_loop):
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
     dispatch_failing_job().verify(ee_config.client_uri, on_connect=lambda: None)
     ee.stop()
+
+
+@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
+def test_ensemble_evaluator_run_and_get_successful_realizations_connection_refused_no_recover(
+    make_ee_config, num_realizations, num_failing
+):
+
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    for i in range(num_failing):
+        ensemble.addFailJob(real=i, step=0, job=1)
+    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+
+    with patch.object(
+        _Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
+    ) as mock:
+        num_successfull = ee.run_and_get_successful_realizations()
+        assert mock.call_count == 3
+    assert num_successfull == num_realizations - num_failing
+
+
+def get_connection_closed_excpetion():
+    # The API of the websockets exception was changed in version 10,
+    # and are not backwards compatible. However, we still need to
+    # support version 9, as this is the latest version that also supports
+    # Python 3.6
+    if int(websockets_version.split(".")[0]) < 10:
+        return ConnectionClosedError(1006, "Connection closed")
+    else:
+        return ConnectionClosedError(None, None)
+
+
+def dummy_iterator(dummy_str: str):
+    for c in dummy_str:
+        yield c
+    raise get_connection_closed_excpetion()
+
+
+@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
+def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_recover(
+    make_ee_config, num_realizations, num_failing
+):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    for i in range(num_failing):
+        ensemble.addFailJob(real=i, step=0, job=1)
+    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    with patch.object(
+        _Monitor,
+        "track",
+        side_effect=[get_connection_closed_excpetion()] * 2
+        + [ConnectionRefusedError("Connection error")]
+        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
+        + [get_connection_closed_excpetion()] * 2
+        + [ConnectionRefusedError("Connection error")] * 2
+        + ["DUMMY TRACKING ITERATOR2"],
+    ) as mock:
+        num_successfull = ee.run_and_get_successful_realizations()
+        assert mock.call_count == 9
+    assert num_successfull == num_realizations - num_failing
+
+
+@pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
+def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_no_recover(
+    make_ee_config, num_realizations, num_failing
+):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    for i in range(num_failing):
+        ensemble.addFailJob(real=i, step=0, job=1)
+    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    with patch.object(
+        _Monitor,
+        "track",
+        side_effect=[get_connection_closed_excpetion()] * 2
+        + [ConnectionRefusedError("Connection error")]
+        + [dummy_iterator("DUMMY TRACKING ITERATOR")]
+        + [get_connection_closed_excpetion()] * 2
+        + [ConnectionRefusedError("Connection error")] * 3
+        + [
+            "DUMMY TRACKING ITERATOR2"
+        ],  # This should not be reached, hence we assert call_count == 9
+    ) as mock:
+        num_successfull = ee.run_and_get_successful_realizations()
+        assert mock.call_count == 9
+    assert num_successfull == num_realizations - num_failing
