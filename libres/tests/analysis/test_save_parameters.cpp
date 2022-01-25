@@ -30,7 +30,7 @@ void save_parameters(enkf_fs_type *target_fs,
                      const int_vector_type *iens_active_index, int last_step,
                      const local_ministep_type *ministep, matrix_type *A);
 
-std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             int_vector_type *iens_active_index, int last_step,
@@ -40,8 +40,8 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 void save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, const local_ministep_type *ministep,
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-        row_scaling_list);
+    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        &row_scaling_list);
 } // namespace analysis
 
 TEST_CASE("Write and read a matrix to enkf_fs instance",
@@ -162,7 +162,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         ministep->add_active_data("TEST");
 
         // Must assing values to each row of the matrix
-        row_scaling_type *scaling =
+        auto scaling =
             local_ministep_get_or_create_row_scaling(ministep, "TEST");
         scaling->assign(0, 0.1);
         scaling->assign(1, 0.2);
@@ -178,11 +178,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
             matrix_iset(A, 1, i, double(i) / 20.0);
         }
 
-        std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-            row_scaling_list;
-
-        row_scaling_list.push_back(
-            std::pair<matrix_type *, const row_scaling_type *>(A, scaling));
+        std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
         analysis::save_row_scaling_parameters(fs, ensemble_config, active_index,
                                               ministep, row_scaling_list);
 

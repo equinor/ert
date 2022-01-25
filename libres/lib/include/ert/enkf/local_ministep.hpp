@@ -48,7 +48,7 @@ public:
     analysis_module_type *analysis_module;
     obs_data_type *obs_data;
 
-    std::unordered_map<std::string, row_scaling> scaling;
+    std::unordered_map<std::string, std::shared_ptr<RowScaling>> scaling;
 
     // TODO: replace with std::unordered_map
     hash_type *
@@ -112,10 +112,10 @@ public:
         return keys;
     }
 
-    const row_scaling *get_row_scaling(std::string key) const {
+    std::shared_ptr<RowScaling> get_row_scaling(std::string key) const {
         auto scaling_iter = scaling.find(key);
         if (scaling_iter != scaling.end())
-            return &scaling_iter->second;
+            return scaling_iter->second;
 
         return nullptr;
     }
@@ -126,7 +126,7 @@ local_ministep_alloc(const char *name, analysis_module_type *analysis_module);
 void local_ministep_free(local_ministep_type *ministep);
 void local_ministep_free__(void *arg);
 
-row_scaling_type *
+RowScaling *
 local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key);
 

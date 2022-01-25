@@ -341,7 +341,7 @@ void save_parameters(enkf_fs_type *target_fs,
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices with the corresponding row-scaling object.
 */
-std::vector<std::pair<matrix_type *, const row_scaling_type *>>
+std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             int_vector_type *iens_active_index, int last_step,
@@ -350,7 +350,8 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 
     int matrix_start_size = 250000;
 
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>> parameters;
+    std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        parameters;
 
     const auto &scaled_keys = ministep->scaled_keys();
     if (scaled_keys.size() > 0) {
@@ -374,13 +375,10 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                                    column, active_list, A);
                 }
             }
-            const row_scaling_type *row_scaling =
-                ministep->get_row_scaling(key);
+            auto row_scaling = ministep->get_row_scaling(key);
 
             matrix_shrink_header(A, row_scaling->size(), matrix_get_columns(A));
-            parameters.push_back(
-                std::pair<matrix_type *, const row_scaling_type *>(
-                    matrix_alloc_copy(A), row_scaling));
+            parameters.emplace_back(matrix_alloc_copy(A), row_scaling);
         }
         matrix_free(A);
     }
@@ -394,8 +392,8 @@ Store a set of row-scaled parameters into a enkf_fs_type storage
 void save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     int_vector_type *iens_active_index, const local_ministep_type *ministep,
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-        row_scaling_list) {
+    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        &row_scaling_list) {
 
     assert(row_scaling_list.size() > 0);
     const auto &scaled_keys = ministep->scaled_keys();
@@ -490,8 +488,8 @@ void run_analysis_update_with_rowscaling(
     analysis_module_type *module, const bool_vector_type *ens_mask,
     const meas_data_type *forecast, obs_data_type *obs_data,
     rng_type *shared_rng, matrix_type *E,
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-        parameters) {
+    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        &parameters) {
 
     ert::utils::Benchmark benchmark(logger,
                                     "run_analysis_update_with_rowscaling");
@@ -537,7 +535,7 @@ void run_analysis_update_with_rowscaling(
         if (analysis_module_check_option(module, ANALYSIS_USE_A))
             analysis_module_initX(module, X, A, S, R, dObs, E, D, shared_rng);
 
-        row_scaling_multiply(row_scaling, A, X);
+        row_scaling->multiply(A, X);
     }
 
     matrix_safe_free(D);

@@ -21,12 +21,10 @@
 #include <stdexcept>
 #include <vector>
 
+#include <ert/python.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/util.hpp>
-
-#define ROW_SCALING_ID 6123199
-#define ROW_SCALING_RESOLUTION 1000
 
 /*
   The values in the row_scaling container are distributed among
@@ -50,28 +48,28 @@ void scaleX(matrix_type *X, const matrix_type *X0, double alpha) {
 
 } // namespace
 
-int row_scaling::size() const { return this->data.size(); }
+size_t RowScaling::size() const { return m_data.size(); }
 
-double row_scaling::operator[](int index) const { return this->data.at(index); }
+double RowScaling::operator[](size_t index) const { return m_data.at(index); }
 
-double row_scaling::clamp(double value) const {
-    return floor(value * this->resolution) / this->resolution;
+double RowScaling::clamp(double value) const {
+    return floor(value * this->m_resolution) / this->m_resolution;
 }
 
-void row_scaling::resize(int new_size) {
+void RowScaling::m_resize(size_t new_size) {
     const double default_value = 0;
-    this->data.resize(new_size, default_value);
+    m_data.resize(new_size, default_value);
 }
 
-double row_scaling::assign(int index, double value) {
+double RowScaling::assign(size_t index, double value) {
     if (value < 0 || value > 1)
-        throw std::invalid_argument("Invalid value ");
+        throw std::invalid_argument("Invalid value");
 
-    if (this->data.size() <= index)
-        this->resize(index + 1);
+    if (m_data.size() <= index)
+        m_resize(index + 1);
 
-    this->data.at(index) = this->clamp(value);
-    return this->data.at(index);
+    m_data.at(index) = clamp(value);
+    return m_data.at(index);
 }
 
 /*
@@ -99,8 +97,8 @@ double row_scaling::assign(int index, double value) {
   are multiplied in one go.
  */
 
-void row_scaling::multiply(matrix_type *A, const matrix_type *X0) const {
-    if (this->data.size() != matrix_get_rows(A))
+void RowScaling::multiply(matrix_type *A, const matrix_type *X0) const {
+    if (m_data.size() != matrix_get_rows(A))
         throw std::invalid_argument(
             "Size mismatch between row_scaling and A matrix");
 
@@ -132,19 +130,19 @@ void row_scaling::multiply(matrix_type *A, const matrix_type *X0) const {
 
     std::size_t index_offset = 0;
     while (true) {
-        if (index_offset == this->data.size())
+        if (index_offset == m_data.size())
             break;
 
         auto end_index = index_offset;
-        auto current_alpha = this->data[sort_index[end_index]];
+        auto current_alpha = m_data[sort_index[end_index]];
         std::vector<int> row_list;
 
         // 1: Identify rows with the same alpha value
         while (true) {
-            if (end_index == this->data.size())
+            if (end_index == m_data.size())
                 break;
 
-            if (this->data[sort_index[end_index]] != current_alpha)
+            if (m_data[sort_index[end_index]] != current_alpha)
                 break;
 
             row_list.push_back(sort_index[end_index]);
@@ -153,7 +151,7 @@ void row_scaling::multiply(matrix_type *A, const matrix_type *X0) const {
         if (row_list.empty())
             break;
 
-        double alpha = this->data[row_list[0]];
+        double alpha = m_data[row_list[0]];
         if (alpha == 0.0)
             break;
 
@@ -183,54 +181,67 @@ void row_scaling::multiply(matrix_type *A, const matrix_type *X0) const {
     matrix_free(X);
 }
 
-template <typename T> void row_scaling::assign(const T *data, int size) {
-    this->resize(size);
+void RowScaling::assign_vector(const float *data, size_t size) {
+    m_resize(size);
     for (int index = 0; index < size; index++)
-        this->assign(index, data[index]);
+        assign(index, data[index]);
 }
 
-/*
-  Below here is a C api for binding to Python.
-*/
-
-row_scaling_type *row_scaling_alloc() {
-    row_scaling_type *scaling = new row_scaling();
-    return scaling;
+void RowScaling::assign_vector(const double *data, size_t size) {
+    m_resize(size);
+    for (int index = 0; index < size; index++)
+        assign(index, data[index]);
 }
 
-row_scaling_type *row_scaling_alloc_copy(const row_scaling_type *scaling) {
-    return new row_scaling(*scaling);
+namespace {
+void setitem(RowScaling &self, size_t index, double value) {
+    self.assign(index, value);
 }
 
-void row_scaling_free(row_scaling_type *scaling) { delete scaling; }
+double getitem(const RowScaling &self, size_t index) { return self[index]; }
 
-double row_scaling_iget(const row_scaling_type *scaling, int index) {
-    return scaling->operator[](index);
+const auto assign_vector_doc = R"(
+Assign tapering value for all elements via a vector.
+
+The assign_vector() function will resize the row_scaling vector to the
+number of elements in the scaling_vector, and assign a value to all
+elements.
+
+A typical situation might be to load the scaling data as a EclKW
+instance from a grdecl formatted file. Before the assign_vector() can
+be called we must transform to an only active elements representation
+and use a numpy view:
+
+    # Load scaling vector from grdecl file; typically created with
+    # geomodelling software.
+    with open("scaling.grdecl") as fh:
+        kw_global = EclKW.read_grdecl(fh, "SCALING")
+
+    # Create a ecl_kw copy with only the active elements.
+    kw_active = grid.compressed_kw_copy(kw_global)
+
+    # Create a numpy view and invoke the assign_vector() function
+    row_scaling.assign_vector(kw_active.numpy_view())
+)";
+template <typename T>
+void assign_vector(RowScaling &self, const py::array_t<T> &array) {
+    self.assign_vector(array.data(), array.size());
 }
+} // namespace
 
-double row_scaling_iset(row_scaling_type *scaling, int index, double value) {
-    return scaling->assign(index, value);
-}
+RES_LIB_SUBMODULE("local.row_scaling", m) {
+    using namespace py::literals;
 
-double row_scaling_clamp(const row_scaling_type *scaling, double value) {
-    return scaling->clamp(value);
-}
+    py::options opts;
+    opts.disable_function_signatures();
 
-void row_scaling_multiply(const row_scaling_type *scaling, matrix_type *A,
-                          const matrix_type *X0) {
-    scaling->multiply(A, X0);
-}
-
-int row_scaling_get_size(const row_scaling_type *row_scaling) {
-    return row_scaling->size();
-}
-
-void row_scaling_assign_double(row_scaling_type *scaling, const double *data,
-                               int size) {
-    scaling->assign(data, size);
-}
-
-void row_scaling_assign_float(row_scaling_type *scaling, const float *data,
-                              int size) {
-    scaling->assign(data, size);
+    py::class_<RowScaling, std::shared_ptr<RowScaling>>(m, "RowScaling")
+        .def(py::init<>())
+        .def("__len__", &RowScaling::size)
+        .def("__setitem__", &setitem, "index"_a, "value"_a)
+        .def("__getitem__", &getitem, "index"_a)
+        .def("clamp", &RowScaling::clamp, "value"_a)
+        .def("assign_vector", &assign_vector<float>, py::doc{assign_vector_doc},
+             "scaling_vector"_a)
+        .def("assign_vector", &assign_vector<double>, "scaling_vector"_a);
 }

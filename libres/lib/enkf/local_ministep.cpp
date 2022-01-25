@@ -16,6 +16,8 @@
    for more details.
 */
 
+#include "ert/enkf/row_scaling.hpp"
+#include "ert/python.hpp"
 #include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
@@ -110,7 +112,7 @@ void local_ministep_activate_data(local_ministep_type *ministep,
     ministep->add_active_data(key);
 }
 
-row_scaling_type *
+RowScaling *
 local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key) {
     auto scaling_iter = ministep->scaling.find(key);
@@ -119,9 +121,9 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
             throw std::invalid_argument(
                 "Tried to create row_scaling object for unknown key");
 
-        ministep->scaling.emplace(key, row_scaling{});
+        ministep->scaling.emplace(key, std::make_shared<RowScaling>());
     }
-    return &ministep->scaling[key];
+    return ministep->scaling[key].get();
 }
 
 local_obsdata_type *
@@ -170,4 +172,21 @@ void local_ministep_summary_fprintf(const local_ministep_type *ministep,
         local_obsdata_summary_fprintf(obsdata, stream);
         fprintf(stream, "\n");
     }
+}
+
+namespace {
+RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
+    auto ministep = reinterpret_cast<local_ministep_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    auto row_scaling =
+        local_ministep_get_or_create_row_scaling(ministep, name.c_str());
+    return row_scaling;
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.ministep", m) {
+    using namespace py::literals;
+
+    m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
+          "name"_a);
 }

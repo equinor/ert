@@ -89,7 +89,7 @@ def test_basic():
             g = j * nx + i
             assert row_scaling[g] == row_scaling.clamp(row_scaling_coloumb(nx, ny, g))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         row_scaling.assign_vector(123.0)
 
 
