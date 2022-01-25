@@ -31,7 +31,8 @@ void run_analysis_update_with_rowscaling(
     analysis_module_type *module, const bool_vector_type *ens_mask,
     const meas_data_type *forecast, obs_data_type *obs_data,
     rng_type *shared_rng, matrix_type *E,
-    std::vector<std::pair<matrix_type *, const row_scaling_type *>> parameters);
+    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        &parameters);
 } // namespace analysis
 
 const double a_true = 1.0;
@@ -214,15 +215,13 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         }
 
         WHEN("Row scaling factor is 0 for both parameters") {
-            auto row_scaling = row_scaling_alloc();
+            auto row_scaling = std::make_shared<RowScaling>();
             for (int row = 0; row < nparam; row++)
-                row_scaling_iset(row_scaling, row, 0.0);
+                row_scaling->assign(row, 0.0);
 
             auto A_with_scaling = matrix_alloc_copy(A);
 
-            std::pair pair{A_with_scaling, row_scaling};
-            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-                parameters{pair};
+            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -236,22 +235,19 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                  "matrix") {
                 REQUIRE(matrix_equal(A, A_with_scaling));
             }
-            row_scaling_free(row_scaling);
             matrix_free(A_with_scaling);
             matrix_free(E);
         }
 
         WHEN("Row scaling factor is 1 for both parameters") {
-            auto row_scaling = row_scaling_alloc();
+            auto row_scaling = std::make_shared<RowScaling>();
             for (int row = 0; row < nparam; row++)
-                row_scaling_iset(row_scaling, row, 1.0);
+                row_scaling->assign(row, 1.0);
 
             auto A_with_scaling = matrix_alloc_copy(A);
             auto A_no_scaling = matrix_alloc_copy(A);
 
-            std::pair pair{A_with_scaling, row_scaling};
-            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-                parameters{pair};
+            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -268,23 +264,20 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                  "updated parameter matrix without row scaling") {
                 REQUIRE(matrix_equal(A_no_scaling, A_with_scaling));
             }
-            row_scaling_free(row_scaling);
             matrix_free(A_with_scaling);
             matrix_free(A_no_scaling);
             matrix_free(E);
         }
 
         WHEN("Row scaling factor is 0 for one parameter and 1 for the other") {
-            auto row_scaling = row_scaling_alloc();
-            row_scaling_iset(row_scaling, 0, 1.0);
-            row_scaling_iset(row_scaling, 1, 0.0);
+            auto row_scaling = std::make_shared<RowScaling>();
+            row_scaling->assign(0, 1.0);
+            row_scaling->assign(1, 0.0);
 
             auto A_with_scaling = matrix_alloc_copy(A);
             auto A_no_scaling = matrix_alloc_copy(A);
 
-            std::pair pair{A_with_scaling, row_scaling};
-            std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-                parameters{pair};
+            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -312,7 +305,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 matrix_free(A_no_scaling_T);
                 matrix_free(A_prior_T);
             }
-            row_scaling_free(row_scaling);
             matrix_free(A_with_scaling);
             matrix_free(A_no_scaling);
             matrix_free(E);
@@ -330,13 +322,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
                 auto A_with_scaling = matrix_alloc_copy(A);
 
-                auto row_scaling = row_scaling_alloc();
-                row_scaling_iset(row_scaling, 0, 1.0);
-                row_scaling_iset(row_scaling, 1, 0.7);
+                auto row_scaling = std::make_shared<RowScaling>();
+                row_scaling->assign(0, 1.0);
+                row_scaling->assign(1, 0.7);
 
-                std::pair pair{A_with_scaling, row_scaling};
-                std::vector<std::pair<matrix_type *, const row_scaling_type *>>
-                    parameters{pair};
+                std::vector parameters{std::pair{A_with_scaling, row_scaling}};
 
                 analysis::run_analysis_update_with_rowscaling(
                     enkf_module, ens_mask, meas_data, obs_data, rng, E,
@@ -358,7 +348,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
                 matrix_free(E);
                 matrix_free(A_with_scaling);
-                row_scaling_free(row_scaling);
             }
 
             // Test everything to some small (but generous) numeric precision

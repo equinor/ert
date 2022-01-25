@@ -1,5 +1,6 @@
 from cwrap import BaseCClass
 
+from res import _lib
 from res import ResPrototype
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
@@ -33,9 +34,6 @@ class LocalMinistep(BaseCClass):
     )
     _add_active_data = ResPrototype(
         "void local_ministep_activate_data(local_ministep, char*)"
-    )
-    _get_or_create_row_scaling = ResPrototype(
-        "row_scaling_ref local_ministep_get_or_create_row_scaling(local_ministep, char*)"
     )
 
     def __init__(self, ministep_key):
@@ -81,7 +79,7 @@ class LocalMinistep(BaseCClass):
         if not self._has_active_data(key):
             raise KeyError(f"Unknown key: {key}")
 
-        return self._get_or_create_row_scaling(key)
+        return _lib.local.ministep.get_or_create_row_scaling(self, key)
 
     def getLocalObsData(self):
         """@rtype: LocalObsdata"""
