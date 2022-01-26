@@ -187,7 +187,6 @@ def _init(args: Any) -> None:
 
     if args.example is None:
         workspace = ert3.workspace.initialize(pathlib.Path.cwd())
-        ert.storage.init(workspace_name=workspace.name)
     else:
         example_name = args.example
         pkg_examples_path = _get_ert3_examples_path()
@@ -220,12 +219,20 @@ def _init(args: Any) -> None:
             )
 
         workspace = ert3.workspace.initialize(wd_example_path)
+
+    try:
         ert.storage.init(workspace_name=workspace.name)
+    except TimeoutError as err:
+        workspace.delete()
+        raise ert.exceptions.StorageError(
+            "Failed to contact storage. Is it running?"
+        ) from err
 
 
 def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
+    ert.storage.assert_storage_initialized(workspace_name=workspace.name)
     experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
     if experiment_run_config.experiment_config.type == "evaluation":
         ert3.engine.run(experiment_run_config, workspace, args.experiment_name)
