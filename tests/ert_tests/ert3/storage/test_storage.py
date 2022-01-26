@@ -424,3 +424,61 @@ def test_ensemble_responses_and_parameters(tmpdir, ert_storage):
             ensemble_size=1,
             responses=responses,
         )
+
+
+@pytest.mark.requires_ert_storage
+def test_get_record_types(tmpdir, ert_storage):
+    ert.storage.init(workspace_name=tmpdir)
+
+    ensemble_size = 5
+    for eid in range(1, 2):
+        experiment = eid * "e"
+        ert.storage.init_experiment(
+            experiment_name=experiment,
+            parameters={},
+            ensemble_size=ensemble_size,
+            responses=[],
+        )
+        expected_record_types = {}
+        for nid in range(1, 3):
+            name_num = nid * "n"
+            ensemble_record_num = ert.data.RecordCollection(
+                records=tuple(
+                    [
+                        ert.data.NumericalRecord(data=[nid * eid * rid])
+                        for rid in range(ensemble_size)
+                    ]
+                )
+            )
+            get_event_loop().run_until_complete(
+                ert.storage.transmit_record_collection(
+                    record_coll=ensemble_record_num,
+                    record_name=name_num,
+                    workspace_name=tmpdir,
+                    experiment_name=experiment,
+                )
+            )
+            expected_record_types[name_num] = "F64_MATRIX"
+            name_blob = nid * "b"
+            ensemble_record_blob = ert.data.RecordCollection(
+                records=tuple(
+                    [
+                        ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89")
+                        for rid in range(ensemble_size)
+                    ]
+                )
+            )
+            get_event_loop().run_until_complete(
+                ert.storage.transmit_record_collection(
+                    record_coll=ensemble_record_blob,
+                    record_name=name_blob,
+                    workspace_name=tmpdir,
+                    experiment_name=experiment,
+                )
+            )
+            expected_record_types[name_blob] = "file"
+
+    record_types = ert.storage.get_experiment_response_record_types(
+        experiment_name=experiment
+    )
+    assert record_types == expected_record_types
