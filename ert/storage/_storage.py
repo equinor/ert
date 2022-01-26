@@ -706,6 +706,35 @@ def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
     return list(response.json()["response_names"])
 
 
+GET_UNIQUE_RESPONSES = """\
+query($id: ID!) {
+  ensemble(id: $id) {
+    uniqueResponses {
+      name
+      recordType
+    }
+  }
+}
+"""
+
+
+def get_experiment_response_record_types(*, experiment_name: str) -> Dict[str, str]:
+    with Storage.session() as session:
+        experiment = _get_experiment_by_name(experiment_name)
+        if experiment is None:
+            raise ert.exceptions.NonExistantExperiment(
+                f"Cannot get parameters from non-existing experiment: {experiment_name}"
+            )
+
+        ensemble_id = experiment["ensemble_ids"][0]
+        response = session.post(
+            "/gql",
+            json={"query": GET_UNIQUE_RESPONSES, "variables": {"id": ensemble_id}},
+        ).json()
+        responses = response["data"]["ensemble"]["uniqueResponses"]
+        return {resp["name"]: resp["recordType"] for resp in responses}
+
+
 def delete_experiment(*, experiment_name: str) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:

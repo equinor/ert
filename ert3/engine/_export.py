@@ -71,13 +71,17 @@ def _prepare_export_responses(
     outputs = defaultdict(list)
     responses = [elem.record for elem in ensemble.output]
     records_url = ert.storage.get_records_url(workspace_name, experiment_name)
+    record_types = ert.storage.get_experiment_response_record_types(
+        experiment_name=experiment_name
+    )
 
     for record_name in responses:
-        for iens in range(ensemble_size):
-            url = f"{records_url}/{record_name}?realization_index={iens}"
-            future = ert.storage.load_record(url, ert.data.RecordType.LIST_FLOAT)
-            record = get_event_loop().run_until_complete(future)
-            outputs[record_name].append(record.data)
+        if record_types[record_name] == "F64_MATRIX":
+            for iens in range(ensemble_size):
+                url = f"{records_url}/{record_name}?realization_index={iens}"
+                future = ert.storage.load_record(url, ert.data.RecordType.LIST_FLOAT)
+                record = get_event_loop().run_until_complete(future)
+                outputs[record_name].append(record.data)
     return outputs
 
 

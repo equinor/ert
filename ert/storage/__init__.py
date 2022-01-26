@@ -17,6 +17,7 @@ from ert.storage._storage import (
     get_record_storage_transmitters,
     transmit_awaitable_record_collection,
     transmit_record_collection,
+    get_experiment_response_record_types,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "get_record_storage_transmitters",
     "transmit_awaitable_record_collection",
     "transmit_record_collection",
+    "get_experiment_response_record_types",
 ]
