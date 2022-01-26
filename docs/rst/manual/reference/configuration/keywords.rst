@@ -85,7 +85,7 @@ Keyword name                                                            Required
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary variables for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
-:ref:`UMASK <umask>`                                                    NO                                                                      Control the permissions on files created by ERT
+:ref:`UMASK <umask>`                                                    NO                                                                      DEPRECATED: Control the permissions on files created by ERT
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
 :ref:`UPDATE_PATH  <update_path>`                                       NO                                                                      Modify a UNIX path variable like LD_LIBRARY_PATH
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
@@ -2250,6 +2250,8 @@ instance, and are not applied to the shell.
 .. _umask:
 .. topic:: UMASK
 
+        This feature is deprecated and will be removed in a future release.
+
         The `umask` is a concept used by Linux to control the permissions on
         newly created files. By default the files created by ERT will have the
         default permissions of your account, but by using the keyword `UMASK`
@@ -2272,13 +2274,6 @@ instance, and are not applied to the shell.
         owner can write to them. Also everyone can execute the directories (i.e.
         list the content).
 
-        ::
-
-           UMASK 0
-
-        No permissions are removed, i.e. everyone can do everything with the
-        files and directories created by ERT.
-
         The umask setting in ERT is passed on to the forward model, and should
         apply to the files/directories created by the forward model also.
         However - the executables in the forward model can in principle set it's
@@ -2298,3 +2293,5 @@ instance, and are not applied to the shell.
          - Owner(7) can execute(1), write(2) and read(4).
          - Group(5) can execute(1) and read(4).
          - Others(2) can read(4)
+
+        Setting UMASK to 0 is not supported as it poses a potential security risk.

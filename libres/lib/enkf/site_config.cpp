@@ -352,11 +352,8 @@ static bool site_config_init(site_config_type *site_config,
     site_config_init_env(site_config, config);
 
     /*
-     Set the umask for all file creation. A value of '0' will ensure
-     that all files and directories are created with 'equal rights'
-     for everyone - might be handy if you are helping someone... The
-     default equinor value is 0022, i.e. write access is removed from
-     group and others.
+     Set the umask for all file creation. The default equinor value is 0022,
+     i.e. write access is removed from group and others.
 
      The string is supposed to be in OCTAL representation (without any
      prefix characters).
@@ -365,9 +362,13 @@ static bool site_config_init(site_config_type *site_config,
     if (config_content_has_item(config, UMASK_KEY)) {
         const char *string_mask = config_content_get_value(config, UMASK_KEY);
         int umask_value;
-        if (util_sscanf_octal_int(string_mask, &umask_value))
+        if (util_sscanf_octal_int(string_mask, &umask_value)) {
+            if (umask_value == 0)
+                throw std::invalid_argument(
+                    "Setting UMASK to 0 is not allowed since it can "
+                    "have severe security implications");
             site_config_set_umask(site_config, (mode_t)umask_value);
-        else
+        } else
             util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n",
                        __func__, string_mask);
     }
@@ -420,6 +421,8 @@ void site_config_add_config_items(config_parser_type *config, bool site_mode) {
         false); /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
 
     item = config_add_schema_item(config, UMASK_KEY, false);
+    config_schema_item_set_deprecated(
+        item, "UMASK is deprecated and will be removed in the future.");
     config_schema_item_set_argc_minmax(item, 1, 1);
 
     /*
