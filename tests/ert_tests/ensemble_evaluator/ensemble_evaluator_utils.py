@@ -224,3 +224,9 @@ class AutorunTestEnsemble(TestEnsemble):
         )
 
         self._eval_thread.start()
+
+    def cancel(self):
+        pass
+
+    def is_cancellable(self):
+        return True
