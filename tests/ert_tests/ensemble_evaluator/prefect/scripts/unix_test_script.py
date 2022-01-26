@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import json
+import time
 
 
 def parse_args(args=None):
@@ -18,5 +19,11 @@ def write_to_file(file, data):
 
 if __name__ == "__main__":
     options = parse_args()
+
+    # this sleep prevents regressions like https://github.com/equinor/ert/issues/2756
+    # in conjunction with aggressive ping_interval and ping_timout in the evaluation
+    # server
+    time.sleep(2)
+
     data = [1, 2, 3]
     write_to_file("output.out", data)
