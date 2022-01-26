@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <fmt/format.h>
 #include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/res_util/subst_list.hpp>
@@ -337,10 +337,6 @@ void ext_job_free__(void *__ext_job) {
     ext_job_free(ext_job_safe_cast(__ext_job));
 }
 
-static void __update_mode(const char *filename, mode_t add_mode) {
-    util_addmode_if_owner(filename, add_mode);
-}
-
 /*
    The license_path =
 
@@ -404,14 +400,9 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
     if (fs::exists(executable_abs)) {
         /*
        The @executable parameter points to an existing file; we store
-       the full path as the executable field of the job; we also try
-       to update the mode of the full_path executable to make sure it
-       is executable.
+       the full path as the executable field of the job.
     */
         char *full_path = (char *)util_alloc_realpath(executable_abs);
-        __update_mode(full_path, S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP +
-                                     S_IWGRP + S_IXGRP + S_IROTH +
-                                     S_IXOTH); /* u:rwx  g:rwx  o:rx */
         ext_job->executable =
             util_realloc_string_copy(ext_job->executable, full_path);
         free(full_path);
@@ -421,11 +412,8 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
        provide context replacement afterwards. The job will be
        discarded by the calling scope.
     */
-        fprintf(stderr,
-                "** Warning: the executable:%s can not be found,\n"
-                "   job:%s will not be available.\n",
-                executable_abs, ext_job->name);
-        ext_job->__valid = false;
+        throw std::invalid_argument(fmt::format(
+            "** The executable {} was not found", executable_input));
     } else {
         if (search_path) {
             /* Go through the PATH variable to try to locate the executable. */
@@ -437,18 +425,8 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
                                        search_path);
                 free(path_executable);
             } else {
-                /* We take the chance that user will supply a valid subst key for this later;
-             if the final executable is not an actually executable file when exporting the
-             job from ext_job_python_fprintf() a big warning will be written on stderr.
-          */
-                fprintf(stderr,
-                        "** Warning: Unable to locate the executable %s for "
-                        "job %s.\n"
-                        "   Path to executable must be relative to the job "
-                        "description file, or an absolute path.\n"
-                        "   Please update job EXECUTABLE for job %s. \n",
-                        executable_abs, ext_job->name, ext_job->name);
-                ext_job->__valid = false;
+                throw std::invalid_argument(fmt::format(
+                    "** The executable {} was not found", executable_input));
             }
         } else {
             ext_job->executable =
@@ -463,14 +441,13 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
     if (ext_job->executable != NULL) {
         if (fs::exists(executable_abs)) {
             if (!util_is_executable(ext_job->executable)) {
-                fprintf(stderr,
-                        "** You do not have execute rights to:%s - job will "
-                        "not be available.\n",
-                        ext_job->executable);
-                ext_job->__valid =
-                    false; /* Mark the job as NOT successfully installed - the ext_job
-                                      instance will later be freed and discarded. */
+                throw std::invalid_argument(
+                    fmt::format("** You do not have execute rights to: {}",
+                                ext_job->executable));
             }
+        } else {
+            throw std::invalid_argument(fmt::format(
+                "** The executable {} was not found", ext_job->executable));
         }
     }
 }
@@ -990,11 +967,6 @@ ext_job_type *ext_job_fscanf_alloc(const char *name,
                                    const char *license_root_path,
                                    bool private_job, const char *config_file,
                                    bool search_path) {
-    {
-        mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP +
-                             S_IROTH; /* u+rw  g+rw  o+r */
-        __update_mode(config_file, target_mode);
-    }
 
     if (util_entry_readable(config_file)) {
         ext_job_type *ext_job = NULL;
@@ -1160,8 +1132,14 @@ ext_job_type *ext_job_fscanf_alloc(const char *name,
                                                                exec_key);
                     const char *executable_raw =
                         config_content_iget(content, exec_key, 0, 0);
-                    ext_job_set_executable(ext_job, executable, executable_raw,
-                                           search_path);
+                    try {
+                        ext_job_set_executable(ext_job, executable,
+                                               executable_raw, search_path);
+                    } catch (std::invalid_argument e) {
+                        fprintf(stderr, "Error parsing executable: %s",
+                                e.what());
+                        ext_job->__valid = false;
+                    }
                 }
 
                 {

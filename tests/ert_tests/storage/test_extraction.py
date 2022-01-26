@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import stat
 from pathlib import Path
 from random import randint, random
 from textwrap import dedent
@@ -103,6 +104,9 @@ class ErtConfigBuilder:
         else:
             (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
             (path / "script").write_text(self.job_script)
+            mode = os.stat(path / "script").st_mode
+            mode |= stat.S_IXUSR | stat.S_IXGRP
+            os.chmod(path / "script", stat.S_IMODE(mode))
 
     def _build_observations(self, path):
         """

@@ -1,5 +1,6 @@
 import json
 import os
+import stat
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -95,6 +96,9 @@ def make_ensemble_builder(queue_config):
                         f'    print("stdout from {job_index}")\n'
                         f"    time.sleep({job_sleep})\n"
                     )
+                mode = os.stat(ext_job_exec).st_mode
+                mode |= stat.S_IXUSR | stat.S_IXGRP
+                os.chmod(ext_job_exec, stat.S_IMODE(mode))
 
                 ext_job_list.append(
                     ExtJob(str(ext_job_config), False, name=f"ext_job_{job_index}")
