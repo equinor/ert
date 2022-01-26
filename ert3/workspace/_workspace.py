@@ -1,4 +1,5 @@
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, cast
@@ -201,6 +202,9 @@ class Workspace:
         with open(experiment_root / output_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, sort_keys=True)
 
+    def delete(self) -> None:
+        shutil.rmtree(self._path / _WORKSPACE_DATA_ROOT)
+
     def _validate_resources(self, ensemble_config: ert3.config.EnsembleConfig) -> None:
         resource_inputs = [
             item
@@ -225,7 +229,7 @@ class Workspace:
 
 
 def initialize(path: Union[str, Path]) -> Workspace:
-    """Initalize a workspace directory
+    """Initialize a workspace directory
 
     Args:
         path (Union[str, pathlib.Path]): Path to the workspace to initialize.
@@ -241,7 +245,7 @@ def initialize(path: Union[str, Path]) -> Workspace:
     root = _locate_root(path)
     if root is not None:
         raise ert.exceptions.IllegalWorkspaceOperation(
-            f"Already inside an ERT workspace, found {root}/.ert"
+            f"Already inside an ERT workspace, found {root}/{_WORKSPACE_DATA_ROOT}"
         )
     (path / _WORKSPACE_DATA_ROOT).mkdir()
     return Workspace(path)

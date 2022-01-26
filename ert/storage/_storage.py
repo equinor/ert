@@ -544,6 +544,17 @@ def init(*, workspace_name: str) -> None:
         )
 
 
+def assert_storage_initialized(workspace_name: str) -> None:
+    response = _get_from_server(path="experiments")
+    experiment_names = {exp["name"]: exp["ensemble_ids"] for exp in response.json()}
+
+    for special_key in _SPECIAL_KEYS:
+        if f"{workspace_name}.{special_key}" not in experiment_names:
+            raise ert.exceptions.StorageError(
+                "Storage is not initialized properly. The workspace needs to be reinitialized"
+            )
+
+
 def init_experiment(
     *,
     experiment_name: str,
