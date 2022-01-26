@@ -1,7 +1,8 @@
 import datetime
 import json
 import os.path
-
+import os
+import stat
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
@@ -167,6 +168,9 @@ def _generate_job(
 
     exec_file = open(executable, "w")
     exec_file.close()
+    mode = os.stat(executable).st_mode
+    mode |= stat.S_IXUSR | stat.S_IXGRP
+    os.chmod(executable, stat.S_IMODE(mode))
 
     ext_job = ExtJob(config_file, private, name, license_root_path)
     os.unlink(config_file)
