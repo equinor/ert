@@ -171,12 +171,21 @@ def test_unix_task(
         jobs=[("script", Path("unix_test_script.py"), job_args)],
         type_="unix",
     )
-    result, flow_run, _ = prefect_flow_run(
+    result, flow_run, messages = prefect_flow_run(
         ws_monitor=mock_ws_monitor,
         step=step,
         input_map=input_map,
         output_map=output_map,
     )
+
+    if not error_test:
+        assert [
+            msg for msg in messages if ids.EVTYPE_FM_JOB_SUCCESS in msg
+        ], "no job success event"
+        assert [
+            msg for msg in messages if ids.EVTYPE_FM_STEP_SUCCESS in msg
+        ], "no step success event"
+
     assert_prefect_flow_run(
         result=result,
         flow_run=flow_run,
