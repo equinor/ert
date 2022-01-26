@@ -1,3 +1,5 @@
+import os
+import stat
 import os.path
 
 from ecl.util.test import TestAreaContext
@@ -12,9 +14,12 @@ def create_valid_config(config_file):
         f.write("STDOUT null\n")
         f.write("STDERR null\n")
         f.write("EXECUTABLE script.sh\n")
-
-    with open("script.sh", "w") as f:
+    name = "script.sh"
+    with open(name, "w") as f:
         f.write("This is a script")
+    mode = os.stat(name).st_mode
+    mode |= stat.S_IXUSR | stat.S_IXGRP
+    os.chmod(name, stat.S_IMODE(mode))
 
 
 def create_upgraded_valid_config(config_file):
@@ -29,8 +34,12 @@ def create_upgraded_valid_config(config_file):
         f.write("ARG_TYPE 4 RUNTIME_FILE\n")
         f.write("ARG_TYPE 5 RUNTIME_INT\n")
 
-    with open("script.sh", "w") as f:
+    name = "script.sh"
+    with open(name, "w") as f:
         f.write("This is a script")
+    mode = os.stat(name).st_mode
+    mode |= stat.S_IXUSR | stat.S_IXGRP
+    os.chmod(name, stat.S_IMODE(mode))
 
 
 def create_config_missing_executable(config_file):

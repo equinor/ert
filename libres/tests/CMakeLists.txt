@@ -25,7 +25,8 @@ add_executable(
   analysis/test_std_enkf.cpp
   analysis/test_compare_initX.cpp
   analysis/test_update.cpp
-  job_queue/test_lsf_driver.cpp)
+  job_queue/test_lsf_driver.cpp
+  job_queue/test_ext_job_executable.cpp)
 
 target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt)
 
