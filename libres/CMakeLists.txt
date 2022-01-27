@@ -82,8 +82,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # set(conan_opts ...)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # set(conan_opts ...)
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  # set(conan_opts ...)
 else()
   message(
     WARNING "Unknown platform. Conan packages may not be configures correctly.")
