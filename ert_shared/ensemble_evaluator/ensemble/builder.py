@@ -687,19 +687,26 @@ class _StepBuilder(_StageBuilder):
                 self._job_name,
                 self._run_arg,
             )
-        cls = _Step
         if self._type == "function":
-            cls = _FunctionStep
+            return _FunctionStep(
+                stage.get_id(),
+                stage.get_inputs(),
+                stage.get_outputs(),
+                jobs,
+                stage.get_name(),
+                source,
+            )
         elif self._type == "unix":
-            cls = _UnixStep
-        return cls(
-            stage.get_id(),
-            stage.get_inputs(),
-            stage.get_outputs(),
-            jobs,
-            stage.get_name(),
-            source,
-        )
+            return _UnixStep(
+                stage.get_id(),
+                stage.get_inputs(),
+                stage.get_outputs(),
+                jobs,
+                stage.get_name(),
+                source,
+            )
+        else:
+            raise ValueError("Unexpected type while building step: {self._type}")
 
 
 def create_step_builder() -> _StepBuilder:
