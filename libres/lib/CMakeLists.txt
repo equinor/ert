@@ -34,6 +34,7 @@ pybind11_add_module(
   python/ensemble_config.cpp
   python/enkf_fs_manager.cpp
   python/enkf_fs_general_data.cpp
+  python/enkf_fs_keyword_data.cpp
   python/py_conversion.cpp
   python/enkf_defaults.cpp
   config/conf_util.cpp

@@ -44,6 +44,8 @@ void enkf_plot_gen_kw_load(enkf_plot_gen_kw_type *gen_kw, enkf_fs_type *fs,
 
 const char *enkf_plot_gen_kw_iget_key(const enkf_plot_gen_kw_type *plot_gen_kw,
                                       int index);
+int enkf_plot_gen_kw_get_keyword_index(const enkf_plot_gen_kw_type *gen_kw,
+                                       const std::string &keyword);
 int enkf_plot_gen_kw_get_keyword_count(const enkf_plot_gen_kw_type *gen_kw);
 bool enkf_plot_gen_kw_should_use_log_scale(const enkf_plot_gen_kw_type *gen_kw,
                                            int index);
