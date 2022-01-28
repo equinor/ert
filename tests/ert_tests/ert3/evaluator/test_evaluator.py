@@ -7,21 +7,6 @@ import ert3
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 
-TEST_PARAMETRIZATION = [
-    ([(0, 0, 0)], [[0] * 10]),
-    (
-        [(1.5, 2.5, 3.5)],
-        [[3.5, 7.5, 14.5, 24.5, 37.5, 53.5, 72.5, 94.5, 119.5, 147.5]],
-    ),
-    (
-        [(1.5, 2.5, 3.5), (5, 4, 3)],
-        [
-            [3.5, 7.5, 14.5, 24.5, 37.5, 53.5, 72.5, 94.5, 119.5, 147.5],
-            [3, 12, 31, 60, 99, 148, 207, 276, 355, 444],
-        ],
-    ),
-]
-
 
 def get_inputs(coeffs):
     input_records = {}
@@ -38,10 +23,31 @@ def get_inputs(coeffs):
 
 
 @pytest.mark.requires_ert_storage
-@pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
-def test_evaluator_script(
-    workspace, stages_config, base_ensemble_dict, coeffs, expected
+@pytest.mark.parametrize(
+    "coeffs, expected",
+    [
+        ([(0, 0, 0)], [[0] * 10]),
+        (
+            [(1.5, 2.5, 3.5)],
+            [[3.5, 7.5, 14.5, 24.5, 37.5, 53.5, 72.5, 94.5, 119.5, 147.5]],
+        ),
+        (
+            [(1.5, 2.5, 3.5), (5, 4, 3)],
+            [
+                [3.5, 7.5, 14.5, 24.5, 37.5, 53.5, 72.5, 94.5, 119.5, 147.5],
+                [3, 12, 31, 60, 99, 148, 207, 276, 355, 444],
+            ],
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "config, has_unix_config",
+    [["stages_config", True], ["function_stages_config", False]],
+)
+def test_evaluator(
+    workspace, config, base_ensemble_dict, coeffs, expected, request, has_unix_config
 ):
+    stages_config = request.getfixturevalue(config)
     storage_path = workspace._path / ".ert" / "tmp" / "test"
     input_transmitters = get_inputs(coeffs)
     base_ensemble_dict["size"] = len(coeffs)
@@ -75,7 +81,7 @@ def test_evaluator_script(
         step_builder,
     )
 
-    if isinstance(stage, ert3.config.Unix):
+    if has_unix_config:
         ert3.evaluator.add_commands(
             stage.transportable_commands,
             base_ensemble_dict["storage_type"],
@@ -91,68 +97,6 @@ def test_evaluator_script(
 
     for _, transmitter_map in evaluation_records.items():
         record = asyncio.get_event_loop().run_until_complete(
-            transmitter_map["polynomial_output"].load()
-        )
-        transmitter_map["polynomial_output"] = record.data
-
-    expected = {iens: {"polynomial_output": data} for iens, data in enumerate(expected)}
-    assert expected == evaluation_records
-
-
-@pytest.mark.requires_ert_storage
-@pytest.mark.parametrize("coeffs, expected", TEST_PARAMETRIZATION)
-def test_evaluator_function(
-    workspace, function_stages_config, base_ensemble_dict, coeffs, expected
-):
-    storage_path = workspace._path / ".ert" / "tmp" / "test"
-    input_transmitters = get_inputs(coeffs)
-    base_ensemble_dict["size"] = len(coeffs)
-    base_ensemble_dict["storage_type"] = "shared_disk"
-    ensemble_config = ert3.config.load_ensemble_config(base_ensemble_dict)
-
-    experiment_run_config = ert3.config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"),
-        function_stages_config,
-        ensemble_config,
-        ert3.config.ParametersConfig.parse_obj([]),
-    )
-    stage = experiment_run_config.get_stage()
-
-    step_builder = (
-        create_step_builder()
-        .set_name(f"{stage.name}-only_step")
-        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
-    )
-
-    inputs = experiment_run_config.get_linked_inputs()
-    stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
-
-    ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)
-
-    ert3.evaluator.add_step_outputs(
-        ensemble_config.storage_type,
-        stage,
-        storage_path,
-        ensemble_config.size,
-        step_builder,
-    )
-
-    if isinstance(stage, ert3.config.Unix):
-        ert3.evaluator.add_commands(
-            stage.transportable_commands,
-            base_ensemble_dict["storage_type"],
-            storage_path,
-            step_builder,
-        )
-
-    ensemble = ert3.evaluator.build_ensemble(
-        stage, ensemble_config.forward_model.driver, ensemble_config.size, step_builder
-    )
-
-    evaluation_records = ert3.evaluator.evaluate(ensemble)
-
-    for _, transmitter_map in evaluation_records.items():
-        record = get_event_loop().run_until_complete(
             transmitter_map["polynomial_output"].load()
         )
         transmitter_map["polynomial_output"] = record.data
