@@ -21,6 +21,7 @@ def test_build_ensemble():
             .set_id("0")
             .set_name("some_step")
             .set_dummy_io()
+            .set_type("unix")
         )
         .active(True)
     )
@@ -172,7 +173,12 @@ def test_topological_sort(steps, expected, ambiguous):
     non_transmitted_factory = MagicMock().return_value = MagicMock()
     non_transmitted_factory.return_value.is_transmitted.return_value = False
     for step_def in steps:
-        step = ee.create_step_builder().set_id("0").set_name(step_def["name"])
+        step = (
+            ee.create_step_builder()
+            .set_id("0")
+            .set_name(step_def["name"])
+            .set_type("unix")
+        )
         for input_ in step_def["inputs"]:
             step.add_input(
                 ee.create_input_builder()
