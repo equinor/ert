@@ -1,13 +1,9 @@
-import math
-
-import numpy
+from res import _lib
 from ecl.util.util import BoolVector
 from pandas import DataFrame
-
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.key_manager import KeyManager
-from res.enkf.plot_data import EnsemblePlotGenKW
 
 
 class GenKwCollector:
@@ -54,36 +50,12 @@ class GenKwCollector:
                 key for key in keys if key in gen_kw_keys
             ]  # ignore keys that doesn't exist
 
-        gen_kw_array = numpy.empty(
-            shape=(len(gen_kw_keys), len(realizations)), dtype=numpy.float64
+        gen_kw_array = _lib.enkf_fs_keyword_data.keyword_data_get_realizations(
+            ert.ensembleConfig(), fs, gen_kw_keys, realizations
         )
-        gen_kw_array.fill(numpy.nan)
-
-        for column_index, key in enumerate(gen_kw_keys):
-            key, keyword = key.split(":")
-
-            use_log_scale = False
-            if key.startswith("LOG10_"):
-                key = key[6:]
-                use_log_scale = True
-
-            ensemble_config_node = ert.ensembleConfig().getNode(key)
-            ensemble_data = EnsemblePlotGenKW(ensemble_config_node, fs)
-            keyword_index = ensemble_data.getIndexForKeyword(keyword)
-
-            for realization_index, realization_number in enumerate(realizations):
-                realization_vector = ensemble_data[realization_number]
-
-                value = realization_vector[keyword_index]
-
-                if use_log_scale:
-                    value = math.log10(value)
-
-                gen_kw_array[column_index][realization_index] = value
-
         gen_kw_data = DataFrame(
-            data=numpy.transpose(gen_kw_array), index=realizations, columns=gen_kw_keys
+            data=gen_kw_array, index=realizations, columns=gen_kw_keys
         )
-        gen_kw_data.index.name = "Realization"
 
+        gen_kw_data.index.name = "Realization"
         return gen_kw_data

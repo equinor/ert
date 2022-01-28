@@ -16,7 +16,7 @@
    for more details.
 */
 #include <assert.h>
-
+#include <iostream>
 #include <ert/util/bool_vector.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
@@ -135,6 +135,23 @@ int enkf_plot_gen_kw_get_keyword_count(const enkf_plot_gen_kw_type *gen_kw) {
         (const gen_kw_config_type *)enkf_config_node_get_ref(
             gen_kw->config_node);
     return gen_kw_config_get_data_size(gen_kw_config);
+}
+
+int enkf_plot_gen_kw_get_keyword_index(const enkf_plot_gen_kw_type *gen_kw,
+                                       const std::string &keyword) {
+    const gen_kw_config_type *gen_kw_config =
+        (const gen_kw_config_type *)enkf_config_node_get_ref(
+            gen_kw->config_node);
+
+    auto kw_count = gen_kw_config_get_data_size(gen_kw_config);
+    int result = -1;
+    for (int i = 0; i < kw_count; i++) {
+        std::string key = gen_kw_config_iget_name(gen_kw_config, i);
+        if (key == keyword) {
+            result = i;
+        }
+    }
+    return result;
 }
 
 bool enkf_plot_gen_kw_should_use_log_scale(const enkf_plot_gen_kw_type *gen_kw,

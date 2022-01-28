@@ -58,6 +58,10 @@ void test_load(const char *config_file) {
         test_assert_int_equal(4,
                               enkf_plot_gen_kw_get_keyword_count(plot_gen_kw));
 
+        test_assert_int_equal(
+            -1, enkf_plot_gen_kw_get_keyword_index(plot_gen_kw, "foo"));
+        test_assert_int_equal(
+            2, enkf_plot_gen_kw_get_keyword_index(plot_gen_kw, "PARAM3"));
         {
             enkf_plot_gen_kw_vector_type *vector =
                 enkf_plot_gen_kw_iget(plot_gen_kw, 0);
