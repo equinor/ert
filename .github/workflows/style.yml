@@ -27,7 +27,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install flake8 black pylint cmake-format
+        pip install -r dev-requirements.txt
 
     - name: Clang Format
       run: ./script/clang-format --check
