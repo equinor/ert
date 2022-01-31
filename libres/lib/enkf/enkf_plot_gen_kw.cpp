@@ -16,7 +16,6 @@
    for more details.
 */
 #include <assert.h>
-#include <iostream>
 #include <ert/util/bool_vector.h>
 
 #include <ert/enkf/enkf_config_node.hpp>
