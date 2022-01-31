@@ -1,4 +1,4 @@
-black
+black==21.12b0
 flaky
 pytest>=6.2.0
 pytest-qt
