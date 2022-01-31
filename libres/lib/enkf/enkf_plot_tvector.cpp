@@ -153,14 +153,3 @@ void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
     }
     enkf_node_free(work_node);
 }
-
-void *enkf_plot_tvector_load__(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    enkf_plot_tvector_type *tvector =
-        (enkf_plot_tvector_type *)arg_pack_iget_ptr(arg_pack, 0);
-    enkf_fs_type *fs = (enkf_fs_type *)arg_pack_iget_ptr(arg_pack, 1);
-    const char *index_key = (const char *)arg_pack_iget_ptr(arg_pack, 2);
-
-    enkf_plot_tvector_load(tvector, fs, index_key);
-    return NULL;
-}
