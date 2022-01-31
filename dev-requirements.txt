@@ -3,7 +3,6 @@ flaky
 pytest>=6.2.0
 pytest-qt
 schemathesis==1.3.4; python_version <= '3.6'
-schemathesis; python_version > '3.6'
 sphinx
 sphinx-argparse
 sphinx_rtd_theme
