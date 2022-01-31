@@ -18,15 +18,13 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
         with evaluator.run() as monitor:
             for e in monitor.track():
-                if (
-                    e["type"]
-                    in (
-                        identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                        identifiers.EVTYPE_EE_SNAPSHOT,
-                    )
-                    and e.data.get(identifiers.STATUS)
-                    in [state.ENSEMBLE_STATE_FAILED, state.ENSEMBLE_STATE_STOPPED]
-                ):
+                if e["type"] in (
+                    identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
+                    identifiers.EVTYPE_EE_SNAPSHOT,
+                ) and e.data.get(identifiers.STATUS) in [
+                    state.ENSEMBLE_STATE_FAILED,
+                    state.ENSEMBLE_STATE_STOPPED,
+                ]:
                     monitor.signal_done()
         assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
         assert evaluator._ensemble.get_successful_realizations() == num_reals
