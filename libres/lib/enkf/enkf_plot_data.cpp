@@ -15,12 +15,6 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <time.h>
-
-#include <ert/util/double_vector.h>
-
-#include <ert/res_util/thread_pool.hpp>
-
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
@@ -32,7 +26,6 @@ struct enkf_plot_data_struct {
     const enkf_config_node_type *config_node;
     int size;
     enkf_plot_tvector_type **ensemble;
-    arg_pack_type **work_arg;
 };
 
 static void enkf_plot_data_resize(enkf_plot_data_type *plot_data,
@@ -43,20 +36,16 @@ static void enkf_plot_data_resize(enkf_plot_data_type *plot_data,
         if (new_size < plot_data->size) {
             for (iens = new_size; iens < plot_data->size; iens++) {
                 enkf_plot_tvector_free(plot_data->ensemble[iens]);
-                arg_pack_free(plot_data->work_arg[iens]);
             }
         }
 
         plot_data->ensemble = (enkf_plot_tvector_type **)util_realloc(
             plot_data->ensemble, new_size * sizeof *plot_data->ensemble);
-        plot_data->work_arg = (arg_pack_type **)util_realloc(
-            plot_data->work_arg, new_size * sizeof *plot_data->work_arg);
 
         if (new_size > plot_data->size) {
             for (iens = plot_data->size; iens < new_size; iens++) {
                 plot_data->ensemble[iens] =
                     enkf_plot_tvector_alloc(plot_data->config_node, iens);
-                plot_data->work_arg[iens] = arg_pack_alloc();
             }
         }
         plot_data->size = new_size;
@@ -67,7 +56,6 @@ static void enkf_plot_data_reset(enkf_plot_data_type *plot_data) {
     int iens;
     for (iens = 0; iens < plot_data->size; iens++) {
         enkf_plot_tvector_reset(plot_data->ensemble[iens]);
-        arg_pack_clear(plot_data->work_arg[iens]);
     }
 }
 
@@ -75,14 +63,12 @@ void enkf_plot_data_free(enkf_plot_data_type *plot_data) {
     int iens;
     for (iens = 0; iens < plot_data->size; iens++) {
         enkf_plot_tvector_free(plot_data->ensemble[iens]);
-        arg_pack_free(plot_data->work_arg[iens]);
     }
-    free(plot_data->work_arg);
     free(plot_data->ensemble);
     free(plot_data);
 }
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_data, ENKF_PLOT_DATA_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION(enkf_plot_data, ENKF_PLOT_DATA_TYPE_ID);
 
 enkf_plot_data_type *
 enkf_plot_data_alloc(const enkf_config_node_type *config_node) {
@@ -92,7 +78,6 @@ enkf_plot_data_alloc(const enkf_config_node_type *config_node) {
     plot_data->config_node = config_node;
     plot_data->size = 0;
     plot_data->ensemble = NULL;
-    plot_data->work_arg = NULL;
     return plot_data;
 }
 
@@ -116,28 +101,18 @@ void enkf_plot_data_load(enkf_plot_data_type *plot_data, enkf_fs_type *fs,
         mask = bool_vector_alloc_copy(input_mask);
     else
         mask = bool_vector_alloc(ens_size, false);
-    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
 
+    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
     enkf_plot_data_resize(plot_data, ens_size);
     enkf_plot_data_reset(plot_data);
     {
-        const int num_cpu = 4;
-        thread_pool_type *tp = thread_pool_alloc(num_cpu, true);
         for (int iens = 0; iens < ens_size; iens++) {
             if (bool_vector_iget(mask, iens)) {
                 enkf_plot_tvector_type *vector =
                     enkf_plot_data_iget(plot_data, iens);
-                arg_pack_type *work_arg = plot_data->work_arg[iens];
-
-                arg_pack_append_ptr(work_arg, vector);
-                arg_pack_append_ptr(work_arg, fs);
-                arg_pack_append_const_ptr(work_arg, index_key);
-
-                thread_pool_add_job(tp, enkf_plot_tvector_load__, work_arg);
+                enkf_plot_tvector_load(vector, fs, index_key);
             }
         }
-        thread_pool_join(tp);
-        thread_pool_free(tp);
     }
     bool_vector_free(mask);
 }

@@ -42,7 +42,6 @@ enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens);
 void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
                             enkf_fs_type *fs, const char *user_key);
-void *enkf_plot_tvector_load__(void *arg);
 void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector);
 void enkf_plot_tvector_iset(enkf_plot_tvector_type *plot_tvector, int index,
                             time_t time, double value);
