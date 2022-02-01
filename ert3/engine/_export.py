@@ -69,8 +69,8 @@ def _prepare_export_responses(
     ensemble_size: int,
 ) -> Dict[str, List[ert.data.record_data]]:
     outputs = defaultdict(list)
-    responses = [elem.record for elem in ensemble.output]
     records_url = ert.storage.get_records_url(workspace_name, experiment_name)
+    responses = ert.storage.get_experiment_responses(experiment_name=experiment_name)
 
     for record_name in responses:
         for iens in range(ensemble_size):

@@ -391,6 +391,7 @@ def test_delete_experiment(tmpdir, ert_storage):
         (["resp1", "resp2"], ["resp1", "resp2"]),
         ([], []),
         (["resp1"], ["resp1"]),
+        (["resp_num", "resp_blob"], ["resp_num"]),
     ],
 )
 def test_get_ensemble_responses(responses, expected_result, tmpdir, ert_storage):
@@ -402,6 +403,24 @@ def test_get_ensemble_responses(responses, expected_result, tmpdir, ert_storage)
         ensemble_size=1,
         responses=responses,
     )
+    # we need to transmitt the responses
+    for response_name in responses:
+        if "blob" in response_name:
+            ensemble_record = ert.data.RecordCollection(
+                records=tuple([ert.data.BlobRecord(data=b"\xF0\x9F\xA6\x89")])
+            )
+        else:
+            ensemble_record = ert.data.RecordCollection(
+                records=tuple([ert.data.NumericalRecord(data=[0]) for rid in range(1)])
+            )
+        future = ert.storage.transmit_record_collection(
+            record_coll=ensemble_record,
+            record_name=response_name,
+            workspace_name=tmpdir,
+            experiment_name=experiment,
+        )
+        get_event_loop().run_until_complete(future)
+
     fetched_ensemble_responses = ert.storage.get_experiment_responses(
         experiment_name=experiment
     )
