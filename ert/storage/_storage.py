@@ -710,11 +710,18 @@ def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
         )
 
     ensemble_id = experiment["ensemble_ids"][0]  # currently just one ens per exp
-    response = _get_from_server(f"ensembles/{ensemble_id}")
+    response = _get_from_server(f"ensembles/{ensemble_id}/responses")
 
     if response.status_code != 200:
         raise ert.exceptions.StorageError(response.text)
-    return list(response.json()["response_names"])
+
+    # The ensemble responses are sent in the following form:
+    #     {
+    #         "polynomial_output": {"id": id, "name": name, "userdata": {}}
+    #     }
+    # therefore we extract only the keys
+
+    return list(response.json().keys())
 
 
 def delete_experiment(*, experiment_name: str) -> None:
