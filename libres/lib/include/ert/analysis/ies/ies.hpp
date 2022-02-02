@@ -28,11 +28,11 @@
 
 namespace ies {
 
-void linalg_store_active_W(data_type *data, const matrix_type *W0);
+void linalg_store_active_W(data::data_type *data, const matrix_type *W0);
 
-matrix_type *alloc_activeE(const data_type *data);
-matrix_type *alloc_activeW(const data_type *data);
-matrix_type *alloc_activeA(const data_type *data);
+matrix_type *alloc_activeE(const data::data_type *data);
+matrix_type *alloc_activeW(const data::data_type *data);
+matrix_type *alloc_activeA(const data::data_type *data);
 
 void init_update(void *arg, const bool_vector_type *ens_mask,
                  const bool_vector_type *obs_mask, const matrix_type *S,

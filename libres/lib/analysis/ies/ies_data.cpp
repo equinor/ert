@@ -23,7 +23,7 @@
 
 #define IES_DATA_TYPE_ID 6635831
 
-struct ies::data_struct {
+struct ies::data::data_struct {
     UTIL_TYPE_ID_DECLARATION;
     int iteration_nr; // Keep track of the outer iteration loop
     int state_size;   // Initial state_size used for checks in subsequent calls
@@ -42,12 +42,11 @@ struct ies::data_struct {
     FILE *log_fp; // logfile id
 };
 
-UTIL_SAFE_CAST_FUNCTION(ies::data, IES_DATA_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(ies::data, IES_DATA_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(ies::data::data, IES_DATA_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION_CONST(ies::data::data, IES_DATA_TYPE_ID)
 
-void *ies::data_alloc() {
-    ies::data_type *data =
-        static_cast<ies::data_type *>(util_malloc(sizeof *data));
+void *ies::data::alloc() {
+    ies::data::data_type *data = new ies::data::data_type();
     UTIL_TYPE_ID_INIT(data, IES_DATA_TYPE_ID);
     data->iteration_nr = 0;
     data->state_size = 0;
@@ -63,57 +62,58 @@ void *ies::data_alloc() {
     return data;
 }
 
-void ies::data_free(void *arg) {
-    ies::data_type *data = ies::data_safe_cast(arg);
+void ies::data::free(void *arg) {
+    ies::data::data_type *data = ies::data::data_safe_cast(arg);
     ies::config::free(data->config);
-    free(data);
+    delete data;
 }
 
-void ies::data_set_iteration_nr(ies::data_type *data, int iteration_nr) {
+void ies::data::set_iteration_nr(ies::data::data_type *data, int iteration_nr) {
     data->iteration_nr = iteration_nr;
 }
 
-int ies::data_inc_iteration_nr(ies::data_type *data) {
+int ies::data::inc_iteration_nr(ies::data::data_type *data) {
     data->iteration_nr++;
     return data->iteration_nr;
 }
 
-int ies::data_get_iteration_nr(const ies::data_type *data) {
+int ies::data::get_iteration_nr(const ies::data::data_type *data) {
     return data->iteration_nr;
 }
 
-ies::config::config_type *ies::data_get_config(const ies::data_type *data) {
+ies::config::config_type *
+ies::data::get_config(const ies::data::data_type *data) {
     return data->config;
 }
 
-void ies::data_update_ens_mask(ies::data_type *data,
-                               const bool_vector_type *ens_mask) {
+void ies::data::update_ens_mask(ies::data::data_type *data,
+                                const bool_vector_type *ens_mask) {
     if (data->ens_mask)
         bool_vector_free(data->ens_mask);
 
     data->ens_mask = bool_vector_alloc_copy(ens_mask);
 }
 
-void ies::store_initial_obs_mask(ies::data_type *data,
-                                 const bool_vector_type *obs_mask) {
+void ies::data::store_initial_obs_mask(ies::data::data_type *data,
+                                       const bool_vector_type *obs_mask) {
     if (!data->obs_mask0)
         data->obs_mask0 = bool_vector_alloc_copy(obs_mask);
 }
 
-void ies::update_obs_mask(ies::data_type *data,
-                          const bool_vector_type *obs_mask) {
+void ies::data::update_obs_mask(ies::data::data_type *data,
+                                const bool_vector_type *obs_mask) {
     if (data->obs_mask)
         bool_vector_free(data->obs_mask);
 
     data->obs_mask = bool_vector_alloc_copy(obs_mask);
 }
 
-int ies::data_get_obs_mask_size(const ies::data_type *data) {
+int ies::data::get_obs_mask_size(const ies::data::data_type *data) {
     return bool_vector_size(data->obs_mask);
 }
 
-int ies::data_active_obs_count(const ies::data_type *data) {
-    int nrobs_msk = ies::data_get_obs_mask_size(data);
+int ies::data::active_obs_count(const ies::data::data_type *data) {
+    int nrobs_msk = ies::data::get_obs_mask_size(data);
     int nrobs = 0;
     for (int i = 0; i < nrobs_msk; i++) {
         if (bool_vector_iget(data->obs_mask, i)) {
@@ -123,16 +123,16 @@ int ies::data_active_obs_count(const ies::data_type *data) {
     return nrobs;
 }
 
-int ies::data_get_ens_mask_size(const ies::data_type *data) {
+int ies::data::get_ens_mask_size(const ies::data::data_type *data) {
     return bool_vector_size(data->ens_mask);
 }
 
-void ies::data_update_state_size(ies::data_type *data, int state_size) {
+void ies::data::update_state_size(ies::data::data_type *data, int state_size) {
     if (data->state_size == 0)
         data->state_size = state_size;
 }
 
-FILE *ies::data_open_log(ies::data_type *data) {
+FILE *ies::data::open_log(ies::data::data_type *data) {
     const char *ies_logfile = ies::config::get_logfile(data->config);
     FILE *fp;
     if (data->iteration_nr == 1) {
@@ -144,17 +144,18 @@ FILE *ies::data_open_log(ies::data_type *data) {
     return fp;
 }
 
-void ies::data_fclose_log(ies::data_type *data) {
+void ies::data::fclose_log(ies::data::data_type *data) {
     fflush(data->log_fp);
     fclose(data->log_fp);
 }
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
-void ies::data_store_initialE(ies::data_type *data, const matrix_type *E0) {
+void ies::data::store_initialE(ies::data::data_type *data,
+                               const matrix_type *E0) {
     if (!data->E) {
-        int obs_size_msk = ies::data_get_obs_mask_size(data);
-        int ens_size_msk = ies::data_get_ens_mask_size(data);
+        int obs_size_msk = ies::data::get_obs_mask_size(data);
+        int ens_size_msk = ies::data::get_ens_mask_size(data);
         data->E = matrix_alloc(obs_size_msk, ens_size_msk);
         matrix_set(data->E, -999.9);
         int m = 0;
@@ -176,10 +177,11 @@ void ies::data_store_initialE(ies::data_type *data, const matrix_type *E0) {
 
 /* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
    in data->E. */
-void ies::data_augment_initialE(ies::data_type *data, const matrix_type *E0) {
+void ies::data::augment_initialE(ies::data::data_type *data,
+                                 const matrix_type *E0) {
     if (data->E) {
-        int obs_size_msk = ies::data_get_obs_mask_size(data);
-        int ens_size_msk = ies::data_get_ens_mask_size(data);
+        int obs_size_msk = ies::data::get_obs_mask_size(data);
+        int ens_size_msk = ies::data::get_ens_mask_size(data);
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
             if (!bool_vector_iget(data->obs_mask0, iobs) &&
@@ -201,13 +203,14 @@ void ies::data_augment_initialE(ies::data_type *data, const matrix_type *E0) {
     }
 }
 
-void ies::data_store_initialA(ies::data_type *data, const matrix_type *A) {
+void ies::data::store_initialA(ies::data::data_type *data,
+                               const matrix_type *A) {
     // We store the initial ensemble to use it in final update equation                     (Line 11)
     if (!data->A0)
         data->A0 = matrix_alloc_copy(A);
 }
 
-void ies::data_allocateW(ies::data_type *data) {
+void ies::data::allocateW(ies::data::data_type *data) {
     if (!data->W) {
         // We initialize data->W which will store W for use in next iteration                    (Line 9)
         int ens_size = bool_vector_size(data->ens_mask);
@@ -216,24 +219,29 @@ void ies::data_allocateW(ies::data_type *data) {
     }
 }
 
-const bool_vector_type *ies::data_get_obs_mask0(const ies::data_type *data) {
+const bool_vector_type *
+ies::data::get_obs_mask0(const ies::data::data_type *data) {
     return data->obs_mask0;
 }
 
-const bool_vector_type *ies::data_get_obs_mask(const ies::data_type *data) {
+const bool_vector_type *
+ies::data::get_obs_mask(const ies::data::data_type *data) {
     return data->obs_mask;
 }
 
-const bool_vector_type *ies::data_get_ens_mask(const ies::data_type *data) {
+const bool_vector_type *
+ies::data::get_ens_mask(const ies::data::data_type *data) {
     return data->ens_mask;
 }
 
-const matrix_type *ies::data_getE(const ies::data_type *data) {
+const matrix_type *ies::data::getE(const ies::data::data_type *data) {
     return data->E;
 }
 
-matrix_type *ies::data_getW(const ies::data_type *data) { return data->W; }
+matrix_type *ies::data::getW(const ies::data::data_type *data) {
+    return data->W;
+}
 
-const matrix_type *ies::data_getA0(const ies::data_type *data) {
+const matrix_type *ies::data::getA0(const ies::data::data_type *data) {
     return data->A0;
 }

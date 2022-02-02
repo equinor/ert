@@ -302,10 +302,12 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
             set_ok = analysis_module_set_bool(module, var_name, bool_value);
 
         if (strcmp(var_name, "USE_EE") == 0)
-            logger->warning("The USE_EE/USE_GE settings have been removed - use the INVERSION setting instead");
+            logger->warning("The USE_EE/USE_GE settings have been removed - "
+                            "use the INVERSION setting instead");
 
         if (strcmp(var_name, "USE_GE") == 0)
-            logger->warning("The USE_EE/USE_GE settings have been removed - use the INVERSION setting instead");
+            logger->warning("The USE_EE/USE_GE settings have been removed - "
+                            "use the INVERSION setting instead");
 
         if (set_ok)
             return true;
