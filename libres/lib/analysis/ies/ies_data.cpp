@@ -65,6 +65,22 @@ void *ies::data::alloc() {
 void ies::data::free(void *arg) {
     ies::data::data_type *data = ies::data::data_safe_cast(arg);
     ies::config::free(data->config);
+
+    if (data->ens_mask)
+        bool_vector_free(data->ens_mask);
+    if (data->obs_mask)
+        bool_vector_free(data->obs_mask);
+    if (data->obs_mask0)
+        bool_vector_free(data->obs_mask0);
+    if (data->A0)
+        matrix_free(data->A0);
+    if (data->E)
+        matrix_free(data->E);
+    if (data->W)
+        matrix_free(data->W);
+    if (data->log_fp)
+        fclose_log(data);
+
     delete data;
 }
 
@@ -147,6 +163,7 @@ FILE *ies::data::open_log(ies::data::data_type *data) {
 void ies::data::fclose_log(ies::data::data_type *data) {
     fflush(data->log_fp);
     fclose(data->log_fp);
+    data->log_fp = NULL;
 }
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
