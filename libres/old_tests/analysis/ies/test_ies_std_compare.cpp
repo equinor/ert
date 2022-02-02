@@ -25,10 +25,12 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    auto *ies_data1 = static_cast<ies::data::data_type *>(ies::data::alloc());
+    auto *ies_data1 =
+        static_cast<ies::data::data_type *>(ies::data::alloc(true));
     auto *ies_config1 = ies::data::get_config(ies_data1);
-    std_enkf_data_type *std_data =
-        static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
+    auto *std_data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(false));
+    auto *std_config = ies::data::get_config(std_data);
 
     ies::config::set_truncation(ies_config1, 0.95);
     ies::config::set_min_steplength(ies_config1, 1.0);
@@ -37,7 +39,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
                                ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
     ies::config::set_aaprojection(ies_config1, false);
 
-    std_enkf_set_truncation(std_data, 0.95);
+    ies::config::set_truncation(std_config, 0.95);
 
     ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask,
                      testdata.S, testdata.R, testdata.dObs, testdata.E,
@@ -54,7 +56,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
 
     matrix_free(A1);
     matrix_free(A2);
-    std_enkf_data_free(std_data);
+    ies::data::free(std_data);
     ies::data::free(ies_data1);
     rng_free(rng);
 }

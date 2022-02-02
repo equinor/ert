@@ -39,13 +39,12 @@ struct ies::data::data_struct {
     bool converged; // GN has converged
     ies::config::config_type *
         config; // This I don't understand but I assume I include data from the ies_config_type defined in ies_config.cpp
-    FILE *log_fp; // logfile id
 };
 
 UTIL_SAFE_CAST_FUNCTION(ies::data::data, IES_DATA_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION_CONST(ies::data::data, IES_DATA_TYPE_ID)
 
-void *ies::data::alloc() {
+ies::data::data_type *ies::data::alloc(bool ies_mode) {
     ies::data::data_type *data = new ies::data::data_type();
     UTIL_TYPE_ID_INIT(data, IES_DATA_TYPE_ID);
     data->iteration_nr = 0;
@@ -57,8 +56,7 @@ void *ies::data::alloc() {
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
-    data->config = ies::config::alloc();
-    data->log_fp = NULL;
+    data->config = ies::config::alloc(ies_mode);
     return data;
 }
 
@@ -78,8 +76,6 @@ void ies::data::free(void *arg) {
         matrix_free(data->E);
     if (data->W)
         matrix_free(data->W);
-    if (data->log_fp)
-        fclose_log(data);
 
     delete data;
 }
@@ -146,24 +142,6 @@ int ies::data::get_ens_mask_size(const ies::data::data_type *data) {
 void ies::data::update_state_size(ies::data::data_type *data, int state_size) {
     if (data->state_size == 0)
         data->state_size = state_size;
-}
-
-FILE *ies::data::open_log(ies::data::data_type *data) {
-    const char *ies_logfile = ies::config::get_logfile(data->config);
-    FILE *fp;
-    if (data->iteration_nr == 1) {
-        fp = fopen(ies_logfile, "w");
-    } else {
-        fp = fopen(ies_logfile, "a");
-    }
-    data->log_fp = fp;
-    return fp;
-}
-
-void ies::data::fclose_log(ies::data::data_type *data) {
-    fflush(data->log_fp);
-    fclose(data->log_fp);
-    data->log_fp = NULL;
 }
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0

@@ -9,6 +9,7 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/std_enkf.hpp>
 
 struct model {
@@ -62,41 +63,40 @@ TEST_CASE("compare_initX", "[analysis]") {
         matrix_type *D = obs_data_allocD(obs_data, E, S);
 
         WHEN("different truncations are used") {
-            std_enkf_data_type *std_enkf_data =
-                static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
+            auto *std_data = ies::data::alloc(false);
+            auto *ies_config = ies::data::get_config(std_data);
 
             matrix_type *X1 = matrix_alloc(ens_size, ens_size);
             matrix_type *X2 = matrix_alloc(ens_size, ens_size);
-            std_enkf_set_truncation(std_enkf_data,
-                                    GENERATE(DEFAULT_ENKF_TRUNCATION_, 0.90));
+            ies::config::set_truncation(
+                ies_config, GENERATE(ies::config::DEFAULT_TRUNCATION, 0.90));
 
-            std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
-                           rng);
-            ies::initX(std_enkf_data_get_config(std_enkf_data), S, R, E, D, X2);
+            std_enkf_initX(std_data, X1, nullptr, S, R, nullptr, E, D, rng);
+            ies::initX(std_data, S, R, E, D, X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
-            std_enkf_data_free(std_enkf_data);
+            ies::data::free(std_data);
             matrix_free(X2);
             matrix_free(X1);
         }
 
         WHEN("Different inversion methods are used") {
-            std_enkf_data_type *std_enkf_data =
-                static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
+            auto *std_data = ies::data::alloc(false);
+            auto *ies_config = ies::data::get_config(std_data);
 
             matrix_type *X1 = matrix_alloc(ens_size, ens_size);
             matrix_type *X2 = matrix_alloc(ens_size, ens_size);
-            std_enkf_set_string(std_enkf_data, INVERSION_KEY,
-                                GENERATE(STRING_INVERSION_SUBSPACE_EE_R,
-                                         STRING_INVERSION_SUBSPACE_EXACT_R,
-                                         STRING_INVERSION_SUBSPACE_RE));
+            ies::config::set_inversion(
+                ies_config,
+                GENERATE(ies::config::IES_INVERSION_SUBSPACE_EE_R,
+                         ies::config::IES_INVERSION_SUBSPACE_EXACT_R,
+                         ies::config::IES_INVERSION_SUBSPACE_RE));
 
-            std_enkf_initX(std_enkf_data, X1, nullptr, S, R, nullptr, E, D,
-                           rng);
-            ies::initX(std_enkf_data_get_config(std_enkf_data), S, R, E, D, X2);
+            std_enkf_initX(std_data, X1, nullptr, S, R, nullptr, E, D, rng);
+            ies::initX(std_data, S, R, E, D, X2);
 
             REQUIRE(matrix_similar(X1, X2, 1e-10));
-            std_enkf_data_free(std_enkf_data);
+            ies::data::free(std_data);
             matrix_free(X2);
             matrix_free(X1);
         }

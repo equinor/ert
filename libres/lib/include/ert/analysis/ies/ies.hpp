@@ -44,7 +44,7 @@ void init_update(void *arg, const bool_vector_type *ens_mask,
   functionality is exported so that it can be utilised in ES updates which are
   not iterative.
 */
-void initX(const config::config_type *ies_config, const matrix_type *S,
+void initX(data::data_type *ies_data, const matrix_type *S,
            const matrix_type *R, const matrix_type *E, const matrix_type *D,
            matrix_type *X);
 

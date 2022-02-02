@@ -112,7 +112,7 @@ void test_have_enough_realisations_defaulted() {
 void test_current_module_options() {
     analysis_config_type *ac = create_analysis_config();
     test_assert_NULL(analysis_config_get_active_module(ac));
-    analysis_config_load_module(ac, "STD_ENKF");
+    analysis_config_load_module(ac, ENSEMBLE_SMOOTHER);
 
     test_assert_false(
         analysis_config_get_module_option(ac, ANALYSIS_SCALE_DATA));

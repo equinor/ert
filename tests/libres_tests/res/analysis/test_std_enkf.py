@@ -18,7 +18,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 from libres_utils import ResTest
 
-from res.analysis import AnalysisModule
+from res.analysis import AnalysisModule, AnalysisModeEnum
 
 
 class StdEnKFTest(ResTest):
@@ -26,7 +26,7 @@ class StdEnKFTest(ResTest):
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
         )
-        self.module = AnalysisModule(name="STD_ENKF")
+        self.module = AnalysisModule(AnalysisModeEnum.ENSEMBLE_SMOOTHER)
 
     def toggleKey(self, key):
         self.assertTrue(self.module.hasVar(key))

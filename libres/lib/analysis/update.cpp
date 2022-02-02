@@ -742,9 +742,6 @@ bool smoother_update(std::vector<int> step_list,
             }
 
             matrix_safe_free(E);
-
-            analysis_module_complete_update(module);
-
         } else if (target_fs != source_fs)
             res_log_ferror(
                 "No active observations/parameters for MINISTEP: %s.",

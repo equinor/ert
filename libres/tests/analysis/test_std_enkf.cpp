@@ -1,46 +1,51 @@
 #include <catch2/catch.hpp>
 
 #include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/analysis_module.hpp>
 
 SCENARIO("Can set inversion method", "[std_enkf]") {
     GIVEN("A default constructed std_enkf_data instance") {
-        std_enkf_data_type *std_enkf_data =
-            static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
+        auto *analysis_module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
 
         WHEN("Setting invalid key") {
-            REQUIRE(
-                !std_enkf_set_string(std_enkf_data, "NO_SUCH_KEY", "VALUE"));
+            REQUIRE(!analysis_module_set_var(analysis_module, "NO_SUCH_KEY",
+                                             "VALUE"));
         }
 
         WHEN("Setting invalid value") {
-            REQUIRE(!std_enkf_set_string(std_enkf_data, INVERSION_KEY,
-                                         "INVALID_VALUE"));
+            REQUIRE(!analysis_module_set_var(
+                analysis_module, ies::config::INVERSION_KEY, "INVALID_VALUE"));
         }
 
         WHEN("Inversion is set to SUBSPACE_EXACT_R") {
 
-            REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
-                                        STRING_INVERSION_SUBSPACE_EXACT_R));
-            REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+            REQUIRE(analysis_module_set_var(
+                analysis_module, ies::config::INVERSION_KEY,
+                ies::config::STRING_INVERSION_SUBSPACE_EXACT_R));
+            //REQUIRE(analysis_module_get_inversion(analysis_module) ==
+            //        ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
         }
 
         WHEN("Inversion is set to SUBSPACE_EE_R") {
 
-            REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
-                                        STRING_INVERSION_SUBSPACE_EE_R));
-            REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    ies::config::IES_INVERSION_SUBSPACE_EE_R);
+            REQUIRE(analysis_module_set_var(
+                analysis_module, ies::config::INVERSION_KEY,
+                ies::config::STRING_INVERSION_SUBSPACE_EE_R));
+            //REQUIRE(analysis_module_get_inversion(analysis_module) ==
+            //        ies::config::IES_INVERSION_SUBSPACE_EE_R);
         }
 
         WHEN("Inversion is set to SUBSPACE_RE") {
 
-            REQUIRE(std_enkf_set_string(std_enkf_data, INVERSION_KEY,
-                                        STRING_INVERSION_SUBSPACE_RE));
-            REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    ies::config::IES_INVERSION_SUBSPACE_RE);
+            REQUIRE(analysis_module_set_var(
+                analysis_module, ies::config::INVERSION_KEY,
+                ies::config::STRING_INVERSION_SUBSPACE_RE));
+            //REQUIRE(analysis_module_get_inversion(analysis_module) ==
+            //        ies::config::IES_INVERSION_SUBSPACE_RE);
         }
 
-        std_enkf_data_free(std_enkf_data);
+        analysis_module_free(analysis_module);
     }
 }

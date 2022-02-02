@@ -48,9 +48,16 @@ typedef enum {
     ANALYSIS_ITERABLE = 32 // The module can bu used as an iterative smoother.
 } analysis_module_flag_enum;
 
+typedef enum {
+    ENSEMBLE_SMOOTHER = 1,
+    ITERATED_ENSEMBLE_SMOOTHER = 2
+} analysis_mode_enum;
+
 typedef struct analysis_module_struct analysis_module_type;
 
-analysis_module_type *analysis_module_alloc(const char *symbol_table);
+analysis_module_type *analysis_module_alloc(analysis_mode_enum mode);
+analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
+                                                  const char *module_name);
 
 void analysis_module_free(analysis_module_type *module);
 
@@ -74,12 +81,10 @@ void analysis_module_init_update(analysis_module_type *module,
 
 bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
                              const char *string_value);
-const char *analysis_module_get_table_name(const analysis_module_type *module);
+analysis_mode_enum analysis_module_get_mode(const analysis_module_type *module);
 const char *analysis_module_get_name(const analysis_module_type *module);
-void analysis_module_set_name(analysis_module_type *module, const char *name);
 bool analysis_module_check_option(const analysis_module_type *module,
-                                  long flag);
-void analysis_module_complete_update(analysis_module_type *module);
+                                  analysis_module_flag_enum option);
 
 bool analysis_module_has_var(const analysis_module_type *module,
                              const char *var);

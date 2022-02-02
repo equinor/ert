@@ -9,9 +9,11 @@
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    std_enkf_data_type *std_data =
-        static_cast<std_enkf_data_type *>(std_enkf_data_alloc());
-    std_enkf_set_truncation(std_data, 1.00);
+    auto *std_data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(false));
+    auto *ies_config = ies::data::get_config(std_data);
+    ies::config::set_truncation(ies_config, 1.00);
+
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
@@ -21,7 +23,7 @@ void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     matrix_inplace_matmul(A2, X);
 
     matrix_free(X);
-    std_enkf_data_free(std_data);
+    ies::data::free(std_data);
     rng_free(rng);
 }
 
@@ -60,7 +62,8 @@ void cmp_std_ies(res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
-    auto *ies_data = static_cast<ies::data::data_type *>(ies::data::alloc());
+    auto *ies_data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
@@ -112,7 +115,8 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *A1c = matrix_alloc_copy(A1);
     matrix_type *A2c = matrix_alloc_copy(A2);
-    auto *ies_data = static_cast<ies::data::data_type *>(ies::data::alloc());
+    auto *ies_data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
@@ -224,7 +228,8 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    auto *ies_data = static_cast<ies::data::data_type *>(ies::data::alloc());
+    auto *ies_data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     matrix_type *A0 = testdata.alloc_state("prior");
