@@ -5,7 +5,7 @@ from typing import List
 
 from ert_data import loader as loader
 from ert_data.measured import MeasuredData
-from ert_storage.client import Client
+from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class PlotApi(object):
 
     def _get_all_cases(self) -> List[str]:
         cases = []
-        with Client() as client:
+        with Storage.session() as client:
             try:
                 response = client.get("/experiments")
                 experiments = response.json()

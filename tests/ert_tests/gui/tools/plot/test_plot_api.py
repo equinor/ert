@@ -6,7 +6,7 @@ import pytest
 from utils import SOURCE_DIR
 from ert_utils import tmpdir
 from pandas import DataFrame
-from ert_storage.client import Client
+from ert_shared.services import Storage
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
@@ -270,32 +270,14 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-def mocked_requests_post(*args, **kwargs):
-    url = kwargs["url"]
-
-    if url == "/gql":
-        return MockResponse(
-            {
-                "data": {
-                    "experiments": [
-                        {"ensembles": [{"id": "120f0c05-f432-40c1-80a2-c525e9838684"}]}
-                    ]
-                }
-            },
-            200,
-        )
-
-    return MockResponse(None, 404)
-
-
 def test_case_structure(api, monkeypatch):
-    mock_post = MagicMock(side_effect=mocked_requests_post)
-    mock_get = MagicMock(side_effect=mocked_requests_get)
-    monkeypatch.setattr(Client, "post", mock_post)
-    monkeypatch.setattr(Client, "get", mock_get)
-    monkeypatch.setenv(
-        "ERT_STORAGE_CONNECTION_STRING", '{"base_url": "http://localhost"}'
-    )
+    from contextlib import contextmanager
+
+    @contextmanager
+    def session():
+        yield MagicMock(get=mocked_requests_get)
+
+    monkeypatch.setattr(Storage, "session", session)
 
     cases = [case["name"] for case in api.get_all_cases_not_running()]
     hidden_case = [
