@@ -89,7 +89,6 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
     return ies::config::get_truncation(data->ies_config);
 }
 
-
 ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data) {
     return ies::config::get_inversion(data->ies_config);
