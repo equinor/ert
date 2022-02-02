@@ -47,8 +47,6 @@
   you have repeated calls to both of these functions the end result
   might be a surprise.
 */
-#define DEFAULT_USE_EE false
-#define DEFAULT_USE_GE false
 
 /*
   The configuration data used by the std_enkf module is contained in a
@@ -72,11 +70,6 @@
 struct std_enkf_data_struct {
     UTIL_TYPE_ID_DECLARATION;
     ies::config::config_type *ies_config;
-
-    bool
-        __use_EE; // Deprecated flag - see comment above function: update_inversion_enum
-    bool
-        __use_GE; // Deprecated flag - see comment above function: update_inversion_enum
 };
 
 static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
@@ -96,50 +89,6 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(std_enkf_data, STD_ENKF_TYPE_ID)
     return ies::config::get_truncation(data->ies_config);
 }
 
-/*
-  The std_enkf module originally used two boolean flags use_EE and use_GE to
-  determine how the inversion should be performed. In order to harmonize with
-  the ies_enkf module the code is updated to rather use an enum from the
-  ies_enkf code. Since the use_GE and use_EE flags can be set as a string option
-  from user code it is retained with some ugly code to ensure that both setting
-  based on the USE_EE/USE_GHE settings and the new INVERSION setting should give
-  the same result. The bool flags __use_EE and __use_GE are extremely deprecated
-  and should be removed.
-*/
-
-static void update_inversion_enum(std_enkf_data_type *std_enkf_data) {
-    auto inversion = ies::config::get_inversion(std_enkf_data->ies_config);
-    if (std_enkf_data->__use_EE) {
-        if (std_enkf_data->__use_GE)
-            inversion = ies::config::IES_INVERSION_SUBSPACE_RE;
-        else
-            inversion = ies::config::IES_INVERSION_SUBSPACE_EE_R;
-    } else
-        inversion = ies::config::IES_INVERSION_SUBSPACE_EXACT_R;
-
-    ies::config::set_inversion(std_enkf_data->ies_config, inversion);
-}
-
-static void update_inversion_flags(std_enkf_data_type *std_enkf_data) {
-    switch (ies::config::get_inversion(std_enkf_data->ies_config)) {
-    case ies::config::IES_INVERSION_SUBSPACE_EXACT_R:
-        std_enkf_data->__use_EE = false;
-        return;
-
-    case ies::config::IES_INVERSION_SUBSPACE_RE:
-        std_enkf_data->__use_EE = true;
-        std_enkf_data->__use_GE = true;
-        return;
-
-    case ies::config::IES_INVERSION_SUBSPACE_EE_R:
-        std_enkf_data->__use_EE = true;
-        std_enkf_data->__use_GE = false;
-        return;
-
-    default:
-        return;
-    }
-}
 
 ies::config::inversion_type
 std_enkf_data_get_inversion(const std_enkf_data_type *data) {
@@ -170,8 +119,6 @@ void *std_enkf_data_alloc() {
     ies::config::set_option_flags(data->ies_config,
                                   ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA);
 
-    data->__use_EE = DEFAULT_USE_EE;
-    data->__use_GE = DEFAULT_USE_GE;
     return data;
 }
 
@@ -223,11 +170,7 @@ bool std_enkf_set_bool(void *arg, const char *var_name, bool value) {
     {
         bool name_recognized = true;
 
-        if (strcmp(var_name, USE_EE_KEY_) == 0)
-            module_data->__use_EE = value;
-        else if (strcmp(var_name, USE_GE_KEY_) == 0)
-            module_data->__use_GE = value;
-        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
+        if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
             if (value)
                 ies::config::set_option(module_data->ies_config,
                                         ANALYSIS_SCALE_DATA);
@@ -237,7 +180,6 @@ bool std_enkf_set_bool(void *arg, const char *var_name, bool value) {
         } else
             name_recognized = false;
 
-        update_inversion_enum(module_data);
         return name_recognized;
     }
 }
@@ -267,7 +209,6 @@ bool std_enkf_set_string(void *arg, const char *var_name, const char *value) {
         } else
             valid_set = false;
 
-        update_inversion_flags(module_data);
         return valid_set;
     }
 }
@@ -282,10 +223,6 @@ bool std_enkf_has_var(const void *arg, const char *var_name) {
         if (strcmp(var_name, ENKF_NCOMP_KEY_) == 0)
             return true;
         else if (strcmp(var_name, ENKF_TRUNCATION_KEY_) == 0)
-            return true;
-        else if (strcmp(var_name, USE_EE_KEY_) == 0)
-            return true;
-        else if (strcmp(var_name, USE_GE_KEY_) == 0)
             return true;
         else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0)
             return true;
@@ -327,11 +264,7 @@ int std_enkf_get_int(const void *arg, const char *var_name) {
 bool std_enkf_get_bool(const void *arg, const char *var_name) {
     const std_enkf_data_type *module_data = std_enkf_data_safe_cast_const(arg);
     {
-        if (strcmp(var_name, USE_EE_KEY_) == 0)
-            return module_data->__use_EE;
-        else if (strcmp(var_name, USE_GE_KEY_) == 0)
-            return module_data->__use_GE;
-        else if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
+        if (strcmp(var_name, ANALYSIS_SCALE_DATA_KEY_) == 0) {
             auto flags = ies::config::get_option_flags(module_data->ies_config);
             return (flags & ANALYSIS_SCALE_DATA);
         } else

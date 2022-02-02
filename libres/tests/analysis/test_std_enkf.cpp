@@ -41,20 +41,6 @@ SCENARIO("Can set inversion method", "[std_enkf]") {
                     ies::config::IES_INVERSION_SUBSPACE_RE);
         }
 
-        WHEN("Deprecated bool flags are set to true") {
-            std_enkf_set_bool(std_enkf_data, USE_EE_KEY_, false);
-            std_enkf_set_bool(std_enkf_data, USE_GE_KEY_, false);
-            REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
-        }
-
-        WHEN("Deprecated bool flags aere set to false") {
-            std_enkf_set_bool(std_enkf_data, USE_EE_KEY_, true);
-            std_enkf_set_bool(std_enkf_data, USE_GE_KEY_, true);
-            REQUIRE(std_enkf_data_get_inversion(std_enkf_data) ==
-                    ies::config::IES_INVERSION_SUBSPACE_RE);
-        }
-
         std_enkf_data_free(std_enkf_data);
     }
 }
