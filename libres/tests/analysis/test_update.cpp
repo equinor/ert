@@ -13,6 +13,7 @@
 
 #include <ert/analysis/update.hpp>
 #include <ert/analysis/std_enkf.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 /**
  * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html  
@@ -64,8 +65,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
     GIVEN("Fixed prior and measurements") {
 
-        auto enkf_module = analysis_module_alloc("STD_ENKF");
-        analysis_module_set_var(enkf_module, ENKF_TRUNCATION_KEY_, "1.0");
+        auto enkf_module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
+        analysis_module_set_var(enkf_module, ies::config::ENKF_TRUNCATION_KEY,
+                                "1.0");
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
         int ens_size = GENERATE(200, 100, 1000);

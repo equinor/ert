@@ -29,13 +29,11 @@
 
 #include <ert/analysis/ies/ies_config.hpp>
 
-#define DEFAULT_TRUNCATION 0.98
 #define DEFAULT_IES_MAX_STEPLENGTH 0.60
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
 #define DEFAULT_IES_INVERSION ies::config::IES_INVERSION_SUBSPACE_EXACT_R
-#define DEFAULT_IES_LOGFILE "ies.log"
 #define DEFAULT_IES_AAPROJECTION false
 
 #define IES_CONFIG_TYPE_ID 196402021
@@ -52,23 +50,25 @@ struct ies::config::config_struct {
         ies_dec_steplength; // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
     inversion_type
         ies_inversion;     // Controlled by config key: DEFAULT_IES_INVERSION
-    char *ies_logfile;     // Controlled by config key: DEFAULT_IES_LOGFILE
     bool ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
 };
 
-ies::config::config_type *ies::config::alloc() {
+ies::config::config_type *ies::config::alloc(bool ies_mode) {
     ies::config::config_type *config = new ies::config::config_type();
     UTIL_TYPE_ID_INIT(config, IES_CONFIG_TYPE_ID);
-    config->ies_logfile = NULL;
     ies::config::set_truncation(config, DEFAULT_TRUNCATION);
-    ies::config::set_option_flags(config, ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A +
-                                              ANALYSIS_ITERABLE +
-                                              ANALYSIS_SCALE_DATA);
+    if (ies_mode)
+        ies::config::set_option_flags(
+            config, ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE +
+                        ANALYSIS_SCALE_DATA);
+    else
+        ies::config::set_option_flags(config,
+                                      ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA);
+
     ies::config::set_max_steplength(config, DEFAULT_IES_MAX_STEPLENGTH);
     ies::config::set_min_steplength(config, DEFAULT_IES_MIN_STEPLENGTH);
     ies::config::set_dec_steplength(config, DEFAULT_IES_DEC_STEPLENGTH);
     ies::config::set_inversion(config, DEFAULT_IES_INVERSION);
-    ies::config::set_logfile(config, DEFAULT_IES_LOGFILE);
     ies::config::set_aaprojection(config, DEFAULT_IES_AAPROJECTION);
 
     return config;
@@ -170,17 +170,6 @@ bool ies::config::get_aaprojection(const ies::config::config_type *config) {
 }
 void ies::config::set_aaprojection(config_type *config, bool ies_aaprojection) {
     config->ies_aaprojection = ies_aaprojection;
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* IES_LOGFILE       */
-char *ies::config::get_logfile(const ies::config::config_type *config) {
-    return config->ies_logfile;
-}
-void ies::config::set_logfile(ies::config::config_type *config,
-                              const char *ies_logfile) {
-    config->ies_logfile =
-        util_realloc_string_copy(config->ies_logfile, ies_logfile);
 }
 
 /*------------------------------------------------------------------------------------------------*/

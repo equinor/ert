@@ -4,7 +4,7 @@
 #include <ert/analysis/analysis_module.hpp>
 
 TEST_CASE("ies_config", "[analysis]") {
-    auto *config = ies::config::alloc();
+    auto *config = ies::config::alloc(true);
     ies::config::set_option_flags(config, 0);
 
     SECTION("set_and_get_option") {

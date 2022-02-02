@@ -19,10 +19,7 @@ from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
 from ecl.util.util.rng import RandomNumberGenerator
 from libres_utils import ResTest
 
-from res.analysis import (
-    AnalysisModule,
-    AnalysisModuleOptionsEnum,
-)
+from res.analysis import AnalysisModule, AnalysisModuleOptionsEnum, AnalysisModeEnum
 from res.util import Matrix
 
 
@@ -33,7 +30,7 @@ class AnalysisModuleTest(ResTest):
         )
 
     def test_analysis_module(self):
-        am = AnalysisModule("IES_ENKF")
+        am = AnalysisModule(AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
 
         self.assertTrue(am.setVar("ITER", "1"))
 
@@ -48,18 +45,12 @@ class AnalysisModuleTest(ResTest):
         self.assertIsInstance(am.getInt("ITER"), int)
 
     def test_set_get_var(self):
-        mod = AnalysisModule("STD_ENKF")
+        mod = AnalysisModule(AnalysisModeEnum.ENSEMBLE_SMOOTHER)
         with self.assertRaises(KeyError):
             mod.setVar("NO-NOT_THIS_KEY", 100)
 
         with self.assertRaises(KeyError):
             mod.getInt("NO-NOT_THIS_KEY")
-
-    def test_create_internal(self):
-        with self.assertRaises(KeyError):
-            mod = AnalysisModule("STD_ENKFXXX")
-
-        mod = AnalysisModule("STD_ENKF")
 
     def construct_matrix(self, n, vals):
         """Constructs n*n matrix with vals as entries"""

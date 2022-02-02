@@ -1,6 +1,6 @@
-#  Copyright (C) 2013  Equinor ASA, Norway.
+#  Copyright (C) 2022  Equinor ASA, Norway.
 #
-#  The file '__init__.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'analysis_module_options_enum.py' is part of ERT - Ensemble based Reservoir Tool.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -13,9 +13,14 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from cwrap import BaseCEnum
 
 
-from .analysis_module import AnalysisModule
-from .enums import AnalysisModuleOptionsEnum, AnalysisModeEnum
+class AnalysisModeEnum(BaseCEnum):
+    TYPE_NAME = "analysis_mode_enum"
+    ENSEMBLE_SMOOTHER = None
+    ITERATED_ENSEMBLE_SMOOTHER = None
 
-__all__ = ["AnalysisModuleOptionsEnum", "AnalysisModeEnum", "AnalysisModule"]
+
+AnalysisModeEnum.addEnum("ENSEMBLE_SMOOTHER", 1)
+AnalysisModeEnum.addEnum("ITERATED_ENSEMBLE_SMOOTHER", 2)

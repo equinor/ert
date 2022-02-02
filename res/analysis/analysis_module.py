@@ -24,13 +24,10 @@ from .enums import AnalysisModuleOptionsEnum
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc = ResPrototype("void* analysis_module_alloc(char*)", bind=False)
+    _alloc = ResPrototype("void* analysis_module_alloc(analysis_mode_enum)", bind=False)
     _free = ResPrototype("void analysis_module_free(analysis_module)")
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
-    )
-    _get_table_name = ResPrototype(
-        "char* analysis_module_get_table_name(analysis_module)"
     )
     _get_name = ResPrototype("char* analysis_module_get_name(analysis_module)")
     _check_option = ResPrototype(
@@ -42,7 +39,6 @@ class AnalysisModule(BaseCClass):
     )
     _get_int = ResPrototype("int analysis_module_get_int(analysis_module, char*)")
     _get_bool = ResPrototype("bool analysis_module_get_bool(analysis_module, char*)")
-    _get_str = ResPrototype("char* analysis_module_get_ptr(analysis_module, char*)")
 
     VARIABLE_NAMES = {
         "IES_MAX_STEPLENGTH": {
@@ -98,8 +94,6 @@ class AnalysisModule(BaseCClass):
             return self.getDouble(name)
         elif variable_type == bool:
             return self.getBool(name)
-        elif variable_type == str:
-            return self.getStr(name)
         elif variable_type == int:
             return self.getInt(name)
 
@@ -152,11 +146,6 @@ class AnalysisModule(BaseCClass):
         """:rtype: bool"""
         self.__assertVar(var)
         return self._get_bool(var)
-
-    def getStr(self, var):
-        """:rtype: str"""
-        self.__assertVar(var)
-        return self._get_str(var)
 
     def __ne__(self, other):
         """

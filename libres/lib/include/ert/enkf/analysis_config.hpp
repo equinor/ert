@@ -48,9 +48,9 @@ analysis_config_get_module(const analysis_config_type *config,
 bool analysis_config_has_module(const analysis_config_type *config,
                                 const char *module_name);
 void analysis_config_load_module(analysis_config_type *config,
-                                 const char *symbol_table);
+                                 analysis_mode_enum mode);
 bool analysis_config_get_module_option(const analysis_config_type *config,
-                                       long flag);
+                                       analysis_module_flag_enum flag);
 
 extern "C++" PY_USED std::vector<std::string>
 analysis_config_module_names(const analysis_config_type *config);
