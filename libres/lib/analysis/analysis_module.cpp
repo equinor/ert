@@ -22,14 +22,17 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <stdexcept>
 
 #include <ert/res_util/matrix.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/analysis_table.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/std_enkf.hpp>
 
 #include <fmt/format.h>
 #include <ert/logging.hpp>
@@ -38,134 +41,52 @@ auto logger = ert::get_logger("analysis");
 
 #define ANALYSIS_MODULE_TYPE_ID 6610123
 
-namespace ies {
-extern analysis_table_type IES_ENKF;
-};
-extern analysis_table_type STD_ENKF;
-
-namespace {
-const std::unordered_map<std::string, analysis_table_type *> analysis_tables{
-    {"IES_ENKF", &ies::IES_ENKF},
-    {"STD_ENKF", &STD_ENKF},
-};
-}
-
 struct analysis_module_struct {
     UTIL_TYPE_ID_DECLARATION;
-    void *module_data;
-    char *symbol_table;
-
-    analysis_free_ftype *freef;
-    analysis_alloc_ftype *alloc;
-    analysis_initX_ftype *initX;
-    analysis_updateA_ftype *updateA;
-    analysis_init_update_ftype *init_update;
-    analysis_complete_update_ftype *complete_update;
-
-    analysis_get_options_ftype *get_options;
-    analysis_set_int_ftype *set_int;
-    analysis_set_double_ftype *set_double;
-    analysis_set_bool_ftype *set_bool;
-    analysis_set_string_ftype *set_string;
-
-    analysis_has_var_ftype *has_var;
-    analysis_get_int_ftype *get_int;
-    analysis_get_double_ftype *get_double;
-    analysis_get_bool_ftype *get_bool;
-    analysis_get_ptr_ftype *get_ptr;
-
+    ies::data::data_type *module_data;
     char *
         user_name; /* String used to identify this module for the user; not used in
                                                    the linking process. */
+    analysis_mode_enum mode;
 };
 
-static analysis_module_type *
-analysis_module_alloc_empty(const char *symbol_table) {
+analysis_mode_enum
+analysis_module_get_mode(const analysis_module_type *module) {
+    return module->mode;
+}
+
+analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
+                                                  const char *module_name) {
     analysis_module_type *module =
         (analysis_module_type *)util_malloc(sizeof *module);
     UTIL_TYPE_ID_INIT(module, ANALYSIS_MODULE_TYPE_ID);
 
-    module->initX = NULL;
-    module->updateA = NULL;
-    module->set_int = NULL;
-    module->set_bool = NULL;
-    module->set_double = NULL;
-    module->set_string = NULL;
+    module->mode = mode;
     module->module_data = NULL;
-    module->init_update = NULL;
-    module->complete_update = NULL;
-    module->has_var = NULL;
-    module->get_int = NULL;
-    module->get_double = NULL;
-    module->get_bool = NULL;
-    module->get_ptr = NULL;
-    module->alloc = NULL;
-
-    module->user_name = NULL;
-    module->symbol_table = util_alloc_string_copy(symbol_table);
+    module->user_name = util_alloc_string_copy(module_name);
+    module->module_data = ies::data::alloc(mode == ITERATED_ENSEMBLE_SMOOTHER);
+    module->user_name = util_alloc_string_copy(module_name);
 
     return module;
 }
 
-static analysis_module_type *
-analysis_module_alloc__(const analysis_table_type *table,
-                        const char *symbol_table) {
-
-    analysis_module_type *module = analysis_module_alloc_empty(symbol_table);
-
-    module->initX = table->initX;
-    module->updateA = table->updateA;
-    module->init_update = table->init_update;
-    module->complete_update = table->complete_update;
-    module->set_int = table->set_int;
-    module->set_double = table->set_double;
-    module->set_string = table->set_string;
-    module->set_bool = table->set_bool;
-    module->alloc = table->alloc;
-    module->freef = table->freef;
-    module->get_options = table->get_options;
-    module->has_var = table->has_var;
-    module->get_int = table->get_int;
-    module->get_double = table->get_double;
-    module->get_bool = table->get_bool;
-    module->get_ptr = table->get_ptr;
-    analysis_module_set_name(module, table->name);
-
-    if (module->alloc)
-        module->module_data = module->alloc();
-
-    return module;
-}
-
-analysis_module_type *analysis_module_alloc(const char *table_name) {
-    auto it = analysis_tables.find(table_name);
-    if (it == analysis_tables.cend())
-        return nullptr;
-
-    return analysis_module_alloc__(it->second, table_name);
+analysis_module_type *analysis_module_alloc(analysis_mode_enum mode) {
+    if (mode == ENSEMBLE_SMOOTHER)
+        return analysis_module_alloc_named(mode, "STD_ENKF");
+    else if (mode == ITERATED_ENSEMBLE_SMOOTHER)
+        return analysis_module_alloc_named(mode, "IES_ENKF");
 }
 
 const char *analysis_module_get_name(const analysis_module_type *module) {
     return module->user_name;
 }
 
-void analysis_module_set_name(analysis_module_type *module, const char *name) {
-    module->user_name = util_realloc_string_copy(module->user_name, name);
-}
-
-const char *analysis_module_get_table_name(const analysis_module_type *module) {
-    return module->symbol_table;
-}
-
 static UTIL_SAFE_CAST_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
     UTIL_IS_INSTANCE_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
 
         void analysis_module_free(analysis_module_type *module) {
-    if (module->freef != NULL)
-        module->freef(module->module_data);
-
+    ies::data::free(module->module_data);
     free(module->user_name);
-    free(module->symbol_table);
     free(module);
 }
 
@@ -174,8 +95,7 @@ void analysis_module_initX(analysis_module_type *module, matrix_type *X,
                            const matrix_type *R, const matrix_type *dObs,
                            const matrix_type *E, const matrix_type *D,
                            rng_type *rng) {
-
-    module->initX(module->module_data, X, A, S, R, dObs, E, D, rng);
+    ies::initX(module->module_data, S, R, E, D, X);
 }
 
 void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
@@ -183,7 +103,7 @@ void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
                              const matrix_type *dObs, const matrix_type *E,
                              const matrix_type *D, rng_type *rng) {
 
-    module->updateA(module->module_data, A, S, R, dObs, E, D, rng);
+    ies::updateA(module->module_data, A, S, R, dObs, E, D, rng);
 }
 
 void analysis_module_init_update(analysis_module_type *module,
@@ -215,46 +135,123 @@ void analysis_module_init_update(analysis_module_type *module,
             "Internal error - number of rows in S must be equal to number of "
             "*active* observations");
 
-    if (module->init_update != NULL)
-        module->init_update(module->module_data, ens_mask, obs_mask, S, R, dObs,
-                            E, D, rng);
-}
-
-void analysis_module_complete_update(analysis_module_type *module) {
-    if (module->complete_update != NULL)
-        module->complete_update(module->module_data);
+    ies::init_update(module->module_data, ens_mask, obs_mask, S, R, dObs, E, D,
+                     rng);
 }
 
 static bool analysis_module_set_int(analysis_module_type *module,
                                     const char *flag, int value) {
-    if (module->set_int != NULL)
-        return module->set_int(module->module_data, flag, value);
+
+    auto *ies_config = ies::data::get_config(module->module_data);
+    if (strcmp(flag, ies::config::ENKF_NCOMP_KEY) == 0)
+        ies::config::set_subspace_dimension(ies_config, value);
+
+    else if (strcmp(flag, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) == 0)
+        ies::config::set_subspace_dimension(ies_config, value);
+
+    else if (strcmp(flag, ies::data::ITER_KEY) == 0)
+        ies::data::set_iteration_nr(module->module_data, value);
+
+    else if (strcmp(flag, ies::config::IES_INVERSION_KEY) == 0)
+        ies::config::set_inversion(
+            ies_config, static_cast<ies::config::inversion_type>(value));
+
     else
         return false;
+
+    return true;
+}
+
+int analysis_module_get_int(const analysis_module_type *module,
+                            const char *var) {
+
+    auto *ies_config = ies::data::get_config(module->module_data);
+    if (strcmp(var, ies::config::ENKF_NCOMP_KEY) == 0 ||
+        strcmp(var, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) == 0) {
+        const auto &truncation = ies::config::get_truncation(ies_config);
+        if (std::holds_alternative<int>(truncation))
+            return std::get<int>(truncation);
+        else
+            return -1;
+    }
+
+    else if (strcmp(var, ies::data::ITER_KEY) == 0)
+        return ies::data::get_iteration_nr(module->module_data);
+
+    else if (strcmp(var, ies::config::IES_INVERSION_KEY) == 0)
+        return ies::config::get_inversion(ies_config);
+
+    util_exit("%s: Tried to get integer variable:%s from module:%s - "
+              "module does not support this variable \n",
+              __func__, var, module->user_name);
+
+    return 0;
 }
 
 static bool analysis_module_set_double(analysis_module_type *module,
                                        const char *var, double value) {
-    if (module->set_double != NULL)
-        return module->set_double(module->module_data, var, value);
+    ies::config::config_type *ies_config =
+        ies::data::get_config(module->module_data);
+    bool name_recognized = true;
+
+    if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0)
+        ies::config::set_truncation(ies_config, value);
+    else if (strcmp(var, ies::config::IES_MAX_STEPLENGTH_KEY) == 0)
+        ies::config::set_max_steplength(ies_config, value);
+    else if (strcmp(var, ies::config::IES_MIN_STEPLENGTH_KEY) == 0)
+        ies::config::set_min_steplength(ies_config, value);
+    else if (strcmp(var, ies::config::IES_DEC_STEPLENGTH_KEY) == 0)
+        ies::config::set_dec_steplength(ies_config, value);
     else
-        return false;
+        name_recognized = false;
+
+    return name_recognized;
 }
 
 static bool analysis_module_set_bool(analysis_module_type *module,
                                      const char *var, bool value) {
-    if (module->set_bool != NULL)
-        return module->set_bool(module->module_data, var, value);
+    auto *ies_config = ies::data::get_config(module->module_data);
+    bool name_recognized = true;
+
+    if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0) {
+        if (value)
+            ies::config::set_option(ies_config, ANALYSIS_SCALE_DATA);
+        else
+            ies::config::del_option(ies_config, ANALYSIS_SCALE_DATA);
+    } else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
+        ies::config::set_aaprojection(ies_config, value);
+    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+        logger->warning("The key {} is ignored", ies::config::IES_DEBUG_KEY);
     else
-        return false;
+        name_recognized = false;
+
+    return name_recognized;
 }
 
 static bool analysis_module_set_string(analysis_module_type *module,
                                        const char *var, const char *value) {
-    if (module->set_string != NULL)
-        return module->set_string(module->module_data, var, value);
-    else
-        return false;
+    auto *ies_config = ies::data::get_config(module->module_data);
+    bool valid_set = true;
+    if (strcmp(var, ies::config::INVERSION_KEY) == 0) {
+        if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
+            ies::config::set_inversion(
+                ies_config, ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+
+        else if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_EE_R) ==
+                 0)
+            ies::config::set_inversion(
+                ies_config, ies::config::IES_INVERSION_SUBSPACE_EE_R);
+
+        else if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_RE) == 0)
+            ies::config::set_inversion(ies_config,
+                                       ies::config::IES_INVERSION_SUBSPACE_RE);
+
+        else
+            valid_set = false;
+    } else
+        valid_set = false;
+
+    return valid_set;
 }
 
 /*
@@ -323,85 +320,74 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
 }
 
 bool analysis_module_check_option(const analysis_module_type *module,
-                                  long flag) {
-    if ((flag & module->get_options(module->module_data, flag)) == flag)
-        return true;
-    else
-        return false;
+                                  analysis_module_flag_enum option) {
+    const auto *ies_config = ies::data::get_config(module->module_data);
+    return ies::config::get_option(ies_config, option);
 }
 
 bool analysis_module_has_var(const analysis_module_type *module,
                              const char *var) {
-    if (module->has_var)
-        return module->has_var(module->module_data, var);
-    else
-        return false;
-}
 
-int analysis_module_get_int(const analysis_module_type *module,
-                            const char *var) {
-    if (analysis_module_has_var(module, var)) {
-        if (module->get_int != NULL)
-            return module->get_int(module->module_data, var);
-        else
-            util_exit("%s: Tried to get integer variable:%s from module:%s - "
-                      "get_int() method not implemented for this module\n",
-                      __func__, var, module->user_name);
-    } else
-        util_exit("%s: Tried to get integer variable:%s from module:%s - "
-                  "module does not support this variable \n",
-                  __func__, var, module->user_name);
+    static const std::unordered_set<std::string> keys = {
+        ies::data::ITER_KEY,
+        ies::config::IES_MAX_STEPLENGTH_KEY,
+        ies::config::IES_MIN_STEPLENGTH_KEY,
+        ies::config::IES_DEC_STEPLENGTH_KEY,
+        ies::config::IES_INVERSION_KEY,
+        ies::config::IES_LOGFILE_KEY,
+        ies::config::IES_DEBUG_KEY,
+        ies::config::IES_AAPROJECTION_KEY,
+        ies::config::ENKF_TRUNCATION_KEY,
+        ies::config::ENKF_SUBSPACE_DIMENSION_KEY,
+        ies::config::ANALYSIS_SCALE_DATA_KEY,
+        ies::config::ENKF_NCOMP_KEY};
 
-    return 0;
+    return (keys.count(var) == 1);
 }
 
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
-    if (analysis_module_has_var(module, var)) {
-        if (module->get_bool != NULL)
-            return module->get_bool(module->module_data, var);
-        else
-            util_exit("%s: Tried to get bool variable:%s from module:%s - "
-                      "get_int() method not implemented for this module\n",
-                      __func__, var, module->user_name);
-    } else
-        util_exit("%s: Tried to get bool variable:%s from module:%s - module "
-                  "does not support this variable \n",
-                  __func__, var, module->user_name);
+    const auto *ies_config = ies::data::get_config(module->module_data);
+    if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0)
+        return ies::config::get_option(ies_config, ANALYSIS_SCALE_DATA);
+
+    else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
+        return ies::config::get_aaprojection(ies_config);
+
+    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+        return false;
+
+    util_exit("%s: Tried to get bool variable:%s from module:%s - module "
+              "does not support this variable \n",
+              __func__, var, module->user_name);
 
     return false;
 }
 
 double analysis_module_get_double(const analysis_module_type *module,
                                   const char *var) {
-    if (analysis_module_has_var(module, var)) {
-        if (module->get_double != NULL)
-            return module->get_double(module->module_data, var);
+
+    const auto *ies_config = ies::data::get_config(module->module_data);
+    if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0) {
+        const auto &truncation = ies::config::get_truncation(ies_config);
+        if (std::holds_alternative<double>(truncation))
+            return std::get<double>(truncation);
         else
-            util_exit("%s: Tried to get double variable:%s from module:%s - "
-                      "get_double() method not implemented for this module\n",
-                      __func__, var, module->user_name);
-    } else
-        util_exit("%s: Tried to get double variable:%s from module:%s - module "
-                  "does not support this variable \n",
-                  __func__, var, module->user_name);
+            return -1;
+    }
 
-    return 0;
-}
+    else if (strcmp(var, ies::config::IES_MAX_STEPLENGTH_KEY) == 0)
+        return ies::config::get_max_steplength(ies_config);
 
-void *analysis_module_get_ptr(const analysis_module_type *module,
-                              const char *var) {
-    if (analysis_module_has_var(module, var)) {
-        if (module->get_double != NULL)
-            return module->get_ptr(module->module_data, var);
-        else
-            util_exit("%s: Tried to get pointer variable:%s from module:%s - "
-                      "get_ptr() method not implemented for this module\n",
-                      __func__, var, module->user_name);
-    } else
-        util_exit("%s: Tried to get pointer variable:%s from module:%s - "
-                  "module does not support this variable \n",
-                  __func__, var, module->user_name);
+    else if (strcmp(var, ies::config::IES_MIN_STEPLENGTH_KEY) == 0)
+        return ies::config::get_min_steplength(ies_config);
 
-    return NULL;
+    else if (strcmp(var, ies::config::IES_DEC_STEPLENGTH_KEY) == 0)
+        return ies::config::get_dec_steplength(ies_config);
+
+    util_exit("%s: Tried to get double variable:%s from module:%s - module "
+              "does not support this variable \n",
+              __func__, var, module->user_name);
+
+    return -1;
 }

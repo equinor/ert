@@ -25,6 +25,24 @@
 namespace ies {
 namespace config {
 
+constexpr double DEFAULT_TRUNCATION = 0.98;
+constexpr const char *IES_LOGFILE_KEY = "IES_LOGFILE";
+constexpr const char *ENKF_SUBSPACE_DIMENSION_KEY = "ENKF_SUBSPACE_DIMENSION";
+constexpr const char *IES_INVERSION_KEY = "IES_INVERSION";
+constexpr const char *ENKF_TRUNCATION_KEY = "ENKF_TRUNCATION";
+constexpr const char *IES_MAX_STEPLENGTH_KEY = "IES_MAX_STEPLENGTH";
+constexpr const char *IES_MIN_STEPLENGTH_KEY = "IES_MIN_STEPLENGTH";
+constexpr const char *IES_DEC_STEPLENGTH_KEY = "IES_DEC_STEPLENGTH";
+constexpr const char *IES_AAPROJECTION_KEY = "IES_AAPROJECTION";
+constexpr const char *IES_DEBUG_KEY = "IES_DEBUG";
+constexpr const char *ANALYSIS_SCALE_DATA_KEY = "ANALYSIS_SCALE_DATA";
+constexpr const char *ENKF_NCOMP_KEY = "ENKF_NCOMP";
+constexpr const char *INVERSION_KEY = "INVERSION";
+constexpr const char *STRING_INVERSION_EXACT = "EXACT";
+constexpr const char *STRING_INVERSION_SUBSPACE_EXACT_R = "SUBSPACE_EXACT_R";
+constexpr const char *STRING_INVERSION_SUBSPACE_EE_R = "SUBSPACE_EE_R";
+constexpr const char *STRING_INVERSION_SUBSPACE_RE = "SUBSPACE_RE";
+
 typedef enum {
     IES_INVERSION_EXACT = 0,
     IES_INVERSION_SUBSPACE_EXACT_R = 1,
@@ -34,7 +52,7 @@ typedef enum {
 
 typedef struct config_struct config_type;
 
-config_type *alloc();
+config_type *alloc(bool ies_mode);
 void free(config_type *config);
 
 const std::variant<double, int> &get_truncation(const config_type *config);
@@ -64,9 +82,6 @@ void set_subspace(config_type *config, bool subspace);
 
 bool get_aaprojection(const config_type *config);
 void set_aaprojection(config_type *config, bool aaprojection);
-
-char *get_logfile(const config_type *config);
-void set_logfile(config_type *config, const char *logfile);
 
 double calculate_steplength(const config_type *config, int iteration_nr);
 } // namespace config

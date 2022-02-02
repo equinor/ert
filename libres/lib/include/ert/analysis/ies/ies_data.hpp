@@ -11,9 +11,11 @@
 namespace ies {
 namespace data {
 
+constexpr const char *ITER_KEY = "ITER";
+
 typedef struct data_struct data_type;
 
-void *alloc();
+data_type *alloc(bool ies_mode);
 void free(void *arg);
 
 void set_iteration_nr(data_type *data, int iteration_nr);
@@ -34,9 +36,6 @@ int active_obs_count(const data_type *data);
 const bool_vector_type *get_obs_mask0(const data_type *data);
 const bool_vector_type *get_obs_mask(const data_type *data);
 const bool_vector_type *get_ens_mask(const data_type *data);
-
-FILE *open_log(data_type *data);
-void fclose_log(data_type *data);
 
 void allocateW(data_type *data);
 void store_initialE(data_type *data, const matrix_type *E0);

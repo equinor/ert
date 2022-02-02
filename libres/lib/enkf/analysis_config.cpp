@@ -227,13 +227,12 @@ int analysis_config_get_rerun_start(const analysis_config_type *config) {
 }
 
 void analysis_config_load_module(analysis_config_type *config,
-                                 const char *symbol_table) {
-    analysis_module_type *module = analysis_module_alloc(symbol_table);
+                                 analysis_mode_enum mode) {
+    analysis_module_type *module = analysis_module_alloc(mode);
     if (module)
         config->analysis_modules[analysis_module_get_name(module)] = module;
     else
-        fprintf(stderr, "** Warning: failed to load module %s from %s.\n",
-                analysis_module_get_name(module), symbol_table);
+        fprintf(stderr, "** Warning: failed to create module \n");
 }
 
 void analysis_config_add_module_copy(analysis_config_type *config,
@@ -241,13 +240,9 @@ void analysis_config_add_module_copy(analysis_config_type *config,
                                      const char *target_name) {
     const analysis_module_type *src_module =
         analysis_config_get_module(config, src_name);
-    analysis_module_type *target_module;
-
-    const char *symbol_table = analysis_module_get_table_name(src_module);
-    target_module = analysis_module_alloc(symbol_table);
-
+    analysis_module_type *target_module = analysis_module_alloc_named(
+        analysis_module_get_mode(src_module), target_name);
     config->analysis_modules[target_name] = target_module;
-    analysis_module_set_name(target_module, target_name);
 }
 
 analysis_module_type *
@@ -267,7 +262,7 @@ bool analysis_config_has_module(const analysis_config_type *config,
 }
 
 bool analysis_config_get_module_option(const analysis_config_type *config,
-                                       long flag) {
+                                       analysis_module_flag_enum flag) {
     if (config->analysis_module)
         return analysis_module_check_option(config->analysis_module, flag);
     else
@@ -323,8 +318,8 @@ analysis_config_get_active_module_name(const analysis_config_type *config) {
 }
 
 void analysis_config_load_internal_modules(analysis_config_type *config) {
-    analysis_config_load_module(config, "IES_ENKF");
-    analysis_config_load_module(config, "STD_ENKF");
+    analysis_config_load_module(config, ITERATED_ENSEMBLE_SMOOTHER);
+    analysis_config_load_module(config, ENSEMBLE_SMOOTHER);
     analysis_config_select_module(config, DEFAULT_ANALYSIS_MODULE);
 }
 

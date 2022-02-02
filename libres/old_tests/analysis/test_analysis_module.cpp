@@ -28,7 +28,7 @@
 #include <ert/analysis/analysis_module.hpp>
 
 void test_invalid_mask_size() {
-    analysis_module_type *module = analysis_module_alloc("STD_ENKF");
+    analysis_module_type *module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
     int active_ens_size = 10;
     int active_obs_size = 5;
     rng_type *rng = NULL;

@@ -6,7 +6,7 @@
 
 void test_create() {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *data = static_cast<ies::data::data_type *>(ies::data::alloc());
+    auto *data = static_cast<ies::data::data_type *>(ies::data::alloc(true));
     test_assert_not_NULL(data);
     ies::data::free(data);
     rng_free(rng);
