@@ -39,11 +39,5 @@ class StdEnKFTest(ResTest):
         self.assertTrue(self.module.setVar(key, False))
         self.assertFalse(self.module.getBool(key))
 
-    def test_EE_option(self):
-        self.toggleKey("USE_EE")
-
-    def test_GE_option(self):
-        self.toggleKey("USE_GE")
-
     def test_scaledata_option(self):
         self.toggleKey("ANALYSIS_SCALE_DATA")
