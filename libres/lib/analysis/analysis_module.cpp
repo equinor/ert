@@ -175,6 +175,7 @@ void analysis_module_initX(analysis_module_type *module, matrix_type *X,
                            const matrix_type *E, const matrix_type *D,
                            rng_type *rng) {
 
+    // Just call the initX function directly
     module->initX(module->module_data, X, A, S, R, dObs, E, D, rng);
 }
 
