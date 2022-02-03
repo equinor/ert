@@ -136,12 +136,13 @@ class EnkfFsManager(BaseCClass):
     # The return value from the getFileSystem will be a weak reference to the
     # underlying enkf_fs object. That implies that the fs manager must be in
     # scope for the return value to be valid.
-    def getFileSystem(self, case_name, mount_root=None, read_only=False) -> EnkfFs:
+    def getFileSystem(self, case_name, mount_root=None) -> EnkfFs:
         """
         @rtype: EnkfFs
         """
         if mount_root is None:
             mount_root = self._mount_root
+
         full_case_name = self._createFullCaseName(mount_root, case_name)
 
         if full_case_name not in self._fs_rotator:
@@ -151,7 +152,7 @@ class EnkfFsManager(BaseCClass):
 
                 EnkfFs.createFileSystem(full_case_name)
 
-            new_fs = EnkfFs(full_case_name, read_only)
+            new_fs = EnkfFs(full_case_name)
             self._fs_rotator.addFileSystem(new_fs, full_case_name)
 
         fs = self._fs_rotator[full_case_name]

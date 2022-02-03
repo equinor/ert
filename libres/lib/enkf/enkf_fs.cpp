@@ -212,7 +212,7 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
     return fs;
 }
 
-enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
@@ -243,13 +243,12 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
         if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
             fs->read_only = false;
         } else {
-            if (!read_only) {
-                fprintf(stderr,
-                        " Another program has already opened filesystem "
-                        "read-write - this instance will be UNSYNCRONIZED "
-                        "read-only. Cross your fingers ....\n");
-            }
+            fprintf(stderr, " Another program has already opened filesystem "
+                            "read-write - this instance will be UNSYNCRONIZED "
+                            "read-only. Cross your fingers ....\n");
+            fs->read_only = true;
         }
+
         util_free_stringlist(path_tmp, path_len);
     }
     return fs;
@@ -341,9 +340,8 @@ static void enkf_fs_assign_driver(enkf_fs_type *fs,
 }
 
 static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
-                                            const char *mount_point,
-                                            bool read_only) {
-    enkf_fs_type *fs = enkf_fs_alloc_empty(mount_point, read_only);
+                                            const char *mount_point) {
+    enkf_fs_type *fs = enkf_fs_alloc_empty(mount_point);
 
     {
         while (true) {
@@ -495,7 +493,7 @@ bool enkf_fs_update_disk_version(const char *mount_point, int src_version,
         return false;
 }
 
-enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
+enkf_fs_type *enkf_fs_mount(const char *mount_point) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
 
     if (!stream)
@@ -509,7 +507,7 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
 
     switch (driver_id) {
     case (BLOCK_FS_DRIVER_ID):
-        fs = enkf_fs_mount_block_fs(stream, mount_point, read_only);
+        fs = enkf_fs_mount_block_fs(stream, mount_point);
         res_log_fdebug("Mounting (block_fs) point %s.", mount_point);
         break;
     default:

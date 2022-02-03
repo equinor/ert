@@ -18,7 +18,6 @@ from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.status.tracker.factory import create_tracker
-from ert_shared.services import Storage
 from res.enkf import EnKFMain, ResConfig
 
 
@@ -41,10 +40,7 @@ def run_cli(args):
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtCliNotifier(ert, args.config)
-    with ERT.adapt(notifier), Storage.connect_or_start_server(
-        res_config=os.path.basename(args.config)
-    ) as storage:
-        storage.wait_until_ready()
+    with ERT.adapt(notifier):
 
         if args.mode == WORKFLOW_MODE:
             execute_workflow(args.name)

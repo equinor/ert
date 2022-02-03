@@ -11,7 +11,7 @@ from ert_shared.main import ert_parser
 
 
 @pytest.fixture
-def poly_case_context(tmpdir, source_root, mock_start_server):
+def poly_case_context(tmpdir, source_root):
     # Copy the poly_example files needed
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),

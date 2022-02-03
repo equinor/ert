@@ -8,7 +8,7 @@
 #include "../tmpdir.hpp"
 
 void enkf_fs_fwrite_misfit(enkf_fs_type *fs);
-enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only);
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point);
 extern "C" void enkf_fs_umount(enkf_fs_type *fs);
 extern "C" void
 misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
@@ -22,7 +22,7 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf]") {
     GIVEN("An instance of enkf_fs") {
         WITH_TMPDIR;
         auto file_path = std::filesystem::current_path();
-        auto fs = enkf_fs_alloc_empty(file_path.c_str(), false);
+        auto fs = enkf_fs_alloc_empty(file_path.c_str());
         enkf_fs_init_path_fmt(fs);
 
         WHEN("Misfits ensemble is initialized with minimal config") {
