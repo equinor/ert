@@ -69,7 +69,6 @@ def run_gui(args):
         window = _start_window(ert, notifier, args)
         return app.exec_()
 
-
 def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
 
     _check_locale()

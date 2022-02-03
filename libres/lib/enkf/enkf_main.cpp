@@ -479,6 +479,7 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     enkf_main_rng_init(enkf_main);
     enkf_main_user_select_initial_fs(enkf_main, read_only);
     enkf_main_init_obs(enkf_main);
+
     enkf_main_add_ensemble_members(enkf_main);
 
     return enkf_main;

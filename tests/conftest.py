@@ -8,6 +8,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from utils import SOURCE_DIR
+from ert_shared.services import Storage
 from res.enkf import ResConfig
 from ert_shared.services import Storage
 
@@ -38,6 +39,13 @@ def env_save():
     ]
     set_xor = set(environment_pre).symmetric_difference(set(environment_post))
     assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
+
+
+@pytest.fixture()
+def mock_start_server(monkeypatch):
+    connect_or_start_server = MagicMock()
+    monkeypatch.setattr(Storage, "connect_or_start_server", connect_or_start_server)
+    yield connect_or_start_server
 
 
 @pytest.fixture(scope="session", autouse=True)
