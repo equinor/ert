@@ -58,7 +58,7 @@ ert_test_context_alloc_internal(test_work_area_type *work_area,
     test_context->res_config = res_config;
     test_context->work_area = work_area;
     test_context->enkf_main =
-        enkf_main_alloc(test_context->res_config, true, false);
+        enkf_main_alloc(test_context->res_config, true, false, false);
     test_context->rng = rng_alloc(MZRAN, INIT_DEV_URANDOM);
     return test_context;
 }

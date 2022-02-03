@@ -1,5 +1,6 @@
 import contextlib
 from argparse import ArgumentParser
+from unittest.mock import MagicMock
 
 import pytest
 import os
@@ -19,6 +20,7 @@ def poly_example_tmp_dir_shared(
     tmp_path_factory,
     source_root,
 ):
+
     tmpdir = tmp_path_factory.mktemp("my_poly_tmp")
     poly_dir = py.path.local(os.path.join(str(tmpdir), "poly_example"))
     shutil.copytree(
@@ -42,7 +44,7 @@ def poly_example_tmp_dir_shared(
             ],
         )
         run_cli(parsed)
-    return poly_dir
+    yield poly_dir
 
 
 @pytest.fixture()
@@ -93,7 +95,7 @@ def new_storage_client(monkeypatch, ert_storage_client):
 
 
 @pytest.fixture
-def run_poly_example_new_storage(monkeypatch, tmpdir, source_root):
+def run_poly_example_new_storage(monkeypatch, tmpdir, source_root, mock_start_server):
     poly_dir = py.path.local(os.path.join(str(tmpdir), "poly_example"))
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),

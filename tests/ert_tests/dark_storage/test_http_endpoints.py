@@ -1,19 +1,13 @@
-from argparse import ArgumentParser
-
 from numpy.testing import assert_array_equal
 from requests import Response
 import uuid
 
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_EXPERIMENT_MODE
-from ert_shared.cli.main import run_cli
-from ert_shared.main import ert_parser
 
 import pandas as pd
 import io
-import pytest
 
 
-def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
+def test_get_experiment(mock_start_server, poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
     assert len(answer_json) == 1

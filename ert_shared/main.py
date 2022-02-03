@@ -424,7 +424,7 @@ def ert_parser(parser, argv):
 
 @contextmanager
 def start_ert_server(mode: str):
-    if mode in ("api", "vis") or not FeatureToggling.is_enabled("new-storage"):
+    if mode in ("api", "vis", "gui") or not FeatureToggling.is_enabled("new-storage"):
         yield
         return
 

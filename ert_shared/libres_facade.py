@@ -49,7 +49,7 @@ class LibresFacade(object):
         )
 
     def get_active_realizations(self, case_name):
-        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
+        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name, read_only=True)
         realizations = SummaryCollector.createActiveList(self._enkf_main, fs)
 
         return realizations
