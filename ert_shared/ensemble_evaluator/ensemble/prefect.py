@@ -89,9 +89,9 @@ def _get_executor(custom_port_range, name="local"):
             "queue": "normal",
             "project": "ERT-TEST",
             "local_directory": "$TMPDIR",
-            "cores": 4,
-            "memory": "16gb",
-            "resource_spec": "select=1:ncpus=4:mem=16gb",
+            "cores": 1,
+            "memory": "32gb",
+            "resource_spec": "select=1:ncpus=1:mem=32gb",
             "scheduler_options": {"port": port},
             "extra": ["--worker-port", "51820:51840"],
         }
