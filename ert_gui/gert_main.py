@@ -38,7 +38,8 @@ from ert_gui.tools.workflows import WorkflowsTool
 from ert_shared import ERT
 
 from res.enkf import EnKFMain, ResConfig
-from ert_shared.services import Storage
+
+import ecl
 
 
 def run_gui(args):
@@ -59,10 +60,7 @@ def run_gui(args):
 
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtNotifier(ert, args.config)
-    with ERT.adapt(notifier), Storage.connect_or_start_server(
-        res_config=os.path.basename(args.config)
-    ) as storage:
-        storage.wait_until_ready()
+    with ERT.adapt(notifier):
         # window reference must be kept until app.exec returns
         window = _start_window(ert, args)
         return app.exec_()

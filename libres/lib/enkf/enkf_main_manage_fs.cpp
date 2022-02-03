@@ -388,8 +388,7 @@ const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main) {
 */
 
 enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
-                                     const char *case_path, bool create,
-                                     bool read_only) {
+                                     const char *case_path, bool create) {
     if (enkf_main_case_is_current(enkf_main, case_path)) {
         // Fast path - we just return a reference to the currently selected case;
         // with increased refcount.
@@ -407,7 +406,7 @@ enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
                     enkf_main_create_fs(enkf_main, case_path);
             }
 
-            new_fs = enkf_fs_mount(new_mount_point, read_only);
+            new_fs = enkf_fs_mount(new_mount_point);
             if (new_fs) {
                 const model_config_type *model_config =
                     enkf_main_get_model_config(enkf_main);
@@ -492,13 +491,12 @@ void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
     }
 }
 
-void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
-                         bool read_only) {
+void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path) {
     if (enkf_main_case_is_current(enkf_main, case_path))
         return; /* We have tried to select the currently selected case - just return. */
     else {
         enkf_fs_type *new_fs =
-            enkf_main_mount_alt_fs(enkf_main, case_path, true, read_only);
+            enkf_main_mount_alt_fs(enkf_main, case_path, true);
         if (enkf_main->dbase == new_fs)
             util_abort("%s : return reference to current FS in situation where "
                        "that should not happen.\n",
@@ -516,8 +514,7 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
     }
 }
 
-static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
-                                             bool read_only) {
+static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main) {
     const char *ens_path =
         model_config_get_enspath(enkf_main_get_model_config(enkf_main));
     int root_version = enkf_fs_get_version104(ens_path);
@@ -528,7 +525,7 @@ static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
         if (enkf_main_current_case_file_exists(enkf_main)) {
             char *current_case =
                 enkf_main_read_alloc_current_case_name(enkf_main);
-            enkf_main_select_fs(enkf_main, current_case, read_only);
+            enkf_main_select_fs(enkf_main, current_case);
             free(current_case);
         } else if (enkf_fs_exists(current_mount_point) &&
                    util_is_link(current_mount_point)) {
@@ -537,13 +534,13 @@ static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
         write the current_case file and delete the symlink.*/
             char *target_case =
                 util_alloc_atlink_target(ens_path, CURRENT_CASE);
-            enkf_main_select_fs(enkf_main, target_case, read_only);
+            enkf_main_select_fs(enkf_main, target_case);
             unlink(current_mount_point);
             enkf_main_write_current_case_file(enkf_main, target_case);
             free(target_case);
         } else
-            enkf_main_select_fs(enkf_main, DEFAULT_CASE,
-                                read_only); // Selecting (a new) default case
+            enkf_main_select_fs(enkf_main,
+                                DEFAULT_CASE); // Selecting (a new) default case
 
         free(current_mount_point);
     } else {

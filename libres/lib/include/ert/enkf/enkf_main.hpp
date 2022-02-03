@@ -79,8 +79,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
 void enkf_main_create_run_path(enkf_main_type *enkf_main,
                                const ert_run_context_type *run_context);
 
-enkf_main_type *enkf_main_alloc(const res_config_type *, bool, bool,
-                                bool = false);
+enkf_main_type *enkf_main_alloc(const res_config_type *, bool, bool);
 
 enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
 
@@ -203,12 +202,10 @@ enkf_fs_type *enkf_main_job_get_fs(const enkf_main_type *);
 enkf_fs_type *enkf_main_get_fs_ref(const enkf_main_type *enkf_main);
 const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main);
 enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
-                                     const char *case_path, bool create,
-                                     bool read_only = false);
+                                     const char *case_path, bool create);
 void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
                       const char *case_path);
-void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
-                         bool read_only = false);
+void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path);
 bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
                          const char *input_case);
 const char *enkf_main_get_mount_root(const enkf_main_type *enkf_main);

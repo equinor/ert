@@ -25,7 +25,7 @@ from res.enkf.util import TimeMap
 class EnkfFs(BaseCClass):
     TYPE_NAME = "enkf_fs"
 
-    _mount = ResPrototype("void* enkf_fs_mount(char*, bool)", bind=False)
+    _mount = ResPrototype("void* enkf_fs_mount(char* )", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
     _exists = ResPrototype("bool  enkf_fs_exists(char*)", bind=False)
     _disk_version = ResPrototype("int   enkf_fs_disk_version(char*)", bind=False)
@@ -49,8 +49,8 @@ class EnkfFs(BaseCClass):
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
 
-    def __init__(self, mount_point, read_only=False):
-        c_ptr = self._mount(mount_point, read_only)
+    def __init__(self, mount_point):
+        c_ptr = self._mount(mount_point)
         super().__init__(c_ptr)
 
     def copy(self):
