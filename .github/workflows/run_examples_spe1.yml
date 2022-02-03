@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6]
+        python-version: ['3.6']
         data-base: [local, postgres]
         os: [ubuntu-18.04]
 
