@@ -5,7 +5,7 @@ import sys
 import time
 from contextlib import contextmanager
 import pickle
-from typing import Set
+from typing import Optional, Set
 import cloudevents.exceptions
 from http import HTTPStatus
 
@@ -50,9 +50,7 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: asyncio.Queue[None] = asyncio.Queue(
-            loop=self._loop
-        )
+        self._dispatchers_connected: Optional[asyncio.Queue[None]] = None
         self._batcher = Batcher(timeout=2, loop=self._loop)
         self._dispatcher = Dispatcher(
             ensemble=self._ensemble,
@@ -136,6 +134,8 @@ class EnsembleEvaluator:
 
     @asynccontextmanager
     async def count_dispatcher(self):
+        if self._dispatchers_connected is None:
+            self._dispatchers_connected = asyncio.Queue(loop=self._loop)
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()
@@ -190,7 +190,10 @@ class EnsembleEvaluator:
             logger.debug("Got done signal.")
             # Wait for dispatchers to disconnect
             try:
-                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=20)
+                if self._dispatchers_connected is not None:
+                    await asyncio.wait_for(
+                        self._dispatchers_connected.join(), timeout=20
+                    )
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for dispatchers to disconnect")
             await self._batcher.join()
