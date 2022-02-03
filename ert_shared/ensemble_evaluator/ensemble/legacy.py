@@ -105,7 +105,7 @@ class _LegacyEnsemble(_Ensemble):
 
             self._job_queue = self._queue_config.create_job_queue()
 
-            timeout_queue = asyncio.Queue(loop=get_event_loop())
+            timeout_queue = asyncio.Queue()
             on_timeout, send_timeout_future = self.setup_timeout_callback(timeout_queue)
 
             for real in self.get_active_reals():
