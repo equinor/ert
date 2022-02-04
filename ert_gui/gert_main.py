@@ -57,7 +57,9 @@ def run_gui(args):
     )
 
     os.chdir(res_config.config_path)
-
+    # Changing current working directory means we need to update the config file to
+    # be the base name of the original config
+    args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     notifier = ErtNotifier(ert, args.config)
     with ERT.adapt(notifier):
