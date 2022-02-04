@@ -243,7 +243,7 @@ def test_empty_dataset_from_remove_inactive_observations(
         (1.0, pd.DataFrame(index=["OBS", "STD", 1, 2])),
     ],
 )
-def test_filter_ensamble_std(
+def test_filter_ensemble_std(
     std_cutoff, expected_result, monkeypatch, facade, measured_data_setup
 ):
     expected_result.columns = _set_multiindex(expected_result)
