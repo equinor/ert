@@ -4,7 +4,7 @@ import io
 import numpy as np
 import pandas as pd
 from enum import Enum
-from typing import Any, Mapping, Optional, List, AsyncGenerator
+from typing import Any, Mapping, Dict, Optional, List, AsyncGenerator
 import sqlalchemy as sa
 from fastapi import (
     APIRouter,
@@ -583,12 +583,31 @@ async def get_record_labels(
     return []
 
 
-@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[Dict[str, Any]])
 async def get_ensemble_parameters(
     *, db: Session = Depends(get_db), ensemble_id: UUID
-) -> List[str]:
+) -> List[Dict[str, Any]]:
     ensemble = db.query(ds.Ensemble).filter_by(id=ensemble_id).one()
-    return ensemble.parameter_names
+    parameters = []
+    for name in ensemble.parameter_names:
+        param = {"name": name, "labels": []}
+        record = (
+            db.query(ds.Record)
+            .join(ds.RecordInfo)
+            .filter_by(name=name)
+            .join(ds.Ensemble)
+            .filter_by(id=ensemble_id)
+            .first()
+        )
+        if record is None:
+            parameters.append(param)
+            continue
+
+        if record.f64_matrix and record.f64_matrix.labels:
+            param["labels"] = record.f64_matrix.labels[0]
+
+        parameters.append(param)
+    return parameters
 
 
 @router.get(
