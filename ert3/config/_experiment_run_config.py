@@ -161,6 +161,7 @@ class ExperimentRunConfig:
                 dest_mime=stage_mime,
                 dest_location=stage_location,
                 dest_is_directory=stage_is_directory,
+                dest_smry_keys=stage_smry_keys,
                 dest_columns=stage_columns,
             )
             inputs[input_.source_namespace][input_.name] = input_
