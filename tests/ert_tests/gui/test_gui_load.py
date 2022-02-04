@@ -111,11 +111,11 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
         sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
         qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-        ensamble_panel = gui.findChild(
+        ensemble_panel = gui.findChild(
             qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
         )
         assert (
-            sim_panel.getCurrentSimulationModel() == ensamble_panel.getSimulationModel()
+            sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
         )
 
 

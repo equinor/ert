@@ -82,7 +82,7 @@ class MeasuredData:
 
     def _get_data(self, observation_keys, load_data, case_name):
         """
-        Adds simulated and observed data and returns a dataframe where ensamble
+        Adds simulated and observed data and returns a dataframe where ensemble
         members will have a data key, observed data will be named OBS and
         observed standard deviation will be named STD.
         """
@@ -126,7 +126,7 @@ class MeasuredData:
 
     def _filter_ensemble_std(self, std_cutoff):
         """
-        Filters on ensamble variation versus a user defined standard
+        Filters on ensemble variation versus a user defined standard
         deviation cutoff. If there is not enough variation in the measurements
         the data point is removed.
         """
@@ -136,7 +136,7 @@ class MeasuredData:
 
     def _filter_ensemble_mean_obs(self, alpha):
         """
-        Filters on distance between the observed data and the ensamble mean
+        Filters on distance between the observed data and the ensemble mean
         based on variation and a user defined alpha.
         """
         ens_mean = self.get_simulated_data().mean()
