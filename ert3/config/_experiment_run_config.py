@@ -30,6 +30,7 @@ class LinkedInput(NamedTuple):
     dest_mime: str
     dest_is_directory: bool
     dest_smry_keys: List[str]
+    dest_columns: List[str]
 
 
 class ExperimentRunConfig:
@@ -136,6 +137,7 @@ class ExperimentRunConfig:
             stage_mime = stage.input[name].mime
             stage_location = stage.input[name].location
             stage_smry_keys = stage.input[name].smry_keys
+            stage_columns = stage.input[name].columns
 
             if stage_mime != ensemble_input.mime:
                 print(
@@ -159,7 +161,7 @@ class ExperimentRunConfig:
                 dest_mime=stage_mime,
                 dest_location=stage_location,
                 dest_is_directory=stage_is_directory,
-                dest_smry_keys=stage_smry_keys,
+                dest_columns=stage_columns,
             )
             inputs[input_.source_namespace][input_.name] = input_
         return inputs

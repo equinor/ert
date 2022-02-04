@@ -43,6 +43,7 @@ class Record(_StagesConfig):
     mime: str = ""
     is_directory: bool = False
     smry_keys: Optional[List[str]] = None
+    columns: Optional[List[str]] = None
 
     _ensure_record_mime = validator("mime", allow_reuse=True)(ensure_mime("location"))
 

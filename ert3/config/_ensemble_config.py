@@ -42,6 +42,7 @@ class Input(_EnsembleConfig):
     mime: str = ""
     is_directory: Optional[bool]
     smry_keys: Optional[List[str]]
+    columns: Optional[List[str]]
 
     @no_type_check
     def __init__(self, **data: Any) -> None:

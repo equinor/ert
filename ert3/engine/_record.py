@@ -13,6 +13,7 @@ async def load_record(
     record_mime: str,
     record_is_directory: bool = False,
     smry_keys: Optional[List[str]] = None,
+    columns: Optional[List[str]] = None,
 ) -> None:
 
     collection = await ert.data.load_collection_from_file(
@@ -20,6 +21,7 @@ async def load_record(
         mime=record_mime,
         is_directory=record_is_directory,
         smry_keys=smry_keys,
+        columns=columns,
     )
     await ert.storage.transmit_record_collection(
         collection, record_name, workspace.name

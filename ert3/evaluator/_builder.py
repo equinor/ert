@@ -193,6 +193,8 @@ def _get_input_recordtransformation(
         return ert.data.TarRecordTransformation()
     elif input_config.dest_smry_keys:
         return ert.data.EclSumTransformation(input_config.dest_smry_keys)
+    elif input_config.dest_columns:
+        return ert.data.CSV2RecordTreeTransformation(input_config.dest_columns)
     return ert.data.FileRecordTransformation()
 
 
