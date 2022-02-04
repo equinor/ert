@@ -471,6 +471,7 @@ async def load_collection_from_file(
     length: int = 1,
     is_directory: bool = False,
     smry_keys: Optional[List[str]] = None,
+    columns: Optional[List[str]] = None,
 ) -> RecordCollection:
     """Creates :py:class:`RecordCollection` from the given path.
 
@@ -496,8 +497,15 @@ async def load_collection_from_file(
             length=length,
             collection_type=RecordCollectionType.UNIFORM,
         )
-    return RecordCollection(
-        records=await ert.data.FileRecordTransformation().transform_output_sequence(
-            mime, file_path
+    if columns:
+        return RecordCollection(
+            records=await ert.data.CSV2RecordTreeTransformation(
+                columns
+            ).transform_output_sequence(mime, file_path)
         )
-    )
+    else:
+        return RecordCollection(
+            records=await ert.data.FileRecordTransformation().transform_output_sequence(
+                mime, file_path
+            )
+        )

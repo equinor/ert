@@ -20,6 +20,7 @@ from .record._transformation import (
     RecordTransformation,
     RecordTreeTransformation,
     TarRecordTransformation,
+    CSV2RecordTreeTransformation,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -50,6 +51,7 @@ __all__ = (
     "FileRecordTransformation",
     "TarRecordTransformation",
     "ExecutableRecordTransformation",
+    "CSV2RecordTreeTransformation",
     "RecordTransformation",
     "transmitter_factory",
 )

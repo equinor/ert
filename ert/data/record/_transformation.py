@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple
 
 import aiofiles
 from ecl.summary import EclSum
+import pandas as pd
 
 from ert.data import BlobRecord, NumericalRecord, NumericalRecordTree, Record
 from ert.serialization import get_serializer
@@ -295,3 +296,31 @@ def _sync_eclsum_transform_output(
             data=dict(zip(map(str, eclsum.dates), map(float, eclsum.numpy_vector(key))))
         )
     return record_dict
+
+
+class CSV2RecordTreeTransformation(RecordTreeTransformation):
+    """Transform dataframe (csv) into a NumericalRecordTree."""
+
+    def __init__(self, columns: List[str]):
+        """
+        Args:
+            columns: List (non-empty) of column names to extract from csv file.
+                Wildcards are not supported.
+        """
+        if not columns:
+            raise ValueError("columns must be non-empty")
+        self._columns = columns
+
+    async def transform_output_sequence(
+        self,
+        mime: str,
+        location: Path,
+    ) -> Tuple[Record, ...]:
+        dframe = pd.read_csv(location, sep=" ")
+
+        record_dicts = [
+            {col: row[col] for col in self._columns} for _, row in dframe.iterrows()
+        ]
+        return tuple(
+            NumericalRecordTree(record_dict=record_dict) for record_dict in record_dicts
+        )
