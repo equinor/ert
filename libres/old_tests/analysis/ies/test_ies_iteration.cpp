@@ -3,7 +3,6 @@
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
 
@@ -17,8 +16,7 @@ void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    std_enkf_initX(std_data, X, nullptr, testdata.S, testdata.R, testdata.dObs,
-                   testdata.E, testdata.D, rng);
+    ies::initX(std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
 

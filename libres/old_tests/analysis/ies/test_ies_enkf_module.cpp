@@ -2,7 +2,6 @@
 #include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.hpp>
-#include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/res_util/es_testdata.hpp>
 

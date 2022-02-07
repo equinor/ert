@@ -12,7 +12,6 @@
 #include <ert/enkf/row_scaling.hpp>
 
 #include <ert/analysis/update.hpp>
-#include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 
 /**
