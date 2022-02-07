@@ -1,5 +1,6 @@
 from collections import namedtuple
-from typing import Any, Callable, Dict, Literal, Type, Union
+from typing import Any, Callable, Dict, Type, Union
+from typing_extensions import Literal
 
 from pydantic import BaseModel, Field, create_model
 

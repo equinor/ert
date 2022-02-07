@@ -1,9 +1,9 @@
+from functools import partialmethod
 from typing import List, Optional
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, create_model
 
 from ert3.config import PluginConfigManager
-from ert3.config import ErtBaseModel, ErtPluginField
 
 
 class _StagesConfig(BaseModel):
@@ -48,18 +48,39 @@ class DummyInstance:
 
 def get_configs(pm):
     """
-    We now need the create configs that use the ErtPluginField dynamically,
+    We now need the create configs dynamically,
     as we would like to control the schema created based on the plugins we provide.
     This will allow us to specify a subset of plugins we want to have effect at runtime,
     such as only using configs from ert in tests.
     """
 
-    class StageIO(ErtBaseModel, _StagesConfig, plugin_manager=pm):
-        name: str
-        transformation: ErtPluginField
+    def getter_template(self, category):
+        config_instance = getattr(self, category)
+        descriminator_value = getattr(
+            config_instance, pm.get_descriminator(category=category)
+        )
+        return pm.get_factory(category=category, name=descriminator_value)(
+            config_instance
+        )
+
+    stage_io_fields = {"name": (str, None)}
+    stage_io_methods = {}
+    for category in ["transformation"]:
+        stage_io_fields[category] = (pm.get_type(category), pm.get_field(category))
+        stage_io_methods[f"get_{category}_instance"] = partialmethod(
+            getter_template, category=category
+        )
+
+    stage_io = create_model(
+        "StageIO",
+        __base__=_StagesConfig,
+        **stage_io_fields,
+    )
+    for name, method in stage_io_methods.items():
+        setattr(stage_io, name, method)
 
     class Stage(BaseModel):
-        input: StageIO
+        input: stage_io
 
     return Stage
 

@@ -14,7 +14,6 @@ from ._experiment_config import load_experiment_config, ExperimentConfig
 from ._parameters_config import load_parameters_config, ParametersConfig
 from ._experiment_run_config import ExperimentRunConfig, LinkedInput
 from ._plugin_manager import PluginConfigManager
-from ._base import ErtPluginField, ErtBaseModel
 
 __all__ = [
     "load_ensemble_config",
@@ -36,6 +35,4 @@ __all__ = [
     "LinkedInput",
     "ExperimentRunConfig",
     "PluginConfigManager",
-    "ErtPluginField",
-    "ErtBaseModel",
 ]
