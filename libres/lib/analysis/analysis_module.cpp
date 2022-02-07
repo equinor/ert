@@ -32,7 +32,6 @@
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
-#include <ert/analysis/std_enkf.hpp>
 
 #include <fmt/format.h>
 #include <ert/logging.hpp>
