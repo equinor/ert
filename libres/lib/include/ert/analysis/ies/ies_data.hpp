@@ -4,7 +4,6 @@
 #include <ert/util/rng.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
-#include <ert/util/type_macros.hpp>
 
 #include <ert/analysis/ies/ies_config.hpp>
 
@@ -16,7 +15,7 @@ constexpr const char *ITER_KEY = "ITER";
 typedef struct data_struct data_type;
 
 data_type *alloc(bool ies_mode);
-void free(void *arg);
+void free(ies::data::data_type *data);
 
 void set_iteration_nr(data_type *data, int iteration_nr);
 int get_iteration_nr(const data_type *data);
@@ -45,8 +44,6 @@ const matrix_type *getE(const data_type *data);
 const matrix_type *getA0(const data_type *data);
 matrix_type *getW(const data_type *data);
 
-UTIL_SAFE_CAST_HEADER(data);
-UTIL_SAFE_CAST_HEADER_CONST(data);
 } // namespace data
 } // namespace ies
 

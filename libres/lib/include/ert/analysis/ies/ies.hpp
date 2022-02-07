@@ -34,7 +34,7 @@ matrix_type *alloc_activeE(const data::data_type *data);
 matrix_type *alloc_activeW(const data::data_type *data);
 matrix_type *alloc_activeA(const data::data_type *data);
 
-void init_update(void *arg, const bool_vector_type *ens_mask,
+void init_update(data::data_type *module_data, const bool_vector_type *ens_mask,
                  const bool_vector_type *obs_mask, const matrix_type *S,
                  const matrix_type *R, const matrix_type *dObs,
                  const matrix_type *E, const matrix_type *D, rng_type *rng);
@@ -49,7 +49,7 @@ void initX(data::data_type *ies_data, const matrix_type *S,
            matrix_type *X);
 
 void updateA(
-    void *module_data,
+    data::data_type *data,
     matrix_type *A,          // Updated ensemble A returned to ERT.
     const matrix_type *Yin,  // Ensemble of predicted measurements
     const matrix_type *Rin,  // Measurement error covariance matrix (not used)
