@@ -529,10 +529,7 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
                 const matrix_type *D, matrix_type *X) {
     const auto *ies_config = ies::data::get_config(ies_data);
     const int ens_size = matrix_get_columns(Y0);
-    const int obs_size = matrix_get_rows(Y0);
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-    bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
-    ies::data::update_obs_mask(ies_data, obs_mask);
     ies::data::update_ens_mask(ies_data, ens_mask);
     ies::data::allocateW(ies_data);
 
@@ -545,7 +542,6 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
                 config::get_truncation(ies_config), use_aa_projection, W0,
                 steplength, iteration_nr, nullptr);
 
-    bool_vector_free(obs_mask);
     bool_vector_free(ens_mask);
     matrix_free(W0);
 }
