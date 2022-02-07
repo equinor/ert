@@ -55,7 +55,12 @@ analysis_module_get_mode(const analysis_module_type *module) {
     return module->mode;
 }
 
-analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
+int analysis_module_ens_size(const analysis_module_type *module) {
+    return ies::data::ens_size(module->module_data);
+}
+
+analysis_module_type *analysis_module_alloc_named(int ens_size,
+                                                  analysis_mode_enum mode,
                                                   const char *module_name) {
     analysis_module_type *module =
         (analysis_module_type *)util_malloc(sizeof *module);
@@ -64,17 +69,19 @@ analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
     module->mode = mode;
     module->module_data = NULL;
     module->user_name = util_alloc_string_copy(module_name);
-    module->module_data = ies::data::alloc(mode == ITERATED_ENSEMBLE_SMOOTHER);
+    module->module_data =
+        ies::data::alloc(ens_size, mode == ITERATED_ENSEMBLE_SMOOTHER);
     module->user_name = util_alloc_string_copy(module_name);
 
     return module;
 }
 
-analysis_module_type *analysis_module_alloc(analysis_mode_enum mode) {
+analysis_module_type *analysis_module_alloc(int ens_size,
+                                            analysis_mode_enum mode) {
     if (mode == ENSEMBLE_SMOOTHER)
-        return analysis_module_alloc_named(mode, "STD_ENKF");
+        return analysis_module_alloc_named(ens_size, mode, "STD_ENKF");
     else if (mode == ITERATED_ENSEMBLE_SMOOTHER)
-        return analysis_module_alloc_named(mode, "IES_ENKF");
+        return analysis_module_alloc_named(ens_size, mode, "IES_ENKF");
     else
         throw std::logic_error("Undandled enum value");
 }

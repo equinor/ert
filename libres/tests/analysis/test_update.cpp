@@ -64,13 +64,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
          "[analysis]") {
 
     GIVEN("Fixed prior and measurements") {
-
-        auto enkf_module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
+        int ens_size = GENERATE(200, 100, 1000);
+        auto enkf_module = analysis_module_alloc(ens_size, ENSEMBLE_SMOOTHER);
         analysis_module_set_var(enkf_module, ies::config::ENKF_TRUNCATION_KEY,
                                 "1.0");
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
-
-        int ens_size = GENERATE(200, 100, 1000);
 
         auto ens_mask = bool_vector_alloc(ens_size, true);
         auto meas_data = meas_data_alloc(ens_mask);

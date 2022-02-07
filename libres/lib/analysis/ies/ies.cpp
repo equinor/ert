@@ -71,8 +71,6 @@ void ies::init_update(void *arg, const bool_vector_type *ens_mask,
 
     /* Store current ens_mask in module_data->ens_mask for each iteration */
     ies::data::update_ens_mask(module_data, ens_mask);
-    ies::data::allocateW(module_data);
-
     /* Store obs_mask for initial iteration in module_data->obs_mask0,
      *  for each subsequent iteration we store the current mask in module_data->obs_mask */
     ies::data::store_initial_obs_mask(module_data, obs_mask);
@@ -530,21 +528,17 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
                 const matrix_type *R, const matrix_type *E,
                 const matrix_type *D, matrix_type *X) {
     const auto *ies_config = ies::data::get_config(ies_data);
-    const int ens_size = matrix_get_columns(Y0);
-    bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-    ies::data::update_ens_mask(ies_data, ens_mask);
-    ies::data::allocateW(ies_data);
 
     bool use_aa_projection = false;
     double steplength = 1;
     int iteration_nr = 1;
+    int active_ens_size = matrix_get_rows(X);
 
-    auto *W0 = ies::alloc_activeW(ies_data);
+    auto *W0 = matrix_alloc(active_ens_size, active_ens_size);
     ies_initX__(nullptr, Y0, R, E, D, X, config::get_inversion(ies_config),
                 config::get_truncation(ies_config), use_aa_projection, W0,
                 steplength, iteration_nr, nullptr);
 
-    bool_vector_free(ens_mask);
     matrix_free(W0);
 }
 

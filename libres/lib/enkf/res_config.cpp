@@ -172,7 +172,6 @@ res_config_type *res_config_alloc(const config_content_type *config_content) {
     res_config->subst_config = subst_config_alloc(config_content);
     res_config->site_config = site_config_alloc(config_content);
     res_config->rng_config = rng_config_alloc(config_content);
-    res_config->analysis_config = analysis_config_alloc(config_content);
 
     res_config->workflow_list = ert_workflow_list_alloc(
         subst_config_get_subst_list(res_config->subst_config), config_content);
@@ -194,6 +193,8 @@ res_config_type *res_config_alloc(const config_content_type *config_content) {
         site_config_get_installed_jobs(res_config->site_config),
         ecl_config_get_last_history_restart(res_config->ecl_config),
         ecl_config_get_refcase(res_config->ecl_config));
+
+    res_config->analysis_config = analysis_config_alloc(config_content);
 
     res_config->log_config = log_config_alloc(config_content);
 

@@ -63,7 +63,7 @@ TEST_CASE("compare_initX", "[analysis]") {
         matrix_type *D = obs_data_allocD(obs_data, E, S);
 
         WHEN("different truncations are used") {
-            auto *std_data = ies::data::alloc(false);
+            auto *std_data = ies::data::alloc(ens_size, false);
             auto *ies_config = ies::data::get_config(std_data);
 
             matrix_type *X1 = matrix_alloc(ens_size, ens_size);
@@ -81,7 +81,7 @@ TEST_CASE("compare_initX", "[analysis]") {
         }
 
         WHEN("Different inversion methods are used") {
-            auto *std_data = ies::data::alloc(false);
+            auto *std_data = ies::data::alloc(ens_size, false);
             auto *ies_config = ies::data::get_config(std_data);
 
             matrix_type *X1 = matrix_alloc(ens_size, ens_size);
