@@ -131,7 +131,7 @@ class _Ensemble:
         )
         await client.websocket.close()
 
-    def get_successful_realizations(self):
+    def get_successful_realizations(self) -> int:
         return self._snapshot.get_successful_realizations()
 
     def _create_snapshot(self):

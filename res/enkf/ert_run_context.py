@@ -221,7 +221,7 @@ class ErtRunContext(BaseCClass):
     def get_mask(self) -> BoolVector:
         return self._get_mask()
 
-    def get_iter(self):
+    def get_iter(self) -> int:
         return self._get_iter()
 
     def get_target_fs(self) -> EnkfFs:

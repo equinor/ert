@@ -268,7 +268,7 @@ class Snapshot:
             step.status == state.STEP_STATE_SUCCESS for step in real.steps.values()
         )
 
-    def get_successful_realizations(self):
+    def get_successful_realizations(self) -> int:
         return len(
             [
                 real
