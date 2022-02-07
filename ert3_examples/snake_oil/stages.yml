@@ -49,3 +49,48 @@
     # Can't sample to integers/constants/discrete, seed.txt is fixed.
     - render -t snake_oil_params.txt.tmpl -i *.json -o snake_oil_params.txt
     - snaky_simulator
+
+
+-
+  name: run_simulator_dm
+
+  input:
+    - record: params
+      columns: 
+        - BPR_138_PERSISTENCE
+        - BPR_555_PERSISTENCE
+        - OP1_DIVERGENCE_SCALE
+        - OP1_OCTAVES
+        - OP1_OFFSET
+        - OP1_PERSISTENCE
+        - OP2_DIVERGENCE_SCALE
+        - OP2_OCTAVES
+        - OP2_OFFSET
+        - OP2_OCTAVES
+      location: resources/designmatrix.txt
+    -
+      record: seedtxt
+      location: seed.txt
+
+    -
+      record: snake_oil_params_txt_tmpl
+      location: snake_oil_params.txt.tmpl
+
+  output:
+    -
+      record: summary
+      location: SNAKE_OIL_FIELD.SMSPEC
+      smry_keys: ["FOPT", "FOPR"]
+
+  transportable_commands:
+    - name: render
+      # These must be in root directory of ert workspace, see issue #1429
+      location: render.py
+    -
+      name: snaky_simulator
+      location: snake_oil_simulator.py
+
+  script:
+    # Can't sample to integers/constants/discrete, seed.txt is fixed.
+    - render -t snake_oil_params.txt.tmpl -i *.json -o snake_oil_params.txt
+    - snaky_simulator

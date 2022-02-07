@@ -176,6 +176,7 @@ class Workspace:
             record_mime,
             ensemble_size,
             is_directory=linked_input.source_is_directory,
+            columns=linked_input.dest_columns,
         )
         return resource
 

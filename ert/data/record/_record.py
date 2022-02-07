@@ -484,6 +484,12 @@ async def load_collection_from_file(
         length: the number of records in the resulting collection. Defaults to 1.
         is_directory: specifies whether `file_path` is directory. Defaults to False.
     """
+    if columns:
+        return RecordCollection(
+            records=await ert.data.CSV2RecordTreeTransformation(
+                columns
+            ).transform_output_sequence(mime, file_path)
+        )
     if mime == "application/octet-stream":
         transformation: ert.data.RecordTransformation
         if smry_keys:
@@ -496,12 +502,6 @@ async def load_collection_from_file(
             records=(await transformation.transform_output(mime, file_path),),
             length=length,
             collection_type=RecordCollectionType.UNIFORM,
-        )
-    if columns:
-        return RecordCollection(
-            records=await ert.data.CSV2RecordTreeTransformation(
-                columns
-            ).transform_output_sequence(mime, file_path)
         )
     else:
         return RecordCollection(
