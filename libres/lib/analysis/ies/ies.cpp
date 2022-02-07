@@ -62,13 +62,12 @@ auto logger = ert::get_logger("ies");
 
 //#define DEFAULT_ANALYSIS_SCALE_DATA true
 
-void ies::init_update(void *arg, const bool_vector_type *ens_mask,
+void ies::init_update(ies::data::data_type *module_data,
+                      const bool_vector_type *ens_mask,
                       const bool_vector_type *obs_mask, const matrix_type *S,
                       const matrix_type *R, const matrix_type *dObs,
                       const matrix_type *E, const matrix_type *D,
                       rng_type *rng) {
-    ies::data::data_type *module_data = ies::data::data_safe_cast(arg);
-
     /* Store current ens_mask in module_data->ens_mask for each iteration */
     ies::data::update_ens_mask(module_data, ens_mask);
     ies::data::allocateW(module_data);
@@ -196,7 +195,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
 }
 
 void ies::updateA(
-    void *module_data,
+    data::data_type *data,
     matrix_type *A,          // Updated ensemble A retured to ERT.
     const matrix_type *Yin,  // Ensemble of predicted measurements
     const matrix_type *Rin,  // Measurement error covariance matrix (not used)
@@ -205,7 +204,6 @@ void ies::updateA(
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
     rng_type *rng) {
 
-    ies::data::data_type *data = ies::data::data_safe_cast(module_data);
     const ies::config::config_type *ies_config = ies::data::get_config(data);
 
     int ens_size = matrix_get_columns(
@@ -551,48 +549,3 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
     bool_vector_free(ens_mask);
     matrix_free(W0);
 }
-
-namespace {
-
-bool get_bool(const void *arg, const char *var_name) {
-    const ies::data::data_type *module_data =
-        ies::data::data_safe_cast_const(arg);
-    const ies::config::config_type *ies_config =
-        ies::data::get_config(module_data);
-    {
-        if (strcmp(var_name, ies::config::IES_AAPROJECTION_KEY) == 0)
-            return ies::config::get_aaprojection(ies_config);
-        else
-            return false;
-    }
-}
-
-bool has_var(const void *arg, const char *var_name) {
-    {
-        if (strcmp(var_name, ies::data::ITER_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_MAX_STEPLENGTH_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_MIN_STEPLENGTH_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_DEC_STEPLENGTH_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_INVERSION_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_LOGFILE_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_DEBUG_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::IES_AAPROJECTION_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::ENKF_TRUNCATION_KEY) == 0)
-            return true;
-        else if (strcmp(var_name, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) ==
-                 0)
-            return true;
-        else
-            return false;
-    }
-}
-
-} // namespace
