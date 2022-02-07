@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, create_model
 _RegisteredConfig = namedtuple("_RegisteredConfig", "config factory")
 
 
-class PluginConfigManager:
+class ConfigPluginRegistry:
     def __init__(self) -> None:
         self._descriminator: Dict[str, str] = {}
         self._registry: Dict[str, Dict[str, _RegisteredConfig]] = {}

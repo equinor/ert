@@ -13,7 +13,7 @@ from ._validator import DEFAULT_RECORD_MIME_TYPE
 from ._experiment_config import load_experiment_config, ExperimentConfig
 from ._parameters_config import load_parameters_config, ParametersConfig
 from ._experiment_run_config import ExperimentRunConfig, LinkedInput
-from ._plugin_manager import PluginConfigManager
+from ._config_plugin_registry import ConfigPluginRegistry
 
 __all__ = [
     "load_ensemble_config",
@@ -34,5 +34,5 @@ __all__ = [
     "TransportableCommand",
     "LinkedInput",
     "ExperimentRunConfig",
-    "PluginConfigManager",
+    "ConfigPluginRegistry",
 ]
