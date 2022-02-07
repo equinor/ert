@@ -75,6 +75,8 @@ analysis_module_type *analysis_module_alloc(analysis_mode_enum mode) {
         return analysis_module_alloc_named(mode, "STD_ENKF");
     else if (mode == ITERATED_ENSEMBLE_SMOOTHER)
         return analysis_module_alloc_named(mode, "IES_ENKF");
+    else
+        throw std::logic_error("Undandled enum value");
 }
 
 const char *analysis_module_get_name(const analysis_module_type *module) {
