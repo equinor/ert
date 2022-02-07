@@ -94,3 +94,4 @@
     # Can't sample to integers/constants/discrete, seed.txt is fixed.
     - render -t snake_oil_params.txt.tmpl -i *.json -o snake_oil_params.txt
     - snaky_simulator
+    
