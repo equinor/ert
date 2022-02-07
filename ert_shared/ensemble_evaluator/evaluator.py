@@ -237,7 +237,7 @@ class EnsembleEvaluator:
         self._loop.call_soon_threadsafe(self._stop)
         self._ws_thread.join()
 
-    def run_and_get_successful_realizations(self):
+    def run_and_get_successful_realizations(self) -> int:
         monitor_context = self.run()
         unsuccessfull_connection_attempts = 0
         while True:

@@ -238,8 +238,7 @@ class ModelConfig(BaseCClass):
     def set_max_internal_submit(self, max_value):
         self._get_max_internal_submit(max_value)
 
-    def getForwardModel(self):
-        """@rtype: ForwardModel"""
+    def getForwardModel(self) -> ForwardModel:
         return self._get_forward_model().setParent(self)
 
     def getRunpathAsString(self):

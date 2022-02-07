@@ -61,7 +61,7 @@ class RunArg(BaseCClass):
     def set_queue_index(self, index):
         self._set_queue_index(index)
 
-    def getQueueIndex(self):
+    def getQueueIndex(self) -> int:
         qi = self._get_queue_index_safe()
         if qi < 0:
             raise ValueError("Cannot get queue index before job is submitted.")
@@ -100,7 +100,7 @@ class RunArg(BaseCClass):
         return self._get_iter()
 
     @property
-    def iens(self):
+    def iens(self) -> int:
         return self._get_iens()
 
     @property
