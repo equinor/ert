@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile,
 from ert_shared.dark_storage.common import (
     get_response_names,
     data_for_key,
-    ensemble_parameter_names,
+    ensemble_parameters,
     observations_for_obs_keys,
 )
 from ert_storage import json_schema as js
@@ -208,12 +208,12 @@ async def get_record_labels(
     return []
 
 
-@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[str])
+@router.get("/ensembles/{ensemble_id}/parameters", response_model=List[dict])
 async def get_ensemble_parameters(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
-) -> List[str]:
+) -> List[dict]:
     ensemble_name = get_name(type="ensemble", uuid=ensemble_id)
-    return ensemble_parameter_names(ensemble_name)
+    return ensemble_parameters(ensemble_name)
 
 
 @router.get(
