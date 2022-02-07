@@ -24,7 +24,6 @@
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/analysis_module.hpp>
 
 #include <ert/analysis/ies/ies_config.hpp>

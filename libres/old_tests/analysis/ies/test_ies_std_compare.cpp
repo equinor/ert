@@ -3,7 +3,6 @@
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/std_enkf.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
 
@@ -48,8 +47,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     ies::updateA(ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
                  testdata.E, testdata.D, rng);
 
-    std_enkf_initX(std_data, X, nullptr, testdata.S, testdata.R, testdata.dObs,
-                   testdata.E, testdata.D, rng);
+    ies::initX(std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
     test_assert_true(matrix_similar(A1, A2, 5e-6));
