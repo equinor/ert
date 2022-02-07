@@ -24,7 +24,6 @@
 #define IES_DATA_TYPE_ID 6635831
 
 struct ies::data::data_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int iteration_nr; // Keep track of the outer iteration loop
     int state_size;   // Initial state_size used for checks in subsequent calls
     bool_vector_type *ens_mask; // Ensemble mask of active realizations
@@ -41,12 +40,8 @@ struct ies::data::data_struct {
         config; // This I don't understand but I assume I include data from the ies_config_type defined in ies_config.cpp
 };
 
-UTIL_SAFE_CAST_FUNCTION(ies::data::data, IES_DATA_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(ies::data::data, IES_DATA_TYPE_ID)
-
 ies::data::data_type *ies::data::alloc(bool ies_mode) {
     ies::data::data_type *data = new ies::data::data_type();
-    UTIL_TYPE_ID_INIT(data, IES_DATA_TYPE_ID);
     data->iteration_nr = 0;
     data->state_size = 0;
     data->ens_mask = NULL;
@@ -60,8 +55,7 @@ ies::data::data_type *ies::data::alloc(bool ies_mode) {
     return data;
 }
 
-void ies::data::free(void *arg) {
-    ies::data::data_type *data = ies::data::data_safe_cast(arg);
+void ies::data::free(ies::data::data_type *data) {
     ies::config::free(data->config);
 
     if (data->ens_mask)
