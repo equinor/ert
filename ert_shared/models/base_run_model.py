@@ -1,14 +1,21 @@
 import logging
 import time
 import uuid
+from typing import Optional, Dict, List, Tuple, Union
 import asyncio
-from typing import Optional
 
 from ecl.util.util import BoolVector
 
+from res.enkf import EnKFMain, QueueConfig, RunArg
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.job_queue import ForwardModelStatus, JobStatusType, RunStatusType
+from res.job_queue import (
+    ForwardModelStatus,
+    JobStatusType,
+    RunStatusType,
+    JobQueue,
+    ForwardModel,
+)
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
@@ -20,6 +27,7 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 # A method decorated with the @job_queue decorator implements the following logic:
 #
@@ -45,50 +53,56 @@ class ErtRunError(Exception):
     pass
 
 
-class BaseRunModel(object):
-    def __init__(self, queue_config, phase_count=1):
-        super(BaseRunModel, self).__init__()
-        self._phase = 0
-        self._phase_count = phase_count
-        self._phase_name = "Starting..."
+class BaseRunModel:
+    def __init__(self, queue_config: QueueConfig, phase_count: Optional[int] = 1):
+        """
 
-        self._job_start_time = 0
-        self._job_stop_time = 0
-        self._indeterminate = False
-        self._fail_message = ""
-        self._failed = False
-        self._queue_config = queue_config
-        self._job_queue = None
-        self.realization_progress = {}
-        self.initial_realizations_mask = []
-        self.completed_realizations_mask = []
-        self.support_restart = True
-        self._run_context = None
-        self._last_run_iteration = -1
+        Parameters
+        ----------
+        queue_config : QueueConfig
+        phase_count : Optional[int], optional
+            Number of data assimilation cycles / iterations an experiment will have, by default 1
+        """
+        self._phase: int = 0
+        self._phase_count = phase_count
+        self._phase_name: str = "Starting..."
+
+        self._job_start_time: int = 0
+        self._job_stop_time: int = 0
+        self._indeterminate: bool = False
+        self._fail_message: str = ""
+        self._failed: bool = False
+        self._queue_config: QueueConfig = queue_config
+        self._job_queue: JobQueue = None
+        self.realization_progress: Dict[int, int] = {}
+        self.initial_realizations_mask: List[int] = []
+        self.completed_realizations_mask: List[int] = []
+        self.support_restart: bool = True
+        self._run_context: ErtRunContext = None
+        self._last_run_iteration: int = -1
         self.reset()
 
-    def ert(self):
-        """@rtype: res.enkf.EnKFMain"""
+    def ert(self) -> EnKFMain:
         return ERT.ert
 
     @property
-    def _ensemble_size(self):
+    def _ensemble_size(self) -> int:
         return len(self.initial_realizations_mask)
 
     @property
-    def _active_realizations(self):
+    def _active_realizations(self) -> List[int]:
         realization_mask = self.initial_realizations_mask
         return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
 
-    def reset(self):
+    def reset(self) -> None:
         self._failed = False
         self._phase = 0
 
-    def start_simulations_thread(self, arguments):
+    def start_simulations_thread(self, arguments) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(arguments=arguments)
 
-    def startSimulations(self, arguments):
+    def startSimulations(self, arguments) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(arguments)
@@ -117,13 +131,13 @@ class BaseRunModel(object):
     def create_context(self, arguments):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    def teardown_context(self):
+    def teardown_context(self) -> None:
         # Used particularly to delete last active run_context to notify
         # fs_manager that storage is not being written to.
         self._run_context = None
 
     @job_queue(None)
-    def killAllSimulations(self):
+    def killAllSimulations(self) -> None:
         if FeatureToggling.is_enabled("ensemble-evaluator"):
             raise NotImplementedError(
                 "the ensemble evaluator does not implement killAllSimulations"
@@ -131,54 +145,51 @@ class BaseRunModel(object):
         self._job_queue.kill_all_jobs()
 
     @job_queue(False)
-    def userExitCalled(self):
-        """@rtype: bool"""
+    def userExitCalled(self) -> bool:
         return self._job_queue.getUserExit()
 
-    def phaseCount(self):
-        """@rtype: int"""
+    def phaseCount(self) -> int:
         return self._phase_count
 
-    def setPhaseCount(self, phase_count):
+    def setPhaseCount(self, phase_count: int) -> None:
         self._phase_count = phase_count
         self.setPhase(0, "")
 
-    def currentPhase(self):
-        """@rtype: int"""
+    def currentPhase(self) -> int:
         return self._phase
 
-    def setPhaseName(self, phase_name, indeterminate=None):
+    def setPhaseName(
+        self, phase_name: str, indeterminate: Optional[bool] = None
+    ) -> None:
         self._phase_name = phase_name
         self.setIndeterminate(indeterminate)
 
-    def getPhaseName(self):
-        """@rtype: str"""
+    def getPhaseName(self) -> str:
         return self._phase_name
 
-    def setIndeterminate(self, indeterminate):
+    def setIndeterminate(self, indeterminate: Union[bool, None]):
         if indeterminate is not None:
             self._indeterminate = indeterminate
 
-    def isFinished(self):
-        """@rtype: bool"""
+    def isFinished(self) -> bool:
         return self._phase == self._phase_count or self.hasRunFailed()
 
-    def hasRunFailed(self):
-        """@rtype: bool"""
+    def hasRunFailed(self) -> bool:
         return self._failed
 
-    def getFailMessage(self):
-        """@rtype: str"""
+    def getFailMessage(self) -> str:
         return self._fail_message
 
-    def _simulationEnded(self):
+    def _simulationEnded(self) -> None:
         self._job_stop_time = int(time.time())
 
-    def setPhase(self, phase, phase_name, indeterminate=None):
+    def setPhase(
+        self, phase: int, phase_name: str, indeterminate: Optional[bool] = None
+    ) -> None:
         self.setPhaseName(phase_name)
         if not 0 <= phase <= self._phase_count:
             raise ValueError(
-                "Phase must be an integer from 0 to less than %d." % self._phase_count
+                "Phase must be an integer between (inclusive) 0 and {self._phase_count}"
             )
 
         self.setIndeterminate(indeterminate)
@@ -191,21 +202,20 @@ class BaseRunModel(object):
 
         self._phase = phase
 
-    def stop_time(self):
+    def stop_time(self) -> int:
         return self._job_stop_time
 
-    def start_time(self):
+    def start_time(self) -> int:
         return self._job_start_time
 
-    def get_runtime(self):
+    def get_runtime(self) -> Union[int, float]:
         if self.stop_time() < self.start_time():
             return time.time() - self.start_time()
         else:
             return self.stop_time() - self.start_time()
 
     @job_queue(1)
-    def getQueueSize(self):
-        """@rtype: int"""
+    def getQueueSize(self) -> int:
         queue_size = len(self._job_queue)
 
         if queue_size == 0:
@@ -214,14 +224,13 @@ class BaseRunModel(object):
         return queue_size
 
     @job_queue({})
-    def getQueueStatus(self):
-        """@rtype: dict of (JobStatusType, int)"""
+    def getQueueStatus(self) -> Dict[JobStatusType, int]:
         queue_status = {}
 
         for job_number in range(len(self._job_queue)):
             status = self._job_queue.getJobStatus(job_number)
 
-            if not status in queue_status:
+            if status not in queue_status:
                 queue_status[status] = 0
 
             queue_status[status] += 1
@@ -229,15 +238,14 @@ class BaseRunModel(object):
         return queue_status
 
     @job_queue(False)
-    def isQueueRunning(self):
-        """@rtype: bool"""
+    def isQueueRunning(self) -> bool:
         return self._job_queue.isRunning()
 
     @staticmethod
     def is_forward_model_finished(progress) -> bool:
         return all(job.status == "Success" for job in progress)
 
-    def update_progress_for_index(self, iteration, idx, run_arg):
+    def update_progress_for_index(self, iteration: int, idx, run_arg: RunArg) -> None:
         try:
             # will throw if not yet submitted (is in a limbo state)
             queue_index = run_arg.getQueueIndex()
@@ -287,7 +295,7 @@ class BaseRunModel(object):
         self.realization_progress[iteration][run_arg.iens] = jobs, status
 
     @job_queue({})
-    def updateDetailedProgress(self):
+    def updateDetailedProgress(self) -> None:
         if not self._run_context:
             return
 
@@ -310,7 +318,7 @@ class BaseRunModel(object):
             else:
                 raise
 
-    def getDetailedProgress(self):
+    def getDetailedProgress(self) -> Tuple[Dict[int, int], int]:
         self.updateDetailedProgress()
 
         if (
@@ -325,11 +333,10 @@ class BaseRunModel(object):
         else:
             return {}, -1
 
-    def isIndeterminate(self):
-        """@rtype: bool"""
+    def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
 
-    def checkHaveSufficientRealizations(self, num_successful_realizations):
+    def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
         elif (
@@ -343,7 +350,7 @@ class BaseRunModel(object):
                 "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
             )
 
-    def checkMinimumActiveRealizations(self, run_context):
+    def checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
         active_realizations = self.count_active_realizations(run_context)
         if (
             not self.ert()
@@ -354,10 +361,12 @@ class BaseRunModel(object):
                 "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
             )
 
-    def count_active_realizations(self, run_context):
+    def count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
-    def run_ensemble_evaluator(self, run_context, ee_config):
+    def run_ensemble_evaluator(
+        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
+    ) -> int:
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
@@ -398,7 +407,7 @@ class BaseRunModel(object):
         run_context.get_sim_fs().fsync()
         return totalOk
 
-    def get_forward_model(self):
+    def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()
 
     def get_run_context(self) -> ErtRunContext:

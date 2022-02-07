@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import Mock, patch
 import pytest
 
@@ -19,42 +18,40 @@ class BaseRunModelTest(ErtTest):
             notifier = ErtNotifier(ert, config_file)
             with ERT.adapt(notifier):
                 brm = BaseRunModel(ert.get_queue_config())
-                self.assertFalse(brm.isQueueRunning())
+                assert not brm.isQueueRunning()
 
 
-class InMemoryBaseRunModelTest(unittest.TestCase):
-    def test_detailed_progress(self):
-        # TODO: rewrite to make use of fixtures
-        brm = BaseRunModel(None)
-        brm._run_context = Mock()
-        brm._run_context.get_iter.return_value = 0
+def test_detailed_progress():
+    brm = BaseRunModel(None)
+    brm._run_context = Mock()
+    brm._run_context.get_iter.return_value = 0
 
-        run_arg1 = Mock()
-        run_arg1.getQueueIndex.return_value = 0
-        run_arg2 = Mock()
-        run_arg2.getQueueIndex.return_value = 1
-        run_arg2.iens = 0
-        brm._run_context.__iter__ = Mock()
-        brm._run_context.__iter__.return_value = iter([run_arg1, run_arg2])
+    run_arg1 = Mock()
+    run_arg1.getQueueIndex.return_value = 0
+    run_arg2 = Mock()
+    run_arg2.getQueueIndex.return_value = 1
+    run_arg2.iens = 0
+    brm._run_context.__iter__ = Mock()
+    brm._run_context.__iter__.return_value = iter([run_arg1, run_arg2])
 
-        def job_status(queue_index):
-            if queue_index == 0:
-                return JobStatusType.JOB_QUEUE_PENDING
-            if queue_index == 1:
-                return JobStatusType.JOB_QUEUE_RUNNING
+    def job_status(queue_index):
+        if queue_index == 0:
+            return JobStatusType.JOB_QUEUE_PENDING
+        if queue_index == 1:
+            return JobStatusType.JOB_QUEUE_RUNNING
 
-        brm._job_queue = Mock()
-        brm._job_queue.getJobStatus.side_effect = job_status
-        brm._job_queue.did_job_time_out.return_value = False
+    brm._job_queue = Mock()
+    brm._job_queue.getJobStatus.side_effect = job_status
+    brm._job_queue.did_job_time_out.return_value = False
 
-        with patch("ert_shared.models.base_run_model.ForwardModelStatus") as f:
-            f.load.return_value = Mock()
-            f.load.return_value.jobs = [{"name": "job1"}]
-            brm.updateDetailedProgress()
+    with patch("ert_shared.models.base_run_model.ForwardModelStatus") as f:
+        f.load.return_value = Mock()
+        f.load.return_value.jobs = [{"name": "job1"}]
+        brm.updateDetailedProgress()
 
-        jobs, status = brm.realization_progress[0][0]
-        self.assertEqual(len(jobs), 1)
-        self.assertIn("name", jobs[0])
+    jobs, _ = brm.realization_progress[0][0]
+    assert len(jobs) == 1
+    assert "name" in jobs[0]
 
 
 class MockJob:

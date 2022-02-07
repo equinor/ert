@@ -274,7 +274,7 @@ class JobQueue(BaseCClass):
     def igetSimStart(self, job_index):
         return self._iget_sim_start(self, job_index)
 
-    def getUserExit(self):
+    def getUserExit(self) -> bool:
         # Will check if a user_exit has been initated on the job. The
         # queue can be queried about this status until a
         # job_queue_reset() call is invoked, and that should not be
