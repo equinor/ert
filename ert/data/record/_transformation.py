@@ -298,7 +298,7 @@ def _sync_eclsum_transform_output(
     return record_dict
 
 
-class CSV2RecordTreeTransformation(RecordTreeTransformation):
+class TabularData2RecordTreeTransformation(RecordTreeTransformation):
     """Transform dataframe (csv) into a NumericalRecordTree."""
 
     def __init__(self, columns: List[str]):
