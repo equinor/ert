@@ -4,6 +4,7 @@ Language: Cpp
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 IndentWidth: 4
+BreakConstructorInitializers: BeforeComma
 
 # Our includes are not order-agnostic
 SortIncludes: false

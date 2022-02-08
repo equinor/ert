@@ -41,7 +41,9 @@
 #include <ert/job_queue/slurm_driver.hpp>
 
 struct SlurmJob {
-    SlurmJob(int job_id) : job_id(job_id), string_id(std::to_string(job_id)) {}
+    SlurmJob(int job_id)
+        : job_id(job_id)
+        , string_id(std::to_string(job_id)) {}
 
     int job_id;
     std::string string_id;

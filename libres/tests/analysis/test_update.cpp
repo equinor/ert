@@ -42,7 +42,9 @@ struct model {
     double a;
     double b;
 
-    model(double a, double b) : a(a), b(b) {}
+    model(double a, double b)
+        : a(a)
+        , b(b) {}
 
     model(rng_type *rng) {
         double a_std = 2.0;

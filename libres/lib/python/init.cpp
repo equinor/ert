@@ -17,7 +17,8 @@ auto &submodules() {
 } // namespace
 
 ert::detail::Submodule::Submodule(const char *path, init_type &init)
-    : path(path), init(init) {
+    : path(path)
+    , init(init) {
     submodules().push_back(this);
 }
 

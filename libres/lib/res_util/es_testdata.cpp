@@ -139,11 +139,15 @@ void es_testdata::save_matrix(const std::string &name,
 es_testdata::es_testdata(const matrix_type *S, const matrix_type *R,
                          const matrix_type *dObs, const matrix_type *D,
                          const matrix_type *E)
-    : S(safe_copy(S)), R(safe_copy(R)), dObs(safe_copy(dObs)), D(safe_copy(D)),
-      E(safe_copy(E)), active_ens_size(matrix_get_columns(S)),
-      active_obs_size(matrix_get_rows(S)),
-      obs_mask(bool_vector_alloc(active_obs_size, true)),
-      ens_mask(bool_vector_alloc(active_ens_size, true)) {}
+    : S(safe_copy(S))
+    , R(safe_copy(R))
+    , dObs(safe_copy(dObs))
+    , D(safe_copy(D))
+    , E(safe_copy(E))
+    , active_ens_size(matrix_get_columns(S))
+    , active_obs_size(matrix_get_rows(S))
+    , obs_mask(bool_vector_alloc(active_obs_size, true))
+    , ens_mask(bool_vector_alloc(active_ens_size, true)) {}
 
 void es_testdata::deactivate_obs(int iobs) {
     if (iobs >= bool_vector_size(this->obs_mask))
@@ -188,8 +192,12 @@ void es_testdata::deactivate_realization(int iens) {
 }
 
 es_testdata::es_testdata(const char *path)
-    : path(path), S(nullptr), E(nullptr), R(nullptr), D(nullptr),
-      dObs(nullptr) {
+    : path(path)
+    , S(nullptr)
+    , E(nullptr)
+    , R(nullptr)
+    , D(nullptr)
+    , dObs(nullptr) {
     pushd tmp_path(this->path);
 
     auto size = load_size();

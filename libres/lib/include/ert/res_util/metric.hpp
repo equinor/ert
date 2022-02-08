@@ -8,7 +8,8 @@ namespace utils {
 class Benchmark {
 public:
     Benchmark(std::shared_ptr<ILogger> logger, const std::string &message)
-        : m_logger(logger), m_message(message) {}
+        : m_logger(logger)
+        , m_message(message) {}
 
     ~Benchmark() {
         m_logger->info(

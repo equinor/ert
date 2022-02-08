@@ -16,8 +16,10 @@ class scoped_memory_logger {
 public:
     scoped_memory_logger(std::shared_ptr<ert::ILogger> logger,
                          const std::string &message)
-        : m_logger(logger), m_message(message), m_enter_mem(process_memory()),
-          m_enter_max_mem(process_max_memory()) {
+        : m_logger(logger)
+        , m_message(message)
+        , m_enter_mem(process_memory())
+        , m_enter_max_mem(process_max_memory()) {
 
         if (m_enter_mem == 0 || m_enter_max_mem == 0)
             m_logger->info(

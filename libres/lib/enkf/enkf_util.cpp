@@ -29,7 +29,8 @@ class generator {
     rng_type *rng;
 
 public:
-    generator(rng_type *rng) : rng(rng) {}
+    generator(rng_type *rng)
+        : rng(rng) {}
 
     using value_type = unsigned int;
     static constexpr value_type min() { return 0; }

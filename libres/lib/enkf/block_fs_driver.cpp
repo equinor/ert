@@ -252,7 +252,8 @@ void ert::block_fs_driver::fsync() {
         bfs_fsync(this->fs_list[driver_nr]);
 }
 
-ert::block_fs_driver::block_fs_driver(int num_fs) : num_fs(num_fs) {
+ert::block_fs_driver::block_fs_driver(int num_fs)
+    : num_fs(num_fs) {
     this->fs_list = (bfs_type **)util_calloc(this->num_fs, sizeof(bfs_type *));
 }
 

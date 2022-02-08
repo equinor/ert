@@ -55,8 +55,10 @@ public:
         active_size; /* A hash table indexed by node keys - each element is an active_list instance. */
 
     local_ministep_type(const char *name, analysis_module_type *analysis_module)
-        : name(strdup(name)), analysis_module(analysis_module),
-          obs_data(nullptr), active_size(hash_alloc()) {
+        : name(strdup(name))
+        , analysis_module(analysis_module)
+        , obs_data(nullptr)
+        , active_size(hash_alloc()) {
         UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
         observations =
             local_obsdata_alloc(std::string("OBSDATA_" + this->name).data());

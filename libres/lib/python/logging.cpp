@@ -57,9 +57,11 @@ auto &loggers() {
  * they can still get monkeypatched by eg. pytest's caplog.
  */
 Logger::interface::interface(py::object logger)
-    : debug(logger.attr("debug")), info(logger.attr("info")),
-      warning(logger.attr("warning")), error(logger.attr("error")),
-      critical(logger.attr("critical")) {}
+    : debug(logger.attr("debug"))
+    , info(logger.attr("info"))
+    , warning(logger.attr("warning"))
+    , error(logger.attr("error"))
+    , critical(logger.attr("critical")) {}
 
 void Logger::init(const std::string &name) {
     // Calling via cwrap does not acquire GIL, so do it now

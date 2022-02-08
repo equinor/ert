@@ -122,7 +122,8 @@ fs::path make_path_for_catch2_test() {
 
 } // namespace
 
-TmpDir::TmpDir() : m_prev_cwd(fs::current_path()) {
+TmpDir::TmpDir()
+    : m_prev_cwd(fs::current_path()) {
     auto tmpdir = make_path_for_catch2_test();
     UNSCOPED_INFO("Using temporary directory " << tmpdir.string() << "\n");
     fs::current_path(tmpdir);
