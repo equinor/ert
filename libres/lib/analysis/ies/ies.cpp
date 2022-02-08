@@ -536,8 +536,9 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
     bool use_aa_projection = false;
     double steplength = 1;
     int iteration_nr = 1;
+    int active_ens_size = matrix_get_rows(X);
 
-    auto *W0 = ies::alloc_activeW(ies_data);
+    auto *W0 = matrix_alloc(active_ens_size, active_ens_size);
     ies_initX__(nullptr, Y0, R, E, D, X, config::get_inversion(ies_config),
                 config::get_truncation(ies_config), use_aa_projection, W0,
                 steplength, iteration_nr, nullptr);
