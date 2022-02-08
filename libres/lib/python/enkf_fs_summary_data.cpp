@@ -22,20 +22,19 @@ RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
             double *data = new double[size];
             std::fill_n(data, size, NAN);
 
-            int realization_index = 0;
-            for (const auto &realization_number : realizations) {
-                int summary_key_index = 0;
-                for (const auto &key : summary_keys) {
-                    auto ensemble_config_node =
-                        ensemble_config_get_node(ensemble_config, key.c_str());
-                    auto ensemble_data =
-                        enkf_plot_data_alloc(ensemble_config_node);
+            int summary_key_index = 0;
+            for (const auto &key : summary_keys) {
+                auto ensemble_config_node =
+                    ensemble_config_get_node(ensemble_config, key.c_str());
+                auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
-                    auto user_key = nullptr;
-                    auto input_mask = nullptr;
-                    enkf_plot_data_load(ensemble_data, enkfs_fs, user_key,
-                                        input_mask);
+                auto user_key = nullptr;
+                auto input_mask = nullptr;
+                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key,
+                                    input_mask);
 
+                int realization_index = 0;
+                for (const auto &realization_number : realizations) {
                     enkf_plot_tvector_type *realization_vector =
                         enkf_plot_data_iget(ensemble_data, realization_number);
                     int realization_vector_size =
@@ -53,9 +52,10 @@ RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
                                   summary_key_index)] = value;
                         }
                     }
-                    summary_key_index++;
+                    realization_index++;
                 }
-                realization_index++;
+                enkf_plot_data_free(ensemble_data);
+                summary_key_index++;
             }
 
             py::capsule free_when_done(data, [](void *f) {
