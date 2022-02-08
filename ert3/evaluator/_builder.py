@@ -194,7 +194,7 @@ def _get_input_recordtransformation(
     elif input_config.dest_smry_keys:
         return ert.data.EclSumTransformation(input_config.dest_smry_keys)
     elif input_config.dest_columns:
-        return ert.data.TabularData2RecordTreeTransformation(input_config.dest_columns)
+        return ert.data.TabularData2NumericalRecord(input_config.dest_columns)
     return ert.data.FileRecordTransformation()
 
 

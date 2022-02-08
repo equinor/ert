@@ -486,7 +486,7 @@ async def load_collection_from_file(
     """
     if columns:
         return RecordCollection(
-            records=await ert.data.TabularData2RecordTreeTransformation(
+            records=await ert.data.TabularData2NumericalRecord(
                 columns
             ).transform_output_sequence(mime, file_path)
         )

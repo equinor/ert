@@ -2,7 +2,18 @@ size: 10
 
 input:
   -
-    source: resources.designmatrix.txt
+    source: resources.designmatrix.xlsx
+    columns: 
+        - BPR_138_PERSISTENCE
+        - BPR_555_PERSISTENCE
+        - OP1_DIVERGENCE_SCALE
+        - OP1_OCTAVES
+        - OP1_OFFSET
+        - OP1_PERSISTENCE
+        - OP2_DIVERGENCE_SCALE
+        - OP2_OCTAVES
+        - OP2_OFFSET
+        - OP2_OCTAVES
     record: params
   -
     source: resources.seedtxt

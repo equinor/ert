@@ -298,8 +298,8 @@ def _sync_eclsum_transform_output(
     return record_dict
 
 
-class TabularData2RecordTreeTransformation(RecordTreeTransformation):
-    """Transform dataframe (csv) into a NumericalRecordTree."""
+class TabularData2NumericalRecord(FileRecordTransformation):
+    """Transform tabular data into a single NumericalRecord."""
 
     def __init__(self, columns: List[str]):
         """
@@ -311,16 +311,31 @@ class TabularData2RecordTreeTransformation(RecordTreeTransformation):
             raise ValueError("columns must be non-empty")
         self._columns = columns
 
+    async def transform_input(
+        self,
+        record: Record,
+        mime: str,
+        runpath: Path,
+        location: Path,
+    ) -> None:
+        if not isinstance(record, NumericalRecord):
+            raise TypeError("Only NumericalRecord can be transformed.")
+
+        print(f"DBG {record.data=}")
+        _prepare_location(runpath, location)
+        await _save_record_to_file(record, runpath / location, "application/json")
+
     async def transform_output_sequence(
         self,
         mime: str,
         location: Path,
     ) -> Tuple[Record, ...]:
-        dframe = pd.read_csv(location, sep=" ")
+        # if mime == "application/octet-stream":
+        dframe = pd.read_excel(location)
+        # else:
+        #     dframe = pd.read_csv(location)
 
         record_dicts = [
             {col: row[col] for col in self._columns} for _, row in dframe.iterrows()
         ]
-        return tuple(
-            NumericalRecordTree(record_dict=record_dict) for record_dict in record_dicts
-        )
+        return tuple(NumericalRecord(data=record_dict) for record_dict in record_dicts)

@@ -67,7 +67,7 @@
         - OP2_OCTAVES
         - OP2_OFFSET
         - OP2_OCTAVES
-      location: resources/designmatrix.txt
+      location: params.json
     -
       record: seedtxt
       location: seed.txt
@@ -92,6 +92,5 @@
 
   script:
     # Can't sample to integers/constants/discrete, seed.txt is fixed.
-    - render -t snake_oil_params.txt.tmpl -i *.json -o snake_oil_params.txt
+    - render -t snake_oil_params.txt.tmpl -i params.json -o snake_oil_params.txt
     - snaky_simulator
-    

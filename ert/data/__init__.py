@@ -20,7 +20,7 @@ from .record._transformation import (
     RecordTransformation,
     RecordTreeTransformation,
     TarRecordTransformation,
-    TabularData2RecordTreeTransformation,
+    TabularData2NumericalRecord,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -51,7 +51,7 @@ __all__ = (
     "FileRecordTransformation",
     "TarRecordTransformation",
     "ExecutableRecordTransformation",
-    "TabularData2RecordTreeTransformation",
+    "TabularData2NumericalRecord",
     "RecordTransformation",
     "transmitter_factory",
 )
