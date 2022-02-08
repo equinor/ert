@@ -27,6 +27,90 @@ Release Notes
  Miscellaneous:
    -
 
+
+Version 2.32
+------------
+
+Breaking changes:
+  - Remove local dataset notion (`#2645 <https://github.com/equinor/ert/pull/2645>`_)
+  - Remove unused functions in enkf_fs_manager (`#2664 <https://github.com/equinor/ert/pull/2664>`_)
+  - Remove unused class History (`#2718 <https://github.com/equinor/ert/pull/2718>`_)
+  - Remove unused python obs and measure (`#2725 <https://github.com/equinor/ert/pull/2725>`_)
+  - Remove unused code in python interface with analysis module (`#2716 <https://github.com/equinor/ert/pull/2716>`_)
+
+Bugfixes:
+  - Forward database url from argparse to Storage (`#2680 <https://github.com/equinor/ert/pull/2680>`_)
+  - Expected boolean return from void-function (`#2768 <https://github.com/equinor/ert/pull/2768>`_)
+  - Always handle connection errors when monitoring the ensemble (`#2771 <https://github.com/equinor/ert/pull/2771>`_)
+  - [ert3] Use lowercase letters when specifying psb resources (`#2692 <https://github.com/equinor/ert/pull/2692>`_)
+  - [ert3] Fix failure when using pbs driver (`#2689 <https://github.com/equinor/ert/pull/2689>`_)
+  - [ert3] Fix SPE1 yaml config for smry_keys (`#2685 <https://github.com/equinor/ert/pull/2685>`_)
+  - [ert3] Use ert port range for pbs driver (`#2723 <https://github.com/equinor/ert/pull/2723>`_)
+
+New features:
+  - Add method getActiveIndexList  to class ActiveList  (`#2323 <https://github.com/equinor/ert/pull/2323>`_)
+  - Support YYYY-MM-DD (ISO-8601) in observation files, timemap files and END_DATE keyword (`#2641 <https://github.com/equinor/ert/pull/2641>`_)
+  - [ert3] Support numerical characters in parameter names (`#2668 <https://github.com/equinor/ert/pull/2668>`_)
+  - [ert3] Make ert3 log to console when realizations complete (`#2732 <https://github.com/equinor/ert/pull/2732>`_)
+  - [ert3] Allow the user to setup backend DB url in ert3 (`#2701 <https://github.com/equinor/ert/pull/2701>`_)
+  - [ert3] Allow inline shell script in stages (`#2740 <https://github.com/equinor/ert/pull/2740>`_)
+
+Improvements:
+  - [ert3] Improve error messages in ert3 config validation (`#2702 <https://github.com/equinor/ert/pull/2702>`_)
+  - [ert3] Pretty print json for human readable files (`#2706 <https://github.com/equinor/ert/pull/2706>`_)
+  - [ert3] Increase timeout of storage (`#2729 <https://github.com/equinor/ert/pull/2729>`_)
+  - Use ert_storage.client (`#2644 <https://github.com/equinor/ert/pull/2644>`_)
+  - Introducing class and methods to log memory usage in scope (`#2640 <https://github.com/equinor/ert/pull/2640>`_)
+  - Namespace ies (`#2621 <https://github.com/equinor/ert/pull/2621>`_)
+  - Remove leftover dd/mm/yyyy mention in docs (`#2696 <https://github.com/equinor/ert/pull/2696>`_)
+  - Writeup of posterior properties (`#2699 <https://github.com/equinor/ert/pull/2699>`_)
+  - Make ConfigKeys an enum w/o ResPrototype (`#2657 <https://github.com/equinor/ert/pull/2657>`_)
+  - Remove broken test configuration file (`#2665 <https://github.com/equinor/ert/pull/2665>`_)
+  - Remove outdated documentation about developing analysis modules (`#2662 <https://github.com/equinor/ert/pull/2662>`_)
+  - Use `ies::config::config` class for configuration also of std enkf module (`#2681 <https://github.com/equinor/ert/pull/2681>`_)
+  - Use std variant (`#2709 <https://github.com/equinor/ert/pull/2709>`_)
+  - Replace parsing of excluded hostnames in lsf with standard library functions (`#2638 <https://github.com/equinor/ert/pull/2638>`_)
+  - Add function time logger (`#2624 <https://github.com/equinor/ert/pull/2624>`_)
+  - Use ies (`#2602 <https://github.com/equinor/ert/pull/2602>`_)
+  - Raise meaningful exception when accessing non existing analysis module (`#2727 <https://github.com/equinor/ert/pull/2727>`_)
+  - Add logging of analysis configuration (`#2752 <https://github.com/equinor/ert/pull/2752>`_)
+  - Describe SIMULATION_JOB (`#2754 <https://github.com/equinor/ert/pull/2754>`_)
+  - Gendata ndarray copy (`#2682 <https://github.com/equinor/ert/pull/2682>`_)
+
+Dependencies:
+  - Pin fastapi==0.70.1 (`#2677 <https://github.com/equinor/ert/pull/2677>`_)
+  - Bump ert-storage >= 0.3.7 (`#2679 <https://github.com/equinor/ert/pull/2679>`_)
+  - Don't ask for storage as an extras in CI (`#2695 <https://github.com/equinor/ert/pull/2695>`_)
+  - Pin Pandas version (`#2765 <https://github.com/equinor/ert/pull/2765>`_)
+
+Miscellaneous:
+  - Various improvements to analysis module (
+    `#2412 <https://github.com/equinor/ert/pull/2412>`_,
+    `#2527 <https://github.com/equinor/ert/pull/2527>`_,
+    `#2497 <https://github.com/equinor/ert/pull/2497>`_,
+    `#2628 <https://github.com/equinor/ert/pull/2628>`_,
+    `#2690 <https://github.com/equinor/ert/pull/2690>`_,
+    `#2705 <https://github.com/equinor/ert/pull/2705>`_,
+    `#2697 <https://github.com/equinor/ert/pull/2697>`_,
+    `#2711 <https://github.com/equinor/ert/pull/2711>`_,
+    `#2717 <https://github.com/equinor/ert/pull/2717>`_,
+    `#2721 <https://github.com/equinor/ert/pull/2721>`_,
+    )
+  - [ert3] Move EclSum support from serializers to transformations (`#2613 <https://github.com/equinor/ert/pull/2613>`_)
+  - Fix mypy `unused "type: ignore" comment` (`#2646 <https://github.com/equinor/ert/pull/2646>`_)
+  - Add script/ecl-check which counts libecl functions (`#2637 <https://github.com/equinor/ert/pull/2637>`_)
+  - Simplify enkf_main_case_is_initialized (`#2656 <https://github.com/equinor/ert/pull/2656>`_)
+  - Add information to pull request template (`#2663 <https://github.com/equinor/ert/pull/2663>`_)
+  - Simplify enkf_main_copy_ensemble  (`#2654 <https://github.com/equinor/ert/pull/2654>`_)
+  - Remove leftover debug-output (`#2693 <https://github.com/equinor/ert/pull/2693>`_)
+  - Group all ert3 tagged PRs together in release notes (`#2713 <https://github.com/equinor/ert/pull/2713>`_)
+  - Increase timeout from `run_examples_polynomial` CI (`#2726 <https://github.com/equinor/ert/pull/2726>`_)
+  - Replace default `gen_kw_export_name` with pybind (`#2719 <https://github.com/equinor/ert/pull/2719>`_)
+  - Add `RES_LIB_SUBMODULE` to pybind11 code (`#2737 <https://github.com/equinor/ert/pull/2737>`_)
+  - Add tests for performance of data collectors (`#2674 <https://github.com/equinor/ert/pull/2674>`_)
+  - Revert flaky performance tests (`#2825 <https://github.com/equinor/ert/pull/2825>`_)
+
+
 Version 2.31
 ------------
 
