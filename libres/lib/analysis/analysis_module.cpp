@@ -400,3 +400,23 @@ double analysis_module_get_double(const analysis_module_type *module,
 
     return -1;
 }
+
+
+//#include <ert/python.hpp>
+//
+//RES_LIB_SUBMODULE("analysis.analysis_module", m) {
+//    using namespace py::literals;
+//
+//    py::options opts;
+//    opts.disable_function_signatures();
+//
+//    py::class_<RowScaling, std::shared_ptr<RowScaling>>(m, "RowScaling")
+//        .def(py::init<>())
+//        .def("__len__", &RowScaling::size)
+//        .def("__setitem__", &setitem, "index"_a, "value"_a)
+//        .def("__getitem__", &getitem, "index"_a)
+//        .def("clamp", &RowScaling::clamp, "value"_a)
+//        .def("assign_vector", &assign_vector<float>, py::doc{assign_vector_doc},
+//             "scaling_vector"_a)
+//        .def("assign_vector", &assign_vector<double>, "scaling_vector"_a);
+//}

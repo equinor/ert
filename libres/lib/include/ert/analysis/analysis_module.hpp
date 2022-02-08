@@ -18,9 +18,8 @@
 
 #ifndef ERT_ANALYSIS_MODULE_H
 #define ERT_ANALYSIS_MODULE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#include <string>
 
 #include <ert/util/type_macros.hpp>
 #include <ert/res_util/matrix.hpp>
@@ -53,56 +52,38 @@ typedef enum {
     ITERATED_ENSEMBLE_SMOOTHER = 2
 } analysis_mode_enum;
 
-typedef struct analysis_module_struct analysis_module_type;
 
-analysis_module_type *analysis_module_alloc(int ens_size,
-                                            analysis_mode_enum mode);
-analysis_module_type *analysis_module_alloc_named(int ens_size,
-                                                  analysis_mode_enum mode,
-                                                  const char *module_name);
+class AnalysisModule {
+public:
+    AnalysisModule(int ens_size, analysis_mode_enum mode);
+    AnalysisModule(int ens_size, analysis_mode_enum mode, const std::string& module_name);
+    ~AnalysisModule();
 
-void analysis_module_free(analysis_module_type *module);
 
-void analysis_module_initX(analysis_module_type *module, matrix_type *X,
-                           const matrix_type *A, const matrix_type *S,
-                           const matrix_type *R, const matrix_type *dObs,
-                           const matrix_type *E, const matrix_type *D,
-                           rng_type *rng);
+    void initX(matrix_type * X, const matrix_type * A, const matrix_type * S, const matrix_type *R, const matrix_type * dObs, const matrix_type *E, const matrix_type * D, rng_type *rng) const;
 
-void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
-                             const matrix_type *S, const matrix_type *R,
-                             const matrix_type *dObs, const matrix_type *E,
-                             const matrix_type *D, rng_type *rng);
+    updateA(matrix_type *A, const matrix_type * A, const matrix_type *S, const matrix_type *R, const matrix_type * dObs, const matrix_type * E, const matrix_type *D, rng_type * rng);
 
-void analysis_module_init_update(analysis_module_type *module,
-                                 const bool_vector_type *ens_mask,
-                                 const bool_vector_type *obs_mask,
-                                 const matrix_type *S, const matrix_type *R,
-                                 const matrix_type *dObs, const matrix_type *E,
-                                 const matrix_type *D, rng_type *rng);
+    init_update(const bool_vector_type *ens_mask,
+                const bool_vector_type *obs_mask,
+                const matrix_type *S, const matrix_type *R,
+                const matrix_type *dObs, const matrix_type *E,
+                const matrix_type *D, rng_type *rng) const;
 
-bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
-                             const char *string_value);
-analysis_mode_enum analysis_module_get_mode(const analysis_module_type *module);
-const char *analysis_module_get_name(const analysis_module_type *module);
-bool analysis_module_check_option(const analysis_module_type *module,
-                                  analysis_module_flag_enum option);
+    int ens_size() const;
+    analysis_mode_enum mode() const;
+    const std::string& name() const;
 
-bool analysis_module_has_var(const analysis_module_type *module,
-                             const char *var);
-double analysis_module_get_double(const analysis_module_type *module,
-                                  const char *var);
-int analysis_module_get_int(const analysis_module_type *module,
-                            const char *var);
-bool analysis_module_get_bool(const analysis_module_type *module,
-                              const char *var);
-void *analysis_module_get_ptr(const analysis_module_type *module,
-                              const char *var);
-int analysis_module_ens_size(const analysis_module_type *module);
+    bool set(const std::string& var_name, const std::string& value);
+    bool has(const std::string& var_name);
+    template <typename T>
+    T get(const std::string& var) const;
 
-UTIL_IS_INSTANCE_HEADER(analysis_module);
+private:
+    std::string            user_name;
+    analysis_mode_enum     mode;
+    ies::data::data_type * module_data;
+};
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif
