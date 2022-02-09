@@ -272,7 +272,7 @@ class RecordTree(Record, Generic[RecordGen]):
             RecordValidationError: Raises when leaf Records
                 are not of the same type.
         """
-        self._record_type = RecordType.BYTES
+        self._record_type: RecordType = RecordType.BYTES
         self._flat_record_dict: Dict[str, RecordGen] = self._flatten_record_dict(
             record_dict
         )
