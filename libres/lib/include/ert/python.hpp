@@ -24,6 +24,14 @@ struct Submodule {
 };
 } // namespace ert::detail
 
+namespace ert {
+template <typename T> T *from_cwrap(py::object obj) {
+    py::int_ address = obj.attr("_BaseCClass__c_pointer");
+    void *pointer = PyLong_AsVoidPtr(address.ptr());
+
+    return reinterpret_cast<T *>(pointer);
+}
+} // namespace ert
 /**
  * Define a submodule path within the Python package 'res._lib'
  *
