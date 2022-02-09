@@ -110,12 +110,13 @@ void test_have_enough_realisations_defaulted() {
 }
 
 void test_current_module_options() {
+    int ens_size = 77;
     analysis_config_type *ac = create_analysis_config();
     test_assert_NULL(analysis_config_get_active_module(ac));
-    analysis_config_load_module(ac, ENSEMBLE_SMOOTHER);
 
     test_assert_false(
         analysis_config_get_module_option(ac, ANALYSIS_SCALE_DATA));
+    analysis_config_load_internal_modules(ens_size, ac);
     test_assert_true(analysis_config_select_module(ac, "STD_ENKF"));
     test_assert_false(analysis_config_select_module(ac, "DOES_NOT_EXIST"));
 

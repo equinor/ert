@@ -24,6 +24,7 @@
 #define IES_DATA_TYPE_ID 6635831
 
 struct ies::data::data_struct {
+    int ens_size;
     int iteration_nr; // Keep track of the outer iteration loop
     int state_size;   // Initial state_size used for checks in subsequent calls
     bool_vector_type *ens_mask; // Ensemble mask of active realizations
@@ -40,18 +41,20 @@ struct ies::data::data_struct {
         config; // This I don't understand but I assume I include data from the ies_config_type defined in ies_config.cpp
 };
 
-ies::data::data_type *ies::data::alloc(bool ies_mode) {
+ies::data::data_type *ies::data::alloc(int ens_size, bool ies_mode) {
     ies::data::data_type *data = new ies::data::data_type();
     data->iteration_nr = 0;
     data->state_size = 0;
+    data->ens_size = ens_size;
     data->ens_mask = NULL;
     data->obs_mask0 = NULL;
     data->obs_mask = NULL;
-    data->W = NULL;
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
     data->config = ies::config::alloc(ies_mode);
+    data->W = matrix_alloc(data->ens_size, data->ens_size);
+    matrix_set(data->W, 0.0);
     return data;
 }
 
@@ -99,6 +102,8 @@ void ies::data::update_ens_mask(ies::data::data_type *data,
 
     data->ens_mask = bool_vector_alloc_copy(ens_mask);
 }
+
+int ies::data::ens_size(const data_type *data) { return data->ens_size; }
 
 void ies::data::store_initial_obs_mask(ies::data::data_type *data,
                                        const bool_vector_type *obs_mask) {
@@ -197,15 +202,6 @@ void ies::data::store_initialA(ies::data::data_type *data,
     // We store the initial ensemble to use it in final update equation                     (Line 11)
     if (!data->A0)
         data->A0 = matrix_alloc_copy(A);
-}
-
-void ies::data::allocateW(ies::data::data_type *data) {
-    if (!data->W) {
-        // We initialize data->W which will store W for use in next iteration                    (Line 9)
-        int ens_size = bool_vector_size(data->ens_mask);
-        data->W = matrix_alloc(ens_size, ens_size);
-        matrix_set(data->W, 0.0);
-    }
 }
 
 const bool_vector_type *

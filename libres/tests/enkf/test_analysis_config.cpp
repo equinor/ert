@@ -6,11 +6,11 @@
 #include "../tmpdir.hpp"
 
 void analysis_config_load_internal_modules(analysis_config_type *config);
-
+int ens_size = 100;
 TEST_CASE("analysis_config_module_names", "[enkf]") {
     GIVEN("A default analysis config with internal modules loaded") {
         auto analysis_config = analysis_config_alloc_default();
-        analysis_config_load_internal_modules(analysis_config);
+        analysis_config_load_internal_modules(ens_size, analysis_config);
 
         WHEN("Module names are allocated") {
             auto modules = analysis_config_module_names(analysis_config);
@@ -28,7 +28,7 @@ TEST_CASE("Accessing analysis modules loaded in config", "[enkf]") {
     GIVEN("A default analysis config with internal modules loaded") {
         auto analysis_config = analysis_config_alloc_default();
         WHEN("Internal modules are loaded") {
-            analysis_config_load_internal_modules(analysis_config);
+            analysis_config_load_internal_modules(ens_size, analysis_config);
             THEN("Fetching existing module do not raise exception") {
                 REQUIRE_NOTHROW(
                     analysis_config_get_module(analysis_config, "STD_ENKF"));

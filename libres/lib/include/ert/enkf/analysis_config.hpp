@@ -47,7 +47,7 @@ analysis_config_get_module(const analysis_config_type *config,
                            const char *module_name);
 bool analysis_config_has_module(const analysis_config_type *config,
                                 const char *module_name);
-void analysis_config_load_module(analysis_config_type *config,
+void analysis_config_load_module(int ens_size, analysis_config_type *config,
                                  analysis_mode_enum mode);
 bool analysis_config_get_module_option(const analysis_config_type *config,
                                        analysis_module_flag_enum flag);
@@ -58,10 +58,12 @@ analysis_config_module_names(const analysis_config_type *config);
 const char *analysis_config_get_log_path(const analysis_config_type *config);
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config);
-PY_USED analysis_config_type *analysis_config_alloc_full(
-    double alpha, bool rerun, int rerun_start, const char *log_path,
-    double std_cutoff, bool stop_long_running, bool single_node_update,
-    double global_std_scaling, int max_runtime, int min_realisations);
+PY_USED analysis_config_type *
+analysis_config_alloc_full(int ens_size, double alpha, bool rerun,
+                           int rerun_start, const char *log_path,
+                           double std_cutoff, bool stop_long_running,
+                           bool single_node_update, double global_std_scaling,
+                           int max_runtime, int min_realisations);
 analysis_config_type *analysis_config_alloc_default(void);
 analysis_config_type *analysis_config_alloc_load(const char *user_config_file);
 analysis_config_type *
@@ -109,6 +111,8 @@ analysis_config_set_global_std_scaling(analysis_config_type *config,
 PY_USED void analysis_config_add_module_copy(analysis_config_type *config,
                                              const char *src_name,
                                              const char *target_name);
+void analysis_config_load_internal_modules(int ens_size,
+                                           analysis_config_type *config);
 
 UTIL_IS_INSTANCE_HEADER(analysis_config);
 

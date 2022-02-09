@@ -28,9 +28,10 @@
 #include <ert/analysis/analysis_module.hpp>
 
 void test_invalid_mask_size() {
-    analysis_module_type *module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
     int active_ens_size = 10;
     int active_obs_size = 5;
+    analysis_module_type *module =
+        analysis_module_alloc(active_ens_size, ENSEMBLE_SMOOTHER);
     rng_type *rng = NULL;
 
     matrix_type *S = matrix_alloc(active_obs_size, active_ens_size);
