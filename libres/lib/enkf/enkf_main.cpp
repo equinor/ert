@@ -251,23 +251,6 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-// Opens and returns a log file.  A subroutine of enkf_main_smoother_update.
-static FILE *enkf_main_log_step_list(const char *log_path,
-                                     const std::vector<int> &step_list) {
-    char *log_file;
-    if (step_list.size() == 1)
-        log_file = util_alloc_sprintf("%s%c%04d", log_path, UTIL_PATH_SEP_CHAR,
-                                      step_list.front());
-    else
-        log_file =
-            util_alloc_sprintf("%s%c%04d-%04d", log_path, UTIL_PATH_SEP_CHAR,
-                               step_list.front(), step_list.back());
-    FILE *log_stream = util_fopen(log_file, "w");
-
-    free(log_file);
-    return log_stream;
-}
-
 bool enkf_main_smoother_update(enkf_main_type *enkf_main,
                                enkf_fs_type *source_fs,
                                enkf_fs_type *target_fs) {
@@ -295,15 +278,9 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
     ensemble_config_type *ensemble_config =
         enkf_main_get_ensemble_config(enkf_main);
 
-    FILE *log_stream = enkf_main_log_step_list(
-        analysis_config_get_log_path(analysis_config), step_list);
-
-    bool ok = analysis::smoother_update(
+    return analysis::smoother_update(
         step_list, updatestep, total_ens_size, obs, shared_rng, analysis_config,
-        ensemble_config, source_fs, target_fs, log_stream, verbose);
-
-    fclose(log_stream);
-    return ok;
+        ensemble_config, source_fs, target_fs, verbose);
 }
 
 static void enkf_main_write_run_path(enkf_main_type *enkf_main,

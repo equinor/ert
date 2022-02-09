@@ -20,6 +20,7 @@
 #include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/analysis_module.hpp>
+#include <ert/python.hpp>
 
 static auto logger = ert::get_logger("analysis.update");
 
@@ -445,6 +446,24 @@ void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
             ", mask_size:" + std::to_string(bool_vector_size(ens_mask)));
 }
 
+// Opens and returns a log file.  A subroutine of enkf_main_smoother_update.
+static FILE *log_step_list(const char *log_path,
+                           const std::vector<int> &step_list) {
+    std::string log_file;
+    if (step_list.size() == 1)
+        log_file = fmt::format("{}{}{:04d}", log_path, UTIL_PATH_SEP_CHAR,
+                               step_list.front());
+    else
+        log_file = util_alloc_sprintf("{}{}{:04d}-{:04d}", log_path,
+                                      UTIL_PATH_SEP_CHAR, step_list.front(),
+                                      step_list.back());
+    FILE *log_stream = fopen(log_file.data(), "w");
+    if (log_stream == nullptr)
+        throw std::runtime_error(fmt::format(
+            "Error opening '{}' for writing: {}", log_file, strerror(errno)));
+    return log_stream;
+}
+
 bool smoother_update(std::vector<int> step_list,
                      const local_updatestep_type *updatestep,
                      int total_ens_size, enkf_obs_type *obs,
@@ -452,7 +471,9 @@ bool smoother_update(std::vector<int> step_list,
                      const analysis_config_type *analysis_config,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,
-                     FILE *log_stream, bool verbose) {
+                     bool verbose) {
+    FILE *log_stream =
+        log_step_list(analysis_config_get_log_path(analysis_config), step_list);
     if (!assert_update_viable(analysis_config, source_fs, total_ens_size,
                               updatestep))
         return false;
@@ -607,7 +628,29 @@ bool smoother_update(std::vector<int> step_list,
     int_vector_free(ens_active_list);
     meas_data_free(meas_data);
     bool_vector_free(ens_mask);
-
+    fclose(log_stream);
     return true;
 }
 } // namespace analysis
+
+static bool smoother_update(const std::vector<int> &step_list,
+                            py::object updatestep, int total_ens_size,
+                            py::object obs, py::object shared_rng,
+                            py::object analysis_config,
+                            py::object ensemble_config, py::object source_fs,
+                            py::object target_fs, bool verbose) {
+    auto updatestep_ = ert::from_cwrap<local_updatestep_type>(updatestep);
+    auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
+    auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
+    auto analysis_config_ =
+        ert::from_cwrap<analysis_config_type>(analysis_config);
+    auto ensemble_config_ =
+        ert::from_cwrap<ensemble_config_type>(ensemble_config);
+    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
+    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
+    return analysis::smoother_update(
+        step_list, updatestep_, total_ens_size, obs_, shared_rng_,
+        analysis_config_, ensemble_config_, source_fs_, target_fs_, verbose);
+}
+
+RES_LIB_SUBMODULE("update", m) { m.def("smoother_update", smoother_update); }
