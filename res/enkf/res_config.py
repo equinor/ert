@@ -102,11 +102,9 @@ class ResConfig(BaseCClass):
         "void res_config_init_config_parser(config_parser)", bind=False
     )
 
-    def __init__(
-        self, user_config_file=None, config=None, throw_on_error=True, config_dict=None
-    ):
+    def __init__(self, user_config_file=None, config=None, config_dict=None):
 
-        self._assert_input(user_config_file, config, throw_on_error, config_dict)
+        self._assert_input(user_config_file, config, config_dict)
 
         self._errors, self._failed_keys = None, None
 
@@ -116,12 +114,9 @@ class ResConfig(BaseCClass):
             configs, config_dir = self._alloc_from_content(
                 user_config_file=user_config_file,
                 config=config,
-                throw_on_error=throw_on_error,
             )
         else:
-            configs, config_dir = self._alloc_from_dict(
-                config_dict=config_dict, throw_on_error=throw_on_error
-            )
+            configs, config_dir = self._alloc_from_dict(config_dict=config_dict)
 
         c_ptr = None
 
@@ -137,7 +132,7 @@ class ResConfig(BaseCClass):
                 % (user_config_file if user_config_file else config)
             )
 
-    def _assert_input(self, user_config_file, config, throw_on_error, config_dict):
+    def _assert_input(self, user_config_file, config, config_dict):
         configs = sum(
             [1 for x in [user_config_file, config, config_dict] if x is not None]
         )
@@ -161,16 +156,8 @@ class ResConfig(BaseCClass):
         if user_config_file is not None and not isfile(user_config_file):
             raise IOError(f'No such configuration file "{user_config_file}".')
 
-        if user_config_file is not None and not throw_on_error:
-            raise NotImplementedError(
-                "Disabling exceptions on errors is not "
-                "available when loading from file."
-            )
-
     # build configs from config file or everest dict
-    def _alloc_from_content(
-        self, user_config_file=None, config=None, throw_on_error=True
-    ):
+    def _alloc_from_content(self, user_config_file=None, config=None):
         if user_config_file is not None:
             # initialize configcontent if user_file provided
             parser = ConfigParser()
@@ -180,7 +167,7 @@ class ResConfig(BaseCClass):
             config_dir = os.getcwd()
             config_content = self._build_config_content(config)
 
-        if self.errors and throw_on_error:
+        if self.errors:
             raise ValueError("Error loading configuration: " + str(self._errors))
 
         subst_config = SubstConfig(config_content=config_content)
@@ -233,7 +220,7 @@ class ResConfig(BaseCClass):
         ], config_dir
 
     # build configs from config dict
-    def _alloc_from_dict(self, config_dict, throw_on_error=True):
+    def _alloc_from_dict(self, config_dict):
         # treat the default config dir
         config_dir = os.getcwd()
         if ConfigKeys.CONFIG_DIRECTORY in config_dict:
