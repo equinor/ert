@@ -21,6 +21,9 @@
 #endif
 
 #include <algorithm>
+#include <vector>
+#include <future>
+#include <chrono>
 #include <filesystem>
 
 #include <string.h>
@@ -31,7 +34,6 @@
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/res_portability.hpp>
 #include <ert/logging.hpp>
 
@@ -234,7 +236,9 @@ struct job_queue_struct {
     unsigned long usleep_time; /* The sleep time before checking for updates. */
     pthread_mutex_t
         run_mutex; /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
-    thread_pool_type *work_pool;
+
+    /* This holds future results of currently running callbacks */
+    std::vector<std::future<void>> active_callbacks;
 };
 
 /*
@@ -406,14 +410,26 @@ static bool job_queue_kill_job_node(job_queue_type *queue,
     return result;
 }
 
+class JobListReadLock {
+    /* This is just a trick to make sure list is unlocked when exiting scope,
+ * also when exiting due to exceptions */
+public:
+    JobListReadLock(job_list_type *job_list) : job_list(job_list) {
+        job_list_get_rdlock(this->job_list);
+    }
+    ~JobListReadLock() { job_list_unlock(this->job_list); }
+
+private:
+    job_list_type *job_list;
+};
+
 #define ASSIGN_LOCKED_ATTRIBUTE(var, func, ...)                                \
-    job_list_get_rdlock(queue->job_list);                                      \
     {                                                                          \
+        JobListReadLock rl(queue->job_list);                                   \
         job_queue_node_type *node =                                            \
             job_list_iget_job(queue->job_list, job_index);                     \
         var = func(__VA_ARGS__);                                               \
-    }                                                                          \
-    job_list_unlock(queue->job_list);
+    }
 
 bool job_queue_kill_job(job_queue_type *queue, int job_index) {
     bool result;
@@ -538,81 +554,69 @@ static bool job_queue_check_node_status_files(const job_queue_type *job_queue,
     return false;
 }
 
-static void *job_queue_run_DONE_callback(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    job_queue_type *job_queue =
-        (job_queue_type *)arg_pack_iget_ptr(arg_pack, 0);
-    int queue_index = arg_pack_iget_int(arg_pack, 1);
-    job_list_get_rdlock(job_queue->job_list);
-    {
-        job_queue_node_type *node =
-            job_list_iget_job(job_queue->job_list, queue_index);
-        bool OK = job_queue_check_node_status_files(job_queue, node);
+static void job_queue_run_DONE_callback(job_queue_type *job_queue,
+                                        job_queue_node_type *node) {
+    JobListReadLock read_lock(
+        job_queue->job_list); // Keep in mind that this runs on another thread
+                              // than the code triggering it, so we need this
 
-        if (OK)
-            OK = job_queue_node_run_DONE_callback(node);
-
-        if (OK)
-            job_queue_change_node_status(job_queue, node, JOB_QUEUE_SUCCESS);
-        else
-            job_queue_change_node_status(job_queue, node, JOB_QUEUE_EXIT);
-
-        job_queue_node_free_driver_data(node, job_queue->driver);
+    // There is a small timeslot in which status may change after we decide to
+    // run this handler, and before we get the readlock above. Handle it...
+    auto status = job_queue_node_get_status(node);
+    if (JOB_QUEUE_DONE != status) {
+        logger->info("Job {}: expected status {} got {}",
+                     job_queue_node_get_name(node), JOB_QUEUE_DONE, status);
+        return;
     }
-    job_list_unlock(job_queue->job_list);
-    arg_pack_free(arg_pack);
-    return NULL;
+
+    bool OK = job_queue_check_node_status_files(job_queue, node);
+
+    if (OK)
+        OK = job_queue_node_run_DONE_callback(node);
+
+    if (OK)
+        job_queue_change_node_status(job_queue, node, JOB_QUEUE_SUCCESS);
+    else
+        job_queue_change_node_status(job_queue, node, JOB_QUEUE_EXIT);
+
+    job_queue_node_free_driver_data(node, job_queue->driver);
 }
 
-static void job_queue_handle_DONE(job_queue_type *queue,
-                                  job_queue_node_type *node) {
-    job_queue_change_node_status(queue, node, JOB_QUEUE_RUNNING_DONE_CALLBACK);
-    {
-        arg_pack_type *arg_pack = arg_pack_alloc();
-        arg_pack_append_ptr(arg_pack, queue);
-        arg_pack_append_int(arg_pack, job_queue_node_get_queue_index(node));
-        thread_pool_add_job(queue->work_pool, job_queue_run_DONE_callback,
-                            arg_pack);
+static void job_queue_run_EXIT_callback(job_queue_type *job_queue,
+                                        job_queue_node_type *node) {
+    JobListReadLock read_lock(
+        job_queue->job_list); // Keep in mind that this runs on another thread
+                              // than the code triggering it, so we need this
+
+    // There is a small timeslot in which status may change after we decide to
+    // run this handler, and before we get the readlock above. Handle it...
+    auto status = job_queue_node_get_status(node);
+    if (JOB_QUEUE_EXIT != status) {
+        logger->info("Job {}: expected status {} got {}",
+                     job_queue_node_get_name(node), JOB_QUEUE_EXIT, status);
+        return;
     }
-}
 
-static void *job_queue_run_EXIT_callback(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    job_queue_type *job_queue =
-        (job_queue_type *)arg_pack_iget_ptr(arg_pack, 0);
-    int queue_index = arg_pack_iget_int(arg_pack, 1);
+    if (job_queue_node_get_submit_attempt(node) < job_queue->max_submit)
+        job_queue_change_node_status(
+            job_queue, node,
+            JOB_QUEUE_WAITING); /* The job will be picked up for antother go. */
+    else {
+        bool retry = job_queue_node_run_RETRY_callback(node);
 
-    job_list_get_rdlock(job_queue->job_list);
-    {
-        job_queue_node_type *node =
-            job_list_iget_job(job_queue->job_list, queue_index);
+        if (retry) {
+            /* OK - we have invoked the retry_callback() - and that has returned true;
+	   giving this job a brand new start. */
+            job_queue_node_reset_submit_attempt(node);
+            job_queue_change_node_status(job_queue, node, JOB_QUEUE_WAITING);
+        } else {
+            // It's time to call it a day
 
-        if (job_queue_node_get_submit_attempt(node) < job_queue->max_submit)
-            job_queue_change_node_status(
-                job_queue, node,
-                JOB_QUEUE_WAITING); /* The job will be picked up for antother go. */
-        else {
-            bool retry = job_queue_node_run_RETRY_callback(node);
-
-            if (retry) {
-                /* OK - we have invoked the retry_callback() - and that has returned true;
-           giving this job a brand new start. */
-                job_queue_node_reset_submit_attempt(node);
-                job_queue_change_node_status(job_queue, node,
-                                             JOB_QUEUE_WAITING);
-            } else {
-                // It's time to call it a day
-
-                job_queue_node_run_EXIT_callback(node);
-                job_queue_change_node_status(job_queue, node, JOB_QUEUE_FAILED);
-            }
+            job_queue_node_run_EXIT_callback(node);
+            job_queue_change_node_status(job_queue, node, JOB_QUEUE_FAILED);
         }
-        job_queue_node_free_driver_data(node, job_queue->driver);
     }
-    job_list_unlock(job_queue->job_list);
-    arg_pack_free(arg_pack);
-
-    return NULL;
+    job_queue_node_free_driver_data(node, job_queue->driver);
 }
 
 /*
@@ -634,18 +638,6 @@ static void job_queue_handle_DO_KILL(job_queue_type *queue,
     job_queue_kill_job_node(queue, node);
     job_queue_node_free_driver_data(node, queue->driver);
     job_queue_change_node_status(queue, node, JOB_QUEUE_IS_KILLED);
-}
-
-static void job_queue_handle_EXIT(job_queue_type *queue,
-                                  job_queue_node_type *node) {
-    job_queue_change_node_status(queue, node, JOB_QUEUE_RUNNING_EXIT_CALLBACK);
-    {
-        arg_pack_type *arg_pack = arg_pack_alloc();
-        arg_pack_append_ptr(arg_pack, queue);
-        arg_pack_append_int(arg_pack, job_queue_node_get_queue_index(node));
-        thread_pool_add_job(queue->work_pool, job_queue_run_EXIT_callback,
-                            arg_pack);
-    }
 }
 
 static void job_queue_check_expired(job_queue_type *queue) {
@@ -755,19 +747,46 @@ static bool submit_new_jobs(job_queue_type *queue) {
     return new_jobs;
 }
 
+/*
+In the original thread_pool based code, there was a warning about callbacks
+potentially using lots of memory, mitigated by limiting the thread_pool to
+a single thread. This behaviour is mimicked here by a counter to keep track
+of simultaneous callbacks.
+
+Note that queue->run_mutex ensures that no other thread pops in and mess
+with the jobs
+ */
+static bool can_run_handler(job_queue_type *queue) {
+    queue->active_callbacks.erase(
+        std::remove_if(queue->active_callbacks.begin(),
+                       queue->active_callbacks.end(), [](std::future<void> &f) {
+                           // wait-time is currently set to 10ms - might be reconsidered...
+                           return std::future_status::ready ==
+                                  f.wait_for(std::chrono::milliseconds(10));
+                       }));
+
+    // max running callbacks currently 1 - might be reconsidered, possibly
+    // replaced with heuristic looking at amount of free memory in system
+    return (queue->active_callbacks.size() < 1);
+}
+
 static void run_handlers(job_queue_type *queue) {
     /*
     Checking for complete / exited / overtime jobs
-  */
-    for (int i = 0; i < job_list_get_size(queue->job_list); ++i) {
-        job_queue_node_type *node = job_list_iget_job(queue->job_list, i);
+   */
+    for (int i = 0;
+         can_run_handler(queue) && i < job_list_get_size(queue->job_list);
+         ++i) {
 
+        job_queue_node_type *node = job_list_iget_job(queue->job_list, i);
         switch (job_queue_node_get_status(node)) {
         case (JOB_QUEUE_DONE):
-            job_queue_handle_DONE(queue, node);
+            queue->active_callbacks.push_back(std::async(
+                std::launch::async, job_queue_run_DONE_callback, queue, node));
             break;
         case (JOB_QUEUE_EXIT):
-            job_queue_handle_EXIT(queue, node);
+            queue->active_callbacks.push_back(std::async(
+                std::launch::async, job_queue_run_EXIT_callback, queue, node));
             break;
         case (JOB_QUEUE_DO_KILL_NODE_FAILURE):
             job_queue_handle_DO_KILL_NODE_FAILURE(queue, node);
@@ -809,61 +828,61 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
     int phase = 0; // UI code: this is the visual spinner
 
     do { // while !complete && !exit
-        job_list_get_rdlock(queue->job_list);
+        {
+            JobListReadLock rl(queue->job_list);
 
-        if (queue
-                ->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we should kill
+            if (queue
+                    ->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we should kill
                                all jobs, do some clearing up and go home. Observe that we will go through the
                                queue handling codeblock below ONE LAST TIME before exiting. */
-            logger->info("Received queue->user_exit in inner loop of "
-                         "job_queue_run_jobs, exiting");
-            job_queue_user_exit__(queue);
-            exit = true;
-        }
+                logger->info("Received queue->user_exit in inner loop of "
+                             "job_queue_run_jobs, exiting");
+                job_queue_user_exit__(queue);
+                exit = true;
+            }
 
-        job_queue_check_expired(queue);
+            job_queue_check_expired(queue);
 
-        bool update_status =
-            job_queue_update_status(queue); // this has side effects
-        loop_status_spinner(queue, update_status, new_jobs, &phase,
-                            verbose); // UI code
+            bool update_status =
+                job_queue_update_status(queue); // this has side effects
+            loop_status_spinner(queue, update_status, new_jobs, &phase,
+                                verbose); // UI code
 
-        int num_complete =
-            job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS) +
-            job_queue_status_get_count(queue->status, JOB_QUEUE_FAILED) +
-            job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
+            int num_complete =
+                job_queue_status_get_count(queue->status, JOB_QUEUE_SUCCESS) +
+                job_queue_status_get_count(queue->status, JOB_QUEUE_FAILED) +
+                job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
 
-        if ((num_total_run > 0) && (num_total_run == num_complete))
-            /* The number of jobs completed is equal to the number
-         of jobs we have said we want to run; so we are finished.
-      */
-            complete = true;
-        else if (num_total_run == 0) {
-            /* We have not informed about how many jobs we will
-         run. To check if we are complete we perform the two
-         tests:
-
-         1. All the jobs which have been added with
-         job_queue_add_job() have completed.
-
-         2. The user has used job_queue_complete_submit()
-         to signal that no more jobs will be forthcoming.
-      */
-            if ((num_complete == job_list_get_size(queue->job_list)) &&
-                queue->submit_complete)
+            if ((num_total_run > 0) && (num_total_run == num_complete))
+                /* The number of jobs completed is equal to the number
+			 of jobs we have said we want to run; so we are finished.
+		  */
                 complete = true;
-        }
+            else if (num_total_run == 0) {
+                /* We have not informed about how many jobs we will
+			 run. To check if we are complete we perform the two
+			 tests:
 
-        if (!complete) {
-            new_jobs = submit_new_jobs(queue);
-            run_handlers(queue);
-        } else {
-            /* print an updated status to stdout before exiting. */
-            if (verbose)
-                job_queue_print_summary(queue, true);
-        }
+			 1. All the jobs which have been added with
+			 job_queue_add_job() have completed.
 
-        job_list_unlock(queue->job_list);
+			 2. The user has used job_queue_complete_submit()
+			 to signal that no more jobs will be forthcoming.
+		  */
+                if ((num_complete == job_list_get_size(queue->job_list)) &&
+                    queue->submit_complete)
+                    complete = true;
+            }
+
+            if (!complete) {
+                new_jobs = submit_new_jobs(queue);
+                run_handlers(queue);
+            } else {
+                /* print an updated status to stdout before exiting. */
+                if (verbose)
+                    job_queue_print_summary(queue, true);
+            }
+        } // end of read-locked scope
 
         if (!exit) {
             res_yield();
@@ -888,20 +907,12 @@ static void handle_run_jobs(job_queue_type *queue, int num_total_run,
     // Check if queue is open. Fails hard if not open
     job_queue_check_open(queue);
 
-    /*
-    The number of threads in the thread pool running callbacks. Memory consumption can
-    potentially be quite high while running the DONE callback - should therefore not use
-    too many threads.
-  */
-    const int NUM_WORKER_THREADS = 1;
-    queue->work_pool = thread_pool_alloc(NUM_WORKER_THREADS, true);
-    logger->debug("Allocated thread pool in job_queue_run_jobs");
-
     queue->running = true;
     job_queue_loop(queue, num_total_run, verbose);
 
-    thread_pool_join(queue->work_pool);
-    thread_pool_free(queue->work_pool);
+    // Block and wait for all callbacks to finish
+    for (auto &f : queue->active_callbacks)
+        f.get();
 }
 
 /*
@@ -1070,7 +1081,6 @@ job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
     queue->pause_on = false;
     queue->running = false;
     queue->submit_complete = false;
-    queue->work_pool = NULL;
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
     queue->progress_timestamp = time(NULL);

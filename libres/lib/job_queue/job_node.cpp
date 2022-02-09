@@ -707,3 +707,7 @@ void *job_queue_node_get_driver_data(job_queue_node_type *node) {
 time_t job_queue_node_get_timestamp(const job_queue_node_type *node) {
     return node->progress_timestamp;
 }
+
+char *job_queue_node_get_name(job_queue_node_type *node) {
+    return (node->job_name);
+}
