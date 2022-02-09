@@ -1,4 +1,4 @@
-from typing import Dict, List, NamedTuple, cast
+from typing import Dict, List, NamedTuple, cast, Any
 
 import ert
 
@@ -7,8 +7,6 @@ from . import (
     ExperimentConfig,
     ParametersConfig,
     SourceNS,
-    StagesConfig,
-    Step,
 )
 
 
@@ -26,10 +24,8 @@ class LinkedInput(NamedTuple):
     source_namespace: SourceNS
     source_location: str
     source_is_directory: bool
-    dest_location: str
-    dest_mime: str
-    dest_is_directory: bool
-    dest_smry_keys: List[str]
+    dest_location:  str
+    transformation: Any
 
 
 class ExperimentRunConfig:
@@ -48,7 +44,7 @@ class ExperimentRunConfig:
     def __init__(
         self,
         experiment_config: ExperimentConfig,
-        stages_config: StagesConfig,
+        stages_config,
         ensemble_config: EnsembleConfig,
         parameters_config: ParametersConfig,
     ) -> None:
@@ -79,7 +75,7 @@ class ExperimentRunConfig:
         return self._experiment_config
 
     @property
-    def stages_config(self) -> StagesConfig:
+    def stages_config(self):
         """Access the stages configuration object.
 
         Returns:
@@ -105,7 +101,7 @@ class ExperimentRunConfig:
         """
         return self._parameters_config
 
-    def get_stage(self) -> Step:
+    def get_stage(self):
         """Return the stage used by the forward model in this
         experiment.
 
@@ -116,7 +112,7 @@ class ExperimentRunConfig:
             self._ensemble_config.forward_model.stage
         )
         # The stage has already been validated to exist:
-        return cast(Step, stage)
+        return stage
 
     def get_linked_inputs(self) -> Dict[SourceNS, Dict[str, LinkedInput]]:
         """Return the linked inputs needed for this experiment run.
@@ -132,34 +128,19 @@ class ExperimentRunConfig:
         stage = self.get_stage()
         for ensemble_input in self._ensemble_config.input:
             name = ensemble_input.record
-            stage_is_directory = stage.input[name].is_directory
-            stage_mime = stage.input[name].mime
-            stage_location = stage.input[name].location
-            stage_smry_keys = stage.input[name].smry_keys
+            stage_location = stage.input[name].transformation.location
+            transformation = stage.input[name].get_transformation_instance()
 
-            if stage_mime != ensemble_input.mime:
-                print(
-                    f"Warning: Conflicting ensemble mime '{ensemble_input.mime}' and "
-                    + f"stage mime '{stage_mime}' for input '{name}'."
-                )
-
-            # fall back on stage is_directory
-            ensemble_is_directory = (
-                ensemble_input.is_directory
-                if ensemble_input.is_directory is not None
-                else stage_is_directory
-            )
+            mime = "application/json" if ensemble_input.source.startswith("stochastic") else ensemble_input.mime
 
             input_ = LinkedInput(
                 name=name,
                 source_namespace=ensemble_input.source_namespace,
-                source_mime=ensemble_input.mime,
-                source_is_directory=ensemble_is_directory,
+                source_mime=mime,
+                source_is_directory=ensemble_input.is_directory,
                 source_location=ensemble_input.source_location,
-                dest_mime=stage_mime,
                 dest_location=stage_location,
-                dest_is_directory=stage_is_directory,
-                dest_smry_keys=stage_smry_keys,
+                transformation=transformation,
             )
             inputs[input_.source_namespace][input_.name] = input_
         return inputs

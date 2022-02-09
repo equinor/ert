@@ -25,13 +25,12 @@ def add_step_inputs(
     step: StepBuilder,
 ) -> None:
     for input_ in inputs:
-        transformation = _get_input_recordtransformation(input_)
         step_input = (
             create_file_io_builder()
             .set_name(input_.name)
-            .set_mime(input_.dest_mime)
+            .set_mime(input_.source_mime)
             .set_path(pathlib.Path(input_.dest_location))
-            .set_transformation(transformation)
+            .set_transformation(input_.transformation)
         )
 
         for iens, io_to_transmitter in transmitters.items():
@@ -97,18 +96,18 @@ def add_commands(
 
 def add_step_outputs(
     storage_type: str,
-    step_config: ert3.config.Step,
+    step_config,
     storage_path: str,
     ensemble_size: int,
     step: StepBuilder,
 ) -> None:
     for record_name, output in step_config.output.items():
-        transformation = _get_output_recordtransformation(output)
+        transformation = output.get_transformation_instance()
         output = (
             create_file_io_builder()
             .set_name(record_name)
-            .set_path(pathlib.Path(output.location))
-            .set_mime(output.mime)
+            .set_path(pathlib.Path(output.transformation.location))
+            .set_mime(output.transformation.mime if hasattr(output.transformation, "mime") else "application/octet-stream")
             .set_transformation(transformation)
         )
         for iens in range(0, ensemble_size):
@@ -137,21 +136,21 @@ def add_step_outputs(
 
 
 def build_ensemble(
-    stage: ert3.config.Step,
+    stage,
     driver: str,
     ensemble_size: int,
     step_builder: StepBuilder,
 ) -> Ensemble:
-    if isinstance(stage, ert3.config.Function):
+    if stage.get_type() == "function":
         step_builder.add_job(
             create_job_builder()
             .set_name(stage.function.__name__)
             .set_executable(cloudpickle.dumps(stage.function))
         )
-    if isinstance(stage, ert3.config.Unix):
+    if stage.get_type() == "unix":
 
         def command_location(name: str) -> FilePath:
-            assert isinstance(stage, ert3.config.Unix)  # mypy
+            assert stage.get_type() == "unix"  # mypy
             return next(
                 (
                     cmd.location
@@ -197,7 +196,7 @@ def _get_input_recordtransformation(
 
 
 def _get_output_recordtransformation(
-    output_config: ert3.config.StageIO,
+    output_config,
 ) -> ert.data.RecordTransformation:
     """Determine (by sniffing the requested configuration) and configure a
     RecordTransformation for the output from a step."""

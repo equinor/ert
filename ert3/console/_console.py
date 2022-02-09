@@ -387,3 +387,9 @@ def _main() -> None:
         _clean(workspace, args)
     else:
         raise NotImplementedError(f"No implementation to handle command {args.sub_cmd}")
+
+
+if __name__ == "__main__":
+    workspace = Workspace(pathlib.Path.cwd())
+    ert3.console.clean(workspace, [], True)
+    _main()

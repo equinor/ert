@@ -2,6 +2,8 @@ import logging
 
 import pluggy
 
+from ert3.config import ConfigPluginRegistry
+
 _PLUGIN_NAMESPACE = "ert3"
 
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
@@ -32,6 +34,6 @@ class ErtPluginManager(pluggy.PluginManager):
                 self_str += "\t\t" + str(hook_caller) + "\n"
         return self_str
 
-    def get_plugin_configs(self):
-        result = self.hook.configs()
+    def get_plugin_configs(self, registry: ConfigPluginRegistry):
+        result = self.hook.configs(registry=registry)
         return result

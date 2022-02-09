@@ -118,6 +118,11 @@ class Workspace:
         Returns: ert3.config.ExperimentRunConfig: A configuration object for an
             experiment run.
         """
+        plugin_registry = ert3.config.ConfigPluginRegistry()
+        plugin_registry.register_category(category="transformation")
+        plugin_manager = ert3.plugins.ErtPluginManager()
+        plugin_manager.get_plugin_configs(registry=plugin_registry)
+
         experiment_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "experiment.yml"
         )
@@ -129,7 +134,9 @@ class Workspace:
         with open(stages_config_path, encoding="utf-8") as f:
             config_dict = yaml.safe_load(f)
         sys.path.append(str(self._path))
-        stage_config = ert3.config.load_stages_config(config_dict)
+        stage_config = ert3.config.load_stages_config(
+            config_dict, plugin_registry=plugin_registry
+        )
 
         ensemble_config_path = (
             self._path / _EXPERIMENTS_BASE / experiment_name / "ensemble.yml"

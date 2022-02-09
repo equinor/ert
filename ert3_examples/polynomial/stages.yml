@@ -2,13 +2,18 @@
   name: evaluate_polynomial
   input:
     -
-      record: coefficients
-      location: coefficients.json
+      name: coefficients
+      transformation:
+        type: file
+        location: coefficients.json
 
   output:
     -
-      record: polynomial_output
-      location: output.json
+      name: polynomial_output
+      transformation:
+        type: file
+        location: output.json
+
 
   transportable_commands:
     -
@@ -19,66 +24,66 @@
   script:
     - poly --coefficients coefficients.json --output output.json
 
--
-  name: function_polynomial
-  input:
-    -
-      record: coefficients
-      location: coeffs
+# -
+#   name: function_polynomial
+#   input:
+#     -
+#       record: coefficients
+#       location: coeffs
 
-  output:
-    -
-      record: polynomial_output
-      location: output
+#   output:
+#     -
+#       record: polynomial_output
+#       location: output
 
-  function: function_steps.functions:polynomial
+#   function: function_steps.functions:polynomial
 
--
-  name: evaluate_x_uncertainty_polynomial
-  input:
-    -
-      record: coefficients
-      location: coefficients.json
-    -
-      record: x_uncertainties
-      location: x_uncertainties.json
+# -
+#   name: evaluate_x_uncertainty_polynomial
+#   input:
+#     -
+#       record: coefficients
+#       location: coefficients.json
+#     -
+#       record: x_uncertainties
+#       location: x_uncertainties.json
   
-  output:
-    -
-      record: polynomial_output
-      location: output.json
+#   output:
+#     -
+#       record: polynomial_output
+#       location: output.json
 
-  transportable_commands:
-    -
-      name: poly
-      location: poly.py
+#   transportable_commands:
+#     -
+#       name: poly
+#       location: poly.py
 
-  script:
-    - poly --coefficients coefficients.json --x_uncertainties x_uncertainties.json --output output.json
+#   script:
+#     - poly --coefficients coefficients.json --x_uncertainties x_uncertainties.json --output output.json
 
--
-  name: evaluate_two_polynomials
-  input:
-    -
-      record: coefficients
-      location: coefficients.json
-    -
-      record: other_coefficients
-      location: other_coefficients.json
+# -
+#   name: evaluate_two_polynomials
+#   input:
+#     -
+#       record: coefficients
+#       location: coefficients.json
+#     -
+#       record: other_coefficients
+#       location: other_coefficients.json
   
-  output:
-    -
-      record: polynomial_output
-      location: output.json
-    -
-      record: other_polynomial_output
-      location: other_output.json
+#   output:
+#     -
+#       record: polynomial_output
+#       location: output.json
+#     -
+#       record: other_polynomial_output
+#       location: other_output.json
 
-  transportable_commands:
-    -
-      name: poly
-      location: poly.py
+#   transportable_commands:
+#     -
+#       name: poly
+#       location: poly.py
   
-  script:
-    - poly --coefficients coefficients.json --output output.json
-    - poly --coefficients other_coefficients.json --output other_output.json
+#   script:
+#     - poly --coefficients coefficients.json --output output.json
+#     - poly --coefficients other_coefficients.json --output other_output.json

@@ -3,12 +3,12 @@ from collections import OrderedDict
 from functools import partialmethod
 from importlib.abc import Loader
 from types import MappingProxyType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Mapping, Tuple, Union, cast
 
 from pydantic import BaseModel, FilePath, ValidationError, create_model, validator
 
 import ert
-from ert3.config import ConfigPluginRegistry
+from ._config_plugin_registry import ConfigPluginRegistry
 
 from ._validator import ensure_mime
 
@@ -102,7 +102,7 @@ def get_configs(plugin_registry):
     StageIO = create_stage_io(plugin_registry=plugin_registry)
 
     def _create_io_mapping(ios: Tuple[Dict[str, str], ...]) -> Mapping[str, StageIO]:
-        ordered_dict = IndexedOrderedDict({io["record"]: StageIO(**io) for io in ios})
+        ordered_dict = IndexedOrderedDict({io["name"]: StageIO(**io) for io in ios})
         proxy = MappingProxyType(ordered_dict)
         return proxy
 
@@ -117,6 +117,9 @@ def get_configs(plugin_registry):
         _set_output = validator("output", pre=True, always=True, allow_reuse=True)(
             _create_io_mapping
         )
+
+        def get_type(self):
+            return "unix" if hasattr(self, "script") else "function"
 
     class Function(_Step):
         function: Callable  # type: ignore
@@ -146,41 +149,13 @@ def get_configs(plugin_registry):
         def __len__(self):  # type: ignore
             return len(self.__root__)
 
-    return StagesConfig, Step
-
-
-def register_plugins() -> ConfigPluginRegistry:
-    """
-    This would normally be controlled by a module that calls the pluggy hooks,
-    similar to ert_shared/plugins/plugin_manager.py.
-    """
-    plugin_registry = ConfigPluginRegistry()
-    plugin_registry.register_category(category="transformation")
-    plugin_registry.register(
-        name="file",
-        category="transformation",
-        config=FileTransformationConfig,
-        factory=lambda x: DummyInstance(config=x),
-    )
-    plugin_registry.register(
-        name="directory",
-        category="transformation",
-        config=DirectoryTransformationConfig,
-        factory=lambda x: DummyInstance(config=x),
-    )
-    plugin_registry.register(
-        name="summary",
-        category="transformation",
-        config=SummaryTransformationConfig,
-        factory=lambda x: DummyInstance(config=x),
-    )
-    return plugin_registry
+    return StagesConfig, Function, Unix, Step
 
 
 def load_stages_config(
-    config_dict: Dict[str, Any], plugin_registry=ConfigPluginRegistry
+    config_dict: Dict[str, Any], plugin_registry: ConfigPluginRegistry
 ):
-    StagesConfig, _ = get_configs(plugin_registry=plugin_registry)
+    StagesConfig, _, _, _ = get_configs(plugin_registry=plugin_registry)
     try:
         return StagesConfig.parse_obj(config_dict)
     except ValidationError as err:

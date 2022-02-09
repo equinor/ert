@@ -162,7 +162,7 @@ def run(
     step_builder = (
         create_step_builder()
         .set_name(f"{stage.name}-only_step")
-        .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
+        .set_type(stage.get_type())
     )
 
     inputs = experiment_run_config.get_linked_inputs()
@@ -203,7 +203,7 @@ def run(
         step_builder,
     )
 
-    if isinstance(stage, ert3.config.Unix):
+    if stage.get_type() == "unix":
         ert3.evaluator.add_commands(
             stage.transportable_commands,
             experiment_run_config.ensemble_config.storage_type,
