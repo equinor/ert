@@ -13,9 +13,10 @@ void test_steplength1(const char *path_testdata) {
     matrix_type *prior = testdata.alloc_matrix("A0", testdata.state_size,
                                                testdata.active_ens_size);
 
-    analysis_module_type *std_module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
+    analysis_module_type *std_module =
+        analysis_module_alloc(100, ENSEMBLE_SMOOTHER);
     analysis_module_type *ies_module =
-        analysis_module_alloc(ITERATED_ENSEMBLE_SMOOTHER);
+        analysis_module_alloc(100, ITERATED_ENSEMBLE_SMOOTHER);
 
     test_assert_true(analysis_module_set_var(
         std_module, ies::config::ENKF_TRUNCATION_KEY, "0.95"));
@@ -40,7 +41,7 @@ void test_steplength1(const char *path_testdata) {
 
 void test_load() {
     analysis_module_type *module =
-        analysis_module_alloc(ITERATED_ENSEMBLE_SMOOTHER);
+        analysis_module_alloc(100, ITERATED_ENSEMBLE_SMOOTHER);
     test_assert_not_NULL(module);
     analysis_module_free(module);
 }

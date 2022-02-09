@@ -34,7 +34,7 @@ class AnalysisConfig(BaseCClass):
     _alloc = ResPrototype("void* analysis_config_alloc(config_content)", bind=False)
     _alloc_load = ResPrototype("void* analysis_config_alloc_load(char*)", bind=False)
     _alloc_full = ResPrototype(
-        "void* analysis_config_alloc_full(double, bool, "
+        "void* analysis_config_alloc_full(int, double, bool, "
         "int, char*, double, bool, bool, "
         "double, int, int)",
         bind=False,
@@ -150,6 +150,7 @@ class AnalysisConfig(BaseCClass):
 
         if config_dict is not None:
             c_ptr = self._alloc_full(
+                config_dict.get(ConfigKeys.NUM_REALIZATIONS, 10),
                 config_dict.get(ConfigKeys.ALPHA_KEY, 3.0),
                 config_dict.get(ConfigKeys.RERUN_KEY, False),
                 config_dict.get(ConfigKeys.RERUN_START_KEY, 0),

@@ -24,11 +24,11 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    auto *ies_data1 =
-        static_cast<ies::data::data_type *>(ies::data::alloc(true));
+    auto *ies_data1 = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, true));
     auto *ies_config1 = ies::data::get_config(ies_data1);
-    auto *std_data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(false));
+    auto *std_data = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, false));
     auto *std_config = ies::data::get_config(std_data);
 
     ies::config::set_truncation(ies_config1, 0.95);

@@ -26,7 +26,7 @@ class StdEnKFTest(ResTest):
         self.rng = RandomNumberGenerator(
             RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
         )
-        self.module = AnalysisModule(AnalysisModeEnum.ENSEMBLE_SMOOTHER)
+        self.module = AnalysisModule(100, AnalysisModeEnum.ENSEMBLE_SMOOTHER)
 
     def toggleKey(self, key):
         self.assertTrue(self.module.hasVar(key))

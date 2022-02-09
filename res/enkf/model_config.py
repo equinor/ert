@@ -126,7 +126,7 @@ class ModelConfig(BaseCClass):
             max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE)
 
             # NUM_REALIZATIONS_KEY
-            num_realizations = config_dict[ConfigKeys.NUM_REALIZATIONS]
+            num_realizations = config_dict.get(ConfigKeys.NUM_REALIZATIONS)
 
             # RUNPATH_KEY
             run_path = config_dict.get(ConfigKeys.RUNPATH)

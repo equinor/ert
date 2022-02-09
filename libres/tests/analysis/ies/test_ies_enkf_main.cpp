@@ -7,11 +7,12 @@
 #include <ert/analysis/ies/ies_data.hpp>
 
 TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *data = static_cast<ies::data::data_type *>(ies::data::alloc(true));
-
     int obs_size = 3;
     int ens_size = 2;
+
+    rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
+    auto *data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(ens_size, true));
 
     // Initialising masks such that all observations and realizations are active
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
@@ -97,7 +98,8 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
 TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
-    auto *data = static_cast<ies::data::data_type *>(ies::data::alloc(true));
+    auto *data =
+        static_cast<ies::data::data_type *>(ies::data::alloc(ens_size, true));
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
 
@@ -144,8 +146,8 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         const int ens_size = 4;
         const int obs_size = 10;
         const int state_size = 10;
-        auto *data =
-            static_cast<ies::data::data_type *>(ies::data::alloc(true));
+        auto *data = static_cast<ies::data::data_type *>(
+            ies::data::alloc(ens_size, true));
         bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
         bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
         matrix_type *A0 = matrix_alloc(state_size, ens_size);

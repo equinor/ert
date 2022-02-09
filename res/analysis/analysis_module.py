@@ -24,7 +24,9 @@ from .enums import AnalysisModuleOptionsEnum
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc = ResPrototype("void* analysis_module_alloc(analysis_mode_enum)", bind=False)
+    _alloc = ResPrototype(
+        "void* analysis_module_alloc(int, analysis_mode_enum)", bind=False
+    )
     _free = ResPrototype("void analysis_module_free(analysis_module)")
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
@@ -71,8 +73,8 @@ class AnalysisModule(BaseCClass):
         "ENKF_NCOMP": {"type": int, "description": "Number of singular values"},
     }
 
-    def __init__(self, name):
-        c_ptr = self._alloc(name)
+    def __init__(self, ens_size, name):
+        c_ptr = self._alloc(ens_size, name)
         if not c_ptr:
             raise KeyError("Failed to load internal module:%s" % name)
 
