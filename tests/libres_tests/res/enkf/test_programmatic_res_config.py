@@ -266,13 +266,6 @@ class ProgrammaticResConfigTest(ResTest):
             with self.assertRaises(ValueError):
                 res_config = ResConfig(config=self.minimum_config_error)
 
-            res_config = ResConfig(
-                config=self.minimum_config_error, throw_on_error=False
-            )
-
-            self.assertTrue(len(res_config.errors) > 0)
-            self.assertEqual(0, len(res_config.failed_keys))
-
     def test_failed_keys(self):
         case_directory = self.createTestPath("local/simple_config")
         config_file = "simple_config/minimum_config"
