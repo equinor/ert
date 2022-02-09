@@ -95,71 +95,39 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
     enkf_node_free(node);
 }
 
-void *serialize_nodes_mt(void *arg) {
-    serialize_info_type *info = (serialize_info_type *)arg;
-    const auto *node_info = info->node_info;
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(info->ensemble_config, node_info->key);
-    for (int iens = info->iens1; iens < info->iens2; iens++) {
-        int column = int_vector_iget(info->iens_active_index, iens);
-        if (column >= 0) {
-            serialize_node(info->src_fs, config_node, iens, info->report_step,
-                           node_info->row_offset, column,
-                           node_info->active_list, info->A);
-        }
-    }
-    return NULL;
-}
-
 void serialize_ministep(const ensemble_config_type *ens_config,
                         const local_ministep_type *ministep, int report_step,
-                        thread_pool_type *work_pool,
-                        serialize_info_type *serialize_info) {
+                        enkf_fs_type *target_fs,
+                        const int_vector_type *iens_active_index,
+                        matrix_type *A) {
 
-    matrix_type *A = serialize_info->A;
     int ens_size = matrix_get_columns(A);
     int current_row = 0;
 
-    const auto &unscaled_keys = ministep->unscaled_keys();
-    serialize_info->active_size.resize(unscaled_keys.size());
-    serialize_info->row_offset.resize(unscaled_keys.size());
-    for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
-        const auto &key = unscaled_keys[ikw];
+    for (auto &key : ministep->unscaled_keys()) {
         const active_list_type *active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key.c_str());
 
-        ensure_node_loaded(config_node, serialize_info->src_fs, report_step);
-        serialize_info->active_size[ikw] = active_list_get_active_size(
+        ensure_node_loaded(config_node, target_fs, report_step);
+        int active_size = active_list_get_active_size(
             active_list,
             enkf_config_node_get_data_size(config_node, report_step));
-        serialize_info->row_offset[ikw] = current_row;
 
         int matrix_rows = matrix_get_rows(A);
-        if ((serialize_info->active_size[ikw] + current_row) > matrix_rows)
-            matrix_resize(A, matrix_rows + 2 * serialize_info->active_size[ikw],
-                          ens_size, true);
+        if ((active_size + current_row) > matrix_rows)
+            matrix_resize(A, matrix_rows + 2 * active_size, ens_size, true);
 
-        if (serialize_info->active_size[ikw] > 0) {
-            const int num_cpu_threads = thread_pool_get_max_running(work_pool);
-            serialize_node_info_type node_info[num_cpu_threads];
-            thread_pool_restart(work_pool);
-            for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
-                node_info[icpu].key = key.c_str();
-                node_info[icpu].active_list = active_list;
-                node_info[icpu].row_offset = serialize_info->row_offset[ikw];
-                serialize_info[icpu].node_info = &node_info[icpu];
-
-                thread_pool_add_job(work_pool, serialize_nodes_mt,
-                                    &serialize_info[icpu]);
+        if (active_size > 0) {
+            for (int iens = 0; iens < ens_size; iens++) {
+                int column = int_vector_iget(iens_active_index, iens);
+                if (column >= 0) {
+                    serialize_node(target_fs, config_node, iens, report_step,
+                                   current_row, column, active_list, A);
+                }
             }
-            thread_pool_join(work_pool);
-
-            for (int icpu = 0; icpu < num_cpu_threads; icpu++)
-                serialize_info[icpu].node_info = nullptr;
-
-            current_row += serialize_info->active_size[ikw];
+            current_row += active_size;
         }
     }
     matrix_shrink_header(A, current_row, ens_size);
@@ -184,21 +152,6 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     enkf_node_free(node);
 }
 
-void *deserialize_nodes_mt(void *arg) {
-    serialize_info_type *info = (serialize_info_type *)arg;
-    const auto *node_info = info->node_info;
-    const enkf_config_node_type *config_node =
-        ensemble_config_get_node(info->ensemble_config, node_info->key);
-    for (int iens = info->iens1; iens < info->iens2; iens++) {
-        int column = int_vector_iget(info->iens_active_index, iens);
-        if (column >= 0)
-            deserialize_node(info->target_fs, info->src_fs, config_node, iens,
-                             info->target_step, node_info->row_offset, column,
-                             node_info->active_list, info->A);
-    }
-    return NULL;
-}
-
 void assert_matrix_size(const matrix_type *m, const char *name, int rows,
                         int columns) {
     if (m) {
@@ -214,72 +167,32 @@ void assert_matrix_size(const matrix_type *m, const char *name, int rows,
 
 void deserialize_ministep(ensemble_config_type *ensemble_config,
                           const local_ministep_type *ministep,
-                          serialize_info_type *serialize_info,
-                          thread_pool_type *work_pool) {
+                          enkf_fs_type *target_fs,
+                          const int_vector_type *iens_active_index,
+                          matrix_type *A) {
 
-    const int num_cpu_threads = thread_pool_get_max_running(work_pool);
-    const auto &unscaled_keys = ministep->unscaled_keys();
-    serialize_info->active_size.resize(unscaled_keys.size());
-    serialize_info->row_offset.resize(unscaled_keys.size());
+    int ens_size = int_vector_size(iens_active_index);
+    const int target_step = 0;
     int current_row = 0;
-    for (size_t ikw = 0; ikw < unscaled_keys.size(); ikw++) {
-        const auto &key = unscaled_keys[ikw];
+    for (auto &key : ministep->unscaled_keys()) {
         const active_list_type *active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, key.c_str());
-        ensure_node_loaded(config_node, serialize_info->src_fs, 0);
-        serialize_info->active_size[ikw] = active_list_get_active_size(
+        ensure_node_loaded(config_node, target_fs, 0);
+        int active_size = active_list_get_active_size(
             active_list, enkf_config_node_get_data_size(config_node, 0));
-        if (serialize_info->active_size[ikw] > 0) {
-            serialize_info->row_offset[ikw] = current_row;
-            current_row += serialize_info->active_size[ikw];
-            /* Multithreaded */
-            serialize_node_info_type node_info[num_cpu_threads];
-            thread_pool_restart(work_pool);
-            for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
-                node_info[icpu].key = key.c_str();
-                node_info[icpu].active_list = active_list;
-                node_info[icpu].row_offset = serialize_info->row_offset[ikw];
-                serialize_info[icpu].node_info = &node_info[icpu];
-
-                thread_pool_add_job(work_pool, deserialize_nodes_mt,
-                                    &serialize_info[icpu]);
+        if (active_size > 0) {
+            for (int iens = 0; iens < ens_size; iens++) {
+                int column = int_vector_iget(iens_active_index, iens);
+                if (column >= 0)
+                    deserialize_node(target_fs, target_fs, config_node, iens,
+                                     target_step, current_row, column,
+                                     active_list, A);
             }
-            thread_pool_join(work_pool);
+            current_row += active_size;
         }
     }
-}
-
-serialize_info_type *
-serialize_info_alloc(enkf_fs_type *src_fs, enkf_fs_type *target_fs,
-                     const ensemble_config_type *ensemble_config,
-                     const int_vector_type *iens_active_index, int target_step,
-                     int report_step, matrix_type *A, int num_cpu_threads) {
-
-    serialize_info_type *serialize_info =
-        new serialize_info_type[num_cpu_threads];
-    int ens_size = int_vector_size(iens_active_index);
-    int iens_offset = 0;
-    for (int icpu = 0; icpu < num_cpu_threads; icpu++) {
-        int iens_increment =
-            (ens_size - iens_offset) / (num_cpu_threads - icpu);
-        serialize_info[icpu] = (serialize_info_type){
-            .src_fs = src_fs,
-            .target_fs = target_fs,
-            .ensemble_config = ensemble_config,
-            .iens1 = iens_offset,
-            .iens2 = iens_offset + iens_increment,
-            .report_step = report_step,
-            .target_step = target_step,
-            .A = A,
-            .iens_active_index = iens_active_index,
-            .node_info = nullptr,
-        };
-        iens_offset = serialize_info[icpu].iens2;
-    }
-    serialize_info[num_cpu_threads - 1].iens2 = ens_size;
-    return serialize_info;
 }
 
 /*
@@ -295,24 +208,14 @@ matrix_type *load_parameters(enkf_fs_type *target_fs,
     matrix_type *parameters = nullptr;
     const auto &unscaled_keys = ministep->unscaled_keys();
     if (unscaled_keys.size() != 0) {
-        int cpu_threads = 4;
-        thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
         int matrix_start_size = 250000;
         matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
-        serialize_info_type *serialize_info = serialize_info_alloc(
-            target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-            target_fs, ensemble_config, iens_active_index, 0, last_step, A,
-            cpu_threads);
+        serialize_ministep(ensemble_config, ministep, last_step, target_fs,
+                           iens_active_index, A);
 
-        serialize_ministep(ensemble_config, ministep, last_step, tp,
-                           serialize_info);
-
-        parameters = matrix_alloc_copy(serialize_info->A);
-
-        delete[] serialize_info;
+        parameters = matrix_alloc_copy(A);
         matrix_free(A);
-        thread_pool_free(tp);
     }
 
     return parameters;
@@ -325,18 +228,9 @@ void save_parameters(enkf_fs_type *target_fs,
                      ensemble_config_type *ensemble_config,
                      const int_vector_type *iens_active_index, int last_step,
                      const local_ministep_type *ministep, matrix_type *A) {
-
     assert(A != nullptr);
-    int cpu_threads = 4;
-    thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
-    serialize_info_type *serialize_info = serialize_info_alloc(
-        target_fs, //src_fs - we have already copied the parameters from the src_fs to the target_fs
-        target_fs, ensemble_config, iens_active_index, 0, last_step, A,
-        cpu_threads);
-
-    deserialize_ministep(ensemble_config, ministep, serialize_info, tp);
-    delete[] serialize_info;
-    thread_pool_free(tp);
+    deserialize_ministep(ensemble_config, ministep, target_fs,
+                         iens_active_index, A);
 }
 
 /*
