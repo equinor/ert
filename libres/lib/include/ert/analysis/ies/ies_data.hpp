@@ -14,8 +14,9 @@ constexpr const char *ITER_KEY = "ITER";
 
 typedef struct data_struct data_type;
 
-data_type *alloc(bool ies_mode);
-void free(ies::data::data_type *data);
+data_type *alloc(int ens_size, bool ies_mode);
+void free(data_type *data);
+int ens_size(const data_type *data);
 
 void set_iteration_nr(data_type *data, int iteration_nr);
 int get_iteration_nr(const data_type *data);
@@ -36,7 +37,6 @@ const bool_vector_type *get_obs_mask0(const data_type *data);
 const bool_vector_type *get_obs_mask(const data_type *data);
 const bool_vector_type *get_ens_mask(const data_type *data);
 
-void allocateW(data_type *data);
 void store_initialE(data_type *data, const matrix_type *E0);
 void augment_initialE(data_type *data, const matrix_type *E0);
 void store_initialA(data_type *data, const matrix_type *A);

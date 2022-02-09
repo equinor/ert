@@ -55,8 +55,10 @@ typedef enum {
 
 typedef struct analysis_module_struct analysis_module_type;
 
-analysis_module_type *analysis_module_alloc(analysis_mode_enum mode);
-analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
+analysis_module_type *analysis_module_alloc(int ens_size,
+                                            analysis_mode_enum mode);
+analysis_module_type *analysis_module_alloc_named(int ens_size,
+                                                  analysis_mode_enum mode,
                                                   const char *module_name);
 
 void analysis_module_free(analysis_module_type *module);
@@ -96,6 +98,7 @@ bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var);
 void *analysis_module_get_ptr(const analysis_module_type *module,
                               const char *var);
+int analysis_module_ens_size(const analysis_module_type *module);
 
 UTIL_IS_INSTANCE_HEADER(analysis_module);
 

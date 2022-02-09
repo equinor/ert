@@ -30,7 +30,7 @@ class AnalysisModuleTest(ResTest):
         )
 
     def test_analysis_module(self):
-        am = AnalysisModule(AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
+        am = AnalysisModule(100, AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
 
         self.assertTrue(am.setVar("ITER", "1"))
 
@@ -45,7 +45,7 @@ class AnalysisModuleTest(ResTest):
         self.assertIsInstance(am.getInt("ITER"), int)
 
     def test_set_get_var(self):
-        mod = AnalysisModule(AnalysisModeEnum.ENSEMBLE_SMOOTHER)
+        mod = AnalysisModule(100, AnalysisModeEnum.ENSEMBLE_SMOOTHER)
         with self.assertRaises(KeyError):
             mod.setVar("NO-NOT_THIS_KEY", 100)
 

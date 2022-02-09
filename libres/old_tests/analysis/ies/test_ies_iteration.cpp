@@ -8,8 +8,8 @@
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *std_data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(false));
+    auto *std_data = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, false));
     auto *ies_config = ies::data::get_config(std_data);
     ies::config::set_truncation(ies_config, 1.00);
 
@@ -60,8 +60,8 @@ void cmp_std_ies(res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
-    auto *ies_data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(true));
+    auto *ies_data = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
@@ -113,8 +113,8 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *A1c = matrix_alloc_copy(A1);
     matrix_type *A2c = matrix_alloc_copy(A2);
-    auto *ies_data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(true));
+    auto *ies_data = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
@@ -226,8 +226,8 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    auto *ies_data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(true));
+    auto *ies_data = static_cast<ies::data::data_type *>(
+        ies::data::alloc(testdata.active_ens_size, true));
     auto *ies_config = ies::data::get_config(ies_data);
 
     matrix_type *A0 = testdata.alloc_state("prior");

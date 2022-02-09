@@ -73,6 +73,7 @@ class AnalysisConfigTest(ResTest):
         with TestAreaContext("analysis_config_constructor_test") as work_area:
             work_area.copy_directory(self.case_directory)
             config_dict = {
+                ConfigKeys.NUM_REALIZATIONS: 10,
                 ConfigKeys.ALPHA_KEY: 3,
                 ConfigKeys.RERUN_KEY: False,
                 ConfigKeys.RERUN_START_KEY: 0,
