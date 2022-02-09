@@ -93,6 +93,9 @@ class ModelConfig(BaseCClass):
     _get_time_map = ResPrototype(
         "void model_config_get_external_time_map(model_config)"
     )
+    _get_last_history_restart = ResPrototype(
+        "int model_config_get_last_history_restart(model_config)"
+    )
 
     def __init__(
         self,
@@ -343,3 +346,6 @@ class ModelConfig(BaseCClass):
             hist_src_enum = HistorySourceEnum.from_string(hist_src_str)
 
         return hist_src_enum
+
+    def get_last_history_restart(self):
+        return self._get_last_history_restart()
