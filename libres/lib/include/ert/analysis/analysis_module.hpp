@@ -25,27 +25,13 @@ extern "C" {
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
 
-/*
-   These are option flag values which are used by the core ert code to
-   query the module of it's needs and capabilities. For instance to to
-   determine whether the data should be scaled prior to analysis the
-   core code will issue the call:
-
-      if (analysis_module_get_option( module, ANALYSIS_SCALE_DATA))
-         obs_data_scale( obs_data , S , E , D , R , dObs );
-
-   It is the responsability of the module to set the various flags.
-*/
-
-typedef enum {
-    ANALYSIS_NEED_ED = 1,
+enum analysis_module_flag_enum : int {
     ANALYSIS_USE_A =
         4, // The module will read the content of A - but not modify it.
     ANALYSIS_UPDATE_A =
         8, // The update will be based on modifying A directly, and not on an X matrix.
-    ANALYSIS_SCALE_DATA = 16,
     ANALYSIS_ITERABLE = 32 // The module can bu used as an iterative smoother.
-} analysis_module_flag_enum;
+};
 
 typedef enum {
     ENSEMBLE_SMOOTHER = 1,
@@ -61,24 +47,6 @@ analysis_module_type *analysis_module_alloc_named(int ens_size,
                                                   const char *module_name);
 
 void analysis_module_free(analysis_module_type *module);
-
-void analysis_module_initX(analysis_module_type *module, matrix_type *X,
-                           const matrix_type *A, const matrix_type *S,
-                           const matrix_type *R, const matrix_type *dObs,
-                           const matrix_type *E, const matrix_type *D,
-                           rng_type *rng);
-
-void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
-                             const matrix_type *S, const matrix_type *R,
-                             const matrix_type *dObs, const matrix_type *E,
-                             const matrix_type *D, rng_type *rng);
-
-void analysis_module_init_update(analysis_module_type *module,
-                                 const bool_vector_type *ens_mask,
-                                 const bool_vector_type *obs_mask,
-                                 const matrix_type *S, const matrix_type *R,
-                                 const matrix_type *dObs, const matrix_type *E,
-                                 const matrix_type *D, rng_type *rng);
 
 bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
                              const char *string_value);
@@ -99,7 +67,14 @@ void *analysis_module_get_ptr(const analysis_module_type *module,
                               const char *var);
 int analysis_module_ens_size(const analysis_module_type *module);
 
+extern "C++" {
+#include <ert/analysis/ies/ies_data.hpp>
+ies::data::Data *
+analysis_module_get_module_data(const analysis_module_type *module);
+}
+
 #ifdef __cplusplus
 }
 #endif
+
 #endif

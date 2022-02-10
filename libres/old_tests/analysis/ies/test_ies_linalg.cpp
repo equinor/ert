@@ -7,14 +7,12 @@
 #include <ert/analysis/ies/ies.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
-    const res::es_testdata &testdata, ies::data::Data &ies_data, matrix_type *A,
+    const res::es_testdata &testdata, ies::data::Data *ies_data, matrix_type *A,
     rng_type *rng) {
-    ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
-                     testdata.S, testdata.R, testdata.dObs, testdata.E,
-                     testdata.D, rng);
+    ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask, testdata.S,
+                     testdata.R, testdata.E, testdata.D);
 
-    ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.dObs,
-                 testdata.E, testdata.D, rng);
+    ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E, testdata.D);
 }
 
 /*
@@ -51,9 +49,9 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
     ies_config2.min_steplength(0.6);
     ies_config2.inversion(ies::config::IES_INVERSION_EXACT);
 
-    update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data1, A1,
+    update_exact_scheme_subspace_no_truncation_diagR(testdata, &ies_data1, A1,
                                                      rng);
-    update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data2, A2,
+    update_exact_scheme_subspace_no_truncation_diagR(testdata, &ies_data2, A2,
                                                      rng);
     test_assert_true(matrix_similar(A1, A2, 5e-5));
 
@@ -96,9 +94,9 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
     ies_config2.min_steplength(0.6);
     ies_config2.inversion(ies::config::IES_INVERSION_SUBSPACE_RE);
 
-    update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data1, A1,
+    update_exact_scheme_subspace_no_truncation_diagR(testdata, &ies_data1, A1,
                                                      rng);
-    update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data2, A2,
+    update_exact_scheme_subspace_no_truncation_diagR(testdata, &ies_data2, A2,
                                                      rng);
     test_assert_true(matrix_similar(A1, A2, 5e-6));
 

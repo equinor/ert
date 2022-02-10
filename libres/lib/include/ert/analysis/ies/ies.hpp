@@ -36,8 +36,8 @@ matrix_type *alloc_activeA(const data::Data *data);
 
 void init_update(data::Data *module_data, const bool_vector_type *ens_mask,
                  const bool_vector_type *obs_mask, const matrix_type *S,
-                 const matrix_type *R, const matrix_type *dObs,
-                 const matrix_type *E, const matrix_type *D, rng_type *rng);
+                 const matrix_type *R, const matrix_type *E,
+                 const matrix_type *D);
 
 /*
   Internally in the ies algorithm there is a standard ES update step, that
@@ -52,10 +52,8 @@ void updateA(
     matrix_type *A,          // Updated ensemble A returned to ERT.
     const matrix_type *Yin,  // Ensemble of predicted measurements
     const matrix_type *Rin,  // Measurement error covariance matrix (not used)
-    const matrix_type *dObs, // Actual observations (not used)
     const matrix_type *Ein,  // Ensemble of observation perturbations
-    const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
-    rng_type *rng);
+    const matrix_type *Din); // (d+E-Y) Ensemble of perturbed observations - Y
 } // namespace ies
 
 #endif

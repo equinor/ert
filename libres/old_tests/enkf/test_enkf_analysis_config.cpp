@@ -109,23 +109,6 @@ void test_have_enough_realisations_defaulted() {
     analysis_config_free(ac);
 }
 
-void test_current_module_options() {
-    int ens_size = 77;
-    analysis_config_type *ac = create_analysis_config();
-    test_assert_NULL(analysis_config_get_active_module(ac));
-
-    test_assert_false(
-        analysis_config_get_module_option(ac, ANALYSIS_SCALE_DATA));
-    analysis_config_load_internal_modules(ens_size, ac);
-    test_assert_true(analysis_config_select_module(ac, "STD_ENKF"));
-    test_assert_false(analysis_config_select_module(ac, "DOES_NOT_EXIST"));
-
-    test_assert_true(
-        analysis_config_get_module_option(ac, ANALYSIS_SCALE_DATA));
-    test_assert_false(analysis_config_get_module_option(ac, ANALYSIS_ITERABLE));
-    analysis_config_free(ac);
-}
-
 void test_stop_long_running() {
     analysis_config_type *ac = create_analysis_config();
     test_assert_bool_equal(false, analysis_config_get_stop_long_running(ac));
@@ -223,7 +206,6 @@ int main(int argc, char **argv) {
     test_have_enough_realisations_defaulted();
     test_min_realizations_percent();
     test_min_realizations_number();
-    test_current_module_options();
     test_stop_long_running();
     exit(0);
 }

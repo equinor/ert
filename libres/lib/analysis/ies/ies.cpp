@@ -60,14 +60,11 @@ namespace {
 auto logger = ert::get_logger("ies");
 }
 
-//#define DEFAULT_ANALYSIS_SCALE_DATA true
-
 void ies::init_update(ies::data::Data *module_data,
                       const bool_vector_type *ens_mask,
                       const bool_vector_type *obs_mask, const matrix_type *S,
-                      const matrix_type *R, const matrix_type *dObs,
-                      const matrix_type *E, const matrix_type *D,
-                      rng_type *rng) {
+                      const matrix_type *R, const matrix_type *E,
+                      const matrix_type *D) {
     /* Store current ens_mask in module_data->ens_mask for each iteration */
     module_data->update_ens_mask(ens_mask);
     /* Store obs_mask for initial iteration in module_data->obs_mask0,
@@ -194,13 +191,11 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
 
 void ies::updateA(
     data::Data *data,
-    matrix_type *A,          // Updated ensemble A retured to ERT.
-    const matrix_type *Yin,  // Ensemble of predicted measurements
-    const matrix_type *Rin,  // Measurement error covariance matrix (not used)
-    const matrix_type *dObs, // Actual observations (not used)
-    const matrix_type *Ein,  // Ensemble of observation perturbations
-    const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
-    rng_type *rng) {
+    matrix_type *A,         // Updated ensemble A retured to ERT.
+    const matrix_type *Yin, // Ensemble of predicted measurements
+    const matrix_type *Rin, // Measurement error covariance matrix (not used)
+    const matrix_type *Ein, // Ensemble of observation perturbations
+    const matrix_type *Din) {
 
     const auto &ies_config = data->config();
 

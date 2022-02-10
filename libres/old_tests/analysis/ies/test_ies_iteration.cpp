@@ -77,11 +77,10 @@ void cmp_std_ies(res::es_testdata &testdata) {
         forward_model(testdata, A1);
 
         ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
-                         testdata.S, testdata.R, testdata.dObs, testdata.E,
-                         testdata.D, rng);
+                         testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, rng);
+        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.E,
+                     testdata.D);
 
         if (verbose) {
             fprintf(stdout, "IES iteration   = %d %d\n", iter,
@@ -148,11 +147,10 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
         }
 
         ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
-                         testdata.S, testdata.R, testdata.dObs, testdata.E,
-                         testdata.D, rng);
+                         testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, rng);
+        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.E,
+                     testdata.D);
 
         if (verbose) {
             fprintf(stdout, "IES iteration = %d active realizations= %d\n",
@@ -241,11 +239,10 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         testdata2.deactivate_obs(2);
 
         ies::init_update(&ies_data, testdata2.ens_mask, testdata2.obs_mask,
-                         testdata2.S, testdata2.R, testdata2.dObs, testdata2.E,
-                         testdata2.D, rng);
+                         testdata2.S, testdata2.R, testdata2.E, testdata2.D);
 
-        ies::updateA(&ies_data, A, testdata2.S, testdata2.R, testdata2.dObs,
-                     testdata2.E, testdata2.D, rng);
+        ies::updateA(&ies_data, A, testdata2.S, testdata2.R, testdata2.E,
+                     testdata2.D);
     }
 
     for (int iter = 1; iter < num_iter; iter++) {
@@ -272,11 +269,10 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
             testdata.deactivate_obs(testdata.active_obs_size / 2);
 
         ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
-                         testdata.S, testdata.R, testdata.dObs, testdata.E,
-                         testdata.D, rng);
+                         testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.dObs,
-                     testdata.E, testdata.D, rng);
+        ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.E,
+                     testdata.D);
     }
 
     matrix_free(A);

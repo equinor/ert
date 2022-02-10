@@ -22,7 +22,7 @@ from res.analysis import AnalysisModuleOptionsEnum
 
 class AnalysisOptionsEnumTest(ResTest):
     def test_items(self):
-        source_file_path = "libres/lib/include/ert/analysis/analysis_module.hpp"
-        self.assertEnumIsFullyDefined(
-            AnalysisModuleOptionsEnum, "analysis_module_flag_enum", source_file_path
-        )
+
+        assert AnalysisModuleOptionsEnum.ANALYSIS_USE_A == 4
+        assert AnalysisModuleOptionsEnum.ANALYSIS_UPDATE_A == 8
+        assert AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE == 32
