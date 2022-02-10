@@ -38,8 +38,6 @@ public:
     matrix_type *getW();
     const matrix_type *getE() const;
 
-    ::ies::config::Config &get_config();
-
     int ens_size() const;
     int obs_mask_size() const;
     int active_obs_count() const;

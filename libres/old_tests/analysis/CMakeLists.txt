@@ -23,7 +23,3 @@ add_executable(ies_iteration ies/test_ies_iteration.cpp)
 target_link_libraries(ies_iteration res)
 add_test(NAME ies_iteration COMMAND ies_iteration
                                     "${TEST_DATA_DIR}/analysis/ies/poly_normal")
-
-add_executable(analysis_module test_analysis_module.cpp)
-target_link_libraries(analysis_module res)
-add_test(NAME analysis_module COMMAND analysis_module)

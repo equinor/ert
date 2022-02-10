@@ -19,8 +19,9 @@
 #ifndef IES_CONFIG_H
 #define IES_CONFIG_H
 
-#include <ert/analysis/analysis_module.hpp>
 #include <variant>
+
+enum analysis_module_flag_enum : int;
 
 namespace ies {
 namespace config {
@@ -35,7 +36,6 @@ constexpr const char *IES_MIN_STEPLENGTH_KEY = "IES_MIN_STEPLENGTH";
 constexpr const char *IES_DEC_STEPLENGTH_KEY = "IES_DEC_STEPLENGTH";
 constexpr const char *IES_AAPROJECTION_KEY = "IES_AAPROJECTION";
 constexpr const char *IES_DEBUG_KEY = "IES_DEBUG";
-constexpr const char *ANALYSIS_SCALE_DATA_KEY = "ANALYSIS_SCALE_DATA";
 constexpr const char *ENKF_NCOMP_KEY = "ENKF_NCOMP";
 constexpr const char *INVERSION_KEY = "INVERSION";
 constexpr const char *STRING_INVERSION_EXACT = "EXACT";
@@ -79,6 +79,7 @@ public:
     void dec_steplength(double dec_step);
 
     double steplength(int iteration_nr) const;
+    bool iterable() const;
 
 private:
     std::variant<double, int> m_truncation;
@@ -86,8 +87,9 @@ private:
         m_ies_inversion; // Controlled by config key: DEFAULT_IES_INVERSION
     bool
         m_ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
+    bool m_iterable;
 
-    long m_option_flags;
+    long m_option_flags = 0;
     double
         m_ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
     double

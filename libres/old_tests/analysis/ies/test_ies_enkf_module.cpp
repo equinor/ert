@@ -23,13 +23,6 @@ void test_steplength1(const char *path_testdata) {
     test_assert_true(analysis_module_set_var(
         ies_module, ies::config::ENKF_TRUNCATION_KEY, "0.95"));
 
-    analysis_module_init_update(std_module, testdata.ens_mask,
-                                testdata.obs_mask, testdata.S, testdata.R,
-                                testdata.dObs, testdata.E, testdata.D, rng);
-
-    analysis_module_initX(std_module, X, prior, testdata.S, testdata.R,
-                          testdata.dObs, testdata.E, testdata.D, rng);
-
     rng_free(rng);
     matrix_free(X);
     if (prior)
