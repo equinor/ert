@@ -101,7 +101,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
 
     ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
-                     nullptr, nullptr, nullptr);
+                     nullptr);
     data.update_ens_mask(ens_mask);
 
     matrix_type *W0 = matrix_alloc(ens_size, ens_size);
@@ -151,7 +151,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
                 matrix_iset(A0, i, j, i * ens_size + j);
         }
         ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
-                         nullptr, nullptr, nullptr);
+                         nullptr);
         data.store_initialA(A0);
 
         WHEN("All realizations active") {

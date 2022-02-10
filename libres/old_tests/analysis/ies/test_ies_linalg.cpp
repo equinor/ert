@@ -10,11 +10,9 @@ void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, ies::data::Data &ies_data, matrix_type *A,
     rng_type *rng) {
     ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
-                     testdata.S, testdata.R, testdata.dObs, testdata.E,
-                     testdata.D, rng);
+                     testdata.S, testdata.R, testdata.E, testdata.D);
 
-    ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.dObs,
-                 testdata.E, testdata.D, rng);
+    ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.E, testdata.D);
 }
 
 /*

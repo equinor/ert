@@ -13,6 +13,7 @@
 
 #include <ert/analysis/update.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 /**
  * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html  
@@ -20,17 +21,16 @@
  */
 
 namespace analysis {
-void run_analysis_update_without_rowscaling(analysis_module_type *module,
-                                            const bool_vector_type *ens_mask,
-                                            const meas_data_type *forecast,
-                                            obs_data_type *obs_data,
-                                            rng_type *shared_rng,
-                                            matrix_type *E, matrix_type *A);
+void run_analysis_update_without_rowscaling(
+    ies::data::Data &module_data, const bool_vector_type *ens_mask,
+    const bool_vector_type *obs_mask, const matrix_type *S,
+    const matrix_type *E, const matrix_type *D, const matrix_type *R,
+    matrix_type *A);
 
 void run_analysis_update_with_rowscaling(
-    analysis_module_type *module, const bool_vector_type *ens_mask,
-    const meas_data_type *forecast, obs_data_type *obs_data,
-    rng_type *shared_rng, matrix_type *E,
+    ies::data::Data &module_data, const bool_vector_type *ens_mask,
+    const bool_vector_type *obs_mask, const matrix_type *S,
+    const matrix_type *E, const matrix_type *D, const matrix_type *R,
     const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         &parameters);
 } // namespace analysis
@@ -64,9 +64,10 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
     GIVEN("Fixed prior and measurements") {
         int ens_size = GENERATE(200, 100, 1000);
-        auto enkf_module = analysis_module_alloc(ens_size, ENSEMBLE_SMOOTHER);
-        analysis_module_set_var(enkf_module, ies::config::ENKF_TRUNCATION_KEY,
-                                "1.0");
+        ies::data::Data module_data(ens_size, false);
+        auto &config = module_data.config();
+        config.truncation(1.0);
+
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
         auto ens_mask = bool_vector_alloc(ens_size, true);
@@ -161,8 +162,15 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 auto A_iter = matrix_alloc_copy(A);           // Preserve prior
 
                 // Create posterior sample (exact estimate, sample covariance)
+                auto S = meas_data_allocS(meas_data);
+                matrix_type *R = obs_data_allocR(obs_data);
+                matrix_type *D = obs_data_allocD(obs_data, E, S);
+                obs_data_scale(obs_data, S, E, D, R, nullptr);
+                const bool_vector_type *obs_mask =
+                    obs_data_get_active_mask(obs_data);
+
                 analysis::run_analysis_update_without_rowscaling(
-                    enkf_module, ens_mask, meas_data, obs_data, rng, E, A_iter);
+                    module_data, ens_mask, obs_mask, S, E, D, R, A_iter);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
@@ -179,6 +187,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     std::pow((b_avg_prior - b_avg_posterior[i_sd]), 2));
 
                 matrix_free(E);
+                matrix_free(S);
+                matrix_free(D);
+                matrix_free(R);
                 matrix_free(A_iter);
             }
 
@@ -226,9 +237,15 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
             matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
+            auto S = meas_data_allocS(meas_data);
+            matrix_type *R = obs_data_allocR(obs_data);
+            matrix_type *D = obs_data_allocD(obs_data, E, S);
+            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            const bool_vector_type *obs_mask =
+                obs_data_get_active_mask(obs_data);
 
             analysis::run_analysis_update_with_rowscaling(
-                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
+                module_data, ens_mask, obs_mask, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix should equal prior parameter "
                  "matrix") {
@@ -236,6 +253,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             }
             matrix_free(A_with_scaling);
             matrix_free(E);
+            matrix_free(S);
+            matrix_free(D);
+            matrix_free(R);
         }
 
         WHEN("Row scaling factor is 1 for both parameters") {
@@ -252,12 +272,17 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
             matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
+            auto S = meas_data_allocS(meas_data);
+            matrix_type *R = obs_data_allocR(obs_data);
+            matrix_type *D = obs_data_allocD(obs_data, E, S);
+            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            const bool_vector_type *obs_mask =
+                obs_data_get_active_mask(obs_data);
 
-            analysis::run_analysis_update_with_rowscaling(
-                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
             analysis::run_analysis_update_without_rowscaling(
-                enkf_module, ens_mask, meas_data, obs_data, rng, E,
-                A_no_scaling);
+                module_data, ens_mask, obs_mask, S, E, D, R, A_no_scaling);
+            analysis::run_analysis_update_with_rowscaling(
+                module_data, ens_mask, obs_mask, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix with row scaling should equal "
                  "updated parameter matrix without row scaling") {
@@ -266,6 +291,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_free(A_with_scaling);
             matrix_free(A_no_scaling);
             matrix_free(E);
+            matrix_free(S);
+            matrix_free(D);
+            matrix_free(R);
         }
 
         WHEN("Row scaling factor is 0 for one parameter and 1 for the other") {
@@ -282,12 +310,16 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
             matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
-
+            auto S = meas_data_allocS(meas_data);
+            matrix_type *R = obs_data_allocR(obs_data);
+            matrix_type *D = obs_data_allocD(obs_data, E, S);
+            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            const bool_vector_type *obs_mask =
+                obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_with_rowscaling(
-                enkf_module, ens_mask, meas_data, obs_data, rng, E, parameters);
+                module_data, ens_mask, obs_mask, S, E, D, R, parameters);
             analysis::run_analysis_update_without_rowscaling(
-                enkf_module, ens_mask, meas_data, obs_data, rng, E,
-                A_no_scaling);
+                module_data, ens_mask, obs_mask, S, E, D, R, A_no_scaling);
 
             THEN("First row of scaled parameters should equal first row of "
                  "unscaled parameters, while second row of scaled parameters "
@@ -307,6 +339,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_free(A_with_scaling);
             matrix_free(A_no_scaling);
             matrix_free(E);
+            matrix_free(S);
+            matrix_free(D);
+            matrix_free(R);
         }
 
         WHEN("Iterating over belief in measurements with row scaling") {
@@ -326,10 +361,14 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 row_scaling->assign(1, 0.7);
 
                 std::vector parameters{std::pair{A_with_scaling, row_scaling}};
-
+                auto S = meas_data_allocS(meas_data);
+                matrix_type *R = obs_data_allocR(obs_data);
+                matrix_type *D = obs_data_allocD(obs_data, E, S);
+                obs_data_scale(obs_data, S, E, D, R, nullptr);
+                const bool_vector_type *obs_mask =
+                    obs_data_get_active_mask(obs_data);
                 analysis::run_analysis_update_with_rowscaling(
-                    enkf_module, ens_mask, meas_data, obs_data, rng, E,
-                    parameters);
+                    module_data, ens_mask, obs_mask, S, E, D, R, parameters);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
@@ -347,6 +386,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
                 matrix_free(E);
                 matrix_free(A_with_scaling);
+                matrix_free(S);
+                matrix_free(D);
+                matrix_free(R);
             }
 
             // Test everything to some small (but generous) numeric precision
@@ -381,6 +423,5 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         obs_data_free(obs_data);
         meas_data_free(meas_data);
         bool_vector_free(ens_mask);
-        analysis_module_free(enkf_module);
     }
 }

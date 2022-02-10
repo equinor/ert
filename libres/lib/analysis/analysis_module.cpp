@@ -89,55 +89,6 @@ void analysis_module_free(analysis_module_type *module) {
     delete module;
 }
 
-void analysis_module_initX(analysis_module_type *module, matrix_type *X,
-                           const matrix_type *A, const matrix_type *S,
-                           const matrix_type *R, const matrix_type *dObs,
-                           const matrix_type *E, const matrix_type *D,
-                           rng_type *rng) {
-    ies::initX(module->module_data.get(), S, R, E, D, X);
-}
-
-void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
-                             const matrix_type *S, const matrix_type *R,
-                             const matrix_type *dObs, const matrix_type *E,
-                             const matrix_type *D, rng_type *rng) {
-
-    ies::updateA(module->module_data.get(), A, S, R, dObs, E, D, rng);
-}
-
-void analysis_module_init_update(analysis_module_type *module,
-                                 const bool_vector_type *ens_mask,
-                                 const bool_vector_type *obs_mask,
-                                 const matrix_type *S, const matrix_type *R,
-                                 const matrix_type *dObs, const matrix_type *E,
-                                 const matrix_type *D, rng_type *rng) {
-
-    /*
-    The ensemble and observation masks sent to the init_update() function can be
-    misleading? When assembling the S,R,E and D matrices the inactive
-    observations & realisatons have been filtered out completely, i.e. the
-    ens_mask and obs_mask variables are *not* used to filter out rows and
-    columns from the S,R,E and D matrices.
-
-    In the case of multi iteration updates we need to detect the changes in
-    active realisatons/observations between iterations, and that is the purpose
-    of the ens_mask and obs_mask variables.
-  */
-
-    if (bool_vector_count_equal(ens_mask, true) != matrix_get_columns(S))
-        throw std::invalid_argument(
-            "Internal error - number of columns in S must be equal to number "
-            "of *active* realisatons");
-
-    if (bool_vector_count_equal(obs_mask, true) != matrix_get_rows(S))
-        throw std::invalid_argument(
-            "Internal error - number of rows in S must be equal to number of "
-            "*active* observations");
-
-    ies::init_update(module->module_data.get(), ens_mask, obs_mask, S, R, dObs,
-                     E, D, rng);
-}
-
 static bool analysis_module_set_int(analysis_module_type *module,
                                     const char *flag, int value) {
 
@@ -210,12 +161,7 @@ static bool analysis_module_set_bool(analysis_module_type *module,
     auto &ies_config = module->module_data->config();
     bool name_recognized = true;
 
-    if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0) {
-        if (value)
-            ies_config.set_option(ANALYSIS_SCALE_DATA);
-        else
-            ies_config.del_option(ANALYSIS_SCALE_DATA);
-    } else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
+    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
         ies_config.aaprojection(value);
     else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         logger->warning("The key {} is ignored", ies::config::IES_DEBUG_KEY);
@@ -333,7 +279,6 @@ bool analysis_module_has_var(const analysis_module_type *module,
         ies::config::IES_AAPROJECTION_KEY,
         ies::config::ENKF_TRUNCATION_KEY,
         ies::config::ENKF_SUBSPACE_DIMENSION_KEY,
-        ies::config::ANALYSIS_SCALE_DATA_KEY,
         ies::config::ENKF_NCOMP_KEY};
 
     return (keys.count(var) == 1);
@@ -342,10 +287,8 @@ bool analysis_module_has_var(const analysis_module_type *module,
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
     const auto &ies_config = module->module_data->config();
-    if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0)
-        return ies_config.get_option(ANALYSIS_SCALE_DATA);
 
-    else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
+    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
         return ies_config.aaprojection();
 
     else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
@@ -384,4 +327,9 @@ double analysis_module_get_double(const analysis_module_type *module,
               __func__, var, module->user_name);
 
     return -1;
+}
+
+extern "C++" ies::data::Data *
+analysis_module_get_module_data(const analysis_module_type *module) {
+    return module->module_data.get();
 }
