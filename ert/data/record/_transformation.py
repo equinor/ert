@@ -168,9 +168,7 @@ class ExecutableRecordTransformation(FileTransformation):
     storing a Record to the file.
     """
 
-    async def transform_input(
-        self, record: Record, mime: str, root_path: Path, location: Path
-    ) -> None:
+    async def transform_input(self, record: Record, root_path: Path) -> None:
         """Transforms a Record to disk on the given location via
         via a serializer given in the mime type. Additionally, it makes
         executable from the file
@@ -189,15 +187,17 @@ class ExecutableRecordTransformation(FileTransformation):
         root_path.mkdir(parents=True, exist_ok=True)
 
         # create file(s)
-        _prepare_location(root_path, location)
-        await _save_record_to_file(record, root_path / location, mime)
+        _prepare_location(root_path, self.location)
+        await _save_record_to_file(
+            record, root_path / self.location, "application/octet-stream"
+        )
 
         # post-process if necessary
-        path = root_path / location
+        path = root_path / self.location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
 
-    async def transform_output(self, mime: str, location: Path) -> Record:
+    async def transform_output(self, root_path: Path) -> Record:
         """Transforms a file to Record from the given location via
         a serializer given in the mime type..
 
@@ -209,7 +209,7 @@ class ExecutableRecordTransformation(FileTransformation):
         Returns:
             Record: return object of :class:`BlobRecord` type.
         """
-        return await _load_record_from_file(location, mime)
+        return await _load_record_from_file(root_path / self.location, "application/octet-stream")
 
 
 async def _load_record_from_file(

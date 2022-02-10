@@ -4,14 +4,14 @@
     -
       name: coefficients
       transformation:
-        type: file
+        type: serialization
         location: coefficients.json
 
   output:
     -
       name: polynomial_output
       transformation:
-        type: file
+        type: serialization
         location: output.json
 
 

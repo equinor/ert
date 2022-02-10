@@ -26,7 +26,7 @@ from ert_shared.ensemble_evaluator.ensemble.io_map import InputMap, OutputMap
 from ert_shared.ensemble_evaluator.entity.function_step import FunctionTask
 from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert.data import RecordTransformation, FileRecordTransformation
+from ert.data import RecordTransformation
 
 from res.enkf import EnKFState, RunArg
 
@@ -136,7 +136,7 @@ class _IOBuilder:
     def build(self):
         if self._concrete_cls is None:
             raise TypeError("cannot build _IO")
-        return self._concrete_cls(self._name)
+        return self._concrete_cls(self._name, transformation=self._transformation)
 
 
 class _DummyIO(_IO):
