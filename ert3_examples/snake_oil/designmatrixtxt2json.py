@@ -12,7 +12,7 @@ DESIGN2PARAMS_OUTPUT = "designmatrix.txt"
 if __name__ == "__main__":
     dframe = pd.read_csv(DESIGN2PARAMS_OUTPUT, sep=" ")
     for col in dframe.columns[1:]:
-        ens_records = [{col: value} for value in dframe[col]]
+        ens_records = [[value] for value in dframe[col]]
         Path("resources/designed_" + col.lower() + ".json").write_text(
             json.dumps(ens_records, indent=4), encoding="utf-8"
         )
