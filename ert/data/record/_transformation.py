@@ -53,11 +53,11 @@ class RecordTransformation(ABC):
     """
 
     @abstractmethod
-    async def transform_input(self, record: Record, root_path: Path) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         pass
 
     @abstractmethod
-    async def transform_output(self, root_path: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         pass
 
 
@@ -66,10 +66,10 @@ class FileTransformation(RecordTransformation):
         super().__init__()
         self.location = location
 
-    async def transform_input(self, record: Record, root_path: Path) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         raise NotImplementedError("not implemented")
 
-    async def transform_output(self, root_path: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         raise NotImplementedError("not implemented")
 
 
@@ -83,7 +83,7 @@ class SerializationTransformation(FileTransformation):
         super().__init__(location)
         self.mime = mime
 
-    async def transform_input(self, record: Record, root_path: Path) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         """Transforms a Record to disk on the given location via a serializer
         given in the mime type.
 
@@ -97,7 +97,7 @@ class SerializationTransformation(FileTransformation):
         _prepare_location(root_path, self.location)
         await _save_record_to_file(record, root_path / self.location, self.mime)
 
-    async def transform_output(self, root_path: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         """Transfroms a file to Record from the given location via
         a serializer given in the mime type.
 
@@ -111,31 +111,32 @@ class SerializationTransformation(FileTransformation):
         return await _load_record_from_file(root_path / self.location, self.mime)
 
     async def transform_output_sequence(
-        self, mime: str, location: Path
+        self, root_path: Path = Path()
     ) -> Tuple[Record, ...]:
-        if mime == "application/octet-stream":
+        # TODO: move this to constructor?
+        if self.mime == "application/octet-stream":
             raise TypeError("Output record types must be NumericalRecord")
-        raw_ensrecord = await get_serializer(mime).decode_from_path(location)
+        raw_ensrecord = await get_serializer(self.mime).decode_from_path(
+            root_path / self.location
+        )
         return tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
 
 
-class TarRecordTransformation(FileTransformation):
-    """:class:`TarRecordTransformation` is :class:`RecordTransformation`
+class TarTransformation(FileTransformation):
+    """:class:`TarTransformation` is :class:`RecordTransformation`
     implementation which provides creating a tar object from a given location
-    into a BlobRecord :func:`TarRecordTransformation.transform_output` and
+    into a BlobRecord :func:`TarTransformation.transform_output` and
     extracting tar object (:class:`BlobRecord`) to the given location.
     """
 
-    async def transform_input(self, record: Record, root_path: Path) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         """Transforms BlobRecord (tar object) to disk, ie. extracting tar object
         on the given location.
 
         Args:
             record: BlobRecord object, where :func:`BlobRecord.data`
                 is the binary tar object
-            mime: mime type is ignored in this case
             root_path: the root of the path
-            location: directory name to extract the tar object into
 
         Raises:
             TypeError: Raises when the Record (loaded via transmitter)
@@ -148,7 +149,7 @@ class TarRecordTransformation(FileTransformation):
             _prepare_location(root_path, self.location)
             tar.extractall(root_path / self.location)
 
-    async def transform_output(self, root_path: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         """Transfroms directory from the given location into a :class:`BlobRecord`
         object.
 
@@ -162,22 +163,20 @@ class TarRecordTransformation(FileTransformation):
         return BlobRecord(data=await _make_tar(root_path / self.location))
 
 
-class ExecutableRecordTransformation(FileTransformation):
-    """:class:`ExecutableRecordTransformation` is :class:`RecordTransformation`
+class ExecutableTransformation(SerializationTransformation):
+    """:class:`ExecutableTransformation` is :class:`RecordTransformation`
     implementation which provides creating an executable file; ie. when
     storing a Record to the file.
     """
 
-    async def transform_input(self, record: Record, root_path: Path) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         """Transforms a Record to disk on the given location via
         via a serializer given in the mime type. Additionally, it makes
         executable from the file
 
         Args:
             record: a record object to save to disk that becomes executable
-            mime: mime type to fetch the corresponding serializer
             root_path: the root of the path
-            location: filename to save the Record to
         """
         if not isinstance(record, BlobRecord):
             raise TypeError("Record type must be a BlobRecord")
@@ -188,34 +187,29 @@ class ExecutableRecordTransformation(FileTransformation):
 
         # create file(s)
         _prepare_location(root_path, self.location)
-        await _save_record_to_file(
-            record, root_path / self.location, "application/octet-stream"
-        )
+        await _save_record_to_file(record, root_path / self.location, self.mime)
 
         # post-process if necessary
         path = root_path / self.location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
 
-    async def transform_output(self, root_path: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         """Transforms a file to Record from the given location via
         a serializer given in the mime type..
 
         Args:
-            mime: mime type to fetch the corresponding serializer
-            root_path: the root of the path
-            location: filename to load the Record from
+            root_path: the root of the path (default: the empty Path)
 
         Returns:
             Record: return object of :class:`BlobRecord` type.
         """
-        return await _load_record_from_file(root_path / self.location, "application/octet-stream")
+        return await _load_record_from_file(
+            root_path / self.location, "application/octet-stream"
+        )
 
 
-async def _load_record_from_file(
-    file: Path,
-    mime: str,
-) -> Record:
+async def _load_record_from_file(file: Path, mime: str) -> Record:
     if mime == "application/octet-stream":
         async with aiofiles.open(str(file), mode="rb") as fb:
             contents_b: bytes = await fb.read()
@@ -235,56 +229,52 @@ async def _save_record_to_file(record: Record, location: Path, mime: str) -> Non
             await fb.write(record.data)  # type: ignore
 
 
-class RecordTreeTransformation(RecordTransformation):
+class RecordTreeTransformation(SerializationTransformation):
     """
     Write all leaf records of a NumericalRecordTree to individual files.
     """
 
-    def __init__(self, sub_path: Optional[str] = None):
+    def __init__(self, location: Path, mime: str, sub_path: Optional[str] = None):
+        super().__init__(location, mime)
         if sub_path is not None:
             raise NotImplementedError("Extracting sub-trees not implemented")
 
-    async def transform_input(
-        self,
-        record: Record,
-        mime: str,
-        root_path: Path,
-        location: Path,
-    ) -> None:
+    async def transform_input(self, record: Record, root_path: Path = Path()) -> None:
         if not isinstance(record, NumericalRecordTree):
             raise TypeError("Only NumericalRecordTrees can be transformed.")
         for key, leaf_record in record.flat_record_dict.items():
-            location_key = f"{key}-{location}"
-            await get_serializer(mime).encode_to_path(
+            location_key = f"{key}-{self.location}"
+            await get_serializer(self.mime).encode_to_path(
                 leaf_record.data, path=root_path / location_key
             )
 
-    async def transform_output(self, mime: str, location: Path) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         raise NotImplementedError
 
 
-class EclSumTransformation(RecordTreeTransformation):
+class EclSumTransformation(FileTransformation):
     """Transform binary output from Eclipse into a NumericalRecordTree."""
 
-    def __init__(self, smry_keys: List[str]):
+    def __init__(self, location: Path, smry_keys: List[str]):
         """
         Args:
+            location: Path location of eclipse load case, passed as load_case to EclSum.
             smry_keys: List (non-empty) of Eclipse summary vectors (must be present) to
                 include when transforming from Eclipse binary files. Wildcards are not
                 supported.
         """
+        super().__init__(location)
         if not smry_keys:
             raise ValueError("smry_keys must be non-empty")
         self._smry_keys = smry_keys
 
-    async def transform_output(
-        self,
-        mime: str,
-        location: Path,
-    ) -> Record:
+    async def transform_output(self, root_path: Path = Path()) -> Record:
         executor = futures.ThreadPoolExecutor()
         record_dict = await get_event_loop().run_in_executor(
-            executor, _sync_eclsum_transform_output, location, self._smry_keys
+            executor,
+            _sync_eclsum_transform_output,
+            root_path / self.location,
+            self._smry_keys,
         )
         return NumericalRecordTree(record_dict=record_dict)
 

@@ -55,11 +55,24 @@ def add_commands(
         )
 
     async def transform_output(
-        transmitter: ert.data.RecordTransmitter, location: pathlib.Path
+        name: str,
+        transmitter: ert.data.RecordTransmitter,
+        mime: str,
+        location: pathlib.Path,
     ) -> None:
-        transformation = ert.data.ExecutableRecordTransformation(location=location)
-        record = await transformation.transform_output(root_path=pathlib.Path(".")) # XXX: Fix this
+        transformation = ert.data.ExecutableTransformation(location, mime)
+        record = await transformation.transform_output()
         await transmitter.transmit_record(record)
+        step.add_input(
+            create_input_builder().set_name(name)
+            # .set_path(command_location(command.name))
+            # .set_mime("application/octet-stream")
+            .set_transformation(transformation)
+            # cast necessary due to https://github.com/python/mypy/issues/9656
+            .set_transmitter_factory(
+                lambda _t=transmitter: cast(ert.data.RecordTransmitter, _t)
+            )
+        )
 
     for command in transportable_commands:
         transmitter: ert.data.RecordTransmitter
@@ -76,18 +89,9 @@ def add_commands(
             raise ValueError(f"Unsupported transmitter type: {storage_type}")
         get_event_loop().run_until_complete(
             transform_output(
+                name=command.name,
                 transmitter=transmitter,
                 location=command.location,
-            )
-        )
-        step.add_input(
-            create_input_builder().set_name(command.name)
-            # .set_path(command_location(command.name))
-            # .set_mime("application/octet-stream")
-            .set_transformation(ert.data.ExecutableRecordTransformation(location=command_location(command.name)))
-            # cast necessary due to https://github.com/python/mypy/issues/9656
-            .set_transmitter_factory(
-                lambda _t=transmitter: cast(ert.data.RecordTransmitter, _t)
             )
         )
 
@@ -178,27 +182,3 @@ def build_ensemble(
     )
 
     return builder.build()
-
-
-def _get_input_recordtransformation(
-    input_config: ert3.config.LinkedInput,
-) -> ert.data.RecordTransformation:
-    """Determine and configure the RecordTransformation to be used, by sniffing the
-    provided inputs."""
-    if input_config.dest_is_directory:
-        return ert.data.TarRecordTransformation()
-    elif input_config.dest_smry_keys:
-        return ert.data.EclSumTransformation(input_config.dest_smry_keys)
-    return ert.data.FileRecordTransformation()
-
-
-def _get_output_recordtransformation(
-    output_config,
-) -> ert.data.RecordTransformation:
-    """Determine (by sniffing the requested configuration) and configure a
-    RecordTransformation for the output from a step."""
-    if output_config.is_directory:
-        return ert.data.TarRecordTransformation()
-    elif output_config.smry_keys:
-        return ert.data.EclSumTransformation(output_config.smry_keys)
-    return ert.data.FileRecordTransformation()

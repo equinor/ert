@@ -15,12 +15,11 @@ from ert.data.record._record import (
 
 from .record._transformation import (
     EclSumTransformation,
-    ExecutableRecordTransformation,
-    FileTransformation,
+    ExecutableTransformation,
     SerializationTransformation,
     RecordTransformation,
     RecordTreeTransformation,
-    TarRecordTransformation,
+    TarTransformation,
 )
 from .record._transmitter import (
     InMemoryRecordTransmitter,
@@ -48,10 +47,9 @@ __all__ = (
     "RecordValidationError",
     "SharedDiskRecordTransmitter",
     "EclSumTransformation",
-    "FileTransformation",
-    "TarRecordTransformation",
     "SerializationTransformation",
-    "ExecutableRecordTransformation",
+    "TarTransformation",
+    "ExecutableTransformation",
     "RecordTransformation",
     "transmitter_factory",
 )
