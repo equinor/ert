@@ -38,11 +38,10 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     std_config.truncation(0.95);
 
     ies::init_update(&ies_data1, testdata.ens_mask, testdata.obs_mask,
-                     testdata.S, testdata.R, testdata.dObs, testdata.E,
-                     testdata.D, rng);
+                     testdata.S, testdata.R, testdata.E, testdata.D);
 
-    ies::updateA(&ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
-                 testdata.E, testdata.D, rng);
+    ies::updateA(&ies_data1, A1, testdata.S, testdata.R, testdata.E,
+                 testdata.D);
 
     ies::initX(&std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
 

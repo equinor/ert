@@ -37,15 +37,12 @@
 
 ies::config::Config::Config(bool ies_mode)
     : m_truncation(DEFAULT_TRUNCATION), m_ies_inversion(DEFAULT_IES_INVERSION),
-      m_ies_aaprojection(DEFAULT_IES_AAPROJECTION),
+      m_ies_aaprojection(DEFAULT_IES_AAPROJECTION), m_iterable(ies_mode),
       m_ies_max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
       m_ies_min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
       m_ies_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {
     if (ies_mode)
-        this->m_option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A +
-                               ANALYSIS_SCALE_DATA + ANALYSIS_ITERABLE;
-    else
-        this->m_option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
+        this->m_option_flags = ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE;
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -148,3 +145,5 @@ double ies::config::Config::steplength(int iteration_nr) const {
 
     return ies_steplength;
 }
+
+bool ies::config::Config::iterable() const { return this->m_iterable; }
