@@ -16,12 +16,12 @@ from ert_shared.async_utils import get_event_loop
 _BIN_FOLDER = "bin"
 
 
-def _prepare_location(base_path: Path, location: Path) -> None:
+def _prepare_location(root_path: Path, location: Path) -> None:
     """Ensure relative, and if the location is within a folder create those
     folders."""
     if location.is_absolute():
         raise ValueError(f"location {location} must be relative")
-    abs_path = base_path / location
+    abs_path = root_path / location
     if not abs_path.parent.exists():
         abs_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -53,54 +53,62 @@ class RecordTransformation(ABC):
     """
 
     @abstractmethod
-    async def transform_input(
-        self, record: Record, mime: str, runpath: Path, location: Path
-    ) -> None:
+    async def transform_input(self, record: Record, root_path: Path) -> None:
         pass
 
     @abstractmethod
-    async def transform_output(self, mime: str, location: Path) -> Record:
+    async def transform_output(self, root_path: Path) -> Record:
         pass
 
 
-class FileRecordTransformation(RecordTransformation):
-    """:class:`FileRecordTransformation` is :class:`RecordTransformation`
+class FileTransformation(RecordTransformation):
+    def __init__(self, location: Path) -> None:
+        super().__init__()
+        self.location = location
+
+    async def transform_input(self, record: Record, root_path: Path) -> None:
+        raise NotImplementedError("not implemented")
+
+    async def transform_output(self, root_path: Path) -> Record:
+        raise NotImplementedError("not implemented")
+
+
+class SerializationTransformation(FileTransformation):
+    """:class:`SerializationTransformation` is :class:`RecordTransformation`
     implementation which provides basic Record to disk and disk to Record
     functionality.
     """
 
-    async def transform_input(
-        self, record: Record, mime: str, runpath: Path, location: Path
-    ) -> None:
+    def __init__(self, location: Path, mime: str) -> None:
+        super().__init__(location)
+        self.mime = mime
+
+    async def transform_input(self, record: Record, root_path: Path) -> None:
         """Transforms a Record to disk on the given location via a serializer
         given in the mime type.
 
         Args:
             record: a record object to save to disk
-            mime: mime type to fetch the corresponding serializer
-            runpath: the root of the path
-            location: filename to save the Record to
+            root_path: the root of the path
         """
         if not isinstance(record, (NumericalRecord, BlobRecord)):
             raise TypeError("Record type must be a NumericalRecord or BlobRecord")
 
-        _prepare_location(runpath, location)
-        await _save_record_to_file(record, runpath / location, mime)
+        _prepare_location(root_path, self.location)
+        await _save_record_to_file(record, root_path / self.location, self.mime)
 
-    async def transform_output(self, mime: str, location: Path) -> Record:
+    async def transform_output(self, root_path: Path) -> Record:
         """Transfroms a file to Record from the given location via
         a serializer given in the mime type.
 
         Args:
-            mime: mime type to fetch the corresponding serializer
-            runpath: the root of the path
-            location: filename to load the Record from
+            root_path: the root of the path
 
         Returns:
             Record: the object is either :class:`BlobRecord` or
                 :class:`NumericalRecord`
         """
-        return await _load_record_from_file(location, mime)
+        return await _load_record_from_file(root_path / self.location, self.mime)
 
     async def transform_output_sequence(
         self, mime: str, location: Path
@@ -111,16 +119,14 @@ class FileRecordTransformation(RecordTransformation):
         return tuple(NumericalRecord(data=raw_record) for raw_record in raw_ensrecord)
 
 
-class TarRecordTransformation(RecordTransformation):
+class TarRecordTransformation(FileTransformation):
     """:class:`TarRecordTransformation` is :class:`RecordTransformation`
     implementation which provides creating a tar object from a given location
     into a BlobRecord :func:`TarRecordTransformation.transform_output` and
     extracting tar object (:class:`BlobRecord`) to the given location.
     """
 
-    async def transform_input(
-        self, record: Record, mime: str, runpath: Path, location: Path
-    ) -> None:
+    async def transform_input(self, record: Record, root_path: Path) -> None:
         """Transforms BlobRecord (tar object) to disk, ie. extracting tar object
         on the given location.
 
@@ -128,7 +134,7 @@ class TarRecordTransformation(RecordTransformation):
             record: BlobRecord object, where :func:`BlobRecord.data`
                 is the binary tar object
             mime: mime type is ignored in this case
-            runpath: the root of the path
+            root_path: the root of the path
             location: directory name to extract the tar object into
 
         Raises:
@@ -139,33 +145,31 @@ class TarRecordTransformation(RecordTransformation):
             raise TypeError("Record type must be a BlobRecord")
 
         with tarfile.open(fileobj=io.BytesIO(record.data), mode="r") as tar:
-            _prepare_location(runpath, location)
-            tar.extractall(runpath / location)
+            _prepare_location(root_path, self.location)
+            tar.extractall(root_path / self.location)
 
-    async def transform_output(self, mime: str, location: Path) -> Record:
+    async def transform_output(self, root_path: Path) -> Record:
         """Transfroms directory from the given location into a :class:`BlobRecord`
         object.
 
         Args:
-            mime: mime type is ignored
-            runpath: the root of the path
-            location: directory name to create tar representation from
+            root_path: the root of the path
 
         Returns:
             Record: returns :class:`BlobRecord` object that is a
                 binary representation of the final tar object.
         """
-        return BlobRecord(data=await _make_tar(location))
+        return BlobRecord(data=await _make_tar(root_path / self.location))
 
 
-class ExecutableRecordTransformation(RecordTransformation):
+class ExecutableRecordTransformation(FileTransformation):
     """:class:`ExecutableRecordTransformation` is :class:`RecordTransformation`
     implementation which provides creating an executable file; ie. when
     storing a Record to the file.
     """
 
     async def transform_input(
-        self, record: Record, mime: str, runpath: Path, location: Path
+        self, record: Record, mime: str, root_path: Path, location: Path
     ) -> None:
         """Transforms a Record to disk on the given location via
         via a serializer given in the mime type. Additionally, it makes
@@ -174,22 +178,22 @@ class ExecutableRecordTransformation(RecordTransformation):
         Args:
             record: a record object to save to disk that becomes executable
             mime: mime type to fetch the corresponding serializer
-            runpath: the root of the path
+            root_path: the root of the path
             location: filename to save the Record to
         """
         if not isinstance(record, BlobRecord):
             raise TypeError("Record type must be a BlobRecord")
 
         # pre-make bin folder if necessary
-        base_path = Path(runpath / _BIN_FOLDER)
-        base_path.mkdir(parents=True, exist_ok=True)
+        root_path = Path(root_path / _BIN_FOLDER)
+        root_path.mkdir(parents=True, exist_ok=True)
 
         # create file(s)
-        _prepare_location(base_path, location)
-        await _save_record_to_file(record, base_path / location, mime)
+        _prepare_location(root_path, location)
+        await _save_record_to_file(record, root_path / location, mime)
 
         # post-process if necessary
-        path = base_path / location
+        path = root_path / location
         st = path.stat()
         path.chmod(st.st_mode | stat.S_IEXEC)
 
@@ -199,7 +203,7 @@ class ExecutableRecordTransformation(RecordTransformation):
 
         Args:
             mime: mime type to fetch the corresponding serializer
-            runpath: the root of the path
+            root_path: the root of the path
             location: filename to load the Record from
 
         Returns:
@@ -244,7 +248,7 @@ class RecordTreeTransformation(RecordTransformation):
         self,
         record: Record,
         mime: str,
-        runpath: Path,
+        root_path: Path,
         location: Path,
     ) -> None:
         if not isinstance(record, NumericalRecordTree):
@@ -252,7 +256,7 @@ class RecordTreeTransformation(RecordTransformation):
         for key, leaf_record in record.flat_record_dict.items():
             location_key = f"{key}-{location}"
             await get_serializer(mime).encode_to_path(
-                leaf_record.data, path=runpath / location_key
+                leaf_record.data, path=root_path / location_key
             )
 
     async def transform_output(self, mime: str, location: Path) -> Record:

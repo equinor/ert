@@ -26,10 +26,9 @@ def add_step_inputs(
 ) -> None:
     for input_ in inputs:
         step_input = (
-            create_file_io_builder()
-            .set_name(input_.name)
-            .set_mime(input_.source_mime)
-            .set_path(pathlib.Path(input_.dest_location))
+            create_file_io_builder().set_name(input_.name)
+            # .set_mime(input_.source_mime)
+            # .set_path(pathlib.Path(input_.dest_location))
             .set_transformation(input_.transformation)
         )
 
@@ -82,10 +81,9 @@ def add_commands(
             )
         )
         step.add_input(
-            create_file_io_builder()
-            .set_name(command.name)
-            .set_path(command_location(command.name))
-            .set_mime("application/octet-stream")
+            create_file_io_builder().set_name(command.name)
+            # .set_path(command_location(command.name))
+            # .set_mime("application/octet-stream")
             .set_transformation(ert.data.ExecutableRecordTransformation())
             # cast necessary due to https://github.com/python/mypy/issues/9656
             .set_transmitter_factory(
@@ -104,10 +102,9 @@ def add_step_outputs(
     for record_name, output in step_config.output.items():
         transformation = output.get_transformation_instance()
         output = (
-            create_file_io_builder()
-            .set_name(record_name)
-            .set_path(pathlib.Path(output.transformation.location))
-            .set_mime(output.transformation.mime if hasattr(output.transformation, "mime") else "application/octet-stream")
+            create_file_io_builder().set_name(record_name)
+            # .set_path(pathlib.Path(output.transformation.location))
+            # .set_mime(output.transformation.mime)
             .set_transformation(transformation)
         )
         for iens in range(0, ensemble_size):

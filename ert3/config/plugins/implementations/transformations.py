@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Type
 
-from pydantic import validator
+from pydantic import BaseModel, validator
 
 from ert3.config import ConfigPluginRegistry
 from ert3.config.plugins import TransformationConfigBase
@@ -13,10 +13,12 @@ from ert.data import TarRecordTransformation
 from ert.data import EclSumTransformation
 
 
-def transformation_factory(config: TransformationConfigBase):
-    if isinstance(config, FileTransformationConfig):
+def transformation_factory(config: Type[BaseModel]) -> TransformationConfigBase:
+    if isinstance(config, SerializationTransformation):
         return FileRecordTransformation()
     elif isinstance(config, SummaryTransformationConfig):
+        if not config.smry_keys:
+            raise ValueError(f"no smry_keys on '{config}'")
         return EclSumTransformation(smry_keys=config.smry_keys)
     elif isinstance(config, DirectoryTransformationConfig):
         return TarRecordTransformation()
@@ -26,11 +28,12 @@ def transformation_factory(config: TransformationConfigBase):
         )
 
 
-class FileTransformationConfig(TransformationConfigBase):
+class SerializationTransformation(TransformationConfigBase):
     mime: str = ""
     _ensure_transportablecommand_mime = validator("mime", allow_reuse=True)(
         ensure_mime("location")
     )
+
 
 class SummaryTransformationConfig(TransformationConfigBase):
     smry_keys: Optional[List[str]] = None
@@ -43,9 +46,9 @@ class DirectoryTransformationConfig(TransformationConfigBase):
 @hook_implementation
 def configs(registry: ConfigPluginRegistry) -> None:
     registry.register(
-        name="file",
+        name="serialization",
         category="transformation",
-        config=FileTransformationConfig,
+        config=SerializationTransformation,
         factory=transformation_factory,
     )
     registry.register(

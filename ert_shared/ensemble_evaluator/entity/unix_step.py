@@ -90,9 +90,9 @@ class UnixTask(prefect.Task):
             record = await transmitters[input_.get_name()].load()
             await input_.get_transformation().transform_input(
                 record=record,
-                mime=input_.get_mime(),
+                # mime=input_.get_mime(),
                 runpath=runpath,
-                location=input_.get_path(),
+                # location=input_.get_path(),
             )
 
         futures = []
@@ -103,8 +103,8 @@ class UnixTask(prefect.Task):
     def run(self, inputs=None):
         async def transform_output(output):
             record = await output.get_transformation().transform_output(
-                mime=output.get_mime(),
-                location=run_path / output.get_path(),
+                # mime=output.get_mime(),
+                root_path=run_path,
             )
             transmitter = outputs[output.get_name()]
             await transmitter.transmit_record(record)

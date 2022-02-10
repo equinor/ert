@@ -24,7 +24,7 @@ class LinkedInput(NamedTuple):
     source_namespace: SourceNS
     source_location: str
     source_is_directory: bool
-    dest_location:  str
+    dest_location: str
     transformation: Any
 
 
@@ -131,7 +131,11 @@ class ExperimentRunConfig:
             stage_location = stage.input[name].transformation.location
             transformation = stage.input[name].get_transformation_instance()
 
-            mime = "application/json" if ensemble_input.source.startswith("stochastic") else ensemble_input.mime
+            mime = (
+                "application/json"
+                if ensemble_input.source_namespace == SourceNS.stochastic
+                else ensemble_input.mime
+            )
 
             input_ = LinkedInput(
                 name=name,

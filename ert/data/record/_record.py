@@ -498,6 +498,6 @@ async def load_collection_from_file(
         )
     return RecordCollection(
         records=await ert.data.FileRecordTransformation().transform_output_sequence(
-            mime, file_path
+            file_path
         )
     )

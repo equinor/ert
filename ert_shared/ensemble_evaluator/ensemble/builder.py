@@ -71,8 +71,6 @@ def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
 
 class _IO:
     def __init__(self, name, transformation: Optional[RecordTransformation] = None):
-        if transformation is None:
-            transformation = FileRecordTransformation()
         self._transformation: RecordTransformation = transformation
         if not name:
             raise ValueError(f"{self} needs name")
@@ -98,7 +96,7 @@ class _IOBuilder:
 
     def __init__(self):
         self._name = None
-        self._transformation: RecordTransformation = FileRecordTransformation()
+        self._transformation: Optional[RecordTransformation] = None
         self._transmitter_factories: Dict[int, ert.data.transmitter_factory] = {}
 
     def set_name(self: _IOBuilder_TV, name) -> _IOBuilder_TV:
@@ -153,48 +151,36 @@ class _DummyIOBuilder(_IOBuilder):
         return super().build()
 
 
-class _FileIO(_IO):
-    def __init__(
-        self,
-        name: str,
-        path: Path,
-        mime: str,
-        transformation: Optional[RecordTransformation] = None,
-    ) -> None:
-        super().__init__(name, transformation=transformation)
-        self._path = path
-        self._mime = mime
+# class _FileIO(_IO):
+#     def __init__(
+#         self,
+#         name: str,
+#         path: Path,
+#         transformation: Optional[RecordTransformation] = None,
+#     ) -> None:
+#         super().__init__(name, transformation=transformation)
+#         self._path = path
 
-    def get_path(self):
-        return self._path
-
-    def get_mime(self):
-        return self._mime
+#     def get_path(self):
+#         return self._path
 
 
-class _FileIOBuilder(_IOBuilder):
-    def __init__(self) -> None:
-        super().__init__()
-        self._path: Optional[Path] = None
-        self._mime: Optional[str] = None
-        self._cls = _FileIO
+# class _FileIOBuilder(_IOBuilder):
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self._path: Optional[Path] = None
+#         self._cls = _FileIO
 
-    def set_path(self, path: Path) -> "_FileIOBuilder":
-        self._path = path
-        return self
+#     def set_path(self, path: Path) -> "_FileIOBuilder":
+#         self._path = path
+#         return self
 
-    def set_mime(self, mime: str) -> "_FileIOBuilder":
-        self._mime = mime
-        return self
-
-    def build(self):
-        if not self._mime:
-            raise ValueError(f"FileIO {self._name} needs mime")
-        return self._cls(self._name, self._path, self._mime, self._transformation)
+#     def build(self):
+#         return self._cls(self._name, self._path, self._transformation)
 
 
-def create_file_io_builder() -> _FileIOBuilder:
-    return _FileIOBuilder()
+# def create_file_io_builder() -> _FileIOBuilder:
+#     return _FileIOBuilder()
 
 
 class _Input(_IO):

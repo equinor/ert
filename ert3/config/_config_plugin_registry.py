@@ -58,7 +58,7 @@ class ConfigPluginRegistry:
             )
 
         if len(values) > 1:
-            return Union[values]
+            return Union[values]  # type: ignore
         else:
             return values[0]
 
