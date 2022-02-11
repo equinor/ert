@@ -24,6 +24,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <memory>
 #include <stdexcept>
 
 #include <ert/res_util/matrix.hpp>
@@ -38,11 +39,8 @@
 
 auto logger = ert::get_logger("analysis");
 
-#define ANALYSIS_MODULE_TYPE_ID 6610123
-
 struct analysis_module_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    ies::data::data_type *module_data;
+    std::unique_ptr<ies::data::Data> module_data;
     char *
         user_name; /* String used to identify this module for the user; not used in
                                                    the linking process. */
@@ -55,21 +53,18 @@ analysis_module_get_mode(const analysis_module_type *module) {
 }
 
 int analysis_module_ens_size(const analysis_module_type *module) {
-    return ies::data::ens_size(module->module_data);
+    return module->module_data->ens_size();
 }
 
 analysis_module_type *analysis_module_alloc_named(int ens_size,
                                                   analysis_mode_enum mode,
                                                   const char *module_name) {
-    analysis_module_type *module =
-        (analysis_module_type *)util_malloc(sizeof *module);
-    UTIL_TYPE_ID_INIT(module, ANALYSIS_MODULE_TYPE_ID);
+    analysis_module_type *module = new analysis_module_type();
 
     module->mode = mode;
-    module->module_data = NULL;
     module->user_name = util_alloc_string_copy(module_name);
-    module->module_data =
-        ies::data::alloc(ens_size, mode == ITERATED_ENSEMBLE_SMOOTHER);
+    module->module_data = std::make_unique<ies::data::Data>(
+        ens_size, mode == ITERATED_ENSEMBLE_SMOOTHER);
     module->user_name = util_alloc_string_copy(module_name);
 
     return module;
@@ -89,13 +84,9 @@ const char *analysis_module_get_name(const analysis_module_type *module) {
     return module->user_name;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
-    UTIL_IS_INSTANCE_FUNCTION(analysis_module, ANALYSIS_MODULE_TYPE_ID)
-
-        void analysis_module_free(analysis_module_type *module) {
-    ies::data::free(module->module_data);
+void analysis_module_free(analysis_module_type *module) {
     free(module->user_name);
-    free(module);
+    delete module;
 }
 
 void analysis_module_initX(analysis_module_type *module, matrix_type *X,
@@ -103,7 +94,7 @@ void analysis_module_initX(analysis_module_type *module, matrix_type *X,
                            const matrix_type *R, const matrix_type *dObs,
                            const matrix_type *E, const matrix_type *D,
                            rng_type *rng) {
-    ies::initX(module->module_data, S, R, E, D, X);
+    ies::initX(module->module_data.get(), S, R, E, D, X);
 }
 
 void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
@@ -111,7 +102,7 @@ void analysis_module_updateA(analysis_module_type *module, matrix_type *A,
                              const matrix_type *dObs, const matrix_type *E,
                              const matrix_type *D, rng_type *rng) {
 
-    ies::updateA(module->module_data, A, S, R, dObs, E, D, rng);
+    ies::updateA(module->module_data.get(), A, S, R, dObs, E, D, rng);
 }
 
 void analysis_module_init_update(analysis_module_type *module,
@@ -143,14 +134,14 @@ void analysis_module_init_update(analysis_module_type *module,
             "Internal error - number of rows in S must be equal to number of "
             "*active* observations");
 
-    ies::init_update(module->module_data, ens_mask, obs_mask, S, R, dObs, E, D,
-                     rng);
+    ies::init_update(module->module_data.get(), ens_mask, obs_mask, S, R, dObs,
+                     E, D, rng);
 }
 
 static bool analysis_module_set_int(analysis_module_type *module,
                                     const char *flag, int value) {
 
-    auto &ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = module->module_data->config();
     if (strcmp(flag, ies::config::ENKF_NCOMP_KEY) == 0)
         ies_config.subspace_dimension(value);
 
@@ -158,7 +149,7 @@ static bool analysis_module_set_int(analysis_module_type *module,
         ies_config.subspace_dimension(value);
 
     else if (strcmp(flag, ies::data::ITER_KEY) == 0)
-        ies::data::set_iteration_nr(module->module_data, value);
+        module->module_data->iteration_nr(value);
 
     else if (strcmp(flag, ies::config::IES_INVERSION_KEY) == 0)
         ies_config.inversion(static_cast<ies::config::inversion_type>(value));
@@ -172,7 +163,7 @@ static bool analysis_module_set_int(analysis_module_type *module,
 int analysis_module_get_int(const analysis_module_type *module,
                             const char *var) {
 
-    const auto &ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = module->module_data->config();
     if (strcmp(var, ies::config::ENKF_NCOMP_KEY) == 0 ||
         strcmp(var, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) == 0) {
         const auto &truncation = ies_config.truncation();
@@ -183,7 +174,7 @@ int analysis_module_get_int(const analysis_module_type *module,
     }
 
     else if (strcmp(var, ies::data::ITER_KEY) == 0)
-        return ies::data::get_iteration_nr(module->module_data);
+        return module->module_data->iteration_nr();
 
     else if (strcmp(var, ies::config::IES_INVERSION_KEY) == 0)
         return ies_config.inversion();
@@ -197,7 +188,7 @@ int analysis_module_get_int(const analysis_module_type *module,
 
 static bool analysis_module_set_double(analysis_module_type *module,
                                        const char *var, double value) {
-    auto &ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = module->module_data->config();
     bool name_recognized = true;
 
     if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0)
@@ -216,7 +207,7 @@ static bool analysis_module_set_double(analysis_module_type *module,
 
 static bool analysis_module_set_bool(analysis_module_type *module,
                                      const char *var, bool value) {
-    auto &ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = module->module_data->config();
     bool name_recognized = true;
 
     if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0) {
@@ -236,7 +227,7 @@ static bool analysis_module_set_bool(analysis_module_type *module,
 
 static bool analysis_module_set_string(analysis_module_type *module,
                                        const char *var, const char *value) {
-    auto &ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = module->module_data->config();
     bool valid_set = true;
     if (strcmp(var, ies::config::INVERSION_KEY) == 0) {
         if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
@@ -324,7 +315,7 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
 
 bool analysis_module_check_option(const analysis_module_type *module,
                                   analysis_module_flag_enum option) {
-    auto &ies_config = ies::data::get_config(module->module_data);
+    const auto &ies_config = module->module_data->config();
     return ies_config.get_option(option);
 }
 
@@ -350,7 +341,7 @@ bool analysis_module_has_var(const analysis_module_type *module,
 
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
-    auto &ies_config = ies::data::get_config(module->module_data);
+    const auto &ies_config = module->module_data->config();
     if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0)
         return ies_config.get_option(ANALYSIS_SCALE_DATA);
 
@@ -370,7 +361,7 @@ bool analysis_module_get_bool(const analysis_module_type *module,
 double analysis_module_get_double(const analysis_module_type *module,
                                   const char *var) {
 
-    auto &ies_config = ies::data::get_config(module->module_data);
+    const auto &ies_config = module->module_data->config();
     if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0) {
         const auto &truncation = ies_config.truncation();
         if (std::holds_alternative<double>(truncation))

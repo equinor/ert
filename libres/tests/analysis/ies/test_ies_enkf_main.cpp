@@ -11,16 +11,15 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     int ens_size = 2;
 
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(ens_size, true));
+    ies::data::Data data(ens_size, true);
 
     // Initialising masks such that all observations and realizations are active
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-    ies::data::update_ens_mask(data, ens_mask);
+    data.update_ens_mask(ens_mask);
 
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
-    ies::data::update_obs_mask(data, obs_mask);
-    ies::data::store_initial_obs_mask(data, obs_mask);
+    data.store_initial_obs_mask(obs_mask);
+    data.update_obs_mask(obs_mask);
 
     // Set initial data
     matrix_type *Ein = matrix_alloc(obs_size, ens_size);
@@ -34,20 +33,20 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     matrix_iset(Ein, 0, 1, 1.5);
     matrix_iset(Ein, 1, 1, 2.5);
     matrix_iset(Ein, 2, 1, 3.5);
-    ies::data::store_initialE(data, Ein);
+    data.store_initialE(Ein);
 
     SECTION("ies_enkf_linalg_extract_active() does nothing when all "
             "observations and realizations are active") {
-        matrix_type *E = ies::alloc_activeE(data);
+        auto *E = data.alloc_activeE();
         REQUIRE(matrix_equal(Ein, E));
         matrix_free(E);
     }
 
     SECTION("deactivate one realisation") {
         bool_vector_iset(ens_mask, 1, false);
-        ies::data::update_ens_mask(data, ens_mask);
+        data.update_ens_mask(ens_mask);
 
-        matrix_type *E = ies::alloc_activeE(data);
+        auto *E = data.alloc_activeE();
         REQUIRE(matrix_get_rows(E) == 3);
         REQUIRE(matrix_get_columns(E) == 1);
 
@@ -59,9 +58,9 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
 
     SECTION("deactivate one observation") {
         bool_vector_iset(obs_mask, 1, false);
-        ies::data::update_obs_mask(data, obs_mask);
+        data.update_obs_mask(obs_mask);
 
-        matrix_type *E = ies::alloc_activeE(data);
+        auto *E = data.alloc_activeE();
         REQUIRE(matrix_get_rows(E) == 2);
         REQUIRE(matrix_get_columns(E) == 2);
 
@@ -74,12 +73,12 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
 
     SECTION("deactivate one observation and one realisation") {
         bool_vector_iset(obs_mask, 1, false);
-        ies::data::update_obs_mask(data, obs_mask);
+        data.update_obs_mask(obs_mask);
 
         bool_vector_iset(ens_mask, 1, false);
-        ies::data::update_ens_mask(data, ens_mask);
+        data.update_ens_mask(ens_mask);
 
-        matrix_type *E = ies::alloc_activeE(data);
+        auto *E = data.alloc_activeE();
         REQUIRE(matrix_get_rows(E) == 2);
         REQUIRE(matrix_get_columns(E) == 1);
 
@@ -91,40 +90,38 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     matrix_free(Ein);
     bool_vector_free(ens_mask);
     bool_vector_free(obs_mask);
-    ies::data::free(data);
     rng_free(rng);
 }
 
 TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
-    auto *data =
-        static_cast<ies::data::data_type *>(ies::data::alloc(ens_size, true));
+    ies::data::Data data(ens_size, true);
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
 
-    ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
+    ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                      nullptr, nullptr, nullptr);
-    ies::data::update_ens_mask(data, ens_mask);
+    data.update_ens_mask(ens_mask);
 
     matrix_type *W0 = matrix_alloc(ens_size, ens_size);
     for (int i = 0; i < ens_size; i++) {
         for (int j = 0; j < ens_size; j++)
             matrix_iset(W0, i, j, i * ens_size + j);
     }
-    ies::linalg_store_active_W(data, W0);
+    ies::linalg_store_active_W(&data, W0);
 
     {
-        matrix_type *W = ies::alloc_activeW(data);
+        auto *W = data.alloc_activeW();
         REQUIRE(matrix_equal(W, W0));
         matrix_free(W);
     }
 
     // Deactivate one realization
     bool_vector_iset(ens_mask, 1, false);
-    ies::data::update_ens_mask(data, ens_mask);
+    data.update_ens_mask(ens_mask);
     {
-        matrix_type *W = ies::alloc_activeW(data);
+        auto *W = data.alloc_activeW();
         for (int i = 0; i < ens_size - 1; i++) {
             for (int j = 0; j < ens_size - 1; j++) {
                 int i0 = i + (i > 0);
@@ -138,7 +135,6 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     matrix_free(W0);
     bool_vector_free(ens_mask);
     bool_vector_free(obs_mask);
-    ies::data::free(data);
 }
 
 SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
@@ -146,8 +142,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         const int ens_size = 4;
         const int obs_size = 10;
         const int state_size = 10;
-        auto *data = static_cast<ies::data::data_type *>(
-            ies::data::alloc(ens_size, true));
+        ies::data::Data data(ens_size, true);
         bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
         bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
         matrix_type *A0 = matrix_alloc(state_size, ens_size);
@@ -155,12 +150,12 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
             for (int j = 0; j < ens_size; j++)
                 matrix_iset(A0, i, j, i * ens_size + j);
         }
-        ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
+        ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                          nullptr, nullptr, nullptr);
-        ies::data::store_initialA(data, A0);
+        data.store_initialA(A0);
 
         WHEN("All realizations active") {
-            matrix_type *A = ies::alloc_activeA(data);
+            auto *A = data.alloc_activeA();
             REQUIRE(matrix_equal(A, A0));
             matrix_free(A);
         }
@@ -168,8 +163,8 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         WHEN("One realization deactivated") {
             int dead_iens = 2;
             bool_vector_iset(ens_mask, dead_iens, false);
-            ies::data::update_ens_mask(data, ens_mask);
-            matrix_type *A = ies::alloc_activeA(data);
+            data.update_ens_mask(ens_mask);
+            auto *A = data.alloc_activeA();
             for (int i = 0; i < state_size; i++) {
                 int i0 = i;
                 for (int j = 0; j < ens_size - 1; j++) {
@@ -186,6 +181,5 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         matrix_free(A0);
         bool_vector_free(ens_mask);
         bool_vector_free(obs_mask);
-        ies::data::free(data);
     }
 }
