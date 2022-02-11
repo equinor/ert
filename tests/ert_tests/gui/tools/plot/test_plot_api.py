@@ -272,7 +272,7 @@ def get_key_name(val):
 @pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
 @pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
 def test_no_storage(case_name, key_def, api):
-    shutil.rmtree("storage")
+    shutil.rmtree("storage", ignore_errors=True)
     obs = key_def["observations"]
     obs_data = api.observations_for_obs_keys(case_name, obs)
     data = api.data_for_key(case_name, key_def["key"])

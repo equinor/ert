@@ -27,4 +27,5 @@ def test_logging_from_c(caplog, level, records):
     caplog.set_level(level)
 
     _test_logger("foo")
-    assert caplog.record_tuples == records
+    check_logs = [log for log in caplog.record_tuples if log[0] == "res._test_logger"]
+    assert check_logs == records
