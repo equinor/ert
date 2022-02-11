@@ -34,7 +34,7 @@ matrix_type *alloc_activeE(const data::Data *data);
 matrix_type *alloc_activeW(const data::Data *data);
 matrix_type *alloc_activeA(const data::Data *data);
 
-void init_update(data::Data *module_data, const bool_vector_type *ens_mask,
+void init_update(data::Data &module_data, const bool_vector_type *ens_mask,
                  const bool_vector_type *obs_mask, const matrix_type *S,
                  const matrix_type *R, const matrix_type *E,
                  const matrix_type *D);
@@ -44,11 +44,12 @@ void init_update(data::Data *module_data, const bool_vector_type *ens_mask,
   functionality is exported so that it can be utilised in ES updates which are
   not iterative.
 */
-void initX(data::Data *ies_data, const matrix_type *S, const matrix_type *R,
-           const matrix_type *E, const matrix_type *D, matrix_type *X);
+void initX(const config::Config &ies_config, const matrix_type *S,
+           const matrix_type *R, const matrix_type *E, const matrix_type *D,
+           matrix_type *X);
 
 void updateA(
-    data::Data *data,
+    const config::Config &ies_config, data::Data &data,
     matrix_type *A,          // Updated ensemble A returned to ERT.
     const matrix_type *Yin,  // Ensemble of predicted measurements
     const matrix_type *Rin,  // Measurement error covariance matrix (not used)
