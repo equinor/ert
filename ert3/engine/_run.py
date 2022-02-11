@@ -29,7 +29,10 @@ def _prepare_experiment(
     if experiment_name in ert.storage.get_experiment_names(
         workspace_name=workspace_name
     ):
-        raise ValueError(f"Experiment {experiment_name} has been carried out.")
+        raise ert.exceptions.ExperimentError(
+            f"Experiment '{experiment_name}' has been carried out already."
+            f"\nTo re-run, first clean the experiment: ert3 clean {experiment_name}"
+        )
 
     parameters = [elem.record for elem in ensemble.input]
     responses = [elem.record for elem in ensemble.output]
