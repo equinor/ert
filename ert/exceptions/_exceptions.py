@@ -41,3 +41,8 @@ class ElementExistsError(StorageError):
 class ElementMissingError(StorageError):
     def __init__(self, message: str) -> None:
         self.message = message
+
+
+class ExperimentError(ErtError):
+    def __init__(self, message: str) -> None:
+        self.message = message

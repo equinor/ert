@@ -353,6 +353,9 @@ def main() -> None:
     except ert.exceptions.ConfigValidationError as e:
         ert3.console.report_validation_errors(e)
         sys.exit(1)
+    except ert.exceptions.ExperimentError as e:
+        ert3.console.report_experiment_error(e)
+        sys.exit(2)
     except ert.exceptions.ErtError as e:
         sys.exit(e)
 

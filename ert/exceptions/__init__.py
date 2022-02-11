@@ -7,6 +7,7 @@ from ert.exceptions._exceptions import (
     IllegalWorkspaceState,
     NonExistantExperiment,
     StorageError,
+    ExperimentError,
 )
 
 # Explicitly export again, otherwise mypy is unhappy.
@@ -19,4 +20,5 @@ __all__ = [
     "IllegalWorkspaceState",
     "NonExistantExperiment",
     "ConfigValidationError",
+    "ExperimentError",
 ]
