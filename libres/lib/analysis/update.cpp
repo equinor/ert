@@ -312,10 +312,10 @@ void save_row_scaling_parameters(
 }
 
 void run_analysis_update_without_rowscaling(
-    ies::data::Data *module_data, const bool_vector_type *ens_mask,
-    const bool_vector_type *obs_mask, const matrix_type *S,
-    const matrix_type *E, const matrix_type *D, const matrix_type *R,
-    matrix_type *A) {
+    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const matrix_type *S, const matrix_type *E, const matrix_type *D,
+    const matrix_type *R, matrix_type *A) {
 
     ert::utils::Benchmark benchmark(logger,
                                     "run_analysis_update_without_rowscaling");
@@ -328,13 +328,12 @@ void run_analysis_update_without_rowscaling(
     int active_obs_size = matrix_get_rows(S);
 
     matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
-    const auto &config = module_data->config();
 
-    if (config.iterable()) {
+    if (module_config.iterable()) {
         ies::init_update(module_data, ens_mask, obs_mask, S, R, E, D);
-        ies::updateA(module_data, A, S, R, E, D);
+        ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
-        ies::initX(module_data, S, R, E, D, X);
+        ies::initX(module_config, S, R, E, D, X);
         matrix_inplace_matmul_mt2(A, X, tp);
     }
     matrix_free(X);
@@ -345,9 +344,10 @@ void run_analysis_update_without_rowscaling(
 Run the row-scaling enabled update algorithm on a set of A matrices.
 */
 void run_analysis_update_with_rowscaling(
-    ies::data::Data *module_data, const bool_vector_type *ens_mask,
-    const bool_vector_type *obs_mask, const matrix_type *S,
-    const matrix_type *E, const matrix_type *D, const matrix_type *R,
+    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const matrix_type *S, const matrix_type *E, const matrix_type *D,
+    const matrix_type *R,
     const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         &parameters) {
 
@@ -359,16 +359,14 @@ void run_analysis_update_with_rowscaling(
     int active_obs_size = matrix_get_rows(S);
     matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
 
-    const auto &config = module_data->config();
-
-    if (config.iterable()) {
+    if (module_config.iterable()) {
         throw std::logic_error("Sorry - row scaling for distance based "
                                "localization can not be combined with "
                                "analysis modules which update the A matrix");
     }
 
     for (auto &[A, row_scaling] : parameters) {
-        ies::initX(module_data, S, R, E, D, X);
+        ies::initX(module_config, S, R, E, D, X);
         row_scaling->multiply(A, X);
     }
 
@@ -537,6 +535,8 @@ bool smoother_update(std::vector<int> step_list,
                 module = local_ministep_get_analysis_module(ministep);
             assert_size_equal(total_ens_size, ens_mask);
 
+            const auto *module_config =
+                analysis_module_get_module_config(module);
             auto *module_data = analysis_module_get_module_data(module);
             // E matrix is generated with shared rng, thus only creating it once for identical results
             int active_ens_size = meas_data_get_active_ens_size(meas_data);
@@ -562,7 +562,8 @@ bool smoother_update(std::vector<int> step_list,
             obs_data_scale(obs_data, S, E, D, R, nullptr);
 
             if (A != nullptr) {
-                run_analysis_update_without_rowscaling(module_data, ens_mask,
+                run_analysis_update_without_rowscaling(*module_config,
+                                                       *module_data, ens_mask,
                                                        obs_mask, S, E, D, R, A);
                 save_parameters(target_fs, ensemble_config, iens_active_index,
                                 current_step, ministep, A);
@@ -575,9 +576,9 @@ bool smoother_update(std::vector<int> step_list,
                 active_ens_size, ministep);
 
             if (row_scaling_parameters.size() > 0) {
-                run_analysis_update_with_rowscaling(module_data, ens_mask,
-                                                    obs_mask, S, E, D, R,
-                                                    row_scaling_parameters);
+                run_analysis_update_with_rowscaling(
+                    *module_config, *module_data, ens_mask, obs_mask, S, E, D,
+                    R, row_scaling_parameters);
                 save_row_scaling_parameters(target_fs, ensemble_config,
                                             iens_active_index, ministep,
                                             row_scaling_parameters);

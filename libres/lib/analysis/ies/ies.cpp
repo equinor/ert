@@ -60,17 +60,17 @@ namespace {
 auto logger = ert::get_logger("ies");
 }
 
-void ies::init_update(ies::data::Data *module_data,
+void ies::init_update(ies::data::Data &module_data,
                       const bool_vector_type *ens_mask,
                       const bool_vector_type *obs_mask, const matrix_type *S,
                       const matrix_type *R, const matrix_type *E,
                       const matrix_type *D) {
     /* Store current ens_mask in module_data->ens_mask for each iteration */
-    module_data->update_ens_mask(ens_mask);
+    module_data.update_ens_mask(ens_mask);
     /* Store obs_mask for initial iteration in module_data->obs_mask0,
      *  for each subsequent iteration we store the current mask in module_data->obs_mask */
-    module_data->store_initial_obs_mask(obs_mask);
-    module_data->update_obs_mask(obs_mask);
+    module_data.store_initial_obs_mask(obs_mask);
+    module_data.update_obs_mask(obs_mask);
 }
 
 void ies_initX__(const matrix_type *A, const matrix_type *Y0,
@@ -190,33 +190,31 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
 }
 
 void ies::updateA(
-    data::Data *data,
-    matrix_type *A,         // Updated ensemble A retured to ERT.
-    const matrix_type *Yin, // Ensemble of predicted measurements
-    const matrix_type *Rin, // Measurement error covariance matrix (not used)
-    const matrix_type *Ein, // Ensemble of observation perturbations
-    const matrix_type *Din) {
-
-    const auto &ies_config = data->config();
+    const config::Config &ies_config, data::Data &data,
+    matrix_type *A,           // Updated ensemble A retured to ERT.
+    const matrix_type *Yin,   // Ensemble of predicted measurements
+    const matrix_type *Rin,   // Measurement error covariance matrix (not used)
+    const matrix_type *Ein,   // Ensemble of observation perturbations
+    const matrix_type *Din) { // (d+E-Y) Ensemble of perturbed observations - Y
 
     int ens_size = matrix_get_columns(
         Yin); // Number of active realizations in current iteration
     int state_size = matrix_get_rows(A);
 
-    int iteration_nr = data->inc_iteration_nr();
+    int iteration_nr = data.inc_iteration_nr();
 
     const double ies_steplength = ies_config.steplength(iteration_nr);
 
-    data->update_state_size(state_size);
+    data.update_state_size(state_size);
     /*
       Counting number of active observations for current iteration. If the
       observations have been used in previous iterations they are contained in
       data->E0. If they are introduced in the current iteration they will be
       augmented to data->E.
     */
-    data->store_initialE(Ein);
-    data->augment_initialE(Ein);
-    data->store_initialA(A);
+    data.store_initialE(Ein);
+    data.augment_initialE(Ein);
+    data.store_initialA(A);
 
     /*
      * Re-structure input matrices according to new active obs_mask and ens_size.
@@ -226,7 +224,7 @@ void ies::updateA(
      */
     matrix_type *Y = matrix_alloc_copy(Yin);
     matrix_type *R = matrix_alloc_copy(Rin);
-    matrix_type *E = data->alloc_activeE();
+    matrix_type *E = data.alloc_activeE();
     matrix_type *D = matrix_alloc_copy(Din);
     matrix_type *X = matrix_alloc(ens_size, ens_size);
 
@@ -237,12 +235,12 @@ void ies::updateA(
 
     double costf;
     {
-        auto *W0 = data->alloc_activeW();
+        auto *W0 = data.alloc_activeW();
         ies_initX__(ies_config.aaprojection() ? A : nullptr, Y, R, E, D, X,
                     ies_config.inversion(), ies_config.truncation(),
                     ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
                     &costf);
-        ies::linalg_store_active_W(data, W0);
+        ies::linalg_store_active_W(&data, W0);
         logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
         matrix_free(W0);
     }
@@ -251,7 +249,7 @@ void ies::updateA(
     int m_ens_size = std::min(ens_size - 1, 16);
     int m_state_size = std::min(state_size - 1, 3);
     {
-        matrix_type *A0 = data->alloc_activeA();
+        matrix_type *A0 = data.alloc_activeA();
         matrix_matmul(A, A0, X);
         matrix_free(A0);
     }
@@ -458,10 +456,9 @@ void ies::linalg_store_active_W(ies::data::Data *data, const matrix_type *W0) {
   as temporary local variables.
 */
 
-void ies::initX(data::Data *ies_data, const matrix_type *Y0,
+void ies::initX(const config::Config &ies_config, const matrix_type *Y0,
                 const matrix_type *R, const matrix_type *E,
                 const matrix_type *D, matrix_type *X) {
-    const auto &ies_config = ies_data->config();
 
     bool use_aa_projection = false;
     double steplength = 1;

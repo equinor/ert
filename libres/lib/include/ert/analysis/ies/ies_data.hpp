@@ -16,13 +16,12 @@ constexpr const char *ITER_KEY = "ITER";
 
 class Data {
 public:
-    Data(int ens_size, bool ies_mode);
+    Data(int ens_size);
     ~Data();
 
     void iteration_nr(int iteration_nr);
     int iteration_nr() const;
     int inc_iteration_nr();
-    ::ies::config::Config &config();
 
     void update_ens_mask(const bool_vector_type *mask);
     void store_initial_obs_mask(const bool_vector_type *mask);
@@ -53,7 +52,6 @@ public:
 
 private:
     int m_ens_size;
-    ::ies::config::Config m_config;
     bool m_converged;
     int m_iteration_nr;
     matrix_type *

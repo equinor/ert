@@ -22,15 +22,16 @@
 
 namespace analysis {
 void run_analysis_update_without_rowscaling(
-    ies::data::Data *module_data, const bool_vector_type *ens_mask,
-    const bool_vector_type *obs_mask, const matrix_type *S,
-    const matrix_type *E, const matrix_type *D, const matrix_type *R,
-    matrix_type *A);
+    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const matrix_type *S, const matrix_type *E, const matrix_type *D,
+    const matrix_type *R, matrix_type *A);
 
 void run_analysis_update_with_rowscaling(
-    ies::data::Data *module_data, const bool_vector_type *ens_mask,
-    const bool_vector_type *obs_mask, const matrix_type *S,
-    const matrix_type *E, const matrix_type *D, const matrix_type *R,
+    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const matrix_type *S, const matrix_type *E, const matrix_type *D,
+    const matrix_type *R,
     const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         &parameters);
 } // namespace analysis
@@ -64,8 +65,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
     GIVEN("Fixed prior and measurements") {
         int ens_size = GENERATE(200, 100, 1000);
-        ies::data::Data module_data(ens_size, false);
-        auto &config = module_data.config();
+        ies::data::Data module_data(ens_size);
+        ies::config::Config config(false);
         config.truncation(1.0);
 
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
@@ -170,7 +171,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     obs_data_get_active_mask(obs_data);
 
                 analysis::run_analysis_update_without_rowscaling(
-                    &module_data, ens_mask, obs_mask, S, E, D, R, A_iter);
+                    config, module_data, ens_mask, obs_mask, S, E, D, R,
+                    A_iter);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
@@ -244,8 +246,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             const bool_vector_type *obs_mask =
                 obs_data_get_active_mask(obs_data);
 
-            analysis::run_analysis_update_with_rowscaling(
-                &module_data, ens_mask, obs_mask, S, E, D, R, parameters);
+            analysis::run_analysis_update_with_rowscaling(config, module_data,
+                                                          ens_mask, obs_mask, S,
+                                                          E, D, R, parameters);
 
             THEN("Updated parameter matrix should equal prior parameter "
                  "matrix") {
@@ -280,9 +283,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 obs_data_get_active_mask(obs_data);
 
             analysis::run_analysis_update_without_rowscaling(
-                &module_data, ens_mask, obs_mask, S, E, D, R, A_no_scaling);
-            analysis::run_analysis_update_with_rowscaling(
-                &module_data, ens_mask, obs_mask, S, E, D, R, parameters);
+                config, module_data, ens_mask, obs_mask, S, E, D, R,
+                A_no_scaling);
+            analysis::run_analysis_update_with_rowscaling(config, module_data,
+                                                          ens_mask, obs_mask, S,
+                                                          E, D, R, parameters);
 
             THEN("Updated parameter matrix with row scaling should equal "
                  "updated parameter matrix without row scaling") {
@@ -316,10 +321,12 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             obs_data_scale(obs_data, S, E, D, R, nullptr);
             const bool_vector_type *obs_mask =
                 obs_data_get_active_mask(obs_data);
-            analysis::run_analysis_update_with_rowscaling(
-                &module_data, ens_mask, obs_mask, S, E, D, R, parameters);
+            analysis::run_analysis_update_with_rowscaling(config, module_data,
+                                                          ens_mask, obs_mask, S,
+                                                          E, D, R, parameters);
             analysis::run_analysis_update_without_rowscaling(
-                &module_data, ens_mask, obs_mask, S, E, D, R, A_no_scaling);
+                config, module_data, ens_mask, obs_mask, S, E, D, R,
+                A_no_scaling);
 
             THEN("First row of scaled parameters should equal first row of "
                  "unscaled parameters, while second row of scaled parameters "
@@ -368,7 +375,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 const bool_vector_type *obs_mask =
                     obs_data_get_active_mask(obs_data);
                 analysis::run_analysis_update_with_rowscaling(
-                    &module_data, ens_mask, obs_mask, S, E, D, R, parameters);
+                    config, module_data, ens_mask, obs_mask, S, E, D, R,
+                    parameters);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =

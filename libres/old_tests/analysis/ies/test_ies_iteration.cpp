@@ -8,14 +8,13 @@
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    ies::data::Data std_data(testdata.active_ens_size, false);
-    auto &ies_config = std_data.config();
+    ies::config::Config ies_config(false);
     ies_config.truncation(1.00);
 
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    ies::initX(&std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
+    ies::initX(ies_config, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
 
@@ -59,8 +58,8 @@ void cmp_std_ies(res::es_testdata &testdata) {
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
 
-    ies::data::Data ies_data(testdata.active_ens_size, true);
-    auto &ies_config = ies_data.config();
+    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::config::Config ies_config(true);
 
     forward_model(testdata, A1);
     ies_config.truncation(1.0);
@@ -76,11 +75,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
     for (int iter = 0; iter < num_iter; iter++) {
         forward_model(testdata, A1);
 
-        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.E,
-                     testdata.D);
+        ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
+                     testdata.E, testdata.D);
 
         if (verbose) {
             fprintf(stdout, "IES iteration   = %d %d\n", iter,
@@ -109,8 +108,8 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *A1c = matrix_alloc_copy(A1);
     matrix_type *A2c = matrix_alloc_copy(A2);
-    ies::data::Data ies_data(testdata.active_ens_size, true);
-    auto &ies_config = ies_data.config();
+    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::config::Config ies_config(true);
 
     forward_model(testdata, A1);
     ies_config.truncation(1.0);
@@ -146,11 +145,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
             matrix_realloc_copy(A1, A1c);
         }
 
-        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.E,
-                     testdata.D);
+        ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
+                     testdata.E, testdata.D);
 
         if (verbose) {
             fprintf(stdout, "IES iteration = %d active realizations= %d\n",
@@ -210,7 +209,7 @@ matrix_type *swap_matrix(matrix_type *old_matrix, matrix_type *new_matrix) {
   reactivation function. What is done is to start with identical copies, testdata and
   testdata2. In the first iteration, one observation is removed in testdata2 and before
   computing the update. In the subsequent iterations, testdata is used which includes
-  the datapoint initially removed from testdata2. 
+  the datapoint initially removed from testdata2.
 */
 
 void test_deactivate_observations_and_realizations(const char *testdata_file) {
@@ -219,8 +218,8 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    ies::data::Data ies_data(testdata.active_ens_size, true);
-    auto &ies_config = ies_data.config();
+    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::config::Config ies_config(true);
 
     matrix_type *A0 = testdata.alloc_state("prior");
     matrix_type *A = matrix_alloc_copy(A0);
@@ -238,11 +237,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         // deactivate an observation initially to test reactivation in the following iteration
         testdata2.deactivate_obs(2);
 
-        ies::init_update(&ies_data, testdata2.ens_mask, testdata2.obs_mask,
+        ies::init_update(ies_data, testdata2.ens_mask, testdata2.obs_mask,
                          testdata2.S, testdata2.R, testdata2.E, testdata2.D);
 
-        ies::updateA(&ies_data, A, testdata2.S, testdata2.R, testdata2.E,
-                     testdata2.D);
+        ies::updateA(ies_config, ies_data, A, testdata2.S, testdata2.R,
+                     testdata2.E, testdata2.D);
     }
 
     for (int iter = 1; iter < num_iter; iter++) {
@@ -268,11 +267,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         if (iter == 7)
             testdata.deactivate_obs(testdata.active_obs_size / 2);
 
-        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.E, testdata.D);
 
-        ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.E,
-                     testdata.D);
+        ies::updateA(ies_config, ies_data, A, testdata.S, testdata.R,
+                     testdata.E, testdata.D);
     }
 
     matrix_free(A);

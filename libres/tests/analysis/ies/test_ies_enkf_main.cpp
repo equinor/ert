@@ -11,7 +11,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     int ens_size = 2;
 
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    ies::data::Data data(ens_size, true);
+    ies::data::Data data(ens_size);
 
     // Initialising masks such that all observations and realizations are active
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
@@ -96,11 +96,11 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
 TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
-    ies::data::Data data(ens_size, true);
+    ies::data::Data data(ens_size);
     bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
     bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
 
-    ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
+    ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                      nullptr);
     data.update_ens_mask(ens_mask);
 
@@ -142,7 +142,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         const int ens_size = 4;
         const int obs_size = 10;
         const int state_size = 10;
-        ies::data::Data data(ens_size, true);
+        ies::data::Data data(ens_size);
         bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
         bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
         matrix_type *A0 = matrix_alloc(state_size, ens_size);
@@ -150,7 +150,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
             for (int j = 0; j < ens_size; j++)
                 matrix_iset(A0, i, j, i * ens_size + j);
         }
-        ies::init_update(&data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
+        ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                          nullptr);
         data.store_initialA(A0);
 
