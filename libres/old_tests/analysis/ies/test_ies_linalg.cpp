@@ -7,13 +7,14 @@
 #include <ert/analysis/ies/ies.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
-    const res::es_testdata &testdata, ies::data::data_type *ies_data,
-    matrix_type *A, rng_type *rng) {
-    ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask, testdata.S,
-                     testdata.R, testdata.dObs, testdata.E, testdata.D, rng);
+    const res::es_testdata &testdata, ies::data::Data &ies_data, matrix_type *A,
+    rng_type *rng) {
+    ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
+                     testdata.S, testdata.R, testdata.dObs, testdata.E,
+                     testdata.D, rng);
 
-    ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.dObs, testdata.E,
-                 testdata.D, rng);
+    ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.dObs,
+                 testdata.E, testdata.D, rng);
 }
 
 /*
@@ -35,13 +36,11 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
 
-    auto *ies_data1 = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config1 = ies::data::get_config(ies_data1);
+    ies::data::Data ies_data1(testdata.active_ens_size, true);
+    auto &ies_config1 = ies_data1.config();
 
-    auto *ies_data2 = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config2 = ies::data::get_config(ies_data2);
+    ies::data::Data ies_data2(testdata.active_ens_size, true);
+    auto &ies_config2 = ies_data2.config();
 
     ies_config1.truncation(1.0);
     ies_config1.max_steplength(0.6);
@@ -60,8 +59,6 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
 
     matrix_free(A1);
     matrix_free(A2);
-    ies::data::free(ies_data1);
-    ies::data::free(ies_data2);
     rng_free(rng);
 }
 
@@ -83,13 +80,11 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
 
-    auto *ies_data1 = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config1 = ies::data::get_config(ies_data1);
+    ies::data::Data ies_data1(testdata.active_ens_size, true);
+    auto &ies_config1 = ies_data1.config();
 
-    auto *ies_data2 = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config2 = ies::data::get_config(ies_data2);
+    ies::data::Data ies_data2(testdata.active_ens_size, true);
+    auto &ies_config2 = ies_data2.config();
 
     ies_config1.truncation(0.95);
     ies_config1.max_steplength(0.6);
@@ -109,8 +104,6 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
 
     matrix_free(A1);
     matrix_free(A2);
-    ies::data::free(ies_data1);
-    ies::data::free(ies_data2);
     rng_free(rng);
 }
 

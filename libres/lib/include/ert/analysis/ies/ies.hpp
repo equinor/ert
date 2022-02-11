@@ -28,13 +28,13 @@
 
 namespace ies {
 
-void linalg_store_active_W(data::data_type *data, const matrix_type *W0);
+void linalg_store_active_W(data::Data *data, const matrix_type *W0);
 
-matrix_type *alloc_activeE(const data::data_type *data);
-matrix_type *alloc_activeW(const data::data_type *data);
-matrix_type *alloc_activeA(const data::data_type *data);
+matrix_type *alloc_activeE(const data::Data *data);
+matrix_type *alloc_activeW(const data::Data *data);
+matrix_type *alloc_activeA(const data::Data *data);
 
-void init_update(data::data_type *module_data, const bool_vector_type *ens_mask,
+void init_update(data::Data *module_data, const bool_vector_type *ens_mask,
                  const bool_vector_type *obs_mask, const matrix_type *S,
                  const matrix_type *R, const matrix_type *dObs,
                  const matrix_type *E, const matrix_type *D, rng_type *rng);
@@ -44,12 +44,11 @@ void init_update(data::data_type *module_data, const bool_vector_type *ens_mask,
   functionality is exported so that it can be utilised in ES updates which are
   not iterative.
 */
-void initX(data::data_type *ies_data, const matrix_type *S,
-           const matrix_type *R, const matrix_type *E, const matrix_type *D,
-           matrix_type *X);
+void initX(data::Data *ies_data, const matrix_type *S, const matrix_type *R,
+           const matrix_type *E, const matrix_type *D, matrix_type *X);
 
 void updateA(
-    data::data_type *data,
+    data::Data *data,
     matrix_type *A,          // Updated ensemble A returned to ERT.
     const matrix_type *Yin,  // Ensemble of predicted measurements
     const matrix_type *Rin,  // Measurement error covariance matrix (not used)

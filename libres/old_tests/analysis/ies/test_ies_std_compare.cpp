@@ -23,13 +23,11 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
+    ies::data::Data ies_data1(testdata.active_ens_size, true);
+    ies::data::Data std_data(testdata.active_ens_size, false);
 
-    auto *ies_data1 = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config1 = ies::data::get_config(ies_data1);
-    auto *std_data = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, false));
-    auto &std_config = ies::data::get_config(std_data);
+    auto &ies_config1 = ies_data1.config();
+    auto &std_config = std_data.config();
 
     ies_config1.truncation(0.95);
     ies_config1.min_steplength(1.0);
@@ -39,22 +37,20 @@ void cmp_std_ies(const res::es_testdata &testdata) {
 
     std_config.truncation(0.95);
 
-    ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask,
+    ies::init_update(&ies_data1, testdata.ens_mask, testdata.obs_mask,
                      testdata.S, testdata.R, testdata.dObs, testdata.E,
                      testdata.D, rng);
 
-    ies::updateA(ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
+    ies::updateA(&ies_data1, A1, testdata.S, testdata.R, testdata.dObs,
                  testdata.E, testdata.D, rng);
 
-    ies::initX(std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
+    ies::initX(&std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
     test_assert_true(matrix_similar(A1, A2, 5e-6));
 
     matrix_free(A1);
     matrix_free(A2);
-    ies::data::free(std_data);
-    ies::data::free(ies_data1);
     rng_free(rng);
 }
 

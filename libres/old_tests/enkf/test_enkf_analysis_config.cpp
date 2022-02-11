@@ -121,8 +121,6 @@ void test_current_module_options() {
     test_assert_false(analysis_config_select_module(ac, "DOES_NOT_EXIST"));
 
     test_assert_true(
-        analysis_module_is_instance(analysis_config_get_active_module(ac)));
-    test_assert_true(
         analysis_config_get_module_option(ac, ANALYSIS_SCALE_DATA));
     test_assert_false(analysis_config_get_module_option(ac, ANALYSIS_ITERABLE));
     analysis_config_free(ac);
