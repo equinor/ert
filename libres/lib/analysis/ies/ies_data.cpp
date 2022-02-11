@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <memory>
 
-#include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
 /*
@@ -22,9 +21,9 @@
   the analysis table.
 */
 
-ies::data::Data::Data(int ens_size, bool ies_mode)
-    : m_ens_size(ens_size), m_config(ies_mode), m_converged(false),
-      m_iteration_nr(0), W(matrix_alloc(ens_size, ens_size)) {}
+ies::data::Data::Data(int ens_size)
+    : m_ens_size(ens_size), m_converged(false), m_iteration_nr(0),
+      W(matrix_alloc(ens_size, ens_size)) {}
 
 ies::data::Data::~Data() {
     matrix_free(this->W);
@@ -48,8 +47,6 @@ void ies::data::Data::iteration_nr(int iteration_nr) {
 int ies::data::Data::iteration_nr() const { return this->m_iteration_nr; }
 
 int ies::data::Data::inc_iteration_nr() { return ++this->m_iteration_nr; }
-
-ies::config::Config &ies::data::Data::config() { return this->m_config; }
 
 void ies::data::Data::update_ens_mask(const bool_vector_type *mask) {
     if (this->m_ens_mask)
