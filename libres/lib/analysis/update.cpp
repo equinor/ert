@@ -446,7 +446,7 @@ void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
             ", mask_size:" + std::to_string(bool_vector_size(ens_mask)));
 }
 
-// Opens and returns a log file.  A subroutine of enkf_main_smoother_update.
+// Opens and returns a log file.
 static FILE *log_step_list(const char *log_path,
                            const std::vector<int> &step_list) {
     std::string log_file;
