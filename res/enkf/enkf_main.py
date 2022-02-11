@@ -272,7 +272,7 @@ class _RealEnKFMain(BaseCClass):
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
 
-        c_ptr = self._alloc(res_config, strict, verbose)
+        c_ptr = self._alloc(res_config, verbose)
         if c_ptr:
             super().__init__(c_ptr)
         else:
