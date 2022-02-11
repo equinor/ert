@@ -150,19 +150,18 @@ void analysis_module_init_update(analysis_module_type *module,
 static bool analysis_module_set_int(analysis_module_type *module,
                                     const char *flag, int value) {
 
-    auto *ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     if (strcmp(flag, ies::config::ENKF_NCOMP_KEY) == 0)
-        ies::config::set_subspace_dimension(ies_config, value);
+        ies_config.subspace_dimension(value);
 
     else if (strcmp(flag, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) == 0)
-        ies::config::set_subspace_dimension(ies_config, value);
+        ies_config.subspace_dimension(value);
 
     else if (strcmp(flag, ies::data::ITER_KEY) == 0)
         ies::data::set_iteration_nr(module->module_data, value);
 
     else if (strcmp(flag, ies::config::IES_INVERSION_KEY) == 0)
-        ies::config::set_inversion(
-            ies_config, static_cast<ies::config::inversion_type>(value));
+        ies_config.inversion(static_cast<ies::config::inversion_type>(value));
 
     else
         return false;
@@ -173,10 +172,10 @@ static bool analysis_module_set_int(analysis_module_type *module,
 int analysis_module_get_int(const analysis_module_type *module,
                             const char *var) {
 
-    auto *ies_config = ies::data::get_config(module->module_data);
+    const auto &ies_config = ies::data::get_config(module->module_data);
     if (strcmp(var, ies::config::ENKF_NCOMP_KEY) == 0 ||
         strcmp(var, ies::config::ENKF_SUBSPACE_DIMENSION_KEY) == 0) {
-        const auto &truncation = ies::config::get_truncation(ies_config);
+        const auto &truncation = ies_config.truncation();
         if (std::holds_alternative<int>(truncation))
             return std::get<int>(truncation);
         else
@@ -187,7 +186,7 @@ int analysis_module_get_int(const analysis_module_type *module,
         return ies::data::get_iteration_nr(module->module_data);
 
     else if (strcmp(var, ies::config::IES_INVERSION_KEY) == 0)
-        return ies::config::get_inversion(ies_config);
+        return ies_config.inversion();
 
     util_exit("%s: Tried to get integer variable:%s from module:%s - "
               "module does not support this variable \n",
@@ -198,18 +197,17 @@ int analysis_module_get_int(const analysis_module_type *module,
 
 static bool analysis_module_set_double(analysis_module_type *module,
                                        const char *var, double value) {
-    ies::config::config_type *ies_config =
-        ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     bool name_recognized = true;
 
     if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0)
-        ies::config::set_truncation(ies_config, value);
+        ies_config.truncation(value);
     else if (strcmp(var, ies::config::IES_MAX_STEPLENGTH_KEY) == 0)
-        ies::config::set_max_steplength(ies_config, value);
+        ies_config.max_steplength(value);
     else if (strcmp(var, ies::config::IES_MIN_STEPLENGTH_KEY) == 0)
-        ies::config::set_min_steplength(ies_config, value);
+        ies_config.min_steplength(value);
     else if (strcmp(var, ies::config::IES_DEC_STEPLENGTH_KEY) == 0)
-        ies::config::set_dec_steplength(ies_config, value);
+        ies_config.dec_steplength(value);
     else
         name_recognized = false;
 
@@ -218,16 +216,16 @@ static bool analysis_module_set_double(analysis_module_type *module,
 
 static bool analysis_module_set_bool(analysis_module_type *module,
                                      const char *var, bool value) {
-    auto *ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     bool name_recognized = true;
 
     if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0) {
         if (value)
-            ies::config::set_option(ies_config, ANALYSIS_SCALE_DATA);
+            ies_config.set_option(ANALYSIS_SCALE_DATA);
         else
-            ies::config::del_option(ies_config, ANALYSIS_SCALE_DATA);
+            ies_config.del_option(ANALYSIS_SCALE_DATA);
     } else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        ies::config::set_aaprojection(ies_config, value);
+        ies_config.aaprojection(value);
     else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         logger->warning("The key {} is ignored", ies::config::IES_DEBUG_KEY);
     else
@@ -238,21 +236,18 @@ static bool analysis_module_set_bool(analysis_module_type *module,
 
 static bool analysis_module_set_string(analysis_module_type *module,
                                        const char *var, const char *value) {
-    auto *ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     bool valid_set = true;
     if (strcmp(var, ies::config::INVERSION_KEY) == 0) {
         if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_EXACT_R) == 0)
-            ies::config::set_inversion(
-                ies_config, ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+            ies_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
 
         else if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_EE_R) ==
                  0)
-            ies::config::set_inversion(
-                ies_config, ies::config::IES_INVERSION_SUBSPACE_EE_R);
+            ies_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EE_R);
 
         else if (strcmp(value, ies::config::STRING_INVERSION_SUBSPACE_RE) == 0)
-            ies::config::set_inversion(ies_config,
-                                       ies::config::IES_INVERSION_SUBSPACE_RE);
+            ies_config.inversion(ies::config::IES_INVERSION_SUBSPACE_RE);
 
         else
             valid_set = false;
@@ -329,8 +324,8 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
 
 bool analysis_module_check_option(const analysis_module_type *module,
                                   analysis_module_flag_enum option) {
-    const auto *ies_config = ies::data::get_config(module->module_data);
-    return ies::config::get_option(ies_config, option);
+    auto &ies_config = ies::data::get_config(module->module_data);
+    return ies_config.get_option(option);
 }
 
 bool analysis_module_has_var(const analysis_module_type *module,
@@ -355,12 +350,12 @@ bool analysis_module_has_var(const analysis_module_type *module,
 
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
-    const auto *ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     if (strcmp(var, ies::config::ANALYSIS_SCALE_DATA_KEY) == 0)
-        return ies::config::get_option(ies_config, ANALYSIS_SCALE_DATA);
+        return ies_config.get_option(ANALYSIS_SCALE_DATA);
 
     else if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        return ies::config::get_aaprojection(ies_config);
+        return ies_config.aaprojection();
 
     else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         return false;
@@ -375,9 +370,9 @@ bool analysis_module_get_bool(const analysis_module_type *module,
 double analysis_module_get_double(const analysis_module_type *module,
                                   const char *var) {
 
-    const auto *ies_config = ies::data::get_config(module->module_data);
+    auto &ies_config = ies::data::get_config(module->module_data);
     if (strcmp(var, ies::config::ENKF_TRUNCATION_KEY) == 0) {
-        const auto &truncation = ies::config::get_truncation(ies_config);
+        const auto &truncation = ies_config.truncation();
         if (std::holds_alternative<double>(truncation))
             return std::get<double>(truncation);
         else
@@ -385,13 +380,13 @@ double analysis_module_get_double(const analysis_module_type *module,
     }
 
     else if (strcmp(var, ies::config::IES_MAX_STEPLENGTH_KEY) == 0)
-        return ies::config::get_max_steplength(ies_config);
+        return ies_config.max_steplength();
 
     else if (strcmp(var, ies::config::IES_MIN_STEPLENGTH_KEY) == 0)
-        return ies::config::get_min_steplength(ies_config);
+        return ies_config.min_steplength();
 
     else if (strcmp(var, ies::config::IES_DEC_STEPLENGTH_KEY) == 0)
-        return ies::config::get_dec_steplength(ies_config);
+        return ies_config.dec_steplength();
 
     util_exit("%s: Tried to get double variable:%s from module:%s - module "
               "does not support this variable \n",

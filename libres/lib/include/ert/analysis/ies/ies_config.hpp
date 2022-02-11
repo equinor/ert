@@ -50,40 +50,52 @@ typedef enum {
     IES_INVERSION_SUBSPACE_RE = 3
 } inversion_type;
 
-typedef struct config_struct config_type;
+class Config {
+public:
+    explicit Config(bool ies_mode);
+    void truncation(double truncation);
+    void subspace_dimension(int subspace_dimension);
+    const std::variant<double, int> &truncation() const;
 
-config_type *alloc(bool ies_mode);
-void free(config_type *config);
+    long get_option_flags() const;
+    void set_option_flags(long flags);
+    bool get_option(analysis_module_flag_enum option) const;
+    void set_option(analysis_module_flag_enum option);
+    void del_option(analysis_module_flag_enum option);
 
-const std::variant<double, int> &get_truncation(const config_type *config);
-void set_truncation(config_type *config, double truncation);
-void set_subspace_dimension(config_type *config, int subspace_dimension);
+    bool aaprojection() const;
+    void aaprojection(bool aaprojection);
 
-void set_option_flags(config_type *config, long flags);
-long get_option_flags(const config_type *config);
-bool get_option(const config_type *config, analysis_module_flag_enum option);
-void set_option(config_type *config, analysis_module_flag_enum option);
-void del_option(config_type *config, analysis_module_flag_enum option);
+    inversion_type inversion() const;
+    void inversion(inversion_type it);
 
-double get_max_steplength(const config_type *config);
-void set_max_steplength(config_type *config, double max_steplength);
+    double max_steplength() const;
+    void max_steplength(double max_step);
 
-double get_min_steplength(const config_type *config);
-void set_min_steplength(config_type *config, double min_steplength);
+    double min_steplength() const;
+    void min_steplength(double min_step);
 
-double get_dec_steplength(const config_type *config);
-void set_dec_steplength(config_type *config, double dec_steplength);
+    double dec_steplength() const;
+    void dec_steplength(double dec_step);
 
-inversion_type get_inversion(const config_type *config);
-void set_inversion(config_type *config, inversion_type inversion);
+    double steplength(int iteration_nr) const;
 
-bool get_subspace(const config_type *config);
-void set_subspace(config_type *config, bool subspace);
+private:
+    std::variant<double, int> m_truncation;
+    inversion_type
+        m_ies_inversion; // Controlled by config key: DEFAULT_IES_INVERSION
+    bool
+        m_ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
 
-bool get_aaprojection(const config_type *config);
-void set_aaprojection(config_type *config, bool aaprojection);
+    long m_option_flags;
+    double
+        m_ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
+    double
+        m_ies_min_steplength; // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
+    double
+        m_ies_dec_steplength; // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
+};
 
-double calculate_steplength(const config_type *config, int iteration_nr);
 } // namespace config
 } // namespace ies
 #endif

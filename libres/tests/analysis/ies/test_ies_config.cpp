@@ -4,29 +4,27 @@
 #include <ert/analysis/analysis_module.hpp>
 
 TEST_CASE("ies_config", "[analysis]") {
-    auto *config = ies::config::alloc(true);
-    ies::config::set_option_flags(config, 0);
+    ies::config::Config config(true);
+    config.set_option_flags(0);
 
     SECTION("set_and_get_option") {
-        REQUIRE(ies::config::get_option(config, ANALYSIS_NEED_ED) == false);
-        ies::config::set_option(config, ANALYSIS_NEED_ED);
-        REQUIRE(ies::config::get_option(config, ANALYSIS_NEED_ED) == true);
+        REQUIRE(config.get_option(ANALYSIS_NEED_ED) == false);
+        config.set_option(ANALYSIS_NEED_ED);
+        REQUIRE(config.get_option(ANALYSIS_NEED_ED) == true);
 
-        ies::config::set_option(config, ANALYSIS_NEED_ED);
-        REQUIRE(ies::config::get_option_flags(config) == ANALYSIS_NEED_ED);
+        config.set_option(ANALYSIS_NEED_ED);
+        REQUIRE(config.get_option_flags() == ANALYSIS_NEED_ED);
     }
 
     SECTION("del_option") {
-        ies::config::set_option(config, ANALYSIS_NEED_ED);
-        REQUIRE(ies::config::get_option_flags(config) == ANALYSIS_NEED_ED);
+        config.set_option(ANALYSIS_NEED_ED);
+        REQUIRE(config.get_option_flags() == ANALYSIS_NEED_ED);
 
-        ies::config::del_option(config, ANALYSIS_NEED_ED);
-        REQUIRE(ies::config::get_option(config, ANALYSIS_NEED_ED) == false);
-        REQUIRE(ies::config::get_option_flags(config) == 0);
+        config.del_option(ANALYSIS_NEED_ED);
+        REQUIRE(config.get_option(ANALYSIS_NEED_ED) == false);
+        REQUIRE(config.get_option_flags() == 0);
 
-        ies::config::del_option(config, ANALYSIS_NEED_ED);
-        REQUIRE(ies::config::get_option_flags(config) == 0);
+        config.del_option(ANALYSIS_NEED_ED);
+        REQUIRE(config.get_option_flags() == 0);
     }
-
-    ies::config::free(config);
 }
