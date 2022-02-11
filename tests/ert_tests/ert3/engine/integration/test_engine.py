@@ -189,7 +189,8 @@ def test_run_once_polynomial_evaluation(
         ert3.engine.run(experiment_run_config, workspace, "evaluation")
     with assert_clean_workspace(workspace):
         with pytest.raises(
-            ValueError, match="Experiment evaluation has been carried out"
+            ert.exceptions.ExperimentError,
+            match="Experiment 'evaluation' has been carried out already.",
         ):
             ert3.engine.run(experiment_run_config, workspace, "evaluation")
 
