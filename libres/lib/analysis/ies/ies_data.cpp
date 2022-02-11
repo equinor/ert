@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <memory>
 
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
@@ -37,8 +38,7 @@ struct ies::data::data_struct {
     matrix_type *
         E; // Prior ensemble of measurement perturations (should be the same for all iterations)
     bool converged; // GN has converged
-    ies::config::config_type *
-        config; // This I don't understand but I assume I include data from the ies_config_type defined in ies_config.cpp
+    std::unique_ptr<ies::config::Config> config;
 };
 
 ies::data::data_type *ies::data::alloc(int ens_size, bool ies_mode) {
@@ -52,15 +52,13 @@ ies::data::data_type *ies::data::alloc(int ens_size, bool ies_mode) {
     data->A0 = NULL;
     data->E = NULL;
     data->converged = false;
-    data->config = ies::config::alloc(ies_mode);
+    data->config = std::make_unique<ies::config::Config>(ies_mode);
     data->W = matrix_alloc(data->ens_size, data->ens_size);
     matrix_set(data->W, 0.0);
     return data;
 }
 
 void ies::data::free(ies::data::data_type *data) {
-    ies::config::free(data->config);
-
     if (data->ens_mask)
         bool_vector_free(data->ens_mask);
     if (data->obs_mask)
@@ -90,9 +88,8 @@ int ies::data::get_iteration_nr(const ies::data::data_type *data) {
     return data->iteration_nr;
 }
 
-ies::config::config_type *
-ies::data::get_config(const ies::data::data_type *data) {
-    return data->config;
+ies::config::Config &ies::data::get_config(const ies::data::data_type *data) {
+    return *data->config;
 }
 
 void ies::data::update_ens_mask(ies::data::data_type *data,

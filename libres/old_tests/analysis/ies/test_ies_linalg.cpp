@@ -37,21 +37,20 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
 
     auto *ies_data1 = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config1 = ies::data::get_config(ies_data1);
+    auto &ies_config1 = ies::data::get_config(ies_data1);
 
     auto *ies_data2 = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config2 = ies::data::get_config(ies_data2);
+    auto &ies_config2 = ies::data::get_config(ies_data2);
 
-    ies::config::set_truncation(ies_config1, 1.0);
-    ies::config::set_max_steplength(ies_config1, 0.6);
-    ies::config::set_min_steplength(ies_config1, 0.6);
-    ies::config::set_inversion(ies_config1,
-                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies_config1.truncation(1.0);
+    ies_config1.max_steplength(0.6);
+    ies_config1.min_steplength(0.6);
+    ies_config1.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
 
-    ies::config::set_max_steplength(ies_config2, 0.6);
-    ies::config::set_min_steplength(ies_config2, 0.6);
-    ies::config::set_inversion(ies_config2, ies::config::IES_INVERSION_EXACT);
+    ies_config2.max_steplength(0.6);
+    ies_config2.min_steplength(0.6);
+    ies_config2.inversion(ies::config::IES_INVERSION_EXACT);
 
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data1, A1,
                                                      rng);
@@ -86,23 +85,21 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
 
     auto *ies_data1 = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config1 = ies::data::get_config(ies_data1);
+    auto &ies_config1 = ies::data::get_config(ies_data1);
 
     auto *ies_data2 = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config2 = ies::data::get_config(ies_data2);
+    auto &ies_config2 = ies::data::get_config(ies_data2);
 
-    ies::config::set_truncation(ies_config1, 0.95);
-    ies::config::set_max_steplength(ies_config1, 0.6);
-    ies::config::set_min_steplength(ies_config1, 0.6);
-    ies::config::set_inversion(ies_config1,
-                               ies::config::IES_INVERSION_SUBSPACE_EE_R);
+    ies_config1.truncation(0.95);
+    ies_config1.max_steplength(0.6);
+    ies_config1.min_steplength(0.6);
+    ies_config1.inversion(ies::config::IES_INVERSION_SUBSPACE_EE_R);
 
-    ies::config::set_truncation(ies_config2, 0.95);
-    ies::config::set_max_steplength(ies_config2, 0.6);
-    ies::config::set_min_steplength(ies_config2, 0.6);
-    ies::config::set_inversion(ies_config2,
-                               ies::config::IES_INVERSION_SUBSPACE_RE);
+    ies_config2.truncation(0.95);
+    ies_config2.max_steplength(0.6);
+    ies_config2.min_steplength(0.6);
+    ies_config2.inversion(ies::config::IES_INVERSION_SUBSPACE_RE);
 
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_data1, A1,
                                                      rng);

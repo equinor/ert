@@ -202,7 +202,7 @@ void ies::updateA(
     const matrix_type *Din,  // (d+E-Y) Ensemble of perturbed observations - Y
     rng_type *rng) {
 
-    const ies::config::config_type *ies_config = ies::data::get_config(data);
+    const auto &ies_config = ies::data::get_config(data);
 
     int ens_size = matrix_get_columns(
         Yin); // Number of active realizations in current iteration
@@ -210,10 +210,7 @@ void ies::updateA(
 
     int iteration_nr = ies::data::inc_iteration_nr(data);
 
-    const double ies_steplength =
-        ies::config::calculate_steplength(ies_config, iteration_nr);
-
-    ies::data::update_state_size(data, state_size);
+    const double ies_steplength = ies_config.steplength(iteration_nr);
 
     /*
       Counting number of active observations for current iteration. If the
@@ -245,11 +242,10 @@ void ies::updateA(
     double costf;
     {
         auto *W0 = ies::alloc_activeW(data);
-        ies_initX__(ies::config::get_aaprojection(ies_config) ? A : nullptr, Y,
-                    R, E, D, X, ies::config::get_inversion(ies_config),
-                    ies::config::get_truncation(ies_config),
-                    ies::config::get_aaprojection(ies_config), W0,
-                    ies_steplength, iteration_nr, &costf);
+        ies_initX__(ies_config.aaprojection() ? A : nullptr, Y, R, E, D, X,
+                    ies_config.inversion(), ies_config.truncation(),
+                    ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
+                    &costf);
         ies::linalg_store_active_W(data, W0);
         logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
         matrix_free(W0);
@@ -525,7 +521,7 @@ void ies::linalg_store_active_W(ies::data::data_type *data,
 void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
                 const matrix_type *R, const matrix_type *E,
                 const matrix_type *D, matrix_type *X) {
-    const auto *ies_config = ies::data::get_config(ies_data);
+    const auto &ies_config = ies::data::get_config(ies_data);
 
     bool use_aa_projection = false;
     double steplength = 1;
@@ -533,9 +529,9 @@ void ies::initX(data::data_type *ies_data, const matrix_type *Y0,
     int active_ens_size = matrix_get_rows(X);
 
     auto *W0 = matrix_alloc(active_ens_size, active_ens_size);
-    ies_initX__(nullptr, Y0, R, E, D, X, config::get_inversion(ies_config),
-                config::get_truncation(ies_config), use_aa_projection, W0,
-                steplength, iteration_nr, nullptr);
+    ies_initX__(nullptr, Y0, R, E, D, X, ies_config.inversion(),
+                ies_config.truncation(), use_aa_projection, W0, steplength,
+                iteration_nr, nullptr);
 
     matrix_free(W0);
 }

@@ -26,19 +26,18 @@ void cmp_std_ies(const res::es_testdata &testdata) {
 
     auto *ies_data1 = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config1 = ies::data::get_config(ies_data1);
+    auto &ies_config1 = ies::data::get_config(ies_data1);
     auto *std_data = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, false));
-    auto *std_config = ies::data::get_config(std_data);
+    auto &std_config = ies::data::get_config(std_data);
 
-    ies::config::set_truncation(ies_config1, 0.95);
-    ies::config::set_min_steplength(ies_config1, 1.0);
-    ies::config::set_max_steplength(ies_config1, 1.0);
-    ies::config::set_inversion(ies_config1,
-                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies::config::set_aaprojection(ies_config1, false);
+    ies_config1.truncation(0.95);
+    ies_config1.min_steplength(1.0);
+    ies_config1.max_steplength(1.0);
+    ies_config1.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies_config1.aaprojection(false);
 
-    ies::config::set_truncation(std_config, 0.95);
+    std_config.truncation(0.95);
 
     ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask,
                      testdata.S, testdata.R, testdata.dObs, testdata.E,
