@@ -22,7 +22,6 @@
 extern "C" {
 #endif
 
-#include <ert/util/type_macros.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
 
@@ -99,8 +98,6 @@ bool analysis_module_get_bool(const analysis_module_type *module,
 void *analysis_module_get_ptr(const analysis_module_type *module,
                               const char *var);
 int analysis_module_ens_size(const analysis_module_type *module);
-
-UTIL_IS_INSTANCE_HEADER(analysis_module);
 
 #ifdef __cplusplus
 }

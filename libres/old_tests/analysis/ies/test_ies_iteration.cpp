@@ -8,20 +8,18 @@
 
 void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    auto *std_data = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, false));
-    auto &ies_config = ies::data::get_config(std_data);
+    ies::data::Data std_data(testdata.active_ens_size, false);
+    auto &ies_config = std_data.config();
     ies_config.truncation(1.00);
 
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
 
-    ies::initX(std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
+    ies::initX(&std_data, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
 
     matrix_free(X);
-    ies::data::free(std_data);
     rng_free(rng);
 }
 
@@ -60,9 +58,9 @@ void cmp_std_ies(res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
-    auto *ies_data = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config = ies::data::get_config(ies_data);
+
+    ies::data::Data ies_data(testdata.active_ens_size, true);
+    auto &ies_config = ies_data.config();
 
     forward_model(testdata, A1);
     ies_config.truncation(1.0);
@@ -78,11 +76,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
     for (int iter = 0; iter < num_iter; iter++) {
         forward_model(testdata, A1);
 
-        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.dObs, testdata.E,
                          testdata.D, rng);
 
-        ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.dObs,
+        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.dObs,
                      testdata.E, testdata.D, rng);
 
         if (verbose) {
@@ -91,7 +89,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
             matrix_pretty_fprint(A1, "Aies", "%11.5f", stdout);
             matrix_pretty_fprint(A2, "Astdenkf", "%11.5f", stdout);
         }
-        test_assert_int_equal(ies::data::get_iteration_nr(ies_data), iter + 1);
+        test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
 
         if (matrix_similar(A1, A2, 1e-5))
             break;
@@ -101,7 +99,6 @@ void cmp_std_ies(res::es_testdata &testdata) {
 
     matrix_free(A1);
     matrix_free(A2);
-    ies::data::free(ies_data);
     rng_free(rng);
 }
 
@@ -113,9 +110,8 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     matrix_type *A1c = matrix_alloc_copy(A1);
     matrix_type *A2c = matrix_alloc_copy(A2);
-    auto *ies_data = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config = ies::data::get_config(ies_data);
+    ies::data::Data ies_data(testdata.active_ens_size, true);
+    auto &ies_config = ies_data.config();
 
     forward_model(testdata, A1);
     ies_config.truncation(1.0);
@@ -151,11 +147,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
             matrix_realloc_copy(A1, A1c);
         }
 
-        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.dObs, testdata.E,
                          testdata.D, rng);
 
-        ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.dObs,
+        ies::updateA(&ies_data, A1, testdata.S, testdata.R, testdata.dObs,
                      testdata.E, testdata.D, rng);
 
         if (verbose) {
@@ -201,7 +197,6 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_free(A2c);
     matrix_free(A1);
     matrix_free(A2);
-    ies::data::free(ies_data);
     rng_free(rng);
 }
 
@@ -226,9 +221,8 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    auto *ies_data = static_cast<ies::data::data_type *>(
-        ies::data::alloc(testdata.active_ens_size, true));
-    auto &ies_config = ies::data::get_config(ies_data);
+    ies::data::Data ies_data(testdata.active_ens_size, true);
+    auto &ies_config = ies_data.config();
 
     matrix_type *A0 = testdata.alloc_state("prior");
     matrix_type *A = matrix_alloc_copy(A0);
@@ -246,11 +240,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         // deactivate an observation initially to test reactivation in the following iteration
         testdata2.deactivate_obs(2);
 
-        ies::init_update(ies_data, testdata2.ens_mask, testdata2.obs_mask,
+        ies::init_update(&ies_data, testdata2.ens_mask, testdata2.obs_mask,
                          testdata2.S, testdata2.R, testdata2.dObs, testdata2.E,
                          testdata2.D, rng);
 
-        ies::updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.dObs,
+        ies::updateA(&ies_data, A, testdata2.S, testdata2.R, testdata2.dObs,
                      testdata2.E, testdata2.D, rng);
     }
 
@@ -277,18 +271,17 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         if (iter == 7)
             testdata.deactivate_obs(testdata.active_obs_size / 2);
 
-        ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
+        ies::init_update(&ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.dObs, testdata.E,
                          testdata.D, rng);
 
-        ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.dObs,
+        ies::updateA(&ies_data, A, testdata.S, testdata.R, testdata.dObs,
                      testdata.E, testdata.D, rng);
     }
 
     matrix_free(A);
     matrix_free(A0);
 
-    ies::data::free(ies_data);
     rng_free(rng);
 }
 

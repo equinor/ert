@@ -22,140 +22,88 @@
   the analysis table.
 */
 
-#define IES_DATA_TYPE_ID 6635831
+ies::data::Data::Data(int ens_size, bool ies_mode)
+    : m_ens_size(ens_size), m_config(ies_mode), m_converged(false),
+      m_iteration_nr(0), W(matrix_alloc(ens_size, ens_size)) {}
 
-struct ies::data::data_struct {
-    int ens_size;
-    int iteration_nr; // Keep track of the outer iteration loop
-    int state_size;   // Initial state_size used for checks in subsequent calls
-    bool_vector_type *ens_mask; // Ensemble mask of active realizations
-    bool_vector_type
-        *obs_mask0; // Initial observation mask for active measurements
-    bool_vector_type *obs_mask; // Current observation mask
-    matrix_type *
-        W; // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
-    matrix_type *A0; // Prior ensemble used in Ei=A0 Omega_i
-    matrix_type *
-        E; // Prior ensemble of measurement perturations (should be the same for all iterations)
-    bool converged; // GN has converged
-    std::unique_ptr<ies::config::Config> config;
-};
+ies::data::Data::~Data() {
+    matrix_free(this->W);
 
-ies::data::data_type *ies::data::alloc(int ens_size, bool ies_mode) {
-    ies::data::data_type *data = new ies::data::data_type();
-    data->iteration_nr = 0;
-    data->state_size = 0;
-    data->ens_size = ens_size;
-    data->ens_mask = NULL;
-    data->obs_mask0 = NULL;
-    data->obs_mask = NULL;
-    data->A0 = NULL;
-    data->E = NULL;
-    data->converged = false;
-    data->config = std::make_unique<ies::config::Config>(ies_mode);
-    data->W = matrix_alloc(data->ens_size, data->ens_size);
-    matrix_set(data->W, 0.0);
-    return data;
+    if (this->m_ens_mask)
+        bool_vector_free(this->m_ens_mask);
+    if (this->m_obs_mask)
+        bool_vector_free(this->m_obs_mask);
+    if (this->m_obs_mask0)
+        bool_vector_free(this->m_obs_mask0);
+    if (this->A0)
+        matrix_free(this->A0);
+    if (this->E)
+        matrix_free(this->E);
 }
 
-void ies::data::free(ies::data::data_type *data) {
-    if (data->ens_mask)
-        bool_vector_free(data->ens_mask);
-    if (data->obs_mask)
-        bool_vector_free(data->obs_mask);
-    if (data->obs_mask0)
-        bool_vector_free(data->obs_mask0);
-    if (data->A0)
-        matrix_free(data->A0);
-    if (data->E)
-        matrix_free(data->E);
-    if (data->W)
-        matrix_free(data->W);
-
-    delete data;
+void ies::data::Data::iteration_nr(int iteration_nr) {
+    this->m_iteration_nr = iteration_nr;
 }
 
-void ies::data::set_iteration_nr(ies::data::data_type *data, int iteration_nr) {
-    data->iteration_nr = iteration_nr;
+int ies::data::Data::iteration_nr() const { return this->m_iteration_nr; }
+
+int ies::data::Data::inc_iteration_nr() { return ++this->m_iteration_nr; }
+
+ies::config::Config &ies::data::Data::config() { return this->m_config; }
+
+void ies::data::Data::update_ens_mask(const bool_vector_type *mask) {
+    if (this->m_ens_mask)
+        bool_vector_free(this->m_ens_mask);
+
+    this->m_ens_mask = bool_vector_alloc_copy(mask);
 }
 
-int ies::data::inc_iteration_nr(ies::data::data_type *data) {
-    data->iteration_nr++;
-    return data->iteration_nr;
+int ies::data::Data::ens_size() const { return this->m_ens_size; }
+
+void ies::data::Data::store_initial_obs_mask(const bool_vector_type *mask) {
+    if (!this->m_obs_mask0)
+        this->m_obs_mask0 = bool_vector_alloc_copy(mask);
 }
 
-int ies::data::get_iteration_nr(const ies::data::data_type *data) {
-    return data->iteration_nr;
+void ies::data::Data::update_obs_mask(const bool_vector_type *mask) {
+    if (this->m_obs_mask)
+        bool_vector_free(this->m_obs_mask);
+
+    this->m_obs_mask = bool_vector_alloc_copy(mask);
 }
 
-ies::config::Config &ies::data::get_config(const ies::data::data_type *data) {
-    return *data->config;
+int ies::data::Data::obs_mask_size() const {
+    return bool_vector_size(this->m_obs_mask);
 }
 
-void ies::data::update_ens_mask(ies::data::data_type *data,
-                                const bool_vector_type *ens_mask) {
-    if (data->ens_mask)
-        bool_vector_free(data->ens_mask);
-
-    data->ens_mask = bool_vector_alloc_copy(ens_mask);
+int ies::data::Data::active_obs_count() const {
+    return bool_vector_count_equal(this->m_obs_mask, true);
 }
 
-int ies::data::ens_size(const data_type *data) { return data->ens_size; }
-
-void ies::data::store_initial_obs_mask(ies::data::data_type *data,
-                                       const bool_vector_type *obs_mask) {
-    if (!data->obs_mask0)
-        data->obs_mask0 = bool_vector_alloc_copy(obs_mask);
+int ies::data::Data::ens_mask_size() const {
+    return bool_vector_size(this->m_ens_mask);
 }
 
-void ies::data::update_obs_mask(ies::data::data_type *data,
-                                const bool_vector_type *obs_mask) {
-    if (data->obs_mask)
-        bool_vector_free(data->obs_mask);
-
-    data->obs_mask = bool_vector_alloc_copy(obs_mask);
-}
-
-int ies::data::get_obs_mask_size(const ies::data::data_type *data) {
-    return bool_vector_size(data->obs_mask);
-}
-
-int ies::data::active_obs_count(const ies::data::data_type *data) {
-    int nrobs_msk = ies::data::get_obs_mask_size(data);
-    int nrobs = 0;
-    for (int i = 0; i < nrobs_msk; i++) {
-        if (bool_vector_iget(data->obs_mask, i)) {
-            nrobs = nrobs + 1;
-        }
-    }
-    return nrobs;
-}
-
-int ies::data::get_ens_mask_size(const ies::data::data_type *data) {
-    return bool_vector_size(data->ens_mask);
-}
-
-void ies::data::update_state_size(ies::data::data_type *data, int state_size) {
-    if (data->state_size == 0)
-        data->state_size = state_size;
+void ies::data::Data::update_state_size(int state_size) {
+    this->m_state_size = state_size;
 }
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
-void ies::data::store_initialE(ies::data::data_type *data,
-                               const matrix_type *E0) {
-    if (!data->E) {
-        int obs_size_msk = ies::data::get_obs_mask_size(data);
-        int ens_size_msk = ies::data::get_ens_mask_size(data);
-        data->E = matrix_alloc(obs_size_msk, ens_size_msk);
-        matrix_set(data->E, -999.9);
+void ies::data::Data::store_initialE(const matrix_type *E0) {
+    if (!this->E) {
+        int obs_size_msk = this->obs_mask_size();
+        int ens_size_msk = this->ens_mask_size();
+        this->E = matrix_alloc(obs_size_msk, ens_size_msk);
+        matrix_set(this->E, -999.9);
+
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (bool_vector_iget(data->obs_mask0, iobs)) {
+            if (bool_vector_iget(this->m_obs_mask0, iobs)) {
                 int active_idx = 0;
                 for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (bool_vector_iget(data->ens_mask, iens)) {
-                        matrix_iset_safe(data->E, iobs, iens,
+                    if (bool_vector_iget(this->m_ens_mask, iens)) {
+                        matrix_iset_safe(this->E, iobs, iens,
                                          matrix_iget(E0, m, active_idx));
                         active_idx++;
                     }
@@ -168,62 +116,107 @@ void ies::data::store_initialE(ies::data::data_type *data,
 
 /* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
    in data->E. */
-void ies::data::augment_initialE(ies::data::data_type *data,
-                                 const matrix_type *E0) {
-    if (data->E) {
-        int obs_size_msk = ies::data::get_obs_mask_size(data);
-        int ens_size_msk = ies::data::get_ens_mask_size(data);
+void ies::data::Data::augment_initialE(const matrix_type *E0) {
+    if (this->E) {
+        int obs_size_msk = this->obs_mask_size();
+        int ens_size_msk = this->ens_mask_size();
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (!bool_vector_iget(data->obs_mask0, iobs) &&
-                bool_vector_iget(data->obs_mask, iobs)) {
+            if (!bool_vector_iget(this->m_obs_mask0, iobs) &&
+                bool_vector_iget(this->m_obs_mask, iobs)) {
                 int i = -1;
                 for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (bool_vector_iget(data->ens_mask, iens)) {
+                    if (bool_vector_iget(this->m_ens_mask, iens)) {
                         i++;
-                        matrix_iset_safe(data->E, iobs, iens,
+                        matrix_iset_safe(this->E, iobs, iens,
                                          matrix_iget(E0, m, i));
                     }
                 }
-                bool_vector_iset(data->obs_mask0, iobs, true);
+                bool_vector_iset(this->m_obs_mask0, iobs, true);
             }
-            if (bool_vector_iget(data->obs_mask, iobs)) {
+            if (bool_vector_iget(this->m_obs_mask, iobs)) {
                 m++;
             }
         }
     }
 }
 
-void ies::data::store_initialA(ies::data::data_type *data,
-                               const matrix_type *A) {
-    // We store the initial ensemble to use it in final update equation                     (Line 11)
-    if (!data->A0)
-        data->A0 = matrix_alloc_copy(A);
+void ies::data::Data::store_initialA(const matrix_type *A) {
+    if (!this->A0)
+        this->A0 = matrix_alloc_copy(A);
 }
 
-const bool_vector_type *
-ies::data::get_obs_mask0(const ies::data::data_type *data) {
-    return data->obs_mask0;
+const bool_vector_type *ies::data::Data::obs_mask0() const {
+    return this->m_obs_mask0;
 }
 
-const bool_vector_type *
-ies::data::get_obs_mask(const ies::data::data_type *data) {
-    return data->obs_mask;
+const bool_vector_type *ies::data::Data::obs_mask() const {
+    return this->m_obs_mask;
 }
 
-const bool_vector_type *
-ies::data::get_ens_mask(const ies::data::data_type *data) {
-    return data->ens_mask;
+const bool_vector_type *ies::data::Data::ens_mask() const {
+    return this->m_ens_mask;
 }
 
-const matrix_type *ies::data::getE(const ies::data::data_type *data) {
-    return data->E;
+const matrix_type *ies::data::Data::getE() const { return this->E; }
+
+matrix_type *ies::data::Data::getW() { return this->W; }
+
+const matrix_type *ies::data::Data::getW() const { return this->W; }
+
+const matrix_type *ies::data::Data::getA0() const { return this->A0; }
+
+namespace {
+
+matrix_type *alloc_active(const matrix_type *full_matrix,
+                          const bool_vector_type *row_mask,
+                          const bool_vector_type *column_mask) {
+    int rows = bool_vector_size(row_mask);
+    int columns = bool_vector_size(column_mask);
+
+    matrix_type *active =
+        matrix_alloc(bool_vector_count_equal(row_mask, true),
+                     bool_vector_count_equal(column_mask, true));
+    int row = 0;
+    for (int iobs = 0; iobs < rows; iobs++) {
+        if (bool_vector_iget(row_mask, iobs)) {
+            int column = 0;
+            for (int iens = 0; iens < columns; iens++) {
+                if (bool_vector_iget(column_mask, iens)) {
+                    matrix_iset(active, row, column,
+                                matrix_iget(full_matrix, iobs, iens));
+                    column++;
+                }
+            }
+            row++;
+        }
+    }
+
+    return active;
+}
+} // namespace
+
+/*
+  During the iteration process both the number of realizations and the number of
+  observations can change, the number of realizations can only be reduced but
+  the number of (active) observations can both be reduced and increased. The
+  iteration algorithm is based maintaining a state for the entire update
+  process, in order to do this correctly we must create matrix representations
+  with the correct active elements both in observation and realisation space.
+*/
+
+matrix_type *ies::data::Data::alloc_activeE() const {
+    return alloc_active(this->E, this->m_obs_mask, this->m_ens_mask);
 }
 
-matrix_type *ies::data::getW(const ies::data::data_type *data) {
-    return data->W;
+matrix_type *ies::data::Data::alloc_activeW() const {
+    return alloc_active(this->W, this->m_ens_mask, this->m_ens_mask);
 }
 
-const matrix_type *ies::data::getA0(const ies::data::data_type *data) {
-    return data->A0;
+matrix_type *ies::data::Data::alloc_activeA() const {
+    bool_vector_type *state_mask =
+        bool_vector_alloc(matrix_get_rows(this->A0), true);
+    auto *activeA = alloc_active(this->A0, state_mask, this->m_ens_mask);
+    bool_vector_free(state_mask);
+    return activeA;
 }
