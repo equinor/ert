@@ -19,8 +19,8 @@ input:
     source: resources.seedtxt
     record: seedtxt
   -
-    source: resources.snake_oil_txt_tmpl
-    record: snake_oil_params_txt_tmpl
+    source: resources.snake_oil_txt_tmpl_params
+    record: snake_oil_params_txt_tmpl_params
 
 output:
   -

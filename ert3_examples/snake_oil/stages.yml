@@ -73,7 +73,7 @@
       location: seed.txt
 
     -
-      record: snake_oil_params_txt_tmpl
+      record: snake_oil_params_txt_tmpl_params
       location: snake_oil_params.txt.tmpl
 
   output:
