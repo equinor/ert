@@ -10,19 +10,21 @@ from ert3.config._validator import ensure_mime
 from ert3.plugins.plugin_manager import hook_implementation
 
 from ert.data import SerializationTransformation
-from ert.data import TarRecordTransformation
+from ert.data import TarTransformation
 from ert.data import EclSumTransformation
 
 
 def transformation_factory(config: Type[BaseModel]) -> TransformationConfigBase:
     if isinstance(config, SerializationTransformationConfig):
-        return SerializationTransformation(location=Path(config.location), mime=config.mime)
+        return SerializationTransformation(
+            location=Path(config.location), mime=config.mime
+        )
     elif isinstance(config, SummaryTransformationConfig):
         if not config.smry_keys:
             raise ValueError(f"no smry_keys on '{config}'")
         return EclSumTransformation(smry_keys=config.smry_keys)
     elif isinstance(config, DirectoryTransformationConfig):
-        return TarRecordTransformation(location=Path(config.location))
+        return TarTransformation(location=Path(config.location))
     else:
         raise ValueError(
             f"Unknown config type {type(config)} for config instance {config}"

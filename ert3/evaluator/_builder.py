@@ -57,10 +57,11 @@ def add_commands(
     async def transform_output(
         name: str,
         transmitter: ert.data.RecordTransmitter,
-        mime: str,
         location: pathlib.Path,
     ) -> None:
-        transformation = ert.data.ExecutableTransformation(location, mime)
+        transformation = ert.data.ExecutableTransformation(
+            location, "application/octet-stream"
+        )
         record = await transformation.transform_output()
         await transmitter.transmit_record(record)
         step.add_input(
