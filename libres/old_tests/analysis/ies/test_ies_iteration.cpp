@@ -10,8 +10,8 @@ void init_stdA(const res::es_testdata &testdata, matrix_type *A2) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     auto *std_data = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, false));
-    auto *ies_config = ies::data::get_config(std_data);
-    ies::config::set_truncation(ies_config, 1.00);
+    auto &ies_config = ies::data::get_config(std_data);
+    ies_config.truncation(1.00);
 
     matrix_type *X =
         matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
@@ -62,14 +62,14 @@ void cmp_std_ies(res::es_testdata &testdata) {
     matrix_type *A2 = testdata.alloc_state("prior");
     auto *ies_data = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config = ies::data::get_config(ies_data);
+    auto &ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
-    ies::config::set_truncation(ies_config, 1.0);
-    ies::config::set_max_steplength(ies_config, 0.6);
-    ies::config::set_min_steplength(ies_config, 0.6);
-    ies::config::set_inversion(ies_config, ies::config::IES_INVERSION_EXACT);
-    ies::config::set_aaprojection(ies_config, false);
+    ies_config.truncation(1.0);
+    ies_config.max_steplength(0.6);
+    ies_config.min_steplength(0.6);
+    ies_config.inversion(ies::config::IES_INVERSION_EXACT);
+    ies_config.aaprojection(false);
 
     /* ES solution */
 
@@ -115,14 +115,14 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     matrix_type *A2c = matrix_alloc_copy(A2);
     auto *ies_data = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config = ies::data::get_config(ies_data);
+    auto &ies_config = ies::data::get_config(ies_data);
 
     forward_model(testdata, A1);
-    ies::config::set_truncation(ies_config, 1.0);
-    ies::config::set_min_steplength(ies_config, 0.6);
-    ies::config::set_max_steplength(ies_config, 0.6);
-    ies::config::set_inversion(ies_config, ies::config::IES_INVERSION_EXACT);
-    ies::config::set_aaprojection(ies_config, false);
+    ies_config.truncation(1.0);
+    ies_config.min_steplength(0.6);
+    ies_config.max_steplength(0.6);
+    ies_config.inversion(ies::config::IES_INVERSION_EXACT);
+    ies_config.aaprojection(false);
     int iens_deact = testdata.active_ens_size / 2;
 
     if (verbose) {
@@ -228,17 +228,16 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
 
     auto *ies_data = static_cast<ies::data::data_type *>(
         ies::data::alloc(testdata.active_ens_size, true));
-    auto *ies_config = ies::data::get_config(ies_data);
+    auto &ies_config = ies::data::get_config(ies_data);
 
     matrix_type *A0 = testdata.alloc_state("prior");
     matrix_type *A = matrix_alloc_copy(A0);
 
-    ies::config::set_truncation(ies_config, 1.00);
-    ies::config::set_max_steplength(ies_config, 0.50);
-    ies::config::set_min_steplength(ies_config, 0.50);
-    ies::config::set_inversion(ies_config,
-                               ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies::config::set_aaprojection(ies_config, false);
+    ies_config.truncation(1.00);
+    ies_config.max_steplength(0.50);
+    ies_config.min_steplength(0.50);
+    ies_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies_config.aaprojection(false);
 
     for (int iter = 0; iter < 1; iter++) {
         printf("test_deactivate_observations_and_realizations: iter= %d\n",

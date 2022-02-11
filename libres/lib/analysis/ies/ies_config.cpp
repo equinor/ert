@@ -35,152 +35,105 @@
 #define DEFAULT_IES_INVERSION ies::config::IES_INVERSION_SUBSPACE_EXACT_R
 #define DEFAULT_IES_AAPROJECTION false
 
-#define IES_CONFIG_TYPE_ID 196402021
-
-struct ies::config::config_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    std::variant<double, int> truncation;
-    long option_flags;
-    double
-        ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
-    double
-        ies_min_steplength; // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
-    double
-        ies_dec_steplength; // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
-    inversion_type
-        ies_inversion;     // Controlled by config key: DEFAULT_IES_INVERSION
-    bool ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
-};
-
-ies::config::config_type *ies::config::alloc(bool ies_mode) {
-    ies::config::config_type *config = new ies::config::config_type();
-    UTIL_TYPE_ID_INIT(config, IES_CONFIG_TYPE_ID);
-    ies::config::set_truncation(config, DEFAULT_TRUNCATION);
+ies::config::Config::Config(bool ies_mode)
+    : m_truncation(DEFAULT_TRUNCATION), m_ies_inversion(DEFAULT_IES_INVERSION),
+      m_ies_aaprojection(DEFAULT_IES_AAPROJECTION),
+      m_ies_max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
+      m_ies_min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
+      m_ies_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {
     if (ies_mode)
-        ies::config::set_option_flags(
-            config, ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A + ANALYSIS_ITERABLE +
-                        ANALYSIS_SCALE_DATA);
+        this->m_option_flags = ANALYSIS_NEED_ED + ANALYSIS_UPDATE_A +
+                               ANALYSIS_SCALE_DATA + ANALYSIS_ITERABLE;
     else
-        ies::config::set_option_flags(config,
-                                      ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA);
-
-    ies::config::set_max_steplength(config, DEFAULT_IES_MAX_STEPLENGTH);
-    ies::config::set_min_steplength(config, DEFAULT_IES_MIN_STEPLENGTH);
-    ies::config::set_dec_steplength(config, DEFAULT_IES_DEC_STEPLENGTH);
-    ies::config::set_inversion(config, DEFAULT_IES_INVERSION);
-    ies::config::set_aaprojection(config, DEFAULT_IES_AAPROJECTION);
-
-    return config;
+        this->m_option_flags = ANALYSIS_NEED_ED + ANALYSIS_SCALE_DATA;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* TRUNCATION -> SUBSPACE_DIMENSION */
 
-const std::variant<double, int> &
-ies::config::get_truncation(const config_type *config) {
-    return config->truncation;
+const std::variant<double, int> &ies::config::Config::truncation() const {
+    return this->m_truncation;
 }
 
-void ies::config::set_truncation(config_type *config, double truncation) {
-    config->truncation = truncation;
+void ies::config::Config::truncation(double truncation) {
+    this->m_truncation = truncation;
 }
 
-void ies::config::set_subspace_dimension(config_type *config,
-                                         int subspace_dimension) {
-    config->truncation = subspace_dimension;
+void ies::config::Config::subspace_dimension(int subspace_dimension) {
+    this->m_truncation = subspace_dimension;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* OPTION_FLAGS */
 
-long ies::config::get_option_flags(const ies::config::config_type *config) {
-    return config->option_flags;
+long ies::config::Config::get_option_flags() const {
+    return this->m_option_flags;
 }
 
-void ies::config::set_option_flags(config_type *config, long flags) {
-    config->option_flags = flags;
+void ies::config::Config::set_option_flags(long flags) {
+    this->m_option_flags = flags;
 }
 
-bool ies::config::get_option(const config_type *config,
-                             analysis_module_flag_enum option) {
-    return ((config->option_flags & option) == option);
+bool ies::config::Config::get_option(analysis_module_flag_enum option) const {
+    return ((this->m_option_flags & option) == option);
 }
 
-void ies::config::set_option(config_type *config,
-                             analysis_module_flag_enum option) {
-    config->option_flags |= option;
+void ies::config::Config::set_option(analysis_module_flag_enum option) {
+    this->m_option_flags |= option;
 }
 
-void ies::config::del_option(config_type *config,
-                             analysis_module_flag_enum option) {
-    if (ies::config::get_option(config, option))
-        config->option_flags -= option;
+void ies::config::Config::del_option(analysis_module_flag_enum option) {
+    if (this->get_option(option))
+        this->m_option_flags -= option;
 }
 
-/*------------------------------------------------------------------------------------------------*/
-/* IES_MAX_STEPLENGTH */
-double ies::config::get_max_steplength(const ies::config::config_type *config) {
-    return config->ies_max_steplength;
-}
-void ies::config::set_max_steplength(ies::config::config_type *config,
-                                     double ies_max_steplength) {
-    config->ies_max_steplength = ies_max_steplength;
-}
-/*------------------------------------------------------------------------------------------------*/
-/* IES_MIN_STEPLENGTH */
-double ies::config::get_min_steplength(const ies::config::config_type *config) {
-    return config->ies_min_steplength;
-}
-void ies::config::set_min_steplength(ies::config::config_type *config,
-                                     double ies_min_steplength) {
-    config->ies_min_steplength = ies_min_steplength;
+double ies::config::Config::max_steplength() const {
+    return this->m_ies_max_steplength;
 }
 
-/*------------------------------------------------------------------------------------------------*/
-/* IES_DEC_STEPLENGTH */
-double ies::config::get_dec_steplength(const ies::config::config_type *config) {
-    return config->ies_dec_steplength;
+void ies::config::Config::max_steplength(double max_step) {
+    this->m_ies_max_steplength = max_step;
 }
-void ies::config::set_dec_steplength(ies::config::config_type *config,
-                                     double ies_dec_steplength) {
 
-    // The formula used to calculate step length has a hard assumption that the
-    // steplength is reduced for every step - here that is silently enforced
-    // with the std::max(1.1, ....).
-    config->ies_dec_steplength =
-        std::max(ies_dec_steplength, MIN_IES_DEC_STEPLENGTH);
+double ies::config::Config::min_steplength() const {
+    return this->m_ies_min_steplength;
+}
+
+void ies::config::Config::min_steplength(double min_step) {
+    this->m_ies_min_steplength = min_step;
+}
+
+double ies::config::Config::dec_steplength() const {
+    return this->m_ies_dec_steplength;
+}
+
+void ies::config::Config::dec_steplength(double dec_step) {
+    this->m_ies_dec_steplength = std::max(dec_step, MIN_IES_DEC_STEPLENGTH);
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_INVERSION          */
-ies::config::inversion_type
-ies::config::get_inversion(const ies::config::config_type *config) {
-    return config->ies_inversion;
+ies::config::inversion_type ies::config::Config::inversion() const {
+    return this->m_ies_inversion;
 }
-void ies::config::set_inversion(ies::config::config_type *config,
-                                ies::config::inversion_type ies_inversion) {
-    config->ies_inversion = ies_inversion;
+void ies::config::Config::inversion(ies::config::inversion_type it) {
+    this->m_ies_inversion = it;
 }
 
 /*------------------------------------------------------------------------------------------------*/
 /* IES_AAPROJECTION         */
-bool ies::config::get_aaprojection(const ies::config::config_type *config) {
-    return config->ies_aaprojection;
-}
-void ies::config::set_aaprojection(config_type *config, bool ies_aaprojection) {
-    config->ies_aaprojection = ies_aaprojection;
+bool ies::config::Config::aaprojection() const {
+    return this->m_ies_aaprojection;
 }
 
-/*------------------------------------------------------------------------------------------------*/
-/* FREE_CONFIG */
-void ies::config::free(ies::config::config_type *config) { delete config; }
+void ies::config::Config::aaprojection(bool ies_aaprojection) {
+    this->m_ies_aaprojection = ies_aaprojection;
+}
 
-double
-ies::config::calculate_steplength(const ies::config::config_type *ies_config,
-                                  int iteration_nr) {
-    double ies_max_step = ies::config::get_max_steplength(ies_config);
-    double ies_min_step = ies::config::get_min_steplength(ies_config);
-    double ies_decline_step = ies::config::get_dec_steplength(ies_config);
+double ies::config::Config::steplength(int iteration_nr) const {
+    double ies_max_step = this->m_ies_max_steplength;
+    double ies_min_step = this->m_ies_min_steplength;
+    double ies_decline_step = this->m_ies_dec_steplength;
 
     /*
       This is an implementation of Eq. (49) from the book:

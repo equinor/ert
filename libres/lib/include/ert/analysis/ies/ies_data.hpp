@@ -22,7 +22,7 @@ void set_iteration_nr(data_type *data, int iteration_nr);
 int get_iteration_nr(const data_type *data);
 int inc_iteration_nr(data_type *data);
 
-config::config_type *get_config(const data_type *data);
+::ies::config::Config &get_config(const data_type *data);
 
 void update_ens_mask(data_type *data, const bool_vector_type *ens_mask);
 void store_initial_obs_mask(data_type *data, const bool_vector_type *obs_mask);
