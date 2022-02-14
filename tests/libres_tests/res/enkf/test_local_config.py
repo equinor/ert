@@ -58,11 +58,7 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(ValueError):
                 local_config.createObsdata("OBSSET_1")
             local_obs_data_1.addNode("GEN_PERLIN_1")
-            local_obs_data_1["GEN_PERLIN_1"].addTimeStep(0)
-            local_obs_data_1["GEN_PERLIN_1"].addTimeStep(1)
             local_obs_data_1.addNode("GEN_PERLIN_2")
-            local_obs_data_1["GEN_PERLIN_2"].addTimeStep(0)
-            local_obs_data_1["GEN_PERLIN_2"].addTimeStep(1)
             self.assertEqual(len(local_obs_data_1), 2)
 
             # Delete node
@@ -90,11 +86,7 @@ class LocalConfigTest(ResTest):
             self.assertTrue(isinstance(local_obs_data_2, LocalObsdata))
 
             local_obs_data_2.addNode("GEN_PERLIN_1")
-            local_obs_data_2["GEN_PERLIN_1"].addTimeStep(0)
-            local_obs_data_2["GEN_PERLIN_1"].addTimeStep(1)
             local_obs_data_2.addNode("GEN_PERLIN_2")
-            local_obs_data_2["GEN_PERLIN_2"].addTimeStep(0)
-            local_obs_data_2["GEN_PERLIN_2"].addTimeStep(1)
             # Ministep
             ministep = local_config.createMinistep("MINISTEP")
             self.assertTrue(isinstance(ministep, LocalMinistep))

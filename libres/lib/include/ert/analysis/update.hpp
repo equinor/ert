@@ -9,8 +9,7 @@
 #include <ert/enkf/enkf_obs.hpp>
 
 namespace analysis {
-bool smoother_update(std::vector<int> step_list,
-                     const local_updatestep_type *updatestep,
+bool smoother_update(const local_updatestep_type *updatestep,
                      int total_ens_size, enkf_obs_type *obs,
                      rng_type *shared_rng,
                      const analysis_config_type *analysis_config,

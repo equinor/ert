@@ -6,28 +6,16 @@ from res import ResPrototype
 class LocalObsdataNode(BaseCClass):
     TYPE_NAME = "local_obsdata_node"
 
-    _alloc = ResPrototype("void* local_obsdata_node_alloc(char* , bool)", bind=False)
+    _alloc = ResPrototype("void* local_obsdata_node_alloc(char*)", bind=False)
     _free = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
     _get_key = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
-    _add_step = ResPrototype(
-        "void  local_obsdata_node_add_tstep(local_obsdata_node, int)"
-    )
-    _tstep_active = ResPrototype(
-        "bool  local_obsdata_node_tstep_active(local_obsdata_node, int)"
-    )
-    _all_timestep_active = ResPrototype(
-        "bool  local_obsdata_node_all_timestep_active(local_obsdata_node)"
-    )
-    _set_all_timestep_active = ResPrototype(
-        "void  local_obsdata_node_set_all_timestep_active(local_obsdata_node, bool)"
-    )
     _get_active_list = ResPrototype(
         "active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)"
     )
 
-    def __init__(self, obs_key, all_timestep_active=True):
+    def __init__(self, obs_key):
         if isinstance(obs_key, str):
-            c_ptr = self._alloc(obs_key, all_timestep_active)
+            c_ptr = self._alloc(obs_key)
             if c_ptr:
                 super().__init__(c_ptr)
             else:
@@ -45,23 +33,11 @@ class LocalObsdataNode(BaseCClass):
     def getKey(self):
         return self.key()
 
-    def addTimeStep(self, step):
-        self._add_step(step)
-
     def free(self):
         self._free()
 
     def __repr__(self):
         return "LocalObsdataNode(key = %s) %s" % (self.key(), self._ad_str())
 
-    def tstepActive(self, tstep):
-        return self._tstep_active(tstep)
-
     def getActiveList(self):
         return self._get_active_list()
-
-    def allTimeStepActive(self):
-        return self._all_timestep_active()
-
-    def setAllTimeStepActive(self, flag):
-        return self._set_all_timestep_active(flag)

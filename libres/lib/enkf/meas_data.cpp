@@ -289,12 +289,6 @@ void meas_data_free(meas_data_type *matrix) {
     free(matrix);
 }
 
-void meas_data_reset(meas_data_type *matrix) {
-    hash_clear(matrix->blocks);
-    vector_clear(
-        matrix->data); /* Will dump and discard all the meas_block instances. */
-}
-
 /*
    The obs_key is not alone unique over different report steps.
 */

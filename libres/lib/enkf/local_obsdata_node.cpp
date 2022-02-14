@@ -30,28 +30,23 @@ struct local_obsdata_node_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *obs_key;
     active_list_type *active_list;
-    std::vector<int> tstep_list;
-    bool all_timestep_active;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(local_obsdata_node, LOCAL_OBSDATA_NODE_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION(local_obsdata_node, LOCAL_OBSDATA_NODE_TYPE_ID)
 
 static local_obsdata_node_type *
-local_obsdata_node_alloc__(const char *obs_key, bool all_timestep_active) {
+local_obsdata_node_alloc__(const char *obs_key) {
     auto node = new local_obsdata_node_type;
     UTIL_TYPE_ID_INIT(node, LOCAL_OBSDATA_NODE_TYPE_ID);
     node->obs_key = util_alloc_string_copy(obs_key);
     node->active_list = NULL;
-    node->all_timestep_active = all_timestep_active;
 
     return node;
 }
 
-local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key,
-                                                  bool all_timestep_active) {
-    local_obsdata_node_type *node =
-        local_obsdata_node_alloc__(obs_key, all_timestep_active);
+local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key) {
+    local_obsdata_node_type *node = local_obsdata_node_alloc__(obs_key);
 
     node->active_list = active_list_alloc();
 
@@ -60,11 +55,9 @@ local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key,
 
 local_obsdata_node_type *
 local_obsdata_node_alloc_copy(const local_obsdata_node_type *src) {
-    local_obsdata_node_type *target =
-        local_obsdata_node_alloc__(src->obs_key, src->all_timestep_active);
+    local_obsdata_node_type *target = local_obsdata_node_alloc__(src->obs_key);
 
     target->active_list = active_list_alloc_copy(src->active_list);
-    target->tstep_list = src->tstep_list;
 
     return target;
 }
@@ -99,57 +92,4 @@ local_obsdata_node_get_active_list(const local_obsdata_node_type *node) {
 active_list_type *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node) {
     return active_list_alloc_copy(node->active_list);
-}
-
-bool local_obsdata_node_tstep_active(const local_obsdata_node_type *node,
-                                     int tstep) {
-    return local_obsdata_node_has_tstep(node, tstep);
-}
-
-/*
-  This a temporarary function to support the change local_obsset ->
-  local_obsdata; should eventually be removed.
-*/
-
-void local_obsdata_node_reset_tstep_list(local_obsdata_node_type *node,
-                                         const std::vector<int> &step_list) {
-    node->tstep_list = step_list;
-    node->all_timestep_active = false;
-}
-
-bool local_obsdata_node_all_timestep_active(
-    const local_obsdata_node_type *node) {
-    return node->all_timestep_active;
-}
-
-/*
-   Observe that this function check for explicitly added timestep,
-   i.e. if the all_timestep_active flag is set to true this will
-   return false.
-*/
-
-bool local_obsdata_node_has_tstep(const local_obsdata_node_type *node,
-                                  int tstep) {
-    return std::find(node->tstep_list.begin(), node->tstep_list.end(), tstep) !=
-           node->tstep_list.end();
-}
-
-void local_obsdata_node_add_tstep(local_obsdata_node_type *node, int tstep) {
-    if (!local_obsdata_node_has_tstep(node, tstep)) {
-
-        if (node->tstep_list.size()) {
-            int last = node->tstep_list.back();
-            node->tstep_list.push_back(tstep);
-            if (tstep < last)
-                std::sort(node->tstep_list.begin(), node->tstep_list.end());
-        } else
-            node->tstep_list.push_back(tstep);
-
-        node->all_timestep_active = false;
-    }
-}
-
-void local_obsdata_node_set_all_timestep_active(local_obsdata_node_type *node,
-                                                bool flag) {
-    node->all_timestep_active = flag;
 }
