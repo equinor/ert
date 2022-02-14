@@ -531,8 +531,6 @@ bool smoother_update(std::vector<int> step_list,
 
             analysis_module_type *module =
                 analysis_config_get_active_module(analysis_config);
-            if (local_ministep_has_analysis_module(ministep))
-                module = local_ministep_get_analysis_module(ministep);
             assert_size_equal(total_ens_size, ens_mask);
 
             const auto *module_config =

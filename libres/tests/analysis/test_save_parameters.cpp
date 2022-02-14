@@ -83,7 +83,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
 
         // set up ministep with one parmater and N realizations
         local_ministep_type *ministep =
-            new local_ministep_type("not-important", nullptr);
+            new local_ministep_type("not-important");
         ministep->add_active_data("TEST");
         int_vector_type *active_index = int_vector_alloc(ensemble_size, -1);
         for (int i = 0; i < ensemble_size; i++) {
@@ -158,7 +158,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
 
         // set up ministep with one parmater and N realizations
         local_ministep_type *ministep =
-            new local_ministep_type("not-important", nullptr);
+            new local_ministep_type("not-important");
         ministep->add_active_data("TEST");
 
         // Must assing values to each row of the matrix
