@@ -29,7 +29,7 @@
 struct local_obsdata_node_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *obs_key;
-    active_list_type *active_list;
+    active_list_type active_list;
     std::vector<int> tstep_list;
     bool all_timestep_active;
 };
@@ -42,7 +42,6 @@ local_obsdata_node_alloc__(const char *obs_key, bool all_timestep_active) {
     auto node = new local_obsdata_node_type;
     UTIL_TYPE_ID_INIT(node, LOCAL_OBSDATA_NODE_TYPE_ID);
     node->obs_key = util_alloc_string_copy(obs_key);
-    node->active_list = NULL;
     node->all_timestep_active = all_timestep_active;
 
     return node;
@@ -53,8 +52,6 @@ local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key,
     local_obsdata_node_type *node =
         local_obsdata_node_alloc__(obs_key, all_timestep_active);
 
-    node->active_list = active_list_alloc();
-
     return node;
 }
 
@@ -63,7 +60,7 @@ local_obsdata_node_alloc_copy(const local_obsdata_node_type *src) {
     local_obsdata_node_type *target =
         local_obsdata_node_alloc__(src->obs_key, src->all_timestep_active);
 
-    target->active_list = active_list_alloc_copy(src->active_list);
+    target->active_list = src->active_list;
     target->tstep_list = src->tstep_list;
 
     return target;
@@ -71,7 +68,7 @@ local_obsdata_node_alloc_copy(const local_obsdata_node_type *src) {
 
 void local_obsdata_node_copy_active_list(local_obsdata_node_type *node,
                                          const active_list_type *active_list) {
-    active_list_copy(node->active_list, active_list);
+    active_list_copy(&node->active_list, active_list);
 }
 
 const char *local_obsdata_node_get_key(const local_obsdata_node_type *node) {
@@ -79,9 +76,6 @@ const char *local_obsdata_node_get_key(const local_obsdata_node_type *node) {
 }
 
 void local_obsdata_node_free(local_obsdata_node_type *node) {
-    if (node->active_list)
-        active_list_free(node->active_list);
-
     free(node->obs_key);
     delete node;
 }
@@ -91,14 +85,14 @@ void local_obsdata_node_free__(void *arg) {
     local_obsdata_node_free(node);
 }
 
-active_list_type *
+const active_list_type *
 local_obsdata_node_get_active_list(const local_obsdata_node_type *node) {
-    return node->active_list;
+    return &node->active_list;
 }
 
 active_list_type *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node) {
-    return active_list_alloc_copy(node->active_list);
+    return active_list_alloc_copy(&node->active_list);
 }
 
 bool local_obsdata_node_tstep_active(const local_obsdata_node_type *node,

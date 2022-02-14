@@ -57,31 +57,14 @@ a fault object. Then the code will be like:
    0,4,5 are updated.
 */
 
-#define ACTIVE_LIST_TYPE_ID 66109
-
-struct active_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    active_mode_type mode; /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
-    std::vector<int> index_list; /* A list of active indices - if data_size == active_size this can be NULL. */
-};
-
-static UTIL_SAFE_CAST_FUNCTION(active_list, ACTIVE_LIST_TYPE_ID)
-    UTIL_IS_INSTANCE_FUNCTION(active_list, ACTIVE_LIST_TYPE_ID)
-
-    /*
-   The newly created active_list default to setting all indices actiove.
-*/
-    active_list_type *active_list_alloc() {
+active_list_type *active_list_alloc() {
     active_list_type *active_list = new active_list_type();
-    UTIL_TYPE_ID_INIT(active_list, ACTIVE_LIST_TYPE_ID);
     active_list->mode = ALL_ACTIVE;
     return active_list;
 }
 
 active_list_type *active_list_alloc_copy(const active_list_type *src) {
-    active_list_type *new_list = active_list_alloc();
-    new_list->mode = src->mode;
-    new_list->index_list = src->index_list;
+    active_list_type *new_list = new active_list_type(*src);
     return new_list;
 }
 
@@ -90,21 +73,15 @@ void active_list_copy(active_list_type *target, const active_list_type *src) {
     target->index_list = src->index_list;
 }
 
-void active_list_free(active_list_type *active_list) {
-    delete active_list;
-}
-
-void active_list_free__(void *arg) {
-    active_list_type *active_list = active_list_safe_cast(arg);
-    active_list_free(active_list);
-}
+void active_list_free(active_list_type *active_list) { delete active_list; }
 
 /*
    Appends a new index to the current list of active indices, and
    setting the mode to PARTLY_ACTIVE.
 */
 void active_list_add_index(active_list_type *active_list, int new_index) {
-    auto find_iter = std::find(active_list->index_list.begin(), active_list->index_list.end(), new_index);
+    auto find_iter = std::find(active_list->index_list.begin(),
+                               active_list->index_list.end(), new_index);
     if (find_iter == active_list->index_list.end()) {
         active_list->mode = PARTLY_ACTIVE;
         active_list->index_list.push_back(new_index);

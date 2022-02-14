@@ -38,7 +38,7 @@ local_obsdata_node_alloc_copy(const local_obsdata_node_type *src);
 const char *local_obsdata_node_get_key(const local_obsdata_node_type *node);
 void local_obsdata_node_free(local_obsdata_node_type *node);
 void local_obsdata_node_free__(void *arg);
-active_list_type *
+const active_list_type *
 local_obsdata_node_get_active_list(const local_obsdata_node_type *node);
 active_list_type *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node);

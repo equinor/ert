@@ -144,11 +144,12 @@ local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
     return active_list;
 }
 
-active_list_type *
+const active_list_type *
 local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
                                    const char *obs_key) {
-    local_obsdata_node_type *obsdata_node = local_obsdata_get(obsdata, obs_key);
-    active_list_type *active_list =
+    const local_obsdata_node_type *obsdata_node =
+        local_obsdata_get(obsdata, obs_key);
+    const active_list_type *active_list =
         local_obsdata_node_get_active_list(obsdata_node);
     return active_list;
 }

@@ -22,37 +22,33 @@
 #include <ert/enkf/active_list.hpp>
 
 int main(int argc, char **argv) {
-    active_list_type *active_list1 = active_list_alloc();
-    active_list_type *active_list2 = active_list_alloc();
+    active_list_type active_list1;
+    active_list_type active_list2;
 
-    test_assert_true(active_list_is_instance(active_list1));
+    test_assert_true(active_list_equal(&active_list1, &active_list2));
 
-    test_assert_true(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list1, 11);
+    test_assert_false(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list1, 11);
-    test_assert_false(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list1, 12);
+    test_assert_false(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list1, 12);
-    test_assert_false(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list2, 11);
+    test_assert_false(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list2, 11);
-    test_assert_false(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list2, 12);
+    test_assert_true(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list2, 12);
-    test_assert_true(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list2, 13);
+    test_assert_false(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list2, 13);
-    test_assert_false(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list1, 13);
+    test_assert_true(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list1, 13);
-    test_assert_true(active_list_equal(active_list1, active_list2));
+    active_list_add_index(&active_list2, 27);
+    test_assert_false(active_list_equal(&active_list1, &active_list2));
+    active_list_copy(&active_list1, &active_list2);
+    test_assert_true(active_list_equal(&active_list1, &active_list2));
 
-    active_list_add_index(active_list2, 27);
-    test_assert_false(active_list_equal(active_list1, active_list2));
-    active_list_copy(active_list1, active_list2);
-    test_assert_true(active_list_equal(active_list1, active_list2));
-
-    active_list_free(active_list1);
-    active_list_free(active_list2);
     exit(0);
 }

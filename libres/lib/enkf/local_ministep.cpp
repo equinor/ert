@@ -42,8 +42,7 @@
 UTIL_SAFE_CAST_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
 UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
 
-local_ministep_type *
-local_ministep_alloc(const char *name) {
+local_ministep_type *local_ministep_alloc(const char *name) {
     return new local_ministep_type(name);
 }
 
@@ -98,7 +97,8 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
 int local_ministep_num_active_data(const local_ministep_type *ministep) {
     return ministep->num_active_data();
 }
-active_list_type *
+
+const active_list_type *
 local_ministep_get_active_data_list(const local_ministep_type *ministep,
                                     const char *key) {
     return ministep->get_active_data_list(key);
@@ -117,7 +117,8 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key) {
     auto scaling_iter = ministep->scaling.find(key);
     if (scaling_iter == ministep->scaling.end()) {
-        if (!hash_has_key(ministep->active_size, key))
+        auto key_iter = ministep->active_size.find(key);
+        if (key_iter == ministep->active_size.end())
             throw std::invalid_argument(
                 "Tried to create row_scaling object for unknown key");
 
@@ -146,17 +147,11 @@ void local_ministep_summary_fprintf(const local_ministep_type *ministep,
     fprintf(stream, "MINISTEP:%s,", ministep->name.data());
 
     {
-        hash_iter_type *data_iter = hash_iter_alloc(ministep->active_size);
-        while (!hash_iter_is_complete(data_iter)) {
-            const char *data_key = hash_iter_get_next_key(data_iter);
-            fprintf(stream, "NAME OF DATA:%s,", data_key);
-
-            active_list_type *active_list =
-                (active_list_type *)hash_get(ministep->active_size, data_key);
-            active_list_summary_fprintf(active_list, ministep->name.data(),
-                                        data_key, stream);
+        for (const auto &[key, al] : ministep->active_size) {
+            fprintf(stream, "NAME OF DATA:%s,", key);
+            active_list_summary_fprintf(&al, ministep->name.data(), key.c_str(),
+                                        stream);
         }
-        hash_iter_free(data_iter);
 
         /* Only one OBSDATA */
         local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);

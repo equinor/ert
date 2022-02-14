@@ -19,14 +19,23 @@
 #ifndef ERT_ACTIVE_LIST_H
 #define ERT_ACTIVE_LIST_H
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_types.hpp>
 
-typedef struct active_list_struct active_list_type;
+extern "C++" {
+#include <vector>
+struct active_list_type {
+    active_mode_type mode =
+        ALL_ACTIVE; /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
+    std::vector<int>
+        index_list; /* A list of active indices - if data_size == active_size this can be NULL. */
+};
+}
 
 active_list_type *active_list_alloc();
 void active_list_add_index(active_list_type *, int);
@@ -43,8 +52,6 @@ bool active_list_iget(const active_list_type *active_list, int index);
 bool active_list_equal(const active_list_type *active_list1,
                        const active_list_type *active_list2);
 void active_list_copy(active_list_type *target, const active_list_type *src);
-
-UTIL_IS_INSTANCE_HEADER(active_list);
 
 #ifdef __cplusplus
 }
