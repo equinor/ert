@@ -298,7 +298,7 @@ def _sync_eclsum_transform_output(
     return record_dict
 
 
-class TabularData2NumericalRecord(FileRecordTransformation):
+class TabularDataTransformation(FileRecordTransformation):
     """Transform tabular data into a single NumericalRecord."""
 
     def __init__(self, columns: List[str]):
