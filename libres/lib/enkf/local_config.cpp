@@ -161,8 +161,7 @@ void local_config_clear_active(local_config_type *local_config) {
 }
 
 local_config_type *local_config_alloc() {
-    local_config_type *local_config =
-        (local_config_type *)util_malloc(sizeof *local_config);
+    local_config_type *local_config = new local_config_type();
 
     local_config->default_updatestep = NULL;
     local_config->updatestep_storage = hash_alloc();
@@ -177,7 +176,8 @@ void local_config_free(local_config_type *local_config) {
     hash_free(local_config->updatestep_storage);
     hash_free(local_config->ministep_storage);
     hash_free(local_config->obsdata_storage);
-    free(local_config);
+
+    delete local_config;
 }
 
 local_ministep_type *
