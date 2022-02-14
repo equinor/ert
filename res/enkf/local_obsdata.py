@@ -107,11 +107,11 @@ object as:
         else:
             raise KeyError('Unknown key "%s".' % key)
 
-    def addNode(self, key, add_all_timesteps=True):
+    def addNode(self, key):
         """@rtype: LocalObsdataNode"""
         assert isinstance(key, str)
         if key in self.obs:
-            node = LocalObsdataNode(key, add_all_timesteps)
+            node = LocalObsdataNode(key)
             if node not in self:
                 node.convertToCReference(self)
                 self._add_node(node)

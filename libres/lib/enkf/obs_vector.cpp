@@ -667,12 +667,10 @@ void obs_vector_scale_std(obs_vector_type *obs_vector,
         if (tstep < 0)
             break;
 
-        if (local_obsdata_node_tstep_active(local_node, tstep)) {
-            void *observation = obs_vector_iget_node(obs_vector, tstep);
-            if (observation)
-                obs_vector->update_std_scale(observation, std_multiplier,
-                                             active_list);
-        }
+        void *observation = obs_vector_iget_node(obs_vector, tstep);
+        if (observation)
+            obs_vector->update_std_scale(observation, std_multiplier,
+                                         active_list);
     }
 }
 
@@ -1083,10 +1081,7 @@ const char *obs_vector_get_obs_key(const obs_vector_type *obs_vector) {
 
 local_obsdata_node_type *
 obs_vector_alloc_local_node(const obs_vector_type *obs_vector) {
-    local_obsdata_node_type *obs_node =
-        local_obsdata_node_alloc(obs_vector->obs_key, false);
-    local_obsdata_node_reset_tstep_list(obs_node, obs_vector->step_list);
-    return obs_node;
+    return local_obsdata_node_alloc(obs_vector->obs_key);
 }
 
 VOID_FREE(obs_vector)

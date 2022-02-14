@@ -261,10 +261,6 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
         last_step = model_config_get_last_history_restart(
             enkf_main_get_model_config(enkf_main));
 
-    std::vector<int> step_list;
-    for (int i = 0; i <= last_step; i++)
-        step_list.push_back(i);
-
     local_config_type *local_config = enkf_main->local_config;
     const local_updatestep_type *updatestep =
         local_config_get_updatestep(local_config);
@@ -279,7 +275,7 @@ bool enkf_main_smoother_update(enkf_main_type *enkf_main,
         enkf_main_get_ensemble_config(enkf_main);
 
     return analysis::smoother_update(
-        step_list, updatestep, total_ens_size, obs, shared_rng, analysis_config,
+        updatestep, total_ens_size, obs, shared_rng, analysis_config,
         ensemble_config, source_fs, target_fs, verbose);
 }
 
@@ -367,7 +363,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             while (!hash_iter_is_complete(obs_iter)) {
                 const char *obs_key = hash_iter_get_next_key(obs_iter);
                 local_obsdata_node_type *obsdata_node =
-                    local_obsdata_node_alloc(obs_key, true);
+                    local_obsdata_node_alloc(obs_key);
                 local_obsdata_add_node(obsdata, obsdata_node);
             }
             local_ministep_add_obsdata(ministep, obsdata);

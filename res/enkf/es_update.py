@@ -28,14 +28,6 @@ class ESUpdate:
         source_fs = run_context.get_sim_fs()
         target_fs = run_context.get_target_fs()
 
-        time_map = source_fs.getTimeMap()
-
-        last_step = time_map.getLastStep()
-        if last_step < 0:
-            last_step = self.ert.getModelConfig().get_last_history_restart()
-
-        step_list = list(range(last_step + 1))
-
         local_config = self.ert.getLocalConfig()
         updatestep = local_config.getUpdatestep()
 
@@ -47,8 +39,7 @@ class ESUpdate:
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
-        ok = _lib.update.smoother_update(
-            step_list,
+        return _lib.update.smoother_update(
             updatestep,
             total_ens_size,
             obs,
@@ -59,5 +50,3 @@ class ESUpdate:
             target_fs,
             verbose,
         )
-
-        return ok

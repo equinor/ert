@@ -317,8 +317,7 @@ static void enkf_obs_get_obs_and_measure_summary(
         if (step < 0)
             break;
 
-        if (local_obsdata_node_tstep_active(obs_node, step) &&
-            obs_vector_iget_active(obs_vector, step)) {
+        if (obs_vector_iget_active(obs_vector, step)) {
             const summary_obs_type *summary_obs =
                 (const summary_obs_type *)obs_vector_iget_node(obs_vector,
                                                                step);
@@ -363,8 +362,7 @@ static void enkf_obs_get_obs_and_measure_summary(
             if (step < 0)
                 break;
 
-            if (local_obsdata_node_tstep_active(obs_node, step) &&
-                obs_vector_iget_active(obs_vector, step)) {
+            if (obs_vector_iget_active(obs_vector, step)) {
                 for (int iens_index = 0; iens_index < active_size;
                      iens_index++) {
                     const int iens =
@@ -434,8 +432,7 @@ void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
         if (report_step < 0)
             return;
 
-        if (local_obsdata_node_tstep_active(obs_node, report_step) &&
-            (obs_vector_iget_active(obs_vector, report_step))) {
+        if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
             const active_list_type *active_list =
                 local_obsdata_node_get_active_list(obs_node);
@@ -451,8 +448,6 @@ void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
 /*
   This will append observations and simulated responses from
   report_step to obs_data and meas_data.
-  Call obs_data_reset and meas_data_reset on obs_data and meas_data
-  if you want to use fresh instances.
 */
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,

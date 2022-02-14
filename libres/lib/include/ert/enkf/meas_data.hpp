@@ -56,7 +56,6 @@ bool meas_data_has_block(const meas_data_type *matrix, const char *lookup_key);
 
 meas_block_type *meas_data_get_block(const meas_data_type *matrix,
                                      const char *lookup_key);
-void meas_data_reset(meas_data_type *);
 meas_data_type *meas_data_alloc(const bool_vector_type *ens_mask);
 void meas_data_free(meas_data_type *);
 matrix_type *meas_data_allocS(const meas_data_type *matrix);

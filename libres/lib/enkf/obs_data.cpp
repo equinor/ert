@@ -331,11 +331,8 @@ obs_data_type *obs_data_alloc(double global_std_scaling) {
     obs_data->data = vector_alloc_new();
     obs_data->mask = bool_vector_alloc(0, false);
     obs_data->global_std_scaling = global_std_scaling;
-    obs_data_reset(obs_data);
     return obs_data;
 }
-
-void obs_data_reset(obs_data_type *obs_data) { vector_clear(obs_data->data); }
 
 obs_block_type *obs_data_add_block(obs_data_type *obs_data, const char *obs_key,
                                    int obs_size, matrix_type *error_covar,

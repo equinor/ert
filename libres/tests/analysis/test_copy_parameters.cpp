@@ -19,7 +19,7 @@
 namespace analysis {
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
-                     const int_vector_type *ens_active_list);
+                     const bool_vector_type *ens_mask);
 } // namespace analysis
 
 TEST_CASE("Copy parameters from one source-fs to target-fs",
@@ -64,10 +64,8 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         }
         enkf_node_free(node);
 
-        int_vector_type *active_index = int_vector_alloc(ensemble_size, -1);
-        for (int i = 0; i < ensemble_size; i++) {
-            int_vector_iset(active_index, i, i);
-        }
+        bool_vector_type *ens_mask = bool_vector_alloc(ensemble_size, true);
+
         WHEN("not copying parameters from source to target") {
             THEN("target fs has no data at the same locations") {
                 enkf_node_type *node = enkf_node_alloc(config_node);
@@ -80,7 +78,7 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         }
         WHEN("copying parameters from source to target") {
             analysis::copy_parameters(fs_source, fs_target, ensemble_config,
-                                      active_index);
+                                      ens_mask);
             THEN("target fs has data at the same locations") {
                 enkf_node_type *node = enkf_node_alloc(config_node);
                 for (int i = 0; i < ensemble_size; i++) {
@@ -92,7 +90,7 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         }
 
         //cleanup
-        int_vector_free(active_index);
+        bool_vector_free(ens_mask);
         ensemble_config_free(ensemble_config);
         enkf_fs_decref(fs_source);
         enkf_fs_decref(fs_target);

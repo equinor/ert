@@ -30,7 +30,6 @@
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
                                        const meas_data_type *meas_data,
-                                       const std::vector<int> &step_list,
                                        const char *ministep_name,
                                        FILE *stream) {
     const char *float_fmt = "%15.3f";
@@ -40,11 +39,8 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
     fprintf(stream,
             "=================================================================="
             "=============================================================\n");
-    fprintf(stream, "Report step...: %04d", step_list.front());
-    if (step_list.size() == 1)
-        fprintf(stream, "\n");
-    else
-        fprintf(stream, " - %04d \n", step_list.back());
+    fprintf(stream, "Report step...: deprecated");
+    fprintf(stream, "\n");
 
     fprintf(stream, "Ministep......: %s   \n", ministep_name);
     fprintf(stream,
