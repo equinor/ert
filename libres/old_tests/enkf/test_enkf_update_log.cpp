@@ -11,7 +11,6 @@
 #include <ert/enkf/enkf_analysis.hpp>
 
 void test_obs_in_log() {
-    std::vector<int> step_list = {10};
     int_vector_type *ens_active_list = int_vector_alloc(0, false);
     bool_vector_type *ens_mask;
     int_vector_append(ens_active_list, 10);
@@ -36,8 +35,8 @@ void test_obs_in_log() {
     size_t size;
     FILE *stream;
     stream = open_memstream(&str_stream, &size);
-    enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list,
-                                      ministep_name, stream);
+    enkf_analysis_fprintf_obs_summary(obs_data, meas_data, ministep_name,
+                                      stream);
     fclose(stream);
     test_assert_true((strstr(str_stream, "OBS") != NULL));
     test_assert_false((strstr(str_stream, "* Local inactive") != NULL));
@@ -50,7 +49,6 @@ void test_obs_in_log() {
 }
 
 void test_local_inactive() {
-    std::vector<int> step_list = {10};
     int_vector_type *ens_active_list = int_vector_alloc(0, false);
     bool_vector_type *ens_mask;
     int_vector_append(ens_active_list, 10);
@@ -75,8 +73,8 @@ void test_local_inactive() {
     size_t size;
     FILE *stream;
     stream = open_memstream(&str_stream, &size);
-    enkf_analysis_fprintf_obs_summary(obs_data, meas_data, step_list,
-                                      ministep_name, stream);
+    enkf_analysis_fprintf_obs_summary(obs_data, meas_data, ministep_name,
+                                      stream);
     fclose(stream);
 
     test_assert_true((strstr(str_stream, "OBS") != NULL));

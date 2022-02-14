@@ -18,30 +18,58 @@
 #include "../tmpdir.hpp"
 
 extern "C" void enkf_fs_umount(enkf_fs_type *fs);
+
 namespace analysis {
+class update_data_type {
+public:
+    update_data_type(
+        matrix_type *S_in, matrix_type *E_in, matrix_type *D_in,
+        matrix_type *R_in, matrix_type *A_in,
+        std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+            A_with_rowscaling_in,
+        const bool_vector_type *obs_mask_in) {
+        S = S_in;
+        E = E_in;
+        D = D_in;
+        R = R_in;
+        A = A_in;
+        A_with_rowscaling = A_with_rowscaling_in;
+        obs_mask_in;
+    }
+    ~update_data_type() {
+        matrix_safe_free(A);
+        for (auto [A, _] : A_with_rowscaling)
+            matrix_free(A);
+    }
+    matrix_type *S;
+    matrix_type *E;
+    matrix_type *D;
+    matrix_type *R;
+    matrix_type *A;
+    const bool_vector_type *obs_mask;
+    std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        A_with_rowscaling;
+};
+
 matrix_type *load_parameters(enkf_fs_type *target_fs,
                              ensemble_config_type *ensemble_config,
                              const int_vector_type *iens_active_index,
-                             int last_step, int active_ens_size,
+                             int active_ens_size,
                              const local_ministep_type *ministep);
 
 void save_parameters(enkf_fs_type *target_fs,
                      ensemble_config_type *ensemble_config,
-                     const int_vector_type *iens_active_index, int last_step,
-                     const local_ministep_type *ministep, matrix_type *A);
+                     const int_vector_type *iens_active_index,
+                     const local_ministep_type *ministep,
+                     const update_data_type &update_data);
 
 std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
-                            int_vector_type *iens_active_index, int last_step,
+                            int_vector_type *iens_active_index,
                             int active_ens_size,
                             const local_ministep_type *ministep);
 
-void save_row_scaling_parameters(
-    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    int_vector_type *iens_active_index, const local_ministep_type *ministep,
-    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
-        &row_scaling_list);
 } // namespace analysis
 
 TEST_CASE("Write and read a matrix to enkf_fs instance",
@@ -95,18 +123,19 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         for (int i = 0; i < ensemble_size; i++) {
             matrix_iset(A, 0, i, double(i) / 10.0);
         }
-        analysis::save_parameters(fs, ensemble_config, active_index, 0,
-                                  ministep, A);
+        auto update_data = analysis::update_data_type(nullptr, nullptr, nullptr,
+                                                      nullptr, A, {}, nullptr);
+        analysis::save_parameters(fs, ensemble_config, active_index, ministep,
+                                  update_data);
 
         WHEN("loading parameters from enkf_fs") {
             matrix_type *B = analysis::load_parameters(
-                fs, ensemble_config, active_index, 0, ensemble_size, ministep);
+                fs, ensemble_config, active_index, ensemble_size, ministep);
             THEN("Loading parameters yield the same matrix") {
                 REQUIRE(B != nullptr);
                 REQUIRE(matrix_equal(A, B));
                 matrix_free(B);
             }
-            matrix_free(A);
         }
 
         //cleanup
@@ -179,12 +208,15 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         }
 
         std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
-        analysis::save_row_scaling_parameters(fs, ensemble_config, active_index,
-                                              ministep, row_scaling_list);
+        auto update_data =
+            analysis::update_data_type(nullptr, nullptr, nullptr, nullptr,
+                                       nullptr, row_scaling_list, nullptr);
+        analysis::save_parameters(fs, ensemble_config, active_index, ministep,
+                                  update_data);
 
         WHEN("loading parameters from enkf_fs") {
             auto parameter_matrices = analysis::load_row_scaling_parameters(
-                fs, ensemble_config, active_index, 0, ensemble_size, ministep);
+                fs, ensemble_config, active_index, ensemble_size, ministep);
             THEN("Loading parameters yield the same matrix") {
                 for (int i = 0; i < parameter_matrices.size(); i++) {
                     auto A = parameter_matrices[i].first;
@@ -195,7 +227,6 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         }
 
         //cleanup
-        matrix_free(A);
         delete ministep;
         int_vector_free(active_index);
         ensemble_config_free(ensemble_config);

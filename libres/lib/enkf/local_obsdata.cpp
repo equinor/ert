@@ -126,15 +126,6 @@ bool local_obsdata_has_node(const local_obsdata_type *data, const char *key) {
     return hash_has_key(data->nodes_map, key);
 }
 
-void local_obsdata_reset_tstep_list(local_obsdata_type *data,
-                                    const std::vector<int> &step_list) {
-    int i;
-    for (i = 0; i < local_obsdata_get_size(data); i++) {
-        local_obsdata_node_type *node = local_obsdata_iget(data, i);
-        local_obsdata_node_reset_tstep_list(node, step_list);
-    }
-}
-
 active_list_type *
 local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
                                         const char *obs_key) {
