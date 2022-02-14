@@ -63,10 +63,10 @@
         - OP1_OCTAVES
         - OP1_OFFSET
         - OP1_PERSISTENCE
+        - OP2_PERSISTENCE
         - OP2_DIVERGENCE_SCALE
         - OP2_OCTAVES
         - OP2_OFFSET
-        - OP2_OCTAVES
       location: params.json
     -
       record: seedtxt

@@ -321,7 +321,6 @@ class TabularData2NumericalRecord(FileRecordTransformation):
         if not isinstance(record, NumericalRecord):
             raise TypeError("Only NumericalRecord can be transformed.")
 
-        print(f"DBG {record.data=}")
         _prepare_location(runpath, location)
         await _save_record_to_file(record, runpath / location, "application/json")
 
