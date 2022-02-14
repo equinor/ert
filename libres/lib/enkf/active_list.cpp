@@ -72,8 +72,7 @@ static UTIL_SAFE_CAST_FUNCTION(active_list, ACTIVE_LIST_TYPE_ID)
    The newly created active_list default to setting all indices actiove.
 */
     active_list_type *active_list_alloc() {
-    active_list_type *active_list =
-        (active_list_type *)util_malloc(sizeof *active_list);
+    active_list_type *active_list = new active_list_type();
     UTIL_TYPE_ID_INIT(active_list, ACTIVE_LIST_TYPE_ID);
     active_list->index_list = int_vector_alloc(0, -1);
     active_list->mode = ALL_ACTIVE;
@@ -96,7 +95,7 @@ void active_list_copy(active_list_type *target, const active_list_type *src) {
 
 void active_list_free(active_list_type *active_list) {
     int_vector_free(active_list->index_list);
-    free(active_list);
+    delete active_list;
 }
 
 void active_list_free__(void *arg) {
