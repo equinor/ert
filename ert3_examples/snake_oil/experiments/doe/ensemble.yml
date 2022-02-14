@@ -9,7 +9,7 @@ input:
     record: seedtxt
   -
     source: resources.snake_oil_txt_tmpl_params
-    record: snake_oil_params_txt_tmpl_params
+    record: snake_oil_params_txt_tmpl
 
 output:
   -

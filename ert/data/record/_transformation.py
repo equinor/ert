@@ -329,11 +329,8 @@ class TabularDataTransformation(FileRecordTransformation):
         mime: str,
         location: Path,
     ) -> Tuple[Record, ...]:
-        # if mime == "application/octet-stream":
-        dframe = pd.read_excel(location)
-        # else:
-        #     dframe = pd.read_csv(location)
 
+        dframe = pd.read_excel(location)
         record_dicts = [
             {col: row[col] for col in self._columns} for _, row in dframe.iterrows()
         ]
