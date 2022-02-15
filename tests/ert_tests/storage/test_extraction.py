@@ -242,11 +242,12 @@ def test_parameters(client):
 
     # Compare parameters (+ 2 due to the two log10_ coeffs)
     parameters = client.get(f"/ensembles/{ensemble_id}/parameters").json()
+    parameter_names = [p["name"] for p in parameters]
     assert len(parameters) == len(priors) + 2
     for name, _, prior in priors:
-        assert f"COEFFS:{name}" in parameters
+        assert f"COEFFS:{name}" in parameter_names
         if prior["function"] in ("lognormal", "loguniform"):
-            assert f"LOG10_COEFFS:{name}" in parameters
+            assert f"LOG10_COEFFS:{name}" in parameter_names
 
     # Compare records (+ 2 due to the two log10_ coeffs)
     records = client.get(f"/ensembles/{ensemble_id}/records").json()
