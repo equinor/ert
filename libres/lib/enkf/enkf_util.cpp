@@ -44,33 +44,6 @@ double enkf_util_rand_normal(double mean, double std, rng_type *rng) {
     return normdist(gen);
 }
 
-#define TRUNCATE(type, void_data, size, min_ptr, max_ptr)                      \
-    {                                                                          \
-        type *data = (type *)void_data;                                        \
-        type min_value = *((type *)min_ptr);                                   \
-        type max_value = *((type *)max_ptr);                                   \
-        int i;                                                                 \
-        for (i = 0; i < size; i++) {                                           \
-            if (data[i] < min_value)                                           \
-                data[i] = min_value;                                           \
-            else if (data[i] > max_value)                                      \
-                data[i] = max_value;                                           \
-        }                                                                      \
-    }
-
-void enkf_util_truncate(void *void_data, int size, ecl_data_type data_type,
-                        void *min_ptr, void *max_ptr) {
-    if (ecl_type_is_double(data_type))
-        TRUNCATE(double, void_data, size, min_ptr, max_ptr)
-    else if (ecl_type_is_float(data_type))
-        TRUNCATE(float, void_data, size, min_ptr, max_ptr)
-    else if (ecl_type_is_int(data_type))
-        TRUNCATE(int, void_data, size, min_ptr, max_ptr)
-    else
-        util_abort("%s: unrecognized type - aborting \n", __func__);
-}
-#undef TRUNCATE
-
 void enkf_util_assert_buffer_type(buffer_type *buffer,
                                   ert_impl_type target_type) {
     ert_impl_type file_type = INVALID;
