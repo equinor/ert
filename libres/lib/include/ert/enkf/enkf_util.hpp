@@ -33,7 +33,6 @@ extern "C" {
 
 #include <ert/enkf/enkf_types.hpp>
 
-void enkf_util_truncate(void *, int, ecl_data_type, void *, void *);
 double enkf_util_rand_normal(double, double, rng_type *rng);
 void enkf_util_assert_buffer_type(buffer_type *buffer,
                                   ert_impl_type target_type);
