@@ -54,6 +54,19 @@ def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensembles_json[0]["userdata"]["name"] == "default"
 
 
+def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.get("/experiments")
+    experiment_json = resp.json()
+    ensemble_id = experiment_json[0]["ensemble_ids"][1]
+
+    resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/responses")
+    ensemble_json = resp.json()
+
+    assert "POLY_RES@0" in ensemble_json
+    assert "observations" in ensemble_json["POLY_RES@0"]
+    assert len(ensemble_json["POLY_RES@0"]["observations"]) == 1
+
+
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
