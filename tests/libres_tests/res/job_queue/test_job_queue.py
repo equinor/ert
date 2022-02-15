@@ -18,7 +18,7 @@ def dummy_exit_callback(args):
     print(args)
 
 
-dummy_config = {
+DUMMY_CONFIG = {
     "job_script": "job_script.py",
     "num_cpu": 1,
     "job_name": "dummy_job_{}",
@@ -27,17 +27,17 @@ dummy_config = {
     "exit_callback": dummy_exit_callback,
 }
 
-simple_script = """#!/usr/bin/env python
+SIMPLE_SCRIPT = """#!/usr/bin/env python
 print('hello')
 """
 
-never_ending_script = """#!/usr/bin/env python
+NEVER_ENDING_SCRIPT = """#!/usr/bin/env python
 import time
 while True:
     time.sleep(0.5)
 """
 
-failing_script = """#!/usr/bin/env python
+FAILING_SCRIPT = """#!/usr/bin/env python
 import sys
 sys.exit(1)
 """
@@ -46,21 +46,21 @@ sys.exit(1)
 def create_queue(script, max_submit=1, max_runtime=None, callback_timeout=None):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
-    with open(dummy_config["job_script"], "w") as f:
+    with open(DUMMY_CONFIG["job_script"], "w") as f:
         f.write(script)
-    os.chmod(dummy_config["job_script"], stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    os.chmod(DUMMY_CONFIG["job_script"], stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
     for i in range(10):
-        os.mkdir(dummy_config["run_path"].format(i))
+        os.mkdir(DUMMY_CONFIG["run_path"].format(i))
         job = JobQueueNode(
-            job_script=dummy_config["job_script"],
-            job_name=dummy_config["job_name"].format(i),
-            run_path=dummy_config["run_path"].format(i),
-            num_cpu=dummy_config["num_cpu"],
+            job_script=DUMMY_CONFIG["job_script"],
+            job_name=DUMMY_CONFIG["job_name"].format(i),
+            run_path=DUMMY_CONFIG["run_path"].format(i),
+            num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
             ok_file=job_queue.ok_file,
             exit_file=job_queue.exit_file,
-            done_callback_function=dummy_config["ok_callback"],
-            exit_callback_function=dummy_config["exit_callback"],
+            done_callback_function=DUMMY_CONFIG["ok_callback"],
+            exit_callback_function=DUMMY_CONFIG["exit_callback"],
             callback_arguments=[{"job_number": i}],
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
@@ -85,7 +85,7 @@ class JobQueueTest(ResTest):
 
     def test_kill_jobs(self):
         with TestAreaContext("job_queue_test_kill") as work_area:
-            job_queue = create_queue(never_ending_script)
+            job_queue = create_queue(NEVER_ENDING_SCRIPT)
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
@@ -115,7 +115,7 @@ class JobQueueTest(ResTest):
 
     def test_add_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
-            job_queue = create_queue(simple_script)
+            job_queue = create_queue(SIMPLE_SCRIPT)
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
@@ -134,7 +134,7 @@ class JobQueueTest(ResTest):
 
     def test_failing_jobs(self):
         with TestAreaContext("job_queue_test_add") as work_area:
-            job_queue = create_queue(failing_script, max_submit=1)
+            job_queue = create_queue(FAILING_SCRIPT, max_submit=1)
 
             assert job_queue.queue_size == 10
             assert job_queue.is_active()
@@ -167,7 +167,7 @@ class JobQueueTest(ResTest):
                 job_numbers.add(arg[0]["job_number"])
 
             job_queue = create_queue(
-                never_ending_script,
+                NEVER_ENDING_SCRIPT,
                 max_submit=1,
                 max_runtime=5,
                 callback_timeout=callback,
@@ -200,14 +200,14 @@ class JobQueueTest(ResTest):
 
     def test_add_ensemble_evaluator_info(self):
         with TestAreaContext("job_queue_add_ensemble_evaluator_info") as work_area:
-            job_queue = create_queue(simple_script)
+            job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"
             cert = "My very nice cert"
             token = "my_super_secret_token"
             cert_file = ".ee.pem"
             runpaths = [
-                pathlib.Path(dummy_config["run_path"].format(i)) for i in range(10)
+                pathlib.Path(DUMMY_CONFIG["run_path"].format(i)) for i in range(10)
             ]
             for runpath in runpaths:
                 with open(runpath / "jobs.json", "w") as f:
@@ -235,14 +235,14 @@ class JobQueueTest(ResTest):
         with TestAreaContext(
             "job_queue_add_ensemble_evaluator_info_cert_none"
         ) as work_area:
-            job_queue = create_queue(simple_script)
+            job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"
             cert = None
             token = None
             cert_file = ".ee.pem"
             runpaths = [
-                pathlib.Path(dummy_config["run_path"].format(i)) for i in range(10)
+                pathlib.Path(DUMMY_CONFIG["run_path"].format(i)) for i in range(10)
             ]
             for runpath in runpaths:
                 with open(runpath / "jobs.json", "w") as f:
