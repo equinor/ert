@@ -24,6 +24,7 @@ import logging
 import ssl
 import time
 import typing
+from collections import deque
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
@@ -35,6 +36,7 @@ from res.job_queue.job_status_type_enum import JobStatusType
 from res.job_queue.queue_differ import QueueDiffer
 from res.job_queue.thread_status_type_enum import ThreadStatus
 from websockets.datastructures import Headers
+from websockets.exceptions import ConnectionClosedError
 
 logger = logging.getLogger(__name__)
 
@@ -418,13 +420,44 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
-    async def _publish_changes(ee_id, changes, websocket):
-        events = [
-            JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
-            for real_id, status in changes.items()
-        ]
-        for event in events:
-            await websocket.send(to_json(event))
+    async def _publish_changes(ee_id, changes, ws_uri, ssl_context, headers):
+        events = deque(
+            [
+                JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+                for real_id, status in changes.items()
+            ]
+        )
+        retries = 0
+        while True:
+            try:
+                async with websockets.connect(
+                    ws_uri, ssl=ssl_context, extra_headers=headers
+                ) as websocket:
+                    while events:
+                        await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
+                        events.popleft()
+                    return
+            except (ConnectionClosedError, asyncio.TimeoutError) as e:
+                if retries >= 10:
+                    logger.exception(
+                        "Connection to websocket %s failed, "
+                        + "unable to publish changes",
+                        ws_uri,
+                    )
+                    raise
+
+                # websockets for python > 3.6 comes with builtin backoff, implement a
+                # crude one here
+                retries += 1
+                backoff = max(3, min(60, 2**retries))
+                logger.info(
+                    "Connection to websocket %s was closed, retry in %d seconds.",
+                    ws_uri,
+                    backoff,
+                    exc_info=e,
+                )
+
+                await asyncio.sleep(backoff)
 
     async def execute_queue_async(
         self, ws_uri, ee_id, pool_sema, evaluators, cert=None, token=None
@@ -437,41 +470,41 @@ class JobQueue(BaseCClass):
         headers = Headers()
         if token is not None:
             headers["token"] = token
-        async with websockets.connect(
-            ws_uri, ssl=ssl_context, extra_headers=headers
-        ) as websocket:
-            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
+        await JobQueue._publish_changes(
+            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+        )
+        try:
+            while True:
+                self.launch_jobs(pool_sema)
 
-            try:
-                while True:
-                    self.launch_jobs(pool_sema)
+                await asyncio.sleep(1)
 
-                    await asyncio.sleep(1)
+                if evaluators is not None:
+                    for func in evaluators:
+                        func()
 
-                    if evaluators is not None:
-                        for func in evaluators:
-                            func()
+                await JobQueue._publish_changes(
+                    ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
+                )
+                if not self.is_active() or self.stopped:
+                    break
+        except asyncio.CancelledError:
+            self.kill_all_jobs()  # make available_capacity() return false
+            logger.debug("queue cancelled, stopping jobs...")
+            await self.stop_jobs_async()
+            logger.debug("jobs stopped, re-raising CancelledError")
+            raise
 
-                    await JobQueue._publish_changes(
-                        ee_id, self.changes_after_transition(), websocket
-                    )
-                    if not self.is_active() or self.stopped:
-                        break
-            except asyncio.CancelledError:
-                self.kill_all_jobs()  # make available_capacity() return false
-                logger.debug("queue cancelled, stopping jobs...")
-                await self.stop_jobs_async()
-                logger.debug("jobs stopped, re-raising CancelledError")
-                raise
+        if self.stopped:
+            logger.debug("observed that the queue had stopped, stopping jobs...")
+            await self.stop_jobs_async()
+            logger.debug("jobs now stopped")
 
-            if self.stopped:
-                logger.debug("observed that the queue had stopped, stopping jobs...")
-                await self.stop_jobs_async()
-                logger.debug("jobs now stopped")
-
-            self.assert_complete()
-            self._differ.transition(self.job_list)
-            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
+        self.assert_complete()
+        self._differ.transition(self.job_list)
+        await JobQueue._publish_changes(
+            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+        )
 
     def add_job_from_run_arg(self, run_arg, res_config, max_runtime, ok_cb, exit_cb):
         job_name = run_arg.job_name
