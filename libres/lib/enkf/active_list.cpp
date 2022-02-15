@@ -129,9 +129,6 @@ int active_list_get_active_size(const active_list_type *active_list,
     case PARTLY_ACTIVE:
         active_size = int_vector_size(active_list->index_list);
         break;
-    case INACTIVE:
-        active_size = 0;
-        break;
     case ALL_ACTIVE:
         active_size = total_size;
         break;
@@ -163,8 +160,6 @@ const int *active_list_get_active(const active_list_type *active_list) {
 bool active_list_iget(const active_list_type *active_list, int index) {
     if (active_list->mode == ALL_ACTIVE)
         return true;
-    else if (active_list->mode == INACTIVE)
-        return false;
     else
         return int_vector_iget(active_list->index_list, index);
 }
