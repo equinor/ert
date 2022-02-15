@@ -1,13 +1,21 @@
+import asyncio
 import json
 import os
 import pathlib
 import stat
 from threading import BoundedSemaphore
+from unittest.mock import patch
 
+import pytest
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, wait_until
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    from mock import AsyncMock
 from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
+from websockets.exceptions import ConnectionClosedError
 
 
 def dummy_ok_callback(args):
@@ -264,3 +272,41 @@ class JobQueueTest(ResTest):
 
                 assert content["ee_cert_path"] == None
                 assert not (runpath / cert_file).exists()
+
+
+@pytest.mark.timeout(20)
+@pytest.mark.asyncio
+async def test_retry_on_closed_connection():
+    with TestAreaContext("job_queue_test_retry"):
+        job_queue = create_queue(SIMPLE_SCRIPT, max_submit=1)
+        pool_sema = BoundedSemaphore(value=10)
+
+        with patch("websockets.connect") as f:
+            websocket_mock = AsyncMock()
+            f.side_effect = [
+                ConnectionClosedError(1006, "expected close"),
+                websocket_mock,
+            ]
+
+            # the queue ate both the exception, and the websocket_mock, trying to
+            # consume a third item from the mock causes an (expected) exception
+            with pytest.raises(RuntimeError, match="coroutine raised StopIteration"):
+                await job_queue.execute_queue_async(
+                    ws_uri="ws://example.org",
+                    ee_id="",
+                    pool_sema=pool_sema,
+                    evaluators=[],
+                )
+
+            # one fails, the next is a mock, the third is a StopIteration
+            assert (
+                f.call_count == 3
+            ), "unexpected number of connect calls {f.call_count}"
+
+            # there will be many send calls in here, but the main point it tried
+            assert len(websocket_mock.mock_calls) > 0, "the websocket was never called"
+
+        # job_queue cannot go out of scope before queue has completed
+        await job_queue.stop_jobs_async()
+        while job_queue.isRunning():
+            await asyncio.sleep(0.1)
