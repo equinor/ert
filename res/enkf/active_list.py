@@ -57,15 +57,13 @@ class ActiveList(BaseCClass):
         self._add_index(index)
 
     def getActiveSize(self, default_value):
-        """In mode PARTLY_ACTIVE, we return the size of the active set; In mode
-        INACTIVE 0 is returned and if the mode is ALL_ACTIVE, the input
-        default_value is returned.
+        """In mode PARTLY_ACTIVE, we return the size of the active set; if the mode is
+        ALL_ACTIVE, the input default_value is returned.
+
         """
         mode = self.getMode()
         if mode == ActiveMode.PARTLY_ACTIVE:
             return self._asize(0)
-        if mode == ActiveMode.INACTIVE:
-            return 0
         return default_value
 
     def free(self):

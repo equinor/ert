@@ -22,10 +22,8 @@ from res.enkf import ActiveList, ActiveMode
 class ActiveListTest(ResTest):
     def test_active_mode_enum(self):
         self.assertEqual(ActiveMode.ALL_ACTIVE, 1)
-        self.assertEqual(ActiveMode.INACTIVE, 2)
         self.assertEqual(ActiveMode.PARTLY_ACTIVE, 3)
         self.assertEqual(ActiveMode(1).name, "ALL_ACTIVE")
-        self.assertEqual(ActiveMode(2).name, "INACTIVE")
         self.assertEqual(ActiveMode(3).name, "PARTLY_ACTIVE")
 
     def test_active_size(self):
@@ -51,7 +49,6 @@ class ActiveListTest(ResTest):
         al = ActiveList()
         rep = repr(al)
         self.assertFalse("PARTLY_ACTIVE" in rep)
-        self.assertFalse("INACTIVE" in rep)
         self.assertTrue("ALL_ACTIVE" in rep)
         pfx = "ActiveList("
         self.assertEqual(pfx, rep[: len(pfx)])
@@ -60,7 +57,6 @@ class ActiveListTest(ResTest):
         rep = repr(al)
         self.assertTrue("150" in rep)
         self.assertTrue("PARTLY_ACTIVE" in rep)
-        self.assertFalse("INACTIVE" in rep)
         self.assertFalse("ALL_ACTIVE" in rep)
 
 
