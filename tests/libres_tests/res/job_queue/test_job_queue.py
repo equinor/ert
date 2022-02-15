@@ -3,6 +3,12 @@ import os
 import pathlib
 import stat
 from threading import BoundedSemaphore
+import websockets
+from functools import partial
+import time
+import pytest
+import socket
+import asyncio
 
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, wait_until
@@ -264,3 +270,39 @@ class JobQueueTest(ResTest):
 
                 assert content["ee_cert_path"] == None
                 assert not (runpath / cert_file).exists()
+
+
+@pytest.mark.asyncio
+async def test_retry_on_closed_connection(unused_tcp_port):
+    received = []
+
+    async def echo(websocket):
+        async for msg in websocket:
+            msg = msg.decode("utf8")
+            msg = json.loads(msg)
+            received.append((msg["source"], msg["data"]["queue_event_type"]))
+
+    with TestAreaContext("job_queue_test_retry"):
+        job_queue = create_queue(SIMPLE_SCRIPT, max_submit=1)
+
+        assert job_queue.is_active()
+
+        pool_sema = BoundedSemaphore(value=10)
+        async with websockets.serve(
+            echo, "localhost", unused_tcp_port, ping_interval=2, ping_timeout=2
+        ) as server:
+            sockets = [s for s in server.sockets if s.family == socket.AF_INET]
+            host, port = sockets[0].getsockname()
+            ws_uri = f"ws://{host}:{port}/"
+            await asyncio.gather(
+                job_queue.execute_queue_async(
+                    ws_uri=ws_uri,
+                    ee_id="irrelevant_id",
+                    pool_sema=pool_sema,
+                    evaluators=[partial(time.sleep, 10)],
+                )
+            )
+
+        job_queue._differ.transition(job_queue.job_list)
+
+        assert job_queue.fetch_next_waiting() is None

@@ -24,6 +24,7 @@ import logging
 import ssl
 import time
 import typing
+from collections import deque
 
 import websockets
 from cloudevents.http import CloudEvent, to_json
@@ -421,13 +422,37 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
-    async def _publish_changes(ee_id, changes, websocket):
-        events = [
-            JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
-            for real_id, status in changes.items()
-        ]
-        for event in events:
-            await websocket.send(to_json(event))
+    async def _publish_changes(ee_id, changes, ws_uri, ssl_context, headers):
+        events = deque(
+            [
+                JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+                for real_id, status in changes.items()
+            ]
+        )
+
+        retries = 0
+        async for websocket in websockets.connect(
+            ws_uri, ssl=ssl_context, extra_headers=headers
+        ):
+            try:
+                while events:
+                    await websocket.send(to_json(events[0]))
+                    events.popleft()
+                break
+            except websockets.ConnectionClosed as e:
+                logger.info(
+                    "Connection to websocket %s could not be opened, trying to reconnect",
+                    ws_uri,
+                    exc_info=e,
+                )
+                if retries > 10:
+                    logger.exception(
+                        "Connection to websocket %s could not be opened, unable to publish changes",
+                        ws_uri,
+                    )
+                    raise
+                retries += 1
+                continue
 
     async def execute_queue_async(
         self, ws_uri, ee_id, pool_sema, evaluators, cert=None, token=None
@@ -440,42 +465,42 @@ class JobQueue(BaseCClass):
         headers = Headers()
         if token is not None:
             headers["token"] = token
-        async with websockets.connect(
-            ws_uri, ssl=ssl_context, extra_headers=headers
-        ) as websocket:
-            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
+        await JobQueue._publish_changes(
+            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+        )
+        try:
+            while True:
+                self.launch_jobs(pool_sema)
 
-            try:
-                while True:
-                    self.launch_jobs(pool_sema)
+                await asyncio.sleep(1)
 
-                    await asyncio.sleep(1)
+                if evaluators is not None:
+                    for func in evaluators:
+                        func()
 
-                    if evaluators is not None:
-                        for func in evaluators:
-                            func()
-
-                    await JobQueue._publish_changes(
-                        ee_id, self.changes_after_transition(), websocket
-                    )
-                    if not self.is_active() or self.stopped:
-                        break
-            except asyncio.CancelledError:
-                if self.stopped:
-                    logger.debug(
-                        "observed that the queue had stopped after cancellation, stopping jobs..."
-                    )
-                    self.stop_jobs()
-                    logger.debug("jobs now stopped (after cancellation)")
-                raise
-
+                await JobQueue._publish_changes(
+                    ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
+                )
+                if not self.is_active() or self.stopped:
+                    break
+        except asyncio.CancelledError:
             if self.stopped:
-                logger.debug("observed that the queue had stopped, stopping jobs...")
-                await self.stop_jobs_async()
-                logger.debug("jobs now stopped")
-            self.assert_complete()
-            self._differ.transition(self.job_list)
-            await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
+                logger.debug(
+                    "observed that the queue had stopped after cancellation, stopping jobs..."
+                )
+                self.stop_jobs()
+                logger.debug("jobs now stopped (after cancellation)")
+            raise
+
+        if self.stopped:
+            logger.debug("observed that the queue had stopped, stopping jobs...")
+            await self.stop_jobs_async()
+            logger.debug("jobs now stopped")
+        self.assert_complete()
+        self._differ.transition(self.job_list)
+        await JobQueue._publish_changes(
+            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+        )
 
     def add_job_from_run_arg(self, run_arg, res_config, max_runtime, ok_cb, exit_cb):
         job_name = run_arg.job_name
