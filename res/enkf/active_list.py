@@ -29,7 +29,6 @@ class ActiveList(BaseCClass):
     _asize = ResPrototype("int   active_list_get_active_size(active_list, int)")
     _get_mode = ResPrototype("active_mode_enum active_list_get_mode(active_list)")
     _get_active_index_list = ResPrototype("int*  active_list_get_active(active_list)")
-    _is_active = ResPrototype("bool active_list_iget(active_list, int)")
 
     def __init__(self):
         c_ptr = self._alloc()
