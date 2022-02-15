@@ -167,7 +167,6 @@ typedef enum {
 typedef enum {
     ALL_ACTIVE =
         1, /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-    INACTIVE = 2, /* Fully inactive */
     PARTLY_ACTIVE =
         3 /* Partly active - must supply additonal type spesific information on what is active.*/
 } active_mode_type;
