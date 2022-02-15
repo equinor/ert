@@ -318,10 +318,7 @@ static void enkf_obs_get_obs_and_measure_summary(
             break;
 
         if (local_obsdata_node_tstep_active(obs_node, step) &&
-            obs_vector_iget_active(obs_vector, step) &&
-            active_list_iget(
-                active_list,
-                0 /* Index into the scalar summary observation */)) {
+            obs_vector_iget_active(obs_vector, step)) {
             const summary_obs_type *summary_obs =
                 (const summary_obs_type *)obs_vector_iget_node(obs_vector,
                                                                step);
@@ -367,10 +364,7 @@ static void enkf_obs_get_obs_and_measure_summary(
                 break;
 
             if (local_obsdata_node_tstep_active(obs_node, step) &&
-                obs_vector_iget_active(obs_vector, step) &&
-                active_list_iget(
-                    active_list,
-                    0 /* Index into the scalar summary observation */)) {
+                obs_vector_iget_active(obs_vector, step)) {
                 for (int iens_index = 0; iens_index < active_size;
                      iens_index++) {
                     const int iens =
