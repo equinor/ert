@@ -40,7 +40,7 @@ enkf_plot_gendata_alloc_from_obs_vector(const obs_vector_type *obs_vector);
 void enkf_plot_gendata_free(enkf_plot_gendata_type *data);
 int enkf_plot_gendata_get_size(const enkf_plot_gendata_type *data);
 int enkf_plot_gendata_get_data_size(const enkf_plot_gendata_type *data);
-std::vector<bool>
+extern "C++" std::vector<bool>
 enkf_plot_gendata_active_mask(const enkf_plot_gendata_type *data);
 enkf_plot_genvector_type *
 enkf_plot_gendata_iget(const enkf_plot_gendata_type *plot_data, int index);
