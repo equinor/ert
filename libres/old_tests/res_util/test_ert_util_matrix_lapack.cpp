@@ -56,7 +56,6 @@ void test_dgesvx() {
         matrix_dgesvx(m2, b2, &rcond);
 
         matrix_sub(b3, b2, b1);
-        matrix_pretty_fprint_submat(b3, "b3", "%.6f ", stdout, 0, 2, 0, 4);
 
         test_assert_true(matrix_similar(b1, b2, epsilon));
     }

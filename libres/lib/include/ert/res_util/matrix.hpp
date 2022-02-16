@@ -22,56 +22,19 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <Eigen/Dense>
+
 #include <ert/util/ert_api_config.hpp>
 #include <ert/util/rng.hpp>
 #include <ert/util/type_macros.hpp>
 #include <ert/util/bool_vector.hpp>
 
-#ifdef HAVE_THREAD_POOL
-#include <ert/res_util/thread_pool.hpp>
-#endif
-
-#ifdef _MSC_VER
-#define __forceinline inline
-#elif __GNUC__
-/* Also clang defines the __GNUC__ symbol */
-#define __forceinline inline __attribute__((always_inline))
-#endif
+using matrix_type = Eigen::MatrixXd;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct matrix_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    char *name;      /* A name of the matrix - for printing - can be NULL. */
-    double *data;    /* The actual storage */
-    bool data_owner; /* is this matrix instance the owner of data? */
-    size_t
-        data_size; /* What is the length of data (number of double values). */
-
-    int rows;    /* The number of rows in the matrix. */
-    int columns; /* The number of columns in the matrix. */
-    int alloc_rows;
-    int alloc_columns;
-    int row_stride; /* The distance in data between two conscutive row values. */
-    int column_stride; /* The distance in data between to consecutive column values. */
-
-    /*
-     Observe that the stride is considered an internal property - if
-     the matrix is stored to disk and then recovered the strides might
-     change, and also matrix_alloc_copy() will not respect strides.
-  */
-};
-
-typedef struct matrix_struct matrix_type;
-
-__forceinline size_t GET_INDEX(const matrix_type *m, size_t i, size_t j) {
-    return m->row_stride * i + m->column_stride * j;
-}
-matrix_type *matrix_fread_alloc(FILE *stream);
-void matrix_fread(matrix_type *matrix, FILE *stream);
-void matrix_fwrite(const matrix_type *matrix, FILE *stream);
 bool matrix_check_dims(const matrix_type *m, int rows, int columns);
 void matrix_fscanf_data(matrix_type *matrix, bool row_major_order,
                         FILE *stream);
@@ -79,11 +42,6 @@ void matrix_fprintf_data(const matrix_type *matrix, bool row_major_order,
                          FILE *stream);
 void matrix_fprintf(const matrix_type *matrix, const char *fmt, FILE *stream);
 void matrix_dump_csv(const matrix_type *matrix, const char *filename);
-void matrix_pretty_fprint(const matrix_type *matrix, const char *name,
-                          const char *fmt, FILE *stream);
-void matrix_pretty_fprint_submat(const matrix_type *matrix, const char *name,
-                                 const char *fmt, FILE *stream, int m, int M,
-                                 int n, int N);
 matrix_type *matrix_alloc(int rows, int columns);
 matrix_type *matrix_alloc_identity(int dim);
 bool matrix_resize(matrix_type *matrix, int rows, int columns,
@@ -91,8 +49,6 @@ bool matrix_resize(matrix_type *matrix, int rows, int columns,
 matrix_type *matrix_alloc_sub_copy(const matrix_type *src, int row_offset,
                                    int column_offset, int rows, int columns);
 matrix_type *matrix_alloc_copy(const matrix_type *src);
-matrix_type *matrix_alloc_column_compressed_copy(const matrix_type *src,
-                                                 const bool_vector_type *mask);
 void matrix_column_compressed_memcpy(matrix_type *target,
                                      const matrix_type *src,
                                      const bool_vector_type *mask);
@@ -102,11 +58,7 @@ void matrix_set_row(matrix_type *matrix, const double *data, int row);
 matrix_type *matrix_alloc_shared(const matrix_type *src, int row, int column,
                                  int rows, int columns);
 void matrix_free(matrix_type *matrix);
-void matrix_safe_free(matrix_type *matrix);
-void matrix_pretty_print(const matrix_type *matrix, const char *name,
-                         const char *fmt);
 void matrix_set(matrix_type *matrix, double value);
-void matrix_set_name(matrix_type *matrix, const char *name);
 void matrix_scale(matrix_type *matrix, double value);
 void matrix_shift(matrix_type *matrix, double value);
 
@@ -116,8 +68,6 @@ void matrix_inplace_sub(matrix_type *A, const matrix_type *B);
 void matrix_sub(matrix_type *A, const matrix_type *B, const matrix_type *C);
 void matrix_transpose(const matrix_type *A, matrix_type *T);
 void matrix_inplace_add_column(matrix_type *A, const matrix_type *B, int colA,
-                               int colB);
-void matrix_inplace_sub_column(matrix_type *A, const matrix_type *B, int colA,
                                int colB);
 void matrix_inplace_transpose(matrix_type *A);
 
@@ -130,10 +80,6 @@ void matrix_isub(matrix_type *matrix, int i, int j, double value);
 void matrix_imul(matrix_type *matrix, int i, int j, double value);
 
 void matrix_inplace_matmul(matrix_type *A, const matrix_type *B);
-#ifdef HAVE_THREAD_POOL
-void matrix_inplace_matmul_mt2(matrix_type *A, const matrix_type *B,
-                               thread_pool_type *thread_pool);
-#endif
 
 void matrix_shift_row(matrix_type *matrix, int row, double shift);
 double matrix_get_column_sum(const matrix_type *matrix, int column);
@@ -156,7 +102,6 @@ double *matrix_get_data(const matrix_type *matrix);
 void matrix_set_column(matrix_type *matrix, const double *data, int column);
 void matrix_set_many_on_column(matrix_type *matrix, int row_offset,
                                int elements, const double *data, int column);
-void matrix_shrink_header(matrix_type *matrix, int rows, int columns);
 void matrix_full_size(matrix_type *matrix);
 int matrix_get_rows(const matrix_type *matrix);
 int matrix_get_columns(const matrix_type *matrix);
@@ -192,16 +137,11 @@ void matrix_copy_block(matrix_type *target_matrix, int target_row,
 void matrix_scalar_set(matrix_type *matrix, double value);
 void matrix_inplace_diag_sqrt(matrix_type *Cd);
 double matrix_trace(const matrix_type *matrix);
-double matrix_diag_std(const matrix_type *Sk, double mean);
-
-#ifdef ERT_HAVE_ISFINITE
-bool matrix_is_finite(const matrix_type *matrix);
-void matrix_assert_finite(const matrix_type *matrix);
-#endif
-
-UTIL_SAFE_CAST_HEADER(matrix);
 
 #ifdef __cplusplus
 }
 #endif
+
+#define matrix_shrink_header(_Mat, _Row, _Col)                                 \
+    matrix_resize((_Mat), (_Row), (_Col), true)
 #endif

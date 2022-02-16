@@ -273,13 +273,3 @@ void enkf_linalg_lowrankCinv(
     matrix_free(U0);
     matrix_free(Z);
 }
-
-matrix_type *enkf_linalg_alloc_innov(const matrix_type *dObs,
-                                     const matrix_type *S) {
-    matrix_type *innov = matrix_alloc_copy(dObs);
-
-    for (int iobs = 0; iobs < matrix_get_row_sum(dObs, iobs); iobs++)
-        matrix_isub(innov, iobs, 0, matrix_get_row_sum(S, iobs));
-
-    return innov;
-}

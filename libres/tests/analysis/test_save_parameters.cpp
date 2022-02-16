@@ -37,7 +37,7 @@ public:
         obs_mask_in;
     }
     ~update_data_type() {
-        matrix_safe_free(A);
+        matrix_free(A);
         for (auto [A, _] : A_with_rowscaling)
             matrix_free(A);
     }

@@ -52,20 +52,20 @@ TEST_CASE("matrix_subtract_row_mean", "[res_util]") {
 
     matrix_subtract_row_mean(X);
 
-    double *result = X->data;
+    Eigen::MatrixXd &result = *X;
 
     // row 0
-    REQUIRE(result[0] == 5.0);
-    REQUIRE(result[4] == -5.0);
+    REQUIRE(result(0, 0) == 5.0);
+    REQUIRE(result(0, 1) == -5.0);
     // row 1
-    REQUIRE(result[1] == -10.0);
-    REQUIRE(result[5] == 10.0);
+    REQUIRE(result(1, 0) == -10.0);
+    REQUIRE(result(1, 1) == 10.0);
     // row 2
-    REQUIRE(result[2] == 17.5);
-    REQUIRE(result[6] == -17.5);
+    REQUIRE(result(2, 0) == 17.5);
+    REQUIRE(result(2, 1) == -17.5);
     // row 3
-    REQUIRE(result[3] == 4.25);
-    REQUIRE(result[7] == -4.25);
+    REQUIRE(result(3, 0) == 4.25);
+    REQUIRE(result(3, 1) == -4.25);
 
     matrix_free(X);
 }
@@ -73,7 +73,7 @@ TEST_CASE("matrix_subtract_row_mean", "[res_util]") {
 SCENARIO("Solving a linear equation with dgesvx") {
     GIVEN("A diagonal matrix A") {
         int N = 4;
-        matrix_type *A = matrix_alloc(N, N);
+        auto A = matrix_alloc_identity(N);
         for (int i = 0; i < N; i++)
             matrix_iset(A, i, i, 1.0 / (i + 1));
 
