@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -8,11 +10,7 @@
 #include <ert/enkf/meas_data.hpp>
 
 void test_measured_to_matrix() {
-    int_vector_type *ens_active_list = int_vector_alloc(0, false);
-    bool_vector_type *ens_mask;
-    for (int i = 0; i < 10; i++)
-        int_vector_append(ens_active_list, i);
-    ens_mask = int_vector_alloc_mask(ens_active_list);
+    std::vector<bool> ens_mask(10, true);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
     meas_block_type *meas_block = meas_data_add_block(meas_data, "OBS", 10, 10);
 
@@ -31,9 +29,7 @@ void test_measured_to_matrix() {
     test_assert_true(matrix_equal(S0, S));
     matrix_free(S);
     matrix_free(S0);
-    int_vector_free(ens_active_list);
     meas_data_free(meas_data);
-    bool_vector_free(ens_mask);
 }
 
 int main(int argc, char **argv) {

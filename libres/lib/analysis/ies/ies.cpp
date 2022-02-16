@@ -67,8 +67,8 @@ auto logger = ert::get_logger("ies");
 }
 
 void ies::init_update(ies::data::Data &module_data,
-                      const bool_vector_type *ens_mask,
-                      const bool_vector_type *obs_mask, const matrix_type *S,
+                      const std::vector<bool> &ens_mask,
+                      const std::vector<bool> &obs_mask, const matrix_type *S,
                       const matrix_type *R, const matrix_type *E,
                       const matrix_type *D) {
     /* Store current ens_mask in module_data->ens_mask for each iteration */
@@ -436,13 +436,13 @@ void ies::linalg_store_active_W(ies::data::Data *data, const matrix_type *W0) {
     int i = 0;
     int j;
     matrix_type *dataW = data->getW();
-    const bool_vector_type *ens_mask = data->ens_mask();
+    const std::vector<bool> &ens_mask = data->ens_mask();
     matrix_set(dataW, 0.0);
     for (int iens = 0; iens < ens_size_msk; iens++) {
-        if (bool_vector_iget(ens_mask, iens)) {
+        if (ens_mask[iens]) {
             j = 0;
             for (int jens = 0; jens < ens_size_msk; jens++) {
-                if (bool_vector_iget(ens_mask, jens)) {
+                if (ens_mask[jens]) {
                     matrix_iset_safe(dataW, iens, jens, matrix_iget(W0, i, j));
                     j += 1;
                 }

@@ -12,10 +12,9 @@
 
 void test_obs_in_log() {
     int_vector_type *ens_active_list = int_vector_alloc(0, false);
-    bool_vector_type *ens_mask;
     int_vector_append(ens_active_list, 10);
 
-    ens_mask = int_vector_alloc_mask(ens_active_list);
+    const std::vector ens_mask{true};
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
     meas_block_type *block = meas_data_add_block(meas_data, "OBS", 10, 10);
 
@@ -44,16 +43,11 @@ void test_obs_in_log() {
     free(str_stream);
     obs_data_free(obs_data);
     meas_data_free(meas_data);
-    bool_vector_free(ens_mask);
     int_vector_free(ens_active_list);
 }
 
 void test_local_inactive() {
-    int_vector_type *ens_active_list = int_vector_alloc(0, false);
-    bool_vector_type *ens_mask;
-    int_vector_append(ens_active_list, 10);
-
-    ens_mask = int_vector_alloc_mask(ens_active_list);
+    std::vector<bool> ens_mask(1, true);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
     meas_block_type *block = meas_data_add_block(meas_data, "OBS", 10, 10);
 
@@ -83,8 +77,6 @@ void test_local_inactive() {
     free(str_stream);
     obs_data_free(obs_data);
     meas_data_free(meas_data);
-    bool_vector_free(ens_mask);
-    int_vector_free(ens_active_list);
 }
 
 int main(int argc, char **argv) {

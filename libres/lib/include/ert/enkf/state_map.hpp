@@ -18,6 +18,8 @@
 #ifndef ERT_STATE_MAP_H
 #define ERT_STATE_MAP_H
 
+#include <vector>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,13 +48,13 @@ void state_map_iset(state_map_type *map, int index,
 bool state_map_equal(const state_map_type *map1, const state_map_type *map2);
 void state_map_fwrite(const state_map_type *map, const char *filename);
 bool state_map_fread(state_map_type *map, const char *filename);
-void state_map_select_matching(const state_map_type *map,
-                               bool_vector_type *select_target, int select_mask,
-                               bool select);
+extern "C++" void state_map_select_matching(const state_map_type *map,
+                                            std::vector<bool> &select_target,
+                                            int select_mask, bool select);
 void state_map_set_from_inverted_mask(state_map_type *map,
-                                      const bool_vector_type *mask,
+                                      const std::vector<bool> &mask,
                                       realisation_state_enum state);
-void state_map_set_from_mask(state_map_type *map, const bool_vector_type *mask,
+void state_map_set_from_mask(state_map_type *map, const std::vector<bool> &mask,
                              realisation_state_enum state);
 int state_map_count_matching(const state_map_type *state_map, int mask);
 bool state_map_legal_transition(realisation_state_enum state1,

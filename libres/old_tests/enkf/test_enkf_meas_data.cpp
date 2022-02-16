@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <vector>
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
@@ -34,13 +35,10 @@ void meas_block_iget_abort(void *arg) {
 }
 
 void create_test() {
-    int_vector_type *ens_active_list = int_vector_alloc(0, false);
-    bool_vector_type *ens_mask;
-    int_vector_append(ens_active_list, 10);
-    int_vector_append(ens_active_list, 20);
-    int_vector_append(ens_active_list, 30);
-
-    ens_mask = int_vector_alloc_mask(ens_active_list);
+    std::vector<bool> ens_mask(31, false);
+    ens_mask[10] = true;
+    ens_mask[20] = true;
+    ens_mask[30] = true;
     {
         meas_data_type *meas_data = meas_data_alloc(ens_mask);
         test_assert_int_equal(3, meas_data_get_active_ens_size(meas_data));
@@ -62,9 +60,6 @@ void create_test() {
         }
         meas_data_free(meas_data);
     }
-
-    bool_vector_free(ens_mask);
-    int_vector_free(ens_active_list);
 }
 
 int main(int argc, char **argv) {

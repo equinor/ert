@@ -47,9 +47,9 @@ class PlotBlockDataLoader:
         ensemble_size = len(state_map)
 
         if input_mask is not None:
-            mask = BoolVector.copy(input_mask)
+            mask = list(BoolVector.copy(input_mask))
         else:
-            mask = BoolVector(False, ensemble_size)
+            mask = [False] * ensemble_size
 
         state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
 

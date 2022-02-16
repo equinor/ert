@@ -16,7 +16,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <vector>
 
+#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ert_test_context.hpp>
 
@@ -75,10 +77,9 @@ void test_measure(ert_test_context_type *test_context) {
         int_vector_append(ens_active_list, i);
 
     {
-        bool_vector_type *ens_mask;
-        ens_mask = int_vector_alloc_mask(ens_active_list);
+        std::vector<bool> ens_mask(enkf_main_get_ensemble_size(enkf_main),
+                                   true);
         meas_data_RFT = meas_data_alloc(ens_mask);
-        bool_vector_free(ens_mask);
     }
 
     obs_vector_measure(rft_obs, fs, 20, ens_active_list, meas_data_RFT,

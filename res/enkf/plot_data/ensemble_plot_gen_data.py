@@ -43,7 +43,7 @@ class EnsemblePlotGenData(BaseCClass):
     )
     _free = ResPrototype("void  enkf_plot_gendata_free(ensemble_plot_gen_data)")
 
-    def __init__(self, ensemble_config_node, file_system, report_step, input_mask=None):
+    def __init__(self, ensemble_config_node, file_system, report_step):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
         assert ensemble_config_node.getImplementationType() == ErtImplType.GEN_DATA
 
@@ -55,14 +55,12 @@ class EnsemblePlotGenData(BaseCClass):
                 "Unable to construct EnsemplePlotGenData from given config node!"
             )
 
-        self.__load(file_system, report_step, input_mask)
+        self.__load(file_system, report_step)
 
-    def __load(self, file_system, report_step, input_mask=None):
+    def __load(self, file_system, report_step):
         assert isinstance(file_system, EnkfFs)
-        if input_mask is not None:
-            assert isinstance(input_mask, BoolVector)
 
-        self._load(file_system, report_step, input_mask)
+        self._load(file_system, report_step, None)
 
     def __len__(self):
         """@rtype: int"""

@@ -14,6 +14,7 @@
   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
   for more details.
 */
+#include <algorithm>
 #include <stdexcept>
 
 #include <ert/res_util/es_testdata.hpp>
@@ -138,13 +139,13 @@ void test_basic() {
     res::es_testdata td2("path/sub/path");
     test_assert_true(matrix_equal(td1.S, td2.S));
 
-    test_assert_int_equal(bool_vector_size(td1.obs_mask), obs_size);
-    test_assert_int_equal(bool_vector_count_equal(td1.obs_mask, true),
-                          obs_size);
+    test_assert_int_equal(td1.obs_mask.size(), obs_size);
+    test_assert_int_equal(
+        std::count(td1.obs_mask.begin(), td1.obs_mask.end(), true), obs_size);
 
-    test_assert_int_equal(bool_vector_size(td1.ens_mask), ens_size);
-    test_assert_int_equal(bool_vector_count_equal(td1.ens_mask, true),
-                          ens_size);
+    test_assert_int_equal(td1.ens_mask.size(), ens_size);
+    test_assert_int_equal(
+        std::count(td1.ens_mask.begin(), td1.ens_mask.end(), true), ens_size);
 }
 
 void test_size_problems() {

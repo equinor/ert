@@ -11,6 +11,7 @@
 #include <ert/res_util/matrix_blas.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/enkf/row_scaling.hpp>
+#include <ert/enkf/meas_data.hpp>
 
 #include <ert/analysis/update.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
@@ -24,19 +25,17 @@
 namespace analysis {
 void run_analysis_update_without_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R, matrix_type *A);
 
 void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R,
     const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         &parameters);
 } // namespace analysis
-
 const double a_true = 1.0;
 const double b_true = 5.0;
 
@@ -72,7 +71,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-        auto ens_mask = bool_vector_alloc(ens_size, true);
+        std::vector<bool> ens_mask(ens_size, true);
         auto meas_data = meas_data_alloc(ens_mask);
         auto obs_data = obs_data_alloc(1.0);
 
@@ -169,7 +168,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 matrix_type *R = obs_data_allocR(obs_data);
                 matrix_type *D = obs_data_allocD(obs_data, E, S);
                 obs_data_scale(obs_data, S, E, D, R, nullptr);
-                const bool_vector_type *obs_mask =
+                const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
 
                 analysis::run_analysis_update_without_rowscaling(
@@ -245,12 +244,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_type *R = obs_data_allocR(obs_data);
             matrix_type *D = obs_data_allocD(obs_data, E, S);
             obs_data_scale(obs_data, S, E, D, R, nullptr);
-            const bool_vector_type *obs_mask =
+            const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
 
-            analysis::run_analysis_update_with_rowscaling(config, module_data,
-                                                          ens_mask, obs_mask, S,
-                                                          E, D, R, parameters);
+            analysis::run_analysis_update_with_rowscaling(
+                config, module_data, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix should equal prior parameter "
                  "matrix") {
@@ -281,15 +279,14 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_type *R = obs_data_allocR(obs_data);
             matrix_type *D = obs_data_allocD(obs_data, E, S);
             obs_data_scale(obs_data, S, E, D, R, nullptr);
-            const bool_vector_type *obs_mask =
+            const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
 
             analysis::run_analysis_update_without_rowscaling(
                 config, module_data, ens_mask, obs_mask, S, E, D, R,
                 A_no_scaling);
-            analysis::run_analysis_update_with_rowscaling(config, module_data,
-                                                          ens_mask, obs_mask, S,
-                                                          E, D, R, parameters);
+            analysis::run_analysis_update_with_rowscaling(
+                config, module_data, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix with row scaling should equal "
                  "updated parameter matrix without row scaling") {
@@ -321,11 +318,10 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_type *R = obs_data_allocR(obs_data);
             matrix_type *D = obs_data_allocD(obs_data, E, S);
             obs_data_scale(obs_data, S, E, D, R, nullptr);
-            const bool_vector_type *obs_mask =
+            const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
-            analysis::run_analysis_update_with_rowscaling(config, module_data,
-                                                          ens_mask, obs_mask, S,
-                                                          E, D, R, parameters);
+            analysis::run_analysis_update_with_rowscaling(
+                config, module_data, S, E, D, R, parameters);
             analysis::run_analysis_update_without_rowscaling(
                 config, module_data, ens_mask, obs_mask, S, E, D, R,
                 A_no_scaling);
@@ -374,11 +370,10 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 matrix_type *R = obs_data_allocR(obs_data);
                 matrix_type *D = obs_data_allocD(obs_data, E, S);
                 obs_data_scale(obs_data, S, E, D, R, nullptr);
-                const bool_vector_type *obs_mask =
+                const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
                 analysis::run_analysis_update_with_rowscaling(
-                    config, module_data, ens_mask, obs_mask, S, E, D, R,
-                    parameters);
+                    config, module_data, S, E, D, R, parameters);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
@@ -432,6 +427,5 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         rng_free(rng);
         obs_data_free(obs_data);
         meas_data_free(meas_data);
-        bool_vector_free(ens_mask);
     }
 }
