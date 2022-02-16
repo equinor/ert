@@ -18,6 +18,8 @@
 
 #ifndef ERT_OBS_DATA_H
 #define ERT_OBS_DATA_H
+
+#include <vector>
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -87,7 +89,8 @@ PY_USED double obs_data_iget_std(const obs_data_type *obs_data,
 PY_USED bool obs_block_iget_is_active(const obs_block_type *obs_block,
                                       int iobs);
 
-const bool_vector_type *obs_data_get_active_mask(const obs_data_type *obs_data);
+extern "C++" std::vector<bool>
+obs_data_get_active_mask(const obs_data_type *obs_data);
 
 #ifdef __cplusplus
 }

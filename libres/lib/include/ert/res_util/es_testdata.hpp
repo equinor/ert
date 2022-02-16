@@ -19,6 +19,7 @@
 #define ES_TESTDATA_HPP
 
 #include <string>
+#include <vector>
 
 #include <ert/util/bool_vector.hpp>
 
@@ -36,8 +37,8 @@ public:
     matrix_type *dObs{};
     int active_obs_size{};
     int active_ens_size{};
-    bool_vector_type *obs_mask{};
-    bool_vector_type *ens_mask{};
+    std::vector<bool> obs_mask;
+    std::vector<bool> ens_mask;
     int state_size{};
 
     es_testdata(const matrix_type *S, const matrix_type *R,

@@ -19,7 +19,7 @@
 namespace analysis {
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
-                     const bool_vector_type *ens_mask);
+                     const std::vector<bool> &ens_mask);
 } // namespace analysis
 
 TEST_CASE("Copy parameters from one source-fs to target-fs",
@@ -64,7 +64,7 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         }
         enkf_node_free(node);
 
-        bool_vector_type *ens_mask = bool_vector_alloc(ensemble_size, true);
+        std::vector<bool> ens_mask(ensemble_size, true);
 
         WHEN("not copying parameters from source to target") {
             THEN("target fs has no data at the same locations") {
@@ -90,7 +90,6 @@ TEST_CASE("Copy parameters from one source-fs to target-fs",
         }
 
         //cleanup
-        bool_vector_free(ens_mask);
         ensemble_config_free(ensemble_config);
         enkf_fs_decref(fs_source);
         enkf_fs_decref(fs_target);

@@ -28,12 +28,6 @@ ies::data::Data::Data(int ens_size)
 ies::data::Data::~Data() {
     matrix_free(this->W);
 
-    if (this->m_ens_mask)
-        bool_vector_free(this->m_ens_mask);
-    if (this->m_obs_mask)
-        bool_vector_free(this->m_obs_mask);
-    if (this->m_obs_mask0)
-        bool_vector_free(this->m_obs_mask0);
     if (this->A0)
         matrix_free(this->A0);
     if (this->E)
@@ -48,38 +42,28 @@ int ies::data::Data::iteration_nr() const { return this->m_iteration_nr; }
 
 int ies::data::Data::inc_iteration_nr() { return ++this->m_iteration_nr; }
 
-void ies::data::Data::update_ens_mask(const bool_vector_type *mask) {
-    if (this->m_ens_mask)
-        bool_vector_free(this->m_ens_mask);
-
-    this->m_ens_mask = bool_vector_alloc_copy(mask);
+void ies::data::Data::update_ens_mask(const std::vector<bool> &mask) {
+    this->m_ens_mask = mask;
 }
 
 int ies::data::Data::ens_size() const { return this->m_ens_size; }
 
-void ies::data::Data::store_initial_obs_mask(const bool_vector_type *mask) {
-    if (!this->m_obs_mask0)
-        this->m_obs_mask0 = bool_vector_alloc_copy(mask);
+void ies::data::Data::store_initial_obs_mask(const std::vector<bool> &mask) {
+    if (this->m_obs_mask0.empty())
+        this->m_obs_mask0 = mask;
 }
 
-void ies::data::Data::update_obs_mask(const bool_vector_type *mask) {
-    if (this->m_obs_mask)
-        bool_vector_free(this->m_obs_mask);
-
-    this->m_obs_mask = bool_vector_alloc_copy(mask);
+void ies::data::Data::update_obs_mask(const std::vector<bool> &mask) {
+    this->m_obs_mask = mask;
 }
 
-int ies::data::Data::obs_mask_size() const {
-    return bool_vector_size(this->m_obs_mask);
-}
+int ies::data::Data::obs_mask_size() const { return this->m_obs_mask.size(); }
 
 int ies::data::Data::active_obs_count() const {
-    return bool_vector_count_equal(this->m_obs_mask, true);
+    return std::count(this->m_obs_mask.begin(), this->m_obs_mask.end(), true);
 }
 
-int ies::data::Data::ens_mask_size() const {
-    return bool_vector_size(this->m_ens_mask);
-}
+int ies::data::Data::ens_mask_size() const { return (this->m_ens_mask.size()); }
 
 void ies::data::Data::update_state_size(int state_size) {
     this->m_state_size = state_size;
@@ -96,10 +80,10 @@ void ies::data::Data::store_initialE(const matrix_type *E0) {
 
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (bool_vector_iget(this->m_obs_mask0, iobs)) {
+            if (this->m_obs_mask0[iobs]) {
                 int active_idx = 0;
                 for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (bool_vector_iget(this->m_ens_mask, iens)) {
+                    if (this->m_ens_mask[iens]) {
                         matrix_iset_safe(this->E, iobs, iens,
                                          matrix_iget(E0, m, active_idx));
                         active_idx++;
@@ -119,19 +103,18 @@ void ies::data::Data::augment_initialE(const matrix_type *E0) {
         int ens_size_msk = this->ens_mask_size();
         int m = 0;
         for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (!bool_vector_iget(this->m_obs_mask0, iobs) &&
-                bool_vector_iget(this->m_obs_mask, iobs)) {
+            if (!this->m_obs_mask0[iobs] && this->m_obs_mask[iobs]) {
                 int i = -1;
                 for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (bool_vector_iget(this->m_ens_mask, iens)) {
+                    if (this->m_ens_mask[iens]) {
                         i++;
                         matrix_iset_safe(this->E, iobs, iens,
                                          matrix_iget(E0, m, i));
                     }
                 }
-                bool_vector_iset(this->m_obs_mask0, iobs, true);
+                this->m_obs_mask0[iobs] = true;
             }
-            if (bool_vector_iget(this->m_obs_mask, iobs)) {
+            if (this->m_obs_mask[iobs]) {
                 m++;
             }
         }
@@ -143,15 +126,15 @@ void ies::data::Data::store_initialA(const matrix_type *A) {
         this->A0 = matrix_alloc_copy(A);
 }
 
-const bool_vector_type *ies::data::Data::obs_mask0() const {
+const std::vector<bool> &ies::data::Data::obs_mask0() const {
     return this->m_obs_mask0;
 }
 
-const bool_vector_type *ies::data::Data::obs_mask() const {
+const std::vector<bool> &ies::data::Data::obs_mask() const {
     return this->m_obs_mask;
 }
 
-const bool_vector_type *ies::data::Data::ens_mask() const {
+const std::vector<bool> &ies::data::Data::ens_mask() const {
     return this->m_ens_mask;
 }
 
@@ -166,20 +149,20 @@ const matrix_type *ies::data::Data::getA0() const { return this->A0; }
 namespace {
 
 matrix_type *alloc_active(const matrix_type *full_matrix,
-                          const bool_vector_type *row_mask,
-                          const bool_vector_type *column_mask) {
-    int rows = bool_vector_size(row_mask);
-    int columns = bool_vector_size(column_mask);
+                          const std::vector<bool> &row_mask,
+                          const std::vector<bool> &column_mask) {
+    int rows = row_mask.size();
+    int columns = column_mask.size();
 
     matrix_type *active =
-        matrix_alloc(bool_vector_count_equal(row_mask, true),
-                     bool_vector_count_equal(column_mask, true));
+        matrix_alloc(std::count(row_mask.begin(), row_mask.end(), true),
+                     std::count(column_mask.begin(), column_mask.end(), true));
     int row = 0;
     for (int iobs = 0; iobs < rows; iobs++) {
-        if (bool_vector_iget(row_mask, iobs)) {
+        if (row_mask[iobs]) {
             int column = 0;
             for (int iens = 0; iens < columns; iens++) {
-                if (bool_vector_iget(column_mask, iens)) {
+                if (column_mask[iens]) {
                     matrix_iset(active, row, column,
                                 matrix_iget(full_matrix, iobs, iens));
                     column++;
@@ -211,9 +194,7 @@ matrix_type *ies::data::Data::alloc_activeW() const {
 }
 
 matrix_type *ies::data::Data::alloc_activeA() const {
-    bool_vector_type *state_mask =
-        bool_vector_alloc(matrix_get_rows(this->A0), true);
+    std::vector<bool> state_mask(matrix_get_rows(this->A0), true);
     auto *activeA = alloc_active(this->A0, state_mask, this->m_ens_mask);
-    bool_vector_free(state_mask);
     return activeA;
 }

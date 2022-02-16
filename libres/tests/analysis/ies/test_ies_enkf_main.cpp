@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <catch2/catch.hpp>
 
 #include <ert/util/rng.h>
@@ -14,10 +16,10 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     ies::data::Data data(ens_size);
 
     // Initialising masks such that all observations and realizations are active
-    bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
+    std::vector<bool> ens_mask(ens_size, true);
     data.update_ens_mask(ens_mask);
 
-    bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
+    std::vector<bool> obs_mask(obs_size, true);
     data.store_initial_obs_mask(obs_mask);
     data.update_obs_mask(obs_mask);
 
@@ -43,7 +45,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     }
 
     SECTION("deactivate one realisation") {
-        bool_vector_iset(ens_mask, 1, false);
+        ens_mask[1] = false;
         data.update_ens_mask(ens_mask);
 
         auto *E = data.alloc_activeE();
@@ -57,7 +59,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     }
 
     SECTION("deactivate one observation") {
-        bool_vector_iset(obs_mask, 1, false);
+        obs_mask[1] = false;
         data.update_obs_mask(obs_mask);
 
         auto *E = data.alloc_activeE();
@@ -72,10 +74,10 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     }
 
     SECTION("deactivate one observation and one realisation") {
-        bool_vector_iset(obs_mask, 1, false);
+        obs_mask[1] = false;
         data.update_obs_mask(obs_mask);
 
-        bool_vector_iset(ens_mask, 1, false);
+        ens_mask[1] = false;
         data.update_ens_mask(ens_mask);
 
         auto *E = data.alloc_activeE();
@@ -88,8 +90,6 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     }
 
     matrix_free(Ein);
-    bool_vector_free(ens_mask);
-    bool_vector_free(obs_mask);
     rng_free(rng);
 }
 
@@ -97,8 +97,8 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
     ies::data::Data data(ens_size);
-    bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-    bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
+    std::vector<bool> ens_mask(ens_size, true);
+    std::vector<bool> obs_mask(obs_size, true);
 
     ies::init_update(data, ens_mask, obs_mask, nullptr, nullptr, nullptr,
                      nullptr);
@@ -118,7 +118,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     }
 
     // Deactivate one realization
-    bool_vector_iset(ens_mask, 1, false);
+    ens_mask[1] = false;
     data.update_ens_mask(ens_mask);
     {
         auto *W = data.alloc_activeW();
@@ -133,8 +133,6 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     }
 
     matrix_free(W0);
-    bool_vector_free(ens_mask);
-    bool_vector_free(obs_mask);
 }
 
 SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
@@ -143,8 +141,8 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         const int obs_size = 10;
         const int state_size = 10;
         ies::data::Data data(ens_size);
-        bool_vector_type *ens_mask = bool_vector_alloc(ens_size, true);
-        bool_vector_type *obs_mask = bool_vector_alloc(obs_size, true);
+        std::vector<bool> ens_mask(ens_size, true);
+        std::vector<bool> obs_mask(obs_size, true);
         matrix_type *A0 = matrix_alloc(state_size, ens_size);
         for (int i = 0; i < state_size; i++) {
             for (int j = 0; j < ens_size; j++)
@@ -162,7 +160,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
 
         WHEN("One realization deactivated") {
             int dead_iens = 2;
-            bool_vector_iset(ens_mask, dead_iens, false);
+            ens_mask[dead_iens] = false;
             data.update_ens_mask(ens_mask);
             auto *A = data.alloc_activeA();
             for (int i = 0; i < state_size; i++) {
@@ -179,7 +177,5 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         }
 
         matrix_free(A0);
-        bool_vector_free(ens_mask);
-        bool_vector_free(obs_mask);
     }
 }
