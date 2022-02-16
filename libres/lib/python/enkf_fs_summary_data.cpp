@@ -29,9 +29,7 @@ RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
                 auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
                 auto user_key = nullptr;
-                auto input_mask = nullptr;
-                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key,
-                                    input_mask);
+                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key);
 
                 int realization_index = 0;
                 for (const auto &realization_number : realizations) {

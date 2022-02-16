@@ -27,14 +27,14 @@ public:
         matrix_type *R_in, matrix_type *A_in,
         std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
             A_with_rowscaling_in,
-        const bool_vector_type *obs_mask_in) {
+        const std::vector<bool> obs_mask_in) {
         S = S_in;
         E = E_in;
         D = D_in;
         R = R_in;
         A = A_in;
         A_with_rowscaling = A_with_rowscaling_in;
-        obs_mask_in;
+        has_observations = true;
     }
     ~update_data_type() {
         matrix_free(A);
@@ -46,9 +46,10 @@ public:
     matrix_type *D;
     matrix_type *R;
     matrix_type *A;
-    const bool_vector_type *obs_mask;
+    const std::vector<bool> obs_mask;
     std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         A_with_rowscaling;
+    bool has_observations = false;
 };
 
 matrix_type *load_parameters(enkf_fs_type *target_fs,
@@ -124,7 +125,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
             matrix_iset(A, 0, i, double(i) / 10.0);
         }
         auto update_data = analysis::update_data_type(nullptr, nullptr, nullptr,
-                                                      nullptr, A, {}, nullptr);
+                                                      nullptr, A, {}, {});
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
 
@@ -208,9 +209,8 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         }
 
         std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
-        auto update_data =
-            analysis::update_data_type(nullptr, nullptr, nullptr, nullptr,
-                                       nullptr, row_scaling_list, nullptr);
+        auto update_data = analysis::update_data_type(
+            nullptr, nullptr, nullptr, nullptr, nullptr, row_scaling_list, {});
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
 

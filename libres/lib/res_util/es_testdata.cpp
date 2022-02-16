@@ -142,16 +142,16 @@ es_testdata::es_testdata(const matrix_type *S, const matrix_type *R,
     : S(safe_copy(S)), R(safe_copy(R)), dObs(safe_copy(dObs)), D(safe_copy(D)),
       E(safe_copy(E)), active_ens_size(matrix_get_columns(S)),
       active_obs_size(matrix_get_rows(S)),
-      obs_mask(bool_vector_alloc(active_obs_size, true)),
-      ens_mask(bool_vector_alloc(active_ens_size, true)) {}
+      obs_mask(std::vector<bool>(active_obs_size, true)),
+      ens_mask(std::vector<bool>(active_ens_size, true)) {}
 
 void es_testdata::deactivate_obs(int iobs) {
-    if (iobs >= bool_vector_size(this->obs_mask))
+    if (iobs >= this->obs_mask.size())
         throw std::invalid_argument("Obs number: " + std::to_string(iobs) +
                                     " out of reach");
 
-    if (bool_vector_iget(this->obs_mask, iobs)) {
-        bool_vector_iset(this->obs_mask, iobs, false);
+    if (this->obs_mask[iobs]) {
+        this->obs_mask[iobs] = false;
 
         matrix_delete_row(this->dObs, iobs);
         matrix_delete_row(this->S, iobs);
@@ -168,12 +168,12 @@ void es_testdata::deactivate_obs(int iobs) {
 }
 
 void es_testdata::deactivate_realization(int iens) {
-    if (iens >= bool_vector_size(this->ens_mask))
+    if (iens >= this->ens_mask.size())
         throw std::invalid_argument(
             "iRealization number: " + std::to_string(iens) + " out of reach");
 
-    if (bool_vector_iget(this->ens_mask, iens)) {
-        bool_vector_iset(this->ens_mask, iens, false);
+    if (this->ens_mask[iens]) {
+        this->ens_mask[iens] = false;
 
         matrix_delete_column(this->S, iens);
 
@@ -201,8 +201,8 @@ es_testdata::es_testdata(const char *path)
     this->R = alloc_load("R", this->active_obs_size, this->active_obs_size);
     this->D = alloc_load("D", this->active_obs_size, this->active_ens_size);
     this->dObs = alloc_load("dObs", this->active_obs_size, 2);
-    this->obs_mask = bool_vector_alloc(this->active_obs_size, true);
-    this->ens_mask = bool_vector_alloc(this->active_ens_size, true);
+    this->obs_mask = std::vector<bool>(this->active_obs_size, true);
+    this->ens_mask = std::vector<bool>(this->active_ens_size, true);
 }
 
 es_testdata::~es_testdata() {
@@ -220,9 +220,6 @@ es_testdata::~es_testdata() {
 
     if (this->dObs)
         matrix_free(this->dObs);
-
-    bool_vector_free(this->obs_mask);
-    bool_vector_free(this->ens_mask);
 }
 
 void es_testdata::save(const std::string &path) const {

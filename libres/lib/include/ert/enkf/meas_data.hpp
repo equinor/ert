@@ -19,6 +19,7 @@
 #ifndef ERT_MEAS_DATA_H
 #define ERT_MEAS_DATA_H
 
+#include <vector>
 #include <stdbool.h>
 
 #include <ert/util/hash.h>
@@ -37,9 +38,9 @@ typedef struct meas_block_struct meas_block_type;
 
 UTIL_IS_INSTANCE_HEADER(meas_data);
 UTIL_SAFE_CAST_HEADER(meas_block);
-meas_block_type *meas_block_alloc(const char *obs_key,
-                                  const bool_vector_type *ens_mask,
-                                  int obs_size);
+extern "C++" meas_block_type *
+meas_block_alloc(const char *obs_key, const std::vector<bool> &ens_mask,
+                 int obs_size);
 int meas_block_get_total_ens_size(const meas_block_type *meas_block);
 PY_USED int meas_block_get_active_ens_size(const meas_block_type *meas_block);
 bool meas_block_iens_active(const meas_block_type *meas_block, int iens);
@@ -56,7 +57,7 @@ bool meas_data_has_block(const meas_data_type *matrix, const char *lookup_key);
 
 meas_block_type *meas_data_get_block(const meas_data_type *matrix,
                                      const char *lookup_key);
-meas_data_type *meas_data_alloc(const bool_vector_type *ens_mask);
+meas_data_type *meas_data_alloc(const std::vector<bool> &ens_mask);
 void meas_data_free(meas_data_type *);
 matrix_type *meas_data_allocS(const meas_data_type *matrix);
 int meas_data_get_active_obs_size(const meas_data_type *matrix);

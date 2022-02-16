@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -17,17 +19,17 @@ void test_obs_mask_deactivate() {
         obs_block_iset(obs_block, iobs, iobs, 0.1);
 
     /* Check that the mask is all true:*/
-    const bool_vector_type *pre_deactivate_mask =
+    const std::vector<bool> pre_deactivate_mask =
         obs_data_get_active_mask(obs_data);
-    test_assert_true(bool_vector_iget(pre_deactivate_mask, 0));
-    test_assert_true(bool_vector_iget(pre_deactivate_mask, 1));
+    test_assert_true(pre_deactivate_mask[0]);
+    test_assert_true(pre_deactivate_mask[1]);
 
     /* Check that the we can deactivate a single block in the mask:*/
     obs_block_type *block = obs_data_iget_block(obs_data, 0);
     obs_block_deactivate(block, 0, false, "---");
-    const bool_vector_type *mask = obs_data_get_active_mask(obs_data);
-    test_assert_false(bool_vector_iget(mask, 0));
-    test_assert_true(bool_vector_iget(mask, 1));
+    const std::vector<bool> mask = obs_data_get_active_mask(obs_data);
+    test_assert_false(mask[0]);
+    test_assert_true(mask[1]);
     obs_data_free(obs_data);
 }
 

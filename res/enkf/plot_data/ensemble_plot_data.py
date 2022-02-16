@@ -12,7 +12,7 @@ class EnsemblePlotData(BaseCClass):
 
     _alloc = ResPrototype("void* enkf_plot_data_alloc(enkf_config_node)", bind=False)
     _load = ResPrototype(
-        "void  enkf_plot_data_load(ensemble_plot_data, enkf_fs, char*, bool_vector)"
+        "void  enkf_plot_data_load(ensemble_plot_data, enkf_fs, char*)"
     )
     _size = ResPrototype("int   enkf_plot_data_get_size(ensemble_plot_data)")
     _get = ResPrototype(
@@ -20,9 +20,7 @@ class EnsemblePlotData(BaseCClass):
     )
     _free = ResPrototype("void  enkf_plot_data_free(ensemble_plot_data)")
 
-    def __init__(
-        self, ensemble_config_node, file_system=None, user_index=None, input_mask=None
-    ):
+    def __init__(self, ensemble_config_node, file_system=None, user_index=None):
         assert isinstance(ensemble_config_node, EnkfConfigNode)
 
         c_pointer = self._alloc(ensemble_config_node)
@@ -31,12 +29,10 @@ class EnsemblePlotData(BaseCClass):
         if file_system is not None:
             self.load(file_system, user_index, input_mask)
 
-    def load(self, file_system, user_index=None, input_mask=None):
+    def load(self, file_system, user_index=None):
         assert isinstance(file_system, EnkfFs)
-        if input_mask is not None:
-            assert isinstance(input_mask, BoolVector)
 
-        self._load(file_system, user_index, input_mask)
+        self._load(file_system, user_index)
 
     def __len__(self):
         """@rtype: int"""

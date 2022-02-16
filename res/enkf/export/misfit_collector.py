@@ -11,11 +11,10 @@ class MisfitCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
-        ens_mask = BoolVector(False, ert.getEnsembleSize())
+        ens_mask = [False] * ert.getEnsembleSize()
         state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
-        active_list = BoolVector.createActiveList(ens_mask)
 
-        return [iens for iens in active_list]
+        return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod
     def getAllMisfitKeys(ert, sort_keys=True):
