@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_SERIALIZE_H
 #define ERT_ENKF_SERIALIZE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -30,6 +27,10 @@ extern "C" {
 #include <ert/ecl/ecl_util.h>
 
 #include <ert/enkf/active_list.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,

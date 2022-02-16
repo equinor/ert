@@ -19,10 +19,6 @@
 #ifndef ERT_MEAS_DATA_H
 #define ERT_MEAS_DATA_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <ert/util/hash.h>
@@ -31,6 +27,10 @@ extern "C" {
 
 #include <ert/tooling.hpp>
 #include <ert/res_util/matrix.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct meas_data_struct meas_data_type;
 typedef struct meas_block_struct meas_block_type;
