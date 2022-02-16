@@ -18,9 +18,6 @@
 
 #ifndef ERT_OBS_DATA_H
 #define ERT_OBS_DATA_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -30,6 +27,10 @@ extern "C" {
 #include <ert/res_util/matrix.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/meas_data.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct obs_data_struct obs_data_type;
 typedef struct obs_block_struct obs_block_type;

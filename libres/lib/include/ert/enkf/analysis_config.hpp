@@ -22,10 +22,6 @@
 #include <string>
 #include <vector>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <ert/util/stringlist.h>
@@ -37,6 +33,10 @@ extern "C" {
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct analysis_config_struct analysis_config_type;
 
