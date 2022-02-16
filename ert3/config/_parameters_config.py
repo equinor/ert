@@ -147,7 +147,10 @@ class _VariablesConfig(_ParametersConfig):
         if len(variables) > 0:
             return variables
 
-        raise ValueError("Parameter group cannot have no variables")
+        raise ValueError(
+            "Parameter group cannot have empty variable list.\n"
+            "Avoid specifying variables to get scalars."
+        )
 
     @validator("__root__", each_item=True)
     def _ensure_valid_variable_names(cls, variable: Any) -> str:
@@ -185,14 +188,8 @@ class _ParameterConfig(_ParametersConfig):
 
     @root_validator
     def _ensure_variables_or_size(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        has_variables = values.get("variables")
-        has_size = values.get("size")
-        if has_variables and has_size:
-            raise AssertionError("Parameter group cannot have both variables and size")
-        if not has_variables and not has_size:
-            raise AssertionError(
-                "Parameter group cannot have neither variables nor size"
-            )
+        if values.get("variables") and values.get("size"):
+            raise ValueError("Parameter group cannot have both variables and size")
         return values
 
     @validator("name")

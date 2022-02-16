@@ -7,20 +7,19 @@ from typing import Callable, ContextManager
 
 import aiofiles
 import cloudpickle
-import pytest
-from ert_utils import tmp
-
 import ert
+import pytest
 from ert.data import (
     BlobRecord,
-    NumericalRecord,
-    RecordTransmitter,
-    NumericalRecordTree,
     BlobRecordTree,
+    NumericalRecord,
+    NumericalRecordTree,
+    RecordTransmitter,
     RecordType,
+    SerializationTransformation,
 )
 from ert.data.record import _transmitter
-from ert.data import SerializationTransformation
+from ert_utils import tmp
 
 record123 = NumericalRecord(data=[1, 2, 3])
 
@@ -28,6 +27,8 @@ simple_records = pytest.mark.parametrize(
     ("record_in", "expected_data"),
     (
         (record123, [1, 2, 3]),
+        (NumericalRecord(data=1.0), 1.0),
+        (NumericalRecord(data=1), 1.0),
         (
             NumericalRecord(data=(1.0, 10.0, 42.0, 999.0)),
             [1.0, 10.0, 42.0, 999.0],

@@ -9,6 +9,8 @@ import ert
 @pytest.mark.parametrize(
     "data",
     (
+        1,
+        1.0,
         [1, 2, 3],
         (1.0, 10.0, 42, 999.0),
         [],
@@ -24,12 +26,19 @@ def test_valid_numerical_record(data):
     if isinstance(data, set):
         data = tuple(data)
 
-    assert len(data) == len(record.data)
-    assert len(data) == len(record.index)
+    if record.record_type == ert.data.RecordType.SCALAR_FLOAT:
+        assert data == record.data
+        assert isinstance(record.data, float)
+        assert record.index == ()
+    else:
+        assert len(data) == len(record.data)
+        assert len(data) == len(record.index)
+
     if isinstance(data, typing.Mapping):
         assert tuple(data.keys()) == record.index
     else:
-        assert tuple(range(len(data))) == record.index
+        if record.record_type != ert.data.RecordType.SCALAR_FLOAT:
+            assert tuple(range(len(data))) == record.index
 
     for idx in record.index:
         assert data[idx] == record.data[idx]
@@ -94,6 +103,7 @@ def test_invalid_blob_record(data):
         ({"a": 0, "b": 1, "c": 2}, ("a", "b")),  # <- Too short index
         ({"a": 0, "b": 1, "c": 2}, ("a", "b", "c", "d")),  # <- Too long index
         ({1: 0, 2: 0}, (1, 2.0)),  # <- Mix of index types
+        (1, (0)),  # <- Index should be empty for scalars
     ),
 )
 def test_inconsistent_index_record(data, index):

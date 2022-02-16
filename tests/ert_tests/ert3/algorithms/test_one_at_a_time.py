@@ -14,14 +14,30 @@ def test_no_parameters():
         ert3.algorithms.one_at_a_time([])
 
 
-@pytest.mark.parametrize(
+distributions_and_sens = pytest.mark.parametrize(
     ("distribution", "a", "b", "sens_low", "sens_high"),
     (
         (ert3.stats.Gaussian, 0, 1, -CNORM_INV, CNORM_INV),
         (ert3.stats.Uniform, 0, 1, CUNI_INV, 1 - CUNI_INV),
     ),
 )
-def test_single_parameter(distribution, a, b, sens_low, sens_high):
+
+
+@distributions_and_sens
+def test_scalar_parameter(distribution, a, b, sens_low, sens_high):
+    single_dist = distribution(a, b)
+
+    evaluations = ert3.algorithms.one_at_a_time({"single": single_dist})
+
+    assert 2 == len(evaluations)
+    for idx, parameter_value in enumerate([sens_low, sens_high]):
+        evali = evaluations[idx]
+        assert ["single"] == list(evali.keys())
+        assert evali["single"].data == pytest.approx(parameter_value)
+
+
+@distributions_and_sens
+def test_size_1_parameter(distribution, a, b, sens_low, sens_high):
     single_dist = distribution(a, b, size=1)
     evaluations = ert3.algorithms.one_at_a_time({"single": single_dist})
 
