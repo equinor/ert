@@ -15,10 +15,10 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <memory>
 
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
 
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
@@ -36,25 +36,21 @@
 struct local_updatestep_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *name;
-    vector_type *ministep;
+    std::vector<std::unique_ptr<local_ministep_type>> ministep;
 };
 
 UTIL_SAFE_CAST_FUNCTION(local_updatestep, LOCAL_UPDATESTEP_TYPE_ID)
 
 local_updatestep_type *local_updatestep_alloc(const char *name) {
-    local_updatestep_type *updatestep =
-        (local_updatestep_type *)util_malloc(sizeof *updatestep);
+    local_updatestep_type *updatestep = new local_updatestep_type();
 
     UTIL_TYPE_ID_INIT(updatestep, LOCAL_UPDATESTEP_TYPE_ID);
     updatestep->name = util_alloc_string_copy(name);
-    updatestep->ministep = vector_alloc_new();
-
     return updatestep;
 }
 
 void local_updatestep_free(local_updatestep_type *updatestep) {
     free(updatestep->name);
-    vector_free(updatestep->ministep);
     free(updatestep);
 }
 
@@ -65,19 +61,18 @@ void local_updatestep_free__(void *arg) {
 
 void local_updatestep_add_ministep(local_updatestep_type *updatestep,
                                    local_ministep_type *ministep) {
-    vector_append_ref(
-        updatestep->ministep,
-        ministep); /* Observe that the vector takes NO ownership */
+    updatestep->ministep.emplace_back(
+        std::unique_ptr<local_ministep_type>(ministep));
 }
 
 local_ministep_type *
 local_updatestep_iget_ministep(const local_updatestep_type *updatestep,
-                               int index) {
-    return (local_ministep_type *)vector_iget(updatestep->ministep, index);
+                               const int index) {
+    return updatestep->ministep.at(index).get();
 }
 
 int local_updatestep_get_num_ministep(const local_updatestep_type *updatestep) {
-    return vector_get_size(updatestep->ministep);
+    return updatestep->ministep.size();
 }
 
 const char *local_updatestep_get_name(const local_updatestep_type *updatestep) {

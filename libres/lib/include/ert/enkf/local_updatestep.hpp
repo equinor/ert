@@ -36,7 +36,7 @@ void local_updatestep_add_ministep(local_updatestep_type *updatestep,
                                    local_ministep_type *ministep);
 local_ministep_type *
 local_updatestep_iget_ministep(const local_updatestep_type *updatestep,
-                               int index);
+                               const int index);
 int local_updatestep_get_num_ministep(const local_updatestep_type *updatestep);
 const char *local_updatestep_get_name(const local_updatestep_type *updatestep);
 
