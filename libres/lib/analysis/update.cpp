@@ -6,7 +6,6 @@
 
 #include "ert/analysis/update.hpp"
 #include <ert/util/type_vector_functions.h>
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/metric.hpp>
 #include <ert/res_util/memory.hpp>
@@ -94,11 +93,11 @@ public:
     }
 
     ~update_data_type() {
-        matrix_safe_free(S);
-        matrix_safe_free(E);
-        matrix_safe_free(D);
-        matrix_safe_free(R);
-        matrix_safe_free(A);
+        matrix_free(S);
+        matrix_free(E);
+        matrix_free(D);
+        matrix_free(R);
+        matrix_free(A);
         for (auto [A, _] : A_with_rowscaling)
             matrix_free(A);
     }
@@ -359,8 +358,6 @@ void run_analysis_update_without_rowscaling(
     if (A == nullptr)
         throw std::logic_error(
             "Parameter matrix can not be NULL when exectuting analysis udate");
-    const int cpu_threads = 4;
-    thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
 
     int active_ens_size = matrix_get_columns(S);
     int active_obs_size = matrix_get_rows(S);
@@ -372,10 +369,9 @@ void run_analysis_update_without_rowscaling(
         ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
         ies::initX(module_config, S, R, E, D, X);
-        matrix_inplace_matmul_mt2(A, X, tp);
+        matrix_inplace_matmul(A, X);
     }
     matrix_free(X);
-    thread_pool_free(tp);
 }
 
 /*

@@ -9,6 +9,7 @@
 #include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/res_util/matrix_blas.hpp>
+#include <ert/res_util/matrix.hpp>
 #include <ert/enkf/row_scaling.hpp>
 
 #include <ert/analysis/update.hpp>
@@ -160,7 +161,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 }
                 matrix_type *E =
                     obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
-                auto A_iter = matrix_alloc_copy(A);           // Preserve prior
+
+                auto A_iter = matrix_alloc_copy(A); // Preserve prior
 
                 // Create posterior sample (exact estimate, sample covariance)
                 auto S = meas_data_allocS(meas_data);

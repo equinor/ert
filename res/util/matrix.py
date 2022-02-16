@@ -27,7 +27,7 @@
 # choice.
 
 
-from cwrap import BaseCClass, CFILE
+from cwrap import BaseCClass
 from res import ResPrototype
 
 
@@ -39,13 +39,10 @@ class Matrix(BaseCClass):
     _alloc_transpose = ResPrototype("matrix_obj  matrix_alloc_transpose(matrix)")
     _inplace_transpose = ResPrototype("void        matrix_inplace_transpose(matrix)")
     _copy = ResPrototype("matrix_obj  matrix_alloc_copy(matrix)")
-    _sub_copy = ResPrototype(
-        "matrix_obj  matrix_alloc_sub_copy(matrix, int , int , int , int)"
-    )
     _free = ResPrototype("void   matrix_free(matrix)")
     _iget = ResPrototype("double matrix_iget( matrix , int , int )")
     _iset = ResPrototype("void   matrix_iset( matrix , int , int , double)")
-    _set_all = ResPrototype("void   matrix_scalar_set( matrix , double)")
+    _set_all = ResPrototype("void   matrix_set_all( matrix , double)")
     _scale_column = ResPrototype("void matrix_scale_column(matrix , int , double)")
     _scale_row = ResPrototype("void matrix_scale_row(matrix , int , double)")
     _copy_column = ResPrototype(
@@ -54,10 +51,7 @@ class Matrix(BaseCClass):
     _rows = ResPrototype("int matrix_get_rows(matrix)")
     _columns = ResPrototype("int matrix_get_columns(matrix)")
     _equal = ResPrototype("bool matrix_equal(matrix, matrix)")
-    _pretty_print = ResPrototype("void matrix_pretty_print(matrix, char*, char*)")
-    _fprint = ResPrototype("void matrix_fprintf(matrix, char*, FILE)")
     _random_init = ResPrototype("void matrix_random_init(matrix, rng)")
-    _dump_csv = ResPrototype("void matrix_dump_csv(matrix, char*)")
 
     _alloc_matmul = ResPrototype(
         "matrix_obj  matrix_alloc_matmul(matrix, matrix)", bind=False
@@ -78,6 +72,9 @@ class Matrix(BaseCClass):
         super().__init__(c_ptr)
         self.setAll(value)
 
+    def setAll(self, value):
+        self._set_all(value)
+
     def copy(self):
         return self._copy()
 
@@ -89,21 +86,6 @@ class Matrix(BaseCClass):
                 "Identity matrix must have positive size, %d not allowed." % dim
             )
         return cls._matrix_alloc_identity(dim)
-
-    def subCopy(self, row_offset, column_offset, rows, columns):
-        if row_offset < 0 or row_offset >= self.rows():
-            raise ValueError("Invalid row offset")
-
-        if column_offset < 0 or column_offset >= self.columns():
-            raise ValueError("Invalid column offset")
-
-        if row_offset + rows > self.rows():
-            raise ValueError("Invalid rows")
-
-        if column_offset + columns > self.columns():
-            raise ValueError("Invalid columns")
-
-        return self._sub_copy(row_offset, column_offset, rows, columns)
 
     def __str__(self):
         s = ""
@@ -158,21 +140,6 @@ class Matrix(BaseCClass):
         assert isinstance(other, Matrix)
         return self._equal(other)
 
-    def scaleColumn(self, column, factor):
-        if not 0 <= column < self.columns():
-            raise IndexError(
-                "Expected column: [0,%d) got:%d" % (self.columns(), column)
-            )
-        self._scale_column(column, factor)
-
-    def scaleRow(self, row, factor):
-        if not 0 <= row < self.rows():
-            raise IndexError("Expected row: [0,%d) got:%d" % (self.rows(), row))
-        self._scale_row(row, factor)
-
-    def setAll(self, value):
-        self._set_all(value)
-
     def copyColumn(self, target_column, src_column):
         columns = self.columns()
         if not 0 <= src_column < columns:
@@ -184,38 +151,6 @@ class Matrix(BaseCClass):
         if src_column != target_column:
             # The underlying C function accepts column copy between matrices.
             Matrix._copy_column(self, self, target_column, src_column)
-
-    def dumpCSV(self, filename):
-        self._dump_csv(filename)
-
-    def prettyPrint(self, name, fmt="%6.3g"):
-        self._pretty_print(name, fmt)
-
-    def fprint(self, fileH, fmt="%g "):
-        """Will print ASCII representation of matrix.
-
-        The fileH argument should point to an open Python
-        filehandle. If you supply a fmt string it is important that it
-        contains a separator, otherwise you might risk that elements
-        overlap in the output. For the matrix:
-
-                  [0 1 2]
-              m = [3 4 5]
-                  [6 7 8]
-
-        The code:
-
-        with open("matrix.txt" , "w") as f:
-           m.fprintf( f )
-
-         The file 'matrix.txt' will look like:
-
-         0 1 2
-         3 4 5
-         6 7 8
-
-        """
-        self._fprint(fmt, CFILE(fileH))
 
     def randomInit(self, rng):
         self._random_init(rng)

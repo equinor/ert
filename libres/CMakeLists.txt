@@ -91,8 +91,9 @@ conan_cmake_run(
   # Packages
   REQUIRES
   catch2/2.13.7
-  fmt/8.0.1
   cjson/1.7.15
+  eigen/3.4.0
+  fmt/8.0.1
   # Options
   OPTIONS
   catch2:with_main=True
@@ -110,10 +111,12 @@ conan_cmake_run(
 # Dependencies
 # -----------------------------------------------------------------
 
-find_package(cJSON REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(Filesystem REQUIRED)
-find_package(pybind11 REQUIRED)
+find_package(cJSON REQUIRED)
 find_package(fmt REQUIRED)
+find_package(pybind11 REQUIRED)
+
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)
   set(HAVE_PTHREAD TRUE)
