@@ -122,7 +122,6 @@ class ProgrammaticResConfigTest(ResTest):
                     "MAX_RUNTIME": 23400,
                     "MIN_REALIZATIONS": "50%",
                     "MAX_SUBMIT": 13,
-                    "UMASK": "007",
                     "QUEUE_OPTION": [
                         {"DRIVER_NAME": "LSF", "OPTION": "MAX_RUNNING", "VALUE": 100},
                         {

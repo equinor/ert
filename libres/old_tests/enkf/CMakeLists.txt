@@ -78,7 +78,6 @@ foreach(
   gen_kw_logarithmic
   enkf_forward_init_GEN_KW
   enkf_forward_init_GEN_PARAM
-  enkf_umask_config
   enkf_executable_path
   enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
@@ -102,9 +101,6 @@ add_config_test(enkf_forward_load_context enkf_forward_load_context
 
 add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
                 "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")
-
-add_config_test(enkf_umask_config enkf_umask_config
-                "${LOCAL_TEST_DATA_DIR}/simple_config/config_umask")
 
 add_config_test(
   enkf_forward_init_GEN_PARAM_TRUE enkf_forward_init_GEN_PARAM

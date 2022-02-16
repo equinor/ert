@@ -82,7 +82,6 @@ class SiteConfigTest(ResTest):
                     },
                 ],
                 ConfigKeys.LICENSE_PATH: "some/random/path",
-                ConfigKeys.UMASK: 18,
             }
 
             site_config_user_file = SiteConfig(user_config_file=config_file)
