@@ -53,7 +53,6 @@ void forward_model(res::es_testdata &testdata, const matrix_type *A1) {
 
 void cmp_std_ies(res::es_testdata &testdata) {
     int num_iter = 100;
-    bool verbose = false;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
@@ -81,12 +80,6 @@ void cmp_std_ies(res::es_testdata &testdata) {
         ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
                      testdata.E, testdata.D);
 
-        if (verbose) {
-            fprintf(stdout, "IES iteration   = %d %d\n", iter,
-                    bool_vector_count_equal(testdata.ens_mask, true));
-            matrix_pretty_fprint(A1, "Aies", "%11.5f", stdout);
-            matrix_pretty_fprint(A2, "Astdenkf", "%11.5f", stdout);
-        }
         test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
 
         if (matrix_similar(A1, A2, 1e-5))
@@ -102,7 +95,6 @@ void cmp_std_ies(res::es_testdata &testdata) {
 
 void cmp_std_ies_delrel(res::es_testdata &testdata) {
     int num_iter = 100;
-    bool verbose = true;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     matrix_type *A1 = testdata.alloc_state("prior");
     matrix_type *A2 = testdata.alloc_state("prior");
@@ -118,12 +110,6 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     ies_config.inversion(ies::config::IES_INVERSION_EXACT);
     ies_config.aaprojection(false);
     int iens_deact = testdata.active_ens_size / 2;
-
-    if (verbose) {
-        fprintf(stdout, "ES and IES original priors\n");
-        matrix_pretty_fprint(A1, "A1  ", "%11.5f", stdout);
-        matrix_pretty_fprint(A2, "A2  ", "%11.5f", stdout);
-    }
 
     /* IES solution after with one realization is inactivated */
     for (int iter = 0; iter < num_iter; iter++) {
@@ -142,7 +128,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
                     iens_active += 1;
                 }
             }
-            matrix_realloc_copy(A1, A1c);
+            matrix_assign(A1, A1c);
         }
 
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
@@ -150,16 +136,9 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
 
         ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
                      testdata.E, testdata.D);
-
-        if (verbose) {
-            fprintf(stdout, "IES iteration = %d active realizations= %d\n",
-                    iter, bool_vector_count_equal(testdata.ens_mask, true));
-            matrix_pretty_fprint(A1, "Aies", "%11.5f", stdout);
-        }
     }
     fprintf(stdout, "IES solution with %d active realizations\n",
             bool_vector_count_equal(testdata.ens_mask, true));
-    matrix_pretty_fprint(A1, "A1  ", "%11.5f", stdout);
 
     /* ES update with one realization removed*/
     {
@@ -172,21 +151,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
                 iens_active += 1;
             }
         }
-        matrix_realloc_copy(A2, A2c);
+        matrix_assign(A2, A2c);
     }
     forward_model(testdata, A2);
 
-    if (verbose) {
-        fprintf(stdout, "\n\n\nES prior with one realization removed\n");
-        matrix_pretty_fprint(A2, "A2  ", "%11.5f", stdout);
-    }
-
     init_stdA(testdata, A2);
-
-    if (verbose) {
-        fprintf(stdout, "ES solution with one realization removed\n");
-        matrix_pretty_fprint(A2, "A2  ", "%11.5f", stdout);
-    }
 
     test_assert_true(matrix_similar(A1, A2, 1e-5));
 

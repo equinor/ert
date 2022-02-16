@@ -24,126 +24,22 @@
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void dgesv_(int *n, int *nrhs, double *A, int *lda, long int *ipivot, double *B,
-            int *ldb, int *info);
-void dgesvx_(char *fact, char *trans, int *n, int *nrhs, double *A, int *lda,
-             double *AF, int *ldaf, long int *ipivot, char *equed, double *R,
-             double *C, double *B, int *ldb, double *X, int *ldx, double *rcond,
-             double *ferr, double *berr, double *work, long int *iwork,
-             int *info);
-void dgesvd_(char *jobu, char *jobvt, int *m, int *n, double *A, int *lda,
-             double *S, double *U, int *ldu, double *VT, int *ldvt,
-             double *work, int *worksize, int *info);
-void dsyevx_(char *jobz, char *range, char *uplo, int *n, double *A, int *lda,
-             double *vl, double *vu, int *il, int *iu, double *abstol, int *m,
-             double *w, double *z, int *ldz, double *work, int *lwork,
-             int *iwork, int *ifail, int *info);
-void dgeqrf_(int *m, int *n, double *A, int *lda, double *tau, double *work,
-             int *lwork, int *info);
-void dorgqr_(int *m, int *n, int *k, double *A, int *lda, double *tau,
-             double *work, int *lwork, int *info);
-void dgetrf_(int *M, int *n, double *A, int *lda, int *ipiv, int *info);
-void dgedi_(double *A, int *lda, int *n, int *ipiv, double *det, double *work,
-            int *job);
-void dgetri_(int *n, double *A, int *lda, int *ipiv, double *work,
-             int *work_size, int *info);
-
-/*
-   This file implements (very thin) interfaces for the matrix_type to
-   some lapack functions. The file does not contain any data
-   structures, only functions.
-*/
-static void matrix_lapack_assert_fortran_layout(const matrix_type *matrix) {
-    int rows, columns, row_stride, column_stride;
-    matrix_get_dims(matrix, &rows, &columns, &row_stride, &column_stride);
-    if (!((column_stride >= rows) && (row_stride == 1)))
-        util_abort("%s: lapack routines require Fortran layout of memory - "
-                   "aborting \n",
-                   __func__);
-}
-
-static void matrix_lapack_assert_square(const matrix_type *matrix) {
-    matrix_lapack_assert_fortran_layout(matrix);
-    {
-        int rows, columns, row_stride, column_stride;
-        matrix_get_dims(matrix, &rows, &columns, &row_stride, &column_stride);
-        if (rows != columns)
-            util_abort("%s: must have square matrices \n", __func__);
-    }
-}
+#include "fmt/format.h"
+#include "fmt/ostream.h"
 
 /*
    Solves the linear equations Ax = B. The solution is stored in B on
    return.
 */
 void matrix_dgesv(matrix_type *A, matrix_type *B) {
-    matrix_lapack_assert_square(A);
-    matrix_lapack_assert_fortran_layout(B);
-    {
-        int n = matrix_get_rows(A);
-        int lda = matrix_get_column_stride(A);
-        int ldb = matrix_get_column_stride(B);
-        int nrhs = matrix_get_columns(B);
-        std::vector<long int> ipivot(n);
-        int info;
-
-        dgesv_(&n, &nrhs, matrix_get_data(A), &lda, ipivot.data(),
-               matrix_get_data(B), &ldb, &info);
-        if (info != 0)
-            util_abort(
-                "%s: low level lapack routine: dgesv() failed with info:%d \n",
-                __func__, info);
-    }
+    Eigen::MatrixXd tmp = A->partialPivLu().solve(*B);
+    *B = tmp;
 }
 
 void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
-    matrix_lapack_assert_square(A);
-    matrix_lapack_assert_fortran_layout(B);
-    {
-        int n = matrix_get_rows(A);
-        int lda = matrix_get_column_stride(A);
-        int ldb = matrix_get_column_stride(B);
-        int nrhs = matrix_get_columns(B);
-        int info;
-        int i, j;
+    Eigen::MatrixXd tmp = A->fullPivLu().solve(*B);
 
-        int ldx = ldb;
-        int ldaf = n;
-        char trans = 'N';
-        char fact = 'N';
-        char equed = 'N';
-
-        std::vector<double> X(nrhs * n);
-        std::vector<double> AF(n * n);
-        std::vector<double> C(n);
-        std::vector<double> R(n);
-        std::vector<double> work(4 * n);
-        std::vector<double> ferr(nrhs);
-        std::vector<double> berr(nrhs);
-        std::vector<long int> ipivot(n);
-        std::vector<long int> iwork(n);
-        double local_rcond;
-
-        dgesvx_(&fact, &trans, &n, &nrhs, matrix_get_data(A), &lda, AF.data(),
-                &ldaf, ipivot.data(), &equed, R.data(), C.data(),
-                matrix_get_data(B), &ldb, X.data(), &ldx, &local_rcond,
-                ferr.data(), berr.data(), work.data(), iwork.data(), &info);
-        if (info != 0)
-            util_abort(
-                "%s: low level lapack routine: dgesvx() failed with info:%d \n",
-                __func__, info);
-
-        for (j = 0; j < B->columns; j++)
-            for (i = 0; i < B->rows; i++)
-                matrix_iset(B, i, j, X[j * B->rows + i]);
-
-        if (rcond)
-            *rcond = local_rcond;
-    }
+    *B = tmp;
 }
 
 /*
@@ -183,276 +79,22 @@ static char dgesvd_get_vector_job(dgesvd_vector_enum vector_job) {
 
 void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
                    matrix_type *A, double *S, matrix_type *U, matrix_type *VT) {
-    char _jobu = dgesvd_get_vector_job(jobu);
-    char _jobvt = dgesvd_get_vector_job(jobvt);
-    int m = matrix_get_rows(A);
-    int n = matrix_get_columns(A);
-    int lda = matrix_get_column_stride(A);
-    int ldu, ldvt;
-    double *VT_data, *U_data;
-    int info = 0;
-    int min_worksize = util_int_max(3 * std::min(m, n) + util_int_max(m, n),
-                                    5 * std::min(m, n));
-    int worksize;
 
-    if (U == NULL) {
-        ldu = 1;
-        U_data = NULL;
-        if (jobu != DGESVD_NONE)
-            util_abort("%s: internal error \n", __func__);
-    } else {
-        ldu = matrix_get_column_stride(U);
-        U_data = matrix_get_data(U);
-        if (jobu == DGESVD_NONE)
-            util_abort("%s: internal error \n", __func__);
-    }
+    int opts = 0;
+    if (U != nullptr)
+        opts |= jobu == DGESVD_ALL ? Eigen::ComputeFullU : Eigen::ComputeThinU;
+    if (VT != nullptr)
+        opts |= jobvt == DGESVD_ALL ? Eigen::ComputeFullV : Eigen::ComputeThinV;
 
-    if (VT == NULL) {
-        ldvt = 1; /* Will fail if set to zero */
-        VT_data = NULL;
-        if (jobvt != DGESVD_NONE)
-            util_abort("%s: internal error \n", __func__);
-    } else {
-        ldvt = matrix_get_column_stride(VT);
-        VT_data = matrix_get_data(VT);
-        if (jobvt == DGESVD_NONE)
-            util_abort("%s: internal error \n", __func__);
-    }
+    auto svd = A->bdcSvd(opts);
 
-    /*
-     Query the routine for optimal worksize.
-  */
+    if (U != nullptr)
+        *U = svd.matrixU();
+    if (VT != nullptr)
+        *VT = svd.matrixV().transpose();
 
-    std::vector<double> work(1);
-    worksize = -1;
-    dgesvd_(&_jobu,             /* 1  */
-            &_jobvt,            /* 2  */
-            &m,                 /* 3  */
-            &n,                 /* 4  */
-            matrix_get_data(A), /* 5  */
-            &lda,               /* 6  */
-            S,                  /* 7  */
-            U_data,             /* 8  */
-            &ldu,               /* 9  */
-            VT_data,            /* 10 */
-            &ldvt,              /* 11 */
-            work.data(),        /* 12 */
-            &worksize,          /* 13 */
-            &info);             /* 14 */
-
-    /* Try to allocate optimal worksize. */
-    worksize = static_cast<int>(work[0]);
-    work.resize(worksize);
-
-    dgesvd_(&_jobu, &_jobvt, &m, &n, matrix_get_data(A), &lda, S, U_data, &ldu,
-            VT_data, &ldvt, work.data(), &worksize, &info);
-}
-
-int matrix_dsyevx(
-    bool compute_eig_vectors,
-    dsyevx_eig_enum
-        which_values, /* DSYEVX | DSYEVX_VALUE_INTERVAL | DSYEVX_INDEX_INTERVAL */
-    dsyevx_uplo_enum uplo,
-    matrix_type
-        *A,    /* The input matrix - is modified by the dsyevx() function. */
-    double VL, /* Lower limit when using DSYEVX_VALUE_INTERVAL */
-    double VU, /* Upper limit when using DSYEVX_VALUE_INTERVAL */
-    int IL,    /* Lower index when using DSYEVX_INDEX_INTERVAL */
-    int IU,    /* Upper index when using DSYEVX_INDEX_INTERVAL */
-    double *eig_values, /* The calcualated eigenvalues                  */
-    matrix_type *Z) {   /* The eigenvectors as columns vectors          */
-
-    int lda = matrix_get_column_stride(A);
-    int n = matrix_get_rows(A);
-    char jobz;
-    char range;
-    char uplo_c;
-
-    if (compute_eig_vectors)
-        jobz = 'V';
-    else
-        jobz = 'N';
-
-    switch (which_values) {
-    case (DSYEVX_ALL):
-        range = 'A';
-        break;
-    case (DSYEVX_VALUE_INTERVAL):
-        range = 'V';
-        break;
-    case (DSYEVX_INDEX_INTERVAL):
-        range = 'I';
-        break;
-    default:
-        util_abort("%s: internal error \n", __func__);
-    }
-
-    if (uplo == DSYEVX_AUPPER)
-        uplo_c = 'U';
-    else if (uplo == DSYEVX_ALOWER)
-        uplo_c = 'L';
-    else
-        util_abort("%s: internal error \n", __func__);
-
-    if (!matrix_is_quadratic(A))
-        util_abort("%s: matrix A must be quadratic \n", __func__);
-
-    {
-        int num_eigenvalues, ldz, info, worksize;
-        std::vector<int> ifail(n);
-        std::vector<int> iwork(5 * n);
-        std::vector<double> work(1);
-        double *z_data;
-        double abstol = 0.0; /* SHopuld */
-
-        if (compute_eig_vectors) {
-            ldz = matrix_get_column_stride(Z);
-            z_data = matrix_get_data(Z);
-        } else {
-            /* In this case we can accept that Z == NULL */
-            ldz = 1;
-            z_data = NULL;
-        }
-
-        /* First call to determine optimal worksize. */
-        worksize = -1;
-        info = 0;
-        dsyevx_(&jobz,              /*  1 */
-                &range,             /*  2 */
-                &uplo_c,            /*  3 */
-                &n,                 /*  4 */
-                matrix_get_data(A), /*  5 */
-                &lda,               /*  6 */
-                &VL,                /*  7 */
-                &VU,                /*  8 */
-                &IL,                /*  9 */
-                &IU,                /* 10 */
-                &abstol,            /* 11 */
-                &num_eigenvalues,   /* 12 */
-                eig_values,         /* 13 */
-                z_data,             /* 14 */
-                &ldz,               /* 15 */
-                work.data(),        /* 16 */
-                &worksize,          /* 17 */
-                iwork.data(),       /* 18 */
-                ifail.data(),       /* 19 */
-                &info);             /* 20 */
-
-        worksize = static_cast<int>(work[0]);
-        work.resize(worksize);
-
-        /* Second call: do the job */
-        info = 0;
-        dsyevx_(&jobz, &range, &uplo_c, &n, matrix_get_data(A), &lda, &VL, &VU,
-                &IL, &IU, &abstol, &num_eigenvalues, eig_values, z_data, &ldz,
-                work.data(), &worksize, iwork.data(), ifail.data(), &info);
-
-        return num_eigenvalues;
-    }
-}
-
-void matrix_dgeqrf(matrix_type *A, double *tau) {
-    int lda = matrix_get_column_stride(A);
-    int m = matrix_get_rows(A);
-    int n = matrix_get_columns(A);
-    std::vector<double> work(1);
-    int worksize;
-    int info;
-
-    /* Determine optimal worksize. */
-    worksize = -1;
-    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work.data(), &worksize,
-            &info);
-    if (info != 0)
-        util_abort("%s: dgerqf routine failed with info:%d \n", __func__, info);
-    worksize = static_cast<int>(work[0]);
-    work.resize(worksize);
-
-    /* Second call - do the actual computation. */
-    dgeqrf_(&m, &n, matrix_get_data(A), &lda, tau, work.data(), &worksize,
-            &info);
-    if (info != 0)
-        util_abort("%s: dgerqf routine failed with info:%d \n", __func__, info);
-}
-
-/*
-    Typically to be used after the matrix_dgeqrf() function to construct a orthormal matrix.
-*/
-
-void matrix_dorgqr(matrix_type *A, double *tau,
-                   int num_reflectors) { /* num_reflectors == length of tau. */
-    int lda = matrix_get_column_stride(A);
-    int m = matrix_get_rows(A);
-    int n = matrix_get_columns(A);
-    std::vector<double> work(1);
-    int worksize;
-    int info;
-
-    /* Determine optimal worksize. */
-    worksize = -1;
-    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work.data(),
-            &worksize, &info);
-    if (info != 0)
-        util_abort("%s: dorgqf routine failed with info:%d \n", __func__, info);
-    worksize = static_cast<int>(work[0]);
-    work.resize(worksize);
-
-    /* Second call - do the actual computation. */
-    dorgqr_(&m, &n, &num_reflectors, matrix_get_data(A), &lda, tau, work.data(),
-            &worksize, &info);
-    if (info != 0)
-        util_abort("%s: dorqf routine failed with info:%d \n", __func__, info);
-}
-
-/* Currently only used as 'support' function for the matrix_det function. */
-static void matrix_dgetrf__(matrix_type *A, int *ipiv, int *info) {
-    int lda = matrix_get_column_stride(A);
-    int m = matrix_get_rows(A);
-    int n = matrix_get_columns(A);
-
-    dgetrf_(&m, &n, matrix_get_data(A), &lda, ipiv, info);
-}
-
-/*
-   Calculated the determinant of A. The matrix content will be
-   destroyed.
-*/
-
-double matrix_det(matrix_type *A) {
-    matrix_lapack_assert_square(A);
-    {
-
-        int dgetrf_info;
-        double det = 1;
-        double det_scale = 0;
-        int n = matrix_get_columns(A);
-        std::vector<int> ipiv(n);
-        matrix_dgetrf__(A, ipiv.data(), &dgetrf_info);
-        {
-            int i;
-            for (i = 0; i < n; i++) {
-                det *= matrix_iget(A, i, i);
-                if (det == 0)
-                    return 0;
-
-                if (ipiv[i] != (i + 1)) /* A permutation has taken place. */
-                    det *= -1;
-
-                /* Try to avoid overflow/underflow by factoring out the order of magnitude. */
-                while (std::abs(det) > 10.0) {
-                    det /= 10;
-                    det_scale += 1;
-                }
-
-                while (std::abs(det) < 1.0) {
-                    det *= 10;
-                    det_scale -= 1;
-                }
-            }
-        }
-
-        return det * pow(10, det_scale);
-    }
+    auto singular = svd.singularValues();
+    std::copy(singular.begin(), singular.end(), S);
 }
 
 /* The matrix will be inverted in-place, the inversion is based on LU
@@ -465,35 +107,9 @@ double matrix_det(matrix_type *A) {
      <0 : Invalid input
 */
 int matrix_inv(matrix_type *A) {
-    matrix_lapack_assert_square(A);
-    {
-        int dgetrf_info;
-        int info;
-        int n = matrix_get_columns(A);
-        std::vector<int> ipiv(n);
-        matrix_dgetrf__(A, ipiv.data(), &dgetrf_info);
-        {
-            int lda = matrix_get_column_stride(A);
-            std::vector<double> work(1);
-            int work_size;
-
-            /* First call: determine optimal worksize: */
-            work_size = -1;
-            dgetri_(&n, matrix_get_data(A), &lda, ipiv.data(), work.data(),
-                    &work_size, &info);
-
-            if (info == 0) {
-                work_size = static_cast<int>(work[0]);
-                work.resize(work_size);
-                dgetri_(&n, matrix_get_data(A), &lda, ipiv.data(), work.data(),
-                        &work_size, &info);
-            } else
-                util_abort("%s: dgetri_ returned info:%d \n", __func__, info);
-        }
-        return info;
-    }
+    if (!A->fullPivLu().isInvertible())
+        return 1;
+    Eigen::MatrixXd tmp = A->fullPivLu().inverse();
+    *A = tmp;
+    return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif

@@ -15,9 +15,6 @@ int enkf_linalg_svdS(const matrix_type *S,
                      dgesvd_vector_enum jobVT, double *sig0, matrix_type *U0,
                      matrix_type *V0T);
 
-matrix_type *enkf_linalg_alloc_innov(const matrix_type *dObs,
-                                     const matrix_type *S);
-
 void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
                                matrix_type *V0T, matrix_type *Z, double *eig,
                                matrix_type *U0,

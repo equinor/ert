@@ -369,9 +369,6 @@ matrix_type *meas_data_allocS(const meas_data_type *matrix) {
                                                            block_nr);
             meas_block_initS(meas_block, S, &obs_offset);
         }
-
-        matrix_set_name(S, "S");
-        matrix_assert_finite(S);
     }
     return S;
 }
