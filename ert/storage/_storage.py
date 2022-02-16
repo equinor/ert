@@ -320,8 +320,8 @@ def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
 
 async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
     if record_type in (
-        ert.data.RecordType.NUMERICAL_TREE,
         ert.data.RecordType.BLOB_TREE,
+        ert.data.RecordType.NUMERICAL_TREE,
     ):
         headers = _set_content_header(
             header="accept", record_type=ert.data.RecordType.BYTES
@@ -332,10 +332,13 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
     content = response.content
     if record_type in (
         ert.data.RecordType.LIST_FLOAT,
-        ert.data.RecordType.MAPPING_STR_FLOAT,
         ert.data.RecordType.MAPPING_INT_FLOAT,
+        ert.data.RecordType.MAPPING_STR_FLOAT,
+        ert.data.RecordType.SCALAR_FLOAT,
     ):
         dataframe: pd.DataFrame = read_csv(io.BytesIO(content))
+        if record_type == ert.data.RecordType.SCALAR_FLOAT:
+            return ert.data.NumericalRecord(data=float(dataframe.iloc[0, 0]))
         for _, row in dataframe.iterrows():  # pylint: disable=no-member
             return ert.data.NumericalRecord(
                 data=_interpret_series(row=row, record_type=record_type)
