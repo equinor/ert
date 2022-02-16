@@ -94,7 +94,8 @@ def test_add_experiments(tmpdir, ert_storage):
         parameters = ert.storage.get_experiment_parameters(
             experiment_name=experiment_name
         )
-        assert experiment_parameter_records == parameters
+        parameter_names = [entry["name"] for entry in parameters]
+        assert experiment_parameter_records == parameter_names
 
 
 @pytest.mark.requires_ert_storage
