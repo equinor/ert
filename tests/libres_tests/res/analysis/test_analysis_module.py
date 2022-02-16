@@ -14,73 +14,32 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-
-from ecl.util.enums import RngAlgTypeEnum, RngInitModeEnum
-from ecl.util.util.rng import RandomNumberGenerator
-from libres_utils import ResTest
+import pytest
 
 from res.analysis import AnalysisModule, AnalysisModuleOptionsEnum, AnalysisModeEnum
-from res.util import Matrix
 
 
-class AnalysisModuleTest(ResTest):
-    def setUp(self):
-        self.rng = RandomNumberGenerator(
-            RngAlgTypeEnum.MZRAN, RngInitModeEnum.INIT_DEFAULT
-        )
+def test_analysis_module():
+    am = AnalysisModule(100, AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
 
-    def test_analysis_module(self):
-        am = AnalysisModule(100, AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
+    assert am.setVar("ITER", "1")
 
-        self.assertTrue(am.setVar("ITER", "1"))
+    assert am.name() == "IES_ENKF"
 
-        self.assertEqual(am.name(), "IES_ENKF")
+    assert am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE)
 
-        self.assertTrue(am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE))
+    assert am.hasVar("ITER")
 
-        self.assertTrue(am.hasVar("ITER"))
+    assert isinstance(am.getDouble("ENKF_TRUNCATION"), float)
 
-        self.assertIsInstance(am.getDouble("ENKF_TRUNCATION"), float)
+    assert isinstance(am.getInt("ITER"), int)
 
-        self.assertIsInstance(am.getInt("ITER"), int)
 
-    def test_set_get_var(self):
-        mod = AnalysisModule(100, AnalysisModeEnum.ENSEMBLE_SMOOTHER)
-        with self.assertRaises(KeyError):
-            mod.setVar("NO-NOT_THIS_KEY", 100)
+def test_set_get_var():
+    mod = AnalysisModule(100, AnalysisModeEnum.ENSEMBLE_SMOOTHER)
 
-        with self.assertRaises(KeyError):
-            mod.getInt("NO-NOT_THIS_KEY")
+    with pytest.raises(KeyError):
+        mod.setVar("NO-NOT_THIS_KEY", 100)
 
-    def construct_matrix(self, n, vals):
-        """Constructs n*n matrix with vals as entries"""
-        self.assertEqual(n * n, len(vals))
-        m = Matrix(n, n)
-        idx = 0
-        for i in range(n):
-            for j in range(n):
-                m[(i, j)] = vals[idx]
-                idx += 1
-        return m
-
-    def _n_identity_mcs(self, n=6, s=3):
-        """return n copies of the identity matrix on s*s elts"""
-        return tuple([Matrix.identity(s) for i in range(n)])
-
-    def _matrix_close(self, m1, m2, epsilon=0.01):
-        """Check that matrices m1 and m2 are of same dimension and that they are
-        pointwise within epsilon difference."""
-
-        c = m1.columns()
-        r = m1.rows()
-        self.assertEqual(c, m2.columns(), "Number of columns for m1 differ from m2")
-        self.assertEqual(r, m2.rows(), "Number of rows for m1 differ from m2")
-        for i in range(0, c):
-            for j in range(0, r):
-                pos = (i, j)
-                diff = abs(m1[pos] - m2[pos])
-                self.assertTrue(
-                    diff <= epsilon,
-                    "Matrices differ at (i,j) = (%d,%d). %f != %f"
-                    % (i, j, m1[pos], m2[pos]),
-                )
+    with pytest.raises(KeyError):
+        mod.getInt("NO-NOT_THIS_KEY")
