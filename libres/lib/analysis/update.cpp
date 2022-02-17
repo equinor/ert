@@ -417,7 +417,8 @@ void run_analysis_update_with_rowscaling(
 Check whether the current state and config allows the update algorithm
 to be executed
 */
-bool is_valid(const analysis_config_type *analysis_config,
+bool is_valid(const ies::config::Config &ies_config,
+              const analysis_config_type *analysis_config,
               const state_map_type *source_state_map, const int total_ens_size,
               const local_updatestep_type *updatestep) {
     const int active_ens_size =
@@ -434,7 +435,7 @@ bool is_valid(const analysis_config_type *analysis_config,
 
     // exit if multi step update with iterable modules
     if (local_updatestep_get_num_ministep(updatestep) > 1 &&
-        analysis_config_module_flag_is_set(analysis_config, ANALYSIS_ITERABLE))
+        ies_config.iterable())
         util_exit("** ERROR: Can not combine iterable modules with multi step "
                   "updates - sorry\n");
     return true;
@@ -584,8 +585,12 @@ bool smoother_update(const local_updatestep_type *updatestep,
     state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     FILE *log_stream =
         create_log_file(analysis_config_get_log_path(analysis_config));
-    if (!is_valid(analysis_config, source_state_map, total_ens_size,
-                  updatestep))
+    analysis_module_type *module =
+        analysis_config_get_active_module(analysis_config);
+    const auto *module_config = analysis_module_get_module_config(module);
+
+    if (!is_valid(*module_config, analysis_config, source_state_map,
+                  total_ens_size, updatestep))
         return false;
 
     ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
@@ -620,11 +625,6 @@ bool smoother_update(const local_updatestep_type *updatestep,
                 scaling attached. These parameters are updated one at a time.
             */
 
-            analysis_module_type *module =
-                analysis_config_get_active_module(analysis_config);
-
-            const auto *module_config =
-                analysis_module_get_module_config(module);
             auto *module_data = analysis_module_get_module_data(module);
 
             if (update_data.A != nullptr) {
