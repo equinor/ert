@@ -181,12 +181,11 @@ void local_config_free(local_config_type *local_config) {
 }
 
 local_ministep_type *
-local_config_alloc_ministep(local_config_type *local_config, const char *key,
-                            analysis_module_type *analysis_module) {
+local_config_alloc_ministep(local_config_type *local_config, const char *key) {
     if (hash_has_key(local_config->ministep_storage, key))
         return nullptr;
 
-    local_ministep_type *ministep = local_ministep_alloc(key, analysis_module);
+    local_ministep_type *ministep = local_ministep_alloc(key);
     hash_insert_hash_owned_ref(local_config->ministep_storage, key, ministep,
                                local_ministep_free__);
     return ministep;
