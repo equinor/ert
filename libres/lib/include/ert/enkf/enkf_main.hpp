@@ -51,7 +51,6 @@
 #include <ert/enkf/local_config.hpp>
 #include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
-#include <ert/enkf/ranking_table.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/rng_manager.hpp>
@@ -82,8 +81,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *, bool = false);
 
 enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
 
-ranking_table_type *
-enkf_main_get_ranking_table(const enkf_main_type *enkf_main);
 const ecl_config_type *
 enkf_main_get_ecl_config(const enkf_main_type *enkf_main);
 ensemble_config_type *
@@ -152,10 +149,6 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 int enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
                                              ert_run_context_type *run_context,
                                              enkf_fs_type *fs);
-
-void enkf_main_export_ranking(enkf_main_type *enkf_main,
-                              const char *ranking_key,
-                              const char *ranking_file);
 
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path);
