@@ -55,39 +55,6 @@ ranking_table_type *ranking_table_alloc(int ens_size) {
     return table;
 }
 
-void ranking_table_add_data_ranking(
-    ranking_table_type *ranking_table, bool sort_increasing,
-    const char *ranking_key, const char *user_key, const char *key_index,
-    enkf_fs_type *fs, const enkf_config_node_type *config_node, int step) {
-
-    data_ranking_type *ranking =
-        data_ranking_alloc(sort_increasing, ranking_table->ens_size, user_key,
-                           key_index, fs, config_node, step);
-    hash_insert_hash_owned_ref(ranking_table->ranking_table, ranking_key,
-                               ranking, data_ranking_free__);
-}
-
-bool ranking_table_display_ranking(const ranking_table_type *ranking_table,
-                                   const char *ranking_key) {
-    if (hash_has_key(ranking_table->ranking_table, ranking_key)) {
-        void *ranking =
-            (void *)hash_get(ranking_table->ranking_table, ranking_key);
-
-        if (data_ranking_is_instance(ranking)) {
-            data_ranking_type *data_ranking = data_ranking_safe_cast(ranking);
-            data_ranking_display(data_ranking, stdout);
-        } else if (misfit_ranking_is_instance(ranking)) {
-            misfit_ranking_type *misfit_ranking =
-                misfit_ranking_safe_cast(ranking);
-            misfit_ranking_display(misfit_ranking, stdout);
-        } else
-            util_abort("%s: internal error \n", __func__);
-
-        return true;
-    } else
-        return false;
-}
-
 bool ranking_table_fwrite_ranking(const ranking_table_type *ranking_table,
                                   const char *ranking_key,
                                   const char *filename) {
