@@ -1,7 +1,8 @@
 #include <vector>
 #include <string>
 #include <assert.h>
-#include <optional>
+#include <fmt/format.h>
+#include <cerrno>
 
 #include "ert/analysis/update.hpp"
 #include <ert/util/type_vector_functions.h>
@@ -523,9 +524,6 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
 
-    enkf_analysis_fprintf_obs_summary(
-        obs_data, meas_data, local_ministep_get_name(ministep), log_stream);
-
     int_vector_type *ens_active_list = bool_vector_alloc_active_list(ens_mask);
 
     local_obsdata_type *selected_observations =
@@ -536,6 +534,8 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
 
     enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
                                       true);
+    enkf_analysis_fprintf_obs_summary(
+        obs_data, meas_data, local_ministep_get_name(ministep), log_stream);
 
     if (meas_data_get_active_obs_size(meas_data) == 0) {
         obs_data_free(obs_data);
