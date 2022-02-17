@@ -153,11 +153,6 @@ int enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
                                              ert_run_context_type *run_context,
                                              enkf_fs_type *fs);
 
-void enkf_main_rank_on_observations(enkf_main_type *enkf_main,
-                                    const char *ranking_key,
-                                    const stringlist_type *obs_ranking_keys,
-                                    const int_vector_type *steps);
-
 void enkf_main_rank_on_data(enkf_main_type *enkf_main, const char *ranking_key,
                             const char *data_key, bool sort_increasing,
                             int step);

@@ -208,58 +208,6 @@ void test_load_results_iter_job(ert_test_context_type *test_context,
     stringlist_free(args);
 }
 
-void test_rank_realizations_on_observations_job(
-    ert_test_context_type *test_context, const char *job_name,
-    const char *job_file) {
-    stringlist_type *args = stringlist_alloc_new();
-    ert_test_context_install_workflow_job(test_context, job_name, job_file);
-
-    stringlist_append_copy(args, "NameOfObsRanking1");
-    stringlist_append_copy(args, "|");
-    stringlist_append_copy(args, "WOPR:*");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfObsRanking2");
-    stringlist_append_copy(args, "1-5");
-    stringlist_append_copy(args, "55");
-    stringlist_append_copy(args, "|");
-    stringlist_append_copy(args, "WWCT:*");
-    stringlist_append_copy(args, "WOPR:*");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfObsRanking3");
-    stringlist_append_copy(args, "5");
-    stringlist_append_copy(args, "55");
-    stringlist_append_copy(args, "|");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfObsRanking4");
-    stringlist_append_copy(args, "1,3,5-10");
-    stringlist_append_copy(args, "55");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfObsRanking5");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfObsRanking6");
-    stringlist_append_copy(args, "|");
-    stringlist_append_copy(args, "UnrecognizableObservation");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_free(args);
-}
-
 void test_rank_realizations_on_data_job(ert_test_context_type *test_context,
                                         const char *job_name,
                                         const char *job_file) {
@@ -577,12 +525,11 @@ int main(int argc, const char **argv) {
     const char *job_file_init_case_job = argv[4];
     const char *job_file_load_results = argv[5];
     const char *job_file_load_results_iter = argv[6];
-    const char *job_file_observation_ranking = argv[7];
-    const char *job_file_data_ranking = argv[8];
-    const char *job_file_ranking_export = argv[9];
-    const char *job_file_init_misfit_table = argv[10];
-    const char *job_file_export_runpath = argv[11];
-    const char *job_file_pre_simulation_copy = argv[12];
+    const char *job_file_data_ranking = argv[7];
+    const char *job_file_ranking_export = argv[8];
+    const char *job_file_init_misfit_table = argv[9];
+    const char *job_file_export_runpath = argv[10];
+    const char *job_file_pre_simulation_copy = argv[11];
 
     ert_test_context_type *test_context =
         create_context(config_file, "enkf_workflow_job_test");
@@ -594,8 +541,6 @@ int main(int argc, const char **argv) {
                                    job_file_load_results_iter);
         test_init_misfit_table(test_context, "JOB5",
                                job_file_init_misfit_table);
-        test_rank_realizations_on_observations_job(
-            test_context, "JOB6", job_file_observation_ranking);
         test_rank_realizations_on_data_job(test_context, "JOB7",
                                            job_file_data_ranking);
         test_export_ranking(test_context, "JOB8", job_file_ranking_export);
