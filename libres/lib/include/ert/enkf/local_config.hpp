@@ -47,8 +47,7 @@ void local_config_clear(local_config_type *local_config);
 void local_config_clear_active(local_config_type *local_config);
 void local_config_free(local_config_type *local_config);
 local_ministep_type *
-local_config_alloc_ministep(local_config_type *local_config, const char *key,
-                            analysis_module_type *analysis_module);
+local_config_alloc_ministep(local_config_type *local_config, const char *key);
 local_updatestep_type *
 local_config_get_updatestep(const local_config_type *local_config);
 local_ministep_type *
