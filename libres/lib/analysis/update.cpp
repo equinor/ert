@@ -439,6 +439,17 @@ bool is_valid(const analysis_config_type *analysis_config,
     return true;
 }
 
+static bool is_valid_wrapper(py::object analysis_config,
+                             py::object source_state_map,
+                             const int total_ens_size, py::object updatestep) {
+    return is_valid(ert::from_cwrap<analysis_config_type>(analysis_config),
+                    ert::from_cwrap<state_map_type>(source_state_map),
+                    total_ens_size,
+                    ert::from_cwrap<local_updatestep_type>(updatestep));
+}
+
+RES_LIB_SUBMODULE("update", m) { m.def("is_valid", is_valid_wrapper); }
+
 /*
 Copy all parameters from source_fs to target_fs
 */
@@ -581,16 +592,12 @@ bool smoother_update(const local_updatestep_type *updatestep,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      bool verbose) {
-    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     FILE *log_stream =
         create_log_file(analysis_config_get_log_path(analysis_config));
-    if (!is_valid(analysis_config, source_state_map, total_ens_size,
-                  updatestep))
-        return false;
-
     ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
 
     bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
+    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
     state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
 
     copy_parameters(source_fs, target_fs, ensemble_config, ens_mask);

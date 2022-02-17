@@ -26,27 +26,26 @@ class ESUpdate:
 
     def smootherUpdate(self, run_context):
         source_fs = run_context.get_sim_fs()
-        target_fs = run_context.get_target_fs()
 
-        local_config = self.ert.getLocalConfig()
-        updatestep = local_config.getUpdatestep()
+        updatestep = self.ert.getLocalConfig().getUpdatestep()
 
         analysis_config = self.ert.analysisConfig()
 
         total_ens_size = self.ert.getEnsembleSize()
-        obs = self.ert.getObservations()
-        verbose = True
-        shared_rng = self.ert.rng()
-        ensemble_config = self.ert.ensembleConfig()
 
-        return _lib.update.smoother_update(
+        return _lib.update.is_valid(
+            analysis_config,
+            source_fs.getStateMap(),
+            total_ens_size,
+            updatestep,
+        ) and _lib.update.smoother_update(
             updatestep,
             total_ens_size,
-            obs,
-            shared_rng,
+            self.ert.getObservations(),
+            self.ert.rng(),
             analysis_config,
-            ensemble_config,
+            self.ert.ensembleConfig(),
             source_fs,
-            target_fs,
-            verbose,
+            run_context.get_target_fs(),
+            True,  # verbose
         )
