@@ -93,7 +93,6 @@ pybind11_add_module(
   enkf/config_keys.cpp
   enkf/container.cpp
   enkf/container_config.cpp
-  enkf/data_ranking.cpp
   enkf/ecl_config.cpp
   enkf/ecl_refcase_list.cpp
   enkf/enkf_analysis.cpp
@@ -149,7 +148,6 @@ pybind11_add_module(
   enkf/obs_data.cpp
   enkf/obs_vector.cpp
   enkf/queue_config.cpp
-  enkf/ranking_table.cpp
   enkf/rng_config.cpp
   enkf/run_arg.cpp
   enkf/runpath_list.cpp

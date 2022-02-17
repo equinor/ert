@@ -99,7 +99,6 @@ struct enkf_main_struct {
         *local_config; /* Holding all the information about local analysis. */
     rng_manager_type *rng_manager;
     rng_type *shared_rng;
-    ranking_table_type *ranking_table;
 
     enkf_obs_type *obs;
 
@@ -160,11 +159,6 @@ local_config_type *enkf_main_get_local_config(const enkf_main_type *enkf_main) {
 
 model_config_type *enkf_main_get_model_config(const enkf_main_type *enkf_main) {
     return res_config_get_model_config(enkf_main->res_config);
-}
-
-ranking_table_type *
-enkf_main_get_ranking_table(const enkf_main_type *enkf_main) {
-    return enkf_main->ranking_table;
 }
 
 const ecl_config_type *
@@ -236,7 +230,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     if (enkf_main->obs)
         enkf_obs_free(enkf_main->obs);
 
-    ranking_table_free(enkf_main->ranking_table);
     enkf_main_free_ensemble(enkf_main);
     enkf_main_close_fs(enkf_main);
 
@@ -412,7 +405,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main->shared_rng = NULL;
     enkf_main->ens_size = 0;
     enkf_main->res_config = NULL;
-    enkf_main->ranking_table = ranking_table_alloc(0);
     enkf_main->obs = NULL;
     enkf_main->local_config = local_config_alloc();
 
@@ -830,13 +822,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
     enkf_node_free(node);
 
     return true;
-}
-
-void enkf_main_export_ranking(enkf_main_type *enkf_main,
-                              const char *ranking_key,
-                              const char *ranking_file) {
-    ranking_table_type *ranking_table = enkf_main_get_ranking_table(enkf_main);
-    ranking_table_fwrite_ranking(ranking_table, ranking_key, ranking_file);
 }
 
 queue_config_type *enkf_main_get_queue_config(enkf_main_type *enkf_main) {

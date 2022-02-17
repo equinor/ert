@@ -283,16 +283,6 @@ interface can be shown.
 Jobs for ranking realizations
 -----------------------------
 
-**EXPORT_RANKING**
-
-The :code:`EXPORT_RANKING` job exports ranking results to file. The job takes
-two parameters; the name of the ranking to export and the file to
-export to.
-
-::
-
-	EXPORT_RANKING Dataranking1 /tmp/dataranking1.txt
-
 **INIT_MISFIT_TABLE**
 
 Calculating the misfit for all observations and all timesteps can

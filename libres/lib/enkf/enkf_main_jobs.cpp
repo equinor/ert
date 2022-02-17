@@ -225,17 +225,6 @@ C_USED void *enkf_main_export_field_to_ECL_JOB(void *self,
 }
 
 // Internal workflow job
-C_USED void *enkf_main_export_ranking_JOB(void *self,
-                                          const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    const char *ranking_name = stringlist_iget(args, 0);
-    const char *ranking_file = stringlist_iget(args, 1);
-
-    enkf_main_export_ranking(enkf_main, ranking_name, ranking_file);
-    return NULL;
-}
-
-// Internal workflow job
 C_USED void *enkf_main_init_misfit_table_JOB(void *self,
                                              const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
