@@ -25,6 +25,8 @@
 
 #include <ert/enkf/summary_obs.hpp>
 
+#include "ert/python.hpp"
+
 #define SUMMARY_OBS_TYPE_ID 66103
 #define OBS_SIZE 1
 
@@ -88,9 +90,9 @@ const char *summary_obs_get_summary_key(const summary_obs_type *summary_obs) {
 void summary_obs_get_observations(const summary_obs_type *summary_obs,
                                   obs_data_type *obs_data, enkf_fs_type *fs,
                                   int report_step,
-                                  const active_list_type *__active_list) {
+                                  const ActiveList *__active_list) {
 
-    int active_size = active_list_get_active_size(__active_list, OBS_SIZE);
+    int active_size = __active_list->getActiveSize(OBS_SIZE);
     if (active_size == 1) {
         obs_block_type *obs_block = obs_data_add_block(
             obs_data, summary_obs->obs_key, OBS_SIZE, NULL, false);
@@ -102,8 +104,8 @@ void summary_obs_get_observations(const summary_obs_type *summary_obs,
 void summary_obs_measure(const summary_obs_type *obs,
                          const summary_type *summary, node_id_type node_id,
                          meas_data_type *meas_data,
-                         const active_list_type *__active_list) {
-    int active_size = active_list_get_active_size(__active_list, OBS_SIZE);
+                         const ActiveList *__active_list) {
+    int active_size = __active_list->getActiveSize(OBS_SIZE);
     if (active_size == 1) {
         meas_block_type *meas_block = meas_data_add_block(
             meas_data, obs->obs_key, node_id.report_step, active_size);
@@ -142,11 +144,11 @@ double summary_obs_get_std_scaling(const summary_obs_type *summary_obs) {
 
 void summary_obs_update_std_scale(summary_obs_type *summary_obs,
                                   double std_multiplier,
-                                  const active_list_type *active_list) {
-    if (active_list_get_mode(active_list) == ALL_ACTIVE)
+                                  const ActiveList *active_list) {
+    if (active_list->getMode() == ALL_ACTIVE)
         summary_obs->std_scaling = std_multiplier;
     else {
-        int size = active_list_get_active_size(active_list, OBS_SIZE);
+        int size = active_list->getActiveSize(OBS_SIZE);
         if (size > 0)
             summary_obs->std_scaling = std_multiplier;
     }
@@ -163,3 +165,20 @@ VOID_USER_GET_OBS(summary_obs)
 VOID_MEASURE(summary_obs, summary)
 VOID_CHI2(summary_obs, summary)
 VOID_UPDATE_STD_SCALE(summary_obs);
+
+class ActiveList;
+namespace {
+void update_std_scaling(py::handle obj, double scaling,
+                        const ActiveList &active_list) {
+    auto *summary_obs = reinterpret_cast<summary_obs_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    summary_obs_update_std_scale(summary_obs, scaling, &active_list);
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.summary_obs", m) {
+    using namespace py::literals;
+
+    m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,
+          "active_list"_a);
+}

@@ -19,33 +19,51 @@
 #ifndef ERT_ACTIVE_LIST_H
 #define ERT_ACTIVE_LIST_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include <ert/util/type_macros.h>
+#include <stdio.h>
+
+#include <vector>
 
 #include <ert/enkf/enkf_types.hpp>
 
-typedef struct active_list_struct active_list_type;
+/**
+   This enum is used when we are setting up the dependencies between
+   observations and variables. The modes all_active and inactive are
+   sufficient information, for the values partly active we need
+   additional information.
 
-active_list_type *active_list_alloc();
-void active_list_add_index(active_list_type *, int);
-void active_list_free(active_list_type *);
-const int *active_list_get_active(const active_list_type *);
-int active_list_get_active_size(const active_list_type *, int total_size);
-active_mode_type active_list_get_mode(const active_list_type *);
-void active_list_free__(void *arg);
-active_list_type *active_list_alloc_copy(const active_list_type *src);
-void active_list_summary_fprintf(const active_list_type *active_list,
-                                 const char *dataset_key, const char *key,
-                                 FILE *stream);
-bool active_list_equal(const active_list_type *active_list1,
-                       const active_list_type *active_list2);
-void active_list_copy(active_list_type *target, const active_list_type *src);
+   The same type is used both for variables (PRESSURE/PORO/MULTZ/...)
+   and for observations.
+*/
 
-UTIL_IS_INSTANCE_HEADER(active_list);
+typedef enum {
+    ALL_ACTIVE =
+    1, /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
+    PARTLY_ACTIVE =
+    3 /* Partly active - must supply additonal type spesific information on what is active.*/
+} active_mode_type;
 
-#ifdef __cplusplus
-}
-#endif
+class ActiveList {
+public:
+    const std::vector<int> &index_list() const;
+    const int *active_list_get_active() const;
+    active_mode_type getMode() const;
+    int getActiveSize(int default_size) const;
+    void add_index(int index);
+    void summary_fprintf(const char *dataset_key, const char *key,
+                         FILE *stream) const;
+    bool operator==(const ActiveList &other) const;
+    void print_self() const {
+        printf("ActiveList::self = %p\n", this);
+        printf("mode: %d \n", static_cast<int>(this->m_mode));
+        printf("index_list: {");
+        for (const auto& v : this->m_index_list)
+            printf(" %d",v);
+        printf("} \n");
+    }
+
+private:
+    std::vector<int> m_index_list;
+    active_mode_type m_mode = ALL_ACTIVE;
+};
+
 #endif

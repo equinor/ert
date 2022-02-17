@@ -18,47 +18,32 @@
 #ifndef ERT_LOCAL_OBSDATA_H
 #define ERT_LOCAL_OBSDATA_H
 
-#include <stdbool.h>
+#include <string>
+#include <unordered_map>
 #include <vector>
-
-#include <ert/util/type_macros.h>
 
 #include <ert/enkf/local_obsdata_node.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class LocalObsData {
+public:
+    explicit LocalObsData(const std::string &name);
+    static LocalObsData make_wrapper(const LocalObsDataNode &node);
+    const LocalObsDataNode &operator[](const std::string &name) const;
+    const LocalObsDataNode &operator[](std::size_t index) const;
+    std::vector<LocalObsDataNode>::const_iterator begin() const;
+    std::vector<LocalObsDataNode>::const_iterator end() const;
+    void del_node(const std::string &key);
+    bool has_node(const std::string &key);
+    bool add_node(const std::string &key);
+    bool add_node(const LocalObsDataNode &node);
+    std::size_t size() const;
+    const std::string &name() const;
 
-typedef struct local_obsdata_struct local_obsdata_type;
+    bool operator==(const LocalObsData& other) const;
+private:
+    std::vector<LocalObsDataNode> m_nodes;
+    std::unordered_map<std::string, std::size_t> m_node_index;
+    std::string m_name;
+};
 
-void local_obsdata_free__(void *arg);
-bool local_obsdata_has_node(const local_obsdata_type *data, const char *key);
-local_obsdata_type *local_obsdata_alloc_copy(const local_obsdata_type *src,
-                                             const char *target_key);
-local_obsdata_type *local_obsdata_alloc(const char *name);
-void local_obsdata_free(local_obsdata_type *data);
-int local_obsdata_get_size(const local_obsdata_type *data);
-bool local_obsdata_add_node(local_obsdata_type *data,
-                            local_obsdata_node_type *node);
-local_obsdata_node_type *local_obsdata_iget(const local_obsdata_type *data,
-                                            int index);
-local_obsdata_type *local_obsdata_alloc_wrapper(local_obsdata_node_type *node);
-const char *local_obsdata_get_name(const local_obsdata_type *data);
-local_obsdata_node_type *local_obsdata_get(const local_obsdata_type *data,
-                                           const char *key);
-void local_obsdata_del_node(local_obsdata_type *data, const char *key);
-active_list_type *
-local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
-                                   const char *obs_key);
-void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
-                                   FILE *stream);
-PY_USED active_list_type *
-local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
-                                        const char *obs_key);
-
-UTIL_IS_INSTANCE_HEADER(local_obsdata);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

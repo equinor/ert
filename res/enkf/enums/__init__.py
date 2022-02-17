@@ -9,8 +9,9 @@ from .realization_state_enum import RealizationStateEnum
 from .enkf_truncation_type import EnkfTruncationType
 from .enkf_fs_type_enum import EnKFFSType
 from .gen_data_file_type_enum import GenDataFileType
-from .active_mode_enum import ActiveMode
 from .hook_runtime_enum import HookRuntime
+
+from res._lib.local.active_list import ActiveMode
 
 __all__ = [
     "EnkfFieldFileFormatEnum",

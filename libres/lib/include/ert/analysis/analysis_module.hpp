@@ -67,6 +67,7 @@ bool analysis_module_get_bool(const analysis_module_type *module,
 void *analysis_module_get_ptr(const analysis_module_type *module,
                               const char *var);
 int analysis_module_ens_size(const analysis_module_type *module);
+bool analysis_module_equal(const analysis_module_type * module1, const analysis_module_type * module2);
 
 extern "C++" {
 #include <ert/analysis/ies/ies_data.hpp>

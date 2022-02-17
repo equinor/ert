@@ -19,10 +19,15 @@
 #ifndef ERT_LOCAL_MINISTEP_H
 #define ERT_LOCAL_MINISTEP_H
 
-#include <string>
 #include <string.h>
-#include <vector>
+
+#include <optional>
+#include <string>
+#include <stdexcept>
 #include <unordered_map>
+#include <vector>
+
+#include <fmt/format.h>
 #include <ert/util/stringlist.h>
 
 #include <ert/enkf/active_list.hpp>
@@ -31,126 +36,132 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define LOCAL_MINISTEP_TYPE_ID 661066
-
-class local_ministep_type {
+class LocalMinistep {
 public:
-    UTIL_TYPE_ID_DECLARATION;
     std::string
-        name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
-    local_obsdata_type *observations;
-    obs_data_type *obs_data;
+        m_name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
+    obs_data_type *obs_data; // Should not be here - this is broken design.
+    std::optional<LocalObsData> observations;
 
-    std::unordered_map<std::string, std::shared_ptr<RowScaling>> scaling;
+    std::unordered_map<std::string, RowScaling> scaling;
+    std::unordered_map<std::string, ActiveList> active_size;
 
-    // TODO: replace with std::unordered_map
-    hash_type *
-        active_size; /* A hash table indexed by node keys - each element is an active_list instance. */
 
-    explicit local_ministep_type(const char *name)
-        : name(strdup(name)), obs_data(nullptr), active_size(hash_alloc()) {
-        UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
-        observations =
-            local_obsdata_alloc(std::string("OBSDATA_" + this->name).data());
+    bool operator==(const LocalMinistep& other) const {
+        return  this->m_name == other.m_name &&
+                   this->scaling == other.scaling &&
+                   this->observations == other.observations &&
+                   this->active_size == other.active_size;
     }
 
-    ~local_ministep_type() {
-        hash_free(active_size);
-        local_obsdata_free(observations);
-        if (obs_data)
-            obs_data_free(obs_data);
+    explicit LocalMinistep(const char *name)
+        : m_name(name),
+          obs_data(nullptr) {}
+
+    ~LocalMinistep() {
+        if (this->obs_data)
+            obs_data_free(this->obs_data);
     }
 
-    inline bool data_is_active(const char *key) const {
-        return hash_has_key(active_size, key);
+    const std::string &name() const { return this->m_name; }
+
+    bool data_is_active(const char *key) const {
+        return this->active_size.count(key) == 1;
     }
 
-    inline int num_active_data() const { return hash_get_size(active_size); }
+    int num_active_data() const { return this->active_size.size(); }
 
     void add_active_data(const char *node_key) {
-        if (data_is_active(node_key) > 0)
+        if (this->data_is_active(node_key) > 0)
             util_abort("%s: tried to add existing node key:%s \n", __func__,
                        node_key);
-        hash_insert_hash_owned_ref(active_size, node_key, active_list_alloc(),
-                                   active_list_free__);
+
+        this->active_size.insert({node_key, ActiveList()});
     }
 
-    active_list_type *get_active_data_list(const char *node_key) const {
-        active_list_type *al = (active_list_type *)hash_get(
-            active_size,
-            node_key); /* Fails hard if you do not have the key ... */
+    ActiveList& get_active_data_list(const std::string& node_key) {
+        auto iter = this->active_size.find(node_key);
+        if (iter == this->active_size.end())
+            throw std::logic_error(fmt::format("Tried to get ActiveList from unknown key: {}", node_key));
+
+        ActiveList& al = iter->second;
+        printf("self: %p   get_active_data_list(): ptr: %p mode:  %d   active_size:%d \n", this, &al, static_cast<int>(al.getMode()), al.getActiveSize(0));
+        return al;
+    }
+
+    const ActiveList& get_active_data_list(const std::string& node_key) const {
+        auto iter = this->active_size.find(node_key);
+        if (iter == this->active_size.end())
+            throw std::logic_error(fmt::format("Tried to get ActiveList from unknown key: {}", node_key));
+
+        const ActiveList& al = iter->second;
+        printf("self: %p   get_active_data_list(): ptr: %p mode:  %d   active_size:%d \n", this, &al, static_cast<int>(al.getMode()), al.getActiveSize(0));
+        al.print_self();
         return al;
     }
 
     std::vector<std::string> unscaled_keys() const {
         std::vector<std::string> keys;
-        hash_iter_type *node_iter = hash_iter_alloc(active_size);
-
-        while (!hash_iter_is_complete(node_iter)) {
-            const char *key = hash_iter_get_next_key(node_iter);
-            if (scaling.count(key) == 0) {
-                keys.emplace_back(key);
-            }
-        }
-        hash_iter_free(node_iter);
+        for (const auto &[key, _] : this->active_size)
+            keys.push_back(key);
         return keys;
     }
 
     std::vector<std::string> scaled_keys() const {
         std::vector<std::string> keys;
         for (const auto &[key, _] : scaling) {
-            keys.push_back(key);
+            if (this->scaling.count(key))
+                keys.push_back(key);
         }
         return keys;
     }
 
-    std::shared_ptr<RowScaling> get_row_scaling(std::string key) const {
-        auto scaling_iter = scaling.find(key);
-        if (scaling_iter != scaling.end())
-            return scaling_iter->second;
+    RowScaling &get_row_scaling(const std::string &key) {
+        auto iter = this->scaling.find(key);
+        if (iter == this->scaling.end())
+            throw std::runtime_error(fmt::format("No such RowScaling key registered: {}", key));
 
-        return nullptr;
+        return iter->second;
+    }
+
+    const LocalObsData& get_obsdata() const { return this->observations.value(); }
+
+    LocalObsData& get_obsdata() { return this->observations.value(); }
+
+    bool have_obsdata() const {
+        return this->observations.has_value();
+    }
+
+
+    // This routine does not have anything to with local configuration,
+    // it should be not be here ;-(
+    void add_runtime_obsdata(obs_data_type *obs_data) {
+        if (this->obs_data)
+            obs_data_free(this->obs_data);
+
+        this->obs_data = obs_data_alloc_copy(obs_data);
+    }
+
+    void add_obsdata(const LocalObsData& new_obs_data) {
+        if (!this->observations.has_value())
+            this->observations = new_obs_data;
+        else {
+            for (const auto &node : new_obs_data)
+                this->observations->add_node(node);
+        }
+    }
+
+    RowScaling &get_or_create_row_scaling(const char *key) {
+        auto scaling_iter = this->scaling.find(key);
+        if (scaling_iter == this->scaling.end()) {
+            if (!this->data_is_active(key))
+                throw std::invalid_argument(
+                    "Tried to create row_scaling object for unknown key");
+
+            this->scaling.emplace(key, RowScaling());
+        }
+        return this->scaling.at(key);
     }
 };
 
-local_ministep_type *local_ministep_alloc(const char *name);
-void local_ministep_free(local_ministep_type *ministep);
-void local_ministep_free__(void *arg);
-
-RowScaling *
-local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
-                                         const char *key);
-
-int local_ministep_num_active_data(const local_ministep_type *ministep);
-void local_ministep_activate_data(local_ministep_type *ministep,
-                                  const char *key);
-active_list_type *
-local_ministep_get_active_data_list(const local_ministep_type *ministep,
-                                    const char *key);
-bool local_ministep_data_is_active(const local_ministep_type *ministep,
-                                   const char *key);
-
-const char *local_ministep_get_name(const local_ministep_type *ministep);
-void local_ministep_summary_fprintf(const local_ministep_type *ministep,
-                                    FILE *stream);
-void local_ministep_add_obsdata(local_ministep_type *ministep,
-                                local_obsdata_type *obsdata);
-void local_ministep_add_obsdata_node(local_ministep_type *ministep,
-                                     local_obsdata_node_type *obsdatanode);
-local_obsdata_type *
-local_ministep_get_obsdata(const local_ministep_type *ministep);
-void local_ministep_add_obs_data(local_ministep_type *ministep,
-                                 obs_data_type *obs_data);
-obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);
-
-UTIL_SAFE_CAST_HEADER(local_ministep);
-UTIL_IS_INSTANCE_HEADER(local_ministep);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

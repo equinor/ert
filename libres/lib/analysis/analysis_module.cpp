@@ -333,3 +333,11 @@ extern "C++" ies::config::Config *
 analysis_module_get_module_config(const analysis_module_type *module) {
     return module->module_config.get();
 }
+
+bool analysis_module_equal(const analysis_module_type * module1, const analysis_module_type * module2) {
+    return *module1->module_data == *module2->module_data &&
+           *module1->module_config == *module2->module_config &&
+            strcmp(module1->user_name, module2->user_name) == 0 &&
+            module1->mode == module2->mode;
+}
+

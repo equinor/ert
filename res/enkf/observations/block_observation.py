@@ -39,9 +39,6 @@ class BlockObservation(BaseCClass):
     _get_std_scaling = ResPrototype(
         "double block_obs_iget_std_scaling( block_obs, int )"
     )
-    _update_std_scaling = ResPrototype(
-        "void   block_obs_update_std_scale(block_obs , double , active_list)"
-    )
     _get_value = ResPrototype("double block_obs_iget_value( block_obs, int)")
     _get_depth = ResPrototype("double block_obs_iget_depth( block_obs, int)")
     _add_field_point = ResPrototype(
@@ -96,7 +93,7 @@ class BlockObservation(BaseCClass):
         return self._get_std_scaling(index)
 
     def updateStdScaling(self, factor, active_list):
-        self._update_std_scaling(factor, active_list)
+        BlockObservation._update_std_scaling(self, factor, active_list)
 
     def getDepth(self, index):
         """@rtype: float"""
@@ -116,3 +113,10 @@ class BlockObservation(BaseCClass):
 
     def __repr__(self):
         return "BlockObservation(size = %d) at 0x%x" % (len(self), self._address())
+
+
+from res._lib.local.block_obs import update_std_scaling
+
+BlockObservation._update_std_scaling = update_std_scaling
+
+del update_std_scaling

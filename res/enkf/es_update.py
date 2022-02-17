@@ -39,7 +39,7 @@ class ESUpdate:
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
-        return _lib.update.smoother_update(
+        update = _lib.update.smoother_update(
             updatestep,
             total_ens_size,
             obs,
@@ -50,3 +50,5 @@ class ESUpdate:
             target_fs,
             verbose,
         )
+        print(f"Back in python update:{update}")
+        return update

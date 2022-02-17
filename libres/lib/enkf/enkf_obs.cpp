@@ -33,10 +33,14 @@
 
 #include <ert/enkf/summary_obs.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_config.hpp>
+#include <ert/enkf/local_obsdata.hpp>
+#include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/active_list.hpp>
 
 /*
 
@@ -162,6 +166,9 @@ In the following example we have two observations
 
  */
 
+hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs);
+conf_class_type *enkf_obs_get_obs_conf_class(void);
+
 #define ENKF_OBS_TYPE_ID 637297
 struct enkf_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -246,63 +253,14 @@ bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs) {
         return false;
 }
 
-bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }
-
-void enkf_obs_free(enkf_obs_type *enkf_obs) {
-    hash_free(enkf_obs->obs_hash);
-    vector_free(enkf_obs->obs_vector);
-    time_map_free(enkf_obs->obs_time);
-    free(enkf_obs);
-}
-
-time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
-    return time_map_iget(enkf_obs->obs_time, report_step);
-}
-
-/*
-   Observe that the obs_vector can be NULL - in which it is of course not added.
-*/
-void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
-                             const obs_vector_type *vector) {
-
-    if (vector != NULL) {
-        const char *obs_key = obs_vector_get_key(vector);
-        if (hash_has_key(enkf_obs->obs_hash, obs_key))
-            util_abort("%s: Observation with key:%s already added.\n", __func__,
-                       obs_key);
-
-        hash_insert_ref(enkf_obs->obs_hash, obs_key, vector);
-        vector_append_owned_ref(enkf_obs->obs_vector, vector,
-                                obs_vector_free__);
-    }
-}
-
-bool enkf_obs_has_key(const enkf_obs_type *obs, const char *key) {
-    return hash_has_key(obs->obs_hash, key);
-}
-
-obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *obs,
-                                     const char *key) {
-    return (obs_vector_type *)hash_get(obs->obs_hash, key);
-}
-
-obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs, int index) {
-    return (obs_vector_type *)vector_iget(obs->obs_vector, index);
-}
-
-int enkf_obs_get_size(const enkf_obs_type *obs) {
-    return vector_get_size(obs->obs_vector);
-}
-
 static void enkf_obs_get_obs_and_measure_summary(
     const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
-    enkf_fs_type *fs, const local_obsdata_node_type *obs_node,
+    enkf_fs_type *fs, const LocalObsDataNode *obs_node,
     const int_vector_type *ens_active_list, meas_data_type *meas_data,
     obs_data_type *obs_data, double_vector_type *obs_value,
     double_vector_type *obs_std) {
 
-    const active_list_type *active_list =
-        local_obsdata_node_get_active_list(obs_node);
+    const auto &active_list = obs_node->active_list();
 
     int active_count = 0;
     int last_step = -1;
@@ -317,18 +275,15 @@ static void enkf_obs_get_obs_and_measure_summary(
         if (step < 0)
             break;
 
-        if (obs_vector_iget_active(obs_vector, step)) {
-            const summary_obs_type *summary_obs =
-                (const summary_obs_type *)obs_vector_iget_node(obs_vector,
-                                                               step);
-            double_vector_iset(obs_std, active_count,
-                               summary_obs_get_std(summary_obs) *
-                                   summary_obs_get_std_scaling(summary_obs));
-            double_vector_iset(obs_value, active_count,
-                               summary_obs_get_value(summary_obs));
-            last_step = step;
-            active_count++;
-        }
+        const summary_obs_type *summary_obs =
+            (const summary_obs_type *)obs_vector_iget_node(obs_vector, step);
+        double_vector_iset(obs_std, active_count,
+                           summary_obs_get_std(summary_obs) *
+                               summary_obs_get_std_scaling(summary_obs));
+        double_vector_iset(obs_value, active_count,
+                           summary_obs_get_value(summary_obs));
+        last_step = step;
+        active_count++;
     }
 
     if (active_count <= 0)
@@ -362,51 +317,44 @@ static void enkf_obs_get_obs_and_measure_summary(
             if (step < 0)
                 break;
 
-            if (obs_vector_iget_active(obs_vector, step)) {
-                for (int iens_index = 0; iens_index < active_size;
-                     iens_index++) {
-                    const int iens =
-                        int_vector_iget(ens_active_list, iens_index);
-                    node_id_type node_id = {.report_step = step, .iens = iens};
-                    enkf_node_load(work_node, fs, node_id);
+            for (int iens_index = 0; iens_index < active_size; iens_index++) {
+                const int iens = int_vector_iget(ens_active_list, iens_index);
+                node_id_type node_id = {.report_step = step, .iens = iens};
+                enkf_node_load(work_node, fs, node_id);
 
-                    int smlength = summary_length(
-                        (const summary_type *)enkf_node_value_ptr(work_node));
-                    if (step >= smlength) {
-                        // if obs vector and sim vector have different length
-                        // deactivate and continue to next
-                        char *msg = util_alloc_sprintf(
-                            "length of observation vector and simulated "
-                            "differ: %d vs. %d ",
-                            step, smlength);
-                        meas_block_deactivate(meas_block, active_count);
-                        obs_block_deactivate(obs_block, active_count, true,
-                                             msg);
-                        free(msg);
-                        break;
-                    } else {
-                        meas_block_iset(
-                            meas_block, iens, active_count,
-                            summary_get((const summary_type *)
-                                            enkf_node_value_ptr(work_node),
-                                        node_id.report_step));
-                    }
+                int smlength = summary_length(
+                    (const summary_type *)enkf_node_value_ptr(work_node));
+                if (step >= smlength) {
+                    // if obs vector and sim vector have different length
+                    // deactivate and continue to next
+                    char *msg = util_alloc_sprintf(
+                        "length of observation vector and simulated "
+                        "differ: %d vs. %d ",
+                        step, smlength);
+                    meas_block_deactivate(meas_block, active_count);
+                    obs_block_deactivate(obs_block, active_count, true, msg);
+                    free(msg);
+                    break;
+                } else {
+                    meas_block_iset(
+                        meas_block, iens, active_count,
+                        summary_get((const summary_type *)enkf_node_value_ptr(
+                                        work_node),
+                                    node_id.report_step));
                 }
-                active_count++;
             }
+            active_count++;
         }
         enkf_node_free(work_node);
     }
 }
 
-void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
-                                       enkf_fs_type *fs,
-                                       const local_obsdata_node_type *obs_node,
-                                       const int_vector_type *ens_active_list,
-                                       meas_data_type *meas_data,
-                                       obs_data_type *obs_data) {
+static void enkf_obs_get_obs_and_measure_node(
+    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
+    const LocalObsDataNode *obs_node, const int_vector_type *ens_active_list,
+    meas_data_type *meas_data, obs_data_type *obs_data) {
 
-    const char *obs_key = local_obsdata_node_get_key(obs_node);
+    const char *obs_key = obs_node->name().c_str();
     obs_vector_type *obs_vector =
         (obs_vector_type *)hash_get(enkf_obs->obs_hash, obs_key);
     obs_impl_type obs_type = obs_vector_get_impl_type(obs_vector);
@@ -434,8 +382,7 @@ void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            const active_list_type *active_list =
-                local_obsdata_node_get_active_list(obs_node);
+            const auto *active_list = obs_node->active_list();
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,
                                          active_list, fs);
@@ -452,24 +399,17 @@ void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const int_vector_type *ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data) {
 
     int iobs;
-    for (iobs = 0; iobs < local_obsdata_get_size(local_obsdata); iobs++) {
-        const local_obsdata_node_type *obs_node =
-            local_obsdata_iget(local_obsdata, iobs);
-        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, obs_node,
+    for (iobs = 0; iobs < local_obsdata->size(); iobs++) {
+        const auto &obs_node = local_obsdata->operator[](iobs);
+        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, &obs_node,
                                           ens_active_list, meas_data, obs_data);
     }
-}
-
-void enkf_obs_clear(enkf_obs_type *enkf_obs) {
-    hash_clear(enkf_obs->obs_hash);
-    vector_clear(enkf_obs->obs_vector);
-    ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
 }
 
 /*
@@ -1154,61 +1094,8 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
     return enkf_conf_class;
 }
 
-/*
-   Allocates a stringlist of obs target keys which correspond to
-   summary observations, these are then added to the state vector in
-   enkf_main.
-*/
-stringlist_type *enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs,
-                                              obs_impl_type obs_type) {
-    stringlist_type *vars = stringlist_alloc_new();
-    hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
-    const char *key = hash_iter_get_next_key(iter);
-    while (key != NULL) {
-        obs_vector_type *obs_vector =
-            (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-        if (obs_vector_get_impl_type(obs_vector) == obs_type)
-            stringlist_append_copy(vars, key);
-        key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    return vars;
-}
-
-obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
-                                const char *key) {
-    obs_vector_type *obs_vector =
-        (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-    return obs_vector_get_impl_type(obs_vector);
-}
-
-stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
-                                                 const char *input_string) {
-
-    stringlist_type *obs_keys = hash_alloc_stringlist(enkf_obs->obs_hash);
-
-    if (!input_string)
-        return obs_keys;
-
-    stringlist_type *matching_keys = stringlist_alloc_new();
-    char **input_keys;
-    int num_keys;
-    int obs_keys_count = stringlist_get_size(obs_keys);
-
-    util_split_string(input_string, " ", &num_keys, &input_keys);
-    for (int i = 0; i < num_keys; i++) {
-        const char *input_key = input_keys[i];
-        for (int j = 0; j < obs_keys_count; j++) {
-            const char *obs_key = stringlist_iget(obs_keys, j);
-
-            if (util_string_match(obs_key, input_key) &&
-                !stringlist_contains(matching_keys, obs_key))
-                stringlist_append_copy(matching_keys, obs_key);
-        }
-    }
-    util_free_stringlist(input_keys, num_keys);
-    stringlist_free(obs_keys);
-    return matching_keys;
+hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
+    return hash_iter_alloc(enkf_obs->obs_hash);
 }
 
 /*
@@ -1251,25 +1138,4 @@ hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
     return map;
 }
 
-hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
-    return hash_iter_alloc(enkf_obs->obs_hash);
-}
-
-void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        local_obsdata_type *local_obs,
-                                        enkf_fs_type *fs,
-                                        const bool_vector_type *ens_mask) {
-    hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
-    while (!hash_iter_is_complete(iter)) {
-        const char *key = hash_iter_get_next_key(iter);
-        obs_vector_type *obs_vector =
-            (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-
-        if (obs_vector_has_data(obs_vector, ens_mask, fs)) {
-            local_obsdata_node_type *node =
-                obs_vector_alloc_local_node(obs_vector);
-            local_obsdata_add_node(local_obs, node);
-        }
-    }
-    hash_iter_free(iter);
-}
+#include "enkf_obs_clink.cpp"

@@ -217,3 +217,63 @@ matrix_type *ies::data::Data::alloc_activeA() const {
     bool_vector_free(state_mask);
     return activeA;
 }
+
+
+namespace {
+bool mask_equal(const bool_vector_type * m1, const bool_vector_type * m2) {
+    if (m1 == m2)
+        return true;
+
+    if (!m1)
+        return false;
+
+    if (!m2)
+        return false;
+
+    return bool_vector_equal(m1, m2);
+}
+
+
+bool matrix_eq(const matrix_type * m1, const matrix_type * m2) {
+    if (m1 == m2)
+        return true;
+
+    if (!m1)
+        return false;
+
+    if (!m2)
+        return false;
+
+    return matrix_equal(m1, m2);
+}
+}
+
+bool ies::data::Data::operator==(const ies::data::Data& other) const {
+    auto eq1 = this->m_ens_size == other.m_ens_size &&
+           this->m_converged == other.m_converged &&
+           this->m_iteration_nr == other.m_iteration_nr &&
+           this->m_state_size == other.m_state_size;
+
+    if (!eq1)
+        return false;
+
+    if (!mask_equal(this->m_ens_mask, other.m_ens_mask))
+        return false;
+
+    if (!mask_equal(this->m_obs_mask0, other.m_obs_mask0))
+        return false;
+
+    if (!mask_equal(this->m_obs_mask, other.m_obs_mask))
+        return false;
+
+    if (!matrix_eq(this->W, other.W))
+        return false;
+
+    if (!matrix_eq(this->A0, other.A0))
+        return false;
+
+    if (!matrix_eq(this->E, other.E))
+        return false;
+
+    return true;
+}

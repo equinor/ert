@@ -187,6 +187,11 @@ void RowScaling::assign_vector(const float *data, size_t size) {
         assign(index, data[index]);
 }
 
+bool RowScaling::operator==(const RowScaling& other) const {
+    return this->m_resolution == other.m_resolution &&
+           this->m_data == other.m_data;
+}
+
 void RowScaling::assign_vector(const double *data, size_t size) {
     m_resize(size);
     for (int index = 0; index < size; index++)
@@ -199,6 +204,8 @@ void setitem(RowScaling &self, size_t index, double value) {
 }
 
 double getitem(const RowScaling &self, size_t index) { return self[index]; }
+
+
 
 const auto assign_vector_doc = R"(
 Assign tapering value for all elements via a vector.
@@ -235,7 +242,7 @@ RES_LIB_SUBMODULE("local.row_scaling", m) {
     py::options opts;
     opts.disable_function_signatures();
 
-    py::class_<RowScaling, std::shared_ptr<RowScaling>>(m, "RowScaling")
+    py::class_<RowScaling>(m, "RowScaling")
         .def(py::init<>())
         .def("__len__", &RowScaling::size)
         .def("__setitem__", &setitem, "index"_a, "value"_a)

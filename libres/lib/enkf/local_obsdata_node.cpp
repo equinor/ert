@@ -18,73 +18,32 @@
 #include <stdlib.h>
 #include <vector>
 #include <algorithm>
-
-#include <ert/util/type_macros.h>
-#include <ert/util/int_vector.h>
-
 #include <ert/enkf/local_obsdata_node.hpp>
 
-#define LOCAL_OBSDATA_NODE_TYPE_ID 84441309
+#include "ert/python.hpp"
 
-struct local_obsdata_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    char *obs_key;
-    active_list_type *active_list;
-};
-
-UTIL_IS_INSTANCE_FUNCTION(local_obsdata_node, LOCAL_OBSDATA_NODE_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(local_obsdata_node, LOCAL_OBSDATA_NODE_TYPE_ID)
-
-static local_obsdata_node_type *
-local_obsdata_node_alloc__(const char *obs_key) {
-    auto node = new local_obsdata_node_type;
-    UTIL_TYPE_ID_INIT(node, LOCAL_OBSDATA_NODE_TYPE_ID);
-    node->obs_key = util_alloc_string_copy(obs_key);
-    node->active_list = NULL;
-
-    return node;
-}
-
-local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key) {
-    local_obsdata_node_type *node = local_obsdata_node_alloc__(obs_key);
-
-    node->active_list = active_list_alloc();
-
-    return node;
-}
-
-local_obsdata_node_type *
-local_obsdata_node_alloc_copy(const local_obsdata_node_type *src) {
-    local_obsdata_node_type *target = local_obsdata_node_alloc__(src->obs_key);
-
-    target->active_list = active_list_alloc_copy(src->active_list);
-
-    return target;
-}
+LocalObsDataNode::LocalObsDataNode(const std::string &key) : m_key(key) {}
 
 const char *local_obsdata_node_get_key(const local_obsdata_node_type *node) {
     return node->obs_key;
 }
 
-void local_obsdata_node_free(local_obsdata_node_type *node) {
-    if (node->active_list)
-        active_list_free(node->active_list);
-
-    free(node->obs_key);
-    delete node;
+const ActiveList *LocalObsDataNode::active_list() const {
+    return &this->m_active_list;
 }
 
-void local_obsdata_node_free__(void *arg) {
-    local_obsdata_node_type *node = local_obsdata_node_safe_cast(arg);
-    local_obsdata_node_free(node);
+
+const std::string &LocalObsDataNode::name() const { return this->m_key; }
+
+bool LocalObsDataNode::operator==(const LocalObsDataNode &other) const {
+    return this->m_key == other.m_key &&
+           this->m_active_list == other.m_active_list;
 }
 
-active_list_type *
-local_obsdata_node_get_active_list(const local_obsdata_node_type *node) {
-    return node->active_list;
-}
-
-active_list_type *
-local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node) {
-    return active_list_alloc_copy(node->active_list);
+RES_LIB_SUBMODULE("local.local_obsdata_node", m) {
+    py::class_<LocalObsDataNode>(m, "LocalObsdataNode")
+        .def(py::init<const std::string &>())
+        .def("key", &LocalObsDataNode::name)
+        .def("getKey", &LocalObsDataNode::name)
+        .def("getActiveList", &LocalObsDataNode::active_list);
 }

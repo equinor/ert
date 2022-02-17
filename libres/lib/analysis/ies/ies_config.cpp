@@ -147,3 +147,14 @@ double ies::config::Config::steplength(int iteration_nr) const {
 }
 
 bool ies::config::Config::iterable() const { return this->m_iterable; }
+
+bool ies::config::Config::operator==(const ies::config::Config& other) const {
+    return this->m_truncation == other.m_truncation &&
+           this->m_ies_inversion == other.m_ies_inversion &&
+           this->m_ies_aaprojection == other.m_ies_aaprojection &&
+           this->m_iterable == other.m_iterable &&
+           this->m_option_flags == other.m_option_flags &&
+           this->m_ies_max_steplength == other.m_ies_max_steplength &&
+           this->m_ies_min_steplength == other.m_ies_min_steplength &&
+           this->m_ies_dec_steplength == other.m_ies_dec_steplength;
+}

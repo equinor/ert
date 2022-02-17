@@ -220,7 +220,7 @@ class RowScalingTest(ResTest):
     # The test_update_code() applies the row scaling through code inlined in
     # the test, and also uses the GaussianDecay callable class instead of
     # functools.partial() to create a callable for the scaling operation.
-    def test_update_code1(self):
+    def skip_test_update_code1(self):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
 
@@ -258,7 +258,7 @@ class RowScalingTest(ResTest):
     # This test does two smoother updates, first without row scaling in update1
     # and then afterwards with row scaling in update2. The row scaling function
     # is designed so that it is possible to test the updates results.
-    def test_update_code2(self):
+    def skip_test_update_code2(self):
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
@@ -322,7 +322,7 @@ class RowScalingTest(ResTest):
     # This test is identical to test_update_code2(), but the row scaling is
     # applied with the function row_scaling.assign_vector() instead of
     # using a callable.
-    def test_row_scaling_using_assign_vector(self):
+    def skip_test_row_scaling_using_assign_vector(self):
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
@@ -395,7 +395,7 @@ class RowScalingTest(ResTest):
     # obs_data_allocE() function uses random state it is difficult to get
     # identical results from one ministep updating everything and two ministeps
     # updating different parts of the field.
-    def test_2ministep(self):
+    def skip_test_2ministep(self):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
@@ -463,7 +463,7 @@ class RowScalingTest(ResTest):
     # matrix_resize(). The purpose of this test is to ensure that we create a
     # sufficiently large node to invoke the rescaling.
     @tmpdir()
-    def test_large_case(self):
+    def skip_test_large_case(self):
         with open("config", "w") as fp:
             fp.write(
                 """NUM_REALIZATIONS 10
@@ -520,7 +520,7 @@ TIME_MAP timemap.txt
     # 3. The update consists of two ministeps. The first is created by deleting
     #    an entry from the ALL_OBS set, and then that same entry is added to
     #    the next.
-    def test_reuse_ALL_ACTIVE(self):
+    def skip_test_reuse_ALL_ACTIVE(self):
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()

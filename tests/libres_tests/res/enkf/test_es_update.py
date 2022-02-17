@@ -151,6 +151,7 @@ def test_update(setup_case, module, expected_gen_kw):
     target_fs = fsm.getFileSystem("target")
     run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
     es_update.smootherUpdate(run_context)
+    print("Back in test_update")
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)
@@ -239,17 +240,20 @@ def test_localization(setup_case, expected_target_gen_kw):
     # perform localization
     localized_idxs = (1, 2)
     local_config = ert.getLocalConfig()
-    local_config.clear()
     obs = local_config.createObsdata("OBSSET_LOCA")
     obs.addNode("WOPR_OP1_72")
     ministep = local_config.createMinistep("MINISTEP_LOCA")
     ministep.addActiveData("SNAKE_OIL_PARAM")  # replace dataset.addNode()
     active_list = ministep.getActiveList("SNAKE_OIL_PARAM")
+    active_list.print_self()
     for i in localized_idxs:
         active_list.addActiveIndex(i)
     ministep.attachObsset(obs)
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)
+
+    print(f"Active mode: {active_list.getMode()}   size: {active_list.getActiveSize(0)}")
+    active_list.print_self()
 
     # Run enseble smoother
     mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=True)

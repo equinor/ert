@@ -334,6 +334,12 @@ obs_data_type *obs_data_alloc(double global_std_scaling) {
     return obs_data;
 }
 
+obs_data_type *obs_data_alloc_copy(const obs_data_type *src) {
+    obs_data_type *copy = obs_data_alloc(src->global_std_scaling);
+    // Should actually copy the internal content of the matrix also.
+    return copy;
+}
+
 obs_block_type *obs_data_add_block(obs_data_type *obs_data, const char *obs_key,
                                    int obs_size, matrix_type *error_covar,
                                    bool error_covar_owner) {

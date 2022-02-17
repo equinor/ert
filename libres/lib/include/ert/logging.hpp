@@ -18,29 +18,31 @@ public:
     enum struct Level { debug, info, warning, error, critical };
     virtual ~ILogger() = default;
 
-    template <typename... Args> void debug(fmt::string_view f, Args &&...args) {
+    template <typename... Args>
+    void debug(fmt::string_view f, Args &&... args) {
         this->log(Level::debug, f,
                   fmt::make_format_args(std::forward<Args>(args)...));
     }
 
-    template <typename... Args> void info(fmt::string_view f, Args &&...args) {
+    template <typename... Args> void info(fmt::string_view f, Args &&... args) {
         this->log(Level::info, f,
                   fmt::make_format_args(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
-    void warning(fmt::string_view f, Args &&...args) {
+    void warning(fmt::string_view f, Args &&... args) {
         this->log(Level::warning, f,
                   fmt::make_format_args(std::forward<Args>(args)...));
     }
 
-    template <typename... Args> void error(fmt::string_view f, Args &&...args) {
+    template <typename... Args>
+    void error(fmt::string_view f, Args &&... args) {
         this->log(Level::error, f,
                   fmt::make_format_args(std::forward<Args>(args)...));
     }
 
     template <typename... Args>
-    void critical(fmt::string_view f, Args &&...args) {
+    void critical(fmt::string_view f, Args &&... args) {
         this->log(Level::critical, f,
                   fmt::make_format_args(std::forward<Args>(args)...));
     }

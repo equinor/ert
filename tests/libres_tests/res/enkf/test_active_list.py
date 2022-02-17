@@ -28,7 +28,6 @@ class ActiveListTest(ResTest):
 
     def test_active_size(self):
         al = ActiveList()
-        self.assertEqual(None, al.getActiveSize(None))
         self.assertEqual(7, al.getActiveSize(7))
         self.assertEqual(-1, al.getActiveSize(-1))
 
@@ -58,6 +57,10 @@ class ActiveListTest(ResTest):
         self.assertTrue("150" in rep)
         self.assertTrue("PARTLY_ACTIVE" in rep)
         self.assertFalse("ALL_ACTIVE" in rep)
+
+    def test_mode_enum(self):
+        self.assertEqual( ActiveMode.ALL_ACTIVE, 1)
+        self.assertEqual( ActiveMode.PARTLY_ACTIVE, 3)
 
 
 def test_active_index_list_empty():

@@ -175,11 +175,10 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const active_list_type *__active_list,
-                           matrix_type *A, int row_offset, int column) {
-    int active_size;
-    const int *active_list = active_list_get_active(__active_list);
-    active_size = active_list_get_active_size(__active_list, node_size);
+                           const ActiveList *__active_list, matrix_type *A,
+                           int row_offset, int column) {
+    const int *active_list = __active_list->active_list_get_active();
+    auto active_size = __active_list->getActiveSize(node_size);
 
     if (ecl_type_is_double(node_type)) {
         const double *node_data = (const double *)__node_data;
@@ -221,11 +220,10 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
-                             const active_list_type *__active_list,
+                             const ActiveList *__active_list,
                              const matrix_type *A, int row_offset, int column) {
-    int active_size;
-    const int *active_list = active_list_get_active(__active_list);
-    active_size = active_list_get_active_size(__active_list, node_size);
+    const int *active_list = __active_list->active_list_get_active();
+    auto active_size = __active_list->getActiveSize(node_size);
 
     if (ecl_type_is_double(node_type)) {
         double *node_data = (double *)__node_data;

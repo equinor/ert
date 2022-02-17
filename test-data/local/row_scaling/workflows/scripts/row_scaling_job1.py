@@ -17,11 +17,10 @@ class RowScalingJob1(ErtScript):
     def run(self):
         main = self.ert()
         local_config = main.getLocalConfig()
-        local_config.clear()
+        ministep = local_config.createMinistep("MINISTEP")
 
-        local_data = local_config.createDataset("LOCAL")
-        local_data.addNode("PORO")
-        row_scaling = local_data.row_scaling("PORO")
+        ministep.addActiveData("PORO")
+        row_scaling = ministep.get_or_create_row_scaling("PORO")
 
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]
@@ -37,8 +36,4 @@ class RowScalingJob1(ErtScript):
 
         obs = local_config.createObsdata("OBSSET_LOCAL")
         obs.addNode("WBHP0")
-        ministep = local_config.createMinistep("MINISTEP_LOCAL")
-        ministep.attachDataset(local_data)
         ministep.attachObsset(obs)
-        updatestep = local_config.getUpdatestep()
-        updatestep.attachMinistep(ministep)

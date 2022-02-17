@@ -81,6 +81,7 @@ public:
     double steplength(int iteration_nr) const;
     bool iterable() const;
 
+    bool operator==(const Config& other) const;
 private:
     std::variant<double, int> m_truncation;
     inversion_type

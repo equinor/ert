@@ -50,6 +50,7 @@ public:
     matrix_type *alloc_activeW() const;
     matrix_type *alloc_activeA() const;
 
+    bool operator==(const Data& other) const;
 private:
     int m_ens_size;
     bool m_converged;
