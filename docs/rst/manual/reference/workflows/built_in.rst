@@ -283,20 +283,6 @@ interface can be shown.
 Jobs for ranking realizations
 -----------------------------
 
-**DATA_RANKING**
-
-The :code:`DATA_RANKING` job will rank realizations in increasing or
-decreasing order on selected data value for a selected time step. The
-job takes as parameters the name of the ranking, the data key to rank
-on, increasing order and selected time steps. If no time step is
-given, the default is the last timestep.
-
-Rank the realizations on :code:`PORO`:1,2,3 on time step 0 in decreasing order:
-
-::
-
-	DATA_RANKING Dataranking1 PORO:1,2,3 false 0
-
 **EXPORT_RANKING**
 
 The :code:`EXPORT_RANKING` job exports ranking results to file. The job takes

@@ -80,32 +80,6 @@ static void data_ranking_init(data_ranking_type *ranking, enkf_fs_type *fs,
     enkf_node_free(enkf_node);
 }
 
-data_ranking_type *data_ranking_alloc(bool sort_increasing, int ens_size,
-                                      const char *user_key,
-                                      const char *key_index, enkf_fs_type *fs,
-                                      const enkf_config_node_type *config_node,
-                                      int step) {
-    data_ranking_type *ranking =
-        (data_ranking_type *)util_malloc(sizeof *ranking);
-    UTIL_TYPE_ID_INIT(ranking, DATA_RANKING_TYPE_ID);
-    ranking->ens_size = ens_size;
-    ranking->sort_increasing = sort_increasing;
-
-    if (ranking->sort_increasing)
-        ranking->data_ensemble = double_vector_alloc(
-            ens_size, INFINITY); // To ensure it comes last when sorting
-    else
-        ranking->data_ensemble = double_vector_alloc(
-            ens_size, -INFINITY); // To ensure it comes last when sorting
-
-    ranking->valid = bool_vector_alloc(ens_size, false);
-    ranking->sort_permutation = NULL;
-    ranking->user_key = util_alloc_string_copy(user_key);
-
-    data_ranking_init(ranking, fs, config_node, key_index, step);
-    return ranking;
-}
-
 void data_ranking_free__(void *arg) {
     data_ranking_type *ranking = data_ranking_safe_cast(arg);
     data_ranking_free(ranking);

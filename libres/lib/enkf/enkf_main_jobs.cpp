@@ -225,40 +225,6 @@ C_USED void *enkf_main_export_field_to_ECL_JOB(void *self,
 }
 
 // Internal workflow job
-C_USED void *enkf_main_rank_on_data_JOB(void *self,
-                                        const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    const char *ranking_name = stringlist_iget(args, 0);
-    const char *data_key = stringlist_iget(args, 1);
-    bool valid = true;
-    bool sort_increasing = stringlist_iget_as_bool(args, 2, &valid);
-
-    if (!valid) {
-        fprintf(stderr, "** Third argument \"sort increasing\" not recognized "
-                        "as bool value, job not started\n");
-        return NULL;
-    }
-
-    int report_step = (stringlist_get_size(args) > 3)
-                          ? stringlist_iget_as_int(args, 3, &valid)
-                          : enkf_main_get_history_length(enkf_main);
-    if (!valid) {
-        fprintf(stderr, "** Fourth argument \"step\" not recognized as integer "
-                        "value, job not started\n");
-        return NULL;
-    }
-
-    if (report_step < 0) {
-        fprintf(stderr, "** Negative report step, job not started\n");
-        return NULL;
-    }
-
-    enkf_main_rank_on_data(enkf_main, ranking_name, data_key, sort_increasing,
-                           report_step);
-    return NULL;
-}
-
-// Internal workflow job
 C_USED void *enkf_main_export_ranking_JOB(void *self,
                                           const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
