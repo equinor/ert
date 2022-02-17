@@ -42,9 +42,8 @@
 UTIL_SAFE_CAST_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
 UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
 
-local_ministep_type *
-local_ministep_alloc(const char *name, analysis_module_type *analysis_module) {
-    return new local_ministep_type(name, analysis_module);
+local_ministep_type *local_ministep_alloc(const char *name) {
+    return new local_ministep_type(name);
 }
 
 void local_ministep_free(local_ministep_type *ministep) { delete ministep; }
@@ -138,15 +137,6 @@ local_ministep_get_obs_data(const local_ministep_type *ministep) {
 
 const char *local_ministep_get_name(const local_ministep_type *ministep) {
     return ministep->name.data();
-}
-
-bool local_ministep_has_analysis_module(const local_ministep_type *ministep) {
-    return ministep->analysis_module != NULL;
-}
-
-analysis_module_type *
-local_ministep_get_analysis_module(const local_ministep_type *ministep) {
-    return ministep->analysis_module;
 }
 
 void local_ministep_summary_fprintf(const local_ministep_type *ministep,

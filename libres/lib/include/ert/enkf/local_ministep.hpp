@@ -25,8 +25,6 @@
 #include <unordered_map>
 #include <ert/util/stringlist.h>
 
-#include <ert/analysis/analysis_module.hpp>
-
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
@@ -45,7 +43,6 @@ public:
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
     local_obsdata_type *observations;
-    analysis_module_type *analysis_module;
     obs_data_type *obs_data;
 
     std::unordered_map<std::string, std::shared_ptr<RowScaling>> scaling;
@@ -54,9 +51,8 @@ public:
     hash_type *
         active_size; /* A hash table indexed by node keys - each element is an active_list instance. */
 
-    local_ministep_type(const char *name, analysis_module_type *analysis_module)
-        : name(strdup(name)), analysis_module(analysis_module),
-          obs_data(nullptr), active_size(hash_alloc()) {
+    explicit local_ministep_type(const char *name)
+        : name(strdup(name)), obs_data(nullptr), active_size(hash_alloc()) {
         UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
         observations =
             local_obsdata_alloc(std::string("OBSDATA_" + this->name).data());
@@ -121,8 +117,7 @@ public:
     }
 };
 
-local_ministep_type *
-local_ministep_alloc(const char *name, analysis_module_type *analysis_module);
+local_ministep_type *local_ministep_alloc(const char *name);
 void local_ministep_free(local_ministep_type *ministep);
 void local_ministep_free__(void *arg);
 
@@ -148,9 +143,6 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                      local_obsdata_node_type *obsdatanode);
 local_obsdata_type *
 local_ministep_get_obsdata(const local_ministep_type *ministep);
-bool local_ministep_has_analysis_module(const local_ministep_type *ministep);
-analysis_module_type *
-local_ministep_get_analysis_module(const local_ministep_type *ministep);
 void local_ministep_add_obs_data(local_ministep_type *ministep,
                                  obs_data_type *obs_data);
 obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);

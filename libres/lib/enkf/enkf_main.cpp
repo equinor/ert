@@ -350,7 +350,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
         local_obsdata_type *obsdata =
             local_config_alloc_obsdata(local_config, "ALL_OBS");
         local_ministep_type *ministep =
-            local_config_alloc_ministep(local_config, "ALL_ACTIVE", NULL);
+            local_config_alloc_ministep(local_config, "ALL_ACTIVE");
         if (!ministep)
             throw std::logic_error(
                 "Failed to create initial ALL_ACTIVE ministep");

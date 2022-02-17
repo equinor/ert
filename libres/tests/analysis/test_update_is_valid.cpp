@@ -24,11 +24,9 @@ void set_state_map(state_map_type *state_map, const int index,
     state_map_iset(state_map, index, state);
 }
 
-void set_option_flag(local_updatestep_type *updatestep, const int ministep,
+void set_option_flag(analysis_module_type *analysis_module,
                      const analysis_module_flag_enum flag) {
-    analysis_module_get_module_config(
-        local_updatestep_iget_ministep(updatestep, ministep)->analysis_module)
-        ->set_option(flag);
+    analysis_module_get_module_config(analysis_module)->set_option(flag);
 }
 
 TEST_CASE("is_valid", "[analysis]") {
@@ -42,8 +40,7 @@ TEST_CASE("is_valid", "[analysis]") {
         const int ensemble_size = 1;
         analysis_module_type *analysis_module =
             analysis_module_alloc(ensemble_size, ENSEMBLE_SMOOTHER);
-        local_ministep_type *ministep =
-            local_ministep_alloc("not important", analysis_module);
+        local_ministep_type *ministep = local_ministep_alloc("not important");
         local_updatestep_add_ministep(updatestep, ministep);
 
         THEN("Assertion fail no active realization") {
@@ -110,15 +107,15 @@ TEST_CASE("is_valid", "[analysis]") {
             set_state_map(source_state_map, 0, STATE_HAS_DATA);
             analysis_module_type *other_analysis_module =
                 analysis_module_alloc(ensemble_size, ENSEMBLE_SMOOTHER);
-            local_ministep_type *other_ministep = local_ministep_alloc(
-                "other analysis module", other_analysis_module);
+            local_ministep_type *other_ministep =
+                local_ministep_alloc("other analysis module");
             local_updatestep_add_ministep(updatestep, other_ministep);
             THEN("Assertion passes with no flags set") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
                                            ensemble_size, updatestep));
             }
             for (const auto flag : {ANALYSIS_USE_A, ANALYSIS_UPDATE_A}) {
-                set_option_flag(updatestep, 0, flag);
+                set_option_flag(other_analysis_module, flag);
             }
             THEN("assert passes for none ANALYSIS_ITERABLE flags") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
@@ -134,8 +131,7 @@ TEST_CASE("is_valid", "[analysis]") {
                 local_updatestep_alloc("iter_update_step");
             analysis_module_type *iter_analysis_module = analysis_module_alloc(
                 ensemble_size, ITERATED_ENSEMBLE_SMOOTHER);
-            local_ministep_type *iter_ministep =
-                local_ministep_alloc("iter", iter_analysis_module);
+            local_ministep_type *iter_ministep = local_ministep_alloc("iter");
             local_updatestep_add_ministep(updatestep, iter_ministep);
             THEN("Assertion passes when ministep count == 1") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
