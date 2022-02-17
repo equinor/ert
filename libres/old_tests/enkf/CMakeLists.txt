@@ -269,7 +269,6 @@ add_equinor_test(
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING"
   "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS"
   "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS_ITER"
-  "${SHARE_DIR}/workflows/jobs/internal/config/OBSERVATION_RANKING"
   "${SHARE_DIR}/workflows/jobs/internal/config/DATA_RANKING"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RANKING"
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
