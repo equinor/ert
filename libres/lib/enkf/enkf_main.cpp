@@ -832,29 +832,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
     return true;
 }
 
-void enkf_main_rank_on_observations(enkf_main_type *enkf_main,
-                                    const char *ranking_key,
-                                    const stringlist_type *obs_ranking_keys,
-                                    const int_vector_type *steps) {
-
-    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    const enkf_obs_type *enkf_obs = enkf_main_get_obs(enkf_main);
-    const ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
-    const int history_length = enkf_main_get_history_length(enkf_main);
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-
-    misfit_ensemble_type *misfit_ensemble = enkf_fs_get_misfit_ensemble(fs);
-    misfit_ensemble_initialize(misfit_ensemble, ensemble_config, enkf_obs, fs,
-                               ens_size, history_length, false);
-
-    ranking_table_type *ranking_table = enkf_main_get_ranking_table(enkf_main);
-
-    ranking_table_add_misfit_ranking(ranking_table, misfit_ensemble,
-                                     obs_ranking_keys, steps, ranking_key);
-    ranking_table_display_ranking(ranking_table, ranking_key);
-}
-
 void enkf_main_rank_on_data(enkf_main_type *enkf_main, const char *ranking_key,
                             const char *data_key, bool sort_increasing,
                             int step) {
