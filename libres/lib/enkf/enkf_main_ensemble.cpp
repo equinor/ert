@@ -28,8 +28,6 @@ void enkf_main_resize_ensemble(enkf_main_type *enkf_main, int new_ens_size) {
     if (new_ens_size == enkf_main->ens_size)
         return;
 
-    ranking_table_set_ens_size(enkf_main->ranking_table, new_ens_size);
-
     /* The ensemble is shrinking. */
     if (new_ens_size < enkf_main->ens_size) {
         /*1: Free all ensemble members which go out of scope. */
