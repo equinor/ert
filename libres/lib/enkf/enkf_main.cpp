@@ -833,28 +833,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
     return true;
 }
 
-void enkf_main_rank_on_data(enkf_main_type *enkf_main, const char *ranking_key,
-                            const char *data_key, bool sort_increasing,
-                            int step) {
-
-    ranking_table_type *ranking_table = enkf_main_get_ranking_table(enkf_main);
-    const ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
-    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    char *key_index;
-
-    const enkf_config_node_type *config_node =
-        ensemble_config_user_get_node(ensemble_config, data_key, &key_index);
-    if (config_node) {
-        ranking_table_add_data_ranking(ranking_table, sort_increasing,
-                                       ranking_key, data_key, key_index, fs,
-                                       config_node, step);
-        ranking_table_display_ranking(ranking_table, ranking_key);
-    } else {
-        fprintf(stderr, "** No data found for key %s\n", data_key);
-    }
-}
-
 void enkf_main_export_ranking(enkf_main_type *enkf_main,
                               const char *ranking_key,
                               const char *ranking_file) {

@@ -208,29 +208,6 @@ void test_load_results_iter_job(ert_test_context_type *test_context,
     stringlist_free(args);
 }
 
-void test_rank_realizations_on_data_job(ert_test_context_type *test_context,
-                                        const char *job_name,
-                                        const char *job_file) {
-    stringlist_type *args = stringlist_alloc_new();
-    ert_test_context_install_workflow_job(test_context, job_name, job_file);
-
-    stringlist_append_copy(args, "NameOfDataRanking");
-    stringlist_append_copy(args, "PORO:1,2,3");
-    stringlist_append_copy(args, "false");
-    stringlist_append_copy(args, "0");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_clear(args);
-    stringlist_append_copy(args, "NameOfDataRanking2");
-    stringlist_append_copy(args, "PORO:1,2,3");
-    stringlist_append_copy(args, "false");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    stringlist_free(args);
-}
-
 void test_export_ranking(ert_test_context_type *test_context,
                          const char *job_name, const char *job_file) {
     stringlist_type *args = stringlist_alloc_new();
@@ -525,11 +502,10 @@ int main(int argc, const char **argv) {
     const char *job_file_init_case_job = argv[4];
     const char *job_file_load_results = argv[5];
     const char *job_file_load_results_iter = argv[6];
-    const char *job_file_data_ranking = argv[7];
-    const char *job_file_ranking_export = argv[8];
-    const char *job_file_init_misfit_table = argv[9];
-    const char *job_file_export_runpath = argv[10];
-    const char *job_file_pre_simulation_copy = argv[11];
+    const char *job_file_ranking_export = argv[7];
+    const char *job_file_init_misfit_table = argv[8];
+    const char *job_file_export_runpath = argv[9];
+    const char *job_file_pre_simulation_copy = argv[10];
 
     ert_test_context_type *test_context =
         create_context(config_file, "enkf_workflow_job_test");
@@ -541,8 +517,6 @@ int main(int argc, const char **argv) {
                                    job_file_load_results_iter);
         test_init_misfit_table(test_context, "JOB5",
                                job_file_init_misfit_table);
-        test_rank_realizations_on_data_job(test_context, "JOB7",
-                                           job_file_data_ranking);
         test_export_ranking(test_context, "JOB8", job_file_ranking_export);
         test_pre_simulation_copy(test_context, "JOBB",
                                  job_file_pre_simulation_copy);
