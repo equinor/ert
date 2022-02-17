@@ -283,39 +283,6 @@ interface can be shown.
 Jobs for ranking realizations
 -----------------------------
 
-**OBSERVATION_RANKING**
-
-The :code:`OBSERVATION_RANKING` job will rank realizations based on the delta
-between observed and simulated values for selected variables and time
-steps. The data for selected variables and time steps are summarized
-for both observed and simulated values, and then the simulated versus
-observed delta is used for ranking the realizations in increasing
-order. The job takes a name for the ranking as the first parameter,
-then the time steps, a "|" character and then variables to rank on. If
-no time steps and/or no variables are given, all time steps and
-variables are taken into account.
-
-Rank the realizations on observation/simulation delta value for all
-:code:`WOPR` data for time steps 0-20:
-
-::
-
-	OBSERVATION_RANKING Ranking1 0-20 | WOPR:*
-
-Rank the simulations on observation/simulation delta value for all
-:code:`WOPR` and :code:`WWCT` data for time steps 1 and 10-50
-
-::
-
-	OBSERVATION_RANKING Ranking2 1, 10-50 | WOPR:* WWCT:*
-
-Rank the realizations on observation/simulation delta value for
-:code:`WOPR` : :code:`OP-1` data for all time steps
-
-::
-
-	OBSERVATION_RANKING Ranking3 | WOPR:OP-1
-
 **DATA_RANKING**
 
 The :code:`DATA_RANKING` job will rank realizations in increasing or
