@@ -4,7 +4,6 @@ from cwrap import BaseCClass
 
 from res import ResPrototype
 from res.enkf.enkf_state import EnKFState
-from res.enkf.enums import RealizationStateEnum
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import JobQueueManager, RunStatusType
 
@@ -36,15 +35,6 @@ class EnkfSimulationRunner(BaseCClass):
 
         if run_context.get_step():
             ecl_config = self._enkf_main().ecl_config.assert_restart()
-
-        #### deselect load and parent failure #####
-        iactive = run_context.get_mask()
-
-        run_context.get_sim_fs().getStateMap().deselectMatching(
-            iactive,
-            RealizationStateEnum.STATE_LOAD_FAILURE
-            | RealizationStateEnum.STATE_PARENT_FAILURE,
-        )
 
         #### start queue ####
         self.start_queue(run_context, job_queue)
