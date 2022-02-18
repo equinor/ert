@@ -90,7 +90,7 @@ def prepare_sensitivity(
     )
 
     if experiment_config.algorithm == "one-at-a-time":
-        sensitivity_input_records = ert3.algorithms.one_at_the_time(
+        sensitivity_input_records = ert3.algorithms.one_at_a_time(
             sensitivity_distributions, tail=experiment_config.tail
         )
     elif experiment_config.algorithm == "fast":
