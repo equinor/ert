@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from performance_utils import make_poly_template, dark_storage_app
 from argparse import ArgumentParser
@@ -11,7 +13,7 @@ from requests import Response
 from pytest import fixture
 import py
 import json
-
+from pathlib import Path
 
 def make_case(reals, x_size):
     return {
@@ -83,6 +85,9 @@ def poly_ran(request, source_root, tmp_path_factory):
             ],
         )
         run_cli(parsed)
+
+        for file in Path("poly_out").rglob("*"):
+            print(f"{file}, {os.stat(file).st_size}")
     yield params
 
     # shutil.rmtree(poly_folder)

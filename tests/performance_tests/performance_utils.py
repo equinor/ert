@@ -165,15 +165,15 @@ if __name__ == "__main__":
         "../../test-data/local/poly_template",
         gen_data_count=34,
         gen_data_entries=15,
-        summary_data_entries=30000,
+        summary_data_entries=100,
         reals=200,
-        summary_data_count=8000,
-        sum_obs_count=850,
+        summary_data_count=4000,
+        sum_obs_count=450,
         gen_obs_count=34,
-        sum_obs_every=10000,
+        sum_obs_every=10,
         gen_obs_every=1,
-        parameter_entries=8,
-        parameter_count=400,
+        parameter_entries=10,
+        parameter_count=8,
         ministeps=1,  # how many ministeps are used, should probably be 1
     )
     print(folder)
