@@ -9,7 +9,7 @@ RES_LIB_SUBMODULE("ensemble_config", m) {
     m.def(
         "ensemble_config_keylist_from_var_type",
         [](py::object self, int var_mask) {
-            auto ensemble_config = py_conversion::to_ensemble_config_type(self);
+            auto ensemble_config = ert::from_cwrap<ensemble_config_type>(self);
             return ensemble_config_keylist_from_var_type(ensemble_config,
                                                          var_mask);
         },
