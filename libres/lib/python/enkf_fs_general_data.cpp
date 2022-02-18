@@ -9,7 +9,7 @@ RES_LIB_SUBMODULE("enkf_fs_general_data", m) {
         "gendata_get_realizations",
         [](py::object self, const std::vector<int> &realizations) {
             auto enkf_plot_gendata =
-                py_conversion::to_enkf_plot_gendata_type(self);
+                ert::from_cwrap<enkf_plot_gendata_type>(self);
             const int data_size =
                 enkf_plot_gendata_get_data_size(enkf_plot_gendata);
             if (data_size < 0) {

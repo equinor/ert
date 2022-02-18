@@ -13,8 +13,8 @@ RES_LIB_SUBMODULE("enkf_fs_keyword_data", m) {
            const std::vector<std::string> &keys,
            const std::vector<int> &realizations) {
             auto ensemble_config =
-                py_conversion::to_ensemble_config_type(config);
-            auto enkf_fs = py_conversion::to_enkf_fs_type(fs);
+                ert::from_cwrap<ensemble_config_type>(config);
+            auto enkf_fs = ert::from_cwrap<enkf_fs_type>(fs);
 
             const int key_count = std::size(keys);
             const int realization_size = std::size(realizations);
