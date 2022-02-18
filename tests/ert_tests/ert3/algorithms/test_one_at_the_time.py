@@ -11,7 +11,7 @@ CUNI_INV = 0.005
 
 def test_no_parameters():
     with pytest.raises(ValueError):
-        ert3.algorithms.one_at_the_time([])
+        ert3.algorithms.one_at_a_time([])
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_no_parameters():
 )
 def test_single_parameter(distribution, a, b, sens_low, sens_high):
     single_dist = distribution(a, b, size=1)
-    evaluations = ert3.algorithms.one_at_the_time({"single": single_dist})
+    evaluations = ert3.algorithms.one_at_a_time({"single": single_dist})
 
     assert 2 == len(evaluations)
     for idx, parameter_value in enumerate([sens_low, sens_high]):
@@ -37,7 +37,7 @@ def test_single_parameter(distribution, a, b, sens_low, sens_high):
 def test_parameter_array():
     size = 10
     gauss_array = ert3.stats.Gaussian(0, 1, size=size)
-    evaluations = ert3.algorithms.one_at_the_time({"array": gauss_array})
+    evaluations = ert3.algorithms.one_at_a_time({"array": gauss_array})
 
     assert 2 * size == len(evaluations)
     for eidx, evali in enumerate(evaluations):
@@ -52,7 +52,7 @@ def test_parameter_array():
 def test_parameter_index():
     index = ["a" * i + str(i) for i in range(5)]
     gauss_index = ert3.stats.Gaussian(0, 1, index=index)
-    evaluations = ert3.algorithms.one_at_the_time({"indexed_gauss": gauss_index})
+    evaluations = ert3.algorithms.one_at_a_time({"indexed_gauss": gauss_index})
 
     assert 2 * len(index) == len(evaluations)
     for eidx, evali in enumerate(evaluations):
@@ -76,7 +76,7 @@ def test_multi_parameter_singletons():
         "a": ert3.stats.Gaussian(0, 1, size=1),
         "b": ert3.stats.Gaussian(0, 1, size=1),
     }
-    evaluations = ert3.algorithms.one_at_the_time(records)
+    evaluations = ert3.algorithms.one_at_a_time(records)
 
     assert len(expected_evaluations) == len(evaluations)
     for expected, result in zip(expected_evaluations, evaluations):
@@ -103,7 +103,7 @@ def test_multi_parameter_doubles():
         "a": ert3.stats.Gaussian(0, 1, size=2),
         "b": ert3.stats.Gaussian(0, 1, size=2),
     }
-    evaluations = ert3.algorithms.one_at_the_time(records)
+    evaluations = ert3.algorithms.one_at_a_time(records)
 
     assert len(expected_evaluations) == len(evaluations)
     for expected, result in zip(expected_evaluations, evaluations):
@@ -130,7 +130,7 @@ def test_uni_and_norm():
         "a": ert3.stats.Gaussian(0, 1, size=2),
         "b": ert3.stats.Uniform(0, 1, size=2),
     }
-    evaluations = ert3.algorithms.one_at_the_time(records)
+    evaluations = ert3.algorithms.one_at_a_time(records)
 
     assert len(expected_evaluations) == len(evaluations)
     for expected, result in zip(expected_evaluations, evaluations):
@@ -151,7 +151,7 @@ def test_multi_parameter_groups():
     index = ["a" * i + str(i) for i in range(5)]
     records["indexed"] = ert3.stats.Gaussian(0, 1, index=index)
 
-    evaluations = ert3.algorithms.one_at_the_time(records)
+    evaluations = ert3.algorithms.one_at_a_time(records)
 
     assert 2 * (size + len(index)) == len(evaluations)
     for eidx, evali in enumerate(evaluations):
@@ -212,7 +212,7 @@ def test_tail(tail, expected_evaluations):
         "a": ert3.stats.Gaussian(0, 1, size=1),
         "b": ert3.stats.Uniform(0, 1, size=1),
     }
-    evaluations = ert3.algorithms.one_at_the_time(records, tail)
+    evaluations = ert3.algorithms.one_at_a_time(records, tail)
 
     for expected, result in zip(expected_evaluations, evaluations):
         for key in expected.keys():

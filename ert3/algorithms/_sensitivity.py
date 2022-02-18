@@ -49,7 +49,7 @@ def _build_salib_problem(
     return problem
 
 
-def one_at_the_time(
+def one_at_a_time(
     parameters: MutableMapping[str, Distribution], tail: Optional[float] = 0.99
 ) -> List[Dict[str, Record]]:
     if len(parameters) == 0:
