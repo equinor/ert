@@ -6,9 +6,9 @@ RES_LIB_SUBMODULE("enkf_fs_manager", m) {
         "initialize_from_scratch",
         [](py::object self, std::vector<std::string> param_list,
            py::object run_context_py) {
-            auto enkf_main = py_conversion::to_enkf_main_type(self);
+            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
             auto run_context =
-                py_conversion::to_run_context_type(run_context_py);
+                ert::from_cwrap<ert_run_context_type>(run_context_py);
             return enkf_main_initialize_from_scratch(enkf_main, param_list,
                                                      run_context);
         },
@@ -17,9 +17,8 @@ RES_LIB_SUBMODULE("enkf_fs_manager", m) {
         "init_current_case_from_existing_custom",
         [](py::object self, py::object source_case_py, int source_report_step,
            std::vector<std::string> &node_list, std::vector<bool> &iactive) {
-            auto source_case_fs =
-                py_conversion::to_enkf_fs_type(source_case_py);
-            auto enkf_main = py_conversion::to_enkf_main_type(self);
+            auto source_case_fs = ert::from_cwrap<enkf_fs_type>(source_case_py);
+            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
             return enkf_main_init_current_case_from_existing_custom(
                 enkf_main, source_case_fs, source_report_step, node_list,
                 iactive);
