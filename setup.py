@@ -85,7 +85,7 @@ setup(
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
         "matplotlib",
-        "numpy",
+        "numpy >= 1.20.0",
         "packaging",
         "pandas <= 1.3.5",
         "pluggy",

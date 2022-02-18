@@ -2,6 +2,7 @@ import random
 from typing import Callable, List, Optional, cast
 
 import numpy as np
+import numpy.typing as npt
 import scipy.stats
 
 import ert
@@ -29,8 +30,8 @@ class Distribution:
         *,
         size: Optional[int],
         index: Optional[ert.data.RecordIndex],
-        rvs: Callable[[int], np.ndarray],  # type: ignore
-        ppf: Callable[[np.ndarray], np.ndarray],  # type: ignore
+        rvs: Callable[[int], npt.NDArray[np.float64]],
+        ppf: Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]],
     ) -> None:
         if size is None and index is None:
             raise ValueError("Cannot create distribution with neither size nor index")
@@ -59,7 +60,7 @@ class Distribution:
     def index(self) -> ert.data.RecordIndex:
         return self._index
 
-    def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
+    def _to_record(self, x: npt.NDArray[np.float64]) -> ert.data.Record:
         if self._as_array:
             return ert.data.NumericalRecord(data=x.tolist())
         else:
@@ -90,12 +91,12 @@ class Gaussian(Distribution):
         self._mean = mean
         self._std = std
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> npt.NDArray[np.float64]:
             return np.array(
                 scipy.stats.norm.rvs(loc=self._mean, scale=self._std, size=size)
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return np.array(scipy.stats.norm.ppf(x, loc=self._mean, scale=self._std))
 
         super().__init__(
@@ -131,14 +132,14 @@ class Uniform(Distribution):
         self._upper_bound = upper_bound
         self._scale = upper_bound - lower_bound
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> npt.NDArray[np.float64]:
             return np.array(
                 scipy.stats.uniform.rvs(
                     loc=self._lower_bound, scale=self._scale, size=self._size
                 )
             )
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return np.array(
                 scipy.stats.uniform.ppf(x, loc=self._lower_bound, scale=self._scale)
             )
@@ -180,16 +181,16 @@ class Discrete(Distribution):
         self._values = values
         self._sortedvalues = sorted(self._values)
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> npt.NDArray[np.float64]:
             return np.array(random.choices(self._values, k=size))
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             # pylint: disable=line-too-long
             # See https://openpress.usask.ca/introtoappliedstatsforpsych/chapter/6-1-discrete-data-percentiles-and-quartiles/ # noqa: E501
             # and in particular equation 6.2 (keeping in mind zero-indexing in Python)
             n = len(self._sortedvalues)
             idxs = np.ceil(x * n).astype(int)
-            retval: np.ndarray = np.array(  # type: ignore
+            retval: npt.NDArray[np.float64] = np.array(
                 [self._sortedvalues[i - 1] if 1 <= i <= n else np.nan for i in idxs]
             )
             return retval
