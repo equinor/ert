@@ -67,7 +67,7 @@ def assert_poly_output(export_data):
         )
 
         for x, y in zip(xs, poly_out):
-            assert coeff["a"] * x ** 2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
+            assert coeff["a"] * x**2 + coeff["b"] * x + coeff["c"] == pytest.approx(y)
 
 
 def assert_export(export_data, ensemble_config, stages_config, parameters_config):

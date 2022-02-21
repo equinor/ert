@@ -14,9 +14,9 @@ def square_file(input_file, output_file):
     for key in keys:
         data1 = data0[key]
         try:
-            out.extend([str(v ** 2) for _, v in data1.items()])
+            out.extend([str(v**2) for _, v in data1.items()])
         except AttributeError:
-            out.append(str(data1 ** 2))
+            out.append(str(data1**2))
     with open(output_file, "w") as fout:
         fout.write("\n".join(out))
 

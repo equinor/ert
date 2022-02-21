@@ -26,7 +26,7 @@ def ishigami_multiple(x, y, z, A=7, B=0.1):
 
 
 def polynomial(x, y, a, b, c):
-    return [a * x ** 2 + b * y + c]
+    return [a * x**2 + b * y + c]
 
 
 def assert_samples(samples, sample_size, param_size, parameters):

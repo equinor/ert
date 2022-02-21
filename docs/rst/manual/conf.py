@@ -21,14 +21,14 @@ from pkg_resources import get_distribution
 
 # -- Project information -----------------------------------------------------
 
-project = u"ERT"
-copyright = u"Equinor"
-author = u"Joakim Hove"
+project = "ERT"
+copyright = "Equinor"
+author = "Joakim Hove"
 
 dist_version = get_distribution("ert").version
 
 # The short X.Y version
-version = u".".join(dist_version.split(".")[:2])
+version = ".".join(dist_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
 release = dist_version
 
@@ -156,7 +156,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "ERT.tex", u"ERT Documentation", u"Joakim Hove", "manual"),
+    (master_doc, "ERT.tex", "ERT Documentation", "Joakim Hove", "manual"),
 ]
 
 
@@ -164,7 +164,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "ert", u"ERT Documentation", [author], 1)]
+man_pages = [(master_doc, "ert", "ERT Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -176,7 +176,7 @@ texinfo_documents = [
     (
         master_doc,
         "ERT",
-        u"ERT Documentation",
+        "ERT Documentation",
         author,
         "ERT",
         "One line description of project.",
