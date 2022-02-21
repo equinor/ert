@@ -15,7 +15,6 @@ pybind11_add_module(
   res_util/ui_return.cpp
   res_util/subst_list.cpp
   res_util/subst_func.cpp
-  res_util/matrix_stat.cpp
   res_util/matrix_blas.cpp
   res_util/matrix_lapack.cpp
   res_util/matrix.cpp
