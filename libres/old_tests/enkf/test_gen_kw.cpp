@@ -25,7 +25,6 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
-#include <ert/res_util/util_printf.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
 namespace fs = std::filesystem;
@@ -50,45 +49,6 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     run_arg_free(run_arg);
 }
 
-static void read_erroneous_gen_kw_file(void *arg) {
-    vector_type *arg_vector = vector_safe_cast(arg);
-    gen_kw_config_type *gen_kw_config =
-        (gen_kw_config_type *)vector_iget(arg_vector, 0);
-    const char *filename = (const char *)vector_iget_const(arg_vector, 1);
-    gen_kw_config_set_parameter_file(gen_kw_config, filename);
-}
-
-void test_read_erroneous_gen_kw_file() {
-    const char *parameter_filename = "MULTFLT_with_errors.txt";
-    const char *tmpl_filename = "MULTFLT.tmpl";
-
-    {
-        FILE *stream = util_fopen(parameter_filename, "w");
-        const char *data = util_alloc_sprintf(
-            "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0");
-        util_fprintf_string(data, 30, right_pad, stream);
-        fclose(stream);
-
-        FILE *tmpl_stream = util_fopen(tmpl_filename, "w");
-        const char *tmpl_data =
-            util_alloc_sprintf("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n");
-        util_fprintf_string(tmpl_data, 30, right_pad, tmpl_stream);
-        fclose(tmpl_stream);
-    }
-
-    gen_kw_config_type *gen_kw_config =
-        gen_kw_config_alloc_empty("MULTFLT", "<%s>");
-    vector_type *arg = vector_alloc_new();
-    vector_append_ref(arg, gen_kw_config);
-    vector_append_ref(arg, parameter_filename);
-
-    test_assert_util_abort("gen_kw_config_set_parameter_file",
-                           read_erroneous_gen_kw_file, arg);
-
-    vector_free(arg);
-    gen_kw_config_free(gen_kw_config);
-}
-
 int main(int argc, char **argv) {
     const char *config_file = argv[1];
     ert_test_context_type *test_context =
@@ -97,7 +57,6 @@ int main(int argc, char **argv) {
     test_assert_not_NULL(enkf_main);
 
     test_write_gen_kw_export_file(enkf_main);
-    test_read_erroneous_gen_kw_file();
 
     ert_test_context_free(test_context);
     exit(0);
