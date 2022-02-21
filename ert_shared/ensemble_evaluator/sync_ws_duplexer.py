@@ -47,7 +47,7 @@ class SyncWebsocketDuplexer:
             self._uri,
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,
-            max_size=2 ** 26,
+            max_size=2**26,
             max_queue=500,
         )
 

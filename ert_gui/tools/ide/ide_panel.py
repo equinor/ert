@@ -150,7 +150,7 @@ class IdePanel(QPlainTextEdit):
 
             cursor_pos = text_cursor.positionInBlock()
             pos = cursor_pos
-            pattern = u"[\\s\u2029\u2028]"
+            pattern = "[\\s\u2029\u2028]"
             while pos >= block_start:
                 text_cursor.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor)
                 text = text_cursor.selectedText()

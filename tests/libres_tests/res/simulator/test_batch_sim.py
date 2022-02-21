@@ -441,7 +441,7 @@ class BatchSimulatorTest(ResTest):
                 self.assertEqual(expected, list(result["ON_OFF"]))
 
                 expected = [
-                    v ** 2
+                    v**2
                     for key in keys
                     for _, v in controls["WELL_ORDER"][key].items()
                 ]

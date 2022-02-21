@@ -53,7 +53,7 @@ def _evaluate_polynomial(coefficients, x_uncertainties):
     else:
         x_range = range(10)
         xs = tuple(x_range)
-    return tuple(a * x ** 2 + b * x + c for x in xs)
+    return tuple(a * x**2 + b * x + c for x in xs)
 
 
 def _main():
