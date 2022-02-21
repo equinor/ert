@@ -1,4 +1,4 @@
-black==21.12b0
+black==22.1.0; python_version > '3.6'
 flaky
 pytest>=6.2.0
 pytest-qt

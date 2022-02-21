@@ -14,7 +14,7 @@ def _evaluate(coeffs, x, degree):
     if degree == 1:
         return coeffs["b"] * x
     if degree >= 2:
-        return coeffs["a"] * x ** degree
+        return coeffs["a"] * x**degree
 
 
 def config_dump_entry(args=None):

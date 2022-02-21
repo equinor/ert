@@ -5,7 +5,7 @@ import math
 
 def byte_with_unit(byte_count):
     suffixes = ["B", "kB", "MB", "GB", "TB", "PB"]
-    power = float(10 ** 3)
+    power = float(10**3)
 
     i = 0
     while byte_count >= power and i < len(suffixes) - 1:
