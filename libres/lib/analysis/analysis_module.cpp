@@ -36,6 +36,7 @@
 
 #include <fmt/format.h>
 #include <ert/logging.hpp>
+#include <ert/python.hpp>
 
 auto logger = ert::get_logger("analysis");
 
@@ -323,6 +324,7 @@ double analysis_module_get_double(const analysis_module_type *module,
 
     return -1;
 }
+extern "C++" {
 
 ies::data::Data *
 analysis_module_get_module_data(const analysis_module_type *module) {
@@ -332,4 +334,27 @@ analysis_module_get_module_data(const analysis_module_type *module) {
 ies::config::Config *
 analysis_module_get_module_config(const analysis_module_type *module) {
     return module->module_config.get();
+}
+
+ies::config::Config *
+analysis_module_get_module_config_pybind(py::object module) {
+    auto module_ = ert::from_cwrap<analysis_module_type>(module);
+    return analysis_module_get_module_config(module_);
+}
+
+ies::data::Data *analysis_module_get_module_data_pybind(py::object module) {
+    auto module_ = ert::from_cwrap<analysis_module_type>(module);
+    return analysis_module_get_module_data(module_);
+}
+
+RES_LIB_SUBMODULE("analysis_module", m) {
+    py::class_<ies::data::Data, std::shared_ptr<ies::data::Data>>(m,
+                                                                  "ModuleData");
+    py::class_<ies::config::Config, std::shared_ptr<ies::config::Config>>(
+        m, "ModuleConfig");
+    m.def("get_module_config", analysis_module_get_module_config_pybind,
+          py::return_value_policy::reference_internal);
+    m.def("get_module_data", analysis_module_get_module_data_pybind,
+          py::return_value_policy::reference_internal);
+}
 }

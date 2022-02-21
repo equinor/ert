@@ -243,8 +243,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             matrix_type *R = obs_data_allocR(obs_data);
             matrix_type *D = obs_data_allocD(obs_data, E, S);
             obs_data_scale(obs_data, S, E, D, R, nullptr);
-            const std::vector<bool> obs_mask =
-                obs_data_get_active_mask(obs_data);
 
             analysis::run_analysis_update_with_rowscaling(
                 config, module_data, S, E, D, R, parameters);
@@ -280,7 +278,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             obs_data_scale(obs_data, S, E, D, R, nullptr);
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
-
             analysis::run_analysis_update_without_rowscaling(
                 config, module_data, ens_mask, obs_mask, S, E, D, R,
                 A_no_scaling);
