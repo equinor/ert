@@ -46,7 +46,6 @@ class EvaluatorTracker:
         next_ensemble_evaluator_wait_time: int = 5,
     ):
         self._model = model
-
         self._monitor_host = host
         self._monitor_port = port
         self._token = token
@@ -54,15 +53,12 @@ class EvaluatorTracker:
         self._protocol = "ws" if cert is None else "wss"
         self._monitor_url = f"{self._protocol}://{host}:{port}"
         self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
-
         self._work_queue: Queue = Queue()
-
         self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
             name="DrainerThread",
         )
         self._drainer_thread.start()
-
         self._iter_snapshot: Dict[int, Snapshot] = {}
 
     def _drain_monitor(self) -> None:
@@ -93,42 +89,24 @@ class EvaluatorTracker:
                                     "observed evaluation stopped event, signal done"
                                 )
                                 monitor.signal_done()
-                            elif event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                            if event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
                                 drainer_logger.debug(
                                     "observed evaluation cancelled event, exit drainer"
                                 )
                                 # Allow track() to emit an EndEvent.
                                 self._work_queue.put(EvaluatorTracker.DONE)
                                 return
-                            elif "reals" in event.data:
-                                for real_id in event.data["reals"]:
-                                    real_status = event.data["reals"][real_id].get(
-                                        "status"
-                                    )
-                                    if (
-                                        real_status
-                                        == REALIZATION_STATE_FINISHED
-                                        # and real_id not in realizations_completed
-                                    ):
-                                        drainer_logger.debug(
-                                            "observed evaluation realization is completed"
-                                        )
-                                        self._work_queue.put()
-
                         elif event["type"] == ids.EVTYPE_EE_TERMINATED:
                             drainer_logger.debug("got terminator event")
-
                 # This sleep needs to be there. Refer to issue #1250: `Authority
                 # on information about evaluations/experiments`
                 time.sleep(self._next_ensemble_evaluator_wait_time)
-
             except (ConnectionRefusedError, ClientError) as e:
                 if not self._model.isFinished():
                     drainer_logger.debug(f"connection refused: {e}")
             except (ConnectionClosedError) as e:
                 # The monitor connection closed unexpectedly
                 drainer_logger.debug(f"connection closed error: {e}")
-
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
         )
@@ -188,7 +166,6 @@ class EvaluatorTracker:
                     iteration=iter_,
                     partial_snapshot=partial,
                 )
-
             self._work_queue.task_done()
 
     def is_finished(self) -> bool:
@@ -210,7 +187,6 @@ class EvaluatorTracker:
 
     def request_termination(self) -> None:
         logger = logging.getLogger("ert_shared.ensemble_evaluator.tracker")
-
         # There might be some situations where the
         # evaluation is finished or the evaluation
         # is yet to start when calling this function.
@@ -233,7 +209,6 @@ class EvaluatorTracker:
         except ClientError as e:
             logger.warning(f"{__name__} - exception {e}")
             return
-
         with create_ee_monitor(
             self._monitor_host,
             self._monitor_port,
