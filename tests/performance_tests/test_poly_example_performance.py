@@ -85,9 +85,12 @@ def poly_ran(request, source_root, tmp_path_factory):
             ],
         )
         run_cli(parsed)
-
-        for file in Path("poly_out").rglob("*"):
+        print(poly_folder)
+        files = list(x for x in Path(".").rglob("*") if "storage" not in x.parts)
+        files.sort()
+        for file in files:
             print(f"{file}, {os.stat(file).st_size}")
+
     yield params
 
     # shutil.rmtree(poly_folder)
