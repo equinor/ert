@@ -1,4 +1,4 @@
-from ert_shared.status.tracker.evaluator import EvaluatorTracker
+from ert.ensemble_evaluator import EvaluatorTracker
 
 
 def create_tracker(
