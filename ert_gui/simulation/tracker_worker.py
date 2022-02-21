@@ -1,6 +1,6 @@
 from ert_gui.model.snapshot import SnapshotModel
 import typing
-from ert_shared.status.tracker.evaluator import EvaluatorTracker
+from ert.ensemble_evaluator import EvaluatorTracker
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -46,7 +46,6 @@ class TrackerWorker(QObject):
                 logger.debug("got end event")
                 break
 
-        self._tracker.reset()
         self.done.emit()
         logger.debug("tracking done.")
 

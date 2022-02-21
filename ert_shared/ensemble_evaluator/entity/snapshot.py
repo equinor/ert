@@ -60,7 +60,7 @@ def convert_iso8601_to_datetime(timestamp):
 
 
 class PartialSnapshot:
-    def __init__(self, snapshot):
+    def __init__(self, snapshot) -> None:
         """Create a PartialSnapshot. If no snapshot is provided, the object is
         a immutable POD, and any attempt at mutating it will raise an
         UnsupportedOperationException."""
@@ -140,7 +140,7 @@ class PartialSnapshot:
     def data(self):
         return self._data
 
-    def from_cloudevent(self, event):
+    def from_cloudevent(self, event) -> "PartialSnapshot":
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
@@ -220,10 +220,10 @@ class PartialSnapshot:
 
 
 class Snapshot:
-    def __init__(self, input_dict):
+    def __init__(self, input_dict) -> None:
         self._data = pyrsistent.freeze(input_dict)
 
-    def merge_event(self, event):
+    def merge_event(self, event) -> None:
         self._data = recursive_update(self._data, event.data())
 
     def merge(self, update):
@@ -240,7 +240,7 @@ class Snapshot:
     def get_status(self):
         return self._data[ids.STATUS]
 
-    def get_reals(self):
+    def get_reals(self) -> Dict[str, "Realization"]:
         return SnapshotDict(**self._data).reals
 
     def get_real(self, real_id):

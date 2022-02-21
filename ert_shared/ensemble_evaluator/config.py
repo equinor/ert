@@ -21,6 +21,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from dns import resolver, reversename, exception
 
+from ert.ensemble_evaluator import EvaluatorConnectionInfo
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,29 +112,6 @@ def _generate_certificate(
     return cert_str, key_bytes, pw
 
 
-class EvaluatorConnectionInfo:
-    """Read only server-info"""
-
-    def __init__(self, host: str, port: int, cert: str, token: str, url: str) -> None:
-        self.host = host
-        self.port = port
-        self.cert = cert
-        self.token = token
-        self.url = url
-
-    @property
-    def dispatch_uri(self) -> str:
-        return f"{self.url}/dispatch"
-
-    @property
-    def client_uri(self) -> str:
-        return f"{self.url}/client"
-
-    @property
-    def result_uri(self) -> str:
-        return f"{self.url}/result"
-
-
 """
 This class is responsible for identifying a host:port-combo and then provide
 low-level sockets bound to said combo. The problem is that these sockets may
@@ -185,14 +165,13 @@ class EvaluatorServerConfig:
     def get_socket(self) -> socket.socket:
         return self._socket_handle.dup()
 
-    def get_info(self):
-        return EvaluatorServerConfigInfo(
-            dispatch_uri=self.dispatch_uri, token=self.token, cert=self.cert
-        )
-
     def get_connection_info(self) -> EvaluatorConnectionInfo:
         return EvaluatorConnectionInfo(
-            self.host, self.port, self.cert, self.token, self.url
+            self.host,
+            self.port,
+            self.url,
+            self.cert,
+            self.token,
         )
 
     def get_server_ssl_context(
