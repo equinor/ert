@@ -175,13 +175,19 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test" --basetemp=temp
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test" --basetemp=temp
+
+    - name: Upload tmp artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} temp
+        path: temp/my_poly_tmpcurrent
 
     - name: Test CLI
       run: |
