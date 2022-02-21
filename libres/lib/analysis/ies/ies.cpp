@@ -39,6 +39,12 @@
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
+/**
+ * @brief Implementation of algorithm as described in
+ * "Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching"
+ * https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full
+ * 
+ */
 namespace ies {
 void linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y);
 
@@ -111,7 +117,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
      */
     ies::linalg_solve_S(W0, Y, S);
 
-    /* INNOVATION H = S*W + D - Y   from Eq. (47) (Line 8)*/
+    /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
     matrix_assign(H, D);                            // H=D=dobs + E - Y
     matrix_dgemm(H, S, W0, false, false, 1.0, 1.0); // H=S*W + H
 
