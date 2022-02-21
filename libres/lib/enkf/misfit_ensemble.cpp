@@ -125,21 +125,6 @@ void misfit_ensemble_fwrite(const misfit_ensemble_type *misfit_ensemble,
 }
 
 /*
-   Observe that the object is NOT in a valid state when leaving this function,
-   must finalize in either misfit_ensemble_alloc() or misfit_ensemble_fread_alloc().
-*/
-
-static misfit_ensemble_type *misfit_ensemble_alloc_empty() {
-    misfit_ensemble_type *table =
-        (misfit_ensemble_type *)util_malloc(sizeof *table);
-
-    table->initialized = false;
-    table->ensemble = vector_alloc_new();
-
-    return table;
-}
-
-/*
    This funcion is a feeble attempt at allowing the ensemble size to
    change runtime. If the new ensemble size is larger than the current
    ensemble size ALL the currently internalized misfit information is
@@ -184,7 +169,11 @@ void misfit_ensemble_fread(misfit_ensemble_type *misfit_ensemble,
 }
 
 misfit_ensemble_type *misfit_ensemble_alloc() {
-    misfit_ensemble_type *table = misfit_ensemble_alloc_empty();
+    auto table = new misfit_ensemble_type();
+
+    table->initialized = false;
+    table->ensemble = vector_alloc_new();
+
     return table;
 }
 
@@ -200,7 +189,7 @@ void misfit_ensemble_clear(misfit_ensemble_type *table) {
 
 void misfit_ensemble_free(misfit_ensemble_type *table) {
     vector_free(table->ensemble);
-    free(table);
+    delete table;
 }
 
 bool misfit_ensemble_initialized(const misfit_ensemble_type *misfit_ensemble) {
