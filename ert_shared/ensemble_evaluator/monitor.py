@@ -2,22 +2,24 @@ import logging
 import pickle
 import uuid
 from contextlib import ExitStack
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.ensemble_evaluator.config import EvaluatorConnectionInfo
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.entity import serialization
 from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
+if TYPE_CHECKING:
+    from ert.ensemble_evaluator import EvaluatorConnectionInfo
+
 
 logger = logging.getLogger(__name__)
 
 
 class _Monitor:
-    def __init__(self, ee_con_info: EvaluatorConnectionInfo) -> None:
+    def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
         self._id = str(uuid.uuid1()).split("-")[0]
@@ -102,5 +104,5 @@ class _Monitor:
                     break
 
 
-def create(ee_con_info: EvaluatorConnectionInfo) -> _Monitor:
+def create(ee_con_info: "EvaluatorConnectionInfo") -> _Monitor:
     return _Monitor(ee_con_info)
