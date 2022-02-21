@@ -1,4 +1,5 @@
 import os
+import logging
 from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
@@ -10,6 +11,8 @@ from res.enkf.export import (
     GenKwCollector,
 )
 from res.enkf.plot_data import PlotBlockDataLoader
+
+_logger = logging.getLogger(__name__)
 
 
 class LibresFacade(object):
@@ -158,18 +161,15 @@ class LibresFacade(object):
             self._enkf_main, case, [key], realization_index
         )
         if not data.empty:
-            data = data.reset_index()
-
-            if any(data.duplicated()):
-                print(
-                    "** Warning: The simulation data contains duplicate "
+            idx = data.index.duplicated()
+            if idx.any():
+                data = data[~idx]
+                _logger.warning(
+                    "The simulation data contains duplicate "
                     "timestamps. A possible explanation is that your "
                     "simulation timestep is less than a second."
                 )
-                data = data.drop_duplicates()
-
-            data = data.pivot(index="Date", columns="Realization", values=key)
-
+            data = data.unstack(level="Realization").droplevel(0, axis=1)
         return data
 
     def has_refcase(self, key):

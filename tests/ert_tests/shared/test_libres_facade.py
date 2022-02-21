@@ -1,12 +1,35 @@
 import os
+import logging
+import pytest
 from unittest import TestCase
+from unittest.mock import patch
+
+import pandas as pd
+from pandas.core.base import PandasObject
 
 from utils import SOURCE_DIR
 from ert_utils import tmpdir
-from pandas.core.base import PandasObject
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
+
+# This hack allows us to call the original method when
+# mocking loadAllSummaryData()
+from res.enkf.export import SummaryCollector
+
+_orig_loader = SummaryCollector.loadAllSummaryData
+
+# Define this in the module-scope. If defined as a class-method
+# it passes "self" when calling _orig_loader. There are probably
+# ways to handle this, but it's simpler to define it here
+def _add_duplicate_row(*args, **kwargs):
+    df = _orig_loader(*args, **kwargs)
+    # Append copy of last date to each realization
+    idx = pd.MultiIndex.from_tuples(
+        [(i, df.loc[i].iloc[-1].name) for i in df.index.levels[0]]
+    )
+    df_new = pd.DataFrame(0, index=idx, columns=df.columns)
+    return pd.concat([df, df_new]).sort_index()
 
 
 class LibresFacadeTest(TestCase):
@@ -18,6 +41,12 @@ class LibresFacadeTest(TestCase):
         ert = EnKFMain(rc)
         facade = LibresFacade(ert)
         return facade
+
+    # Since "caplog "is a pytest-fixture and this class is based on Python
+    # unittest, use this trick from https://stackoverflow.com/a/50375022
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
 
     @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_keyword_type_checks(self):
@@ -235,3 +264,44 @@ class LibresFacadeTest(TestCase):
         facade = self.facade()
         data = facade.history_data("nokey")
         self.assertIsInstance(data, PandasObject)
+
+    def _do_verify_indices_and_values(self, data):
+        # Verify indices
+        assert data.columns.name == "Realization"
+        assert all(data.columns == range(25))
+        assert data.index.name == "Date"
+        assert all(data.index == pd.date_range("2010-01-10", periods=200, freq="10D"))
+
+        # Verify selected datapoints
+        assert data.iloc[0][0] == pytest.approx(0.118963, abs=1e-6)  # top-left
+        assert data.iloc[199][0] == pytest.approx(0.133601, abs=1e-6)  # bottom-left
+        assert data.iloc[4][9] == pytest.approx(
+            0.178028, abs=1e-6
+        )  # somewhere in the middle
+        # bottom-right 5 entries in col
+        assert data.iloc[-5:][24].values == pytest.approx(
+            [0.143714, 0.142230, 0.140191, 0.140143, 0.139711], abs=1e-6
+        )
+
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
+    def test_summary_data_verify_indices_and_values(self):
+        facade = self.facade()
+        self._caplog.clear()
+        with self._caplog.at_level(logging.WARNING):
+            self._do_verify_indices_and_values(
+                facade.gather_summary_data("default_0", "FOPR")
+            )
+            assert "contains duplicate timestamps" not in self._caplog.text
+
+    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
+    @patch(
+        "res.enkf.export.SummaryCollector.loadAllSummaryData", wraps=_add_duplicate_row
+    )
+    def test_summary_data_verify_remove_duplicates(self, *args):
+        facade = self.facade()
+        self._caplog.clear()
+        with self._caplog.at_level(logging.WARNING):
+            self._do_verify_indices_and_values(
+                facade.gather_summary_data("default_0", "FOPR")
+            )
+            assert "contains duplicate timestamps" in self._caplog.text
