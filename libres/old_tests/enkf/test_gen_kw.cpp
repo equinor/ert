@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <iostream>
+#include <fstream>
 
 #include <filesystem>
 
@@ -49,6 +51,41 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     run_arg_free(run_arg);
 }
 
+static void read_erroneous_gen_kw_file(void *arg) {
+    vector_type *arg_vector = vector_safe_cast(arg);
+    gen_kw_config_type *gen_kw_config =
+        (gen_kw_config_type *)vector_iget(arg_vector, 0);
+    const char *filename = (const char *)vector_iget_const(arg_vector, 1);
+    gen_kw_config_set_parameter_file(gen_kw_config, filename);
+}
+
+void test_read_erroneous_gen_kw_file() {
+    const char *parameter_filename = "MULTFLT_with_errors.txt";
+    const char *tmpl_filename = "MULTFLT.tmpl";
+
+    {
+        std::ofstream param_file(parameter_filename);
+        param_file << "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0";
+        param_file.close();
+
+        std::ofstream tmpl_file(tmpl_filename);
+        tmpl_file << "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0";
+        tmpl_file.close();
+    }
+
+    gen_kw_config_type *gen_kw_config =
+        gen_kw_config_alloc_empty("MULTFLT", "<%s>");
+    vector_type *arg = vector_alloc_new();
+    vector_append_ref(arg, gen_kw_config);
+    vector_append_ref(arg, parameter_filename);
+
+    test_assert_util_abort("gen_kw_config_set_parameter_file",
+                           read_erroneous_gen_kw_file, arg);
+
+    vector_free(arg);
+    gen_kw_config_free(gen_kw_config);
+}
+
 int main(int argc, char **argv) {
     const char *config_file = argv[1];
     ert_test_context_type *test_context =
@@ -57,7 +94,7 @@ int main(int argc, char **argv) {
     test_assert_not_NULL(enkf_main);
 
     test_write_gen_kw_export_file(enkf_main);
-
+    test_read_erroneous_gen_kw_file();
     ert_test_context_free(test_context);
     exit(0);
 }
