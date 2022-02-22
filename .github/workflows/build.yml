@@ -190,7 +190,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} temp
-        path: temp
+        path: tests/temp/my_poly_tmpcurrent
 
     - name: Test CLI
       run: |
