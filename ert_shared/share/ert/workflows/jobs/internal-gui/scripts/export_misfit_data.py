@@ -70,8 +70,5 @@ class ExportMisfitDataJob(ErtScript):
 
     def createActiveList(self, fs):
         state_map = fs.getStateMap()
-        ens_mask = [False] * self.ert().getEnsembleSize()
-        state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
-        index_list = [index for index, element in enumerate(ens_mask) if element]
-        bool_vec = BoolVector.createFromList(len(index_list), index_list)
-        return bool_vec.createActiveList()
+        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        return [index for index, element in enumerate(ens_mask) if element]

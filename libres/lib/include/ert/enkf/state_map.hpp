@@ -48,9 +48,9 @@ void state_map_iset(state_map_type *map, int index,
 bool state_map_equal(const state_map_type *map1, const state_map_type *map2);
 void state_map_fwrite(const state_map_type *map, const char *filename);
 bool state_map_fread(state_map_type *map, const char *filename);
-extern "C++" void state_map_select_matching(const state_map_type *map,
-                                            std::vector<bool> &select_target,
-                                            int select_mask, bool select);
+extern "C++" std::vector<bool>
+state_map_select_matching(const state_map_type *map, int select_mask,
+                          bool select);
 void state_map_set_from_inverted_mask(state_map_type *map,
                                       const std::vector<bool> &mask,
                                       realisation_state_enum state);
