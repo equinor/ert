@@ -167,59 +167,49 @@ void test_update_matching() {
 
 void test_select_matching() {
     state_map_type *map = state_map_alloc();
-    std::vector<bool> mask1(21, false);
-    std::vector<bool> mask2(1000, true);
 
     state_map_iset(map, 10, STATE_INITIALIZED);
     state_map_iset(map, 10, STATE_HAS_DATA);
     state_map_iset(map, 20, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
-    state_map_select_matching(map, mask2, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
+    std::vector<bool> mask = state_map_select_matching(
+        map, STATE_HAS_DATA | STATE_INITIALIZED, true);
+    test_assert_int_equal(mask.size(), 21);
+    test_assert_true(mask[10]);
+    test_assert_true(mask[20]);
 
-    for (int i = 0; i < mask1.size(); i++) {
+    mask = state_map_select_matching(map, STATE_HAS_DATA, true);
+
+    for (size_t i; i < mask.size(); i++) {
         if (i == 10)
-            test_assert_true(mask1[i]);
-        else if (i == 20)
-            test_assert_true(mask1[i]);
+            test_assert_true(mask[i]);
         else {
-            test_assert_false(mask1[i]);
-            test_assert_true(mask2[i]);
+            test_assert_false(mask[0]);
         }
     }
 
     state_map_iset(map, 50, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
-    test_assert_int_equal(mask1.size(), 21);
+    mask = state_map_select_matching(map, STATE_HAS_DATA | STATE_INITIALIZED,
+                                     true);
+    test_assert_int_equal(mask.size(), 51);
 
     state_map_free(map);
 }
 
 void test_deselect_matching() {
     state_map_type *map = state_map_alloc();
-    std::vector<bool> mask1(0, false);
-    std::vector<bool> mask2(1000, true);
 
-    state_map_iset(map, 10, STATE_INITIALIZED);
     state_map_iset(map, 10, STATE_HAS_DATA);
     state_map_iset(map, 20, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              false);
-    state_map_select_matching(map, mask2, STATE_HAS_DATA | STATE_INITIALIZED,
-                              false);
+    std::vector<bool> mask = state_map_select_matching(
+        map, STATE_HAS_DATA | STATE_INITIALIZED, false);
 
-    test_assert_int_equal(state_map_get_size(map), mask1.size());
+    test_assert_int_equal(state_map_get_size(map), mask.size());
 
-    for (int i = 0; i < mask1.size(); i++) {
-        if (i == 10)
-            test_assert_false(mask1[1]);
-        else if (i == 20)
-            test_assert_false(mask2[1]);
+    for (int i = 0; i < mask.size(); i++) {
+        if ((i == 10) | (i == 20))
+            test_assert_false(mask[i]);
         else {
-            test_assert_false(mask1[1]);
-            test_assert_true(mask2[1]);
+            test_assert_true(mask[i]);
         }
     }
 

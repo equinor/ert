@@ -209,25 +209,20 @@ bool state_map_fread(state_map_type *map, const char *filename) {
     return file_exists;
 }
 
-/*
-  NB: This function does *not* resize select_target vector; i.e. realizations
-  beyond the size of the select_target vector will not be selected.
-*/
-void state_map_select_matching(const state_map_type *map,
-                               std::vector<bool> &select_target,
-                               int select_mask, bool select) {
+std::vector<bool> state_map_select_matching(const state_map_type *map,
+                                            int select_mask, bool select) {
+    std::vector<bool> select_target(int_vector_size(map->state), false);
     pthread_rwlock_rdlock(&map->rw_lock);
     {
         const int *map_ptr = int_vector_get_ptr(map->state);
-        size_t size =
-            std::min((size_t)int_vector_size(map->state), select_target.size());
-        for (size_t i = 0; i < size; i++) {
+        for (size_t i = 0; i < select_target.size(); i++) {
             int state_value = map_ptr[i];
             if (state_value & select_mask)
                 select_target[i] = select;
         }
     }
     pthread_rwlock_unlock(&map->rw_lock);
+    return select_target;
 }
 
 static void state_map_set_from_mask__(state_map_type *map,
@@ -271,15 +266,10 @@ int state_map_count_matching(const state_map_type *state_map, int mask) {
     return count;
 }
 
-void select_matching(py::object map, py::list my_list, int select_mask,
-                     bool select) {
+std::vector<bool> select_matching(py::object map, int select_mask,
+                                  bool select) {
     auto map_ = ert::from_cwrap<state_map_type>(map);
-    std::vector<bool> select_target;
-    for (auto item : my_list)
-        select_target.push_back(item.cast<bool>());
-    state_map_select_matching(map_, select_target, select_mask, select);
-    for (size_t i = 0; i < select_target.size(); i++)
-        my_list[i] = py::bool_(select_target[i]);
+    return state_map_select_matching(map_, select_mask, select);
 }
 
 RES_LIB_SUBMODULE("state_map", m) { m.def("select_matching", select_matching); }

@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector, DoubleVector
+from ecl.util.util import DoubleVector
 from res import ResPrototype
 from res import _lib
 from res.enkf.config import EnkfConfigNode
