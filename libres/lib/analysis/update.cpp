@@ -588,8 +588,8 @@ bool smoother_update(const local_updatestep_type *updatestep,
 
     ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
 
-    std::vector<bool> ens_mask(total_ens_size, false);
-    state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
+    auto ens_mask =
+        state_map_select_matching(source_state_map, STATE_HAS_DATA, true);
 
     copy_parameters(source_fs, target_fs, ensemble_config, ens_mask);
 

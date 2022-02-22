@@ -1,4 +1,4 @@
-from ecl.util.util import BoolVector, DoubleVector, ThreadPool
+from ecl.util.util import DoubleVector, ThreadPool
 
 from res.enkf import NodeId
 from res.enkf.data import EnkfNode
@@ -35,23 +35,17 @@ class PlotBlockDataLoader:
 
         return depth
 
-    def load(self, fs, report_step, input_mask=None):
+    def load(self, fs, report_step):
         """
         @type fs: EnkfFs
         @type report_step: int
-        @type input_mask: BoolVector
         @rtype: PlotBlockData
         """
 
         state_map = fs.getStateMap()
         ensemble_size = len(state_map)
 
-        if input_mask is not None:
-            mask = list(BoolVector.copy(input_mask))
-        else:
-            mask = [False] * ensemble_size
-
-        state_map.selectMatching(mask, RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
 
         depth = self.getDepthValues(report_step)
 
@@ -61,8 +55,8 @@ class PlotBlockDataLoader:
         plot_block_data = PlotBlockData(depth)
 
         thread_pool = ThreadPool()
-        for index in range(ensemble_size):
-            if mask[index]:
+        for index, mask in enumerate(ens_mask):
+            if mask:
                 thread_pool.addTask(
                     self.loadVector, plot_block_data, fs, report_step, index
                 )

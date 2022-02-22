@@ -95,9 +95,8 @@ void enkf_plot_data_load(enkf_plot_data_type *plot_data, enkf_fs_type *fs,
     state_map_type *state_map = enkf_fs_get_state_map(fs);
     int ens_size = state_map_get_size(state_map);
 
-    std::vector<bool> mask(ens_size, false);
-
-    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
+    std::vector<bool> mask =
+        state_map_select_matching(state_map, STATE_HAS_DATA, true);
     enkf_plot_data_resize(plot_data, ens_size);
     enkf_plot_data_reset(plot_data);
     {
