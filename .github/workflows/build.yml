@@ -176,18 +176,21 @@ jobs:
         sleep 5
         pushd tests
         pytest ert_tests performance_tests -sv --durations=0 -m "integration_test" --basetemp=temp
+        ls temp
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
         pytest ert_tests performance_tests -sv --durations=0 -m "integration_test" --basetemp=temp
+        ls temp
 
     - name: Upload tmp artifact
+      if: always()
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.os }} Python ${{ matrix.python-version }} temp
-        path: temp/my_poly_tmpcurrent
+        path: temp
 
     - name: Test CLI
       run: |
