@@ -45,27 +45,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "max_runtime_poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
-                "--disable-ensemble-evaluator",
-                "--realizations",
-                "0,1",
-                "max_runtime_poly_example/poly.ert",
-            ],
-            0,
-            1,
-            [
-                (".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FAILURE),
-                (
-                    ".*",
-                    "reals.*.steps.*.jobs.*.error",
-                    "The run is cancelled due to reaching MAX_RUNTIME",
-                ),
-            ],
-            id="legacy_poly_experiment_cancelled_by_max_runtime",
-        ),
-        pytest.param(
-            "max_runtime_poly_example",
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
                 "--realizations",
                 "0,1",
                 "max_runtime_poly_example/poly.ert",
@@ -86,20 +65,6 @@ def check_expression(original, path_expression, expected, msg_start):
             "poly_example",
             [
                 ENSEMBLE_EXPERIMENT_MODE,
-                "--disable-ensemble-evaluator",
-                "--realizations",
-                "0,1",
-                "poly_example/poly.ert",
-            ],
-            2,
-            1,
-            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
-            id="legacy_poly_experiment",
-        ),
-        pytest.param(
-            "poly_example",
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
                 "--realizations",
                 "0,1",
                 "poly_example/poly.ert",
@@ -108,22 +73,6 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
             id="ee_poly_experiment",
-        ),
-        pytest.param(
-            "poly_example",
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--disable-ensemble-evaluator",
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "5,6",
-                "poly_example/poly.ert",
-            ],
-            2,
-            2,
-            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
-            id="legacy_poly_smoother",
         ),
         pytest.param(
             "poly_example",
@@ -139,26 +88,6 @@ def check_expression(original, path_expression, expected, msg_start):
             2,
             [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
             id="ee_poly_smoother",
-        ),
-        pytest.param(
-            "failing_poly_example",
-            [
-                ENSEMBLE_SMOOTHER_MODE,
-                "--disable-ensemble-evaluator",
-                "--target-case",
-                "poly_runpath_file",
-                "--realizations",
-                "0,1",
-                "failing_poly_example/poly.ert",
-            ],
-            1,
-            2,
-            [
-                ("0", "reals.'0'.steps.*.jobs.'0'.status", state.JOB_STATE_FAILURE),
-                ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
-                (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
-            ],
-            id="legacy_failing_poly_smoother",
         ),
         pytest.param(
             "failing_poly_example",
@@ -217,9 +146,8 @@ def test_tracking(
             model, argument = create_model(parsed)
 
             ee_config = None
-            if FeatureToggling.is_enabled("ensemble-evaluator"):
-                ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
-                argument.update({"ee_config": ee_config})
+            ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
+            argument.update({"ee_config": ee_config})
 
             thread = threading.Thread(
                 name="ert_cli_simulation_thread",

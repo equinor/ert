@@ -1,7 +1,6 @@
 from ert_gui.model.snapshot import SnapshotModel
 import typing
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
-from ert_shared.status.tracker.legacy import LegacyTracker
 from ert_shared.status.entity.event import (
     EndEvent,
     FullSnapshotEvent,
@@ -22,7 +21,7 @@ class TrackerWorker(QObject):
     done = Signal()
 
     def __init__(
-        self, tracker: typing.Union[LegacyTracker, EvaluatorTracker], parent=None
+        self, tracker: EvaluatorTracker, parent=None
     ):
         super().__init__(parent)
         logger.debug("init trackerworker")

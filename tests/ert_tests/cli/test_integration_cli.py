@@ -107,15 +107,12 @@ def test_ensemble_evaluator(tmpdir, source_root, mock_start_server):
                 "poly_runpath_file",
                 "--realizations",
                 "1,2,4,8,16,32,64",
-                "--disable-ensemble-evaluator",
                 "poly_example/poly.ert",
                 "--port-range",
                 "1024-65535",
             ],
         )
         FeatureToggling.update_from_args(parsed)
-
-        assert FeatureToggling.is_enabled("ensemble-evaluator") is False
 
         run_cli(parsed)
         FeatureToggling.reset()
@@ -134,7 +131,6 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root, mock_start_s
             parser,
             [
                 ENSEMBLE_SMOOTHER_MODE,
-                "--disable-ensemble-evaluator",
                 "--disable-monitoring",
                 "--target-case",
                 "poly_runpath_file",
@@ -146,8 +142,6 @@ def test_ensemble_evaluator_disable_monitoring(tmpdir, source_root, mock_start_s
             ],
         )
         FeatureToggling.update_from_args(parsed)
-
-        assert FeatureToggling.is_enabled("ensemble-evaluator") is False
 
         run_cli(parsed)
         FeatureToggling.reset()

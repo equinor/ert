@@ -1,7 +1,5 @@
-from ert_shared.status.tracker.legacy import LegacyTracker
 from ert_shared.status.tracker.evaluator import EvaluatorTracker
 from ert_shared.status.utils import scale_intervals
-from ert_shared.feature_toggling import FeatureToggling
 
 
 def create_tracker(
@@ -27,18 +25,12 @@ def create_tracker(
     if num_realizations is not None:
         general_interval, detailed_interval = scale_intervals(num_realizations)
 
-    if FeatureToggling.is_enabled("ensemble-evaluator"):
-        return EvaluatorTracker(
-            model,
-            ee_config.host,
-            ee_config.port,
-            general_interval,
-            detailed_interval,
-            token=ee_config.token,
-            cert=ee_config.cert,
-        )
-    return LegacyTracker(
+    return EvaluatorTracker(
         model,
+        ee_config.host,
+        ee_config.port,
         general_interval,
         detailed_interval,
+        token=ee_config.token,
+        cert=ee_config.cert,
     )

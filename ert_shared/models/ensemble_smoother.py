@@ -1,4 +1,3 @@
-from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
@@ -37,18 +36,10 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
-            num_successful_realizations = self.run_ensemble_evaluator(
-                prior_context, ee_config
-            )
-        else:
-            self._job_queue = self._queue_config.create_job_queue()
-            num_successful_realizations = (
-                self.ert()
-                .getEnkfSimulationRunner()
-                .runSimpleStep(self._job_queue, prior_context)
-            )
+        ee_config = arguments["ee_config"]
+        num_successful_realizations = self.run_ensemble_evaluator(
+            prior_context, ee_config
+        )
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)
@@ -86,18 +77,10 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Running forecast...", indeterminate=False)
 
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
-            num_successful_realizations = self.run_ensemble_evaluator(
-                rerun_context, ee_config
-            )
-        else:
-            self._job_queue = self._queue_config.create_job_queue()
-            num_successful_realizations = (
-                self.ert()
-                .getEnkfSimulationRunner()
-                .runSimpleStep(self._job_queue, rerun_context)
-            )
+        ee_config = arguments["ee_config"]
+        num_successful_realizations = self.run_ensemble_evaluator(
+            rerun_context, ee_config
+        )
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
