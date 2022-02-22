@@ -41,9 +41,6 @@ active_list_type *
 local_obsdata_node_get_active_list(const local_obsdata_node_type *node);
 active_list_type *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node);
-extern "C++" void
-local_obsdata_node_copy_active_list(local_obsdata_node_type *node,
-                                    const active_list_type *active_list);
 UTIL_IS_INSTANCE_HEADER(local_obsdata_node);
 UTIL_SAFE_CAST_HEADER(local_obsdata_node);
 
