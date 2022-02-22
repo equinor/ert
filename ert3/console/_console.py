@@ -224,8 +224,11 @@ def _init(args: Any) -> None:
         ert.storage.init(workspace_name=workspace.name)
     except TimeoutError as err:
         workspace.delete()
+        raise ert.exceptions.StorageError(f"Failed to contact storage: {err}") from err
+    except ValueError as err:
+        workspace.delete()
         raise ert.exceptions.StorageError(
-            "Failed to contact storage. Is it running?"
+            f"Could not initialize storage: {err}"
         ) from err
 
 

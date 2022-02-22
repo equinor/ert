@@ -14,7 +14,7 @@ def test_init(tmpdir, ert_storage):
 @pytest.mark.requires_ert_storage
 def test_double_init(tmpdir, ert_storage):
     ert.storage.init(workspace_name=tmpdir)
-    with pytest.raises(ValueError, match="Storage already initialized"):
+    with pytest.raises(RuntimeError, match="already registered in storage"):
         ert.storage.init(workspace_name=tmpdir)
 
 
