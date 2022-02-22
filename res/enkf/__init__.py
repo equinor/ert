@@ -66,12 +66,8 @@ from .local_ministep import LocalMinistep
 from .local_obsdata import LocalObsdata
 from .local_obsdata_node import LocalObsdataNode
 from .local_updatestep import LocalUpdateStep
-from .meas_block import MeasBlock
-from .meas_data import MeasData
 from .model_config import ModelConfig
 from .node_id import NodeId
-from .obs_block import ObsBlock
-from .obs_data import ObsData
 from .observations import (
     BlockDataConfig,
     BlockObservation,
