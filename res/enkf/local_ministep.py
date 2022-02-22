@@ -1,10 +1,10 @@
+from typing import Dict, List
 from cwrap import BaseCClass
 
 from res import _lib
 from res import ResPrototype
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
-from res.enkf.obs_data import ObsData
 from res.enkf.row_scaling import RowScaling
 
 
@@ -16,9 +16,6 @@ class LocalMinistep(BaseCClass):
     )
     _get_local_obs_data = ResPrototype(
         "local_obsdata_ref local_ministep_get_obsdata(local_ministep)"
-    )
-    _get_obs_data = ResPrototype(
-        "obs_data_ref local_ministep_get_obs_data( local_ministep )"
     )
     _free = ResPrototype("void local_ministep_free(local_ministep)")
     _attach_obsdata = ResPrototype(
@@ -92,9 +89,8 @@ class LocalMinistep(BaseCClass):
         """@rtype: str"""
         return self.name()
 
-    def get_obs_data(self) -> ObsData:
-        """@rtype: ObsData"""
-        return self._get_obs_data()
+    def get_obs_active_list(self) -> Dict[str, List[bool]]:
+        return _lib.local.ministep.get_obs_active_list(self)
 
     def free(self):
         self._free()

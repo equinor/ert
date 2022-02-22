@@ -132,7 +132,7 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 _ = ministep.getActiveList("DATA")
 
-            self.assertIsNone(ministep.get_obs_data())
+            self.assertEqual(ministep.get_obs_active_list(), {})
 
     def test_attach_ministep(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -181,16 +181,13 @@ class LocalConfigTest(ResTest):
 
             update_step = ert.getLocalConfig().getUpdatestep()
             ministep = update_step[len(update_step) - 1]
-            obs_data = ministep.get_obs_data()
-            self.assertEqual(len(expected_keys), obs_data.get_num_blocks())
+            active_dict = ministep.get_obs_active_list()
+            self.assertEqual(len(expected_keys), len(active_dict))
 
             observed_obs_keys = set()
-            for block_num in range(obs_data.get_num_blocks()):
-                block = obs_data.get_block(block_num)
-
-                obs_key = block.get_obs_key()
+            for obs_key, block in active_dict.items():
                 observed_obs_keys.add(obs_key)
                 for i in range(len(block)):
-                    self.assertTrue(block.is_active(i))
+                    self.assertTrue(block[i])
 
             self.assertSetEqual(expected_keys, observed_obs_keys)

@@ -20,4 +20,3 @@ from .substitution_list import SubstitutionList
 from .enums import LLSQResultEnum
 from .ui_return import UIReturn
 from .path_format import PathFormat
-from .matrix import Matrix
