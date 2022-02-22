@@ -97,9 +97,8 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
 int local_ministep_num_active_data(const local_ministep_type *ministep) {
     return ministep->num_active_data();
 }
-active_list_type *
-local_ministep_get_active_data_list(const local_ministep_type *ministep,
-                                    const char *key) {
+ActiveList *local_ministep_get_active_data_list(local_ministep_type *ministep,
+                                                const char *key) {
     return ministep->get_active_data_list(key);
 }
 bool local_ministep_data_is_active(const local_ministep_type *ministep,
@@ -116,7 +115,7 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key) {
     auto scaling_iter = ministep->scaling.find(key);
     if (scaling_iter == ministep->scaling.end()) {
-        if (!hash_has_key(ministep->active_size, key))
+        if (ministep->active_size.count(key) == 0)
             throw std::invalid_argument(
                 "Tried to create row_scaling object for unknown key");
 
@@ -140,38 +139,23 @@ const char *local_ministep_get_name(const local_ministep_type *ministep) {
 }
 
 void local_ministep_summary_fprintf(const local_ministep_type *ministep,
-                                    FILE *stream) {
-
-    fprintf(stream, "MINISTEP:%s,", ministep->name.data());
-
-    {
-        hash_iter_type *data_iter = hash_iter_alloc(ministep->active_size);
-        while (!hash_iter_is_complete(data_iter)) {
-            const char *data_key = hash_iter_get_next_key(data_iter);
-            fprintf(stream, "NAME OF DATA:%s,", data_key);
-
-            active_list_type *active_list =
-                (active_list_type *)hash_get(ministep->active_size, data_key);
-            active_list_summary_fprintf(active_list, ministep->name.data(),
-                                        data_key, stream);
-        }
-        hash_iter_free(data_iter);
-
-        /* Only one OBSDATA */
-        local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
-        local_obsdata_summary_fprintf(obsdata, stream);
-        fprintf(stream, "\n");
-    }
-}
+                                    FILE *stream) {}
 
 namespace {
 RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
-    auto ministep = reinterpret_cast<local_ministep_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    auto row_scaling =
+    auto * ministep = ert::from_cwrap<local_ministep_type>(self);
+    auto * row_scaling =
         local_ministep_get_or_create_row_scaling(ministep, name.c_str());
     return row_scaling;
 }
+
+ActiveList &get_active_data_list(py::handle self, const std::string &name) {
+    auto * ministep = ert::from_cwrap<local_ministep_type>(self);
+    auto active_list =
+        local_ministep_get_active_data_list(ministep, name.c_str());
+    return *active_list;
+}
+
 } // namespace
 
 RES_LIB_SUBMODULE("local.ministep", m) {
@@ -202,4 +186,6 @@ RES_LIB_SUBMODULE("local.ministep", m) {
     m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
           "name"_a);
     m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
+    m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
+          py::return_value_policy::reference);
 }

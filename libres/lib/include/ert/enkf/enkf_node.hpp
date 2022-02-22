@@ -48,10 +48,10 @@
 extern "C" {
 #endif
 
-typedef void(serialize_ftype)(const void *, node_id_type,
-                              const active_list_type *, matrix_type *, int,
-                              int);
-typedef void(deserialize_ftype)(void *, node_id_type, const active_list_type *,
+extern "C++" {
+typedef void(serialize_ftype)(const void *, node_id_type, const ActiveList *,
+                              matrix_type *, int, int);
+typedef void(deserialize_ftype)(void *, node_id_type, const ActiveList *,
                                 const matrix_type *, int, int);
 
 typedef void(ecl_write_ftype)(const void *, /* Node object */
@@ -80,6 +80,13 @@ typedef void(clear_ftype)(void *);
 typedef void(node_copy_ftype)(const void *, void *);
 typedef void(ensemble_mulX_vector_ftype)(void *, int, const void **,
                                          const double *);
+void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                         node_id_type node_id, const ActiveList *active_list,
+                         matrix_type *A, int row_offset, int column);
+void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                           node_id_type node_id, const ActiveList *active_list,
+                           const matrix_type *A, int row_offset, int column);
+}
 
 typedef enum {
     alloc_func = 0,
@@ -125,14 +132,6 @@ void enkf_node_free__(void *);
 void *enkf_node_value_ptr(const enkf_node_type *);
 ert_impl_type enkf_node_get_impl_type(const enkf_node_type *);
 bool enkf_node_use_forward_init(const enkf_node_type *enkf_node);
-void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                         node_id_type node_id,
-                         const active_list_type *active_list, matrix_type *A,
-                         int row_offset, int column);
-void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                           node_id_type node_id,
-                           const active_list_type *active_list,
-                           const matrix_type *A, int row_offset, int column);
 
 bool enkf_node_forward_load_vector(
     enkf_node_type *enkf_node, const forward_load_context_type *load_context,

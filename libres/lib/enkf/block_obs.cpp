@@ -34,6 +34,7 @@
 #include <ert/enkf/container_config.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/block_obs.hpp>
+#include "ert/python.hpp"
 
 #define BLOCK_OBS_TYPE_ID 661098
 #define POINT_OBS_TYPE_ID 778196
@@ -248,11 +249,11 @@ void block_obs_free(block_obs_type *block_obs) {
 void block_obs_get_observations(const block_obs_type *block_obs,
                                 obs_data_type *obs_data, enkf_fs_type *fs,
                                 int report_step,
-                                const active_list_type *__active_list) {
+                                const ActiveList *__active_list) {
     int i;
     int obs_size = block_obs_get_size(block_obs);
-    int active_size = active_list_get_active_size(__active_list, obs_size);
-    active_mode_type active_mode = active_list_get_mode(__active_list);
+    int active_size = __active_list->active_size(obs_size);
+    active_mode_type active_mode = __active_list->getMode();
     obs_block_type *obs_block =
         obs_data_add_block(obs_data, block_obs->obs_key, obs_size, NULL, false);
 
@@ -264,7 +265,7 @@ void block_obs_get_observations(const block_obs_type *block_obs,
                            point_obs->std * point_obs->std_scaling);
         }
     } else if (active_mode == PARTLY_ACTIVE) {
-        const int *active_list = active_list_get_active(__active_list);
+        const int *active_list = __active_list->active_list_get_active();
         for (i = 0; i < active_size; i++) {
             int iobs = active_list[i];
             const point_obs_type *point_obs =
@@ -297,16 +298,16 @@ double block_obs_iget_data(const block_obs_type *block_obs, const void *state,
 
 void block_obs_measure(const block_obs_type *block_obs, const void *state,
                        node_id_type node_id, meas_data_type *meas_data,
-                       const active_list_type *__active_list) {
+                       const ActiveList *__active_list) {
     block_obs_assert_data(block_obs, state);
     {
         int obs_size = block_obs_get_size(block_obs);
-        int active_size = active_list_get_active_size(__active_list, obs_size);
+        int active_size = __active_list->active_size(obs_size);
         meas_block_type *meas_block = meas_data_add_block(
             meas_data, block_obs->obs_key, node_id.report_step, obs_size);
         int iobs;
 
-        active_mode_type active_mode = active_list_get_mode(__active_list);
+        active_mode_type active_mode = __active_list->getMode();
         if (active_mode == ALL_ACTIVE) {
             for (iobs = 0; iobs < obs_size; iobs++) {
                 double value =
@@ -314,7 +315,7 @@ void block_obs_measure(const block_obs_type *block_obs, const void *state,
                 meas_block_iset(meas_block, node_id.iens, iobs, value);
             }
         } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = active_list_get_active(__active_list);
+            const int *active_list = __active_list->active_list_get_active();
             for (int i = 0; i < active_size; i++) {
                 iobs = active_list[i];
                 {
@@ -416,17 +417,17 @@ int block_obs_get_size(const block_obs_type *block_obs) {
 }
 
 void block_obs_update_std_scale(block_obs_type *block_obs, double scale_factor,
-                                const active_list_type *active_list) {
+                                const ActiveList *active_list) {
     int obs_size = block_obs_get_size(block_obs);
-    if (active_list_get_mode(active_list) == ALL_ACTIVE) {
+    if (active_list->getMode() == ALL_ACTIVE) {
         for (int i = 0; i < obs_size; i++) {
             point_obs_type *point_observation =
                 block_obs_iget_point(block_obs, i);
             point_observation->std_scaling = scale_factor;
         }
     } else {
-        const int *active_index = active_list_get_active(active_list);
-        int size = active_list_get_active_size(active_list, obs_size);
+        const int *active_index = active_list->active_list_get_active();
+        int size = active_list->active_size(obs_size);
         for (int i = 0; i < size; i++) {
             int obs_index = active_index[i];
             point_obs_type *point_observation =
@@ -444,3 +445,20 @@ VOID_MEASURE_UNSAFE(
 VOID_USER_GET_OBS(block_obs)
 VOID_CHI2(block_obs, field)
 VOID_UPDATE_STD_SCALE(block_obs)
+
+class ActiveList;
+namespace {
+void update_std_scaling(py::handle obj, double scaling,
+                        const ActiveList &active_list) {
+    auto *block_obs = reinterpret_cast<block_obs_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    block_obs_update_std_scale(block_obs, scaling, &active_list);
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.block_obs", m) {
+    using namespace py::literals;
+
+    m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,
+          "active_list"_a);
+}

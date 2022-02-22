@@ -179,7 +179,7 @@ C_USED void gen_data_read_from_buffer(gen_data_type *gen_data,
 }
 
 void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
-                        const active_list_type *active_list, matrix_type *A,
+                        const ActiveList *active_list, matrix_type *A,
                         int row_offset, int column) {
     const gen_data_config_type *config = gen_data->config;
     const int data_size = gen_data_config_get_data_size(
@@ -191,8 +191,8 @@ void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
 }
 
 void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
-                          const active_list_type *active_list,
-                          const matrix_type *A, int row_offset, int column) {
+                          const ActiveList *active_list, const matrix_type *A,
+                          int row_offset, int column) {
     {
         const gen_data_config_type *config = gen_data->config;
         const int data_size = gen_data_config_get_data_size(

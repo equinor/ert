@@ -16,6 +16,7 @@
 
 from cwrap import BaseCClass
 from res import ResPrototype
+from res import _lib
 
 
 class SummaryObservation(BaseCClass):
@@ -30,9 +31,6 @@ class SummaryObservation(BaseCClass):
     _get_std = ResPrototype("double summary_obs_get_std(summary_obs)")
     _get_std_scaling = ResPrototype("double summary_obs_get_std_scaling(summary_obs)")
     _get_summary_key = ResPrototype("char*  summary_obs_get_summary_key(summary_obs)")
-    _update_std_scale = ResPrototype(
-        "void   summary_obs_update_std_scale(summary_obs , double , active_list)"
-    )
     _set_std_scale = ResPrototype(
         "void   summary_obs_set_std_scale(summary_obs , double)"
     )
@@ -88,7 +86,7 @@ class SummaryObservation(BaseCClass):
         return self._get_summary_key()
 
     def updateStdScaling(self, factor, active_list):
-        self._update_std_scale(factor, active_list)
+        _lib.local.summary_obs.update_std_scaling(self, factor, active_list)
 
     def free(self):
         self._free()

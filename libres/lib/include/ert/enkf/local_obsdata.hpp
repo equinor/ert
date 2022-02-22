@@ -47,12 +47,12 @@ const char *local_obsdata_get_name(const local_obsdata_type *data);
 local_obsdata_node_type *local_obsdata_get(const local_obsdata_type *data,
                                            const char *key);
 void local_obsdata_del_node(local_obsdata_type *data, const char *key);
-active_list_type *
+ActiveList *
 local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
                                    const char *obs_key);
 void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
                                    FILE *stream);
-PY_USED active_list_type *
+PY_USED ActiveList *
 local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
                                         const char *obs_key);
 

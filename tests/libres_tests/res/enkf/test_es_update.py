@@ -251,6 +251,8 @@ def test_localization(setup_case, expected_target_gen_kw):
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)
 
+    print("Local config complete")
+
     # Run enseble smoother
     mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=True)
     model_config = ert.getModelConfig()
@@ -260,7 +262,9 @@ def test_localization(setup_case, expected_target_gen_kw):
     run_context = ErtRunContext.ensemble_smoother(
         sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, 0
     )
+    print("Calling update")
     es_update.smootherUpdate(run_context)
+    print("Update complete")
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)

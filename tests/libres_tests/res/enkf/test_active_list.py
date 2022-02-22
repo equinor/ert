@@ -28,7 +28,6 @@ class ActiveListTest(ResTest):
 
     def test_active_size(self):
         al = ActiveList()
-        self.assertEqual(None, al.getActiveSize(None))
         self.assertEqual(7, al.getActiveSize(7))
         self.assertEqual(-1, al.getActiveSize(-1))
 

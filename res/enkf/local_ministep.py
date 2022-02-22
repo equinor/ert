@@ -23,9 +23,6 @@ class LocalMinistep(BaseCClass):
     )
     _name = ResPrototype("char* local_ministep_get_name(local_ministep)")
     _data_size = ResPrototype("int local_ministep_num_active_data(local_ministep)")
-    _active_data_list = ResPrototype(
-        "active_list_ref local_ministep_get_active_data_list(local_ministep, char*)"
-    )
     _has_active_data = ResPrototype(
         "bool local_ministep_data_is_active(local_ministep, char*)"
     )
@@ -57,7 +54,7 @@ class LocalMinistep(BaseCClass):
     def getActiveList(self, key):
         """@rtype: ActiveList"""
         if self._has_active_data(key):
-            return self._active_data_list(key)
+            return _lib.local.ministep.get_active_data_list(self, key)
         else:
             raise KeyError('Local key "%s" not recognized.' % key)
 

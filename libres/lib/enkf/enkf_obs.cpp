@@ -33,10 +33,14 @@
 
 #include <ert/enkf/summary_obs.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_config.hpp>
+#include <ert/enkf/local_obsdata.hpp>
+#include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/active_list.hpp>
 
 /*
 
@@ -162,6 +166,9 @@ In the following example we have two observations
 
  */
 
+hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs);
+conf_class_type *enkf_obs_get_obs_conf_class(void);
+
 #define ENKF_OBS_TYPE_ID 637297
 struct enkf_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -246,54 +253,6 @@ bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs) {
         return false;
 }
 
-bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }
-
-void enkf_obs_free(enkf_obs_type *enkf_obs) {
-    hash_free(enkf_obs->obs_hash);
-    vector_free(enkf_obs->obs_vector);
-    time_map_free(enkf_obs->obs_time);
-    free(enkf_obs);
-}
-
-time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
-    return time_map_iget(enkf_obs->obs_time, report_step);
-}
-
-/*
-   Observe that the obs_vector can be NULL - in which it is of course not added.
-*/
-void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
-                             const obs_vector_type *vector) {
-
-    if (vector != NULL) {
-        const char *obs_key = obs_vector_get_key(vector);
-        if (hash_has_key(enkf_obs->obs_hash, obs_key))
-            util_abort("%s: Observation with key:%s already added.\n", __func__,
-                       obs_key);
-
-        hash_insert_ref(enkf_obs->obs_hash, obs_key, vector);
-        vector_append_owned_ref(enkf_obs->obs_vector, vector,
-                                obs_vector_free__);
-    }
-}
-
-bool enkf_obs_has_key(const enkf_obs_type *obs, const char *key) {
-    return hash_has_key(obs->obs_hash, key);
-}
-
-obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *obs,
-                                     const char *key) {
-    return (obs_vector_type *)hash_get(obs->obs_hash, key);
-}
-
-obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs, int index) {
-    return (obs_vector_type *)vector_iget(obs->obs_vector, index);
-}
-
-int enkf_obs_get_size(const enkf_obs_type *obs) {
-    return vector_get_size(obs->obs_vector);
-}
-
 static void enkf_obs_get_obs_and_measure_summary(
     const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
     enkf_fs_type *fs, const local_obsdata_node_type *obs_node,
@@ -301,8 +260,7 @@ static void enkf_obs_get_obs_and_measure_summary(
     obs_data_type *obs_data, double_vector_type *obs_value,
     double_vector_type *obs_std) {
 
-    const active_list_type *active_list =
-        local_obsdata_node_get_active_list(obs_node);
+    const auto &active_list = local_obsdata_node_get_active_list(obs_node);
 
     int active_count = 0;
     int last_step = -1;
@@ -317,18 +275,15 @@ static void enkf_obs_get_obs_and_measure_summary(
         if (step < 0)
             break;
 
-        if (obs_vector_iget_active(obs_vector, step)) {
-            const summary_obs_type *summary_obs =
-                (const summary_obs_type *)obs_vector_iget_node(obs_vector,
-                                                               step);
-            double_vector_iset(obs_std, active_count,
-                               summary_obs_get_std(summary_obs) *
-                                   summary_obs_get_std_scaling(summary_obs));
-            double_vector_iset(obs_value, active_count,
-                               summary_obs_get_value(summary_obs));
-            last_step = step;
-            active_count++;
-        }
+        const summary_obs_type *summary_obs =
+            (const summary_obs_type *)obs_vector_iget_node(obs_vector, step);
+        double_vector_iset(obs_std, active_count,
+                           summary_obs_get_std(summary_obs) *
+                               summary_obs_get_std_scaling(summary_obs));
+        double_vector_iset(obs_value, active_count,
+                           summary_obs_get_value(summary_obs));
+        last_step = step;
+        active_count++;
     }
 
     if (active_count <= 0)
@@ -362,49 +317,43 @@ static void enkf_obs_get_obs_and_measure_summary(
             if (step < 0)
                 break;
 
-            if (obs_vector_iget_active(obs_vector, step)) {
-                for (int iens_index = 0; iens_index < active_size;
-                     iens_index++) {
-                    const int iens =
-                        int_vector_iget(ens_active_list, iens_index);
-                    node_id_type node_id = {.report_step = step, .iens = iens};
-                    enkf_node_load(work_node, fs, node_id);
+            for (int iens_index = 0; iens_index < active_size; iens_index++) {
+                const int iens = int_vector_iget(ens_active_list, iens_index);
+                node_id_type node_id = {.report_step = step, .iens = iens};
+                enkf_node_load(work_node, fs, node_id);
 
-                    int smlength = summary_length(
-                        (const summary_type *)enkf_node_value_ptr(work_node));
-                    if (step >= smlength) {
-                        // if obs vector and sim vector have different length
-                        // deactivate and continue to next
-                        char *msg = util_alloc_sprintf(
-                            "length of observation vector and simulated "
-                            "differ: %d vs. %d ",
-                            step, smlength);
-                        meas_block_deactivate(meas_block, active_count);
-                        obs_block_deactivate(obs_block, active_count, true,
-                                             msg);
-                        free(msg);
-                        break;
-                    } else {
-                        meas_block_iset(
-                            meas_block, iens, active_count,
-                            summary_get((const summary_type *)
-                                            enkf_node_value_ptr(work_node),
-                                        node_id.report_step));
-                    }
+                int smlength = summary_length(
+                    (const summary_type *)enkf_node_value_ptr(work_node));
+                if (step >= smlength) {
+                    // if obs vector and sim vector have different length
+                    // deactivate and continue to next
+                    char *msg = util_alloc_sprintf(
+                        "length of observation vector and simulated "
+                        "differ: %d vs. %d ",
+                        step, smlength);
+                    meas_block_deactivate(meas_block, active_count);
+                    obs_block_deactivate(obs_block, active_count, true, msg);
+                    free(msg);
+                    break;
+                } else {
+                    meas_block_iset(
+                        meas_block, iens, active_count,
+                        summary_get((const summary_type *)enkf_node_value_ptr(
+                                        work_node),
+                                    node_id.report_step));
                 }
-                active_count++;
             }
+            active_count++;
         }
         enkf_node_free(work_node);
     }
 }
 
-void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
-                                       enkf_fs_type *fs,
-                                       const local_obsdata_node_type *obs_node,
-                                       const int_vector_type *ens_active_list,
-                                       meas_data_type *meas_data,
-                                       obs_data_type *obs_data) {
+static void enkf_obs_get_obs_and_measure_node(
+    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
+    const local_obsdata_node_type *obs_node,
+    const int_vector_type *ens_active_list, meas_data_type *meas_data,
+    obs_data_type *obs_data) {
 
     const char *obs_key = local_obsdata_node_get_key(obs_node);
     obs_vector_type *obs_vector =
@@ -434,7 +383,7 @@ void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            const active_list_type *active_list =
+            const auto *active_list =
                 local_obsdata_node_get_active_list(obs_node);
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,
@@ -459,17 +408,10 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
 
     int iobs;
     for (iobs = 0; iobs < local_obsdata_get_size(local_obsdata); iobs++) {
-        const local_obsdata_node_type *obs_node =
-            local_obsdata_iget(local_obsdata, iobs);
+        const auto *obs_node = local_obsdata_iget(local_obsdata, iobs);
         enkf_obs_get_obs_and_measure_node(enkf_obs, fs, obs_node,
                                           ens_active_list, meas_data, obs_data);
     }
-}
-
-void enkf_obs_clear(enkf_obs_type *enkf_obs) {
-    hash_clear(enkf_obs->obs_hash);
-    vector_clear(enkf_obs->obs_vector);
-    ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
 }
 
 /*
@@ -1154,11 +1096,91 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
     return enkf_conf_class;
 }
 
+hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
+    return hash_iter_alloc(enkf_obs->obs_hash);
+}
+
 /*
-   Allocates a stringlist of obs target keys which correspond to
-   summary observations, these are then added to the state vector in
-   enkf_main.
+   This function allocates a hash table which looks like this:
+
+     {"OBS_KEY1": "STATE_KEY1", "OBS_KEY2": "STATE_KEY2", "OBS_KEY3": "STATE_KEY3", ....}
+
+   where "OBS_KEY" represents the keys in the enkf_obs hash, and the
+   value they are pointing at are the enkf_state keywords they are
+   measuring. For instance if we have an observation with key "RFT_1A"
+   the entry in the table will be:  ... "RFT_1A":  "PRESSURE", ..
+   since an RFT observation observes the pressure.
+
+   Let us consider the watercut in a well. Then the state_kw will
+   typically be WWCT:P1 for a well named 'P1'. Let us assume that this
+   well is observed both as a normal HISTORY observation from
+   SCHEDULE, and from two separator tests, called S1 and S2. Then the
+   hash table will look like this:
+
+       "WWCT:P1": "WWCT:P1",
+       "S1"     : "WWCT:P1",
+       "S2"     : "WWCT:P1"
+
+
+   I.e. there are three different observations keys, all observing the
+   same state_kw.
 */
+
+hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
+    hash_type *map = hash_alloc();
+    hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
+    const char *key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+        obs_vector_type *obs_vector =
+            (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
+        hash_insert_ref(map, key, obs_vector_get_state_kw(obs_vector));
+        key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+    return map;
+}
+
+bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }
+
+void enkf_obs_free(enkf_obs_type *enkf_obs) {
+    hash_free(enkf_obs->obs_hash);
+    vector_free(enkf_obs->obs_vector);
+    time_map_free(enkf_obs->obs_time);
+    free(enkf_obs);
+}
+
+time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
+    return time_map_iget(enkf_obs->obs_time, report_step);
+}
+
+bool enkf_obs_has_key(const enkf_obs_type *obs, const char *key) {
+    return hash_has_key(obs->obs_hash, key);
+}
+
+obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *obs,
+                                     const char *key) {
+    return (obs_vector_type *)hash_get(obs->obs_hash, key);
+}
+
+obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs, int index) {
+    return (obs_vector_type *)vector_iget(obs->obs_vector, index);
+}
+
+int enkf_obs_get_size(const enkf_obs_type *obs) {
+    return vector_get_size(obs->obs_vector);
+}
+
+void enkf_obs_clear(enkf_obs_type *enkf_obs) {
+    hash_clear(enkf_obs->obs_hash);
+    vector_clear(enkf_obs->obs_vector);
+    ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
+}
+
+/*
+      Allocates a stringlist of obs target keys which correspond to
+      summary observations, these are then added to the state vector in
+      enkf_main.
+    */
 stringlist_type *enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs,
                                               obs_impl_type obs_type) {
     stringlist_type *vars = stringlist_alloc_new();
@@ -1212,64 +1234,19 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
 }
 
 /*
-   This function allocates a hash table which looks like this:
+      Observe that the obs_vector can be NULL - in which it is of course not added.
+    */
+void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
+                             const obs_vector_type *vector) {
 
-     {"OBS_KEY1": "STATE_KEY1", "OBS_KEY2": "STATE_KEY2", "OBS_KEY3": "STATE_KEY3", ....}
+    if (vector != NULL) {
+        const char *obs_key = obs_vector_get_key(vector);
+        if (hash_has_key(enkf_obs->obs_hash, obs_key))
+            util_abort("%s: Observation with key:%s already added.\n", __func__,
+                       obs_key);
 
-   where "OBS_KEY" represents the keys in the enkf_obs hash, and the
-   value they are pointing at are the enkf_state keywords they are
-   measuring. For instance if we have an observation with key "RFT_1A"
-   the entry in the table will be:  ... "RFT_1A":  "PRESSURE", ..
-   since an RFT observation observes the pressure.
-
-   Let us consider the watercut in a well. Then the state_kw will
-   typically be WWCT:P1 for a well named 'P1'. Let us assume that this
-   well is observed both as a normal HISTORY observation from
-   SCHEDULE, and from two separator tests, called S1 and S2. Then the
-   hash table will look like this:
-
-       "WWCT:P1": "WWCT:P1",
-       "S1"     : "WWCT:P1",
-       "S2"     : "WWCT:P1"
-
-
-   I.e. there are three different observations keys, all observing the
-   same state_kw.
-*/
-
-hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
-    hash_type *map = hash_alloc();
-    hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
-    const char *key = hash_iter_get_next_key(iter);
-    while (key != NULL) {
-        obs_vector_type *obs_vector =
-            (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-        hash_insert_ref(map, key, obs_vector_get_state_kw(obs_vector));
-        key = hash_iter_get_next_key(iter);
+        hash_insert_ref(enkf_obs->obs_hash, obs_key, vector);
+        vector_append_owned_ref(enkf_obs->obs_vector, vector,
+                                obs_vector_free__);
     }
-    hash_iter_free(iter);
-    return map;
-}
-
-hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
-    return hash_iter_alloc(enkf_obs->obs_hash);
-}
-
-void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        local_obsdata_type *local_obs,
-                                        enkf_fs_type *fs,
-                                        const bool_vector_type *ens_mask) {
-    hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
-    while (!hash_iter_is_complete(iter)) {
-        const char *key = hash_iter_get_next_key(iter);
-        obs_vector_type *obs_vector =
-            (obs_vector_type *)hash_get(enkf_obs->obs_hash, key);
-
-        if (obs_vector_has_data(obs_vector, ens_mask, fs)) {
-            local_obsdata_node_type *node =
-                obs_vector_alloc_local_node(obs_vector);
-            local_obsdata_add_node(local_obs, node);
-        }
-    }
-    hash_iter_free(iter);
 }

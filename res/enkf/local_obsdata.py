@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
+from res import _lib
 from res.enkf.local_obsdata_node import LocalObsdataNode
 
 
@@ -21,12 +22,6 @@ class LocalObsdata(BaseCClass):
     )
     _get_node = ResPrototype(
         "local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)"
-    )
-    _copy_active_list = ResPrototype(
-        "active_list_ref local_obsdata_get_copy_node_active_list(local_obsdata, char*)"
-    )
-    _active_list = ResPrototype(
-        "active_list_ref local_obsdata_get_node_active_list(local_obsdata, char*)"
     )
 
     def __init__(self, name, obs=None):
@@ -136,14 +131,14 @@ object as:
     def getActiveList(self, key):
         """@rtype: ActiveList"""
         if key in self:
-            return self._active_list(key)
+            return _lib.local.local_obsdata.get_active_list(self, key)
         else:
             raise KeyError('Local key "%s" not recognized.' % key)
 
     def copy_active_list(self, key):
         """@rtype: ActiveList"""
         if key in self:
-            return self._copy_active_list(key)
+            return _lib.local.local_obsdata.copy_active_list(self, key)
         else:
             raise KeyError('Local key "%s" not recognized.' % key)
 

@@ -30,13 +30,19 @@
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/summary.hpp>
-#include <ert/enkf/active_list.hpp>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct summary_obs_struct summary_obs_type;
+
+extern "C++" {
+#include <ert/enkf/active_list.hpp>
+void summary_obs_update_std_scale(summary_obs_type *summary_obs,
+                                  double std_multiplier,
+                                  const ActiveList *active_list);
+}
 
 void summary_obs_free(summary_obs_type *summary_obs);
 
@@ -53,10 +59,6 @@ bool summary_obs_default_used(const summary_obs_type *summary_obs,
 
 PY_USED const char *
 summary_obs_get_summary_key(const summary_obs_type *summary_obs);
-
-void summary_obs_update_std_scale(summary_obs_type *summary_obs,
-                                  double std_multiplier,
-                                  const active_list_type *active_list);
 
 void summary_obs_set_std_scale(summary_obs_type *summary_obs,
                                double std_multiplier);
