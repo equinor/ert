@@ -21,7 +21,7 @@ from ert_shared.storage.extraction import (
     post_ensemble_results,
     post_update_data,
 )
-from ert_shared.feature_toggling import FeatureToggling, feature_enabled
+from ert_shared.feature_toggling import feature_enabled
 from ert_shared import ERT
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
@@ -138,11 +138,9 @@ class BaseRunModel:
 
     @job_queue(None)
     def killAllSimulations(self) -> None:
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            raise NotImplementedError(
-                "the ensemble evaluator does not implement killAllSimulations"
-            )
-        self._job_queue.kill_all_jobs()
+        raise NotImplementedError(
+            "the ensemble evaluator does not implement killAllSimulations"
+        )
 
     @job_queue(False)
     def userExitCalled(self) -> bool:

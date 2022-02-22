@@ -23,7 +23,6 @@ from ert_gui.simulation import (
     SimulationConfigPanel,
 )
 from ert_gui.simulation import RunDialog
-from ert_shared.feature_toggling import FeatureToggling
 from collections import OrderedDict
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
@@ -32,9 +31,7 @@ class SimulationPanel(QWidget):
     def __init__(self, config_file):
         QWidget.__init__(self)
         self._config_file = config_file
-        self._ee_config = None
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            self._ee_config = EvaluatorServerConfig()
+        self._ee_config = EvaluatorServerConfig()
 
         self.setObjectName("Simulation_panel")
         layout = QVBoxLayout()

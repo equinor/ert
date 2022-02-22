@@ -3,7 +3,6 @@ from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
 from ert_shared import ERT
-from ert_shared.feature_toggling import FeatureToggling
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -26,18 +25,10 @@ class EnsembleExperiment(BaseRunModel):
 
         self.setPhaseName(run_msg, indeterminate=False)
 
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
-            num_successful_realizations = self.run_ensemble_evaluator(
-                run_context, ee_config
-            )
-        else:
-            self._job_queue = self._queue_config.create_job_queue()
-            num_successful_realizations = (
-                self.ert()
-                .getEnkfSimulationRunner()
-                .runEnsembleExperiment(self._job_queue, run_context)
-            )
+        ee_config = arguments["ee_config"]
+        num_successful_realizations = self.run_ensemble_evaluator(
+            run_context, ee_config
+        )
 
         num_successful_realizations += arguments.get("prev_successful_realizations", 0)
         self.checkHaveSufficientRealizations(num_successful_realizations)
