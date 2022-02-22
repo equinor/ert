@@ -20,9 +20,7 @@ class TrackerWorker(QObject):
     consumed_event = Signal(object)
     done = Signal()
 
-    def __init__(
-        self, tracker: EvaluatorTracker, parent=None
-    ):
+    def __init__(self, tracker: EvaluatorTracker, parent=None):
         super().__init__(parent)
         logger.debug("init trackerworker")
         self._tracker = tracker
