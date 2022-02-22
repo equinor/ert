@@ -61,6 +61,16 @@ def test_cli_init_twice(tmpdir, ert_storage):
                 ert3.console._console._main()
 
 
+def test_cli_init_without_storage(tmpdir, mocker):
+    with tmpdir.as_cwd():
+        mocker.patch("ert.storage.init", side_effect=TimeoutError)
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            with pytest.raises(SystemExit, match="Failed to contact storage"):
+                ert3.console.main()
+        assert not pathlib.Path(".ert").exists()
+
+
 @pytest.mark.requires_ert_storage
 def test_cli_init_subfolder(workspace):
     (workspace._path / "sub_folder").mkdir()
@@ -110,6 +120,26 @@ def test_cli_init_example_twice(tmpdir, ert_storage):
             with pytest.raises(
                 SystemExit,
                 match="Your working directory already contains example polynomial",
+            ):
+                ert3.console.main()
+
+
+@pytest.mark.requires_ert_storage
+def test_cli_init_remnant_in_storage(tmpdir, ert_storage):
+    """Create a scenario where a workspace has for any reason already been registered
+    in storage, but the ".ert" directory is missing or has never been there. This
+    could be due to a name conflict, or a user trying to recover from failures."""
+    with tmpdir.as_cwd():
+        args = ["ert3", "init"]
+        with patch.object(sys, "argv", args):
+            ert3.console.main()
+
+        pathlib.Path(".ert").rmdir()
+
+        with patch.object(sys, "argv", args):
+            with pytest.raises(
+                RuntimeError,
+                match="already registered in storage",
             ):
                 ert3.console.main()
 
