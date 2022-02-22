@@ -145,19 +145,22 @@ def test_tracking(
 
             model, argument = create_model(parsed)
 
-            ee_config = None
-            ee_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
-            argument.update({"ee_config": ee_config})
+            evaluator_config = EvaluatorServerConfig(
+                custom_port_range=range(1024, 65535)
+            )
 
             thread = threading.Thread(
                 name="ert_cli_simulation_thread",
                 target=model.start_simulations_thread,
-                args=(argument,),
+                args=(argument, evaluator_config),
             )
             thread.start()
 
             tracker = create_tracker(
-                model, general_interval=1, detailed_interval=2, ee_config=ee_config
+                model,
+                general_interval=1,
+                detailed_interval=2,
+                ee_config=evaluator_config,
             )
 
             snapshots = {}

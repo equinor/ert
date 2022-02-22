@@ -10,6 +10,7 @@ from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole
 from ert_gui.simulation.tracker_worker import TrackerWorker
 from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel
 from ert_shared.status.entity.event import (
     EndEvent,
@@ -64,7 +65,7 @@ class RunDialog(QDialog):
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
 
-        self._simulations_arguments = simulation_arguments
+        self._simulation_arguments = simulation_arguments
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -274,9 +275,13 @@ class RunDialog(QDialog):
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
+        evaluator_config = EvaluatorServerConfig()
+
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())
-            self._run_model.startSimulations(self._simulations_arguments)
+            self._run_model.startSimulations(
+                self._simulation_arguments, evaluator_config=evaluator_config
+            )
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
         simulation_thread.setDaemon(True)
@@ -287,8 +292,8 @@ class RunDialog(QDialog):
 
         tracker = create_tracker(
             self._run_model,
-            num_realizations=self._simulations_arguments["active_realizations"].count(),
-            ee_config=self._simulations_arguments.get("ee_config", None),
+            num_realizations=self._simulation_arguments["active_realizations"].count(),
+            ee_config=evaluator_config,
         )
 
         worker = TrackerWorker(tracker)
@@ -421,11 +426,11 @@ class RunDialog(QDialog):
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
             active_realizations = self.create_mask_from_failed_realizations()
-            self._simulations_arguments["active_realizations"] = active_realizations
-            self._simulations_arguments[
+            self._simulation_arguments["active_realizations"] = active_realizations
+            self._simulation_arguments[
                 "prev_successful_realizations"
-            ] = self._simulations_arguments.get("prev_successful_realizations", 0)
-            self._simulations_arguments[
+            ] = self._simulation_arguments.get("prev_successful_realizations", 0)
+            self._simulation_arguments[
                 "prev_successful_realizations"
             ] += self.count_successful_realizations()
             self.startSimulation()
