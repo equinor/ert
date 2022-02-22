@@ -64,7 +64,7 @@ class RunDialog(QDialog):
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
 
-        self._simulations_argments = simulation_arguments
+        self._simulations_arguments = simulation_arguments
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -276,7 +276,7 @@ class RunDialog(QDialog):
 
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())
-            self._run_model.startSimulations(self._simulations_argments)
+            self._run_model.startSimulations(self._simulations_arguments)
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
         simulation_thread.setDaemon(True)
@@ -287,8 +287,8 @@ class RunDialog(QDialog):
 
         tracker = create_tracker(
             self._run_model,
-            num_realizations=self._simulations_argments["active_realizations"].count(),
-            ee_config=self._simulations_argments.get("ee_config", None),
+            num_realizations=self._simulations_arguments["active_realizations"].count(),
+            ee_config=self._simulations_arguments.get("ee_config", None),
         )
 
         worker = TrackerWorker(tracker)
@@ -421,11 +421,11 @@ class RunDialog(QDialog):
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
             active_realizations = self.create_mask_from_failed_realizations()
-            self._simulations_argments["active_realizations"] = active_realizations
-            self._simulations_argments[
+            self._simulations_arguments["active_realizations"] = active_realizations
+            self._simulations_arguments[
                 "prev_successful_realizations"
-            ] = self._simulations_argments.get("prev_successful_realizations", 0)
-            self._simulations_argments[
+            ] = self._simulations_arguments.get("prev_successful_realizations", 0)
+            self._simulations_arguments[
                 "prev_successful_realizations"
             ] += self.count_successful_realizations()
             self.startSimulation()
