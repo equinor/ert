@@ -15,9 +15,6 @@ class FeatureToggling:
             default_enabled=False,
             msg="The new storage solution is experimental! Thank you for testing our new features.",
         ),
-        "ensemble-evaluator": _Feature(
-            default_enabled=True,
-        ),
     }
 
     _conf = deepcopy(_conf_original)

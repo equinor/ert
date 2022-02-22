@@ -13,7 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from ert_shared.feature_toggling import FeatureToggling
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
@@ -150,18 +149,10 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = "Running forecast for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=False)
 
-        if FeatureToggling.is_enabled("ensemble-evaluator"):
-            ee_config = arguments["ee_config"]
-            num_successful_realizations = self.run_ensemble_evaluator(
-                run_context, ee_config
-            )
-        else:
-            self._job_queue = self._queue_config.create_job_queue()
-            num_successful_realizations = (
-                self.ert()
-                .getEnkfSimulationRunner()
-                .runSimpleStep(self._job_queue, run_context)
-            )
+        ee_config = arguments["ee_config"]
+        num_successful_realizations = self.run_ensemble_evaluator(
+            run_context, ee_config
+        )
 
         # Push simulation results to storage
         self._post_ensemble_results(new_ensemble_id)
