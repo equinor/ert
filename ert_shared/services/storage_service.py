@@ -52,7 +52,9 @@ class Storage(BaseService):
             except requests.ConnectionError:
                 pass
 
-        raise RuntimeError("Server started, but none of the URLs provided worked")
+        raise TimeoutError(
+            "None of the URLs provided for the ert storage server worked."
+        )
 
     @classmethod
     def session(cls, timeout=None) -> Client:
