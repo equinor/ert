@@ -21,8 +21,8 @@
 
 #include <ert/enkf/local_obsdata_node.hpp>
 
-void test_content(local_obsdata_node_type *node) {
-    const auto *active_list = local_obsdata_node_get_active_list(node);
+void test_content(LocalObsDataNode *node) {
+    const auto *active_list = node->active_list();
 
     test_assert_not_NULL(active_list);
 
@@ -31,8 +31,7 @@ void test_content(local_obsdata_node_type *node) {
 
         new_active_list.add_index(1098);
 
-        test_assert_false(new_active_list ==
-                          *local_obsdata_node_get_active_list(node));
+        test_assert_false(new_active_list == *active_list);
     }
 }
 
@@ -40,17 +39,11 @@ int main(int argc, char **argv) {
     const char *obs_key = "1234";
 
     {
-        local_obsdata_node_type *node = local_obsdata_node_alloc(obs_key);
+        LocalObsDataNode node(obs_key);
 
-        test_assert_true(local_obsdata_node_is_instance(node));
-        test_assert_string_equal(obs_key, local_obsdata_node_get_key(node));
-        test_content(node);
-        local_obsdata_node_free(node);
+        test_assert_string_equal(obs_key, node.name().c_str());
+        test_content(&node);
     }
 
-    {
-        void *node = local_obsdata_node_alloc(obs_key);
-        local_obsdata_node_free__(node);
-    }
     exit(0);
 }

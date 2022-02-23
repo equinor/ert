@@ -39,16 +39,15 @@ local_obsdata_type *local_obsdata_alloc(const char *name);
 void local_obsdata_free(local_obsdata_type *data);
 int local_obsdata_get_size(const local_obsdata_type *data);
 bool local_obsdata_add_node(local_obsdata_type *data,
-                            local_obsdata_node_type *node);
-local_obsdata_node_type *local_obsdata_iget(const local_obsdata_type *data,
-                                            int index);
-local_obsdata_type *local_obsdata_alloc_wrapper(local_obsdata_node_type *node);
+                            const LocalObsDataNode *node);
+const LocalObsDataNode *local_obsdata_iget(const local_obsdata_type *data,
+                                           int index);
+LocalObsDataNode *local_obsdata_get(local_obsdata_type *data, const char *key);
+
 const char *local_obsdata_get_name(const local_obsdata_type *data);
-local_obsdata_node_type *local_obsdata_get(const local_obsdata_type *data,
-                                           const char *key);
 void local_obsdata_del_node(local_obsdata_type *data, const char *key);
-ActiveList *
-local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
+const ActiveList *
+local_obsdata_get_node_active_list(local_obsdata_type *obsdata,
                                    const char *obs_key);
 ActiveList *
 local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,

@@ -70,11 +70,9 @@ void local_ministep_add_obsdata(local_ministep_type *ministep,
     else { // Add nodes from input observations to existing observations
         int iobs;
         for (iobs = 0; iobs < local_obsdata_get_size(obsdata); iobs++) {
-            local_obsdata_node_type *obs_node =
-                local_obsdata_iget(obsdata, iobs);
-            local_obsdata_node_type *new_node =
-                local_obsdata_node_alloc_copy(obs_node);
-            local_ministep_add_obsdata_node(ministep, new_node);
+            auto *obs_node = local_obsdata_iget(obsdata, iobs);
+            LocalObsDataNode new_node(*obs_node);
+            local_ministep_add_obsdata_node(ministep, &new_node);
         }
     }
 }
@@ -89,7 +87,7 @@ void local_ministep_add_obs_data(local_ministep_type *ministep,
 }
 
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,
-                                     local_obsdata_node_type *obsdatanode) {
+                                     LocalObsDataNode *obsdatanode) {
     local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
     local_obsdata_add_node(obsdata, obsdatanode);
 }
@@ -139,10 +137,10 @@ const char *local_ministep_get_name(const local_ministep_type *ministep) {
 }
 
 namespace {
-RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
-    auto ministep = reinterpret_cast<local_ministep_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    auto row_scaling =
+RowScaling *get_or_create_row_scaling(py::handle self,
+                                      const std::string &name) {
+    auto *ministep = ert::from_cwrap<local_ministep_type>(self);
+    auto *row_scaling =
         local_ministep_get_or_create_row_scaling(ministep, name.c_str());
     return row_scaling;
 }
@@ -151,6 +149,11 @@ ActiveList &get_active_data_list(py::handle obj, const std::string &name) {
     auto *self = ert::from_cwrap<local_ministep_type>(obj);
     auto *active_list = local_ministep_get_active_data_list(self, name.c_str());
     return *active_list;
+}
+
+void add_obsdata_node(py::handle self, LocalObsDataNode &node) {
+    auto *ministep = ert::from_cwrap<local_ministep_type>(self);
+    local_ministep_add_obsdata_node(ministep, &node);
 }
 
 } // namespace
@@ -185,4 +188,5 @@ RES_LIB_SUBMODULE("local.ministep", m) {
     m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
     m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
           py::return_value_policy::reference);
+    m.def("add_obsdata_node", &add_obsdata_node, "self"_a, "node"_a);
 }

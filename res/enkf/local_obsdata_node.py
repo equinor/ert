@@ -1,41 +1,5 @@
-from cwrap import BaseCClass
+# fmt: off
+from res._lib.local.local_obsdata_node import LocalObsdataNode  # pylint: disable=unused-import
+# fmt: on
 
-from res import ResPrototype
-from res import _lib
-
-
-class LocalObsdataNode(BaseCClass):
-    TYPE_NAME = "local_obsdata_node"
-
-    _alloc = ResPrototype("void* local_obsdata_node_alloc(char*)", bind=False)
-    _free = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
-    _get_key = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
-
-    def __init__(self, obs_key):
-        if isinstance(obs_key, str):
-            c_ptr = self._alloc(obs_key)
-            if c_ptr:
-                super().__init__(c_ptr)
-            else:
-                raise ArgumentError(
-                    'Unable to construct LocalObsdataNode with key = "%s".' % obs_key
-                )
-        else:
-            raise TypeError(
-                "LocalObsdataNode needs string, not %s." % str(type(obs_key))
-            )
-
-    def key(self):
-        return self._get_key()
-
-    def getKey(self):
-        return self.key()
-
-    def free(self):
-        self._free()
-
-    def __repr__(self):
-        return "LocalObsdataNode(key = %s) %s" % (self.key(), self._ad_str())
-
-    def getActiveList(self):
-        return _lib.local.local_obsdata_node.get_active_list(self)
+__all__ = ["LocalObsDataNode"]

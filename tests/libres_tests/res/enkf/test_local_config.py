@@ -22,6 +22,7 @@ from res.enkf import ErtRunContext, ESUpdate
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
+from res.enkf.active_list import ActiveList
 from res.enkf.local_updatestep import LocalUpdateStep
 from res.test import ErtTestContext
 
@@ -70,8 +71,8 @@ class LocalConfigTest(ResTest):
             self.assertTrue(isinstance(node, LocalObsdataNode))
 
             # Add node again with no range and check return type
-            node_again = local_obs_data_1.addNode("GEN_PERLIN_1")
-            self.assertTrue(isinstance(node_again, LocalObsdataNode))
+            node_added = local_obs_data_1.addNode("GEN_PERLIN_1")
+            self.assertTrue(node_added)
 
             # Error when adding existing obs node
             with self.assertRaises(KeyError):
@@ -191,3 +192,11 @@ class LocalConfigTest(ResTest):
                     self.assertTrue(block[i])
 
             self.assertSetEqual(expected_keys, observed_obs_keys)
+
+    def test_local_obsdata_node(self):
+        node = LocalObsdataNode("OBS_NODE")
+        self.assertEqual(node.key(), "OBS_NODE")
+        self.assertEqual(node.getKey(), "OBS_NODE")
+
+        al = node.getActiveList()
+        self.assertTrue(isinstance(al, ActiveList))
