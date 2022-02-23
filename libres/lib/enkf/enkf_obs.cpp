@@ -399,15 +399,15 @@ static void enkf_obs_get_obs_and_measure_node(
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const int_vector_type *ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data) {
 
     int iobs;
-    for (iobs = 0; iobs < local_obsdata_get_size(local_obsdata); iobs++) {
-        const auto *obs_node = local_obsdata_iget(local_obsdata, iobs);
-        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, obs_node,
+    for (iobs = 0; iobs < local_obsdata->size(); iobs++) {
+        const auto &obs_node = local_obsdata->operator[](iobs);
+        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, &obs_node,
                                           ens_active_list, meas_data, obs_data);
     }
 }

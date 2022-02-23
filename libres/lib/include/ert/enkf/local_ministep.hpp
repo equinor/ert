@@ -42,7 +42,7 @@ public:
     UTIL_TYPE_ID_DECLARATION;
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
-    local_obsdata_type *observations;
+    LocalObsData *observations;
     obs_data_type *obs_data;
 
     std::unordered_map<std::string, std::shared_ptr<RowScaling>> scaling;
@@ -51,12 +51,11 @@ public:
     explicit local_ministep_type(const char *name)
         : name(strdup(name)), obs_data(nullptr) {
         UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
-        observations =
-            local_obsdata_alloc(std::string("OBSDATA_" + this->name).data());
+        this->observations = new LocalObsData("OBSDATA_" + this->name);
     }
 
     ~local_ministep_type() {
-        local_obsdata_free(observations);
+        delete this->observations;
         if (obs_data)
             obs_data_free(obs_data);
     }
@@ -129,11 +128,10 @@ const char *local_ministep_get_name(const local_ministep_type *ministep);
 void local_ministep_summary_fprintf(const local_ministep_type *ministep,
                                     FILE *stream);
 void local_ministep_add_obsdata(local_ministep_type *ministep,
-                                local_obsdata_type *obsdata);
+                                LocalObsData *obsdata);
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                      LocalObsDataNode *obsdatanode);
-local_obsdata_type *
-local_ministep_get_obsdata(const local_ministep_type *ministep);
+LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep);
 void local_ministep_add_obs_data(local_ministep_type *ministep,
                                  obs_data_type *obs_data);
 obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);

@@ -17,6 +17,7 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
+from res import _lib
 from res.analysis import AnalysisModule
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_updatestep import LocalUpdateStep
@@ -56,12 +57,6 @@ class LocalConfig(BaseCClass):
     )
     _get_ministep = ResPrototype(
         "local_ministep_ref   local_config_get_ministep(local_config, char*)"
-    )
-    _get_obsdata = ResPrototype(
-        "local_obsdata_ref    local_config_get_obsdata(local_config, char*)"
-    )
-    _copy_obsdata = ResPrototype(
-        "local_obsdata_ref    local_config_alloc_obsdata_copy(local_config, char*, char*)"
     )
 
     def __init__(self):
@@ -110,7 +105,6 @@ class LocalConfig(BaseCClass):
 
         self._create_obsdata(obsdata_key)
         obsdata = self.getObsdata(obsdata_key)
-        obsdata.initObservations(self.__getObservations())
         return obsdata
 
     def copyObsdata(self, src_key, target_key):
@@ -120,8 +114,7 @@ class LocalConfig(BaseCClass):
         if not self._has_obsdata(src_key):
             raise KeyError(f"The observation set {src_key} does not exist")
 
-        obsdata = self._copy_obsdata(src_key, target_key)
-        obsdata.initObservations(self.__getObservations())
+        obsdata = _lib.local.local_config.get_obsdata_copy(self, src_key, target_key)
         return obsdata
 
     def getUpdatestep(self):
@@ -136,7 +129,7 @@ class LocalConfig(BaseCClass):
     def getObsdata(self, obsdata_key):
         """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
-        return self._get_obsdata(obsdata_key)
+        return _lib.local.local_config.get_obsdata_ref(self, obsdata_key)
 
     def attachMinistep(self, update_step, mini_step):
         assert isinstance(mini_step, LocalMinistep)

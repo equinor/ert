@@ -63,7 +63,7 @@ void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const int_vector_type *ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data);
