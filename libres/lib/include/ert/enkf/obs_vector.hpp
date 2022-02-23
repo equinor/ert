@@ -66,10 +66,10 @@ void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
                         meas_data_type *, const ActiveList *active_list);
 
 void obs_vector_scale_std(obs_vector_type *obs_vector,
-                          const local_obsdata_node_type *local_node,
+                          const LocalObsDataNode *local_node,
                           double std_multiplier);
 
-local_obsdata_node_type *
+LocalObsDataNode *
 obs_vector_alloc_local_node(const obs_vector_type *obs_vector);
 
 typedef void(obs_free_ftype)(void *);
