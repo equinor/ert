@@ -6,6 +6,8 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
+static auto logger = ert::get_logger("enkf_fs");
+
 RES_LIB_SUBMODULE("enkf_fs_keyword_data", m) {
     m.def(
         "keyword_data_get_realizations",
@@ -54,12 +56,19 @@ RES_LIB_SUBMODULE("enkf_fs_keyword_data", m) {
                     enkf_plot_gen_kw_vector_type *vector =
                         enkf_plot_gen_kw_iget(ensemble_data, realization);
 
-                    auto value =
-                        enkf_plot_gen_kw_vector_iget(vector, keyword_index);
-                    if (use_log_scale) {
-                        value = log10(value);
+                    auto vector_size = enkf_plot_gen_kw_vector_get_size(vector);
+                    if (keyword_index < vector_size) {
+                        auto value =
+                            enkf_plot_gen_kw_vector_iget(vector, keyword_index);
+                        if (use_log_scale) {
+                            value = log10(value);
+                        }
+                        data[key_index + realization_index * key_count] = value;
+                    } else {
+                        logger->warning("Index out of bounds. keyword_index={} "
+                                        "vector_size={}",
+                                        keyword_index, vector_size);
                     }
-                    data[key_index + realization_index * key_count] = value;
                 }
                 enkf_plot_gen_kw_free(ensemble_data);
             }
