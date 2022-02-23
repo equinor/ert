@@ -480,9 +480,9 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
 void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
     if (bool_vector_size(ens_mask) != ens_size)
         throw std::logic_error(
-            "fundamental inconsistency detected. Total ens_size:" +
-            std::to_string(ens_size) +
-            ", mask_size:" + std::to_string(bool_vector_size(ens_mask)));
+            fmt::format("Fundamental inconsistency detected. Total ens_size: "
+                        "{}, mask_size; {}",
+                        ens_size, bool_vector_size(ens_mask)));
 }
 
 static FILE *create_log_file(const char *log_path) {
