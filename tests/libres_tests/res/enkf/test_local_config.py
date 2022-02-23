@@ -70,8 +70,8 @@ class LocalConfigTest(ResTest):
             self.assertTrue(isinstance(node, LocalObsdataNode))
 
             # Add node again with no range and check return type
-            node_again = local_obs_data_1.addNode("GEN_PERLIN_1")
-            self.assertTrue(isinstance(node_again, LocalObsdataNode))
+            node_added = local_obs_data_1.addNode("GEN_PERLIN_1")
+            self.assertTrue(node_added)
 
             # Error when adding existing obs node
             with self.assertRaises(KeyError):

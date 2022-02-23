@@ -16,6 +16,7 @@
    for more details.
 */
 #include <stdlib.h>
+#include <unordered_map>
 #include <vector>
 
 #include <ert/util/util.h>
@@ -30,8 +31,8 @@
 
 struct local_obsdata_struct {
     UTIL_TYPE_ID_DECLARATION;
-    hash_type *nodes_map;
-    vector_type *nodes_list;
+    std::unordered_map<std::string, std::size_t> node_index;
+    std::vector<LocalObsDataNode> nodes;
     char *name;
 };
 
@@ -39,39 +40,25 @@ UTIL_IS_INSTANCE_FUNCTION(local_obsdata, LOCAL_OBSDATA_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION(local_obsdata, LOCAL_OBSDATA_TYPE_ID)
 
     local_obsdata_type *local_obsdata_alloc(const char *name) {
-    local_obsdata_type *data = (local_obsdata_type *)util_malloc(sizeof *data);
+    local_obsdata_type *data = new local_obsdata_type();
     UTIL_TYPE_ID_INIT(data, LOCAL_OBSDATA_TYPE_ID);
-    data->nodes_list = vector_alloc_new();
-    data->nodes_map = hash_alloc();
     data->name = util_alloc_string_copy(name);
-    return data;
-}
-
-local_obsdata_type *local_obsdata_alloc_wrapper(local_obsdata_node_type *node) {
-    local_obsdata_type *data =
-        local_obsdata_alloc(local_obsdata_node_get_key(node));
-    local_obsdata_add_node(data, node);
     return data;
 }
 
 local_obsdata_type *local_obsdata_alloc_copy(const local_obsdata_type *src,
                                              const char *target_key) {
     local_obsdata_type *target = local_obsdata_alloc(target_key);
-    int i;
-    for (i = 0; i < local_obsdata_get_size(src); i++) {
-        const local_obsdata_node_type *src_node = local_obsdata_iget(src, i);
-        local_obsdata_node_type *target_node =
-            local_obsdata_node_alloc_copy(src_node);
-        local_obsdata_add_node(target, target_node);
+    for (int i = 0; i < local_obsdata_get_size(src); i++) {
+        const auto *node = local_obsdata_iget(src, i);
+        local_obsdata_add_node(target, node);
     }
     return target;
 }
 
 void local_obsdata_free(local_obsdata_type *data) {
-    vector_free(data->nodes_list);
-    hash_free(data->nodes_map);
     free(data->name);
-    free(data);
+    delete data;
 }
 
 void local_obsdata_free__(void *arg) {
@@ -84,63 +71,51 @@ const char *local_obsdata_get_name(const local_obsdata_type *data) {
 }
 
 int local_obsdata_get_size(const local_obsdata_type *data) {
-    return vector_get_size(data->nodes_list);
+    return data->nodes.size();
 }
 
 /*
-  The @data instance will assume ownership of the node; i.e. calling
-  scope should NOT call local_obsdata_node_free().
+  The @data instance will insert a copy
 */
 
 bool local_obsdata_add_node(local_obsdata_type *data,
-                            local_obsdata_node_type *node) {
-    const char *key = local_obsdata_node_get_key(node);
+                            const LocalObsDataNode *node) {
+    const char *key = node->name().c_str();
     if (local_obsdata_has_node(data, key))
         return false;
     else {
-        vector_append_owned_ref(data->nodes_list, node,
-                                local_obsdata_node_free__);
-        hash_insert_ref(data->nodes_map, key, node);
+        data->node_index.emplace(key, data->nodes.size());
+        data->nodes.push_back(*node);
         return true;
     }
 }
 
 void local_obsdata_del_node(local_obsdata_type *data, const char *key) {
-    local_obsdata_node_type *node = local_obsdata_get(data, key);
-    int index = vector_find(data->nodes_list, node);
-
-    hash_del(data->nodes_map, key);
-    vector_idel(data->nodes_list, index);
+    auto index = data->node_index.at(key);
+    data->nodes.erase(data->nodes.begin() + index);
+    data->node_index.erase(key);
 }
 
-local_obsdata_node_type *local_obsdata_iget(const local_obsdata_type *data,
-                                            int index) {
-    return (local_obsdata_node_type *)vector_iget(data->nodes_list, index);
+const LocalObsDataNode *local_obsdata_iget(const local_obsdata_type *data,
+                                           int index) {
+    return &data->nodes[index];
 }
 
-local_obsdata_node_type *local_obsdata_get(const local_obsdata_type *data,
-                                           const char *key) {
-    return (local_obsdata_node_type *)hash_get(data->nodes_map, key);
+LocalObsDataNode *local_obsdata_get(local_obsdata_type *data, const char *key) {
+    auto index = data->node_index.at(key);
+    return &data->nodes[index];
 }
 
 bool local_obsdata_has_node(const local_obsdata_type *data, const char *key) {
-    return hash_has_key(data->nodes_map, key);
+    return data->node_index.count(key) == 1;
 }
 
-ActiveList *
-local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
-                                        const char *obs_key) {
-    local_obsdata_node_type *obsdata_node = local_obsdata_get(obsdata, obs_key);
-    auto *active_list = local_obsdata_node_get_copy_active_list(obsdata_node);
-    return active_list;
-}
-
-ActiveList *
-local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
-                                   const char *obs_key) {
-    local_obsdata_node_type *obsdata_node = local_obsdata_get(obsdata, obs_key);
-    auto *active_list = local_obsdata_node_get_active_list(obsdata_node);
-    return active_list;
+const ActiveList *
+local_obsdata_get_node_active_list(local_obsdata_type *obsdata,
+                                   const char *key) {
+    auto index = obsdata->node_index.at(key);
+    auto &node = obsdata->nodes[index];
+    return node.active_list();
 }
 
 void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
@@ -151,19 +126,41 @@ void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
 
     int i;
     for (i = 0; i < local_obsdata_get_size(obsdata); i++) {
-        local_obsdata_node_type *node = local_obsdata_iget(obsdata, i);
-        const char *obs_key = local_obsdata_node_get_key(node);
+        auto *node = local_obsdata_iget(obsdata, i);
+        const char *obs_key = node->name().c_str();
         fprintf(stream, "OBSERVATION:%s,", obs_key);
     }
 }
 
 namespace {
-ActiveList &get_active_list(py::handle obj, const std::string &name) {
-    auto *node = reinterpret_cast<local_obsdata_type *>(
+const ActiveList &get_active_list(py::handle obj, const std::string &name) {
+    auto *obsdata = reinterpret_cast<local_obsdata_type *>(
         PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    auto *active_list = local_obsdata_get_node_active_list(node, name.c_str());
+    auto *active_list =
+        local_obsdata_get_node_active_list(obsdata, name.c_str());
     return *active_list;
 }
+
+bool add_node(py::handle obj, const LocalObsDataNode &node) {
+    auto *obsdata = reinterpret_cast<local_obsdata_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    return local_obsdata_add_node(obsdata, &node);
+}
+
+const LocalObsDataNode &get_node(py::handle obj, const std::string &key) {
+    auto *obsdata = reinterpret_cast<local_obsdata_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    auto *node_ptr = local_obsdata_get(obsdata, key.c_str());
+    return *node_ptr;
+}
+
+const LocalObsDataNode &iget_node(py::handle obj, int index) {
+    auto *obsdata = reinterpret_cast<local_obsdata_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    auto *node_ptr = local_obsdata_iget(obsdata, index);
+    return *node_ptr;
+}
+
 } // namespace
 
 RES_LIB_SUBMODULE("local.local_obsdata", m) {
@@ -173,4 +170,9 @@ RES_LIB_SUBMODULE("local.local_obsdata", m) {
           py::return_value_policy::reference_internal);
     m.def("copy_active_list", &get_active_list, "self"_a, "key"_a,
           py::return_value_policy::copy);
+    m.def("add_node", &add_node, "self"_a, "node"_a);
+    m.def("iget_node", &iget_node, "self"_a, "index"_a,
+          py::return_value_policy::reference_internal);
+    m.def("get_node", &get_node, "self"_a, "key"_a,
+          py::return_value_policy::reference_internal);
 }

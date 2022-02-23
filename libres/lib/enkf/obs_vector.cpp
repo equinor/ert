@@ -659,9 +659,9 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 }
 
 void obs_vector_scale_std(obs_vector_type *obs_vector,
-                          const local_obsdata_node_type *local_node,
+                          const LocalObsDataNode *local_node,
                           double std_multiplier) {
-    const auto *active_list = local_obsdata_node_get_active_list(local_node);
+    const auto *active_list = local_node->active_list();
     int tstep = -1;
 
     while (true) {
@@ -1081,9 +1081,9 @@ const char *obs_vector_get_obs_key(const obs_vector_type *obs_vector) {
     return obs_vector->obs_key;
 }
 
-local_obsdata_node_type *
+LocalObsDataNode *
 obs_vector_alloc_local_node(const obs_vector_type *obs_vector) {
-    return local_obsdata_node_alloc(obs_vector->obs_key);
+    return new LocalObsDataNode(obs_vector->obs_key);
 }
 
 VOID_FREE(obs_vector)

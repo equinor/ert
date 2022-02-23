@@ -255,12 +255,12 @@ bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs) {
 
 static void enkf_obs_get_obs_and_measure_summary(
     const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
-    enkf_fs_type *fs, const local_obsdata_node_type *obs_node,
+    enkf_fs_type *fs, const LocalObsDataNode *obs_node,
     const int_vector_type *ens_active_list, meas_data_type *meas_data,
     obs_data_type *obs_data, double_vector_type *obs_value,
     double_vector_type *obs_std) {
 
-    const auto &active_list = local_obsdata_node_get_active_list(obs_node);
+    const auto &active_list = obs_node->active_list();
 
     int active_count = 0;
     int last_step = -1;
@@ -351,11 +351,10 @@ static void enkf_obs_get_obs_and_measure_summary(
 
 static void enkf_obs_get_obs_and_measure_node(
     const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
-    const local_obsdata_node_type *obs_node,
-    const int_vector_type *ens_active_list, meas_data_type *meas_data,
-    obs_data_type *obs_data) {
+    const LocalObsDataNode *obs_node, const int_vector_type *ens_active_list,
+    meas_data_type *meas_data, obs_data_type *obs_data) {
 
-    const char *obs_key = local_obsdata_node_get_key(obs_node);
+    const char *obs_key = obs_node->name().c_str();
     obs_vector_type *obs_vector =
         (obs_vector_type *)hash_get(enkf_obs->obs_hash, obs_key);
     obs_impl_type obs_type = obs_vector_get_impl_type(obs_vector);
@@ -383,8 +382,7 @@ static void enkf_obs_get_obs_and_measure_node(
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            const auto *active_list =
-                local_obsdata_node_get_active_list(obs_node);
+            const auto *active_list = obs_node->active_list();
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,
                                          active_list, fs);

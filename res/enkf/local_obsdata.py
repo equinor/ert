@@ -1,9 +1,8 @@
 from cwrap import BaseCClass
 
+from res.enkf.local_obsdata_node import LocalObsdataNode
 from res import ResPrototype
 from res import _lib
-from res.enkf.local_obsdata_node import LocalObsdataNode
-
 
 class LocalObsdata(BaseCClass):
     TYPE_NAME = "local_obsdata"
@@ -12,17 +11,8 @@ class LocalObsdata(BaseCClass):
     _free = ResPrototype("void  local_obsdata_free(local_obsdata)")
     _size = ResPrototype("int   local_obsdata_get_size(local_obsdata)")
     _has_node = ResPrototype("bool  local_obsdata_has_node(local_obsdata, char*)")
-    _add_node = ResPrototype(
-        "bool  local_obsdata_add_node(local_obsdata, local_obsdata_node)"
-    )
     _del_node = ResPrototype("void  local_obsdata_del_node(local_obsdata, char*)")
     _name = ResPrototype("char* local_obsdata_get_name(local_obsdata)")
-    _iget_node = ResPrototype(
-        "local_obsdata_node_ref local_obsdata_iget(local_obsdata, int)"
-    )
-    _get_node = ResPrototype(
-        "local_obsdata_node_ref local_obsdata_get(local_obsdata, char*)"
-    )
 
     def __init__(self, name, obs=None):
         # The obs instance should be a EnkFObs instance; some circular dependency problems
@@ -67,18 +57,15 @@ object as:
             if key < 0:
                 key += len(self)
             if 0 <= key < len(self):
-                node_ = self._iget_node(key)
-                node_.setParent(self)
-                return node_
+                return _lib.local.local_obsdata.iget_node(self, key)
             else:
                 raise IndexError("Invalid index, valid range is [0, %d)" % len(self))
         else:
             if key in self:
-                node_ = self._get_node(key)
-                node_.setParent(self)
-                return node_
+                return _lib.local.local_obsdata.get_node(self, key)
             else:
                 raise KeyError('Unknown key "%s".' % key)
+
 
     def __iter__(self):
         cur = 0
@@ -106,11 +93,9 @@ object as:
         """@rtype: LocalObsdataNode"""
         assert isinstance(key, str)
         if key in self.obs:
-            node = LocalObsdataNode(key)
-            if node not in self:
-                node.convertToCReference(self)
-                self._add_node(node)
-                return node
+            if key not in self:
+                node = LocalObsdataNode(key)
+                return _lib.local.local_obsdata.add_node(self, node)
             else:
                 raise KeyError("Tried to add existing observation key:%s " % key)
         else:
