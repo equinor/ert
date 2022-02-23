@@ -200,20 +200,6 @@ class EnKFTest(ResTest):
 
             main.getObservations().addObservationVector(observation_vector)
 
-            values = []
-            for index in range(0, count):
-                value = index * 10.5
-                std = index / 10.0
-                summary_observation_node = SummaryObservation(
-                    summary_key, observation_key, value, std
-                )
-                observation_vector.installNode(index, summary_observation_node)
-                self.assertEqual(
-                    observation_vector.getNode(index), summary_observation_node
-                )
-                self.assertEqual(value, summary_observation_node.getValue())
-                values.append((index, value, std))
-
             observations = main.getObservations()
             test_vector = observations[observation_key]
             index = 0

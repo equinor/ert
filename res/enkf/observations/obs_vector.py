@@ -38,12 +38,6 @@ class ObsVector(BaseCClass):
     _get_impl_type = ResPrototype(
         "enkf_obs_impl_type obs_vector_get_impl_type( obs_vector)"
     )
-    _install_node = ResPrototype(
-        "void  obs_vector_install_node(obs_vector, int, void*)"
-    )
-    _get_next_active_step = ResPrototype(
-        "int   obs_vector_get_next_active_step(obs_vector, int)"
-    )
     _has_data = ResPrototype(
         "bool  obs_vector_has_data(obs_vector , bool_vector , enkf_fs)"
     )
@@ -132,10 +126,6 @@ class ObsVector(BaseCClass):
                 "the firstActiveStep() method cannot be called with no active steps."
             )
 
-    def getActiveCount(self):
-        """@rtype: int"""
-        return len(self)
-
     def __len__(self):
         return self._get_num_active()
 
@@ -143,18 +133,9 @@ class ObsVector(BaseCClass):
         """@rtype: bool"""
         return self._iget_active(index)
 
-    def getNextActiveStep(self, previous_step=-1):
-        """@rtype: int"""
-        return self._get_next_active_step(previous_step)
-
     def getImplementationType(self):
         """@rtype: EnkfObservationImplementationType"""
         return self._get_impl_type()
-
-    def installNode(self, index, node):
-        assert isinstance(node, SummaryObservation)
-        node.convertToCReference(self)
-        self._install_node(index, node.from_param(node))
 
     def getConfigNode(self):
         """@rtype: EnkfConfigNode"""
