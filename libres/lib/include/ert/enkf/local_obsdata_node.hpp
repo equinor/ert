@@ -18,35 +18,21 @@
 #ifndef ERT_LOCAL_OBSDATA_NODE_H
 #define ERT_LOCAL_OBSDATA_NODE_H
 
-#include <ert/util/type_macros.h>
-#include <ert/util/int_vector.h>
-#include <vector>
-#include <algorithm>
-
+#include <string>
 #include <ert/enkf/active_list.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class LocalObsDataNode {
+public:
+    LocalObsDataNode(const std::string &key);
 
-typedef struct local_obsdata_node_struct local_obsdata_node_type;
+    const ActiveList *active_list() const;
+    void update_active_list(const ActiveList &al);
+    const std::string &name() const;
+    bool operator==(const LocalObsDataNode &other) const;
 
-local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key);
-local_obsdata_node_type *
-local_obsdata_node_alloc_copy(const local_obsdata_node_type *src);
-const char *local_obsdata_node_get_key(const local_obsdata_node_type *node);
-void local_obsdata_node_free(local_obsdata_node_type *node);
-void local_obsdata_node_free__(void *arg);
-extern "C++" ActiveList *
-local_obsdata_node_get_active_list(const local_obsdata_node_type *node);
+private:
+    ActiveList m_active_list;
+    std::string m_key;
+};
 
-extern "C++" ActiveList *
-local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node);
-
-UTIL_IS_INSTANCE_HEADER(local_obsdata_node);
-UTIL_SAFE_CAST_HEADER(local_obsdata_node);
-
-#ifdef __cplusplus
-}
-#endif
 #endif
