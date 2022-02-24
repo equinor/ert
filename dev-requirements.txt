@@ -8,8 +8,9 @@ sphinx-argparse
 sphinx_rtd_theme
 sphinx-autoapi
 pytest-asyncio
-requests
+pytest-mock
 pytest-timeout
+requests
 jsonpath_ng
 sphinxcontrib.datatemplates
 decorator
