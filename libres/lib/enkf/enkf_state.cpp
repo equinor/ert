@@ -530,40 +530,6 @@ int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
                                                 ecl_config, run_arg, msg_list);
 }
 
-/*
-   Observe that this does not return the loadOK flag; it will load as
-   good as it can all the data it should, and be done with it.
-*/
-
-void *enkf_state_load_from_forward_model_mt(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    enkf_state_type *enkf_state =
-        enkf_state_safe_cast((enkf_state_type *)arg_pack_iget_ptr(arg_pack, 0));
-    run_arg_type *run_arg = (run_arg_type *)arg_pack_iget_ptr(arg_pack, 1);
-    stringlist_type *msg_list =
-        (stringlist_type *)arg_pack_iget_ptr(arg_pack, 2);
-    bool manual_load = arg_pack_iget_bool(arg_pack, 3);
-    int *result = (int *)arg_pack_iget_ptr(arg_pack, 4);
-    int iens = run_arg_get_iens(run_arg);
-
-    if (manual_load)
-        state_map_update_undefined(
-            enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg)), iens,
-            STATE_INITIALIZED);
-
-    *result = enkf_state_load_from_forward_model(enkf_state, run_arg, msg_list);
-    if (*result & REPORT_STEP_INCOMPATIBLE) {
-        // If refcase has been used for observations: crash and burn.
-        fprintf(
-            stderr,
-            "** Warning the timesteps in refcase and current simulation are "
-            "not in accordance - something wrong with schedule file?\n");
-        *result -= REPORT_STEP_INCOMPATIBLE;
-    }
-
-    return NULL;
-}
-
 void enkf_state_free(enkf_state_type *enkf_state) {
     hash_free(enkf_state->node_hash);
     shared_info_free(enkf_state->shared_info);

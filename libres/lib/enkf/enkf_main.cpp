@@ -18,14 +18,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
-#include <thread>
 
 #include <unordered_map>
 #include <vector>
+#include <tuple>
+#include <future>
 #include <string>
 
-#define HAVE_THREAD_POOL 1
 #include <ert/util/rng.h>
 #include <ert/util/vector.hpp>
 #include <ert/util/int_vector.h>
@@ -35,12 +34,9 @@
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/util/type_vector_functions.h>
 
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/logging.hpp>
-
-#include <ert/job_queue/job_queue.hpp>
 
 #include <ert/sched/history.hpp>
 
@@ -56,7 +52,8 @@
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/field.hpp>
-#include <ert/enkf/callback_arg.hpp>
+
+#include <ert/concurrency.hpp>
 
 static auto logger = ert::get_logger("enkf");
 
@@ -670,56 +667,62 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
     auto const *iactive = ert_run_context_get_iactive(run_context);
 
-    int result[ens_size];
-    arg_pack_type **arg_list = (arg_pack_type **)util_calloc(
-        ens_size, sizeof *arg_list); // CXX_CAST_ERROR
-    thread_pool_type *tp =
-        thread_pool_alloc(std::thread::hardware_concurrency(), true);
+    // Loading state from a fwd-model is mainly io-bound so we can
+    // allow a lot more than #cores threads to execute in parallel.
+    // The number 100 is quite arbitrarily chosen though and should
+    // probably come from some resource like a site-config or similar.
+    // NOTE that this mechanism only limits the number of *concurrently
+    // executing* threads. The number of instantiated and stored futures
+    // will be equal to the number of active realizations.
+    Semafoor concurrently_executing_threads(100);
+    std::vector<std::tuple<int, std::future<int>>> futures;
 
     for (int iens = 0; iens < ens_size; ++iens) {
-        result[iens] = 0;
-        arg_pack_type *arg_pack = arg_pack_alloc();
-        arg_list[iens] = arg_pack;
-
         if (bool_vector_iget(iactive, iens)) {
-            enkf_state_type *enkf_state = enkf_main_iget_state(enkf_main, iens);
-            arg_pack_append_ptr(arg_pack, enkf_state); /* 0: enkf_state*/
-            arg_pack_append_ptr(
-                arg_pack,
-                ert_run_context_iget_arg(run_context, iens)); /* 1: run_arg */
-            arg_pack_append_ptr(
-                arg_pack,
-                realizations_msg_list
-                    [iens]); /* 2: List of interactive mode messages. */
-            arg_pack_append_bool(arg_pack, true);         /* 3: Manual load */
-            arg_pack_append_ptr(arg_pack, &result[iens]); /* 4: Result */
-            thread_pool_add_job(tp, enkf_state_load_from_forward_model_mt,
-                                arg_pack);
+
+            futures.push_back(std::make_tuple(
+                iens, // for logging later
+                std::async(
+                    std::launch::async,
+                    [=](const int realisation, Semafoor &execution_limiter) {
+                        // Acquire permit from semaphore or pause execution
+                        // until one becomes available. A successfully acquired
+                        // permit is released when exiting scope.
+                        std::scoped_lock lock(execution_limiter);
+
+                        auto *state_map = enkf_fs_get_state_map(
+                            run_arg_get_sim_fs(ert_run_context_iget_arg(
+                                run_context, realisation)));
+
+                        state_map_update_undefined(state_map, realisation,
+                                                   STATE_INITIALIZED);
+
+                        return enkf_state_load_from_forward_model(
+                            enkf_main_iget_state(enkf_main, realisation),
+                            ert_run_context_iget_arg(run_context, realisation),
+                            *realizations_msg_list);
+                    },
+                    iens, std::ref(concurrently_executing_threads))));
         }
     }
-
-    thread_pool_join(tp);
-    thread_pool_free(tp);
 
     int loaded = 0;
-    for (int iens = 0; iens < ens_size; ++iens) {
-        if (bool_vector_iget(iactive, iens)) {
-            if (result[iens] & LOAD_FAILURE)
-                fprintf(
-                    stderr,
-                    "** Warning: Function %s: Realization %d load failure\n",
-                    __func__, iens);
-            else if (result[iens] & REPORT_STEP_INCOMPATIBLE)
-                fprintf(stderr,
-                        "** Warning: Function %s: Realization %d report step "
-                        "incompatible\n",
-                        __func__, iens);
-            else
-                loaded++;
-        }
-        arg_pack_free(arg_list[iens]);
+    for (auto &[iens, fut] : futures) {
+        int result = fut.get();
+        if (result & LOAD_FAILURE) {
+            logger->warning("Function {}: Realization {} load failure",
+                            __func__, iens);
+        } else if (result & REPORT_STEP_INCOMPATIBLE) {
+            logger->warning("The timesteps in refcase and "
+                            "current simulation are "
+                            "not in accordance - something wrong with "
+                            "schedule file?");
+            logger->warning("Function {}: Realization {} report step "
+                            "incompatible",
+                            __func__, iens);
+        } else
+            loaded++;
     }
-    free(arg_list);
     return loaded;
 }
 
