@@ -250,26 +250,12 @@ def get_ensemble_responses(
 ) -> Mapping[str, js.RecordOut]:
 
     response_map: Mapping[str, js.RecordOut] = {}
-    case = get_name("ensemble", ensemble_id)
-
     for response_name in get_response_names():
         obs_keys = res.observation_keys(response_name)
-        observations_list = [
-            js.ObservationOut(
-                id=uuid4(),
-                userData=[],
-                errors=obs["errors"],
-                values=obs["values"],
-                x_axis=obs["x_axis"],
-                name=obs["name"],
-            )
-            for obs in observations_for_obs_keys(case, obs_keys)
-        ]
         response_map[str(response_name)] = js.RecordOut(
             id=get_id(f"response", f"{ensemble_id}/{response_name}"),
             name=response_name,
             userdata={},
-            observations=observations_list,
+            has_observations=len(obs_keys) != 0,
         )
-
     return response_map
