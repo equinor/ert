@@ -28,10 +28,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 
 UTIL_SAFE_CAST_HEADER(enkf_plot_tvector);
@@ -46,16 +42,17 @@ void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector);
 void enkf_plot_tvector_iset(enkf_plot_tvector_type *plot_tvector, int index,
                             time_t time, double value);
 
-int enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector);
-double enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
-                                    int index);
-time_t enkf_plot_tvector_iget_time(const enkf_plot_tvector_type *plot_tvector,
-                                   int index);
-bool enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
-                                   int index);
+extern "C" int
+enkf_plot_tvector_size(const enkf_plot_tvector_type *plot_tvector);
+extern "C" double
+enkf_plot_tvector_iget_value(const enkf_plot_tvector_type *plot_tvector,
+                             int index);
+extern "C" time_t
+enkf_plot_tvector_iget_time(const enkf_plot_tvector_type *plot_tvector,
+                            int index);
+extern "C" bool
+enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
+                              int index);
 bool enkf_plot_tvector_all_active(const enkf_plot_tvector_type *plot_tvector);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

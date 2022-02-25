@@ -178,7 +178,7 @@ struct enkf_fs_struct {
 UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 
-extern "C" void enkf_fs_umount(enkf_fs_type *fs);
+void enkf_fs_umount(enkf_fs_type *fs);
 
 int enkf_fs_incref(enkf_fs_type *fs) {
     fs->refcount++;

@@ -18,9 +18,6 @@
 
 #ifndef ERT_SUBST_FUNC_H
 #define ERT_SUBST_FUNC_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/stringlist.hpp>
 
@@ -49,7 +46,4 @@ char *subst_func_exp(const stringlist_type *args, void *arg);
 char *subst_func_log(const stringlist_type *args, void *arg);
 char *subst_func_pow10(const stringlist_type *args, void *arg);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

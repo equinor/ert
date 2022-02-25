@@ -50,10 +50,7 @@ void create_error_workflow(const char *workflow_file, const char *tmp_file,
     printf("Have created:%s \n", workflow_file);
 }
 
-extern "C" {
-// This symbol will be dlsym'd.
-
-void *read_file(void *self, const stringlist_type *args) {
+extern "C" void *read_file(void *self, const stringlist_type *args) {
     printf("Running read_file \n");
     int *value = (int *)self;
     FILE *stream = util_fopen(stringlist_iget(args, 0), "r");
@@ -66,7 +63,6 @@ void *read_file(void *self, const stringlist_type *args) {
         return return_value;
     } else
         return NULL;
-}
 }
 
 static void create_exjob(const char *workflow, const char *bin_path) {

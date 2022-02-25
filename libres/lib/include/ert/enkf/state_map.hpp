@@ -19,11 +19,6 @@
 #define ERT_STATE_MAP_H
 
 #include <vector>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/util/type_macros.h>
 #include <ert/util/bool_vector.h>
 
@@ -31,38 +26,37 @@ extern "C" {
 
 typedef struct state_map_struct state_map_type;
 
-state_map_type *state_map_alloc();
+extern "C" state_map_type *state_map_alloc();
 state_map_type *state_map_fread_alloc(const char *filename);
 state_map_type *state_map_fread_alloc_readonly(const char *filename);
 state_map_type *state_map_alloc_copy(const state_map_type *map);
-bool state_map_is_readonly(const state_map_type *state_map);
-void state_map_free(state_map_type *map);
-int state_map_get_size(const state_map_type *map);
-realisation_state_enum state_map_iget(const state_map_type *map, int index);
+extern "C" bool state_map_is_readonly(const state_map_type *state_map);
+extern "C" void state_map_free(state_map_type *map);
+extern "C" int state_map_get_size(const state_map_type *map);
+extern "C" realisation_state_enum state_map_iget(const state_map_type *map,
+                                                 int index);
 void state_map_update_undefined(state_map_type *map, int index,
                                 realisation_state_enum new_state);
 void state_map_update_matching(state_map_type *map, int index, int state_mask,
                                realisation_state_enum new_state);
-void state_map_iset(state_map_type *map, int index,
-                    realisation_state_enum state);
-bool state_map_equal(const state_map_type *map1, const state_map_type *map2);
-void state_map_fwrite(const state_map_type *map, const char *filename);
-bool state_map_fread(state_map_type *map, const char *filename);
-extern "C++" std::vector<bool>
-state_map_select_matching(const state_map_type *map, int select_mask,
-                          bool select);
+extern "C" void state_map_iset(state_map_type *map, int index,
+                               realisation_state_enum state);
+extern "C" bool state_map_equal(const state_map_type *map1,
+                                const state_map_type *map2);
+extern "C" void state_map_fwrite(const state_map_type *map,
+                                 const char *filename);
+extern "C" bool state_map_fread(state_map_type *map, const char *filename);
+std::vector<bool> state_map_select_matching(const state_map_type *map,
+                                            int select_mask, bool select);
 void state_map_set_from_inverted_mask(state_map_type *map,
                                       const std::vector<bool> &mask,
                                       realisation_state_enum state);
 void state_map_set_from_mask(state_map_type *map, const std::vector<bool> &mask,
                              realisation_state_enum state);
 int state_map_count_matching(const state_map_type *state_map, int mask);
-bool state_map_legal_transition(realisation_state_enum state1,
-                                realisation_state_enum state2);
+extern "C" bool state_map_legal_transition(realisation_state_enum state1,
+                                           realisation_state_enum state2);
 
 UTIL_IS_INSTANCE_HEADER(state_map);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

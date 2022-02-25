@@ -22,10 +22,6 @@
 #include <ert/util/type_macros.h>
 #include <ert/util/rng.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * The number of unsigned int's necessary to represent the state of the rng
  * algorithm. Since the current algorithm used is mzran, this value is set to
@@ -55,7 +51,4 @@ void rng_manager_log_state(const rng_manager_type *rng_manager);
 
 UTIL_IS_INSTANCE_HEADER(rng_manager);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

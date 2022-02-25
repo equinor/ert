@@ -19,10 +19,6 @@
 #ifndef ERT_LSB_H
 #define ERT_LSB_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <lsf/lsbatch.h>
@@ -43,9 +39,5 @@ struct jobInfoEnt *lsb_readjob(const lsb_type *lsb);
 int lsb_closejob(const lsb_type *lsb);
 char *lsb_sys_msg(const lsb_type *lsb);
 stringlist_type *lsb_get_error_list(const lsb_type *lsb);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

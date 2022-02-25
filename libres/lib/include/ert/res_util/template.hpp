@@ -18,9 +18,6 @@
 
 #ifndef ERT_UTIL_TEMPLATE_H
 #define ERT_UTIL_TEMPLATE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 
@@ -50,7 +47,4 @@ const char *template_get_template_file(const template_type *_template);
 
 //void template_eval_loops( const template_type * template_ , buffer_type * buffer );
 
-#endif
-#ifdef __cplusplus
-}
 #endif

@@ -48,7 +48,7 @@ void gen_kw_free(gen_kw_type *gen_kw) {
     free(gen_kw);
 }
 
-PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
+extern "C" PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
     gen_kw_type *gen_kw = (gen_kw_type *)util_malloc(sizeof *gen_kw);
     gen_kw->__type_id = GEN_KW;
     gen_kw->config = config;

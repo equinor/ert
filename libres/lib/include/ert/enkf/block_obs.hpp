@@ -32,10 +32,6 @@
 #include <ert/enkf/field.hpp>
 #include <ert/enkf/active_list.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct block_obs_struct block_obs_type;
 
 typedef enum { SOURCE_FIELD = 10, SOURCE_SUMMARY = 12 } block_obs_source_type;
@@ -46,29 +42,36 @@ block_obs_type *block_obs_alloc_complete(
     const ecl_grid_type *grid, int size, const int *i, const int *j,
     const int *k, const double *obs_value, const double *obs_std);
 
-block_obs_type *block_obs_alloc(const char *obs_key, const void *data_config,
-                                const ecl_grid_type *grid);
+extern "C" block_obs_type *block_obs_alloc(const char *obs_key,
+                                           const void *data_config,
+                                           const ecl_grid_type *grid);
 
-void block_obs_free(block_obs_type *block_obs);
+extern "C" void block_obs_free(block_obs_type *block_obs);
 
-PY_USED double block_obs_iget_depth(const block_obs_type *block_obs, int index);
-PY_USED int block_obs_iget_i(const block_obs_type *, int index);
-PY_USED int block_obs_iget_j(const block_obs_type *, int index);
-PY_USED int block_obs_iget_k(const block_obs_type *, int index);
-int block_obs_get_size(const block_obs_type *);
-double block_obs_iget_value(const block_obs_type *block_obs, int index);
-double block_obs_iget_std(const block_obs_type *block_obs, int index);
-double block_obs_iget_data(const block_obs_type *block_obs, const void *state,
-                           int iobs, node_id_type node_id);
-double block_obs_iget_std_scaling(const block_obs_type *block_obs, int index);
-PY_USED void block_obs_update_std_scale(block_obs_type *block_obs,
-                                        double scale_factor,
-                                        const ActiveList *active_list);
-void block_obs_append_field_obs(block_obs_type *block_obs, int i, int j, int k,
-                                double value, double std);
-void block_obs_append_summary_obs(block_obs_type *block_obs, int i, int j,
-                                  int k, const char *sum_key, double value,
-                                  double std);
+extern "C" PY_USED double block_obs_iget_depth(const block_obs_type *block_obs,
+                                               int index);
+extern "C" PY_USED int block_obs_iget_i(const block_obs_type *, int index);
+extern "C" PY_USED int block_obs_iget_j(const block_obs_type *, int index);
+extern "C" PY_USED int block_obs_iget_k(const block_obs_type *, int index);
+extern "C" int block_obs_get_size(const block_obs_type *);
+extern "C" double block_obs_iget_value(const block_obs_type *block_obs,
+                                       int index);
+extern "C" double block_obs_iget_std(const block_obs_type *block_obs,
+                                     int index);
+extern "C" double block_obs_iget_data(const block_obs_type *block_obs,
+                                      const void *state, int iobs,
+                                      node_id_type node_id);
+extern "C" double block_obs_iget_std_scaling(const block_obs_type *block_obs,
+                                             int index);
+extern "C" PY_USED void
+block_obs_update_std_scale(block_obs_type *block_obs, double scale_factor,
+                           const ActiveList *active_list);
+extern "C" void block_obs_append_field_obs(block_obs_type *block_obs, int i,
+                                           int j, int k, double value,
+                                           double std);
+extern "C" void block_obs_append_summary_obs(block_obs_type *block_obs, int i,
+                                             int j, int k, const char *sum_key,
+                                             double value, double std);
 
 VOID_FREE_HEADER(block_obs);
 VOID_GET_OBS_HEADER(block_obs);
@@ -78,7 +81,4 @@ VOID_USER_GET_OBS_HEADER(block_obs);
 VOID_CHI2_HEADER(block_obs);
 VOID_UPDATE_STD_SCALE_HEADER(block_obs);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

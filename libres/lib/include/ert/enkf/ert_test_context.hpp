@@ -28,10 +28,6 @@
 #include <ert/enkf/res_config.hpp>
 #include <ert/enkf/enkf_main.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct ert_test_context_struct ert_test_context_type;
 
 ert_test_context_type *ert_test_context_alloc(const char *test_name,
@@ -57,9 +53,5 @@ bool ert_test_context_run_worklow(ert_test_context_type *test_context,
 const char *ert_test_context_get_cwd(const ert_test_context_type *test_context);
 
 UTIL_IS_INSTANCE_HEADER(ert_test_context);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

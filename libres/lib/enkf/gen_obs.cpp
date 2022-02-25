@@ -484,9 +484,8 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
     }
 }
 
-C_USED void gen_obs_update_std_scale(gen_obs_type *gen_obs,
-                                     double std_multiplier,
-                                     const ActiveList *active_list) {
+void gen_obs_update_std_scale(gen_obs_type *gen_obs, double std_multiplier,
+                              const ActiveList *active_list) {
     if (active_list->getMode() == ALL_ACTIVE) {
         for (int i = 0; i < gen_obs->obs_size; i++)
             gen_obs->std_scaling[i] = std_multiplier;

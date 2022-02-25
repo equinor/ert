@@ -27,10 +27,6 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct misfit_ranking_struct misfit_ranking_type;
 
 UTIL_IS_INSTANCE_HEADER(misfit_ranking);
@@ -50,9 +46,5 @@ void misfit_ranking_iset_invalid(misfit_ranking_type *misfit_ranking, int iens);
 void misfit_ranking_iset(misfit_ranking_type *misfit_ranking, int iens,
                          hash_type *obs_hash, double total_misfit);
 void misfit_ranking_init_sort(misfit_ranking_type *misfit_ranking);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

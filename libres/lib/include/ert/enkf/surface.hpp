@@ -19,10 +19,6 @@
 #ifndef ERT_SURFACE_H
 #define ERT_SURFACE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/surface_config.hpp>
@@ -43,9 +39,5 @@ VOID_DESERIALIZE_HEADER(surface);
 VOID_CLEAR_HEADER(surface);
 VOID_INITIALIZE_HEADER(surface);
 VOID_FLOAD_HEADER(surface);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

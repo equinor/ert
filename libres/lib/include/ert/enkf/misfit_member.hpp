@@ -19,10 +19,6 @@
 #ifndef ERT_MISFIT_MEMBER_H
 #define ERT_MISFIT_MEMBER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 
 #include <ert/enkf/misfit_ts.hpp>
@@ -39,9 +35,5 @@ void misfit_member_update(misfit_member_type *node, const char *obs_key,
                           const double **work_chi2);
 void misfit_member_free__(void *node);
 misfit_member_type *misfit_member_alloc(int iens);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

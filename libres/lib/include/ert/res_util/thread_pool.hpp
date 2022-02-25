@@ -18,10 +18,6 @@
 #ifndef ERT_THREAD_POOL_H
 #define ERT_THREAD_POOL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 typedef struct thread_pool_struct thread_pool_type;
@@ -33,9 +29,5 @@ void thread_pool_free(thread_pool_type *);
 void thread_pool_restart(thread_pool_type *tp);
 int thread_pool_get_max_running(const thread_pool_type *pool);
 bool thread_pool_try_join(thread_pool_type *pool, int timeout_seconds);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -18,9 +18,6 @@
 
 #ifndef ERT_EXT_JOBLIST_H
 #define ERT_EXT_JOBLIST_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/hash.hpp>
@@ -31,25 +28,25 @@ extern "C" {
 
 typedef struct ext_joblist_struct ext_joblist_type;
 
-ext_joblist_type *ext_joblist_alloc();
-void ext_joblist_free(ext_joblist_type *);
-void ext_joblist_add_job(ext_joblist_type *joblist, const char *name,
-                         ext_job_type *new_job);
-ext_job_type *ext_joblist_get_job(const ext_joblist_type *, const char *);
+extern "C" ext_joblist_type *ext_joblist_alloc();
+extern "C" void ext_joblist_free(ext_joblist_type *);
+extern "C" void ext_joblist_add_job(ext_joblist_type *joblist, const char *name,
+                                    ext_job_type *new_job);
+extern "C" ext_job_type *ext_joblist_get_job(const ext_joblist_type *,
+                                             const char *);
 ext_job_type *ext_joblist_get_job_copy(const ext_joblist_type *, const char *);
 //void               ext_joblist_python_fprintf(const ext_joblist_type * , const stringlist_type * , const char * , const subst_list_type *);
-bool ext_joblist_has_job(const ext_joblist_type *, const char *);
-stringlist_type *ext_joblist_alloc_list(const ext_joblist_type *joblist);
-bool ext_joblist_del_job(ext_joblist_type *joblist, const char *job_name);
+extern "C" bool ext_joblist_has_job(const ext_joblist_type *, const char *);
+extern "C" stringlist_type *
+ext_joblist_alloc_list(const ext_joblist_type *joblist);
+extern "C" bool ext_joblist_del_job(ext_joblist_type *joblist,
+                                    const char *job_name);
 void ext_joblist_add_jobs_in_directory(ext_joblist_type *joblist,
                                        const char *path,
                                        const char *license_root_path,
                                        bool user_mode, bool search_path);
-int ext_joblist_get_size(const ext_joblist_type *joblist);
+extern "C" int ext_joblist_get_size(const ext_joblist_type *joblist);
 
-hash_type *ext_joblist_get_jobs(const ext_joblist_type *joblist);
+extern "C" hash_type *ext_joblist_get_jobs(const ext_joblist_type *joblist);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

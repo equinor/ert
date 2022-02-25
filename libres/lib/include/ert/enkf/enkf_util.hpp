@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_UTIL_H
 #define ERT_ENKF_UTIL_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -37,7 +34,4 @@ double enkf_util_rand_normal(double, double, rng_type *rng);
 void enkf_util_assert_buffer_type(buffer_type *buffer,
                                   ert_impl_type target_type);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -19,10 +19,6 @@
 #ifndef ERT_CONFIG_CONTENT_NODE_H
 #define ERT_CONFIG_CONTENT_NODE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/util/hash.hpp>
 
 #include <ert/config/config_schema_item.hpp>
@@ -30,7 +26,7 @@ extern "C" {
 
 typedef struct config_content_node_struct config_content_node_type;
 
-config_item_types
+extern "C" config_item_types
 config_content_node_iget_type(const config_content_node_type *node, int index);
 config_content_node_type *
 config_content_node_alloc(const config_schema_item_type *schema,
@@ -44,39 +40,41 @@ config_content_node_alloc_joined_string(const config_content_node_type *node,
                                         const char *sep);
 void config_content_node_free(config_content_node_type *node);
 void config_content_node_free__(void *arg);
-const char *
+extern "C" const char *
 config_content_node_get_full_string(const config_content_node_type *node,
                                     const char *sep);
-const char *config_content_node_iget(const config_content_node_type *node,
-                                     int index);
-bool config_content_node_iget_as_bool(const config_content_node_type *node,
-                                      int index);
-int config_content_node_iget_as_int(const config_content_node_type *node,
-                                    int index);
-double config_content_node_iget_as_double(const config_content_node_type *node,
-                                          int index);
-const char *config_content_node_iget_as_path(config_content_node_type *node,
-                                             int index);
-const char *config_content_node_iget_as_abspath(config_content_node_type *node,
-                                                int index);
-const char *config_content_node_iget_as_relpath(config_content_node_type *node,
-                                                int index);
+extern "C" const char *
+config_content_node_iget(const config_content_node_type *node, int index);
+extern "C" bool
+config_content_node_iget_as_bool(const config_content_node_type *node,
+                                 int index);
+extern "C" int
+config_content_node_iget_as_int(const config_content_node_type *node,
+                                int index);
+extern "C" double
+config_content_node_iget_as_double(const config_content_node_type *node,
+                                   int index);
+extern "C" const char *
+config_content_node_iget_as_path(config_content_node_type *node, int index);
+extern "C" const char *
+config_content_node_iget_as_abspath(config_content_node_type *node, int index);
+extern "C" const char *
+config_content_node_iget_as_relpath(config_content_node_type *node, int index);
 const char *
 config_content_node_iget_as_executable(config_content_node_type *node,
                                        int index);
-time_t config_content_node_iget_as_isodate(const config_content_node_type *node,
-                                           int index);
+extern "C" time_t
+config_content_node_iget_as_isodate(const config_content_node_type *node,
+                                    int index);
 const stringlist_type *
 config_content_node_get_stringlist(const config_content_node_type *node);
 const char *config_content_node_safe_iget(const config_content_node_type *node,
                                           int index);
-int config_content_node_get_size(const config_content_node_type *node);
+extern "C" int
+config_content_node_get_size(const config_content_node_type *node);
 const char *config_content_node_get_kw(const config_content_node_type *node);
 void config_content_node_assert_key_value(const config_content_node_type *node);
 void config_content_node_init_opt_hash(const config_content_node_type *node,
                                        hash_type *opt_hash, int elm_offset);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

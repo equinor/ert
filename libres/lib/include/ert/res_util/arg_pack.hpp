@@ -18,9 +18,6 @@
 
 #ifndef ERT_ARG_PACK_H
 #define ERT_ARG_PACK_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -81,7 +78,4 @@ ISET_TYPED_HEADER(size_t)
 #undef APPEND_TYPED_HEADER
 #undef GET_TYPED_HEADER
 
-#ifdef __cplusplus
-}
-#endif
 #endif

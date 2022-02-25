@@ -19,20 +19,18 @@
 #ifndef ERT_CONFIG_PATH_ELM_H
 #define ERT_CONFIG_PATH_ELM_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/config/config_root_path.hpp>
 
 typedef struct config_path_elm_struct config_path_elm_type;
 
-void config_path_elm_free(config_path_elm_type *path_elm);
+extern "C" void config_path_elm_free(config_path_elm_type *path_elm);
 void config_path_elm_free__(void *arg);
 config_path_elm_type *
 config_path_elm_alloc(const config_root_path_type *root_path, const char *path);
-const char *config_path_elm_get_abspath(const config_path_elm_type *path_elm);
-const char *config_path_elm_get_relpath(const config_path_elm_type *path_elm);
+extern "C" const char *
+config_path_elm_get_abspath(const config_path_elm_type *path_elm);
+extern "C" const char *
+config_path_elm_get_relpath(const config_path_elm_type *path_elm);
 char *config_path_elm_alloc_abspath(const config_path_elm_type *path_elm,
                                     const char *input_path);
 char *config_path_elm_alloc_relpath(const config_path_elm_type *path_elm,
@@ -40,7 +38,4 @@ char *config_path_elm_alloc_relpath(const config_path_elm_type *path_elm,
 char *config_path_elm_alloc_path(const config_path_elm_type *path_elm,
                                  const char *input_path);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

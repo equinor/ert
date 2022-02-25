@@ -29,9 +29,6 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 /*
   How should the run system handle a load problem of a summary
   variable. Observe that the numerical enum values are actually used -
@@ -57,10 +54,10 @@ void summary_config_set_load_fail_mode(summary_config_type *config,
                                        load_fail_type load_fail);
 load_fail_type
 summary_config_get_load_fail_mode(const summary_config_type *config);
-const char *summary_config_get_var(const summary_config_type *);
-summary_config_type *summary_config_alloc(const char *,
-                                          load_fail_type load_fail);
-void summary_config_free(summary_config_type *);
+extern "C" const char *summary_config_get_var(const summary_config_type *);
+extern "C" summary_config_type *summary_config_alloc(const char *,
+                                                     load_fail_type load_fail);
+extern "C" void summary_config_free(summary_config_type *);
 
 UTIL_IS_INSTANCE_HEADER(summary_config);
 UTIL_SAFE_CAST_HEADER(summary_config);
@@ -69,7 +66,4 @@ GET_DATA_SIZE_HEADER(summary);
 VOID_GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -23,10 +23,6 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct surface_config_struct surface_config_type;
 
 void surface_config_ecl_write(const surface_config_type *config,
@@ -44,9 +40,5 @@ UTIL_SAFE_CAST_HEADER_CONST(surface_config);
 GET_DATA_SIZE_HEADER(surface);
 VOID_GET_DATA_SIZE_HEADER(surface);
 VOID_CONFIG_FREE_HEADER(surface);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

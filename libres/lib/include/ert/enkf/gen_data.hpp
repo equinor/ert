@@ -32,21 +32,17 @@
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/forward_load_context.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void gen_data_assert_size(gen_data_type *gen_data, int size, int report_step);
 bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
                            const forward_load_context_type *load_context);
-void gen_data_free(gen_data_type *);
-double gen_data_iget_double(const gen_data_type *, int);
-int gen_data_get_size(const gen_data_type *);
-double gen_data_iget_double(const gen_data_type *, int);
-void gen_data_export(const gen_data_type *gen_data, const char *full_path,
-                     gen_data_file_format_type export_type);
-void gen_data_export_data(const gen_data_type *gen_data,
-                          double_vector_type *export_data);
+extern "C" void gen_data_free(gen_data_type *);
+extern "C" int gen_data_get_size(const gen_data_type *);
+extern "C" double gen_data_iget_double(const gen_data_type *, int);
+extern "C" void gen_data_export(const gen_data_type *gen_data,
+                                const char *full_path,
+                                gen_data_file_format_type export_type);
+extern "C" void gen_data_export_data(const gen_data_type *gen_data,
+                                     double_vector_type *export_data);
 const char *gen_data_get_key(const gen_data_type *gen_data);
 int gen_data_get_size(const gen_data_type *gen_data);
 void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
@@ -69,7 +65,4 @@ VOID_WRITE_TO_BUFFER_HEADER(gen_data);
 VOID_SERIALIZE_HEADER(gen_data)
 VOID_DESERIALIZE_HEADER(gen_data)
 VOID_CLEAR_HEADER(gen_data);
-#ifdef __cplusplus
-}
-#endif
 #endif

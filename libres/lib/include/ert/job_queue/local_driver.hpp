@@ -18,9 +18,6 @@
 
 #ifndef ERT_LOCAL_DRIVER_H
 #define ERT_LOCAL_DRIVER_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/job_queue/queue_driver.hpp>
 
@@ -38,7 +35,4 @@ job_status_type local_driver_get_job_status(void *__driver, void *__job);
 void local_driver_free_job(void *__job);
 void local_driver_init_option_list(stringlist_type *option_list);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

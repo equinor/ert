@@ -18,9 +18,6 @@
 
 #ifndef ERT_GEN_KW_H
 #define ERT_GEN_KW_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/double_vector.h>
 #include <ert/res_util/subst_list.hpp>
@@ -32,24 +29,25 @@ extern "C" {
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 
-void gen_kw_ecl_write(const gen_kw_type *gen_kw, const char *run_path,
-                      const char *base_file, value_export_type *export_value);
-PY_USED void gen_kw_write_export_file(const gen_kw_type *gen_kw,
-                                      const char *filename);
+extern "C" void gen_kw_ecl_write(const gen_kw_type *gen_kw,
+                                 const char *run_path, const char *base_file,
+                                 value_export_type *export_value);
+extern "C" PY_USED void gen_kw_write_export_file(const gen_kw_type *gen_kw,
+                                                 const char *filename);
 
-void gen_kw_free(gen_kw_type *);
-int gen_kw_data_size(const gen_kw_type *);
-double gen_kw_data_iget(const gen_kw_type *, int, bool);
-void gen_kw_data_iset(gen_kw_type *, int, double);
-PY_USED void gen_kw_data_set_vector(gen_kw_type *gen_kw,
-                                    const double_vector_type *values);
-double gen_kw_data_get(gen_kw_type *, const char *, bool);
-void gen_kw_data_set(gen_kw_type *, const char *, double);
-PY_USED bool gen_kw_data_has_key(gen_kw_type *, const char *);
-const char *gen_kw_get_name(const gen_kw_type *, int);
+extern "C" void gen_kw_free(gen_kw_type *);
+extern "C" int gen_kw_data_size(const gen_kw_type *);
+extern "C" double gen_kw_data_iget(const gen_kw_type *, int, bool);
+extern "C" void gen_kw_data_iset(gen_kw_type *, int, double);
+extern "C" PY_USED void
+gen_kw_data_set_vector(gen_kw_type *gen_kw, const double_vector_type *values);
+extern "C" double gen_kw_data_get(gen_kw_type *, const char *, bool);
+extern "C" void gen_kw_data_set(gen_kw_type *, const char *, double);
+extern "C" PY_USED bool gen_kw_data_has_key(gen_kw_type *, const char *);
+extern "C" const char *gen_kw_get_name(const gen_kw_type *, int);
 void gen_kw_filter_file(const gen_kw_type *, const char *);
-void gen_kw_ecl_write_template(const gen_kw_type *gen_kw,
-                               const char *file_name);
+extern "C" void gen_kw_ecl_write_template(const gen_kw_type *gen_kw,
+                                          const char *file_name);
 
 UTIL_SAFE_CAST_HEADER(gen_kw);
 UTIL_SAFE_CAST_HEADER_CONST(gen_kw);
@@ -66,7 +64,4 @@ VOID_FLOAD_HEADER(gen_kw);
 VOID_CLEAR_HEADER(gen_kw);
 VOID_SERIALIZE_HEADER(gen_kw)
 VOID_DESERIALIZE_HEADER(gen_kw)
-#ifdef __cplusplus
-}
-#endif
 #endif

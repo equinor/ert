@@ -31,10 +31,6 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define LOCAL_MINISTEP_TYPE_ID 661066
 
 class local_ministep_type {
@@ -109,37 +105,38 @@ public:
 };
 
 local_ministep_type *local_ministep_alloc(const char *name);
-void local_ministep_free(local_ministep_type *ministep);
+extern "C" void local_ministep_free(local_ministep_type *ministep);
 void local_ministep_free__(void *arg);
 
 RowScaling *
 local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
                                          const char *key);
 
-int local_ministep_num_active_data(const local_ministep_type *ministep);
-void local_ministep_activate_data(local_ministep_type *ministep,
-                                  const char *key);
-ActiveList *
+extern "C" int
+local_ministep_num_active_data(const local_ministep_type *ministep);
+extern "C" void local_ministep_activate_data(local_ministep_type *ministep,
+                                             const char *key);
+extern "C" ActiveList *
 local_ministep_get_active_data_list(const local_ministep_type *ministep,
                                     const char *key);
-bool local_ministep_data_is_active(const local_ministep_type *ministep,
-                                   const char *key);
+extern "C" bool
+local_ministep_data_is_active(const local_ministep_type *ministep,
+                              const char *key);
 
-const char *local_ministep_get_name(const local_ministep_type *ministep);
-void local_ministep_add_obsdata(local_ministep_type *ministep,
-                                local_obsdata_type *obsdata);
-void local_ministep_add_obsdata_node(local_ministep_type *ministep,
-                                     LocalObsDataNode *obsdatanode);
-local_obsdata_type *
+extern "C" const char *
+local_ministep_get_name(const local_ministep_type *ministep);
+extern "C" void local_ministep_add_obsdata(local_ministep_type *ministep,
+                                           local_obsdata_type *obsdata);
+extern "C" void local_ministep_add_obsdata_node(local_ministep_type *ministep,
+                                                LocalObsDataNode *obsdatanode);
+extern "C" local_obsdata_type *
 local_ministep_get_obsdata(const local_ministep_type *ministep);
 void local_ministep_add_obs_data(local_ministep_type *ministep,
                                  obs_data_type *obs_data);
-obs_data_type *local_ministep_get_obs_data(const local_ministep_type *ministep);
+extern "C" obs_data_type *
+local_ministep_get_obs_data(const local_ministep_type *ministep);
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

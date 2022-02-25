@@ -19,10 +19,7 @@
 #ifndef VALUE_EXPORT_H
 #define VALUE_EXPORT_H
 
-#ifdef __cplusplus
 #include <string>
-extern "C" {
-#endif
 
 #include <ert/util/type_macros.h>
 
@@ -41,7 +38,4 @@ void value_export_append(value_export_type *value, const std::string key,
 
 UTIL_IS_INSTANCE_HEADER(value_export);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

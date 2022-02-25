@@ -24,10 +24,6 @@
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/fs_types.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FS_MAGIC_ID 123998L
 #define CURRENT_FS_VERSION 107
 #define MIN_SUPPORTED_FS_VERSION 105
@@ -220,7 +216,4 @@ void fs_driver_assert_magic(FILE *stream);
 void fs_driver_assert_version(FILE *stream, const char *mount_point);
 int fs_driver_fread_version(FILE *stream);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

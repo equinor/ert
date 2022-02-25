@@ -24,17 +24,9 @@
   split like this to avoid circular dependencies.
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct gen_data_config_struct gen_data_config_type;
 typedef struct gen_data_struct gen_data_type;
 
-gen_data_type *gen_data_alloc(const gen_data_config_type *);
-
-#ifdef __cplusplus
-}
-#endif
+extern "C" gen_data_type *gen_data_alloc(const gen_data_config_type *);
 
 #endif

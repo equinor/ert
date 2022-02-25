@@ -22,10 +22,6 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct container_config_struct container_config_type;
 
 container_config_type *container_config_alloc(const char *key);
@@ -40,7 +36,4 @@ GET_DATA_SIZE_HEADER(container);
 VOID_GET_DATA_SIZE_HEADER(container);
 VOID_CONFIG_FREE_HEADER(container);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

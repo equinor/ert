@@ -19,9 +19,6 @@
 #ifndef ERT_CONFIG_SETTINGS_H
 #define ERT_CONFIG_SETTINGS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/stringlist.hpp>
@@ -62,7 +59,4 @@ bool config_settings_set_value(const config_settings_type *config_settings,
 bool config_settings_set_double_value(
     const config_settings_type *config_settings, const char *key, double value);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -18,9 +18,6 @@
 
 #ifndef ERT_RMS_TYPE_H
 #define ERT_RMS_TYPE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -46,7 +43,4 @@ typedef struct {
 void rms_type_free(void *);
 __rms_type *rms_type_alloc(rms_type_enum, int);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

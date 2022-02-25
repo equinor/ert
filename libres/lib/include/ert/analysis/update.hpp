@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdexcept>
 #define HAVE_THREAD_POOL 1
 #include <ert/enkf/enkf_fs.hpp>

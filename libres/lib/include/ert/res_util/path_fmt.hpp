@@ -24,24 +24,17 @@
 
 #include <ert/util/node_ctype.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct path_fmt_struct path_fmt_type;
 
-path_fmt_type *path_fmt_alloc_directory_fmt(const char *);
+extern "C" path_fmt_type *path_fmt_alloc_directory_fmt(const char *);
 path_fmt_type *path_fmt_alloc_path_fmt(const char *);
 char *path_fmt_alloc_path(const path_fmt_type *, bool, ...);
 char *path_fmt_alloc_file(const path_fmt_type *, bool, ...);
-void path_fmt_free(path_fmt_type *);
+extern "C" void path_fmt_free(path_fmt_type *);
 void path_fmt_free__(void *arg);
-const char *path_fmt_get_fmt(const path_fmt_type *);
+extern "C" const char *path_fmt_get_fmt(const path_fmt_type *);
 void path_fmt_reset_fmt(path_fmt_type *, const char *);
 path_fmt_type *path_fmt_realloc_path_fmt(path_fmt_type *path_fmt,
                                          const char *fmt);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
