@@ -44,11 +44,6 @@
 #include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/value_export.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern "C++" {
 typedef void(serialize_ftype)(const void *, node_id_type, const ActiveList *,
                               matrix_type *, int, int);
 typedef void(deserialize_ftype)(void *, node_id_type, const ActiveList *,
@@ -86,7 +81,6 @@ void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
 void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
                            node_id_type node_id, const ActiveList *active_list,
                            const matrix_type *A, int row_offset, int column);
-}
 
 typedef enum {
     alloc_func = 0,
@@ -114,7 +108,7 @@ bool enkf_node_user_get_no_id(enkf_node_type *enkf_node, enkf_fs_type *fs,
 bool enkf_node_user_get(enkf_node_type *, enkf_fs_type *, const char *,
                         node_id_type, double *);
 enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config);
-enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
+extern "C" enkf_node_type *enkf_node_alloc(const enkf_config_node_type *);
 enkf_node_type *enkf_node_copyc(const enkf_node_type *);
 /*
     The enkf_node_free() function declaration is in the enkf_config_node.h header,
@@ -129,8 +123,8 @@ bool enkf_node_has_data(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id);
 //void             enkf_node_free_data(enkf_node_type * );
 void enkf_node_free__(void *);
-void *enkf_node_value_ptr(const enkf_node_type *);
-ert_impl_type enkf_node_get_impl_type(const enkf_node_type *);
+extern "C" void *enkf_node_value_ptr(const enkf_node_type *);
+extern "C" ert_impl_type enkf_node_get_impl_type(const enkf_node_type *);
 bool enkf_node_use_forward_init(const enkf_node_type *enkf_node);
 
 bool enkf_node_forward_load_vector(
@@ -138,8 +132,8 @@ bool enkf_node_forward_load_vector(
     const int_vector_type *time_index);
 bool enkf_node_forward_load(enkf_node_type *,
                             const forward_load_context_type *load_context);
-void enkf_node_ecl_write(const enkf_node_type *, const char *,
-                         value_export_type *, int);
+extern "C" void enkf_node_ecl_write(const enkf_node_type *, const char *,
+                                    value_export_type *, int);
 bool enkf_node_initialize(enkf_node_type *enkf_node, int, rng_type *);
 void enkf_node_clear(enkf_node_type *);
 
@@ -153,28 +147,25 @@ void enkf_node_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                     node_id_type node_id);
 void enkf_node_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                            int iens);
-bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                     node_id_type node_id);
+extern "C" bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                                node_id_type node_id);
 bool enkf_node_store_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                             int iens);
-bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
-                        node_id_type node_id);
+extern "C" bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
+                                   node_id_type node_id);
 bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                int iens);
 bool enkf_node_vector_storage(const enkf_node_type *node);
 enkf_node_type *
 enkf_node_alloc_shared_container(const enkf_config_node_type *config,
                                  hash_type *node_hash);
-enkf_node_type *
+extern "C" enkf_node_type *
 enkf_node_alloc_private_container(const enkf_config_node_type *config);
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
-const char *enkf_node_get_key(const enkf_node_type *);
+extern "C" const char *enkf_node_get_key(const enkf_node_type *);
 bool enkf_node_has_func(const enkf_node_type *, node_function_type);
 bool enkf_node_internalize(const enkf_node_type *, int);
 
 UTIL_IS_INSTANCE_HEADER(enkf_node);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

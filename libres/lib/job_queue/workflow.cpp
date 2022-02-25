@@ -264,14 +264,7 @@ stringlist_type *workflow_iget_arguments(const workflow_type *workflow,
     return cmd->arglist;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-PY_USED const char *worflow_get_src_file(const workflow_type *workflow) {
+extern "C" PY_USED const char *
+worflow_get_src_file(const workflow_type *workflow) {
     return workflow->src_file;
 }
-
-#ifdef __cplusplus
-}
-#endif

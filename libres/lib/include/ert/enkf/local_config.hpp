@@ -30,34 +30,28 @@
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct local_config_struct local_config_type;
-local_obsdata_type *
+extern "C" local_obsdata_type *
 local_config_get_obsdata(const local_config_type *local_config,
                          const char *key);
-PY_USED local_obsdata_type *
+extern "C" PY_USED local_obsdata_type *
 local_config_alloc_obsdata_copy(local_config_type *local_config,
                                 const char *src_key, const char *target_key);
 
 local_config_type *local_config_alloc();
-void local_config_clear(local_config_type *local_config);
-void local_config_clear_active(local_config_type *local_config);
-void local_config_free(local_config_type *local_config);
-local_ministep_type *
+extern "C" void local_config_clear(local_config_type *local_config);
+extern "C" void local_config_clear_active(local_config_type *local_config);
+extern "C" void local_config_free(local_config_type *local_config);
+extern "C" local_ministep_type *
 local_config_alloc_ministep(local_config_type *local_config, const char *key);
-local_updatestep_type *
+extern "C" local_updatestep_type *
 local_config_get_updatestep(const local_config_type *local_config);
-local_ministep_type *
+extern "C" local_ministep_type *
 local_config_get_ministep(const local_config_type *local_config,
                           const char *key);
-local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
-                                               const char *obsdata_name);
-bool local_config_has_obsdata(const local_config_type *local_config,
-                              const char *obsdata_name);
-#ifdef __cplusplus
-}
-#endif
+extern "C" local_obsdata_type *
+local_config_alloc_obsdata(local_config_type *local_config,
+                           const char *obsdata_name);
+extern "C" bool local_config_has_obsdata(const local_config_type *local_config,
+                                         const char *obsdata_name);
 #endif

@@ -27,7 +27,7 @@
 typedef struct field_config_struct field_config_type;
 typedef struct field_struct field_type;
 
-field_type *field_alloc(const field_config_type *);
+extern "C" field_type *field_alloc(const field_config_type *);
 bool field_fload(field_type *, const char *);
 
 #endif

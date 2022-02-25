@@ -659,7 +659,7 @@ void enkf_node_clear(enkf_node_type *enkf_node) {
     enkf_node->clear(enkf_node->data);
 }
 
-void enkf_node_free(enkf_node_type *enkf_node) {
+extern "C" void enkf_node_free(enkf_node_type *enkf_node) {
     if (enkf_node->freef != NULL)
         enkf_node->freef(enkf_node->data);
     free(enkf_node->node_key);

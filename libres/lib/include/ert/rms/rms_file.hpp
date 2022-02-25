@@ -18,9 +18,6 @@
 
 #ifndef ERT_RMS_FILE_H
 #define ERT_RMS_FILE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -50,7 +47,4 @@ void rms_file_get_dims(const rms_file_type *, int *);
 FILE *rms_file_get_FILE(const rms_file_type *);
 bool rms_file_is_roff(FILE *);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -19,10 +19,6 @@
 #ifndef ERT_CONFIG_CONTENT_ITEM_H
 #define ERT_CONFIG_CONTENT_ITEM_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/type_macros.hpp>
@@ -34,10 +30,11 @@ extern "C" {
 
 typedef struct config_content_item_struct config_content_item_type;
 
-int config_content_item_get_size(const config_content_item_type *item);
+extern "C" int
+config_content_item_get_size(const config_content_item_type *item);
 config_content_node_type *
 config_content_item_get_last_node(const config_content_item_type *item);
-config_content_node_type *
+extern "C" config_content_node_type *
 config_content_item_iget_node(const config_content_item_type *item, int index);
 const stringlist_type *
 config_content_item_iget_stringlist_ref(const config_content_item_type *item,
@@ -53,9 +50,9 @@ int config_content_item_iget_as_int(const config_content_item_type *item,
 double config_content_item_iget_as_double(const config_content_item_type *item,
                                           int occurence, int index);
 void config_content_item_clear(config_content_item_type *item);
-void config_content_item_free(config_content_item_type *item);
+extern "C" void config_content_item_free(config_content_item_type *item);
 void config_content_item_free__(void *arg);
-config_content_item_type *
+extern "C" config_content_item_type *
 config_content_item_alloc(const config_schema_item_type *schema,
                           const config_path_elm_type *path_elm);
 config_content_node_type *
@@ -67,9 +64,5 @@ const config_path_elm_type *
 config_content_item_get_path_elm(const config_content_item_type *item);
 
 UTIL_IS_INSTANCE_HEADER(config_content_item);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

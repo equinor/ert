@@ -18,9 +18,6 @@
 
 #ifndef ERT_QUEUE_DRIVER_H
 #define ERT_QUEUE_DRIVER_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/hash.hpp>
 #include <ert/job_queue/job_status.hpp>
@@ -64,34 +61,40 @@ queue_driver_type *queue_driver_alloc_LSF(const char *queue_name,
 queue_driver_type *queue_driver_alloc_TORQUE();
 queue_driver_type *queue_driver_alloc_local();
 queue_driver_type *queue_driver_alloc_slurm();
-queue_driver_type *queue_driver_alloc(job_driver_type type);
+extern "C" queue_driver_type *queue_driver_alloc(job_driver_type type);
 
 void *queue_driver_submit_job(queue_driver_type *driver, const char *run_cmd,
                               int num_cpu, const char *run_path,
                               const char *job_name, int argc,
                               const char **argv);
-void queue_driver_free_job(queue_driver_type *driver, void *job_data);
+extern "C" void queue_driver_free_job(queue_driver_type *driver,
+                                      void *job_data);
 void queue_driver_blacklist_node(queue_driver_type *driver, void *job_data);
-void queue_driver_kill_job(queue_driver_type *driver, void *job_data);
-job_status_type queue_driver_get_status(queue_driver_type *driver,
-                                        void *job_data);
+extern "C" void queue_driver_kill_job(queue_driver_type *driver,
+                                      void *job_data);
+extern "C" job_status_type queue_driver_get_status(queue_driver_type *driver,
+                                                   void *job_data);
 
-PY_USED const char *queue_driver_get_name(const queue_driver_type *driver);
+extern "C" PY_USED const char *
+queue_driver_get_name(const queue_driver_type *driver);
 
-bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
-                             const void *value);
+extern "C" bool queue_driver_set_option(queue_driver_type *driver,
+                                        const char *option_key,
+                                        const void *value);
 bool queue_driver_unset_option(queue_driver_type *driver,
                                const char *option_key);
-const void *queue_driver_get_option(queue_driver_type *driver,
-                                    const char *option_key);
+extern "C" const void *queue_driver_get_option(queue_driver_type *driver,
+                                               const char *option_key);
 void queue_driver_init_option_list(queue_driver_type *driver,
                                    stringlist_type *option_list);
 
-void queue_driver_free(queue_driver_type *driver);
+extern "C" void queue_driver_free(queue_driver_type *driver);
 void queue_driver_free__(void *driver);
 
-void queue_driver_set_max_running(queue_driver_type *driver, int max_running);
-PY_USED int queue_driver_get_max_running(const queue_driver_type *driver);
+extern "C" void queue_driver_set_max_running(queue_driver_type *driver,
+                                             int max_running);
+extern "C" PY_USED int
+queue_driver_get_max_running(const queue_driver_type *driver);
 
 typedef enum {
     SUBMIT_OK = 0,
@@ -105,7 +108,4 @@ submit_status_type;
 
 UTIL_IS_INSTANCE_HEADER(queue_driver);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

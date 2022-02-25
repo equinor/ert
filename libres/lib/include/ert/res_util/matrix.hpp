@@ -31,10 +31,6 @@
 
 using matrix_type = Eigen::MatrixXd;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 bool matrix_check_dims(const matrix_type *m, int rows, int columns);
 void matrix_fscanf_data(matrix_type *matrix, bool row_major_order,
                         FILE *stream);
@@ -42,13 +38,13 @@ void matrix_fprintf_data(const matrix_type *matrix, bool row_major_order,
                          FILE *stream);
 void matrix_fprintf(const matrix_type *matrix, const char *fmt, FILE *stream);
 void matrix_dump_csv(const matrix_type *matrix, const char *filename);
-matrix_type *matrix_alloc(int rows, int columns);
-matrix_type *matrix_alloc_identity(int dim);
+extern "C" matrix_type *matrix_alloc(int rows, int columns);
+extern "C" matrix_type *matrix_alloc_identity(int dim);
 bool matrix_resize(matrix_type *matrix, int rows, int columns,
                    bool copy_content);
 matrix_type *matrix_alloc_sub_copy(const matrix_type *src, int row_offset,
                                    int column_offset, int rows, int columns);
-matrix_type *matrix_alloc_copy(const matrix_type *src);
+extern "C" matrix_type *matrix_alloc_copy(const matrix_type *src);
 void matrix_column_compressed_memcpy(matrix_type *target,
                                      const matrix_type *src,
                                      const bool_vector_type *mask);
@@ -57,7 +53,7 @@ void matrix_set_row(matrix_type *matrix, const double *data, int row);
 
 matrix_type *matrix_alloc_shared(const matrix_type *src, int row, int column,
                                  int rows, int columns);
-void matrix_free(matrix_type *matrix);
+extern "C" void matrix_free(matrix_type *matrix);
 void matrix_set(matrix_type *matrix, double value);
 void matrix_scale(matrix_type *matrix, double value);
 void matrix_shift(matrix_type *matrix, double value);
@@ -69,11 +65,11 @@ void matrix_sub(matrix_type *A, const matrix_type *B, const matrix_type *C);
 void matrix_transpose(const matrix_type *A, matrix_type *T);
 void matrix_inplace_add_column(matrix_type *A, const matrix_type *B, int colA,
                                int colB);
-void matrix_inplace_transpose(matrix_type *A);
+extern "C" void matrix_inplace_transpose(matrix_type *A);
 
 void matrix_iset_safe(matrix_type *matrix, int i, int j, double value);
-void matrix_iset(matrix_type *matrix, int i, int j, double value);
-double matrix_iget(const matrix_type *matrix, int i, int j);
+extern "C" void matrix_iset(matrix_type *matrix, int i, int j, double value);
+extern "C" double matrix_iget(const matrix_type *matrix, int i, int j);
 double matrix_iget_safe(const matrix_type *matrix, int i, int j);
 void matrix_iadd(matrix_type *matrix, int i, int j, double value);
 void matrix_isub(matrix_type *matrix, int i, int j, double value);
@@ -89,13 +85,15 @@ double matrix_get_column_abssum(const matrix_type *matrix, int column);
 void matrix_subtract_row_mean(matrix_type *matrix);
 void matrix_subtract_and_store_row_mean(matrix_type *matrix,
                                         matrix_type *row_mean);
-void matrix_scale_column(matrix_type *matrix, int column, double scale_factor);
-void matrix_scale_row(matrix_type *matrix, int row, double scale_factor);
+extern "C" void matrix_scale_column(matrix_type *matrix, int column,
+                                    double scale_factor);
+extern "C" void matrix_scale_row(matrix_type *matrix, int row,
+                                 double scale_factor);
 void matrix_set_const_column(matrix_type *matrix, const double value,
                              int column);
-void matrix_copy_column(matrix_type *target_matrix,
-                        const matrix_type *src_matrix, int src_column,
-                        int target_column);
+extern "C" void matrix_copy_column(matrix_type *target_matrix,
+                                   const matrix_type *src_matrix,
+                                   int src_column, int target_column);
 
 double *matrix_get_data(const matrix_type *matrix);
 
@@ -103,13 +101,13 @@ void matrix_set_column(matrix_type *matrix, const double *data, int column);
 void matrix_set_many_on_column(matrix_type *matrix, int row_offset,
                                int elements, const double *data, int column);
 void matrix_full_size(matrix_type *matrix);
-int matrix_get_rows(const matrix_type *matrix);
-int matrix_get_columns(const matrix_type *matrix);
+extern "C" int matrix_get_rows(const matrix_type *matrix);
+extern "C" int matrix_get_columns(const matrix_type *matrix);
 int matrix_get_column_stride(const matrix_type *matrix);
 void matrix_get_dims(const matrix_type *matrix, int *rows, int *columns,
                      int *row_stride, int *column_stride);
 bool matrix_is_quadratic(const matrix_type *matrix);
-bool matrix_equal(const matrix_type *m1, const matrix_type *m2);
+extern "C" bool matrix_equal(const matrix_type *m1, const matrix_type *m2);
 bool matrix_similar(const matrix_type *m1, const matrix_type *m2,
                     double epsilon);
 bool matrix_columns_equal(const matrix_type *m1, int col1,
@@ -117,7 +115,7 @@ bool matrix_columns_equal(const matrix_type *m1, int col1,
 
 void matrix_diag_set_scalar(matrix_type *matrix, double value);
 void matrix_diag_set(matrix_type *matrix, const double *diag);
-void matrix_random_init(matrix_type *matrix, rng_type *rng);
+extern "C" void matrix_random_init(matrix_type *matrix, rng_type *rng);
 void matrix_delete_row(matrix_type *m1, int row);
 void matrix_delete_column(matrix_type *m1, int row);
 
@@ -126,7 +124,7 @@ double matrix_column_column_dot_product(const matrix_type *m1, int col1,
                                         const matrix_type *m2, int col2);
 double matrix_row_column_dot_product(const matrix_type *m1, int row1,
                                      const matrix_type *m2, int col2);
-matrix_type *matrix_alloc_transpose(const matrix_type *A);
+extern "C" matrix_type *matrix_alloc_transpose(const matrix_type *A);
 void matrix_copy_row(matrix_type *target_matrix, const matrix_type *src_matrix,
                      int target_row, int src_row);
 void matrix_copy_block(matrix_type *target_matrix, int target_row,
@@ -137,10 +135,6 @@ void matrix_copy_block(matrix_type *target_matrix, int target_row,
 void matrix_scalar_set(matrix_type *matrix, double value);
 void matrix_inplace_diag_sqrt(matrix_type *Cd);
 double matrix_trace(const matrix_type *matrix);
-
-#ifdef __cplusplus
-}
-#endif
 
 #define matrix_shrink_header(_Mat, _Row, _Col)                                 \
     matrix_resize((_Mat), (_Row), (_Col), true)

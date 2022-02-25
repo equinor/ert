@@ -29,10 +29,6 @@
 #include <ert/enkf/run_arg_type.hpp>
 #include <ert/enkf/ecl_config.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct forward_load_context_struct forward_load_context_type;
 
 bool forward_load_context_accept_messages(
@@ -43,29 +39,28 @@ void forward_load_context_update_result(forward_load_context_type *load_context,
                                         int flags);
 int forward_load_context_get_result(
     const forward_load_context_type *load_context);
-forward_load_context_type *
+extern "C" forward_load_context_type *
 forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
                            const ecl_config_type *ecl_config,
                            stringlist_type *messages);
-void forward_load_context_free(forward_load_context_type *load_context);
+extern "C" void
+forward_load_context_free(forward_load_context_type *load_context);
 const ecl_sum_type *
 forward_load_context_get_ecl_sum(const forward_load_context_type *load_context);
 const run_arg_type *
 forward_load_context_get_run_arg(const forward_load_context_type *load_context);
 const char *forward_load_context_get_run_path(
     const forward_load_context_type *load_context);
-int forward_load_context_get_load_step(
+extern "C" int forward_load_context_get_load_step(
     const forward_load_context_type *load_context);
 enkf_fs_type *
 forward_load_context_get_sim_fs(const forward_load_context_type *load_context);
 bool forward_load_context_load_restart_file(
     forward_load_context_type *load_context, int report_step);
-void forward_load_context_select_step(forward_load_context_type *load_context,
-                                      int report_step);
+extern "C" void
+forward_load_context_select_step(forward_load_context_type *load_context,
+                                 int report_step);
 
 UTIL_IS_INSTANCE_HEADER(forward_load_context);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

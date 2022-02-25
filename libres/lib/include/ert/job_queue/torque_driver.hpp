@@ -18,9 +18,6 @@
 #ifndef TORQUE_DRIVER_H
 #define TORQUE_DRIVER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
 
 #include <ert/util/type_macros.hpp>
@@ -79,9 +76,5 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
 
 UTIL_SAFE_CAST_HEADER(torque_driver);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* TORQUE_DRIVER_H */

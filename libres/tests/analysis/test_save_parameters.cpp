@@ -17,7 +17,7 @@
 
 #include "../tmpdir.hpp"
 
-extern "C" void enkf_fs_umount(enkf_fs_type *fs);
+void enkf_fs_umount(enkf_fs_type *fs);
 
 namespace analysis {
 class update_data_type {

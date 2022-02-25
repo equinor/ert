@@ -30,10 +30,6 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/tooling.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum {
     SCHEDULE = 0,
     REFCASE_SIMULATED = 1, /* ecl_sum_get_well_var( "WWCT" );  */
@@ -63,7 +59,4 @@ history_source_type history_get_source(const history_type *history);
 
 UTIL_IS_INSTANCE_HEADER(history);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

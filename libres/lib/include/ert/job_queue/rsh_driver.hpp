@@ -18,9 +18,6 @@
 
 #ifndef ERT_RSH_DRIVER_H
 #define ERT_RSH_DRIVER_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <ert/util/hash.hpp>
 
 #define RSH_HOST "RSH_HOST"
@@ -46,8 +43,4 @@ bool rsh_driver_set_option(void *__driver, const char *option_key,
                            const void *value);
 const void *rsh_driver_get_option(const void *__driver, const char *option_key);
 void rsh_driver_init_option_list(stringlist_type *option_list);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -19,10 +19,6 @@
 #ifndef ERT_FS_TYPES_H
 #define ERT_FS_TYPES_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
   The various driver implementations - this goes on disk all over the
   place, and the numbers should be considered SET IN STONE. When a new
@@ -66,7 +62,4 @@ typedef enum {
 
 bool fs_types_valid(fs_driver_enum driver_type);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

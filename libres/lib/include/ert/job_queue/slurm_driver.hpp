@@ -24,9 +24,6 @@
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/job_queue/job_status.hpp>
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
   The options supported by the Slurm driver; these string constants will be used
@@ -54,7 +51,4 @@ void slurm_driver_free_job(void *__job);
 
 UTIL_SAFE_CAST_HEADER(slurm_driver);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

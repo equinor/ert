@@ -25,10 +25,6 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/res_config.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct callback_arg_struct callback_arg_type;
 
 struct callback_arg_struct {
@@ -44,7 +40,4 @@ callback_arg_type *callback_arg_alloc(const res_config_type *res_config,
 UTIL_IS_INSTANCE_HEADER(callback_arg);
 UTIL_SAFE_CAST_HEADER(callback_arg);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

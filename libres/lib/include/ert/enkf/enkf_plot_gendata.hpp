@@ -27,33 +27,26 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct enkf_plot_gendata_struct enkf_plot_gendata_type;
 
-enkf_plot_gendata_type *
+extern "C" enkf_plot_gendata_type *
 enkf_plot_gendata_alloc(const enkf_config_node_type *enkf_config_node);
 enkf_plot_gendata_type *
 enkf_plot_gendata_alloc_from_obs_vector(const obs_vector_type *obs_vector);
-void enkf_plot_gendata_free(enkf_plot_gendata_type *data);
-int enkf_plot_gendata_get_size(const enkf_plot_gendata_type *data);
+extern "C" void enkf_plot_gendata_free(enkf_plot_gendata_type *data);
+extern "C" int enkf_plot_gendata_get_size(const enkf_plot_gendata_type *data);
 int enkf_plot_gendata_get_data_size(const enkf_plot_gendata_type *data);
-extern "C++" std::vector<bool>
+std::vector<bool>
 enkf_plot_gendata_active_mask(const enkf_plot_gendata_type *data);
-enkf_plot_genvector_type *
+extern "C" enkf_plot_genvector_type *
 enkf_plot_gendata_iget(const enkf_plot_gendata_type *plot_data, int index);
-void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
-                            int report_step);
+extern "C" void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data,
+                                       enkf_fs_type *fs, int report_step);
 
-double_vector_type *
+extern "C" double_vector_type *
 enkf_plot_gendata_get_min_values(enkf_plot_gendata_type *plot_data);
-double_vector_type *
+extern "C" double_vector_type *
 enkf_plot_gendata_get_max_values(enkf_plot_gendata_type *plot_data);
 UTIL_IS_INSTANCE_HEADER(enkf_plot_gendata);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

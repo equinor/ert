@@ -19,10 +19,6 @@
 #ifndef ERT_JOB_NODE_H
 #define ERT_JOB_NODE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/util/type_macros.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue_status.hpp>
@@ -55,7 +51,7 @@ bool job_queue_node_status_transition(job_queue_node_type *node,
 submit_status_type job_queue_node_submit(job_queue_node_type *node,
                                          job_queue_status_type *status,
                                          queue_driver_type *driver);
-PY_USED submit_status_type job_queue_node_submit_simple(
+extern "C" PY_USED submit_status_type job_queue_node_submit_simple(
     job_queue_node_type *node, queue_driver_type *driver);
 void job_queue_node_free_error_info(job_queue_node_type *node);
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node);
@@ -73,7 +69,7 @@ job_queue_node_type *job_queue_node_alloc_simple(const char *job_name,
                                                  const char *run_cmd, int argc,
                                                  const char **argv);
 
-PY_USED job_queue_node_type *job_queue_node_alloc_python(
+extern "C" PY_USED job_queue_node_type *job_queue_node_alloc_python(
     const char *job_name, const char *run_path, const char *run_cmd, int argc,
     const stringlist_type *arguments, int num_cpu, const char *ok_file,
     const char *status_file, const char *exit_file);
@@ -81,18 +77,21 @@ PY_USED job_queue_node_type *job_queue_node_alloc_python(
 bool job_queue_node_kill(job_queue_node_type *node,
                          job_queue_status_type *status,
                          queue_driver_type *driver);
-PY_USED bool job_queue_node_kill_simple(job_queue_node_type *node,
-                                        queue_driver_type *driver);
-void job_queue_node_free(job_queue_node_type *node);
-job_status_type job_queue_node_get_status(const job_queue_node_type *node);
+extern "C" PY_USED bool job_queue_node_kill_simple(job_queue_node_type *node,
+                                                   queue_driver_type *driver);
+extern "C" void job_queue_node_free(job_queue_node_type *node);
+extern "C" job_status_type
+job_queue_node_get_status(const job_queue_node_type *node);
 void job_queue_node_free_driver_data(job_queue_node_type *node,
                                      queue_driver_type *driver);
 PY_USED bool job_queue_node_update_status(job_queue_node_type *node,
                                           job_queue_status_type *status,
                                           queue_driver_type *driver);
-PY_USED bool job_queue_node_update_status_simple(job_queue_node_type *node,
-                                                 queue_driver_type *driver);
-int job_queue_node_get_submit_attempt(const job_queue_node_type *node);
+extern "C" PY_USED bool
+job_queue_node_update_status_simple(job_queue_node_type *node,
+                                    queue_driver_type *driver);
+extern "C" int
+job_queue_node_get_submit_attempt(const job_queue_node_type *node);
 void job_queue_node_reset_submit_attempt(job_queue_node_type *node);
 void job_queue_node_dec_submit_attempt(job_queue_node_type *node);
 
@@ -110,14 +109,11 @@ int job_queue_node_get_queue_index(const job_queue_node_type *node);
 void job_queue_node_set_queue_index(job_queue_node_type *node, int queue_index);
 
 void *job_queue_node_get_driver_data(job_queue_node_type *node);
-void job_queue_node_set_status(job_queue_node_type *node,
-                               job_status_type new_status);
+extern "C" void job_queue_node_set_status(job_queue_node_type *node,
+                                          job_status_type new_status);
 
 char *job_queue_node_get_name(job_queue_node_type *node);
 UTIL_IS_INSTANCE_HEADER(job_queue_node);
 UTIL_SAFE_CAST_HEADER(job_queue_node);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

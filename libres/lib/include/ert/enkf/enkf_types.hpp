@@ -18,9 +18,6 @@
 
 #ifndef ERT_ENKF_TYPES_H
 #define ERT_ENKF_TYPES_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/tooling.hpp>
 
@@ -177,7 +174,4 @@ typedef struct enkf_obs_struct enkf_obs_type;
 
 const char *enkf_types_get_impl_name(ert_impl_type);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

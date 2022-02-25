@@ -19,10 +19,6 @@
 #ifndef ERT_ECL_REFCASE_LIST_H
 #define ERT_ECL_REFCASE_LIST_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/ecl/ecl_sum.h>
 
 typedef struct ecl_refcase_list_struct ecl_refcase_list_type;
@@ -49,8 +45,4 @@ ecl_refcase_list_get_case(ecl_refcase_list_type *refcase_list,
                           const char *case_name);
 bool ecl_refcase_list_has_case(ecl_refcase_list_type *refcase_list,
                                const char *case_name);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -9,12 +9,12 @@
 
 void enkf_fs_fwrite_misfit(enkf_fs_type *fs);
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only);
-extern "C" void enkf_fs_umount(enkf_fs_type *fs);
-extern "C" void
-misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
-                           const ensemble_config_type *ensemble_config,
-                           const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
-                           int ens_size, int history_length, bool force_init);
+void enkf_fs_umount(enkf_fs_type *fs);
+void misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
+                                const ensemble_config_type *ensemble_config,
+                                const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
+                                int ens_size, int history_length,
+                                bool force_init);
 void enkf_fs_init_path_fmt(enkf_fs_type *fs);
 void enkf_fs_set_read_only(enkf_fs_type *fs, bool read_only);
 

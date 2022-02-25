@@ -21,10 +21,6 @@
 
 #include <ert/config/config_path_elm.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct config_path_stack_struct config_path_stack_type;
 
 void config_path_stack_free(config_path_stack_type *path_stack);
@@ -36,7 +32,4 @@ const config_path_elm_type *
 config_path_stack_get_last(const config_path_stack_type *path_stack);
 void config_path_stack_pop(config_path_stack_type *path_stack);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
