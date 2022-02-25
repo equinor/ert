@@ -100,7 +100,6 @@ setup(
         "requests",
         "SALib",
         "scipy",
-        "semeio",
         "sqlalchemy",
         "typing-extensions; python_version < '3.8'",
         "uvicorn < 0.17.0; python_version <= '3.6'",

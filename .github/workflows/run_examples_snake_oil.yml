@@ -27,11 +27,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install ERT
+    - name: Install ERT and dependencies
       run: |
         export CC=gcc-10
         export CXX=g++-10
         pip install .
+        pip install semeio  # We need design2params from semeio for this example
 
     - name: Start ert-storage
       run: |
