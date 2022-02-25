@@ -18,9 +18,6 @@
 
 #ifndef ERT_RMS_TAGKEY_H
 #define ERT_RMS_TAGKEY_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -63,7 +60,4 @@ void rms_tagkey_inplace_add_scaled(rms_tagkey_type *, const rms_tagkey_type *,
                                    double);
 void rms_tagkey_clear(rms_tagkey_type *);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

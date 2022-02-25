@@ -19,9 +19,6 @@
 #ifndef ERT_CONTAINER_H
 #define ERT_CONTAINER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <ert/util/type_macros.h>
 
 typedef struct container_struct container_type;
@@ -36,7 +33,4 @@ VOID_FREE_HEADER(container);
 UTIL_IS_INSTANCE_HEADER(container);
 UTIL_SAFE_CAST_HEADER_CONST(container);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -19,10 +19,6 @@
 #ifndef ERT_JOB_LIST_H
 #define ERT_JOB_LIST_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/util/type_macros.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
@@ -46,7 +42,4 @@ void job_list_unlock(job_list_type *list);
 UTIL_SAFE_CAST_HEADER(job_list);
 UTIL_IS_INSTANCE_HEADER(job_list);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

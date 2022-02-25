@@ -48,17 +48,12 @@
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/run_arg.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct enkf_state_struct enkf_state_type;
 
 void *enkf_state_load_from_forward_model_mt(void *arg);
-void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
-                           enkf_fs_type *fs,
-                           const std::vector<std::string> &param_list,
-                           init_mode_type init_mode);
+extern "C" void enkf_state_initialize(
+    enkf_state_type *enkf_state, rng_type *rng, enkf_fs_type *fs,
+    const std::vector<std::string> &param_list, init_mode_type init_mode);
 
 int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
                                        run_arg_type *run_arg,
@@ -78,20 +73,19 @@ void enkf_state_add_node(enkf_state_type *, const char *,
 void enkf_state_ecl_write(const ensemble_config_type *ens_config,
                           const model_config_type *model_config,
                           const run_arg_type *run_arg, enkf_fs_type *fs);
-void enkf_state_free(enkf_state_type *);
+extern "C" void enkf_state_free(enkf_state_type *);
 
-const ensemble_config_type *
+extern "C" const ensemble_config_type *
 enkf_state_get_ensemble_config(const enkf_state_type *enkf_state);
 
 bool enkf_state_complete_forward_modelOK__(void *arg);
 bool enkf_state_complete_forward_modelRETRY__(void *arg);
 bool enkf_state_complete_forward_modelEXIT__(void *arg);
 
-bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                         run_arg_type *run_arg);
-bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
+extern "C" bool
+enkf_state_complete_forward_modelOK(const res_config_type *res_config,
+                                    run_arg_type *run_arg);
+extern "C" bool
+enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

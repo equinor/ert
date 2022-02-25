@@ -21,10 +21,6 @@
 #include <ert/util/stringlist.hpp>
 #include <ert/job_queue/queue_driver.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
   The options supported by the LSF driver.
 */
@@ -98,7 +94,4 @@ char *lsf_job_write_bjobs_to_file(const char *bjobs_cmd,
 
 UTIL_SAFE_CAST_HEADER(lsf_driver);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -19,10 +19,6 @@
 #ifndef ERT_GEN_COMMON_H
 #define ERT_GEN_COMMON_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -32,9 +28,5 @@ void *gen_common_fscanf_alloc(const char *, ecl_data_type, int *);
 void *gen_common_fread_alloc(const char *, ecl_data_type, int *);
 void *gen_common_fload_alloc(const char *, gen_data_file_format_type,
                              ecl_data_type, ecl_type_enum *, int *);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

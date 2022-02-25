@@ -19,10 +19,6 @@
 #ifndef RESENV_H
 #define RESENV_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 char **res_env_alloc_PATH_list();
@@ -35,7 +31,4 @@ char *res_env_isscanf_alloc_envvar(const char *string, int env_index);
 const char *res_env_update_path_var(const char *variable, const char *value,
                                     bool append);
 
-#ifdef __cplusplus
-}
-#endif
 #endif // RESLOG_H

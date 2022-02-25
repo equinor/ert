@@ -19,10 +19,6 @@
 #ifndef ERT_CONFIG_ROOT_PATH_H
 #define ERT_CONFIG_ROOT_PATH_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct config_root_path_struct config_root_path_type;
 
 void config_root_path_free(config_root_path_type *root_path);
@@ -34,7 +30,4 @@ config_root_path_get_rel_path(const config_root_path_type *root_path);
 const char *
 config_root_path_get_abs_path(const config_root_path_type *root_path);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

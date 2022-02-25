@@ -25,37 +25,35 @@
 
 #include <ert/enkf/local_obsdata_node.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct local_obsdata_struct local_obsdata_type;
 
 void local_obsdata_free__(void *arg);
-bool local_obsdata_has_node(const local_obsdata_type *data, const char *key);
+extern "C" bool local_obsdata_has_node(const local_obsdata_type *data,
+                                       const char *key);
 local_obsdata_type *local_obsdata_alloc_copy(const local_obsdata_type *src,
                                              const char *target_key);
-local_obsdata_type *local_obsdata_alloc(const char *name);
-void local_obsdata_free(local_obsdata_type *data);
-int local_obsdata_get_size(const local_obsdata_type *data);
-bool local_obsdata_add_node(local_obsdata_type *data,
-                            const LocalObsDataNode *node);
-const LocalObsDataNode *local_obsdata_iget(const local_obsdata_type *data,
-                                           int index);
-LocalObsDataNode *local_obsdata_get(local_obsdata_type *data, const char *key);
-
-const char *local_obsdata_get_name(const local_obsdata_type *data);
-void local_obsdata_del_node(local_obsdata_type *data, const char *key);
-const ActiveList *
-local_obsdata_get_node_active_list(local_obsdata_type *obsdata,
+extern "C" local_obsdata_type *local_obsdata_alloc(const char *name);
+extern "C" void local_obsdata_free(local_obsdata_type *data);
+extern "C" int local_obsdata_get_size(const local_obsdata_type *data);
+extern "C" bool local_obsdata_add_node(local_obsdata_type *data,
+                                       const LocalObsDataNode *node);
+extern "C" const LocalObsDataNode *
+local_obsdata_iget(const local_obsdata_type *data, int index);
+local_obsdata_type *local_obsdata_alloc_wrapper(LocalObsDataNode *node);
+extern "C" const char *local_obsdata_get_name(const local_obsdata_type *data);
+extern "C" LocalObsDataNode *local_obsdata_get(const local_obsdata_type *data,
+                                               const char *key);
+extern "C" void local_obsdata_del_node(local_obsdata_type *data,
+                                       const char *key);
+extern "C" ActiveList *
+local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
                                    const char *obs_key);
-ActiveList *
+void local_obsdata_summary_fprintf(const local_obsdata_type *obsdata,
+                                   FILE *stream);
+extern "C" PY_USED ActiveList *
 local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
                                         const char *obs_key);
 
 UTIL_IS_INSTANCE_HEADER(local_obsdata);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

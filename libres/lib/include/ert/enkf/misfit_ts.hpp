@@ -19,10 +19,6 @@
 #ifndef ERT_MISFIT_TS_H
 #define ERT_MISFIT_TS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 
 typedef struct misfit_ts_struct misfit_ts_type;
@@ -33,9 +29,5 @@ misfit_ts_type *misfit_ts_alloc(int history_length);
 misfit_ts_type *misfit_ts_fread_alloc(FILE *stream);
 void misfit_ts_free__(void *vector);
 void misfit_ts_iset(misfit_ts_type *vector, int time_index, double value);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

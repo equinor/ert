@@ -28,10 +28,6 @@
 
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void misfit_ensemble_fread(misfit_ensemble_type *misfit_ensemble, FILE *stream);
 void misfit_ensemble_clear(misfit_ensemble_type *table);
 misfit_ensemble_type *misfit_ensemble_alloc();
@@ -52,9 +48,5 @@ int misfit_ensemble_get_ens_size(const misfit_ensemble_type *misfit_ensemble);
 
 misfit_member_type *
 misfit_ensemble_iget_member(const misfit_ensemble_type *table, int iens);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -18,9 +18,6 @@
 
 #ifndef ERT_FIELD_TRANS_H
 #define ERT_FIELD_TRANS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -36,7 +33,4 @@ bool field_trans_table_has_key(field_trans_table_type *, const char *);
 field_func_type *field_trans_table_lookup(field_trans_table_type *,
                                           const char *);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

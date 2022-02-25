@@ -18,26 +18,20 @@
 
 #ifndef ENVIRONMENT_VARLIST_H
 #define ENVIRONMENT_VARLIST_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdio.h>
 
 typedef struct env_varlist_struct env_varlist_type;
 
-env_varlist_type *env_varlist_alloc();
+extern "C" env_varlist_type *env_varlist_alloc();
 
 void env_varlist_update_path(env_varlist_type *list, const char *path_var,
                              const char *new_path);
-void env_varlist_setenv(env_varlist_type *list, const char *var,
-                        const char *value);
+extern "C" void env_varlist_setenv(env_varlist_type *list, const char *var,
+                                   const char *value);
 void env_varlist_json_fprintf(const env_varlist_type *list, FILE *stream);
-int env_varlist_get_size(env_varlist_type *list);
+extern "C" int env_varlist_get_size(env_varlist_type *list);
 
-void env_varlist_free(env_varlist_type *list);
+extern "C" void env_varlist_free(env_varlist_type *list);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

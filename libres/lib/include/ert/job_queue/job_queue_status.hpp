@@ -19,9 +19,6 @@
 #ifndef ERT_JOB_QUEUE_STATUS_H
 #define ERT_JOB_QUEUE_STATUS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <time.h>
 
 #include <ert/util/type_macros.hpp>
@@ -44,7 +41,4 @@ int job_queue_status_get_total_count(const job_queue_status_type *status);
 UTIL_IS_INSTANCE_HEADER(job_queue_status);
 UTIL_SAFE_CAST_HEADER(job_queue_status);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

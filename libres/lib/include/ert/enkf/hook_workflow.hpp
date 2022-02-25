@@ -18,10 +18,6 @@
 #ifndef ERT_HOOK_WORKFLOW_H
 #define ERT_HOOK_WORKFLOW_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/workflow.hpp>
@@ -43,17 +39,14 @@ hook_workflow_type *hook_workflow_alloc(workflow_type *workflow,
 void hook_workflow_free(hook_workflow_type *hook_workflow);
 void hook_workflow_free__(void *arg);
 
-workflow_type *
+extern "C" workflow_type *
 hook_workflow_get_workflow(const hook_workflow_type *hook_workflow);
 bool hook_workflow_run_workflow(const hook_workflow_type *hook_workflow,
                                 ert_workflow_list_type *workflow_list,
                                 void *self);
-hook_run_mode_enum
+extern "C" hook_run_mode_enum
 hook_workflow_get_run_mode(const hook_workflow_type *hook_workflow);
 
 hook_run_mode_enum hook_workflow_run_mode_from_name(const char *run_mode);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

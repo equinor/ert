@@ -18,9 +18,6 @@
 
 #ifndef ERT_TRANS_FUNC_H
 #define ERT_TRANS_FUNC_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -41,7 +38,4 @@ stringlist_type *trans_func_get_param_names(const trans_func_type *trans_func);
 double_vector_type *trans_func_get_params(const trans_func_type *trans_func);
 const char *trans_func_get_name(const trans_func_type *trans_func);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -20,10 +20,6 @@
 
 #include <ert/res_util/matrix.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
    This enum is just a simple way to label the different ways the
    singular vectors in U and VT are returned to the calling scope. The
@@ -70,9 +66,5 @@ void matrix_dorgqr(matrix_type *A, double *tau, int num_reflectors);
 double matrix_det(matrix_type *A);
 
 int matrix_inv(matrix_type *A);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -18,9 +18,7 @@
 
 #ifndef ERT_CONF_DATA_H
 #define ERT_CONF_DATA_H
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 #include <stdbool.h>
 #include <time.h>
 
@@ -46,7 +44,4 @@ double conf_data_get_double_from_string(dt_enum dt, const char *str);
 
 time_t conf_data_get_time_t_from_string(dt_enum dt, const char *str);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

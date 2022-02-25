@@ -41,24 +41,8 @@
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 
-extern "C" {
-int enkf_obs_get_size(const enkf_obs_type *obs);
-bool enkf_obs_is_valid(const enkf_obs_type *);
-void enkf_obs_clear(enkf_obs_type *enkf_obs);
-stringlist_type *enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs,
-                                              obs_impl_type);
-stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
-                                                 const char *input_string);
-bool enkf_obs_has_key(const enkf_obs_type *, const char *);
-obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs, const char *key);
-obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs, int index);
-obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *, const char *);
-time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step);
-void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
-                             const obs_vector_type *vector);
-}
-
 bool enkf_obs_have_obs(const enkf_obs_type *enkf_obs);
+extern "C" bool enkf_obs_is_valid(const enkf_obs_type *);
 
 enkf_obs_type *enkf_obs_alloc(const history_type *history,
                               time_map_type *external_time_map,
@@ -66,9 +50,19 @@ enkf_obs_type *enkf_obs_alloc(const history_type *history,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config);
 
-void enkf_obs_free(enkf_obs_type *enkf_obs);
+extern "C" void enkf_obs_free(enkf_obs_type *enkf_obs);
+
+extern "C" obs_vector_type *enkf_obs_iget_vector(const enkf_obs_type *obs,
+                                                 int index);
+extern "C" obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *,
+                                                const char *);
+extern "C" void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
+                                        const obs_vector_type *vector);
 
 void enkf_obs_load(enkf_obs_type *, const char *, double);
+extern "C" void enkf_obs_clear(enkf_obs_type *enkf_obs);
+extern "C" obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
+                                           const char *key);
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
@@ -77,10 +71,20 @@ void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data);
 
+extern "C" stringlist_type *
+enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs, obs_impl_type);
 hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs);
+
+extern "C" bool enkf_obs_has_key(const enkf_obs_type *, const char *);
+extern "C" int enkf_obs_get_size(const enkf_obs_type *obs);
 
 hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs);
 
+extern "C" stringlist_type *
+enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
+                                const char *input_string);
+extern "C" time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs,
+                                         int report_step);
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
                                         local_obsdata_type *local_obs,
                                         enkf_fs_type *fs,

@@ -324,12 +324,12 @@ double analysis_module_get_double(const analysis_module_type *module,
     return -1;
 }
 
-extern "C++" ies::data::Data *
+ies::data::Data *
 analysis_module_get_module_data(const analysis_module_type *module) {
     return module->module_data.get();
 }
 
-extern "C++" ies::config::Config *
+ies::config::Config *
 analysis_module_get_module_config(const analysis_module_type *module) {
     return module->module_config.get();
 }

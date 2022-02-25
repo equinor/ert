@@ -18,9 +18,6 @@
 
 #ifndef ERT_RMS_UTIL_H
 #define ERT_RMS_UTIL_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +40,4 @@ void rms_util_fwrite_string(const char *string, FILE *stream);
 void rms_util_fwrite_comment(const char *, FILE *);
 void rms_util_fwrite_newline(FILE *stream);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

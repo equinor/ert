@@ -22,10 +22,6 @@
 #include <ert/util/vector.hpp>
 #include <ert/util/type_macros.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct block_fs_struct block_fs_type;
 typedef struct user_file_node_struct user_file_node_type;
 
@@ -55,7 +51,4 @@ vector_type *block_fs_alloc_filelist(block_fs_type *block_fs,
 
 UTIL_IS_INSTANCE_HEADER(block_fs);
 UTIL_SAFE_CAST_HEADER(block_fs);
-#ifdef __cplusplus
-}
-#endif
 #endif

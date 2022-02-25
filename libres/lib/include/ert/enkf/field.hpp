@@ -30,30 +30,26 @@
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/field_common.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Typedef field_type moved to field_config.h */
 
 void field_scale(field_type *field, double scale_factor);
-double field_iget_double(const field_type *, int);
-double field_ijk_get_double(const field_type *field, int, int, int);
+extern "C" double field_iget_double(const field_type *, int);
+extern "C" double field_ijk_get_double(const field_type *field, int, int, int);
 float field_iget_float(const field_type *, int);
 PY_USED void field_ijk_get(const field_type *, int, int, int, void *);
 void field_ecl_write1D_fortio(const field_type *, fortio_type *);
 void field_ecl_write3D_fortio(const field_type *, fortio_type *, const char *);
 void field_ROFF_export(const field_type *, const char *, const char *);
 void field_copy_ecl_kw_data(field_type *, const ecl_kw_type *);
-void field_free(field_type *);
+extern "C" void field_free(field_type *);
 bool field_fload_keep_inactive(field_type *field, const char *filename);
 bool field_fload_rms(field_type *field, const char *filename,
                      bool keep_inactive);
 void field_export3D(const field_type *, void *, bool, ecl_data_type, void *,
                     const char *);
-void field_export(const field_type *, const char *, fortio_type *,
-                  field_file_format_type, bool, const char *);
-int field_get_size(const field_type *field);
+extern "C" void field_export(const field_type *, const char *, fortio_type *,
+                             field_file_format_type, bool, const char *);
+extern "C" int field_get_size(const field_type *field);
 
 void field_inplace_output_transform(field_type *field);
 
@@ -72,7 +68,4 @@ VOID_DESERIALIZE_HEADER(field);
 VOID_CLEAR_HEADER(field);
 VOID_FLOAD_HEADER(field);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

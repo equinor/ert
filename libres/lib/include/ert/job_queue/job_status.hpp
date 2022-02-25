@@ -18,9 +18,6 @@
 
 #ifndef JOB_STATUS_H
 #define JOB_STATUS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/util/hash.hpp>
 /*
@@ -137,7 +134,4 @@ typedef enum {
 
 const char *job_status_get_name(job_status_type status);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

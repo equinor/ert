@@ -99,9 +99,6 @@
  *
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdbool.h>
 
 #include <ert/util/stringlist.hpp>
@@ -258,7 +255,4 @@ conf_instance_type *
 conf_instance_alloc_from_file(const conf_class_type *conf_class,
                               const char *name, const char *file_name);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

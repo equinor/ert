@@ -19,13 +19,6 @@
 #ifndef RES_PORTABILITY_H
 #define RES_PORTABILITY_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void res_yield();
 
-#ifdef __cplusplus
-}
-#endif
 #endif // RESLOG_H

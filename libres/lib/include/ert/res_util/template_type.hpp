@@ -11,10 +11,6 @@
 
 #define TEMPLATE_TYPE_ID 7781045
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct template_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *
@@ -43,7 +39,3 @@ void template_eval_loops(const struct template_struct *template_,
 #endif //ERT_HAVE_REGEXP
 
 #endif //ERT_TEMPLATE_TYPE_H
-
-#ifdef __cplusplus
-}
-#endif

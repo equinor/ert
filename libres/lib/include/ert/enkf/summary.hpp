@@ -27,17 +27,15 @@
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/summary_config.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-summary_type *summary_alloc(const summary_config_type *summary_config);
-void summary_free(summary_type *summary);
-double summary_get(const summary_type *summary, int report_step);
-void summary_set(summary_type *summary, int report_step, double value);
+extern "C" summary_type *
+summary_alloc(const summary_config_type *summary_config);
+extern "C" void summary_free(summary_type *summary);
+extern "C" double summary_get(const summary_type *summary, int report_step);
+extern "C" void summary_set(summary_type *summary, int report_step,
+                            double value);
 bool summary_active_value(double value);
-int summary_length(const summary_type *summary);
-double summary_undefined_value();
+extern "C" int summary_length(const summary_type *summary);
+extern "C" double summary_undefined_value();
 
 VOID_HAS_DATA_HEADER(summary);
 UTIL_SAFE_CAST_HEADER(summary);
@@ -55,7 +53,4 @@ VOID_SERIALIZE_HEADER(summary)
 VOID_DESERIALIZE_HEADER(summary)
 VOID_CLEAR_HEADER(summary);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
