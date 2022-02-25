@@ -42,13 +42,11 @@ $ ert --help
 ```
 
 
-The `ert` program is based on three different repositories:
+The `ert` program is based on two different repositories:
 
 1. [ecl](https://github.com/Equinor/ecl) which contains utilities to read and write Eclipse files.
 
-2. [libres](https://github.com/Equinor/libres) utilities to manage reservoir data, and algorithms do actually do model updating.
-
-3. ert - this repository - the actual application and all of the GUI.
+2. ert - this repository - the actual application and all of the GUI.
 
 
 ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
