@@ -1,6 +1,7 @@
 import os
 import pkg_resources
 import shutil
+from pathlib import Path
 
 import pytest
 from unittest.mock import MagicMock
@@ -54,3 +55,16 @@ def mock_start_server(monkeypatch):
     connect_or_start_server = MagicMock()
     monkeypatch.setattr(Storage, "connect_or_start_server", connect_or_start_server)
     yield connect_or_start_server
+
+
+def has_equinor_test_data():
+    return os.path.isdir(os.path.join(SOURCE_DIR, "test-data", "Equinor"))
+
+
+def pytest_runtest_setup(item):
+    if item.get_closest_marker("equinor_test") and not has_equinor_test_data():
+        pytest.skip("Test requires Equinor data")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "equinor_test")
