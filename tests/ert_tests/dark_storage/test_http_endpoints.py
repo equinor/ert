@@ -63,8 +63,8 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
     ensemble_json = resp.json()
 
     assert "POLY_RES@0" in ensemble_json
-    assert "observations" in ensemble_json["POLY_RES@0"]
-    assert len(ensemble_json["POLY_RES@0"]["observations"]) == 1
+    assert "has_observations" in ensemble_json["POLY_RES@0"]
+    assert ensemble_json["POLY_RES@0"]["has_observations"] == True
 
 
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
