@@ -77,3 +77,83 @@ class ErtTestContext:
             return True
         else:
             return False
+
+
+class ErtTestSharedContext:
+    """
+    Like ErtTestContext without making a private copy of the testcase.
+    Primarily for benchmarking large tests which we don't want to copy.
+
+    Use with caution and be careful with state in the testcase!
+    """
+
+    def __init__(self, model_config, cleanup=True):
+        """
+        If 'cleanup==True' exiting the context removes all files and
+        directories which did not exist when entering the context.
+
+        It will NOT, however, restore changed content of existing files.
+        """
+        self._model_config = model_config
+        self._cleanup = cleanup
+        self._res_config = None
+        self._ert = None
+        self._dir_before = None
+
+    def __enter__(self):
+        self._dir_before = os.getcwd()
+        os.chdir(pathlib.Path(self._model_config).parent)
+
+        # store all files upon entering
+        if self._cleanup:
+            self._dir_list = set(
+                [
+                    os.path.join(root, d)
+                    for root, dirs, files in os.walk(".")
+                    for d in dirs
+                ]
+            )
+            self._file_list = set(
+                [
+                    os.path.join(root, f)
+                    for root, dirs, files in os.walk(".")
+                    for f in files
+                ]
+            )
+
+        try:
+            config = pathlib.Path(self._model_config).name
+            self._res_config = ResConfig(user_config_file=config)
+            self._ert = EnKFMain(self._res_config, strict=True)
+        except Exception:
+            os.chdir(self._dir_before)
+            raise
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._cleanup:
+            # remove any files not present when entering
+            fl = set(
+                [
+                    os.path.join(root, f)
+                    for root, dirs, files in os.walk(".")
+                    for f in files
+                ]
+            )
+            dl = set(
+                [
+                    os.path.join(root, d)
+                    for root, dirs, files in os.walk(".")
+                    for d in dirs
+                ]
+            )
+            [os.remove(f) for f in fl - self._file_list]
+            [shutil.rmtree(d, ignore_errors=True) for d in dl - self._dir_list]
+
+        self._ert = None
+        self._res_config = None
+        os.chdir(self._dir_before)
+
+    @property
+    def ert(self):
+        return self._ert
