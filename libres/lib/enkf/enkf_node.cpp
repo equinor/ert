@@ -627,8 +627,10 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
                            const matrix_type *A, int row_offset, int column) {
 
     FUNC_ASSERT(enkf_node->deserialize);
+    printf("calling deserialize implementation\n");
     enkf_node->deserialize(enkf_node->data, node_id, active_list, A, row_offset,
                            column);
+    printf("internal deserialize complete \n");
     enkf_node_store(enkf_node, fs, node_id);
 }
 

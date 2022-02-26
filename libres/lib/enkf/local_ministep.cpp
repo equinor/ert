@@ -72,5 +72,5 @@ RES_LIB_SUBMODULE("local.local_ministep", m) {
         .def("get_runtime_obs_active_list",
              &LocalMinistep::get_runtime_obs_active_list)
         .def("get_or_create_row_scaling",
-             &LocalMinistep::get_or_create_row_scaling, "name"_a);
+             &LocalMinistep::get_or_create_row_scaling, "name"_a, py::return_value_policy::reference_internal);
 }

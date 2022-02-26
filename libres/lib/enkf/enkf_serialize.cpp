@@ -226,6 +226,7 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
     auto active_size = __active_list->active_size(node_size);
 
     if (ecl_type_is_double(node_type)) {
+        printf("Iterating over double \n");
         double *node_data = (double *)__node_data;
 
         if (active_size == node_size) { /* All elements active */
@@ -245,6 +246,7 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
 
     } else if (ecl_type_is_float(node_type)) {
         float *node_data = (float *)__node_data;
+        printf("Iterating over float node_size:%d  active_size:%d  A:%p matrix_size: [%d,%d] \n", node_size, active_size, A, matrix_get_rows(A), matrix_get_columns(A));
 
         if (active_size == node_size) { /* All elements active */
             int row_index;

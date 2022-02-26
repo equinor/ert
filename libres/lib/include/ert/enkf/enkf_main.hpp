@@ -48,7 +48,6 @@
 #include <ert/enkf/misfit_ensemble.hpp>
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/site_config.hpp>
-#include <ert/enkf/local_config.hpp>
 #include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/enkf/hook_manager.hpp>
@@ -62,6 +61,12 @@ extern "C" {
 #endif
 
 typedef struct enkf_main_struct enkf_main_type;
+
+extern "C++" {
+#include <ert/enkf/local_config.hpp>
+LocalConfig *enkf_main_get_local_config(const enkf_main_type *enkf_main);
+}
+
 const char *enkf_main_get_user_config_file(const enkf_main_type *enkf_main);
 
 ert_templates_type *enkf_main_get_templates(enkf_main_type *enkf_main);
@@ -88,7 +93,6 @@ enkf_main_get_ensemble_config(const enkf_main_type *enkf_main);
 int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main);
 int enkf_main_get_history_length(const enkf_main_type *);
 model_config_type *enkf_main_get_model_config(const enkf_main_type *);
-local_config_type *enkf_main_get_local_config(const enkf_main_type *enkf_main);
 bool enkf_main_load_obs(enkf_main_type *, const char *, bool);
 enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 bool enkf_main_have_obs(const enkf_main_type *enkf_main);

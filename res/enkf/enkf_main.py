@@ -177,9 +177,6 @@ class _RealEnKFMain(BaseCClass):
     _get_model_config = ResPrototype(
         "model_config_ref enkf_main_get_model_config( enkf_main )"
     )
-    _get_local_config = ResPrototype(
-        "local_config_ref enkf_main_get_local_config( enkf_main )"
-    )
     _get_analysis_config = ResPrototype(
         "analysis_config_ref enkf_main_get_analysis_config( enkf_main)"
     )
@@ -339,11 +336,10 @@ class _RealEnKFMain(BaseCClass):
 
     def getLocalConfig(self) -> LocalConfig:
         """@rtype: LocalConfig"""
-        config = self._get_local_config().setParent(self)
-        print("Have fetched local config")
-        config.initAttributes(
-            self.ensembleConfig(), self.getObservations(), self.eclConfig().getGrid()
-        )
+        config = _RealEnKFMain._get_local_config(self)
+        # config.initAttributes(
+        #    self.ensembleConfig(), self.getObservations(), self.eclConfig().getGrid()
+        # )
         return config
 
     def siteConfig(self) -> SiteConfig:
@@ -466,3 +462,10 @@ class _RealEnKFMain(BaseCClass):
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."
         return self._get_shared_rng()
+
+
+from res._lib.local.enkf_main import get_local_config
+
+_RealEnKFMain._get_local_config = get_local_config
+
+del get_local_config

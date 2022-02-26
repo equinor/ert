@@ -9,9 +9,8 @@
 #include <ert/enkf/enkf_obs.hpp>
 
 namespace analysis {
-bool smoother_update(const local_updatestep_type *updatestep,
-                     int total_ens_size, enkf_obs_type *obs,
-                     rng_type *shared_rng,
+bool smoother_update(const LocalUpdateStep *updatestep, int total_ens_size,
+                     enkf_obs_type *obs, rng_type *shared_rng,
                      const analysis_config_type *analysis_config,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,

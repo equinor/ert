@@ -19,40 +19,65 @@
 #ifndef ERT_LOCAL_CONFIG_H
 #define ERT_LOCAL_CONFIG_H
 
-#include <ert/util/stringlist.h>
-
-#include <ert/ecl/ecl_grid.h>
-
-#include <ert/analysis/analysis_module.hpp>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/local_obsdata.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class LocalConfig {
+public:
+    LocalConfig(const std::vector<std::string> &parameter_keys,
+                const std::vector<std::string> &obs_keys);
 
-typedef struct local_config_struct local_config_type;
-LocalObsData *local_config_get_obsdata(local_config_type *local_config,
-                                       const char *key);
+    bool has_obsdata(const std::string &obs_key) const;
 
-local_config_type *local_config_alloc();
-void local_config_clear(local_config_type *local_config);
-void local_config_clear_active(local_config_type *local_config);
-void local_config_free(local_config_type *local_config);
-LocalMinistep *local_config_alloc_ministep(local_config_type *local_config,
-                                           const char *key);
-local_updatestep_type *
-local_config_get_updatestep(const local_config_type *local_config);
-LocalMinistep *local_config_get_ministep(local_config_type *local_config,
-                                         const char *key);
-LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
-                                         const char *obsdata_name);
-bool local_config_has_obsdata(const local_config_type *local_config,
-                              const char *obsdata_name);
-#ifdef __cplusplus
-}
-#endif
+    LocalMinistep &make_ministep(const std::string &key);
+    LocalMinistep *ministep(const std::string &key);
+    LocalMinistep *global_ministep();
+
+    LocalObsData *make_obsdata(const std::string &key);
+    LocalObsData *obsdata(const std::string &key);
+    LocalObsData *global_obsdata();
+    LocalUpdateStep &updatestep();
+
+    void clear() const;
+
+private:
+    LocalMinistep m_global_ministep;
+    LocalObsData m_global_obsdata;
+    LocalUpdateStep m_global_updatestep;
+
+    std::optional<LocalUpdateStep> m_updatestep;
+    std::unordered_map<std::string, LocalMinistep> m_ministep;
+    std::unordered_map<std::string, LocalObsData> m_obsdata;
+};
+
+//typedef struct local_config_struct local_config_type;
+//LocalObsData *
+//local_config_get_obsdata(const local_config_type *local_config,
+//                         const char *key);
+//PY_USED LocalObsData *
+//local_config_alloc_obsdata_copy(local_config_type *local_config,
+//                                const char *src_key, const char *target_key);
+//
+//local_config_type *local_config_alloc();
+//void local_config_clear(local_config_type *local_config);
+//void local_config_clear_active(local_config_type *local_config);
+//void local_config_free(local_config_type *local_config);
+//LocalMinistep *
+//local_config_alloc_ministep(local_config_type *local_config, const char *key,
+//                            analysis_module_type *analysis_module);
+//LocalUpdateStep *
+//local_config_get_updatestep(const local_config_type *local_config);
+//LocalMinistep *
+//local_config_get_ministep(const local_config_type *local_config,
+//                          const char *key);
+//LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
+//                                               const char *obsdata_name);
+//bool local_config_has_obsdata(const local_config_type *local_config,
+//                              const char *obsdata_name);
 #endif

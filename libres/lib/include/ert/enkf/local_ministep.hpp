@@ -146,6 +146,12 @@ public:
         }
     }
 
+    void print_self() const {
+        printf("ministep: %s/%p  scaled_keys: %ld\n", this->name().c_str(),
+               this, this->scaling.size());
+    }
+
+
     RowScaling &get_or_create_row_scaling(const char *key) {
         auto scaling_iter = this->scaling.find(key);
         if (scaling_iter == this->scaling.end()) {
@@ -155,8 +161,7 @@ public:
 
             this->scaling.emplace(key, RowScaling());
         }
-        printf("ministep: %s/%p  scaled_keys: %ld\n", this->name().c_str(),
-               this, this->scaling.size());
+        this->print_self();
         return this->scaling.at(key);
     }
 

@@ -842,7 +842,7 @@ void field_deserialize(field_type *field, node_id_type node_id,
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
     ecl_data_type data_type = field_config_get_ecl_data_type(config);
-
+    printf("Calling enkf_matrix_deserialize \n");
     enkf_matrix_deserialize(field->data, data_size, data_type, active_list, A,
                             row_offset, column);
 }

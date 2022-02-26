@@ -198,8 +198,10 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     enkf_node_load(node, src_fs, node_id);
 
     // deserialize the matrix into the node (and writes it to the target fs)
+    printf("Calling enkf_node_deserialize() \n");
     enkf_node_deserialize(node, target_fs, node_id, active_list, A, row_offset,
                           column);
+    printf("deserilize done \n");
     state_map_update_undefined(enkf_fs_get_state_map(target_fs), iens,
                                STATE_INITIALIZED);
     enkf_node_free(node);
@@ -279,9 +281,11 @@ void save_parameters(enkf_fs_type *target_fs,
                      const int_vector_type *iens_active_index,
                      const LocalMinistep *ministep,
                      const update_data_type &update_data) {
+    printf("Staring save_parameters \n");
     if (update_data.A)
         deserialize_ministep(ensemble_config, ministep, target_fs,
                              iens_active_index, update_data.A);
+    printf("plain deserialize complete \n");
     if (update_data.A_with_rowscaling.size() > 0) {
         const auto &scaled_keys = ministep->scaled_keys();
 
@@ -290,9 +294,12 @@ void save_parameters(enkf_fs_type *target_fs,
             const ActiveList &active_list =
                 ministep->get_active_data_list(key.data());
             matrix_type *A = update_data.A_with_rowscaling[ikw].first;
+            printf("Saving parameter : %s  A:%p \n", key.c_str(), A);
             for (int iens = 0; iens < int_vector_size(iens_active_index);
                  iens++) {
                 int column = int_vector_iget(iens_active_index, iens);
+                printf("Calling deserialize node: %d \n",iens);
+                ministep->print_self();
                 deserialize_node(
                     target_fs, target_fs,
                     ensemble_config_get_node(ensemble_config, key.c_str()),
@@ -300,6 +307,7 @@ void save_parameters(enkf_fs_type *target_fs,
             }
         }
     }
+    printf("save parameers complete");
 }
 
 /*
@@ -340,9 +348,13 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                                &active_list, A);
             }
             auto &row_scaling = ministep->get_row_scaling(key);
+            if (row_scaling.size() == 0)
+                throw std::logic_error("No scaling points assigned \n");
 
             matrix_shrink_header(A, row_scaling.size(), matrix_get_columns(A));
             parameters.emplace_back(matrix_alloc_copy(A), &row_scaling);
+            const auto& [A_ptr, _] = parameters.back();
+            printf("Row scaling A: %p  matrix_size:[%d,%d]\n", A_ptr, matrix_get_rows(A_ptr), matrix_get_columns(A_ptr));
         }
         matrix_free(A);
     }
@@ -413,7 +425,7 @@ void run_analysis_update_with_rowscaling(
         ies::initX(module_config, S, R, E, D, X);
         row_scaling->multiply(A, X);
     }
-    printf("row_sclaing upte complete \n");
+    printf("row_scaling update complete \n");
     matrix_free(X);
 }
 
@@ -423,7 +435,7 @@ to be executed
 */
 bool is_valid(const analysis_config_type *analysis_config,
               const state_map_type *source_state_map, const int total_ens_size,
-              const local_updatestep_type *updatestep) {
+              const LocalUpdateStep *updatestep) {
     const int active_ens_size =
         state_map_count_matching(source_state_map, STATE_HAS_DATA);
 
@@ -437,7 +449,7 @@ bool is_valid(const analysis_config_type *analysis_config,
     }
 
     // exit if multi step update with iterable modules
-    if (local_updatestep_get_num_ministep(updatestep) > 1 &&
+    if (updatestep->size() > 1 &&
         analysis_config_module_flag_is_set(analysis_config, ANALYSIS_ITERABLE))
         util_exit("** ERROR: Can not combine iterable modules with multi step "
                   "updates - sorry\n");
@@ -573,9 +585,8 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     return update_data_type(S, E, D, R, A, row_scaling_parameters, obs_mask);
 }
 
-bool smoother_update(const local_updatestep_type *updatestep,
-                     int total_ens_size, enkf_obs_type *obs,
-                     rng_type *shared_rng,
+bool smoother_update(const LocalUpdateStep *updatestep, int total_ens_size,
+                     enkf_obs_type *obs, rng_type *shared_rng,
                      const analysis_config_type *analysis_config,
                      ensemble_config_type *ensemble_config,
                      enkf_fs_type *source_fs, enkf_fs_type *target_fs,
@@ -595,22 +606,19 @@ bool smoother_update(const local_updatestep_type *updatestep,
     copy_parameters(source_fs, target_fs, ensemble_config, ens_mask);
 
     /* Looping over local analysis ministep */
-    for (int ministep_nr = 0;
-         ministep_nr < local_updatestep_get_num_ministep(updatestep);
-         ministep_nr++) {
-        const auto *ministep =
-            local_updatestep_iget_const_ministep(updatestep, ministep_nr);
+    for (int ministep_nr = 0; ministep_nr < updatestep->size(); ministep_nr++) {
+        const auto &ministep = updatestep->operator[](ministep_nr);
         {
-            auto scaled_keys = ministep->scaled_keys();
+            auto scaled_keys = ministep.scaled_keys();
             printf("%s working with updatestep:%p ministep %s/%p scaled_keys: "
                    "%ld \n",
-                   __func__, updatestep, ministep->name().c_str(), ministep,
+                   __func__, updatestep, ministep.name().c_str(), &ministep,
                    scaled_keys.size());
         }
 
         auto update_data = make_update_data(
             source_fs, target_fs, obs, ensemble_config, analysis_config,
-            ens_mask, ministep, shared_rng, log_stream);
+            ens_mask, &ministep, shared_rng, log_stream);
         if (update_data.has_observations) {
             int_vector_type *iens_active_index =
                 bool_vector_to_active_list(ens_mask);
@@ -650,11 +658,11 @@ bool smoother_update(const local_updatestep_type *updatestep,
             }
             printf("Saving parameters \n");
             save_parameters(target_fs, ensemble_config, iens_active_index,
-                            ministep, update_data);
-
+                            &ministep, update_data);
+            printf("Save parameters complete \n");
         } else
             logger->error("No active observations/parameters for MINISTEP: {}.",
-                          ministep->name().c_str());
+                          ministep.name().c_str());
     }
 
     fclose(log_stream);
@@ -663,12 +671,11 @@ bool smoother_update(const local_updatestep_type *updatestep,
 }
 } // namespace analysis
 
-static bool smoother_update(py::object updatestep, int total_ens_size,
+static bool smoother_update(const LocalUpdateStep& updatestep, int total_ens_size,
                             py::object obs, py::object shared_rng,
                             py::object analysis_config,
                             py::object ensemble_config, py::object source_fs,
                             py::object target_fs, bool verbose) {
-    auto updatestep_ = ert::from_cwrap<local_updatestep_type>(updatestep);
     auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
     auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
     auto analysis_config_ =
@@ -678,7 +685,7 @@ static bool smoother_update(py::object updatestep, int total_ens_size,
     auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
     auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
     return analysis::smoother_update(
-        updatestep_, total_ens_size, obs_, shared_rng_, analysis_config_,
+        &updatestep, total_ens_size, obs_, shared_rng_, analysis_config_,
         ensemble_config_, source_fs_, target_fs_, verbose);
 }
 
