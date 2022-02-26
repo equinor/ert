@@ -76,11 +76,13 @@ def _simulate_server(host, port, sock):
     Just opening and closing sockets doesn't really activate underlying sockets.
     This is also more similar of how real applications might behave.
     """
+    ready_event = threading.Event()
 
     class ServerThread(threading.Thread):
         def run(self):
             self.port = port
             sock.listen()
+            ready_event.set()
             conn, addr = sock.accept()
             try:
                 self.data = conn.recv(1024).decode()
@@ -89,6 +91,7 @@ def _simulate_server(host, port, sock):
 
     dummy_server = ServerThread()
     dummy_server.start()
+    ready_event.wait()
 
     client_socket = socket.socket()
     client_socket.connect((host, port))
