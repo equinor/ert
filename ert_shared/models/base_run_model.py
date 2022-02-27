@@ -1,14 +1,13 @@
 import logging
 import time
 import uuid
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Tuple, Union, Any
 import asyncio
 
 from ecl.util.util import BoolVector
 
 from res.enkf import EnKFMain, QueueConfig, RunArg
 from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import (
     ForwardModelStatus,
     JobStatusType,
@@ -27,11 +26,6 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-# A method decorated with the @job_queue decorator implements the following logic:
-#
-# 1. If self._job_queue is assigned a valid value the method is run normally.
-# 2. If self._job_queue is None - the decorator argument is returned.
 
 
 class ErtRunError(Exception):
@@ -75,20 +69,23 @@ class BaseRunModel:
 
     @property
     def _active_realizations(self) -> List[int]:
-        realization_mask = self.initial_realizations_mask
-        return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
+        return [
+            idx
+            for idx, mask_val in enumerate(self.initial_realizations_mask)
+            if mask_val
+        ]
 
     def reset(self) -> None:
         self._failed = False
         self._phase = 0
 
-    def start_simulations_thread(self, arguments, evaluator_server_config) -> None:
+    def start_simulations_thread(self, arguments: Dict[str, Any], evaluator_server_config) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(
             arguments=arguments, evaluator_server_config=evaluator_server_config
         )
 
-    def startSimulations(self, arguments, evaluator_server_config) -> None:
+    def startSimulations(self, arguments: Dict[str, Any], evaluator_server_config) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(
@@ -109,16 +106,24 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(self, arguments, evaluator_server_config):
+    def runSimulations(self, arguments: Dict[str, Any], evaluator_server_config) -> ErtRunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
-    def create_context(self, arguments):
+    def create_context(self, arguments: Dict[str, Any]) -> ErtRunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
         # Used particularly to delete last active run_context to notify
         # fs_manager that storage is not being written to.
         self._run_context = None
+
+    def killAllSimulations(self) -> None:
+        raise NotImplementedError(
+            "the ensemble evaluator does not implement killAllSimulations"
+        )
+
+    def userExitCalled(self) -> bool:
+        return False if self._job_queue is None else self._job_queue.getUserExit()
 
     def phaseCount(self) -> int:
         return self._phase_count
@@ -161,7 +166,7 @@ class BaseRunModel:
         self.setPhaseName(phase_name)
         if not 0 <= phase <= self._phase_count:
             raise ValueError(
-                "Phase must be an integer between (inclusive) 0 and {self._phase_count}"
+                f"Phase must be an integer between (inclusive) 0 and {self._phase_count}"
             )
 
         self.setIndeterminate(indeterminate)
@@ -186,6 +191,39 @@ class BaseRunModel:
         else:
             return self.stop_time() - self.start_time()
 
+    def getQueueSize(self) -> int:
+        if self._job_queue is None:
+            return 1
+
+        queue_size = len(self._job_queue)
+
+        if queue_size == 0:
+            queue_size = 1
+
+        return queue_size
+
+    def getQueueStatus(self) -> Dict[JobStatusType, int]:
+        if self._job_queue is None:
+            return {}
+
+        queue_status = {}
+
+        for job_number in range(len(self._job_queue)):
+            status = self._job_queue.getJobStatus(job_number)
+
+            if status not in queue_status:
+                queue_status[status] = 0
+
+            queue_status[status] += 1
+
+        return queue_status
+
+    def isQueueRunning(self) -> bool:
+        if self._job_queue is None:
+            return False
+
+        return self._job_queue.isRunning()
+
     @staticmethod
     def is_forward_model_finished(progress) -> bool:
         return all(job.status == "Success" for job in progress)
@@ -199,7 +237,7 @@ class BaseRunModel:
 
         status = None
         timed_out = False
-        if self._job_queue:
+        if self._job_queue is not None:
             status = self._job_queue.getJobStatus(queue_index)
             timed_out = self._job_queue.did_job_time_out(queue_index)
 
@@ -238,6 +276,47 @@ class BaseRunModel:
                     job.error = "The run is cancelled due to reaching MAX_RUNTIME"
                     job.status = "Failure"
         self.realization_progress[iteration][run_arg.iens] = jobs, status
+
+    def updateDetailedProgress(self) -> None:
+        if self._job_queue is None:
+            return {}
+
+        if not self._run_context:
+            return
+
+        iteration = self._run_context.get_iter()
+        if iteration not in self.realization_progress:
+            self.realization_progress[iteration] = {}
+
+        try:
+            # Run context might be set to None by concurrent threads,
+            # which will results in an Attribute Error
+            for idx, run_arg in enumerate(self._run_context):
+                self.update_progress_for_index(iteration, idx, run_arg)
+        except AttributeError as e:
+            if self._run_context is None:
+                logging.debug(
+                    "Ignoring exception in run model (run_context is None): {}".format(
+                        str(e)
+                    )
+                )
+            else:
+                raise
+
+    def getDetailedProgress(self) -> Tuple[Dict[int, int], int]:
+        self.updateDetailedProgress()
+
+        if (
+            self._run_context
+            and self._run_context.get_iter() in self.realization_progress
+        ):
+            return self.realization_progress, self._run_context.get_iter()
+
+        elif self._last_run_iteration in self.realization_progress:
+            return self.realization_progress, self._last_run_iteration
+
+        else:
+            return {}, -1
 
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
