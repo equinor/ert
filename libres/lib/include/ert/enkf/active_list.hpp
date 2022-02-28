@@ -36,9 +36,6 @@ int active_list_get_active_size(const active_list_type *, int total_size);
 active_mode_type active_list_get_mode(const active_list_type *);
 void active_list_free__(void *arg);
 active_list_type *active_list_alloc_copy(const active_list_type *src);
-void active_list_summary_fprintf(const active_list_type *active_list,
-                                 const char *dataset_key, const char *key,
-                                 FILE *stream);
 bool active_list_equal(const active_list_type *active_list1,
                        const active_list_type *active_list2);
 void active_list_copy(active_list_type *target, const active_list_type *src);

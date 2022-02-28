@@ -157,21 +157,6 @@ const int *active_list_get_active(const active_list_type *active_list) {
         return NULL;
 }
 
-void active_list_summary_fprintf(const active_list_type *active_list,
-                                 const char *dataset_key, const char *key,
-                                 FILE *stream) {
-    int number_of_active = int_vector_size(active_list->index_list);
-    if (active_list->mode == ALL_ACTIVE) {
-        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-                "ALL_ACTIVE");
-    } else if (active_list->mode == PARTLY_ACTIVE) {
-        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-                "PARTLY_ACTIVE");
-    } else
-        fprintf(stream, "NUMBER OF ACTIVE:%d,STATUS:%s,", number_of_active,
-                "INACTIVE");
-}
-
 bool active_list_equal(const active_list_type *active_list1,
                        const active_list_type *active_list2) {
     if (active_list1 == active_list2)
