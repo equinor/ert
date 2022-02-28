@@ -49,11 +49,19 @@ class Job:
             stdin = None
 
         if self.std_err:
+            os.makedirs(
+                os.path.dirname(os.path.abspath(self.std_err)),
+                exist_ok=True,
+            )
             stderr = open(self.std_err, "w")
         else:
             stderr = None
 
         if self.std_out:
+            os.makedirs(
+                os.path.dirname(os.path.abspath(self.std_out)),
+                exist_ok=True,
+            )
             stdout = open(self.std_out, "w")
         else:
             stdout = None
