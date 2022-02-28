@@ -20,7 +20,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return self.ert().analysisConfig().getModule(module_name)
 
     def _runAndPostProcess(
-        self, run_context, arguments, evaluator_config, update_id=None
+        self, run_context, arguments, evaluator_server_config, update_id=None
     ):
         phase_msg = "Running iteration %d of %d simulation iterations..." % (
             run_context.get_iter(),
@@ -35,7 +35,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         ensemble_id = self._post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_config
+            run_context, evaluator_server_config
         )
 
         self.checkHaveSufficientRealizations(num_successful_realizations)
@@ -75,7 +75,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
         return update_id
 
-    def runSimulations(self, arguments, evaluator_config):
+    def runSimulations(self, arguments, evaluator_server_config):
         phase_count = ERT.enkf_facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
@@ -87,7 +87,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
             target_case_format
         )
 
-        ensemble_id = self._runAndPostProcess(run_context, arguments, evaluator_config)
+        ensemble_id = self._runAndPostProcess(
+            run_context, arguments, evaluator_server_config
+        )
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -115,7 +117,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     arguments, current_iter, prior_context=run_context
                 )
                 ensemble_id = self._runAndPostProcess(
-                    run_context, arguments, evaluator_config, update_id
+                    run_context, arguments, evaluator_server_config, update_id
                 )
                 num_retries = 0
             else:
@@ -123,7 +125,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     arguments, current_iter, prior_context=run_context, rerun=True
                 )
                 ensemble_id = self._runAndPostProcess(
-                    run_context, arguments, evaluator_config, update_id
+                    run_context, arguments, evaluator_server_config, update_id
                 )
                 num_retries += 1
 

@@ -61,16 +61,20 @@ def run_cli(args):
             )
             raise ErtCliError(msg)
 
-        evaluator_config = EvaluatorServerConfig(custom_port_range=args.port_range)
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=args.port_range
+        )
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
             target=model.start_simulations_thread,
-            args=(argument, evaluator_config),
+            args=(argument, evaluator_server_config),
         )
         thread.start()
 
-        tracker = create_tracker(model, detailed_interval=0, ee_config=evaluator_config)
+        tracker = create_tracker(
+            model, detailed_interval=0, ee_config=evaluator_server_config
+        )
 
         out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)
