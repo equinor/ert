@@ -259,7 +259,6 @@ class RowScalingTest(ResTest):
     # This test does two smoother updates, first without row scaling in update1
     # and then afterwards with row scaling in update2. The row scaling function
     # is designed so that it is possible to test the updates results.
-    @unittest.skip("Debug skip")
     def test_update_code2(self):
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext("row_scaling", self.config_file) as tc:

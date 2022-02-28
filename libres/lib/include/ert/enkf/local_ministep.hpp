@@ -61,7 +61,7 @@ public:
 
     const std::string &name() const { return this->m_name; }
 
-    bool data_is_active(const char *key) const {
+    bool data_is_active(const std::string& key) const {
         return this->active_size.count(key) == 1;
     }
 
@@ -152,7 +152,7 @@ public:
     }
 
 
-    RowScaling &get_or_create_row_scaling(const char *key) {
+    RowScaling &get_or_create_row_scaling(const std::string& key) {
         auto scaling_iter = this->scaling.find(key);
         if (scaling_iter == this->scaling.end()) {
             if (!this->data_is_active(key))
