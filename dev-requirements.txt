@@ -1,24 +1,24 @@
 black==22.1.0; python_version > '3.6'
-flaky
-pytest>=6.2.0
-pytest-qt
-schemathesis==1.3.4; python_version <= '3.6'
-sphinx
-sphinx-argparse
-sphinx_rtd_theme
-sphinx-autoapi
-pytest-asyncio
-pytest-mock
-pytest-timeout
-requests
-jsonpath_ng
-sphinxcontrib.datatemplates
-decorator
-pylint
 click
+cmake-format
+decorator
+flake8>=4.0.0
+flaky
+jsonpath_ng
+pylint
+pytest-asyncio
+pytest-cov
+pytest-mock
+pytest-qt
+pytest-snapshot
+pytest-timeout
+pytest>=6.2.0
+requests
+schemathesis==1.3.4; python_version <= '3.6'
 scikit-build
 setuptools_scm
-pytest-snapshot
-flake8>=4.0.0
-cmake-format
-pytest-cov
+sphinx
+sphinx_rtd_theme
+sphinx-argparse
+sphinx-autoapi
+sphinxcontrib.datatemplates
