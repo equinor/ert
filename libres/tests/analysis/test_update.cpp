@@ -8,7 +8,6 @@
 
 #include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/res_util/matrix_blas.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/enkf/meas_data.hpp>
