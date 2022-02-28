@@ -71,13 +71,6 @@ void enkf_obs_free(enkf_obs_type *enkf_obs);
 
 void enkf_obs_load(enkf_obs_type *, const char *, double);
 
-void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
-                                       enkf_fs_type *fs,
-                                       const local_obsdata_node_type *obs_node,
-                                       const int_vector_type *ens_active_list,
-                                       meas_data_type *meas_data,
-                                       obs_data_type *obs_data);
-
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
                                        const local_obsdata_type *local_obsdata,
