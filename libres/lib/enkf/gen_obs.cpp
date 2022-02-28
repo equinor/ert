@@ -32,6 +32,7 @@
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_common.hpp>
 
+#include "ert/python.hpp"
 /*
    This file implemenets a structure for general observations. A
    general observation is just a vector of numbers - where EnKF has no
@@ -294,14 +295,13 @@ double gen_obs_chi2(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
 
 void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
                      node_id_type node_id, meas_data_type *meas_data,
-                     const active_list_type *__active_list) {
+                     const ActiveList *__active_list) {
     gen_obs_assert_data_size(gen_obs, gen_data);
     {
-        int active_size =
-            active_list_get_active_size(__active_list, gen_obs->obs_size);
+        int active_size = __active_list->active_size(gen_obs->obs_size);
         meas_block_type *meas_block = meas_data_add_block(
             meas_data, gen_obs->obs_key, node_id.report_step, active_size);
-        active_mode_type active_mode = active_list_get_mode(__active_list);
+        active_mode_type active_mode = __active_list->getMode();
         const bool_vector_type *forward_model_active =
             gen_data_config_get_active_mask(gen_obs->data_config);
 
@@ -319,7 +319,7 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
                                 gen_data_iget_double(gen_data, data_index));
             }
         } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = active_list_get_active(__active_list);
+            const int *active_list = __active_list->active_list_get_active();
             int index;
 
             for (index = 0; index < active_size; index++) {
@@ -339,7 +339,7 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
 C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
                                      obs_data_type *obs_data, enkf_fs_type *fs,
                                      int report_step,
-                                     const active_list_type *__active_list) {
+                                     const ActiveList *__active_list) {
     const bool_vector_type *forward_model_active = NULL;
     if (gen_data_config_has_active_mask(gen_obs->data_config, fs,
                                         report_step)) {
@@ -350,9 +350,8 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
     }
 
     {
-        active_mode_type active_mode = active_list_get_mode(__active_list);
-        int active_size =
-            active_list_get_active_size(__active_list, gen_obs->obs_size);
+        active_mode_type active_mode = __active_list->getMode();
+        int active_size = __active_list->active_size(gen_obs->obs_size);
         obs_block_type *obs_block = obs_data_add_block(
             obs_data, gen_obs->obs_key, active_size, NULL, false);
 
@@ -370,9 +369,8 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
                 }
             }
         } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = active_list_get_active(__active_list);
-            int active_size =
-                active_list_get_active_size(__active_list, gen_obs->obs_size);
+            const int *active_list = __active_list->active_list_get_active();
+            int active_size = __active_list->active_size(gen_obs->obs_size);
             /*
 	There are three different indices active at the same time here:
 
@@ -488,13 +486,13 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
 
 C_USED void gen_obs_update_std_scale(gen_obs_type *gen_obs,
                                      double std_multiplier,
-                                     const active_list_type *active_list) {
-    if (active_list_get_mode(active_list) == ALL_ACTIVE) {
+                                     const ActiveList *active_list) {
+    if (active_list->getMode() == ALL_ACTIVE) {
         for (int i = 0; i < gen_obs->obs_size; i++)
             gen_obs->std_scaling[i] = std_multiplier;
     } else {
-        const int *active_index = active_list_get_active(active_list);
-        int size = active_list_get_active_size(active_list, gen_obs->obs_size);
+        const int *active_index = active_list->active_list_get_active();
+        int size = active_list->active_size(gen_obs->obs_size);
         for (int i = 0; i < size; i++) {
             int obs_index = active_index[i];
             if (obs_index >= gen_obs->obs_size) {
@@ -552,3 +550,19 @@ VOID_MEASURE(gen_obs, gen_data)
 VOID_USER_GET_OBS(gen_obs)
 VOID_CHI2(gen_obs, gen_data)
 VOID_UPDATE_STD_SCALE(gen_obs)
+
+class ActiveList;
+namespace {
+void update_std_scaling(py::handle obj, double scaling,
+                        const ActiveList &active_list) {
+    auto *self = ert::from_cwrap<gen_obs_type>(obj);
+    gen_obs_update_std_scale(self, scaling, &active_list);
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.gen_obs", m) {
+    using namespace py::literals;
+
+    m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,
+          "active_list"_a);
+}

@@ -21,7 +21,7 @@
 
 #include <ert/util/type_macros.h>
 #include <ert/util/int_vector.h>
-
+#include <ert/python.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
 
 #define LOCAL_OBSDATA_NODE_TYPE_ID 84441309
@@ -29,7 +29,7 @@
 struct local_obsdata_node_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *obs_key;
-    active_list_type *active_list;
+    ActiveList *active_list;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(local_obsdata_node, LOCAL_OBSDATA_NODE_TYPE_ID)
@@ -40,7 +40,7 @@ local_obsdata_node_alloc__(const char *obs_key) {
     auto node = new local_obsdata_node_type;
     UTIL_TYPE_ID_INIT(node, LOCAL_OBSDATA_NODE_TYPE_ID);
     node->obs_key = util_alloc_string_copy(obs_key);
-    node->active_list = NULL;
+    node->active_list = nullptr;
 
     return node;
 }
@@ -48,7 +48,7 @@ local_obsdata_node_alloc__(const char *obs_key) {
 local_obsdata_node_type *local_obsdata_node_alloc(const char *obs_key) {
     local_obsdata_node_type *node = local_obsdata_node_alloc__(obs_key);
 
-    node->active_list = active_list_alloc();
+    node->active_list = new ActiveList();
 
     return node;
 }
@@ -57,7 +57,7 @@ local_obsdata_node_type *
 local_obsdata_node_alloc_copy(const local_obsdata_node_type *src) {
     local_obsdata_node_type *target = local_obsdata_node_alloc__(src->obs_key);
 
-    target->active_list = active_list_alloc_copy(src->active_list);
+    target->active_list = new ActiveList(*src->active_list);
 
     return target;
 }
@@ -68,7 +68,7 @@ const char *local_obsdata_node_get_key(const local_obsdata_node_type *node) {
 
 void local_obsdata_node_free(local_obsdata_node_type *node) {
     if (node->active_list)
-        active_list_free(node->active_list);
+        delete node->active_list;
 
     free(node->obs_key);
     delete node;
@@ -79,12 +79,27 @@ void local_obsdata_node_free__(void *arg) {
     local_obsdata_node_free(node);
 }
 
-active_list_type *
+ActiveList *
 local_obsdata_node_get_active_list(const local_obsdata_node_type *node) {
     return node->active_list;
 }
 
-active_list_type *
+ActiveList *
 local_obsdata_node_get_copy_active_list(const local_obsdata_node_type *node) {
-    return active_list_alloc_copy(node->active_list);
+    return new ActiveList(*node->active_list);
+}
+
+namespace {
+ActiveList &get_active_list(py::handle obj) {
+    auto *self = ert::from_cwrap<local_obsdata_node_type>(obj);
+    auto *active_list = local_obsdata_node_get_active_list(self);
+    return *active_list;
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.local_obsdata_node", m) {
+    using namespace py::literals;
+
+    m.def("get_active_list", &get_active_list, "self"_a,
+          py::return_value_policy::reference_internal);
 }

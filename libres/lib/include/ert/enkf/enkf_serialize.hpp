@@ -19,30 +19,18 @@
 #ifndef ERT_ENKF_SERIALIZE_H
 #define ERT_ENKF_SERIALIZE_H
 
-#include <stdlib.h>
-#include <stdbool.h>
-
 #include <ert/res_util/matrix.hpp>
-
-#include <ert/ecl/ecl_util.h>
-
 #include <ert/enkf/active_list.hpp>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <ert/ecl/ecl_type.h>
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const active_list_type *__active_list,
-                           matrix_type *A, int row_offset, int column);
+                           const ActiveList *__active_list, matrix_type *A,
+                           int row_offset, int column);
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
-                             const active_list_type *__active_list,
+                             const ActiveList *__active_list,
                              const matrix_type *A, int row_offset, int column);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

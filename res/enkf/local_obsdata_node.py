@@ -1,6 +1,7 @@
 from cwrap import BaseCClass
 
 from res import ResPrototype
+from res import _lib
 
 
 class LocalObsdataNode(BaseCClass):
@@ -9,9 +10,6 @@ class LocalObsdataNode(BaseCClass):
     _alloc = ResPrototype("void* local_obsdata_node_alloc(char*)", bind=False)
     _free = ResPrototype("void  local_obsdata_node_free(local_obsdata_node)")
     _get_key = ResPrototype("char* local_obsdata_node_get_key(local_obsdata_node)")
-    _get_active_list = ResPrototype(
-        "active_list_ref local_obsdata_node_get_active_list(local_obsdata_node)"
-    )
 
     def __init__(self, obs_key):
         if isinstance(obs_key, str):
@@ -40,4 +38,4 @@ class LocalObsdataNode(BaseCClass):
         return "LocalObsdataNode(key = %s) %s" % (self.key(), self._ad_str())
 
     def getActiveList(self):
-        return self._get_active_list()
+        return _lib.local.local_obsdata_node.get_active_list(self)
