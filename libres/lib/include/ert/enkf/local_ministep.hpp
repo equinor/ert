@@ -135,8 +135,6 @@ bool local_ministep_data_is_active(const local_ministep_type *ministep,
                                    const char *key);
 
 const char *local_ministep_get_name(const local_ministep_type *ministep);
-void local_ministep_summary_fprintf(const local_ministep_type *ministep,
-                                    FILE *stream);
 void local_ministep_add_obsdata(local_ministep_type *ministep,
                                 local_obsdata_type *obsdata);
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,
