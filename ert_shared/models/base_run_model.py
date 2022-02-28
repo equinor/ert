@@ -79,13 +79,17 @@ class BaseRunModel:
         self._failed = False
         self._phase = 0
 
-    def start_simulations_thread(self, arguments: Dict[str, Any], evaluator_server_config) -> None:
+    def start_simulations_thread(
+        self, arguments: Dict[str, Any], evaluator_server_config
+    ) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(
             arguments=arguments, evaluator_server_config=evaluator_server_config
         )
 
-    def startSimulations(self, arguments: Dict[str, Any], evaluator_server_config) -> None:
+    def startSimulations(
+        self, arguments: Dict[str, Any], evaluator_server_config
+    ) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(
@@ -106,7 +110,9 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(self, arguments: Dict[str, Any], evaluator_server_config) -> ErtRunContext:
+    def runSimulations(
+        self, arguments: Dict[str, Any], evaluator_server_config
+    ) -> ErtRunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def create_context(self, arguments: Dict[str, Any]) -> ErtRunContext:
@@ -228,7 +234,7 @@ class BaseRunModel:
     def is_forward_model_finished(progress) -> bool:
         return all(job.status == "Success" for job in progress)
 
-    def update_progress_for_index(self, iteration: int, idx, run_arg: RunArg) -> None:
+    def update_progress_for_iteration(self, iteration: int, run_arg: RunArg) -> None:
         try:
             # will throw if not yet submitted (is in a limbo state)
             queue_index = run_arg.getQueueIndex()
@@ -262,7 +268,7 @@ class BaseRunModel:
         if not fms or not BaseRunModel.is_forward_model_finished(fms[0]):
             loaded = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
             if not loaded and not timed_out:
-                # If this idx timed out, returning here would prevent
+                # If this iteration timed out, returning here would prevent
                 # non-successful jobs in being marked as failed (timed out). So
                 # return only in the case where it did not time out.
                 return
@@ -291,8 +297,8 @@ class BaseRunModel:
         try:
             # Run context might be set to None by concurrent threads,
             # which will results in an Attribute Error
-            for idx, run_arg in enumerate(self._run_context):
-                self.update_progress_for_index(iteration, idx, run_arg)
+            for run_arg in self._run_context:
+                self.update_progress_for_iteration(iteration, run_arg)
         except AttributeError as e:
             if self._run_context is None:
                 logging.debug(
