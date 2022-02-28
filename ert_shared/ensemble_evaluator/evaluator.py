@@ -184,7 +184,7 @@ class EnsembleEvaluator:
             ssl=self._config.get_server_ssl_context(),
             process_request=self.process_request,
             max_queue=None,
-            max_size=2 ** 26,
+            max_size=2**26,
         ):
             await done
             logger.debug("Got done signal.")
@@ -271,7 +271,7 @@ class EnsembleEvaluator:
                         logger.debug("Stopping current ensemble")
                         self._stop()
                     break
-                sleep_time = 0.25 * 2 ** unsuccessfull_connection_attempts
+                sleep_time = 0.25 * 2**unsuccessfull_connection_attempts
                 logger.debug(
                     f"Sleeping for {sleep_time} seconds before attempting to reconnect"
                 )

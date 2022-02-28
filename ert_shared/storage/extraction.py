@@ -177,17 +177,7 @@ def _extract_active_observations(ert) -> Mapping[str, list]:
         return {}
 
     ministep = update_step[-1]
-    obs_data = ministep.get_obs_data()
-    if obs_data is None:
-        return {}
-
-    active_obs = {}
-    for block_num in range(obs_data.get_num_blocks()):
-        block = obs_data.get_block(block_num)
-        obs_key = block.get_obs_key()
-        active_list = [block.is_active(i) for i in range(len(block))]
-        active_obs[obs_key] = active_list
-    return active_obs
+    return ministep.get_obs_active_list()
 
 
 def _create_observation_transformation(ert, db_observations) -> List[dict]:

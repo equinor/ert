@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <vector>
+
 #include <stdlib.h>
 
 #include <ert/util/test_work_area.hpp>
@@ -165,66 +167,52 @@ void test_update_matching() {
 
 void test_select_matching() {
     state_map_type *map = state_map_alloc();
-    bool_vector_type *mask1 = bool_vector_alloc(21, false);
-    bool_vector_type *mask2 = bool_vector_alloc(1000, true);
 
     state_map_iset(map, 10, STATE_INITIALIZED);
     state_map_iset(map, 10, STATE_HAS_DATA);
     state_map_iset(map, 20, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
-    state_map_select_matching(map, mask2, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
+    std::vector<bool> mask = state_map_select_matching(
+        map, STATE_HAS_DATA | STATE_INITIALIZED, true);
+    test_assert_int_equal(mask.size(), 21);
+    test_assert_true(mask[10]);
+    test_assert_true(mask[20]);
 
-    for (int i = 0; i < bool_vector_size(mask1); i++) {
+    mask = state_map_select_matching(map, STATE_HAS_DATA, true);
+
+    for (size_t i; i < mask.size(); i++) {
         if (i == 10)
-            test_assert_true(bool_vector_iget(mask1, i));
-        else if (i == 20)
-            test_assert_true(bool_vector_iget(mask1, i));
+            test_assert_true(mask[i]);
         else {
-            test_assert_false(bool_vector_iget(mask1, i));
-            test_assert_true(bool_vector_iget(mask2, i));
+            test_assert_false(mask[0]);
         }
     }
 
     state_map_iset(map, 50, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              true);
-    test_assert_int_equal(bool_vector_size(mask1), 21);
+    mask = state_map_select_matching(map, STATE_HAS_DATA | STATE_INITIALIZED,
+                                     true);
+    test_assert_int_equal(mask.size(), 51);
 
-    bool_vector_free(mask1);
-    bool_vector_free(mask2);
     state_map_free(map);
 }
 
 void test_deselect_matching() {
     state_map_type *map = state_map_alloc();
-    bool_vector_type *mask1 = bool_vector_alloc(0, false);
-    bool_vector_type *mask2 = bool_vector_alloc(1000, true);
 
-    state_map_iset(map, 10, STATE_INITIALIZED);
     state_map_iset(map, 10, STATE_HAS_DATA);
     state_map_iset(map, 20, STATE_INITIALIZED);
-    state_map_select_matching(map, mask1, STATE_HAS_DATA | STATE_INITIALIZED,
-                              false);
-    state_map_select_matching(map, mask2, STATE_HAS_DATA | STATE_INITIALIZED,
-                              false);
+    std::vector<bool> mask = state_map_select_matching(
+        map, STATE_HAS_DATA | STATE_INITIALIZED, false);
 
-    test_assert_int_equal(state_map_get_size(map), bool_vector_size(mask1));
+    test_assert_int_equal(state_map_get_size(map), mask.size());
 
-    for (int i = 0; i < bool_vector_size(mask1); i++) {
-        if (i == 10)
-            test_assert_false(bool_vector_iget(mask1, i));
-        else if (i == 20)
-            test_assert_false(bool_vector_iget(mask2, i));
+    for (int i = 0; i < mask.size(); i++) {
+        if ((i == 10) | (i == 20))
+            test_assert_false(mask[i]);
         else {
-            test_assert_false(bool_vector_iget(mask1, i));
-            test_assert_true(bool_vector_iget(mask2, i));
+            test_assert_true(mask[i]);
         }
     }
 
-    bool_vector_free(mask1);
-    bool_vector_free(mask2);
     state_map_free(map);
 }
 

@@ -6,7 +6,6 @@
 
 #include "ert/analysis/update.hpp"
 #include <ert/util/type_vector_functions.h>
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/metric.hpp>
 #include <ert/res_util/memory.hpp>
@@ -82,7 +81,7 @@ public:
         matrix_type *R_in, matrix_type *A_in,
         std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
             A_with_rowscaling_in,
-        const bool_vector_type *obs_mask_in)
+        const std::vector<bool> &obs_mask_in)
         : obs_mask(obs_mask_in) {
         S = S_in;
         E = E_in;
@@ -94,11 +93,11 @@ public:
     }
 
     ~update_data_type() {
-        matrix_safe_free(S);
-        matrix_safe_free(E);
-        matrix_safe_free(D);
-        matrix_safe_free(R);
-        matrix_safe_free(A);
+        matrix_free(S);
+        matrix_free(E);
+        matrix_free(D);
+        matrix_free(R);
+        matrix_free(A);
         for (auto [A, _] : A_with_rowscaling)
             matrix_free(A);
     }
@@ -108,11 +107,23 @@ public:
     matrix_type *D;
     matrix_type *R;
     matrix_type *A;
-    const bool_vector_type *obs_mask;
+    const std::vector<bool> obs_mask;
     std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
         A_with_rowscaling;
     bool has_observations = false;
 };
+
+namespace {
+int_vector_type *
+bool_vector_to_active_list(const std::vector<bool> &bool_vector) {
+    int_vector_type *active_list = int_vector_alloc(0, 0);
+    for (int i = 0; i < bool_vector.size(); i++) {
+        if (bool_vector[i])
+            int_vector_append(active_list, i);
+    }
+    return active_list;
+}
+} // namespace
 
 /*
  This is very awkward; the problem is that for the GEN_DATA type the config
@@ -167,12 +178,10 @@ void serialize_ministep(const ensemble_config_type *ens_config,
             matrix_resize(A, matrix_rows + 2 * active_size, ens_size, true);
 
         if (active_size > 0) {
-            for (int iens = 0; iens < ens_size; iens++) {
-                int column = int_vector_iget(iens_active_index, iens);
-                if (column >= 0) {
-                    serialize_node(target_fs, config_node, iens, current_row,
-                                   column, active_list, A);
-                }
+            for (int column = 0; column < ens_size; column++) {
+                int iens = int_vector_iget(iens_active_index, column);
+                serialize_node(target_fs, config_node, iens, current_row,
+                               column, active_list, A);
             }
             current_row += active_size;
         }
@@ -229,11 +238,10 @@ void deserialize_ministep(ensemble_config_type *ensemble_config,
         int active_size = active_list_get_active_size(
             active_list, enkf_config_node_get_data_size(config_node, 0));
         if (active_size > 0) {
-            for (int iens = 0; iens < ens_size; iens++) {
-                int column = int_vector_iget(iens_active_index, iens);
-                if (column >= 0)
-                    deserialize_node(target_fs, target_fs, config_node, iens,
-                                     current_row, column, active_list, A);
+            for (int column = 0; column < ens_size; column++) {
+                int iens = int_vector_iget(iens_active_index, column);
+                deserialize_node(target_fs, target_fs, config_node, iens,
+                                 current_row, column, active_list, A);
             }
             current_row += active_size;
         }
@@ -288,12 +296,10 @@ void save_parameters(enkf_fs_type *target_fs,
             for (int iens = 0; iens < int_vector_size(iens_active_index);
                  iens++) {
                 int column = int_vector_iget(iens_active_index, iens);
-                if (column >= 0) {
-                    deserialize_node(
-                        target_fs, target_fs,
-                        ensemble_config_get_node(ensemble_config, key.c_str()),
-                        iens, 0, column, active_list, A);
-                }
+                deserialize_node(
+                    target_fs, target_fs,
+                    ensemble_config_get_node(ensemble_config, key.c_str()),
+                    iens, 0, column, active_list, A);
             }
         }
     }
@@ -329,13 +335,11 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
             if (matrix_get_rows(A) < node_size)
                 matrix_resize(A, node_size, active_ens_size, false);
 
-            for (int iens = 0; iens < int_vector_size(iens_active_index);
-                 iens++) {
-                int column = int_vector_iget(iens_active_index, iens);
-                if (column >= 0) {
-                    serialize_node(target_fs, config_node, iens, 0, column,
-                                   active_list, A);
-                }
+            for (int column = 0; column < int_vector_size(iens_active_index);
+                 column++) {
+                int iens = int_vector_iget(iens_active_index, column);
+                serialize_node(target_fs, config_node, iens, 0, column,
+                               active_list, A);
             }
             auto row_scaling = ministep->get_row_scaling(key);
 
@@ -350,7 +354,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 
 void run_analysis_update_without_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
+    const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R, matrix_type *A) {
 
@@ -359,8 +363,6 @@ void run_analysis_update_without_rowscaling(
     if (A == nullptr)
         throw std::logic_error(
             "Parameter matrix can not be NULL when exectuting analysis udate");
-    const int cpu_threads = 4;
-    thread_pool_type *tp = thread_pool_alloc(cpu_threads, false);
 
     int active_ens_size = matrix_get_columns(S);
     int active_obs_size = matrix_get_rows(S);
@@ -372,10 +374,9 @@ void run_analysis_update_without_rowscaling(
         ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
         ies::initX(module_config, S, R, E, D, X);
-        matrix_inplace_matmul_mt2(A, X, tp);
+        matrix_inplace_matmul(A, X);
     }
     matrix_free(X);
-    thread_pool_free(tp);
 }
 
 /*
@@ -383,7 +384,6 @@ Run the row-scaling enabled update algorithm on a set of A matrices.
 */
 void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const bool_vector_type *ens_mask, const bool_vector_type *obs_mask,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R,
     const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
@@ -445,7 +445,7 @@ Copy all parameters from source_fs to target_fs
 */
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                      const ensemble_config_type *ensemble_config,
-                     const bool_vector_type *ens_mask) {
+                     const std::vector<bool> &ens_mask) {
 
     /*
       Copy all the parameter nodes from source case to target case;
@@ -454,8 +454,7 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
       over there.
     */
     if (target_fs != source_fs) {
-        int_vector_type *ens_active_list =
-            bool_vector_alloc_active_list(ens_mask);
+        int_vector_type *ens_active_list = bool_vector_to_active_list(ens_mask);
         std::vector<std::string> param_keys =
             ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
         for (auto &key : param_keys) {
@@ -481,12 +480,12 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 }
 
-void assert_size_equal(int ens_size, const bool_vector_type *ens_mask) {
-    if (bool_vector_size(ens_mask) != ens_size)
+void assert_size_equal(int ens_size, const std::vector<bool> &ens_mask) {
+    if (ens_mask.size() != ens_size)
         throw std::logic_error(
-            "fundamental inconsistency detected. Total ens_size:" +
-            std::to_string(ens_size) +
-            ", mask_size:" + std::to_string(bool_vector_size(ens_mask)));
+            fmt::format("Fundamental inconsistency detected. Total ens_size: "
+                        "{}, mask_size; {}",
+                        ens_size, ens_mask.size()));
 }
 
 static FILE *create_log_file(const char *log_path) {
@@ -504,7 +503,7 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
                                   enkf_fs_type *target_fs, enkf_obs_type *obs,
                                   ensemble_config_type *ensemble_config,
                                   const analysis_config_type *analysis_config,
-                                  bool_vector_type *ens_mask,
+                                  const std::vector<bool> &ens_mask,
                                   local_ministep_type *ministep,
                                   rng_type *shared_rng, FILE *log_stream) {
     /*
@@ -524,7 +523,7 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
 
-    int_vector_type *ens_active_list = bool_vector_alloc_active_list(ens_mask);
+    int_vector_type *ens_active_list = bool_vector_to_active_list(ens_mask);
 
     local_obsdata_type *selected_observations =
         local_ministep_get_obsdata(ministep);
@@ -548,8 +547,7 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     meas_data_free(meas_data);
 
     matrix_type *E = obs_data_allocE(obs_data, shared_rng, active_ens_size);
-    int_vector_type *iens_active_index =
-        bool_vector_alloc_active_index_list(ens_mask, -1);
+    int_vector_type *iens_active_index = bool_vector_to_active_list(ens_mask);
     auto A = load_parameters(target_fs, ensemble_config, iens_active_index,
                              active_ens_size, ministep);
 
@@ -560,7 +558,7 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     assert_matrix_size(D, "D", active_obs_size, active_ens_size);
     assert_matrix_size(S, "S", active_obs_size, active_ens_size);
     assert_matrix_size(R, "R", active_obs_size, active_obs_size);
-    const bool_vector_type *obs_mask = obs_data_get_active_mask(obs_data);
+    std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
     obs_data_scale(obs_data, S, E, D, R, nullptr);
 
     auto row_scaling_parameters = load_row_scaling_parameters(
@@ -590,8 +588,8 @@ bool smoother_update(const local_updatestep_type *updatestep,
 
     ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
 
-    bool_vector_type *ens_mask = bool_vector_alloc(total_ens_size, false);
-    state_map_select_matching(source_state_map, ens_mask, STATE_HAS_DATA, true);
+    auto ens_mask =
+        state_map_select_matching(source_state_map, STATE_HAS_DATA, true);
 
     copy_parameters(source_fs, target_fs, ensemble_config, ens_mask);
 
@@ -607,7 +605,7 @@ bool smoother_update(const local_updatestep_type *updatestep,
             ens_mask, ministep, shared_rng, log_stream);
         if (update_data.has_observations) {
             int_vector_type *iens_active_index =
-                bool_vector_alloc_active_index_list(ens_mask, -1);
+                bool_vector_to_active_list(ens_mask);
 
             /*
             The update for one local_dataset instance consists of two main chunks:
@@ -636,8 +634,7 @@ bool smoother_update(const local_updatestep_type *updatestep,
 
             if (update_data.A_with_rowscaling.size() > 0) {
                 run_analysis_update_with_rowscaling(
-                    *module_config, *module_data, ens_mask,
-                    update_data.obs_mask, update_data.S, update_data.E,
+                    *module_config, *module_data, update_data.S, update_data.E,
                     update_data.D, update_data.R,
                     update_data.A_with_rowscaling);
             }
@@ -649,7 +646,6 @@ bool smoother_update(const local_updatestep_type *updatestep,
                           local_ministep_get_name(ministep));
     }
 
-    bool_vector_free(ens_mask);
     fclose(log_stream);
     return true;
 }

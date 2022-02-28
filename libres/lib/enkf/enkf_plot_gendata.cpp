@@ -147,20 +147,13 @@ static void enkf_plot_gendata_reset(enkf_plot_gendata_type *plot_gendata,
 }
 
 void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
-                            int report_step,
-                            const bool_vector_type *input_mask) {
+                            int report_step) {
 
     state_map_type *state_map = enkf_fs_get_state_map(fs);
     int ens_size = state_map_get_size(state_map);
-    bool_vector_type *mask;
 
-    if (input_mask)
-        mask = bool_vector_alloc_copy(input_mask);
-    else
-        mask = bool_vector_alloc(ens_size, false);
-
-    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
-
+    const auto &mask =
+        state_map_select_matching(state_map, STATE_HAS_DATA, true);
     enkf_plot_gendata_resize(plot_data, ens_size);
     enkf_plot_gendata_reset(plot_data, report_step);
     plot_data->report_step = report_step;
@@ -168,7 +161,7 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
         const int num_cpu = 4;
         thread_pool_type *tp = thread_pool_alloc(num_cpu, true);
         for (int iens = 0; iens < ens_size; iens++) {
-            if (bool_vector_iget(mask, iens)) {
+            if (mask[iens]) {
                 enkf_plot_genvector_type *vector =
                     enkf_plot_gendata_iget(plot_data, iens);
                 arg_pack_type *work_arg = plot_data->work_arg[iens];
@@ -182,8 +175,6 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
         thread_pool_join(tp);
         thread_pool_free(tp);
     }
-
-    bool_vector_free(mask);
 }
 
 void enkf_plot_gendata_find_min_max_values__(

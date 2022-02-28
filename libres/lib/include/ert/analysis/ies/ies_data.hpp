@@ -2,6 +2,7 @@
 #define IES_DATA_H
 
 #include <optional>
+#include <vector>
 
 #include <ert/util/rng.hpp>
 #include <ert/res_util/matrix.hpp>
@@ -23,14 +24,14 @@ public:
     int iteration_nr() const;
     int inc_iteration_nr();
 
-    void update_ens_mask(const bool_vector_type *mask);
-    void store_initial_obs_mask(const bool_vector_type *mask);
-    void update_obs_mask(const bool_vector_type *mask);
+    void update_ens_mask(const std::vector<bool> &mask);
+    void store_initial_obs_mask(const std::vector<bool> &mask);
+    void update_obs_mask(const std::vector<bool> &mask);
     void update_state_size(int state_size);
 
-    const bool_vector_type *obs_mask0() const;
-    const bool_vector_type *obs_mask() const;
-    const bool_vector_type *ens_mask() const;
+    const std::vector<bool> &obs_mask0() const;
+    const std::vector<bool> &obs_mask() const;
+    const std::vector<bool> &ens_mask() const;
 
     const matrix_type *getA0() const;
     const matrix_type *getW() const;
@@ -58,9 +59,9 @@ private:
         W; // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
 
     std::optional<int> m_state_size;
-    bool_vector_type *m_ens_mask = nullptr;
-    bool_vector_type *m_obs_mask0 = nullptr;
-    bool_vector_type *m_obs_mask = nullptr;
+    std::vector<bool> m_ens_mask{};
+    std::vector<bool> m_obs_mask0{};
+    std::vector<bool> m_obs_mask{};
     matrix_type *A0 = nullptr; // Prior ensemble used in Ei=A0 Omega_i
     matrix_type *E =
         nullptr; // Prior ensemble of measurement perturations (should be the same for all iterations)

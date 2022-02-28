@@ -34,8 +34,8 @@ matrix_type *alloc_activeE(const data::Data *data);
 matrix_type *alloc_activeW(const data::Data *data);
 matrix_type *alloc_activeA(const data::Data *data);
 
-void init_update(data::Data &module_data, const bool_vector_type *ens_mask,
-                 const bool_vector_type *obs_mask, const matrix_type *S,
+void init_update(data::Data &module_data, const std::vector<bool> &ens_mask,
+                 const std::vector<bool> &obs_mask, const matrix_type *S,
                  const matrix_type *R, const matrix_type *E,
                  const matrix_type *D);
 

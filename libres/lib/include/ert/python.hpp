@@ -25,7 +25,7 @@ struct Submodule {
 } // namespace ert::detail
 
 namespace ert {
-template <typename T> T *from_cwrap(py::object obj) {
+template <typename T> T *from_cwrap(py::handle obj) {
     py::int_ address = obj.attr("_BaseCClass__c_pointer");
     void *pointer = PyLong_AsVoidPtr(address.ptr());
 
@@ -58,13 +58,3 @@ template <typename T> T *from_cwrap(py::object obj) {
     static ::ert::detail::Submodule _python_submodule{_Path,                   \
                                                       _python_submodule_init}; \
     void _python_submodule_init(py::module_ _ModuleParam)
-
-namespace py_conversion {
-
-enkf_main_type *to_enkf_main_type(py::object obj);
-ert_run_context_type *to_run_context_type(py::object obj);
-enkf_fs_type *to_enkf_fs_type(py::object obj);
-ensemble_config_type *to_ensemble_config_type(py::object obj);
-enkf_plot_gendata_type *to_enkf_plot_gendata_type(py::object obj);
-
-} // namespace py_conversion

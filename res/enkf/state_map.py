@@ -16,7 +16,7 @@
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector
 
-from res import ResPrototype
+from res import ResPrototype, _lib
 from res.enkf.enums import RealizationStateEnum
 
 
@@ -31,9 +31,6 @@ class StateMap(BaseCClass):
     _size = ResPrototype("int   state_map_get_size(state_map)")
     _iget = ResPrototype("realisation_state_enum state_map_iget(state_map, int)")
     _iset = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
-    _select_matching = ResPrototype(
-        "void  state_map_select_matching(state_map, bool_vector, realisation_state_enum, bool)"
-    )
     _is_read_only = ResPrototype("bool  state_map_is_readonly(state_map)")
     _is_legal_transition = ResPrototype(
         "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",
@@ -105,25 +102,19 @@ class StateMap(BaseCClass):
         """@rtype: bool"""
         return self._is_read_only()
 
-    def selectMatching(self, select_target, select_mask):
+    def selectMatching(self, select_mask):
         """
-        @type select_target: BoolVector
         @type select_mask: RealizationStateEnum
         """
-        assert isinstance(select_target, BoolVector)
         assert isinstance(select_mask, RealizationStateEnum)
+        return _lib.state_map.select_matching(self, select_mask, True)
 
-        self._select_matching(select_target, select_mask, True)
-
-    def deselectMatching(self, select_target, select_mask):
+    def deselectMatching(self, select_mask):
         """
-        @type select_target: BoolVector
         @type select_mask: RealizationStateEnum
         """
-        assert isinstance(select_target, BoolVector)
         assert isinstance(select_mask, RealizationStateEnum)
-
-        self._select_matching(select_target, select_mask, False)
+        return _lib.state_map.select_matching(self, select_mask, False)
 
     def realizationList(self, state_value):
         """
@@ -142,9 +133,9 @@ class StateMap(BaseCClass):
         @type state_value: RealizationStateEnum
         @rtype: ecl.util.BoolVector
         """
-        mask = BoolVector(False, len(self))
-        self.selectMatching(mask, state_value)
-        return mask
+        mask = self.selectMatching(state_value)
+        index_list = [index for index, element in enumerate(mask) if element]
+        return BoolVector.createFromList(len(mask), index_list)
 
     def free(self):
         self._free()

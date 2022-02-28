@@ -91,28 +91,21 @@ int enkf_plot_data_get_size(const enkf_plot_data_type *plot_data) {
 }
 
 void enkf_plot_data_load(enkf_plot_data_type *plot_data, enkf_fs_type *fs,
-                         const char *index_key,
-                         const bool_vector_type *input_mask) {
+                         const char *index_key) {
     state_map_type *state_map = enkf_fs_get_state_map(fs);
     int ens_size = state_map_get_size(state_map);
-    bool_vector_type *mask;
 
-    if (input_mask)
-        mask = bool_vector_alloc_copy(input_mask);
-    else
-        mask = bool_vector_alloc(ens_size, false);
-
-    state_map_select_matching(state_map, mask, STATE_HAS_DATA, true);
+    std::vector<bool> mask =
+        state_map_select_matching(state_map, STATE_HAS_DATA, true);
     enkf_plot_data_resize(plot_data, ens_size);
     enkf_plot_data_reset(plot_data);
     {
         for (int iens = 0; iens < ens_size; iens++) {
-            if (bool_vector_iget(mask, iens)) {
+            if (mask[iens]) {
                 enkf_plot_tvector_type *vector =
                     enkf_plot_data_iget(plot_data, iens);
                 enkf_plot_tvector_load(vector, fs, index_key);
             }
         }
     }
-    bool_vector_free(mask);
 }

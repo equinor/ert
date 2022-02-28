@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <iostream>
+#include <fstream>
 
 #include <filesystem>
 
@@ -25,7 +27,6 @@
 #include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
 
-#include <ert/res_util/util_printf.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
 namespace fs = std::filesystem;
@@ -63,17 +64,13 @@ void test_read_erroneous_gen_kw_file() {
     const char *tmpl_filename = "MULTFLT.tmpl";
 
     {
-        FILE *stream = util_fopen(parameter_filename, "w");
-        const char *data = util_alloc_sprintf(
-            "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0");
-        util_fprintf_string(data, 30, right_pad, stream);
-        fclose(stream);
+        std::ofstream param_file(parameter_filename);
+        param_file << "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0";
+        param_file.close();
 
-        FILE *tmpl_stream = util_fopen(tmpl_filename, "w");
-        const char *tmpl_data =
-            util_alloc_sprintf("<MULTFLT1> <MULTFLT2> <MULTFLT3>\n");
-        util_fprintf_string(tmpl_data, 30, right_pad, tmpl_stream);
-        fclose(tmpl_stream);
+        std::ofstream tmpl_file(tmpl_filename);
+        tmpl_file << "MULTFLT1 NORMAL 0\nMULTFLT2 RAW\nMULTFLT3 NORMAL 0";
+        tmpl_file.close();
     }
 
     gen_kw_config_type *gen_kw_config =
@@ -98,7 +95,6 @@ int main(int argc, char **argv) {
 
     test_write_gen_kw_export_file(enkf_main);
     test_read_erroneous_gen_kw_file();
-
     ert_test_context_free(test_context);
     exit(0);
 }

@@ -56,20 +56,20 @@ matrix_type *test_enkf_linalg_genX2() {
 
 TEST_CASE("enkf_linalg_genX2", "[analysis]") {
     matrix_type *X2 = test_enkf_linalg_genX2();
-    double *result = X2->data;
+    Eigen::MatrixXd &result = *X2;
 
     // first columns
-    REQUIRE(result[0] == Approx(4.94974747));
-    REQUIRE(result[1] == Approx(5.37401154));
-    REQUIRE(result[2] == Approx(6.06217783));
+    REQUIRE(result(0, 0) == Approx(4.94974747));
+    REQUIRE(result(1, 0) == Approx(5.37401154));
+    REQUIRE(result(2, 0) == Approx(6.06217783));
     // second column
-    REQUIRE(result[3] == Approx(3.53553391));
-    REQUIRE(result[4] == Approx(4.17193001));
-    REQUIRE(result[5] == Approx(4.33012702));
+    REQUIRE(result(0, 1) == Approx(3.53553391));
+    REQUIRE(result(1, 1) == Approx(4.17193001));
+    REQUIRE(result(2, 1) == Approx(4.33012702));
     // third column
-    REQUIRE(result[6] == Approx(2.82842712));
-    REQUIRE(result[7] == Approx(3.25269119));
-    REQUIRE(result[8] == Approx(3.46410162));
+    REQUIRE(result(0, 2) == Approx(2.82842712));
+    REQUIRE(result(1, 2) == Approx(3.25269119));
+    REQUIRE(result(2, 2) == Approx(3.46410162));
 
     matrix_free(X2);
 }

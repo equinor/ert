@@ -45,8 +45,7 @@ enkf_plot_gendata_active_mask(const enkf_plot_gendata_type *data);
 enkf_plot_genvector_type *
 enkf_plot_gendata_iget(const enkf_plot_gendata_type *plot_data, int index);
 void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
-                            int report_step,
-                            const bool_vector_type *input_mask);
+                            int report_step);
 
 double_vector_type *
 enkf_plot_gendata_get_min_values(enkf_plot_gendata_type *plot_data);

@@ -18,12 +18,13 @@
 
 #ifndef ERT_ANALYSIS_MODULE_H
 #define ERT_ANALYSIS_MODULE_H
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum analysis_module_flag_enum : int {
     ANALYSIS_USE_A =

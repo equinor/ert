@@ -9,7 +9,7 @@ def _load_coeffs(filename):
 
 
 def _evaluate(coeffs, x):
-    return coeffs["a"] * x ** 2 + coeffs["b"] * x + coeffs["c"]
+    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
 
 if __name__ == "__main__":

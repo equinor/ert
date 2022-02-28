@@ -11,8 +11,8 @@ RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
            const std::vector<std::string> &summary_keys,
            const std::vector<int> &realizations, const int time_map_size) {
             auto ensemble_config =
-                py_conversion::to_ensemble_config_type(ens_cfg);
-            auto enkfs_fs = py_conversion::to_enkf_fs_type(fs);
+                ert::from_cwrap<ensemble_config_type>(ens_cfg);
+            auto enkfs_fs = ert::from_cwrap<enkf_fs_type>(fs);
 
             const int realization_size = std::size(realizations);
             const int summary_key_size = std::size(summary_keys);
@@ -29,9 +29,7 @@ RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
                 auto ensemble_data = enkf_plot_data_alloc(ensemble_config_node);
 
                 auto user_key = nullptr;
-                auto input_mask = nullptr;
-                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key,
-                                    input_mask);
+                enkf_plot_data_load(ensemble_data, enkfs_fs, user_key);
 
                 int realization_index = 0;
                 for (const auto &realization_number : realizations) {

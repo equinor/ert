@@ -177,6 +177,29 @@ RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
 RES_LIB_SUBMODULE("local.ministep", m) {
     using namespace py::literals;
 
+    auto get_obs_active_list_impl = [](py::handle self) -> py::dict {
+        auto ministep = ert::from_cwrap<local_ministep_type>(self);
+
+        py::dict dict;
+        if (ministep->obs_data == nullptr)
+            return dict;
+
+        int num_blocks = obs_data_get_num_blocks(ministep->obs_data);
+        for (int i{}; i < num_blocks; ++i) {
+            auto obs_block = obs_data_iget_block(ministep->obs_data, i);
+            py::str key = obs_block_get_key(obs_block);
+
+            py::list active_list;
+            int active_size = obs_block_get_size(obs_block);
+            for (int j{}; j < active_size; ++j)
+                active_list.append(
+                    py::bool_{obs_block_iget_is_active(obs_block, j)});
+            dict[key] = active_list;
+        }
+        return dict;
+    };
+
     m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
           "name"_a);
+    m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
 }

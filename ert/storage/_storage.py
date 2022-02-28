@@ -535,7 +535,9 @@ def init(*, workspace_name: str) -> None:
 
     for special_key in _SPECIAL_KEYS:
         if f"{workspace_name}.{special_key}" in experiment_names:
-            raise ValueError("Storage already initialized")
+            raise RuntimeError(
+                f"Workspace {workspace_name} already registered in storage"
+            )
         _init_experiment(
             experiment_name=f"{workspace_name}.{special_key}",
             parameters={},

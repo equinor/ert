@@ -15,7 +15,6 @@ pybind11_add_module(
   res_util/ui_return.cpp
   res_util/subst_list.cpp
   res_util/subst_func.cpp
-  res_util/matrix_stat.cpp
   res_util/matrix_blas.cpp
   res_util/matrix_lapack.cpp
   res_util/matrix.cpp
@@ -23,7 +22,6 @@ pybind11_add_module(
   res_util/path_fmt.cpp
   res_util/res_env.cpp
   res_util/res_portability.cpp
-  res_util/util_printf.cpp
   res_util/block_fs.cpp
   res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
@@ -33,7 +31,6 @@ pybind11_add_module(
   python/enkf_fs_manager.cpp
   python/enkf_fs_general_data.cpp
   python/enkf_fs_keyword_data.cpp
-  python/py_conversion.cpp
   python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
   config/conf_util.cpp
@@ -170,8 +167,14 @@ pybind11_add_module(
 
 find_package(LAPACK REQUIRED)
 target_link_libraries(
-  _lib PUBLIC ${ECL} ${LAPACK_LIBRARIES} ${LAPACK_LINKER_FLAGS} std::filesystem
-              cJSON::cJSON fmt::fmt)
+  _lib
+  PUBLIC ${ECL}
+         ${LAPACK_LIBRARIES}
+         ${LAPACK_LINKER_FLAGS}
+         std::filesystem
+         cJSON::cJSON
+         fmt::fmt
+         Eigen3::Eigen)
 target_include_directories(
   _lib
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

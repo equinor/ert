@@ -408,8 +408,6 @@ matrix_type *obs_data_allocE(const obs_data_type *obs_data, rng_type *rng,
             obs_block_initE(obs_block, E, pert_var.data(), &obs_offset);
         }
     }
-    matrix_set_name(E, "E");
-    matrix_assert_finite(E);
     return E;
 }
 
@@ -428,9 +426,6 @@ matrix_type *obs_data_allocD(const obs_data_type *obs_data,
             obs_block_initD(obs_block, D, &obs_offset);
         }
     }
-
-    matrix_set_name(D, "D");
-    matrix_assert_finite(D);
     return D;
 }
 
@@ -447,9 +442,6 @@ matrix_type *obs_data_allocR(const obs_data_type *obs_data) {
             obs_block_initR(obs_block, R, &obs_offset);
         }
     }
-
-    matrix_set_name(R, "R");
-    matrix_assert_finite(R);
     return R;
 }
 
@@ -467,7 +459,6 @@ matrix_type *obs_data_allocdObs(const obs_data_type *obs_data) {
             obs_block_initdObs(obs_block, dObs, &obs_offset);
         }
     }
-    matrix_set_name(dObs, "dObs");
     return dObs;
 }
 
@@ -612,8 +603,7 @@ double obs_data_iget_std(const obs_data_type *obs_data, int total_index) {
     return obs_block_iget_std(obs_block, total_index - total_offset);
 }
 
-const bool_vector_type *
-obs_data_get_active_mask(const obs_data_type *obs_data) {
+std::vector<bool> obs_data_get_active_mask(const obs_data_type *obs_data) {
     int total_size = obs_data_get_total_size(obs_data);
     bool_vector_resize(obs_data->mask, total_size,
                        false); //too account for extra data blocks added/removed
@@ -625,6 +615,9 @@ obs_data_get_active_mask(const obs_data_type *obs_data) {
             (const obs_block_type *)vector_iget_const(obs_data->data, block_nr);
         obs_block_set_active_mask(obs_block, obs_data->mask, &offset);
     }
-
-    return obs_data->mask;
+    std::vector<bool> stl_mask{};
+    for (int i = 0; i < bool_vector_size(obs_data->mask); i++) {
+        stl_mask.push_back(bool_vector_iget(obs_data->mask, i));
+    }
+    return stl_mask;
 }

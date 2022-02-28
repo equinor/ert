@@ -35,7 +35,7 @@ void test_load_GEN_KW(enkf_main_type *enkf_main, const char *key,
     {
         enkf_fs_type *enkf_fs = enkf_main_mount_alt_fs(enkf_main, "enkf", true);
 
-        enkf_plot_data_load(plot_data, enkf_fs, index_key, NULL);
+        enkf_plot_data_load(plot_data, enkf_fs, index_key);
         test_assert_int_equal(25, enkf_plot_data_get_size(plot_data));
         {
             enkf_plot_tvector_type *plot_vector =
@@ -67,7 +67,7 @@ void test_load_summary(enkf_main_type *enkf_main, const char *summary_key) {
 
     {
         enkf_fs_type *enkf_fs = enkf_main_mount_alt_fs(enkf_main, "enkf", true);
-        enkf_plot_data_load(plot_data, enkf_fs, NULL, NULL);
+        enkf_plot_data_load(plot_data, enkf_fs, NULL);
         test_assert_int_equal(25, enkf_plot_data_get_size(plot_data));
         {
             enkf_plot_tvector_type *plot_vector =
@@ -82,7 +82,7 @@ void test_load_summary(enkf_main_type *enkf_main, const char *summary_key) {
     {
         enkf_fs_type *enkf_fs =
             enkf_main_mount_alt_fs(enkf_main, "default", true);
-        enkf_plot_data_load(plot_data, enkf_fs, NULL, NULL);
+        enkf_plot_data_load(plot_data, enkf_fs, NULL);
         test_assert_int_equal(25, enkf_plot_data_get_size(plot_data));
         {
             enkf_plot_tvector_type *plot_vector =

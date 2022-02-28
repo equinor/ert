@@ -370,14 +370,6 @@ class BaseRunModel:
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
-        iactive = run_context.get_mask()
-
-        run_context.get_sim_fs().getStateMap().deselectMatching(
-            iactive,
-            RealizationStateEnum.STATE_LOAD_FAILURE
-            | RealizationStateEnum.STATE_PARENT_FAILURE,
-        )
-
         ensemble = create_ensemble_builder_from_legacy(
             run_context,
             self.get_forward_model(),

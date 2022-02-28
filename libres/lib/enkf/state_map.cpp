@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include <ert/python.hpp>
+
 #include <ert/util/util.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/bool_vector.h>
@@ -207,46 +209,40 @@ bool state_map_fread(state_map_type *map, const char *filename) {
     return file_exists;
 }
 
-/*
-  NB: This function does *not* resize select_target vector; i.e. realizations
-  beyond the size of the select_target vector will not be selected.
-*/
-void state_map_select_matching(const state_map_type *map,
-                               bool_vector_type *select_target, int select_mask,
-                               bool select) {
+std::vector<bool> state_map_select_matching(const state_map_type *map,
+                                            int select_mask, bool select) {
+    std::vector<bool> select_target(int_vector_size(map->state), false);
     pthread_rwlock_rdlock(&map->rw_lock);
     {
         const int *map_ptr = int_vector_get_ptr(map->state);
-        int size = std::min(int_vector_size(map->state),
-                            bool_vector_size(select_target));
-        for (int i = 0; i < size; i++) {
+        for (size_t i = 0; i < select_target.size(); i++) {
             int state_value = map_ptr[i];
             if (state_value & select_mask)
-                bool_vector_iset(select_target, i, select);
+                select_target[i] = select;
         }
     }
     pthread_rwlock_unlock(&map->rw_lock);
+    return select_target;
 }
 
 static void state_map_set_from_mask__(state_map_type *map,
-                                      const bool_vector_type *mask,
+                                      const std::vector<bool> &mask,
                                       realisation_state_enum state,
                                       bool invert) {
-    const bool *mask_ptr = bool_vector_get_ptr(mask);
-    for (int i = 0; i < bool_vector_size(mask); i++) {
-        if (mask_ptr[i] != invert)
+    for (int i = 0; i < mask.size(); i++) {
+        if (mask[i] != invert)
             state_map_iset(map, i, state);
     }
 }
 
 void state_map_set_from_inverted_mask(state_map_type *state_map,
-                                      const bool_vector_type *mask,
+                                      const std::vector<bool> &mask,
                                       realisation_state_enum state) {
     state_map_set_from_mask__(state_map, mask, state, true);
 }
 
 void state_map_set_from_mask(state_map_type *state_map,
-                             const bool_vector_type *mask,
+                             const std::vector<bool> &mask,
                              realisation_state_enum state) {
     state_map_set_from_mask__(state_map, mask, state, false);
 }
@@ -269,3 +265,11 @@ int state_map_count_matching(const state_map_type *state_map, int mask) {
     pthread_rwlock_unlock(&state_map->rw_lock);
     return count;
 }
+
+std::vector<bool> select_matching(py::object map, int select_mask,
+                                  bool select) {
+    auto map_ = ert::from_cwrap<state_map_type>(map);
+    return state_map_select_matching(map_, select_mask, select);
+}
+
+RES_LIB_SUBMODULE("state_map", m) { m.def("select_matching", select_matching); }

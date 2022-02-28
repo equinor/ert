@@ -7,7 +7,7 @@ with open("coeffs.json") as f:
 
 
 def evaluate(coeffs, x):
-    return coeffs["a"] * x ** 2 + coeffs["b"] * x + coeffs["c"]
+    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
 
 
 output = [evaluate(coeffs, x) for x in range(10)]

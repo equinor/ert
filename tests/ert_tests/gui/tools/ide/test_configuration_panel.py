@@ -6,7 +6,7 @@ from qtpy.QtWidgets import QMessageBox, QFileDialog
 from ert_gui.tools.ide import ConfigurationPanel
 import os
 
-UNICODE_TEXT = u"""ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
+UNICODE_TEXT = """ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
 ᛋᚳᛖᚪᛚ᛫ᚦᛖᚪᚻ᛫ᛗᚪᚾᚾᚪ᛫ᚷᛖᚻᚹᛦᛚᚳ᛫ᛗᛁᚳᛚᚢᚾ᛫ᚻᛦᛏ᛫ᛞᚫᛚᚪᚾ
 ᚷᛁᚠ᛫ᚻᛖ᛫ᚹᛁᛚᛖ᛫ᚠᚩᚱ᛫ᛞᚱᛁᚻᛏᚾᛖ᛫ᛞᚩᛗᛖᛋ᛫ᚻᛚᛇᛏᚪᚾ᛬"""
 
@@ -46,7 +46,7 @@ def test_save_unicode(tmpdir, qtbot, monkeypatch):
 
     with tmpdir.as_cwd():
         with io.open("poly.ert", "w") as f:
-            f.write(u"Hello World\n")
+            f.write("Hello World\n")
 
         widget = ConfigurationPanel("poly.ert")
         qtbot.addWidget(widget)
@@ -70,7 +70,7 @@ def test_saveas(tmpdir, qtbot, monkeypatch):
 
     with tmpdir.as_cwd():
         with io.open("poly.ert", "w") as f:
-            f.write(u"Hello World\n")
+            f.write("Hello World\n")
 
         widget = ConfigurationPanel("poly.ert")
         widget.show()
@@ -87,7 +87,7 @@ def test_saveas_cancel(tmpdir, qtbot, monkeypatch):
 
     with tmpdir.as_cwd():
         with io.open("poly.ert", "w") as f:
-            f.write(u"Hello World\n")
+            f.write("Hello World\n")
 
         widget = ConfigurationPanel("poly.ert")
         widget.show()

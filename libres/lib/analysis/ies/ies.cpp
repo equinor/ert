@@ -39,6 +39,12 @@
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
+/**
+ * @brief Implementation of algorithm as described in
+ * "Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching"
+ * https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full
+ * 
+ */
 namespace ies {
 void linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y);
 
@@ -61,8 +67,8 @@ auto logger = ert::get_logger("ies");
 }
 
 void ies::init_update(ies::data::Data &module_data,
-                      const bool_vector_type *ens_mask,
-                      const bool_vector_type *obs_mask, const matrix_type *S,
+                      const std::vector<bool> &ens_mask,
+                      const std::vector<bool> &obs_mask, const matrix_type *S,
                       const matrix_type *R, const matrix_type *E,
                       const matrix_type *D) {
     /* Store current ens_mask in module_data->ens_mask for each iteration */
@@ -111,7 +117,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
      */
     ies::linalg_solve_S(W0, Y, S);
 
-    /* INNOVATION H = S*W + D - Y   from Eq. (47) (Line 8)*/
+    /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
     matrix_assign(H, D);                            // H=D=dobs + E - Y
     matrix_dgemm(H, S, W0, false, false, 1.0, 1.0); // H=S*W + H
 
@@ -430,13 +436,13 @@ void ies::linalg_store_active_W(ies::data::Data *data, const matrix_type *W0) {
     int i = 0;
     int j;
     matrix_type *dataW = data->getW();
-    const bool_vector_type *ens_mask = data->ens_mask();
+    const std::vector<bool> &ens_mask = data->ens_mask();
     matrix_set(dataW, 0.0);
     for (int iens = 0; iens < ens_size_msk; iens++) {
-        if (bool_vector_iget(ens_mask, iens)) {
+        if (ens_mask[iens]) {
             j = 0;
             for (int jens = 0; jens < ens_size_msk; jens++) {
-                if (bool_vector_iget(ens_mask, jens)) {
+                if (ens_mask[jens]) {
                     matrix_iset_safe(dataW, iens, jens, matrix_iget(W0, i, j));
                     j += 1;
                 }
