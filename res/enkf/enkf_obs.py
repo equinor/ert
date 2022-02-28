@@ -24,7 +24,6 @@ from res.enkf.observations import ObsVector
 class EnkfObs(BaseCClass):
     TYPE_NAME = "enkf_obs"
 
-    _free = ResPrototype("void enkf_obs_free( enkf_obs )")
     _get_size = ResPrototype("int enkf_obs_get_size( enkf_obs )")
     _valid = ResPrototype("bool enkf_obs_is_valid(enkf_obs)")
 
@@ -131,9 +130,6 @@ class EnkfObs(BaseCClass):
 
     def clear(self):
         self._clear()
-
-    def free(self):
-        self._free()
 
     def __repr__(self):
         validity = "valid" if self.valid else "invalid"
