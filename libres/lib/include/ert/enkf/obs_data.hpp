@@ -68,6 +68,7 @@ PY_USED void obs_data_scale_matrix(const obs_data_type *obs_data,
 PY_USED void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
                                     matrix_type *matrix);
 
+obs_data_type *obs_data_alloc_copy(const obs_data_type *src);
 obs_data_type *obs_data_alloc(double global_std_scaling);
 void obs_data_free(obs_data_type *);
 matrix_type *obs_data_allocD(const obs_data_type *obs_data,
