@@ -139,31 +139,6 @@ const char *local_ministep_get_name(const local_ministep_type *ministep) {
     return ministep->name.data();
 }
 
-void local_ministep_summary_fprintf(const local_ministep_type *ministep,
-                                    FILE *stream) {
-
-    fprintf(stream, "MINISTEP:%s,", ministep->name.data());
-
-    {
-        hash_iter_type *data_iter = hash_iter_alloc(ministep->active_size);
-        while (!hash_iter_is_complete(data_iter)) {
-            const char *data_key = hash_iter_get_next_key(data_iter);
-            fprintf(stream, "NAME OF DATA:%s,", data_key);
-
-            active_list_type *active_list =
-                (active_list_type *)hash_get(ministep->active_size, data_key);
-            active_list_summary_fprintf(active_list, ministep->name.data(),
-                                        data_key, stream);
-        }
-        hash_iter_free(data_iter);
-
-        /* Only one OBSDATA */
-        local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
-        local_obsdata_summary_fprintf(obsdata, stream);
-        fprintf(stream, "\n");
-    }
-}
-
 namespace {
 RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
     auto ministep = reinterpret_cast<local_ministep_type *>(
