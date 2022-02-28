@@ -83,7 +83,7 @@ void local_ministep_add_obs_data(local_ministep_type *ministep,
         obs_data_free(ministep->obs_data);
         ministep->obs_data = NULL;
     }
-    ministep->obs_data = obs_data;
+    ministep->obs_data = obs_data_alloc_copy(obs_data);
 }
 
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,

@@ -123,6 +123,18 @@ static UTIL_SAFE_CAST_FUNCTION(obs_block, OBS_BLOCK_TYPE_ID)
     return obs_block;
 }
 
+obs_block_type *obs_block_alloc_copy(const obs_block_type *src) {
+    obs_block_type *copy = obs_block_alloc(src->obs_key, src->size, nullptr,
+                                           false, src->global_std_scaling);
+    for (int i = 0; i < src->size; i++) {
+        copy->value[i] = src->value[i];
+        copy->std[i] = src->std[i];
+        copy->active_mode[i] = src->active_mode[i];
+    }
+    copy->active_size = src->active_size;
+    return copy;
+}
+
 void obs_block_free(obs_block_type *obs_block) {
     free(obs_block->obs_key);
     free(obs_block->value);
@@ -332,6 +344,18 @@ obs_data_type *obs_data_alloc(double global_std_scaling) {
     obs_data->mask = bool_vector_alloc(0, false);
     obs_data->global_std_scaling = global_std_scaling;
     return obs_data;
+}
+
+obs_data_type *obs_data_alloc_copy(const obs_data_type *src) {
+    obs_data_type *copy = obs_data_alloc(src->global_std_scaling);
+    copy->mask = bool_vector_alloc_copy(src->mask);
+    for (int i = 0; i < vector_get_size(src->data); i++) {
+        obs_block_type *new_block =
+            obs_block_alloc_copy(static_cast<const obs_block_type *>(
+                vector_iget_const(src->data, i)));
+        vector_append_owned_ref(copy->data, new_block, obs_block_free__);
+    }
+    return copy;
 }
 
 obs_block_type *obs_data_add_block(obs_data_type *obs_data, const char *obs_key,

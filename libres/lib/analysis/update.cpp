@@ -544,7 +544,6 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
 
     int active_ens_size = meas_data_get_active_ens_size(meas_data);
     auto S = meas_data_allocS(meas_data);
-    meas_data_free(meas_data);
 
     matrix_type *E = obs_data_allocE(obs_data, shared_rng, active_ens_size);
     int_vector_type *iens_active_index = bool_vector_to_active_list(ens_mask);
@@ -569,6 +568,8 @@ update_data_type make_update_data(enkf_fs_type *source_fs,
     configuration objects, not the actual data.*/
     local_ministep_add_obs_data(ministep, obs_data);
 
+    obs_data_free(obs_data);
+    meas_data_free(meas_data);
     return update_data_type(S, E, D, R, A, row_scaling_parameters, obs_mask);
 }
 
