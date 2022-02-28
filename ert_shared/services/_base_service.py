@@ -188,6 +188,9 @@ class _Proc(threading.Thread):
 
             # Timeout reached, exit with a failure
             if ready == ([], [], []):
+                print(
+                    f"Service {self._service_name} startup exceeded defined timeout {self._timeout}s, initiating shutdown"
+                )
                 self._do_shutdown()
                 self._ensure_delete_conn_info()
                 return None
