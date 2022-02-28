@@ -340,7 +340,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             local_config_get_updatestep(local_config);
         LocalObsData *obsdata =
             local_config_alloc_obsdata(local_config, "ALL_OBS");
-        local_ministep_type *ministep =
+        auto *ministep =
             local_config_alloc_ministep(local_config, "ALL_ACTIVE");
         if (!ministep)
             throw std::logic_error(
@@ -356,7 +356,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
                 LocalObsDataNode node(obs_key);
                 obsdata->add_node(node);
             }
-            local_ministep_add_obsdata(ministep, obsdata);
+            ministep->add_obsdata(*obsdata);
             hash_iter_free(obs_iter);
         }
 

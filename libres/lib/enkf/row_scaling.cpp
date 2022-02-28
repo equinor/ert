@@ -72,6 +72,10 @@ double RowScaling::assign(size_t index, double value) {
     return m_data.at(index);
 }
 
+bool RowScaling::operator==(const RowScaling &other) const {
+    return this->m_resolution == other.m_resolution &&
+           this->m_data == other.m_data;
+}
 /*
   The final step in the Ensemble Smoother update is the matrix multiplication
 

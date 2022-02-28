@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include <unordered_map>
+#include <fmt/format.h>
 #include <ert/util/vector.h>
 
 #include <ert/python.hpp>
@@ -32,7 +33,7 @@
   +-------------------------- local_updatestep_type ---------------------------------------+
   |                                                                                        |
   |                                                                                        |
-  |    +----------------- local_ministep_type --------------------------------------+      |
+  |    +----------------- LocalMiniStep --------------------------------------+      |
   |    |                                                                            |      |
   |    |                                       /    +--- local_dataset_type ---+    |      |
   |    |                                       |    | PRESSURE                 |    |      |
@@ -55,7 +56,7 @@
   |    +----------------------------------------------------------------------------+      |
   |                                                                                        |
   |                                                                                        |
-  |    +----------------- local_ministep_type --------------------------------------+      |
+  |    +----------------- LocalMiniStep --------------------------------------+      |
   |    |                                                                            |      |
   |    |                                       /    +--- local_dataset_type ---+    |      |
   |    |    +-- local_obsset_type ---+         |    | PERMX PORO               |    |      |
@@ -83,7 +84,7 @@ local_updatestep_type: This is is the top level configuration of the
    update at one time step can typically conist of several enkf
    updates, this is handled by using several local_ministep.
 
-local_ministep_type: The ministep defines a collection of observations
+LocalMiniStep: The ministep defines a collection of observations
    and state/parameter variables which are mutually dependant on
    eachother and should be updated together. The local_ministep will
    consist of *ONE* local_obsset of observations, and one or more
@@ -118,7 +119,7 @@ struct local_config_struct {
         default_updatestep; /* A default report step returned if no particular report step has been installed for this time index. */
     hash_type *
         updatestep_storage; /* These three hash tables are the 'holding area' for the local_updatestep, */
-    hash_type *ministep_storage; /* local_ministep instances. */
+    std::unordered_map<std::string, LocalMinistep> ministep_storage;
     std::unordered_map<std::string, LocalObsData> obsdata_storage;
 };
 
@@ -143,7 +144,6 @@ local_config_alloc_updatestep(local_config_type *local_config,
 void local_config_clear(local_config_type *local_config) {
     local_config->default_updatestep = NULL;
     hash_clear(local_config->updatestep_storage);
-    hash_clear(local_config->ministep_storage);
     local_config->obsdata_storage.clear();
     local_config->default_updatestep =
         local_config_alloc_updatestep(local_config, "DEFAULT");
@@ -167,7 +167,6 @@ local_config_type *local_config_alloc() {
 
     local_config->default_updatestep = NULL;
     local_config->updatestep_storage = hash_alloc();
-    local_config->ministep_storage = hash_alloc();
 
     local_config_clear(local_config);
     return local_config;
@@ -175,19 +174,17 @@ local_config_type *local_config_alloc() {
 
 void local_config_free(local_config_type *local_config) {
     hash_free(local_config->updatestep_storage);
-    hash_free(local_config->ministep_storage);
     delete local_config;
 }
 
-local_ministep_type *
-local_config_alloc_ministep(local_config_type *local_config, const char *key) {
-    if (hash_has_key(local_config->ministep_storage, key))
-        return nullptr;
+LocalMinistep *local_config_alloc_ministep(local_config_type *local_config,
+                                           const char *key) {
+    if (local_config->ministep_storage.count(key) == 1)
+        throw std::logic_error(
+            fmt::format("Ministep with name: {} already configured", key));
 
-    local_ministep_type *ministep = local_ministep_alloc(key);
-    hash_insert_hash_owned_ref(local_config->ministep_storage, key, ministep,
-                               local_ministep_free__);
-    return ministep;
+    local_config->ministep_storage.emplace(key, LocalMinistep(key));
+    return &local_config->ministep_storage.at(key);
 }
 
 LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
@@ -206,12 +203,9 @@ bool local_config_has_obsdata(const local_config_type *local_config,
     return local_config->obsdata_storage.count(key) == 1;
 }
 
-local_ministep_type *
-local_config_get_ministep(const local_config_type *local_config,
-                          const char *key) {
-    local_ministep_type *ministep =
-        (local_ministep_type *)hash_get(local_config->ministep_storage, key);
-    return ministep;
+LocalMinistep *local_config_get_ministep(local_config_type *local_config,
+                                         const char *key) {
+    return &local_config->ministep_storage.at(key);
 }
 
 LocalObsData *local_config_get_obsdata(local_config_type *local_config,
@@ -250,6 +244,18 @@ LocalObsData copy_obsdata(py::handle obj, const std::string &obs_key,
     return copy;
 }
 
+LocalMinistep &create_ministep(py::object self, const std::string &name) {
+    auto *local_config = ert::from_cwrap<local_config_type>(self);
+    auto *ministep = local_config_alloc_ministep(local_config, name.c_str());
+    return *ministep;
+}
+
+LocalMinistep &get_ministep(py::object self, const std::string &name) {
+    auto *local_config = ert::from_cwrap<local_config_type>(self);
+    auto *ministep = local_config_get_ministep(local_config, name.c_str());
+    return *ministep;
+}
+
 } // namespace
 
 RES_LIB_SUBMODULE("local.local_config", m) {
@@ -258,4 +264,8 @@ RES_LIB_SUBMODULE("local.local_config", m) {
           py::return_value_policy::reference);
     m.def("get_obsdata_copy", &copy_obsdata, py::arg("self"), py::arg("key1"),
           py::arg("key2"));
+    m.def("create_ministep", &create_ministep,
+          py::return_value_policy::reference_internal);
+    m.def("get_ministep", &get_ministep,
+          py::return_value_policy::reference_internal);
 }

@@ -119,20 +119,17 @@ class LocalConfigTest(ResTest):
             main = test_context.getErt()
 
             local_config = main.getLocalConfig()
-            analysis_module = main.analysisConfig().getModule("STD_ENKF")
 
             # Ministep
-            ministep = local_config.createMinistep("MINISTEP", analysis_module)
+            ministep = local_config.createMinistep("MINISTEP")
             self.assertTrue(isinstance(ministep, LocalMinistep))
 
-            with self.assertRaises(KeyError):
-                _ = local_config.createMinistep("MINISTEP", None)
+            with self.assertRaises(Exception):
+                _ = local_config.createMinistep("MINISTEP")
 
             self.assertFalse(ministep.hasActiveData("DATA"))
-            with self.assertRaises(KeyError):
+            with self.assertRaises(Exception):
                 _ = ministep.getActiveList("DATA")
-
-            self.assertEqual(ministep.get_obs_active_list(), {})
 
     def test_attach_ministep(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -153,41 +150,3 @@ class LocalConfigTest(ResTest):
             updatestep.attachMinistep(ministep)
             self.assertTrue(isinstance(updatestep[0], LocalMinistep))
             self.assertEqual(len(updatestep), upd_size + 1)
-
-    @tmpdir()
-    def test_attach_obs_data_to_ministep(self):
-        config = self.createTestPath("local/snake_oil/snake_oil.ert")
-
-        expected_keys = {
-            "WPR_DIFF_1",
-            "WOPR_OP1_108",
-            "FOPR",
-            "WOPR_OP1_144",
-            "WOPR_OP1_190",
-            "WOPR_OP1_9",
-            "WOPR_OP1_36",
-            "WOPR_OP1_72",
-        }
-
-        with ErtTestContext("obs_data_ministep_test", config) as context:
-            ert = context.getErt()
-            es_update = ESUpdate(ert)
-            fsm = ert.getEnkfFsManager()
-
-            sim_fs = fsm.getFileSystem("default_0")
-            target_fs = fsm.getFileSystem("target")
-            run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
-            es_update.smootherUpdate(run_context)
-
-            update_step = ert.getLocalConfig().getUpdatestep()
-            ministep = update_step[len(update_step) - 1]
-            active_dict = ministep.get_obs_active_list()
-            self.assertEqual(len(expected_keys), len(active_dict))
-
-            observed_obs_keys = set()
-            for obs_key, block in active_dict.items():
-                observed_obs_keys.add(obs_key)
-                for i in range(len(block)):
-                    self.assertTrue(block[i])
-
-            self.assertSetEqual(expected_keys, observed_obs_keys)

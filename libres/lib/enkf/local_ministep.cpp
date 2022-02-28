@@ -39,173 +39,38 @@
    to the internals of the underlying enkf_node / obs_node objects.
 */
 
-UTIL_SAFE_CAST_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
-
-local_ministep_type *local_ministep_alloc(const char *name) {
-    return new local_ministep_type(name);
-}
-
-void local_ministep_free(local_ministep_type *ministep) { delete ministep; }
-
-void local_ministep_free__(void *arg) {
-    local_ministep_type *ministep = local_ministep_safe_cast(arg);
-    local_ministep_free(ministep);
-}
-
-/*
-   When adding observations and update nodes here observe the following:
-
-   1. The thing will fail hard if you try to add a node/obs which is
-   already in the hash table.
-
-   2. The newly added elements will be assigned an active_list
-   instance with mode ALL_ACTIVE.
-*/
-
-void local_ministep_add_obsdata(local_ministep_type *ministep,
-                                LocalObsData *obsdata) {
-    if (ministep->observations == NULL)
-        ministep->observations = obsdata;
-    else { // Add nodes from input observations to existing observations
-        int iobs;
-        for (iobs = 0; iobs < obsdata->size(); iobs++) {
-            auto &obs_node = obsdata->operator[](iobs);
-            LocalObsDataNode new_node(obs_node);
-            local_ministep_add_obsdata_node(ministep, &new_node);
-        }
-    }
-}
-
-void local_ministep_add_obs_data(local_ministep_type *ministep,
-                                 obs_data_type *obs_data) {
-    if (ministep->obs_data != NULL) {
-        obs_data_free(ministep->obs_data);
-        ministep->obs_data = NULL;
-    }
-    ministep->obs_data = obs_data;
-}
-
-void local_ministep_add_obsdata_node(local_ministep_type *ministep,
-                                     LocalObsDataNode *obsdatanode) {
-    LocalObsData *obsdata = local_ministep_get_obsdata(ministep);
-    obsdata->add_node(*obsdatanode);
-}
-
-int local_ministep_num_active_data(const local_ministep_type *ministep) {
-    return ministep->num_active_data();
-}
-ActiveList *local_ministep_get_active_data_list(local_ministep_type *ministep,
-                                                const char *key) {
-    return ministep->get_active_data_list(key);
-}
-bool local_ministep_data_is_active(const local_ministep_type *ministep,
-                                   const char *key) {
-    return ministep->data_is_active(key);
-}
-void local_ministep_activate_data(local_ministep_type *ministep,
-                                  const char *key) {
-    ministep->add_active_data(key);
-}
-
-RowScaling *
-local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
-                                         const char *key) {
-    auto scaling_iter = ministep->scaling.find(key);
-    if (scaling_iter == ministep->scaling.end()) {
-        if (ministep->active_size.count(key) == 0)
-            throw std::invalid_argument(
-                "Tried to create row_scaling object for unknown key");
-
-        ministep->scaling.emplace(key, std::make_shared<RowScaling>());
-    }
-    return ministep->scaling[key].get();
-}
-
-LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep) {
-    return ministep->observations;
-}
-
-obs_data_type *
-local_ministep_get_obs_data(const local_ministep_type *ministep) {
-    return ministep->obs_data;
-}
-
-const char *local_ministep_get_name(const local_ministep_type *ministep) {
-    return ministep->name.data();
-}
-
-void local_ministep_summary_fprintf(const local_ministep_type *ministep,
-                                    FILE *stream) {}
-
-namespace {
-RowScaling *get_or_create_row_scaling(py::handle obj, const std::string &name) {
-    auto * ministep = ert::from_cwrap<local_ministep_type>(self);
-    auto * row_scaling =
-        local_ministep_get_or_create_row_scaling(ministep, name.c_str());
-    return row_scaling;
-}
-
-ActiveList &get_active_data_list(py::handle self, const std::string &name) {
-    auto * ministep = ert::from_cwrap<local_ministep_type>(self);
-    auto active_list =
-        local_ministep_get_active_data_list(ministep, name.c_str());
-    return *active_list;
-}
-
-void add_obsdata_node(py::handle obj, LocalObsDataNode &node) {
-    auto *ministep = reinterpret_cast<local_ministep_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    local_ministep_add_obsdata_node(ministep, &node);
-}
-
-LocalObsData &get_obsdata(py::handle obj) {
-    auto *ministep = reinterpret_cast<local_ministep_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    auto *obsdata_ptr = local_ministep_get_obsdata(ministep);
-    return *obsdata_ptr;
-}
-
-void attach_obsdata(py::handle obj, LocalObsData &obsdata) {
-    auto *ministep = reinterpret_cast<local_ministep_type *>(
-        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
-    local_ministep_add_obsdata(ministep, &obsdata);
-}
-
-} // namespace
-
-RES_LIB_SUBMODULE("local.ministep", m) {
+RES_LIB_SUBMODULE("local.local_ministep", m) {
     using namespace py::literals;
 
-    auto get_obs_active_list_impl = [](py::handle self) -> py::dict {
-        auto ministep = ert::from_cwrap<local_ministep_type>(self);
+    auto get_active_data_list =
+        static_cast<ActiveList &(LocalMinistep::*)(const std::string &)>(
+            &LocalMinistep::get_active_data_list);
+    auto get_obs_data = static_cast<LocalObsData &(LocalMinistep::*)()>(
+        &LocalMinistep::get_obsdata);
+    auto get_row_scaling =
+        static_cast<RowScaling &(LocalMinistep::*)(const std::string &)>(
+            &LocalMinistep::get_row_scaling);
 
-        py::dict dict;
-        if (ministep->obs_data == nullptr)
-            return dict;
-
-        int num_blocks = obs_data_get_num_blocks(ministep->obs_data);
-        for (int i{}; i < num_blocks; ++i) {
-            auto obs_block = obs_data_iget_block(ministep->obs_data, i);
-            py::str key = obs_block_get_key(obs_block);
-
-            py::list active_list;
-            int active_size = obs_block_get_size(obs_block);
-            for (int j{}; j < active_size; ++j)
-                active_list.append(
-                    py::bool_{obs_block_iget_is_active(obs_block, j)});
-            dict[key] = active_list;
-        }
-        return dict;
-    };
-
-    m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
-          "name"_a);
-    m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
-    m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
-          py::return_value_policy::reference);
-    m.def("add_obsdata_node", &add_obsdata_node, "self"_a, "node"_a);
-    m.def("get_obsdata", &get_obsdata, "self"_a,
-          py::return_value_policy::reference);
-    m.def("attach_obsdata", &attach_obsdata, "self"_a, "obsdata"_a);
+    py::class_<LocalMinistep>(m, "LocalMinistep")
+        .def("hasActiveData", &LocalMinistep::data_is_active)
+        .def("getActiveList", get_active_data_list,
+             py::return_value_policy::reference_internal)
+        .def("numActiveData", &LocalMinistep::num_active_data)
+        .def("addActiveData", &LocalMinistep::add_active_data)
+        .def("addNode",
+             [](LocalMinistep &self, const LocalObsDataNode &node) {
+                 auto &observations = self.get_obsdata();
+                 observations.add_node(node);
+             })
+        .def("attachObsset", &LocalMinistep::add_obsdata)
+        .def("row_scaling", &LocalMinistep::get_or_create_row_scaling,
+             py::return_value_policy::reference_internal)
+        .def("getLocalObsData", get_obs_data,
+             py::return_value_policy::reference_internal)
+        .def("have_obsdata", &LocalMinistep::have_obsdata)
+        .def("name", &LocalMinistep::name)
+        .def("get_runtime_obs_active_list",
+             &LocalMinistep::get_runtime_obs_active_list)
+        .def("get_or_create_row_scaling",
+             &LocalMinistep::get_or_create_row_scaling, "name"_a);
 }

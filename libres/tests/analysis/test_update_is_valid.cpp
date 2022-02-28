@@ -40,8 +40,8 @@ TEST_CASE("is_valid", "[analysis]") {
         const int ensemble_size = 1;
         analysis_module_type *analysis_module =
             analysis_module_alloc(ensemble_size, ENSEMBLE_SMOOTHER);
-        local_ministep_type *ministep = local_ministep_alloc("not important");
-        local_updatestep_add_ministep(updatestep, ministep);
+        LocalMinistep ministep("not-important");
+        local_updatestep_add_ministep(updatestep, &ministep);
 
         THEN("Assertion fail no active realization") {
             REQUIRE(analysis_config_get_min_realisations(analysis_config) == 0);
@@ -107,9 +107,8 @@ TEST_CASE("is_valid", "[analysis]") {
             set_state_map(source_state_map, 0, STATE_HAS_DATA);
             analysis_module_type *other_analysis_module =
                 analysis_module_alloc(ensemble_size, ENSEMBLE_SMOOTHER);
-            local_ministep_type *other_ministep =
-                local_ministep_alloc("other analysis module");
-            local_updatestep_add_ministep(updatestep, other_ministep);
+            LocalMinistep other_ministep("other analysis module");
+            local_updatestep_add_ministep(updatestep, &other_ministep);
             THEN("Assertion passes with no flags set") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
                                            ensemble_size, updatestep));
@@ -121,7 +120,6 @@ TEST_CASE("is_valid", "[analysis]") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
                                            ensemble_size, updatestep));
             }
-            local_ministep_free(other_ministep);
             analysis_module_free(other_analysis_module);
         }
 
@@ -131,19 +129,17 @@ TEST_CASE("is_valid", "[analysis]") {
                 local_updatestep_alloc("iter_update_step");
             analysis_module_type *iter_analysis_module = analysis_module_alloc(
                 ensemble_size, ITERATED_ENSEMBLE_SMOOTHER);
-            local_ministep_type *iter_ministep = local_ministep_alloc("iter");
-            local_updatestep_add_ministep(updatestep, iter_ministep);
+            LocalMinistep iter_ministep("Iter");
+            local_updatestep_add_ministep(updatestep, &iter_ministep);
             THEN("Assertion passes when ministep count == 1") {
                 REQUIRE(analysis::is_valid(analysis_config, source_state_map,
                                            ensemble_size, iter_updatestep));
             }
-            local_ministep_free(iter_ministep);
             analysis_module_free(iter_analysis_module);
             local_updatestep_free(iter_updatestep);
         }
 
         // cleanup
-        local_ministep_free(ministep);
         analysis_module_free(analysis_module);
         local_updatestep_free(updatestep);
         state_map_free(source_state_map);

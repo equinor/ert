@@ -70,6 +70,8 @@ bool LocalObsData::add_node(const LocalObsDataNode &node) {
     return true;
 }
 
+bool LocalObsData::empty() const { return this->m_nodes.empty(); }
+
 std::size_t LocalObsData::size() const { return this->m_nodes.size(); }
 
 const std::string &LocalObsData::name() const { return this->m_name; }

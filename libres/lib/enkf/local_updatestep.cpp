@@ -16,10 +16,11 @@
    for more details.
 */
 
+#include <vector>
+
 #include <ert/util/util.h>
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
-
+#include <ert/python.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 
@@ -36,26 +37,23 @@
 struct local_updatestep_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *name;
-    vector_type *ministep;
+    std::vector<LocalMinistep *> ministep;
 };
 
 UTIL_SAFE_CAST_FUNCTION(local_updatestep, LOCAL_UPDATESTEP_TYPE_ID)
 
 local_updatestep_type *local_updatestep_alloc(const char *name) {
-    local_updatestep_type *updatestep =
-        (local_updatestep_type *)util_malloc(sizeof *updatestep);
+    local_updatestep_type *updatestep = new local_updatestep_type();
 
     UTIL_TYPE_ID_INIT(updatestep, LOCAL_UPDATESTEP_TYPE_ID);
     updatestep->name = util_alloc_string_copy(name);
-    updatestep->ministep = vector_alloc_new();
 
     return updatestep;
 }
 
 void local_updatestep_free(local_updatestep_type *updatestep) {
     free(updatestep->name);
-    vector_free(updatestep->ministep);
-    free(updatestep);
+    delete updatestep;
 }
 
 void local_updatestep_free__(void *arg) {
@@ -64,22 +62,49 @@ void local_updatestep_free__(void *arg) {
 }
 
 void local_updatestep_add_ministep(local_updatestep_type *updatestep,
-                                   local_ministep_type *ministep) {
-    vector_append_ref(
-        updatestep->ministep,
-        ministep); /* Observe that the vector takes NO ownership */
+                                   LocalMinistep *ministep) {
+    printf("\nPushing ministep:%p  on updatestep: %p \n", ministep, updatestep);
+    updatestep->ministep.push_back(ministep);
 }
 
-local_ministep_type *
-local_updatestep_iget_ministep(const local_updatestep_type *updatestep,
-                               int index) {
-    return (local_ministep_type *)vector_iget(updatestep->ministep, index);
+LocalMinistep *local_updatestep_iget_ministep(local_updatestep_type *updatestep,
+                                              int index) {
+    return updatestep->ministep[index];
+}
+
+const LocalMinistep *
+local_updatestep_iget_const_ministep(const local_updatestep_type *updatestep,
+                                     int index) {
+    return updatestep->ministep[index];
 }
 
 int local_updatestep_get_num_ministep(const local_updatestep_type *updatestep) {
-    return vector_get_size(updatestep->ministep);
+    return updatestep->ministep.size();
 }
 
 const char *local_updatestep_get_name(const local_updatestep_type *updatestep) {
     return updatestep->name;
+}
+
+namespace {
+
+LocalMinistep &iget_ministep(py::object self, int index) {
+    auto *updatestep = ert::from_cwrap<local_updatestep_type>(self);
+    auto *ministep = local_updatestep_iget_ministep(updatestep, index);
+    return *ministep;
+}
+
+void add_ministep(py::object self, LocalMinistep &ministep) {
+    auto *updatestep = ert::from_cwrap<local_updatestep_type>(self);
+    local_updatestep_add_ministep(updatestep, &ministep);
+}
+
+} // namespace
+
+RES_LIB_SUBMODULE("local.local_updatestep", m) {
+    using namespace py::literals;
+
+    m.def("iget_ministep", &iget_ministep,
+          py::return_value_policy::reference_internal);
+    m.def("add_ministep", &add_ministep);
 }

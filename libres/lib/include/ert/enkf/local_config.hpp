@@ -42,13 +42,12 @@ local_config_type *local_config_alloc();
 void local_config_clear(local_config_type *local_config);
 void local_config_clear_active(local_config_type *local_config);
 void local_config_free(local_config_type *local_config);
-local_ministep_type *
-local_config_alloc_ministep(local_config_type *local_config, const char *key);
+LocalMinistep *local_config_alloc_ministep(local_config_type *local_config,
+                                           const char *key);
 local_updatestep_type *
 local_config_get_updatestep(const local_config_type *local_config);
-local_ministep_type *
-local_config_get_ministep(const local_config_type *local_config,
-                          const char *key);
+LocalMinistep *local_config_get_ministep(local_config_type *local_config,
+                                         const char *key);
 LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
                                          const char *obsdata_name);
 bool local_config_has_obsdata(const local_config_type *local_config,

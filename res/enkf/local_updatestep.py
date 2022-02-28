@@ -1,20 +1,14 @@
 from cwrap import BaseCClass
 
+from res import _lib
 from res import ResPrototype
-from res.enkf.local_ministep import LocalMinistep
 
 
 class LocalUpdateStep(BaseCClass):
     TYPE_NAME = "local_updatestep"
 
     _size = ResPrototype("int   local_updatestep_get_num_ministep(local_updatestep)")
-    _iget_ministep = ResPrototype(
-        "local_ministep_ref local_updatestep_iget_ministep(local_updatestep, int)"
-    )
     _free = ResPrototype("void  local_updatestep_free(local_updatestep)")
-    _attach_ministep = ResPrototype(
-        "void  local_updatestep_add_ministep(local_updatestep, local_ministep)"
-    )
     _name = ResPrototype("char* local_updatestep_get_name(local_updatestep)")
 
     def __init__(self, updatestep_key):
@@ -31,13 +25,12 @@ class LocalUpdateStep(BaseCClass):
         if index < 0:
             index += len(self)
         if 0 <= index < len(self):
-            return self._iget_ministep(index)
+            return _lib.local.local_updatestep.iget_ministep(self, index)
         else:
             raise IndexError("Invalid index, valid range: [0, %d)" % len(self))
 
     def attachMinistep(self, ministep):
-        assert isinstance(ministep, LocalMinistep)
-        self._attach_ministep(ministep)
+        _lib.local.local_updatestep.add_ministep(self, ministep)
 
     def name(self):
         return self._name()

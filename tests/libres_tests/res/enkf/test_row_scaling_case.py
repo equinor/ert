@@ -272,6 +272,8 @@ class RowScalingTest(ResTest):
             rng.setState(random_seed)
             es_update.smootherUpdate(run_context)
 
+            print("Default ALL_ACTIVE update complete")
+
             # Configure the local updates
             local_config = main.getLocalConfig()
             local_config.clear()
@@ -291,6 +293,7 @@ class RowScalingTest(ResTest):
             field_config = poro_config.getFieldModelConfig()
             grid = main.eclConfig().getGrid()
             row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
+            row_scaling = ministep.row_scaling("PORO")
 
             # Second update with row scaling
             update_fs2 = main.getEnkfFsManager().getFileSystem("target2")

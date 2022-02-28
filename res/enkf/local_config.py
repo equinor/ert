@@ -18,9 +18,7 @@ from cwrap import BaseCClass
 
 from res import ResPrototype
 from res import _lib
-from res.analysis import AnalysisModule
-from res.enkf.local_ministep import LocalMinistep
-from res.enkf.local_updatestep import LocalUpdateStep
+from res.enkf.local_updatestep import LocalUpdateStep  # pylint: disable=unused-import
 
 
 class LocalConfig(BaseCClass):
@@ -40,13 +38,6 @@ class LocalConfig(BaseCClass):
     _free = ResPrototype("void   local_config_free(local_config)")
     _clear = ResPrototype("void   local_config_clear(local_config)")
     _clear_active = ResPrototype("void   local_config_clear_active(local_config)")
-    _create_ministep = ResPrototype(
-        "local_ministep_ref local_config_alloc_ministep(local_config, char*, analysis_module)"
-    )
-    _attach_ministep = ResPrototype(
-        "void   local_updatestep_add_ministep(local_updatestep, local_ministep)",
-        bind=False,
-    )
     _create_obsdata = ResPrototype(
         "void   local_config_alloc_obsdata(local_config, char*)"
     )
@@ -54,9 +45,6 @@ class LocalConfig(BaseCClass):
 
     _get_updatestep = ResPrototype(
         "local_updatestep_ref local_config_get_updatestep(local_config)"
-    )
-    _get_ministep = ResPrototype(
-        "local_ministep_ref   local_config_get_ministep(local_config, char*)"
     )
 
     def __init__(self):
@@ -86,15 +74,10 @@ class LocalConfig(BaseCClass):
     def clear_active(self):
         self._clear_active()
 
-    def createMinistep(self, mini_step_key, analysis_module=None):
+    def createMinistep(self, mini_step_key):
         """@rtype: Ministep"""
         assert isinstance(mini_step_key, str)
-        if analysis_module:
-            assert isinstance(analysis_module, AnalysisModule)
-        ministep = self._create_ministep(mini_step_key, analysis_module)
-        if ministep is None:
-            raise KeyError("Ministep:  {} already exists".format(mini_step_key))
-        ministep.set_ensemble_config(self.__getEnsembleConfig())
+        ministep = _lib.local.local_config.create_ministep(self, mini_step_key)
         return ministep
 
     def createObsdata(self, obsdata_key):
@@ -124,17 +107,12 @@ class LocalConfig(BaseCClass):
     def getMinistep(self, mini_step_key):
         """@rtype: Ministep"""
         assert isinstance(mini_step_key, str)
-        return self._get_ministep(mini_step_key)
+        return _lib.local.local_config.get_ministep(self, mini_step_key)
 
     def getObsdata(self, obsdata_key):
         """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
         return _lib.local.local_config.get_obsdata_ref(self, obsdata_key)
-
-    def attachMinistep(self, update_step, mini_step):
-        assert isinstance(mini_step, LocalMinistep)
-        assert isinstance(update_step, LocalUpdateStep)
-        self._attach_ministep(update_step, mini_step)
 
     def __repr__(self):
         return self._create_repr()
