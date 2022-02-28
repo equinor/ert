@@ -113,3 +113,23 @@ def test_init_job_with_std():
     )
     assert job.std_err == "exit_err"
     assert job.std_out == "exit_out"
+
+
+def test_makedirs(monkeypatch, tmp_path):
+    """
+    Test that the directories for the output process streams are created if
+    they don't exist
+    """
+    monkeypatch.chdir(tmp_path)
+    job = Job(
+        {
+            "executable": "/usr/bin/true",
+            "stdout": "a/file",
+            "stderr": "b/c/file",
+        },
+        0,
+    )
+    for _ in job.run():
+        pass
+    assert (tmp_path / "a/file").is_file()
+    assert (tmp_path / "b/c/file").is_file()
