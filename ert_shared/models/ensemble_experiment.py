@@ -9,7 +9,7 @@ class EnsembleExperiment(BaseRunModel):
     def __init__(self):
         super(EnsembleExperiment, self).__init__(ERT.enkf_facade.get_queue_config())
 
-    def runSimulations__(self, arguments, run_msg, evaluator_config):
+    def runSimulations__(self, arguments, run_msg, evaluator_server_config):
 
         run_context = self.create_context(arguments)
 
@@ -26,7 +26,7 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhaseName(run_msg, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_config
+            run_context, evaluator_server_config
         )
 
         num_successful_realizations += arguments.get("prev_successful_realizations", 0)
@@ -42,9 +42,9 @@ class EnsembleExperiment(BaseRunModel):
 
         return run_context
 
-    def runSimulations(self, arguments, evaluator_config):
+    def runSimulations(self, arguments, evaluator_server_config):
         return self.runSimulations__(
-            arguments, "Running ensemble experiment...", evaluator_config
+            arguments, "Running ensemble experiment...", evaluator_server_config
         )
 
     def create_context(self, arguments):

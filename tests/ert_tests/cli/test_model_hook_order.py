@@ -31,11 +31,11 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     mock_parent.runWorkflows = mock_sim_runner
     ERT_mock = MagicMock()
     minimum_args = MagicMock()
-    evaluator_config_mock = MagicMock()
+    evaluator_server_config_mock = MagicMock()
     test_module = inspect.getmodule(test_class)
     monkeypatch.setattr(test_module, "EnkfSimulationRunner", mock_parent)
     monkeypatch.setattr(test_module, "ERT", ERT_mock)
-    test_class.runSimulations(MagicMock(), minimum_args, evaluator_config_mock)
+    test_class.runSimulations(MagicMock(), minimum_args, evaluator_server_config_mock)
 
     expected_calls = [
         call(expected_call, ert=ERT_mock.ert) for expected_call in EXPECTED_CALL_ORDER
@@ -54,7 +54,9 @@ def test_hook_call_order_es_mda(monkeypatch):
         "weights": [1],
         "analysis_module": "some_module",
     }
-    evaluator_config = EvaluatorServerConfig(custom_port_range=range(1024, 65535))
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535)
+    )
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()
     mock_parent.runWorkflows = mock_sim_runner
@@ -73,7 +75,7 @@ def test_hook_call_order_es_mda(monkeypatch):
 
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
-    test_class.runSimulations(minimum_args, evaluator_config)
+    test_class.runSimulations(minimum_args, evaluator_server_config)
 
     expected_calls = [
         call(expected_call, ert=ERT_mock.ert) for expected_call in EXPECTED_CALL_ORDER
@@ -88,7 +90,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     """
     test_class = IteratedEnsembleSmoother
     minimum_args = MagicMock()
-    evaluator_config = MagicMock()
+    evaluator_server_config = MagicMock()
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()
     mock_parent.runWorkflows = mock_sim_runner
@@ -117,7 +119,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class.setAnalysisModule.return_value.getInt.return_value = 1
     test_class.setPhase = MagicMock()
 
-    test_class.runSimulations(minimum_args, evaluator_config)
+    test_class.runSimulations(minimum_args, evaluator_server_config)
 
     expected_calls = [
         call(expected_call, ert=ERT_mock.ert) for expected_call in EXPECTED_CALL_ORDER
