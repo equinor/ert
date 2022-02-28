@@ -165,16 +165,8 @@ pybind11_add_module(
   enkf/subst_config.cpp)
 # -----------------------------------------------------------------
 
-find_package(LAPACK REQUIRED)
-target_link_libraries(
-  _lib
-  PUBLIC ${ECL}
-         ${LAPACK_LIBRARIES}
-         ${LAPACK_LINKER_FLAGS}
-         std::filesystem
-         cJSON::cJSON
-         fmt::fmt
-         Eigen3::Eigen)
+target_link_libraries(_lib PUBLIC ${ECL} std::filesystem cJSON::cJSON fmt::fmt
+                                  Eigen3::Eigen)
 target_include_directories(
   _lib
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
