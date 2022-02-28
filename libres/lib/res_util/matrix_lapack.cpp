@@ -96,20 +96,3 @@ void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
     auto singular = svd.singularValues();
     std::copy(singular.begin(), singular.end(), S);
 }
-
-/* The matrix will be inverted in-place, the inversion is based on LU
-   factorisation in the routine matrix_dgetrf__(  ).
-
-   The return value:
-
-     =0 : Success
-     >0 : Singular matrix
-     <0 : Invalid input
-*/
-int matrix_inv(matrix_type *A) {
-    if (!A->fullPivLu().isInvertible())
-        return 1;
-    Eigen::MatrixXd tmp = A->fullPivLu().inverse();
-    *A = tmp;
-    return 0;
-}

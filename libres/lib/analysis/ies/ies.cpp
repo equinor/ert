@@ -277,18 +277,12 @@ void ies::linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y) {
     int m_ens_size = std::min(ens_size - 1, 16);
     int m_state_size = std::min(state_size - 1, 3);
 
-    std::vector<double> eig(ens_size);
     matrix_type *Ai = matrix_alloc_copy(A);
-    matrix_type *AAi = matrix_alloc(ens_size, ens_size);
     matrix_subtract_row_mean(Ai);
-    matrix_type *VT = matrix_alloc(state_size, ens_size);
-    matrix_dgesvd(DGESVD_NONE, DGESVD_MIN_RETURN, Ai, eig.data(), NULL, VT);
-    matrix_dgemm(AAi, VT, VT, true, false, 1.0, 0.0);
+    auto svd = Ai->bdcSvd(Eigen::ComputeThinV);
+    *Y *= svd.matrixV().transpose() * svd.matrixV();
 
-    matrix_inplace_matmul(Y, AAi);
     matrix_free(Ai);
-    matrix_free(AAi);
-    matrix_free(VT);
 }
 
 /*
@@ -322,7 +316,7 @@ void ies::linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
     matrix_transpose(Y, YT); // RHS stored in YT
 
     /* Solve system                                                                                (Line 7)   */
-    matrix_dgesvx(Omega, YT, nullptr);
+    *YT = Omega->partialPivLu().solve(*YT);
 
     matrix_transpose(YT, S); // Copy solution to S
 
@@ -403,11 +397,12 @@ void ies::linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
     matrix_type *ZtStH = matrix_alloc(ens_size, ens_size);
     matrix_type *StH = matrix_alloc(ens_size, ens_size);
     matrix_type *StS = matrix_alloc(ens_size, ens_size);
-    std::vector<double> eig(ens_size);
 
     matrix_diag_set_scalar(StS, 1.0);
     matrix_dgemm(StS, S, S, true, false, 1.0, 1.0);
-    matrix_dgesvd(DGESVD_ALL, DGESVD_NONE, StS, eig.data(), Z, NULL);
+    auto svd = StS->bdcSvd(Eigen::ComputeFullU);
+    std::vector<double> eig = svd.singularValues();
+    *Z = svd.matrixV().transpose();
 
     matrix_dgemm(StH, S, H, true, false, 1.0, 0.0);
     matrix_dgemm(ZtStH, Z, StH, true, false, 1.0, 0.0);

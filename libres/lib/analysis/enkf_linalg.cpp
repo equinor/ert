@@ -103,6 +103,7 @@ int enkf_linalg_svdS(const matrix_type *S,
     int num_singular_values =
         std::min(matrix_get_rows(S), matrix_get_columns(S));
     {
+        Eigen::MatrixXd workS = *S;
         matrix_type *workS = matrix_alloc_copy(S);
         matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
         matrix_free(workS);
@@ -150,7 +151,6 @@ void enkf_linalg_lowrankE(
     matrix_type *X0 = matrix_alloc(nrmin, nrens);
 
     matrix_type *U1 = matrix_alloc(nrmin, nrmin);
-    std::vector<double> sig1(nrmin);
 
     int i, j;
 
@@ -167,7 +167,9 @@ void enkf_linalg_lowrankE(
             matrix_imul(X0, i, j, inv_sig0[i]);
 
     /* Compute SVD of X0->  U1*eig*V1   14.52 */
-    matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, X0, sig1.data(), U1, NULL);
+    auto svd = X0->bdcSvd(Eigen::ComputeThinU);
+    std::vector<double> sig1 = svd.singularValues();
+    *U1 = svd.matrixU();
 
     /* Lambda1 = 1/(I + Lambda^2)  in 14.56 */
     for (i = 0; i < nrmin; i++)
