@@ -340,13 +340,13 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
     double nsc = 1.0 / sqrt(ens_size - 1.0);
     matrix_type *X1 = matrix_alloc(
         nrobs, std::min(ens_size, nrobs)); // Used in subspace inversion
-    std::vector<double> eig(ens_size);
+    Eigen::VectorXd eig;
 
     if (ies_inversion == config::IES_INVERSION_SUBSPACE_RE) {
         matrix_type *scaledE = matrix_alloc_copy(E);
         matrix_scale(scaledE, nsc);
 
-        enkf_linalg_lowrankE(S, scaledE, X1, eig.data(), truncation);
+        enkf_linalg_lowrankE(S, scaledE, X1, eig, truncation);
 
         matrix_free(scaledE);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
@@ -354,14 +354,14 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         matrix_type *Cee = matrix_alloc_matmul(E, Et);
         matrix_scale(Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
 
-        enkf_linalg_lowrankCinv(S, Cee, X1, eig.data(), truncation);
+        enkf_linalg_lowrankCinv(S, Cee, X1, eig, truncation);
 
         matrix_free(Et);
         matrix_free(Cee);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
         matrix_type *scaledR = matrix_alloc_copy(R);
         matrix_scale(scaledR, nsc * nsc);
-        enkf_linalg_lowrankCinv(S, scaledR, X1, eig.data(), truncation);
+        enkf_linalg_lowrankCinv(S, scaledR, X1, eig, truncation);
         matrix_free(scaledR);
     }
 

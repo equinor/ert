@@ -69,31 +69,3 @@ TEST_CASE("matrix_subtract_row_mean", "[res_util]") {
 
     matrix_free(X);
 }
-
-SCENARIO("Solving a linear equation with dgesvx") {
-    GIVEN("A diagonal matrix A") {
-        int N = 4;
-        auto A = matrix_alloc_identity(N);
-        for (int i = 0; i < N; i++)
-            matrix_iset(A, i, i, 1.0 / (i + 1));
-
-        AND_GIVEN("A vector b") {
-            matrix_type *bx = matrix_alloc(N, 1);
-            for (int i = 0; i < N; i++)
-                matrix_iset(bx, i, 0, 1);
-
-            WHEN("Using dgesvx to solve the linear equation Ax=b") {
-                double rcond_value;
-                double *rcond = GENERATE_REF(&rcond_value, nullptr);
-                matrix_dgesvx(A, bx, rcond);
-
-                THEN("b is modified to be the solution x") {
-                    for (int i = 0; i < N; i++)
-                        REQUIRE(matrix_iget(bx, i, 0) == (i + 1));
-                }
-            }
-            matrix_free(bx);
-        }
-        matrix_free(A);
-    }
-}

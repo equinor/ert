@@ -22,8 +22,8 @@ void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
 
 void enkf_linalg_lowrankCinv(
     const matrix_type *S, const matrix_type *R,
-    matrix_type *W, /* Corresponding to X1 from Eq. 14.29 */
-    double *eig,    /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
+    matrix_type *W,       /* Corresponding to X1 from Eq. 14.29 */
+    Eigen::VectorXd &eig, /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
     const std::variant<double, int> &truncation);
 
 void enkf_linalg_lowrankE(
@@ -31,8 +31,8 @@ void enkf_linalg_lowrankE(
     const matrix_type *E, /* (nrobs x nrens) */
     matrix_type
         *W, /* (nrobs x nrmin) Corresponding to X1 from Eqs. 14.54-14.55 */
-    double
-        *eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
+    Eigen::VectorXd
+        &eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
     const std::variant<double, int> &truncation);
 
 void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
