@@ -98,15 +98,17 @@ class BaseRunModel:
         self._failed = False
         self._phase = 0
 
-    def start_simulations_thread(self, arguments, evaluator_config) -> None:
+    def start_simulations_thread(self, arguments, evaluator_server_config) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
-        self.startSimulations(arguments=arguments, evaluator_config=evaluator_config)
+        self.startSimulations(
+            arguments=arguments, evaluator_server_config=evaluator_server_config
+        )
 
-    def startSimulations(self, arguments, evaluator_config) -> None:
+    def startSimulations(self, arguments, evaluator_server_config) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(
-                arguments, evaluator_config=evaluator_config
+                arguments, evaluator_server_config=evaluator_server_config
             )
             self.updateDetailedProgress()
             self.completed_realizations_mask = run_context.get_mask()
@@ -127,7 +129,7 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(self, arguments, evaluator_config):
+    def runSimulations(self, arguments, evaluator_server_config):
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def create_context(self, arguments):

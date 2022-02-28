@@ -18,7 +18,7 @@ class EnsembleSmoother(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments, evaluator_config):
+    def runSimulations(self, arguments, evaluator_server_config):
         prior_context = self.create_context(arguments)
 
         self.checkMinimumActiveRealizations(prior_context)
@@ -37,7 +37,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            prior_context, evaluator_config
+            prior_context, evaluator_server_config
         )
 
         # Push simulation results to storage
@@ -77,7 +77,7 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Running forecast...", indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            rerun_context, evaluator_config
+            rerun_context, evaluator_server_config
         )
 
         self.checkHaveSufficientRealizations(num_successful_realizations)

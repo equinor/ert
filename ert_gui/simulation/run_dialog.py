@@ -275,12 +275,13 @@ class RunDialog(QDialog):
         self._snapshot_model.reset()
         self._tab_widget.clear()
 
-        evaluator_config = EvaluatorServerConfig()
+        evaluator_server_config = EvaluatorServerConfig()
 
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())
             self._run_model.startSimulations(
-                self._simulation_arguments, evaluator_config=evaluator_config
+                self._simulation_arguments,
+                evaluator_server_config=evaluator_server_config,
             )
 
         simulation_thread = Thread(name="ert_gui_simulation_thread")
@@ -293,7 +294,7 @@ class RunDialog(QDialog):
         tracker = create_tracker(
             self._run_model,
             num_realizations=self._simulation_arguments["active_realizations"].count(),
-            ee_config=evaluator_config,
+            ee_config=evaluator_server_config,
         )
 
         worker = TrackerWorker(tracker)

@@ -44,7 +44,7 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments, evaluator_config):
+    def runSimulations(self, arguments, evaluator_server_config):
         context = self.create_context(arguments, 0, initialize_mask_from_arguments=True)
         self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(arguments["weights"])
@@ -80,7 +80,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 arguments, iteration, initialize_mask_from_arguments=is_first_iteration
             )
             _, ensemble_id = self._simulateAndPostProcess(
-                run_context, arguments, evaluator_config, update_id=update_id
+                run_context, arguments, evaluator_server_config, update_id=update_id
             )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(
@@ -97,7 +97,7 @@ class MultipleDataAssimilation(BaseRunModel):
             arguments, len(weights), initialize_mask_from_arguments=False, update=False
         )
         self._simulateAndPostProcess(
-            run_context, arguments, evaluator_config, update_id=update_id
+            run_context, arguments, evaluator_server_config, update_id=update_id
         )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
@@ -135,7 +135,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return update_id
 
     def _simulateAndPostProcess(
-        self, run_context, arguments, evaluator_config, update_id: int = None
+        self, run_context, arguments, evaluator_server_config, update_id: int = None
     ):
         iteration = run_context.get_iter()
 
@@ -154,7 +154,7 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setPhaseName(phase_string, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
-            run_context, evaluator_config
+            run_context, evaluator_server_config
         )
 
         # Push simulation results to storage
