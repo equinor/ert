@@ -7,7 +7,6 @@
 
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/matrix_lapack.hpp>
-#include <ert/res_util/matrix_blas.hpp>
 
 #include <ert/analysis/enkf_linalg.hpp>
 
@@ -29,8 +28,8 @@ void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
         for (j = 0; j < nrobs; j++)
             matrix_iset(X1, i, j, eig[i] * matrix_iget(W, j, i));
 
-    matrix_matmul(X2, X1, D); /*  X2 = X1 * D */
-    matrix_matmul(X3, W, X2); /*  X3 = W * X2 = X1 * X2 */
+    *X2 = *X1 * *D;
+    *X3 = *W * *X2;
 
     matrix_free(X1);
     matrix_free(X2);
@@ -56,7 +55,7 @@ void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
     const int nrens = matrix_get_columns(S);
     const int idim = matrix_get_rows(X2);
 
-    matrix_dgemm(X2, W, S, true, false, 1.0, 0.0);
+    *X2 = W->transpose() * *S;
     {
         int i, j;
         for (j = 0; j < nrens; j++)
@@ -158,8 +157,7 @@ void enkf_linalg_lowrankE(
     enkf_linalg_svdS(S, truncation, DGESVD_NONE, inv_sig0.data(), U0, NULL);
 
     /* X0(nrmin x nrens) =  Sigma0^(+) * U0'* E  (14.51)  */
-    matrix_dgemm(X0, U0, E, true, false, 1.0,
-                 0.0); /*  X0 = U0^T * E  (14.51) */
+    *X0 = U0->transpose() * *E; /* (14.51) */
 
     /* Multiply X0 with sig0^(-1) from left X0 =  S^(-1) * X0   */
     for (j = 0; j < matrix_get_columns(X0); j++)
@@ -179,7 +177,7 @@ void enkf_linalg_lowrankE(
             matrix_imul(U1, i, j, inv_sig0[i]);
 
     /* Compute X1 = W = U0 * (U1=sig0^+ U1) = U0 * Sigma0^(+') * U1  (14:55) */
-    matrix_matmul(W, U0, U1);
+    *W = *U0 * *U1;
 
     matrix_free(X0);
     matrix_free(U0);
@@ -189,12 +187,7 @@ void enkf_linalg_lowrankE(
 void enkf_linalg_Cee(matrix_type *B, int nrens, const matrix_type *R,
                      const matrix_type *U0, const double *inv_sig0) {
     const int nrmin = matrix_get_rows(B);
-    {
-        matrix_type *X0 = matrix_alloc(nrmin, matrix_get_rows(R));
-        matrix_dgemm(X0, U0, R, true, false, 1.0, 0.0);  /* X0 = U0^T * R */
-        matrix_dgemm(B, X0, U0, false, false, 1.0, 0.0); /* B = X0 * U0 */
-        matrix_free(X0);
-    }
+    *B = U0->transpose() * *R * *U0;
 
     {
         int i, j;
@@ -268,7 +261,7 @@ void enkf_linalg_lowrankCinv(
     matrix_type *Z = matrix_alloc(nrmin, nrmin);
 
     enkf_linalg_lowrankCinv__(S, R, NULL, Z, eig, U0, truncation);
-    matrix_matmul(W, U0, Z); /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
+    *W = *U0 * *Z; /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
 
     matrix_free(U0);
     matrix_free(Z);

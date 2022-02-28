@@ -30,7 +30,6 @@
 #include <ert/util/bool_vector.hpp>
 
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_blas.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
@@ -38,6 +37,8 @@
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
+
+using Eigen::MatrixXd;
 
 /**
  * @brief Implementation of algorithm as described in
@@ -118,8 +119,8 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
     ies::linalg_solve_S(W0, Y, S);
 
     /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
-    matrix_assign(H, D);                            // H=D=dobs + E - Y
-    matrix_dgemm(H, S, W0, false, false, 1.0, 1.0); // H=S*W + H
+    matrix_assign(H, D); // H=D=dobs + E - Y
+    *H += *S * *W0;
 
     /* Store previous W for convergence test */
     matrix_type *W = matrix_alloc_copy(W0);
@@ -256,7 +257,7 @@ void ies::updateA(
     int m_state_size = std::min(state_size - 1, 3);
     {
         matrix_type *A0 = data.alloc_activeA();
-        matrix_matmul(A, A0, X);
+        *A = *A0 * *X;
         matrix_free(A0);
     }
 
@@ -283,7 +284,7 @@ void ies::linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y) {
     matrix_subtract_row_mean(Ai);
     matrix_type *VT = matrix_alloc(state_size, ens_size);
     matrix_dgesvd(DGESVD_NONE, DGESVD_MIN_RETURN, Ai, eig.data(), NULL, VT);
-    matrix_dgemm(AAi, VT, VT, true, false, 1.0, 0.0);
+    *AAi = VT->transpose() * *VT;
 
     matrix_inplace_matmul(Y, AAi);
     matrix_free(Ai);
@@ -357,13 +358,12 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         matrix_free(scaledE);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
         matrix_type *Et = matrix_alloc_transpose(E);
-        matrix_type *Cee = matrix_alloc_matmul(E, Et);
-        matrix_scale(Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
+        MatrixXd Cee = *E * *Et;
+        matrix_scale(&Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
 
-        enkf_linalg_lowrankCinv(S, Cee, X1, eig.data(), truncation);
+        enkf_linalg_lowrankCinv(S, &Cee, X1, eig.data(), truncation);
 
         matrix_free(Et);
-        matrix_free(Cee);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
         matrix_type *scaledR = matrix_alloc_copy(R);
         matrix_scale(scaledR, nsc * nsc);
@@ -380,8 +380,8 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         enkf_linalg_genX3(X3, X1, H, eig.data());
 
         /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
-        matrix_dgemm(W0, S, X3, true, false, ies_steplength,
-                     1.0 - ies_steplength);
+        *W0 = ies_steplength * S->transpose() * *X3 +
+              (1.0 - ies_steplength) * *W0;
 
         matrix_free(X3);
     }
@@ -399,32 +399,21 @@ void ies::linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                                  double ies_steplength) {
     int ens_size = matrix_get_columns(S);
 
-    matrix_type *Z = matrix_alloc(ens_size, ens_size); // Eigen vectors of S'S+I
-    matrix_type *ZtStH = matrix_alloc(ens_size, ens_size);
-    matrix_type *StH = matrix_alloc(ens_size, ens_size);
-    matrix_type *StS = matrix_alloc(ens_size, ens_size);
+    MatrixXd Z = MatrixXd::Zero(ens_size, ens_size);
     std::vector<double> eig(ens_size);
 
-    matrix_diag_set_scalar(StS, 1.0);
-    matrix_dgemm(StS, S, S, true, false, 1.0, 1.0);
-    matrix_dgesvd(DGESVD_ALL, DGESVD_NONE, StS, eig.data(), Z, NULL);
+    MatrixXd StS = MatrixXd::Identity(ens_size, ens_size) + S->transpose() * *S;
+    matrix_dgesvd(DGESVD_ALL, DGESVD_NONE, &StS, eig.data(), &Z, NULL);
 
-    matrix_dgemm(StH, S, H, true, false, 1.0, 0.0);
-    matrix_dgemm(ZtStH, Z, StH, true, false, 1.0, 0.0);
+    MatrixXd ZtStH = Z.transpose() * S->transpose() * *H;
 
     for (int i = 0; i < ens_size; i++) {
         eig[i] = 1.0 / eig[i];
-        matrix_scale_row(ZtStH, i, eig[i]);
+        matrix_scale_row(&ZtStH, i, eig[i]);
     }
 
     /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * Z * (Lamda^{-1}) Z' S' H         (Line 9)    */
-    matrix_dgemm(W0, Z, ZtStH, false, false, ies_steplength,
-                 1.0 - ies_steplength);
-
-    matrix_free(Z);
-    matrix_free(ZtStH);
-    matrix_free(StH);
-    matrix_free(StS);
+    *W0 = ies_steplength * Z * ZtStH + (1.0 - ies_steplength) * *W0;
 }
 
 /*
