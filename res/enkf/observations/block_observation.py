@@ -22,6 +22,7 @@ from res import ResPrototype
 from res.enkf.config import FieldConfig
 from res.enkf.node_id import NodeId
 from res.enkf.observations import BlockDataConfig
+from res import _lib
 
 
 class BlockObservation(BaseCClass):
@@ -38,9 +39,6 @@ class BlockObservation(BaseCClass):
     _get_std = ResPrototype("double block_obs_iget_std( block_obs, int )")
     _get_std_scaling = ResPrototype(
         "double block_obs_iget_std_scaling( block_obs, int )"
-    )
-    _update_std_scaling = ResPrototype(
-        "void   block_obs_update_std_scale(block_obs , double , active_list)"
     )
     _get_value = ResPrototype("double block_obs_iget_value( block_obs, int)")
     _get_depth = ResPrototype("double block_obs_iget_depth( block_obs, int)")
@@ -96,7 +94,7 @@ class BlockObservation(BaseCClass):
         return self._get_std_scaling(index)
 
     def updateStdScaling(self, factor, active_list):
-        self._update_std_scaling(factor, active_list)
+        _lib.local.block_obs.update_std_scaling(self, factor, active_list)
 
     def getDepth(self, index):
         """@rtype: float"""

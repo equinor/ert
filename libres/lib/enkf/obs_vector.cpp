@@ -43,6 +43,9 @@
 #include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/local_obsdata.hpp>
+#include <ert/enkf/local_obsdata_node.hpp>
+#include <ert/enkf/active_list.hpp>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -658,8 +661,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 void obs_vector_scale_std(obs_vector_type *obs_vector,
                           const local_obsdata_node_type *local_node,
                           double std_multiplier) {
-    const active_list_type *active_list =
-        local_obsdata_node_get_active_list(local_node);
+    const auto *active_list = local_obsdata_node_get_active_list(local_node);
     int tstep = -1;
 
     while (true) {
@@ -877,7 +879,7 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
 
 void obs_vector_iget_observations(const obs_vector_type *obs_vector,
                                   int report_step, obs_data_type *obs_data,
-                                  const active_list_type *active_list,
+                                  const ActiveList *active_list,
                                   enkf_fs_type *fs) {
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL)
@@ -887,7 +889,7 @@ void obs_vector_iget_observations(const obs_vector_type *obs_vector,
 void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
                         int report_step, const int_vector_type *ens_active_list,
                         meas_data_type *meas_data,
-                        const active_list_type *active_list) {
+                        const ActiveList *active_list) {
 
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL) {

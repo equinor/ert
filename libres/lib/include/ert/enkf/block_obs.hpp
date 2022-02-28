@@ -63,7 +63,7 @@ double block_obs_iget_data(const block_obs_type *block_obs, const void *state,
 double block_obs_iget_std_scaling(const block_obs_type *block_obs, int index);
 PY_USED void block_obs_update_std_scale(block_obs_type *block_obs,
                                         double scale_factor,
-                                        const active_list_type *active_list);
+                                        const ActiveList *active_list);
 void block_obs_append_field_obs(block_obs_type *block_obs, int i, int j, int k,
                                 double value, double std);
 void block_obs_append_summary_obs(block_obs_type *block_obs, int i, int j,

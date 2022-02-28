@@ -23,6 +23,7 @@
 #include <ert/util/vector.h>
 #include <ert/util/hash.h>
 
+#include <ert/python.hpp>
 #include <ert/enkf/local_config.hpp>
 
 #define LOCAL_OBSDATA_TYPE_ID 86331309
@@ -126,20 +127,35 @@ bool local_obsdata_has_node(const local_obsdata_type *data, const char *key) {
     return hash_has_key(data->nodes_map, key);
 }
 
-active_list_type *
+ActiveList *
 local_obsdata_get_copy_node_active_list(const local_obsdata_type *obsdata,
                                         const char *obs_key) {
     local_obsdata_node_type *obsdata_node = local_obsdata_get(obsdata, obs_key);
-    active_list_type *active_list =
-        local_obsdata_node_get_copy_active_list(obsdata_node);
+    auto *active_list = local_obsdata_node_get_copy_active_list(obsdata_node);
     return active_list;
 }
 
-active_list_type *
+ActiveList *
 local_obsdata_get_node_active_list(const local_obsdata_type *obsdata,
                                    const char *obs_key) {
     local_obsdata_node_type *obsdata_node = local_obsdata_get(obsdata, obs_key);
-    active_list_type *active_list =
-        local_obsdata_node_get_active_list(obsdata_node);
+    auto *active_list = local_obsdata_node_get_active_list(obsdata_node);
     return active_list;
+}
+
+namespace {
+ActiveList &get_active_list(py::handle obj, const std::string &name) {
+    auto *self = ert::from_cwrap<local_obsdata_type>(obj);
+    auto *active_list = local_obsdata_get_node_active_list(self, name.c_str());
+    return *active_list;
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.local_obsdata", m) {
+    using namespace py::literals;
+
+    m.def("get_active_list", &get_active_list, "self"_a, "key"_a,
+          py::return_value_policy::reference_internal);
+    m.def("copy_active_list", &get_active_list, "self"_a, "key"_a,
+          py::return_value_policy::copy);
 }
