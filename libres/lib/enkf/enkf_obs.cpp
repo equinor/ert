@@ -399,12 +399,11 @@ static void enkf_obs_get_obs_and_measure_summary(
     }
 }
 
-void enkf_obs_get_obs_and_measure_node(const enkf_obs_type *enkf_obs,
-                                       enkf_fs_type *fs,
-                                       const local_obsdata_node_type *obs_node,
-                                       const int_vector_type *ens_active_list,
-                                       meas_data_type *meas_data,
-                                       obs_data_type *obs_data) {
+static void enkf_obs_get_obs_and_measure_node(
+    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
+    const local_obsdata_node_type *obs_node,
+    const int_vector_type *ens_active_list, meas_data_type *meas_data,
+    obs_data_type *obs_data) {
 
     const char *obs_key = local_obsdata_node_get_key(obs_node);
     obs_vector_type *obs_vector =
