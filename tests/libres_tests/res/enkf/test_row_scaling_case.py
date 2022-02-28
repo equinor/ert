@@ -221,7 +221,6 @@ class RowScalingTest(ResTest):
     # The test_update_code() applies the row scaling through code inlined in
     # the test, and also uses the GaussianDecay callable class instead of
     # functools.partial() to create a callable for the scaling operation.
-    @unittest.skip("Debug skip")
     def test_update_code1(self):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()

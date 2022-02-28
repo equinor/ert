@@ -281,7 +281,7 @@ void save_parameters(enkf_fs_type *target_fs,
                      const int_vector_type *iens_active_index,
                      const LocalMinistep *ministep,
                      const update_data_type &update_data) {
-    printf("Staring save_parameters \n");
+    printf("Staring save_parameters  ministep:%p \n", ministep);
     if (update_data.A)
         deserialize_ministep(ensemble_config, ministep, target_fs,
                              iens_active_index, update_data.A);
@@ -327,7 +327,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 
     const auto &scaled_keys = ministep->scaled_keys();
     printf("ministep: %s/%p  scaled_keys: %ld\n", ministep->name().c_str(),
-           &ministep, scaled_keys.size());
+           ministep, scaled_keys.size());
     if (scaled_keys.size() > 0) {
         matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
@@ -348,8 +348,8 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                                &active_list, A);
             }
             auto &row_scaling = ministep->get_row_scaling(key);
-            if (row_scaling.size() == 0)
-                throw std::logic_error("No scaling points assigned \n");
+            //if (row_scaling.size() == 0)
+            //    throw std::logic_error("No scaling points assigned \n");
 
             matrix_shrink_header(A, row_scaling.size(), matrix_get_columns(A));
             parameters.emplace_back(matrix_alloc_copy(A), &row_scaling);

@@ -145,6 +145,8 @@ LocalMinistep &LocalConfig::make_ministep(const std::string &key) {
     this->m_ministep.emplace(key, LocalMinistep(key.c_str()));
     auto &ministep = this->m_ministep.at(key);
     this->m_updatestep->add_ministep(ministep);
+    printf("-------------------------------------------------------------------------------\n");
+    printf("%s:  ministep: %p  \n", __func__, &ministep);
     return ministep;
 }
 
