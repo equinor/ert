@@ -173,9 +173,6 @@ class EnKFTest(ResTest):
             "field_file_format_type",
             "libres/lib/include/ert/enkf/field_config.hpp",
         )
-        self.assertEnumIsFullyDefined(
-            ActiveMode, "active_mode_type", "libres/lib/include/ert/enkf/enkf_types.hpp"
-        )
 
     @tmpdir()
     def test_observations(self):

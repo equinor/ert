@@ -45,7 +45,7 @@ namespace analysis {
 
 typedef struct {
     int row_offset;
-    const active_list_type *active_list;
+    const ActiveList *active_list;
     const char *key;
 } serialize_node_info_type;
 
@@ -146,7 +146,7 @@ void ensure_node_loaded(const enkf_config_node_type *config_node,
 
 void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
                     int iens, int row_offset, int column,
-                    const active_list_type *active_list, matrix_type *A) {
+                    const ActiveList *active_list, matrix_type *A) {
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
@@ -164,14 +164,14 @@ void serialize_ministep(const ensemble_config_type *ens_config,
     int current_row = 0;
 
     for (auto &key : ministep->unscaled_keys()) {
-        const active_list_type *active_list =
+        const ActiveList *active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ens_config, key.c_str());
 
         ensure_node_loaded(config_node, target_fs);
-        int active_size = active_list_get_active_size(
-            active_list, enkf_config_node_get_data_size(config_node, 0));
+        int active_size = active_list->active_size(
+            enkf_config_node_get_data_size(config_node, 0));
 
         int matrix_rows = matrix_get_rows(A);
         if ((active_size + current_row) > matrix_rows)
@@ -191,8 +191,8 @@ void serialize_ministep(const ensemble_config_type *ens_config,
 
 void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
                       const enkf_config_node_type *config_node, int iens,
-                      int row_offset, int column,
-                      const active_list_type *active_list, matrix_type *A) {
+                      int row_offset, int column, const ActiveList *active_list,
+                      matrix_type *A) {
 
     node_id_type node_id = {.report_step = 0, .iens = iens};
     enkf_node_type *node = enkf_node_alloc(config_node);
@@ -230,13 +230,13 @@ void deserialize_ministep(ensemble_config_type *ensemble_config,
     int ens_size = int_vector_size(iens_active_index);
     int current_row = 0;
     for (auto &key : ministep->unscaled_keys()) {
-        const active_list_type *active_list =
+        const ActiveList *active_list =
             ministep->get_active_data_list(key.data());
         const enkf_config_node_type *config_node =
             ensemble_config_get_node(ensemble_config, key.c_str());
         ensure_node_loaded(config_node, target_fs);
-        int active_size = active_list_get_active_size(
-            active_list, enkf_config_node_get_data_size(config_node, 0));
+        int active_size = active_list->active_size(
+            enkf_config_node_get_data_size(config_node, 0));
         if (active_size > 0) {
             for (int column = 0; column < ens_size; column++) {
                 int iens = int_vector_iget(iens_active_index, column);
@@ -290,7 +290,7 @@ void save_parameters(enkf_fs_type *target_fs,
 
         for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
             const auto &key = scaled_keys[ikw];
-            const active_list_type *active_list =
+            const ActiveList *active_list =
                 ministep->get_active_data_list(key.data());
             matrix_type *A = update_data.A_with_rowscaling[ikw].first;
             for (int iens = 0; iens < int_vector_size(iens_active_index);
@@ -326,7 +326,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
         matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
 
         for (const auto &key : scaled_keys) {
-            const active_list_type *active_list =
+            const ActiveList *active_list =
                 ministep->get_active_data_list(key.data());
             const auto *config_node =
                 ensemble_config_get_node(ensemble_config, key.c_str());

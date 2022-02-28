@@ -32,12 +32,16 @@
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/active_list.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct summary_obs_struct summary_obs_type;
 
+void summary_obs_update_std_scale(summary_obs_type *summary_obs,
+                                  double std_multiplier,
+                                  const ActiveList *active_list);
+
+bool summary_obs_default_used(const summary_obs_type *summary_obs,
+                              int restart_nr);
+
+extern "C" {
 void summary_obs_free(summary_obs_type *summary_obs);
 
 summary_obs_type *summary_obs_alloc(const char *summary_key,
@@ -48,18 +52,12 @@ double summary_obs_get_value(const summary_obs_type *summary_obs);
 double summary_obs_get_std(const summary_obs_type *summary_obs);
 double summary_obs_get_std_scaling(const summary_obs_type *summary_obs);
 
-bool summary_obs_default_used(const summary_obs_type *summary_obs,
-                              int restart_nr);
-
 PY_USED const char *
 summary_obs_get_summary_key(const summary_obs_type *summary_obs);
 
-void summary_obs_update_std_scale(summary_obs_type *summary_obs,
-                                  double std_multiplier,
-                                  const active_list_type *active_list);
-
 void summary_obs_set_std_scale(summary_obs_type *summary_obs,
                                double std_multiplier);
+}
 
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
@@ -69,7 +67,4 @@ VOID_USER_GET_OBS_HEADER(summary_obs);
 VOID_CHI2_HEADER(summary_obs);
 VOID_UPDATE_STD_SCALE_HEADER(summary_obs);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -301,8 +301,7 @@ static void enkf_obs_get_obs_and_measure_summary(
     obs_data_type *obs_data, double_vector_type *obs_value,
     double_vector_type *obs_std) {
 
-    const active_list_type *active_list =
-        local_obsdata_node_get_active_list(obs_node);
+    const auto *active_list = local_obsdata_node_get_active_list(obs_node);
 
     int active_count = 0;
     int last_step = -1;
@@ -425,7 +424,7 @@ static void enkf_obs_get_obs_and_measure_node(
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            const active_list_type *active_list =
+            const auto *active_list =
                 local_obsdata_node_get_active_list(obs_node);
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,

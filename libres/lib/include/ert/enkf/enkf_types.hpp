@@ -154,23 +154,6 @@ typedef enum {
     JOB_RUN_OK = 4
 } run_status_type;
 
-/**
-   This enum is used when we are setting up the dependencies between
-   observations and variables. The modes all_active and inactive are
-   sufficient information, for the values partly active we need
-   additional information.
-
-   The same type is used both for variables (PRESSURE/PORO/MULTZ/...)
-   and for observations.
-*/
-
-typedef enum {
-    ALL_ACTIVE =
-        1, /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-    PARTLY_ACTIVE =
-        3 /* Partly active - must supply additonal type spesific information on what is active.*/
-} active_mode_type;
-
 typedef struct {
     int report_step;
     int iens;
