@@ -21,11 +21,7 @@ updating is the Ensemble Smoother (ES).
 
 ## Prerequisites
 
-The following is needed to run ert properly
-- libblas
-- lapack
-
-MacOS already ships with BLAS and LAPACK implementations in its [vecLib](https://developer.apple.com/documentation/accelerate/veclib) framework.
+Python 3.6+ with development headers.
 
 ## Installation
 
