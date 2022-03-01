@@ -69,9 +69,6 @@ void enkf_main_exit(enkf_main_type *enkf_main);
 extern "C" void enkf_main_init_run(enkf_main_type *enkf_main,
                                    const ert_run_context_type *run_context);
 
-bool enkf_main_smoother_update(enkf_main_type *enkf_main,
-                               enkf_fs_type *source_fs,
-                               enkf_fs_type *target_fs);
 extern "C" void
 enkf_main_create_run_path(enkf_main_type *enkf_main,
                           const ert_run_context_type *run_context);

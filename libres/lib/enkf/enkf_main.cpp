@@ -244,34 +244,6 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-bool enkf_main_smoother_update(enkf_main_type *enkf_main,
-                               enkf_fs_type *source_fs,
-                               enkf_fs_type *target_fs) {
-    time_map_type *time_map = enkf_fs_get_time_map(source_fs);
-
-    int last_step = time_map_get_last_step(time_map);
-    if (last_step < 0)
-        last_step = model_config_get_last_history_restart(
-            enkf_main_get_model_config(enkf_main));
-
-    local_config_type *local_config = enkf_main->local_config;
-    const local_updatestep_type *updatestep =
-        local_config_get_updatestep(local_config);
-    const analysis_config_type *analysis_config =
-        enkf_main_get_analysis_config(enkf_main);
-
-    const int total_ens_size = enkf_main->ens_size;
-    enkf_obs_type *obs = enkf_main->obs;
-    bool verbose = enkf_main->verbose;
-    rng_type *shared_rng = enkf_main->shared_rng;
-    ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
-
-    return analysis::smoother_update(
-        updatestep, total_ens_size, obs, shared_rng, analysis_config,
-        ensemble_config, source_fs, target_fs, verbose);
-}
-
 static void enkf_main_write_run_path(enkf_main_type *enkf_main,
                                      const ert_run_context_type *run_context) {
     runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);

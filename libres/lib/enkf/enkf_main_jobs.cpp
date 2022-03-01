@@ -341,22 +341,6 @@ enkf_main_export_runpath_file_JOB(void *self, const stringlist_type *args) {
 
 // Internal workflow job
 extern "C" C_USED void *
-enkf_main_analysis_update_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    enkf_fs_type *source_fs =
-        enkf_main_mount_alt_fs(enkf_main, stringlist_iget(args, 0), false);
-    enkf_fs_type *target_fs =
-        enkf_main_mount_alt_fs(enkf_main, stringlist_iget(args, 1), true);
-
-    enkf_main_smoother_update(enkf_main, source_fs, target_fs);
-
-    enkf_fs_decref(source_fs);
-    enkf_fs_decref(target_fs);
-    return NULL;
-}
-
-// Internal workflow job
-extern "C" C_USED void *
 enkf_main_pre_simulation_copy_JOB(void *self, const stringlist_type *args) {
     const char *source_path = stringlist_iget(args, 0);
 
