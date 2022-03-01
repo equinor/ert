@@ -316,33 +316,6 @@ void run_analysis_update_with_rowscaling(
 }
 
 /*
-Check whether the current state and config allows the update algorithm
-to be executed
-*/
-bool is_valid(const analysis_config_type *analysis_config,
-              const state_map_type *source_state_map, const int total_ens_size,
-              const local_updatestep_type *updatestep) {
-    const int active_ens_size =
-        state_map_count_matching(source_state_map, STATE_HAS_DATA);
-
-    if (!analysis_config_have_enough_realisations(
-            analysis_config, active_ens_size, total_ens_size)) {
-        fprintf(stderr,
-                "** ERROR ** There are %d active realisations left, which is "
-                "less than the minimum specified - stopping assimilation.\n",
-                active_ens_size);
-        return false;
-    }
-
-    // exit if multi step update with iterable modules
-    if (local_updatestep_get_num_ministep(updatestep) > 1 &&
-        analysis_config_module_flag_is_set(analysis_config, ANALYSIS_ITERABLE))
-        util_exit("** ERROR: Can not combine iterable modules with multi step "
-                  "updates - sorry\n");
-    return true;
-}
-
-/*
 Copy all parameters from source_fs to target_fs
 */
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
@@ -466,81 +439,6 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     return std::make_shared<update_data_type>(
         std::move(S), std::move(E), std::move(D), std::move(R), std::move(A),
         std::move(row_scaling_parameters), std::move(obs_mask));
-}
-
-bool smoother_update(const local_updatestep_type *updatestep,
-                     int total_ens_size, enkf_obs_type *obs,
-                     rng_type *shared_rng,
-                     const analysis_config_type *analysis_config,
-                     ensemble_config_type *ensemble_config,
-                     enkf_fs_type *source_fs, enkf_fs_type *target_fs,
-                     bool verbose) {
-    state_map_type *source_state_map = enkf_fs_get_state_map(source_fs);
-    if (!is_valid(analysis_config, source_state_map, total_ens_size,
-                  updatestep))
-        return false;
-
-    ert::utils::scoped_memory_logger memlogger(logger, "smoother_update");
-
-    auto ens_mask =
-        state_map_select_matching(source_state_map, STATE_HAS_DATA, true);
-
-    copy_parameters(source_fs, target_fs, ensemble_config, ens_mask);
-
-    /* Looping over local analysis ministep */
-    for (int ministep_nr = 0;
-         ministep_nr < local_updatestep_get_num_ministep(updatestep);
-         ministep_nr++) {
-        local_ministep_type *ministep =
-            local_updatestep_iget_ministep(updatestep, ministep_nr);
-
-        auto update_data =
-            make_update_data(source_fs, target_fs, obs, ensemble_config,
-                             analysis_config, ens_mask, ministep, shared_rng);
-        if (update_data->has_observations) {
-            std::vector<int> iens_active_index =
-                bool_vector_to_active_list(ens_mask);
-
-            /*
-            The update for one local_dataset instance consists of two main chunks:
-
-            1. The first chunk updates all the parameters which don't have row
-                scaling attached. These parameters are serialized together to the A
-                matrix and all the parameters are updated in one go.
-
-            2. The second chunk is loop over all the parameters which have row
-                scaling attached. These parameters are updated one at a time.
-            */
-
-            analysis_module_type *module =
-                analysis_config_get_active_module(analysis_config);
-
-            const auto *module_config =
-                analysis_module_get_module_config(module);
-            auto *module_data = analysis_module_get_module_data(module);
-
-            if (update_data->A) {
-                run_analysis_update_without_rowscaling(
-                    *module_config, *module_data, ens_mask,
-                    update_data->obs_mask, &update_data->S, &update_data->E,
-                    &update_data->D, &update_data->R, &update_data->A.value());
-            }
-
-            if (update_data->A_with_rowscaling.size() > 0) {
-                run_analysis_update_with_rowscaling(
-                    *module_config, *module_data, &update_data->S,
-                    &update_data->E, &update_data->D, &update_data->R,
-                    update_data->A_with_rowscaling);
-            }
-            save_parameters(target_fs, ensemble_config, iens_active_index,
-                            ministep, *update_data);
-
-        } else
-            logger->error("No active observations/parameters for MINISTEP: {}.",
-                          local_ministep_get_name(ministep));
-    }
-
-    return true;
 }
 } // namespace analysis
 
