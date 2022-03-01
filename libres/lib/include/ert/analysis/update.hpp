@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdexcept>
+#include <vector>
+#include <memory>
 #define HAVE_THREAD_POOL 1
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/obs_data.hpp>
@@ -22,18 +24,15 @@ class update_data_type : public std::enable_shared_from_this<update_data_type> {
 public:
     update_data_type() = default;
     update_data_type(
-        matrix_type *S_in, matrix_type *E_in, matrix_type *D_in,
-        matrix_type *R_in, std::optional<Eigen::MatrixXd> A_in,
-        std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+        matrix_type S_in, matrix_type E_in, matrix_type D_in, matrix_type R_in,
+        std::optional<Eigen::MatrixXd> A_in,
+        std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
             A_with_rowscaling_in,
         const std::vector<bool> &obs_mask_in)
-        : obs_mask(obs_mask_in) {
-        S = *S_in;
-        E = *E_in;
-        D = *D_in;
-        R = *R_in;
-        A = A_in;
-        A_with_rowscaling = A_with_rowscaling_in;
+        : S(std::move(S_in)), E(std::move(E_in)), D(std::move(D_in)),
+          R(std::move(R_in)), A(std::move(A_in)),
+          obs_mask(std::move(obs_mask_in)),
+          A_with_rowscaling(std::move(A_with_rowscaling_in)) {
         has_observations = true;
     }
 
@@ -43,7 +42,7 @@ public:
     Eigen::MatrixXd R;
     std::optional<Eigen::MatrixXd> A;
     std::vector<bool> obs_mask;
-    std::vector<std::pair<Eigen::MatrixXd *, std::shared_ptr<RowScaling>>>
+    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         A_with_rowscaling;
     bool has_observations = false;
 };

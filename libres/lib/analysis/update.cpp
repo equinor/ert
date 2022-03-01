@@ -213,11 +213,12 @@ load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     const auto &unscaled_keys = ministep->unscaled_keys();
     if (unscaled_keys.size() != 0) {
         int matrix_start_size = 250000;
-        matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
+        Eigen::MatrixXd A =
+            Eigen::MatrixXd::Zero(matrix_start_size, active_ens_size);
 
         serialize_ministep(ensemble_config, ministep, target_fs,
-                           iens_active_index, A);
-        return *A;
+                           iens_active_index, &A);
+        return A;
     }
 
     return {};
@@ -241,13 +242,13 @@ void save_parameters(enkf_fs_type *target_fs,
             const auto &key = scaled_keys[ikw];
             const ActiveList *active_list =
                 ministep->get_active_data_list(key.data());
-            matrix_type *A = update_data.A_with_rowscaling[ikw].first;
+            auto &A = update_data.A_with_rowscaling[ikw].first;
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 deserialize_node(
                     target_fs, target_fs,
                     ensemble_config_get_node(ensemble_config, key.c_str()),
-                    iens, 0, column, active_list, A);
+                    iens, 0, column, active_list, &A);
             }
         }
     }
@@ -257,21 +258,20 @@ void save_parameters(enkf_fs_type *target_fs,
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices with the corresponding row-scaling object.
 */
-std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             const std::vector<int> &iens_active_index,
                             int active_ens_size,
                             const local_ministep_type *ministep) {
 
-    int matrix_start_size = 250000;
-
-    std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         parameters;
 
     const auto &scaled_keys = ministep->scaled_keys();
     if (scaled_keys.size() > 0) {
-        matrix_type *A = matrix_alloc(matrix_start_size, active_ens_size);
+        int matrix_start_size = 250000;
+        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(250000, active_ens_size);
 
         for (const auto &key : scaled_keys) {
             const ActiveList *active_list =
@@ -280,19 +280,19 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                 ensemble_config_get_node(ensemble_config, key.c_str());
             const int node_size =
                 enkf_config_node_get_data_size(config_node, 0);
-            if (matrix_get_rows(A) < node_size)
-                matrix_resize(A, node_size, active_ens_size, false);
+            if (matrix_get_rows(&A) < node_size)
+                matrix_resize(&A, node_size, active_ens_size, false);
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, 0, column,
-                               active_list, A);
+                               active_list, &A);
             }
             auto row_scaling = ministep->get_row_scaling(key);
 
-            matrix_shrink_header(A, row_scaling->size(), matrix_get_columns(A));
-            parameters.emplace_back(matrix_alloc_copy(A), row_scaling);
+            matrix_shrink_header(&A, row_scaling->size(),
+                                 matrix_get_columns(&A));
+            parameters.emplace_back(std::move(A), row_scaling);
         }
-        matrix_free(A);
     }
 
     return parameters;
@@ -332,7 +332,7 @@ void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R,
-    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         &parameters) {
 
     ert::utils::Benchmark benchmark(logger,
@@ -353,7 +353,7 @@ void run_analysis_update_with_rowscaling(
 
     for (auto &[A, row_scaling] : parameters) {
         ies::initX(module_config, S, R, E, D, X);
-        row_scaling->multiply(A, X);
+        row_scaling->multiply(&A, X);
     }
 
     matrix_free(X);
@@ -494,23 +494,23 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 
     int active_ens_size = meas_data_get_active_ens_size(meas_data);
-    auto S = meas_data_allocS(meas_data);
+    Eigen::MatrixXd S = meas_data_makeS(meas_data);
     meas_data_free(meas_data);
 
-    matrix_type *E = obs_data_allocE(obs_data, shared_rng, active_ens_size);
+    Eigen::MatrixXd E = obs_data_makeE(obs_data, shared_rng, active_ens_size);
     std::vector<int> iens_active_index = bool_vector_to_active_list(ens_mask);
     auto A = load_parameters(target_fs, ensemble_config, iens_active_index,
                              active_ens_size, ministep);
 
     int active_obs_size = obs_data_get_active_size(obs_data);
-    matrix_type *R = obs_data_allocR(obs_data);
-    matrix_type *D = obs_data_allocD(obs_data, E, S);
-    assert_matrix_size(E, "E", active_obs_size, active_ens_size);
-    assert_matrix_size(D, "D", active_obs_size, active_ens_size);
-    assert_matrix_size(S, "S", active_obs_size, active_ens_size);
-    assert_matrix_size(R, "R", active_obs_size, active_obs_size);
+    Eigen::MatrixXd R = obs_data_makeR(obs_data);
+    Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+    assert_matrix_size(&E, "E", active_obs_size, active_ens_size);
+    assert_matrix_size(&D, "D", active_obs_size, active_ens_size);
+    assert_matrix_size(&S, "S", active_obs_size, active_ens_size);
+    assert_matrix_size(&R, "R", active_obs_size, active_obs_size);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
-    obs_data_scale(obs_data, S, E, D, R, nullptr);
+    obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
 
     auto row_scaling_parameters = load_row_scaling_parameters(
         target_fs, ensemble_config, iens_active_index, active_ens_size,
@@ -520,8 +520,9 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     configuration objects, not the actual data.*/
     local_ministep_add_obs_data(ministep, obs_data);
 
-    return std::make_shared<update_data_type>(S, E, D, R, A,
-                                              row_scaling_parameters, obs_mask);
+    return std::make_shared<update_data_type>(
+        std::move(S), std::move(E), std::move(D), std::move(R), std::move(A),
+        std::move(row_scaling_parameters), std::move(obs_mask));
 }
 
 bool smoother_update(const local_updatestep_type *updatestep,
@@ -688,13 +689,19 @@ RES_LIB_SUBMODULE("update", m) {
     py::class_<analysis::update_data_type,
                std::shared_ptr<analysis::update_data_type>>(m, "UpdateData")
         .def(py::init<>())
-        .def_readwrite("S", &analysis::update_data_type::S)
-        .def_readwrite("E", &analysis::update_data_type::E)
-        .def_readwrite("D", &analysis::update_data_type::D)
-        .def_readwrite("R", &analysis::update_data_type::R)
-        .def_readwrite("A", &analysis::update_data_type::A)
+        .def_readwrite("S", &analysis::update_data_type::S,
+                       py::return_value_policy::reference_internal)
+        .def_readwrite("E", &analysis::update_data_type::E,
+                       py::return_value_policy::reference_internal)
+        .def_readwrite("D", &analysis::update_data_type::D,
+                       py::return_value_policy::reference_internal)
+        .def_readwrite("R", &analysis::update_data_type::R,
+                       py::return_value_policy::reference_internal)
+        .def_readwrite("A", &analysis::update_data_type::A,
+                       py::return_value_policy::reference_internal)
         .def_readwrite("A_with_rowscaling",
-                       &analysis::update_data_type::A_with_rowscaling)
+                       &analysis::update_data_type::A_with_rowscaling,
+                       py::return_value_policy::reference_internal)
         .def_readwrite("has_observations",
                        &analysis::update_data_type::has_observations)
         .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask);
