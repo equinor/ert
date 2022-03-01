@@ -158,8 +158,6 @@ def test_tracking(
 
             tracker = create_tracker(
                 model,
-                general_interval=1,
-                detailed_interval=2,
                 ee_config=evaluator_server_config,
             )
 

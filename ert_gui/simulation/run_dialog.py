@@ -293,7 +293,6 @@ class RunDialog(QDialog):
 
         tracker = create_tracker(
             self._run_model,
-            num_realizations=self._simulation_arguments["active_realizations"].count(),
             ee_config=evaluator_server_config,
         )
 

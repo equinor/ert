@@ -82,26 +82,3 @@ def format_running_time(runtime: int) -> str:
         layout = "Running time: {s} seconds"
 
     return layout.format(d=days, h=hours, m=minutes, s=seconds)
-
-
-def scale_intervals(reals):
-    scaled_gen = _scale(reals, min_time=5, max_time=10)
-    scaled_det = _scale(reals, min_time=10, max_time=20)
-    return math.trunc(scaled_gen), math.trunc(scaled_det)
-
-
-def _scale(nr_realizations, min_time=5, max_time=15, min_real=1, max_real=500):
-    nr_realizations = min(max_real, nr_realizations)
-    nr_realizations = max(min_real, nr_realizations)
-    norm_real = _norm(min_real, max_real, nr_realizations)
-
-    scaling_factor = _norm(_func(0), _func(1), _func(norm_real))
-    return min_time + scaling_factor * (max_time - min_time)
-
-
-def _norm(min_val, max_val, val):
-    return (val - min_val) / (max_val - min_val)
-
-
-def _func(val):
-    return 1.0 * (1.0 + 500.0) ** val

@@ -38,8 +38,6 @@ class EvaluatorTracker:
         model: BaseRunModel,
         host,
         port,
-        general_interval,
-        detailed_interval,
         token=None,
         cert=None,
         next_ensemble_evaluator_wait_time=5,
@@ -63,7 +61,6 @@ class EvaluatorTracker:
         self._drainer_thread.start()
 
         self._iter_snapshot = {}
-        self._general_interval = general_interval
 
     def _drain_monitor(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
