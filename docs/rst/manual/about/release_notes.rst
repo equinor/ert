@@ -28,6 +28,94 @@ Release Notes
    -
 
 
+Version 2.33
+------------
+
+Breaking changes:
+  - Introduce nested namespace ies::data (`#2828 <https://github.com/equinor/ert/pull/2828>`_)
+  - Remove unused python class ConfigSettings (`#2746 <https://github.com/equinor/ert/pull/2746>`_)
+  - Remove changing mode of files by ext_job (`#2784 <https://github.com/equinor/ert/pull/2784>`_)
+  - Deprecate keyword UMASK and disallow UMASK 0 (`#2777 <https://github.com/equinor/ert/pull/2777>`_)
+  - Delete workflows related to obs/data ranking (`#2927 <https://github.com/equinor/ert/pull/2927>`_)
+  - Replace bool_vector with stl::vector and return vector instead of mutating in state_map_select_matching (`#2922 <https://github.com/equinor/ert/pull/2922>`_)
+  - Remove `Matrix`, `\{Obs,Meas\}\{Data,Block\}` classes from Python (`#2923 <https://github.com/equinor/ert/pull/2923>`_)
+
+Bugfixes:
+  - Make AutorunTestEnsemble cancellable (`#2786 <https://github.com/equinor/ert/pull/2786>`_)
+  - Do not build vanilla step on unexpected step type (`#2807 <https://github.com/equinor/ert/pull/2807>`_)
+  - Free internal resources in ies::data_free() (`#2830 <https://github.com/equinor/ert/pull/2830>`_)
+  - Update config path to basename when changing working directory (`#2851 <https://github.com/equinor/ert/pull/2851>`_)
+  - Remove redundant parameter in enkf_main_alloc (`#2890 <https://github.com/equinor/ert/pull/2890>`_)
+  - [ert3] Fix websocket connection timeout in Unix step (`#2783 <https://github.com/equinor/ert/pull/2783>`_)
+
+New features:
+  - Keyword data ndarray copy (`#2806 <https://github.com/equinor/ert/pull/2806>`_)
+  - Cleanup redundant parameters (`#2853 <https://github.com/equinor/ert/pull/2853>`_)
+  - Remove usage of thread_pool in job_queue (`#2883 <https://github.com/equinor/ert/pull/2883>`_)
+  - [ert3] Add snakeoil example for ert3 (`#2703 <https://github.com/equinor/ert/pull/2703>`_)
+  - Replace ResLog with Python logging (`#2710 <https://github.com/equinor/ert/pull/2710>`_)
+  - [ert3] Implement discrete uniform and constant distribution (`#2224 <https://github.com/equinor/ert/pull/2224>`_)
+
+Improvements:
+  - [ert3] Improve error handling around ert3 initialization (`#2779 <https://github.com/equinor/ert/pull/2779>`_)
+  - [ert3] Increase worker memory requirements on PBS (`#2832 <https://github.com/equinor/ert/pull/2832>`_)
+  - [ert3] Add better error handling when trying to rerun an experiment (`#2891 <https://github.com/equinor/ert/pull/2891>`_)
+  - Improve the summary collector (`#2871 <https://github.com/equinor/ert/pull/2871>`_)
+  - `matrix_type` -> Eigen (`#2872 <https://github.com/equinor/ert/pull/2872>`_)
+
+Dependencies:
+  - Upgrade black to 22.1.0 (`#2946 <https://github.com/equinor/ert/pull/2946>`_)
+
+Miscellaneous:
+  - Fix typo ensamble (`#2845 <https://github.com/equinor/ert/pull/2845>`_)
+  - Remove cmake feature tests (`#2791 <https://github.com/equinor/ert/pull/2791>`_)
+  - Various improvements to analysis module (
+    `#2747 <https://github.com/equinor/ert/pull/2747>`_,
+    `#2748 <https://github.com/equinor/ert/pull/2748>`_,
+    `#2772 <https://github.com/equinor/ert/pull/2772>`_,
+    `#2829 <https://github.com/equinor/ert/pull/2829>`_,
+    `#2857 <https://github.com/equinor/ert/pull/2857>`_,
+    `#2855 <https://github.com/equinor/ert/pull/2855>`_,
+    `#2892 <https://github.com/equinor/ert/pull/2892>`_,
+    `#2863 <https://github.com/equinor/ert/pull/2863>`_,
+    `#2893 <https://github.com/equinor/ert/pull/2893>`_,
+    `#2901 <https://github.com/equinor/ert/pull/2901>`_,
+    `#2877 <https://github.com/equinor/ert/pull/2877>`_,
+    `#2744 <https://github.com/equinor/ert/pull/2744>`_,
+    `#2897 <https://github.com/equinor/ert/pull/2897>`_,
+    `#2933 <https://github.com/equinor/ert/pull/2933>`_,
+    `#2929 <https://github.com/equinor/ert/pull/2929>`_,
+    `#2910 <https://github.com/equinor/ert/pull/2910>`_,
+    `#2919 <https://github.com/equinor/ert/pull/2919>`_,
+    `#2947 <https://github.com/equinor/ert/pull/2947>`_,
+    `#2957 <https://github.com/equinor/ert/pull/2957>`_,
+    `#2942 <https://github.com/equinor/ert/pull/2942>`_,
+    `#2950 <https://github.com/equinor/ert/pull/2950>`_
+    )
+  - Drop threads when collecting summary-data (`#2808 <https://github.com/equinor/ert/pull/2808>`_)
+  - Refactor summary collector (`#2802 <https://github.com/equinor/ert/pull/2802>`_)
+  - Revert flaky performance tests (`#2822 <https://github.com/equinor/ert/pull/2822>`_)
+  - Retrieve responses for _export via the dedicated endpoint (`#2820 <https://github.com/equinor/ert/pull/2820>`_)
+  - Replaced reuse_addr with something more insisting (`#2757 <https://github.com/equinor/ert/pull/2757>`_)
+  - Improve snake oil example (
+    `#2848 <https://github.com/equinor/ert/pull/2848>`_,
+    `#2888 <https://github.com/equinor/ert/pull/2888>`_
+    )
+  - Add types and perform clean-up of BaseRunModel (`#2854 <https://github.com/equinor/ert/pull/2854>`_)
+  - Fix mypy error (`#2876 <https://github.com/equinor/ert/pull/2876>`_)
+  - Remove deprecated parameter 'loop' in Queues  (`#2889 <https://github.com/equinor/ert/pull/2889>`_)
+  - Update ensemble parameter response from dark storage (`#2856 <https://github.com/equinor/ert/pull/2856>`_)
+  - Remove thread_pool in loading/saving parameters (`#2884 <https://github.com/equinor/ert/pull/2884>`_)
+  - Remove compiler warning (`#2911 <https://github.com/equinor/ert/pull/2911>`_)
+  - Adjust test in extraction due to changes in API (`#2917 <https://github.com/equinor/ert/pull/2917>`_)
+  - Parameterize some test instead of having duplicate (`#2810 <https://github.com/equinor/ert/pull/2810>`_)
+  - [ert3] Change one_at_the_time() to one_at_a_time() (`#2943 <https://github.com/equinor/ert/pull/2943>`_)
+  - Add observations to responses query (`#2912 <https://github.com/equinor/ert/pull/2912>`_)
+  - Replace first iteration of convert from cwrap (`#2938 <https://github.com/equinor/ert/pull/2938>`_)
+  - Remove unused module util_fprint and res_version (`#2949 <https://github.com/equinor/ert/pull/2949>`_)
+  - Use fmt to write error message (`#2974 <https://github.com/equinor/ert/pull/2974>`_)
+
+
 Version 2.32
 ------------
 
