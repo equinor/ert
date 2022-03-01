@@ -3,7 +3,6 @@ import unittest
 from ert_shared.status.utils import (
     _calculate_progress,
     format_running_time,
-    scale_intervals,
 )
 
 
@@ -29,33 +28,6 @@ class TrackerUtilsTest(unittest.TestCase):
 
         for t in tests:
             self.assertEqual(t["expected"], format_running_time(t["seconds"]))
-
-    def test_scale_intervals(self):
-        tests = [
-            {"reals": 1, "expected_gen": 5, "expected_det": 10},
-            {"reals": 100, "expected_gen": 5, "expected_det": 10},
-            {"reals": 200, "expected_gen": 5, "expected_det": 10},
-            {"reals": 500, "expected_gen": 10, "expected_det": 20},
-            {"reals": 900, "expected_gen": 10, "expected_det": 20},
-            {"reals": 1000, "expected_gen": 10, "expected_det": 20},
-        ]
-
-        for t in tests:
-            actual_gen, actual_det = scale_intervals(t["reals"])
-            self.assertEqual(
-                t["expected_gen"],
-                actual_gen,
-                "failed to scale general to {} (was: {}) for {} reals".format(
-                    t["expected_gen"], actual_gen, t["reals"]
-                ),
-            )
-            self.assertEqual(
-                t["expected_det"],
-                actual_det,
-                "failed to scale detailed to {} (was: {}) for {} reals".format(
-                    t["expected_det"], actual_det, t["reals"]
-                ),
-            )
 
     def test_calculate_progress(self):
         tests = [
