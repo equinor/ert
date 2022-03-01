@@ -33,7 +33,7 @@ void save_parameters(enkf_fs_type *target_fs,
                      const local_ministep_type *ministep,
                      const update_data_type &update_data);
 
-std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(enkf_fs_type *target_fs,
                             ensemble_config_type *ensemble_config,
                             const std::vector<int> &iens_active_index,
@@ -94,8 +94,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
             matrix_iset(A, 0, i, double(i) / 10.0);
         }
         auto update_data = analysis::update_data_type(
-            matrix_alloc(1, 1), matrix_alloc(1, 1), matrix_alloc(1, 1),
-            matrix_alloc(1, 1), std::make_optional(*A), {}, {});
+            {}, {}, {}, {}, std::make_optional(*A), {}, {});
 
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
@@ -170,16 +169,15 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
             active_index.push_back(i);
 
         // Create matrix and save as as the parameter defined in the ministep
-        matrix_type *A = matrix_alloc(2, ensemble_size);
+        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, ensemble_size);
         for (int i = 0; i < ensemble_size; i++) {
-            matrix_iset(A, 0, i, double(i) / 10.0);
-            matrix_iset(A, 1, i, double(i) / 20.0);
+            matrix_iset(&A, 0, i, double(i) / 10.0);
+            matrix_iset(&A, 1, i, double(i) / 20.0);
         }
 
         std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
-        auto update_data = analysis::update_data_type(
-            matrix_alloc(1, 1), matrix_alloc(1, 1), matrix_alloc(1, 1),
-            matrix_alloc(1, 1), {}, row_scaling_list, {});
+        auto update_data = analysis::update_data_type({}, {}, {}, {}, {},
+                                                      row_scaling_list, {});
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
 
@@ -190,7 +188,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
                 for (int i = 0; i < parameter_matrices.size(); i++) {
                     auto A = parameter_matrices[i].first;
                     auto B = row_scaling_list[i].first;
-                    REQUIRE(matrix_equal(A, B));
+                    REQUIRE(A == B);
                 }
             }
         }

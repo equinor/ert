@@ -392,7 +392,7 @@ class RowScalingTest(ResTest):
 
     # This test has a configuration where the update consists of two ministeps,
     # where the same field is updated in both steps. Because the
-    # obs_data_allocE() function uses random state it is difficult to get
+    # obs_data_makeE() function uses random state it is difficult to get
     # identical results from one ministep updating everything and two ministeps
     # updating different parts of the field.
     def test_2ministep(self):

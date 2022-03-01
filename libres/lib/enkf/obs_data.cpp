@@ -361,36 +361,35 @@ void obs_data_free(obs_data_type *obs_data) {
     free(obs_data);
 }
 
-matrix_type *obs_data_allocE(const obs_data_type *obs_data, rng_type *rng,
-                             int active_ens_size) {
-    matrix_type *E;
+Eigen::MatrixXd obs_data_makeE(const obs_data_type *obs_data, rng_type *rng,
+                               int active_ens_size) {
     int iens, iobs_active;
     int active_obs_size = obs_data_get_active_size(obs_data);
     std::vector<double> pert_mean(active_obs_size);
     std::vector<double> pert_var(active_obs_size);
 
-    E = matrix_alloc(active_obs_size, active_ens_size);
+    Eigen::MatrixXd E = Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
 
     {
 
         for (int j = 0; j < active_ens_size; j++) {
             for (int i = 0; i < active_obs_size; i++) {
-                matrix_iset(E, i, j, enkf_util_rand_normal(0, 1, rng));
+                matrix_iset(&E, i, j, enkf_util_rand_normal(0, 1, rng));
             }
         }
     }
 
     for (iens = 0; iens < active_ens_size; iens++)
         for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
-            pert_mean[iobs_active] += matrix_iget(E, iobs_active, iens);
+            pert_mean[iobs_active] += matrix_iget(&E, iobs_active, iens);
 
     for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
         pert_mean[iobs_active] /= active_ens_size;
 
     for (iens = 0; iens < active_ens_size; iens++) {
         for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++) {
-            matrix_iadd(E, iobs_active, iens, -pert_mean[iobs_active]);
-            double tmp = matrix_iget(E, iobs_active, iens);
+            matrix_iadd(&E, iobs_active, iens, -pert_mean[iobs_active]);
+            double tmp = matrix_iget(&E, iobs_active, iens);
             pert_var[iobs_active] += tmp * tmp;
         }
     }
@@ -405,16 +404,17 @@ matrix_type *obs_data_allocE(const obs_data_type *obs_data, rng_type *rng,
             const obs_block_type *obs_block =
                 (const obs_block_type *)vector_iget_const(obs_data->data,
                                                           block_nr);
-            obs_block_initE(obs_block, E, pert_var.data(), &obs_offset);
+            obs_block_initE(obs_block, &E, pert_var.data(), &obs_offset);
         }
     }
     return E;
 }
 
-matrix_type *obs_data_allocD(const obs_data_type *obs_data,
-                             const matrix_type *E, const matrix_type *S) {
-    matrix_type *D = matrix_alloc_copy(E);
-    matrix_inplace_sub(D, S);
+Eigen::MatrixXd obs_data_makeD(const obs_data_type *obs_data,
+                               const Eigen::MatrixXd &E,
+                               const Eigen::MatrixXd &S) {
+    Eigen::MatrixXd D = E;
+    matrix_inplace_sub(&D, &S);
 
     {
         int obs_offset = 0;
@@ -423,15 +423,15 @@ matrix_type *obs_data_allocD(const obs_data_type *obs_data,
             const obs_block_type *obs_block =
                 (const obs_block_type *)vector_iget_const(obs_data->data,
                                                           block_nr);
-            obs_block_initD(obs_block, D, &obs_offset);
+            obs_block_initD(obs_block, &D, &obs_offset);
         }
     }
     return D;
 }
 
-matrix_type *obs_data_allocR(const obs_data_type *obs_data) {
+Eigen::MatrixXd obs_data_makeR(const obs_data_type *obs_data) {
     int active_size = obs_data_get_active_size(obs_data);
-    matrix_type *R = matrix_alloc(active_size, active_size);
+    Eigen::MatrixXd R = Eigen::MatrixXd::Zero(active_size, active_size);
     {
         int obs_offset = 0;
         for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
@@ -439,27 +439,10 @@ matrix_type *obs_data_allocR(const obs_data_type *obs_data) {
             const obs_block_type *obs_block =
                 (const obs_block_type *)vector_iget_const(obs_data->data,
                                                           block_nr);
-            obs_block_initR(obs_block, R, &obs_offset);
+            obs_block_initR(obs_block, &R, &obs_offset);
         }
     }
     return R;
-}
-
-matrix_type *obs_data_allocdObs(const obs_data_type *obs_data) {
-    int active_size = obs_data_get_active_size(obs_data);
-    matrix_type *dObs = matrix_alloc(active_size, 2);
-    {
-        int obs_offset = 0;
-        for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
-             block_nr++) {
-            const obs_block_type *obs_block =
-                (const obs_block_type *)vector_iget_const(obs_data->data,
-                                                          block_nr);
-
-            obs_block_initdObs(obs_block, dObs, &obs_offset);
-        }
-    }
-    return dObs;
 }
 
 static void obs_data_scale_matrix__(matrix_type *m,

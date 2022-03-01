@@ -17,8 +17,8 @@
 #include <ert/analysis/ies/ies_data.hpp>
 
 /**
- * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html  
- * 
+ * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html
+ *
  */
 
 namespace analysis {
@@ -32,7 +32,7 @@ void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     const matrix_type *S, const matrix_type *E, const matrix_type *D,
     const matrix_type *R,
-    const std::vector<std::pair<matrix_type *, std::shared_ptr<RowScaling>>>
+    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         &parameters);
 } // namespace analysis
 const double a_true = 1.0;
@@ -63,7 +63,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
          "[analysis]") {
 
     GIVEN("Fixed prior and measurements") {
-        int ens_size = GENERATE(200, 100, 1000);
+        int ens_size = GENERATE(10, 100, 200);
         ies::data::Data module_data(ens_size);
         ies::config::Config config(false);
         config.truncation(1.0);
@@ -82,14 +82,14 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
         // prior
         int nparam = true_model.size();
-        auto A = matrix_alloc(nparam, ens_size);
+        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(nparam, ens_size);
         for (int iens = 0; iens < ens_size; iens++) {
             const auto &model = ens[iens];
-            matrix_iset(A, 0, iens, model.a);
-            matrix_iset(A, 1, iens, model.b);
+            matrix_iset(&A, 0, iens, model.a);
+            matrix_iset(&A, 1, iens, model.b);
         }
-        double a_avg_prior = matrix_get_row_sum(A, 0) / ens_size;
-        double b_avg_prior = matrix_get_row_sum(A, 1) / ens_size;
+        double a_avg_prior = matrix_get_row_sum(&A, 0) / ens_size;
+        double b_avg_prior = matrix_get_row_sum(&A, 1) / ens_size;
 
         // observations and measurements
         int obs_size = 45;
@@ -157,28 +157,28 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     // What is iterated is the belief in them
                     obs_block_iset(ob, iobs, measurements[iobs], obs_std);
                 }
-                matrix_type *E =
-                    obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
+                Eigen::MatrixXd E =
+                    obs_data_makeE(obs_data, rng, ens_size); // Evensen (9.19)
 
-                auto A_iter = matrix_alloc_copy(A); // Preserve prior
+                Eigen::MatrixXd A_iter = A; // Preserve prior
 
                 // Create posterior sample (exact estimate, sample covariance)
-                auto S = meas_data_allocS(meas_data);
-                matrix_type *R = obs_data_allocR(obs_data);
-                matrix_type *D = obs_data_allocD(obs_data, E, S);
-                obs_data_scale(obs_data, S, E, D, R, nullptr);
+                Eigen::MatrixXd S = meas_data_makeS(meas_data);
+                Eigen::MatrixXd R = obs_data_makeR(obs_data);
+                Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+                obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
                 const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
 
                 analysis::run_analysis_update_without_rowscaling(
-                    config, module_data, ens_mask, obs_mask, S, E, D, R,
-                    A_iter);
+                    config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
+                    &A_iter);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
-                    matrix_get_row_sum(A_iter, 0) / ens_size;
+                    matrix_get_row_sum(&A_iter, 0) / ens_size;
                 b_avg_posterior[i_sd] =
-                    matrix_get_row_sum(A_iter, 1) / ens_size;
+                    matrix_get_row_sum(&A_iter, 1) / ens_size;
 
                 // Calculate distances
                 d_posterior_ml[i_sd] =
@@ -187,12 +187,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 d_prior_posterior[i_sd] = std::sqrt(
                     std::pow((a_avg_prior - a_avg_posterior[i_sd]), 2) +
                     std::pow((b_avg_prior - b_avg_posterior[i_sd]), 2));
-
-                matrix_free(E);
-                matrix_free(S);
-                matrix_free(D);
-                matrix_free(R);
-                matrix_free(A_iter);
             }
 
             // Test everything to some small (but generous) numeric precision
@@ -231,31 +225,26 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             for (int row = 0; row < nparam; row++)
                 row_scaling->assign(row, 0.0);
 
-            auto A_with_scaling = matrix_alloc_copy(A);
+            Eigen::MatrixXd A_with_scaling = A;
 
             std::vector parameters{std::pair{A_with_scaling, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
-            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
-            auto S = meas_data_allocS(meas_data);
-            matrix_type *R = obs_data_allocR(obs_data);
-            matrix_type *D = obs_data_allocD(obs_data, E, S);
-            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            Eigen::MatrixXd E = obs_data_makeE(obs_data, rng, ens_size);
+            Eigen::MatrixXd S = meas_data_makeS(meas_data);
+            Eigen::MatrixXd R = obs_data_makeR(obs_data);
+            Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+            obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
 
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, S, E, D, R, parameters);
+                config, module_data, &S, &E, &D, &R, parameters);
 
             THEN("Updated parameter matrix should equal prior parameter "
                  "matrix") {
-                REQUIRE(matrix_equal(A, A_with_scaling));
+                REQUIRE(A == A_with_scaling);
             }
-            matrix_free(A_with_scaling);
-            matrix_free(E);
-            matrix_free(S);
-            matrix_free(D);
-            matrix_free(R);
         }
 
         WHEN("Row scaling factor is 1 for both parameters") {
@@ -263,37 +252,33 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             for (int row = 0; row < nparam; row++)
                 row_scaling->assign(row, 1.0);
 
-            auto A_with_scaling = matrix_alloc_copy(A);
-            auto A_no_scaling = matrix_alloc_copy(A);
+            printf("original\n");
+            matrix_fprintf_data(&A, true, stdout);
+            Eigen::MatrixXd A_no_scaling = A;
 
-            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
+            std::vector parameters{std::pair{A, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
-            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
-            auto S = meas_data_allocS(meas_data);
-            matrix_type *R = obs_data_allocR(obs_data);
-            matrix_type *D = obs_data_allocD(obs_data, E, S);
-            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            Eigen::MatrixXd E = obs_data_makeE(obs_data, rng, ens_size);
+            Eigen::MatrixXd S = meas_data_makeS(meas_data);
+            Eigen::MatrixXd R = obs_data_makeR(obs_data);
+            Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+            obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, S, E, D, R,
-                A_no_scaling);
+                config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
+                &A_no_scaling);
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, S, E, D, R, parameters);
+                config, module_data, &S, &E, &D, &R, parameters);
 
             THEN("Updated parameter matrix with row scaling should equal "
                  "updated parameter matrix without row scaling") {
-                REQUIRE(matrix_equal(A_no_scaling, A_with_scaling));
+                auto A_with_scaling = parameters.begin()->first;
+                REQUIRE(A_no_scaling.isApprox(A_with_scaling));
             }
-            matrix_free(A_with_scaling);
-            matrix_free(A_no_scaling);
-            matrix_free(E);
-            matrix_free(S);
-            matrix_free(D);
-            matrix_free(R);
         }
 
         WHEN("Row scaling factor is 0 for one parameter and 1 for the other") {
@@ -301,48 +286,38 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             row_scaling->assign(0, 1.0);
             row_scaling->assign(1, 0.0);
 
-            auto A_with_scaling = matrix_alloc_copy(A);
-            auto A_no_scaling = matrix_alloc_copy(A);
+            Eigen::MatrixXd A_no_scaling = A;
 
-            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
+            std::vector parameters{std::pair{A, row_scaling}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
             }
-            matrix_type *E = obs_data_allocE(obs_data, rng, ens_size);
-            auto S = meas_data_allocS(meas_data);
-            matrix_type *R = obs_data_allocR(obs_data);
-            matrix_type *D = obs_data_allocD(obs_data, E, S);
-            obs_data_scale(obs_data, S, E, D, R, nullptr);
+            Eigen::MatrixXd E = obs_data_makeE(obs_data, rng, ens_size);
+            Eigen::MatrixXd S = meas_data_makeS(meas_data);
+            Eigen::MatrixXd R = obs_data_makeR(obs_data);
+            Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+            obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, S, E, D, R, parameters);
+                config, module_data, &S, &E, &D, &R, parameters);
             analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, S, E, D, R,
-                A_no_scaling);
+                config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
+                &A_no_scaling);
 
             THEN("First row of scaled parameters should equal first row of "
                  "unscaled parameters, while second row of scaled parameters "
                  "should equal prior") {
-                auto A_with_scaling_T = matrix_alloc_transpose(A_with_scaling);
-                auto A_no_scaling_T = matrix_alloc_transpose(A_no_scaling);
-                auto A_prior_T = matrix_alloc_transpose(A);
-                REQUIRE(matrix_columns_equal(A_with_scaling_T, 0,
-                                             A_no_scaling_T, 0));
+                auto A_with_scaling = parameters.begin()->first;
+                Eigen::MatrixXd A_with_scaling_T = A_with_scaling.transpose();
+                Eigen::MatrixXd A_no_scaling_T = A_no_scaling.transpose();
+                Eigen::MatrixXd A_prior_T = A.transpose();
+                REQUIRE(matrix_columns_equal(&A_with_scaling_T, 0,
+                                             &A_no_scaling_T, 0));
                 REQUIRE(
-                    matrix_columns_equal(A_with_scaling_T, 1, A_prior_T, 1));
-
-                matrix_free(A_with_scaling_T);
-                matrix_free(A_no_scaling_T);
-                matrix_free(A_prior_T);
+                    matrix_columns_equal(&A_with_scaling_T, 1, &A_prior_T, 1));
             }
-            matrix_free(A_with_scaling);
-            matrix_free(A_no_scaling);
-            matrix_free(E);
-            matrix_free(S);
-            matrix_free(D);
-            matrix_free(R);
         }
 
         WHEN("Iterating over belief in measurements with row scaling") {
@@ -353,29 +328,29 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     // What is iterated is the belief in them
                     obs_block_iset(ob, iobs, measurements[iobs], obs_std);
                 }
-                matrix_type *E =
-                    obs_data_allocE(obs_data, rng, ens_size); // Evensen (9.19)
-                auto A_with_scaling = matrix_alloc_copy(A);
+                Eigen::MatrixXd E =
+                    obs_data_makeE(obs_data, rng, ens_size); // Evensen (9.19)
+                Eigen::MatrixXd A_with_scaling = A;
 
                 auto row_scaling = std::make_shared<RowScaling>();
                 row_scaling->assign(0, 1.0);
                 row_scaling->assign(1, 0.7);
 
                 std::vector parameters{std::pair{A_with_scaling, row_scaling}};
-                auto S = meas_data_allocS(meas_data);
-                matrix_type *R = obs_data_allocR(obs_data);
-                matrix_type *D = obs_data_allocD(obs_data, E, S);
-                obs_data_scale(obs_data, S, E, D, R, nullptr);
+                Eigen::MatrixXd S = meas_data_makeS(meas_data);
+                Eigen::MatrixXd R = obs_data_makeR(obs_data);
+                Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
+                obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
                 const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
                 analysis::run_analysis_update_with_rowscaling(
-                    config, module_data, S, E, D, R, parameters);
+                    config, module_data, &S, &E, &D, &R, parameters);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] =
-                    matrix_get_row_sum(A_with_scaling, 0) / ens_size;
+                    matrix_get_row_sum(&A_with_scaling, 0) / ens_size;
                 b_avg_posterior[i_sd] =
-                    matrix_get_row_sum(A_with_scaling, 1) / ens_size;
+                    matrix_get_row_sum(&A_with_scaling, 1) / ens_size;
 
                 // Calculate distances
                 d_posterior_ml[i_sd] =
@@ -384,12 +359,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 d_prior_posterior[i_sd] = std::sqrt(
                     std::pow((a_avg_prior - a_avg_posterior[i_sd]), 2) +
                     std::pow((b_avg_prior - b_avg_posterior[i_sd]), 2));
-
-                matrix_free(E);
-                matrix_free(A_with_scaling);
-                matrix_free(S);
-                matrix_free(D);
-                matrix_free(R);
             }
 
             // Test everything to some small (but generous) numeric precision
@@ -419,7 +388,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             }
         }
 
-        matrix_free(A);
         rng_free(rng);
         obs_data_free(obs_data);
         meas_data_free(meas_data);

@@ -60,8 +60,9 @@ extern "C" bool meas_data_has_block(const meas_data_type *matrix,
 extern "C" meas_block_type *meas_data_get_block(const meas_data_type *matrix,
                                                 const char *lookup_key);
 meas_data_type *meas_data_alloc(const std::vector<bool> &ens_mask);
+
 extern "C" void meas_data_free(meas_data_type *);
-extern "C" matrix_type *meas_data_allocS(const meas_data_type *matrix);
+Eigen::MatrixXd meas_data_makeS(const meas_data_type *matrix);
 extern "C" int meas_data_get_active_obs_size(const meas_data_type *matrix);
 extern "C" int meas_data_get_total_ens_size(const meas_data_type *matrix);
 extern "C" int meas_data_get_active_ens_size(const meas_data_type *meas_data);
@@ -71,6 +72,7 @@ extern "C" meas_block_type *meas_data_add_block(meas_data_type *matrix,
 extern "C" int meas_data_get_num_blocks(const meas_data_type *meas_block);
 extern "C" meas_block_type *meas_data_iget_block(const meas_data_type *matrix,
                                                  int block_mnr);
+
 const meas_block_type *meas_data_iget_block_const(const meas_data_type *matrix,
                                                   int block_nr);
 extern "C" int meas_block_get_total_obs_size(const meas_block_type *meas_block);
