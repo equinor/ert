@@ -67,13 +67,13 @@ extern "C" PY_USED void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
 
 extern "C" obs_data_type *obs_data_alloc(double global_std_scaling);
 extern "C" void obs_data_free(obs_data_type *);
-extern "C" matrix_type *obs_data_allocD(const obs_data_type *obs_data,
-                                        const matrix_type *E,
-                                        const matrix_type *S);
-extern "C" matrix_type *obs_data_allocR(const obs_data_type *obs_data);
-extern "C" matrix_type *obs_data_allocdObs(const obs_data_type *obs_data);
-extern "C" matrix_type *obs_data_allocE(const obs_data_type *obs_data,
-                                        rng_type *rng, int active_ens_size);
+Eigen::MatrixXd obs_data_makeD(const obs_data_type *obs_data,
+                               const Eigen::MatrixXd &E,
+                               const Eigen::MatrixXd &S);
+Eigen::MatrixXd obs_data_makeR(const obs_data_type *obs_data);
+
+Eigen::MatrixXd obs_data_makeE(const obs_data_type *obs_data, rng_type *rng,
+                               int active_ens_size);
 extern "C" void obs_data_scale(const obs_data_type *obs_data, matrix_type *S,
                                matrix_type *E, matrix_type *D, matrix_type *R,
                                matrix_type *O);

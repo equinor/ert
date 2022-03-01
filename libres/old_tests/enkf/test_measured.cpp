@@ -25,9 +25,8 @@ void test_measured_to_matrix() {
         }
     }
 
-    matrix_type *S = meas_data_allocS(meas_data);
-    test_assert_true(matrix_equal(S0, S));
-    matrix_free(S);
+    auto S = meas_data_makeS(meas_data);
+    test_assert_true(matrix_equal(S0, &S));
     matrix_free(S0);
     meas_data_free(meas_data);
 }
