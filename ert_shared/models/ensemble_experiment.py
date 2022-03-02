@@ -62,11 +62,6 @@ class EnsembleExperiment(BaseRunModel):
             result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
         )
 
-        # Deleting a run_context removes the possibility to retrospectively
-        # determine detailed progress. Thus, before deletion, the detailed
-        # progress is stored.
-        self.updateDetailedProgress()
-
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
         return run_context
