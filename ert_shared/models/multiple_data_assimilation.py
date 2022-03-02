@@ -242,11 +242,6 @@ class MultipleDataAssimilation(BaseRunModel):
             for index, run_realization in enumerate(self.initial_realizations_mask):
                 mask[index] = mask[index] and run_realization
 
-        # Deleting a run_context removes the possibility to retrospectively
-        # determine detailed progress. Thus, before deletion, the detailed
-        # progress is stored.
-        self.updateDetailedProgress()
-
         run_context = ErtRunContext.ensemble_smoother(
             sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
         )
