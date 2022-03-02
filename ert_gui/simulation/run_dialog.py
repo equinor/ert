@@ -311,8 +311,6 @@ class RunDialog(QDialog):
     def killJobs(self):
 
         msg = "Are you sure you want to kill the currently running simulations?"
-        if self._run_model.getQueueStatus().get(JobStatusType.JOB_QUEUE_UNKNOWN, 0) > 0:
-            msg += "\n\nKilling a simulation with unknown status will not kill the realizations already submitted!"
         kill_job = QMessageBox.question(
             self, "Kill simulations?", msg, QMessageBox.Yes | QMessageBox.No
         )
