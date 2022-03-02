@@ -12,6 +12,8 @@ def test_openapi(ert_storage_app, dark_storage_app):
     expect = ert_storage_app.openapi()
     actual = dark_storage_app.openapi()
 
+    # Remove /gql endpoint, as this is a workaround to get EnkfMain injected in the request object
+    del actual["paths"]["/gql"]
     # Remove textual data (descriptions and such) from ERT Storage's API.
     def _remove_text(data):
         if isinstance(data, dict):

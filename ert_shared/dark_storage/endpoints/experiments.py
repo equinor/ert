@@ -58,7 +58,7 @@ def get_experiment_ensembles(
             parent=None,
             experiment_id=get_id("experiment", "default"),
             userdata={"name": case},
-            size=get_size(case),
+            size=get_size(res, case),
             parameter_names=[],
             response_names=[],
             child_ensemble_ids=[],
