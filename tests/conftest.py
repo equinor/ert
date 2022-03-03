@@ -1,9 +1,11 @@
 import os
 import pkg_resources
+import shutil
 
 import pytest
 
 from utils import SOURCE_DIR
+from res.enkf import ResConfig
 
 
 @pytest.fixture(scope="session")
@@ -32,3 +34,14 @@ def env_save():
     ]
     set_xor = set(environment_pre).symmetric_difference(set(environment_post))
     assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
+
+
+@pytest.fixture()
+def setup_case(tmpdir, source_root):
+    def copy_case(path, config_file):
+        shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
+        os.chdir("test_data")
+        return ResConfig(config_file)
+
+    with tmpdir.as_cwd():
+        yield copy_case
