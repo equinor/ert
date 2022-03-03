@@ -11,28 +11,23 @@
 #include <ert/analysis/enkf_linalg.hpp>
 
 /**
- * Implements Eq. 14.31 in the book Data Assimilation,
+ * Implements parts of Eq. 14.31 in the book Data Assimilation,
  * The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
+ * Specifically, this implements
+ * X_1 (I + \Lambda_1)^{-1} X_1^T (D - M[A^f])
 */
-void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
-                       const matrix_type *D, const double *eig) {
-    const int nrobs = matrix_get_rows(D);
-    const int nrens = matrix_get_columns(D);
-    const int nrmin = std::min(nrobs, nrens);
-    int i, j;
-    matrix_type *X1 = matrix_alloc(nrmin, nrobs);
-    matrix_type *X2 = matrix_alloc(nrmin, nrens);
+Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,
+                                  const Eigen::MatrixXd &D,
+                                  const Eigen::VectorXd &eig) {
+    const int nrmin = std::min(D.rows(), D.cols());
+    // Corresponds to (I + \Lambda_1)^{-1} since `eig` has already been transformed.
+    Eigen::MatrixXd Lambda_inv = eig(Eigen::seq(0, nrmin - 1)).asDiagonal();
+    Eigen::MatrixXd X1 = Lambda_inv * W.transpose();
 
-    /* X1 = (I + Lambda1)^(-1) * W'*/
-    for (i = 0; i < nrmin; i++)
-        for (j = 0; j < nrobs; j++)
-            matrix_iset(X1, i, j, eig[i] * matrix_iget(W, j, i));
+    Eigen::MatrixXd X2 = X1 * D;
+    Eigen::MatrixXd X3 = W * X2;
 
-    *X2 = *X1 * *D;
-    *X3 = *W * *X2;
-
-    matrix_free(X1);
-    matrix_free(X2);
+    return X3;
 }
 
 /**

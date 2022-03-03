@@ -37,7 +37,8 @@ void enkf_linalg_lowrankE(
 
 void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
                        const matrix_type *W, const double *eig);
-void enkf_linalg_genX3(matrix_type *X3, const matrix_type *W,
-                       const matrix_type *D, const double *eig);
 
+Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,
+                                  const Eigen::MatrixXd &D,
+                                  const Eigen::VectorXd &eig);
 #endif

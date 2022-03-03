@@ -371,20 +371,15 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         matrix_free(scaledR);
     }
 
-    {
-        /*
-          X3 = X1 * diag(eig) * X1' * H (Similar to Eq. 14.31, Evensen (2007))
-        */
-        matrix_type *X3 =
-            matrix_alloc(nrobs, ens_size); // Used in subspace inversion
-        enkf_linalg_genX3(X3, X1, H, eig.data());
+    /*
+        X3 = X1 * diag(eig) * X1' * H (Similar to Eq. 14.31, Evensen (2007))
+    */
+    Eigen::Map<Eigen::VectorXd> eig_vector(eig.data(), eig.size());
+    Eigen::MatrixXd X3 = enkf_linalg_genX3(*X1, *H, eig_vector);
 
-        /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
-        *W0 = ies_steplength * S->transpose() * *X3 +
-              (1.0 - ies_steplength) * *W0;
+    /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
+    *W0 = ies_steplength * S->transpose() * X3 + (1.0 - ies_steplength) * *W0;
 
-        matrix_free(X3);
-    }
     matrix_free(X1);
 }
 
