@@ -250,7 +250,7 @@ def get_ensemble_responses(
 ) -> Mapping[str, js.RecordOut]:
 
     response_map: Mapping[str, js.RecordOut] = {}
-    for response_name in get_response_names():
+    for response_name in get_response_names(res):
         obs_keys = res.observation_keys(response_name)
         response_map[str(response_name)] = js.RecordOut(
             id=get_id(f"response", f"{ensemble_id}/{response_name}"),
