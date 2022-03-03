@@ -35,9 +35,6 @@ void enkf_linalg_lowrankE(
         *eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
     const std::variant<double, int> &truncation);
 
-void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
-                       const matrix_type *W, const double *eig);
-
 Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,
                                   const Eigen::MatrixXd &D,
                                   const Eigen::VectorXd &eig);
