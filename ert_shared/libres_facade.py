@@ -216,12 +216,9 @@ class LibresFacade(object):
         else:
             report_step = 0
 
-        try:
-            data = GenDataCollector.loadGenData(
-                self._enkf_main, case, key, report_step, realization_index
-            )
-        except (ValueError, KeyError):
-            data = DataFrame()
+        data = GenDataCollector.loadGenData(
+            self._enkf_main, case, key, report_step, realization_index
+        )
 
         return data.dropna()  # removes all rows that has a NaN
 
