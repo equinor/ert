@@ -12,13 +12,15 @@ from res.enkf import EnkfObservationImplementationType
 def get_res_from_info(info):
     return info.context["request"].state.res
 
+
 def ensemble_parameter_names(res, ensemble_name: str) -> List[str]:
     return res.gen_kw_keys()
 
 
 def ensemble_parameters(res, ensemble_name: str) -> List[dict]:
     return [
-        dict(name=key, labels=[]) for key in ensemble_parameter_names(res, ensemble_name)
+        dict(name=key, labels=[])
+        for key in ensemble_parameter_names(res, ensemble_name)
     ]
 
 

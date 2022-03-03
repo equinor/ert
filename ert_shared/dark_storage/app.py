@@ -24,6 +24,7 @@ app = FastAPI(
 @app.on_event("startup")
 async def initialize_ids() -> None:
     import ert_shared.dark_storage.enkf as enkf
+
     enkf.ids = {}
 
 

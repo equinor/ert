@@ -10,6 +10,7 @@ from ert_shared.dark_storage.graphql.experiments import Experiment, CreateExperi
 
 from starlette.requests import Request
 
+
 class Query(gr.ObjectType):
     experiments = gr.List(Experiment)
     experiment = gr.Field(Experiment, id=gr.ID(required=True))
@@ -44,7 +45,7 @@ graphql_app = GraphQLApp(schema=schema)
 router = APIRouter(tags=["graphql"])
 
 
-@router.post('/gql')
+@router.post("/gql")
 async def f(request: Request, res=Depends(get_res)):
     request.state.res = res
     return await graphql_app.handle_graphql(request=request)

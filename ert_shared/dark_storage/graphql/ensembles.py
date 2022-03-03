@@ -9,7 +9,8 @@ from ert_shared.dark_storage.common import (
     ensemble_parameters,
     ensemble_parameter_names,
     get_response_names,
-    get_responses, get_res_from_info,
+    get_responses,
+    get_res_from_info,
 )
 
 from ert_shared.dark_storage.enkf import (

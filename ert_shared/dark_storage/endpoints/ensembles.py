@@ -33,7 +33,9 @@ def get_ensemble(
         experiment_id=get_id("experiment", "default"),
         userdata={"name": get_name("ensemble", ensemble_id)},
         size=get_size(res, get_name("ensemble", ensemble_id)),
-        parameter_names=ensemble_parameter_names(res, get_name("ensemble", ensemble_id)),
+        parameter_names=ensemble_parameter_names(
+            res, get_name("ensemble", ensemble_id)
+        ),
         response_names=get_response_names(res),
         child_ensemble_ids=[],
     )

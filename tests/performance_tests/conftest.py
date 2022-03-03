@@ -95,4 +95,3 @@ def poly_ran(request, source_root, tmp_path_factory):
     yield params
 
     # shutil.rmtree(poly_folder)
-
