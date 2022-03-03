@@ -30,35 +30,6 @@ Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,
     return X3;
 }
 
-/**
- * Implements a version of Eq. 14.34 from the book Data Assimilation,
- * The Ensemble Kalman Filter, 2nd Edition by Geir Evensen.
- *
- * Eq. 14.34 is as follows:
- *
- *     X2 = (I + \Lambda_1)^{-1/2} @ X^T_1 * S
- *
- * , but this function seems to implement the following:
- *
- *     X2 = X^T_1 * S
- *     X2 = (\Lambda^{-1/2}_1 * X2^T)^T
- *
- * See tests for more details.
-*/
-void enkf_linalg_genX2(matrix_type *X2, const matrix_type *S,
-                       const matrix_type *W, const double *eig) {
-    const int nrens = matrix_get_columns(S);
-    const int idim = matrix_get_rows(X2);
-
-    *X2 = W->transpose() * *S;
-    {
-        int i, j;
-        for (j = 0; j < nrens; j++)
-            for (i = 0; i < idim; i++)
-                matrix_imul(X2, i, j, sqrt(eig[i]));
-    }
-}
-
 static int enkf_linalg_num_significant(int num_singular_values,
                                        const double *sig0, double truncation) {
     int num_significant = 0;
