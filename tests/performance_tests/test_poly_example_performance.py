@@ -78,6 +78,7 @@ def get_parameters(dark_storage_client, ensemble_id1, keyword, poly_ran):
     )
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     "function",
     [

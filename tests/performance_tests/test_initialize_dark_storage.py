@@ -93,7 +93,6 @@ def get_parameters(ert, ensemble_id1, keyword, poly_ran):
     )
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "function",
     [
