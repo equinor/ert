@@ -367,7 +367,15 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
 enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
                                 fs_driver_impl driver_id, void *arg,
                                 bool mount) {
+    /*
+	 * NOTE: This value is the (maximum) number of concurrent files
+	 * used by ert::block_fs_driver -objects. These objects will
+	 * occasionally schedule one std::future for each file, hence
+	 * this is sometimes the number of concurrently executing futures.
+	 * (In other words - don't set it to 100000...)
+	 */
     const int num_drivers = 32;
+
     FILE *stream = fs_driver_open_fstab(mount_point, true);
     if (stream != NULL) {
         fs_driver_init_fstab(stream, driver_id);

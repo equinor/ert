@@ -18,6 +18,8 @@
 
 #include <filesystem>
 #include <cstdio>
+#include <future>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -28,7 +30,6 @@ namespace fs = std::filesystem;
 #include <ert/util/buffer.h>
 
 #include <ert/res_util/block_fs.hpp>
-#include <ert/res_util/thread_pool.hpp>
 
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
@@ -83,13 +84,6 @@ static void bfs_close(bfs_type *bfs) {
     free(bfs);
 }
 
-static void *bfs_close__(void *arg) {
-    bfs_type *bfs = (bfs_type *)arg;
-    bfs_close(bfs);
-
-    return NULL;
-}
-
 static bfs_type *bfs_alloc(const bfs_config_type *config) {
     bfs_type *fs = (bfs_type *)util_malloc(sizeof *fs);
     UTIL_TYPE_ID_INIT(fs, BFS_TYPE_ID);
@@ -114,12 +108,6 @@ static void bfs_mount(bfs_type *bfs) {
     bfs->block_fs = block_fs_mount(
         bfs->mountfile, config->block_size, config->fragmentation_limit,
         config->fsync_interval, config->read_only, config->bfs_lock);
-}
-
-static void *bfs_mount__(void *arg) {
-    bfs_type *bfs = bfs_safe_cast(arg);
-    bfs_mount(bfs);
-    return NULL;
 }
 
 static void bfs_fsync(bfs_type *bfs) { block_fs_fsync(bfs->block_fs); }
@@ -234,13 +222,19 @@ bool ert::block_fs_driver::has_vector(const char *node_key, int iens) {
 }
 
 ert::block_fs_driver::~block_fs_driver() {
-    int driver_nr;
-    thread_pool_type *tp = thread_pool_alloc(4, true);
-    for (driver_nr = 0; driver_nr < this->num_fs; driver_nr++)
-        thread_pool_add_job(tp, bfs_close__, this->fs_list[driver_nr]);
+    // Sometimes only one is managed, so no need to spin up parallelism
+    if (this->num_fs == 1) {
+        bfs_close(this->fs_list[0]);
+    } else {
+        std::vector<std::future<void>> futures;
+        for (int driver_nr = 0; driver_nr < this->num_fs; ++driver_nr)
+            futures.push_back(std::async(std::launch::async, bfs_close,
+                                         this->fs_list[driver_nr]));
 
-    thread_pool_join(tp);
-    thread_pool_free(tp);
+        // Wait for all futures to finish
+        for (auto &fut : futures)
+            fut.get();
+    }
 
     bfs_config_free(this->config);
     free(this->fs_list);
@@ -270,13 +264,19 @@ ert::block_fs_driver *ert::block_fs_driver::new_(bool read_only, int num_fs,
 }
 
 void ert::block_fs_driver::mount() {
-    thread_pool_type *tp = thread_pool_alloc(4, true);
+    // Sometimes only one is managed, so no need to spin up parallelism
+    if (this->num_fs == 1) {
+        bfs_mount(this->fs_list[0]);
+    } else {
+        std::vector<std::future<void>> futures;
+        for (int driver_nr = 0; driver_nr < this->num_fs; ++driver_nr)
+            futures.push_back(std::async([](bfs_type *bfs) { bfs_mount(bfs); },
+                                         this->fs_list[driver_nr]));
 
-    for (int ifs = 0; ifs < this->num_fs; ifs++)
-        thread_pool_add_job(tp, bfs_mount__, this->fs_list[ifs]);
-
-    thread_pool_join(tp);
-    thread_pool_free(tp);
+        // Wait for all futures to finish
+        for (auto &fut : futures)
+            fut.get();
+    }
 }
 
 void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
