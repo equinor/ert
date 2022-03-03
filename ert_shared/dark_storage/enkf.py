@@ -13,24 +13,7 @@ from res.enkf import EnKFMain, ResConfig
 
 __all__ = ["LibresFacade", "get_res"]
 
-
-_libres_facade: Optional[LibresFacade] = None
-_ert: Optional[EnKFMain] = None
-_config: Optional[ResConfig] = None
 ids = {}
-
-
-def init_facade() -> None:
-    global _libres_facade
-    global _ert
-    global _config
-
-    configfile = os.environ["ERT_STORAGE_RES_CONFIG"]
-
-    _config = ResConfig(configfile)
-    os.chdir(_config.config_path)
-    _ert = EnKFMain(_config, strict=True)
-    _libres_facade = LibresFacade(_ert)
 
 
 def get_id(type, name):
