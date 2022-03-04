@@ -3,7 +3,6 @@ from pandas import DataFrame
 
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
-from res.enkf.key_manager import KeyManager
 
 
 class MisfitCollector:
@@ -11,14 +10,7 @@ class MisfitCollector:
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
-
         return [index for index, element in enumerate(ens_mask) if element]
-
-    @staticmethod
-    def getAllMisfitKeys(ert, sort_keys=True):
-        """@rtype: list of str"""
-        key_manager = KeyManager(ert)
-        return key_manager.misfitKeys(sort_keys=sort_keys)
 
     @staticmethod
     def loadAllMisfitData(ert: EnKFMain, case_name) -> DataFrame:
@@ -30,7 +22,7 @@ class MisfitCollector:
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         realizations = MisfitCollector.createActiveList(ert, fs)
-        misfit_keys = MisfitCollector.getAllMisfitKeys(ert, sort_keys=False)
+        misfit_keys = ert.getKeyManager().misfitKeys(sort_keys=False)
         misfit_sum_index = len(misfit_keys) - 1
 
         misfit_array = numpy.empty(

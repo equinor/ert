@@ -1,19 +1,8 @@
 from pandas import DataFrame
-
 from res.enkf import EnKFMain
-from res.enkf.key_manager import KeyManager
 
 
 class SummaryObservationCollector:
-    @staticmethod
-    def getAllObservationKeys(ert: EnKFMain):
-        """
-        @type ert: EnKFMain
-        @rtype: list of str
-        """
-        key_manager = KeyManager(ert)
-        return key_manager.summaryKeysWithObservations()
-
     @staticmethod
     def loadObservationData(ert: EnKFMain, case_name, keys=None):
         """
@@ -28,7 +17,7 @@ class SummaryObservationCollector:
             observations.getObservationTime(index).datetime()
             for index in range(1, history_length + 1)
         ]
-        summary_keys = SummaryObservationCollector.getAllObservationKeys(ert)
+        summary_keys = ert.getKeyManager().summaryKeysWithObservations()
         if keys is not None:
             summary_keys = [
                 key for key in keys if key in summary_keys
