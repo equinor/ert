@@ -24,6 +24,8 @@
 
 LocalObsDataNode::LocalObsDataNode(const std::string &key) : m_key(key) {}
 
+ActiveList *LocalObsDataNode::active_list() { return &this->m_active_list; }
+
 const ActiveList *LocalObsDataNode::active_list() const {
     return &this->m_active_list;
 }
@@ -35,11 +37,19 @@ bool LocalObsDataNode::operator==(const LocalObsDataNode &other) const {
            this->m_active_list == other.m_active_list;
 }
 
+bool LocalObsDataNode::operator!=(const LocalObsDataNode &other) const {
+    return !(*this == other);
+}
+
 RES_LIB_SUBMODULE("local.local_obsdata_node", m) {
     py::class_<LocalObsDataNode>(m, "LocalObsdataNode")
         .def(py::init<const std::string &>())
         .def("key", &LocalObsDataNode::name)
         .def("getKey", &LocalObsDataNode::name)
-        .def("getActiveList", &LocalObsDataNode::active_list,
+        .def(pybind11::self == pybind11::self)
+        .def(pybind11::self != pybind11::self)
+        .def("getActiveList",
+             static_cast<ActiveList *(LocalObsDataNode::*)()>(
+                 &LocalObsDataNode::active_list),
              py::return_value_policy::reference_internal);
 }

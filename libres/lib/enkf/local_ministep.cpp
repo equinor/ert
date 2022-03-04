@@ -64,14 +64,14 @@ void local_ministep_free__(void *arg) {
 */
 
 void local_ministep_add_obsdata(local_ministep_type *ministep,
-                                local_obsdata_type *obsdata) {
+                                LocalObsData *obsdata) {
     if (ministep->observations == NULL)
         ministep->observations = obsdata;
     else { // Add nodes from input observations to existing observations
         int iobs;
-        for (iobs = 0; iobs < local_obsdata_get_size(obsdata); iobs++) {
-            auto *obs_node = local_obsdata_iget(obsdata, iobs);
-            LocalObsDataNode new_node(*obs_node);
+        for (iobs = 0; iobs < obsdata->size(); iobs++) {
+            auto &obs_node = (*obsdata)[iobs];
+            LocalObsDataNode new_node(obs_node);
             local_ministep_add_obsdata_node(ministep, &new_node);
         }
     }
@@ -88,8 +88,8 @@ void local_ministep_add_obs_data(local_ministep_type *ministep,
 
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                      LocalObsDataNode *obsdatanode) {
-    local_obsdata_type *obsdata = local_ministep_get_obsdata(ministep);
-    local_obsdata_add_node(obsdata, obsdatanode);
+    LocalObsData *obsdata = local_ministep_get_obsdata(ministep);
+    obsdata->add_node(*obsdatanode);
 }
 
 int local_ministep_num_active_data(const local_ministep_type *ministep) {
@@ -122,8 +122,7 @@ local_ministep_get_or_create_row_scaling(local_ministep_type *ministep,
     return ministep->scaling[key].get();
 }
 
-local_obsdata_type *
-local_ministep_get_obsdata(const local_ministep_type *ministep) {
+LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep) {
     return ministep->observations;
 }
 
@@ -154,6 +153,17 @@ ActiveList &get_active_data_list(py::handle obj, const std::string &name) {
 void add_obsdata_node(py::handle self, LocalObsDataNode &node) {
     auto *ministep = ert::from_cwrap<local_ministep_type>(self);
     local_ministep_add_obsdata_node(ministep, &node);
+}
+
+LocalObsData &get_obsdata(py::handle obj) {
+    auto *ministep = ert::from_cwrap<local_ministep_type>(obj);
+    auto *obsdata_ptr = local_ministep_get_obsdata(ministep);
+    return *obsdata_ptr;
+}
+
+void attach_obsdata(py::handle obj, LocalObsData &obsdata) {
+    auto *ministep = ert::from_cwrap<local_ministep_type>(obj);
+    local_ministep_add_obsdata(ministep, &obsdata);
 }
 
 } // namespace
@@ -189,4 +199,7 @@ RES_LIB_SUBMODULE("local.ministep", m) {
     m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
           py::return_value_policy::reference);
     m.def("add_obsdata_node", &add_obsdata_node, "self"_a, "node"_a);
+    m.def("get_obsdata", &get_obsdata, "self"_a,
+          py::return_value_policy::reference);
+    m.def("attach_obsdata", &attach_obsdata, "self"_a, "obsdata"_a);
 }

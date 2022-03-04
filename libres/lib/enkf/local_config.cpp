@@ -19,8 +19,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <unordered_map>
 #include <ert/util/vector.h>
 
+#include <ert/python.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/local_config.hpp>
@@ -117,7 +119,7 @@ struct local_config_struct {
     hash_type *
         updatestep_storage; /* These three hash tables are the 'holding area' for the local_updatestep, */
     hash_type *ministep_storage; /* local_ministep instances. */
-    hash_type *obsdata_storage;
+    std::unordered_map<std::string, LocalObsData> obsdata_storage;
 };
 
 /*
@@ -142,7 +144,7 @@ void local_config_clear(local_config_type *local_config) {
     local_config->default_updatestep = NULL;
     hash_clear(local_config->updatestep_storage);
     hash_clear(local_config->ministep_storage);
-    hash_clear(local_config->obsdata_storage);
+    local_config->obsdata_storage.clear();
     local_config->default_updatestep =
         local_config_alloc_updatestep(local_config, "DEFAULT");
 }
@@ -161,13 +163,11 @@ void local_config_clear_active(local_config_type *local_config) {
 }
 
 local_config_type *local_config_alloc() {
-    local_config_type *local_config =
-        (local_config_type *)util_malloc(sizeof *local_config);
+    local_config_type *local_config = new local_config_type();
 
     local_config->default_updatestep = NULL;
     local_config->updatestep_storage = hash_alloc();
     local_config->ministep_storage = hash_alloc();
-    local_config->obsdata_storage = hash_alloc();
 
     local_config_clear(local_config);
     return local_config;
@@ -176,8 +176,7 @@ local_config_type *local_config_alloc() {
 void local_config_free(local_config_type *local_config) {
     hash_free(local_config->updatestep_storage);
     hash_free(local_config->ministep_storage);
-    hash_free(local_config->obsdata_storage);
-    free(local_config);
+    delete local_config;
 }
 
 local_ministep_type *
@@ -191,34 +190,20 @@ local_config_alloc_ministep(local_config_type *local_config, const char *key) {
     return ministep;
 }
 
-local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
-                                               const char *obsdata_name) {
+LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
+                                         const char *obsdata_name) {
     if (local_config_has_obsdata(local_config, obsdata_name))
         util_abort("%s: tried to add existing obsdata node key:%s \n", __func__,
                    obsdata_name);
 
-    local_obsdata_type *obsdata = local_obsdata_alloc(obsdata_name);
-    hash_insert_hash_owned_ref(local_config->obsdata_storage, obsdata_name,
-                               obsdata, local_obsdata_free__);
-    return obsdata;
+    local_config->obsdata_storage.emplace(std::string{obsdata_name},
+                                          LocalObsData{obsdata_name});
+    return &local_config->obsdata_storage.at(obsdata_name);
 }
 
 bool local_config_has_obsdata(const local_config_type *local_config,
                               const char *key) {
-    return hash_has_key(local_config->obsdata_storage, key);
-}
-
-local_obsdata_type *
-local_config_alloc_obsdata_copy(local_config_type *local_config,
-                                const char *src_key, const char *target_key) {
-    local_obsdata_type *src_obsdata =
-        (local_obsdata_type *)hash_get(local_config->obsdata_storage, src_key);
-    local_obsdata_type *copy_obsdata =
-        local_obsdata_alloc_copy(src_obsdata, target_key);
-
-    hash_insert_hash_owned_ref(local_config->obsdata_storage, target_key,
-                               copy_obsdata, local_obsdata_free__);
-    return copy_obsdata;
+    return local_config->obsdata_storage.count(key) == 1;
 }
 
 local_ministep_type *
@@ -229,12 +214,13 @@ local_config_get_ministep(const local_config_type *local_config,
     return ministep;
 }
 
-local_obsdata_type *
-local_config_get_obsdata(const local_config_type *local_config,
-                         const char *key) {
-    local_obsdata_type *obsdata =
-        (local_obsdata_type *)hash_get(local_config->obsdata_storage, key);
-    return obsdata;
+LocalObsData *local_config_get_obsdata(local_config_type *local_config,
+                                       const char *key) {
+    auto iter = local_config->obsdata_storage.find(key);
+    if (iter == local_config->obsdata_storage.end())
+        throw py::key_error("No such observation key");
+
+    return &iter->second;
 }
 
 local_updatestep_type *
@@ -246,4 +232,40 @@ local_config_get_updatestep(const local_config_type *local_config) {
                    __func__);
 
     return updatestep;
+}
+
+namespace {
+
+LocalObsData &get_obsdata(py::handle obj, const std::string &obs_key) {
+    auto *local_config = ert::from_cwrap<local_config_type>(obj);
+    auto *obsdata = local_config_get_obsdata(local_config, obs_key.c_str());
+    return *obsdata;
+}
+
+LocalObsData copy_obsdata(py::handle obj, const std::string &obs_key,
+                          const std::string &target_key) {
+    auto *local_config = ert::from_cwrap<local_config_type>(obj);
+    auto *obsdata = local_config_get_obsdata(local_config, obs_key.c_str());
+    LocalObsData copy(target_key);
+    for (const auto &node : *obsdata)
+        copy.add_node(node);
+    return copy;
+}
+
+LocalObsData &create_obsdata(py::handle obj, const std::string &obs_key) {
+    auto *local_config = ert::from_cwrap<local_config_type>(obj);
+    auto *obs_data = local_config_alloc_obsdata(local_config, obs_key.c_str());
+    return *obs_data;
+}
+
+} // namespace
+
+RES_LIB_SUBMODULE("local.local_config", m) {
+    using namespace py::literals;
+    m.def("get_obsdata_ref", &get_obsdata, "self"_a, "key"_a,
+          py::return_value_policy::reference_internal);
+    m.def("create_obsdata", &create_obsdata, "self"_a, "key"_a,
+          py::return_value_policy::reference_internal);
+    m.def("get_obsdata_copy", &copy_obsdata, py::arg("self"), py::arg("key1"),
+          py::arg("key2"));
 }

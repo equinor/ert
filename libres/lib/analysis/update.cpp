@@ -391,8 +391,7 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
 
     std::vector<int> ens_active_list = bool_vector_to_active_list(ens_mask);
 
-    local_obsdata_type *selected_observations =
-        local_ministep_get_obsdata(ministep);
+    LocalObsData *selected_observations = local_ministep_get_obsdata(ministep);
     enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
                                       ens_active_list, meas_data, obs_data);
 

@@ -129,7 +129,6 @@ class LocalConfigTest(ResTest):
             main = test_context.getErt()
 
             local_config = main.getLocalConfig()
-
             updatestep = local_config.getUpdatestep()
             ministep = updatestep[0]
             self.assertEqual(1, ministep.numActiveData())

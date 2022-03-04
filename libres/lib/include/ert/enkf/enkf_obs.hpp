@@ -66,7 +66,7 @@ extern "C" obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const std::vector<int> &ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data);
@@ -86,7 +86,7 @@ enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
 extern "C" time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs,
                                          int report_step);
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        local_obsdata_type *local_obs,
+                                        LocalObsData *local_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask);
 conf_class_type *enkf_obs_get_obs_conf_class();
