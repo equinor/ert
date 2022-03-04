@@ -340,6 +340,7 @@ class _RealEnKFMain(BaseCClass):
     def getLocalConfig(self) -> LocalConfig:
         """@rtype: LocalConfig"""
         config = self._get_local_config().setParent(self)
+        print("Have fetched local config")
         config.initAttributes(
             self.ensembleConfig(), self.getObservations(), self.eclConfig().getGrid()
         )

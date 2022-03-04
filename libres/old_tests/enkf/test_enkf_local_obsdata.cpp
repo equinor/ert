@@ -18,25 +18,33 @@
 #include <stdlib.h>
 
 #include <ert/util/test_util.h>
+
 #include <ert/enkf/local_obsdata.hpp>
 
-int main(int argc, char **argv) {
-    local_obsdata_type *obsdata;
+void test_wrapper() {
+    LocalObsDataNode node("KEY");
+    auto data = LocalObsData::make_wrapper(node);
+    test_assert_int_equal(1, data.size());
+    test_assert_true(node == data[0]);
+    test_assert_true(data.has_node("KEY"));
+    test_assert_false(data.has_node("KEYX"));
+    test_assert_string_equal(node.name().c_str(), data.name().c_str());
+}
 
-    obsdata = local_obsdata_alloc("KEY");
-    test_assert_true(local_obsdata_is_instance(obsdata));
-    test_assert_int_equal(0, local_obsdata_get_size(obsdata));
-    test_assert_string_equal("KEY", local_obsdata_get_name(obsdata));
+int main(int argc, char **argv) {
+    LocalObsData obsdata("KEY");
+
+    test_assert_int_equal(0, obsdata.size());
+    test_assert_string_equal("KEY", obsdata.name().c_str());
 
     {
         LocalObsDataNode obsnode("KEY");
-        test_assert_true(local_obsdata_add_node(obsdata, &obsnode));
-        test_assert_false(local_obsdata_add_node(obsdata, &obsnode));
-        test_assert_int_equal(1, local_obsdata_get_size(obsdata));
-        test_assert_true(obsnode == *local_obsdata_iget(obsdata, 0));
+        test_assert_true(obsdata.add_node(obsnode));
+        test_assert_false(obsdata.add_node(obsnode));
+        test_assert_int_equal(1, obsdata.size());
+        test_assert_true(obsnode == obsdata[0]);
     }
 
-    local_obsdata_free(obsdata);
-
+    test_wrapper();
     exit(0);
 }

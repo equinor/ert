@@ -72,7 +72,7 @@ void enkf_obs_load(enkf_obs_type *, const char *, double);
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const int_vector_type *ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data);
@@ -82,7 +82,7 @@ hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs);
 hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs);
 
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        local_obsdata_type *local_obs,
+                                        LocalObsData *local_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask);
 conf_class_type *enkf_obs_get_obs_conf_class();

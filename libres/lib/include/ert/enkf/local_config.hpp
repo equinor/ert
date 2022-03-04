@@ -35,12 +35,8 @@ extern "C" {
 #endif
 
 typedef struct local_config_struct local_config_type;
-local_obsdata_type *
-local_config_get_obsdata(const local_config_type *local_config,
-                         const char *key);
-PY_USED local_obsdata_type *
-local_config_alloc_obsdata_copy(local_config_type *local_config,
-                                const char *src_key, const char *target_key);
+LocalObsData *local_config_get_obsdata(local_config_type *local_config,
+                                       const char *key);
 
 local_config_type *local_config_alloc();
 void local_config_clear(local_config_type *local_config);
@@ -53,8 +49,8 @@ local_config_get_updatestep(const local_config_type *local_config);
 local_ministep_type *
 local_config_get_ministep(const local_config_type *local_config,
                           const char *key);
-local_obsdata_type *local_config_alloc_obsdata(local_config_type *local_config,
-                                               const char *obsdata_name);
+LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
+                                         const char *obsdata_name);
 bool local_config_has_obsdata(const local_config_type *local_config,
                               const char *obsdata_name);
 #ifdef __cplusplus
