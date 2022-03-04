@@ -1,23 +1,10 @@
-import os
-import shutil
 import sys
 
 import pytest
 
 from ecl.util.util import BoolVector
 
-from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig, EnKFMain
-
-
-@pytest.fixture()
-def setup_case(tmpdir, source_root):
-    def copy_case(path, config_file):
-        shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
-        os.chdir("test_data")
-        return ResConfig(config_file)
-
-    with tmpdir.as_cwd():
-        yield copy_case
+from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
 
 
 @pytest.mark.parametrize(

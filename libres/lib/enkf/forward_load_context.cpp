@@ -16,14 +16,19 @@
    for more details.
 */
 
+#include <cstdlib>
 #include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
 
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/run_arg.hpp>
+#include <ert/res_util/memory.hpp>
+#include <fmt/format.h>
 
 #define FORWARD_LOAD_CONTEXT_TYPE_ID 644239127
+
+static auto logger = ert::get_logger("enkf.forward_load_context");
 
 struct forward_load_context_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -44,7 +49,7 @@ struct forward_load_context_struct {
     bool ecl_active;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(forward_load_context, FORWARD_LOAD_CONTEXT_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION(forward_load_context, FORWARD_LOAD_CONTEXT_TYPE_ID);
 
 static void
 forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
@@ -95,11 +100,33 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
 
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
             bool include_restart = false;
-            bool lazy_load = true;
-            int file_options = 0;
-            summary = ecl_sum_fread_alloc(
-                header_file, data_files, SUMMARY_KEY_JOIN_STRING,
-                include_restart, lazy_load, file_options);
+
+            /*
+             * Setting this flag causes summary-data to be loaded by
+             * ecl::unsmry_loader which is "horribly slow" according
+             * to comments in the code. The motivation for introducing
+             * this mode was at some point to use less memory, but
+             * computers nowadays should not have a problem with that.
+             *
+             * For comments, reasoning and discussions, please refer to
+             * https://github.com/equinor/ert/issues/2873
+             *   and
+             * https://github.com/equinor/ert/issues/2972
+             */
+            bool lazy_load = false;
+            if (std::getenv("ERT_LAZY_LOAD_SUMMARYDATA"))
+                lazy_load = true;
+
+            {
+                ert::utils::scoped_memory_logger memlogger(
+                    logger, fmt::format("lazy={}", lazy_load));
+
+                int file_options = 0;
+                summary = ecl_sum_fread_alloc(
+                    header_file, data_files, SUMMARY_KEY_JOIN_STRING,
+                    include_restart, lazy_load, file_options);
+            }
+
             {
                 time_t end_time =
                     ecl_config_get_end_date(load_context->ecl_config);
