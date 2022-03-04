@@ -3,7 +3,6 @@ from ecl.util.util import BoolVector
 from pandas import DataFrame
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
-from res.enkf.key_manager import KeyManager
 
 
 class GenKwCollector:
@@ -17,12 +16,6 @@ class GenKwCollector:
         index_list = [index for index, element in enumerate(ens_mask) if element]
         bool_vec = BoolVector.createFromList(len(index_list), index_list)
         return bool_vec.createActiveList()
-
-    @staticmethod
-    def getAllGenKwKeys(ert):
-        """@rtype: list of str"""
-        key_manager = KeyManager(ert)
-        return key_manager.genKwKeys()
 
     @staticmethod
     def loadAllGenKwData(ert: EnKFMain, case_name, keys=None, realization_index=None):
@@ -41,7 +34,7 @@ class GenKwCollector:
                 raise IndexError(f"No such realization ({realization_index})")
             realizations = [realization_index]
 
-        gen_kw_keys = GenKwCollector.getAllGenKwKeys(ert)
+        gen_kw_keys = ert.getKeyManager().genKwKeys()
 
         if keys is not None:
             gen_kw_keys = [
