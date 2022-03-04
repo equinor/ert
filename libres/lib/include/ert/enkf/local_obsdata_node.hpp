@@ -25,10 +25,12 @@ class LocalObsDataNode {
 public:
     LocalObsDataNode(const std::string &key);
 
+    ActiveList *active_list();
     const ActiveList *active_list() const;
     void update_active_list(const ActiveList &al);
     const std::string &name() const;
     bool operator==(const LocalObsDataNode &other) const;
+    bool operator!=(const LocalObsDataNode &other) const;
 
 private:
     ActiveList m_active_list;
