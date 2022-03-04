@@ -236,7 +236,7 @@ void enkf_main_free(enkf_main_type *enkf_main) {
 
     local_config_free(enkf_main->local_config);
 
-    free(enkf_main);
+    delete enkf_main;
 }
 
 void enkf_main_exit(enkf_main_type *enkf_main) {
@@ -306,13 +306,12 @@ ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
 */
 
 void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
-
     local_config_type *local_config = enkf_main->local_config;
     local_config_clear(local_config);
     {
         local_updatestep_type *default_step =
             local_config_get_updatestep(local_config);
-        local_obsdata_type *obsdata =
+        LocalObsData *obsdata =
             local_config_alloc_obsdata(local_config, "ALL_OBS");
         local_ministep_type *ministep =
             local_config_alloc_ministep(local_config, "ALL_ACTIVE");
@@ -328,7 +327,7 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
             while (!hash_iter_is_complete(obs_iter)) {
                 const char *obs_key = hash_iter_get_next_key(obs_iter);
                 LocalObsDataNode node(obs_key);
-                local_obsdata_add_node(obsdata, &node);
+                obsdata->add_node(node);
             }
             local_ministep_add_obsdata(ministep, obsdata);
             hash_iter_free(obs_iter);
@@ -369,8 +368,7 @@ void enkf_main_clear_data_kw(enkf_main_type *enkf_main) {
 }
 
 static enkf_main_type *enkf_main_alloc_empty() {
-    enkf_main_type *enkf_main =
-        (enkf_main_type *)util_malloc(sizeof *enkf_main);
+    enkf_main_type *enkf_main = new enkf_main_type;
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
     enkf_main->ensemble = NULL;
     enkf_main->rng_manager = NULL;

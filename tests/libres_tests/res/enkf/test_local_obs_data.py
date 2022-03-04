@@ -30,7 +30,7 @@ def test_empty():
     "index, error, expected_msg",
     [
         (10, IndexError, "Invalid index, valid range is"),
-        ("NO_SUCH_KEY", KeyError, 'Unknown key "NO_SUCH_KEY'),
+        ("NO_SUCH_KEY", KeyError, 'Unknown key "NO_SUCH_KEY"'),
     ],
 )
 def test_exception(index, error, expected_msg):

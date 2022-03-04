@@ -3,20 +3,14 @@ from cwrap import BaseCClass
 
 from res import _lib
 from res import ResPrototype
-from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.row_scaling import RowScaling
+from res.enkf.local_obsdata import LocalObsdata
 
 
 class LocalMinistep(BaseCClass):
     TYPE_NAME = "local_ministep"
 
-    _get_local_obs_data = ResPrototype(
-        "local_obsdata_ref local_ministep_get_obsdata(local_ministep)"
-    )
     _free = ResPrototype("void local_ministep_free(local_ministep)")
-    _attach_obsdata = ResPrototype(
-        "void local_ministep_add_obsdata(local_ministep, local_obsdata)"
-    )
     _name = ResPrototype("char* local_ministep_get_name(local_ministep)")
     _data_size = ResPrototype("int local_ministep_num_active_data(local_ministep)")
     _has_active_data = ResPrototype(
@@ -62,7 +56,7 @@ class LocalMinistep(BaseCClass):
 
     def attachObsset(self, obs_set):
         assert isinstance(obs_set, LocalObsdata)
-        self._attach_obsdata(obs_set)
+        _lib.local.ministep.attach_obsdata(self, obs_set)
 
     def row_scaling(self, key) -> RowScaling:
         if not self._has_active_data(key):
@@ -72,7 +66,7 @@ class LocalMinistep(BaseCClass):
 
     def getLocalObsData(self):
         """@rtype: LocalObsdata"""
-        return self._get_local_obs_data()
+        return _lib.local.ministep.get_obsdata(self)
 
     def name(self):
         return self._name()

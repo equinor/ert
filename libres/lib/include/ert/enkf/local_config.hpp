@@ -31,12 +31,15 @@
 #include <ert/enkf/enkf_obs.hpp>
 
 typedef struct local_config_struct local_config_type;
-extern "C" local_obsdata_type *
-local_config_get_obsdata(const local_config_type *local_config,
-                         const char *key);
-extern "C" PY_USED local_obsdata_type *
-local_config_alloc_obsdata_copy(local_config_type *local_config,
-                                const char *src_key, const char *target_key);
+
+LocalObsData *local_config_get_obsdata(const local_config_type *local_config,
+                                       const char *key);
+LocalObsData *local_config_alloc_obsdata_copy(local_config_type *local_config,
+                                              const char *src_key,
+                                              const char *target_key);
+
+LocalObsData *local_config_get_obsdata(local_config_type *local_config,
+                                       const char *key);
 
 local_config_type *local_config_alloc();
 extern "C" void local_config_clear(local_config_type *local_config);
@@ -49,9 +52,10 @@ local_config_get_updatestep(const local_config_type *local_config);
 extern "C" local_ministep_type *
 local_config_get_ministep(const local_config_type *local_config,
                           const char *key);
-extern "C" local_obsdata_type *
-local_config_alloc_obsdata(local_config_type *local_config,
-                           const char *obsdata_name);
 extern "C" bool local_config_has_obsdata(const local_config_type *local_config,
                                          const char *obsdata_name);
+LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
+                                         const char *obsdata_name);
+bool local_config_has_obsdata(const local_config_type *local_config,
+                              const char *obsdata_name);
 #endif

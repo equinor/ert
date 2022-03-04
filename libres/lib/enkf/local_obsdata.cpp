@@ -15,149 +15,118 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <unordered_map>
-#include <vector>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/vector.h>
-#include <ert/util/hash.h>
+#include <ert/enkf/local_obsdata.hpp>
 
-#include <ert/python.hpp>
-#include <ert/enkf/local_config.hpp>
+#include "ert/python.hpp"
 
-#define LOCAL_OBSDATA_TYPE_ID 86331309
+LocalObsData::LocalObsData(const std::string &name) : m_name(name) {}
 
-struct local_obsdata_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    std::unordered_map<std::string, std::size_t> node_index;
-    std::vector<LocalObsDataNode> nodes;
-    char *name;
-};
-
-UTIL_IS_INSTANCE_FUNCTION(local_obsdata, LOCAL_OBSDATA_TYPE_ID)
-static UTIL_SAFE_CAST_FUNCTION(local_obsdata, LOCAL_OBSDATA_TYPE_ID)
-
-    local_obsdata_type *local_obsdata_alloc(const char *name) {
-    local_obsdata_type *data = new local_obsdata_type();
-    UTIL_TYPE_ID_INIT(data, LOCAL_OBSDATA_TYPE_ID);
-    data->name = util_alloc_string_copy(name);
-    return data;
+LocalObsData LocalObsData::make_wrapper(const LocalObsDataNode &node) {
+    LocalObsData obs_data(node.name());
+    obs_data.add_node(node);
+    return obs_data;
 }
 
-local_obsdata_type *local_obsdata_alloc_copy(const local_obsdata_type *src,
-                                             const char *target_key) {
-    local_obsdata_type *target = local_obsdata_alloc(target_key);
-    for (int i = 0; i < local_obsdata_get_size(src); i++) {
-        const auto *node = local_obsdata_iget(src, i);
-        local_obsdata_add_node(target, node);
+LocalObsDataNode &LocalObsData::operator[](const std::string &obs_key) {
+    auto index_iter = this->m_node_index.find(obs_key);
+    if (index_iter == this->m_node_index.end())
+        throw py::key_error(fmt::format("Unknown key \"{}\"", obs_key));
+
+    return this->m_nodes[index_iter->second];
+}
+
+const LocalObsDataNode &
+LocalObsData::operator[](const std::string &obs_key) const {
+    auto index_iter = this->m_node_index.find(obs_key);
+    if (index_iter == this->m_node_index.end())
+        throw py::key_error(fmt::format("Unknown key \"{}\"", obs_key));
+
+    return this->m_nodes[index_iter->second];
+}
+
+const LocalObsDataNode &LocalObsData::operator[](std::size_t index) const {
+    if (index >= this->m_nodes.size())
+        throw std::out_of_range(fmt::format(
+            "Invalid index, valid range is: [0,{})", this->m_nodes.size()));
+
+    return this->m_nodes[index];
+}
+
+void LocalObsData::del_node(const std::string &key) {
+    auto index = this->m_node_index.at(key);
+    this->m_nodes.erase(this->m_nodes.begin() + index);
+    this->m_node_index.clear();
+    for (index = 0; index < this->m_nodes.size(); index++) {
+        const auto &node = this->m_nodes[index];
+        this->m_node_index.insert({node.name(), index});
     }
-    return target;
 }
 
-void local_obsdata_free(local_obsdata_type *data) {
-    free(data->name);
-    delete data;
+bool LocalObsData::has_node(const std::string &key) const {
+    return (this->m_node_index.count(key) != 0);
 }
 
-void local_obsdata_free__(void *arg) {
-    local_obsdata_type *data = local_obsdata_safe_cast(arg);
-    return local_obsdata_free(data);
+bool LocalObsData::add_node(const std::string &key) {
+    if (this->m_node_index.count(key) > 0)
+        throw py::key_error("Key already registered");
+
+    this->m_nodes.emplace_back(key);
+    this->m_node_index.emplace(key, this->m_nodes.size() - 1);
+    return true;
 }
 
-const char *local_obsdata_get_name(const local_obsdata_type *data) {
-    return data->name;
-}
-
-int local_obsdata_get_size(const local_obsdata_type *data) {
-    return data->nodes.size();
-}
-
-/*
-  The @data instance will insert a copy
-*/
-
-bool local_obsdata_add_node(local_obsdata_type *data,
-                            const LocalObsDataNode *node) {
-    const char *key = node->name().c_str();
-    if (local_obsdata_has_node(data, key))
+bool LocalObsData::add_node(const LocalObsDataNode &node) {
+    if (this->has_node(node.name()))
         return false;
-    else {
-        data->node_index.emplace(key, data->nodes.size());
-        data->nodes.push_back(*node);
-        return true;
-    }
+
+    this->m_nodes.push_back(node);
+    this->m_node_index.emplace(node.name(), this->m_nodes.size() - 1);
+    return true;
 }
 
-void local_obsdata_del_node(local_obsdata_type *data, const char *key) {
-    auto index = data->node_index.at(key);
-    data->nodes.erase(data->nodes.begin() + index);
-    data->node_index.clear();
-    for (std::size_t i = 0; i < data->nodes.size(); i++) {
-        const auto &node = data->nodes[i];
-        data->node_index.emplace(node.name(), i);
-    }
+std::size_t LocalObsData::size() const { return this->m_nodes.size(); }
+
+bool LocalObsData::operator==(const LocalObsData &other) const {
+    return this->m_nodes == other.m_nodes &&
+           this->m_node_index == other.m_node_index &&
+           this->m_name == other.m_name;
 }
 
-const LocalObsDataNode *local_obsdata_iget(const local_obsdata_type *data,
-                                           int index) {
-    return &data->nodes[index];
+std::vector<LocalObsDataNode>::const_iterator LocalObsData::begin() const {
+    return this->m_nodes.begin();
 }
 
-LocalObsDataNode *local_obsdata_get(local_obsdata_type *data, const char *key) {
-    auto index = data->node_index.at(key);
-    return &data->nodes[index];
+std::vector<LocalObsDataNode>::const_iterator LocalObsData::end() const {
+    return this->m_nodes.end();
 }
 
-bool local_obsdata_has_node(const local_obsdata_type *data, const char *key) {
-    return data->node_index.count(key) == 1;
-}
-
-const ActiveList *
-local_obsdata_get_node_active_list(local_obsdata_type *obsdata,
-                                   const char *key) {
-    auto index = obsdata->node_index.at(key);
-    auto &node = obsdata->nodes[index];
-    return node.active_list();
-}
+const std::string &LocalObsData::name() const { return this->m_name; }
 
 namespace {
-const ActiveList *get_active_list(py::handle obj, const std::string &name) {
-    auto *self = ert::from_cwrap<local_obsdata_type>(obj);
-    auto active_list = local_obsdata_get_node_active_list(self, name.c_str());
-    return active_list;
-}
 
-bool add_node(py::handle obj, const LocalObsDataNode &node) {
-    auto *obsdata = ert::from_cwrap<local_obsdata_type>(obj);
-    return local_obsdata_add_node(obsdata, &node);
-}
-
-const LocalObsDataNode &get_node(py::handle obj, const std::string &key) {
-    auto *obsdata = ert::from_cwrap<local_obsdata_type>(obj);
-    auto *node_ptr = local_obsdata_get(obsdata, key.c_str());
-    return *node_ptr;
-}
-
-const LocalObsDataNode &iget_node(py::handle obj, int index) {
-    auto *obsdata = ert::from_cwrap<local_obsdata_type>(obj);
-    auto *node_ptr = local_obsdata_iget(obsdata, index);
-    return *node_ptr;
+ActiveList &get_active_list(LocalObsData &obs_data, const std::string &key) {
+    auto &node = obs_data[key];
+    return *node.active_list();
 }
 
 } // namespace
 
 RES_LIB_SUBMODULE("local.local_obsdata", m) {
-    using namespace py::literals;
-
-    m.def("get_active_list", &get_active_list, "self"_a, "key"_a,
-          py::return_value_policy::reference_internal);
-    m.def("copy_active_list", &get_active_list, "self"_a, "key"_a,
-          py::return_value_policy::copy);
-    m.def("add_node", &add_node, "self"_a, "node"_a);
-    m.def("iget_node", &iget_node, "self"_a, "index"_a,
-          py::return_value_policy::reference_internal);
-    m.def("get_node", &get_node, "self"_a, "key"_a,
-          py::return_value_policy::reference_internal);
+    py::class_<LocalObsData>(m, "LocalObsdata")
+        .def(py::init<const std::string &>())
+        .def("__len__", &LocalObsData::size)
+        .def("__getitem__", py::overload_cast<std::size_t>(
+                                &LocalObsData::operator[], py::const_))
+        .def("__getitem__", py::overload_cast<const std::string &>(
+                                &LocalObsData::operator[], py::const_))
+        .def("__contains__", &LocalObsData::has_node)
+        .def("__delitem__", &LocalObsData::del_node)
+        .def("addNode",
+             py::overload_cast<const std::string &>(&LocalObsData::add_node))
+        .def("name", &LocalObsData::name)
+        .def("getActiveList", get_active_list,
+             py::return_value_policy::reference_internal)
+        .def("copy_active_list", get_active_list,
+             py::return_value_policy::copy);
 }

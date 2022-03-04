@@ -423,7 +423,7 @@ static void enkf_obs_get_obs_and_measure_node(
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            const auto *active_list = obs_node->active_list();
+            auto *active_list = obs_node->active_list();
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,
                                          active_list, fs);
@@ -440,15 +440,15 @@ static void enkf_obs_get_obs_and_measure_node(
 
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
-                                       const local_obsdata_type *local_obsdata,
+                                       const LocalObsData *local_obsdata,
                                        const std::vector<int> &ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data) {
 
     int iobs;
-    for (iobs = 0; iobs < local_obsdata_get_size(local_obsdata); iobs++) {
-        const auto *obs_node = local_obsdata_iget(local_obsdata, iobs);
-        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, obs_node,
+    for (iobs = 0; iobs < local_obsdata->size(); iobs++) {
+        const auto &obs_node = (*local_obsdata)[iobs];
+        enkf_obs_get_obs_and_measure_node(enkf_obs, fs, &obs_node,
                                           ens_active_list, meas_data, obs_data);
     }
 }
@@ -1243,7 +1243,7 @@ hash_iter_type *enkf_obs_alloc_iter(const enkf_obs_type *enkf_obs) {
 }
 
 void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        local_obsdata_type *local_obs,
+                                        LocalObsData *local_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask) {
     hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);
@@ -1254,7 +1254,8 @@ void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
 
         if (obs_vector_has_data(obs_vector, ens_mask, fs)) {
             auto *node = obs_vector_alloc_local_node(obs_vector);
-            local_obsdata_add_node(local_obs, node);
+            local_obs->add_node(*node);
+            delete node;
         }
     }
     hash_iter_free(iter);
