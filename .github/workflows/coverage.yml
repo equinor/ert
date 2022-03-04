@@ -32,8 +32,8 @@ jobs:
 
     - name: Install with dependencies
       run: |
-        pip install -r dev-requirements.txt
         pip install .
+        pip install -r dev-requirements.txt
 
     - name: Run ert tests
       if: matrix.system-under-test == 'ert'
