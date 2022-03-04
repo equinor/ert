@@ -119,9 +119,10 @@ local_obsdata_get_node_active_list(local_obsdata_type *obsdata,
 }
 
 namespace {
-ActiveList &get_active_list(py::handle obj, const std::string &name) {
+const ActiveList *get_active_list(py::handle obj, const std::string &name) {
     auto *self = ert::from_cwrap<local_obsdata_type>(obj);
-    auto *active_list = local_obsdata_get_node_active_list(self, name.c_str());
+    auto active_list = local_obsdata_get_node_active_list(self, name.c_str());
+    return active_list;
 }
 
 bool add_node(py::handle obj, const LocalObsDataNode &node) {
