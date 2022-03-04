@@ -2,7 +2,6 @@ from pandas import DataFrame, MultiIndex
 from res import _lib
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
-from res.enkf.key_manager import KeyManager
 
 
 class SummaryCollector:
@@ -11,12 +10,6 @@ class SummaryCollector:
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
-
-    @staticmethod
-    def getAllSummaryKeys(ert):
-        """@rtype: list of str"""
-        key_manager = KeyManager(ert)
-        return key_manager.summaryKeys()
 
     @staticmethod
     def loadAllSummaryData(ert: EnKFMain, case_name, keys=None, realization_index=None):
@@ -38,7 +31,7 @@ class SummaryCollector:
                 raise IndexError(f"No such realization {realization_index}")
             realizations = [realization_index]
 
-        summary_keys = SummaryCollector.getAllSummaryKeys(ert)
+        summary_keys = ert.getKeyManager().summaryKeys()
         if keys is not None:
             summary_keys = [
                 key for key in keys if key in summary_keys
