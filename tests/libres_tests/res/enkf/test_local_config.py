@@ -78,6 +78,21 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 local_obs_data_1.addNode("GEN_PERLIN_1")
 
+    def test_get_active_list(self):
+        with ErtTestContext(self.local_conf_path, self.config) as test_context:
+            main = test_context.getErt()
+
+            local_config = main.getLocalConfig()
+
+            local_config.clear()
+            local_obs_data_1 = local_config.createObsdata("OBSSET_1")
+            local_obs_data_1.addNode("GEN_PERLIN_1")
+            l1 = local_obs_data_1.copy_active_list("GEN_PERLIN_1")
+            l2 = local_obs_data_1.getActiveList("GEN_PERLIN_1")
+            assert l1 != l2
+            assert isinstance(l1, ActiveList)
+            assert isinstance(l2, ActiveList)
+
     def test_attach_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
