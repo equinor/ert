@@ -1,4 +1,3 @@
-from unittest.mock import Mock, patch
 import pytest
 
 from ert_utils import ErtTest
@@ -6,7 +5,6 @@ from ert_utils import ErtTest
 from ert_gui.ertnotifier import ErtNotifier
 from ert_shared import ERT
 from ert_shared.models import BaseRunModel
-from res.job_queue import JobStatusType
 from res.test import ErtTestContext
 
 

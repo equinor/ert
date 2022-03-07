@@ -1,5 +1,4 @@
 from argparse import ArgumentTypeError
-import os
 
 from ecl.util.util import BoolVector
 from ert_shared.ide.keywords.definitions import RangeStringArgument

@@ -33,7 +33,6 @@ from qtpy.QtWidgets import (
     QHeaderView,
     QProgressBar,
 )
-from res.job_queue import JobStatusType
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
