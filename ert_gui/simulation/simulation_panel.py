@@ -120,7 +120,11 @@ class SimulationPanel(QWidget):
         if start_simulations == QMessageBox.Yes:
             run_model = self.getCurrentSimulationModel()
             arguments = self.getSimulationArguments()
-            dialog = RunDialog(self._config_file, run_model(), arguments)
+            dialog = RunDialog(
+                self._config_file,
+                run_model(ERT.ert, ERT.ert.get_queue_config()),
+                arguments,
+            )
             dialog.startSimulation()
             dialog.exec_()
 
