@@ -31,6 +31,11 @@ class SummaryObservationCollectorTest(ResTest):
                 SummaryObservationCollector.summaryKeyHasObservations(ert, "FOPT")
             )
 
+            keys = SummaryObservationCollector.getAllObservationKeys(ert)
+            self.assertTrue("FOPR" in keys)
+            self.assertTrue("WOPR:OP1" in keys)
+            self.assertFalse("WOPR:OP2" in keys)
+
             data = SummaryObservationCollector.loadObservationData(ert, "default_0")
 
             self.assertFloatEqual(data["FOPR"]["2010-01-10"], 0.001696887)

@@ -18,6 +18,11 @@ class GenKwCollector:
         return bool_vec.createActiveList()
 
     @staticmethod
+    def getAllGenKwKeys(ert):
+        """@rtype: list of str"""
+        return ert.getKeyManager().genKwKeys()
+
+    @staticmethod
     def loadAllGenKwData(ert: EnKFMain, case_name, keys=None, realization_index=None):
         """
         @type ert: EnKFMain
