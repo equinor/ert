@@ -110,8 +110,6 @@ bool matrix_is_quadratic(const matrix_type *matrix);
 extern "C" bool matrix_equal(const matrix_type *m1, const matrix_type *m2);
 bool matrix_similar(const matrix_type *m1, const matrix_type *m2,
                     double epsilon);
-bool matrix_columns_equal(const matrix_type *m1, int col1,
-                          const matrix_type *m2, int col2);
 
 void matrix_diag_set_scalar(matrix_type *matrix, double value);
 void matrix_diag_set(matrix_type *matrix, const double *diag);
