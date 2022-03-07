@@ -5,6 +5,7 @@ from ecl.util.util import BoolVector
 from res.enkf import EnKFMain
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     """
