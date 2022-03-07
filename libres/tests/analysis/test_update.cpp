@@ -313,10 +313,9 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 Eigen::MatrixXd A_with_scaling_T = A_with_scaling.transpose();
                 Eigen::MatrixXd A_no_scaling_T = A_no_scaling.transpose();
                 Eigen::MatrixXd A_prior_T = A.transpose();
-                REQUIRE(A_with_scaling_T(Eigen::all, 0)
-                            .isApprox(A_no_scaling_T(Eigen::all, 0)));
-                REQUIRE(A_with_scaling_T(Eigen::all, 1)
-                            .isApprox(A_prior_T(Eigen::all, 1)));
+                REQUIRE(
+                    A_with_scaling_T.col(0).isApprox(A_no_scaling_T.col(0)));
+                REQUIRE(A_with_scaling_T.col(1).isApprox(A_prior_T.col(1)));
             }
         }
 

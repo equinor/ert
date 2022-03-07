@@ -54,7 +54,7 @@ void linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
 
 void linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
                                const matrix_type *E, const matrix_type *R,
-                               const matrix_type *S, const matrix_type *H,
+                               const Eigen::MatrixXd &S, const matrix_type *H,
                                const std::variant<double, int> &truncation,
                                double ies_steplength);
 
@@ -157,7 +157,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
      */
 
     if (ies_inversion != ies::config::IES_INVERSION_EXACT) {
-        ies::linalg_subspace_inversion(W0, ies_inversion, E, R, S, H,
+        ies::linalg_subspace_inversion(W0, ies_inversion, E, R, *S, H,
                                        truncation, ies_steplength);
     } else if (ies_inversion == ies::config::IES_INVERSION_EXACT) {
         ies::linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength);
@@ -278,12 +278,14 @@ void ies::linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y) {
     int m_ens_size = std::min(ens_size - 1, 16);
     int m_state_size = std::min(state_size - 1, 3);
 
-    std::vector<double> eig(ens_size);
     matrix_type *Ai = matrix_alloc_copy(A);
     matrix_type *AAi = matrix_alloc(ens_size, ens_size);
     matrix_subtract_row_mean(Ai);
     matrix_type *VT = matrix_alloc(state_size, ens_size);
-    matrix_dgesvd(DGESVD_NONE, DGESVD_MIN_RETURN, Ai, eig.data(), NULL, VT);
+
+    auto svd = Ai->bdcSvd(Eigen::ComputeThinV);
+    *VT = svd.matrixV().transpose();
+
     *AAi = VT->transpose() * *VT;
 
     matrix_inplace_matmul(Y, AAi);
@@ -338,22 +340,23 @@ void ies::linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
 */
 void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
                                     const matrix_type *E, const matrix_type *R,
-                                    const matrix_type *S, const matrix_type *H,
+                                    const Eigen::MatrixXd &S,
+                                    const matrix_type *H,
                                     const std::variant<double, int> &truncation,
                                     double ies_steplength) {
 
-    int ens_size = matrix_get_columns(S);
-    int nrobs = matrix_get_rows(S);
+    int ens_size = S.cols();
+    int nrobs = S.rows();
     double nsc = 1.0 / sqrt(ens_size - 1.0);
     matrix_type *X1 = matrix_alloc(
         nrobs, std::min(ens_size, nrobs)); // Used in subspace inversion
-    std::vector<double> eig(ens_size);
+    Eigen::VectorXd eig(ens_size);
 
     if (ies_inversion == config::IES_INVERSION_SUBSPACE_RE) {
         matrix_type *scaledE = matrix_alloc_copy(E);
         matrix_scale(scaledE, nsc);
 
-        enkf_linalg_lowrankE(S, scaledE, X1, eig.data(), truncation);
+        enkf_linalg_lowrankE(S, *scaledE, *X1, eig, truncation);
 
         matrix_free(scaledE);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
@@ -361,13 +364,13 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
         MatrixXd Cee = *E * *Et;
         matrix_scale(&Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
 
-        enkf_linalg_lowrankCinv(S, &Cee, X1, eig.data(), truncation);
+        enkf_linalg_lowrankCinv(S, Cee, *X1, eig, truncation);
 
         matrix_free(Et);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
         matrix_type *scaledR = matrix_alloc_copy(R);
         matrix_scale(scaledR, nsc * nsc);
-        enkf_linalg_lowrankCinv(S, scaledR, X1, eig.data(), truncation);
+        enkf_linalg_lowrankCinv(S, *scaledR, *X1, eig, truncation);
         matrix_free(scaledR);
     }
 
@@ -378,7 +381,7 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
     Eigen::MatrixXd X3 = enkf_linalg_genX3(*X1, *H, eig_vector);
 
     /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
-    *W0 = ies_steplength * S->transpose() * X3 + (1.0 - ies_steplength) * *W0;
+    *W0 = ies_steplength * S.transpose() * X3 + (1.0 - ies_steplength) * *W0;
 
     matrix_free(X1);
 }
@@ -394,11 +397,11 @@ void ies::linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
                                  double ies_steplength) {
     int ens_size = matrix_get_columns(S);
 
-    MatrixXd Z = MatrixXd::Zero(ens_size, ens_size);
-    std::vector<double> eig(ens_size);
-
     MatrixXd StS = MatrixXd::Identity(ens_size, ens_size) + S->transpose() * *S;
-    matrix_dgesvd(DGESVD_ALL, DGESVD_NONE, &StS, eig.data(), &Z, NULL);
+
+    auto svd = StS.bdcSvd(Eigen::ComputeFullU);
+    MatrixXd Z = svd.matrixU();
+    Eigen::VectorXd eig = svd.singularValues();
 
     MatrixXd ZtStH = Z.transpose() * S->transpose() * *H;
 
