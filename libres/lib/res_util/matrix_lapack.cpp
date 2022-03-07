@@ -42,61 +42,6 @@ void matrix_dgesvx(matrix_type *A, matrix_type *B, double *rcond) {
     *B = tmp;
 }
 
-/*
-   This little function translates between an integer identifier
-   (i.e. and enum instance) to one of the characters used by the low
-   level lapack routine to indicate how the singular vectors should be
-   returned to the calling scope.
-
-   The meaning of the different enum values is documented in the enum
-   definition in the header file matrix_lapack.h.
-*/
-
-static char dgesvd_get_vector_job(dgesvd_vector_enum vector_job) {
-    char job = 'X';
-    switch (vector_job) {
-    case (DGESVD_ALL):
-        job = 'A';
-        break;
-    case (DGESVD_MIN_RETURN):
-        job = 'S';
-        break;
-    case (DGESVD_MIN_OVERWRITE):
-        job = 'O';
-        break;
-    case (DGESVD_NONE):
-        job = 'N';
-        break;
-    default:
-        util_abort("%s: internal error - unrecognized code:%d \n", vector_job);
-    }
-    return job;
-}
-
-/*
-   If jobu == DGSEVD_NONE the U matrix can be NULL, same for jobvt.
-*/
-
-void matrix_dgesvd(dgesvd_vector_enum jobu, dgesvd_vector_enum jobvt,
-                   matrix_type *A, double *S, matrix_type *U, matrix_type *VT) {
-
-    int opts = 0;
-    if (U != nullptr)
-        opts |= jobu == DGESVD_ALL ? Eigen::ComputeFullU : Eigen::ComputeThinU;
-    if (VT != nullptr)
-        opts |= jobvt == DGESVD_ALL ? Eigen::ComputeFullV : Eigen::ComputeThinV;
-
-    auto svd = A->bdcSvd(opts);
-
-    if (U != nullptr)
-        *U = svd.matrixU();
-    if (VT != nullptr)
-        *VT = svd.matrixV().transpose();
-
-    auto singular = svd.singularValues();
-    std::copy(singular.begin(), singular.end(), S);
-}
-
 /* The matrix will be inverted in-place, the inversion is based on LU
    factorisation in the routine matrix_dgetrf__(  ).
 

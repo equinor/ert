@@ -30,12 +30,10 @@ Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,
     return X3;
 }
 
-static int enkf_linalg_num_significant(int num_singular_values,
-                                       const double *sig0, double truncation) {
+static int enkf_linalg_num_significant(const Eigen::VectorXd &singular_values,
+                                       double truncation) {
     int num_significant = 0;
-    double total_sigma2 = 0;
-    for (int i = 0; i < num_singular_values; i++)
-        total_sigma2 += sig0[i] * sig0[i];
+    double total_sigma2 = singular_values.squaredNorm();
 
     /*
      * Determine the number of singular values by enforcing that
@@ -44,11 +42,11 @@ static int enkf_linalg_num_significant(int num_singular_values,
      */
     {
         double running_sigma2 = 0;
-        for (int i = 0; i < num_singular_values; i++) {
+        for (auto sig : singular_values) {
             if (running_sigma2 / total_sigma2 <
                 truncation) { /* Include one more singular value ? */
                 num_significant++;
-                running_sigma2 += sig0[i] * sig0[i];
+                running_sigma2 += sig * sig;
             } else
                 break;
         }
@@ -57,38 +55,26 @@ static int enkf_linalg_num_significant(int num_singular_values,
     return num_significant;
 }
 
-int enkf_linalg_svdS(const matrix_type *S,
+int enkf_linalg_svdS(const Eigen::MatrixXd &S,
                      const std::variant<double, int> &truncation,
-                     dgesvd_vector_enum store_V0T, double *inv_sig0,
-                     matrix_type *U0, matrix_type *V0T) {
+                     Eigen::VectorXd &inv_sig0, Eigen::MatrixXd &U0) {
 
-    double *sig0 = inv_sig0;
     int num_significant = 0;
 
-    int num_singular_values =
-        std::min(matrix_get_rows(S), matrix_get_columns(S));
-    {
-        matrix_type *workS = matrix_alloc_copy(S);
-        matrix_dgesvd(DGESVD_MIN_RETURN, store_V0T, workS, sig0, U0, V0T);
-        matrix_free(workS);
-    }
+    auto svd = S.bdcSvd(Eigen::ComputeThinU);
+    U0 = svd.matrixU();
+    Eigen::VectorXd singular_values = svd.singularValues();
 
-    if (std::holds_alternative<int>(truncation))
+    if (std::holds_alternative<int>(truncation)) {
         num_significant = std::get<int>(truncation);
-    else
+    } else {
         num_significant = enkf_linalg_num_significant(
-            num_singular_values, sig0, std::get<double>(truncation));
-
-    {
-        int i;
-        /* Inverting the significant singular values */
-        for (i = 0; i < num_significant; i++)
-            inv_sig0[i] = 1.0 / sig0[i];
-
-        /* Explicitly setting the insignificant singular values to zero. */
-        for (i = num_significant; i < num_singular_values; i++)
-            inv_sig0[i] = 0;
+            singular_values, std::get<double>(truncation));
     }
+
+    inv_sig0 = singular_values.cwiseInverse();
+
+    inv_sig0(Eigen::seq(num_significant, Eigen::last)).setZero();
 
     return num_significant;
 }
@@ -98,137 +84,79 @@ int enkf_linalg_svdS(const matrix_type *S,
  Geir Evensen
 */
 void enkf_linalg_lowrankE(
-    const matrix_type *S, /* (nrobs x nrens) */
-    const matrix_type *E, /* (nrobs x nrens) */
-    matrix_type
-        *W, /* (nrobs x nrmin) Corresponding to X1 from Eqs. 14.54-14.55 */
-    double
-        *eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
+    const Eigen::MatrixXd &S, /* (nrobs x nrens) */
+    const Eigen::MatrixXd &E, /* (nrobs x nrens) */
+    Eigen::MatrixXd
+        &W, /* (nrobs x nrmin) Corresponding to X1 from Eqs. 14.54-14.55 */
+    Eigen::VectorXd
+        &eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
     const std::variant<double, int> &truncation) {
 
-    const int nrobs = matrix_get_rows(S);
-    const int nrens = matrix_get_columns(S);
+    const int nrobs = S.rows();
+    const int nrens = S.cols();
     const int nrmin = std::min(nrobs, nrens);
 
-    std::vector<double> inv_sig0(nrmin);
-    matrix_type *U0 = matrix_alloc(nrobs, nrmin);
-    matrix_type *X0 = matrix_alloc(nrmin, nrens);
-
-    matrix_type *U1 = matrix_alloc(nrmin, nrmin);
-    std::vector<double> sig1(nrmin);
-
-    int i, j;
+    Eigen::VectorXd inv_sig0(nrmin);
+    Eigen::MatrixXd U0(nrobs, nrmin);
 
     /* Compute SVD of S=HA`  ->  U0, invsig0=sig0^(-1) */
-    enkf_linalg_svdS(S, truncation, DGESVD_NONE, inv_sig0.data(), U0, NULL);
+    enkf_linalg_svdS(S, truncation, inv_sig0, U0);
+
+    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
 
     /* X0(nrmin x nrens) =  Sigma0^(+) * U0'* E  (14.51)  */
-    *X0 = U0->transpose() * *E; /* (14.51) */
-
-    /* Multiply X0 with sig0^(-1) from left X0 =  S^(-1) * X0   */
-    for (j = 0; j < matrix_get_columns(X0); j++)
-        for (i = 0; i < matrix_get_rows(X0); i++)
-            matrix_imul(X0, i, j, inv_sig0[i]);
+    Eigen::MatrixXd X0 = Sigma_inv * U0.transpose() * E;
 
     /* Compute SVD of X0->  U1*eig*V1   14.52 */
-    matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, X0, sig1.data(), U1, NULL);
+    auto svd = X0.bdcSvd(Eigen::ComputeThinU);
+    const auto &sig1 = svd.singularValues();
 
     /* Lambda1 = 1/(I + Lambda^2)  in 14.56 */
-    for (i = 0; i < nrmin; i++)
+    for (int i = 0; i < nrmin; i++)
         eig[i] = 1.0 / (1.0 + sig1[i] * sig1[i]);
 
-    /* Compute sig0^+ U1  (14:55) */
-    for (j = 0; j < nrmin; j++)
-        for (i = 0; i < nrmin; i++)
-            matrix_imul(U1, i, j, inv_sig0[i]);
-
-    /* Compute X1 = W = U0 * (U1=sig0^+ U1) = U0 * Sigma0^(+') * U1  (14:55) */
-    *W = *U0 * *U1;
-
-    matrix_free(X0);
-    matrix_free(U0);
-    matrix_free(U1);
+    /* Compute X1 = W = U0 * (U1=sig0^+ U1) = U0 * Sigma0^(+') * U1  (14.55) */
+    W = U0 * Sigma_inv.transpose() * svd.matrixU();
 }
 
-void enkf_linalg_Cee(matrix_type *B, int nrens, const matrix_type *R,
-                     const matrix_type *U0, const double *inv_sig0) {
-    const int nrmin = matrix_get_rows(B);
-    *B = U0->transpose() * *R * *U0;
-
-    {
-        int i, j;
-
-        /* Funny code ??
-       Multiply B with S^(-1)from left and right
-       BHat =  S^(-1) * B * S^(-1)
-    */
-        for (j = 0; j < matrix_get_columns(B); j++)
-            for (i = 0; i < matrix_get_rows(B); i++)
-                matrix_imul(B, i, j, inv_sig0[i]);
-
-        for (j = 0; j < matrix_get_columns(B); j++)
-            for (i = 0; i < matrix_get_rows(B); i++)
-                matrix_imul(B, i, j, inv_sig0[j]);
-    }
-
-    matrix_scale(B, nrens - 1.0);
-}
-
-void enkf_linalg_lowrankCinv__(const matrix_type *S, const matrix_type *R,
-                               matrix_type *V0T, matrix_type *Z, double *eig,
-                               matrix_type *U0,
-                               const std::variant<double, int> &truncation) {
-
-    const int nrobs = matrix_get_rows(S);
-    const int nrens = matrix_get_columns(S);
-    const int nrmin = std::min(nrobs, nrens);
-    std::vector<double> inv_sig0(nrmin);
-
-    if (V0T != NULL)
-        enkf_linalg_svdS(S, truncation, DGESVD_MIN_RETURN, inv_sig0.data(), U0,
-                         V0T);
-    else
-        enkf_linalg_svdS(S, truncation, DGESVD_NONE, inv_sig0.data(), U0, NULL);
-
-    {
-        matrix_type *B = matrix_alloc(nrmin, nrmin);
-        enkf_linalg_Cee(
-            B, nrens, R, U0,
-            inv_sig0
-                .data()); /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
-        matrix_dgesvd(DGESVD_MIN_RETURN, DGESVD_NONE, B, eig, Z, NULL);
-        matrix_free(B);
-    }
-
-    {
-        int i, j;
-        /* Lambda1 = (I + Lambda)^(-1) */
-
-        for (i = 0; i < nrmin; i++)
-            eig[i] = 1.0 / (1 + eig[i]);
-
-        for (j = 0; j < nrmin; j++)
-            for (i = 0; i < nrmin; i++)
-                matrix_imul(Z, i, j, inv_sig0[i]); /* Z2 =  Sigma0^(+) * Z; */
-    }
+/* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
+Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
+                                const Eigen::MatrixXd &U0,
+                                const Eigen::VectorXd &inv_sig0) {
+    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
+    return (nrens - 1.0) * Sigma_inv * U0.transpose() * R * U0 *
+           Sigma_inv.transpose();
 }
 
 void enkf_linalg_lowrankCinv(
-    const matrix_type *S, const matrix_type *R,
-    matrix_type *W, /* Corresponding to X1 from Eq. 14.29 */
-    double *eig,    /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
+    const Eigen::MatrixXd &S, const Eigen::MatrixXd &R,
+    Eigen::MatrixXd &W,   /* Corresponding to X1 from Eq. 14.29 */
+    Eigen::VectorXd &eig, /* Corresponding to 1 / (1 + Lambda_1) (14.29) */
     const std::variant<double, int> &truncation) {
 
-    const int nrobs = matrix_get_rows(S);
-    const int nrens = matrix_get_columns(S);
+    const int nrobs = S.rows();
+    const int nrens = S.cols();
     const int nrmin = std::min(nrobs, nrens);
 
-    matrix_type *U0 = matrix_alloc(nrobs, nrmin);
-    matrix_type *Z = matrix_alloc(nrmin, nrmin);
+    Eigen::MatrixXd U0(nrobs, nrmin);
+    Eigen::MatrixXd Z(nrmin, nrmin);
 
-    enkf_linalg_lowrankCinv__(S, R, NULL, Z, eig, U0, truncation);
-    *W = *U0 * *Z; /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
+    Eigen::VectorXd inv_sig0(nrmin);
+    enkf_linalg_svdS(S, truncation, inv_sig0, U0);
 
-    matrix_free(U0);
-    matrix_free(Z);
+    Eigen::MatrixXd B = enkf_linalg_Cee(nrens, R, U0, inv_sig0);
+
+    auto svd = B.bdcSvd(Eigen::ComputeThinU);
+    Z = svd.matrixU();
+    eig = svd.singularValues();
+
+    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
+
+    /* Lambda1 = (I + Lambda)^(-1) */
+    for (int i = 0; i < nrmin; i++)
+        eig[i] = 1.0 / (1 + eig[i]);
+
+    Z = Sigma_inv * Z;
+
+    W = U0 * Z; /* X1 = W = U0 * Z2 = U0 * Sigma0^(+') * Z    */
 }
