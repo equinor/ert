@@ -13,13 +13,13 @@ from res.job_queue import (
     RunStatusType,
     ForwardModel,
 )
+from ert_shared.libres_facade import LibresFacade
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
 from ert_shared.feature_toggling import feature_enabled
-from ert_shared import ERT
 from ert_shared.ensemble_evaluator.ensemble.builder import (
     create_ensemble_builder_from_legacy,
 )
@@ -37,7 +37,7 @@ class ErtRunError(Exception):
 
 
 class BaseRunModel:
-    def __init__(self, queue_config: QueueConfig, phase_count: Optional[int] = 1):
+    def __init__(self, ert, queue_config: QueueConfig, phase_count: Optional[int] = 1):
         """
 
         Parameters
@@ -62,10 +62,12 @@ class BaseRunModel:
         self.support_restart: bool = True
         self._run_context: ErtRunContext = None
         self._last_run_iteration: int = -1
+        self._ert = ert
+        self.facade = LibresFacade(ert)
         self.reset()
 
     def ert(self) -> EnKFMain:
-        return ERT.ert
+        return self._ert
 
     @property
     def _ensemble_size(self) -> int:
@@ -313,7 +315,7 @@ class BaseRunModel:
     def _post_ensemble_data(self, update_id: Optional[str] = None) -> str:
         self.setPhaseName("Uploading data...")
         ensemble_id = post_ensemble_data(
-            ert=ERT.enkf_facade,
+            ert=self.facade,
             ensemble_size=self._ensemble_size,
             update_id=update_id,
             active_realizations=self._active_realizations,
@@ -324,14 +326,14 @@ class BaseRunModel:
     @feature_enabled("new-storage")
     def _post_ensemble_results(self, ensemble_id: str) -> None:
         self.setPhaseName("Uploading results...")
-        post_ensemble_results(ert=ERT.enkf_facade, ensemble_id=ensemble_id)
+        post_ensemble_results(ert=self.facade, ensemble_id=ensemble_id)
         self.setPhaseName("Uploading done")
 
     @feature_enabled("new-storage")
     def _post_update_data(self, parent_ensemble_id: str, algorithm: str) -> str:
         self.setPhaseName("Uploading update...")
         update_id = post_update_data(
-            ert=ERT.enkf_facade,
+            ert=self.facade,
             parent_ensemble_id=parent_ensemble_id,
             algorithm=algorithm,
         )

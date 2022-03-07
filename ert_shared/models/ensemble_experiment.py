@@ -2,12 +2,11 @@ from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
-from ert_shared import ERT
 
 
 class EnsembleExperiment(BaseRunModel):
-    def __init__(self):
-        super(EnsembleExperiment, self).__init__(ERT.enkf_facade.get_queue_config())
+    def __init__(self, ert, queue_config):
+        super().__init__(ert, queue_config)
 
     def runSimulations__(self, arguments, run_msg, evaluator_server_config):
 
@@ -21,7 +20,7 @@ class EnsembleExperiment(BaseRunModel):
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data()
 
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ERT.ert)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self.ert())
 
         self.setPhaseName(run_msg, indeterminate=False)
 
@@ -33,7 +32,7 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ERT.ert)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, self.ert())
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)

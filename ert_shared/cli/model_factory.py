@@ -10,18 +10,18 @@ from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilatio
 from ert_shared.models.single_test_run import SingleTestRun
 
 
-def create_model(args):
+def create_model(ert, args):
     # Setup model
     if args.mode == "test_run":
-        model, argument = _setup_single_test_run()
+        model, argument = _setup_single_test_run(ert)
     elif args.mode == "ensemble_experiment":
-        model, argument = _setup_ensemble_experiment(args)
+        model, argument = _setup_ensemble_experiment(ert, args)
     elif args.mode == "ensemble_smoother":
-        model, argument = _setup_ensemble_smoother(args)
+        model, argument = _setup_ensemble_smoother(ert, args)
     elif args.mode == "es_mda":
-        model, argument = _setup_multiple_data_assimilation(args)
+        model, argument = _setup_multiple_data_assimilation(ert, args)
     elif args.mode == "iterative_ensemble_smoother":
-        model, argument = _setup_iterative_ensemble_smoother(args)
+        model, argument = _setup_iterative_ensemble_smoother(ert, args)
 
     else:
         raise NotImplementedError("Run type not supported {}".format(args.mode))
@@ -29,16 +29,16 @@ def create_model(args):
     return model, argument
 
 
-def _setup_single_test_run():
-    model = SingleTestRun()
+def _setup_single_test_run(ert):
+    model = SingleTestRun(ert)
     simulations_argument = {
         "active_realizations": BoolVector(default_value=True, initial_size=1),
     }
     return model, simulations_argument
 
 
-def _setup_ensemble_experiment(args):
-    model = EnsembleExperiment()
+def _setup_ensemble_experiment(ert, args):
+    model = EnsembleExperiment(ert, ert.get_queue_config())
     simulations_argument = {
         "active_realizations": _realizations(args),
         "iter_num": int(args.iter_num),
@@ -46,14 +46,14 @@ def _setup_ensemble_experiment(args):
     return model, simulations_argument
 
 
-def _setup_ensemble_smoother(args):
-    model = EnsembleSmoother()
+def _setup_ensemble_smoother(ert, args):
+    model = EnsembleSmoother(ert, ert.get_queue_config())
     iterable = False
-    active_name = ERT.ert.analysisConfig().activeModuleName()
+    active_name = ert.analysisConfig().activeModuleName()
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=False),
+        "target_case": _target_case_name(ert, args, format_mode=False),
         "analysis_module": _get_analysis_module_name(
             active_name, modules, iterable=iterable
         ),
@@ -61,14 +61,14 @@ def _setup_ensemble_smoother(args):
     return model, simulations_argument
 
 
-def _setup_multiple_data_assimilation(args):
-    model = MultipleDataAssimilation()
+def _setup_multiple_data_assimilation(ert, args):
+    model = MultipleDataAssimilation(ert, ert.get_queue_config())
     iterable = False
-    active_name = ERT.ert.analysisConfig().activeModuleName()
+    active_name = ert.analysisConfig().activeModuleName()
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=True),
+        "target_case": _target_case_name(ert, args, format_mode=True),
         "analysis_module": _get_analysis_module_name(
             active_name, modules, iterable=iterable
         ),
@@ -78,18 +78,18 @@ def _setup_multiple_data_assimilation(args):
     return model, simulations_argument
 
 
-def _setup_iterative_ensemble_smoother(args):
-    model = IteratedEnsembleSmoother()
+def _setup_iterative_ensemble_smoother(ert, args):
+    model = IteratedEnsembleSmoother(ert, ert.get_queue_config())
     iterable = True
-    active_name = ERT.ert.analysisConfig().activeModuleName()
+    active_name = ert.analysisConfig().activeModuleName()
     modules = ERT.enkf_facade.get_analysis_module_names(iterable=iterable)
     simulations_argument = {
         "active_realizations": _realizations(args),
-        "target_case": _target_case_name(args, format_mode=True),
+        "target_case": _target_case_name(ert, args, format_mode=True),
         "analysis_module": _get_analysis_module_name(
             active_name, modules, iterable=iterable
         ),
-        "num_iterations": _num_iterations(args),
+        "num_iterations": _num_iterations(ert, args),
     }
     return model, simulations_argument
 
@@ -128,7 +128,7 @@ def _realizations(args):
     return mask
 
 
-def _target_case_name(args, format_mode=False):
+def _target_case_name(ert, args, format_mode=False):
     """@rtype: str"""
     if args.target_case is not None:
         return args.target_case
@@ -137,7 +137,7 @@ def _target_case_name(args, format_mode=False):
         case_name = ERT.enkf_facade.get_current_case_name()
         return "{}_smoother_update".format(case_name)
 
-    aic = ERT.ert.analysisConfig().getAnalysisIterConfig()
+    aic = ert.analysisConfig().getAnalysisIterConfig()
     if aic.caseFormatSet():
         return aic.getCaseFormat()
 
@@ -145,9 +145,9 @@ def _target_case_name(args, format_mode=False):
     return "{}_%d".format(case_name)
 
 
-def _num_iterations(args):
+def _num_iterations(ert, args):
     if args.num_iterations is not None:
-        ERT.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+        ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
             int(args.num_iterations)
         )
     return None

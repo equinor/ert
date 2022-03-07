@@ -25,7 +25,7 @@ class ModelFactoryTest(ErtTest):
             with ERT.adapt(notifier):
                 custom_name = "test"
                 args = Namespace(target_case=custom_name)
-                res = model_factory._target_case_name(args)
+                res = model_factory._target_case_name(ert, args)
                 self.assertEqual(custom_name, res)
 
     def test_default_target_case_name(self):
@@ -37,7 +37,7 @@ class ModelFactoryTest(ErtTest):
             with ERT.adapt(notifier):
 
                 args = Namespace(target_case=None)
-                res = model_factory._target_case_name(args)
+                res = model_factory._target_case_name(ert, args)
                 self.assertEqual("default_smoother_update", res)
 
     def test_default_target_case_name_format_mode(self):
@@ -50,7 +50,7 @@ class ModelFactoryTest(ErtTest):
             with ERT.adapt(notifier):
 
                 args = Namespace(target_case=None)
-                res = model_factory._target_case_name(args, format_mode=True)
+                res = model_factory._target_case_name(ert, args, format_mode=True)
                 self.assertEqual("default_%d", res)
 
     def test_default_realizations(self):
@@ -74,7 +74,7 @@ class ModelFactoryTest(ErtTest):
             notifier = ErtCliNotifier(ert, config_file)
             with ERT.adapt(notifier):
                 args = Namespace(iter_num=10, realizations=None)
-                model, argument = model_factory._setup_ensemble_experiment(args)
+                model, argument = model_factory._setup_ensemble_experiment(ert, args)
                 run_context = model.create_context(argument)
                 self.assertEqual(argument["iter_num"], 10)
                 self.assertEqual(run_context.get_iter(), 10)
@@ -100,7 +100,7 @@ class ModelFactoryTest(ErtTest):
             notifier = ErtCliNotifier(ert, config_file)
             with ERT.adapt(notifier):
 
-                model, argument = model_factory._setup_single_test_run()
+                model, argument = model_factory._setup_single_test_run(ert)
                 self.assertTrue(isinstance(model, SingleTestRun))
                 self.assertEqual(1, len(argument.keys()))
                 self.assertTrue("active_realizations" in argument)
@@ -113,7 +113,7 @@ class ModelFactoryTest(ErtTest):
             notifier = ErtCliNotifier(ert, config_file)
             with ERT.adapt(notifier):
 
-                model, argument = model_factory._setup_single_test_run()
+                model, argument = model_factory._setup_single_test_run(ert)
                 self.assertTrue(isinstance(model, EnsembleExperiment))
                 self.assertEqual(1, len(argument.keys()))
                 self.assertTrue("active_realizations" in argument)
@@ -127,7 +127,7 @@ class ModelFactoryTest(ErtTest):
             with ERT.adapt(notifier):
                 args = Namespace(realizations="0-4,7,8", target_case="test_case")
 
-                model, argument = model_factory._setup_ensemble_smoother(args)
+                model, argument = model_factory._setup_ensemble_smoother(ert, args)
                 self.assertTrue(isinstance(model, EnsembleSmoother))
                 self.assertEqual(3, len(argument.keys()))
                 self.assertTrue("active_realizations" in argument)
@@ -148,7 +148,9 @@ class ModelFactoryTest(ErtTest):
                     start_iteration="0",
                 )
 
-                model, argument = model_factory._setup_multiple_data_assimilation(args)
+                model, argument = model_factory._setup_multiple_data_assimilation(
+                    ert, args
+                )
                 self.assertTrue(isinstance(model, MultipleDataAssimilation))
                 self.assertEqual(5, len(argument.keys()))
                 self.assertTrue("active_realizations" in argument)
@@ -172,7 +174,9 @@ class ModelFactoryTest(ErtTest):
                     num_iterations="10",
                 )
 
-                model, argument = model_factory._setup_iterative_ensemble_smoother(args)
+                model, argument = model_factory._setup_iterative_ensemble_smoother(
+                    ert, args
+                )
                 self.assertTrue(isinstance(model, IteratedEnsembleSmoother))
                 self.assertEqual(4, len(argument.keys()))
                 self.assertTrue("active_realizations" in argument)
