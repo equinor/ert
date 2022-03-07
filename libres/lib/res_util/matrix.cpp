@@ -345,11 +345,6 @@ bool matrix_similar(const matrix_type *m1, const matrix_type *m2,
     return true;
 }
 
-bool matrix_columns_equal(const matrix_type *m1, int col1,
-                          const matrix_type *m2, int col2) {
-    return m1->col(col1).isApprox(m2->col(col2));
-}
-
 void matrix_diag_set_scalar(matrix_type *matrix, double value) {
     if (matrix->rows() == matrix->cols()) {
         int i;
