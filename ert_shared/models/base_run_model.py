@@ -1,14 +1,12 @@
-import logging
 import time
 import uuid
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Union
 import asyncio
 
 from ecl.util.util import BoolVector
 
 from res.enkf import EnKFMain, QueueConfig, RunArg
 from res.enkf.ert_run_context import ErtRunContext
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.job_queue import (
     ForwardModelStatus,
     JobStatusType,
