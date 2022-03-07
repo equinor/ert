@@ -143,7 +143,7 @@ def test_tracking(
         notifier = ErtCliNotifier(ert, parsed.config)
         with ERT.adapt(notifier):
 
-            model, argument = create_model(parsed)
+            model, argument = create_model(ert, parsed)
 
             evaluator_server_config = EvaluatorServerConfig(
                 custom_port_range=range(1024, 65535)

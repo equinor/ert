@@ -1,12 +1,10 @@
 from ert_shared.models import ErtRunError, EnsembleExperiment
-from ert_shared import ERT
 
 
 class SingleTestRun(EnsembleExperiment):
-    def __init__(self):
-        queue_config = ERT.enkf_facade.get_queue_config()
-        local_queue_config = queue_config.create_local_copy()
-        super(EnsembleExperiment, self).__init__(local_queue_config)
+    def __init__(self, ert, *_):
+        local_queue_config = ert.get_queue_config().create_local_copy()
+        super().__init__(ert, local_queue_config)
 
     def checkHaveSufficientRealizations(self, num_successful_realizations):
         # Should only have one successful realization

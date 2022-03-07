@@ -18,7 +18,6 @@ from res.enkf.enums import RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel, ErtRunError
-from ert_shared import ERT
 
 import logging
 
@@ -32,10 +31,8 @@ class MultipleDataAssimilation(BaseRunModel):
 
     default_weights = "4, 2, 1"
 
-    def __init__(self):
-        super(MultipleDataAssimilation, self).__init__(
-            ERT.enkf_facade.get_queue_config(), phase_count=2
-        )
+    def __init__(self, ert, queue_config):
+        super().__init__(ert, queue_config, phase_count=2)
         self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name):
@@ -84,13 +81,13 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(
-                    HookRuntime.PRE_FIRST_UPDATE, ert=ERT.ert
+                    HookRuntime.PRE_FIRST_UPDATE, ert=self.ert()
                 )
-            EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=ERT.ert)
+            EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
             update_id = self.update(
                 run_context=run_context, weight=weight, ensemble_id=ensemble_id
             )
-            EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=ERT.ert)
+            EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context(
@@ -145,7 +142,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Pre processing for iteration: %d" % iteration
         self.setPhaseName(phase_string)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=ERT.ert)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
 
         # Push ensemble, parameters, observations to new storage
         new_ensemble_id = self._post_ensemble_data(update_id=update_id)
@@ -165,7 +162,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
         phase_string = "Post processing for iteration: %d" % iteration
         self.setPhaseName(phase_string, indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=ERT.ert)
+        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
 
         return num_successful_realizations, new_ensemble_id
 

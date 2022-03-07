@@ -277,7 +277,7 @@ def test_tracking_progress(
     All events leading up to the final update event and end event, are
     discarded. The test asserts that the state of the world is correct only for
     the final update event."""
-    brm = BaseRunModel(None)
+    brm = BaseRunModel(None, None)
     with patch("ert_shared.status.tracker.evaluator.create_ee_monitor") as mock_ee:
         mock_ee.return_value.__enter__.return_value = make_mock_ee_monitor(
             monitor_events.copy()
