@@ -13,6 +13,11 @@ class MisfitCollector:
         return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod
+    def getAllMisfitKeys(ert, sort_keys=True):
+        """@rtype: list of str"""
+        return ert.getKeyManager().misfitKeys(sort_keys=sort_keys)
+
+    @staticmethod
     def loadAllMisfitData(ert: EnKFMain, case_name) -> DataFrame:
         """
         @type ert: EnKFMain

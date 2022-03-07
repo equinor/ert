@@ -6,6 +6,11 @@ from res.enkf.enums import RealizationStateEnum
 
 class SummaryCollector:
     @staticmethod
+    def getAllSummaryKeys(ert):
+        """@rtype: list of str"""
+        return ert.getKeyManager().summaryKeys()
+
+    @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)

@@ -4,6 +4,14 @@ from res.enkf import EnKFMain
 
 class SummaryObservationCollector:
     @staticmethod
+    def getAllObservationKeys(ert: EnKFMain):
+        """
+        @type ert: EnKFMain
+        @rtype: list of str
+        """
+        return ert.getKeyManager().summaryKeysWithObservations()
+
+    @staticmethod
     def loadObservationData(ert: EnKFMain, case_name, keys=None):
         """
         @type ert: EnKFMain
