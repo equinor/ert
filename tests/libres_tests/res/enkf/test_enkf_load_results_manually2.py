@@ -6,7 +6,7 @@ from res.enkf import EnKFMain
 
 
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_load_results_manually(setup_case, caplog, monkeypatch, lazy_load):
+def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     """
     This little test does not depend on Equinor-data and only verifies
     the lazy_load flag in forward_load_context plus memory-logging
@@ -14,7 +14,7 @@ def test_load_results_manually(setup_case, caplog, monkeypatch, lazy_load):
     if lazy_load:
         monkeypatch.setenv("ERT_LAZY_LOAD_SUMMARYDATA", str(lazy_load))
     res_config = setup_case("local/snake_oil", "snake_oil.ert")
-    ert = EnKFMain(res_config)
+    ert = EnKFMain(res_config, strict=True)
     load_from = ert.getEnkfFsManager().getFileSystem("default_0")
     ert.getEnkfFsManager().switchFileSystem(load_from)
     realisations = BoolVector(default_value=False, initial_size=25)
