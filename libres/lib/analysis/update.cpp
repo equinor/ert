@@ -4,9 +4,9 @@
 #include <fmt/format.h>
 #include <cerrno>
 #include <optional>
+#include <Eigen/Dense>
 
-#include "ert/analysis/update.hpp"
-#include <ert/res_util/matrix.hpp>
+#include <ert/analysis/update.hpp>
 #include <ert/res_util/metric.hpp>
 #include <ert/res_util/memory.hpp>
 #include <ert/enkf/local_ministep.hpp>
@@ -56,11 +56,11 @@ void ensure_node_loaded(const enkf_config_node_type *config_node,
 
 void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
                     int iens, int row_offset, int column,
-                    const ActiveList *active_list, matrix_type *A) {
+                    const ActiveList *active_list, Eigen::MatrixXd &A) {
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
-    enkf_node_serialize(node, fs, node_id, active_list, A, row_offset, column);
+    enkf_node_serialize(node, fs, node_id, active_list, &A, row_offset, column);
     enkf_node_free(node);
 }
 
@@ -68,9 +68,9 @@ void serialize_ministep(const ensemble_config_type *ens_config,
                         const local_ministep_type *ministep,
                         enkf_fs_type *target_fs,
                         const std::vector<int> &iens_active_index,
-                        matrix_type *A) {
+                        Eigen::MatrixXd &A) {
 
-    int ens_size = matrix_get_columns(A);
+    int ens_size = A.cols();
     int current_row = 0;
 
     for (auto &key : ministep->unscaled_keys()) {
@@ -83,9 +83,8 @@ void serialize_ministep(const ensemble_config_type *ens_config,
         int active_size = active_list->active_size(
             enkf_config_node_get_data_size(config_node, 0));
 
-        int matrix_rows = matrix_get_rows(A);
-        if ((active_size + current_row) > matrix_rows)
-            matrix_resize(A, matrix_rows + 2 * active_size, ens_size, true);
+        if ((active_size + current_row) > A.rows())
+            A.conservativeResize(A.rows() + 2 * active_size, ens_size);
         if (active_size > 0) {
             for (int column = 0; column < ens_size; column++) {
                 int iens = iens_active_index[column];
@@ -95,13 +94,13 @@ void serialize_ministep(const ensemble_config_type *ens_config,
             current_row += active_size;
         }
     }
-    matrix_shrink_header(A, current_row, ens_size);
+    A.conservativeResize(current_row, ens_size);
 }
 
 void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
                       const enkf_config_node_type *config_node, int iens,
                       int row_offset, int column, const ActiveList *active_list,
-                      const matrix_type *A) {
+                      const Eigen::MatrixXd &A) {
 
     node_id_type node_id = {.report_step = 0, .iens = iens};
     enkf_node_type *node = enkf_node_alloc(config_node);
@@ -110,31 +109,28 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     enkf_node_load(node, src_fs, node_id);
 
     // deserialize the matrix into the node (and writes it to the target fs)
-    enkf_node_deserialize(node, target_fs, node_id, active_list, A, row_offset,
+    enkf_node_deserialize(node, target_fs, node_id, active_list, &A, row_offset,
                           column);
     state_map_update_undefined(enkf_fs_get_state_map(target_fs), iens,
                                STATE_INITIALIZED);
     enkf_node_free(node);
 }
 
-void assert_matrix_size(const matrix_type *m, const char *name, int rows,
+void assert_matrix_size(const Eigen::MatrixXd &m, const char *name, int rows,
                         int columns) {
-    if (m) {
-        if (!matrix_check_dims(m, rows, columns))
-            throw std::invalid_argument(
-                "matrix mismatch " + std::string(name) + ":[" +
-                std::to_string(matrix_get_rows(m)) + "," +
-                std::to_string(matrix_get_columns(m)) + "   - expected:[" +
-                std::to_string(rows) + "," + std::to_string(columns) + "]");
-    } else
-        throw std::invalid_argument("matrix: " + std::string(name) + "is NULL");
+    if (!((m.rows() == rows) && (m.cols() == columns)))
+        throw std::invalid_argument("matrix mismatch " + std::string(name) +
+                                    ":[" + std::to_string(m.rows()) + "," +
+                                    std::to_string(m.cols()) +
+                                    "   - expected:[" + std::to_string(rows) +
+                                    "," + std::to_string(columns) + "]");
 }
 
 void deserialize_ministep(ensemble_config_type *ensemble_config,
                           const local_ministep_type *ministep,
                           enkf_fs_type *target_fs,
                           const std::vector<int> &iens_active_index,
-                          const matrix_type *A) {
+                          const Eigen::MatrixXd &A) {
 
     int ens_size = iens_active_index.size();
     int current_row = 0;
@@ -173,7 +169,7 @@ load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
             Eigen::MatrixXd::Zero(matrix_start_size, active_ens_size);
 
         serialize_ministep(ensemble_config, ministep, target_fs,
-                           iens_active_index, &A);
+                           iens_active_index, A);
         return A;
     }
 
@@ -190,7 +186,7 @@ void save_parameters(enkf_fs_type *target_fs,
                      const update_data_type &update_data) {
     if (update_data.A)
         deserialize_ministep(ensemble_config, ministep, target_fs,
-                             iens_active_index, &update_data.A.value());
+                             iens_active_index, update_data.A.value());
     if (update_data.A_with_rowscaling.size() > 0) {
         const auto &scaled_keys = ministep->scaled_keys();
 
@@ -204,7 +200,7 @@ void save_parameters(enkf_fs_type *target_fs,
                 deserialize_node(
                     target_fs, target_fs,
                     ensemble_config_get_node(ensemble_config, key.c_str()),
-                    iens, 0, column, active_list, &A);
+                    iens, 0, column, active_list, A);
             }
         }
     }
@@ -236,17 +232,16 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
                 ensemble_config_get_node(ensemble_config, key.c_str());
             const int node_size =
                 enkf_config_node_get_data_size(config_node, 0);
-            if (matrix_get_rows(&A) < node_size)
-                matrix_resize(&A, node_size, active_ens_size, false);
+            if (A.rows() < node_size)
+                A.conservativeResize(node_size, active_ens_size);
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, 0, column,
-                               active_list, &A);
+                               active_list, A);
             }
             auto row_scaling = ministep->get_row_scaling(key);
 
-            matrix_shrink_header(&A, row_scaling->size(),
-                                 matrix_get_columns(&A));
+            A.conservativeResize(row_scaling->size(), A.cols());
             parameters.emplace_back(std::move(A), row_scaling);
         }
     }
@@ -257,28 +252,21 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 void run_analysis_update_without_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
-    const matrix_type *S, const matrix_type *E, const matrix_type *D,
-    const matrix_type *R, matrix_type *A) {
+    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
+    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R, Eigen::MatrixXd &A) {
 
     ert::utils::Benchmark benchmark(logger,
                                     "run_analysis_update_without_rowscaling");
-    if (A == nullptr)
-        throw std::logic_error(
-            "Parameter matrix can not be NULL when exectuting analysis udate");
 
-    int active_ens_size = matrix_get_columns(S);
-    int active_obs_size = matrix_get_rows(S);
-
-    matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
+    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(S.cols(), S.cols());
 
     if (module_config.iterable()) {
-        ies::init_update(module_data, ens_mask, obs_mask, S, R, E, D);
-        ies::updateA(module_config, module_data, A, S, R, E, D);
+        ies::init_update(module_data, ens_mask, obs_mask, &S, &R, &E, &D);
+        ies::updateA(module_config, module_data, &A, &S, &R, &E, &D);
     } else {
-        ies::initX(module_config, S, R, E, D, X);
-        matrix_inplace_matmul(A, X);
+        ies::initX(module_config, &S, &R, &E, &D, &X);
+        A *= X;
     }
-    matrix_free(X);
 }
 
 /*
@@ -286,8 +274,8 @@ Run the row-scaling enabled update algorithm on a set of A matrices.
 */
 void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const matrix_type *S, const matrix_type *E, const matrix_type *D,
-    const matrix_type *R,
+    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
+    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         &parameters) {
 
@@ -297,9 +285,7 @@ void run_analysis_update_with_rowscaling(
         throw std::logic_error("No parameter matrices provided for analysis "
                                "update with rowscaling");
 
-    int active_ens_size = matrix_get_columns(S);
-    int active_obs_size = matrix_get_rows(S);
-    matrix_type *X = matrix_alloc(active_ens_size, active_ens_size);
+    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(S.cols(), S.cols());
 
     if (module_config.iterable()) {
         throw std::logic_error("Sorry - row scaling for distance based "
@@ -308,11 +294,9 @@ void run_analysis_update_with_rowscaling(
     }
 
     for (auto &[A, row_scaling] : parameters) {
-        ies::initX(module_config, S, R, E, D, X);
-        row_scaling->multiply(&A, X);
+        ies::initX(module_config, &S, &R, &E, &D, &X);
+        row_scaling->multiply(&A, &X);
     }
-
-    matrix_free(X);
 }
 
 /*
@@ -421,10 +405,10 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     int active_obs_size = obs_data_get_active_size(obs_data);
     Eigen::MatrixXd R = obs_data_makeR(obs_data);
     Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
-    assert_matrix_size(&E, "E", active_obs_size, active_ens_size);
-    assert_matrix_size(&D, "D", active_obs_size, active_ens_size);
-    assert_matrix_size(&S, "S", active_obs_size, active_ens_size);
-    assert_matrix_size(&R, "R", active_obs_size, active_obs_size);
+    assert_matrix_size(E, "E", active_obs_size, active_ens_size);
+    assert_matrix_size(D, "D", active_obs_size, active_ens_size);
+    assert_matrix_size(S, "S", active_obs_size, active_ens_size);
+    assert_matrix_size(R, "R", active_obs_size, active_obs_size);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
     obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
 
@@ -493,8 +477,8 @@ static void run_analysis_update_without_rowscaling_pybind(
 
     analysis::run_analysis_update_without_rowscaling(
         module_config, module_data, ens_mask, update_data.obs_mask,
-        &update_data.S, &update_data.E, &update_data.D, &update_data.R,
-        &update_data.A.value());
+        update_data.S, update_data.E, update_data.D, update_data.R,
+        update_data.A.value());
 }
 
 static void run_analysis_update_with_rowscaling_pybind(
@@ -502,8 +486,8 @@ static void run_analysis_update_with_rowscaling_pybind(
     analysis::update_data_type &update_data) {
 
     analysis::run_analysis_update_with_rowscaling(
-        module_config, module_data, &update_data.S, &update_data.E,
-        &update_data.D, &update_data.R, update_data.A_with_rowscaling);
+        module_config, module_data, update_data.S, update_data.E, update_data.D,
+        update_data.R, update_data.A_with_rowscaling);
 }
 } // namespace
 RES_LIB_SUBMODULE("update", m) {
