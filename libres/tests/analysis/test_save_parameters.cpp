@@ -89,12 +89,12 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         }
 
         // Create matrix and save as as the parameter defined in the ministep
-        matrix_type *A = matrix_alloc(1, ensemble_size);
-        for (int i = 0; i < ensemble_size; i++) {
-            matrix_iset(A, 0, i, double(i) / 10.0);
-        }
+        Eigen::MatrixXd A = Eigen::MatrixXd::Zero(1, ensemble_size);
+        for (int i = 0; i < ensemble_size; i++)
+            A(0, i) = double(i) / 10.0;
+
         auto update_data = analysis::update_data_type(
-            {}, {}, {}, {}, std::make_optional(*A), {}, {});
+            {}, {}, {}, {}, std::make_optional(A), {}, {});
 
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
@@ -104,7 +104,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
                 fs, ensemble_config, active_index, ensemble_size, ministep);
             THEN("Loading parameters yield the same matrix") {
                 REQUIRE(B.has_value());
-                REQUIRE(matrix_equal(A, &B.value()));
+                REQUIRE(A == B.value());
             }
         }
 
@@ -171,8 +171,8 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         // Create matrix and save as as the parameter defined in the ministep
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, ensemble_size);
         for (int i = 0; i < ensemble_size; i++) {
-            matrix_iset(&A, 0, i, double(i) / 10.0);
-            matrix_iset(&A, 1, i, double(i) / 20.0);
+            A(0, i) = double(i) / 10.0;
+            A(1, i) = double(i) / 20.0;
         }
 
         std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
