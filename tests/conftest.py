@@ -59,3 +59,24 @@ def pytest_runtest_setup(item):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "equinor_test")
+
+
+@pytest.fixture()
+def unused_tcp_port(unused_tcp_port, monkeypatch):
+    # The unused_tcp_port checks against localhost when providing an unused port:
+    # https://github.com/pytest-dev/pytest-asyncio/blob/9246f5825f589ff01f1c67620ce34bdc416c5af3/pytest_asyncio/plugin.py#L490
+    # In find_available_port, we use our public ip address if a current_host is
+    # not provided (as given in _get_ip_address). Using the public ip address
+    # is fine in production, but for unit testing paired with unused_tcp_port
+    # we have to specify localhost. We wrap unused_tcp_port and mock
+    # the `_get_ip_address` to only provide localhost. The original unused_tcp_port
+    # remains untouched
+    import ert_shared.port_handler
+
+    def mocked_get_ip_address():
+        return "127.0.0.1"
+
+    monkeypatch.setattr(
+        ert_shared.port_handler, "_get_ip_address", mocked_get_ip_address
+    )
+    return unused_tcp_port
