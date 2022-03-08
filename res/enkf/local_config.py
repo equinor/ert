@@ -67,13 +67,9 @@ class LocalConfig(BaseCClass):
     def __init__(self):
         raise NotImplementedError("Class can not be instantiated directly!")
 
-    def initAttributes(self, ensemble_config, obs, grid):
+    def initAttributes(self, ensemble_config, grid):
         self.ensemble_config = ensemble_config
-        self.obs = obs
         self.grid = grid
-
-    def __getObservations(self):
-        return self.obs
 
     def __getEnsembleConfig(self):
         return self.ensemble_config
@@ -110,7 +106,6 @@ class LocalConfig(BaseCClass):
 
         self._create_obsdata(obsdata_key)
         obsdata = self.getObsdata(obsdata_key)
-        obsdata.initObservations(self.__getObservations())
         return obsdata
 
     def copyObsdata(self, src_key, target_key):
@@ -121,7 +116,6 @@ class LocalConfig(BaseCClass):
             raise KeyError(f"The observation set {src_key} does not exist")
 
         obsdata = self._copy_obsdata(src_key, target_key)
-        obsdata.initObservations(self.__getObservations())
         return obsdata
 
     def getUpdatestep(self):
