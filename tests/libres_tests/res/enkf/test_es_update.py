@@ -231,9 +231,7 @@ def test_localization(setup_case, expected_target_gen_kw):
     obs.addNode("WOPR_OP1_72")
     ministep = local_config.createMinistep("MINISTEP_LOCA")
     ministep.addActiveData("SNAKE_OIL_PARAM")  # replace dataset.addNode()
-    active_list = ministep.getActiveList("SNAKE_OIL_PARAM")
-    for i in localized_idxs:
-        active_list.addActiveIndex(i)
+    ministep.activate_indices("SNAKE_OIL_PARAM", localized_idxs)
     ministep.attachObsset(obs)
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)

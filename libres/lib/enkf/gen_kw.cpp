@@ -187,7 +187,7 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens, const char *init_file,
 }
 
 void gen_kw_serialize(const gen_kw_type *gen_kw, node_id_type node_id,
-                      const ActiveList *active_list, matrix_type *A,
+                      const ActiveList &active_list, matrix_type *A,
                       int row_offset, int column) {
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     enkf_matrix_serialize(gen_kw->data, data_size, ECL_DOUBLE, active_list, A,
@@ -195,7 +195,7 @@ void gen_kw_serialize(const gen_kw_type *gen_kw, node_id_type node_id,
 }
 
 void gen_kw_deserialize(gen_kw_type *gen_kw, node_id_type node_id,
-                        const ActiveList *active_list, const matrix_type *A,
+                        const ActiveList &active_list, const matrix_type *A,
                         int row_offset, int column) {
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     enkf_matrix_deserialize(gen_kw->data, data_size, ECL_DOUBLE, active_list, A,

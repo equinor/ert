@@ -93,7 +93,7 @@ class BlockObservation(BaseCClass):
         """@rtype: float"""
         return self._get_std_scaling(index)
 
-    def updateStdScaling(self, factor, active_list):
+    def updateStdScaling(self, factor, active_list = None):
         _lib.local.block_obs.update_std_scaling(self, factor, active_list)
 
     def getDepth(self, index):

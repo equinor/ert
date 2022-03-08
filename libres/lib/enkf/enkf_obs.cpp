@@ -423,7 +423,7 @@ static void enkf_obs_get_obs_and_measure_node(
 
         if (obs_vector_iget_active(obs_vector, report_step)) {
             /* The observation is active for this report step. */
-            auto *active_list = obs_node->active_list();
+            const auto &active_list = obs_node->active_list();
             /* Collect the observed data in the obs_data instance. */
             obs_vector_iget_observations(obs_vector, report_step, obs_data,
                                          active_list, fs);

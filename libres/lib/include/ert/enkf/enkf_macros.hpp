@@ -200,25 +200,25 @@
 
 #define VOID_SERIALIZE(prefix)                                                 \
     void prefix##_serialize__(const void *void_arg, node_id_type node_id,      \
-                              const ActiveList *active_list, matrix_type *A,   \
+                              const ActiveList &active_list, matrix_type *A,   \
                               int row_offset, int column) {                    \
         const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
         prefix##_serialize(arg, node_id, active_list, A, row_offset, column);  \
     }
 #define VOID_SERIALIZE_HEADER(prefix)                                          \
-    void prefix##_serialize__(const void *, node_id_type, const ActiveList *,  \
+    void prefix##_serialize__(const void *, node_id_type, const ActiveList &,  \
                               matrix_type *, int, int);
 
 #define VOID_DESERIALIZE(prefix)                                               \
     void prefix##_deserialize__(                                               \
-        void *void_arg, node_id_type node_id, const ActiveList *active_list,   \
+        void *void_arg, node_id_type node_id, const ActiveList &active_list,   \
         const matrix_type *A, int row_offset, int column) {                    \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
         prefix##_deserialize(arg, node_id, active_list, A, row_offset,         \
                              column);                                          \
     }
 #define VOID_DESERIALIZE_HEADER(prefix)                                        \
-    void prefix##_deserialize__(void *, node_id_type, const ActiveList *,      \
+    void prefix##_deserialize__(void *, node_id_type, const ActiveList &,      \
                                 const matrix_type *, int, int);
 
 #define VOID_INITIALIZE(prefix)                                                \
@@ -233,19 +233,19 @@
 #define VOID_GET_OBS(prefix)                                                   \
     void prefix##_get_observations__(                                          \
         const void *void_arg, obs_data_type *obs_data, enkf_fs_type *fs,       \
-        int report_step, const ActiveList *__active_list) {                    \
+        int report_step, const ActiveList &__active_list) {                    \
         prefix##_get_observations((prefix##_type *)void_arg, obs_data, fs,     \
                                   report_step, __active_list);                 \
     }
 
 #define VOID_GET_OBS_HEADER(prefix)                                            \
     void prefix##_get_observations__(const void *, obs_data_type *,            \
-                                     enkf_fs_type *, int, const ActiveList *)
+                                     enkf_fs_type *, int, const ActiveList &)
 
 #define VOID_MEASURE(obs_prefix, state_prefix)                                 \
     void obs_prefix##_measure__(                                               \
         const void *void_obs, const void *void_state, node_id_type node_id,    \
-        meas_data_type *meas_data, const ActiveList *__active_list) {          \
+        meas_data_type *meas_data, const ActiveList &__active_list) {          \
         const obs_prefix##_type *obs = obs_prefix##_safe_cast_const(void_obs); \
         const state_prefix##_type *state =                                     \
             state_prefix##_safe_cast_const(void_state);                        \
@@ -255,25 +255,25 @@
 #define VOID_MEASURE_UNSAFE(obs_prefix, state_prefix)                          \
     void obs_prefix##_measure__(                                               \
         const void *void_obs, const void *state, node_id_type node_id,         \
-        meas_data_type *meas_data, const ActiveList *__active_list) {          \
+        meas_data_type *meas_data, const ActiveList &__active_list) {          \
         const obs_prefix##_type *obs = obs_prefix##_safe_cast_const(void_obs); \
         obs_prefix##_measure(obs, state, node_id, meas_data, __active_list);   \
     }
 
 #define VOID_MEASURE_HEADER(obs_prefix)                                        \
     void obs_prefix##_measure__(const void *, const void *, node_id_type,      \
-                                meas_data_type *, const ActiveList *)
+                                meas_data_type *, const ActiveList &)
 
 #define VOID_UPDATE_STD_SCALE(prefix)                                          \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \
-                                     const ActiveList *active_list) {          \
+                                     const ActiveList &active_list) {          \
         prefix##_type *obs = prefix##_safe_cast(void_obs);                     \
         prefix##_update_std_scale(obs, std_multiplier, active_list);           \
     }
 
 #define VOID_UPDATE_STD_SCALE_HEADER(prefix)                                   \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \
-                                     const ActiveList *active_list);
+                                     const ActiveList &active_list);
 
 #define VOID_CHI2(obs_prefix, state_prefix)                                    \
     double obs_prefix##_chi2__(const void *void_obs, const void *void_state,   \

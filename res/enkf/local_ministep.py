@@ -48,6 +48,9 @@ class LocalMinistep(BaseCClass):
         else:
             raise KeyError('Local key "%s" not recognized.' % key)
 
+    def activate_indices(self, key, indices):
+        _lib.local.ministep.activate_indices(self, key, indices)
+
     def numActiveData(self):
         return self._data_size()
 

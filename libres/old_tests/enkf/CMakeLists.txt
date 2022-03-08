@@ -21,7 +21,6 @@ endfunction()
 
 foreach(
   test
-  enkf_active_list
   enkf_analysis_config
   enkf_config_node
   enkf_enkf_config_node_gen_data
@@ -32,7 +31,6 @@ foreach(
   enkf_gen_data_config_parse
   enkf_iter_config
   enkf_local_obsdata
-  enkf_local_obsdata_node
   enkf_meas_data
   enkf_model_config
   enkf_obs_invalid_path

@@ -85,7 +85,7 @@ class SummaryObservation(BaseCClass):
         """@rtype: str"""
         return self._get_summary_key()
 
-    def updateStdScaling(self, factor, active_list):
+    def updateStdScaling(self, factor, active_list = None):
         _lib.local.summary_obs.update_std_scaling(self, factor, active_list)
 
     def free(self):

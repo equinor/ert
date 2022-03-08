@@ -83,7 +83,7 @@ void test_measure(ert_test_context_type *test_context) {
     }
 
     obs_vector_measure(rft_obs, fs, 20, ens_active_list, meas_data_RFT,
-                       &active_list);
+                       {});
 
     meas_data_free(meas_data_RFT);
 }

@@ -22,7 +22,6 @@ from res.enkf import ErtRunContext, ESUpdate
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
-from res.enkf.active_list import ActiveList
 from res.enkf.local_updatestep import LocalUpdateStep
 from res.enkf.enums import ActiveMode
 from res.test import ErtTestContext
@@ -99,9 +98,8 @@ class LocalConfigTest(ResTest):
             local_obs_data_1.addNode("GEN_PERLIN_1")
             l1 = local_obs_data_1.copy_active_list("GEN_PERLIN_1")
             l2 = local_obs_data_1.getActiveList("GEN_PERLIN_1")
-            assert l1 != l2
-            assert isinstance(l1, ActiveList)
-            assert isinstance(l2, ActiveList)
+            assert l1 is None
+            assert l2 is None
 
     def test_attach_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -219,8 +217,4 @@ class LocalConfigTest(ResTest):
 
     def test_local_obsdata_node(self):
         node = LocalObsdataNode("OBS_NODE")
-        self.assertEqual(node.key(), "OBS_NODE")
-        self.assertEqual(node.getKey(), "OBS_NODE")
-
-        al = node.getActiveList()
-        self.assertTrue(isinstance(al, ActiveList))
+        self.assertEqual(node.key, "OBS_NODE")

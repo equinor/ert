@@ -826,7 +826,7 @@ void field_free(field_type *field) {
 }
 
 void field_serialize(const field_type *field, node_id_type node_id,
-                     const ActiveList *active_list, matrix_type *A,
+                     const ActiveList &active_list, matrix_type *A,
                      int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
@@ -837,7 +837,7 @@ void field_serialize(const field_type *field, node_id_type node_id,
 }
 
 void field_deserialize(field_type *field, node_id_type node_id,
-                       const ActiveList *active_list, const matrix_type *A,
+                       const ActiveList &active_list, const matrix_type *A,
                        int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);

@@ -15,13 +15,13 @@
 #  for more details.
 import ctypes
 import os.path
+from typing import Optional, Set
 
 import numpy as np
 from cwrap import BaseCClass
 from ecl.util.util import IntVector
 
 from res import ResPrototype
-from res.enkf import ActiveList
 from res.enkf.config import GenDataConfig
 from res import _lib
 
@@ -115,7 +115,7 @@ class GenObservation(BaseCClass):
         """@rtype: float"""
         return self._get_std_scaling(obs_index)
 
-    def updateStdScaling(self, factor, active_list: ActiveList):
+    def updateStdScaling(self, factor, active_list: Optional[Set[int]] = None):
         _lib.local.gen_obs.update_std_scaling(self, factor, active_list)
 
     def get_data_points(self):

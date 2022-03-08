@@ -1,7 +1,7 @@
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
-from res.enkf import ActiveList, GenDataConfig, GenObservation
+from res.enkf import GenDataConfig, GenObservation
 
 
 class GenObsTest(ResTest):
@@ -40,12 +40,10 @@ class GenObsTest(ResTest):
             self.assertEqual(gen_obs.getStdScaling(0), 1)
             self.assertEqual(gen_obs.getStdScaling(1), 1)
 
-            active_list = ActiveList()
-            gen_obs.updateStdScaling(0.25, active_list)
+            gen_obs.updateStdScaling(0.25)
             self.assertEqual(gen_obs.getStdScaling(0), 0.25)
             self.assertEqual(gen_obs.getStdScaling(1), 0.25)
 
-            active_list.addActiveIndex(1)
-            gen_obs.updateStdScaling(2.00, active_list)
+            gen_obs.updateStdScaling(2.00, [1])
             self.assertEqual(gen_obs.getStdScaling(0), 0.25)
             self.assertEqual(gen_obs.getStdScaling(1), 2.00)

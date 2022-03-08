@@ -51,9 +51,9 @@ bool summary_obs_default_used(const summary_obs_type *summary_obs,
 extern "C" PY_USED const char *
 summary_obs_get_summary_key(const summary_obs_type *summary_obs);
 
-extern "C" void summary_obs_update_std_scale(summary_obs_type *summary_obs,
+void summary_obs_update_std_scale(summary_obs_type *summary_obs,
                                              double std_multiplier,
-                                             const ActiveList *active_list);
+                                             const ActiveList &active_list);
 
 extern "C" void summary_obs_set_std_scale(summary_obs_type *summary_obs,
                                           double std_multiplier);

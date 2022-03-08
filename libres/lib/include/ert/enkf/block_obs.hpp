@@ -63,9 +63,9 @@ extern "C" double block_obs_iget_data(const block_obs_type *block_obs,
                                       node_id_type node_id);
 extern "C" double block_obs_iget_std_scaling(const block_obs_type *block_obs,
                                              int index);
-extern "C" PY_USED void
+void
 block_obs_update_std_scale(block_obs_type *block_obs, double scale_factor,
-                           const ActiveList *active_list);
+                           const ActiveList &active_list);
 extern "C" void block_obs_append_field_obs(block_obs_type *block_obs, int i,
                                            int j, int k, double value,
                                            double std);

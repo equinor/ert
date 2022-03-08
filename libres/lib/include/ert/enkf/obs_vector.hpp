@@ -46,9 +46,8 @@ typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2, BLOCK_OBS = 3 } obs_impl_type;
 typedef struct obs_vector_struct obs_vector_type;
 
 void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
-                        int report_step,
-                        const std::vector<int> &ens_active_list,
-                        meas_data_type *, const ActiveList *active_list);
+                        int report_step, const std::vector<int> &ens_active_list,
+                        meas_data_type *, const ActiveList &active_list);
 
 void obs_vector_scale_std(obs_vector_type *obs_vector,
                           const LocalObsDataNode *local_node,
@@ -59,26 +58,26 @@ obs_vector_alloc_local_node(const obs_vector_type *obs_vector);
 
 typedef void(obs_free_ftype)(void *);
 typedef void(obs_get_ftype)(const void *, obs_data_type *, enkf_fs_type *, int,
-                            const ActiveList *);
+                            const ActiveList &);
 typedef void(obs_meas_ftype)(const void *, const void *, node_id_type,
-                             meas_data_type *, const ActiveList *);
+                             meas_data_type *, const ActiveList &);
 typedef void(obs_user_get_ftype)(void *, const char *, double *, double *,
                                  bool *);
-typedef void(obs_update_std_scale_ftype)(void *, double, const ActiveList *);
+typedef void(obs_update_std_scale_ftype)(void *, double, const ActiveList &);
 typedef double(obs_chi2_ftype)(const void *, const void *, node_id_type);
 
 extern "C" void obs_vector_free(obs_vector_type *);
 extern "C" int obs_vector_get_num_active(const obs_vector_type *);
 extern "C" bool obs_vector_iget_active(const obs_vector_type *, int);
 void obs_vector_iget_observations(const obs_vector_type *, int, obs_data_type *,
-                                  const ActiveList *active_list,
+                                  const ActiveList &active_list,
                                   enkf_fs_type *fs);
 extern "C" bool obs_vector_has_data(const obs_vector_type *obs_vector,
                                     const bool_vector_type *active_mask,
                                     enkf_fs_type *fs);
 void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
                         int report_step, const int_vector_type *ens_active_list,
-                        meas_data_type *, const ActiveList *active_list);
+                        meas_data_type *, const ActiveList &active_list);
 extern "C" const char *obs_vector_get_state_kw(const obs_vector_type *);
 extern "C" const char *obs_vector_get_key(const obs_vector_type *);
 extern "C" obs_impl_type obs_vector_get_impl_type(const obs_vector_type *);

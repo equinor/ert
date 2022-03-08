@@ -69,14 +69,12 @@ public:
         this->active_size.emplace(node_key, ActiveList());
     }
 
-    ActiveList *get_active_data_list(const char *node_key) {
-        auto &al = this->active_size.at(node_key);
-        return &al;
+    ActiveList &get_active_data_list(const char *node_key) {
+        return this->active_size.at(node_key);
     }
 
-    const ActiveList *get_active_data_list(const char *node_key) const {
-        auto &al = this->active_size.at(node_key);
-        return &al;
+    const ActiveList &get_active_data_list(const char *node_key) const {
+        return this->active_size.at(node_key);
     }
 
     std::vector<std::string> unscaled_keys() const {
@@ -115,7 +113,7 @@ extern "C" int
 local_ministep_num_active_data(const local_ministep_type *ministep);
 extern "C" void local_ministep_activate_data(local_ministep_type *ministep,
                                              const char *key);
-extern "C" ActiveList *
+ActiveList &
 local_ministep_get_active_data_list(const local_ministep_type *ministep,
                                     const char *key);
 extern "C" bool

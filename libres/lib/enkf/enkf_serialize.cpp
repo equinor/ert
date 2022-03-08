@@ -175,10 +175,9 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const ActiveList *__active_list, matrix_type *A,
+                           const ActiveList &active_list, matrix_type *A,
                            int row_offset, int column) {
-    const int *active_list = __active_list->active_list_get_active();
-    auto active_size = __active_list->active_size(node_size);
+    auto active_size = active_list ? active_list->size() : node_size;
 
     if (ecl_type_is_double(node_type)) {
         const double *node_data = (const double *)__node_data;
@@ -189,7 +188,7 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
             int row_index;
             int node_index;
             for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
+                node_index = (*active_list)[row_index];
                 matrix_iset(A, row_index + row_offset, column,
                             node_data[node_index]);
             }
@@ -207,7 +206,7 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
             int row_index;
             int node_index;
             for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
+                node_index = (*active_list)[row_index];
                 matrix_iset(A, row_index + row_offset, column,
                             node_data[node_index]);
             }
@@ -220,10 +219,9 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
-                             const ActiveList *__active_list,
+                             const ActiveList &active_list,
                              const matrix_type *A, int row_offset, int column) {
-    const int *active_list = __active_list->active_list_get_active();
-    auto active_size = __active_list->active_size(node_size);
+    auto active_size = active_list ? active_list->size() : node_size;
 
     if (ecl_type_is_double(node_type)) {
         double *node_data = (double *)__node_data;
@@ -237,7 +235,7 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
             int row_index;
             int node_index;
             for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
+                node_index = (*active_list)[row_index];
                 node_data[node_index] =
                     matrix_iget(A, row_index + row_offset, column);
             }
@@ -255,7 +253,7 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
             int row_index;
             int node_index;
             for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
+                node_index = (*active_list)[row_index];
                 node_data[node_index] =
                     matrix_iget(A, row_index + row_offset, column);
             }

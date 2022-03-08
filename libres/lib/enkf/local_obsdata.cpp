@@ -106,8 +106,7 @@ const std::string &LocalObsData::name() const { return this->m_name; }
 namespace {
 
 ActiveList &get_active_list(LocalObsData &obs_data, const std::string &key) {
-    auto &node = obs_data[key];
-    return *node.active_list();
+    return obs_data[key].active_list();
 }
 
 } // namespace

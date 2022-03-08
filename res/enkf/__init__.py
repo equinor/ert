@@ -16,7 +16,6 @@
 
 from res.job_queue import CancelPluginException, ErtPlugin, ErtScript
 
-from .active_list import ActiveList
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
 from .config import (

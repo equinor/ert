@@ -661,7 +661,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
 void obs_vector_scale_std(obs_vector_type *obs_vector,
                           const LocalObsDataNode *local_node,
                           double std_multiplier) {
-    const auto *active_list = local_node->active_list();
+    const auto &active_list = local_node->active_list();
     int tstep = -1;
 
     while (true) {
@@ -879,7 +879,7 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
 
 void obs_vector_iget_observations(const obs_vector_type *obs_vector,
                                   int report_step, obs_data_type *obs_data,
-                                  const ActiveList *active_list,
+                                  const ActiveList &active_list,
                                   enkf_fs_type *fs) {
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL)
@@ -890,7 +890,7 @@ void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
                         int report_step,
                         const std::vector<int> &ens_active_list,
                         meas_data_type *meas_data,
-                        const ActiveList *active_list) {
+                        const ActiveList &active_list) {
 
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL) {

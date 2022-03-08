@@ -95,7 +95,7 @@ void local_ministep_add_obsdata_node(local_ministep_type *ministep,
 int local_ministep_num_active_data(const local_ministep_type *ministep) {
     return ministep->num_active_data();
 }
-ActiveList *local_ministep_get_active_data_list(local_ministep_type *ministep,
+ActiveList &local_ministep_get_active_data_list(local_ministep_type *ministep,
                                                 const char *key) {
     return ministep->get_active_data_list(key);
 }
@@ -146,8 +146,7 @@ RowScaling *get_or_create_row_scaling(py::handle self,
 
 ActiveList &get_active_data_list(py::handle obj, const std::string &name) {
     auto *self = ert::from_cwrap<local_ministep_type>(obj);
-    auto *active_list = local_ministep_get_active_data_list(self, name.c_str());
-    return *active_list;
+    return local_ministep_get_active_data_list(self, name.c_str());
 }
 
 void add_obsdata_node(py::handle self, LocalObsDataNode &node) {
@@ -193,11 +192,26 @@ RES_LIB_SUBMODULE("local.ministep", m) {
         return dict;
     };
 
+    auto activate_indices = [](py::handle self, const std::string &name, const std::vector<int> &indices) {
+        auto ministep = ert::from_cwrap<local_ministep_type>(self);
+
+        auto &active_list = ministep->get_active_data_list(name.c_str());
+
+        // Initialise the vector if empty
+        if (!active_list) {
+            active_list.emplace(indices);
+            return;
+        }
+
+        throw py::key_error("activate_indices");
+    };
+
     m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
           "name"_a);
     m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
     m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
           py::return_value_policy::reference);
+    m.def("activate_indices", activate_indices, "self"_a, "name"_a, "indices"_a);
     m.def("add_obsdata_node", &add_obsdata_node, "self"_a, "node"_a);
     m.def("get_obsdata", &get_obsdata, "self"_a,
           py::return_value_policy::reference);

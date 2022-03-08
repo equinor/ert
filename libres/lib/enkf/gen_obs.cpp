@@ -295,18 +295,16 @@ double gen_obs_chi2(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
 
 void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
                      node_id_type node_id, meas_data_type *meas_data,
-                     const ActiveList *__active_list) {
+                     const ActiveList &active_list) {
     gen_obs_assert_data_size(gen_obs, gen_data);
     {
-        int active_size = __active_list->active_size(gen_obs->obs_size);
         meas_block_type *meas_block = meas_data_add_block(
-            meas_data, gen_obs->obs_key, node_id.report_step, active_size);
-        active_mode_type active_mode = __active_list->getMode();
+            meas_data, gen_obs->obs_key, node_id.report_step, active_list ? active_list->size() : gen_obs->obs_size);
         const bool_vector_type *forward_model_active =
             gen_data_config_get_active_mask(gen_obs->data_config);
 
         int iobs;
-        if (active_mode == ALL_ACTIVE) {
+        if (!active_list.has_value()) {
             for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
                 int data_index = gen_obs->data_index_list[iobs];
 
@@ -318,12 +316,9 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
                 meas_block_iset(meas_block, node_id.iens, iobs,
                                 gen_data_iget_double(gen_data, data_index));
             }
-        } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = __active_list->active_list_get_active();
-            int index;
-
-            for (index = 0; index < active_size; index++) {
-                iobs = active_list[index];
+        } else {
+            for (int index = 0; index < active_list->size(); index++) {
+                iobs = (*active_list)[index];
                 int data_index = gen_obs->data_index_list[iobs];
                 if (forward_model_active != NULL) {
                     if (!bool_vector_iget(forward_model_active, data_index))
@@ -339,7 +334,7 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
 C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
                                      obs_data_type *obs_data, enkf_fs_type *fs,
                                      int report_step,
-                                     const ActiveList *__active_list) {
+                                     const ActiveList &active_list) {
     const bool_vector_type *forward_model_active = NULL;
     if (gen_data_config_has_active_mask(gen_obs->data_config, fs,
                                         report_step)) {
@@ -350,12 +345,10 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
     }
 
     {
-        active_mode_type active_mode = __active_list->getMode();
-        int active_size = __active_list->active_size(gen_obs->obs_size);
         obs_block_type *obs_block = obs_data_add_block(
-            obs_data, gen_obs->obs_key, active_size, NULL, false);
+            obs_data, gen_obs->obs_key, active_list ? active_list->size() : gen_obs->obs_size, NULL, false);
 
-        if (active_mode == ALL_ACTIVE) {
+        if (!active_list.has_value()) {
             for (int iobs = 0; iobs < gen_obs->obs_size; iobs++)
                 obs_block_iset(obs_block, iobs, gen_obs->obs_data[iobs],
                                IGET_SCALED_STD(gen_obs, iobs));
@@ -368,26 +361,20 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
                         obs_block_iset_missing(obs_block, iobs);
                 }
             }
-        } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = __active_list->active_list_get_active();
-            int active_size = __active_list->active_size(gen_obs->obs_size);
-            /*
-	There are three different indices active at the same time here:
-
-	  active_index : [0 ... active_size> - running over the size of
-     	                 the current local observation.
-
-      	  iobs : [0 ... size(obs)> - running over the complete size of
-                  	 the observation node.
-
-          data_index : The index in the data space corresponding to
-                         the observation index iobs.
-
-      */
-
-            for (int active_index = 0; active_index < active_size;
+        } else {
+            // There are three different indices active at the same time here:
+            //
+            // active_index : [0 ... active_size> - running over the size of
+            //     the current local observation.
+            //
+            // iobs : [0 ... size(obs)> - running over the complete size of
+            //     the observation node.
+            //
+            // data_index : The index in the data space corresponding to
+            //     the observation index iobs.
+            for (int active_index = 0; active_index < active_list->size();
                  active_index++) {
-                int iobs = active_list[active_index];
+                int iobs = (*active_list)[active_index];
                 obs_block_iset(obs_block, active_index, gen_obs->obs_data[iobs],
                                IGET_SCALED_STD(gen_obs, iobs));
                 {
@@ -485,15 +472,13 @@ void gen_obs_user_get_with_data_index(const gen_obs_type *gen_obs,
 }
 
 void gen_obs_update_std_scale(gen_obs_type *gen_obs, double std_multiplier,
-                              const ActiveList *active_list) {
-    if (active_list->getMode() == ALL_ACTIVE) {
+                              const ActiveList &active_list) {
+    if (!active_list.has_value()) {
         for (int i = 0; i < gen_obs->obs_size; i++)
             gen_obs->std_scaling[i] = std_multiplier;
     } else {
-        const int *active_index = active_list->active_list_get_active();
-        int size = active_list->active_size(gen_obs->obs_size);
-        for (int i = 0; i < size; i++) {
-            int obs_index = active_index[i];
+        for (int i = 0; i < active_list->size(); i++) {
+            int obs_index = (*active_list)[i];
             if (obs_index >= gen_obs->obs_size) {
                 util_abort("[Gen_Obs] Index out of bounds %d [0, %d]",
                            obs_index, gen_obs->obs_size - 1);
@@ -550,12 +535,11 @@ VOID_USER_GET_OBS(gen_obs)
 VOID_CHI2(gen_obs, gen_data)
 VOID_UPDATE_STD_SCALE(gen_obs)
 
-class ActiveList;
 namespace {
 void update_std_scaling(py::handle obj, double scaling,
                         const ActiveList &active_list) {
     auto *self = ert::from_cwrap<gen_obs_type>(obj);
-    gen_obs_update_std_scale(self, scaling, &active_list);
+    gen_obs_update_std_scale(self, scaling, active_list);
 }
 } // namespace
 
