@@ -54,7 +54,7 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
                                                      ies_data1, A1, rng);
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_config2,
                                                      ies_data2, A2, rng);
-    test_assert_true(matrix_similar(A1, A2, 5e-5));
+    test_assert_true(A1->isApprox(*A2, 5e-5));
 
     matrix_free(A1);
     matrix_free(A2);
@@ -99,7 +99,7 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
                                                      ies_data1, A1, rng);
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_config2,
                                                      ies_data2, A2, rng);
-    test_assert_true(matrix_similar(A1, A2, 5e-6));
+    test_assert_true(A1->isApprox(*A2, 5e-6));
 
     matrix_free(A1);
     matrix_free(A2);

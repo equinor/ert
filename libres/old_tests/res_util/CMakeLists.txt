@@ -5,7 +5,6 @@ foreach(
   ert_util_arg_pack
   ert_util_matrix
   es_testdata
-  ert_util_matrix_lapack
   ert_util_subst_list
   ert_util_subst_list_add_from_string
   ert_util_block_fs

@@ -108,8 +108,6 @@ void matrix_get_dims(const matrix_type *matrix, int *rows, int *columns,
                      int *row_stride, int *column_stride);
 bool matrix_is_quadratic(const matrix_type *matrix);
 extern "C" bool matrix_equal(const matrix_type *m1, const matrix_type *m2);
-bool matrix_similar(const matrix_type *m1, const matrix_type *m2,
-                    double epsilon);
 
 void matrix_diag_set_scalar(matrix_type *matrix, double value);
 void matrix_diag_set(matrix_type *matrix, const double *diag);

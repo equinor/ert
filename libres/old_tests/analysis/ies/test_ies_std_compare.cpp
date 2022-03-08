@@ -44,7 +44,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     ies::initX(std_config, testdata.S, testdata.R, testdata.E, testdata.D, X);
 
     matrix_inplace_matmul(A2, X);
-    test_assert_true(matrix_similar(A1, A2, 5e-6));
+    test_assert_true(A1->isApprox(*A2, 5e-6));
 
     matrix_free(A1);
     matrix_free(A2);
