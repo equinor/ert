@@ -46,7 +46,8 @@ typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2, BLOCK_OBS = 3 } obs_impl_type;
 typedef struct obs_vector_struct obs_vector_type;
 
 void obs_vector_measure(const obs_vector_type *, enkf_fs_type *fs,
-                        int report_step, const int_vector_type *ens_active_list,
+                        int report_step,
+                        const std::vector<int> &ens_active_list,
                         meas_data_type *, const ActiveList *active_list);
 
 void obs_vector_scale_std(obs_vector_type *obs_vector,

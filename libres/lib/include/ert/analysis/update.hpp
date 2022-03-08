@@ -1,16 +1,13 @@
 #pragma once
 
 #include <stdexcept>
-#include <vector>
-#include <memory>
-#define HAVE_THREAD_POOL 1
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-
-#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
+#include <ert/util/rng.hpp>
 
 namespace analysis {
 /**

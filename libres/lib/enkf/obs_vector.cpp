@@ -887,7 +887,8 @@ void obs_vector_iget_observations(const obs_vector_type *obs_vector,
 }
 
 void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
-                        int report_step, const int_vector_type *ens_active_list,
+                        int report_step,
+                        const std::vector<int> &ens_active_list,
                         meas_data_type *meas_data,
                         const ActiveList *active_list) {
 
@@ -898,10 +899,10 @@ void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
 
         node_id_type node_id = {.report_step = report_step, .iens = 0};
 
-        int vec_size = int_vector_size(ens_active_list);
+        int vec_size = ens_active_list.size();
         for (int active_iens_index = 0; active_iens_index < vec_size;
              active_iens_index++) {
-            node_id.iens = int_vector_iget(ens_active_list, active_iens_index);
+            node_id.iens = ens_active_list[active_iens_index];
 
             enkf_node_load(enkf_node, fs, node_id);
             obs_vector->measure(obs_node, enkf_node_value_ptr(enkf_node),
