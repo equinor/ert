@@ -8,7 +8,6 @@
 
 #include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/res_util/matrix.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/enkf/meas_data.hpp>
 
@@ -25,13 +24,13 @@ namespace analysis {
 void run_analysis_update_without_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
-    const matrix_type *S, const matrix_type *E, const matrix_type *D,
-    const matrix_type *R, matrix_type *A);
+    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
+    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R, Eigen::MatrixXd &A);
 
 void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
-    const matrix_type *S, const matrix_type *E, const matrix_type *D,
-    const matrix_type *R,
+    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
+    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         &parameters);
 } // namespace analysis
@@ -85,11 +84,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(nparam, ens_size);
         for (int iens = 0; iens < ens_size; iens++) {
             const auto &model = ens[iens];
-            matrix_iset(&A, 0, iens, model.a);
-            matrix_iset(&A, 1, iens, model.b);
+            A(0, iens) = model.a;
+            A(1, iens) = model.b;
         }
-        double a_avg_prior = matrix_get_row_sum(&A, 0) / ens_size;
-        double b_avg_prior = matrix_get_row_sum(&A, 1) / ens_size;
+        double a_avg_prior = A.row(0).sum() / ens_size;
+        double b_avg_prior = A.row(1).sum() / ens_size;
 
         // observations and measurements
         int obs_size = 45;
@@ -171,14 +170,12 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     obs_data_get_active_mask(obs_data);
 
                 analysis::run_analysis_update_without_rowscaling(
-                    config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
-                    &A_iter);
+                    config, module_data, ens_mask, obs_mask, S, E, D, R,
+                    A_iter);
 
                 // Extract estimates
-                a_avg_posterior[i_sd] =
-                    matrix_get_row_sum(&A_iter, 0) / ens_size;
-                b_avg_posterior[i_sd] =
-                    matrix_get_row_sum(&A_iter, 1) / ens_size;
+                a_avg_posterior[i_sd] = A_iter.row(0).sum() / ens_size;
+                b_avg_posterior[i_sd] = A_iter.row(1).sum() / ens_size;
 
                 // Calculate distances
                 d_posterior_ml[i_sd] =
@@ -239,7 +236,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
 
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, &S, &E, &D, &R, parameters);
+                config, module_data, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix should equal prior parameter "
                  "matrix") {
@@ -252,8 +249,6 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             for (int row = 0; row < nparam; row++)
                 row_scaling->assign(row, 1.0);
 
-            printf("original\n");
-            matrix_fprintf_data(&A, true, stdout);
             Eigen::MatrixXd A_no_scaling = A;
 
             std::vector parameters{std::pair{A, row_scaling}};
@@ -269,10 +264,10 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
-                &A_no_scaling);
+                config, module_data, ens_mask, obs_mask, S, E, D, R,
+                A_no_scaling);
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, &S, &E, &D, &R, parameters);
+                config, module_data, S, E, D, R, parameters);
 
             THEN("Updated parameter matrix with row scaling should equal "
                  "updated parameter matrix without row scaling") {
@@ -301,10 +296,10 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_with_rowscaling(
-                config, module_data, &S, &E, &D, &R, parameters);
+                config, module_data, S, E, D, R, parameters);
             analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, &S, &E, &D, &R,
-                &A_no_scaling);
+                config, module_data, ens_mask, obs_mask, S, E, D, R,
+                A_no_scaling);
 
             THEN("First row of scaled parameters should equal first row of "
                  "unscaled parameters, while second row of scaled parameters "
@@ -343,13 +338,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
                 analysis::run_analysis_update_with_rowscaling(
-                    config, module_data, &S, &E, &D, &R, parameters);
+                    config, module_data, S, E, D, R, parameters);
 
                 // Extract estimates
-                a_avg_posterior[i_sd] =
-                    matrix_get_row_sum(&A_with_scaling, 0) / ens_size;
-                b_avg_posterior[i_sd] =
-                    matrix_get_row_sum(&A_with_scaling, 1) / ens_size;
+                a_avg_posterior[i_sd] = A_with_scaling.row(0).sum() / ens_size;
+                b_avg_posterior[i_sd] = A_with_scaling.row(1).sum() / ens_size;
 
                 // Calculate distances
                 d_posterior_ml[i_sd] =
