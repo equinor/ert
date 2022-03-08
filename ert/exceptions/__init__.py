@@ -5,7 +5,7 @@ from ert.exceptions._exceptions import (
     ErtError,
     IllegalWorkspaceOperation,
     IllegalWorkspaceState,
-    NonExistantExperiment,
+    NonExistentExperiment,
     StorageError,
     ExperimentError,
 )
@@ -18,7 +18,7 @@ __all__ = [
     "ElementMissingError",
     "IllegalWorkspaceOperation",
     "IllegalWorkspaceState",
-    "NonExistantExperiment",
+    "NonExistentExperiment",
     "ConfigValidationError",
     "ExperimentError",
 ]

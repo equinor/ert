@@ -433,7 +433,7 @@ def test_cli_clean_one(workspace):
 
 
 @pytest.mark.requires_ert_storage
-def test_cli_clean_non_existant_experiment(workspace, capsys):
+def test_cli_clean_non_Existent_experiment(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
     experiments = {"E0", " E1"}
     for experiment in experiments:
@@ -453,7 +453,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
 
     deleted_experiment = experiments.pop()
 
-    args = ["ert3", "clean", deleted_experiment, "non_existant_experiment"]
+    args = ["ert3", "clean", deleted_experiment, "non_Existent_experiment"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -464,7 +464,7 @@ def test_cli_clean_non_existant_experiment(workspace, capsys):
     captured = capsys.readouterr()
     assert (
         captured.out.strip() == "Following experiment(s) did not exist:\n"
-        "    non_existant_experiment\n"
+        "    non_Existent_experiment\n"
         "Perhaps you mistyped an experiment name?"
     )
 
