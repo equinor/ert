@@ -23,45 +23,6 @@ static auto logger = ert::get_logger("analysis.update");
 
 namespace analysis {
 
-/*
-   Helper structs used to pass information to the multithreaded serialize and
-   deserialize routines. A serialize_info structure is used at three levels, and
-   this also reflects on the degree of change of the various members.
-
-     One ministep: This corresponds to one full execution of the function
-         enkf_main_analysis_update().
-
-     One dataset: Each ministep can consist of several local dataset.
-
-     One node: Each local dataset will consist of several nodes.
-
-   The members explicitly marked with a mutable: comment will vary in the
-   lifetime of the serialization_info, the other members will be constant. 
-*/
-
-typedef struct {
-    int row_offset;
-    const ActiveList *active_list;
-    const char *key;
-} serialize_node_info_type;
-
-typedef struct {
-    enkf_fs_type *src_fs;
-    enkf_fs_type *target_fs;
-    const ensemble_config_type *ensemble_config;
-    int iens1; /* Inclusive lower limit. */
-    int iens2; /* NOT inclusive upper limit. */
-    matrix_type *A;
-    const int_vector_type *iens_active_index;
-
-    std::vector<int>
-        active_size; /* mutable: For the serialization of one dataset - many nodes */
-    std::vector<int>
-        row_offset; /* mutable: For the serialization of one dataset - many nodes */
-    serialize_node_info_type
-        *node_info; /* mutable: For the serialization of one node */
-} serialize_info_type;
-
 namespace {
 std::vector<int>
 bool_vector_to_active_list(const std::vector<bool> &bool_vector) {
@@ -421,14 +382,6 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 }
 
-void assert_size_equal(int ens_size, const std::vector<bool> &ens_mask) {
-    if (ens_mask.size() != ens_size)
-        throw std::logic_error(
-            fmt::format("Fundamental inconsistency detected. Total ens_size: "
-                        "{}, mask_size; {}",
-                        ens_size, ens_mask.size()));
-}
-
 static FILE *create_log_file(const char *log_path) {
     std::string log_file;
     log_file = fmt::format("{}{}deprecated", log_path, UTIL_PATH_SEP_CHAR);
@@ -592,25 +545,6 @@ bool smoother_update(const local_updatestep_type *updatestep,
 } // namespace analysis
 
 namespace {
-static bool smoother_update_pybind(py::object updatestep, int total_ens_size,
-                                   py::object obs, py::object shared_rng,
-                                   py::object analysis_config,
-                                   py::object ensemble_config,
-                                   py::object source_fs, py::object target_fs,
-                                   bool verbose) {
-    auto updatestep_ = ert::from_cwrap<local_updatestep_type>(updatestep);
-    auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
-    auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
-    auto analysis_config_ =
-        ert::from_cwrap<analysis_config_type>(analysis_config);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    return analysis::smoother_update(
-        updatestep_, total_ens_size, obs_, shared_rng_, analysis_config_,
-        ensemble_config_, source_fs_, target_fs_, verbose);
-}
 
 static void copy_parameters_pybind(py::object source_fs, py::object target_fs,
                                    py::object ensemble_config,
@@ -695,7 +629,6 @@ RES_LIB_SUBMODULE("update", m) {
         .def_readwrite("has_observations",
                        &analysis::update_data_type::has_observations)
         .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask);
-    m.def("smoother_update", smoother_update_pybind);
     m.def("copy_parameters", copy_parameters_pybind);
     m.def("make_update_data", make_update_data_pybind);
     m.def("save_parameters", save_parameters_pybind);
