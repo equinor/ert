@@ -6,17 +6,12 @@
 #include <optional>
 
 #include "ert/analysis/update.hpp"
-#include <ert/util/type_vector_functions.h>
 #include <ert/res_util/matrix.hpp>
 #include <ert/res_util/metric.hpp>
 #include <ert/res_util/memory.hpp>
-#include <ert/util/int_vector.h>
-#include <ert/util/bool_vector.h>
-#include <ert/util/hash.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
-#include <ert/util/vector.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
@@ -468,17 +463,12 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
 
-    int_vector_type *ens_active_list = int_vector_alloc(0, 0);
-    for (int i = 0; i < ens_mask.size(); i++) {
-        if (ens_mask[i])
-            int_vector_append(ens_active_list, i);
-    }
+    std::vector<int> ens_active_list = bool_vector_to_active_list(ens_mask);
 
     local_obsdata_type *selected_observations =
         local_ministep_get_obsdata(ministep);
     enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
                                       ens_active_list, meas_data, obs_data);
-    int_vector_free(ens_active_list);
 
     enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
                                       true);
