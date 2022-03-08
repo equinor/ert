@@ -1,5 +1,5 @@
 import pickle
-from typing import Dict
+from typing import Dict, Optional
 
 import ert
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -50,8 +50,9 @@ def _run(
 
 def evaluate(
     ensemble: Ensemble,
+    custom_port_range: Optional[range] = None,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
-    config = EvaluatorServerConfig()
+    config = EvaluatorServerConfig(custom_port_range=custom_port_range)
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     result = _run(ee)
     return result

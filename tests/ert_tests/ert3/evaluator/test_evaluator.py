@@ -93,7 +93,7 @@ def test_evaluator(
         stage, ensemble_config.forward_model.driver, ensemble_config.size, step_builder
     )
 
-    evaluation_records = ert3.evaluator.evaluate(ensemble)
+    evaluation_records = ert3.evaluator.evaluate(ensemble, range(1024, 65535))
 
     for _, transmitter_map in evaluation_records.items():
         record = asyncio.get_event_loop().run_until_complete(
