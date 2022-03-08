@@ -103,7 +103,7 @@ def test_get_parameters_unknown_experiment(tmpdir, ert_storage):
     ert.storage.init(workspace_name=tmpdir)
 
     with pytest.raises(
-        ert.exceptions.NonExistantExperiment,
+        ert.exceptions.NonExistentExperiment,
         match="Cannot get parameters from non-existing experiment: unknown-experiment",
     ):
         ert.storage.get_experiment_parameters(experiment_name="unknown-experiment")
@@ -283,7 +283,7 @@ def test_add_ensemble_record_to_non_existing_experiment(
 ):
     ert.storage.init(workspace_name=tmpdir)
     with pytest.raises(
-        ert.exceptions.NonExistantExperiment,
+        ert.exceptions.NonExistentExperiment,
         match="Experiment non_existing_experiment does not exist",
     ):
         get_event_loop().run_until_complete(
@@ -302,7 +302,7 @@ def test_add_ensemble_record_to_non_existing_experiment(
 def test_get_ensemble_record_to_non_existing_experiment(tmpdir, ert_storage):
     ert.storage.init(workspace_name=tmpdir)
     with pytest.raises(
-        ert.exceptions.NonExistantExperiment,
+        ert.exceptions.NonExistentExperiment,
         match="Experiment non_existing_experiment does not exist",
     ):
         ert.storage.get_ensemble_record(
@@ -354,7 +354,7 @@ def test_get_record_names_unknown_experiment(tmpdir, ert_storage):
     ert.storage.init(workspace_name=tmpdir)
 
     with pytest.raises(
-        ert.exceptions.NonExistantExperiment,
+        ert.exceptions.NonExistentExperiment,
         match="Cannot get record names of non-existing experiment: unknown-experiment",
     ):
         ert.storage.get_ensemble_record_names(
@@ -375,7 +375,7 @@ def test_delete_experiment(tmpdir, ert_storage):
     assert "test" in ert.storage.get_experiment_names(workspace_name=tmpdir)
 
     with pytest.raises(
-        ert.exceptions.NonExistantExperiment,
+        ert.exceptions.NonExistentExperiment,
         match="Experiment does not exist: does_not_exist",
     ):
         ert.storage.delete_experiment(experiment_name="does_not_exist")

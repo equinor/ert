@@ -434,7 +434,7 @@ def get_records_url(workspace_name: str, experiment_name: Optional[str] = None) 
         experiment_name = f"{workspace_name}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistentExperiment(
             f"Experiment {experiment_name} does not exist"
         )
 
@@ -517,7 +517,7 @@ async def _get_ensemble_id_async(
     experiment = experiments.get(experiment_name, None)
     if experiment is not None:
         return str(experiment["ensemble_ids"][0])
-    raise ert.exceptions.NonExistantExperiment(
+    raise ert.exceptions.NonExistentExperiment(
         f"Experiment {experiment_name} does not exist"
     )
 
@@ -624,7 +624,7 @@ def get_experiment_names(*, workspace_name: str) -> Set[str]:
 def _get_experiment_parameters(experiment_name: str) -> Iterable[str]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistentExperiment(
             f"Cannot get parameters from non-existing experiment: {experiment_name}"
         )
 
@@ -685,7 +685,7 @@ def get_ensemble_record_names(
         experiment_name = f"{workspace_name}.{_ENSEMBLE_RECORDS}"
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistentExperiment(
             f"Cannot get record names of non-existing experiment: {experiment_name}"
         )
 
@@ -707,7 +707,7 @@ def get_experiment_parameters(*, experiment_name: str) -> Iterable[str]:
 def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistentExperiment(
             f"Cannot get responses from non-existing experiment: {experiment_name}"
         )
 
@@ -729,7 +729,7 @@ def get_experiment_responses(*, experiment_name: str) -> Iterable[str]:
 def delete_experiment(*, experiment_name: str) -> None:
     experiment = _get_experiment_by_name(experiment_name)
     if experiment is None:
-        raise ert.exceptions.NonExistantExperiment(
+        raise ert.exceptions.NonExistentExperiment(
             f"Experiment does not exist: {experiment_name}"
         )
     response = _delete_on_server(path=f"experiments/{experiment['id']}")
