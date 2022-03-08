@@ -4,7 +4,6 @@
 
 #include <ert/util/double_vector.hpp>
 
-#include <ert/res_util/matrix_lapack.hpp>
 #include <ert/res_util/matrix.hpp>
 
 Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,

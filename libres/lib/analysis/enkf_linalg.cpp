@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 #include <ert/res_util/matrix.hpp>
-#include <ert/res_util/matrix_lapack.hpp>
 
 #include <ert/analysis/enkf_linalg.hpp>
 
