@@ -158,7 +158,7 @@ def test_tracking(
 
             tracker = create_tracker(
                 model,
-                ee_config=evaluator_server_config,
+                ee_con_info=evaluator_server_config.get_connection_info(),
             )
 
             snapshots = {}

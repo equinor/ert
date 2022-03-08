@@ -150,7 +150,7 @@ class PrefectEnsemble(_Ensemble):
             _get_executor, custom_port_range, executor
         )
 
-        self._ee_config = None
+        self._ee_con_info = None
         self._eval_proc = None
         self._ee_id: Optional[str] = None
         self._iens_to_task = {}
@@ -205,7 +205,7 @@ class PrefectEnsemble(_Ensemble):
 
     def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
         self._ee_id = ee_id
-        self._ee_config = config.get_info()
+        self._ee_con_info = config.get_connection_info()
 
         # everything in self will be pickled since we bind a member function in target
         ctx = self._get_multiprocessing_context()
@@ -219,9 +219,9 @@ class PrefectEnsemble(_Ensemble):
         get_event_loop()
         try:
             with Client(
-                self._ee_config.dispatch_uri,
-                self._ee_config.token,
-                self._ee_config.cert,
+                self._ee_con_info.dispatch_uri,
+                self._ee_con_info.token,
+                self._ee_con_info.cert,
             ) as c:
                 event = CloudEvent(
                     {
@@ -231,16 +231,16 @@ class PrefectEnsemble(_Ensemble):
                 )
                 c.send(to_json(event).decode())
             with prefect.context(
-                url=self._ee_config.dispatch_uri,
-                token=self._ee_config.token,
-                cert=self._ee_config.cert,
+                url=self._ee_con_info.dispatch_uri,
+                token=self._ee_con_info.token,
+                cert=self._ee_con_info.cert,
             ):
                 self.run_flow(self._ee_id)
 
             with Client(
-                self._ee_config.dispatch_uri,
-                self._ee_config.token,
-                self._ee_config.cert,
+                self._ee_con_info.dispatch_uri,
+                self._ee_con_info.token,
+                self._ee_con_info.cert,
             ) as c:
                 event = CloudEvent(
                     {
@@ -257,9 +257,9 @@ class PrefectEnsemble(_Ensemble):
                 exc_info=True,
             )
             with Client(
-                self._ee_config.dispatch_uri,
-                self._ee_config.token,
-                self._ee_config.cert,
+                self._ee_con_info.dispatch_uri,
+                self._ee_con_info.token,
+                self._ee_con_info.cert,
             ) as c:
                 event = CloudEvent(
                     {
@@ -325,10 +325,10 @@ class PrefectEnsemble(_Ensemble):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(
             self.send_cloudevent(
-                self._ee_config.dispatch_uri,
+                self._ee_con_info.dispatch_uri,
                 event,
-                token=self._ee_config.token,
-                cert=self._ee_config.cert,
+                token=self._ee_con_info.token,
+                cert=self._ee_con_info.cert,
             )
         )
         loop.close()
