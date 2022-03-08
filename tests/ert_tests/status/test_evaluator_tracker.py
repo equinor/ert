@@ -10,6 +10,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     SnapshotBuilder,
     Step,
 )
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models.base_run_model import BaseRunModel
 from ert_shared.status.entity import state
 from ert_shared.status.entity.event import EndEvent, SnapshotUpdateEvent
@@ -278,12 +279,13 @@ def test_tracking_progress(
     discarded. The test asserts that the state of the world is correct only for
     the final update event."""
     brm = BaseRunModel(None, None)
+    ee_config = EvaluatorServerConfig()
     with patch("ert_shared.status.tracker.evaluator.create_ee_monitor") as mock_ee:
         mock_ee.return_value.__enter__.return_value = make_mock_ee_monitor(
             monitor_events.copy()
         )
         tracker = EvaluatorTracker(
-            brm, "host", "port", 0, 0, next_ensemble_evaluator_wait_time=0.1
+            brm, ee_config.get_connection_info(), next_ensemble_evaluator_wait_time=0.1
         )
         for attr, val in brm_mutations:
             setattr(brm, attr, val)

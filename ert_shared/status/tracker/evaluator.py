@@ -15,6 +15,7 @@ from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
 from ert_shared.models.base_run_model import BaseRunModel
+from ert_shared.ensemble_evaluator.config import EvaluatorConnectionInfo
 import ert_shared.ensemble_evaluator.entity.identifiers as ids
 from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
@@ -36,30 +37,18 @@ class EvaluatorTracker:
     def __init__(
         self,
         model: BaseRunModel,
-        host,
-        port,
-        token=None,
-        cert=None,
+        ee_con_info: EvaluatorConnectionInfo,
         next_ensemble_evaluator_wait_time=5,
     ):
         self._model = model
-
-        self._monitor_host = host
-        self._monitor_port = port
-        self._token = token
-        self._cert = cert
-        self._protocol = "ws" if cert is None else "wss"
-        self._monitor_url = f"{self._protocol}://{host}:{port}"
+        self._ee_con_info = ee_con_info
         self._next_ensemble_evaluator_wait_time = next_ensemble_evaluator_wait_time
-
         self._work_queue = queue.Queue()
-
         self._drainer_thread = threading.Thread(
             target=self._drain_monitor,
             name="DrainerThread",
         )
         self._drainer_thread.start()
-
         self._iter_snapshot = {}
 
     def _drain_monitor(self):
@@ -68,13 +57,7 @@ class EvaluatorTracker:
         while not self._model.isFinished():
             try:
                 drainer_logger.debug("connecting to new monitor...")
-                with create_ee_monitor(
-                    self._monitor_host,
-                    self._monitor_port,
-                    protocol=self._protocol,
-                    cert=self._cert,
-                    token=self._token,
-                ) as monitor:
+                with create_ee_monitor(self._ee_con_info) as monitor:
                     drainer_logger.debug("connected")
                     for event in monitor.track():
                         if event["type"] in (
@@ -204,9 +187,9 @@ class EvaluatorTracker:
         try:
             get_event_loop().run_until_complete(
                 wait_for_evaluator(
-                    base_url=self._monitor_url,
-                    token=self._token,
-                    cert=self._cert,
+                    base_url=self._ee_con_info.url,
+                    token=self._ee_con_info.token,
+                    cert=self._ee_con_info.cert,
                     timeout=5,
                 )
             )
@@ -214,13 +197,7 @@ class EvaluatorTracker:
             logger.warning(f"{__name__} - exception {e}")
             return
 
-        with create_ee_monitor(
-            self._monitor_host,
-            self._monitor_port,
-            token=self._token,
-            cert=self._cert,
-            protocol=self._protocol,
-        ) as monitor:
+        with create_ee_monitor(self._ee_con_info) as monitor:
             for e in monitor.track():
                 monitor.signal_cancel()
                 break
