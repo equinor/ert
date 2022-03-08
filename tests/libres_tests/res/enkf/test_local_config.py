@@ -24,6 +24,7 @@ from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode
 from res.enkf.active_list import ActiveList
 from res.enkf.local_updatestep import LocalUpdateStep
+from res.enkf.enums import ActiveMode
 from res.test import ErtTestContext
 
 
@@ -77,6 +78,15 @@ class LocalConfigTest(ResTest):
             # Error when adding existing obs node
             with self.assertRaises(KeyError):
                 local_obs_data_1.addNode("GEN_PERLIN_1")
+
+            with self.assertRaises(KeyError):
+                local_config.getObsdata("NO_SUCH_KEY")
+
+            local_obs_data_2 = local_config.getObsdata("OBSSET_1")
+            self.assertEqual(local_obs_data_1, local_obs_data_2)
+            al = local_obs_data_2.getActiveList("GEN_PERLIN_1")
+            al.addActiveIndex(10)
+            self.assertEqual(al.getMode(), ActiveMode.PARTLY_ACTIVE)
 
     def test_get_active_list(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:

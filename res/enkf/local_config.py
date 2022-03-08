@@ -130,6 +130,8 @@ class LocalConfig(BaseCClass):
     def getObsdata(self, obsdata_key):
         """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
+        if not self._has_obsdata(obsdata_key):
+            raise KeyError(f"No such local observation key: {obsdata_key}")
         return self._get_obsdata(obsdata_key)
 
     def attachMinistep(self, update_step, mini_step):
