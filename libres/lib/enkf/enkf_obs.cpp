@@ -297,7 +297,7 @@ int enkf_obs_get_size(const enkf_obs_type *obs) {
 static void enkf_obs_get_obs_and_measure_summary(
     const enkf_obs_type *enkf_obs, obs_vector_type *obs_vector,
     enkf_fs_type *fs, const LocalObsDataNode *obs_node,
-    const int_vector_type *ens_active_list, meas_data_type *meas_data,
+    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
     obs_data_type *obs_data, double_vector_type *obs_value,
     double_vector_type *obs_std) {
 
@@ -350,7 +350,7 @@ static void enkf_obs_get_obs_and_measure_summary(
             obs_block_iset(obs_block, i, double_vector_iget(obs_value, i),
                            double_vector_iget(obs_std, i));
 
-        int active_size = int_vector_size(ens_active_list);
+        int active_size = ens_active_list.size();
         active_count = 0;
         step = -1;
         while (true) {
@@ -359,7 +359,7 @@ static void enkf_obs_get_obs_and_measure_summary(
                 break;
 
             for (int iens_index = 0; iens_index < active_size; iens_index++) {
-                const int iens = int_vector_iget(ens_active_list, iens_index);
+                const int iens = ens_active_list[iens_index];
                 node_id_type node_id = {.report_step = step, .iens = iens};
                 enkf_node_load(work_node, fs, node_id);
 
@@ -392,7 +392,7 @@ static void enkf_obs_get_obs_and_measure_summary(
 
 static void enkf_obs_get_obs_and_measure_node(
     const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
-    const LocalObsDataNode *obs_node, const int_vector_type *ens_active_list,
+    const LocalObsDataNode *obs_node, const std::vector<int> &ens_active_list,
     meas_data_type *meas_data, obs_data_type *obs_data) {
 
     const char *obs_key = obs_node->name().c_str();
@@ -441,7 +441,7 @@ static void enkf_obs_get_obs_and_measure_node(
 void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
                                        enkf_fs_type *fs,
                                        const local_obsdata_type *local_obsdata,
-                                       const int_vector_type *ens_active_list,
+                                       const std::vector<int> &ens_active_list,
                                        meas_data_type *meas_data,
                                        obs_data_type *obs_data) {
 
