@@ -324,7 +324,6 @@ double analysis_module_get_double(const analysis_module_type *module,
 
     return -1;
 }
-extern "C++" {
 
 ies::data::Data *
 analysis_module_get_module_data(const analysis_module_type *module) {
@@ -356,5 +355,4 @@ RES_LIB_SUBMODULE("analysis_module", m) {
           py::return_value_policy::reference_internal);
     m.def("get_module_data", analysis_module_get_module_data_pybind,
           py::return_value_policy::reference_internal);
-}
 }
