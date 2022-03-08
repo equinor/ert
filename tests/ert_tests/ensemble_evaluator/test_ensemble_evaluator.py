@@ -101,7 +101,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
 
         # a second monitor connects
-        with ee_monitor.create(host, port, "wss", cert, token) as monitor2:
+        with ee_monitor.create(evaluator._config.get_connection_info()) as monitor2:
             events2 = monitor2.track()
             full_snapshot_event = next(events2)
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT

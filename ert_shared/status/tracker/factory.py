@@ -3,7 +3,7 @@ from ert_shared.status.tracker.evaluator import EvaluatorTracker
 
 def create_tracker(
     model,
-    ee_config=None,
+    ee_con_info,
 ):
     """Creates a tracker tracking a @model. The provided model
     is updated purely event-driven.
@@ -14,8 +14,5 @@ def create_tracker(
 
     return EvaluatorTracker(
         model,
-        ee_config.host,
-        ee_config.port,
-        token=ee_config.token,
-        cert=ee_config.cert,
+        ee_con_info,
     )

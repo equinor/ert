@@ -292,7 +292,7 @@ class RunDialog(QDialog):
 
         tracker = create_tracker(
             self._run_model,
-            ee_config=evaluator_server_config,
+            ee_con_info=evaluator_server_config.get_connection_info(),
         )
 
         worker = TrackerWorker(tracker)

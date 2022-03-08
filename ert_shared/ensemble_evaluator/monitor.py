@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from typing import Optional
 
 import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert_shared.ensemble_evaluator.config import EvaluatorConnectionInfo
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
@@ -16,18 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 class _Monitor:
-    def __init__(self, host, port, protocol="wss", cert=None, token=None):
-        self._base_uri = f"{protocol}://{host}:{port}"
-        self._client_uri = f"{self._base_uri}/client"
-        self._result_uri = f"{self._base_uri}/result"
-        self._cert = cert
-        self._token = token
+    def __init__(self, ee_con_info: EvaluatorConnectionInfo) -> None:
+        self._ee_con_info = ee_con_info
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
         self._id = str(uuid.uuid1()).split("-")[0]
 
     def __enter__(self):
         self._ws_duplexer = SyncWebsocketDuplexer(
-            self._client_uri, self._base_uri, self._cert, self._token
+            self._ee_con_info.client_uri,
+            self._ee_con_info.url,
+            self._ee_con_info.cert,
+            self._ee_con_info.token,
         )
         return self
 
@@ -35,14 +35,17 @@ class _Monitor:
         self._ws_duplexer.stop()
 
     def get_base_uri(self):
-        return self._base_uri
+        return self._ee_con_info.url
 
     def _send_event(self, cloud_event: CloudEvent) -> None:
         with ExitStack() as stack:
             duplexer = self._ws_duplexer
             if not duplexer:
                 duplexer = SyncWebsocketDuplexer(
-                    self._client_uri, self._base_uri, self._cert, self._token
+                    self._ee_con_info.client_uri,
+                    self._ee_con_info.url,
+                    self._ee_con_info.cert,
+                    self._ee_con_info.token,
                 )
                 stack.callback(duplexer.stop)
             duplexer.send(
@@ -80,7 +83,10 @@ class _Monitor:
             duplexer = self._ws_duplexer
             if not duplexer:
                 duplexer = SyncWebsocketDuplexer(
-                    self._client_uri, self._base_uri, self._cert, self._token
+                    self._ee_con_info.client_uri,
+                    self._ee_con_info.url,
+                    self._ee_con_info.cert,
+                    self._ee_con_info.token,
                 )
                 stack.callback(duplexer.stop)
             for message in duplexer.receive():
@@ -96,5 +102,5 @@ class _Monitor:
                     break
 
 
-def create(host, port, protocol, cert, token):
-    return _Monitor(host, port, protocol, cert, token)
+def create(ee_con_info: EvaluatorConnectionInfo) -> _Monitor:
+    return _Monitor(ee_con_info)

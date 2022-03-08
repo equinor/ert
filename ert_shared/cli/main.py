@@ -72,7 +72,9 @@ def run_cli(args):
         )
         thread.start()
 
-        tracker = create_tracker(model, ee_config=evaluator_server_config)
+        tracker = create_tracker(
+            model, ee_con_info=evaluator_server_config.get_connection_info()
+        )
 
         out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)

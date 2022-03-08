@@ -224,13 +224,7 @@ class EnsembleEvaluator:
     def run(self) -> ee_monitor._Monitor:
         self._ws_thread.start()
         self._ensemble.evaluate(self._config, self._ee_id)
-        return ee_monitor.create(
-            self._config.host,
-            self._config.port,
-            self._config.protocol,
-            self._config.cert,
-            self._config.token,
-        )
+        return ee_monitor.create(self._config.get_connection_info())
 
     def _stop(self):
         if not self._done.done():
