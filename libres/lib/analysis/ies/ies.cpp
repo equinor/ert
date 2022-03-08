@@ -325,7 +325,8 @@ void ies::linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
     matrix_transpose(Y, YT); // RHS stored in YT
 
     /* Solve system                                                                                (Line 7)   */
-    matrix_dgesvx(Omega, YT, nullptr);
+    Eigen::MatrixXd tmp = Omega->fullPivLu().solve(*YT);
+    *YT = tmp;
 
     matrix_transpose(YT, S); // Copy solution to S
 
