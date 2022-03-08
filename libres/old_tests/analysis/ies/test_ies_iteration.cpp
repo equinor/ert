@@ -83,11 +83,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
 
         test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
 
-        if (matrix_similar(A1, A2, 1e-5))
+        if (A1->isApprox(*A2, 1e-5))
             break;
     }
 
-    test_assert_true(matrix_similar(A1, A2, 1e-5));
+    test_assert_true(A1->isApprox(*A2, 1e-5));
 
     matrix_free(A1);
     matrix_free(A2);
@@ -157,7 +157,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
 
     init_stdA(testdata, A2);
 
-    test_assert_true(matrix_similar(A1, A2, 1e-5));
+    test_assert_true(A1->isApprox(*A2, 1e-5));
 
     matrix_free(A1c);
     matrix_free(A2c);
