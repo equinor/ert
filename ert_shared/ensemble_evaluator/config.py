@@ -137,7 +137,7 @@ the asyncio code to also close the underlying socket:
 class EvaluatorServerConfig:
     def __init__(
         self,
-        custom_port_range: range = None,
+        custom_port_range: typing.Optional[range] = None,
         use_token: bool = True,
         generate_cert: bool = True,
     ) -> None:
