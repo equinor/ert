@@ -17,7 +17,7 @@ class IllegalWorkspaceState(ErtError):
         self.message = message
 
 
-class NonExistantExperiment(IllegalWorkspaceOperation):
+class NonExistentExperiment(IllegalWorkspaceOperation):
     def __init__(self, message: str) -> None:
         self.message = message
 
