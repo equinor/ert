@@ -22,46 +22,39 @@
 #include <ert/util/test_util.hpp>
 
 res::es_testdata make_testdata(int ens_size, int obs_size) {
-    matrix_type *S = matrix_alloc(obs_size, ens_size);
-    matrix_type *E = matrix_alloc(obs_size, ens_size);
-    matrix_type *R = matrix_alloc(obs_size, obs_size);
-    matrix_type *D = matrix_alloc(obs_size, ens_size);
-    matrix_type *dObs = matrix_alloc(obs_size, 2);
+    Eigen::MatrixXd S = Eigen::MatrixXd::Zero(obs_size, ens_size);
+    Eigen::MatrixXd E = Eigen::MatrixXd::Zero(obs_size, ens_size);
+    Eigen::MatrixXd R = Eigen::MatrixXd::Zero(obs_size, obs_size);
+    Eigen::MatrixXd D = Eigen::MatrixXd::Zero(obs_size, ens_size);
+    Eigen::MatrixXd dObs = Eigen::MatrixXd::Zero(obs_size, 2);
 
     {
         double v = 0;
-        for (int i = 0; i < matrix_get_rows(S); i++) {
-            for (int j = 0; j < matrix_get_columns(S); j++) {
-                matrix_iset(S, i, j, v);
-                matrix_iset(E, i, j, v);
-                matrix_iset(D, i, j, v);
+        for (int i = 0; i < S.rows(); i++) {
+            for (int j = 0; j < S.cols(); j++) {
+                S( i, j) = v;
+                E( i, j) = v;
+                D( i, j) = v;
+                v += 1;
+            }
+        }
+        v = 0;
+        for (int i = 0; i < dObs.rows(); i++) {
+            for (int j = 0; j < dObs.cols(); j++) {
+                dObs(i, j) = v;
                 v += 1;
             }
         }
 
         v = 0;
-        for (int i = 0; i < matrix_get_rows(dObs); i++) {
-            for (int j = 0; j < matrix_get_columns(dObs); j++) {
-                matrix_iset(dObs, i, j, v);
-                v += 1;
-            }
-        }
-
-        v = 0;
-        for (int i = 0; i < matrix_get_rows(R); i++) {
-            for (int j = 0; j < matrix_get_columns(R); j++) {
-                matrix_iset(R, i, j, v);
+        for (int i = 0; i < R.rows(); i++) {
+            for (int j = 0; j < R.cols(); j++) {
+                R( i, j) = v;
                 v += 1;
             }
         }
     }
-    res::es_testdata td(S, R, dObs, D, E);
-
-    matrix_free(S);
-    matrix_free(R);
-    matrix_free(dObs);
-    matrix_free(D);
-    matrix_free(E);
+    res::es_testdata td(S, R, D, E, dObs);
 
     return td;
 }
@@ -77,52 +70,52 @@ void test_deactivate() {
     test_assert_throw(td1.deactivate_obs(10), std::invalid_argument);
     td1.deactivate_obs(del_iobs);
 
-    for (int i1 = 0; i1 < matrix_get_rows(td1.R); i1++) {
+    for (int i1 = 0; i1 < td1.R.rows(); i1++) {
         int i2 = i1 + (i1 >= del_iobs ? 1 : 0);
-        for (int j1 = 0; j1 < matrix_get_columns(td1.R); j1++) {
+        for (int j1 = 0; j1 < td1.R.cols(); j1++) {
             int j2 = j1 + (j1 >= del_iobs ? 1 : 0);
 
-            test_assert_double_equal(matrix_iget(td1.R, i1, j1),
-                                     matrix_iget(td2.R, i2, j2));
+            test_assert_double_equal(td1.R( i1, j1),
+                                     td2.R( i2, j2));
         }
+        test_assert_double_equal(td1.dObs(i1, 0),
+                                 td2.dObs(i2, 0));
+        test_assert_double_equal(td1.dObs(i1, 1),
+                                 td2.dObs(i2, 1));
 
-        test_assert_double_equal(matrix_iget(td1.dObs, i1, 0),
-                                 matrix_iget(td2.dObs, i2, 0));
-        test_assert_double_equal(matrix_iget(td1.dObs, i1, 1),
-                                 matrix_iget(td2.dObs, i2, 1));
-        for (int j1 = 0; j1 < matrix_get_columns(td1.S); j1++) {
+        for (int j1 = 0; j1 < td1.S.cols(); j1++) {
             int j2 = j1;
-            test_assert_double_equal(matrix_iget(td1.S, i1, j1),
-                                     matrix_iget(td2.S, i2, j2));
+            test_assert_double_equal(td1.S( i1, j1),
+                                     td2.S( i2, j2));
 
-            if (td1.E)
-                test_assert_double_equal(matrix_iget(td1.E, i1, j1),
-                                         matrix_iget(td2.E, i2, j2));
+            
+            test_assert_double_equal(td1.E( i1, j1),
+                                         td2.E( i2, j2));
 
-            if (td1.D)
-                test_assert_double_equal(matrix_iget(td1.D, i1, j1),
-                                         matrix_iget(td2.D, i2, j2));
+            
+            test_assert_double_equal(td1.D( i1, j1),
+                                         td2.D( i2, j2));
         }
     }
 
     td1.deactivate_realization(del_iens);
 
-    for (int i1 = 0; i1 < matrix_get_rows(td1.S); i1++) {
+    for (int i1 = 0; i1 < td1.S.rows(); i1++) {
         int i2 = i1 + (i1 >= del_iobs ? 1 : 0);
 
-        for (int j1 = 0; j1 < matrix_get_columns(td1.S); j1++) {
+        for (int j1 = 0; j1 < td1.S.cols(); j1++) {
             int j2 = j1 + (j1 >= del_iens ? 1 : 0);
 
-            test_assert_double_equal(matrix_iget(td1.S, i1, j1),
-                                     matrix_iget(td2.S, i2, j2));
+            test_assert_double_equal(td1.S( i1, j1),
+                                     td2.S( i2, j2));
 
-            if (td1.E)
-                test_assert_double_equal(matrix_iget(td1.E, i1, j1),
-                                         matrix_iget(td2.E, i2, j2));
 
-            if (td1.D)
-                test_assert_double_equal(matrix_iget(td1.D, i1, j1),
-                                         matrix_iget(td2.D, i2, j2));
+            test_assert_double_equal(td1.E( i1, j1),
+                                         td2.E( i2, j2));
+
+
+            test_assert_double_equal(td1.D( i1, j1),
+                                         td2.D( i2, j2));
         }
     }
 
@@ -137,7 +130,7 @@ void test_basic() {
     res::es_testdata td1 = make_testdata(ens_size, obs_size);
     td1.save("path/sub/path");
     res::es_testdata td2("path/sub/path");
-    test_assert_true(matrix_equal(td1.S, td2.S));
+    test_assert_true(td1.S == td2.S);
 
     test_assert_int_equal(td1.obs_mask.size(), obs_size);
     test_assert_int_equal(
@@ -177,7 +170,7 @@ void test_load_state() {
     td.deactivate_realization(5);
     int active_ens_size = td.active_ens_size;
 
-    test_assert_throw(td.alloc_state("DOES_NOT_EXIST"), std::invalid_argument);
+    test_assert_throw(td.make_state("DOES_NOT_EXIST"), std::invalid_argument);
 
     {
         int invalid_size = 10 * active_ens_size + active_ens_size / 2;
@@ -185,7 +178,7 @@ void test_load_state() {
         for (int i = 0; i < invalid_size; i++)
             fprintf(stream, "%d\n", i);
         fclose(stream);
-        test_assert_throw(td.alloc_state("A0"), std::invalid_argument);
+        test_assert_throw(td.make_state("A0"), std::invalid_argument);
     }
     {
         int state_size = 7;
@@ -201,24 +194,22 @@ void test_load_state() {
         }
         fclose(stream);
 
-        matrix_type *A1 = td.alloc_state("A1");
-        test_assert_int_equal(matrix_get_rows(A1), state_size);
-        test_assert_int_equal(matrix_get_columns(A1), active_ens_size);
+        Eigen::MatrixXd A1 = td.make_state("A1");
+        test_assert_int_equal(A1.rows(), state_size);
+        test_assert_int_equal(A1.cols(), active_ens_size);
 
         value = 0;
         for (int row = 0; row < state_size; row++) {
             for (int iens = 0; iens < active_ens_size; iens++) {
-                test_assert_double_equal(matrix_iget(A1, row, iens), value);
+                test_assert_double_equal(A1( row, iens), value);
                 value++;
             }
         }
 
         td.save_matrix("A2", A1);
-        matrix_type *A2 = td.alloc_matrix("A2", state_size, active_ens_size);
-        test_assert_true(matrix_equal(A1, A2));
+        Eigen::MatrixXd A2 = td.make_matrix("A2", state_size, active_ens_size);
+        test_assert_true(A1 == A2);
 
-        matrix_free(A1);
-        matrix_free(A2);
     }
 }
 
