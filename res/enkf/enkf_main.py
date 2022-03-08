@@ -341,7 +341,7 @@ class _RealEnKFMain(BaseCClass):
         """@rtype: LocalConfig"""
         config = self._get_local_config().setParent(self)
         config.initAttributes(
-            self.ensembleConfig(), self.getObservations(), self.eclConfig().getGrid()
+            self.ensembleConfig(), self.eclConfig().getGrid()
         )
         return config
 
