@@ -93,7 +93,11 @@ bool local_obsdata_add_node(local_obsdata_type *data,
 void local_obsdata_del_node(local_obsdata_type *data, const char *key) {
     auto index = data->node_index.at(key);
     data->nodes.erase(data->nodes.begin() + index);
-    data->node_index.erase(key);
+    data->node_index.clear();
+    for (std::size_t i = 0; i < data->nodes.size(); i++) {
+        const auto &node = data->nodes[i];
+        data->node_index.emplace(node.name(), i);
+    }
 }
 
 const LocalObsDataNode *local_obsdata_iget(const local_obsdata_type *data,
