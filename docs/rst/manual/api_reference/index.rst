@@ -4,5 +4,6 @@
 
   exceptions
   config
+  config_plugins
   workspace
   data

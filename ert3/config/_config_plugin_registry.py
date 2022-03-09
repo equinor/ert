@@ -24,6 +24,7 @@ from pydantic import (
 
 
 class _RegisteredConfig(NamedTuple):
+    original_config: Type[BaseModel]
     config: Type[BaseModel]
     factory: Callable[[Type[BaseModel], Type[BaseModel]], Any]
     default_for_category: bool = False
@@ -36,6 +37,7 @@ class ConfigPluginRegistry:
     def __init__(self) -> None:
         self._descriminator: Dict[str, str] = {}
         self._registry: Dict[str, Dict[str, _RegisteredConfig]] = {}
+        self._base_configs: Dict[str, Type[BaseModel]] = {}
 
         # Ellipsis (...) is pydantic's way of declaring a required field.
         # Setting this to None, will make it optional. Setting it to
@@ -47,12 +49,16 @@ class ConfigPluginRegistry:
     def register_category(
         self,
         category: str,
+        base_config: Type[BaseModel],
         descriminator: str = "type",
         optional: bool = True,
     ) -> None:
         """
         Args:
             category: the category to register. Can only be registered once.
+            base_config: A base config for the category. It provides common options
+                for all configurations, and all registered configs are expected to
+                inherit from this class.
             descriminator: If multiple configurations belong to one category, a
                 discriminator must be used such that the configuration system knows
                 exactly what configuration to create. See `tagged unions`_.
@@ -64,6 +70,7 @@ class ConfigPluginRegistry:
         if category in self._registry:
             raise ValueError(f"Category '{category}' is already registered")
         self._descriminator[category] = descriminator
+        self._base_configs[category] = base_config
         self._registry[category] = {}
 
         if optional:
@@ -111,6 +118,7 @@ class ConfigPluginRegistry:
             config=full_config,
             factory=factory,
             default_for_category=is_default_for_category,
+            original_config=config,
         )
 
     def get_factory(
@@ -122,6 +130,10 @@ class ConfigPluginRegistry:
     def get_descriminator(self, category: str) -> str:
         """Return the discriminator for this category."""
         return self._descriminator[category]
+
+    def get_base_config(self, category: str) -> str:
+        """Return the base config class for this category."""
+        return self._base_configs[category]
 
     def get_type(self, category: str) -> Any:
         """Return the type for this category. If multiple associated names exist, a
@@ -171,6 +183,18 @@ class ConfigPluginRegistry:
                 default = name
         return default
 
+    def get_original_configs(self, category: str) -> Dict[str, Type[BaseModel]]:
+        """Return the field for this category. If multiple associated names exist, a
+        descriminator will exist in this field."""
+        if category not in self._registry:
+            raise ValueError(f"Unknown category '{category}'")
+        if not self._registry[category]:
+            return {}
+
+        return {
+            name: rc.original_config for name, rc in self._registry[category].items()
+        }
+
 
 def _getter_template(
     self: Any, category: str, optional: bool, plugin_registry: ConfigPluginRegistry
@@ -206,6 +230,7 @@ def create_plugged_model(
     model_module: Optional[str] = None,
     extra_fields: Optional[Dict[str, Any]] = None,
     validators: Optional[Dict[str, Classmethod]] = None,
+    docs: bool = False,
 ) -> Type[BaseModel]:
     """Create a plugged model ``model_name`` with the given ``categories``.
 
@@ -228,7 +253,7 @@ def create_plugged_model(
     for category in categories:
         category_field = plugin_registry.get_field(category)
         category_type = plugin_registry.get_type(category)
-        fields[category] = (category_type, category_field)
+        fields[category] = (Any, Any) if docs else (category_type, category_field)
         model_attrs[f"get_{category}_instance"] = partialmethod(
             _getter_template,
             category=category,

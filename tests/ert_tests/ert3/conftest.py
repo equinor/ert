@@ -459,7 +459,10 @@ def raw_ensrec_to_records():
 def plugin_registry():
     plugin_registry = ert3.config.ConfigPluginRegistry()
     plugin_registry.register_category(
-        category="transformation", descriminator="type", optional=True
+        category="transformation",
+        descriminator="type",
+        optional=True,
+        base_config=ert3.config.plugins.TransformationConfigBase,
     )
     plugin_manager = ert3.plugins.ErtPluginManager(
         plugins=[ert3.config.plugins.implementations]
