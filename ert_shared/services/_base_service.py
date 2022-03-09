@@ -29,7 +29,6 @@ from typing import (
 if TYPE_CHECKING:
     from inspect import Traceback
 
-logger = getLogger("ert_shared.storage")
 T = TypeVar("T", bound="BaseService")
 ConnInfo = Union[Mapping[str, Any], Exception, None]
 
@@ -116,7 +115,7 @@ class _Proc(threading.Thread):
         global SERVICE_NAMES
         SERVICE_NAMES.add(self._service_name)
 
-        self._proc = Popen(
+        self._childproc = Popen(
             self._exec_args,
             pass_fds=(fd_write,),
             env=env,
@@ -125,7 +124,7 @@ class _Proc(threading.Thread):
         os.close(fd_write)
 
     def run(self) -> None:
-        comm = self._read_conn_info(self._proc)
+        comm = self._read_conn_info(self._childproc)
 
         if comm is None:
             self._set_conn_info(TimeoutError())
@@ -143,7 +142,7 @@ class _Proc(threading.Thread):
             self._set_conn_info(conn_info)
 
             while True:
-                if self._proc.poll() is not None:
+                if self._childproc.poll() is not None:
                     break
                 if self._shutdown.wait(1):
                     self._do_shutdown()
@@ -155,7 +154,7 @@ class _Proc(threading.Thread):
         """Shutdown the server."""
         self._shutdown.set()
         self.join()
-        return self._proc.returncode
+        return self._childproc.returncode
 
     def _assert_server_not_running(self) -> None:
         """It doesn't seem to be possible to check whether a server has been started
@@ -188,9 +187,6 @@ class _Proc(threading.Thread):
 
             # Timeout reached, exit with a failure
             if ready == ([], [], []):
-                print(
-                    f"Service {self._service_name} startup exceeded defined timeout {self._timeout}s, initiating shutdown"
-                )
                 self._do_shutdown()
                 self._ensure_delete_conn_info()
                 return None
@@ -202,14 +198,19 @@ class _Proc(threading.Thread):
         return comm_buf.getvalue()
 
     def _do_shutdown(self) -> None:
-        if self._proc is None:
+        if self._childproc is None:
             return
         try:
-            self._proc.terminate()
-            self._proc.wait(10)
+            self._childproc.terminate()
+            self._childproc.wait(10)  # Give it 10s to shut down cleanly..
         except TimeoutExpired:
-            self._proc.kill()
-            self._proc.wait()
+            try:
+                self._childproc.kill()  # ... then kick it harder...
+                self._childproc.wait(self._timeout)  # ... and wait again
+            except TimeoutExpired:
+                self.logger.error(
+                    f"waiting for child-process exceeded timeout {timeout}s"
+                )
 
     def _ensure_delete_conn_info(self) -> None:
         """
@@ -257,11 +258,10 @@ class BaseService:
     def __init__(
         self,
         exec_args: Sequence[str],
-        timeout: int = 20,
+        timeout: int = 120,
         conn_info: ConnInfo = None,
     ):
         self._exec_args = exec_args
-        self._timeout = timeout
 
         self._proc: Optional[_Proc] = None
         self._conn_info: ConnInfo = conn_info
@@ -295,15 +295,16 @@ class BaseService:
         timeout: Optional[int] = None,
     ) -> T:
         if cls._instance is not None:
-            cls._instance.wait_until_ready()
+            cls._instance.wait_until_ready(timeout=timeout)
             assert isinstance(cls._instance, cls)
             return cls._instance
 
         path = Path(project) if project is not None else Path.cwd()
         name = f"{cls.service_name}_server.json"
 
+        # Note: If the caller actually pass None, we override that here...
         if timeout is None:
-            timeout = 20
+            timeout = 120
         t = -1
         while t < timeout:
             search_path = Path(path)
@@ -321,6 +322,8 @@ class BaseService:
     @classmethod
     def connect_or_start_server(cls: Type[T], *args, **kwargs) -> _Context[T]:
         try:
+            # Note that timeout==0 will bypass the loop in connect() and force
+            # TimeoutError if there is no known existing instance
             return _Context(cls.connect(timeout=0))
         except TimeoutError:
             # Server is not running. Start a new one
@@ -333,6 +336,9 @@ class BaseService:
             return not (
                 self._conn_info is None or isinstance(self._conn_info, Exception)
             )
+
+        if isinstance(self._conn_info, TimeoutError):
+            self.logger.critical(f"startup exceeded defined timeout {timeout}s")
         return False  # Timeout reached
 
     def wait(self) -> None:
@@ -353,7 +359,7 @@ class BaseService:
 
         self._conn_info_event.set()
 
-    def fetch_conn_info(self, timeout: float = 20) -> Mapping[str, Any]:
+    def fetch_conn_info(self, timeout: float = 120) -> Mapping[str, Any]:
         self.wait_until_ready(timeout)
         if self._conn_info is None:
             raise ValueError("conn_info is None")
@@ -376,6 +382,10 @@ class BaseService:
         Used for identifying the server information JSON file.
         """
         raise NotImplementedError
+
+    @property
+    def logger(self):
+        return getLogger("ert_shared." + self.service_name)
 
     @property
     def _service_file(self) -> str:

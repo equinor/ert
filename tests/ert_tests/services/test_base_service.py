@@ -1,6 +1,7 @@
 import os
 import sys
 import signal
+import logging
 from pathlib import Path
 from textwrap import dedent
 
@@ -127,9 +128,11 @@ time.sleep(30)
 sys.exit(2)
 """
 )
-def test_not_respond(server):
+def test_not_respond(server, caplog):
     with pytest.raises(TimeoutError):
-        server.fetch_conn_info()
+        with caplog.at_level(logging.CRITICAL):
+            server.fetch_conn_info()
+            assert "startup exceeded defined timeout" in caplog.text
     assert server.shutdown() == -signal.SIGTERM
 
 
