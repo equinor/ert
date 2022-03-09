@@ -567,7 +567,11 @@ def test_transformations(
 
 def test_required_plugged_in_configuration_errors():
     plugin_registry = ert3.config.ConfigPluginRegistry()
-    plugin_registry.register_category(category="transformation", optional=False)
+    plugin_registry.register_category(
+        category="transformation",
+        optional=False,
+        base_config=ert3.config.plugins.TransformationConfigBase,
+    )
     plugin_manager = ert3.plugins.ErtPluginManager(
         plugins=[ert3.config.plugins.implementations]
     )
@@ -596,7 +600,11 @@ def test_required_plugged_in_configuration_errors():
 
 def test_optional_plugged_in_configuration():
     plugin_registry = ert3.config.ConfigPluginRegistry()
-    plugin_registry.register_category(category="transformation", optional=True)
+    plugin_registry.register_category(
+        category="transformation",
+        optional=True,
+        base_config=ert3.config.plugins.TransformationConfigBase,
+    )
     plugin_manager = ert3.plugins.ErtPluginManager(
         plugins=[ert3.config.plugins.implementations]
     )
