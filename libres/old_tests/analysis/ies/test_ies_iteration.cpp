@@ -43,8 +43,8 @@ void forward_model(res::es_testdata &testdata, const Eigen::MatrixXd &A1) {
     }
 
     /* Updating D according to new S: D=dObs+E-S*/
-    // for (int i = 0; i < nrens; i++)
-        // matrix_copy_column(&testdata.D, &testdata.dObs, i, 0);
+    for (int i = 0; i < nrens; i++)
+        matrix_copy_column(&testdata.D, &testdata.dObs, i, 0);
 
     testdata.D += testdata.E;
     testdata.D += testdata.S;

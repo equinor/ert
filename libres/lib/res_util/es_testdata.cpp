@@ -62,6 +62,7 @@ private:
 };
 
 Eigen::MatrixXd load_matrix(const std::string &name, int rows, int columns) {
+    printf("file: %s\n", name.c_str());
     if (!fs::exists(name))
         throw std::invalid_argument("File not found");
 
@@ -115,6 +116,7 @@ void matrix_delete_row_column(Eigen::MatrixXd &m1, int row_column) {
 Eigen::MatrixXd es_testdata::make_matrix(const std::string &fname, int rows,
                                        int columns) const {
     pushd tmp_path(this->path);
+    printf("Path: %s\n", this->path.c_str());
     return load_matrix(fname, rows, columns);
 }
 
@@ -174,17 +176,18 @@ void es_testdata::deactivate_realization(int iens) {
     }
 }
 
-es_testdata::es_testdata(const char *path)
-    : path(path), S(load_matrix("S", this->active_obs_size, this->active_ens_size))
-    , E(load_matrix("E", this->active_obs_size, this->active_ens_size)), 
-    R(load_matrix("R", this->active_obs_size, this->active_ens_size)), 
-    D(load_matrix("D", this->active_obs_size, this->active_ens_size))
+es_testdata::es_testdata(const char *path): path(path)
        {
     pushd tmp_path(this->path);
-
-    auto size = load_size();
+        auto size = load_size();
     this->active_ens_size = size[0];
     this->active_obs_size = size[1];
+
+    S = load_matrix("S", this->active_obs_size, this->active_ens_size);
+    E = load_matrix("E", this->active_obs_size, this->active_ens_size);
+    R = load_matrix("R", this->active_obs_size, this->active_obs_size);
+    D = load_matrix("D", this->active_obs_size, this->active_ens_size);
+
 
     this->obs_mask = std::vector<bool>(this->active_obs_size, true);
     this->ens_mask = std::vector<bool>(this->active_ens_size, true);

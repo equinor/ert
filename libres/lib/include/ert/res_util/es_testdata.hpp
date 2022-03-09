@@ -32,6 +32,7 @@ public:
     Eigen::MatrixXd E{};
     Eigen::MatrixXd R{};
     Eigen::MatrixXd D{};
+    Eigen::MatrixXd dObs{};
     int active_obs_size{};
     int active_ens_size{};
     std::vector<bool> obs_mask;
