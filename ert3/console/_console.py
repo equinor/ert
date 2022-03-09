@@ -450,7 +450,11 @@ def _main() -> None:
     workspace = Workspace(pathlib.Path.cwd())
 
     plugin_registry = ert3.config.ConfigPluginRegistry()
-    plugin_registry.register_category(category="transformation", optional=True)
+    plugin_registry.register_category(
+        category="transformation",
+        optional=True,
+        base_config=ert3.config.plugins.TransformationConfigBase,
+    )
     plugin_manager = ert3.plugins.ErtPluginManager()
     plugin_manager.collect(registry=plugin_registry)
 

@@ -14,6 +14,8 @@ from ._stages_config import (
     TransportableCommand,
     Step,
     create_stages_config,
+    create_plugged_model,
+    StageIO,
 )
 from ._validator import DEFAULT_RECORD_MIME_TYPE
 from ._experiment_config import load_experiment_config, ExperimentConfig
@@ -41,4 +43,6 @@ __all__ = [
     "ExperimentRunConfig",
     "ConfigPluginRegistry",
     "create_stages_config",
+    "create_plugged_model",
+    "StageIO",
 ]
