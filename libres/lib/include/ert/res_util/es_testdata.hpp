@@ -20,37 +20,34 @@
 
 #include <string>
 #include <vector>
-
+#include <Eigen/Dense>
 #include <ert/util/bool_vector.hpp>
-
-#include <ert/res_util/matrix.hpp>
 
 namespace res {
 class es_testdata {
 public:
     std::string path;
 
-    matrix_type *S{};
-    matrix_type *E{};
-    matrix_type *R{};
-    matrix_type *D{};
-    matrix_type *dObs{};
+    Eigen::MatrixXd S{};
+    Eigen::MatrixXd E{};
+    Eigen::MatrixXd R{};
+    Eigen::MatrixXd D{};
+    Eigen::MatrixXd dObs{};
     int active_obs_size{};
     int active_ens_size{};
     std::vector<bool> obs_mask;
     std::vector<bool> ens_mask;
     int state_size{};
 
-    es_testdata(const matrix_type *S, const matrix_type *R,
-                const matrix_type *dObs, const matrix_type *D,
-                const matrix_type *E);
+    es_testdata(const Eigen::MatrixXd &S, const Eigen::MatrixXd &R,
+                const Eigen::MatrixXd &D, const Eigen::MatrixXd &E,
+                const Eigen::MatrixXd &dObs);
     es_testdata(const char *path);
-    ~es_testdata();
 
-    matrix_type *alloc_matrix(const std::string &name, int rows,
-                              int columns) const;
-    void save_matrix(const std::string &name, const matrix_type *m) const;
-    matrix_type *alloc_state(const std::string &name) const;
+    Eigen::MatrixXd make_matrix(const std::string &name, int rows,
+                                int columns) const;
+    void save_matrix(const std::string &name, const Eigen::MatrixXd &m) const;
+    Eigen::MatrixXd make_state(const std::string &name) const;
     void save(const std::string &path) const;
     void deactivate_obs(int iobs);
     void deactivate_realization(int iens);

@@ -261,10 +261,10 @@ void run_analysis_update_without_rowscaling(
     Eigen::MatrixXd X = Eigen::MatrixXd::Zero(S.cols(), S.cols());
 
     if (module_config.iterable()) {
-        ies::init_update(module_data, ens_mask, obs_mask, &S, &R, &E, &D);
-        ies::updateA(module_config, module_data, &A, &S, &R, &E, &D);
+        ies::init_update(module_data, ens_mask, obs_mask);
+        ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
-        ies::initX(module_config, &S, &R, &E, &D, &X);
+        ies::initX(module_config, S, R, E, D, X);
         A *= X;
     }
 }
@@ -294,7 +294,7 @@ void run_analysis_update_with_rowscaling(
     }
 
     for (auto &[A, row_scaling] : parameters) {
-        ies::initX(module_config, &S, &R, &E, &D, &X);
+        ies::initX(module_config, S, R, E, D, X);
         row_scaling->multiply(&A, &X);
     }
 }

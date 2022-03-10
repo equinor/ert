@@ -8,9 +8,8 @@
 
 void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, const ies::config::Config &ies_config,
-    ies::data::Data &ies_data, matrix_type *A, rng_type *rng) {
-    ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask, testdata.S,
-                     testdata.R, testdata.E, testdata.D);
+    ies::data::Data &ies_data, Eigen::MatrixXd &A, rng_type *rng) {
+    ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
 
     ies::updateA(ies_config, ies_data, A, testdata.S, testdata.R, testdata.E,
                  testdata.D);
@@ -32,8 +31,8 @@ should give same result as:
 void test_consistency_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    matrix_type *A1 = testdata.alloc_state("prior");
-    matrix_type *A2 = testdata.alloc_state("prior");
+    Eigen::MatrixXd A1 = testdata.make_state("prior");
+    Eigen::MatrixXd A2 = testdata.make_state("prior");
 
     ies::data::Data ies_data1(testdata.active_ens_size);
     ies::config::Config ies_config1(true);
@@ -54,10 +53,7 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
                                                      ies_data1, A1, rng);
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_config2,
                                                      ies_data2, A2, rng);
-    test_assert_true(A1->isApprox(*A2, 5e-5));
-
-    matrix_free(A1);
-    matrix_free(A2);
+    test_assert_true(A1.isApprox(A2, 5e-5));
     rng_free(rng);
 }
 
@@ -76,8 +72,8 @@ should give same result as
 
 void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    matrix_type *A1 = testdata.alloc_state("prior");
-    matrix_type *A2 = testdata.alloc_state("prior");
+    Eigen::MatrixXd A1 = testdata.make_state("prior");
+    Eigen::MatrixXd A2 = testdata.make_state("prior");
 
     ies::data::Data ies_data1(testdata.active_ens_size);
     ies::config::Config ies_config1(true);
@@ -99,10 +95,8 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
                                                      ies_data1, A1, rng);
     update_exact_scheme_subspace_no_truncation_diagR(testdata, ies_config2,
                                                      ies_data2, A2, rng);
-    test_assert_true(A1->isApprox(*A2, 5e-6));
+    test_assert_true(A1.isApprox(A2, 5e-6));
 
-    matrix_free(A1);
-    matrix_free(A2);
     rng_free(rng);
 }
 

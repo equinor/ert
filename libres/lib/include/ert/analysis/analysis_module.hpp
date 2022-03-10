@@ -19,7 +19,6 @@
 #ifndef ERT_ANALYSIS_MODULE_H
 #define ERT_ANALYSIS_MODULE_H
 
-#include <ert/res_util/matrix.hpp>
 #include <ert/util/bool_vector.hpp>
 
 #include <ert/analysis/ies/ies_data.hpp>
