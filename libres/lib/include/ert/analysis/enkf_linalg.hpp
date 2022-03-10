@@ -1,10 +1,8 @@
 #ifndef ERT_ENKF_LINALG_H
 #define ERT_ENKF_LINALG_H
 #include <variant>
-
+#include <Eigen/Dense>
 #include <ert/util/double_vector.hpp>
-
-#include <ert/res_util/matrix.hpp>
 
 Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
                                 const Eigen::MatrixXd &U0,

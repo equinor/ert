@@ -61,21 +61,21 @@ private:
     char *org_cwd;
 };
 
-matrix_type *alloc_load(const std::string &name, int rows, int columns) {
+Eigen::MatrixXd load_matrix(const std::string &name, int rows, int columns) {
     if (!fs::exists(name))
-        return NULL;
+        throw std::invalid_argument("File not found");
 
     FILE *stream = util_fopen(name.c_str(), "r");
-    matrix_type *m = matrix_alloc(rows, columns);
-    matrix_fscanf_data(m, ROW_MAJOR_STORAGE, stream);
+    Eigen::MatrixXd m = Eigen::MatrixXd::Zero(rows, columns);
+    matrix_fscanf_data(&m, ROW_MAJOR_STORAGE, stream);
     fclose(stream);
 
     return m;
 }
 
-void save_matrix_data(const std::string &name, const matrix_type *m) {
+void save_matrix_data(const std::string &name, const Eigen::MatrixXd &m) {
     FILE *stream = util_fopen(name.c_str(), "w");
-    matrix_fprintf_data(m, ROW_MAJOR_STORAGE, stream);
+    matrix_fprintf_data(&m, ROW_MAJOR_STORAGE, stream);
     fclose(stream);
 }
 
@@ -105,43 +105,33 @@ void save_size(int ens_size, int obs_size) {
     fclose(stream);
 }
 
-matrix_type *safe_copy(const matrix_type *m) {
-    if (m)
-        return matrix_alloc_copy(m);
-
-    return nullptr;
-}
-
-void matrix_delete_row_column(matrix_type *m1, int row_column) {
-    matrix_delete_row(m1, row_column);
-    matrix_delete_column(m1, row_column);
+void matrix_delete_row_column(Eigen::MatrixXd &m1, int row_column) {
+    matrix_delete_row(&m1, row_column);
+    matrix_delete_column(&m1, row_column);
 }
 
 } // namespace
 
-matrix_type *es_testdata::alloc_matrix(const std::string &fname, int rows,
-                                       int columns) const {
+Eigen::MatrixXd es_testdata::make_matrix(const std::string &fname, int rows,
+                                         int columns) const {
     pushd tmp_path(this->path);
-
-    matrix_type *m = alloc_load(fname, rows, columns);
-    return m;
+    return load_matrix(fname, rows, columns);
 }
 
 void es_testdata::save_matrix(const std::string &name,
-                              const matrix_type *m) const {
+                              const Eigen::MatrixXd &m) const {
     pushd tmp_path(this->path);
 
     FILE *stream = util_fopen(name.c_str(), "w");
-    matrix_fprintf_data(m, ROW_MAJOR_STORAGE, stream);
+    matrix_fprintf_data(&m, ROW_MAJOR_STORAGE, stream);
     fclose(stream);
 }
 
-es_testdata::es_testdata(const matrix_type *S, const matrix_type *R,
-                         const matrix_type *dObs, const matrix_type *D,
-                         const matrix_type *E)
-    : S(safe_copy(S)), R(safe_copy(R)), dObs(safe_copy(dObs)), D(safe_copy(D)),
-      E(safe_copy(E)), active_ens_size(matrix_get_columns(S)),
-      active_obs_size(matrix_get_rows(S)),
+es_testdata::es_testdata(const Eigen::MatrixXd &S, const Eigen::MatrixXd &R,
+                         const Eigen::MatrixXd &D, const Eigen::MatrixXd &E,
+                         const Eigen::MatrixXd &dObs)
+    : S(S), R(R), D(D), E(E), dObs(dObs), active_ens_size(S.cols()),
+      active_obs_size(S.rows()),
       obs_mask(std::vector<bool>(active_obs_size, true)),
       ens_mask(std::vector<bool>(active_ens_size, true)) {}
 
@@ -153,15 +143,11 @@ void es_testdata::deactivate_obs(int iobs) {
     if (this->obs_mask[iobs]) {
         this->obs_mask[iobs] = false;
 
-        matrix_delete_row(this->dObs, iobs);
-        matrix_delete_row(this->S, iobs);
+        matrix_delete_row(&this->dObs, iobs);
+        matrix_delete_row(&this->S, iobs);
         matrix_delete_row_column(this->R, iobs);
-
-        if (this->E)
-            matrix_delete_row(this->E, iobs);
-
-        if (this->D)
-            matrix_delete_row(this->D, iobs);
+        matrix_delete_row(&this->E, iobs);
+        matrix_delete_row(&this->D, iobs);
 
         this->active_obs_size -= 1;
     }
@@ -175,71 +161,39 @@ void es_testdata::deactivate_realization(int iens) {
     if (this->ens_mask[iens]) {
         this->ens_mask[iens] = false;
 
-        matrix_delete_column(this->S, iens);
-
-        if (this->E)
-            matrix_delete_column(this->E, iens);
-
-        if (this->D)
-            matrix_delete_column(this->D, iens);
+        matrix_delete_column(&this->S, iens);
+        matrix_delete_column(&this->E, iens);
+        matrix_delete_column(&this->D, iens);
 
         this->active_ens_size -= 1;
     }
 }
 
-es_testdata::es_testdata(const char *path)
-    : path(path), S(nullptr), E(nullptr), R(nullptr), D(nullptr),
-      dObs(nullptr) {
+es_testdata::es_testdata(const char *path) : path(path) {
     pushd tmp_path(this->path);
-
     auto size = load_size();
     this->active_ens_size = size[0];
     this->active_obs_size = size[1];
 
-    this->S = alloc_load("S", this->active_obs_size, this->active_ens_size);
-    this->E = alloc_load("E", this->active_obs_size, this->active_ens_size);
-    this->R = alloc_load("R", this->active_obs_size, this->active_obs_size);
-    this->D = alloc_load("D", this->active_obs_size, this->active_ens_size);
-    this->dObs = alloc_load("dObs", this->active_obs_size, 2);
+    S = load_matrix("S", this->active_obs_size, this->active_ens_size);
+    E = load_matrix("E", this->active_obs_size, this->active_ens_size);
+    R = load_matrix("R", this->active_obs_size, this->active_obs_size);
+    D = load_matrix("D", this->active_obs_size, this->active_ens_size);
+    dObs = load_matrix("dObs", this->active_obs_size, 2);
+
     this->obs_mask = std::vector<bool>(this->active_obs_size, true);
     this->ens_mask = std::vector<bool>(this->active_ens_size, true);
-}
-
-es_testdata::~es_testdata() {
-    if (this->S)
-        matrix_free(this->S);
-
-    if (this->E)
-        matrix_free(this->E);
-
-    if (this->R)
-        matrix_free(this->R);
-
-    if (this->D)
-        matrix_free(this->D);
-
-    if (this->dObs)
-        matrix_free(this->dObs);
 }
 
 void es_testdata::save(const std::string &path) const {
     pushd tmp_path(path, true);
     save_size(this->active_ens_size, this->active_obs_size);
 
-    if (this->S)
-        save_matrix_data("S", S);
-
-    if (this->E)
-        save_matrix_data("E", E);
-
-    if (this->R)
-        save_matrix_data("R", R);
-
-    if (this->D)
-        save_matrix_data("D", D);
-
-    if (this->dObs)
-        save_matrix_data("dObs", dObs);
+    save_matrix_data("S", this->S);
+    save_matrix_data("E", this->E);
+    save_matrix_data("R", this->R);
+    save_matrix_data("D", this->D);
+    save_matrix_data("dObs", this->dObs);
 }
 
 /*
@@ -249,7 +203,7 @@ void es_testdata::save(const std::string &path) const {
   of this->active_ens_size.
 */
 
-matrix_type *es_testdata::alloc_state(const std::string &name) const {
+Eigen::MatrixXd es_testdata::make_state(const std::string &name) const {
 
     pushd tmp_path(this->path);
 
@@ -267,11 +221,11 @@ matrix_type *es_testdata::alloc_state(const std::string &name) const {
             std::to_string(this->active_ens_size));
 
     int state_size = data.size() / this->active_ens_size;
-    matrix_type *state = matrix_alloc(state_size, this->active_ens_size);
+    Eigen::MatrixXd state =
+        Eigen::MatrixXd::Zero(state_size, this->active_ens_size);
     for (int is = 0; is < state_size; is++) {
         for (int iens = 0; iens < this->active_ens_size; iens++) {
-            matrix_iset(state, is, iens,
-                        data[iens + is * this->active_ens_size]);
+            state(is, iens) = data[iens + is * this->active_ens_size];
         }
     }
 

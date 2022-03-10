@@ -1,17 +1,9 @@
 #include <ert/util/test_util.hpp>
-#include <ert/util/rng.h>
 
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
-#include <ert/res_util/es_testdata.hpp>
 
-void test_steplength1(const char *path_testdata) {
-    res::es_testdata testdata(path_testdata);
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    matrix_type *X =
-        matrix_alloc(testdata.active_ens_size, testdata.active_ens_size);
-    matrix_type *prior = testdata.alloc_matrix("A0", testdata.state_size,
-                                               testdata.active_ens_size);
+void test_steplength1() {
 
     analysis_module_type *std_module =
         analysis_module_alloc(100, ENSEMBLE_SMOOTHER);
@@ -22,11 +14,6 @@ void test_steplength1(const char *path_testdata) {
         std_module, ies::config::ENKF_TRUNCATION_KEY, "0.95"));
     test_assert_true(analysis_module_set_var(
         ies_module, ies::config::ENKF_TRUNCATION_KEY, "0.95"));
-
-    rng_free(rng);
-    matrix_free(X);
-    if (prior)
-        matrix_free(prior);
 
     analysis_module_free(std_module);
     analysis_module_free(ies_module);
@@ -43,5 +30,5 @@ int main(int argc, char **argv) {
     const char *path_testdata = argv[1];
 
     test_load();
-    test_steplength1(path_testdata);
+    test_steplength1();
 }

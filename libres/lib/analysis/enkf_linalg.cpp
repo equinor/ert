@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <ert/res_util/matrix.hpp>
-
 #include <ert/analysis/enkf_linalg.hpp>
 
 /**

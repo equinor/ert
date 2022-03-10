@@ -27,8 +27,6 @@
 #include <memory>
 #include <stdexcept>
 
-#include <ert/res_util/matrix.hpp>
-
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>

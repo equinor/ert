@@ -23,16 +23,7 @@
 
 ies::data::Data::Data(int ens_size)
     : m_ens_size(ens_size), m_converged(false), m_iteration_nr(0),
-      W(matrix_alloc(ens_size, ens_size)) {}
-
-ies::data::Data::~Data() {
-    matrix_free(this->W);
-
-    if (this->A0)
-        matrix_free(this->A0);
-    if (this->E)
-        matrix_free(this->E);
-}
+      W(Eigen::MatrixXd::Zero(ens_size, ens_size)) {}
 
 void ies::data::Data::iteration_nr(int iteration_nr) {
     this->m_iteration_nr = iteration_nr;
@@ -71,59 +62,56 @@ void ies::data::Data::update_state_size(int state_size) {
 
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
-void ies::data::Data::store_initialE(const matrix_type *E0) {
-    if (!this->E) {
-        int obs_size_msk = this->obs_mask_size();
-        int ens_size_msk = this->ens_mask_size();
-        this->E = matrix_alloc(obs_size_msk, ens_size_msk);
-        matrix_set(this->E, -999.9);
+void ies::data::Data::store_initialE(const Eigen::MatrixXd &E0) {
+    if (E.rows() != 0 || E.cols() != 0)
+        return;
+    int obs_size_msk = this->obs_mask_size();
+    int ens_size_msk = this->ens_mask_size();
+    this->E = Eigen::MatrixXd::Zero(obs_size_msk, ens_size_msk);
+    this->E.setConstant(-999.9);
 
-        int m = 0;
-        for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (this->m_obs_mask0[iobs]) {
-                int active_idx = 0;
-                for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (this->m_ens_mask[iens]) {
-                        matrix_iset_safe(this->E, iobs, iens,
-                                         matrix_iget(E0, m, active_idx));
-                        active_idx++;
-                    }
+    int m = 0;
+    for (int iobs = 0; iobs < obs_size_msk; iobs++) {
+        if (this->m_obs_mask0[iobs]) {
+            int active_idx = 0;
+            for (int iens = 0; iens < ens_size_msk; iens++) {
+                if (this->m_ens_mask[iens]) {
+                    this->E(iobs, iens) = E0(m, active_idx);
+                    active_idx++;
                 }
-                m++;
             }
+            m++;
         }
     }
 }
 
 /* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
    in data->E. */
-void ies::data::Data::augment_initialE(const matrix_type *E0) {
-    if (this->E) {
-        int obs_size_msk = this->obs_mask_size();
-        int ens_size_msk = this->ens_mask_size();
-        int m = 0;
-        for (int iobs = 0; iobs < obs_size_msk; iobs++) {
-            if (!this->m_obs_mask0[iobs] && this->m_obs_mask[iobs]) {
-                int i = -1;
-                for (int iens = 0; iens < ens_size_msk; iens++) {
-                    if (this->m_ens_mask[iens]) {
-                        i++;
-                        matrix_iset_safe(this->E, iobs, iens,
-                                         matrix_iget(E0, m, i));
-                    }
+void ies::data::Data::augment_initialE(const Eigen::MatrixXd &E0) {
+
+    int obs_size_msk = this->obs_mask_size();
+    int ens_size_msk = this->ens_mask_size();
+    int m = 0;
+    for (int iobs = 0; iobs < obs_size_msk; iobs++) {
+        if (!this->m_obs_mask0[iobs] && this->m_obs_mask[iobs]) {
+            int i = -1;
+            for (int iens = 0; iens < ens_size_msk; iens++) {
+                if (this->m_ens_mask[iens]) {
+                    i++;
+                    this->E(iobs, iens) = E0(m, i);
                 }
-                this->m_obs_mask0[iobs] = true;
             }
-            if (this->m_obs_mask[iobs]) {
-                m++;
-            }
+            this->m_obs_mask0[iobs] = true;
+        }
+        if (this->m_obs_mask[iobs]) {
+            m++;
         }
     }
 }
 
-void ies::data::Data::store_initialA(const matrix_type *A) {
-    if (!this->A0)
-        this->A0 = matrix_alloc_copy(A);
+void ies::data::Data::store_initialA(const Eigen::MatrixXd &A) {
+    if (A0.rows() == 0 || A0.cols() == 0)
+        this->A0 = A;
 }
 
 const std::vector<bool> &ies::data::Data::obs_mask0() const {
@@ -138,33 +126,32 @@ const std::vector<bool> &ies::data::Data::ens_mask() const {
     return this->m_ens_mask;
 }
 
-const matrix_type *ies::data::Data::getE() const { return this->E; }
+const Eigen::MatrixXd &ies::data::Data::getE() const { return this->E; }
 
-matrix_type *ies::data::Data::getW() { return this->W; }
+Eigen::MatrixXd &ies::data::Data::getW() { return this->W; }
 
-const matrix_type *ies::data::Data::getW() const { return this->W; }
+const Eigen::MatrixXd &ies::data::Data::getW() const { return this->W; }
 
-const matrix_type *ies::data::Data::getA0() const { return this->A0; }
+const Eigen::MatrixXd &ies::data::Data::getA0() const { return this->A0; }
 
 namespace {
 
-matrix_type *alloc_active(const matrix_type *full_matrix,
-                          const std::vector<bool> &row_mask,
-                          const std::vector<bool> &column_mask) {
+Eigen::MatrixXd make_active(const Eigen::MatrixXd &full_matrix,
+                            const std::vector<bool> &row_mask,
+                            const std::vector<bool> &column_mask) {
     int rows = row_mask.size();
     int columns = column_mask.size();
 
-    matrix_type *active =
-        matrix_alloc(std::count(row_mask.begin(), row_mask.end(), true),
-                     std::count(column_mask.begin(), column_mask.end(), true));
+    Eigen::MatrixXd active = Eigen::MatrixXd::Zero(
+        std::count(row_mask.begin(), row_mask.end(), true),
+        std::count(column_mask.begin(), column_mask.end(), true));
     int row = 0;
     for (int iobs = 0; iobs < rows; iobs++) {
         if (row_mask[iobs]) {
             int column = 0;
             for (int iens = 0; iens < columns; iens++) {
                 if (column_mask[iens]) {
-                    matrix_iset(active, row, column,
-                                matrix_iget(full_matrix, iobs, iens));
+                    active(row, column) = full_matrix(iobs, iens);
                     column++;
                 }
             }
@@ -185,16 +172,15 @@ matrix_type *alloc_active(const matrix_type *full_matrix,
   with the correct active elements both in observation and realisation space.
 */
 
-matrix_type *ies::data::Data::alloc_activeE() const {
-    return alloc_active(this->E, this->m_obs_mask, this->m_ens_mask);
+Eigen::MatrixXd ies::data::Data::make_activeE() const {
+    return make_active(this->E, this->m_obs_mask, this->m_ens_mask);
 }
 
-matrix_type *ies::data::Data::alloc_activeW() const {
-    return alloc_active(this->W, this->m_ens_mask, this->m_ens_mask);
+Eigen::MatrixXd ies::data::Data::make_activeW() const {
+    return make_active(this->W, this->m_ens_mask, this->m_ens_mask);
 }
 
-matrix_type *ies::data::Data::alloc_activeA() const {
-    std::vector<bool> state_mask(matrix_get_rows(this->A0), true);
-    auto *activeA = alloc_active(this->A0, state_mask, this->m_ens_mask);
-    return activeA;
+Eigen::MatrixXd ies::data::Data::make_activeA() const {
+    std::vector<bool> state_mask(this->A0.rows(), true);
+    return make_active(this->A0, state_mask, this->m_ens_mask);
 }
