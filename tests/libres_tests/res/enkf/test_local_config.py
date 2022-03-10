@@ -33,14 +33,6 @@ class LocalConfigTest(ResTest):
         self.config = self.createTestPath("local/mini_ert/mini_config")
         self.local_conf_path = "python/enkf/data/local_config"
 
-    def test_get_grid(self):
-        with ErtTestContext(self.local_conf_path, self.config) as test_context:
-            main = test_context.getErt()
-            local_config = main.getLocalConfig()
-            grid = local_config.getGrid()
-            dimens = grid.getNX(), grid.getNY(), grid.getNZ()
-            self.assertEqual((10, 10, 5), dimens)
-
     def test_local_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
@@ -48,9 +40,8 @@ class LocalConfigTest(ResTest):
 
             local_config = main.getLocalConfig()
 
-            local_config.clear()
             updatestep = local_config.getUpdatestep()
-            self.assertEqual(0, len(updatestep))
+            self.assertEqual(1, len(updatestep))
 
             # Creating obsdata
             local_obs_data_1 = local_config.createObsdata("OBSSET_1")
@@ -144,20 +135,15 @@ class LocalConfigTest(ResTest):
             main = test_context.getErt()
 
             local_config = main.getLocalConfig()
-            analysis_module = main.analysisConfig().getModule("STD_ENKF")
-
             # Ministep
-            ministep = local_config.createMinistep("MINISTEP", analysis_module)
+            ministep = local_config.createMinistep("MINISTEP")
             self.assertTrue(isinstance(ministep, LocalMinistep))
-
-            with self.assertRaises(KeyError):
-                _ = local_config.createMinistep("MINISTEP", None)
 
             self.assertFalse(ministep.hasActiveData("DATA"))
             with self.assertRaises(KeyError):
                 _ = ministep.getActiveList("DATA")
 
-            self.assertEqual(ministep.get_obs_active_list(), {})
+            self.assertEqual(ministep.get_runtime_obs_active_list(), {})
 
     def test_attach_ministep(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -206,7 +192,7 @@ class LocalConfigTest(ResTest):
 
             update_step = ert.getLocalConfig().getUpdatestep()
             ministep = update_step[len(update_step) - 1]
-            active_dict = ministep.get_obs_active_list()
+            active_dict = ministep.get_runtime_obs_active_list()
             self.assertEqual(len(expected_keys), len(active_dict))
 
             observed_obs_keys = set()

@@ -1,3 +1,3 @@
-from res._lib.local.local_obsdata import LocalObsdata
+from res._lib.local.obsdata import LocalObsdata
 
 __all__ = ["LocalObsdata"]

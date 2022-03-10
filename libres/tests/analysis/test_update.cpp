@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <functional>
 
 #include <catch2/catch.hpp>
 
@@ -31,7 +32,8 @@ void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
     const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
-    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
+    std::vector<
+        std::pair<Eigen::MatrixXd, std::reference_wrapper<const RowScaling>>>
         &parameters);
 } // namespace analysis
 const double a_true = 1.0;
@@ -218,13 +220,14 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         }
 
         WHEN("Row scaling factor is 0 for both parameters") {
-            auto row_scaling = std::make_shared<RowScaling>();
+            RowScaling row_scaling;
             for (int row = 0; row < nparam; row++)
-                row_scaling->assign(row, 0.0);
+                row_scaling.assign(row, 0.0);
 
             Eigen::MatrixXd A_with_scaling = A;
 
-            std::vector parameters{std::pair{A_with_scaling, row_scaling}};
+            std::vector parameters{
+                std::pair{A_with_scaling, std::cref(row_scaling)}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -245,13 +248,13 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         }
 
         WHEN("Row scaling factor is 1 for both parameters") {
-            auto row_scaling = std::make_shared<RowScaling>();
+            RowScaling row_scaling;
             for (int row = 0; row < nparam; row++)
-                row_scaling->assign(row, 1.0);
+                row_scaling.assign(row, 1.0);
 
             Eigen::MatrixXd A_no_scaling = A;
 
-            std::vector parameters{std::pair{A, row_scaling}};
+            std::vector parameters{std::pair{A, std::cref(row_scaling)}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -277,13 +280,13 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         }
 
         WHEN("Row scaling factor is 0 for one parameter and 1 for the other") {
-            auto row_scaling = std::make_shared<RowScaling>();
-            row_scaling->assign(0, 1.0);
-            row_scaling->assign(1, 0.0);
+            RowScaling row_scaling;
+            row_scaling.assign(0, 1.0);
+            row_scaling.assign(1, 0.0);
 
             Eigen::MatrixXd A_no_scaling = A;
 
-            std::vector parameters{std::pair{A, row_scaling}};
+            std::vector parameters{std::pair{A, std::cref(row_scaling)}};
 
             for (int iobs = 0; iobs < obs_size; iobs++) {
                 obs_block_iset(ob, iobs, measurements[iobs], 1.0);
@@ -326,11 +329,11 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                     obs_data_makeE(obs_data, rng, ens_size); // Evensen (9.19)
                 Eigen::MatrixXd A_with_scaling = A;
 
-                auto row_scaling = std::make_shared<RowScaling>();
-                row_scaling->assign(0, 1.0);
-                row_scaling->assign(1, 0.7);
+                RowScaling row_scaling;
+                row_scaling.assign(0, 1.0);
+                row_scaling.assign(1, 0.7);
 
-                std::vector parameters{std::pair{A_with_scaling, row_scaling}};
+                std::vector parameters{std::pair{A, std::cref(row_scaling)}};
                 Eigen::MatrixXd S = meas_data_makeS(meas_data);
                 Eigen::MatrixXd R = obs_data_makeR(obs_data);
                 Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);

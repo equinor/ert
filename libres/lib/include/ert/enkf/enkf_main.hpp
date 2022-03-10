@@ -86,8 +86,7 @@ extern "C" int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main);
 extern "C" int enkf_main_get_history_length(const enkf_main_type *);
 extern "C" model_config_type *
 enkf_main_get_model_config(const enkf_main_type *);
-extern "C" local_config_type *
-enkf_main_get_local_config(const enkf_main_type *enkf_main);
+LocalConfig *enkf_main_get_local_config(const enkf_main_type *enkf_main);
 extern "C" bool enkf_main_load_obs(enkf_main_type *, const char *, bool);
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);

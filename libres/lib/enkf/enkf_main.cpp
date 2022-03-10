@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <algorithm>
+#include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <tuple>
@@ -54,6 +57,8 @@
 #include <ert/enkf/field.hpp>
 
 #include <ert/concurrency.hpp>
+
+#include "ert/python.hpp"
 
 static auto logger = ert::get_logger("enkf");
 
@@ -92,8 +97,7 @@ struct enkf_main_struct {
     enkf_fs_type *dbase; /* The internalized information. */
 
     const res_config_type *res_config;
-    local_config_type
-        *local_config; /* Holding all the information about local analysis. */
+    std::unique_ptr<LocalConfig> local_config;
     rng_manager_type *rng_manager;
     rng_type *shared_rng;
 
@@ -150,8 +154,8 @@ subst_list_type *enkf_main_get_data_kw(const enkf_main_type *enkf_main) {
     return subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
 }
 
-local_config_type *enkf_main_get_local_config(const enkf_main_type *enkf_main) {
-    return enkf_main->local_config;
+LocalConfig *enkf_main_get_local_config(const enkf_main_type *enkf_main) {
+    return enkf_main->local_config.get();
 }
 
 model_config_type *enkf_main_get_model_config(const enkf_main_type *enkf_main) {
@@ -230,8 +234,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     enkf_main_free_ensemble(enkf_main);
     enkf_main_close_fs(enkf_main);
 
-    local_config_free(enkf_main->local_config);
-
     delete enkf_main;
 }
 
@@ -301,48 +303,29 @@ ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
    default 'ALL_ACTIVE' configuration.
 */
 
-void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
-    local_config_type *local_config = enkf_main->local_config;
-    local_config_clear(local_config);
+void enkf_main_create_all_active_config(enkf_main_type *enkf_main) {
+
+    std::vector<std::string> obs_keys;
     {
-        local_updatestep_type *default_step =
-            local_config_get_updatestep(local_config);
-        LocalObsData *obsdata =
-            local_config_alloc_obsdata(local_config, "ALL_OBS");
-        local_ministep_type *ministep =
-            local_config_alloc_ministep(local_config, "ALL_ACTIVE");
-        if (!ministep)
-            throw std::logic_error(
-                "Failed to create initial ALL_ACTIVE ministep");
-
-        local_updatestep_add_ministep(default_step, ministep);
-
-        /* Adding all observation keys */
-        {
-            hash_iter_type *obs_iter = enkf_obs_alloc_iter(enkf_main->obs);
-            while (!hash_iter_is_complete(obs_iter)) {
-                const char *obs_key = hash_iter_get_next_key(obs_iter);
-                LocalObsDataNode node(obs_key);
-                obsdata->add_node(node);
-            }
-            local_ministep_add_obsdata(ministep, obsdata);
-            hash_iter_free(obs_iter);
+        hash_iter_type *obs_iter = enkf_obs_alloc_iter(enkf_main->obs);
+        while (!hash_iter_is_complete(obs_iter)) {
+            const char *obs_key = hash_iter_get_next_key(obs_iter);
+            obs_keys.push_back(obs_key);
         }
-
-        /* Adding all node which can be updated. */
-        {
-            std::vector<std::string> keylist =
-                ensemble_config_keylist_from_var_type(
-                    enkf_main_get_ensemble_config(enkf_main), PARAMETER);
-            for (auto &key : keylist)
-                /*
-          Make sure the funny GEN_KW instance masquerading as
-          SCHEDULE_PREDICTION_FILE is not added to the soup.
-                */
-                if (key != "PRED")
-                    ministep->add_active_data(key.data());
-        }
+        hash_iter_free(obs_iter);
     }
+    std::vector<std::string> parameter_keys =
+        ensemble_config_keylist_from_var_type(
+            enkf_main_get_ensemble_config(enkf_main), PARAMETER);
+    /*
+      Make sure the funny GEN_KW instance masquerading as
+      SCHEDULE_PREDICTION_FILE is not added to the soup.
+    */
+    std::remove(parameter_keys.begin(), parameter_keys.end(),
+                std::string{"PRED"});
+
+    enkf_main->local_config =
+        std::make_unique<LocalConfig>(parameter_keys, obs_keys);
 }
 
 void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose) {
@@ -372,7 +355,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main->ens_size = 0;
     enkf_main->res_config = NULL;
     enkf_main->obs = NULL;
-    enkf_main->local_config = local_config_alloc();
 
     enkf_main_set_verbose(enkf_main, false);
     enkf_main_init_fs(enkf_main);
@@ -806,3 +788,19 @@ rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main) {
 
 #include "enkf_main_ensemble.cpp"
 #include "enkf_main_manage_fs.cpp"
+
+namespace {
+LocalConfig &get_local_config(py::handle obj) {
+    auto *enkf_main = reinterpret_cast<enkf_main_type *>(
+        PyLong_AsVoidPtr(obj.attr("_BaseCClass__c_pointer").ptr()));
+    auto *local_config = enkf_main_get_local_config(enkf_main);
+    return *local_config;
+}
+} // namespace
+
+RES_LIB_SUBMODULE("local.enkf_main", m) {
+    using namespace py::literals;
+
+    m.def("get_local_config", &get_local_config, "self"_a,
+          py::return_value_policy::reference);
+}

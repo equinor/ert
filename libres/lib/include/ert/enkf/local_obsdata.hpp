@@ -38,6 +38,7 @@ public:
     bool add_node(const std::string &key);
     bool add_node(const LocalObsDataNode &node);
     std::size_t size() const;
+    bool empty() const;
     const std::string &name() const;
 
     bool operator==(const LocalObsData &other) const;

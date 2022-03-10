@@ -19,6 +19,7 @@ add_executable(
   enkf/test_analysis_config.cpp
   enkf/test_obs_data.cpp
   enkf/test_deprecated_umask.cpp
+  enkf/test_local_config.cpp
   res_util/test_matrix.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp

@@ -19,17 +19,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <unordered_map>
-#include <ert/util/vector.h>
+#include <fmt/format.h>
 
-#include <ert/python.hpp>
+#include <ert/util/vector.h>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
 #include <ert/enkf/local_config.hpp>
 
+#include "ert/python.hpp"
+static auto logger = ert::get_logger("local_config");
+
 /*
 
-  +-------------------------- local_updatestep_type ---------------------------------------+
+  +-------------------------------- LocalUpdateStep ---------------------------------------+
   |                                                                                        |
   |                                                                                        |
   |    +----------------- local_ministep_type --------------------------------------+      |
@@ -76,7 +78,7 @@
 This figure illustrates the different objects when configuring local
 analysis:
 
-local_updatestep_type: This is is the top level configuration of the
+LocalUpdateStep: This is is the top level configuration of the
    updating at one timestep. In principle you can have different
    updatestep configurations at the different timesteps, but it will
    typically be identical for all the time steps. Observe that the
@@ -113,159 +115,96 @@ core EnKF updating:
     default ALL_ACTIVE local configuration will be used.
 */
 
-struct local_config_struct {
-    local_updatestep_type *
-        default_updatestep; /* A default report step returned if no particular report step has been installed for this time index. */
-    hash_type *
-        updatestep_storage; /* These three hash tables are the 'holding area' for the local_updatestep, */
-    hash_type *ministep_storage; /* local_ministep instances. */
-    std::unordered_map<std::string, LocalObsData> obsdata_storage;
-};
+LocalConfig::LocalConfig(const std::vector<std::string> &parameter_keys,
+                         const std::vector<std::string> &obs_keys)
+    : m_global_updatestep("DEFAULT"),
+      m_global_ministep(
+          "ALL_ACTIVE") // The strings "ALL_ACTIVE" and "ALL_OBS" are part of the API.
+      ,
+      m_global_obsdata("ALL_OBS") {
+    for (const auto &obs_key : obs_keys)
+        this->m_global_obsdata.add_node(obs_key);
 
-/*
-   Instances of local_updatestep and local_ministep are allocated from
-   the local_config object, and then subsequently manipulated from the calling scope.
-*/
+    for (const auto &param_key : parameter_keys)
+        this->m_global_ministep.add_active_data(param_key.c_str());
 
-static local_updatestep_type *
-local_config_alloc_updatestep(local_config_type *local_config,
-                              const char *key) {
-    local_updatestep_type *updatestep = local_updatestep_alloc(key);
-    hash_insert_hash_owned_ref(local_config->updatestep_storage, key,
-                               updatestep, local_updatestep_free__);
-    return updatestep;
+    this->m_global_ministep.add_obsdata(this->m_global_obsdata);
+    this->m_global_updatestep.add_ministep(this->m_global_ministep);
 }
 
-/*
-  The local_config_clear() function will remove all current local configuration,
-  and then reallocate a new empty updatestep configuration.
-*/
-void local_config_clear(local_config_type *local_config) {
-    local_config->default_updatestep = NULL;
-    hash_clear(local_config->updatestep_storage);
-    hash_clear(local_config->ministep_storage);
-    local_config->obsdata_storage.clear();
-    local_config->default_updatestep =
-        local_config_alloc_updatestep(local_config, "DEFAULT");
+bool LocalConfig::has_obsdata(const std::string &obs_key) const {
+    return this->m_obsdata.count(obs_key) == 1;
 }
 
-/*
-  The local_config_clear_active() function will reset the current active
-  updatestep, but the named building blocks of type ministep, local_dataset and
-  obsdata will be retained and can be reused through name based lookup when we
-  create a new local configuration.
-*/
+LocalMinistep &LocalConfig::make_ministep(const std::string &key) {
+    if (this->m_ministep.count(key) == 1)
+        return this->m_ministep.at(key);
 
-void local_config_clear_active(local_config_type *local_config) {
-    hash_clear(local_config->updatestep_storage);
-    local_config->default_updatestep =
-        local_config_alloc_updatestep(local_config, "DEFAULT");
-}
+    if (!this->m_updatestep.has_value())
+        this->m_updatestep = LocalUpdateStep("DEFAULT");
 
-local_config_type *local_config_alloc() {
-    local_config_type *local_config = new local_config_type();
-
-    local_config->default_updatestep = NULL;
-    local_config->updatestep_storage = hash_alloc();
-    local_config->ministep_storage = hash_alloc();
-
-    local_config_clear(local_config);
-    return local_config;
-}
-
-void local_config_free(local_config_type *local_config) {
-    hash_free(local_config->updatestep_storage);
-    hash_free(local_config->ministep_storage);
-    delete local_config;
-}
-
-local_ministep_type *
-local_config_alloc_ministep(local_config_type *local_config, const char *key) {
-    if (hash_has_key(local_config->ministep_storage, key))
-        return nullptr;
-
-    local_ministep_type *ministep = local_ministep_alloc(key);
-    hash_insert_hash_owned_ref(local_config->ministep_storage, key, ministep,
-                               local_ministep_free__);
+    this->m_ministep.emplace(key, LocalMinistep(key.c_str()));
+    auto &ministep = this->m_ministep.at(key);
     return ministep;
 }
 
-LocalObsData *local_config_alloc_obsdata(local_config_type *local_config,
-                                         const char *obsdata_name) {
-    if (local_config_has_obsdata(local_config, obsdata_name))
-        util_abort("%s: tried to add existing obsdata node key:%s \n", __func__,
-                   obsdata_name);
-
-    local_config->obsdata_storage.emplace(std::string{obsdata_name},
-                                          LocalObsData{obsdata_name});
-    return &local_config->obsdata_storage.at(obsdata_name);
+LocalMinistep *LocalConfig::ministep(const std::string &key) {
+    if (key == this->m_global_ministep.name())
+        return this->global_ministep();
+    else
+        return &this->m_ministep.at(key);
 }
 
-bool local_config_has_obsdata(const local_config_type *local_config,
-                              const char *key) {
-    return local_config->obsdata_storage.count(key) == 1;
+LocalMinistep *LocalConfig::global_ministep() {
+    return &this->m_global_ministep;
 }
 
-local_ministep_type *
-local_config_get_ministep(const local_config_type *local_config,
-                          const char *key) {
-    local_ministep_type *ministep =
-        (local_ministep_type *)hash_get(local_config->ministep_storage, key);
-    return ministep;
+LocalObsData *LocalConfig::make_obsdata(const std::string &key) {
+    if (this->m_obsdata.count(key) == 1)
+        throw std::invalid_argument("Tried to add existing observation key");
+
+    this->m_obsdata.emplace(key, LocalObsData(key));
+    return &this->m_obsdata.at(key);
 }
 
-LocalObsData *local_config_get_obsdata(local_config_type *local_config,
-                                       const char *key) {
-    auto iter = local_config->obsdata_storage.find(key);
-    if (iter == local_config->obsdata_storage.end())
-        throw py::key_error("No such observation key");
+LocalObsData *LocalConfig::obsdata(const std::string &key) {
+    if (key == this->m_global_obsdata.name())
+        return this->global_obsdata();
+    else {
+        auto iter = this->m_obsdata.find(key);
+        if (iter == this->m_obsdata.end())
+            throw py::key_error(
+                fmt::format("No such observation key: {}", key));
 
-    return &iter->second;
+        return &iter->second;
+    }
 }
 
-local_updatestep_type *
-local_config_get_updatestep(const local_config_type *local_config) {
-    local_updatestep_type *updatestep = local_config->default_updatestep;
+LocalObsData *LocalConfig::global_obsdata() { return &this->m_global_obsdata; }
 
-    if (updatestep == NULL)
-        util_abort("%s: fatal error. No default updatestep configured. \n",
-                   __func__);
-
-    return updatestep;
+LocalUpdateStep &LocalConfig::updatestep() {
+    if (this->m_updatestep.has_value())
+        return this->m_updatestep.value();
+    else
+        return this->m_global_updatestep;
 }
 
-namespace {
-
-LocalObsData &get_obsdata(py::handle obj, const std::string &obs_key) {
-    auto *local_config = ert::from_cwrap<local_config_type>(obj);
-    auto *obsdata = local_config_get_obsdata(local_config, obs_key.c_str());
-    return *obsdata;
+void LocalConfig::clear() const {
+    logger->warning(
+        "The LocalConfig::clear() function is deprecated and will be removed");
 }
 
-LocalObsData copy_obsdata(py::handle obj, const std::string &obs_key,
-                          const std::string &target_key) {
-    auto *local_config = ert::from_cwrap<local_config_type>(obj);
-    auto *obsdata = local_config_get_obsdata(local_config, obs_key.c_str());
-    LocalObsData copy(target_key);
-    for (const auto &node : *obsdata)
-        copy.add_node(node);
-    return copy;
-}
-
-LocalObsData &create_obsdata(py::handle obj, const std::string &obs_key) {
-    auto *local_config = ert::from_cwrap<local_config_type>(obj);
-    auto *obs_data = local_config_alloc_obsdata(local_config, obs_key.c_str());
-    return *obs_data;
-}
-
-} // namespace
-
-RES_LIB_SUBMODULE("local.local_config", m) {
-    using namespace py::literals;
-    m.def("get_obsdata_ref", &get_obsdata, "self"_a, "key"_a,
-          py::return_value_policy::reference_internal);
-    m.def("create_obsdata", &create_obsdata, "self"_a, "key"_a,
-          py::return_value_policy::reference_internal);
-    m.def("get_obsdata_copy", &copy_obsdata, py::arg("self"), py::arg("key1"),
-          py::arg("key2"));
+RES_LIB_SUBMODULE("local.config", m) {
+    py::class_<LocalConfig>(m, "LocalConfig")
+        .def("createMinistep", &LocalConfig::make_ministep,
+             py::return_value_policy::reference_internal)
+        .def("createObsdata", &LocalConfig::make_obsdata,
+             py::return_value_policy::reference_internal)
+        .def("getUpdatestep", &LocalConfig::updatestep,
+             py::return_value_policy::reference_internal)
+        .def("global_ministep", &LocalConfig::global_ministep)
+        .def("global_obsdata", &LocalConfig::global_obsdata)
+        .def("getMinistep", &LocalConfig::ministep)
+        .def("clear", &LocalConfig::clear)
+        .def("getObsdata", &LocalConfig::obsdata);
 }
