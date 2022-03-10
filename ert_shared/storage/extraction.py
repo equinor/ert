@@ -177,7 +177,7 @@ def _extract_active_observations(ert) -> Mapping[str, list]:
         return {}
 
     ministep = update_step[-1]
-    return ministep.get_obs_active_list()
+    return ministep.get_runtime_obs_active_list()
 
 
 def _create_observation_transformation(ert, db_observations) -> List[dict]:

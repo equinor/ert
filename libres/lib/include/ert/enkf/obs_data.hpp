@@ -67,6 +67,7 @@ extern "C" PY_USED void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
 
 extern "C" obs_data_type *obs_data_alloc(double global_std_scaling);
 extern "C" void obs_data_free(obs_data_type *);
+obs_data_type *obs_data_alloc_copy(const obs_data_type *src);
 Eigen::MatrixXd obs_data_makeD(const obs_data_type *obs_data,
                                const Eigen::MatrixXd &E,
                                const Eigen::MatrixXd &S);

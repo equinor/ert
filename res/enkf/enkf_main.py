@@ -18,6 +18,7 @@ from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
 
 from res import ResPrototype
+from res import _lib
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
@@ -176,9 +177,6 @@ class _RealEnKFMain(BaseCClass):
     )
     _get_model_config = ResPrototype(
         "model_config_ref enkf_main_get_model_config( enkf_main )"
-    )
-    _get_local_config = ResPrototype(
-        "local_config_ref enkf_main_get_local_config( enkf_main )"
     )
     _get_analysis_config = ResPrototype(
         "analysis_config_ref enkf_main_get_analysis_config( enkf_main)"
@@ -339,9 +337,7 @@ class _RealEnKFMain(BaseCClass):
 
     def getLocalConfig(self) -> LocalConfig:
         """@rtype: LocalConfig"""
-        config = self._get_local_config().setParent(self)
-        config.initAttributes(self.ensembleConfig(), self.eclConfig().getGrid())
-        return config
+        return _lib.local.enkf_main.get_local_config(self)
 
     def siteConfig(self) -> SiteConfig:
         """@rtype: SiteConfig"""

@@ -91,6 +91,20 @@ SCENARIO(
             }
         }
 
+        THEN("obs_data_alloc_copy") {
+            auto *rng1 = rng_alloc(MZRAN, INIT_DEFAULT);
+            auto *rng2 = rng_alloc(MZRAN, INIT_DEFAULT);
+            auto *obs_data_copy = obs_data_alloc_copy(obs_data);
+            auto E1 = obs_data_makeE(obs_data, rng1, 3);
+            auto E2 = obs_data_makeE(obs_data_copy, rng2, 3);
+
+            REQUIRE(E1 == E2);
+
+            obs_data_free(obs_data_copy);
+            rng_free(rng1);
+            rng_free(rng2);
+        }
+
         WHEN("One more block is added and E is allocated") {
             const char *obs_key = "obs_block_1";
             const int obs_size = 4;

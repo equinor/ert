@@ -41,7 +41,7 @@ bool LocalObsDataNode::operator!=(const LocalObsDataNode &other) const {
     return !(*this == other);
 }
 
-RES_LIB_SUBMODULE("local.local_obsdata_node", m) {
+RES_LIB_SUBMODULE("local.obsdata_node", m) {
     py::class_<LocalObsDataNode>(m, "LocalObsdataNode")
         .def(py::init<const std::string &>())
         .def("key", &LocalObsDataNode::name)

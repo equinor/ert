@@ -87,6 +87,8 @@ bool LocalObsData::add_node(const LocalObsDataNode &node) {
 
 std::size_t LocalObsData::size() const { return this->m_nodes.size(); }
 
+bool LocalObsData::empty() const { return this->m_nodes.size() == 0; }
+
 bool LocalObsData::operator==(const LocalObsData &other) const {
     return this->m_nodes == other.m_nodes &&
            this->m_node_index == other.m_node_index &&
@@ -112,7 +114,7 @@ ActiveList &get_active_list(LocalObsData &obs_data, const std::string &key) {
 
 } // namespace
 
-RES_LIB_SUBMODULE("local.local_obsdata", m) {
+RES_LIB_SUBMODULE("local.obsdata", m) {
     py::class_<LocalObsData>(m, "LocalObsdata")
         .def(py::init<const std::string &>())
         .def("__len__", &LocalObsData::size)

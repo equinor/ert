@@ -63,6 +63,7 @@ def analysis_smoother_update(
     # Looping over local analysis ministep
     for i in range(len(updatestep)):
         ministep = updatestep[i]
+        print("num ministep: {}".format(len(updatestep)))
 
         update_data = _lib.update.make_update_data(
             source_fs,

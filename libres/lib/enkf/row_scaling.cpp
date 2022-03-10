@@ -21,6 +21,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <ert/python.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/res_util/matrix.hpp>
@@ -72,6 +74,10 @@ double RowScaling::assign(size_t index, double value) {
     return m_data.at(index);
 }
 
+bool RowScaling::operator==(const RowScaling &other) const {
+    return this->m_resolution == other.m_resolution &&
+           this->m_data == other.m_data;
+}
 /*
   The final step in the Ensemble Smoother update is the matrix multiplication
 
@@ -100,7 +106,8 @@ double RowScaling::assign(size_t index, double value) {
 void RowScaling::multiply(matrix_type *A, const matrix_type *X0) const {
     if (m_data.size() != matrix_get_rows(A))
         throw std::invalid_argument(
-            "Size mismatch between row_scaling and A matrix");
+            fmt::format("Size mismatch row_scaling: {}   A.rows: {}",
+                        this->size(), matrix_get_rows(A)));
 
     if (matrix_get_columns(A) != matrix_get_rows(X0))
         throw std::invalid_argument("Size mismatch between X0 and A matrix");
@@ -235,7 +242,7 @@ RES_LIB_SUBMODULE("local.row_scaling", m) {
     py::options opts;
     opts.disable_function_signatures();
 
-    py::class_<RowScaling, std::shared_ptr<RowScaling>>(m, "RowScaling")
+    py::class_<RowScaling>(m, "RowScaling")
         .def(py::init<>())
         .def("__len__", &RowScaling::size)
         .def("__setitem__", &setitem, "index"_a, "value"_a)
