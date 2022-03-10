@@ -227,6 +227,19 @@ class Workspace:
                         f"Resource must be a regular file: '{resource.source_location}'"
                     )
 
+    def suggest_local_run_path(
+        self, basename: str = "local-test-run", run_id: str = "abcdef"
+    ) -> Path:
+        """Suggest an absolute directory path that can be used for a local test
+        run.
+
+        Args:
+            basename: This will be part of returned directory name, with
+                an index appended.
+            runid: An id that will always be included in the suggested runpath
+        """
+        return Path(self._path.absolute() / (basename + f"-{run_id}"))
+
 
 def initialize(path: Union[str, Path]) -> Workspace:
     """Initialize a workspace directory
