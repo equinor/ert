@@ -91,9 +91,6 @@ extern "C" void matrix_scale_row(matrix_type *matrix, int row,
                                  double scale_factor);
 void matrix_set_const_column(matrix_type *matrix, const double value,
                              int column);
-extern "C" void matrix_copy_column(matrix_type *target_matrix,
-                                   const matrix_type *src_matrix,
-                                   int src_column, int target_column);
 
 double *matrix_get_data(const matrix_type *matrix);
 

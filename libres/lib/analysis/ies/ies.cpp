@@ -29,8 +29,6 @@
 #include <ert/util/rng.hpp>
 #include <ert/util/bool_vector.hpp>
 
-#include <ert/res_util/matrix.hpp>
-
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 
@@ -47,31 +45,39 @@ using Eigen::MatrixXd;
  * 
  */
 namespace ies {
-void linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y);
+void linalg_compute_AA_projection(const Eigen::MatrixXd &A, Eigen::MatrixXd &Y);
 
-void linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
-                    matrix_type *S);
+void linalg_solve_S(const Eigen::MatrixXd &W0, const Eigen::MatrixXd &Y,
+                    Eigen::MatrixXd &S);
 
-void linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
-                               const matrix_type *E, const matrix_type *R,
-                               const Eigen::MatrixXd &S, const matrix_type *H,
+void linalg_subspace_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
+                               const Eigen::MatrixXd &E,
+                               const Eigen::MatrixXd &R,
+                               const Eigen::MatrixXd &S,
+                               const Eigen::MatrixXd &H,
                                const std::variant<double, int> &truncation,
                                double ies_steplength);
 
-void linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
-                            const matrix_type *S, const matrix_type *H,
+void linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
+                            const Eigen::MatrixXd &S, const Eigen::MatrixXd &H,
                             double ies_steplength);
 } // namespace ies
 
 namespace {
 auto logger = ert::get_logger("ies");
+
+void subtract_row_mean(Eigen::MatrixXd &matrix) {
+    for (int i = 0; i < matrix.rows(); i++) {
+        double row_mean = matrix.row(i).sum() / matrix.cols();
+        for (int j = 0; j < matrix.cols(); j++)
+            matrix(i, j) -= row_mean;
+    }
 }
+} // namespace
 
 void ies::init_update(ies::data::Data &module_data,
                       const std::vector<bool> &ens_mask,
-                      const std::vector<bool> &obs_mask, const matrix_type *S,
-                      const matrix_type *R, const matrix_type *E,
-                      const matrix_type *D) {
+                      const std::vector<bool> &obs_mask) {
     /* Store current ens_mask in module_data->ens_mask for each iteration */
     module_data.update_ens_mask(ens_mask);
     /* Store obs_mask for initial iteration in module_data->obs_mask0,
@@ -80,33 +86,31 @@ void ies::init_update(ies::data::Data &module_data,
     module_data.update_obs_mask(obs_mask);
 }
 
-void ies_initX__(const matrix_type *A, const matrix_type *Y0,
-                 const matrix_type *R, const matrix_type *E,
-                 const matrix_type *D, matrix_type *X,
+void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
+                 const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
+                 const Eigen::MatrixXd &D, Eigen::MatrixXd &X,
                  const ies::config::inversion_type ies_inversion,
                  const std::variant<double, int> &truncation,
-                 bool use_aa_projection, matrix_type *W0, double ies_steplength,
-                 int iteration_nr, double *costf)
+                 bool use_aa_projection, Eigen::MatrixXd &W0,
+                 double ies_steplength, int iteration_nr, double *costf)
 
 {
-    const int ens_size = matrix_get_columns(Y0);
-    const int nrobs_inp = matrix_get_rows(Y0);
+    const int ens_size = Y0.cols();
+    const int nrobs_inp = Y0.rows();
 
-    matrix_type *Y = matrix_alloc_copy(Y0);
-    matrix_type *H =
-        matrix_alloc(nrobs_inp, ens_size); // Innovation vector "H= S*W+D-Y"
-    matrix_type *S = matrix_alloc(
+    Eigen::MatrixXd Y = Y0;
+    Eigen::MatrixXd S = Eigen::MatrixXd::Zero(
         nrobs_inp,
         ens_size); // Predicted ensemble anomalies scaled with inv(Omeaga)
     const double nsc = 1.0 / sqrt(ens_size - 1.0);
 
     /*  Subtract mean of predictions to generate predicted ensemble anomaly matrix (Line 5) */
-    matrix_subtract_row_mean(Y); // Y=Y*(I-(1/ens_size)*11)
-    matrix_scale(Y, nsc);        // Y=Y / sqrt(ens_size-1)
+    subtract_row_mean(Y); // Y=Y*(I-(1/ens_size)*11)
+    Y *= nsc;             // Y=Y / sqrt(ens_size-1)
 
     /* COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1) */
-    if (A) {
-        const int state_size = matrix_get_rows(A);
+    if (A.rows() > 0 && A.cols() > 0) {
+        const int state_size = A.rows();
         if (use_aa_projection && (state_size <= (ens_size - 1))) {
             ies::linalg_compute_AA_projection(A, Y);
         }
@@ -119,11 +123,11 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
     ies::linalg_solve_S(W0, Y, S);
 
     /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
-    matrix_assign(H, D); // H=D=dobs + E - Y
-    *H += *S * *W0;
+    Eigen::MatrixXd H = D; // H=D=dobs + E - Y
+    H += S * W0;
 
     /* Store previous W for convergence test */
-    matrix_type *W = matrix_alloc_copy(W0);
+    Eigen::MatrixXd W = W0;
 
     /*
      * COMPUTE NEW UPDATED W                                                                        (Line 9)
@@ -157,7 +161,7 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
      */
 
     if (ies_inversion != ies::config::IES_INVERSION_EXACT) {
-        ies::linalg_subspace_inversion(W0, ies_inversion, E, R, *S, H,
+        ies::linalg_subspace_inversion(W0, ies_inversion, E, R, S, H,
                                        truncation, ies_steplength);
     } else if (ies_inversion == ies::config::IES_INVERSION_EXACT) {
         ies::linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength);
@@ -167,46 +171,40 @@ void ies_initX__(const matrix_type *A, const matrix_type *Y0,
      * CONSTRUCT TRANFORM MATRIX X FOR CURRENT ITERATION (Line 10)
      *   X= I + W/sqrt(N-1)
      */
-    matrix_assign(X, W0);
-    matrix_scale(X, nsc);
+    X = W0;
+    X *= nsc;
     for (int i = 0; i < ens_size; i++) {
-        matrix_iadd(X, i, i, 1.0);
+        X(i, i) += 1.0;
     }
 
     /* COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE (Line 12)*/
-    matrix_type *DW = matrix_alloc(ens_size, ens_size);
-    matrix_sub(DW, W0, W);
+    Eigen::MatrixXd DW = W0 - W;
 
     if (costf) {
         std::vector<double> costJ(ens_size);
         double local_costf = 0.0;
         for (int i = 0; i < ens_size; i++) {
-            costJ[i] = matrix_column_column_dot_product(W, i, W, i) +
-                       matrix_column_column_dot_product(D, i, D, i);
+            costJ[i] = W.col(i).dot(W.col(i)) + D.col(i).dot(D.col(i));
             local_costf += costJ[i];
         }
         local_costf = local_costf / ens_size;
         *costf = local_costf;
     }
-
-    matrix_free(W);
-    matrix_free(DW);
-    matrix_free(H);
-    matrix_free(S);
-    matrix_free(Y);
 }
 
 void ies::updateA(
     const config::Config &ies_config, data::Data &data,
-    matrix_type *A,           // Updated ensemble A retured to ERT.
-    const matrix_type *Yin,   // Ensemble of predicted measurements
-    const matrix_type *Rin,   // Measurement error covariance matrix (not used)
-    const matrix_type *Ein,   // Ensemble of observation perturbations
-    const matrix_type *Din) { // (d+E-Y) Ensemble of perturbed observations - Y
+    Eigen::MatrixXd &A,         // Updated ensemble A retured to ERT.
+    const Eigen::MatrixXd &Yin, // Ensemble of predicted measurements
+    const Eigen::MatrixXd
+        &Rin, // Measurement error covariance matrix (not used)
+    const Eigen::MatrixXd &Ein, // Ensemble of observation perturbations
+    const Eigen::MatrixXd
+        &Din) { // (d+E-Y) Ensemble of perturbed observations - Y
 
-    int ens_size = matrix_get_columns(
-        Yin); // Number of active realizations in current iteration
-    int state_size = matrix_get_rows(A);
+    int ens_size =
+        Yin.cols(); // Number of active realizations in current iteration
+    int state_size = A.rows();
 
     int iteration_nr = data.inc_iteration_nr();
 
@@ -229,69 +227,43 @@ void ies::updateA(
      * Copies the initial measurement perturbations for the active observations into the current E matrix.
      * Copies the inputs in D, Y and R into their local representations
      */
-    matrix_type *Y = matrix_alloc_copy(Yin);
-    matrix_type *R = matrix_alloc_copy(Rin);
-    matrix_type *E = data.alloc_activeE();
-    matrix_type *D = matrix_alloc_copy(Din);
-    matrix_type *X = matrix_alloc(ens_size, ens_size);
+    Eigen::MatrixXd E = data.make_activeE();
+    Eigen::MatrixXd D = Din;
+    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(ens_size, ens_size);
 
     /* Subtract new measurement perturbations              D=D-E    */
-    matrix_inplace_sub(D, Ein);
+    D -= Ein;
     /* Add old measurement perturbations */
-    matrix_inplace_add(D, E);
+    D += E;
 
     double costf;
     {
-        auto *W0 = data.alloc_activeW();
-        ies_initX__(ies_config.aaprojection() ? A : nullptr, Y, R, E, D, X,
-                    ies_config.inversion(), ies_config.truncation(),
+        auto W0 = data.make_activeW();
+        ies_initX__(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin,
+                    E, D, X, ies_config.inversion(), ies_config.truncation(),
                     ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
                     &costf);
         ies::linalg_store_active_W(&data, W0);
         logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
-        matrix_free(W0);
     }
 
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
-    int m_ens_size = std::min(ens_size - 1, 16);
-    int m_state_size = std::min(state_size - 1, 3);
     {
-        matrix_type *A0 = data.alloc_activeA();
-        *A = *A0 * *X;
-        matrix_free(A0);
+        Eigen::MatrixXd A0 = data.make_activeA();
+        A = A0 * X;
     }
-
-    matrix_free(Y);
-    matrix_free(D);
-    matrix_free(E);
-    matrix_free(R);
-    matrix_free(X);
 }
 
 /*  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
-void ies::linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y) {
-    int ens_size = matrix_get_columns(A);
-    int state_size = matrix_get_rows(A);
-    int nrobs = matrix_get_rows(Y);
+void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
+                                       Eigen::MatrixXd &Y) {
 
-    int m_nrobs = std::min(nrobs - 1, 7);
-    int m_ens_size = std::min(ens_size - 1, 16);
-    int m_state_size = std::min(state_size - 1, 3);
-
-    matrix_type *Ai = matrix_alloc_copy(A);
-    matrix_type *AAi = matrix_alloc(ens_size, ens_size);
-    matrix_subtract_row_mean(Ai);
-    matrix_type *VT = matrix_alloc(state_size, ens_size);
-
-    auto svd = Ai->bdcSvd(Eigen::ComputeThinV);
-    *VT = svd.matrixV().transpose();
-
-    *AAi = VT->transpose() * *VT;
-
-    matrix_inplace_matmul(Y, AAi);
-    matrix_free(Ai);
-    matrix_free(AAi);
-    matrix_free(VT);
+    Eigen::MatrixXd Ai = A;
+    subtract_row_mean(Ai);
+    auto svd = Ai.bdcSvd(Eigen::ComputeThinV);
+    Eigen::MatrixXd VT = svd.matrixV().transpose();
+    Eigen::MatrixXd AAi = VT.transpose() * VT;
+    Y *= AAi;
 }
 
 /*
@@ -299,92 +271,71 @@ void ies::linalg_compute_AA_projection(const matrix_type *A, matrix_type *Y) {
 *  When solving the system S = Y inv(Omega) we write
 *     Omega^T S^T = Y^T
 */
-void ies::linalg_solve_S(const matrix_type *W0, const matrix_type *Y,
-                         matrix_type *S) {
-    int ens_size = matrix_get_columns(W0);
-    int nrobs = matrix_get_rows(S);
-    double nsc = 1.0 / sqrt(ens_size - 1.0);
-
-    matrix_type *YT =
-        matrix_alloc(ens_size, nrobs); // Y^T used in linear solver
-    matrix_type *ST =
-        matrix_alloc(ens_size, nrobs); // current S^T used in linear solver
-    matrix_type *Omega =
-        matrix_alloc(ens_size, ens_size); // current S^T used in linear solver
+void ies::linalg_solve_S(const Eigen::MatrixXd &W0, const Eigen::MatrixXd &Y,
+                         Eigen::MatrixXd &S) {
+    double nsc = 1.0 / sqrt(W0.cols() - 1.0);
 
     /*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).*/
-    matrix_assign(
-        Omega,
-        W0); // Omega=data->W (from previous iteration used to solve for S)
-    matrix_subtract_row_mean(Omega);   // Omega=Omega*(I-(1/N)*11')
-    matrix_scale(Omega, nsc);          // Omega/sqrt(N-1)
-    matrix_inplace_transpose(Omega);   // Omega=transpose(Omega)
-    for (int i = 0; i < ens_size; i++) // Omega=Omega+I
-        matrix_iadd(Omega, i, i, 1.0);
+    Eigen::MatrixXd Omega =
+        W0; // Omega=data->W (from previous iteration used to solve for S)
+    subtract_row_mean(Omega);              // Omega=Omega*(I-(1/N)*11')
+    Omega *= nsc;                          // Omega/sqrt(N-1)
+    Omega.transposeInPlace();              // Omega=transpose(Omega)
+    for (int i = 0; i < Omega.cols(); i++) // Omega=Omega+I
+        Omega(i, i) += 1.0;
 
-    matrix_transpose(Y, YT); // RHS stored in YT
+    Eigen::MatrixXd YT = Y.transpose(); // RHS stored in YT
 
     /* Solve system                                                                                (Line 7)   */
-    Eigen::MatrixXd tmp = Omega->fullPivLu().solve(*YT);
-    *YT = tmp;
+    Eigen::MatrixXd tmp = Omega.fullPivLu().solve(YT);
+    YT = tmp;
 
-    matrix_transpose(YT, S); // Copy solution to S
-
-    matrix_free(Omega);
-    matrix_free(ST);
-    matrix_free(YT);
+    S = YT.transpose(); // Copy solution to S
 }
 
 /*
 *  The standard inversion works on the equation
 *          S'*(S*S'+R)^{-1} H           (a)
 */
-void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
-                                    const matrix_type *E, const matrix_type *R,
-                                    const Eigen::MatrixXd &S,
-                                    const matrix_type *H,
-                                    const std::variant<double, int> &truncation,
-                                    double ies_steplength) {
+void ies::linalg_subspace_inversion(
+    Eigen::MatrixXd &W0, const int ies_inversion, const Eigen::MatrixXd &E,
+    const Eigen::MatrixXd &R, const Eigen::MatrixXd &S,
+    const Eigen::MatrixXd &H, const std::variant<double, int> &truncation,
+    double ies_steplength) {
 
     int ens_size = S.cols();
     int nrobs = S.rows();
     double nsc = 1.0 / sqrt(ens_size - 1.0);
-    matrix_type *X1 = matrix_alloc(
+    Eigen::MatrixXd X1 = Eigen::MatrixXd::Zero(
         nrobs, std::min(ens_size, nrobs)); // Used in subspace inversion
     Eigen::VectorXd eig(ens_size);
 
     if (ies_inversion == config::IES_INVERSION_SUBSPACE_RE) {
-        matrix_type *scaledE = matrix_alloc_copy(E);
-        matrix_scale(scaledE, nsc);
+        Eigen::MatrixXd scaledE = E;
+        scaledE *= nsc;
+        enkf_linalg_lowrankE(S, scaledE, X1, eig, truncation);
 
-        enkf_linalg_lowrankE(S, *scaledE, *X1, eig, truncation);
-
-        matrix_free(scaledE);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
-        matrix_type *Et = matrix_alloc_transpose(E);
-        MatrixXd Cee = *E * *Et;
-        matrix_scale(&Cee, 1.0 / ((ens_size - 1) * (ens_size - 1)));
+        Eigen::MatrixXd Et = E.transpose();
+        MatrixXd Cee = E * Et;
+        Cee *= 1.0 / ((ens_size - 1) * (ens_size - 1));
 
-        enkf_linalg_lowrankCinv(S, Cee, *X1, eig, truncation);
+        enkf_linalg_lowrankCinv(S, Cee, X1, eig, truncation);
 
-        matrix_free(Et);
     } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
-        matrix_type *scaledR = matrix_alloc_copy(R);
-        matrix_scale(scaledR, nsc * nsc);
-        enkf_linalg_lowrankCinv(S, *scaledR, *X1, eig, truncation);
-        matrix_free(scaledR);
+        Eigen::MatrixXd scaledR = R;
+        scaledR *= nsc * nsc;
+        enkf_linalg_lowrankCinv(S, scaledR, X1, eig, truncation);
     }
 
     /*
         X3 = X1 * diag(eig) * X1' * H (Similar to Eq. 14.31, Evensen (2007))
     */
     Eigen::Map<Eigen::VectorXd> eig_vector(eig.data(), eig.size());
-    Eigen::MatrixXd X3 = enkf_linalg_genX3(*X1, *H, eig_vector);
+    Eigen::MatrixXd X3 = enkf_linalg_genX3(X1, H, eig_vector);
 
     /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * S' * X3                          (Line 9)    */
-    *W0 = ies_steplength * S.transpose() * X3 + (1.0 - ies_steplength) * *W0;
-
-    matrix_free(X1);
+    W0 = ies_steplength * S.transpose() * X3 + (1.0 - ies_steplength) * W0;
 }
 
 /*
@@ -393,45 +344,45 @@ void ies::linalg_subspace_inversion(matrix_type *W0, const int ies_inversion,
 *  which in the case when R=I can be rewritten as
 *          (S'*S + I)^{-1} * S' * H     (b)
 */
-void ies::linalg_exact_inversion(matrix_type *W0, const int ies_inversion,
-                                 const matrix_type *S, const matrix_type *H,
+void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
+                                 const Eigen::MatrixXd &S,
+                                 const Eigen::MatrixXd &H,
                                  double ies_steplength) {
-    int ens_size = matrix_get_columns(S);
+    int ens_size = S.cols();
 
-    MatrixXd StS = MatrixXd::Identity(ens_size, ens_size) + S->transpose() * *S;
+    MatrixXd StS = MatrixXd::Identity(ens_size, ens_size) + S.transpose() * S;
 
     auto svd = StS.bdcSvd(Eigen::ComputeFullU);
     MatrixXd Z = svd.matrixU();
     Eigen::VectorXd eig = svd.singularValues();
 
-    MatrixXd ZtStH = Z.transpose() * S->transpose() * *H;
+    MatrixXd ZtStH = Z.transpose() * S.transpose() * H;
 
-    for (int i = 0; i < ens_size; i++) {
-        eig[i] = 1.0 / eig[i];
-        matrix_scale_row(&ZtStH, i, eig[i]);
-    }
+    for (int i = 0; i < ens_size; i++)
+        ZtStH.row(i) /= eig[i];
 
     /*    Update data->W = (1-ies_steplength) * data->W +  ies_steplength * Z * (Lamda^{-1}) Z' S' H         (Line 9)    */
-    *W0 = ies_steplength * Z * ZtStH + (1.0 - ies_steplength) * *W0;
+    W0 = ies_steplength * Z * ZtStH + (1.0 - ies_steplength) * W0;
 }
 
 /*
 * the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */
-void ies::linalg_store_active_W(ies::data::Data *data, const matrix_type *W0) {
+void ies::linalg_store_active_W(ies::data::Data *data,
+                                const Eigen::MatrixXd &W0) {
     int ens_size_msk = data->ens_mask_size();
     int i = 0;
     int j;
-    matrix_type *dataW = data->getW();
+    Eigen::MatrixXd &dataW = data->getW();
     const std::vector<bool> &ens_mask = data->ens_mask();
-    matrix_set(dataW, 0.0);
+    dataW.setConstant(0.0);
     for (int iens = 0; iens < ens_size_msk; iens++) {
         if (ens_mask[iens]) {
             j = 0;
             for (int jens = 0; jens < ens_size_msk; jens++) {
                 if (ens_mask[jens]) {
-                    matrix_iset_safe(dataW, iens, jens, matrix_iget(W0, i, j));
+                    dataW(iens, jens) = W0(i, j);
                     j += 1;
                 }
             }
@@ -450,19 +401,18 @@ void ies::linalg_store_active_W(ies::data::Data *data, const matrix_type *W0) {
   as temporary local variables.
 */
 
-void ies::initX(const config::Config &ies_config, const matrix_type *Y0,
-                const matrix_type *R, const matrix_type *E,
-                const matrix_type *D, matrix_type *X) {
+void ies::initX(const config::Config &ies_config, const Eigen::MatrixXd &Y0,
+                const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
+                const Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
 
     bool use_aa_projection = false;
     double steplength = 1;
     int iteration_nr = 1;
-    int active_ens_size = matrix_get_rows(X);
+    int active_ens_size = X.rows();
 
-    auto *W0 = matrix_alloc(active_ens_size, active_ens_size);
-    ies_initX__(nullptr, Y0, R, E, D, X, ies_config.inversion(),
+    Eigen::MatrixXd W0 =
+        Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+    ies_initX__({}, Y0, R, E, D, X, ies_config.inversion(),
                 ies_config.truncation(), use_aa_projection, W0, steplength,
                 iteration_nr, nullptr);
-
-    matrix_free(W0);
 }

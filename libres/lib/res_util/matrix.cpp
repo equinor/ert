@@ -221,16 +221,6 @@ void matrix_set_many_on_column(matrix_type *matrix, int row_offset,
         throw std::out_of_range("range violation");
 }
 
-void matrix_copy_column(matrix_type *dst_matrix, const matrix_type *src_matrix,
-                        int dst_column, int src_column) {
-    matrix_assert_equal_rows(dst_matrix, src_matrix);
-    {
-        int row;
-        for (row = 0; row < dst_matrix->rows(); row++)
-            (*dst_matrix)(row, dst_column) = (*src_matrix)(row, src_column);
-    }
-}
-
 double matrix_column_column_dot_product(const matrix_type *m1, int col1,
                                         const matrix_type *m2, int col2) {
     return m1->col(col1).dot(m2->col(col2));

@@ -21,8 +21,8 @@ class update_data_type : public std::enable_shared_from_this<update_data_type> {
 public:
     update_data_type() = default;
     update_data_type(
-        matrix_type S_in, matrix_type E_in, matrix_type D_in, matrix_type R_in,
-        std::optional<Eigen::MatrixXd> A_in,
+        Eigen::MatrixXd S_in, Eigen::MatrixXd E_in, Eigen::MatrixXd D_in,
+        Eigen::MatrixXd R_in, std::optional<Eigen::MatrixXd> A_in,
         std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
             A_with_rowscaling_in,
         const std::vector<bool> &obs_mask_in)
