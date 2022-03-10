@@ -74,7 +74,7 @@ def one_at_a_time(
                 records = _build_base_records(const_records, parameters)
 
                 rec_values = dist.ppf(0.5)
-                rec_values.data[idx] = lim_val.data[idx]  # type: ignore
+                rec_values.data[idx] = lim_val.data[idx]
                 records[group_name] = rec_values
 
                 evaluations.append(records)
@@ -104,9 +104,9 @@ def fast_sample(
         records = []
         for sample in samples:
             data = dict(zip(dist.index, sample[: dist.size]))
-            record = NumericalRecord(data=data, index=dist.index)  # type: ignore
+            record = NumericalRecord(data=data, index=dist.index)
             records.append(record)
-        samples = np.delete(samples, list(range(dist.size)), axis=1)  # type: ignore
+        samples = np.delete(samples, list(range(dist.size)), axis=1)
         group_records.append(records)
 
     evaluations = []
@@ -159,7 +159,7 @@ def fast_analyze(
     data = np.zeros([sample_size * param_size, record_size])
     for i, record in enumerate(records):
         for j in range(record_size):
-            data[i][j] = record.data[j]  # type: ignore
+            data[i][j] = record.data[j]
 
     problem = _build_salib_problem(parameters)
 

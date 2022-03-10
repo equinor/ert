@@ -5,7 +5,7 @@ from typing import Optional, Union
 from concurrent.futures import CancelledError
 import websockets
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
-from websockets.client import WebSocketClientProtocol  # type: ignore
+from websockets.client import WebSocketClientProtocol
 from websockets.datastructures import Headers
 
 
@@ -76,7 +76,7 @@ class SyncWebsocketDuplexer:
         self._ensure_running()
         try:
             asyncio.run_coroutine_threadsafe(
-                self._ws.send(msg), loop=self._loop  # type: ignore
+                self._ws.send(msg), loop=self._loop
             ).result()
         except OSError:
             self.stop()
@@ -89,7 +89,7 @@ class SyncWebsocketDuplexer:
         while True:
             try:
                 event = asyncio.run_coroutine_threadsafe(
-                    self._ws.recv(), loop=self._loop  # type: ignore
+                    self._ws.recv(), loop=self._loop
                 ).result()
                 yield event
             except OSError:

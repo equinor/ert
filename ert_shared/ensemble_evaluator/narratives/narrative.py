@@ -10,7 +10,7 @@ from http import HTTPStatus
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from cloudevents.sdk import types
-from websockets.server import WebSocketServer  # type: ignore
+from websockets.server import WebSocketServer
 
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
@@ -75,7 +75,7 @@ class _CloudEventSerializer:
         return from_json(data, data_unmarshaller=data_unmarshaller)
 
 
-class _ConnectionInformation(TypedDict):  # type: ignore
+class _ConnectionInformation(TypedDict):
     uri: str
     proto: str
     hostname: str
@@ -112,7 +112,7 @@ class ReMatch:
         self.replace_with = replace_with
 
 
-class EventDescription(TypedDict):  # type: ignore
+class EventDescription(TypedDict):
     id_: str
     source: Union[str, ReMatch]
     type_: Union[str, ReMatch]

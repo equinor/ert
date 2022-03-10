@@ -175,7 +175,7 @@ class EvaluatorServerConfig:
         if generate_cert:
             cert, key, pw = _generate_certificate(ip_address=self.host)
         else:
-            cert, key, pw = None, None, None  # type: ignore
+            cert, key, pw = None, None, None
         self.cert = cert
         self._key = key
         self._key_pw = pw

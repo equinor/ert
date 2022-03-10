@@ -80,7 +80,7 @@ class _DiscreteInput(_ParametersConfig):
     values: List[float]
 
     @root_validator
-    def _ensure_proper_values(cls, values):  # type: ignore
+    def _ensure_proper_values(cls, values: dict) -> dict:
         value_list = values.get("values")
 
         if value_list is not None and len(value_list) > 0:

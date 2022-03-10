@@ -104,7 +104,7 @@ def add_step_outputs(
 ) -> None:
     for record_name, output in step_config.output.items():
         transformation = _get_output_recordtransformation(output)
-        output = (
+        io_output = (
             create_file_io_builder()
             .set_name(record_name)
             .set_path(pathlib.Path(output.location))

@@ -228,7 +228,7 @@ async def _save_record_to_file(record: Record, location: Path, mime: str) -> Non
             await ft.write(get_serializer(mime).encode(record.data))
     else:
         async with aiofiles.open(str(location), mode="wb") as fb:
-            await fb.write(record.data)  # type: ignore
+            await fb.write(record.data)
 
 
 class RecordTreeTransformation(RecordTransformation):

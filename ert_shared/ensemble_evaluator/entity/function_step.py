@@ -75,7 +75,7 @@ class FunctionTask(prefect.Task):
             )
         return output
 
-    def run(self, inputs: Dict[str, RecordTransmitter]):  # type: ignore
+    def run(self, inputs: Dict[str, RecordTransmitter]):
         with Client(
             prefect.context.url, prefect.context.token, prefect.context.cert
         ) as ee_client:

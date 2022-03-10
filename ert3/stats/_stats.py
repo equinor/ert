@@ -1,5 +1,8 @@
+import sys
 import random
-from typing import Callable, List, Optional, cast
+from typing import Callable, List, Optional, Type, cast
+
+from typing_extensions import TypeAlias
 
 import numpy as np
 import scipy.stats
@@ -11,7 +14,7 @@ if sys.version_info >= (3, 7):
 else:
     # Workaround for Python 3.6: numpy.typing was introduced in numpy 1.20,
     # which does not support it.
-    NDArrayF64 = np.ndarray
+    NDArrayF64: TypeAlias = np.ndarray
 
 import ert
 
@@ -74,7 +77,7 @@ class Distribution:
         else:
             return ert.data.NumericalRecord(
                 data={
-                    idx: float(val) for idx, val in zip(self.index, x)  # type: ignore
+                    int(idx): float(val) for idx, val in zip(self.index, x)
                 }
             )
 
@@ -189,16 +192,16 @@ class Discrete(Distribution):
         self._values = values
         self._sortedvalues = sorted(self._values)
 
-        def rvs(size: int) -> np.ndarray:  # type: ignore
+        def rvs(size: int) -> np.ndarray:
             return np.array(random.choices(self._values, k=size))
 
-        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+        def ppf(x: np.ndarray) -> np.ndarray:
             # pylint: disable=line-too-long
             # See https://openpress.usask.ca/introtoappliedstatsforpsych/chapter/6-1-discrete-data-percentiles-and-quartiles/ # noqa: E501
             # and in particular equation 6.2 (keeping in mind zero-indexing in Python)
             n = len(self._sortedvalues)
             idxs = np.ceil(x * n).astype(int)
-            retval: np.ndarray = np.array(  # type: ignore
+            retval: np.ndarray = np.array(
                 [self._sortedvalues[i - 1] if 1 <= i <= n else np.nan for i in idxs]
             )
             return retval
