@@ -274,17 +274,6 @@ def _build_local_test_run_config(
             f"{experiment_run_config.experiment_config.type}"
         )
 
-    for input_record in experiment_run_config.ensemble_config.input:
-        if input_record.source_namespace not in (
-            ert3.config.SourceNS.resources,
-            ert3.config.SourceNS.stochastic,
-        ):
-            raise NotImplementedError(
-                "Local test runs are currently only supported for "
-                "stochastic and resources input sources. "
-                f"Found:\n'{input_record.source_namespace}'."
-            )
-
     raw_ensemble_config = experiment_run_config.ensemble_config.dict()
 
     raw_ensemble_config["active_range"] = str(realization)

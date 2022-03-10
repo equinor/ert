@@ -23,6 +23,10 @@ ert3 record load designed_coefficients experiments/doe/coefficients_record.json
 ert3 run doe
 ert3 export doe
 
+ert3 record load designed_coefficients_3 experiments/doe3/coefficients_record.json
+ert3 run --local-test-run --realization 1 doe3
+grep '"a": 1' local-test-run-*/coefficients.json
+
 ert3 run sensitivity
 ert3 export sensitivity
 
