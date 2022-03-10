@@ -11,8 +11,8 @@ import pkg_resources as pkg
 
 import ert
 import ert3
-from ert3.workspace import Workspace
 from ert3.config import DEFAULT_RECORD_MIME_TYPE
+from ert3.workspace import Workspace
 from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
 
@@ -36,6 +36,16 @@ def _build_init_argparser(subparsers: Any) -> None:
 def _build_run_argparser(subparsers: Any) -> None:
     run_parser = subparsers.add_parser("run", help="Run experiment")
     run_parser.add_argument("experiment_name", help="Name of the experiment")
+    run_parser.add_argument(
+        "--local-test-run",
+        default=False,
+        action="store_true",
+        help=(
+            "Will evaluate a single realization locally in the "
+            "folder `<workspace root>/local-test-run-xxxxxx` where xxxxxx "
+            "is an id appended to the experiment name."
+        ),
+    )
 
 
 def _build_export_argparser(subparsers: Any) -> None:
@@ -232,13 +242,63 @@ def _init(args: Any) -> None:
         ) from err
 
 
+def _build_local_test_run_config(
+    experiment_run_config: ert3.config.ExperimentRunConfig,
+) -> ert3.config.ExperimentRunConfig:
+    """Validate and modify a run configuration for a local test run scenario.
+
+    The ensemble size is set to 1, and the driver is set to "local".
+    """
+    if experiment_run_config.experiment_config.type != "evaluation":
+        raise ert.exceptions.ExperimentError(
+            "Local test runs are only supported for evaluation experiments, was:\n"
+            f"{experiment_run_config.experiment_config.type}"
+        )
+
+    for input_record in experiment_run_config.ensemble_config.input:
+        if not (
+            input_record.source.startswith("stochastic.")
+            or input_record.source.startswith("resources.")
+        ):
+            raise NotImplementedError(
+                "Local test runs are currently only supported for "
+                "stochastic and resources input sources. "
+                f"Found:\n'{input_record.source}'."
+            )
+
+    raw_ensemble_config = experiment_run_config.ensemble_config.dict()
+    raw_ensemble_config["size"] = 1
+    raw_ensemble_config["forward_model"]["driver"] = "local"
+
+    # Mime types do not make sense when data is not read from
+    # files, see issue #2764
+    for input_ in raw_ensemble_config["input"]:
+        input_.pop("mime")
+
+    return ert3.config.ExperimentRunConfig(
+        experiment_run_config.experiment_config,
+        experiment_run_config.stages_config,
+        ert3.config.load_ensemble_config(raw_ensemble_config),
+        experiment_run_config.parameters_config,
+    )
+
+
 def _run(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
     ert.storage.assert_storage_initialized(workspace_name=workspace.name)
     experiment_run_config = workspace.load_experiment_run_config(args.experiment_name)
+
+    if args.local_test_run:
+        experiment_run_config = _build_local_test_run_config(experiment_run_config)
+
     if experiment_run_config.experiment_config.type == "evaluation":
-        ert3.engine.run(experiment_run_config, workspace, args.experiment_name)
+        ert3.engine.run(
+            experiment_run_config,
+            workspace,
+            args.experiment_name,
+            local_test_run=args.local_test_run,
+        )
     elif experiment_run_config.experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
             experiment_run_config, workspace, args.experiment_name

@@ -343,6 +343,7 @@ def function_stages_config():
 
 @pytest.fixture
 def ert_storage(ert_storage_client, monkeypatch):
+    # ert_storage_client fixture is defined in ert-storage repo.
     from contextlib import contextmanager
     from ert.storage import _storage
     from httpx import AsyncClient

@@ -1,16 +1,16 @@
 import copy
+import os
 import pathlib
 import sys
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
-
-import ert3
-import ert
-from ert_shared.services import Storage
 from ert_utils import chdir
+
+import ert
+import ert3
+from ert_shared.services import Storage
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
@@ -584,6 +584,46 @@ def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
     capture = capsys.readouterr()
     assert "Error while loading stages configuration data:" in capture.out
     assert "str type expected" in capture.out
+
+
+def test_cli_local_test_run(tmpdir):
+    with chdir(tmpdir):
+        with Storage.start_server():
+            args = ["ert3", "init", "--example", "polynomial"]
+            with patch.object(sys, "argv", args):
+                ert3.console._console._main()
+
+            os.chdir("polynomial")
+
+            # Error testing is performed in this context to reduce
+            # test time as a full storage server is involved.
+            with pytest.raises(ert.exceptions.ExperimentError):
+                with patch.object(
+                    sys, "argv", ["ert3", "run", "sensitivity", "--local-test-run"]
+                ):
+                    ert3.console._console._main()
+
+            with pytest.raises(NotImplementedError):
+                with patch.object(
+                    sys, "argv", ["ert3", "run", "doe", "--local-test-run"]
+                ):
+                    ert3.console._console._main()
+
+            with patch.object(
+                sys, "argv", ["ert3", "run", "evaluation", "--local-test-run"]
+            ):
+                ert3.console._console._main()
+
+            experiments = [
+                experiment
+                for experiment in ert.storage.get_experiment_names(
+                    workspace_name="polynomial"
+                )
+                if experiment.startswith("evaluation-")
+            ]
+            assert len(experiments) == 1
+            run_id = experiments[0].split("-")[1]
+            assert pathlib.Path(f"local-test-run-{run_id}/output.json").exists()
 
 
 def test_failing_check_service(tmpdir):

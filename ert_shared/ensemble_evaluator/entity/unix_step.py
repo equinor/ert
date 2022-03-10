@@ -1,17 +1,17 @@
 import asyncio
-from typing import Any, Dict, Optional
-from pathlib import Path
+import contextlib
+import os
 import subprocess
 import tempfile
-import os
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 import prefect
 
+from ert.data import RecordTransmitter
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.entity import identifiers as ids
-
-from ert.data import RecordTransmitter
 
 _BIN_FOLDER = "bin"
 
@@ -27,12 +27,24 @@ def _send_event(type_: str, source: str, data: Optional[Dict[str, Any]] = None) 
         )
 
 
+@contextlib.contextmanager
+def create_runpath(path=None):
+    if path is not None:
+        yield Path(path)
+    else:
+        with tempfile.TemporaryDirectory() as run_path:
+            yield Path(run_path)
+
+
 class UnixTask(prefect.Task):
-    def __init__(self, step, output_transmitters, ee_id, *args, **kwargs) -> None:
+    def __init__(
+        self, step, output_transmitters, ee_id, *args, run_path=None, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._step = step
         self._output_transmitters = output_transmitters
         self._ee_id = ee_id
+        self._run_path = run_path
 
     def get_step(self):
         return self._step
@@ -109,8 +121,7 @@ class UnixTask(prefect.Task):
             transmitter = outputs[output.get_name()]
             await transmitter.transmit_record(record)
 
-        with tempfile.TemporaryDirectory() as run_path:
-            run_path = Path(run_path)
+        with create_runpath(self._run_path) as run_path:
             self._load_and_dump_input(transmitters=inputs, runpath=run_path)
             _send_event(
                 ids.EVTYPE_FM_STEP_RUNNING,

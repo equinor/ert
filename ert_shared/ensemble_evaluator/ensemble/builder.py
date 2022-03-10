@@ -452,11 +452,15 @@ class _UnixStep(_Step):
         jobs,
         name,
         source,
+        run_path=None,
     ):
         super().__init__(id_, inputs, outputs, jobs, name, source)
+        self._run_path: pathlib.Path = run_path
 
     def get_task(self, output_transmitters, ee_id, *args, **kwargs):
-        return UnixTask(self, output_transmitters, ee_id, *args, **kwargs)
+        return UnixTask(
+            self, output_transmitters, ee_id, *args, run_path=self._run_path, **kwargs
+        )
 
 
 class _FunctionStep(_Step):
@@ -704,6 +708,7 @@ class _StepBuilder(_StageBuilder):
                 jobs,
                 stage.get_name(),
                 source,
+                run_path=self._run_path,
             )
         else:
             raise ValueError("Unexpected type while building step: {self._type}")
