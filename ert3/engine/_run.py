@@ -1,8 +1,10 @@
 import asyncio
 import logging
+import os
 import tempfile
+import uuid
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import ert
 import ert3
@@ -142,13 +144,28 @@ def run(
     experiment_run_config: ert3.config.ExperimentRunConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
+    local_test_run: bool = False,
 ) -> None:
+    """Run a configured experiment in a workspace.
+
+    Args:
+        experiment_run_config
+        workspace
+        experiment_name: Which experiment in the workspace to pick
+        local_test_run: If set, the runpath will be in the current
+            directory, with a unique id (6 digit hex). The experiment
+            name as registered in storage will also contain the same id.
+    """
     # This reassures mypy that the ensemble size is defined
     assert experiment_run_config.ensemble_config.size is not None
     ensemble_size = experiment_run_config.ensemble_config.size
 
     if experiment_run_config.experiment_config.type != "evaluation":
         raise ValueError("this entry point can only run 'evaluation' experiments")
+
+    if local_test_run:
+        test_run_id = uuid.uuid4().hex
+        experiment_name = f"{experiment_name}-{test_run_id}"
 
     _prepare_experiment(
         workspace.name,
@@ -167,6 +184,12 @@ def run(
         .set_name(f"{stage.name}-only_step")
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
+
+    local_run_path: Optional[Path] = None
+
+    if local_test_run:
+        local_run_path = workspace.suggest_local_run_path(run_id=test_run_id)
+        step_builder.set_run_path(local_run_path)
 
     inputs = experiment_run_config.get_linked_inputs()
 
@@ -221,6 +244,11 @@ def run(
         step_builder,
     )
     ert3.evaluator.evaluate(ensemble)
+
+    if local_test_run:
+        print("Run")
+        print(f"  cd {os.path.relpath(str(local_run_path))}")
+        print("to inspect the input and output files.")
 
 
 # pylint: disable=too-many-arguments

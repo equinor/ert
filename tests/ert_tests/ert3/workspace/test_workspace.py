@@ -3,11 +3,10 @@ import os
 from pathlib import Path
 
 import pytest
-
-import ert3
-import ert
-
 import yaml
+
+import ert
+import ert3
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 _RESOURCES_BASE = ert3.workspace._workspace._RESOURCES_BASE
@@ -328,3 +327,17 @@ def test_workspace_load_experiment_config_resources_validation(
         match="Resource must be a directory: 'coefficients.json'",
     ):
         workspace.load_experiment_run_config("test")
+
+
+def test_suggest_local_run_path(tmpdir):
+    ert3.workspace.initialize(tmpdir)
+    workspace = ert3.workspace.Workspace(tmpdir)
+    assert workspace.suggest_local_run_path() == Path(tmpdir) / "local-test-run-abcdef"
+    assert (
+        workspace.suggest_local_run_path(basename="foobar")
+        == Path(tmpdir) / "foobar-abcdef"
+    )
+    assert (
+        workspace.suggest_local_run_path(run_id="aaa")
+        == Path(tmpdir) / "local-test-run-aaa"
+    )
