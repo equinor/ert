@@ -601,7 +601,7 @@ def test_check_service(tmpdir, monkeypatch):
         with patch.object(
             sys, "argv", ["ert3", "service", "check", "storage", "--timeout", "10"]
         ):
-            with Storage.start_server():
+            with Storage.start_server(timeout=120):
                 ert3.console._console._main()
 
 

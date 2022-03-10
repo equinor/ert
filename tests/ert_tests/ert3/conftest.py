@@ -135,7 +135,7 @@ def workspace_integration(tmpdir):
     workspace_dir.mkdir()
     with chdir(workspace_dir):
 
-        with Storage.start_server():
+        with Storage.start_server(timeout=120):
             workspace_obj = ert3.workspace.initialize(workspace_dir)
             ert.storage.init(workspace_name=workspace_obj.name)
             yield workspace_obj
