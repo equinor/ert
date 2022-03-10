@@ -62,7 +62,6 @@ private:
 };
 
 Eigen::MatrixXd load_matrix(const std::string &name, int rows, int columns) {
-    printf("file: %s\n", name.c_str());
     if (!fs::exists(name))
         throw std::invalid_argument("File not found");
 
@@ -116,7 +115,6 @@ void matrix_delete_row_column(Eigen::MatrixXd &m1, int row_column) {
 Eigen::MatrixXd es_testdata::make_matrix(const std::string &fname, int rows,
                                        int columns) const {
     pushd tmp_path(this->path);
-    printf("Path: %s\n", this->path.c_str());
     return load_matrix(fname, rows, columns);
 }
 
@@ -149,9 +147,7 @@ void es_testdata::deactivate_obs(int iobs) {
         matrix_delete_row(&this->dObs, iobs);
         matrix_delete_row(&this->S, iobs);
         matrix_delete_row_column(this->R, iobs);
-
         matrix_delete_row(&this->E, iobs);
-
         matrix_delete_row(&this->D, iobs);
 
         this->active_obs_size -= 1;
@@ -167,9 +163,7 @@ void es_testdata::deactivate_realization(int iens) {
         this->ens_mask[iens] = false;
 
         matrix_delete_column(&this->S, iens);
-
         matrix_delete_column(&this->E, iens);
-
         matrix_delete_column(&this->D, iens);
 
         this->active_ens_size -= 1;
@@ -199,11 +193,11 @@ void es_testdata::save(const std::string &path) const {
     pushd tmp_path(path, true);
     save_size(this->active_ens_size, this->active_obs_size);
 
-    save_matrix_data("S", S);
-    save_matrix_data("E", E);
-    save_matrix_data("R", R);
-    save_matrix_data("D", D);
-    save_matrix_data("dObs", dObs);
+    save_matrix_data("S", this->S);
+    save_matrix_data("E", this->E);
+    save_matrix_data("R", this->R);
+    save_matrix_data("D", this->D);
+    save_matrix_data("dObs", this->dObs);
 }
 
 /*

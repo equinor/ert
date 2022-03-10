@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <ert/util/test_util.hpp>
 #include <ert/util/rng.h>
+#include <fmt/ostream.h>
 
 #include <ert/res_util/es_testdata.hpp>
 #include <ert/res_util/matrix.hpp>
@@ -26,44 +27,19 @@ void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
   testdata structure - with A1 as prior.
 */
 
-// void forward_model(res::es_testdata &testdata, const Eigen::MatrixXd &A1) {
-//     int nrens = A1.cols();
-//     int ndim = A1.rows();
-//     int nrobs = testdata.S.rows();
-
-//     /* Model prediction gives new S given prior S=func(A) */
-//     for (int iens = 0; iens < nrens; iens++) {
-//         for (int i = 0; i < nrobs; i++) {
-//             double coeffa = A1( 0, iens);
-//             double coeffb = A1( 1, iens);
-//             double coeffc = A1( 2, iens);
-//             double y = coeffa * i * i + coeffb * i + coeffc;
-//             testdata.S(i, iens) = y;
-//         }
-//     }
-
-//     /* Updating D according to new S: D=dObs+E-S*/
-//     for (int i = 0; i < nrens; i++)
-//         matrix_copy_column(&testdata.D, &testdata.dObs, i, 0);
-
-//     testdata.D += testdata.E;
-//     testdata.D += testdata.S;
-// }
-
-
-void forward_model(res::es_testdata &testdata, const matrix_type *A1) {
-    int nrens = matrix_get_columns(A1);
-    int ndim = matrix_get_rows(A1);
-    int nrobs = matrix_get_rows(&testdata.S);
+void forward_model(res::es_testdata &testdata, const Eigen::MatrixXd &A1) {
+    int nrens = A1.cols();
+    int ndim = A1.rows();
+    int nrobs = testdata.S.rows();
 
     /* Model prediction gives new S given prior S=func(A) */
     for (int iens = 0; iens < nrens; iens++) {
         for (int i = 0; i < nrobs; i++) {
-            double coeffa = matrix_iget(A1, 0, iens);
-            double coeffb = matrix_iget(A1, 1, iens);
-            double coeffc = matrix_iget(A1, 2, iens);
+            double coeffa = A1( 0, iens);
+            double coeffb = A1( 1, iens);
+            double coeffc = A1( 2, iens);
             double y = coeffa * i * i + coeffb * i + coeffc;
-            matrix_iset(&testdata.S, i, iens, y);
+            testdata.S(i, iens) = y;
         }
     }
 
@@ -71,12 +47,11 @@ void forward_model(res::es_testdata &testdata, const matrix_type *A1) {
     for (int i = 0; i < nrens; i++)
         matrix_copy_column(&testdata.D, &testdata.dObs, i, 0);
 
-    matrix_inplace_add(&testdata.D, &testdata.E);
-    matrix_inplace_sub(&testdata.D, &testdata.S);
+    testdata.D += testdata.E;
+    testdata.D += testdata.S;
 }
 
 void cmp_std_ies(res::es_testdata &testdata) {
-    int num_iter = 100;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
@@ -84,7 +59,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
     ies::data::Data ies_data(testdata.active_ens_size);
     ies::config::Config ies_config(true);
     auto Dprev = testdata.D;
-    forward_model(testdata, &A1);
+    forward_model(testdata, A1);
     assert(Dprev != testdata.D);
     ies_config.truncation(1.0);
     ies_config.max_steplength(0.6);
@@ -95,16 +70,14 @@ void cmp_std_ies(res::es_testdata &testdata) {
     /* ES solution */
 
     init_stdA(testdata, A2);
-
+    int num_iter = 100;
     for (int iter = 0; iter < num_iter; iter++) {
-        forward_model(testdata, &A1);
-
+        forward_model(testdata, A1);
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask,
                          testdata.S, testdata.R, testdata.E, testdata.D);
 
         ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
                      testdata.E, testdata.D);
-
         test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
 
         if (A1.isApprox(A2, 1e-5))
@@ -121,12 +94,10 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
-    Eigen::MatrixXd A1c = A1;
-    Eigen::MatrixXd A2c = A2;
     ies::data::Data ies_data(testdata.active_ens_size);
     ies::config::Config ies_config(true);
 
-    forward_model(testdata, &A1);
+    forward_model(testdata, A1);
     ies_config.truncation(1.0);
     ies_config.min_steplength(0.6);
     ies_config.max_steplength(0.6);
@@ -136,12 +107,12 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
 
     /* IES solution after with one realization is inactivated */
     for (int iter = 0; iter < num_iter; iter++) {
-        forward_model(testdata, &A1);
+        forward_model(testdata, A1);
 
         // Removing the realization
         if (iter == 6) {
             testdata.deactivate_realization(iens_deact);
-            A1c = Eigen::MatrixXd::Zero(A1.rows(),
+            Eigen::MatrixXd A1c = Eigen::MatrixXd::Zero(A1.rows(),
                                std::count(testdata.ens_mask.begin(),
                                           testdata.ens_mask.end(), true));
             int iens_active = 0;
@@ -163,7 +134,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
 
     /* ES update with one realization removed*/
     {
-        A2c = Eigen::MatrixXd::Zero(A2.rows(),
+        Eigen::MatrixXd A2c = Eigen::MatrixXd::Zero(A2.rows(),
                            std::count(testdata.ens_mask.begin(),
                                       testdata.ens_mask.end(), true));
         int iens_active = 0;
@@ -175,7 +146,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
         }
         A2 = A2c;
     }
-    forward_model(testdata, &A2);
+    forward_model(testdata, A2);
 
     init_stdA(testdata, A2);
 
@@ -262,7 +233,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
 
 int main(int argc, char **argv) {
     res::es_testdata testdata(argv[1]);
-    cmp_std_ies(testdata);
-    //cmp_std_ies_delrel(testdata);
+    //cmp_std_ies(testdata);
+    cmp_std_ies_delrel(testdata);
     //test_deactivate_observations_and_realizations(argv[1]);
 }

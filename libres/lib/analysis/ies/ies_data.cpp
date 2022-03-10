@@ -107,7 +107,8 @@ void ies::data::Data::augment_initialE(const Eigen::MatrixXd &E0) {
 }
 
 void ies::data::Data::store_initialA(const Eigen::MatrixXd &A) {
-    this->A0 = A;
+    if (A0.rows() != A.rows() || A0.cols() != A.cols())
+        this->A0 = A;
 }
 
 const std::vector<bool> &ies::data::Data::obs_mask0() const {
