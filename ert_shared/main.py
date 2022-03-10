@@ -54,6 +54,15 @@ def run_webviz_ert(args):
 
     with Storage.connect_or_start_server(**kwargs) as storage:
         storage.wait_until_ready()
+        print(
+            """
+-----------------------------------------------------------
+
+Starting up Webviz-ERT. This might take more than a minute.
+
+-----------------------------------------------------------
+"""
+        )
         with WebvizErt.start_server() as webviz_ert:
             webviz_ert.wait()
 
