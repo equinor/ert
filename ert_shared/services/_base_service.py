@@ -327,12 +327,15 @@ class BaseService:
             pass
         return cls.start_server(*args, **kwargs)
 
-    def wait_until_ready(self, timeout: Optional[float] = None) -> bool:
-        self._conn_info_event.wait(timeout)
-        if self._conn_info_event.is_set():
+    def wait_until_ready(self, timeout: int = None) -> bool:
+        if timeout is None:
+            timeout = self._timeout
+
+        if self._conn_info_event.wait(timeout):
             return not (
                 self._conn_info is None or isinstance(self._conn_info, Exception)
             )
+
         return False  # Timeout reached
 
     def wait(self) -> None:
@@ -353,12 +356,14 @@ class BaseService:
 
         self._conn_info_event.set()
 
-    def fetch_conn_info(self, timeout: float = 20) -> Mapping[str, Any]:
-        self.wait_until_ready(timeout)
-        if self._conn_info is None:
-            raise ValueError("conn_info is None")
-        elif isinstance(self._conn_info, Exception):
+    def fetch_conn_info(self) -> Mapping[str, Any]:
+        is_ready = self.wait_until_ready(self._timeout)
+        if isinstance(self._conn_info, Exception):
             raise self._conn_info
+        elif not is_ready:
+            raise TimeoutError()
+        elif self._conn_info is None:
+            raise ValueError("conn_info is None")
         return self._conn_info
 
     def shutdown(self) -> int:
