@@ -4,7 +4,8 @@ from ert_gui.ertwidgets.models.ertmodel import getAllCases
 
 
 class AllCasesModel(QAbstractItemModel):
-    def __init__(self):
+    def __init__(self, facade):
+        self.facade = facade
         QAbstractItemModel.__init__(self)
         self.__data = []
 
@@ -42,7 +43,7 @@ class AllCasesModel(QAbstractItemModel):
         return None
 
     def getAllItems(self):
-        return getAllCases()
+        return getAllCases(self.facade)
 
     def indexOf(self, item):
         items = self.getAllItems()

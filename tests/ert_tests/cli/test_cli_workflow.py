@@ -3,8 +3,6 @@ from argparse import Namespace
 from utils import SOURCE_DIR
 from ert_utils import ErtTest, tmpdir
 
-from ert_shared import ERT
-from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
 from res.enkf import EnKFMain, ResConfig
 
@@ -22,8 +20,6 @@ class WorkflowTest(ErtTest):
         rc = ResConfig(user_config_file=config_file)
         rc.convertToCReference(None)
         ert = EnKFMain(rc)
-        notifier = ErtCliNotifier(ert, config_file)
-        with ERT.adapt(notifier):
-            args = Namespace(name="test_wf")
-            execute_workflow(args.name)
-            assert os.path.isfile(".ert_runpath_list")
+        args = Namespace(name="test_wf")
+        execute_workflow(ert, args.name)
+        assert os.path.isfile(".ert_runpath_list")

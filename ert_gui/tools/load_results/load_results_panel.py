@@ -17,15 +17,16 @@ from qtpy.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.all_cases_model import AllCasesModel
-from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_gui.tools.load_results import LoadResultsModel
+from ert_shared.libres_facade import LibresFacade
 
 
 class LoadResultsPanel(QWidget):
-    def __init__(self):
+    def __init__(self, facade: LibresFacade):
+        self.facade = facade
         QWidget.__init__(self)
 
         self.setMinimumWidth(500)
@@ -36,7 +37,7 @@ class LoadResultsPanel(QWidget):
         self.activateWindow()
 
         layout = QFormLayout()
-        current_case = getCurrentCaseName()
+        current_case = facade.get_current_case_name()
 
         run_path_text = QTextEdit()
         run_path_text.setText(self.readCurrentRunPath())
@@ -45,7 +46,7 @@ class LoadResultsPanel(QWidget):
 
         layout.addRow("Load data from current run path: ", run_path_text)
 
-        self._case_model = AllCasesModel()
+        self._case_model = AllCasesModel(self.facade)
         self._case_combo = QComboBox()
         self._case_combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
         self._case_combo.setMinimumContentsLength(20)
@@ -53,14 +54,14 @@ class LoadResultsPanel(QWidget):
         self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))
         layout.addRow("Load into case:", self._case_combo)
 
-        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_model = ActiveRealizationsModel(self.facade)
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "load_results_manually/Realizations"
         )
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        iterations_count = LoadResultsModel.getIterationCount()
+        iterations_count = LoadResultsModel.getIterationCount(self.facade._enkf_main)
 
         self._iterations_model = ValueModel(iterations_count)
         self._iterations_field = StringBox(
@@ -72,8 +73,8 @@ class LoadResultsPanel(QWidget):
         self.setLayout(layout)
 
     def readCurrentRunPath(self):
-        current_case = getCurrentCaseName()
-        run_path = LoadResultsModel.getCurrentRunPath()
+        current_case = self.facade.get_current_case_name()
+        run_path = LoadResultsModel.getCurrentRunPath(self.facade._enkf_main)
         run_path = run_path.replace("<ERTCASE>", current_case)
         run_path = run_path.replace("<ERT-CASE>", current_case)
         return run_path
@@ -93,7 +94,9 @@ class LoadResultsPanel(QWidget):
                 % (iteration, e)
             )
             return False
-        loaded = LoadResultsModel.loadResults(selected_case, realizations, iteration)
+        loaded = LoadResultsModel.loadResults(
+            self.facade._enkf_main, selected_case, realizations, iteration
+        )
         if loaded > 0:
             print("Successfully loaded %d realisations." % loaded)
         else:
@@ -101,5 +104,5 @@ class LoadResultsPanel(QWidget):
         return loaded
 
     def setCurrectCase(self):
-        current_case = getCurrentCaseName()
+        current_case = self.facade.get_current_case_name()
         self._case_combo.setCurrentIndex(self._case_model.indexOf(current_case))

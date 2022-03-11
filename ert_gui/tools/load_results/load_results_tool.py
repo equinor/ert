@@ -21,7 +21,8 @@ from ert_gui.tools.load_results import LoadResultsPanel
 
 
 class LoadResultsTool(Tool):
-    def __init__(self):
+    def __init__(self, facade):
+        self.facade = facade
         super(LoadResultsTool, self).__init__(
             "Load results manually",
             "tools/load_manually",
@@ -29,11 +30,11 @@ class LoadResultsTool(Tool):
         )
         self.__import_widget = None
         self.__dialog = None
-        self.setEnabled(LoadResultsModel.isValidRunPath())
+        self.setEnabled(LoadResultsModel.isValidRunPath(self.facade._enkf_main))
 
     def trigger(self):
         if self.__import_widget is None:
-            self.__import_widget = LoadResultsPanel()
+            self.__import_widget = LoadResultsPanel(self.facade)
         self.__dialog = ClosableDialog(
             "Load results manually", self.__import_widget, self.parent()
         )

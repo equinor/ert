@@ -1,10 +1,6 @@
 import functools
-import os
-import sys
 
-import pkg_resources
 import webbrowser
-import yaml
 
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtWidgets import (

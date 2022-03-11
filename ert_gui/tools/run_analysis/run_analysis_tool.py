@@ -26,10 +26,9 @@ from ert_gui.tools.run_analysis import RunAnalysisPanel
 import ert_shared
 
 
-def analyse(target, source):
+def analyse(ert, target, source):
     """Runs analysis using target and source cases. Returns whether or not
     the analysis was successful."""
-    ert = ert_shared.ERT.ert
     fs_manager = ert.getEnkfFsManager()
     es_update = ESUpdate(ert)
 
@@ -43,7 +42,9 @@ def analyse(target, source):
 
 
 class RunAnalysisTool(Tool):
-    def __init__(self):
+    def __init__(self, ert, notifier):
+        self.ert = ert
+        self.notifier = notifier
         super(RunAnalysisTool, self).__init__(
             "Run Analysis", "tools/run_analysis", resourceIcon("ide/table_import")
         )
@@ -53,7 +54,7 @@ class RunAnalysisTool(Tool):
 
     def trigger(self):
         if self._run_widget is None:
-            self._run_widget = RunAnalysisPanel()
+            self._run_widget = RunAnalysisPanel(self.ert, self.notifier)
         self._dialog = ClosableDialog("Run Analysis", self._run_widget, self.parent())
         self._dialog.addButton("Run", self.run)
         self._dialog.exec_()
@@ -66,7 +67,7 @@ class RunAnalysisTool(Tool):
             self._report_empty_target()
             return
 
-        success = analyse(target, source)
+        success = analyse(self.ert, target, source)
 
         msg = QMessageBox()
         msg.setWindowTitle("Run Analysis")
@@ -82,7 +83,7 @@ class RunAnalysisTool(Tool):
             msg.exec_()
             return
 
-        ert_shared.ERT.ertChanged.emit()
+        self.notifier.ertChanged.emit()
         self._dialog.accept()
 
     def _report_empty_target(self):

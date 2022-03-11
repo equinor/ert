@@ -15,25 +15,23 @@
 #  for more details.
 import os
 
-from ert_shared import ERT
 
-
-class LoadResultsModel(object):
+class LoadResultsModel:
     @staticmethod
-    def loadResults(selected_case, realisations, iteration):
+    def loadResults(ert, selected_case, realisations, iteration):
         """
         @type selected_case: str
         @type realisations: BoolVector
         @type iteration: int
         @rtype int: number of loaded realisations
         """
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
-        return ERT.ert.loadFromForwardModel(realisations, iteration, fs)
+        fs = ert.getEnkfFsManager().getFileSystem(selected_case)
+        return ert.loadFromForwardModel(realisations, iteration, fs)
 
     @staticmethod
-    def isValidRunPath():
+    def isValidRunPath(ert):
         """@rtype: bool"""
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
+        run_path = ert.getModelConfig().getRunpathAsString()
         try:
             result = run_path % (0, 0)
             return True
@@ -49,14 +47,14 @@ class LoadResultsModel(object):
         return False
 
     @staticmethod
-    def getCurrentRunPath():
+    def getCurrentRunPath(ert):
         """@rtype: str"""
-        return ERT.ert.getModelConfig().getRunpathAsString()
+        return ert.getModelConfig().getRunpathAsString()
 
     @staticmethod
-    def getIterationCount():
+    def getIterationCount(ert):
         """@rtype: int"""
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
+        run_path = ert.getModelConfig().getRunpathAsString()
         try:
             results = run_path % (0, 0)
         except TypeError:

@@ -12,9 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import getCurrentCaseName
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
 from ert_gui.simulation import SingleTestRunPanel
 from ert_gui.simulation import (
@@ -25,10 +23,14 @@ from ert_gui.simulation import (
 from ert_gui.simulation import RunDialog
 from collections import OrderedDict
 
+from ert_shared.libres_facade import LibresFacade
+
 
 class SimulationPanel(QWidget):
-    def __init__(self, config_file):
+    def __init__(self, ert, notifier, config_file):
+        self.notifier = notifier
         QWidget.__init__(self)
+        self.ert = ert
         self._config_file = config_file
 
         self.setObjectName("Simulation_panel")
@@ -75,12 +77,12 @@ class SimulationPanel(QWidget):
 
         self._simulation_widgets = OrderedDict()
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
-        self.addSimulationConfigPanel(SingleTestRunPanel())
-        self.addSimulationConfigPanel(EnsembleExperimentPanel())
-        if ERT.ert.have_observations():
-            self.addSimulationConfigPanel(EnsembleSmootherPanel())
-            self.addSimulationConfigPanel(MultipleDataAssimilationPanel())
-            self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel())
+        self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier))
+        self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier))
+        if self.ert.have_observations():
+            self.addSimulationConfigPanel(EnsembleSmootherPanel(ert, notifier))
+            self.addSimulationConfigPanel(MultipleDataAssimilationPanel(ert, notifier))
+            self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel(ert, notifier))
 
         self.setLayout(layout)
 
@@ -108,7 +110,7 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        case_name = getCurrentCaseName()
+        case_name = LibresFacade(self.ert).get_current_case_name()
         message = (
             "Are you sure you want to use case '%s' for initialization of the initial ensemble when running the simulations?"
             % case_name
@@ -122,13 +124,13 @@ class SimulationPanel(QWidget):
             arguments = self.getSimulationArguments()
             dialog = RunDialog(
                 self._config_file,
-                run_model(ERT.ert, ERT.ert.get_queue_config()),
+                run_model(self.ert, self.ert.get_queue_config()),
                 arguments,
             )
             dialog.startSimulation()
             dialog.exec_()
 
-            ERT.emitErtChange()  # simulations may have added new cases.
+            self.notifier.emitErtChange()  # simulations may have added new cases
 
     def toggleSimulationMode(self):
         current_model = self.getCurrentSimulationModel()

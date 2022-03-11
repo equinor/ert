@@ -28,6 +28,9 @@ class LibresFacade(object):
     def get_analysis_config(self):
         return self._enkf_main.analysisConfig()
 
+    def get_analysis_module(self, module_name):
+        return self._enkf_main.analysisConfig().getModule(module_name)
+
     def get_analysis_modules(self, iterable=False):
         module_names = self._enkf_main.analysisConfig().getModuleList()
 

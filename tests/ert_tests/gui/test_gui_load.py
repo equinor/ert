@@ -9,7 +9,6 @@ from qtpy.QtCore import Qt
 import ert_gui
 from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.gert_main import _start_window, run_gui
-from ert_shared import ERT
 
 
 @pytest.fixture()
@@ -19,9 +18,45 @@ def patch_enkf_main(monkeypatch, tmpdir):
 
     mocked_enkf_main = Mock()
     mocked_enkf_main.getWorkflowList.return_value = plugins_mock
+    mocked_enkf_main.getEnsembleSize.return_value = 10
+
+    mocked_enkf_main.analysisConfig.return_value.getAnalysisIterConfig.return_value.getNumIterations.return_value = (
+        1
+    )
+    mocked_enkf_main.getWorkflowList.return_value.getWorkflowNames.return_value = [
+        "my_workflow"
+    ]
 
     res_config_mock = Mock()
     type(res_config_mock).config_path = PropertyMock(return_value=tmpdir.strpath)
+    facade_mock = Mock()
+    facade_mock.get_analysis_module_names.return_value = []
+    facade_mock.get_ensemble_size.return_value = 1
+    monkeypatch.setattr(
+        ert_gui.simulation.single_test_run_panel,
+        "LibresFacade",
+        Mock(return_value=facade_mock),
+    )
+    monkeypatch.setattr(
+        ert_gui.simulation.ensemble_experiment_panel,
+        "LibresFacade",
+        Mock(return_value=facade_mock),
+    )
+    monkeypatch.setattr(
+        ert_gui.simulation.ensemble_smoother_panel,
+        "LibresFacade",
+        Mock(return_value=facade_mock),
+    )
+    monkeypatch.setattr(
+        ert_gui.simulation.multiple_data_assimilation_panel,
+        "LibresFacade",
+        Mock(return_value=facade_mock),
+    )
+    monkeypatch.setattr(
+        ert_gui.simulation.iterated_ensemble_smoother_panel,
+        "LibresFacade",
+        Mock(return_value=facade_mock),
+    )
 
     monkeypatch.setattr(
         ert_gui.gert_main, "EnKFMain", Mock(return_value=mocked_enkf_main)
@@ -34,31 +69,14 @@ def patch_enkf_main(monkeypatch, tmpdir):
         "_getAllCases",
         Mock(return_value=["test"]),
     )
-    monkeypatch.setattr(
-        ert_gui.ertwidgets.caseselector, "getCurrentCaseName", Mock(return_value="test")
-    )
-    monkeypatch.setattr(
-        ert_gui.ertwidgets.models.activerealizationsmodel,
-        "getRealizationCount",
-        Mock(return_value=0),
-    )
-    monkeypatch.setattr(
-        ert_gui.simulation.ensemble_experiment_panel,
-        "getRealizationCount",
-        Mock(return_value=0),
-    )
+
     monkeypatch.setattr(
         ert_gui.ertwidgets.models.activerealizationsmodel,
         "mask_to_rangestring",
         Mock(return_value=""),
     )
 
-    obs_mock = Mock()
-    obs_mock.have_observations.return_value = False
-    ert_shared_mock = Mock()
-    type(ert_shared_mock).ert = PropertyMock(return_value=obs_mock)
-
-    monkeypatch.setattr(ert_gui.simulation.simulation_panel, "ERT", ert_shared_mock)
+    # monkeypatch.setattr(ert_gui.simulation.simulation_panel, "ERT", ert_shared_mock)
     monkeypatch.setattr(
         ert_gui.ertwidgets.summarypanel.ErtSummary,
         "getForwardModels",
@@ -72,11 +90,6 @@ def patch_enkf_main(monkeypatch, tmpdir):
     monkeypatch.setattr(
         ert_gui.ertwidgets.summarypanel.ErtSummary,
         "getObservations",
-        Mock(return_value=[]),
-    )
-    monkeypatch.setattr(
-        ert_gui.tools.workflows.workflows_tool,
-        "getWorkflowNames",
         Mock(return_value=[]),
     )
 
@@ -94,29 +107,25 @@ def patch_enkf_main(monkeypatch, tmpdir):
 def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     args_mock = Mock()
     type(args_mock).config = PropertyMock(return_value="config.ert")
-    notifier = ErtNotifier(patch_enkf_main, args_mock.config)
-    with ERT.adapt(notifier):
-        gui = _start_window(patch_enkf_main, args_mock)
-        qtbot.addWidget(gui)
+    notifier = ErtNotifier(args_mock.config)
+    gui = _start_window(patch_enkf_main, notifier, args_mock)
+    qtbot.addWidget(gui)
 
-        sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
-        single_run_panel = gui.findChild(
-            qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
-        )
-        assert (
-            sim_panel.getCurrentSimulationModel()
-            == single_run_panel.getSimulationModel()
-        )
+    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+    single_run_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Single_test_run_panel"
+    )
+    assert (
+        sim_panel.getCurrentSimulationModel() == single_run_panel.getSimulationModel()
+    )
 
-        sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
-        qtbot.keyClick(sim_mode, Qt.Key_Down)
+    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+    qtbot.keyClick(sim_mode, Qt.Key_Down)
 
-        ensemble_panel = gui.findChild(
-            qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-        )
-        assert (
-            sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
-        )
+    ensemble_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
+    )
+    assert sim_panel.getCurrentSimulationModel() == ensemble_panel.getSimulationModel()
 
 
 @pytest.mark.skipif(
@@ -153,38 +162,24 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
         "runSimulation",
         _assert_iter_in_args,
     )
-    # overrides realization count to 2
-    monkeypatch.setattr(
-        ert_gui.ertwidgets.models.activerealizationsmodel,
-        "getRealizationCount",
-        Mock(return_value=2),
+
+    notifier = ErtNotifier(args_mock.config)
+    gui = _start_window(patch_enkf_main, notifier, args_mock)
+    qtbot.addWidget(gui)
+
+    sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
+    qtbot.keyClick(sim_mode, Qt.Key_Down)
+
+    sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
+
+    ensemble_panel = gui.findChild(
+        qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
     )
+    # simulate entering number 10 as iter_num
+    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
+    qtbot.keyClicks(ensemble_panel._iter_field, "10")
+    qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
 
-    monkeypatch.setattr(
-        ert_gui.simulation.ensemble_experiment_panel,
-        "getRealizationCount",
-        Mock(return_value=2),
-    )
-    notifier = ErtNotifier(patch_enkf_main, args_mock.config)
-    with ERT.adapt(notifier):
-        gui = _start_window(patch_enkf_main, args_mock)
-        qtbot.addWidget(gui)
-
-        sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
-        qtbot.keyClick(sim_mode, Qt.Key_Down)
-
-        sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
-
-        ensemble_panel = gui.findChild(
-            qtpy.QtWidgets.QWidget, name="Ensemble_experiment_panel"
-        )
-        # simulate entering number 10 as iter_num
-        qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Backspace)
-        qtbot.keyClicks(ensemble_panel._iter_field, "10")
-        qtbot.keyClick(ensemble_panel._iter_field, Qt.Key_Enter)
-
-        start_simulation = gui.findChild(
-            qtpy.QtWidgets.QWidget, name="start_simulation"
-        )
-        qtbot.mouseClick(start_simulation, Qt.LeftButton)
-        assert sim_panel.getSimulationArguments()["iter_num"] == 10
+    start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
+    qtbot.mouseClick(start_simulation, Qt.LeftButton)
+    assert sim_panel.getSimulationArguments()["iter_num"] == 10

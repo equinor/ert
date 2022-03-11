@@ -50,7 +50,8 @@ class SummaryTemplate(object):
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, ert, parent=None):
+        self.ert = ert
         QFrame.__init__(self, parent)
 
         self.setMinimumWidth(250)
@@ -71,7 +72,7 @@ class SummaryPanel(QFrame):
         self.updateSummary()
 
     def updateSummary(self):
-        summary = ErtSummary()
+        summary = ErtSummary(self.ert)
 
         text = SummaryTemplate("Forward Model")
 

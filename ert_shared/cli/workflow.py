@@ -1,11 +1,9 @@
 import logging
 
-from ert_shared import ERT
 
-
-def execute_workflow(workflow_name):
+def execute_workflow(ert, workflow_name):
     logger = logging.getLogger(__name__)
-    workflow_list = ERT.ert.getWorkflowList()
+    workflow_list = ert.getWorkflowList()
     try:
         workflow = workflow_list[workflow_name]
     except KeyError:
@@ -13,7 +11,7 @@ def execute_workflow(workflow_name):
         logger.error(msg.format(workflow_name))
         return
     context = workflow_list.getContext()
-    workflow.run(ert=ERT.ert, verbose=True, context=context)
+    workflow.run(ert=ert, verbose=True, context=context)
     all_successful = all([v["completed"] for k, v in workflow.getJobsReport().items()])
     if not all_successful:
         logger.error(f"Workflow {workflow_name} failed!")

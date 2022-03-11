@@ -10,9 +10,8 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
 )
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget
-from ert_gui.ertwidgets.models.ertmodel import getAllCases, selectOrCreateNewCase
+from ert_gui.ertwidgets.models.ertmodel import getAllCases
 from ert_gui.ertwidgets.validateddialog import ValidatedDialog
 from ert_gui.ertwidgets import resourceIcon
 
@@ -66,7 +65,8 @@ class AddRemoveWidget(QWidget):
 
 
 class CaseList(QWidget):
-    def __init__(self):
+    def __init__(self, facade, notifier):
+        self.facade = facade
         QWidget.__init__(self)
 
         addHelpToWidget(self, "init/case_list")
@@ -93,7 +93,7 @@ class CaseList(QWidget):
 
         self.setLayout(layout)
 
-        ERT.ertChanged.connect(self.updateList)
+        notifier.ertChanged.connect(self.updateList)
         self.updateList()
 
     def setSelectable(self, selectable):
@@ -103,10 +103,12 @@ class CaseList(QWidget):
             self._list.setSelectionMode(QAbstractItemView.NoSelection)
 
     def addItem(self):
-        dialog = ValidatedDialog("New case", "Enter name of new case:", getAllCases())
+        dialog = ValidatedDialog(
+            "New case", "Enter name of new case:", getAllCases(self.facade)
+        )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
-            selectOrCreateNewCase(new_case_name)
+            self.facade.select_or_create_new_case(new_case_name)
 
     def removeItem(self):
         message = "Support for removal of items has not been implemented!"
@@ -114,7 +116,7 @@ class CaseList(QWidget):
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""
-        case_list = getAllCases()
+        case_list = getAllCases(self.facade)
 
         self._list.clear()
 

@@ -2,12 +2,6 @@ from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import (
-    getRealizationCount,
-    getRunPath,
-    setNumberOfIterations,
-    getNumberOfIterations,
-)
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import (
@@ -16,22 +10,28 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import IteratedEnsembleSmoother
+from ert_shared.libres_facade import LibresFacade
+from res.enkf import EnKFMain
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self):
+    def __init__(self, ert: EnKFMain, notifier):
+        self.ert = ert
+        self.notifier = notifier
         SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
 
         layout = QFormLayout()
 
-        case_selector = CaseSelector()
+        case_selector = CaseSelector(LibresFacade(ert), notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % getRunPath())
+        run_path_label = QLabel(
+            "<b>%s</b>" % self.ert.getModelConfig().getRunpathAsString()
+        )
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        number_of_realizations_label = QLabel("<b>%d</b>" % self.ert.getEnsembleSize())
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -41,15 +41,19 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         num_iterations_spinner = QSpinBox()
         num_iterations_spinner.setMinimum(1)
         num_iterations_spinner.setMaximum(100)
-        num_iterations_spinner.setValue(getNumberOfIterations())
+        num_iterations_spinner.setValue(
+            self.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
+        )
         addHelpToWidget(
             num_iterations_spinner, "config/simulation/number_of_iterations"
         )
-        num_iterations_spinner.valueChanged[int].connect(setNumberOfIterations)
+        num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
 
         layout.addRow("Number of iterations:", num_iterations_spinner)
 
-        self._iterated_target_case_format_model = TargetCaseModel(format_mode=True)
+        self._iterated_target_case_format_model = TargetCaseModel(
+            LibresFacade(self.ert), notifier, format_mode=True
+        )
         self._iterated_target_case_format_field = StringBox(
             self._iterated_target_case_format_model,
             "config/simulation/iterated_target_case_format",
@@ -58,16 +62,20 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
         self._analysis_module_selector = AnalysisModuleSelector(
-            iterable=True, help_link="config/analysis/analysis_module"
+            LibresFacade(self.ert),
+            iterable=True,
+            help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_model = ActiveRealizationsModel(
+            LibresFacade(self.ert)
+        )
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(getRealizationCount())
+            RangeStringArgument(self.ert.getEnsembleSize())
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -79,6 +87,16 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         )
 
         self.setLayout(layout)
+
+    def setNumberIterations(self, iteration_count):
+        if (
+            iteration_count
+            != self.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
+        ):
+            self.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+                iteration_count
+            )
+            self.notifier.emitErtChange()
 
     def isConfigurationValid(self):
         analysis_module = self._analysis_module_selector.getSelectedAnalysisModuleName()
