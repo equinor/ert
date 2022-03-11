@@ -34,7 +34,7 @@ struct surface_struct {
     double *data; /* Size should always be one */
 };
 
-C_USED void surface_clear(surface_type *surface) {
+ void surface_clear(surface_type *surface) {
     const int data_size = surface_config_get_data_size(surface->config);
     for (int k = 0; k < data_size; k++)
         surface->data[k] = 0;

@@ -31,7 +31,7 @@ namespace fs = std::filesystem;
 #define SUMMARY_KEY_SET_TYPE_ID 700672133
 
 struct summary_key_set_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hash_type *key_set;
     pthread_rwlock_t rw_lock;
     bool read_only;

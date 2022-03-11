@@ -26,7 +26,7 @@
 #define ENKF_PLOT_GEN_KW_VECTOR_TYPE_ID 88362064
 
 struct enkf_plot_gen_kw_vector_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int iens;
     double_vector_type *data;
     const enkf_config_node_type *config_node;

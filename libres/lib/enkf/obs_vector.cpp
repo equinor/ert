@@ -50,7 +50,7 @@
 #define OBS_VECTOR_TYPE_ID 120086
 
 struct obs_vector_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     obs_free_ftype *freef;  /* Function used to free an observation node. */
     obs_get_ftype *get_obs; /* Function used to build the 'd' vector. */
     obs_meas_ftype *

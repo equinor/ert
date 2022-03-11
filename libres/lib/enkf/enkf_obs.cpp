@@ -164,7 +164,7 @@ In the following example we have two observations
 
 #define ENKF_OBS_TYPE_ID 637297
 struct enkf_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     /* A hash of obs_vector_types indexed by user provided keys. */
     vector_type *obs_vector;
     hash_type *obs_hash;

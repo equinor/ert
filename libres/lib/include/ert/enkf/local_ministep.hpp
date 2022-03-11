@@ -35,7 +35,7 @@
 
 class local_ministep_type {
 public:
-    UTIL_TYPE_ID_DECLARATION;
+    
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
     LocalObsData *observations;

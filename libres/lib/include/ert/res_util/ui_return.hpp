@@ -37,11 +37,11 @@ extern "C" bool ui_return_add_error(ui_return_type *ui_return,
                                     const char *error_msg);
 extern "C" void ui_return_add_help(ui_return_type *ui_return,
                                    const char *help_text);
-extern "C" PY_USED const char *
+extern "C"  const char *
 ui_return_get_first_error(const ui_return_type *ui_return);
 extern "C" const char *
 ui_return_get_last_error(const ui_return_type *ui_return);
-extern "C" PY_USED const char *
+extern "C"  const char *
 ui_return_get_help(const ui_return_type *ui_return);
 extern "C" const char *ui_return_iget_error(const ui_return_type *ui_return,
                                             int index);

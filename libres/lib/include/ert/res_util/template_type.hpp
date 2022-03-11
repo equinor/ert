@@ -12,7 +12,7 @@
 #define TEMPLATE_TYPE_ID 7781045
 
 struct template_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *
         template_file; /* The template file - if internalize_template == false this filename can contain keys which will be replaced at instantiation time. */
     char *

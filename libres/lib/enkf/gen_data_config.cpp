@@ -49,7 +49,7 @@ static auto logger = ert::get_logger("enkf");
 
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *
         key; /* The key this gen_data instance is known under - needed for debugging. */
     ecl_data_type

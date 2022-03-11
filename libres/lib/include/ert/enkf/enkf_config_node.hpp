@@ -161,7 +161,7 @@ enkf_config_node_new_container(const char *key);
 extern "C" void
 enkf_config_node_update_container(enkf_config_node_type *config_node,
                                   const enkf_config_node_type *child_node);
-extern "C" PY_USED const char *
+extern "C"  const char *
 enkf_config_node_iget_container_key(const enkf_config_node_type *config_node,
                                     int index);
 /*
@@ -182,26 +182,26 @@ enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_from_config(
 enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_from_config(
     const config_content_node_type *node);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_full(
+extern "C"  enkf_config_node_type *enkf_config_node_alloc_GEN_PARAM_full(
     const char *node_key, bool forward_init,
     gen_data_file_format_type input_format,
     gen_data_file_format_type output_format, const char *init_file_fmt,
     const char *ecl_file, const char *min_std_file, const char *template_file,
     const char *data_key);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
+extern "C"  enkf_config_node_type *enkf_config_node_alloc_GEN_DATA_full(
     const char *node_key, const char *result_file,
     gen_data_file_format_type input_format, const int_vector_type *report_steps,
     const char *ecl_file, const char *init_file_fmt, const char *template_file,
     const char *data_key);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
+extern "C"  enkf_config_node_type *enkf_config_node_alloc_GEN_KW_full(
     const char *node_key, bool forward_init, const char *gen_kw_format,
     const char *template_file, const char *enkf_outfile,
     const char *parameter_file, const char *min_std_file,
     const char *init_file_fmt);
 
-extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
+extern "C"  enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     const char *node_key, bool forward_init, const char *output_file,
     const char *base_surface, const char *min_std_file,
     const char *init_file_fmt);

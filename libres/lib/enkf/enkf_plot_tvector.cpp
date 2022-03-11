@@ -26,7 +26,7 @@
 #define ENKF_PLOT_TVECTOR_ID 6111861
 
 struct enkf_plot_tvector_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     double_vector_type *data;
     double_vector_type *work;
     time_t_vector_type *time;

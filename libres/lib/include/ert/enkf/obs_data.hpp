@@ -60,9 +60,9 @@ extern "C" obs_block_type *obs_data_add_block(obs_data_type *obs_data,
                                               const char *obs_key, int obs_size,
                                               matrix_type *error_covar,
                                               bool error_covar_owner);
-extern "C" PY_USED void obs_data_scale_matrix(const obs_data_type *obs_data,
+extern "C"  void obs_data_scale_matrix(const obs_data_type *obs_data,
                                               matrix_type *matrix);
-extern "C" PY_USED void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
+extern "C"  void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
                                                matrix_type *matrix);
 
 extern "C" obs_data_type *obs_data_alloc(double global_std_scaling);
@@ -83,9 +83,9 @@ extern "C" int obs_data_get_num_blocks(const obs_data_type *obs_data);
 extern "C" const char *obs_block_get_key(const obs_block_type *obs_block);
 extern "C" double obs_data_iget_value(const obs_data_type *obs_data,
                                       int total_index);
-extern "C" PY_USED double obs_data_iget_std(const obs_data_type *obs_data,
+extern "C"  double obs_data_iget_std(const obs_data_type *obs_data,
                                             int total_index);
-extern "C" PY_USED bool
+extern "C"  bool
 obs_block_iget_is_active(const obs_block_type *obs_block, int iobs);
 
 std::vector<bool> obs_data_get_active_mask(const obs_data_type *obs_data);

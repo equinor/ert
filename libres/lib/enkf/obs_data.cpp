@@ -75,7 +75,7 @@ Matrices: S, D, E and various internal variables.
 #define OBS_BLOCK_TYPE_ID 995833
 
 struct obs_block_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *obs_key;
     int size;
     double *value;

@@ -37,7 +37,7 @@ static const char *rms_endtag_string = "endtag";
 #define RMS_TAG_TYPE_ID 4431296
 
 struct rms_tag_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *name;
     vector_type *key_list;
     hash_type *key_hash; /* Hash of tagkey instances */

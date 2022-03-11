@@ -1,0 +1,4 @@
+libres
+======
+
+.. doxygenindex::

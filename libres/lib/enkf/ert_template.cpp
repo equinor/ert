@@ -28,14 +28,14 @@
 
 /* Singular - one template. */
 struct ert_template_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     template_type *tmpl;
     char *target_file;
 };
 
 /* Plural - many templates. */
 struct ert_templates_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     subst_list_type *parent_subst;
     hash_type *templates;
 };

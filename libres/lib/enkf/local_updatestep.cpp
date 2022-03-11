@@ -34,7 +34,7 @@
 #define LOCAL_UPDATESTEP_TYPE_ID 77159
 
 struct local_updatestep_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *name;
     vector_type *ministep;
 };

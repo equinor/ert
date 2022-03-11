@@ -46,7 +46,7 @@ static auto logger = ert::get_logger("enkf");
 #define ERT_WORKFLOW_LIST_TYPE_ID 8856275
 
 struct ert_workflow_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hash_type *workflows;
     hash_type *alias_map;
     workflow_joblist_type *joblist;

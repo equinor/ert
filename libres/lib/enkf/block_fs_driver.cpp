@@ -48,7 +48,7 @@ struct bfs_config_struct {
 #define BFS_TYPE_ID 5510643
 
 struct bfs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     block_fs_type *block_fs;
     char *
         mountfile; // The full path to the file mounted by the block_fs layer - including extension.

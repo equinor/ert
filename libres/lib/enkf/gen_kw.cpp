@@ -48,7 +48,7 @@ void gen_kw_free(gen_kw_type *gen_kw) {
     free(gen_kw);
 }
 
-extern "C" PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
+extern "C"  gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
     gen_kw_type *gen_kw = (gen_kw_type *)util_malloc(sizeof *gen_kw);
     gen_kw->__type_id = GEN_KW;
     gen_kw->config = config;
@@ -58,7 +58,7 @@ extern "C" PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *config) {
     return gen_kw;
 }
 
-C_USED void gen_kw_clear(gen_kw_type *gen_kw) {
+ void gen_kw_clear(gen_kw_type *gen_kw) {
     int i;
     for (i = 0; i < gen_kw_config_get_data_size(gen_kw->config); i++)
         gen_kw->data[i] = 0.0;
@@ -133,7 +133,7 @@ bool gen_kw_data_has_key(gen_kw_type *gen_kw, const char *subkey) {
     return has_key;
 }
 
-C_USED bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw,
+ bool gen_kw_write_to_buffer(const gen_kw_type *gen_kw,
                                    buffer_type *buffer, int report_step) {
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     buffer_fwrite_int(buffer, GEN_KW);
@@ -159,7 +159,7 @@ void gen_kw_read_from_buffer(gen_kw_type *gen_kw, buffer_type *buffer,
 }
 #undef MULTFLT
 
-C_USED static bool gen_kw_fload(gen_kw_type *, const char *);
+ static bool gen_kw_fload(gen_kw_type *, const char *);
 
 bool gen_kw_initialize(gen_kw_type *gen_kw, int iens, const char *init_file,
                        rng_type *rng) {
@@ -393,7 +393,7 @@ static bool gen_kw_fload(gen_kw_type *gen_kw, const char *filename) {
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
 */
-C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
+ bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
                             int report_step, double *value) {
     int index = gen_kw_config_get_index(gen_kw->config, key);
 

@@ -38,7 +38,7 @@ struct summary_struct {
     double_vector_type *data_vector;
 };
 
-C_USED void summary_clear(summary_type *summary) {
+ void summary_clear(summary_type *summary) {
     double_vector_reset(summary->data_vector);
 }
 
@@ -90,7 +90,7 @@ bool summary_write_to_buffer(const summary_type *summary, buffer_type *buffer,
     return true;
 }
 
-C_USED bool summary_has_data(const summary_type *summary, int report_step) {
+ bool summary_has_data(const summary_type *summary, int report_step) {
     return double_vector_size(summary->data_vector) > report_step;
 }
 

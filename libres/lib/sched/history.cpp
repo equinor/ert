@@ -29,7 +29,7 @@
 #define HISTORY_TYPE_ID 66143109
 
 struct history_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const ecl_sum_type *
         refcase; /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
     history_source_type source;

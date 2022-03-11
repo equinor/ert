@@ -60,7 +60,7 @@
 #define SUM_PAIR_TYPE_ID 665109971
 
 typedef struct sum_pair_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *case_name; // This  should be (path)/basename - no extension
     ecl_sum_type *ecl_sum;
 } sum_pair_type;

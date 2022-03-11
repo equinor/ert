@@ -36,10 +36,10 @@ extern "C" int analysis_iter_config_get_num_retries_per_iteration(
 extern "C" void
 analysis_iter_config_set_case_fmt(analysis_iter_config_type *config,
                                   const char *case_fmt);
-extern "C" PY_USED char *
+extern "C"  char *
 analysis_iter_config_get_case_fmt(analysis_iter_config_type *config);
 extern "C" analysis_iter_config_type *analysis_iter_config_alloc();
-extern "C" PY_USED analysis_iter_config_type *
+extern "C"  analysis_iter_config_type *
 analysis_iter_config_alloc_full(const char *case_fmt, int num_iterations,
                                 int num_iter_tries);
 extern "C" void analysis_iter_config_free(analysis_iter_config_type *config);

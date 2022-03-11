@@ -31,7 +31,7 @@ typedef struct forward_model_struct forward_model_type;
 
 extern "C" stringlist_type *
 forward_model_alloc_joblist(const forward_model_type *forward_model);
-extern "C" PY_USED void forward_model_clear(forward_model_type *forward_model);
+extern "C"  void forward_model_clear(forward_model_type *forward_model);
 extern "C" forward_model_type *
 forward_model_alloc(const ext_joblist_type *ext_joblist);
 void forward_model_parse_job_args(forward_model_type *model,

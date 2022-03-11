@@ -39,7 +39,7 @@
 #define WORKFLOW_JOB_TYPE_ID 614441
 
 struct workflow_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     bool internal;
     int min_arg;
     int max_arg;

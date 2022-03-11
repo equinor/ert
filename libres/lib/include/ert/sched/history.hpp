@@ -45,7 +45,7 @@ history_source_type history_get_source_type(const char *string_source);
 void history_free(history_type *);
 history_type *history_alloc_from_refcase(const ecl_sum_type *refcase,
                                          bool use_h_keywords);
-PY_USED const char *
+ const char *
 history_get_source_string(history_source_type history_source);
 bool history_init_ts(const history_type *history, const char *summary_key,
                      double_vector_type *value, bool_vector_type *valid);

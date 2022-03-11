@@ -116,7 +116,7 @@ static auto logger = ert::get_logger("job_queue.lsf_driver");
 #define DEFAULT_BHIST_CMD "bhist"
 
 struct lsf_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     long int lsf_jobnr;
     int num_exec_host;
     char **exec_host;
@@ -126,7 +126,7 @@ struct lsf_job_struct {
 };
 
 struct lsf_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *queue_name;
     char *resource_request;
     std::vector<std::string> exclude_hosts;

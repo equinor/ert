@@ -46,7 +46,7 @@ namespace fs = std::filesystem;
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
 struct enkf_config_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     ert_impl_type impl_type;
     enkf_var_type var_type;
     bool vector_storage;

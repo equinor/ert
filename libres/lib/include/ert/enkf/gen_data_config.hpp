@@ -76,7 +76,7 @@ gen_data_config_get_output_format(const gen_data_config_type *);
 ecl_data_type
 gen_data_config_get_internal_data_type(const gen_data_config_type *);
 extern "C" void gen_data_config_free(gen_data_config_type *);
-extern "C" PY_USED int
+extern "C"  int
 gen_data_config_get_initial_size(const gen_data_config_type *config);
 void gen_data_config_assert_size(gen_data_config_type *, int, int);
 extern "C" const bool_vector_type *

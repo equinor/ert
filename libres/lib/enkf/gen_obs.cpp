@@ -58,7 +58,7 @@
 #define GEN_OBS_TYPE_ID 77619
 
 struct gen_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int obs_size; /* This is the total size of the observation vector. */
     int *
         data_index_list; /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
@@ -336,7 +336,7 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
     }
 }
 
-C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
+ void gen_obs_get_observations(gen_obs_type *gen_obs,
                                      obs_data_type *obs_data, enkf_fs_type *fs,
                                      int report_step,
                                      const ActiveList *__active_list) {

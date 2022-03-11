@@ -87,7 +87,7 @@ extern "C" const char *
 ecl_config_get_refcase_name(const ecl_config_type *ecl_config);
 extern "C" ecl_config_type *
 ecl_config_alloc(const config_content_type *config_content);
-extern "C" PY_USED ecl_config_type *
+extern "C"  ecl_config_type *
 ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
                       char *refcase_default, stringlist_type *ref_case_list,
                       time_t end_date, char *sched_prediction_file);

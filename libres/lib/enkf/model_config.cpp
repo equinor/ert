@@ -69,7 +69,7 @@ static auto logger = ert::get_logger("enkf");
 
 #define MODEL_CONFIG_TYPE_ID 661053
 struct model_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     forward_model_type *
         forward_model; /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */
     time_map_type *external_time_map;

@@ -28,7 +28,7 @@
 #define ENKF_PLOT_GENDATA_TYPE_ID 377626666
 
 struct enkf_plot_gendata_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int size;
     int report_step;
     const enkf_config_node_type *enkf_config_node;

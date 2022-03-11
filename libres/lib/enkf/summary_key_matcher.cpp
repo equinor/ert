@@ -7,7 +7,7 @@
 #define SUMMARY_KEY_MATCHER_TYPE_ID 700672137
 
 struct summary_key_matcher_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hash_type *key_set;
 };
 

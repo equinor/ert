@@ -32,18 +32,18 @@
 extern "C" void gen_kw_ecl_write(const gen_kw_type *gen_kw,
                                  const char *run_path, const char *base_file,
                                  value_export_type *export_value);
-extern "C" PY_USED void gen_kw_write_export_file(const gen_kw_type *gen_kw,
+extern "C"  void gen_kw_write_export_file(const gen_kw_type *gen_kw,
                                                  const char *filename);
 
 extern "C" void gen_kw_free(gen_kw_type *);
 extern "C" int gen_kw_data_size(const gen_kw_type *);
 extern "C" double gen_kw_data_iget(const gen_kw_type *, int, bool);
 extern "C" void gen_kw_data_iset(gen_kw_type *, int, double);
-extern "C" PY_USED void
+extern "C"  void
 gen_kw_data_set_vector(gen_kw_type *gen_kw, const double_vector_type *values);
 extern "C" double gen_kw_data_get(gen_kw_type *, const char *, bool);
 extern "C" void gen_kw_data_set(gen_kw_type *, const char *, double);
-extern "C" PY_USED bool gen_kw_data_has_key(gen_kw_type *, const char *);
+extern "C"  bool gen_kw_data_has_key(gen_kw_type *, const char *);
 extern "C" const char *gen_kw_get_name(const gen_kw_type *, int);
 void gen_kw_filter_file(const gen_kw_type *, const char *);
 extern "C" void gen_kw_ecl_write_template(const gen_kw_type *gen_kw,

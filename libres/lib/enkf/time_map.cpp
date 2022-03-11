@@ -42,7 +42,7 @@ static void time_map_summary_update_abort(time_map_type *map,
 
 #define TIME_MAP_TYPE_ID 7751432
 struct time_map_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     time_t_vector_type *map;
     pthread_rwlock_t rw_lock;
     bool modified;

@@ -25,7 +25,7 @@
 
 #define CONFIG_CONTENT_ITEM_ID 8876752
 struct config_content_item_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const config_schema_item_type *schema;
     vector_type *nodes;
     const config_path_elm_type *path_elm;

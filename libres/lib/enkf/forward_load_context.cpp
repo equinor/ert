@@ -31,7 +31,7 @@
 static auto logger = ert::get_logger("enkf.forward_load_context");
 
 struct forward_load_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     // Everyuthing can be NULL here ... - when created from gen_data.
 
     ecl_sum_type *ecl_sum;

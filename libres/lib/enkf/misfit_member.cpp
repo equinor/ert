@@ -26,7 +26,7 @@
 #define MISFIT_MEMBER_TYPE_ID 541066
 
 struct misfit_member_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int my_iens;
     hash_type *
         obs; /* hash table of misfit_ts_type instances - indexed by observation keys. The structure

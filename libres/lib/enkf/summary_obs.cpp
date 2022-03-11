@@ -31,7 +31,7 @@
 #define OBS_SIZE 1
 
 struct summary_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *
         summary_key; /* The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
     char *obs_key;
@@ -114,7 +114,7 @@ void summary_obs_measure(const summary_obs_type *obs,
     }
 }
 
-C_USED double summary_obs_chi2(const summary_obs_type *obs,
+ double summary_obs_chi2(const summary_obs_type *obs,
                                const summary_type *summary,
                                node_id_type node_id) {
     double x =

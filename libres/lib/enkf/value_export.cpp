@@ -37,7 +37,7 @@ namespace fs = std::filesystem;
 #define VALUE_EXPORT_TYPE_ID 5741761
 
 struct value_export_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     std::string directory;
     std::string base_name;
     std::map<std::string, std::map<std::string, double>> values;

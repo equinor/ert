@@ -37,7 +37,7 @@ static auto logger = ert::get_logger("job_queue");
 #define INVALID_QUEUE_INDEX -999
 
 struct job_queue_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int num_cpu; /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
     char *run_cmd; /* The path to the actual executable. */
     char *

@@ -32,7 +32,7 @@ namespace fs = std::filesystem;
 
 #define CONFIG_CONTENT_NODE_ID 6752887
 struct config_content_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const config_schema_item_type *schema;
     stringlist_type *stringlist; /* The values which have been set. */
     const config_path_elm_type *cwd;

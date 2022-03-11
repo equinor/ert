@@ -40,14 +40,14 @@ namespace fs = std::filesystem;
 #define GEN_KW_PARAMETER_TYPE_ID 886201
 
 typedef struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *name;
     char *tagged_name;
     trans_func_type *trans_func;
 } gen_kw_parameter_type;
 
 struct gen_kw_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *key;
     vector_type *parameters; /* Vector of gen_kw_parameter_type instances. */
     char *template_file;

@@ -138,7 +138,7 @@ private:
 #define SLURM_CONFIGURING_STATUS "CONFIGURING"
 
 struct slurm_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
 
     std::string sbatch_cmd;
     std::string scancel_cmd;

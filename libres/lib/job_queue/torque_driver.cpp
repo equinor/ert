@@ -34,7 +34,7 @@ namespace fs = std::filesystem;
 #define TORQUE_JOB_TYPE_ID 12312312
 
 struct torque_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *queue_name;
     char *qsub_cmd;
     char *qstat_cmd;
@@ -51,7 +51,7 @@ struct torque_driver_struct {
 };
 
 struct torque_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     long int torque_jobnr;
     char *torque_jobnr_char;
 };

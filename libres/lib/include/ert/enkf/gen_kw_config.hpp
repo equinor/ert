@@ -37,7 +37,7 @@ void gen_kw_config_fprintf_config(const gen_kw_config_type *config,
                                   FILE *stream);
 extern "C" void gen_kw_config_set_parameter_file(gen_kw_config_type *config,
                                                  const char *parameter_file);
-extern "C" PY_USED const char *
+extern "C"  const char *
 gen_kw_config_get_parameter_file(const gen_kw_config_type *config);
 extern "C" const char *gen_kw_config_get_key(const gen_kw_config_type *config);
 extern "C" const char *
@@ -60,7 +60,7 @@ void gen_kw_config_update(gen_kw_config_type *config, const char *template_file,
                           const char *parameter_file);
 void gen_kw_config_update_tag_format(gen_kw_config_type *config,
                                      const char *tag_format);
-extern "C" PY_USED const char *
+extern "C"  const char *
 gen_kw_config_iget_function_type(const gen_kw_config_type *config, int index);
 extern "C" double_vector_type *
 gen_kw_config_iget_function_parameter_values(const gen_kw_config_type *config,

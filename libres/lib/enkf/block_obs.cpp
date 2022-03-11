@@ -40,7 +40,7 @@
 #define POINT_OBS_TYPE_ID 778196
 
 typedef struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     block_obs_source_type source_type;
     int i;
     int j;
@@ -55,7 +55,7 @@ typedef struct {
 static UTIL_SAFE_CAST_FUNCTION(point_obs, POINT_OBS_TYPE_ID);
 
 struct block_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *obs_key; /* A user provided label for the observation.      */
     vector_type *point_list;
     const ecl_grid_type *grid;
@@ -329,7 +329,7 @@ void block_obs_measure(const block_obs_type *block_obs, const void *state,
 }
 
 // used by the VOID_CHI2 macro
-C_USED double block_obs_chi2(const block_obs_type *block_obs, const void *state,
+ double block_obs_chi2(const block_obs_type *block_obs, const void *state,
                              node_id_type node_id) {
     double sum_chi2 = 0;
     int obs_size = block_obs_get_size(block_obs);

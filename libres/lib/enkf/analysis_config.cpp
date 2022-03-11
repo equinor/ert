@@ -44,7 +44,7 @@
 #define ANALYSIS_CONFIG_TYPE_ID 64431306
 
 struct analysis_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     std::unordered_map<std::string, analysis_module_type *> analysis_modules;
     analysis_module_type *analysis_module;
     char *log_path; /* Points to directory with update logs. */

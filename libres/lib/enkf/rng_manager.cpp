@@ -32,7 +32,7 @@ static auto logger = ert::get_logger("enkf");
 #define RNG_MANAGER_TYPE_ID 77250451
 
 struct rng_manager_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     rng_alg_type rng_alg;
     rng_type *
         internal_seed_rng; /* This is used to seed the RNG's which are managed. */

@@ -35,7 +35,7 @@ namespace fs = std::filesystem;
 #define STATE_MAP_TYPE_ID 500672132
 
 struct state_map_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int_vector_type *state;
     pthread_rwlock_t mutable rw_lock;
     bool read_only;

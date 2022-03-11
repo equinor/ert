@@ -117,7 +117,7 @@ typedef struct {
 
 #define THREAD_POOL_TYPE_ID 71443207
 struct thread_pool_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     thread_pool_arg_type
         *queue;      /* The jobs to be executed are appended in this vector. */
     int queue_index; /* The index of the next job to run. */

@@ -25,7 +25,7 @@ typedef struct subst_config_struct subst_config_type;
 
 extern "C" subst_config_type *
 subst_config_alloc(const config_content_type *user_config);
-extern "C" PY_USED subst_config_type *
+extern "C"  subst_config_type *
 subst_config_alloc_full(const subst_list_type *define_list);
 extern "C" void subst_config_free(subst_config_type *subst_config);
 

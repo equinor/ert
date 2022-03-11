@@ -38,7 +38,7 @@
 #define MISFIT_RANKING_TYPE_ID 671108
 
 struct misfit_ranking_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     vector_type *
         ensemble; /* An ensemble of hash instances. Each hash instance is populated like this: hash_insert_double(hash , "WGOR" , 1.09); */
     double_vector_type *

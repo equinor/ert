@@ -45,7 +45,7 @@ alloc_iactive_vector_from_range(const stringlist_type *range, int startindex,
 }
 
 // Internal workflow job
-extern "C" C_USED void *enkf_main_exit_JOB(void *self,
+extern "C"  void *enkf_main_exit_JOB(void *self,
                                            const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     enkf_main_exit(enkf_main);
@@ -56,7 +56,7 @@ extern "C" C_USED void *enkf_main_exit_JOB(void *self,
    Will create the new case if it does not exist.
 */
 // Internal workflow job
-extern "C" C_USED void *enkf_main_select_case_JOB(void *self,
+extern "C"  void *enkf_main_select_case_JOB(void *self,
                                                   const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     const char *new_case = stringlist_iget(args, 0);
@@ -65,7 +65,7 @@ extern "C" C_USED void *enkf_main_select_case_JOB(void *self,
 }
 
 // Internal workflow job
-extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
+extern "C"  void *enkf_main_create_case_JOB(void *self,
                                                   const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     const char *new_case = stringlist_iget(args, 0);
@@ -75,7 +75,7 @@ extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
 
@@ -140,7 +140,7 @@ static void *enkf_main_load_results_JOB__(enkf_main_type *enkf_main, int iter,
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_load_results_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     int iter = 0;
@@ -158,7 +158,7 @@ enkf_main_load_results_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal Workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_load_results_iter_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     stringlist_type *iens_args = stringlist_alloc_new();
@@ -191,7 +191,7 @@ static void enkf_main_jobs_export_field(const enkf_main_type *enkf_main,
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_export_field_JOB(void *self, const stringlist_type *args) {
     const char *file_name = stringlist_iget(args, 1);
     field_file_format_type file_type =
@@ -208,7 +208,7 @@ enkf_main_export_field_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_export_field_to_RMS_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     enkf_main_jobs_export_field(enkf_main, args, RMS_ROFF_FILE);
@@ -216,7 +216,7 @@ enkf_main_export_field_to_RMS_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     enkf_main_jobs_export_field(enkf_main, args, ECL_GRDECL_FILE);
@@ -224,7 +224,7 @@ enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_init_misfit_table_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     int history_length = enkf_main_get_history_length(enkf_main);
@@ -286,7 +286,7 @@ static void enkf_main_export_runpath_file(enkf_main_type *enkf_main,
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_export_runpath_file_JOB(void *self, const stringlist_type *args) {
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
     int ensemble_size = enkf_main_get_ensemble_size(enkf_main);
@@ -340,7 +340,7 @@ enkf_main_export_runpath_file_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal workflow job
-extern "C" C_USED void *
+extern "C"  void *
 enkf_main_pre_simulation_copy_JOB(void *self, const stringlist_type *args) {
     const char *source_path = stringlist_iget(args, 0);
 

@@ -142,7 +142,7 @@ static auto logger = ert::get_logger("enkf");
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *case_name;
     char *root_path;
     char *

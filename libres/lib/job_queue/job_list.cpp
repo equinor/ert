@@ -30,7 +30,7 @@
 #define JOB_LIST_TYPE_ID 8154222
 
 struct job_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int active_size;
     int alloc_size;
     job_queue_node_type **jobs;

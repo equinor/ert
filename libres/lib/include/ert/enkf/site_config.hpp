@@ -37,7 +37,7 @@ typedef struct site_config_struct site_config_type;
 
 extern "C" const char *site_config_get_location();
 extern "C" const char *site_config_get_config_file(const site_config_type *);
-extern "C" PY_USED const char *
+extern "C"  const char *
 site_config_get_license_root_path(const site_config_type *site_config);
 extern "C" void
 site_config_set_license_root_path(site_config_type *site_config,

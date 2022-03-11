@@ -62,7 +62,7 @@ extern "C" int time_map_lookup_time_with_tolerance(time_map_type *map,
                                                    time_t time,
                                                    int seconds_before_tolerance,
                                                    int seconds_after_tolerance);
-extern "C" PY_USED void
+extern "C"  void
 time_map_summary_upgrade107(time_map_type *map, const ecl_sum_type *ecl_sum);
 
 #endif

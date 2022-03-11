@@ -28,7 +28,7 @@
 #define MISFIT_TS_TYPE_ID 641066
 
 struct misfit_ts_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     double_vector_type *
         data; /* A double vector of length 'history_length' with actual misfit values. */
 };

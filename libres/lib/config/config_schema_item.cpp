@@ -86,7 +86,7 @@ struct validate_struct {
 
 #define CONFIG_SCHEMA_ITEM_ID 6751
 struct config_schema_item_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *kw; /* The kw which identifies this item */
 
     bool required_set;

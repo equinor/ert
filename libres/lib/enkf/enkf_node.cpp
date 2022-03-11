@@ -182,7 +182,7 @@
 #define ENKF_NODE_TYPE_ID 71043086
 
 struct enkf_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     alloc_ftype *alloc;
     ecl_write_ftype *ecl_write;
     forward_load_ftype *forward_load;

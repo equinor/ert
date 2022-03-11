@@ -38,7 +38,7 @@ extern "C" queue_config_type *
 queue_config_alloc_load(const char *user_config_file);
 extern "C" queue_config_type *
 queue_config_alloc(const config_content_type *config_content);
-extern "C" PY_USED queue_config_type *
+extern "C"  queue_config_type *
 queue_config_alloc_full(char *job_script, bool user_mode, int max_submit,
                         int num_cpu, job_driver_type driver_type);
 extern "C" queue_config_type *
@@ -81,10 +81,10 @@ queue_config_alloc_job_queue(const queue_config_type *queue_config);
 
 extern "C" int queue_config_get_num_cpu(const queue_config_type *queue_config);
 
-extern "C" PY_USED const char *queue_config_lsf_queue_name();
-extern "C" PY_USED const char *queue_config_lsf_server();
-extern "C" PY_USED const char *queue_config_lsf_resource();
-extern "C" PY_USED const char *queue_config_lsf_driver_name();
+extern "C"  const char *queue_config_lsf_queue_name();
+extern "C"  const char *queue_config_lsf_server();
+extern "C"  const char *queue_config_lsf_resource();
+extern "C"  const char *queue_config_lsf_driver_name();
 
 UTIL_SAFE_CAST_HEADER(queue_config);
 UTIL_IS_INSTANCE_HEADER(queue_config);

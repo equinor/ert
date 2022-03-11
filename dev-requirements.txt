@@ -1,4 +1,5 @@
 black==22.1.0; python_version > '3.6'
+breathe
 click
 cmake-format
 decorator

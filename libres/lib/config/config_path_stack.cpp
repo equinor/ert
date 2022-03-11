@@ -26,7 +26,7 @@
 #define CONFIG_PATH_STACK_TYPE_ID 86751520
 
 struct config_path_stack_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     vector_type *storage;
     vector_type *stack;
 };

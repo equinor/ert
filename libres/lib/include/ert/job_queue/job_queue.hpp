@@ -28,7 +28,7 @@
 #include <ert/job_queue/job_node.hpp>
 
 typedef struct job_queue_struct job_queue_type;
-extern "C" PY_USED void job_queue_submit_complete(job_queue_type *queue);
+extern "C"  void job_queue_submit_complete(job_queue_type *queue);
 extern "C" void job_queue_set_driver(job_queue_type *queue,
                                      queue_driver_type *driver);
 bool job_queue_has_driver(const job_queue_type *queue);
@@ -48,7 +48,7 @@ bool job_queue_accept_jobs(const job_queue_type *queue);
 
 extern "C" void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
                                    bool verbose);
-extern "C" PY_USED void job_queue_run_jobs_threaded(job_queue_type *queue,
+extern "C"  void job_queue_run_jobs_threaded(job_queue_type *queue,
                                                     int num_total_run,
                                                     bool verbose);
 void *job_queue_run_jobs__(void *);
@@ -64,41 +64,41 @@ extern "C" time_t job_queue_iget_sim_start(job_queue_type *queue,
                                            int job_index);
 time_t job_queue_iget_sim_end(job_queue_type *queue, int job_index);
 
-extern "C" PY_USED void
+extern "C"  void
 job_queue_set_max_job_duration(job_queue_type *queue, int max_duration_seconds);
 extern "C" int job_queue_get_max_job_duration(const job_queue_type *queue);
 void job_queue_set_job_stop_time(job_queue_type *queue, time_t time);
 time_t job_queue_get_job_stop_time(const job_queue_type *queue);
 void job_queue_set_auto_job_stop_time(job_queue_type *queue);
 extern "C" bool job_queue_kill_job(job_queue_type *queue, int job_index);
-extern "C" PY_USED bool job_queue_is_running(const job_queue_type *queue);
+extern "C"  bool job_queue_is_running(const job_queue_type *queue);
 void job_queue_set_max_submit(job_queue_type *job_queue, int max_submit);
 extern "C" int job_queue_get_max_submit(const job_queue_type *job_queue);
 bool job_queue_get_open(const job_queue_type *job_queue);
-extern "C" PY_USED bool job_queue_get_pause(const job_queue_type *job_queue);
-extern "C" PY_USED void job_queue_set_pause_on(job_queue_type *job_queue);
-extern "C" PY_USED void job_queue_set_pause_off(job_queue_type *job_queue);
-extern "C" PY_USED bool job_queue_start_user_exit(job_queue_type *queue);
-extern "C" PY_USED bool job_queue_get_user_exit(const job_queue_type *queue);
+extern "C"  bool job_queue_get_pause(const job_queue_type *job_queue);
+extern "C"  void job_queue_set_pause_on(job_queue_type *job_queue);
+extern "C"  void job_queue_set_pause_off(job_queue_type *job_queue);
+extern "C"  bool job_queue_start_user_exit(job_queue_type *queue);
+extern "C"  bool job_queue_get_user_exit(const job_queue_type *queue);
 
-extern "C" PY_USED int job_queue_get_active_size(const job_queue_type *queue);
+extern "C"  int job_queue_get_active_size(const job_queue_type *queue);
 extern "C" int job_queue_get_num_running(const job_queue_type *queue);
 extern "C" int job_queue_get_num_pending(const job_queue_type *queue);
 extern "C" int job_queue_get_num_waiting(const job_queue_type *queue);
 extern "C" int job_queue_get_num_complete(const job_queue_type *queue);
-extern "C" PY_USED void *job_queue_iget_driver_data(job_queue_type *queue,
+extern "C"  void *job_queue_iget_driver_data(job_queue_type *queue,
                                                     int job_index);
 job_queue_node_type *job_queue_iget_job(job_queue_type *job_queue, int job_nr);
 bool job_queue_has_driver(const job_queue_type *queue);
 int job_queue_get_max_running(const job_queue_type *queue);
 
-extern "C" PY_USED void job_queue_set_max_running(job_queue_type *queue,
+extern "C"  void job_queue_set_max_running(job_queue_type *queue,
                                                   int max_running);
 
 extern "C" char *job_queue_get_ok_file(const job_queue_type *queue);
-extern "C" PY_USED char *job_queue_get_exit_file(const job_queue_type *queue);
-extern "C" PY_USED char *job_queue_get_status_file(const job_queue_type *queue);
-extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,
+extern "C"  char *job_queue_get_exit_file(const job_queue_type *queue);
+extern "C"  char *job_queue_get_status_file(const job_queue_type *queue);
+extern "C"  int job_queue_add_job_node(job_queue_type *queue,
                                               job_queue_node_type *node);
 
 UTIL_SAFE_CAST_HEADER(job_queue);

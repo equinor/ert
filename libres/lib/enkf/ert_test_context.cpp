@@ -32,7 +32,7 @@ namespace fs = std::filesystem;
 
 #define ERT_TEST_CONTEXT_TYPE_ID 99671055
 struct ert_test_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     enkf_main_type *enkf_main;
     test_work_area_type *work_area;
     res_config_type *res_config;

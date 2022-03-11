@@ -82,7 +82,7 @@ get_string(const std::unordered_map<std::string, std::string> &opt_map,
 } // namespace
 
 struct ensemble_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     pthread_mutex_t mutex;
     char *
         gen_kw_format_string; /* format string used when creating gen_kw search/replace strings. */

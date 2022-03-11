@@ -55,7 +55,7 @@ char * path = path_fmt_alloc(path_fmt , "BaseCase" , 67);
 #define PATH_FMT_ID 7519200
 
 struct path_fmt_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *fmt;
     char *file_fmt;
     bool is_directory;

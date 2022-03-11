@@ -65,7 +65,7 @@ typedef struct shared_info_struct {
 } shared_info_type;
 
 struct enkf_state_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hash_type *node_hash;
     ensemble_config_type *
         ensemble_config; /* The config nodes for the enkf_node objects contained in node_hash. */

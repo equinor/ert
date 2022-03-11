@@ -27,7 +27,7 @@
 #define INVALID_QUEUE_INDEX -99
 
 struct run_arg_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int iens;
     int max_internal_submit; /* How many times the enkf_state object should try to resubmit when the queueu has said everything is OK - but the load fails. */
     int num_internal_submit;

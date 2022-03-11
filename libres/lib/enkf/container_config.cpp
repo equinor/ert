@@ -25,7 +25,7 @@
 #define CONTAINER_CONFIG_TYPE_ID 51330852
 
 struct container_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     vector_type *nodes;
 };
 

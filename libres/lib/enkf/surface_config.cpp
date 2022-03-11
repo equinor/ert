@@ -25,7 +25,7 @@
 #define SURFACE_CONFIG_TYPE_ID 853317
 
 struct surface_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     geo_surface_type *base_surface;
 };
 

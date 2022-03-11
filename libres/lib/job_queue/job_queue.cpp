@@ -207,7 +207,7 @@ static auto logger = ert::get_logger("job_queue");
 #define JOB_QUEUE_TYPE_ID 665210
 
 struct job_queue_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     job_list_type *job_list;
     job_queue_status_type *status;
     char *

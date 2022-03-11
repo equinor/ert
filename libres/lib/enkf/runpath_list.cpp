@@ -41,7 +41,7 @@ struct runpath_list_struct {
 
 #define RUNPATH_NODE_TYPE_ID 661400541
 struct runpath_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int iens;
     int iter;
     char *runpath;

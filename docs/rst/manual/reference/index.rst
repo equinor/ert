@@ -8,3 +8,4 @@
    workflows/index
    queue
    configuration_file
+   libres

@@ -26,7 +26,7 @@ typedef struct workflow_job_struct workflow_job_type;
 
 extern "C" const char *
 workflow_job_get_name(const workflow_job_type *workflow_job);
-extern "C" PY_USED bool
+extern "C"  bool
 workflow_job_internal(const workflow_job_type *workflow_job);
 extern "C" config_parser_type *workflow_job_alloc_config();
 extern "C" workflow_job_type *workflow_job_alloc(const char *name,
@@ -43,32 +43,32 @@ void workflow_job_update_config_compiler(const workflow_job_type *workflow_job,
                                          config_parser_type *config_compiler);
 void workflow_job_set_executable(workflow_job_type *workflow_job,
                                  const char *executable);
-extern "C" PY_USED char *
+extern "C"  char *
 workflow_job_get_executable(workflow_job_type *workflow_job);
 
 void workflow_job_set_internal_script(workflow_job_type *workflow_job,
                                       const char *script_path);
-extern "C" PY_USED char *
+extern "C"  char *
 workflow_job_get_internal_script_path(const workflow_job_type *workflow_job);
 extern "C" bool
 workflow_job_is_internal_script(const workflow_job_type *workflow_job);
 
 void workflow_job_set_function(workflow_job_type *workflow_job,
                                const char *function);
-extern "C" PY_USED char *
+extern "C"  char *
 workflow_job_get_function(workflow_job_type *workflow_job);
 void workflow_job_set_module(workflow_job_type *workflow_job,
                              const char *module);
-extern "C" PY_USED char *
+extern "C"  char *
 workflow_job_get_module(workflow_job_type *workflow_job);
 void *workflow_job_run(const workflow_job_type *job, void *self, bool verbose,
                        const stringlist_type *arg);
 
-extern "C" PY_USED int
+extern "C"  int
 workflow_job_get_min_arg(const workflow_job_type *workflow_job);
-extern "C" PY_USED int
+extern "C"  int
 workflow_job_get_max_arg(const workflow_job_type *workflow_job);
-extern "C" PY_USED config_item_types
+extern "C"  config_item_types
 workflow_job_iget_argtype(const workflow_job_type *workflow_job, int index);
 
 #endif

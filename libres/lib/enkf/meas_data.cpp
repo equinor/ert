@@ -40,7 +40,7 @@
 #define MEAS_DATA_TYPE_ID 561000861
 
 struct meas_data_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int active_ens_size;
     vector_type *data;
     pthread_mutex_t data_mutex;
@@ -49,7 +49,7 @@ struct meas_data_struct {
 };
 
 struct meas_block_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int active_ens_size;
     int obs_size;
     int ens_stride;

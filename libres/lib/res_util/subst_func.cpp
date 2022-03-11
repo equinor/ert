@@ -28,12 +28,12 @@
 #define SUBST_FUNC_POOL_TYPE_ID 7641
 
 struct subst_func_pool_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hash_type *func_table;
 };
 
 struct subst_func_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     subst_func_ftype *func;
     char *name;
     char *doc_string; /* doc_string for this function - can be NULL. */

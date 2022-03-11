@@ -83,8 +83,8 @@ extern "C" void ext_job_set_stderr_file(ext_job_type *ext_job,
                                         const char *stderr_file);
 extern "C" const char *ext_job_get_stderr_file(const ext_job_type *ext_job);
 
-extern "C" PY_USED int ext_job_get_min_arg(const ext_job_type *ext_job);
-extern "C" PY_USED int ext_job_get_max_arg(const ext_job_type *ext_job);
+extern "C"  int ext_job_get_min_arg(const ext_job_type *ext_job);
+extern "C"  int ext_job_get_max_arg(const ext_job_type *ext_job);
 extern "C" config_item_types ext_job_iget_argtype(const ext_job_type *ext_job,
                                                   int index);
 

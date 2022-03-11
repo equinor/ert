@@ -30,7 +30,7 @@
 
 #define EXT_PARAM_CONFIG_ID 97124451
 struct ext_param_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     std::string key;
     std::vector<std::string> keys;
     std::vector<std::vector<std::string>> suffixes;

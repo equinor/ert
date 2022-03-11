@@ -22,7 +22,7 @@
 #define ENKF_PLOT_DATA_TYPE_ID 3331063
 
 struct enkf_plot_data_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const enkf_config_node_type *config_node;
     int size;
     enkf_plot_tvector_type **ensemble;

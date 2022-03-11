@@ -109,7 +109,7 @@ jobList = [
     "null" //Setting STDOUT null or STDERR null in forward model directs output to screen
 
 struct ext_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *name;
     char *executable;
     char *target_file;

@@ -46,7 +46,7 @@ ert_workflow_list_alloc_load_site_config(const subst_list_type *);
 extern "C" ert_workflow_list_type *
 ert_workflow_list_alloc(const subst_list_type *context,
                         const config_content_type *config_content);
-extern "C" PY_USED ert_workflow_list_type *
+extern "C"  ert_workflow_list_type *
 ert_workflow_list_alloc_full(const subst_list_type *context,
                              workflow_joblist_type *workflow_joblist);
 

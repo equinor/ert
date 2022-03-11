@@ -127,7 +127,7 @@ void gen_data_free(gen_data_type *gen_data) {
    changed.
 */
 
-C_USED bool gen_data_write_to_buffer(const gen_data_type *gen_data,
+ bool gen_data_write_to_buffer(const gen_data_type *gen_data,
                                      buffer_type *buffer, int report_step) {
     const bool write_zero_size =
         true; /* true:ALWAYS write a file   false:only write files with size > 0. */
@@ -153,7 +153,7 @@ C_USED bool gen_data_write_to_buffer(const gen_data_type *gen_data,
     }
 }
 
-C_USED void gen_data_read_from_buffer(gen_data_type *gen_data,
+ void gen_data_read_from_buffer(gen_data_type *gen_data,
                                       buffer_type *buffer, enkf_fs_type *fs,
                                       int report_step) {
     int size;
@@ -361,7 +361,7 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
    the gen_data instance does not have any init function - that is OK.
 */
 
-C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
+ bool gen_data_initialize(gen_data_type *gen_data, int iens,
                                 const char *init_file, rng_type *rng) {
     bool ret = false;
     if (init_file) {
@@ -515,7 +515,7 @@ void gen_data_export_data(const gen_data_type *gen_data,
    false, and return silently in that case.
 */
 
-C_USED bool gen_data_user_get(const gen_data_type *gen_data,
+ bool gen_data_user_get(const gen_data_type *gen_data,
                               const char *index_key, int report_step,
                               double *value) {
     int index;
@@ -538,7 +538,7 @@ const char *gen_data_get_key(const gen_data_type *gen_data) {
     return gen_data_config_get_key(gen_data->config);
 }
 
-C_USED void gen_data_clear(gen_data_type *gen_data) {
+ void gen_data_clear(gen_data_type *gen_data) {
     const gen_data_config_type *config = gen_data->config;
     ecl_data_type internal_type =
         gen_data_config_get_internal_data_type(config);

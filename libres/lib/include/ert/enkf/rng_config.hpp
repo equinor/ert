@@ -36,7 +36,7 @@ rng_config_type *
 rng_config_alloc_load_user_config(const char *user_config_file);
 extern "C" rng_config_type *
 rng_config_alloc(const config_content_type *config_content);
-extern "C" PY_USED rng_config_type *
+extern "C"  rng_config_type *
 rng_config_alloc_full(const char *random_seed);
 extern "C" void rng_config_free(rng_config_type *rng);
 void rng_config_add_config_items(config_parser_type *config);

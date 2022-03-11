@@ -117,7 +117,7 @@ _______________/                     \___________/       |  with EnKF.          
 #define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
 
     char *ecl_kw_name; /* Name/key ... */
     int data_size, nx, ny,

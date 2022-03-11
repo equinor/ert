@@ -110,7 +110,7 @@ ensemble_config_type *ensemble_config_alloc_load(const char *, ecl_grid_type *,
 extern "C" ensemble_config_type *
 ensemble_config_alloc(const config_content_type *, ecl_grid_type *,
                       const ecl_sum_type *);
-extern "C" PY_USED ensemble_config_type *
+extern "C"  ensemble_config_type *
 ensemble_config_alloc_full(const char *gen_kw_format_string);
 extern "C" void ensemble_config_init_SUMMARY_full(ensemble_config_type *,
                                                   const char *,

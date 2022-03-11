@@ -38,7 +38,7 @@ meas_block_type *meas_block_alloc(const char *obs_key,
                                   const std::vector<bool> &ens_mask,
                                   int obs_size);
 extern "C" int meas_block_get_total_ens_size(const meas_block_type *meas_block);
-extern "C" PY_USED int
+extern "C"  int
 meas_block_get_active_ens_size(const meas_block_type *meas_block);
 extern "C" bool meas_block_iens_active(const meas_block_type *meas_block,
                                        int iens);

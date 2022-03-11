@@ -39,7 +39,7 @@ res_config_init_config_parser(config_parser_type *config_parser);
 res_config_type *res_config_alloc_load(const char *);
 res_config_type *res_config_alloc(const config_content_type *);
 
-extern "C" PY_USED res_config_type *res_config_alloc_full(
+extern "C"  res_config_type *res_config_alloc_full(
     char *config_dir, char *user_config_file, subst_config_type *subst_config,
     site_config_type *site_config, rng_config_type *rng_config,
     analysis_config_type *analysis_config,
@@ -75,7 +75,7 @@ res_config_get_model_config(const res_config_type *res_config);
 extern "C" queue_config_type *
 res_config_get_queue_config(const res_config_type *res_config);
 
-extern "C" PY_USED const char *
+extern "C"  const char *
 res_config_get_config_directory(const res_config_type *);
 extern "C" const char *res_config_get_user_config_file(const res_config_type *);
 

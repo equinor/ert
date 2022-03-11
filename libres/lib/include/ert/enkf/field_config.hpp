@@ -114,13 +114,13 @@ extern "C" field_config_type *
 field_config_alloc_empty(const char *ecl_kw_name, ecl_grid_type *ecl_grid,
                          field_trans_table_type *trans_table, bool global_size);
 
-C_USED const char *field_config_default_extension(field_file_format_type, bool);
+ const char *field_config_default_extension(field_file_format_type, bool);
 extern "C" field_file_format_type field_config_guess_file_type(const char *);
 ecl_data_type field_config_get_ecl_data_type(const field_config_type *);
 void field_config_get_dims(const field_config_type *, int *, int *, int *);
-extern "C" PY_USED int field_config_get_nx(const field_config_type *config);
-extern "C" PY_USED int field_config_get_ny(const field_config_type *config);
-extern "C" PY_USED int field_config_get_nz(const field_config_type *config);
+extern "C"  int field_config_get_nx(const field_config_type *config);
+extern "C"  int field_config_get_ny(const field_config_type *config);
+extern "C"  int field_config_get_nz(const field_config_type *config);
 extern "C" void field_config_free(field_config_type *);
 int field_config_get_volume(const field_config_type *);
 extern "C" int

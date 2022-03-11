@@ -31,7 +31,7 @@
 #define UI_RETURN_TYPE_ID 6122209
 
 struct ui_return_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     ui_return_status_enum status;
     stringlist_type *error_list;
     char *help_text;

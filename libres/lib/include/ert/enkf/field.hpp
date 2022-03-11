@@ -36,7 +36,7 @@ void field_scale(field_type *field, double scale_factor);
 extern "C" double field_iget_double(const field_type *, int);
 extern "C" double field_ijk_get_double(const field_type *field, int, int, int);
 float field_iget_float(const field_type *, int);
-PY_USED void field_ijk_get(const field_type *, int, int, int, void *);
+ void field_ijk_get(const field_type *, int, int, int, void *);
 void field_ecl_write1D_fortio(const field_type *, fortio_type *);
 void field_ecl_write3D_fortio(const field_type *, fortio_type *, const char *);
 void field_ROFF_export(const field_type *, const char *, const char *);

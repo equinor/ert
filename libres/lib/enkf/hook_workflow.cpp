@@ -36,7 +36,7 @@
 #define HOOK_WORKFLOW_TYPE_ID 7321780
 
 struct hook_workflow_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     hook_run_mode_enum run_mode;
     workflow_type *workflow;
 };

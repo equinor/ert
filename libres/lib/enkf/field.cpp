@@ -316,7 +316,7 @@ static void field_import3D(field_type *field, const void *_src_data,
         for (k = 0; k < (s); k++)                                              \
             (d)[k] = 0;                                                        \
     }
-C_USED void field_clear(field_type *field) {
+ void field_clear(field_type *field) {
     const ecl_data_type data_type =
         field_config_get_ecl_data_type(field->config);
     const int data_size = field_config_get_data_size(field->config);
@@ -375,7 +375,7 @@ field_type *field_alloc(const field_config_type *field_config) {
     return __field_alloc(field_config, NULL, 0);
 }
 
-C_USED void field_copy(const field_type *src, field_type *target) {
+ void field_copy(const field_type *src, field_type *target) {
     if (src->config == target->config)
         memcpy(target->data, src->data,
                field_config_get_byte_size(src->config));
@@ -1149,7 +1149,7 @@ bool field_fload_keep_inactive(field_type *field, const char *filename) {
   [1..ny] , [1...nz], they are immediately converted to C-based zero
   offset indices.
 */
-C_USED bool field_user_get(const field_type *field, const char *index_key,
+ bool field_user_get(const field_type *field, const char *index_key,
                            int report_step, double *value) {
     const bool internal_value = false;
     bool valid = false;

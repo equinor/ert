@@ -33,7 +33,7 @@
 #define CONFIG_CONTENT_TYPE_ID 6612520
 
 struct config_content_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     std::set<std::string> *
         parsed_files; /* A set of config files whcih have been parsed - to protect against circular includes. */
 

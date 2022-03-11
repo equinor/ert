@@ -26,7 +26,7 @@
 #define CONFIG_PATH_ELM_TYPE_ID 7100063
 
 struct config_path_elm_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *abs_path; // This will always be absolute
     char *rel_path; // This will always be relative to the root path.
     const config_root_path_type *root_path;

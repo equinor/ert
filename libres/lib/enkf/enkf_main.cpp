@@ -88,7 +88,7 @@ static auto logger = ert::get_logger("enkf");
 #define ENKF_MAIN_ID 8301
 
 struct enkf_main_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     enkf_fs_type *dbase; /* The internalized information. */
 
     const res_config_type *res_config;

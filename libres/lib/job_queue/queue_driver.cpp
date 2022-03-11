@@ -56,7 +56,7 @@
 #define QUEUE_DRIVER_ID 86516032
 
 struct queue_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     /*
      Function pointers - pointing to low level functions in the implementations of
      e.g. lsf_driver.

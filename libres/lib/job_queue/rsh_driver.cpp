@@ -31,7 +31,7 @@
 #include <ert/job_queue/rsh_driver.hpp>
 
 struct rsh_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     bool active; /* Means that it allocated - not really in use */
     job_status_type status;
     pthread_t run_thread;
@@ -50,7 +50,7 @@ typedef struct {
 #define RSH_JOB_TYPE_ID 63256701
 
 struct rsh_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     pthread_mutex_t submit_lock;
     pthread_attr_t thread_attr;
     char *rsh_command;

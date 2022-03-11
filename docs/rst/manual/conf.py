@@ -52,6 +52,7 @@ extensions = [
     "sphinxarg.ext",
     "sphinx.ext.todo",
     "sphinxcontrib.datatemplates",
+    "breathe",
     "ert_jobs",
     "ert_narratives",
 ]
@@ -188,6 +189,9 @@ texinfo_documents = [
 # -- Extension configuration -------------------------------------------------
 
 todo_include_todos = True
+
+breathe_projects = { "libres": "../../xml" }
+breathe_default_project = "libres"
 
 # -- Options for intersphinx extension ---------------------------------------
 

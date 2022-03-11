@@ -33,7 +33,7 @@ extern "C" void runpath_list_add(runpath_list_type *list, int iens, int iter,
 extern "C" void runpath_list_clear(runpath_list_type *list);
 extern "C" int runpath_list_iget_iens(runpath_list_type *list, int index);
 extern "C" int runpath_list_iget_iter(runpath_list_type *list, int index);
-extern "C" PY_USED char *runpath_list_iget_runpath(runpath_list_type *list,
+extern "C"  char *runpath_list_iget_runpath(runpath_list_type *list,
                                                    int index);
 extern "C" char *runpath_list_iget_basename(runpath_list_type *list, int index);
 void runpath_list_set_line_fmt(runpath_list_type *list, const char *line_fmt);
@@ -43,6 +43,6 @@ extern "C" const char *
 runpath_list_get_export_file(const runpath_list_type *list);
 extern "C" void runpath_list_set_export_file(runpath_list_type *list,
                                              const char *export_file);
-extern "C" PY_USED bool runpath_list_load(runpath_list_type *list);
+extern "C"  bool runpath_list_load(runpath_list_type *list);
 
 #endif

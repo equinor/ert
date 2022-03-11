@@ -97,7 +97,7 @@ enkf_main_get_analysis_config(const enkf_main_type *);
 subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main);
 extern "C" subst_list_type *
 enkf_main_get_data_kw(const enkf_main_type *enkf_main);
-extern "C" PY_USED void enkf_main_clear_data_kw(enkf_main_type *enkf_main);
+extern "C"  void enkf_main_clear_data_kw(enkf_main_type *enkf_main);
 extern "C" const site_config_type *
 enkf_main_get_site_config(const enkf_main_type *enkf_main);
 extern "C" void enkf_main_resize_ensemble(enkf_main_type *enkf_main,
@@ -142,7 +142,7 @@ int enkf_main_load_from_forward_model_with_fs(
 int enkf_main_load_from_forward_model(enkf_main_type *enkf_main, int iter,
                                       bool_vector_type *iactive,
                                       stringlist_type **realizations_msg_list);
-extern "C" PY_USED int
+extern "C"  int
 enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main, int iter,
                                            bool_vector_type *iactive,
                                            enkf_fs_type *fs);
@@ -169,7 +169,7 @@ enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
                                           enkf_fs_type *source_case_fs,
                                           int source_report_step);
 
-PY_USED void enkf_main_init_current_case_from_existing_custom(
+ void enkf_main_init_current_case_from_existing_custom(
     enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
     int source_report_step, std::vector<std::string> &node_list,
     std::vector<bool> &iactive);
@@ -205,7 +205,7 @@ extern "C" runpath_list_type *
 enkf_main_alloc_runpath_list(const enkf_main_type *enkf_main);
 extern "C" runpath_list_type *
 enkf_main_get_runpath_list(const enkf_main_type *enkf_main);
-extern "C" PY_USED ert_run_context_type *
+extern "C"  ert_run_context_type *
 enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
     const enkf_main_type *enkf_main, enkf_fs_type *fs,
     bool_vector_type *iactive, int iter);

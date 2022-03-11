@@ -48,7 +48,7 @@ extern "C" void gen_obs_load_values(const gen_obs_type *gen_obs, int size,
                                     double *data);
 extern "C" double gen_obs_iget_std_scaling(const gen_obs_type *gen_obs,
                                            int index);
-extern "C" PY_USED int gen_obs_get_obs_index(const gen_obs_type *gen_obs,
+extern "C"  int gen_obs_get_obs_index(const gen_obs_type *gen_obs,
                                              int index);
 extern "C" void gen_obs_load_observation(gen_obs_type *gen_obs,
                                          const char *obs_file);

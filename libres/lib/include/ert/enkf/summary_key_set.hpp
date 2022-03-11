@@ -14,7 +14,7 @@ extern "C" void summary_key_set_free(summary_key_set_type *set);
 extern "C" int summary_key_set_get_size(summary_key_set_type *set);
 extern "C" bool summary_key_set_add_summary_key(summary_key_set_type *set,
                                                 const char *summary_key);
-extern "C" PY_USED bool
+extern "C"  bool
 summary_key_set_has_summary_key(summary_key_set_type *set,
                                 const char *summary_key);
 extern "C" stringlist_type *

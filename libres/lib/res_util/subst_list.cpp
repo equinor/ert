@@ -84,7 +84,7 @@ typedef enum {
 #define SUBST_LIST_TYPE_ID 6614320
 
 struct subst_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const subst_list_type *
         parent; /* A parent subst_list instance - can be NULL - no destructor is called for the parent. */
     vector_type *string_data; /* The string substitutions we should do. */

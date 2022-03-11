@@ -29,6 +29,6 @@
 typedef struct gen_kw_config_struct gen_kw_config_type;
 typedef struct gen_kw_struct gen_kw_type;
 
-extern "C" PY_USED gen_kw_type *gen_kw_alloc(const gen_kw_config_type *);
+extern "C"  gen_kw_type *gen_kw_alloc(const gen_kw_config_type *);
 
 #endif

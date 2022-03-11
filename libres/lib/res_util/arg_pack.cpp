@@ -91,7 +91,7 @@ typedef struct {
 } arg_node_type;
 
 struct arg_pack_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int size; /* The number of arguments appended to this arg_pack instance. */
     int alloc_size; /* The number of nodes allocated to this arg_pack - will in general be greater than size. */
     bool
@@ -127,32 +127,32 @@ static void __arg_node_assert_type(const arg_node_type *node,
     }
 
 // Used by IGET_TYPED macro
-C_USED static int arg_node_get_int(const arg_node_type *node) {
+ static int arg_node_get_int(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_INT_VALUE);
     ARG_NODE_GET_RETURN(int)
 }
 
-C_USED static char arg_node_get_char(const arg_node_type *node) {
+ static char arg_node_get_char(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_CHAR_VALUE);
     ARG_NODE_GET_RETURN(char)
 }
 
-C_USED static double arg_node_get_double(const arg_node_type *node) {
+ static double arg_node_get_double(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_DOUBLE_VALUE);
     ARG_NODE_GET_RETURN(double)
 }
 
-C_USED static float arg_node_get_float(const arg_node_type *node) {
+ static float arg_node_get_float(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_FLOAT_VALUE);
     ARG_NODE_GET_RETURN(float)
 }
 
-C_USED static bool arg_node_get_bool(const arg_node_type *node) {
+ static bool arg_node_get_bool(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_BOOL_VALUE);
     ARG_NODE_GET_RETURN(bool)
 }
 
-C_USED static size_t arg_node_get_size_t(const arg_node_type *node) {
+ static size_t arg_node_get_size_t(const arg_node_type *node) {
     __arg_node_assert_type(node, CTYPE_SIZE_T_VALUE);
     ARG_NODE_GET_RETURN(size_t)
 }
@@ -193,32 +193,32 @@ static node_ctype arg_node_get_ctype(const arg_node_type *arg_node) {
     node->destructor = NULL;
 
 // Used by ISET_TYPED macro
-C_USED static void arg_node_set_int(arg_node_type *node, int value) {
+ static void arg_node_set_int(arg_node_type *node, int value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_INT_VALUE;
 }
 
-C_USED static void arg_node_set_char(arg_node_type *node, char value) {
+ static void arg_node_set_char(arg_node_type *node, char value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_CHAR_VALUE;
 }
 
-C_USED static void arg_node_set_float(arg_node_type *node, float value) {
+ static void arg_node_set_float(arg_node_type *node, float value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_FLOAT_VALUE;
 }
 
-C_USED static void arg_node_set_double(arg_node_type *node, double value) {
+ static void arg_node_set_double(arg_node_type *node, double value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_DOUBLE_VALUE;
 }
 
-C_USED static void arg_node_set_bool(arg_node_type *node, bool value) {
+ static void arg_node_set_bool(arg_node_type *node, bool value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_BOOL_VALUE;
 }
 
-C_USED static void arg_node_set_size_t(arg_node_type *node, size_t value) {
+ static void arg_node_set_size_t(arg_node_type *node, size_t value) {
     ARG_NODE_SET(node, value);
     node->ctype = CTYPE_SIZE_T_VALUE;
 }

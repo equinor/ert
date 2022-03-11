@@ -55,7 +55,7 @@ extern "C" const char *
 analysis_config_get_log_path(const analysis_config_type *config);
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config);
-extern "C" PY_USED analysis_config_type *
+extern "C"  analysis_config_type *
 analysis_config_alloc_full(int ens_size, double alpha, bool rerun,
                            int rerun_start, const char *log_path,
                            double std_cutoff, bool stop_long_running,
@@ -68,9 +68,9 @@ extern "C" analysis_config_type *
 analysis_config_alloc(const config_content_type *config_content);
 extern "C" void analysis_config_free(analysis_config_type *);
 extern "C" double analysis_config_get_alpha(const analysis_config_type *config);
-extern "C" PY_USED bool
+extern "C"  bool
 analysis_config_get_rerun(const analysis_config_type *config);
-extern "C" PY_USED int
+extern "C"  int
 analysis_config_get_rerun_start(const analysis_config_type *config);
 extern "C" void analysis_config_set_rerun(analysis_config_type *config,
                                           bool rerun);
@@ -103,19 +103,19 @@ extern "C" bool
 analysis_config_get_stop_long_running(const analysis_config_type *config);
 extern "C" void analysis_config_set_max_runtime(analysis_config_type *config,
                                                 int max_runtime);
-extern "C" PY_USED int
+extern "C"  int
 analysis_config_get_max_runtime(const analysis_config_type *config);
 extern "C" int
 analysis_config_get_min_realisations(const analysis_config_type *config);
-extern "C" PY_USED const char *
+extern "C"  const char *
 analysis_config_get_active_module_name(const analysis_config_type *config);
 
 extern "C" double
 analysis_config_get_global_std_scaling(const analysis_config_type *config);
-extern "C" PY_USED void
+extern "C"  void
 analysis_config_set_global_std_scaling(analysis_config_type *config,
                                        double global_std_scaling);
-extern "C" PY_USED void
+extern "C"  void
 analysis_config_add_module_copy(analysis_config_type *config,
                                 const char *src_name, const char *target_name);
 void analysis_config_load_internal_modules(int ens_size,

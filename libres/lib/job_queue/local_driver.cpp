@@ -30,7 +30,7 @@
 typedef struct local_job_struct local_job_type;
 
 struct local_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     bool active;
     job_status_type status;
     pthread_t run_thread;
@@ -41,7 +41,7 @@ struct local_job_struct {
 #define LOCAL_JOB_TYPE_ID 63056619
 
 struct local_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     pthread_attr_t thread_attr;
     pthread_mutex_t submit_lock;
 };

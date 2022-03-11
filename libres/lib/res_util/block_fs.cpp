@@ -113,7 +113,7 @@ struct file_node_struct {
 */
 
 struct block_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *
         mount_file; /* The full path to a file with some mount information - input to the mount routine. */
     char *path;

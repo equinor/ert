@@ -33,7 +33,7 @@
 #define ERT_RUN_CONTEXT_TYPE_ID 55534132
 
 struct ert_run_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     vector_type *run_args;
     run_mode_type run_mode;
     init_mode_type init_mode;

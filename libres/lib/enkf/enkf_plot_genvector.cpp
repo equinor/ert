@@ -27,7 +27,7 @@
 #define ENKF_PLOT_GENVECTOR_TYPE_ID 66862669
 
 struct enkf_plot_genvector_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int iens;
     double_vector_type *data;
     const enkf_config_node_type *config_node;

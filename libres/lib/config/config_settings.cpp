@@ -27,7 +27,7 @@
 #define SETTING_NODE_TYPE_ID 76254096
 
 struct config_settings_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     char *root_key;
     hash_type *settings;
 };
@@ -35,7 +35,7 @@ struct config_settings_struct {
 typedef struct setting_node_struct setting_node_type;
 
 struct setting_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     config_item_types value_type;
     char *key;
     char *string_value;

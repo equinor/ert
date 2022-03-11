@@ -39,13 +39,13 @@ namespace fs = std::filesystem;
 typedef struct cmd_struct cmd_type;
 
 struct cmd_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     const workflow_job_type *workflow_job;
     stringlist_type *arglist;
 };
 
 struct workflow_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     time_t compile_time;
     bool compiled;
     char *src_file;
@@ -264,7 +264,7 @@ stringlist_type *workflow_iget_arguments(const workflow_type *workflow,
     return cmd->arglist;
 }
 
-extern "C" PY_USED const char *
+extern "C"  const char *
 worflow_get_src_file(const workflow_type *workflow) {
     return workflow->src_file;
 }

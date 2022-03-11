@@ -25,7 +25,7 @@
 #define JOB_QUEUE_STATUS_TYPE_ID 777620306
 
 struct job_queue_status_struct {
-    UTIL_TYPE_ID_DECLARATION;
+    
     int status_list[JOB_QUEUE_MAX_STATE];
     pthread_rwlock_t rw_lock;
     int status_index[JOB_QUEUE_MAX_STATE];
