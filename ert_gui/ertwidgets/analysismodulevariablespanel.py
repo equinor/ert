@@ -29,17 +29,18 @@ from qtpy.QtWidgets import (
 from ert_gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
+from ert_shared.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesPanel(QWidget):
-    def __init__(self, analysis_module_name, parent=None):
-        QWidget.__init__(self, parent)
-
+    def __init__(self, analysis_module_name: str, facade: LibresFacade):
+        QWidget.__init__(self)
+        self.facade = facade
         self._analysis_module_name = analysis_module_name
 
         layout = QFormLayout()
         variable_names = AnalysisModuleVariablesModel.getVariableNames(
-            self._analysis_module_name
+            facade, facade.get_analysis_module(analysis_module_name)
         )
 
         if len(variable_names) == 0:
@@ -57,7 +58,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                     variable_name
                 )
                 variable_value = analysis_module_variables_model.getVariableValue(
-                    self._analysis_module_name, variable_name
+                    self.facade, self._analysis_module_name, variable_name
                 )
 
                 label_name = analysis_module_variables_model.getVariableLabelName(
@@ -251,5 +252,5 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         if value is not None:
             AnalysisModuleVariablesModel.setVariableValue(
-                self._analysis_module_name, variable_name, value
+                self.facade, self._analysis_module_name, variable_name, value
             )

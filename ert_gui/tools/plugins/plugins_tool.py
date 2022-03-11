@@ -1,17 +1,17 @@
 from qtpy.QtWidgets import QMenu
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
 from ert_gui.tools.plugins import PluginHandler, PluginRunner
 
 
 class PluginsTool(Tool):
-    def __init__(self, plugin_handler):
+    def __init__(self, plugin_handler, notifier):
         """
         @type plugin_handler: PluginHandler
         """
         enabled = len(plugin_handler) > 0
+        self.notifier = notifier
         super(PluginsTool, self).__init__(
             "Plugins",
             "tools/plugins",
@@ -35,4 +35,4 @@ class PluginsTool(Tool):
         self.getAction().setMenu(menu)
 
     def trigger(self):
-        ERT.emitErtChange()  # plugin may have added new cases.
+        self.notifier.emitErtChange()  # plugin may have added new cases.

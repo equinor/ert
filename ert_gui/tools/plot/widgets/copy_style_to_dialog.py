@@ -9,7 +9,6 @@ from qtpy.QtWidgets import (
 
 from ert_gui.ertwidgets import CheckList, resourceIcon
 from ert_gui.tools.plot import FilterPopup, FilterableKwListModel
-from ert_shared import ERT
 
 
 class CopyStyleToDialog(QDialog):

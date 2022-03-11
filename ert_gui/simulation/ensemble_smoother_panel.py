@@ -1,40 +1,42 @@
 from qtpy.QtWidgets import QFormLayout, QLabel
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import (
-    getRealizationCount,
-    getRunPath,
     get_runnable_realizations_mask,
 )
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert_gui.simulation import SimulationConfigPanel
+from ert_shared.libres_facade import LibresFacade
 from ert_shared.models import EnsembleSmoother
+from res.enkf import EnKFMain
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self):
-        SimulationConfigPanel.__init__(self, EnsembleSmoother)
-
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+        super().__init__(EnsembleSmoother)
+        self.ert = ert
+        facade = LibresFacade(ert)
         layout = QFormLayout()
 
-        self._case_selector = CaseSelector()
+        self._case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % getRunPath())
+        run_path_label = QLabel("<b>%s</b>" % facade.run_path)
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._target_case_model = TargetCaseModel()
+        self._target_case_model = TargetCaseModel(facade, notifier)
         self._target_case_field = StringBox(
             self._target_case_model, "config/simulation/target_case"
         )
@@ -42,16 +44,18 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case:", self._target_case_field)
 
         self._analysis_module_selector = AnalysisModuleSelector(
-            iterable=False, help_link="config/analysis/analysis_module"
+            facade,
+            iterable=False,
+            help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        active_realizations_model = ActiveRealizationsModel()
+        active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
             active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(getRealizationCount())
+            RangeStringArgument(facade.get_ensemble_size())
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -83,5 +87,5 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(case)
+        mask = get_runnable_realizations_mask(self.ert, case)
         self._active_realizations_field.model.setValueFromMask(mask)
