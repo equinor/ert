@@ -1,6 +1,6 @@
 from ecl.util.util import BoolVector
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
+from ert_shared.libres_facade import LibresFacade
 
 
 def mask_to_rangestring(mask):
@@ -33,7 +33,8 @@ def mask_to_rangestring(mask):
 
 
 class ActiveRealizationsModel(ValueModel):
-    def __init__(self):
+    def __init__(self, facade: LibresFacade):
+        self.facade = facade
         ValueModel.__init__(self, self.getDefaultValue())
         self._custom = False
 
@@ -53,11 +54,11 @@ class ActiveRealizationsModel(ValueModel):
         self.setValue(mask_to_rangestring(mask))
 
     def getDefaultValue(self):
-        size = getRealizationCount()
+        size = self.facade.get_ensemble_size()
         return "0-%d" % (size - 1)
 
     def getActiveRealizationsMask(self):
-        count = getRealizationCount()
+        count = self.facade.get_ensemble_size()
 
         mask = BoolVector(default_value=False, initial_size=count)
         if not mask.updateActiveMask(self.getValue()):

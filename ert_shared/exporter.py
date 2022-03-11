@@ -15,19 +15,21 @@
 #  for more details.
 import logging
 
-from ert_shared import ERT
+from ert_shared.libres_facade import LibresFacade
 
 logger = logging.getLogger(__name__)
 
 
 class Exporter:
-    def __init__(self):
+    def __init__(self, ert):
+        self.ert = ert
+        self.facade = LibresFacade(ert)
         self._export_job = "CSV_EXPORT2"
         self._runpath_job = "EXPORT_RUNPATH"
 
     def is_valid(self):
-        export_job = ERT.enkf_facade.get_workflow_job(self._export_job)
-        runpath_job = ERT.enkf_facade.get_workflow_job(self._runpath_job)
+        export_job = self.facade.get_workflow_job(self._export_job)
+        runpath_job = self.facade.get_workflow_job(self._runpath_job)
 
         if export_job is None:
             logger.error(
@@ -44,17 +46,17 @@ class Exporter:
         return True
 
     def run_export(self, parameters):
-        export_job = ERT.enkf_facade.get_workflow_job(self._export_job)
-        runpath_job = ERT.enkf_facade.get_workflow_job(self._runpath_job)
+        export_job = self.facade.get_workflow_job(self._export_job)
+        runpath_job = self.facade.get_workflow_job(self._runpath_job)
 
-        runpath_job.run(ert=ERT.ert, arguments=[], verbose=True)
+        runpath_job.run(ert=self.ert, arguments=[], verbose=True)
         if runpath_job.hasFailed():
             raise UserWarning(f"Failed to execute {self._runpath_job}")
 
         export_job.run(
-            ert=ERT.ert,
+            ert=self.ert,
             arguments=[
-                ERT.ert.getRunpathList().getExportFile(),
+                self.ert.getRunpathList().getExportFile(),
                 parameters["output_file"],
                 parameters["time_index"],
                 parameters["column_keys"],

@@ -22,7 +22,7 @@ class RunAnalysisTests(ErtTest):
 
         with patch("ert_gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
             rs.return_value = MockedQIcon()
-            self.tool = run_analysis.RunAnalysisTool()
+            self.tool = run_analysis.RunAnalysisTool(Mock(), Mock())
         self.tool._run_widget = Mock(spec=run_analysis.RunAnalysisPanel)
         self.tool._dialog = Mock(spec=ClosableDialog)
 
@@ -38,10 +38,11 @@ class RunAnalysisTests(ErtTest):
         self.tool._run_widget.source_case.return_value = "source"
         self.tool._run_widget.target_case.return_value = "target"
 
-        with patch("ert_gui.tools.run_analysis.run_analysis_tool.ert_shared.ERT"):
-            self.tool.run()
+        ert_mock = Mock()
+        self.tool.ert = ert_mock
+        self.tool.run()
 
-        mock_analyse.assert_called_once_with("target", "source")
+        mock_analyse.assert_called_once_with(ert_mock, "target", "source")
         mock_messagebox.return_value.setText.assert_called_once_with(
             "Successfully ran analysis for case 'source'."
         )
@@ -52,10 +53,11 @@ class RunAnalysisTests(ErtTest):
     def test_show_dialogue_at_failure(self, mock_messagebox, mock_analyse):
         self.tool._run_widget.source_case.return_value = "source"
         self.tool._run_widget.target_case.return_value = "target"
-
+        ert_mock = Mock()
+        self.tool.ert = ert_mock
         self.tool.run()
 
-        mock_analyse.assert_called_once_with("target", "source")
+        mock_analyse.assert_called_once_with(ert_mock, "target", "source")
         mock_messagebox.return_value.setText.assert_called_once_with(
             "Unable to run analysis for case 'source'."
         )

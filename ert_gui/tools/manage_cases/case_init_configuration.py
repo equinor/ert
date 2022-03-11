@@ -11,25 +11,24 @@ from qtpy.QtWidgets import (
     QSpinBox,
 )
 
-from ert_shared import ERT
 from ert_gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
 from ert_gui.ertwidgets.caselist import CaseList
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.checklist import CheckList
 from ert_gui.ertwidgets.models.ertmodel import (
-    getRealizationCount,
     initializeCurrentCaseFromScratch,
-    getCaseRealizationStates,
-    getParameterList,
-    getHistoryLength,
     initializeCurrentCaseFromExisting,
-    getCurrentCaseName,
 )
 from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert_shared.libres_facade import LibresFacade
+from res.enkf import EnkfVarType
 
 
-def createCheckLists():
+def createCheckLists(ert):
     parameter_model = SelectableListModel([])
+
+    def getParameterList():
+        return ert.ensembleConfig().getKeylistFromVarType(EnkfVarType.PARAMETER)
 
     parameter_model.getList = getParameterList
     parameter_check_list = CheckList(
@@ -40,7 +39,7 @@ def createCheckLists():
     members_model = SelectableListModel([])
 
     def getMemberList():
-        return [str(member) for member in range(getRealizationCount())]
+        return [str(member) for member in range(ert.getEnsembleSize())]
 
     members_model.getList = getMemberList
     member_check_list = CheckList(members_model, "Members", "init/select_members")
@@ -64,7 +63,9 @@ def createRow(*widgets):
 
 class CaseInitializationConfigurationPanel(QTabWidget):
     @showWaitCursorWhileWaiting
-    def __init__(self):
+    def __init__(self, ert, notifier):
+        self.ert = ert
+        self.notifier = notifier
         QTabWidget.__init__(self)
         self.setWindowTitle("Case Management")
         self.setMinimumWidth(600)
@@ -77,7 +78,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
     def addCreateNewCaseTab(self):
         panel = QWidget()
         layout = QVBoxLayout()
-        case_list = CaseList()
+        case_list = CaseList(LibresFacade(self.ert), self.notifier)
         case_list.setMaximumWidth(250)
 
         layout.addWidget(case_list)
@@ -91,10 +92,12 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         panel = QWidget()
         layout = QVBoxLayout()
 
-        row1 = createRow(QLabel("Target case:"), CaseSelector())
+        row1 = createRow(
+            QLabel("Target case:"), CaseSelector(LibresFacade(self.ert), self.notifier)
+        )
         layout.addLayout(row1)
 
-        check_list_layout, parameter_model, members_model = createCheckLists()
+        check_list_layout, parameter_model, members_model = createCheckLists(self.ert)
         layout.addLayout(check_list_layout)
 
         layout.addSpacing(10)
@@ -107,7 +110,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         def initializeFromScratch():
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
-            initializeCurrentCaseFromScratch(parameters, members)
+            initializeCurrentCaseFromScratch(parameters, members, self.ert)
 
         initialize_button.clicked.connect(initializeFromScratch)
         layout.addWidget(initialize_button, 0, Qt.AlignCenter)
@@ -121,12 +124,16 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         widget = QWidget()
         layout = QVBoxLayout()
 
-        target_case = CaseSelector()
+        target_case = CaseSelector(LibresFacade(self.ert), self.notifier)
         row = createRow(QLabel("Target case:"), target_case)
         layout.addLayout(row)
 
         source_case = CaseSelector(
-            update_ert=False, show_only_initialized=True, ignore_current=True
+            LibresFacade(self.ert),
+            self.notifier,
+            update_ert=False,
+            show_only_initialized=True,
+            ignore_current=True,
         )
         row = createRow(QLabel("Source case:"), source_case)
         layout.addLayout(row)
@@ -135,7 +142,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout.addLayout(row)
 
         layout.addSpacing(10)
-        check_list_layout, parameter_model, members_model = createCheckLists()
+        check_list_layout, parameter_model, members_model = createCheckLists(self.ert)
         layout.addLayout(check_list_layout)
         layout.addSpacing(10)
 
@@ -151,7 +158,12 @@ class CaseInitializationConfigurationPanel(QTabWidget):
             parameters = parameter_model.getSelectedItems()
             members = members_model.getSelectedItems()
             initializeCurrentCaseFromExisting(
-                source_case_name, target_case_name, report_step, parameters, members
+                source_case_name,
+                target_case_name,
+                report_step,
+                parameters,
+                members,
+                self.ert,
             )
 
         initialize_button.clicked.connect(initializeFromExisting)
@@ -167,7 +179,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         history_length_spinner = QSpinBox()
         addHelpToWidget(history_length_spinner, "config/init/history_length")
         history_length_spinner.setMinimum(0)
-        history_length_spinner.setMaximum(getHistoryLength())
+        history_length_spinner.setMaximum(self.ert.getHistoryLength())
 
         initial = QToolButton()
         initial.setText("Initial")
@@ -183,7 +195,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         addHelpToWidget(end_of_time, "config/init/history_length")
 
         def setToMax():
-            history_length_spinner.setValue(getHistoryLength())
+            history_length_spinner.setValue(self.ert.getHistoryLength())
 
         end_of_time.clicked.connect(setToMax)
 
@@ -198,7 +210,10 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         layout = QVBoxLayout()
 
         case_selector = CaseSelector(
-            update_ert=False, help_link="init/selected_case_info"
+            LibresFacade(self.ert),
+            self.notifier,
+            update_ert=False,
+            help_link="init/selected_case_info",
         )
         row1 = createRow(QLabel("Select case:"), case_selector)
 
@@ -215,7 +230,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         case_widget.setLayout(layout)
 
         case_selector.currentIndexChanged[str].connect(self._showInfoForCase)
-        ERT.ertChanged.connect(self._showInfoForCase)
+        self.notifier.ertChanged.connect(self._showInfoForCase)
 
         self.addTab(case_widget, "Case Info")
 
@@ -223,9 +238,9 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
     def _showInfoForCase(self, case_name=None):
         if case_name is None:
-            case_name = getCurrentCaseName()
+            case_name = self.ert.getEnkfFsManager().getCurrentFileSystem().getCaseName()
 
-        states = getCaseRealizationStates(str(case_name))
+        states = list(self.ert.getEnkfFsManager().getStateMapForCase(case_name))
 
         html = "<table>"
         for index in range(len(states)):

@@ -15,6 +15,7 @@
 #  for more details.
 from qtpy.QtWidgets import QFormLayout, QLabel
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import (
     addHelpToWidget,
     CaseSelector,
@@ -22,7 +23,6 @@ from ert_gui.ertwidgets import (
     AnalysisModuleSelector,
 )
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount, getRunPath
 from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
@@ -35,28 +35,31 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
+from ert_shared.libres_facade import LibresFacade
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
-    def __init__(self):
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
         layout = QFormLayout()
 
-        case_selector = CaseSelector()
+        case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % getRunPath())
+        run_path_label = QLabel("<b>%s</b>" % facade.run_path)
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % getRealizationCount())
+        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        self._target_case_format_model = TargetCaseModel(format_mode=True)
+        self._target_case_format_model = TargetCaseModel(
+            facade, notifier, format_mode=True
+        )
         self._target_case_format_field = StringBox(
             self._target_case_format_model, "config/simulation/target_case_format"
         )
@@ -67,7 +70,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         self._createInputForWeights(layout)
 
         self._iter_field = StringBox(
-            IterValueModel(),
+            IterValueModel(notifier),
             "config/simulation/iter_num",
         )
         self._iter_field.setValidator(
@@ -76,16 +79,18 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         layout.addRow("Start iteration:", self._iter_field)
 
         self._analysis_module_selector = AnalysisModuleSelector(
-            iterable=False, help_link="config/analysis/analysis_module"
+            facade,
+            iterable=False,
+            help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        self._active_realizations_model = ActiveRealizationsModel()
+        self._active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(getRealizationCount())
+            RangeStringArgument(facade.get_ensemble_size())
         )
         layout.addRow("Active realizations:", self._active_realizations_field)
 

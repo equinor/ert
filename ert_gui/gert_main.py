@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import argparse
 import os
 import logging
 import sys
@@ -21,10 +22,10 @@ import time
 from qtpy.QtCore import Qt, QLocale
 from qtpy.QtWidgets import QApplication, QMessageBox
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ert_splash import ErtSplash
 from ert_gui.ertwidgets import SummaryPanel, resourceIcon
 import ert_gui.ertwidgets
-from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools.export import ExportTool
@@ -35,7 +36,7 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
-from ert_shared import ERT
+from ert_shared.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
 
@@ -61,14 +62,13 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    notifier = ErtNotifier(ert, args.config)
-    with ERT.adapt(notifier):
-        # window reference must be kept until app.exec returns
-        window = _start_window(ert, args)
-        return app.exec_()
+    # window reference must be kept until app.exec returns
+    notifier = ErtNotifier(args.config)
+    window = _start_window(ert, notifier, args)
+    return app.exec_()
 
 
-def _start_window(ert, args):
+def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
 
     _check_locale()
 
@@ -77,7 +77,7 @@ def _start_window(ert, args):
     splash.repaint()
     splash_screen_start_time = time.time()
 
-    window = _setup_main_window(ert, args)
+    window = _setup_main_window(ert, notifier, args)
 
     minimum_splash_screen_time = 2
     sleep_time_left = minimum_splash_screen_time - (
@@ -91,7 +91,7 @@ def _start_window(ert, args):
     window.activateWindow()
     window.raise_()
 
-    if not ert._real_enkf_main().have_observations():
+    if not ert.have_observations():
         QMessageBox.warning(
             window,
             "Warning!",
@@ -122,22 +122,23 @@ def _check_locale():
         sys.stderr.write(msg)
 
 
-def _setup_main_window(ert, args):
+def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
+    facade = LibresFacade(ert)
     config_file = args.config
     window = GertMainWindow(config_file)
-    window.setWidget(SimulationPanel(config_file))
+    window.setWidget(SimulationPanel(ert, notifier, config_file))
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     window.addDock(
-        "Configuration Summary", SummaryPanel(), area=Qt.BottomDockWidgetArea
+        "Configuration Summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(IdeTool(config_file))
-    window.addTool(PlotTool(config_file))
-    window.addTool(ExportTool())
-    window.addTool(WorkflowsTool())
-    window.addTool(ManageCasesTool())
-    window.addTool(PluginsTool(plugin_handler))
-    window.addTool(RunAnalysisTool())
-    window.addTool(LoadResultsTool())
+    window.addTool(IdeTool(config_file, notifier))
+    window.addTool(PlotTool(ert, config_file))
+    window.addTool(ExportTool(ert))
+    window.addTool(WorkflowsTool(ert, notifier))
+    window.addTool(ManageCasesTool(ert, notifier))
+    window.addTool(PluginsTool(plugin_handler, notifier))
+    window.addTool(RunAnalysisTool(ert, notifier))
+    window.addTool(LoadResultsTool(facade))
     window.adjustSize()
     return window

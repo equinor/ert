@@ -5,7 +5,7 @@ class ValueModel(QObject):
     valueChanged = Signal(str)
 
     def __init__(self, value=""):
-        super(ValueModel, self).__init__()
+        super().__init__()
         self._value = value
 
     def getValue(self):

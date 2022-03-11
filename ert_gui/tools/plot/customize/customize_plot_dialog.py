@@ -12,7 +12,6 @@ from qtpy.QtWidgets import (
     QListWidget,
 )
 
-from ert_shared import ERT
 from ert_gui.tools.plot.widgets import CopyStyleToDialog
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.plottery import PlotConfig, PlotConfigHistory, PlotConfigFactory

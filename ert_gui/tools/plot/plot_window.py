@@ -7,7 +7,6 @@ from ert_gui.plottery.plots.ensemble import EnsemblePlot
 from ert_gui.plottery.plots.gaussian_kde import GaussianKDEPlot
 from ert_gui.plottery.plots.histogram import HistogramPlot
 from ert_gui.plottery.plots.statistics import StatisticsPlot
-from ert_shared import ERT
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 from ert_gui.plottery import PlotContext, PlotConfig
 
@@ -15,6 +14,7 @@ from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidg
 from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
+from ert_shared.libres_facade import LibresFacade
 
 CROSS_CASE_STATISTICS = "Cross Case Statistics"
 DISTRIBUTION = "Distribution"
@@ -25,10 +25,10 @@ STATISTICS = "Statistics"
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, config_file, parent):
+    def __init__(self, ert, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        self._api = PlotApi(ERT.enkf_facade)
+        self._api = PlotApi(LibresFacade(ert))
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)

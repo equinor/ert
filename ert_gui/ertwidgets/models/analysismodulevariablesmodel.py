@@ -13,9 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_shared.libres_facade import LibresFacade
 from res.analysis.analysis_module import AnalysisModule
-from ert_shared import ERT
-from ert_gui.ertwidgets.models.ertmodel import getRealizationCount
 
 
 class AnalysisModuleVariablesModel(object):
@@ -91,9 +90,9 @@ class AnalysisModuleVariablesModel(object):
     }
 
     @classmethod
-    def getVariableNames(cls, analysis_module_name):
+    def getVariableNames(cls, facade: LibresFacade, analysis_module_name: str):
         """@rtype: list of str"""
-        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
         items = []
         for name in cls._VARIABLE_NAMES:
@@ -126,14 +125,18 @@ class AnalysisModuleVariablesModel(object):
         return cls._VARIABLE_NAMES[name]["pos"]
 
     @classmethod
-    def setVariableValue(cls, analysis_module_name, name, value):
-        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
+    def setVariableValue(
+        cls, facade: LibresFacade, analysis_module_name: str, name: str, value: str
+    ):
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         result = analysis_module.setVar(name, str(value))
 
     @classmethod
-    def getVariableValue(cls, analysis_module_name, name):
+    def getVariableValue(
+        cls, facade: LibresFacade, analysis_module_name: str, name: str
+    ):
         """@rtype: int or float or bool or str"""
-        analysis_module = ERT.ert.analysisConfig().getModule(analysis_module_name)
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         variable_type = cls.getVariableType(name)
         if variable_type == float:
             return analysis_module.getDouble(name)

@@ -4,15 +4,19 @@ from qtpy.QtCore import QMargins, Qt
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton
 
 from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import (
-    getCurrentAnalysisModuleName,
-    getAnalysisModuleNames,
-)
 from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from ert_shared.libres_facade import LibresFacade
 
 
 class AnalysisModuleSelector(QWidget):
-    def __init__(self, iterable=False, load_all=False, help_link=""):
+    def __init__(
+        self,
+        facade: LibresFacade,
+        iterable: bool = False,
+        load_all: bool = False,
+        help_link: str = "",
+    ):
+        self.facade = facade
         QWidget.__init__(self)
         self._iterable = iterable
 
@@ -22,9 +26,9 @@ class AnalysisModuleSelector(QWidget):
 
         analysis_module_combo = QComboBox()
 
-        self._module_names = getAnalysisModuleNames(self._iterable)
+        self._module_names = facade.get_analysis_module_names(self._iterable)
         if load_all:
-            self._module_names += getAnalysisModuleNames(not self._iterable)
+            self._module_names += facade.get_analysis_module_names(not self._iterable)
 
         suffix = {"STD_ENKF": " - Recommended"}
         for module_name in self._module_names:
@@ -56,7 +60,7 @@ class AnalysisModuleSelector(QWidget):
         self._current_module_name = self._module_names[index]
 
     def _getCurrentAnalysisModuleName(self):
-        active_name = getCurrentAnalysisModuleName()
+        active_name = self.facade.get_analysis_config().activeModuleName()
         modules = self._module_names
 
         if active_name in modules:
@@ -76,7 +80,7 @@ class AnalysisModuleSelector(QWidget):
     def showVariablesPopup(self):
         if self.getSelectedAnalysisModuleName() is not None:
             variable_dialog = AnalysisModuleVariablesPanel(
-                self.getSelectedAnalysisModuleName()
+                self.getSelectedAnalysisModuleName(), self.facade
             )
             dialog = ClosableDialog("Edit variables", variable_dialog, self.parent())
 

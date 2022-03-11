@@ -1,9 +1,6 @@
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
-from ert_gui.ertwidgets.models.ertmodel import getAllCasesNotRunning
-
-
 class PlotCaseModel(QAbstractItemModel):
     def __init__(self, cases):
         QAbstractItemModel.__init__(self)

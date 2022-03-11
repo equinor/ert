@@ -4,7 +4,6 @@ import os
 import sys
 import threading
 
-from ert_shared import ERT
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -13,9 +12,9 @@ from ert_shared.cli import (
 )
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
-from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.libres_facade import LibresFacade
 from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
@@ -38,57 +37,59 @@ def run_cli(args):
 
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    notifier = ErtCliNotifier(ert, args.config)
-    with ERT.adapt(notifier):
+    facade = LibresFacade(ert)
 
-        if args.mode == WORKFLOW_MODE:
-            execute_workflow(args.name)
-            return
+    if args.mode == WORKFLOW_MODE:
+        execute_workflow(ert, args.name)
+        return
+    model, argument = create_model(
+        ert,
+        facade.get_analysis_module_names,
+        facade.get_ensemble_size(),
+        facade.get_current_case_name(),
+        args,
+    )
+    # Test run does not have a current_case
+    if "current_case" in args and args.current_case:
+        facade.select_or_create_new_case(args.current_case)
 
-        model, argument = create_model(ert, args)
-        # Test run does not have a current_case
-        if "current_case" in args and args.current_case:
-            ERT.enkf_facade.select_or_create_new_case(args.current_case)
-
-        if (
-            args.mode
-            in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE]
-            and args.target_case == ERT.enkf_facade.get_current_case_name()
-        ):
-            msg = (
-                "ERROR: Target file system and source file system can not be the same. "
-                "They were both: {}.".format(args.target_case)
-            )
-            raise ErtCliError(msg)
-
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=args.port_range
+    if (
+        args.mode
+        in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE]
+        and args.target_case == facade.get_current_case_name()
+    ):
+        msg = (
+            "ERROR: Target file system and source file system can not be the same. "
+            "They were both: {}.".format(args.target_case)
         )
+        raise ErtCliError(msg)
 
-        thread = threading.Thread(
-            name="ert_cli_simulation_thread",
-            target=model.start_simulations_thread,
-            args=(argument, evaluator_server_config),
-        )
-        thread.start()
+    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
 
-        tracker = create_tracker(
-            model, ee_con_info=evaluator_server_config.get_connection_info()
-        )
+    thread = threading.Thread(
+        name="ert_cli_simulation_thread",
+        target=model.start_simulations_thread,
+        args=(argument, evaluator_server_config),
+    )
+    thread.start()
 
-        out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
-        monitor = Monitor(out=out, color_always=args.color_always)
+    tracker = create_tracker(
+        model, ee_con_info=evaluator_server_config.get_connection_info()
+    )
 
-        try:
-            monitor.monitor(tracker)
-        except (SystemExit, KeyboardInterrupt):
-            print("\nKilling simulations...")
-            tracker.request_termination()
+    out = open(os.devnull, "w") if args.disable_monitoring else sys.stderr
+    monitor = Monitor(out=out, color_always=args.color_always)
 
-        if args.disable_monitoring:
-            out.close()
+    try:
+        monitor.monitor(tracker)
+    except (SystemExit, KeyboardInterrupt):
+        print("\nKilling simulations...")
+        tracker.request_termination()
 
-        thread.join()
+    if args.disable_monitoring:
+        out.close()
 
-        if model.hasRunFailed():
-            raise ErtCliError(model.getFailMessage())
+    thread.join()
+
+    if model.hasRunFailed():
+        raise ErtCliError(model.getFailMessage())
