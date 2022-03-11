@@ -4,7 +4,6 @@ import os
 import sys
 import threading
 
-from ert_shared import ERT
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -13,9 +12,9 @@ from ert_shared.cli import (
 )
 from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
-from ert_shared.cli.notifier import ErtCliNotifier
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.libres_facade import LibresFacade
 from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.services import Storage
 from res.enkf import EnKFMain, ResConfig
@@ -39,25 +38,30 @@ def run_cli(args):
 
     os.chdir(res_config.config_path)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    notifier = ErtCliNotifier(ert, args.config)
-    with ERT.adapt(notifier), Storage.connect_or_start_server(
+    facade = LibresFacade(ert)
+    with Storage.connect_or_start_server(
         res_config=os.path.basename(args.config)
     ) as storage:
         storage.wait_until_ready()
 
         if args.mode == WORKFLOW_MODE:
-            execute_workflow(args.name)
+            execute_workflow(ert, args.name)
             return
-
-        model, argument = create_model(ert, args)
+        model, argument = create_model(
+            ert,
+            facade.get_analysis_module_names,
+            facade.get_ensemble_size(),
+            facade.get_current_case_name(),
+            args,
+        )
         # Test run does not have a current_case
         if "current_case" in args and args.current_case:
-            ERT.enkf_facade.select_or_create_new_case(args.current_case)
+            facade.select_or_create_new_case(args.current_case)
 
         if (
             args.mode
             in [ENSEMBLE_SMOOTHER_MODE, ITERATIVE_ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE]
-            and args.target_case == ERT.enkf_facade.get_current_case_name()
+            and args.target_case == facade.get_current_case_name()
         ):
             msg = (
                 "ERROR: Target file system and source file system can not be the same. "
@@ -65,9 +69,7 @@ def run_cli(args):
             )
             raise ErtCliError(msg)
 
-        evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=args.port_range
-        )
+        evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
 
         thread = threading.Thread(
             name="ert_cli_simulation_thread",

@@ -15,25 +15,22 @@
 #  for more details.
 import os
 
-from ert_shared import ERT
+from ecl.util.util import BoolVector
+
+from res.enkf import EnKFMain
 
 
-class LoadResultsModel(object):
+class LoadResultsModel:
     @staticmethod
-    def loadResults(selected_case, realisations, iteration):
-        """
-        @type selected_case: str
-        @type realisations: BoolVector
-        @type iteration: int
-        @rtype int: number of loaded realisations
-        """
-        fs = ERT.ert.getEnkfFsManager().getFileSystem(selected_case)
-        return ERT.ert.loadFromForwardModel(realisations, iteration, fs)
+    def loadResults(
+        ert: EnKFMain, selected_case: str, realisations: BoolVector, iteration: int
+    ) -> int:
+        fs = ert.getEnkfFsManager().getFileSystem(selected_case)
+        return ert.loadFromForwardModel(realisations, iteration, fs)
 
     @staticmethod
-    def isValidRunPath():
+    def isValidRunPath(run_path):
         """@rtype: bool"""
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
             result = run_path % (0, 0)
             return True
@@ -49,14 +46,8 @@ class LoadResultsModel(object):
         return False
 
     @staticmethod
-    def getCurrentRunPath():
-        """@rtype: str"""
-        return ERT.ert.getModelConfig().getRunpathAsString()
-
-    @staticmethod
-    def getIterationCount():
+    def getIterationCount(run_path):
         """@rtype: int"""
-        run_path = ERT.ert.getModelConfig().getRunpathAsString()
         try:
             results = run_path % (0, 0)
         except TypeError:

@@ -7,13 +7,17 @@ from ert_gui.tools.manage_cases.case_init_configuration import (
 
 
 class ManageCasesTool(Tool):
-    def __init__(self):
-        super(ManageCasesTool, self).__init__(
+    def __init__(self, ert, notifier):
+        self.notifier = notifier
+        self.ert = ert
+        super().__init__(
             "Manage Cases", "tools/manage_cases", resourceIcon("ide/database_gear")
         )
 
     def trigger(self):
-        case_management_widget = CaseInitializationConfigurationPanel()
+        case_management_widget = CaseInitializationConfigurationPanel(
+            self.ert, self.notifier
+        )
 
         dialog = ClosableDialog("Manage Cases", case_management_widget, self.parent())
         dialog.exec_()

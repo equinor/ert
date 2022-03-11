@@ -1,23 +1,24 @@
 from qtpy.QtWidgets import QComboBox
 
-from ert_shared import ERT
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import (
     getAllCases,
-    selectOrCreateNewCase,
-    getCurrentCaseName,
-    getAllInitializedCases,
 )
+from ert_shared.libres_facade import LibresFacade
 
 
 class CaseSelector(QComboBox):
     def __init__(
         self,
-        update_ert=True,
-        show_only_initialized=False,
-        ignore_current=False,
-        help_link="init/current_case_selection",
+        facade: LibresFacade,
+        notifier: ErtNotifier,
+        update_ert: bool = True,
+        show_only_initialized: bool = False,
+        ignore_current: bool = False,
+        help_link: str = "init/current_case_selection",
     ):
+        self.facade = facade
         QComboBox.__init__(self)
         self._update_ert = update_ert  # If true current case of ert will be change
         self._show_only_initialized = (
@@ -33,13 +34,17 @@ class CaseSelector(QComboBox):
         self.populate()
 
         self.currentIndexChanged[int].connect(self.selectionChanged)
-        ERT.ertChanged.connect(self.populate)
+        notifier.ertChanged.connect(self.populate)
 
     def _getAllCases(self):
         if self._show_only_initialized:
-            return getAllInitializedCases()
+            return [
+                case
+                for case in getAllCases(self.facade)
+                if self.facade._enkf_main.getEnkfFsManager().isCaseInitialized(case)
+            ]
         else:
-            return getAllCases()
+            return getAllCases(self.facade)
 
     def selectionChanged(self, index):
         if self._update_ert:
@@ -51,7 +56,7 @@ class CaseSelector(QComboBox):
             )
 
             item = self._getAllCases()[index]
-            selectOrCreateNewCase(item)
+            self.facade.select_or_create_new_case(item)
 
     def populate(self):
         block = self.signalsBlocked()
@@ -64,7 +69,7 @@ class CaseSelector(QComboBox):
             self.addItem(case)
 
         current_index = 0
-        current_case = getCurrentCaseName()
+        current_case = self.facade.get_current_case_name()
         if current_case in case_list:
             current_index = case_list.index(current_case)
 

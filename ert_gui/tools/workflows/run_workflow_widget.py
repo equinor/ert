@@ -12,8 +12,8 @@ from qtpy.QtWidgets import (
 )
 
 from ert_gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
-from ert_gui.ertwidgets.models.ertmodel import getWorkflowNames, createWorkflowRunner
 from ert_gui.tools.workflows.workflow_dialog import WorkflowDialog
+from res.job_queue import WorkflowRunner
 
 
 class RunWorkflowWidget(QWidget):
@@ -22,7 +22,8 @@ class RunWorkflowWidget(QWidget):
     workflowFailed = Signal()
     workflowKilled = Signal()
 
-    def __init__(self):
+    def __init__(self, ert):
+        self.ert = ert
         QWidget.__init__(self)
 
         layout = QHBoxLayout()
@@ -31,7 +32,9 @@ class RunWorkflowWidget(QWidget):
         self._workflow_combo = QComboBox()
         addHelpToWidget(self._workflow_combo, "run/workflow")
 
-        self._workflow_combo.addItems(getWorkflowNames())
+        self._workflow_combo.addItems(
+            sorted(ert.getWorkflowList().getWorkflowNames(), key=str.lower)
+        )
 
         layout.addWidget(QLabel("Select Workflow:"), 0, Qt.AlignVCenter)
         layout.addWidget(self._workflow_combo, 0, Qt.AlignVCenter)
@@ -100,7 +103,9 @@ class RunWorkflowWidget(QWidget):
 
     def getCurrentWorkflowName(self):
         index = self._workflow_combo.currentIndex()
-        return getWorkflowNames()[index]
+        return sorted(self.ert.getWorkflowList().getWorkflowNames(), key=str.lower)[
+            index
+        ]
 
     def startWorkflow(self):
         self._running_workflow_dialog = WorkflowDialog(
@@ -112,7 +117,11 @@ class RunWorkflowWidget(QWidget):
         workflow_thread.setDaemon(True)
         workflow_thread.run = self.runWorkflow
 
-        self._workflow_runner = createWorkflowRunner(self.getCurrentWorkflowName())
+        workflow_list = self.ert.getWorkflowList()
+
+        workflow = workflow_list[self.getCurrentWorkflowName()]
+        context = workflow_list.getContext()
+        self._workflow_runner = WorkflowRunner(workflow, self.ert, context)
         self._workflow_runner.run()
 
         workflow_thread.start()

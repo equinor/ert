@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
+from res.enkf import EnKFMain
 
 
 class SummaryTemplate(object):
@@ -50,8 +51,9 @@ class SummaryTemplate(object):
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, parent=None):
-        QFrame.__init__(self, parent)
+    def __init__(self, ert: EnKFMain):
+        self.ert = ert
+        QFrame.__init__(self)
 
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)
@@ -71,7 +73,7 @@ class SummaryPanel(QFrame):
         self.updateSummary()
 
     def updateSummary(self):
-        summary = ErtSummary()
+        summary = ErtSummary(self.ert)
 
         text = SummaryTemplate("Forward Model")
 

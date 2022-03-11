@@ -17,20 +17,26 @@ from qtpy.QtWidgets import QWidget, QFormLayout, QLineEdit
 
 from ert_gui.ertwidgets.analysismoduleselector import AnalysisModuleSelector
 from ert_gui.ertwidgets.caseselector import CaseSelector
+from ert_shared.libres_facade import LibresFacade
 
 
 class RunAnalysisPanel(QWidget):
-    def __init__(self):
+    def __init__(self, ert, notifier):
+        self.ert = ert
         QWidget.__init__(self)
 
         self.setWindowTitle("Run Analysis")
         self.activateWindow()
 
         self.analysis_module = AnalysisModuleSelector(
-            load_all=True, help_link="config/analysis/analysis_module"
+            LibresFacade(ert),
+            load_all=True,
+            help_link="config/analysis/analysis_module",
         )
         self.target_case_text = QLineEdit()
-        self.source_case_selector = CaseSelector(update_ert=False)
+        self.source_case_selector = CaseSelector(
+            LibresFacade(self.ert), notifier, update_ert=False
+        )
 
         layout = QFormLayout()
         layout.addRow("Analysis", self.analysis_module)

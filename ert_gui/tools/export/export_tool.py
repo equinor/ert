@@ -25,13 +25,13 @@ import logging
 
 
 class ExportTool(Tool):
-    def __init__(self):
-        super(ExportTool, self).__init__(
+    def __init__(self, ert):
+        super().__init__(
             "Export Data", "tools/export", resourceIcon("ide/table_export")
         )
         self.__export_widget = None
         self.__dialog = None
-        self.__exporter = Exporter()
+        self.__exporter = Exporter(ert)
         self.setEnabled(self.__exporter.is_valid())
 
     def trigger(self):

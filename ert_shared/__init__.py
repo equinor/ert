@@ -1,5 +1,3 @@
-from .ert_adapter import ERT
-
 try:
     from ert_shared.version import version as __version__
 except ImportError:
