@@ -17,5 +17,6 @@
 
 from .analysis_module import AnalysisModule
 from .enums import AnalysisModuleOptionsEnum, AnalysisModeEnum
+from .ies_data import IESData
 
-__all__ = ["AnalysisModuleOptionsEnum", "AnalysisModeEnum", "AnalysisModule"]
+__all__ = ["AnalysisModuleOptionsEnum", "AnalysisModeEnum", "AnalysisModule", "IESData"]

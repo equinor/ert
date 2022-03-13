@@ -2,6 +2,8 @@
 #include <memory>
 
 #include <ert/analysis/ies/ies_data.hpp>
+#include "ert/python.hpp"
+
 
 /*
   The configuration data used by the ies_enkf module is contained in a
@@ -198,3 +200,9 @@ matrix_type *ies::data::Data::alloc_activeA() const {
     auto *activeA = alloc_active(this->A0, state_mask, this->m_ens_mask);
     return activeA;
 }
+
+RES_LIB_SUBMODULE("analysis.ies_data", m) {
+    py::class_<ies::data::Data>(m, "IESData")
+        .def(py::init<int>());
+}
+
