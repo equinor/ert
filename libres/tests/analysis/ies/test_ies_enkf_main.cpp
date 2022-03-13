@@ -8,6 +8,12 @@
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
+TEST_CASE("default construct ies Data", "[analysis]") {
+    ies::data::Data src_data(100);
+    auto target_data = std::move(src_data);
+    ies::data::Data copy_data(std::move(target_data));
+}
+
 TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     int obs_size = 3;
     int ens_size = 2;

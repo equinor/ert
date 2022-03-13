@@ -18,6 +18,11 @@ constexpr const char *ITER_KEY = "ITER";
 class Data {
 public:
     Data(int ens_size);
+    Data(const Data &) = delete;
+    Data &operator=(const Data &) = delete;
+    Data(Data &&);
+    //Data operator=(Data &&) = delete;
+
     ~Data();
 
     void iteration_nr(int iteration_nr);
@@ -55,8 +60,8 @@ private:
     int m_ens_size;
     bool m_converged;
     int m_iteration_nr;
-    matrix_type *
-        W; // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
+    matrix_type *W;
+    // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
 
     std::optional<int> m_state_size;
     std::vector<bool> m_ens_mask{};

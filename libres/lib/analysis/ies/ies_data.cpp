@@ -26,12 +26,20 @@ ies::data::Data::Data(int ens_size)
       W(matrix_alloc(ens_size, ens_size)) {}
 
 ies::data::Data::~Data() {
-    matrix_free(this->W);
-
+    if (this->W)
+        matrix_free(this->W);
     if (this->A0)
         matrix_free(this->A0);
     if (this->E)
         matrix_free(this->E);
+}
+
+ies::data::Data::Data(Data &&other)
+    : m_ens_size(other.m_ens_size), m_converged(other.m_converged),
+      m_iteration_nr(other.m_iteration_nr), W(nullptr) {
+    std::swap(this->W, other.W);
+    std::swap(this->A0, other.A0);
+    std::swap(this->E, other.E);
 }
 
 void ies::data::Data::iteration_nr(int iteration_nr) {
