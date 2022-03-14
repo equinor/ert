@@ -65,14 +65,6 @@ void linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
 
 namespace {
 auto logger = ert::get_logger("ies");
-
-void subtract_row_mean(Eigen::MatrixXd &matrix) {
-    for (int i = 0; i < matrix.rows(); i++) {
-        double row_mean = matrix.row(i).sum() / matrix.cols();
-        for (int j = 0; j < matrix.cols(); j++)
-            matrix(i, j) -= row_mean;
-    }
-}
 } // namespace
 
 void ies::init_update(ies::data::Data &module_data,
@@ -96,9 +88,11 @@ void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
 
     Eigen::MatrixXd Y = Y0;
 
+    double nsc = 1.0 / sqrt(ens_size - 1.0);
+
     /*  Subtract mean of predictions to generate predicted ensemble anomaly matrix (Line 5) */
-    subtract_row_mean(Y);      // Y=Y*(I-(1/ens_size)*11)
-    Y /= sqrt(ens_size - 1.0); // Y=Y / sqrt(ens_size-1)
+    Y = nsc * (Y.colwise() -
+               Y.rowwise().mean()); // Y = Y * (I - (1 / ens_size) * 11')
 
     /* COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1) */
     if (A.rows() > 0 && A.cols() > 0) {
@@ -245,7 +239,7 @@ void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
                                        Eigen::MatrixXd &Y) {
 
     Eigen::MatrixXd Ai = A;
-    subtract_row_mean(Ai);
+    Ai = Ai.colwise() - Ai.rowwise().mean();
     auto svd = Ai.bdcSvd(Eigen::ComputeThinV);
     Eigen::MatrixXd VT = svd.matrixV().transpose();
     Eigen::MatrixXd AAi = VT.transpose() * VT;
@@ -263,9 +257,11 @@ Eigen::MatrixXd ies::linalg_solve_S(const Eigen::MatrixXd &W0,
     /*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).*/
     Eigen::MatrixXd Omega =
         W0; // Omega=data->W (from previous iteration used to solve for S)
-    subtract_row_mean(Omega);       // Omega=Omega*(I-(1/N)*11')
-    Omega /= sqrt(W0.cols() - 1.0); // Omega/sqrt(N-1)
-    Omega.transposeInPlace();       // Omega=transpose(Omega)
+    double nsc = 1.0 / sqrt(W0.cols() - 1.0);
+    Omega =
+        nsc * (Omega.colwise() -
+               Omega.rowwise().mean()); // Omega = Omega * (I - (1 / N) * 11')
+    Omega.transposeInPlace();           // Omega=transpose(Omega)
     Omega.diagonal().array() += 1.0;
 
     Eigen::MatrixXd ST = Omega.fullPivLu().solve(Y.transpose());
