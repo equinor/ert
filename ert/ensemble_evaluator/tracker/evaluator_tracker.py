@@ -173,14 +173,17 @@ class EvaluatorTracker:
             # Calculate completed realizations
             current_iter = max(list(self._iter_snapshot.keys()))
             done_reals = 0
-            for real in self._iter_snapshot[current_iter].get_reals().values():
+            all_reals = self._iter_snapshot[current_iter].get_reals()
+            if not all_reals:
+                # Empty ensemble or all realizations deactivated
+                return 1.0
+            for real in all_reals.values():
                 if real.status in [
                     state.REALIZATION_STATE_FINISHED,
                     state.REALIZATION_STATE_FAILED,
                 ]:
                     done_reals += 1
-            total_reals = len(self._iter_snapshot[current_iter].get_reals())
-            real_progress = float(done_reals) / total_reals
+            real_progress = float(done_reals) / len(all_reals)
             return (current_iter + real_progress) / self._model.phaseCount()
 
     def _clear_work_queue(self) -> None:

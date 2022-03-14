@@ -1,34 +1,32 @@
 import asyncio
 import contextlib
-from datetime import timedelta
 import functools
 import importlib
 import logging
 import multiprocessing
-from multiprocessing.context import BaseContext
 import os
 import signal
 import threading
 import time
-from typing import Optional
+from datetime import timedelta
+from multiprocessing.context import BaseContext
+from typing import List, Optional
 
 import cloudpickle
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
+from ert_shared.async_utils import get_event_loop
+from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from ert_shared.port_handler import find_available_port
+
 import prefect
 import prefect.utilities.logging
 from prefect import Flow
 from prefect import context as prefect_context
 from prefect.executors import DaskExecutor, LocalDaskExecutor
-
-from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.config import (
-    EvaluatorServerConfig,
-)
-from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.port_handler import find_available_port
 
 DEFAULT_MAX_RETRIES = 0
 DEFAULT_RETRY_DELAY = 5  # seconds
@@ -141,7 +139,7 @@ class PrefectEnsemble(_Ensemble):
         self._max_retries = max_retries
         self._retry_delay = timedelta(seconds=retry_delay)
 
-        # If we instansiate an executor here the prefect ensemble
+        # If we instantiate an executor here the prefect ensemble
         # will fail to pickle (required when using multiprocessing),
         # as the executor has an internal thread lock. Hence, we
         # bind the parameters and delay creating an instance until
@@ -156,10 +154,10 @@ class PrefectEnsemble(_Ensemble):
         self._iens_to_task = {}
         self._allow_cancel = multiprocessing.Event()
 
-    def get_flow(self, ee_id, real_range):
-        with Flow(f"Realization range {real_range}") as flow:
-            transmitter_map = {}
-            for iens in real_range:
+    def get_flow(self, ee_id, iens_range: List[int]):
+        with Flow(f"Realization range {iens_range}") as flow:
+            transmitter_map = {}  # one map pr flow (real-batch)
+            for iens in iens_range:
                 transmitter_map[iens] = {
                     record: transmitter
                     for record, transmitter in self._inputs[iens].items()
@@ -270,16 +268,19 @@ class PrefectEnsemble(_Ensemble):
                 c.send(to_json(event).decode())
 
     def run_flow(self, ee_id):
-        num_realizations = len(self._reals)
-        real_range = range(num_realizations)
+        """Send batches of active realizations as Prefect-flows to the Prefect flow executor"""
+        active_iens: List[int] = [
+            realization.get_iens() for realization in self.get_active_reals()
+        ]
+
         i = 0
         state_map = {}
-        while i < num_realizations:
-            realization_range = real_range[i : i + self._real_per_batch]
-            flow = self.get_flow(ee_id, realization_range)
+        while i < len(active_iens):
+            iens_range = active_iens[i : i + self._real_per_batch]
+            flow = self.get_flow(ee_id, iens_range)
             with prefect_log_level_context(level="WARNING"):
                 state = flow.run(executor=self._new_executor())
-            for iens in realization_range:
+            for iens in iens_range:
                 state_map[iens] = state
             i = i + self._real_per_batch
         for iens, tasks in self._iens_to_task.items():

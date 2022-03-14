@@ -43,7 +43,16 @@ def _build_run_argparser(subparsers: Any) -> None:
         help=(
             "Will evaluate a single realization locally in the "
             "folder `<workspace root>/local-test-run-xxxxxx` where xxxxxx "
-            "is an id appended to the experiment name."
+            "is a unique identifier."
+        ),
+    )
+    run_parser.add_argument(
+        "--realization",
+        default=None,  # The default is injected in code
+        type=int,
+        help=(
+            "Which realization to run for local test runs. Must be unset "
+            "for other runs. Default is 0."
         ),
     )
 
@@ -246,10 +255,13 @@ def _init(args: Any) -> None:
 def _build_local_test_run_config(
     experiment_run_config: ert3.config.ExperimentRunConfig,
     plugin_registry: ConfigPluginRegistry,
+    realization: int = 0,
 ) -> ert3.config.ExperimentRunConfig:
     """Validate and modify a run configuration for a local test run scenario.
 
-    The ensemble size is set to 1, and the driver is set to "local".
+    Only the supplied realization index is set active in the ensemble.
+
+    The driver is set to "local".
     """
     if experiment_run_config.experiment_config.type != "evaluation":
         raise ert.exceptions.ExperimentError(
@@ -269,7 +281,9 @@ def _build_local_test_run_config(
             )
 
     raw_ensemble_config = experiment_run_config.ensemble_config.dict()
-    raw_ensemble_config["size"] = 1
+
+    raw_ensemble_config["active_range"] = str(realization)
+
     raw_ensemble_config["forward_model"]["driver"] = "local"
 
     return ert3.config.ExperimentRunConfig(
@@ -294,9 +308,20 @@ def _run(
     )
 
     if args.local_test_run:
+        if args.realization is None:
+            realization = 0
+        else:
+            realization = args.realization
         experiment_run_config = _build_local_test_run_config(
-            experiment_run_config, plugin_registry=plugin_registry
+            experiment_run_config,
+            plugin_registry=plugin_registry,
+            realization=realization,
         )
+    else:
+        if args.realization is not None:
+            raise ert.exceptions.ExperimentError(
+                "Specifying realization index only works for local test runs."
+            )
 
     if experiment_run_config.experiment_config.type == "evaluation":
         ert3.engine.run(

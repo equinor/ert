@@ -2,9 +2,11 @@ import sys
 from enum import Enum
 from typing import Any, Callable, Dict, Optional, Tuple, Type, no_type_check
 
-from pydantic import BaseModel, ValidationError, create_model, root_validator
+from pydantic import BaseModel, ValidationError, create_model, root_validator, validator
 
 import ert
+import ert.ensemble_evaluator
+
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 
 if sys.version_info >= (3, 8):
@@ -139,6 +141,28 @@ class EnsembleConfig(_EnsembleConfig):
     output: Tuple[EnsembleOutput, ...]
     size: Optional[int] = None
     storage_type: str = "ert_storage"
+    active_range: Optional[str] = None
+    """Specifies list of ranges of realizations that are active.
+    Default (``None``) means all realizations are active.
+    Empty string means no realizations are active."""
+
+    @validator("active_range")
+    def is_active_range_valid(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        ert.ensemble_evaluator.ActiveRange.validate_rangestring(value)
+        return value
+
+    @root_validator
+    def active_range_vs_size(cls, values):  # type: ignore
+        if values.get("active_range") is not None:
+            if values.get("size") is None:
+                return values
+            # If size is not provided, we accept any active_range
+            ert.ensemble_evaluator.ActiveRange.validate_rangestring_vs_length(
+                values["active_range"], values["size"]
+            )
+        return values
 
 
 def create_ensemble_config(

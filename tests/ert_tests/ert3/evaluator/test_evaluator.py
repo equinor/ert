@@ -1,9 +1,8 @@
 import asyncio
 
-import pytest
-
 import ert
 import ert3
+import pytest
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 
@@ -112,6 +111,74 @@ def test_evaluator(
 
     expected = {iens: {"polynomial_output": data} for iens, data in enumerate(expected)}
     assert expected == evaluation_records
+
+
+@pytest.mark.parametrize(
+    "active_mask",
+    [([True, True]), ([True, False]), ([False, True]), ([False, False])],
+)
+def test_inactive_realizations(
+    active_mask,
+    workspace,
+    base_ensemble_dict,
+    function_stages_config,
+    plugin_registry,
+):
+    coeffs = [(0, 0, 0), (1, 1, 1)]
+    storage_path = workspace._path / ".ert" / "tmp" / "test"
+    base_ensemble_dict["size"] = len(coeffs)
+    base_ensemble_dict["storage_type"] = "shared_disk"
+    input_transmitters = get_inputs(coeffs)
+    ensemble_config = ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
+
+    experiment_run_config = ert3.config.ExperimentRunConfig(
+        ert3.config.ExperimentConfig(type="evaluation"),
+        function_stages_config,
+        ensemble_config,
+        ert3.config.ParametersConfig.parse_obj([]),
+    )
+    stage = experiment_run_config.get_stage()
+    step_builder = (
+        create_step_builder().set_name("dummy-function-only_step").set_type("function")
+    )
+    inputs = experiment_run_config.get_linked_inputs()
+    stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
+    ert3.evaluator.add_step_inputs(stochastic_inputs, input_transmitters, step_builder)
+
+    ert3.evaluator.add_step_outputs(
+        ensemble_config.storage_type,
+        stage,
+        storage_path,
+        ensemble_config.size,
+        step_builder,
+    )
+
+    ensemble = ert3.evaluator.build_ensemble(
+        stage,
+        ensemble_config.forward_model.driver,
+        ensemble_config.size,
+        step_builder,
+        active_mask,
+    )
+
+    evaluation_records = ert3.evaluator.evaluate(ensemble, range(1024, 65535))
+
+    for realization_index, active in enumerate(active_mask):
+        if active is False:
+            with pytest.raises(RuntimeError, match="cannot load untransmitted record"):
+                asyncio.get_event_loop().run_until_complete(
+                    evaluation_records[realization_index]["polynomial_output"].load()
+                )
+        else:
+            assert (
+                asyncio.get_event_loop()
+                .run_until_complete(
+                    evaluation_records[realization_index]["polynomial_output"].load()
+                )
+                .data
+            )
 
 
 @pytest.mark.parametrize(

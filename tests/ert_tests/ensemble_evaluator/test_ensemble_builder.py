@@ -13,7 +13,8 @@ from ert.data import (
 )
 
 
-def test_build_ensemble():
+@pytest.mark.parametrize("active_real", [True, False])
+def test_build_ensemble(active_real):
     ensemble = ee.create_ensemble_builder().add_realization(
         ee.create_realization_builder()
         .set_iens(0)
@@ -30,11 +31,11 @@ def test_build_ensemble():
             .set_dummy_io()
             .set_type("unix")
         )
-        .active(True)
+        .active(active_real)
     )
     ensemble = ensemble.build()
     real = ensemble.get_reals()[0]
-    assert real.is_active()
+    assert real.is_active() == active_real
 
 
 def test_build_ensemble_legacy():
