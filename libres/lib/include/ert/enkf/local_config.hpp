@@ -28,6 +28,8 @@
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 
+#include <ert/analysis/ies/ies_data.hpp>
+
 class LocalConfig {
 public:
     LocalConfig(const std::vector<std::string> &parameter_keys,
@@ -43,10 +45,12 @@ public:
     LocalObsData *obsdata(const std::string &key);
     LocalObsData *global_obsdata();
     LocalUpdateStep &updatestep();
-
+    const LocalUpdateStep &updatestep() const;
     void clear() const;
 
+    std::unordered_map<std::string, ies::data::Data> make_update_state(int ens_size) const;
 private:
+
     LocalMinistep m_global_ministep;
     LocalObsData m_global_obsdata;
     LocalUpdateStep m_global_updatestep;

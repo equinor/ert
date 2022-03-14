@@ -43,5 +43,22 @@ TEST_CASE("local_config", "[enkf]") {
             updatestep.add_ministep(*local_config.global_ministep());
             REQUIRE(updatestep.size() == 2);
         }
+
+        THEN("make_update_state") {
+            int ens_size = 123;
+            auto& m1 = local_config.make_ministep("M1");
+            auto& m2 = local_config.make_ministep("M2");
+            auto &updatestep = local_config.updatestep();
+            updatestep.add_ministep(m1);
+            updatestep.add_ministep(m2);
+
+            auto update_state = local_config.make_update_state(ens_size);
+            REQUIRE(update_state.size() == 2);
+            REQUIRE(update_state.count("M1") == 1);
+            REQUIRE(update_state.count("M2") == 1);
+
+            const auto& m1_data = update_state.at("M1");
+            REQUIRE(m1_data.ens_size() == ens_size);
+        }
     }
 }

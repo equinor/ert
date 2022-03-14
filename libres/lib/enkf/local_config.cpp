@@ -189,22 +189,43 @@ LocalUpdateStep &LocalConfig::updatestep() {
         return this->m_global_updatestep;
 }
 
+const LocalUpdateStep &LocalConfig::updatestep() const {
+    if (this->m_updatestep.has_value())
+        return this->m_updatestep.value();
+    else
+        return this->m_global_updatestep;
+}
+
 void LocalConfig::clear() const {
     logger->warning(
         "The LocalConfig::clear() function is deprecated and will be removed");
 }
 
+std::unordered_map<std::string, ies::data::Data> LocalConfig::make_update_state(int ens_size) const {
+    std::unordered_map<std::string, ies::data::Data> update_state;
+    const auto& us = this->updatestep();
+    for (std::size_t ministep_index = 0; ministep_index < us.size(); ministep_index++) {
+        const auto& ministep = us[ministep_index];
+        update_state.emplace( ministep.name(), ies::data::Data(ens_size) );
+    }
+    return update_state;
+}
+
 RES_LIB_SUBMODULE("local.config", m) {
+    auto get_updatestep =
+        static_cast<LocalUpdateStep &(LocalConfig::*)()>(&LocalConfig::updatestep);
+
     py::class_<LocalConfig>(m, "LocalConfig")
         .def("createMinistep", &LocalConfig::make_ministep,
              py::return_value_policy::reference_internal)
         .def("createObsdata", &LocalConfig::make_obsdata,
              py::return_value_policy::reference_internal)
-        .def("getUpdatestep", &LocalConfig::updatestep,
+        .def("getUpdatestep", get_updatestep,
              py::return_value_policy::reference_internal)
         .def("global_ministep", &LocalConfig::global_ministep)
         .def("global_obsdata", &LocalConfig::global_obsdata)
         .def("getMinistep", &LocalConfig::ministep)
+        .def("make_update_state", &LocalConfig::make_update_state)
         .def("clear", &LocalConfig::clear)
         .def("getObsdata", &LocalConfig::obsdata);
 }
