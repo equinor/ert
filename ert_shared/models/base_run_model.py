@@ -7,6 +7,7 @@ from ecl.util.util import BoolVector
 
 from res.enkf import EnKFMain, QueueConfig, RunArg
 from res.enkf.ert_run_context import ErtRunContext
+from res.analysis import UpdateData
 from res.job_queue import (
     ForwardModelStatus,
     JobStatusType,
@@ -63,6 +64,7 @@ class BaseRunModel:
         self._run_context: ErtRunContext = None
         self._last_run_iteration: int = -1
         self._ert = ert
+        self.update_state = ert.getLocalConfig().make_update_state(ert.getEnsembleSize())
         self.facade = LibresFacade(ert)
         self.reset()
 

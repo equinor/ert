@@ -35,6 +35,7 @@ def config_is_correct(updatestep, iterable):
 
 def analysis_smoother_update(
     updatestep,
+    updatestate,
     total_ens_size,
     obs,
     shared_rng,
@@ -89,7 +90,7 @@ def analysis_smoother_update(
             """
 
             module_config = _lib.analysis_module.get_module_config(module)
-            module_data = _lib.analysis_module.get_module_data(module)
+            module_data = updatestate[ministep.name()]
             if update_data.A is not None:
                 _lib.update.run_analysis_update_without_rowscaling(
                     module_config, module_data, ens_mask, update_data
@@ -134,7 +135,7 @@ class ESUpdate:
     def setGlobalStdScaling(self, weight):
         self._analysis_config.setGlobalStdScaling(weight)
 
-    def smootherUpdate(self, run_context):
+    def smootherUpdate(self, run_context, update_state):
         source_fs = run_context.get_sim_fs()
         target_fs = run_context.get_target_fs()
 
@@ -151,6 +152,7 @@ class ESUpdate:
 
         return analysis_smoother_update(
             updatestep,
+            update_state,
             total_ens_size,
             obs,
             shared_rng,
