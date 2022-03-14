@@ -1,17 +1,18 @@
+import re
 from copy import deepcopy
+from email.mime import base
 from nis import match
 
-import re
-import pytest
-
-import ert3
 import ert
+import ert3
+import pytest
 
 
 @pytest.fixture()
 def base_ensemble_config():
     yield {
         "size": 1000,
+        "active_range": "0-999",
         "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
         "output": [{"record": "polynomial_output"}],
         "forward_model": {
@@ -67,6 +68,44 @@ def test_forward_model_invalid_driver(base_ensemble_config, plugin_registry):
         ert.exceptions.ConfigValidationError,
         match="unexpected value; permitted: 'local'",
     ):
+        ert3.config.load_ensemble_config(
+            base_ensemble_config, plugin_registry=plugin_registry
+        )
+
+
+@pytest.mark.parametrize(
+    "size, active_range",
+    [
+        (1, "0"),
+        (1, ""),
+        (1, None),
+        (1, "0-0"),
+        (2, "0-1"),
+        (2, "1-1"),
+        (2, "1"),
+        (2, "0"),
+        (None, None),
+        (None, "0-9999999"),
+    ],
+)
+def test_valid_active_range(base_ensemble_config, plugin_registry, size, active_range):
+    base_ensemble_config["size"] = size
+    base_ensemble_config["active_range"] = active_range
+    ert3.config.load_ensemble_config(
+        base_ensemble_config, plugin_registry=plugin_registry
+    )
+
+
+@pytest.mark.parametrize(
+    "size, active_range",
+    [(1, "1"), (10, "-0"), (10, "0-"), (10, "0-10"), (10, "0.10"), (10, "0--10")],
+)
+def test_invalid_active_range(
+    base_ensemble_config, plugin_registry, size, active_range
+):
+    base_ensemble_config["size"] = size
+    base_ensemble_config["active_range"] = active_range
+    with pytest.raises(ert.exceptions.ConfigValidationError):
         ert3.config.load_ensemble_config(
             base_ensemble_config, plugin_registry=plugin_registry
         )

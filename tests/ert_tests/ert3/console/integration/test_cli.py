@@ -632,6 +632,40 @@ def test_cli_local_test_run(tmpdir):
             assert pathlib.Path(f"local-test-run-{run_id}/output.json").exists()
 
 
+def test_cli_local_test_run_specific_realization(tmpdir):
+    with chdir(tmpdir):
+        with Storage.start_server():
+            args = ["ert3", "init", "--example", "polynomial"]
+            with patch.object(sys, "argv", args):
+                ert3.console._console._main()
+
+            os.chdir("polynomial")
+
+            with pytest.raises(ert.exceptions.ExperimentError):
+                with patch.object(
+                    sys, "argv", ["ert3", "run", "evaluation", "--realization", "2"]
+                ):
+                    ert3.console._console._main()
+
+            with patch.object(
+                sys,
+                "argv",
+                ["ert3", "run", "evaluation", "--local-test-run", "--realization", "2"],
+            ):
+                ert3.console._console._main()
+
+            experiments = [
+                experiment
+                for experiment in ert.storage.get_experiment_names(
+                    workspace_name="polynomial"
+                )
+                if experiment.startswith("evaluation-")
+            ]
+            assert len(experiments) == 1
+            run_id = experiments[0].split("-")[1]
+            assert pathlib.Path(f"local-test-run-{run_id}/output.json").exists()
+
+
 def test_failing_check_service(tmpdir):
     with tmpdir.as_cwd():
         with patch.object(

@@ -235,11 +235,20 @@ def run(
             step_builder,
         )
 
+    active_range = experiment_run_config.ensemble_config.active_range
+    if active_range is None:
+        active_mask = None
+    else:
+        active_mask = ert.ensemble_evaluator.ActiveRange(
+            rangestring=experiment_run_config.ensemble_config.active_range,
+            length=ensemble_size,
+        ).mask
     ensemble = ert3.evaluator.build_ensemble(
         stage,
         experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
         step_builder,
+        active_mask,
     )
     ert3.evaluator.evaluate(ensemble)
 

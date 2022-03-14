@@ -1,10 +1,9 @@
 import pathlib
 import shlex
 from functools import partial
-from typing import Callable, Dict, Tuple, Type, cast
+from typing import Callable, Dict, List, Optional, Tuple, Type, cast
 
 import cloudpickle
-
 import ert
 import ert3
 from ert_shared.async_utils import get_event_loop
@@ -131,7 +130,10 @@ def build_ensemble(
     driver: str,
     ensemble_size: int,
     step_builder: StepBuilder,
+    active_mask: Optional[List[bool]] = None,
 ) -> Ensemble:
+    if active_mask is None:
+        active_mask = [True] * ensemble_size
     if isinstance(stage, ert3.config.Function):
         step_builder.add_job(
             create_job_builder()
@@ -154,9 +156,13 @@ def build_ensemble(
         .set_max_running(10000)
         .set_max_retries(0)
         .set_executor(driver)
-        .set_forward_model(
-            create_realization_builder().active(True).add_step(step_builder)
-        )
     )
+    for iens, active_flag in enumerate(active_mask):
+        builder = builder.add_realization(
+            create_realization_builder()
+            .set_iens(iens)
+            .active(active_flag)
+            .add_step(step_builder)
+        )
 
     return builder.build()
