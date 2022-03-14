@@ -45,8 +45,6 @@ extern "C" ext_param_type *ext_param_alloc(const ext_param_config_type *config);
 extern "C" ext_param_config_type const *
 ext_param_get_config(const ext_param_type *param);
 
-UTIL_SAFE_CAST_HEADER(ext_param);
-UTIL_SAFE_CAST_HEADER_CONST(ext_param);
 VOID_FREE_HEADER(ext_param);
 VOID_ALLOC_HEADER(ext_param);
 VOID_ECL_WRITE_HEADER(ext_param);

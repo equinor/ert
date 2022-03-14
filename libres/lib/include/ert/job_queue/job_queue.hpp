@@ -101,6 +101,5 @@ extern "C" PY_USED char *job_queue_get_status_file(const job_queue_type *queue);
 extern "C" PY_USED int job_queue_add_job_node(job_queue_type *queue,
                                               job_queue_node_type *node);
 
-UTIL_SAFE_CAST_HEADER(job_queue);
 
 #endif

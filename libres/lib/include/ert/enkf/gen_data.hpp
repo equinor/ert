@@ -51,8 +51,6 @@ bool gen_data_fload_with_report_step(
     gen_data_type *gen_data, const char *filename,
     const forward_load_context_type *load_context);
 
-UTIL_SAFE_CAST_HEADER(gen_data);
-UTIL_SAFE_CAST_HEADER_CONST(gen_data);
 VOID_USER_GET_HEADER(gen_data);
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);

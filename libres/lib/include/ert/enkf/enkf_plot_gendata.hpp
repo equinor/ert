@@ -47,6 +47,5 @@ extern "C" double_vector_type *
 enkf_plot_gendata_get_min_values(enkf_plot_gendata_type *plot_data);
 extern "C" double_vector_type *
 enkf_plot_gendata_get_max_values(enkf_plot_gendata_type *plot_data);
-UTIL_IS_INSTANCE_HEADER(enkf_plot_gendata);
 
 #endif

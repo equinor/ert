@@ -33,11 +33,9 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");
 
-#define JOB_QUEUE_NODE_TYPE_ID 3315299
 #define INVALID_QUEUE_INDEX -999
 
 struct job_queue_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int num_cpu; /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
     char *run_cmd; /* The path to the actual executable. */
     char *
@@ -164,8 +162,6 @@ void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
     }
 }
 
-UTIL_IS_INSTANCE_FUNCTION(job_queue_node, JOB_QUEUE_NODE_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(job_queue_node, JOB_QUEUE_NODE_TYPE_ID)
 
 int job_queue_node_get_queue_index(const job_queue_node_type *node) {
     if (node->queue_index == INVALID_QUEUE_INDEX)
@@ -261,7 +257,6 @@ job_queue_node_alloc(const char *job_name, const char *run_path,
         (job_queue_node_type *)util_malloc(sizeof *node);
     node->confirmed_running = false;
     node->progress_timestamp = time(NULL);
-    UTIL_TYPE_ID_INIT(node, JOB_QUEUE_NODE_TYPE_ID);
 
     /* The data initialized in this block should *NEVER* change. */
     std::string path = job_name;

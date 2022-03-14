@@ -52,7 +52,7 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
 }
 
 static void read_erroneous_gen_kw_file(void *arg) {
-    vector_type *arg_vector = vector_safe_cast(arg);
+    vector_type *arg_vector = reinterpret_cast<vector_type*>(arg);
     gen_kw_config_type *gen_kw_config =
         (gen_kw_config_type *)vector_iget(arg_vector, 0);
     const char *filename = (const char *)vector_iget_const(arg_vector, 1);

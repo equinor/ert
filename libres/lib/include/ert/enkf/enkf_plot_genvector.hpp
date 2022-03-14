@@ -35,6 +35,5 @@ void *enkf_plot_genvector_load__(void *arg);
 extern "C" double
 enkf_plot_genvector_iget(const enkf_plot_genvector_type *vector, int index);
 
-UTIL_IS_INSTANCE_HEADER(enkf_plot_genvector);
 
 #endif

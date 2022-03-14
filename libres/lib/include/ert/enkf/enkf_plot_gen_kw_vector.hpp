@@ -40,6 +40,5 @@ extern "C" double
 enkf_plot_gen_kw_vector_iget(const enkf_plot_gen_kw_vector_type *vector,
                              int index);
 
-UTIL_IS_INSTANCE_HEADER(enkf_plot_gen_kw_vector);
 
 #endif

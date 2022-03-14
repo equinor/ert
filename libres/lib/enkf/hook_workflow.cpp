@@ -33,21 +33,17 @@
 #define RUN_MODE_PRE_UPDATE_NAME "PRE_UPDATE"
 #define RUN_MODE_POST_UPDATE_NAME "POST_UPDATE"
 
-#define HOOK_WORKFLOW_TYPE_ID 7321780
 
 struct hook_workflow_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hook_run_mode_enum run_mode;
     workflow_type *workflow;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(hook_workflow, HOOK_WORKFLOW_TYPE_ID);
 
 hook_workflow_type *hook_workflow_alloc(workflow_type *workflow,
                                         hook_run_mode_enum run_mode) {
     hook_workflow_type *hook_workflow =
         (hook_workflow_type *)util_malloc(sizeof *hook_workflow);
-    UTIL_TYPE_ID_INIT(hook_workflow, HOOK_WORKFLOW_TYPE_ID);
     hook_workflow->run_mode = run_mode;
     hook_workflow->workflow = workflow;
     return hook_workflow;
@@ -58,7 +54,7 @@ void hook_workflow_free(hook_workflow_type *hook_workflow) {
 }
 
 void hook_workflow_free__(void *arg) {
-    hook_workflow_type *hook_workflow = hook_workflow_safe_cast(arg);
+    hook_workflow_type *hook_workflow = reinterpret_cast<hook_workflow_type*>(arg);
     hook_workflow_free(hook_workflow);
 }
 

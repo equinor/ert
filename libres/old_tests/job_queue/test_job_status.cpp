@@ -24,7 +24,7 @@
 #include <ert/util/test_util.hpp>
 
 void call_get_status(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    job_queue_status_type *job_status = reinterpret_cast<job_queue_status_type*>(arg);
     job_queue_status_get_count(
         job_status,
         pow(2,
@@ -42,20 +42,20 @@ void test_create() {
 }
 
 void *add_sim(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    job_queue_status_type *job_status = reinterpret_cast<job_queue_status_type*>(arg);
     job_queue_status_inc(job_status, JOB_QUEUE_WAITING);
     return NULL;
 }
 
 void *user_exit(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    job_queue_status_type *job_status = reinterpret_cast<job_queue_status_type*>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING,
                                 JOB_QUEUE_DO_KILL);
     return NULL;
 }
 
 void *user_done(void *arg) {
-    job_queue_status_type *job_status = job_queue_status_safe_cast(arg);
+    job_queue_status_type *job_status = reinterpret_cast<job_queue_status_type*>(arg);
     job_queue_status_transition(job_status, JOB_QUEUE_WAITING, JOB_QUEUE_DONE);
     return NULL;
 }

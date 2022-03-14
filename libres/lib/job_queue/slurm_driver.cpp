@@ -122,7 +122,6 @@ private:
     mutable pthread_rwlock_t lock = PTHREAD_RWLOCK_INITIALIZER;
 };
 
-#define SLURM_DRIVER_TYPE_ID 70555081
 #define DEFAULT_SBATCH_CMD "sbatch"
 #define DEFAULT_SCANCEL_CMD "scancel"
 #define DEFAULT_SQUEUE_CMD "squeue"
@@ -138,7 +137,6 @@ private:
 #define SLURM_CONFIGURING_STATUS "CONFIGURING"
 
 struct slurm_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
 
     std::string sbatch_cmd;
     std::string scancel_cmd;
@@ -217,12 +215,9 @@ template <typename C> static std::string join_string(const C &strings) {
     return full_string;
 }
 
-UTIL_SAFE_CAST_FUNCTION(slurm_driver, SLURM_DRIVER_TYPE_ID)
-static UTIL_SAFE_CAST_FUNCTION_CONST(slurm_driver, SLURM_DRIVER_TYPE_ID)
 
     void *slurm_driver_alloc() {
     slurm_driver_type *driver = new slurm_driver_type();
-    UTIL_TYPE_ID_INIT(driver, SLURM_DRIVER_TYPE_ID);
     driver->sbatch_cmd = DEFAULT_SBATCH_CMD;
     driver->scancel_cmd = DEFAULT_SCANCEL_CMD;
     driver->squeue_cmd = DEFAULT_SQUEUE_CMD;
@@ -237,13 +232,13 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(slurm_driver, SLURM_DRIVER_TYPE_ID)
 void slurm_driver_free(slurm_driver_type *driver) { delete driver; }
 
 void slurm_driver_free__(void *__driver) {
-    slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
+    slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>(__driver);
     slurm_driver_free(driver);
 }
 
 const void *slurm_driver_get_option(const void *__driver,
                                     const char *option_key) {
-    const slurm_driver_type *driver = slurm_driver_safe_cast_const(__driver);
+    const slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>_const(__driver);
     if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0)
         return driver->sbatch_cmd.c_str();
 
@@ -282,7 +277,7 @@ const void *slurm_driver_get_option(const void *__driver,
 
 bool slurm_driver_set_option(void *__driver, const char *option_key,
                              const void *value) {
-    slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
+    slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>(__driver);
     if (strcmp(option_key, SLURM_SBATCH_OPTION) == 0) {
         driver->sbatch_cmd = static_cast<const char *>(value);
         return true;
@@ -433,7 +428,7 @@ static std::string make_submit_script(const slurm_driver_type *driver,
 void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
                               const char *run_path, const char *job_name,
                               int argc, const char **argv) {
-    slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
+    slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>(__driver);
 
     auto submit_script =
         make_submit_script(driver, cmd, job_name, num_cpu, argc, argv);
@@ -599,7 +594,7 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
 */
 
 job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
-    slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
+    slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>(__driver);
     const auto *job = static_cast<const SlurmJob *>(__job);
     auto update_cache = difftime(time(nullptr), driver->status_timestamp) >
                         driver->status_timeout;
@@ -610,7 +605,7 @@ job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
 }
 
 void slurm_driver_kill_job(void *__driver, void *__job) {
-    slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
+    slurm_driver_type *driver = reinterpret_cast<slurm_driver_type*>(__driver);
     const auto *job = static_cast<const SlurmJob *>(__job);
     const char **argv =
         static_cast<const char **>(util_calloc(1, sizeof *argv));

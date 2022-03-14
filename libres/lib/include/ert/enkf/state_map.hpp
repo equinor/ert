@@ -57,6 +57,5 @@ int state_map_count_matching(const state_map_type *state_map, int mask);
 extern "C" bool state_map_legal_transition(realisation_state_enum state1,
                                            realisation_state_enum state2);
 
-UTIL_IS_INSTANCE_HEADER(state_map);
 
 #endif

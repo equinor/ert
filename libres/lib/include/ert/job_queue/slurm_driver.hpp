@@ -49,6 +49,5 @@ job_status_type slurm_driver_get_job_status(void *__driver, void *__job);
 void slurm_driver_kill_job(void *__driver, void *__job);
 void slurm_driver_free_job(void *__job);
 
-UTIL_SAFE_CAST_HEADER(slurm_driver);
 
 #endif

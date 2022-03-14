@@ -86,7 +86,6 @@ struct validate_struct {
 
 #define CONFIG_SCHEMA_ITEM_ID 6751
 struct config_schema_item_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *kw; /* The kw which identifies this item */
 
     bool required_set;
@@ -194,7 +193,6 @@ static void validate_set_indexed_selection_set(validate_type *validate,
         set.insert(stringlist_iget(argv, i));
 }
 
-static UTIL_SAFE_CAST_FUNCTION(config_schema_item, CONFIG_SCHEMA_ITEM_ID)
 
     void config_schema_item_assure_type(const config_schema_item_type *item,
                                         int index, int type_mask) {
@@ -211,7 +209,6 @@ config_schema_item_type *config_schema_item_alloc(const char *kw,
                                                   bool required) {
     config_schema_item_type *item =
         (config_schema_item_type *)util_malloc(sizeof *item);
-    UTIL_TYPE_ID_INIT(item, CONFIG_SCHEMA_ITEM_ID);
     item->kw = util_alloc_string_copy(kw);
 
     item->required_set = required;
@@ -509,7 +506,7 @@ void config_schema_item_free(config_schema_item_type *item) {
 }
 
 void config_schema_item_free__(void *void_item) {
-    config_schema_item_type *item = config_schema_item_safe_cast(void_item);
+    config_schema_item_type *item = reinterpret_cast<config_schema_item_type*>(void_item);
     config_schema_item_free(item);
 }
 

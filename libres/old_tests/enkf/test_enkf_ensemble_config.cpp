@@ -23,7 +23,7 @@
 #include <ert/enkf/ensemble_config.hpp>
 
 void add_NULL_node(void *arg) {
-    ensemble_config_type *ens_config = ensemble_config_safe_cast(arg);
+    ensemble_config_type *ens_config = reinterpret_cast<ensemble_config_type*>(arg);
     ensemble_config_add_node(ens_config, NULL);
 }
 

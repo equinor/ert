@@ -777,7 +777,7 @@ void field_ecl_write(const field_type *field, const char *run_path,
         field_config_get_export_format(field->config);
 
     if (export_format == ECL_FILE) {
-        fortio_type *restart_fortio = fortio_safe_cast(filestream);
+        fortio_type *restart_fortio = reinterpret_cast<fortio_type*>(filestream);
         field_export(field, NULL, restart_fortio, export_format, true, NULL);
         return;
     }
@@ -1194,9 +1194,6 @@ C_USED bool field_user_get(const field_type *field, const char *index_key,
 
   MATH_OPS(field)
 */
-UTIL_SAFE_CAST_FUNCTION(field, FIELD)
-UTIL_SAFE_CAST_FUNCTION_CONST(field, FIELD)
-UTIL_IS_INSTANCE_FUNCTION(field, FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_ECL_WRITE(field)

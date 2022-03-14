@@ -23,19 +23,15 @@
 #include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/config_keys.hpp>
 
-#define ERT_TEMPLATE_TYPE_ID 7731963
-#define ERT_TEMPLATES_TYPE_ID 6677330
 
 /* Singular - one template. */
 struct ert_template_struct {
-    UTIL_TYPE_ID_DECLARATION;
     template_type *tmpl;
     char *target_file;
 };
 
 /* Plural - many templates. */
 struct ert_templates_struct {
-    UTIL_TYPE_ID_DECLARATION;
     subst_list_type *parent_subst;
     hash_type *templates;
 };
@@ -66,7 +62,6 @@ ert_template_type *ert_template_alloc(const char *template_file,
                                       subst_list_type *parent_subst) {
     ert_template_type *ert_template =
         (ert_template_type *)util_malloc(sizeof *ert_template);
-    UTIL_TYPE_ID_INIT(ert_template, ERT_TEMPLATE_TYPE_ID);
     ert_template->tmpl = template_alloc(
         template_file, false,
         parent_subst); /* The templates are instantiated with internalize_template == false;
@@ -107,16 +102,14 @@ void ert_template_set_args_from_string(ert_template_type *ert_template,
     template_add_args_from_string(ert_template->tmpl, arg_string);
 }
 
-UTIL_SAFE_CAST_FUNCTION(ert_template, ERT_TEMPLATE_TYPE_ID)
 
 void ert_template_free__(void *arg) {
-    ert_template_free(ert_template_safe_cast(arg));
+    ert_template_free(reinterpret_cast<ert_template_type*>(arg));
 }
 
 ert_templates_type *ert_templates_alloc_default(subst_list_type *parent_subst) {
     ert_templates_type *templates =
         (ert_templates_type *)util_malloc(sizeof *templates);
-    UTIL_TYPE_ID_INIT(templates, ERT_TEMPLATES_TYPE_ID);
     templates->templates = hash_alloc();
     templates->parent_subst = parent_subst;
     return templates;

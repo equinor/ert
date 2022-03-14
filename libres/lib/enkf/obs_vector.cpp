@@ -47,10 +47,8 @@
 #include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/active_list.hpp>
 
-#define OBS_VECTOR_TYPE_ID 120086
 
 struct obs_vector_struct {
-    UTIL_TYPE_ID_DECLARATION;
     obs_free_ftype *freef;  /* Function used to free an observation node. */
     obs_get_ftype *get_obs; /* Function used to build the 'd' vector. */
     obs_meas_ftype *
@@ -72,8 +70,6 @@ struct obs_vector_struct {
     std::vector<int> step_list;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
 
 static void obs_vector_prefer_RESTART_warning() {
     // clang-format off
@@ -161,7 +157,6 @@ obs_vector_type *obs_vector_alloc(obs_impl_type obs_type, const char *obs_key,
                                   int num_reports) {
     auto vector = new obs_vector_type;
 
-    UTIL_TYPE_ID_INIT(vector, OBS_VECTOR_TYPE_ID);
     vector->freef = NULL;
     vector->measure = NULL;
     vector->get_obs = NULL;
@@ -239,32 +234,8 @@ void obs_vector_free(obs_vector_type *obs_vector) {
     delete obs_vector;
 }
 
-static void obs_vector_assert_node_type(const obs_vector_type *obs_vector,
-                                        const void *node) {
-    bool type_OK;
-    switch (obs_vector->obs_type) {
-    case (SUMMARY_OBS):
-        type_OK = summary_obs_is_instance(node);
-        break;
-    case (BLOCK_OBS):
-        type_OK = block_obs_is_instance(node);
-        break;
-    case (GEN_OBS):
-        type_OK = gen_obs_is_instance(node);
-        break;
-    default:
-        util_abort("%s: Error in type check: \n", __func__);
-        type_OK = false;
-    }
-    if (!type_OK)
-        util_abort("%s: Type mismatch when trying to add observation node to "
-                   "observation vector \n",
-                   __func__);
-}
-
 void obs_vector_install_node(obs_vector_type *obs_vector, int index,
                              void *node) {
-    obs_vector_assert_node_type(obs_vector, node);
     {
         if (vector_iget_const(obs_vector->nodes, index) == NULL) {
             obs_vector->num_active++;

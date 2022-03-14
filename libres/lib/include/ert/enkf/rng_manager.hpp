@@ -49,6 +49,5 @@ void rng_manager_save_state(const rng_manager_type *rng_manager,
                             const char *seed_file);
 void rng_manager_log_state(const rng_manager_type *rng_manager);
 
-UTIL_IS_INSTANCE_HEADER(rng_manager);
 
 #endif

@@ -83,6 +83,5 @@ extern "C" const subst_list_type *
 ert_workflow_list_get_context(const ert_workflow_list_type *workflow_list);
 int ert_workflow_list_get_size(const ert_workflow_list_type *workflow_list);
 
-UTIL_IS_INSTANCE_HEADER(ert_workflow_list);
 
 #endif

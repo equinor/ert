@@ -49,6 +49,4 @@ vector_type *block_fs_alloc_filelist(block_fs_type *block_fs,
                                      block_fs_sort_type sort_mode,
                                      bool include_free_nodes);
 
-UTIL_IS_INSTANCE_HEADER(block_fs);
-UTIL_SAFE_CAST_HEADER(block_fs);
 #endif

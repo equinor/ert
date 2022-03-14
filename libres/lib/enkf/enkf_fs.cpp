@@ -133,7 +133,6 @@ static auto logger = ert::get_logger("enkf");
   foolprof.
 */
 
-#define ENKF_FS_TYPE_ID 1089763
 #define ENKF_MOUNT_MAP "enkf_mount_info"
 #define SUMMARY_KEY_SET_FILE "summary-key-set"
 #define TIME_MAP_FILE "time-map"
@@ -142,7 +141,6 @@ static auto logger = ert::get_logger("enkf");
 #define CASE_CONFIG_FILE "case_config"
 
 struct enkf_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *case_name;
     char *root_path;
     char *
@@ -175,8 +173,6 @@ struct enkf_fs_struct {
         // be able to answer the question: Is this case currently 'running'?
 };
 
-UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
 
 void enkf_fs_umount(enkf_fs_type *fs);
 
@@ -215,7 +211,6 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
 
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     enkf_fs_type *fs = new enkf_fs_type;
-    UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
     fs->cases_config = cases_config_alloc();
     fs->state_map = state_map_alloc();

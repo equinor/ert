@@ -47,7 +47,7 @@ void fs_driver_init(fs_driver_type *driver) {
     driver->fsync_driver = NULL;
 }
 
-fs_driver_type *fs_driver_safe_cast(void *__driver) {
+fs_driver_type *reinterpret_cast<fs_driver_type*>(void *__driver) {
     fs_driver_type *driver = (fs_driver_type *)__driver;
     if (driver->type_id != FS_DRIVER_ID)
         util_abort("%s: runtime cast failed. \n", __func__);

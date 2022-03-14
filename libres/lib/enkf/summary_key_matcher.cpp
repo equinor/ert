@@ -4,19 +4,15 @@
 
 #include <ert/util/hash.h>
 
-#define SUMMARY_KEY_MATCHER_TYPE_ID 700672137
 
 struct summary_key_matcher_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hash_type *key_set;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(summary_key_matcher, SUMMARY_KEY_MATCHER_TYPE_ID)
 
 summary_key_matcher_type *summary_key_matcher_alloc() {
     summary_key_matcher_type *matcher =
         (summary_key_matcher_type *)util_malloc(sizeof *matcher);
-    UTIL_TYPE_ID_INIT(matcher, SUMMARY_KEY_MATCHER_TYPE_ID);
     matcher->key_set = hash_alloc();
     return matcher;
 }

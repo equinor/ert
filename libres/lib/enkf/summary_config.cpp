@@ -27,7 +27,6 @@
 
 #include <ert/enkf/summary_config.hpp>
 
-#define SUMMARY_CONFIG_TYPE_ID 63106
 
 struct summary_config_struct {
     int __type_id;
@@ -40,7 +39,6 @@ struct summary_config_struct {
         obs_set; /* Set of keys (which fit in enkf_obs) which are observations of this node. */
 };
 
-UTIL_IS_INSTANCE_FUNCTION(summary_config, SUMMARY_CONFIG_TYPE_ID)
 
 const char *summary_config_get_var(const summary_config_type *config) {
     return config->var;
@@ -100,7 +98,5 @@ int summary_config_get_data_size(const summary_config_type *config) {
     return 1;
 }
 
-UTIL_SAFE_CAST_FUNCTION(summary_config, SUMMARY_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(summary_config, SUMMARY_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)

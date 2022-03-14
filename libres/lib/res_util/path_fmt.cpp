@@ -55,13 +55,11 @@ char * path = path_fmt_alloc(path_fmt , "BaseCase" , 67);
 #define PATH_FMT_ID 7519200
 
 struct path_fmt_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *fmt;
     char *file_fmt;
     bool is_directory;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(path_fmt, PATH_FMT_ID)
 
     void path_fmt_reset_fmt(path_fmt_type *path, const char *fmt) {
     path->fmt = util_realloc_string_copy(path->fmt, fmt);
@@ -71,7 +69,6 @@ static UTIL_SAFE_CAST_FUNCTION(path_fmt, PATH_FMT_ID)
 
 static path_fmt_type *path_fmt_alloc__(const char *fmt, bool is_directory) {
     path_fmt_type *path = (path_fmt_type *)util_malloc(sizeof *path);
-    UTIL_TYPE_ID_INIT(path, PATH_FMT_ID);
     path->fmt = NULL;
     path->file_fmt = NULL;
     path->is_directory = is_directory;
@@ -273,6 +270,6 @@ void path_fmt_free(path_fmt_type *path) {
 }
 
 void path_fmt_free__(void *arg) {
-    path_fmt_type *path_fmt = path_fmt_safe_cast(arg);
+    path_fmt_type *path_fmt = reinterpret_cast<path_fmt_type*>(arg);
     path_fmt_free(path_fmt);
 }

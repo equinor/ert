@@ -39,23 +39,18 @@ struct runpath_list_struct {
     char *export_file;
 };
 
-#define RUNPATH_NODE_TYPE_ID 661400541
 struct runpath_node_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int iens;
     int iter;
     char *runpath;
     char *basename;
 };
 
-UTIL_SAFE_CAST_FUNCTION(runpath_node, RUNPATH_NODE_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(runpath_node, RUNPATH_NODE_TYPE_ID)
 
 static runpath_node_type *runpath_node_alloc(int iens, int iter,
                                              const char *runpath,
                                              const char *basename) {
     runpath_node_type *node = (runpath_node_type *)util_malloc(sizeof *node);
-    UTIL_TYPE_ID_INIT(node, RUNPATH_NODE_TYPE_ID);
 
     node->iens = iens;
     node->iter = iter;
@@ -72,7 +67,7 @@ static void runpath_node_free(runpath_node_type *node) {
 }
 
 static void runpath_node_free__(void *arg) {
-    runpath_node_type *node = runpath_node_safe_cast(arg);
+    runpath_node_type *node = reinterpret_cast<runpath_node_type*>(arg);
     runpath_node_free(node);
 }
 
@@ -81,8 +76,8 @@ static void runpath_node_free__(void *arg) {
 */
 
 static int runpath_node_cmp(const void *arg1, const void *arg2) {
-    const runpath_node_type *node1 = runpath_node_safe_cast_const(arg1);
-    const runpath_node_type *node2 = runpath_node_safe_cast_const(arg2);
+    const runpath_node_type *node1 = reinterpret_cast<runpath_node_type*>_const(arg1);
+    const runpath_node_type *node2 = reinterpret_cast<runpath_node_type*>_const(arg2);
     {
         if (node1->iter > node2->iter)
             return 1;

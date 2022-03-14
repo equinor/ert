@@ -32,20 +32,16 @@
 
 namespace fs = std::filesystem;
 
-#define STATE_MAP_TYPE_ID 500672132
 
 struct state_map_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int_vector_type *state;
     pthread_rwlock_t mutable rw_lock;
     bool read_only;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(state_map, STATE_MAP_TYPE_ID)
 
 state_map_type *state_map_alloc() {
     state_map_type *map = (state_map_type *)util_malloc(sizeof *map);
-    UTIL_TYPE_ID_INIT(map, STATE_MAP_TYPE_ID);
     map->state = int_vector_alloc(0, STATE_UNDEFINED);
     pthread_rwlock_init(&map->rw_lock, NULL);
     map->read_only = false;

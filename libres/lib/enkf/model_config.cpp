@@ -67,9 +67,7 @@ static auto logger = ert::get_logger("enkf");
   This semantically predefined runpath is the only option visible to the user.
  */
 
-#define MODEL_CONFIG_TYPE_ID 661053
 struct model_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     forward_model_type *
         forward_model; /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */
     time_map_type *external_time_map;
@@ -253,7 +251,6 @@ void model_config_set_max_internal_submit(model_config_type *model_config,
     model_config->max_internal_submit = max_resample;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(model_config, MODEL_CONFIG_TYPE_ID)
 
 model_config_type *model_config_alloc_empty() {
     model_config_type *model_config =
@@ -266,7 +263,6 @@ model_config_type *model_config_alloc_empty() {
      3. Initialize with user supplied values.
 
   */
-    UTIL_TYPE_ID_INIT(model_config, MODEL_CONFIG_TYPE_ID);
     model_config->enspath = NULL;
     model_config->rftpath = NULL;
     model_config->data_root = NULL;

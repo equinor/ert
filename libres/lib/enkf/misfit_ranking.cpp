@@ -35,10 +35,8 @@
    misfit_ranking. I.e. all the RFT measurements.
 */
 
-#define MISFIT_RANKING_TYPE_ID 671108
 
 struct misfit_ranking_struct {
-    UTIL_TYPE_ID_DECLARATION;
     vector_type *
         ensemble; /* An ensemble of hash instances. Each hash instance is populated like this: hash_insert_double(hash , "WGOR" , 1.09); */
     double_vector_type *
@@ -48,8 +46,6 @@ struct misfit_ranking_struct {
     int ens_size;
 };
 
-UTIL_SAFE_CAST_FUNCTION(misfit_ranking, MISFIT_RANKING_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(misfit_ranking, MISFIT_RANKING_TYPE_ID)
 
 void misfit_ranking_display(const misfit_ranking_type *misfit_ranking,
                             FILE *stream) {
@@ -111,7 +107,6 @@ void misfit_ranking_display(const misfit_ranking_type *misfit_ranking,
 static misfit_ranking_type *misfit_ranking_alloc_empty(int ens_size) {
     misfit_ranking_type *misfit_ranking =
         (misfit_ranking_type *)util_malloc(sizeof *misfit_ranking);
-    UTIL_TYPE_ID_INIT(misfit_ranking, MISFIT_RANKING_TYPE_ID);
     misfit_ranking->sort_permutation = NULL;
     misfit_ranking->ensemble = vector_alloc_new();
     misfit_ranking->total = double_vector_alloc(0, INVALID_RANKING_VALUE);
@@ -174,7 +169,7 @@ void misfit_ranking_free(misfit_ranking_type *misfit_ranking) {
 }
 
 void misfit_ranking_free__(void *arg) {
-    misfit_ranking_type *misfit_ranking = misfit_ranking_safe_cast(arg);
+    misfit_ranking_type *misfit_ranking = reinterpret_cast<misfit_ranking_type*>(arg);
     misfit_ranking_free(misfit_ranking);
 }
 

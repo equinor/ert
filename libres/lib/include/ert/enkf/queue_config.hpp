@@ -86,7 +86,5 @@ extern "C" PY_USED const char *queue_config_lsf_server();
 extern "C" PY_USED const char *queue_config_lsf_resource();
 extern "C" PY_USED const char *queue_config_lsf_driver_name();
 
-UTIL_SAFE_CAST_HEADER(queue_config);
-UTIL_IS_INSTANCE_HEADER(queue_config);
 
 #endif

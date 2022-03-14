@@ -30,7 +30,5 @@ void container_assert_size(const container_type *container);
 
 VOID_ALLOC_HEADER(container);
 VOID_FREE_HEADER(container);
-UTIL_IS_INSTANCE_HEADER(container);
-UTIL_SAFE_CAST_HEADER_CONST(container);
 
 #endif

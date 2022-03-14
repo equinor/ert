@@ -49,6 +49,5 @@ extern "C" bool
 enkf_plot_gen_kw_should_use_log_scale(const enkf_plot_gen_kw_type *gen_kw,
                                       int index);
 
-UTIL_IS_INSTANCE_HEADER(enkf_plot_gen_kw);
 
 #endif

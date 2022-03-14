@@ -23,6 +23,5 @@ extern "C" bool summary_key_matcher_summary_key_is_required(
 extern "C" stringlist_type *
 summary_key_matcher_get_keys(const summary_key_matcher_type *matcher);
 
-UTIL_IS_INSTANCE_HEADER(summary_key_matcher);
 
 #endif

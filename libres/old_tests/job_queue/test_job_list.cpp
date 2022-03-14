@@ -32,7 +32,7 @@ void test_create() {
 }
 
 void call_add_job(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(arg);
     job_list_type *job_list = (job_list_type *)arg_pack_iget_ptr(arg_pack, 0);
     job_queue_node_type *node =
         (job_queue_node_type *)arg_pack_iget_ptr(arg_pack, 1);
@@ -40,7 +40,7 @@ void call_add_job(void *arg) {
 }
 
 void call_iget_job(void *arg) {
-    job_list_type *job_list = job_list_safe_cast(arg);
+    job_list_type *job_list = reinterpret_cast<job_list_type*>(arg);
     job_list_iget_job(job_list, 10);
 }
 

@@ -75,6 +75,5 @@ FILE *torque_driver_get_debug_stream(const torque_driver_type *driver);
 job_status_type torque_driver_parse_status(const char *qstat_file,
                                            const char *jobnr);
 
-UTIL_SAFE_CAST_HEADER(torque_driver);
 
 #endif /* TORQUE_DRIVER_H */

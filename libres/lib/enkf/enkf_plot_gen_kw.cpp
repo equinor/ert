@@ -23,23 +23,19 @@
 #include <ert/enkf/enkf_plot_gen_kw.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 
-#define ENKF_PLOT_GEN_KW_TYPE_ID 88362063
 
 struct enkf_plot_gen_kw_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const enkf_config_node_type *config_node;
     int size;                                /* Number of ensembles. */
     enkf_plot_gen_kw_vector_type **ensemble; /* One vector for each ensemble. */
 };
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_gen_kw, ENKF_PLOT_GEN_KW_TYPE_ID)
 
 enkf_plot_gen_kw_type *
 enkf_plot_gen_kw_alloc(const enkf_config_node_type *config_node) {
     if (enkf_config_node_get_impl_type(config_node) == GEN_KW) {
         enkf_plot_gen_kw_type *plot_gen_kw =
             (enkf_plot_gen_kw_type *)util_malloc(sizeof *plot_gen_kw);
-        UTIL_TYPE_ID_INIT(plot_gen_kw, ENKF_PLOT_GEN_KW_TYPE_ID);
         plot_gen_kw->config_node = config_node;
         plot_gen_kw->size = 0;
         plot_gen_kw->ensemble = NULL;

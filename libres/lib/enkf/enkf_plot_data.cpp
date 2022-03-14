@@ -19,10 +19,8 @@
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
 
-#define ENKF_PLOT_DATA_TYPE_ID 3331063
 
 struct enkf_plot_data_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const enkf_config_node_type *config_node;
     int size;
     enkf_plot_tvector_type **ensemble;
@@ -68,13 +66,11 @@ void enkf_plot_data_free(enkf_plot_data_type *plot_data) {
     free(plot_data);
 }
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_data, ENKF_PLOT_DATA_TYPE_ID);
 
 enkf_plot_data_type *
 enkf_plot_data_alloc(const enkf_config_node_type *config_node) {
     enkf_plot_data_type *plot_data =
         (enkf_plot_data_type *)util_malloc(sizeof *plot_data);
-    UTIL_TYPE_ID_INIT(plot_data, ENKF_PLOT_DATA_TYPE_ID);
     plot_data->config_node = config_node;
     plot_data->size = 0;
     plot_data->ensemble = NULL;

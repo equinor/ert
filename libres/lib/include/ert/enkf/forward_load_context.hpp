@@ -61,6 +61,5 @@ extern "C" void
 forward_load_context_select_step(forward_load_context_type *load_context,
                                  int report_step);
 
-UTIL_IS_INSTANCE_HEADER(forward_load_context);
 
 #endif

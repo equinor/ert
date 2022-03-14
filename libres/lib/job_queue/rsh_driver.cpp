@@ -31,7 +31,6 @@
 #include <ert/job_queue/rsh_driver.hpp>
 
 struct rsh_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool active; /* Means that it allocated - not really in use */
     job_status_type status;
     pthread_t run_thread;
@@ -46,11 +45,8 @@ typedef struct {
     pthread_mutex_t host_mutex;
 } rsh_host_type;
 
-#define RSH_DRIVER_TYPE_ID 44963256
-#define RSH_JOB_TYPE_ID 63256701
 
 struct rsh_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     pthread_mutex_t submit_lock;
     pthread_attr_t thread_attr;
     char *rsh_command;
@@ -60,9 +56,7 @@ struct rsh_driver_struct {
     hash_type *__host_hash; /* Redundancy ... */
 };
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(rsh_driver, RSH_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(
     rsh_driver,
-    RSH_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(rsh_job, RSH_JOB_TYPE_ID)
 
     /*
    If the host is for some reason not available, NULL should be
@@ -149,7 +143,7 @@ static void rsh_host_submit_job(rsh_host_type *rsh_host, rsh_job_type *job,
 */
 
 static void *rsh_host_submit_job__(void *__arg_pack) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg_pack);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(__arg_pack);
     char *rsh_cmd = (char *)arg_pack_iget_ptr(arg_pack, 0);
     rsh_host_type *rsh_host = (rsh_host_type *)arg_pack_iget_ptr(arg_pack, 1);
     char *submit_cmd = (char *)arg_pack_iget_ptr(arg_pack, 2);
@@ -170,7 +164,6 @@ rsh_job_type *rsh_job_alloc(const char *run_path) {
     job->active = false;
     job->status = JOB_QUEUE_WAITING;
     job->run_path = util_alloc_string_copy(run_path);
-    UTIL_TYPE_ID_INIT(job, RSH_JOB_TYPE_ID);
     return job;
 }
 
@@ -184,7 +177,7 @@ job_status_type rsh_driver_get_job_status(void *__driver, void *__job) {
         /* The job has not been registered at all ... */
         return JOB_QUEUE_NOT_ACTIVE;
     else {
-        rsh_job_type *job = rsh_job_safe_cast(__job);
+        rsh_job_type *job = reinterpret_cast<rsh_job_type*>(__job);
         {
             if (job->active == false) {
                 util_abort("%s: internal error - should not query status on "
@@ -198,12 +191,12 @@ job_status_type rsh_driver_get_job_status(void *__driver, void *__job) {
 }
 
 void rsh_driver_free_job(void *__job) {
-    rsh_job_type *job = rsh_job_safe_cast(__job);
+    rsh_job_type *job = reinterpret_cast<rsh_job_type*>(__job);
     rsh_job_free(job);
 }
 
 void rsh_driver_kill_job(void *__driver, void *__job) {
-    rsh_job_type *job = rsh_job_safe_cast(__job);
+    rsh_job_type *job = reinterpret_cast<rsh_job_type*>(__job);
     if (job->active)
         pthread_cancel(job->run_thread);
     rsh_job_free(job);
@@ -214,7 +207,7 @@ void *rsh_driver_submit_job(void *__driver, const char *submit_cmd,
                             const char *run_path, const char *job_name,
                             int argc, const char **argv) {
 
-    rsh_driver_type *driver = rsh_driver_safe_cast(__driver);
+    rsh_driver_type *driver = reinterpret_cast<rsh_driver_type*>(__driver);
     rsh_job_type *job = NULL;
     {
         /*
@@ -296,7 +289,7 @@ void rsh_driver_free(rsh_driver_type *driver) {
 }
 
 void rsh_driver_free__(void *__driver) {
-    rsh_driver_type *driver = rsh_driver_safe_cast(__driver);
+    rsh_driver_type *driver = reinterpret_cast<rsh_driver_type*>(__driver);
     rsh_driver_free(driver);
 }
 
@@ -323,7 +316,6 @@ void rsh_driver_set_host_list(rsh_driver_type *rsh_driver,
 void *rsh_driver_alloc() {
     rsh_driver_type *rsh_driver =
         (rsh_driver_type *)util_malloc(sizeof *rsh_driver);
-    UTIL_TYPE_ID_INIT(rsh_driver, RSH_DRIVER_TYPE_ID);
     pthread_mutex_init(&rsh_driver->submit_lock, NULL);
     pthread_attr_init(&rsh_driver->thread_attr);
     pthread_attr_setdetachstate(&rsh_driver->thread_attr,
@@ -385,7 +377,7 @@ void rsh_driver_add_host_from_string(rsh_driver_type *rsh_driver,
 bool rsh_driver_set_option(void *__driver, const char *option_key,
                            const void *value_) {
     const char *value = (const char *)value_;
-    rsh_driver_type *driver = rsh_driver_safe_cast(__driver);
+    rsh_driver_type *driver = reinterpret_cast<rsh_driver_type*>(__driver);
     bool has_option = true;
     {
         if (strcmp(RSH_HOST, option_key) ==
@@ -395,7 +387,7 @@ bool rsh_driver_set_option(void *__driver, const char *option_key,
             strcmp(RSH_HOSTLIST, option_key) ==
             0) { /* Set full host list - value should be hash of integers. */
             if (value != NULL) {
-                const hash_type *hash_value = hash_safe_cast_const(value);
+                const hash_type *hash_value = reinterpret_cast<hash_type*>_const(value);
                 rsh_driver_set_host_list(driver, hash_value);
             }
         } else if (strcmp(RSH_CLEAR_HOSTLIST, option_key) == 0)
@@ -412,7 +404,7 @@ bool rsh_driver_set_option(void *__driver, const char *option_key,
 
 const void *rsh_driver_get_option(const void *__driver,
                                   const char *option_key) {
-    const rsh_driver_type *driver = rsh_driver_safe_cast_const(__driver);
+    const rsh_driver_type *driver = reinterpret_cast<rsh_driver_type*>_const(__driver);
     {
         if (strcmp(RSH_CMD, option_key) == 0)
             return driver->rsh_command;

@@ -22,19 +22,15 @@
 
 #include <ert/enkf/container_config.hpp>
 
-#define CONTAINER_CONFIG_TYPE_ID 51330852
 
 struct container_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     vector_type *nodes;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(container_config, CONTAINER_CONFIG_TYPE_ID);
 
 container_config_type *container_config_alloc(const char *key) {
     container_config_type *container =
         (container_config_type *)util_malloc(sizeof *container);
-    UTIL_TYPE_ID_INIT(container, CONTAINER_CONFIG_TYPE_ID);
     container->nodes = vector_alloc_new();
     return container;
 }
@@ -59,7 +55,5 @@ int container_config_get_data_size(
     return 0;
 }
 
-UTIL_SAFE_CAST_FUNCTION(container_config, CONTAINER_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(container_config, CONTAINER_CONFIG_TYPE_ID)
 VOID_GET_DATA_SIZE(container)
 VOID_CONFIG_FREE(container)

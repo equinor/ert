@@ -69,8 +69,6 @@ extern "C" stringlist_type *
 gen_kw_config_iget_function_parameter_names(const gen_kw_config_type *config,
                                             int index);
 
-UTIL_SAFE_CAST_HEADER_CONST(gen_kw_config);
-UTIL_SAFE_CAST_HEADER(gen_kw_config);
 VOID_FREE_HEADER(gen_kw_config);
 VOID_GET_DATA_SIZE_HEADER(gen_kw);
 #endif

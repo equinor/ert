@@ -25,7 +25,6 @@
 
 #define CONFIG_CONTENT_ITEM_ID 8876752
 struct config_content_item_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const config_schema_item_type *schema;
     vector_type *nodes;
     const config_path_elm_type *path_elm;
@@ -146,11 +145,9 @@ void config_content_item_free(config_content_item_type *item) {
     free(item);
 }
 
-UTIL_SAFE_CAST_FUNCTION(config_content_item, CONFIG_CONTENT_ITEM_ID)
-UTIL_IS_INSTANCE_FUNCTION(config_content_item, CONFIG_CONTENT_ITEM_ID)
 
 void config_content_item_free__(void *arg) {
-    config_content_item_type *content_item = config_content_item_safe_cast(arg);
+    config_content_item_type *content_item = reinterpret_cast<config_content_item_type*>(arg);
     config_content_item_free(content_item);
 }
 
@@ -159,7 +156,6 @@ config_content_item_alloc(const config_schema_item_type *schema,
                           const config_path_elm_type *path_elm) {
     config_content_item_type *content_item =
         (config_content_item_type *)util_malloc(sizeof *content_item);
-    UTIL_TYPE_ID_INIT(content_item, CONFIG_CONTENT_ITEM_ID);
     content_item->schema = schema;
     content_item->nodes = vector_alloc_new();
     content_item->path_elm = path_elm;

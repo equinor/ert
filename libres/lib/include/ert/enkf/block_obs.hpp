@@ -75,7 +75,6 @@ extern "C" void block_obs_append_summary_obs(block_obs_type *block_obs, int i,
 
 VOID_FREE_HEADER(block_obs);
 VOID_GET_OBS_HEADER(block_obs);
-UTIL_IS_INSTANCE_HEADER(block_obs);
 VOID_MEASURE_HEADER(block_obs);
 VOID_USER_GET_OBS_HEADER(block_obs);
 VOID_CHI2_HEADER(block_obs);

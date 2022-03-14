@@ -22,10 +22,8 @@
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue_status.hpp>
 
-#define JOB_QUEUE_STATUS_TYPE_ID 777620306
 
 struct job_queue_status_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int status_list[JOB_QUEUE_MAX_STATE];
     pthread_rwlock_t rw_lock;
     int status_index[JOB_QUEUE_MAX_STATE];
@@ -48,13 +46,10 @@ static int STATUS_INDEX(const job_queue_status_type *status_count,
     return 0;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(job_queue_status, JOB_QUEUE_STATUS_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(job_queue_status, JOB_QUEUE_STATUS_TYPE_ID)
 
 job_queue_status_type *job_queue_status_alloc() {
     job_queue_status_type *status =
         (job_queue_status_type *)util_malloc(sizeof *status);
-    UTIL_TYPE_ID_INIT(status, JOB_QUEUE_STATUS_TYPE_ID);
     pthread_rwlock_init(&status->rw_lock, NULL);
     job_queue_status_clear(status);
     status->timestamp = time(NULL);

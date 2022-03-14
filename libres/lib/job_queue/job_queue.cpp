@@ -69,7 +69,6 @@ static auto logger = ert::get_logger("job_queue");
         this:
 
         struct some_driver {
-            UTIL_TYPE_ID_DECLARATION
             QUEUE_DRIVER_FUNCTIONS
             ....
             ....
@@ -80,7 +79,6 @@ static auto logger = ert::get_logger("job_queue");
         queue_driver_type instance which is a struct like this:
 
         struct queue_driver_struct {
-            UTIL_TYPE_ID_DECLARATION
             QUEUE_DRIVER_FIELDS
         }
 
@@ -204,10 +202,8 @@ static auto logger = ert::get_logger("job_queue");
 
 */
 
-#define JOB_QUEUE_TYPE_ID 665210
 
 struct job_queue_struct {
-    UTIL_TYPE_ID_DECLARATION;
     job_list_type *job_list;
     job_queue_status_type *status;
     char *
@@ -960,7 +956,7 @@ void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
 }
 
 void *job_queue_run_jobs__(void *__arg_pack) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg_pack);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(__arg_pack);
     job_queue_type *queue = (job_queue_type *)arg_pack_iget_ptr(arg_pack, 0);
     int num_total_run = arg_pack_iget_int(arg_pack, 1);
     bool verbose = arg_pack_iget_bool(arg_pack, 2);
@@ -1053,7 +1049,6 @@ int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
         return -1;
 }
 
-UTIL_SAFE_CAST_FUNCTION(job_queue, JOB_QUEUE_TYPE_ID)
 
 /*
    Observe that the job_queue returned by this function is NOT ready
@@ -1066,7 +1061,6 @@ job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
                                 const char *exit_file) {
 
     job_queue_type *queue = (job_queue_type *)util_malloc(sizeof *queue);
-    UTIL_TYPE_ID_INIT(queue, JOB_QUEUE_TYPE_ID);
     queue->usleep_time = 250000; /* 1000000 : 1 second */
     queue->max_ok_wait_time = 60;
     queue->max_duration = 0;

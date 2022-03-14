@@ -55,7 +55,7 @@
 #define VOID_GET_DATA_SIZE(prefix)                                             \
     int prefix##_config_get_data_size__(const void *arg) {                     \
         const prefix##_config_type *config =                                   \
-            prefix##_config_safe_cast_const(arg);                              \
+            reinterpret_cast<const prefix##_config_type*>(arg);                \
         return prefix##_config_get_data_size(config);                          \
     }
 #define VOID_GET_DATA_SIZE_HEADER(prefix)                                      \
@@ -64,7 +64,7 @@
 #define VOID_ALLOC(prefix)                                                     \
     void *prefix##_alloc__(const void *void_config) {                          \
         const prefix##_config_type *config =                                   \
-            prefix##_config_safe_cast_const(void_config);                      \
+            reinterpret_cast<const prefix##_config_type*>(void_config);        \
         return prefix##_alloc(config);                                         \
     }
 
@@ -72,7 +72,8 @@
 
 #define VOID_HAS_DATA(prefix)                                                  \
     bool prefix##_has_data__(const void *void_arg, int report_step) {          \
-        const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
+        const prefix##_type *arg =                                             \
+            reinterpret_cast<const prefix##_type*>(void_arg);                  \
         return prefix##_has_data(arg, report_step);                            \
     }
 
@@ -82,14 +83,16 @@
 #define VOID_WRITE_TO_BUFFER(prefix)                                           \
     bool prefix##_write_to_buffer__(const void *void_arg, buffer_type *buffer, \
                                     int report_step) {                         \
-        const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
+        const prefix##_type *arg =                                             \
+            reinterpret_cast<const prefix##_type*>(void_arg);                  \
         return prefix##_write_to_buffer(arg, buffer, report_step);             \
     }
 
 #define VOID_READ_FROM_BUFFER(prefix)                                          \
     void prefix##_read_from_buffer__(void *void_arg, buffer_type *buffer,      \
                                      enkf_fs_type *fs, int report_step) {      \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                                   \
+            reinterpret_cast<prefix##_type*>(void_arg);                        \
         prefix##_read_from_buffer(arg, buffer, fs, report_step);               \
     }
 
@@ -101,7 +104,8 @@
 
 #define VOID_FLOAD(prefix)                                                     \
     bool prefix##_fload__(void *void_arg, const char *filename) {              \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         return prefix##_fload(arg, filename);                                  \
     }
 #define VOID_FLOAD_HEADER(prefix) bool prefix##_fload__(void *, const char *);
@@ -110,7 +114,8 @@
     void prefix##_ecl_write__(const void *void_arg, const char *path,          \
                               const char *file,                                \
                               value_export_type *export_value) {               \
-        const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
+        const prefix##_type *arg =                                             \
+            reinterpret_cast<const prefix##_type*>(void_arg);                  \
         prefix##_ecl_write(arg, path, file, export_value);                     \
     }
 
@@ -122,7 +127,8 @@
     bool prefix##_forward_load__(                                              \
         void *void_arg, const char *ecl_file,                                  \
         const forward_load_context_type *load_context) {                       \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         return prefix##_forward_load(arg, ecl_file, load_context);             \
     }
 
@@ -135,7 +141,8 @@
         void *void_arg, const char *ecl_file,                                  \
         const forward_load_context_type *load_context,                         \
         const int_vector_type *time_index) {                                   \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         return prefix##_forward_load_vector(arg, ecl_file, load_context,       \
                                             time_index);                       \
     }
@@ -147,7 +154,8 @@
 
 #define VOID_FREE(prefix)                                                      \
     void prefix##_free__(void *void_arg) {                                     \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         prefix##_free(arg);                                                    \
     }
 
@@ -156,7 +164,8 @@
 #define VOID_USER_GET(prefix)                                                  \
     bool prefix##_user_get__(void *void_arg, const char *key, int report_step, \
                              double *value) {                                  \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        const prefix##_type *arg =                                             \
+            reinterpret_cast<const prefix##_type*>(void_arg);                  \
         return prefix##_user_get(arg, key, report_step, value);                \
     }
 
@@ -166,7 +175,8 @@
 #define VOID_USER_GET_VECTOR(prefix)                                           \
     void prefix##_user_get_vector__(void *void_arg, const char *key,           \
                                     double_vector_type *value) {               \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         prefix##_user_get_vector(arg, key, value);                             \
     }
 
@@ -184,8 +194,10 @@
 
 #define VOID_COPY(prefix)                                                      \
     void prefix##_copy__(const void *void_src, void *void_target) {            \
-        const prefix##_type *src = prefix##_safe_cast_const(void_src);         \
-        prefix##_type *target = prefix##_safe_cast(void_target);               \
+        const prefix##_type *src =                                             \
+            reinterpret_cast<const prefix##_type*>(void_src);                  \
+        prefix##_type *target =                                          \
+            reinterpret_cast<prefix##_type*>(void_target);               \
         prefix##_copy(src, target);                                            \
     }
 #define VOID_COPY_HEADER(prefix) void prefix##_copy__(const void *, void *);
@@ -202,7 +214,8 @@
     void prefix##_serialize__(const void *void_arg, node_id_type node_id,      \
                               const ActiveList *active_list, matrix_type *A,   \
                               int row_offset, int column) {                    \
-        const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
+        const prefix##_type *arg =                                             \
+            reinterpret_cast<const prefix##_type*>(void_arg);                  \
         prefix##_serialize(arg, node_id, active_list, A, row_offset, column);  \
     }
 #define VOID_SERIALIZE_HEADER(prefix)                                          \
@@ -213,7 +226,8 @@
     void prefix##_deserialize__(                                               \
         void *void_arg, node_id_type node_id, const ActiveList *active_list,   \
         const matrix_type *A, int row_offset, int column) {                    \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         prefix##_deserialize(arg, node_id, active_list, A, row_offset,         \
                              column);                                          \
     }
@@ -224,7 +238,8 @@
 #define VOID_INITIALIZE(prefix)                                                \
     bool prefix##_initialize__(void *void_arg, int iens,                       \
                                const char *init_file, rng_type *rng) {         \
-        prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
+        prefix##_type *arg =                                             \
+            reinterpret_cast<prefix##_type*>(void_arg);                  \
         return prefix##_initialize(arg, iens, init_file, rng);                 \
     }
 #define VOID_INITIALIZE_HEADER(prefix)                                         \
@@ -267,7 +282,8 @@
 #define VOID_UPDATE_STD_SCALE(prefix)                                          \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \
                                      const ActiveList *active_list) {          \
-        prefix##_type *obs = prefix##_safe_cast(void_obs);                     \
+        prefix##_type *obs =                                             \
+            reinterpret_cast<prefix##_type*>(void_obs);                  \
         prefix##_update_std_scale(obs, std_multiplier, active_list);           \
     }
 
@@ -278,7 +294,8 @@
 #define VOID_CHI2(obs_prefix, state_prefix)                                    \
     double obs_prefix##_chi2__(const void *void_obs, const void *void_state,   \
                                node_id_type node_id) {                         \
-        const obs_prefix##_type *obs = obs_prefix##_safe_cast_const(void_obs); \
+        const prefix##_type *obs =                                             \
+            reinterpret_cast<const prefix##_type*>(void_obs);                  \
         const state_prefix##_type *state =                                     \
             (const state_prefix##_type *)void_state;                           \
         return obs_prefix##_chi2(obs, state, node_id);                         \
@@ -295,7 +312,7 @@
 
 #define VOID_CLEAR(prefix)                                                     \
     void prefix##_clear__(void *void_arg) {                                    \
-        prefix##_clear(prefix##_safe_cast(void_arg));                          \
+        prefix##_clear(reinterpret_cast<prefix##_type*>(void_arg));                          \
     }
 #define VOID_CLEAR_HEADER(prefix) void prefix##_clear__(void *)
 #endif

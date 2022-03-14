@@ -88,7 +88,6 @@ template_type *template_alloc(const char *template_file,
                               bool internalize_template,
                               subst_list_type *parent_subst) {
     template_type *_template = (template_type *)util_malloc(sizeof *_template);
-    UTIL_TYPE_ID_INIT(_template, TEMPLATE_TYPE_ID);
     _template->arg_list = subst_list_alloc(parent_subst);
     _template->template_buffer = NULL;
     _template->template_file = NULL;

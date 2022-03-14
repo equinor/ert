@@ -225,7 +225,5 @@ extern "C" void enkf_main_add_data_kw(enkf_main_type *enkf_main,
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);
 
-UTIL_SAFE_CAST_HEADER(enkf_main);
-UTIL_IS_INSTANCE_HEADER(enkf_main);
 
 #endif

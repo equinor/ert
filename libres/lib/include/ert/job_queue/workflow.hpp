@@ -49,6 +49,5 @@ workflow_iget_arguments(const workflow_type *workflow, int index);
 extern "C" bool workflow_try_compile(workflow_type *script,
                                      const subst_list_type *context);
 
-UTIL_IS_INSTANCE_HEADER(workflow);
 
 #endif

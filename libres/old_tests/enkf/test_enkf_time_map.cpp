@@ -55,7 +55,7 @@ void ecl_test(const char *ecl_case) {
 }
 
 static void map_update(void *arg) {
-    vector_type *arg_vector = vector_safe_cast(arg);
+    vector_type *arg_vector = reinterpret_cast<vector_type*>(arg);
     time_map_type *tmap = (time_map_type *)vector_iget(arg_vector, 0);
     ecl_sum_type *sum = (ecl_sum_type *)vector_iget(arg_vector, 1);
 
@@ -84,7 +84,7 @@ void test_inconsistent_summary(const char *case1, const char *case2) {
 }
 
 static void alloc_index_map(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(arg);
     time_map_type *map = (time_map_type *)arg_pack_iget_ptr(arg_pack, 0);
     ecl_sum_type *sum = (ecl_sum_type *)arg_pack_iget_ptr(arg_pack, 1);
 
@@ -269,7 +269,7 @@ void simple_test() {
 }
 
 static void simple_update(void *arg) {
-    time_map_type *tmap = time_map_safe_cast(arg);
+    time_map_type *tmap = reinterpret_cast<time_map_type*>(arg);
 
     time_map_update(tmap, 0, 101);
 }
@@ -290,7 +290,7 @@ void simple_test_inconsistent() {
 #define MAP_SIZE 10000
 
 void *update_time_map(void *arg) {
-    time_map_type *time_map = time_map_safe_cast(arg);
+    time_map_type *time_map = reinterpret_cast<time_map_type*>(arg);
     int i;
     for (i = 0; i < MAP_SIZE; i++)
         time_map_update(time_map, i, i);

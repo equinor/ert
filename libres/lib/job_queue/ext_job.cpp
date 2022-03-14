@@ -101,7 +101,6 @@ jobList = [
      "stdin"     : "eclipse.stdin"}]
 */
 
-#define EXT_JOB_TYPE_ID 763012
 
 #define EXT_JOB_STDOUT "stdout"
 #define EXT_JOB_STDERR "stderr"
@@ -109,7 +108,6 @@ jobList = [
     "null" //Setting STDOUT null or STDERR null in forward model directs output to screen
 
 struct ext_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *name;
     char *executable;
     char *target_file;
@@ -148,14 +146,12 @@ struct ext_job_struct {
         __valid; /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
 };
 
-static UTIL_SAFE_CAST_FUNCTION(ext_job, EXT_JOB_TYPE_ID)
 
     static ext_job_type *ext_job_alloc__(const char *name,
                                          const char *license_root_path,
                                          bool private_job) {
     ext_job_type *ext_job = (ext_job_type *)util_malloc(sizeof *ext_job);
 
-    UTIL_TYPE_ID_INIT(ext_job, EXT_JOB_TYPE_ID);
     ext_job->name = util_alloc_string_copy(name);
     ext_job->license_root_path = util_alloc_string_copy(license_root_path);
     ext_job->executable = NULL;
@@ -334,7 +330,7 @@ void ext_job_free(ext_job_type *ext_job) {
 }
 
 void ext_job_free__(void *__ext_job) {
-    ext_job_free(ext_job_safe_cast(__ext_job));
+    ext_job_free(reinterpret_cast<ext_job_type*>(__ext_job));
 }
 
 /*

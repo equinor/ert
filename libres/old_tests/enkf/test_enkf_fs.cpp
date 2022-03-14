@@ -122,7 +122,7 @@ void createFS() {
 }
 
 void test_fwrite_readonly(void *arg) {
-    enkf_fs_type *fs = enkf_fs_safe_cast(arg);
+    enkf_fs_type *fs = reinterpret_cast<enkf_fs_type*>(arg);
     /*
      The arguments here are completely bogus; the important thing is
      that this fwrite call should be intercepted by a util_abort()

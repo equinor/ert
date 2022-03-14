@@ -25,20 +25,16 @@
 
 #include <ert/enkf/misfit_ts.hpp>
 
-#define MISFIT_TS_TYPE_ID 641066
 
 struct misfit_ts_struct {
-    UTIL_TYPE_ID_DECLARATION;
     double_vector_type *
         data; /* A double vector of length 'history_length' with actual misfit values. */
 };
 
-static UTIL_SAFE_CAST_FUNCTION(misfit_ts, MISFIT_TS_TYPE_ID);
 
 misfit_ts_type *misfit_ts_alloc(int history_length) {
     misfit_ts_type *misfit_ts =
         (misfit_ts_type *)util_malloc(sizeof *misfit_ts);
-    UTIL_TYPE_ID_INIT(misfit_ts, MISFIT_TS_TYPE_ID);
 
     if (history_length > 0)
         misfit_ts->data = double_vector_alloc(history_length + 1, 0);
@@ -66,7 +62,7 @@ static void misfit_ts_free(misfit_ts_type *misfit_ts) {
 }
 
 void misfit_ts_free__(void *vector) {
-    misfit_ts_free(misfit_ts_safe_cast(vector));
+    misfit_ts_free(reinterpret_cast<misfit_ts_type*>(vector));
 }
 
 void misfit_ts_iset(misfit_ts_type *vector, int time_index, double value) {

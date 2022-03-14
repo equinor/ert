@@ -27,11 +27,9 @@
 
 #include "ert/python.hpp"
 
-#define SUMMARY_OBS_TYPE_ID 66103
 #define OBS_SIZE 1
 
 struct summary_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *
         summary_key; /* The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
     char *obs_key;
@@ -57,7 +55,6 @@ summary_obs_type *summary_obs_alloc(const char *summary_key,
                                     double std) {
 
     summary_obs_type *obs = (summary_obs_type *)util_malloc(sizeof *obs);
-    UTIL_TYPE_ID_INIT(obs, SUMMARY_OBS_TYPE_ID)
 
     obs->summary_key = util_alloc_string_copy(summary_key);
     obs->obs_key = util_alloc_string_copy(obs_key);
@@ -68,9 +65,6 @@ summary_obs_type *summary_obs_alloc(const char *summary_key,
     return obs;
 }
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(summary_obs, SUMMARY_OBS_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION(summary_obs, SUMMARY_OBS_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION(summary_obs, SUMMARY_OBS_TYPE_ID);
 
 void summary_obs_free(summary_obs_type *summary_obs) {
     free(summary_obs->summary_key);

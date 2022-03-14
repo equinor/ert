@@ -117,7 +117,6 @@ _______________/                     \___________/       |  with EnKF.          
 #define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
 
     char *ecl_kw_name; /* Name/key ... */
     int data_size, nx, ny,
@@ -155,7 +154,6 @@ struct field_config_struct {
     char *input_transform_name;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(field_config, FIELD_CONFIG_ID)
 
 void field_config_set_ecl_data_type(field_config_type *config,
                                     ecl_data_type data_type) {
@@ -314,7 +312,6 @@ field_config_type *field_config_alloc_empty(const char *ecl_kw_name,
 
     field_config_type *config =
         (field_config_type *)util_malloc(sizeof *config);
-    UTIL_TYPE_ID_INIT(config, FIELD_CONFIG_ID);
 
     config->keep_inactive_cells = keep_inactive_cells;
     config->ecl_kw_name = util_alloc_string_copy(ecl_kw_name);
@@ -809,8 +806,6 @@ void field_config_fprintf_config(const field_config_type *config,
         fprintf(stream, CONFIG_FLOAT_OPTION_FORMAT, MAX_KEY, config->max_value);
 }
 
-UTIL_SAFE_CAST_FUNCTION(field_config, FIELD_CONFIG_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(field_config, FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_GET_DATA_SIZE(field)

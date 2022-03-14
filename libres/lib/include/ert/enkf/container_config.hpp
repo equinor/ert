@@ -30,8 +30,6 @@ void container_config_add_node(container_config_type *container,
                                const enkf_config_node_type *config_node);
 int container_config_get_size(const container_config_type *container_config);
 
-UTIL_IS_INSTANCE_HEADER(container_config);
-UTIL_SAFE_CAST_HEADER_CONST(container_config);
 GET_DATA_SIZE_HEADER(container);
 VOID_GET_DATA_SIZE_HEADER(container);
 VOID_CONFIG_FREE_HEADER(container);

@@ -56,7 +56,6 @@
 #define QUEUE_DRIVER_ID 86516032
 
 struct queue_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     /*
      Function pointers - pointing to low level functions in the implementations of
      e.g. lsf_driver.
@@ -85,7 +84,6 @@ struct queue_driver_struct {
                                         will (try) to send an unlimited number of jobs to the driver. */
 };
 
-UTIL_IS_INSTANCE_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
 
 void queue_driver_set_max_running(queue_driver_type *driver, int max_running) {
     driver->max_running_string =
@@ -201,7 +199,6 @@ bool queue_driver_unset_option(queue_driver_type *driver,
 static queue_driver_type *queue_driver_alloc_empty() {
     queue_driver_type *driver =
         (queue_driver_type *)util_malloc(sizeof *driver);
-    UTIL_TYPE_ID_INIT(driver, QUEUE_DRIVER_ID);
     driver->driver_type = NULL_DRIVER;
     driver->submit = NULL;
     driver->get_status = NULL;
@@ -220,7 +217,6 @@ static queue_driver_type *queue_driver_alloc_empty() {
     return driver;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
 
     /*
    The driver created in this function has all the function pointers
@@ -411,6 +407,6 @@ void queue_driver_free(queue_driver_type *driver) {
 }
 
 void queue_driver_free__(void *driver) {
-    queue_driver_type *queue_driver = queue_driver_safe_cast(driver);
+    queue_driver_type *queue_driver = reinterpret_cast<queue_driver_type*>(driver);
     queue_driver_free(queue_driver);
 }

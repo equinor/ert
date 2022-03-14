@@ -36,11 +36,8 @@
 #include <ert/enkf/block_obs.hpp>
 #include "ert/python.hpp"
 
-#define BLOCK_OBS_TYPE_ID 661098
-#define POINT_OBS_TYPE_ID 778196
 
 typedef struct {
-    UTIL_TYPE_ID_DECLARATION;
     block_obs_source_type source_type;
     int i;
     int j;
@@ -52,10 +49,8 @@ typedef struct {
     char *sum_key;
 } point_obs_type;
 
-static UTIL_SAFE_CAST_FUNCTION(point_obs, POINT_OBS_TYPE_ID);
 
 struct block_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *obs_key; /* A user provided label for the observation.      */
     vector_type *point_list;
     const ecl_grid_type *grid;
@@ -63,9 +58,6 @@ struct block_obs_struct {
     block_obs_source_type source_type;
 };
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(block_obs, BLOCK_OBS_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION(block_obs, BLOCK_OBS_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION(block_obs, BLOCK_OBS_TYPE_ID);
 
 static point_obs_type *point_obs_alloc(block_obs_source_type source_type, int i,
                                        int j, int k, int active_index,
@@ -73,7 +65,6 @@ static point_obs_type *point_obs_alloc(block_obs_source_type source_type, int i,
                                        double std) {
     point_obs_type *point_obs =
         (point_obs_type *)util_malloc(sizeof *point_obs);
-    UTIL_TYPE_ID_INIT(point_obs, POINT_OBS_TYPE_ID);
 
     if (source_type == SOURCE_FIELD) {
         point_obs->active_index = active_index;
@@ -100,7 +91,7 @@ static void point_obs_free(point_obs_type *point_obs) {
 }
 
 static void point_obs_free__(void *arg) {
-    point_obs_type *point_obs = point_obs_safe_cast(arg);
+    point_obs_type *point_obs = reinterpret_cast<point_obs_type*>(arg);
     point_obs_free(point_obs);
 }
 
@@ -108,12 +99,12 @@ static double point_obs_iget_data(const point_obs_type *point_obs,
                                   const void *state, int iobs,
                                   node_id_type node_id) {
     if (point_obs->source_type == SOURCE_FIELD) {
-        const field_type *field = field_safe_cast_const(state);
+        const field_type *field = reinterpret_cast<field_type*>_const(state);
         return field_iget_double(field, point_obs->active_index);
     } else if (point_obs->source_type == SOURCE_SUMMARY) {
-        const container_type *container = container_safe_cast_const(state);
+        const container_type *container = reinterpret_cast<container_type*>_const(state);
         const summary_type *summary =
-            summary_safe_cast_const(container_iget_node(container, iobs));
+            reinterpret_cast<summary_type*>_const(container_iget_node(container, iobs));
         return summary_get(summary, node_id.report_step);
     } else {
         util_abort("%s: unknown source type: %d \n", __func__,
@@ -188,7 +179,6 @@ block_obs_type *block_obs_alloc(const char *obs_key, const void *data_config,
     {
         block_obs_type *block_obs =
             (block_obs_type *)util_malloc(sizeof *block_obs);
-        UTIL_TYPE_ID_INIT(block_obs, BLOCK_OBS_TYPE_ID);
 
         block_obs->obs_key = util_alloc_string_copy(obs_key);
         block_obs->data_config = data_config;

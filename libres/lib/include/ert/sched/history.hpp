@@ -57,6 +57,5 @@ time_t history_get_time_t_from_restart_nr(const history_type *history,
                                           int restart_nr);
 history_source_type history_get_source(const history_type *history);
 
-UTIL_IS_INSTANCE_HEADER(history);
 
 #endif

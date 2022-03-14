@@ -30,9 +30,6 @@ typedef void(arg_node_free_ftype)(void *);
 typedef void *(arg_node_copyc_ftype)(const void *);
 
 arg_pack_type *arg_pack_alloc();
-UTIL_SAFE_CAST_HEADER(arg_pack);
-UTIL_SAFE_CAST_HEADER_CONST(arg_pack);
-UTIL_IS_INSTANCE_HEADER(arg_pack);
 
 void arg_pack_free(arg_pack_type *);
 void arg_pack_clear(arg_pack_type *);

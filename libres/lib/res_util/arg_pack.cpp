@@ -60,7 +60,7 @@
 
 
    void some_function__(void * __arg_pack) {
-      arg_pack_type * arg_pack = arg_pack_safe_cast( __arg_pack );
+      arg_pack_type * arg_pack = reinterpret_cast<arg_pack_type*>( __arg_pack );
       const char * arg1 = arg_pack_iget_ptr( arg_pack , 0);
       int          arg2 = arg_pack_iget_int( arg_pack , 1);
 
@@ -78,7 +78,6 @@
 
 */
 
-#define ARG_PACK_TYPE_ID 668268
 
 typedef struct {
     void *
@@ -91,7 +90,6 @@ typedef struct {
 } arg_node_type;
 
 struct arg_pack_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int size; /* The number of arguments appended to this arg_pack instance. */
     int alloc_size; /* The number of nodes allocated to this arg_pack - will in general be greater than size. */
     bool
@@ -254,9 +252,6 @@ static void arg_node_free(arg_node_type *node) {
     free(node);
 }
 
-UTIL_SAFE_CAST_FUNCTION(arg_pack, ARG_PACK_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION_CONST(arg_pack, ARG_PACK_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(arg_pack, ARG_PACK_TYPE_ID)
 
 static void __arg_pack_assert_index(const arg_pack_type *arg, int iarg) {
     if (iarg < 0 || iarg >= arg->size)
@@ -323,7 +318,6 @@ static arg_node_type *arg_pack_get_append_node(arg_pack_type *arg_pack) {
 
 arg_pack_type *arg_pack_alloc() {
     arg_pack_type *arg_pack = (arg_pack_type *)util_malloc(sizeof *arg_pack);
-    UTIL_TYPE_ID_INIT(arg_pack, ARG_PACK_TYPE_ID);
     arg_pack->nodes = NULL;
     arg_pack->alloc_size = 0;
     arg_pack->locked = false;

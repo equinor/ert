@@ -24,12 +24,12 @@
 #include <ert/enkf/ert_run_context.hpp>
 
 void call_get_queue_index(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    run_arg_type *run_arg = reinterpret_cast<run_arg_type*>(arg);
     run_arg_get_queue_index(run_arg);
 }
 
 void call_set_queue_index(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    run_arg_type *run_arg = reinterpret_cast<run_arg_type*>(arg);
     run_arg_set_queue_index(run_arg, 88);
 }
 
@@ -62,12 +62,12 @@ void test_queue_index() {
 }
 
 void call_get_sim_fs(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    run_arg_type *run_arg = reinterpret_cast<run_arg_type*>(arg);
     run_arg_get_sim_fs(run_arg);
 }
 
 void call_get_update_target_fs(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    run_arg_type *run_arg = reinterpret_cast<run_arg_type*>(arg);
     run_arg_get_update_target_fs(run_arg);
 }
 

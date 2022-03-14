@@ -36,6 +36,5 @@ void value_export(const value_export_type *value);
 void value_export_append(value_export_type *value, const std::string key,
                          const std::string subkey, double double_value);
 
-UTIL_IS_INSTANCE_HEADER(value_export);
 
 #endif

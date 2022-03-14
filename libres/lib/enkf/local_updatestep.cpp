@@ -31,21 +31,17 @@
    contain several.
 */
 
-#define LOCAL_UPDATESTEP_TYPE_ID 77159
 
 struct local_updatestep_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *name;
     vector_type *ministep;
 };
 
-UTIL_SAFE_CAST_FUNCTION(local_updatestep, LOCAL_UPDATESTEP_TYPE_ID)
 
 local_updatestep_type *local_updatestep_alloc(const char *name) {
     local_updatestep_type *updatestep =
         (local_updatestep_type *)util_malloc(sizeof *updatestep);
 
-    UTIL_TYPE_ID_INIT(updatestep, LOCAL_UPDATESTEP_TYPE_ID);
     updatestep->name = util_alloc_string_copy(name);
     updatestep->ministep = vector_alloc_new();
 
@@ -59,7 +55,7 @@ void local_updatestep_free(local_updatestep_type *updatestep) {
 }
 
 void local_updatestep_free__(void *arg) {
-    local_updatestep_type *updatestep = local_updatestep_safe_cast(arg);
+    local_updatestep_type *updatestep = reinterpret_cast<local_updatestep_type*>(arg);
     local_updatestep_free(updatestep);
 }
 

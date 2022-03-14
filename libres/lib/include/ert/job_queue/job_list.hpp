@@ -39,7 +39,5 @@ void job_list_reader_wait(job_list_type *list, int usleep_time1,
                           int usleep_time2);
 void job_list_unlock(job_list_type *list);
 
-UTIL_SAFE_CAST_HEADER(job_list);
-UTIL_IS_INSTANCE_HEADER(job_list);
 
 #endif

@@ -46,6 +46,5 @@ ui_return_get_help(const ui_return_type *ui_return);
 extern "C" const char *ui_return_iget_error(const ui_return_type *ui_return,
                                             int index);
 
-UTIL_IS_INSTANCE_HEADER(ui_return);
 
 #endif

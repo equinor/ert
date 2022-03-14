@@ -27,22 +27,17 @@
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>
 
-#define JOB_LIST_TYPE_ID 8154222
 
 struct job_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int active_size;
     int alloc_size;
     job_queue_node_type **jobs;
     pthread_rwlock_t lock;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(job_list, JOB_LIST_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(job_list, JOB_LIST_TYPE_ID)
 
 job_list_type *job_list_alloc() {
     job_list_type *job_list = (job_list_type *)util_malloc(sizeof *job_list);
-    UTIL_TYPE_ID_INIT(job_list, JOB_LIST_TYPE_ID);
     job_list->active_size = 0;
     job_list->alloc_size = 0;
     job_list->jobs = NULL;

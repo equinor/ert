@@ -36,11 +36,8 @@
 
 #include <ert/enkf/meas_data.hpp>
 
-#define MEAS_BLOCK_TYPE_ID 661936407
-#define MEAS_DATA_TYPE_ID 561000861
 
 struct meas_data_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int active_ens_size;
     vector_type *data;
     pthread_mutex_t data_mutex;
@@ -49,7 +46,6 @@ struct meas_data_struct {
 };
 
 struct meas_block_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int active_ens_size;
     int obs_size;
     int ens_stride;
@@ -63,7 +59,6 @@ struct meas_block_struct {
     int_vector_type *index_map;
 };
 
-UTIL_SAFE_CAST_FUNCTION(meas_block, MEAS_BLOCK_TYPE_ID)
 
 /*
    Observe that meas_block instance must be allocated with a correct
@@ -95,7 +90,6 @@ meas_block_type *meas_block_alloc(const char *obs_key,
                                   const std::vector<bool> &ens_mask,
                                   int obs_size) {
     auto meas_block = new meas_block_type;
-    UTIL_TYPE_ID_INIT(meas_block, MEAS_BLOCK_TYPE_ID);
     meas_block->active_ens_size =
         std::count(ens_mask.begin(), ens_mask.end(), true);
     meas_block->ens_mask = ens_mask;
@@ -128,7 +122,7 @@ void meas_block_free(meas_block_type *meas_block) {
 }
 
 static void meas_block_free__(void *arg) {
-    meas_block_type *meas_block = meas_block_safe_cast(arg);
+    meas_block_type *meas_block = reinterpret_cast<meas_block_type*>(arg);
     meas_block_free(meas_block);
 }
 
@@ -273,11 +267,9 @@ int meas_block_get_total_ens_size(const meas_block_type *meas_block) {
     return meas_block->ens_mask.size();
 }
 
-UTIL_IS_INSTANCE_FUNCTION(meas_data, MEAS_DATA_TYPE_ID)
 
 meas_data_type *meas_data_alloc(const std::vector<bool> &ens_mask) {
     auto meas = new meas_data_type;
-    UTIL_TYPE_ID_INIT(meas, MEAS_DATA_TYPE_ID);
 
     meas->data = vector_alloc_new();
     meas->blocks = hash_alloc();

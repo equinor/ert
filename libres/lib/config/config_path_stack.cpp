@@ -23,10 +23,8 @@
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_path_stack.hpp>
 
-#define CONFIG_PATH_STACK_TYPE_ID 86751520
 
 struct config_path_stack_struct {
-    UTIL_TYPE_ID_DECLARATION;
     vector_type *storage;
     vector_type *stack;
 };
@@ -34,7 +32,6 @@ struct config_path_stack_struct {
 config_path_stack_type *config_path_stack_alloc() {
     config_path_stack_type *path_stack =
         (config_path_stack_type *)util_malloc(sizeof *path_stack);
-    UTIL_TYPE_ID_INIT(path_stack, CONFIG_PATH_STACK_TYPE_ID);
     path_stack->storage = vector_alloc_new();
     path_stack->stack = vector_alloc_new();
     return path_stack;

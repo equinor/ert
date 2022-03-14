@@ -62,7 +62,6 @@ void gen_obs_parse_data_index(gen_obs_type *obs, const char *data_index_string);
 extern "C" void gen_obs_free(gen_obs_type *gen_obs);
 
 VOID_CHI2_HEADER(gen_obs);
-UTIL_IS_INSTANCE_HEADER(gen_obs);
 VOID_FREE_HEADER(gen_obs);
 VOID_GET_OBS_HEADER(gen_obs);
 VOID_MEASURE_HEADER(gen_obs);

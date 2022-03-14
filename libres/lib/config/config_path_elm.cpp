@@ -23,23 +23,19 @@
 #include <ert/config/config_root_path.hpp>
 #include <ert/config/config_path_elm.hpp>
 
-#define CONFIG_PATH_ELM_TYPE_ID 7100063
 
 struct config_path_elm_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *abs_path; // This will always be absolute
     char *rel_path; // This will always be relative to the root path.
     const config_root_path_type *root_path;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(config_path_elm, CONFIG_PATH_ELM_TYPE_ID)
 
     config_path_elm_type *config_path_elm_alloc(
         const config_root_path_type *root_path, const char *path) {
     if (root_path != NULL) {
         config_path_elm_type *path_elm =
             (config_path_elm_type *)util_malloc(sizeof *path_elm);
-        UTIL_TYPE_ID_INIT(path_elm, CONFIG_PATH_ELM_TYPE_ID);
         path_elm->root_path = root_path;
         if (path == NULL) {
             path_elm->rel_path = NULL;
@@ -75,7 +71,7 @@ void config_path_elm_free(config_path_elm_type *path_elm) {
 }
 
 void config_path_elm_free__(void *arg) {
-    config_path_elm_type *path_elm = config_path_elm_safe_cast(arg);
+    config_path_elm_type *path_elm = reinterpret_cast<config_path_elm_type*>(arg);
     config_path_elm_free(path_elm);
 }
 

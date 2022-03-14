@@ -81,10 +81,8 @@ typedef enum {
     SUBST_SHARED_REF = 3
 } subst_insert_type; /* Mode used in the subst_list_insert__() function */
 
-#define SUBST_LIST_TYPE_ID 6614320
 
 struct subst_list_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const subst_list_type *
         parent; /* A parent subst_list instance - can be NULL - no destructor is called for the parent. */
     vector_type *string_data; /* The string substitutions we should do. */
@@ -239,7 +237,6 @@ subst_list_insert_new_node(subst_list_type *subst_list, const char *key,
     return new_node;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(subst_list, SUBST_LIST_TYPE_ID)
 
 /*
    Observe that this function sets both the subst parent, and the pool
@@ -275,7 +272,6 @@ bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
 subst_list_type *subst_list_alloc(const void *input_arg) {
     subst_list_type *subst_list =
         (subst_list_type *)util_malloc(sizeof *subst_list);
-    UTIL_TYPE_ID_INIT(subst_list, SUBST_LIST_TYPE_ID);
     subst_list->parent = NULL;
     subst_list->func_pool = NULL;
     subst_list->map = hash_alloc();

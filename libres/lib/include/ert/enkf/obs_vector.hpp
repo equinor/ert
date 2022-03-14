@@ -130,8 +130,6 @@ obs_vector_get_obs_key(const obs_vector_type *obs_vector);
 LocalObsDataNode *
 obs_vector_alloc_local_node(const obs_vector_type *obs_vector);
 
-UTIL_IS_INSTANCE_HEADER(obs_vector);
-UTIL_SAFE_CAST_HEADER(obs_vector);
 VOID_FREE_HEADER(obs_vector);
 
 #endif

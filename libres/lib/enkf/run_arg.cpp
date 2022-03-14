@@ -23,11 +23,9 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
 
-#define RUN_ARG_TYPE_ID 66143287
 #define INVALID_QUEUE_INDEX -99
 
 struct run_arg_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int iens;
     int max_internal_submit; /* How many times the enkf_state object should try to resubmit when the queueu has said everything is OK - but the load fails. */
     int num_internal_submit;
@@ -50,8 +48,6 @@ struct run_arg_struct {
     char *run_id;
 };
 
-UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
 static void run_arg_update_subst(run_arg_type *run_arg);
 
@@ -67,7 +63,6 @@ static run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
             __func__);
     {
         run_arg_type *run_arg = (run_arg_type *)util_malloc(sizeof *run_arg);
-        UTIL_TYPE_ID_INIT(run_arg, RUN_ARG_TYPE_ID);
         run_arg->run_id = util_alloc_string_copy(run_id);
         run_arg->sim_fs = sim_fs;
         run_arg->update_target_fs = update_target_fs;
@@ -127,7 +122,7 @@ void run_arg_free(run_arg_type *run_arg) {
 }
 
 void run_arg_free__(void *arg) {
-    run_arg_type *run_arg = run_arg_safe_cast(arg);
+    run_arg_type *run_arg = reinterpret_cast<run_arg_type*>(arg);
     run_arg_free(run_arg);
 }
 

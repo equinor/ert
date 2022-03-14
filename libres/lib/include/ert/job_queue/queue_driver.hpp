@@ -106,6 +106,5 @@ typedef enum {
                                              because of pause or it is going down. */
 submit_status_type;
 
-UTIL_IS_INSTANCE_HEADER(queue_driver);
 
 #endif

@@ -27,8 +27,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/run_arg_type.hpp>
 
-UTIL_SAFE_CAST_HEADER(run_arg);
-UTIL_IS_INSTANCE_HEADER(run_arg);
 
 extern "C" run_arg_type *
 run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id, enkf_fs_type *sim_fs,

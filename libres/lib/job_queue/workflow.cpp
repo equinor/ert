@@ -31,21 +31,17 @@
 
 namespace fs = std::filesystem;
 
-#define CMD_TYPE_ID 66153
-#define WORKFLOW_TYPE_ID 6762081
 #define WORKFLOW_COMMENT_STRING "--"
 #define WORKFLOW_INCLUDE "INCLUDE"
 
 typedef struct cmd_struct cmd_type;
 
 struct cmd_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const workflow_job_type *workflow_job;
     stringlist_type *arglist;
 };
 
 struct workflow_struct {
-    UTIL_TYPE_ID_DECLARATION;
     time_t compile_time;
     bool compiled;
     char *src_file;
@@ -58,13 +54,11 @@ struct workflow_struct {
 static cmd_type *cmd_alloc(const workflow_job_type *workflow_job,
                            const stringlist_type *arglist) {
     cmd_type *cmd = (cmd_type *)util_malloc(sizeof *cmd);
-    UTIL_TYPE_ID_INIT(cmd, CMD_TYPE_ID);
     cmd->workflow_job = workflow_job;
     cmd->arglist = stringlist_alloc_deep_copy(arglist);
     return cmd;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(cmd, CMD_TYPE_ID);
 
 static void cmd_free(cmd_type *cmd) {
     stringlist_free(cmd->arglist);
@@ -72,7 +66,7 @@ static void cmd_free(cmd_type *cmd) {
 }
 
 static void cmd_free__(void *arg) {
-    cmd_type *cmd = cmd_safe_cast(arg);
+    cmd_type *cmd = reinterpret_cast<cmd_type*>(arg);
     cmd_free(cmd);
 }
 
@@ -209,7 +203,6 @@ void *workflow_pop_stack(workflow_type *workflow) {
 workflow_type *workflow_alloc(const char *src_file,
                               workflow_joblist_type *joblist) {
     workflow_type *script = (workflow_type *)util_malloc(sizeof *script);
-    UTIL_TYPE_ID_INIT(script, WORKFLOW_TYPE_ID);
 
     script->src_file = util_alloc_string_copy(src_file);
     script->joblist = joblist;
@@ -222,8 +215,6 @@ workflow_type *workflow_alloc(const char *src_file,
     return script;
 }
 
-static UTIL_SAFE_CAST_FUNCTION(workflow, WORKFLOW_TYPE_ID)
-    UTIL_IS_INSTANCE_FUNCTION(workflow, WORKFLOW_TYPE_ID)
 
         void workflow_free(workflow_type *workflow) {
     free(workflow->src_file);
@@ -237,7 +228,7 @@ static UTIL_SAFE_CAST_FUNCTION(workflow, WORKFLOW_TYPE_ID)
 }
 
 void workflow_free__(void *arg) {
-    workflow_type *workflow = workflow_safe_cast(arg);
+    workflow_type *workflow = reinterpret_cast<workflow_type*>(arg);
     workflow_free(workflow);
 }
 

@@ -39,8 +39,6 @@
    to the internals of the underlying enkf_node / obs_node objects.
 */
 
-UTIL_SAFE_CAST_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
-UTIL_IS_INSTANCE_FUNCTION(local_ministep, LOCAL_MINISTEP_TYPE_ID);
 
 local_ministep_type *local_ministep_alloc(const char *name) {
     return new local_ministep_type(name);
@@ -49,7 +47,7 @@ local_ministep_type *local_ministep_alloc(const char *name) {
 void local_ministep_free(local_ministep_type *ministep) { delete ministep; }
 
 void local_ministep_free__(void *arg) {
-    local_ministep_type *ministep = local_ministep_safe_cast(arg);
+    local_ministep_type *ministep = reinterpret_cast<local_ministep_type*>(arg);
     local_ministep_free(ministep);
 }
 

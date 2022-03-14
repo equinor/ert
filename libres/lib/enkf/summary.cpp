@@ -296,8 +296,6 @@ bool summary_forward_load_vector(summary_type *summary,
     return true;
 }
 
-UTIL_SAFE_CAST_FUNCTION(summary, SUMMARY)
-UTIL_SAFE_CAST_FUNCTION_CONST(summary, SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY(summary)

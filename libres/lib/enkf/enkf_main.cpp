@@ -88,7 +88,6 @@ static auto logger = ert::get_logger("enkf");
 #define ENKF_MAIN_ID 8301
 
 struct enkf_main_struct {
-    UTIL_TYPE_ID_DECLARATION;
     enkf_fs_type *dbase; /* The internalized information. */
 
     const res_config_type *res_config;
@@ -111,8 +110,6 @@ static void enkf_main_init_fs(enkf_main_type *enkf_main);
 static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main);
 static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 
-UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
-UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
 
 const analysis_config_type *
 enkf_main_get_analysis_config(const enkf_main_type *enkf_main) {
@@ -365,7 +362,6 @@ void enkf_main_clear_data_kw(enkf_main_type *enkf_main) {
 
 static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main_type *enkf_main = new enkf_main_type;
-    UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
     enkf_main->ensemble = NULL;
     enkf_main->rng_manager = NULL;
     enkf_main->shared_rng = NULL;

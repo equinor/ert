@@ -72,10 +72,8 @@ Matrices: S, D, E and various internal variables.
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/enkf_util.hpp>
 
-#define OBS_BLOCK_TYPE_ID 995833
 
 struct obs_block_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *obs_key;
     int size;
     double *value;
@@ -95,7 +93,6 @@ struct obs_data_struct {
     double global_std_scaling;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(obs_block, OBS_BLOCK_TYPE_ID)
 
     obs_block_type *obs_block_alloc(const char *obs_key, int obs_size,
                                     matrix_type *error_covar,
@@ -104,7 +101,6 @@ static UTIL_SAFE_CAST_FUNCTION(obs_block, OBS_BLOCK_TYPE_ID)
     obs_block_type *obs_block =
         (obs_block_type *)util_malloc(sizeof *obs_block);
 
-    UTIL_TYPE_ID_INIT(obs_block, OBS_BLOCK_TYPE_ID);
     obs_block->size = obs_size;
     obs_block->obs_key = util_alloc_string_copy(obs_key);
     obs_block->value =
@@ -132,7 +128,7 @@ void obs_block_free(obs_block_type *obs_block) {
 }
 
 static void obs_block_free__(void *arg) {
-    obs_block_type *obs_block = obs_block_safe_cast(arg);
+    obs_block_type *obs_block = reinterpret_cast<obs_block_type*>(arg);
     obs_block_free(obs_block);
 }
 

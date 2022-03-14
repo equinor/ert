@@ -29,8 +29,6 @@
 
 typedef struct misfit_ranking_struct misfit_ranking_type;
 
-UTIL_IS_INSTANCE_HEADER(misfit_ranking);
-UTIL_SAFE_CAST_HEADER(misfit_ranking);
 
 void misfit_ranking_display(const misfit_ranking_type *misfit_ranking,
                             FILE *stream);

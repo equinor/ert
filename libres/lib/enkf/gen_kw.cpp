@@ -410,8 +410,6 @@ C_USED bool gen_kw_user_get(const gen_kw_type *gen_kw, const char *key,
     }
 }
 
-UTIL_SAFE_CAST_FUNCTION(gen_kw, GEN_KW);
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_kw, GEN_KW);
 VOID_ALLOC(gen_kw);
 VOID_INITIALIZE(gen_kw);
 VOID_COPY(gen_kw)

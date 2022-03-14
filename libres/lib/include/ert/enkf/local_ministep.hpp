@@ -31,11 +31,9 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/row_scaling.hpp>
 
-#define LOCAL_MINISTEP_TYPE_ID 661066
 
 class local_ministep_type {
 public:
-    UTIL_TYPE_ID_DECLARATION;
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
     LocalObsData *observations;
@@ -46,7 +44,6 @@ public:
 
     explicit local_ministep_type(const char *name)
         : name(strdup(name)), obs_data(nullptr) {
-        UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
         this->observations = new LocalObsData("OBSDATA_" + this->name);
     }
 
@@ -139,7 +136,5 @@ void local_ministep_add_obs_data(local_ministep_type *ministep,
 extern "C" obs_data_type *
 local_ministep_get_obs_data(const local_ministep_type *ministep);
 
-UTIL_SAFE_CAST_HEADER(local_ministep);
-UTIL_IS_INSTANCE_HEADER(local_ministep);
 
 #endif

@@ -25,6 +25,5 @@ extern "C" void summary_key_set_fwrite(summary_key_set_type *set,
                                        const char *filename);
 bool summary_key_set_fread(summary_key_set_type *set, const char *filename);
 
-UTIL_IS_INSTANCE_HEADER(summary_key_set);
 
 #endif

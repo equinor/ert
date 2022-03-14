@@ -573,8 +573,6 @@ void gen_data_copy_to_double_vector(const gen_data_type *gen_data,
     }
 }
 
-UTIL_SAFE_CAST_FUNCTION_CONST(gen_data, GEN_DATA)
-UTIL_SAFE_CAST_FUNCTION(gen_data, GEN_DATA)
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)

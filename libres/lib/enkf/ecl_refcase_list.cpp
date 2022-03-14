@@ -57,10 +57,8 @@
          will get NULL.
  */
 
-#define SUM_PAIR_TYPE_ID 665109971
 
 typedef struct sum_pair_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *case_name; // This  should be (path)/basename - no extension
     ecl_sum_type *ecl_sum;
 } sum_pair_type;
@@ -93,7 +91,6 @@ static sum_pair_type *sum_pair_alloc(const char *case_name, bool strict_load) {
 
         {
             sum_pair_type *pair = (sum_pair_type *)util_malloc(sizeof *pair);
-            UTIL_TYPE_ID_INIT(pair, SUM_PAIR_TYPE_ID);
             pair->case_name = use_case;
             pair->ecl_sum = ecl_sum;
             return pair;
@@ -105,8 +102,6 @@ static sum_pair_type *sum_pair_alloc(const char *case_name, bool strict_load) {
     }
 }
 
-static UTIL_SAFE_CAST_FUNCTION(sum_pair, SUM_PAIR_TYPE_ID);
-static UTIL_SAFE_CAST_FUNCTION_CONST(sum_pair, SUM_PAIR_TYPE_ID);
 
 const ecl_sum_type *sum_pair_get_ecl_sum(sum_pair_type *sum_pair) {
     if (sum_pair->ecl_sum == NULL)
@@ -122,13 +117,13 @@ static void sum_pair_free(sum_pair_type *sum_pair) {
 }
 
 static void sum_pair_free__(void *arg) {
-    sum_pair_type *pair = sum_pair_safe_cast(arg);
+    sum_pair_type *pair = reinterpret_cast<sum_pair_type*>(arg);
     sum_pair_free(pair);
 }
 
 static int sum_pair_cmp(const void *arg1, const void *arg2) {
-    const sum_pair_type *pair1 = sum_pair_safe_cast_const(arg1);
-    const sum_pair_type *pair2 = sum_pair_safe_cast_const(arg2);
+    const sum_pair_type *pair1 = reinterpret_cast<sum_pair_type*>_const(arg1);
+    const sum_pair_type *pair2 = reinterpret_cast<sum_pair_type*>_const(arg2);
 
     return util_strcmp_int(pair1->case_name, pair2->case_name);
 }

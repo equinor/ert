@@ -26,12 +26,10 @@
 #include <ert/res_util/memory.hpp>
 #include <fmt/format.h>
 
-#define FORWARD_LOAD_CONTEXT_TYPE_ID 644239127
 
 static auto logger = ert::get_logger("enkf.forward_load_context");
 
 struct forward_load_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
     // Everyuthing can be NULL here ... - when created from gen_data.
 
     ecl_sum_type *ecl_sum;
@@ -49,7 +47,6 @@ struct forward_load_context_struct {
     bool ecl_active;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(forward_load_context, FORWARD_LOAD_CONTEXT_TYPE_ID);
 
 static void
 forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
@@ -179,7 +176,6 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
                            stringlist_type *messages) {
     forward_load_context_type *load_context =
         (forward_load_context_type *)util_malloc(sizeof *load_context);
-    UTIL_TYPE_ID_INIT(load_context, FORWARD_LOAD_CONTEXT_TYPE_ID);
 
     load_context->ecl_active = false;
     load_context->ecl_sum = NULL;

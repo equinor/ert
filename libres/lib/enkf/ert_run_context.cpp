@@ -30,10 +30,8 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/ert_run_context.hpp>
 
-#define ERT_RUN_CONTEXT_TYPE_ID 55534132
 
 struct ert_run_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
     vector_type *run_args;
     run_mode_type run_mode;
     init_mode_type init_mode;
@@ -145,7 +143,6 @@ ert_run_context_alloc__(const bool_vector_type *iactive, run_mode_type run_mode,
                         enkf_fs_type *update_target_fs, int iter) {
     ert_run_context_type *context =
         (ert_run_context_type *)util_malloc(sizeof *context);
-    UTIL_TYPE_ID_INIT(context, ERT_RUN_CONTEXT_TYPE_ID);
 
     if (iactive != NULL) {
         context->iactive = bool_vector_alloc_copy(iactive);
@@ -295,7 +292,6 @@ ert_run_context_alloc(run_mode_type run_mode, init_mode_type init_mode,
     return NULL;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(ert_run_context, ERT_RUN_CONTEXT_TYPE_ID);
 
 const char *ert_run_context_get_id(const ert_run_context_type *context) {
     return context->run_id;

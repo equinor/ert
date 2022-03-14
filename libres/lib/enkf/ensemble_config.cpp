@@ -46,7 +46,6 @@
 
 namespace fs = std::filesystem;
 
-#define ENSEMBLE_CONFIG_TYPE_ID 8825306
 
 namespace {
 
@@ -82,7 +81,6 @@ get_string(const std::unordered_map<std::string, std::string> &opt_map,
 } // namespace
 
 struct ensemble_config_struct {
-    UTIL_TYPE_ID_DECLARATION;
     pthread_mutex_t mutex;
     char *
         gen_kw_format_string; /* format string used when creating gen_kw search/replace strings. */
@@ -94,8 +92,6 @@ struct ensemble_config_struct {
     summary_key_matcher_type *summary_key_matcher;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID)
 
 /*
    setting the format string used to 'mangle' the string in the gen_kw
@@ -156,7 +152,6 @@ ensemble_config_get_trans_table(const ensemble_config_type *ensemble_config) {
 static ensemble_config_type *ensemble_config_alloc_empty(void) {
     ensemble_config_type *ensemble_config = new ensemble_config_type();
 
-    UTIL_TYPE_ID_INIT(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID);
     ensemble_config->field_trans_table = field_trans_table_alloc();
     ensemble_config->gen_kw_format_string =
         util_alloc_string_copy(DEFAULT_GEN_KW_TAG_FORMAT);

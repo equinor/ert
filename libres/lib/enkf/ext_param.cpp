@@ -230,8 +230,6 @@ ext_param_config_type const *ext_param_get_config(const ext_param_type *param) {
     return param->config;
 }
 
-UTIL_SAFE_CAST_FUNCTION(ext_param, EXT_PARAM)
-UTIL_SAFE_CAST_FUNCTION_CONST(ext_param, EXT_PARAM)
 VOID_ALLOC(ext_param)
 VOID_FREE(ext_param)
 VOID_ECL_WRITE(ext_param)

@@ -24,22 +24,18 @@
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
 
-#define ENKF_PLOT_GENVECTOR_TYPE_ID 66862669
 
 struct enkf_plot_genvector_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int iens;
     double_vector_type *data;
     const enkf_config_node_type *config_node;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_genvector, ENKF_PLOT_GENVECTOR_TYPE_ID)
 
 enkf_plot_genvector_type *
 enkf_plot_genvector_alloc(const enkf_config_node_type *config_node, int iens) {
     enkf_plot_genvector_type *vector =
         (enkf_plot_genvector_type *)util_malloc(sizeof *vector);
-    UTIL_TYPE_ID_INIT(vector, ENKF_PLOT_GENVECTOR_TYPE_ID);
     vector->config_node = config_node;
     vector->data = double_vector_alloc(0, 0);
     vector->iens = iens;
@@ -75,7 +71,7 @@ void enkf_plot_genvector_load(enkf_plot_genvector_type *vector,
 }
 
 void *enkf_plot_genvector_load__(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(arg);
     enkf_plot_genvector_type *vector =
         (enkf_plot_genvector_type *)arg_pack_iget_ptr(arg_pack, 0);
     enkf_fs_type *fs = (enkf_fs_type *)arg_pack_iget_ptr(arg_pack, 1);

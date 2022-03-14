@@ -23,17 +23,14 @@
 
 #include <ert/enkf/misfit_member.hpp>
 
-#define MISFIT_MEMBER_TYPE_ID 541066
 
 struct misfit_member_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int my_iens;
     hash_type *
         obs; /* hash table of misfit_ts_type instances - indexed by observation keys. The structure
                                  of this hash table is duplicated for each ensemble member.*/
 };
 
-static UTIL_SAFE_CAST_FUNCTION(misfit_member, MISFIT_MEMBER_TYPE_ID);
 
 static void misfit_member_free(misfit_member_type *node) {
     hash_free(node->obs);
@@ -41,12 +38,11 @@ static void misfit_member_free(misfit_member_type *node) {
 }
 
 void misfit_member_free__(void *node) {
-    misfit_member_free(misfit_member_safe_cast(node));
+    misfit_member_free(reinterpret_cast<misfit_member_type*>(node));
 }
 
 misfit_member_type *misfit_member_alloc(int iens) {
     misfit_member_type *node = (misfit_member_type *)util_malloc(sizeof *node);
-    UTIL_TYPE_ID_INIT(node, MISFIT_MEMBER_TYPE_ID);
     node->my_iens = iens;
     node->obs = hash_alloc();
     return node;

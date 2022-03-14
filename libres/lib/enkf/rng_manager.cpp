@@ -29,10 +29,8 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
 
-#define RNG_MANAGER_TYPE_ID 77250451
 
 struct rng_manager_struct {
-    UTIL_TYPE_ID_DECLARATION;
     rng_alg_type rng_alg;
     rng_type *
         internal_seed_rng; /* This is used to seed the RNG's which are managed. */
@@ -41,12 +39,10 @@ struct rng_manager_struct {
     vector_type *rng_list;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(rng_manager, RNG_MANAGER_TYPE_ID)
 
 static rng_manager_type *rng_manager_alloc__(rng_init_mode init_mode) {
     rng_manager_type *rng_manager =
         (rng_manager_type *)util_malloc(sizeof *rng_manager);
-    UTIL_TYPE_ID_INIT(rng_manager, RNG_MANAGER_TYPE_ID);
     rng_manager->rng_list = vector_alloc_new();
     rng_manager->rng_alg = MZRAN;
     rng_manager->internal_seed_rng = rng_alloc(rng_manager->rng_alg, init_mode);

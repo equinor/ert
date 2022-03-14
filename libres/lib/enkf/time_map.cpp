@@ -40,9 +40,7 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time);
 static void time_map_summary_update_abort(time_map_type *map,
                                           const ecl_sum_type *ecl_sum);
 
-#define TIME_MAP_TYPE_ID 7751432
 struct time_map_struct {
-    UTIL_TYPE_ID_DECLARATION;
     time_t_vector_type *map;
     pthread_rwlock_t rw_lock;
     bool modified;
@@ -51,12 +49,9 @@ struct time_map_struct {
     const ecl_sum_type *refcase;
 };
 
-UTIL_SAFE_CAST_FUNCTION(time_map, TIME_MAP_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION(time_map, TIME_MAP_TYPE_ID)
 
 time_map_type *time_map_alloc() {
     time_map_type *map = (time_map_type *)util_malloc(sizeof *map);
-    UTIL_TYPE_ID_INIT(map, TIME_MAP_TYPE_ID);
 
     map->map = time_t_vector_alloc(0, DEFAULT_TIME);
     map->modified = false;

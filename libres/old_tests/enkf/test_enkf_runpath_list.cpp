@@ -29,7 +29,7 @@
 #include <ert/enkf/ert_test_context.hpp>
 
 void *add_pathlist(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(arg);
     runpath_list_type *list =
         (runpath_list_type *)arg_pack_iget_ptr(arg_pack, 0);
     int offset = arg_pack_iget_int(arg_pack, 1);

@@ -40,7 +40,6 @@
 #include <ert/enkf/callback_arg.hpp>
 
 static auto logger = ert::get_logger("enkf");
-#define ENKF_STATE_TYPE_ID 78132
 
 /*
    This struct contains various objects which the enkf_state needs
@@ -65,7 +64,6 @@ typedef struct shared_info_struct {
 } shared_info_type;
 
 struct enkf_state_struct {
-    UTIL_TYPE_ID_DECLARATION;
     hash_type *node_hash;
     ensemble_config_type *
         ensemble_config; /* The config nodes for the enkf_node objects contained in node_hash. */
@@ -74,7 +72,6 @@ struct enkf_state_struct {
     int __iens;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(enkf_state, ENKF_STATE_TYPE_ID)
 
     static shared_info_type *shared_info_alloc(
         const site_config_type *site_config, model_config_type *model_config,
@@ -178,7 +175,6 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
 
     enkf_state_type *enkf_state =
         (enkf_state_type *)util_malloc(sizeof *enkf_state);
-    UTIL_TYPE_ID_INIT(enkf_state, ENKF_STATE_TYPE_ID);
 
     enkf_state->ensemble_config = ensemble_config;
     enkf_state->shared_info =
@@ -650,7 +646,7 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
 }
 
 bool enkf_state_complete_forward_modelOK__(void *arg) {
-    callback_arg_type *cb_arg = callback_arg_safe_cast(arg);
+    callback_arg_type *cb_arg = reinterpret_cast<callback_arg_type*>(arg);
 
     return enkf_state_complete_forward_modelOK(cb_arg->res_config,
                                                cb_arg->run_arg);
@@ -671,7 +667,7 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 }
 
 static bool enkf_state_complete_forward_model_EXIT_handler(void *arg) {
-    callback_arg_type *callback_arg = callback_arg_safe_cast(arg);
+    callback_arg_type *callback_arg = reinterpret_cast<callback_arg_type*>(arg);
     run_arg_type *run_arg = callback_arg->run_arg;
     return enkf_state_complete_forward_model_EXIT_handler__(run_arg);
 }
@@ -725,7 +721,7 @@ static void enkf_state_internal_retry(const res_config_type *res_config,
 }
 
 bool enkf_state_complete_forward_modelRETRY__(void *arg) {
-    callback_arg_type *cb_arg = callback_arg_safe_cast(arg);
+    callback_arg_type *cb_arg = reinterpret_cast<callback_arg_type*>(arg);
 
     if (run_arg_can_retry(cb_arg->run_arg)) {
         enkf_state_internal_retry(cb_arg->res_config, cb_arg->run_arg,

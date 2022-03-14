@@ -32,7 +32,6 @@ struct container_struct {
 C_USED container_type *container_alloc(const container_config_type *config) {
     container_type *container =
         (container_type *)util_malloc(sizeof *container);
-    UTIL_TYPE_ID_INIT(container, CONTAINER);
     container->config = config;
     container->nodes = vector_alloc_new();
     return container;
@@ -63,8 +62,5 @@ void container_assert_size(const container_type *container) {
                    container_config_get_size(container->config));
 }
 
-UTIL_IS_INSTANCE_FUNCTION(container, CONTAINER)
-UTIL_SAFE_CAST_FUNCTION(container, CONTAINER)
-UTIL_SAFE_CAST_FUNCTION_CONST(container, CONTAINER)
 VOID_ALLOC(container)
 VOID_FREE(container)

@@ -47,7 +47,7 @@ alloc_iactive_vector_from_range(const stringlist_type *range, int startindex,
 // Internal workflow job
 extern "C" C_USED void *enkf_main_exit_JOB(void *self,
                                            const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     enkf_main_exit(enkf_main);
     return NULL;
 }
@@ -58,7 +58,7 @@ extern "C" C_USED void *enkf_main_exit_JOB(void *self,
 // Internal workflow job
 extern "C" C_USED void *enkf_main_select_case_JOB(void *self,
                                                   const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     const char *new_case = stringlist_iget(args, 0);
     enkf_main_select_fs(enkf_main, new_case);
     return NULL;
@@ -67,7 +67,7 @@ extern "C" C_USED void *enkf_main_select_case_JOB(void *self,
 // Internal workflow job
 extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
                                                   const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     const char *new_case = stringlist_iget(args, 0);
     enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, new_case, true);
     enkf_fs_decref(fs);
@@ -77,7 +77,7 @@ extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
 
     const char *source_case = stringlist_iget(args, 0);
     enkf_fs_type *source_fs =
@@ -142,7 +142,7 @@ static void *enkf_main_load_results_JOB__(enkf_main_type *enkf_main, int iter,
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_load_results_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     int iter = 0;
     {
         const model_config_type *model_config =
@@ -160,7 +160,7 @@ enkf_main_load_results_JOB(void *self, const stringlist_type *args) {
 // Internal Workflow job
 extern "C" C_USED void *
 enkf_main_load_results_iter_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     stringlist_type *iens_args = stringlist_alloc_new();
     int iter;
 
@@ -198,7 +198,7 @@ enkf_main_export_field_JOB(void *self, const stringlist_type *args) {
         field_config_default_export_format(file_name);
 
     if ((RMS_ROFF_FILE == file_type) || (ECL_GRDECL_FILE == file_type)) {
-        enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+        enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
         enkf_main_jobs_export_field(enkf_main, args, file_type);
     } else
         printf("EXPORT_FIELD filename argument: File extension must be either "
@@ -210,7 +210,7 @@ enkf_main_export_field_JOB(void *self, const stringlist_type *args) {
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_export_field_to_RMS_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     enkf_main_jobs_export_field(enkf_main, args, RMS_ROFF_FILE);
     return NULL;
 }
@@ -218,7 +218,7 @@ enkf_main_export_field_to_RMS_JOB(void *self, const stringlist_type *args) {
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     enkf_main_jobs_export_field(enkf_main, args, ECL_GRDECL_FILE);
     return NULL;
 }
@@ -226,7 +226,7 @@ enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_init_misfit_table_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     int history_length = enkf_main_get_history_length(enkf_main);
     enkf_obs_type *enkf_obs = enkf_main_get_obs(enkf_main);
     int ens_size = enkf_main_get_ensemble_size(enkf_main);
@@ -288,7 +288,7 @@ static void enkf_main_export_runpath_file(enkf_main_type *enkf_main,
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_export_runpath_file_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     int ensemble_size = enkf_main_get_ensemble_size(enkf_main);
     const analysis_config_type *analysis_config =
         enkf_main_get_analysis_config(enkf_main);
@@ -351,7 +351,7 @@ enkf_main_pre_simulation_copy_JOB(void *self, const stringlist_type *args) {
         return NULL;
     }
 
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
+    enkf_main_type *enkf_main = reinterpret_cast<enkf_main_type*>(self);
     model_config_type *model_config = enkf_main_get_model_config(enkf_main);
     if (!model_config_data_root_is_set(model_config)) {
         logger->error(

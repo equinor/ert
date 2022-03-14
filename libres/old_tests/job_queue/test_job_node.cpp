@@ -28,7 +28,7 @@ void test_create() {
 }
 
 void call_get_queue_index(void *arg) {
-    job_queue_node_type *node = job_queue_node_safe_cast(arg);
+    job_queue_node_type *node = reinterpret_cast<job_queue_node_type*>(arg);
     job_queue_node_get_queue_index(node);
 }
 

@@ -26,7 +26,6 @@
 #define ENKF_PLOT_TVECTOR_ID 6111861
 
 struct enkf_plot_tvector_struct {
-    UTIL_TYPE_ID_DECLARATION;
     double_vector_type *data;
     double_vector_type *work;
     time_t_vector_type *time;
@@ -36,8 +35,6 @@ struct enkf_plot_tvector_struct {
     bool summary_mode;
 };
 
-UTIL_SAFE_CAST_FUNCTION(enkf_plot_tvector, ENKF_PLOT_TVECTOR_ID)
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_tvector, ENKF_PLOT_TVECTOR_ID)
 
 void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector) {
     double_vector_reset(plot_tvector->data);
@@ -49,7 +46,6 @@ enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens) {
     enkf_plot_tvector_type *plot_tvector =
         (enkf_plot_tvector_type *)util_malloc(sizeof *plot_tvector);
-    UTIL_TYPE_ID_INIT(plot_tvector, ENKF_PLOT_TVECTOR_ID);
 
     plot_tvector->data = double_vector_alloc(0, 0);
     plot_tvector->time = time_t_vector_alloc(-1, 0);

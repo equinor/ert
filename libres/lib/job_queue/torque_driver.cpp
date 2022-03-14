@@ -30,11 +30,8 @@
 
 namespace fs = std::filesystem;
 
-#define TORQUE_DRIVER_TYPE_ID 34873653
-#define TORQUE_JOB_TYPE_ID 12312312
 
 struct torque_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *queue_name;
     char *qsub_cmd;
     char *qstat_cmd;
@@ -51,22 +48,17 @@ struct torque_driver_struct {
 };
 
 struct torque_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     long int torque_jobnr;
     char *torque_jobnr_char;
 };
 
-UTIL_SAFE_CAST_FUNCTION(torque_driver, TORQUE_DRIVER_TYPE_ID);
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(
     torque_driver,
-    TORQUE_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(torque_job,
                                                           TORQUE_JOB_TYPE_ID)
 
     void *torque_driver_alloc() {
     torque_driver_type *torque_driver =
         (torque_driver_type *)util_malloc(sizeof *torque_driver);
-    UTIL_TYPE_ID_INIT(torque_driver, TORQUE_DRIVER_TYPE_ID);
 
     torque_driver->queue_name = NULL;
     torque_driver->qsub_cmd = NULL;
@@ -192,7 +184,7 @@ torque_driver_set_num_cpus_per_node(torque_driver_type *driver,
 bool torque_driver_set_option(void *__driver, const char *option_key,
                               const void *value_) {
     const char *value = (const char *)value_;
-    torque_driver_type *driver = torque_driver_safe_cast(__driver);
+    torque_driver_type *driver = reinterpret_cast<torque_driver_type*>(__driver);
     bool option_set = true;
     {
         if (strcmp(TORQUE_QSUB_CMD, option_key) == 0)
@@ -225,7 +217,7 @@ bool torque_driver_set_option(void *__driver, const char *option_key,
 
 const void *torque_driver_get_option(const void *__driver,
                                      const char *option_key) {
-    const torque_driver_type *driver = torque_driver_safe_cast_const(__driver);
+    const torque_driver_type *driver = reinterpret_cast<torque_driver_type*>_const(__driver);
     {
         if (strcmp(TORQUE_QSUB_CMD, option_key) == 0)
             return driver->qsub_cmd;
@@ -270,7 +262,6 @@ torque_job_type *torque_job_alloc() {
     job = (torque_job_type *)util_malloc(sizeof *job);
     job->torque_jobnr_char = NULL;
     job->torque_jobnr = 0;
-    UTIL_TYPE_ID_INIT(job, TORQUE_JOB_TYPE_ID);
 
     return job;
 }
@@ -466,7 +457,7 @@ void torque_job_free(torque_job_type *job) {
 
 void torque_driver_free_job(void *__job) {
 
-    torque_job_type *job = torque_job_safe_cast(__job);
+    torque_job_type *job = reinterpret_cast<torque_job_type*>(__job);
     torque_job_free(job);
 }
 
@@ -474,7 +465,7 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
                                int num_cpu, const char *run_path,
                                const char *job_name, int argc,
                                const char **argv) {
-    torque_driver_type *driver = torque_driver_safe_cast(__driver);
+    torque_driver_type *driver = reinterpret_cast<torque_driver_type*>(__driver);
     torque_job_type *job = torque_job_alloc();
 
     torque_debug(driver, "Submitting job in:%s", run_path);
@@ -612,15 +603,15 @@ job_status_type torque_driver_parse_status(const char *qstat_file,
 }
 
 job_status_type torque_driver_get_job_status(void *__driver, void *__job) {
-    torque_driver_type *driver = torque_driver_safe_cast(__driver);
-    torque_job_type *job = torque_job_safe_cast(__job);
+    torque_driver_type *driver = reinterpret_cast<torque_driver_type*>(__driver);
+    torque_job_type *job = reinterpret_cast<torque_job_type*>(__job);
     return torque_driver_get_qstat_status(driver, job->torque_jobnr_char);
 }
 
 void torque_driver_kill_job(void *__driver, void *__job) {
 
-    torque_driver_type *driver = torque_driver_safe_cast(__driver);
-    torque_job_type *job = torque_job_safe_cast(__job);
+    torque_driver_type *driver = reinterpret_cast<torque_driver_type*>(__driver);
+    torque_job_type *job = reinterpret_cast<torque_job_type*>(__job);
     util_spawn_blocking(driver->qdel_cmd, 1,
                         (const char **)&job->torque_jobnr_char, NULL, NULL);
 }
@@ -640,7 +631,7 @@ void torque_driver_free(torque_driver_type *driver) {
 }
 
 void torque_driver_free__(void *__driver) {
-    torque_driver_type *driver = torque_driver_safe_cast(__driver);
+    torque_driver_type *driver = reinterpret_cast<torque_driver_type*>(__driver);
     torque_driver_free(driver);
 }
 

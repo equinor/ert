@@ -55,10 +55,8 @@
   std_scaling will be incorporated in the result.
 */
 
-#define GEN_OBS_TYPE_ID 77619
 
 struct gen_obs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int obs_size; /* This is the total size of the observation vector. */
     int *
         data_index_list; /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
@@ -77,8 +75,6 @@ struct gen_obs_struct {
     gen_data_config_type *data_config;
 };
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(
-    gen_obs, GEN_OBS_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(gen_obs,
                                                              GEN_OBS_TYPE_ID)
 
     void gen_obs_free(gen_obs_type *gen_obs) {
@@ -190,7 +186,6 @@ void gen_obs_parse_data_index(gen_obs_type *obs,
 gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
                               const char *obs_key) {
     gen_obs_type *obs = (gen_obs_type *)util_malloc(sizeof *obs);
-    UTIL_TYPE_ID_INIT(obs, GEN_OBS_TYPE_ID);
     obs->obs_data = NULL;
     obs->obs_std = NULL;
     obs->std_scaling = NULL;
@@ -542,7 +537,6 @@ int gen_obs_get_obs_index(const gen_obs_type *gen_obs, int index) {
     }
 }
 
-UTIL_IS_INSTANCE_FUNCTION(gen_obs, GEN_OBS_TYPE_ID)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs, gen_data)

@@ -179,9 +179,6 @@ extern "C" field_type_enum
 field_config_get_type(const field_config_type *config);
 
 /*Generated headers */
-UTIL_IS_INSTANCE_HEADER(field_config);
-UTIL_SAFE_CAST_HEADER(field_config);
-UTIL_SAFE_CAST_HEADER_CONST(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
 VOID_GET_DATA_SIZE_HEADER(field);

@@ -140,8 +140,6 @@ bool surface_user_get(const surface_type *surface, const char *index_key,
     return false;
 }
 
-UTIL_SAFE_CAST_FUNCTION(surface, SURFACE)
-UTIL_SAFE_CAST_FUNCTION_CONST(surface, SURFACE)
 VOID_ALLOC(surface)
 VOID_FREE(surface)
 VOID_ECL_WRITE(surface)

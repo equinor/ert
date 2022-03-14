@@ -30,31 +30,24 @@
 typedef struct local_job_struct local_job_type;
 
 struct local_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool active;
     job_status_type status;
     pthread_t run_thread;
     pid_t child_process;
 };
 
-#define LOCAL_DRIVER_TYPE_ID 66196305
-#define LOCAL_JOB_TYPE_ID 63056619
 
 struct local_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
     pthread_attr_t thread_attr;
     pthread_mutex_t submit_lock;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(
     local_driver,
-    LOCAL_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(local_job,
                                                          LOCAL_JOB_TYPE_ID)
 
     static local_job_type *local_job_alloc() {
     local_job_type *job;
     job = (local_job_type *)util_malloc(sizeof *job);
-    UTIL_TYPE_ID_INIT(job, LOCAL_JOB_TYPE_ID);
     job->active = false;
     job->status = JOB_QUEUE_WAITING;
     return job;
@@ -65,19 +58,19 @@ job_status_type local_driver_get_job_status(void *__driver, void *__job) {
         /* The job has not been registered at all ... */
         return JOB_QUEUE_NOT_ACTIVE;
     else {
-        local_job_type *job = local_job_safe_cast(__job);
+        local_job_type *job = reinterpret_cast<local_job_type*>(__job);
         return job->status;
     }
 }
 
 void local_driver_free_job(void *__job) {
-    local_job_type *job = local_job_safe_cast(__job);
+    local_job_type *job = reinterpret_cast<local_job_type*>(__job);
     if (!job->active)
         free(job);
 }
 
 void local_driver_kill_job(void *__driver, void *__job) {
-    local_job_type *job = local_job_safe_cast(__job);
+    local_job_type *job = reinterpret_cast<local_job_type*>(__job);
     if (job->child_process > 0)
         kill(job->child_process, SIGTERM);
 }
@@ -89,7 +82,7 @@ void local_driver_kill_job(void *__driver, void *__job) {
 */
 
 void *submit_job_thread__(void *__arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg);
+    arg_pack_type *arg_pack = reinterpret_cast<arg_pack_type*>(__arg);
     const char *executable = (const char *)arg_pack_iget_const_ptr(arg_pack, 0);
     /*
     The arg_pack contains a run_path field as the second argument,
@@ -121,7 +114,7 @@ void *local_driver_submit_job(void *__driver, const char *submit_cmd,
                               int num_cpu, /* Ignored */
                               const char *run_path, const char *job_name,
                               int argc, const char **argv) {
-    local_driver_type *driver = local_driver_safe_cast(__driver);
+    local_driver_type *driver = reinterpret_cast<local_driver_type*>(__driver);
     {
         local_job_type *job = local_job_alloc();
         arg_pack_type *arg_pack = arg_pack_alloc();
@@ -156,14 +149,13 @@ void local_driver_free(local_driver_type *driver) {
 }
 
 void local_driver_free__(void *__driver) {
-    local_driver_type *driver = local_driver_safe_cast(__driver);
+    local_driver_type *driver = reinterpret_cast<local_driver_type*>(__driver);
     local_driver_free(driver);
 }
 
 void *local_driver_alloc() {
     local_driver_type *local_driver =
         (local_driver_type *)util_malloc(sizeof *local_driver);
-    UTIL_TYPE_ID_INIT(local_driver, LOCAL_DRIVER_TYPE_ID);
     pthread_mutex_init(&local_driver->submit_lock, NULL);
     pthread_attr_init(&local_driver->thread_attr);
     pthread_attr_setdetachstate(&local_driver->thread_attr,

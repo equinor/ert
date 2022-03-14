@@ -38,7 +38,6 @@
 */
 
 struct misfit_ensemble_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool initialized;
     int history_length;
     vector_type *

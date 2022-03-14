@@ -34,10 +34,8 @@
 
 namespace fs = std::filesystem;
 
-#define VALUE_EXPORT_TYPE_ID 5741761
 
 struct value_export_struct {
-    UTIL_TYPE_ID_DECLARATION;
     std::string directory;
     std::string base_name;
     std::map<std::string, std::map<std::string, double>> values;
@@ -78,7 +76,6 @@ value_export_type *value_export_alloc(std::string directory,
                                       std::string base_name) {
 
     value_export_type *value = new value_export_type;
-    UTIL_TYPE_ID_INIT(value, VALUE_EXPORT_TYPE_ID);
     value->directory = directory;
     value->base_name = base_name;
     return value;
@@ -205,4 +202,3 @@ void value_export_append(value_export_type *value, const std::string key,
     value->values[key][subkey] = double_value;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(value_export, VALUE_EXPORT_TYPE_ID)

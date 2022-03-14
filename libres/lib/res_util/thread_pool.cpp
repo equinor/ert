@@ -115,9 +115,7 @@ typedef struct {
     bool running;  /* Is the job_slot running now?? */
 } thread_pool_job_slot_type;
 
-#define THREAD_POOL_TYPE_ID 71443207
 struct thread_pool_struct {
-    UTIL_TYPE_ID_DECLARATION;
     thread_pool_arg_type
         *queue;      /* The jobs to be executed are appended in this vector. */
     int queue_index; /* The index of the next job to run. */
@@ -136,7 +134,6 @@ struct thread_pool_struct {
     pthread_rwlock_t queue_lock;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(thread_pool, THREAD_POOL_TYPE_ID)
 
     /*
    This function will grow the queue. It is called by the main thread
@@ -205,7 +202,7 @@ static void *thread_pool_start_job(void *arg) {
 */
 
 static void *thread_pool_main_loop(void *arg) {
-    thread_pool_type *tp = thread_pool_safe_cast(arg);
+    thread_pool_type *tp = reinterpret_cast<thread_pool_type*>(arg);
     {
         const int usleep_init =
             1000; /* The sleep time when there are free slots available - but no jobs wanting to run. */
@@ -411,7 +408,6 @@ bool thread_pool_try_join(thread_pool_type *pool, int timeout_seconds) {
 
 thread_pool_type *thread_pool_alloc(int max_running, bool start_queue) {
     thread_pool_type *pool = (thread_pool_type *)util_malloc(sizeof *pool);
-    UTIL_TYPE_ID_INIT(pool, THREAD_POOL_TYPE_ID);
     pool->job_slots = (thread_pool_job_slot_type *)util_calloc(
         max_running, sizeof *pool->job_slots);
     pool->max_running = max_running;

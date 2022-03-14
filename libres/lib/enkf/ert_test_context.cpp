@@ -30,16 +30,13 @@
 
 namespace fs = std::filesystem;
 
-#define ERT_TEST_CONTEXT_TYPE_ID 99671055
 struct ert_test_context_struct {
-    UTIL_TYPE_ID_DECLARATION;
     enkf_main_type *enkf_main;
     test_work_area_type *work_area;
     res_config_type *res_config;
     rng_type *rng;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(ert_test_context, ERT_TEST_CONTEXT_TYPE_ID)
 
 static ert_test_context_type *
 ert_test_context_alloc_internal(test_work_area_type *work_area,
@@ -47,7 +44,6 @@ ert_test_context_alloc_internal(test_work_area_type *work_area,
                                 const char *ui_mode) {
     ert_test_context_type *test_context =
         (ert_test_context_type *)util_malloc(sizeof *test_context);
-    UTIL_TYPE_ID_INIT(test_context, ERT_TEST_CONTEXT_TYPE_ID);
 
     /*
     This environment variable is set to ensure that test context will

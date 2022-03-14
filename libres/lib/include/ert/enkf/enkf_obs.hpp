@@ -90,6 +90,5 @@ void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
                                         enkf_fs_type *fs,
                                         const bool_vector_type *ens_mask);
 conf_class_type *enkf_obs_get_obs_conf_class();
-UTIL_IS_INSTANCE_HEADER(enkf_obs);
 
 #endif

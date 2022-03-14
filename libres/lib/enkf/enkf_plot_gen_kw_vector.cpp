@@ -23,16 +23,13 @@
 #include <ert/enkf/enkf_plot_gen_kw_vector.hpp>
 #include <ert/enkf/gen_kw.hpp>
 
-#define ENKF_PLOT_GEN_KW_VECTOR_TYPE_ID 88362064
 
 struct enkf_plot_gen_kw_vector_struct {
-    UTIL_TYPE_ID_DECLARATION;
     int iens;
     double_vector_type *data;
     const enkf_config_node_type *config_node;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(enkf_plot_gen_kw_vector,
                           ENKF_PLOT_GEN_KW_VECTOR_TYPE_ID)
 
 enkf_plot_gen_kw_vector_type *
@@ -40,7 +37,6 @@ enkf_plot_gen_kw_vector_alloc(const enkf_config_node_type *config_node,
                               int iens) {
     enkf_plot_gen_kw_vector_type *vector =
         (enkf_plot_gen_kw_vector_type *)util_malloc(sizeof *vector);
-    UTIL_TYPE_ID_INIT(vector, ENKF_PLOT_GEN_KW_VECTOR_TYPE_ID);
     vector->config_node = config_node;
     vector->data = double_vector_alloc(0, 0);
     vector->iens = iens;

@@ -36,7 +36,6 @@
 namespace fs = std::filesystem;
 
 #define MOUNT_MAP_MAGIC_INT 8861290
-#define BLOCK_FS_TYPE_ID 7100652
 #define INDEX_MAGIC_INT 1213775
 #define INDEX_FORMAT_VERSION 1
 
@@ -113,7 +112,6 @@ struct file_node_struct {
 */
 
 struct block_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
     char *
         mount_file; /* The full path to a file with some mount information - input to the mount routine. */
     char *path;
@@ -154,7 +152,6 @@ struct block_fs_struct {
 
 static void block_fs_rotate__(block_fs_type *block_fs);
 
-UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
 
 static inline void fseek__(FILE *stream, long int arg, int whence) {
     if (fseek(stream, arg, whence) != 0) {
@@ -558,7 +555,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
                                            int fsync_interval, bool read_only,
                                            bool use_lockfile) {
     block_fs_type *block_fs = (block_fs_type *)util_malloc(sizeof *block_fs);
-    UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
     block_fs->mount_file = util_alloc_string_copy(mount_file);
     block_fs->fsync_interval = fsync_interval;
@@ -607,7 +603,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
     return block_fs;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
 
 static void block_fs_fwrite_mount_info__(const char *mount_file, int version) {
     FILE *stream = util_fopen(mount_file, "w");

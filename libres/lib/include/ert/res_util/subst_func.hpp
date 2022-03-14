@@ -38,7 +38,6 @@ subst_func_type *subst_func_pool_get_func(const subst_func_pool_type *pool,
                                           const char *func_name);
 bool subst_func_pool_has_func(const subst_func_pool_type *pool,
                               const char *func_name);
-UTIL_IS_INSTANCE_HEADER(subst_func_pool);
 
 char *subst_func_add(const stringlist_type *args, void *arg);
 char *subst_func_mul(const stringlist_type *args, void *arg);

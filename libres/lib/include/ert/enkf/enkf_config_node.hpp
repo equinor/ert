@@ -206,7 +206,5 @@ extern "C" PY_USED enkf_config_node_type *enkf_config_node_alloc_SURFACE_full(
     const char *base_surface, const char *min_std_file,
     const char *init_file_fmt);
 
-UTIL_IS_INSTANCE_HEADER(enkf_config_node);
-UTIL_SAFE_CAST_HEADER(enkf_config_node);
 VOID_FREE_HEADER(enkf_config_node);
 #endif

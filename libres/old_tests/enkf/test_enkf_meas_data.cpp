@@ -25,12 +25,12 @@
 #include <ert/enkf/meas_data.hpp>
 
 void meas_block_iset_abort(void *arg) {
-    meas_block_type *block = meas_block_safe_cast(arg);
+    meas_block_type *block = reinterpret_cast<meas_block_type*>(arg);
     meas_block_iset(block, 0, 0, 100);
 }
 
 void meas_block_iget_abort(void *arg) {
-    meas_block_type *block = meas_block_safe_cast(arg);
+    meas_block_type *block = reinterpret_cast<meas_block_type*>(arg);
     meas_block_iget(block, 0, 0);
 }
 

@@ -30,10 +30,8 @@
 #include <ert/config/config_path_stack.hpp>
 #include <ert/config/config_content.hpp>
 
-#define CONFIG_CONTENT_TYPE_ID 6612520
 
 struct config_content_struct {
-    UTIL_TYPE_ID_DECLARATION;
     std::set<std::string> *
         parsed_files; /* A set of config files whcih have been parsed - to protect against circular includes. */
 
@@ -51,12 +49,10 @@ struct config_content_struct {
     bool valid;
 };
 
-UTIL_IS_INSTANCE_FUNCTION(config_content, CONFIG_CONTENT_TYPE_ID)
 
 config_content_type *config_content_alloc(const char *filename) {
     config_content_type *content =
         (config_content_type *)util_malloc(sizeof *content);
-    UTIL_TYPE_ID_INIT(content, CONFIG_CONTENT_TYPE_ID);
     content->parsed_files = new std::set<std::string>();
 
     content->valid = false;

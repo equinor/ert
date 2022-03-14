@@ -19,17 +19,13 @@
 
 #include <ert/enkf/callback_arg.hpp>
 
-#define CALLBACK_ARG_TYPE_ID 7814509
 
 callback_arg_type *callback_arg_alloc(const res_config_type *res_config,
                                       run_arg_type *run_arg, rng_type *rng) {
     callback_arg_type *cb = (callback_arg_type *)util_malloc(sizeof *cb);
-    UTIL_TYPE_ID_INIT(cb, CALLBACK_ARG_TYPE_ID);
     cb->run_arg = run_arg;
     cb->rng = rng;
     cb->res_config = res_config;
     return cb;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(callback_arg, CALLBACK_ARG_TYPE_ID)
-UTIL_SAFE_CAST_FUNCTION(callback_arg, CALLBACK_ARG_TYPE_ID)

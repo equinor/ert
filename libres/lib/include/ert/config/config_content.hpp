@@ -113,6 +113,5 @@ void config_content_pop_path_stack(config_content_type *content);
 extern "C" stringlist_type *
 config_content_alloc_keys(const config_content_type *content);
 
-UTIL_IS_INSTANCE_HEADER(config_content);
 
 #endif

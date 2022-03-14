@@ -28,7 +28,6 @@
 typedef struct callback_arg_struct callback_arg_type;
 
 struct callback_arg_struct {
-    UTIL_TYPE_ID_DECLARATION;
     const res_config_type *res_config;
     run_arg_type *run_arg;
     rng_type *rng;
@@ -37,7 +36,5 @@ struct callback_arg_struct {
 callback_arg_type *callback_arg_alloc(const res_config_type *res_config,
                                       run_arg_type *run_arg, rng_type *rng);
 
-UTIL_IS_INSTANCE_HEADER(callback_arg);
-UTIL_SAFE_CAST_HEADER(callback_arg);
 
 #endif

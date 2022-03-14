@@ -40,6 +40,5 @@ extern "C" int enkf_plot_data_get_size(const enkf_plot_data_type *plot_data);
 extern "C" enkf_plot_tvector_type *
 enkf_plot_data_iget(const enkf_plot_data_type *plot_data, int index);
 
-UTIL_IS_INSTANCE_HEADER(enkf_plot_data);
 
 #endif
