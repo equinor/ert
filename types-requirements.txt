@@ -1,4 +1,4 @@
-mypy < 0.920
+mypy
 types-aiofiles
 types-requests
 types-pkg_resources
