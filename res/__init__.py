@@ -35,7 +35,7 @@ def _load_lib():
     import res._lib
     import ctypes
 
-    lib = ctypes.CDLL(res._lib.__file__, ctypes.RTLD_GLOBAL)
+    lib = ctypes.PyDLL(res._lib.__file__, ctypes.RTLD_GLOBAL)
 
     # Configure site_config to be a ctypes.CFUNCTION with type:
     # void set_site_config(char *);
