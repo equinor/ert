@@ -6,6 +6,7 @@ import pytest
 import os
 import shutil
 import py
+import gc
 
 from starlette.testclient import TestClient
 
@@ -78,6 +79,7 @@ def reset_enkf():
     enkf._config = None
     enkf._ert = None
     enkf._libres_facade = None
+    gc.collect()
 
 
 def new_storage_client(monkeypatch, ert_storage_client):
