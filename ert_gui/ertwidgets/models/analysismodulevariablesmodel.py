@@ -89,9 +89,9 @@ class AnalysisModuleVariablesModel(object):
     }
 
     @classmethod
-    def getVariableNames(cls, ert, analysis_module_name):
+    def getVariableNames(cls, facade, analysis_module_name):
         """@rtype: list of str"""
-        analysis_module = ert.analysisConfig().getModule(analysis_module_name)
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
         items = []
         for name in cls._VARIABLE_NAMES:
@@ -124,14 +124,14 @@ class AnalysisModuleVariablesModel(object):
         return cls._VARIABLE_NAMES[name]["pos"]
 
     @classmethod
-    def setVariableValue(cls, ert, analysis_module_name, name, value):
-        analysis_module = ert.analysisConfig().getModule(analysis_module_name)
+    def setVariableValue(cls, facade, analysis_module_name, name, value):
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         result = analysis_module.setVar(name, str(value))
 
     @classmethod
-    def getVariableValue(cls, ert, analysis_module_name, name):
+    def getVariableValue(cls, facade, analysis_module_name, name):
         """@rtype: int or float or bool or str"""
-        analysis_module = ert.analysisConfig().getModule(analysis_module_name)
+        analysis_module = facade.get_analysis_module(analysis_module_name)
         variable_type = cls.getVariableType(name)
         if variable_type == float:
             return analysis_module.getDouble(name)

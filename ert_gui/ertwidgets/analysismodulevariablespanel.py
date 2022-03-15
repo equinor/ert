@@ -40,7 +40,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         layout = QFormLayout()
         variable_names = AnalysisModuleVariablesModel.getVariableNames(
-            facade._enkf_main, facade.get_analysis_module(analysis_module_name)
+            facade, facade.get_analysis_module(analysis_module_name)
         )
 
         if len(variable_names) == 0:
@@ -58,7 +58,7 @@ class AnalysisModuleVariablesPanel(QWidget):
                     variable_name
                 )
                 variable_value = analysis_module_variables_model.getVariableValue(
-                    self.facade._enkf_main, self._analysis_module_name, variable_name
+                    self.facade, self._analysis_module_name, variable_name
                 )
 
                 label_name = analysis_module_variables_model.getVariableLabelName(
@@ -252,5 +252,5 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         if value is not None:
             AnalysisModuleVariablesModel.setVariableValue(
-                self.facade._enkf_main, self._analysis_module_name, variable_name, value
+                self.facade, self._analysis_module_name, variable_name, value
             )
