@@ -361,7 +361,9 @@ def function_ensemble_builder_factory(
 
 @pytest.fixture()
 def evaluator_config():
-    return EvaluatorServerConfig(custom_port_range=range(1024, 65535))
+    return EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+    )
 
 
 class MockWSMonitor:
