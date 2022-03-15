@@ -550,6 +550,7 @@ class BatchSimulatorTest(ResTest):
                 JobStatusType.JOB_QUEUE_UNKNOWN,
                 JobStatusType.JOB_QUEUE_EXIT,
                 JobStatusType.JOB_QUEUE_DONE,
+                None,  # job is not submitted yet but ok for this test
             )
         )
 
