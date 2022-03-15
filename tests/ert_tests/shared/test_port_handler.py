@@ -7,7 +7,9 @@ from ert_shared import port_handler
 
 def test_find_available_port(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
-    host, port, sock = port_handler.find_available_port(custom_range=custom_range)
+    host, port, sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert host is not None
     assert port is not None
     assert port in custom_range
@@ -17,7 +19,9 @@ def test_find_available_port(unused_tcp_port):
 
 def test_find_available_port_forced(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port)
-    host, port, sock = port_handler.find_available_port(custom_range=custom_range)
+    host, port, sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert sock is not None
     assert sock.fileno() != -1
@@ -27,7 +31,9 @@ def test_invalid_host_name():
     invalid_host = "invalid_host"
 
     with pytest.raises(port_handler.InvalidHostException) as exc_info:
-        port_handler.find_available_port(custom_host=invalid_host)
+        port_handler.find_available_port(
+            custom_host=invalid_host, custom_host="127.0.0.1"
+        )
 
     assert (
         f"Trying to bind socket with what looks like an invalid hostname ({invalid_host})"
@@ -49,7 +55,9 @@ def test_get_family():
 def test_gc_closes_socket(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
-    _, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    _, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -64,7 +72,9 @@ def test_gc_closes_socket(unused_tcp_port):
 
     orig_sock = None
 
-    _, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    _, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -166,7 +176,9 @@ def test_def_passive_live_nok_nok_close_ok_ok(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
     # Opening original socket with will_close_then_reopen_socket=False
-    _, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    _, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -174,18 +186,24 @@ def test_def_passive_live_nok_nok_close_ok_ok(unused_tcp_port):
     # When the socket is kept open, this port can not be reused
     # with or without setting will_close_then_reopen_socket
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            custom_host="127.0.0.1",
+            will_close_then_reopen_socket=True,
         )
 
     orig_sock.close()
 
     # When we close the socket without actually having used it, it is
     # immediately reusable with or without setting will_close_then_reopen_socket
-    _, port, sock = port_handler.find_available_port(custom_range=custom_range)
+    _, port, sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert sock is not None
     assert sock.fileno() != -1
@@ -194,7 +212,9 @@ def test_def_passive_live_nok_nok_close_ok_ok(unused_tcp_port):
     sock.close()
 
     _, port, sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert sock is not None
@@ -215,7 +235,9 @@ def test_reuse_active_close_nok_ok(unused_tcp_port):
 
     # Note: Setting will_close_then_reopen_socket=True on original socket
     host, port, orig_sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert orig_sock is not None
@@ -227,11 +249,15 @@ def test_reuse_active_close_nok_ok(unused_tcp_port):
 
     # Using will_close_then_reopen_socket=False fails...
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # ... but using will_close_then_reopen_socket=True succeeds
     _, port, sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert sock is not None
@@ -251,7 +277,9 @@ def test_reuse_active_live_nok_nok(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
     host, port, orig_sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert orig_sock is not None
@@ -263,11 +291,15 @@ def test_reuse_active_live_nok_nok(unused_tcp_port):
     # Even with "will_close_then_reopen_socket"=True when obtaining original
     # socket, subsequent calls fails
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         _, port, sock = port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            custom_host="127.0.0.1",
+            will_close_then_reopen_socket=True,
         )
 
 
@@ -282,7 +314,9 @@ def test_def_active_live_nok_nok(unused_tcp_port):
     """
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
-    host, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    host, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -292,12 +326,16 @@ def test_def_active_live_nok_nok(unused_tcp_port):
 
     # Immediately trying to bind to the same port fails...
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        host, port, sock = port_handler.find_available_port(custom_range=custom_range)
+        host, port, sock = port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # ... also using will_close_then_reopen_socket=True
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         host, port, sock = port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            custom_host="127.0.0.1",
+            will_close_then_reopen_socket=True,
         )
 
 
@@ -316,7 +354,9 @@ def test_def_active_close_macos_nok_ok(unused_tcp_port):
     """
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
-    host, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    host, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -327,12 +367,16 @@ def test_def_active_close_macos_nok_ok(unused_tcp_port):
 
     # Immediately trying to bind to the same port fails
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        _, _, sock = port_handler.find_available_port(custom_range=custom_range)
+        _, _, sock = port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # On MacOS, setting will_close_then_reopen_socket=True in subsequent calls allows
     # to reuse the port
     _, port, sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert sock is not None
@@ -354,7 +398,9 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
     """
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
-    host, port, orig_sock = port_handler.find_available_port(custom_range=custom_range)
+    host, port, orig_sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
@@ -365,13 +411,17 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
 
     # Immediately trying to bind to the same port fails
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        host, port, sock = port_handler.find_available_port(custom_range=custom_range)
+        host, port, sock = port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # On Linux, setting will_close_then_reopen_socket=True in subsequent calls do
     # NOT allow reusing the port in this case
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         host, port, sock = port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            custom_host="127.0.0.1",
+            will_close_then_reopen_socket=True,
         )
 
 
@@ -390,7 +440,9 @@ def test_reuse_passive_live_macos_nok_nok(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
     _, port, orig_sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert orig_sock is not None
@@ -398,12 +450,16 @@ def test_reuse_passive_live_macos_nok_nok(unused_tcp_port):
 
     # As long as the socket is kept alive this port can not be bound again...
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # ... not even when setting will_close_then_reopen_socket=True
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            custom_host="127.0.0.1",
+            will_close_then_reopen_socket=True,
         )
 
 
@@ -424,7 +480,9 @@ def test_reuse_passive_live_linux_nok_ok(unused_tcp_port):
 
     # Opening original socket with will_close_then_reopen_socket=True
     _, port, orig_sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert orig_sock is not None
@@ -437,7 +495,9 @@ def test_reuse_passive_live_linux_nok_ok(unused_tcp_port):
     # ... but on Linux the port can be re-bound by setting this flag!
     # This does not seem safe in a multi-user/-process environment!
     _, port, sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert sock is not None
@@ -456,7 +516,9 @@ def test_reuse_passive_close_ok_ok(unused_tcp_port):
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
     _, port, orig_sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert orig_sock is not None
@@ -466,7 +528,9 @@ def test_reuse_passive_close_ok_ok(unused_tcp_port):
 
     # When we close the socket without actually having used it, it is
     # immediately reusable with or without setting will_close_then_reopen_socket
-    _, port, sock = port_handler.find_available_port(custom_range=custom_range)
+    _, port, sock = port_handler.find_available_port(
+        custom_range=custom_range, custom_host="127.0.0.1"
+    )
     assert port == unused_tcp_port
     assert sock is not None
     assert sock.fileno() != -1
@@ -475,7 +539,9 @@ def test_reuse_passive_close_ok_ok(unused_tcp_port):
     sock.close()
 
     _, port, sock = port_handler.find_available_port(
-        custom_range=custom_range, will_close_then_reopen_socket=True
+        custom_range=custom_range,
+        custom_host="127.0.0.1",
+        will_close_then_reopen_socket=True,
     )
     assert port == unused_tcp_port
     assert sock is not None
