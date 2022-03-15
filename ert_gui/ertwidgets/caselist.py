@@ -69,6 +69,7 @@ class AddRemoveWidget(QWidget):
 class CaseList(QWidget):
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self.facade = facade
+        self.notifier = notifier
         QWidget.__init__(self)
 
         addHelpToWidget(self, "init/case_list")
@@ -111,6 +112,7 @@ class CaseList(QWidget):
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
             self.facade.select_or_create_new_case(new_case_name)
+            self.notifier.ertChanged.emit()
 
     def removeItem(self):
         message = "Support for removal of items has not been implemented!"
