@@ -60,23 +60,13 @@ extern "C" obs_block_type *obs_data_add_block(obs_data_type *obs_data,
                                               const char *obs_key, int obs_size,
                                               matrix_type *error_covar,
                                               bool error_covar_owner);
-extern "C" PY_USED void obs_data_scale_matrix(const obs_data_type *obs_data,
-                                              matrix_type *matrix);
-extern "C" PY_USED void obs_data_scale_Rmatrix(const obs_data_type *obs_data,
-                                               matrix_type *matrix);
 
 extern "C" obs_data_type *obs_data_alloc(double global_std_scaling);
 extern "C" void obs_data_free(obs_data_type *);
-Eigen::MatrixXd obs_data_makeD(const obs_data_type *obs_data,
-                               const Eigen::MatrixXd &E,
-                               const Eigen::MatrixXd &S);
-Eigen::MatrixXd obs_data_makeR(const obs_data_type *obs_data);
 
-Eigen::MatrixXd obs_data_makeE(const obs_data_type *obs_data, rng_type *rng,
-                               int active_ens_size);
-extern "C" void obs_data_scale(const obs_data_type *obs_data, matrix_type *S,
-                               matrix_type *E, matrix_type *D, matrix_type *R,
-                               matrix_type *O);
+Eigen::VectorXd obs_data_values_as_vector(const obs_data_type *obs_data);
+Eigen::VectorXd obs_data_errors_as_vector(const obs_data_type *obs_data);
+
 extern "C" int obs_data_get_active_size(const obs_data_type *obs_data);
 extern "C" int obs_data_get_total_size(const obs_data_type *obs_data);
 extern "C" int obs_data_get_num_blocks(const obs_data_type *obs_data);

@@ -192,129 +192,6 @@ int obs_block_get_active_size(const obs_block_type *obs_block) {
     return obs_block->active_size;
 }
 
-/*Function that sets each element of the scaling factor equal to 1 divided by the prior standard deviation (from the
-  obs_data input file.
-*/
-static void obs_block_init_scaling(const obs_block_type *obs_block,
-                                   double *scale_factor, int *__obs_offset) {
-    int obs_offset = *__obs_offset;
-    int iobs;
-    for (iobs = 0; iobs < obs_block->size; iobs++) {
-        if (obs_block->active_mode[iobs] == ACTIVE) {
-            scale_factor[obs_offset] =
-                1.0 / obs_block_iget_std(obs_block, iobs);
-            obs_offset++;
-        }
-    }
-    *__obs_offset = obs_offset;
-}
-
-static void obs_block_initdObs(const obs_block_type *obs_block,
-                               matrix_type *dObs, int *__obs_offset) {
-    int obs_offset = *__obs_offset;
-    int iobs;
-    for (iobs = 0; iobs < obs_block->size; iobs++) {
-        if (obs_block->active_mode[iobs] == ACTIVE) {
-            matrix_iset(dObs, obs_offset, 0, obs_block->value[iobs]);
-            matrix_iset(dObs, obs_offset, 1, obs_block->std[iobs]);
-            obs_offset++;
-        }
-    }
-    *__obs_offset = obs_offset;
-}
-
-static void obs_block_initR(const obs_block_type *obs_block, matrix_type *R,
-                            int *__obs_offset) {
-    int obs_offset = *__obs_offset;
-    if (obs_block->error_covar == NULL) {
-        int iobs;
-        int iactive = 0;
-        for (iobs = 0; iobs < obs_block->size; iobs++) {
-            if (obs_block->active_mode[iobs] == ACTIVE) {
-                double var = obs_block_iget_std(obs_block, iobs) *
-                             obs_block_iget_std(obs_block, iobs);
-                matrix_iset_safe(R, obs_offset + iactive, obs_offset + iactive,
-                                 var);
-                iactive++;
-            }
-        }
-    } else {
-        int row_active = 0; /* We have a covar matrix */
-        for (int row = 0; row < obs_block->size; row++) {
-            if (obs_block->active_mode[row] == ACTIVE) {
-                int col_active = 0;
-                for (int col = 0; col < obs_block->size; col++) {
-                    if (obs_block->active_mode[col] == ACTIVE) {
-                        matrix_iset_safe(
-                            R, obs_offset + row_active, obs_offset + col_active,
-                            matrix_iget(obs_block->error_covar, row, col));
-                        col_active++;
-                    }
-                }
-                row_active++;
-            }
-        }
-    }
-
-    *__obs_offset = obs_offset + obs_block->active_size;
-    if ((obs_block->error_covar_owner) && (obs_block->error_covar != NULL))
-        matrix_free(obs_block->error_covar);
-}
-
-static void obs_block_initE(const obs_block_type *obs_block, matrix_type *E,
-                            const double *pert_var, int *__obs_offset) {
-    int ens_size = matrix_get_columns(E);
-    int obs_offset = *__obs_offset;
-    int iobs;
-    for (iobs = 0; iobs < obs_block->size; iobs++) {
-        if (obs_block->active_mode[iobs] == ACTIVE) {
-            double factor = obs_block_iget_std(obs_block, iobs) *
-                            sqrt(ens_size / pert_var[obs_offset]);
-            for (int iens = 0; iens < ens_size; iens++)
-                matrix_imul(E, obs_offset, iens, factor);
-
-            obs_offset++;
-        }
-    }
-
-    *__obs_offset = obs_offset;
-}
-
-static void obs_block_initE_non_centred(const obs_block_type *obs_block,
-                                        matrix_type *E, int *__obs_offset) {
-    int ens_size = matrix_get_columns(E);
-    int obs_offset = *__obs_offset;
-    int iobs;
-    for (iobs = 0; iobs < obs_block->size; iobs++) {
-        if (obs_block->active_mode[iobs] == ACTIVE) {
-            double factor = obs_block_iget_std(obs_block, iobs);
-            for (int iens = 0; iens < ens_size; iens++)
-                matrix_imul(E, obs_offset, iens, factor);
-
-            obs_offset++;
-        }
-    }
-
-    *__obs_offset = obs_offset;
-}
-
-static void obs_block_initD(const obs_block_type *obs_block, matrix_type *D,
-                            int *__obs_offset) {
-    int ens_size = matrix_get_columns(D);
-    int obs_offset = *__obs_offset;
-    int iobs;
-    for (iobs = 0; iobs < obs_block->size; iobs++) {
-        if (obs_block->active_mode[iobs] == ACTIVE) {
-            for (int iens = 0; iens < ens_size; iens++)
-                matrix_iadd(D, obs_offset, iens, obs_block->value[iobs]);
-
-            obs_offset++;
-        }
-    }
-
-    *__obs_offset = obs_offset;
-}
-
 static void obs_block_set_active_mask(const obs_block_type *obs_block,
                                       bool_vector_type *mask, int *offset) {
     for (int i = 0; i < obs_block->size; i++) {
@@ -361,161 +238,40 @@ void obs_data_free(obs_data_type *obs_data) {
     free(obs_data);
 }
 
-Eigen::MatrixXd obs_data_makeE(const obs_data_type *obs_data, rng_type *rng,
-                               int active_ens_size) {
-    int iens, iobs_active;
+Eigen::VectorXd obs_data_values_as_vector(const obs_data_type *obs_data) {
     int active_obs_size = obs_data_get_active_size(obs_data);
-    std::vector<double> pert_mean(active_obs_size);
-    std::vector<double> pert_var(active_obs_size);
-
-    Eigen::MatrixXd E = Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
-
-    {
-
-        for (int j = 0; j < active_ens_size; j++) {
-            for (int i = 0; i < active_obs_size; i++) {
-                matrix_iset(&E, i, j, enkf_util_rand_normal(0, 1, rng));
-            }
-        }
-    }
-
-    for (iens = 0; iens < active_ens_size; iens++)
-        for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
-            pert_mean[iobs_active] += matrix_iget(&E, iobs_active, iens);
-
-    for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++)
-        pert_mean[iobs_active] /= active_ens_size;
-
-    for (iens = 0; iens < active_ens_size; iens++) {
-        for (iobs_active = 0; iobs_active < active_obs_size; iobs_active++) {
-            matrix_iadd(&E, iobs_active, iens, -pert_mean[iobs_active]);
-            double tmp = matrix_iget(&E, iobs_active, iens);
-            pert_var[iobs_active] += tmp * tmp;
-        }
-    }
-
-    /*
-    The actual observed data are not accessed before this last block.
-  */
-    {
-        int obs_offset = 0;
-        for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
-             block_nr++) {
-            const obs_block_type *obs_block =
-                (const obs_block_type *)vector_iget_const(obs_data->data,
-                                                          block_nr);
-            obs_block_initE(obs_block, &E, pert_var.data(), &obs_offset);
-        }
-    }
-    return E;
-}
-
-Eigen::MatrixXd obs_data_makeD(const obs_data_type *obs_data,
-                               const Eigen::MatrixXd &E,
-                               const Eigen::MatrixXd &S) {
-    Eigen::MatrixXd D = E;
-    matrix_inplace_sub(&D, &S);
-
-    {
-        int obs_offset = 0;
-        for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
-             block_nr++) {
-            const obs_block_type *obs_block =
-                (const obs_block_type *)vector_iget_const(obs_data->data,
-                                                          block_nr);
-            obs_block_initD(obs_block, &D, &obs_offset);
-        }
-    }
-    return D;
-}
-
-Eigen::MatrixXd obs_data_makeR(const obs_data_type *obs_data) {
-    int active_size = obs_data_get_active_size(obs_data);
-    Eigen::MatrixXd R = Eigen::MatrixXd::Zero(active_size, active_size);
-    {
-        int obs_offset = 0;
-        for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
-             block_nr++) {
-            const obs_block_type *obs_block =
-                (const obs_block_type *)vector_iget_const(obs_data->data,
-                                                          block_nr);
-            obs_block_initR(obs_block, &R, &obs_offset);
-        }
-    }
-    return R;
-}
-
-static void obs_data_scale_matrix__(matrix_type *m,
-                                    const double *scale_factor) {
-    const int rows = matrix_get_rows(m);
-    const int columns = matrix_get_columns(m);
-    int i, j;
-
-    for (i = 0; i < columns; i++)
-        for (j = 0; j < rows; j++)
-            matrix_imul(m, j, i, scale_factor[j]);
-}
-
-static void obs_data_scale_Rmatrix__(matrix_type *R,
-                                     const double *scale_factor) {
-    int nrobs_active = matrix_get_rows(R);
-
-    /* Scale the error covariance matrix*/
-    for (int i = 0; i < nrobs_active; i++)
-        for (int j = 0; j < nrobs_active; j++)
-            matrix_imul(R, i, j, scale_factor[i] * scale_factor[j]);
-}
-
-std::vector<double> obs_data_make_scale_factor(const obs_data_type *obs_data) {
-    int nrobs_active = obs_data_get_active_size(obs_data);
-    std::vector<double> scale_factor(nrobs_active);
+    Eigen::VectorXd obs_values = Eigen::VectorXd::Zero(active_obs_size);
     int obs_offset = 0;
     for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
          block_nr++) {
         const obs_block_type *obs_block =
             (const obs_block_type *)vector_iget_const(obs_data->data, block_nr);
-
-        /* Init. the scaling factor ( 1/std(dObs) ) */
-        obs_block_init_scaling(obs_block, scale_factor.data(), &obs_offset);
+        for (int iobs = 0; iobs < obs_block->size; iobs++) {
+            if (obs_block->active_mode[iobs] == ACTIVE) {
+                obs_values(obs_offset) = obs_block->value[iobs];
+                obs_offset++;
+            }
+        }
     }
-
-    return scale_factor;
+    return obs_values;
 }
 
-void obs_data_scale_matrix(const obs_data_type *obs_data, matrix_type *matrix) {
-    std::vector<double> scale_factor = obs_data_make_scale_factor(obs_data);
-    obs_data_scale_matrix__(matrix, scale_factor.data());
-}
-
-void obs_data_scale_Rmatrix(const obs_data_type *obs_data, matrix_type *R) {
-    std::vector<double> scale_factor = obs_data_make_scale_factor(obs_data);
-    obs_data_scale_Rmatrix__(R, scale_factor.data());
-}
-
-void obs_data_scale(const obs_data_type *obs_data, matrix_type *S,
-                    matrix_type *E, matrix_type *D, matrix_type *R,
-                    matrix_type *dObs) {
-    std::vector<double> scale_factor = obs_data_make_scale_factor(obs_data);
-
-    /* Scale the forecasted data so that they (in theory) have the same variance
-     (if the prior distribution for the observation errors is correct) */
-    obs_data_scale_matrix__(S, scale_factor.data());
-
-    /* Scale the combined data matrix: D = DObs + E - S, where DObs is the iobs_active times ens_size matrix where
-     each column contains a copy of the observed data
-  */
-    if (D != NULL)
-        obs_data_scale_matrix__(D, scale_factor.data());
-
-    /* Same with E (used for low rank representation of the error covariance matrix*/
-    if (E != NULL)
-        obs_data_scale_matrix__(E, scale_factor.data());
-
-    if (dObs != NULL)
-        obs_data_scale_matrix__(dObs, scale_factor.data());
-
-    if (R != NULL)
-        obs_data_scale_Rmatrix__(R, scale_factor.data());
+Eigen::VectorXd obs_data_errors_as_vector(const obs_data_type *obs_data) {
+    int active_obs_size = obs_data_get_active_size(obs_data);
+    Eigen::VectorXd obs_errors = Eigen::VectorXd::Zero(active_obs_size);
+    int obs_offset = 0;
+    for (int block_nr = 0; block_nr < vector_get_size(obs_data->data);
+         block_nr++) {
+        const obs_block_type *obs_block =
+            (const obs_block_type *)vector_iget_const(obs_data->data, block_nr);
+        for (int iobs = 0; iobs < obs_block->size; iobs++) {
+            if (obs_block->active_mode[iobs] == ACTIVE) {
+                obs_errors(obs_offset) = obs_block->std[iobs];
+                obs_offset++;
+            }
+        }
+    }
+    return obs_errors;
 }
 
 int obs_data_get_active_size(const obs_data_type *obs_data) {

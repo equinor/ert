@@ -54,6 +54,11 @@ void updateA(
     const Eigen::MatrixXd &Ein, // Ensemble of observation perturbations
     const Eigen::MatrixXd
         &Din); // (d+E-Y) Ensemble of perturbed observations - Y
+
+Eigen::MatrixXd makeE(const Eigen::VectorXd &obs_errors,
+                      const Eigen::MatrixXd &noise);
+Eigen::MatrixXd makeD(const Eigen::VectorXd &obs_values,
+                      const Eigen::MatrixXd &E, const Eigen::MatrixXd &S);
 } // namespace ies
 
 #endif

@@ -386,30 +386,43 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     enkf_analysis_fprintf_obs_summary(
         obs_data, meas_data, local_ministep_get_name(ministep), log_stream);
     fclose(log_stream);
-    if (meas_data_get_active_obs_size(meas_data) == 0) {
+
+    int active_obs_size = obs_data_get_active_size(obs_data);
+    int active_ens_size = meas_data_get_active_ens_size(meas_data);
+    Eigen::MatrixXd S = meas_data_makeS(meas_data);
+    assert_matrix_size(S, "S", active_obs_size, active_ens_size);
+    meas_data_free(meas_data);
+
+    Eigen::VectorXd observation_values = obs_data_values_as_vector(obs_data);
+    Eigen::VectorXd observation_errors =
+        obs_data_errors_as_vector(obs_data) * global_std_scaling;
+    std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
+
+    if (S.rows() == 0) {
         obs_data_free(obs_data);
-        meas_data_free(meas_data);
         return std::make_shared<update_data_type>();
     }
 
-    int active_ens_size = meas_data_get_active_ens_size(meas_data);
-    Eigen::MatrixXd S = meas_data_makeS(meas_data);
-    meas_data_free(meas_data);
+    Eigen::MatrixXd noise =
+        Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
+    for (int j = 0; j < active_ens_size; j++)
+        for (int i = 0; i < active_obs_size; i++)
+            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng);
 
-    Eigen::MatrixXd E = obs_data_makeE(obs_data, shared_rng, active_ens_size);
+    Eigen::MatrixXd E = ies::makeE(observation_errors, noise);
+    Eigen::MatrixXd R =
+        observation_errors.cwiseProduct(observation_errors).asDiagonal();
+    Eigen::MatrixXd D = ies::makeD(observation_values, E, S);
+
+    Eigen::VectorXd error_inverse = observation_errors.array().inverse();
+    S = S.array().colwise() * error_inverse.array();
+    E = E.array().colwise() * error_inverse.array();
+    D = D.array().colwise() * error_inverse.array();
+    R = R.cwiseProduct(error_inverse * error_inverse.transpose());
+
     std::vector<int> iens_active_index = bool_vector_to_active_list(ens_mask);
     auto A = load_parameters(target_fs, ensemble_config, iens_active_index,
                              active_ens_size, ministep);
-
-    int active_obs_size = obs_data_get_active_size(obs_data);
-    Eigen::MatrixXd R = obs_data_makeR(obs_data);
-    Eigen::MatrixXd D = obs_data_makeD(obs_data, E, S);
-    assert_matrix_size(E, "E", active_obs_size, active_ens_size);
-    assert_matrix_size(D, "D", active_obs_size, active_ens_size);
-    assert_matrix_size(S, "S", active_obs_size, active_ens_size);
-    assert_matrix_size(R, "R", active_obs_size, active_obs_size);
-    std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
-    obs_data_scale(obs_data, &S, &E, &D, &R, nullptr);
 
     auto row_scaling_parameters = load_row_scaling_parameters(
         target_fs, ensemble_config, iens_active_index, active_ens_size,
