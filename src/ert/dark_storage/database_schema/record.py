@@ -72,6 +72,10 @@ class Record(Base, UserdataField):
     def record_class(self) -> RecordClass:
         return self.record_info.record_class
 
+    @property
+    def has_observations(self) -> bool:
+        return len(self.observations) > 0
+
 
 class File(Base):
     __tablename__ = "file"
