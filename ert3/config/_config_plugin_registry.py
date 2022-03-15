@@ -11,6 +11,7 @@ from typing import (
     Type,
     Union,
     List,
+    TYPE_CHECKING,
 )
 from typing_extensions import Literal
 
@@ -189,6 +190,13 @@ def _getter_template(
     )
 
 
+# https://mypy.readthedocs.io/en/latest/runtime_troubles.html#using-classes-that-are-generic-in-stubs-but-not-at-runtime
+if TYPE_CHECKING:
+    Classmethod = classmethod[Any]  # pylint: disable=unsubscriptable-object
+else:
+    Classmethod = classmethod
+
+
 # pylint: disable=too-many-arguments
 def create_plugged_model(
     model_name: str,
@@ -197,7 +205,7 @@ def create_plugged_model(
     model_base: Optional[Type[BaseModel]] = None,
     model_module: Optional[str] = None,
     extra_fields: Optional[Dict[str, Any]] = None,
-    validators: Optional[Dict[str, classmethod]] = None,
+    validators: Optional[Dict[str, Classmethod]] = None,
 ) -> Type[BaseModel]:
     """Create a plugged model ``model_name`` with the given ``categories``.
 
