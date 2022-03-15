@@ -192,10 +192,7 @@ int run_arg_get_queue_index(const run_arg_type *run_arg) {
 }
 
 bool run_arg_is_submitted(const run_arg_type *run_arg) {
-    if (run_arg->queue_index == INVALID_QUEUE_INDEX)
-        return false;
-    else
-        return true;
+    return run_arg->queue_index != INVALID_QUEUE_INDEX;
 }
 
 run_status_type run_arg_get_run_status(const run_arg_type *run_arg) {
