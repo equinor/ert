@@ -2,7 +2,9 @@
 
 #include "catch2/catch.hpp"
 
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/obs_data.hpp>
+#include <ert/analysis/ies/ies.hpp>
 
 // std::normal_distribution has a different implementation depending on platform,
 // which makes this differentiation necessary.
@@ -68,7 +70,17 @@ SCENARIO(
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
         WHEN("E is allocated") {
-            Eigen::MatrixXd E = obs_data_makeE(obs_data, rng, 3);
+
+            int active_obs_size = obs_data_get_active_size(obs_data);
+            int active_ens_size = 3;
+            Eigen::MatrixXd noise =
+                Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
+            for (int j = 0; j < active_ens_size; j++)
+                for (int i = 0; i < active_obs_size; i++)
+                    noise(i, j) = enkf_util_rand_normal(0, 1, rng);
+            Eigen::VectorXd observation_errors =
+                obs_data_errors_as_vector(obs_data) * global_std_scaling;
+            Eigen::MatrixXd E = ies::makeE(observation_errors, noise);
 
             if (PLATFORM_NAME == "macos") {
                 THEN("Rows of E are effected by data in the block") {
@@ -106,7 +118,16 @@ SCENARIO(
             REQUIRE(obs_data_get_active_size(obs_data) == 5);
             REQUIRE(obs_data_get_num_blocks(obs_data) == 2);
 
-            Eigen::MatrixXd E = obs_data_makeE(obs_data, rng, 3);
+            int active_obs_size = obs_data_get_active_size(obs_data);
+            int active_ens_size = 3;
+            Eigen::MatrixXd noise =
+                Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
+            for (int j = 0; j < active_ens_size; j++)
+                for (int i = 0; i < active_obs_size; i++)
+                    noise(i, j) = enkf_util_rand_normal(0, 1, rng);
+            Eigen::VectorXd observation_errors =
+                obs_data_errors_as_vector(obs_data) * global_std_scaling;
+            Eigen::MatrixXd E = ies::makeE(observation_errors, noise);
 
             if (PLATFORM_NAME == "macos") {
                 THEN("Rows of E are effected by data in the block") {
@@ -149,5 +170,29 @@ SCENARIO(
         }
         rng_free(rng);
         obs_data_free(obs_data);
+    }
+}
+
+SCENARIO("Creating eigen vectors from obs_data [obs_data]") {
+    GIVEN("A obs_data with one obs_block") {
+        double global_std_scaling = 1.0;
+        obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
+
+        const char *obs_key = "obs_block_0";
+        const int obs_size = 3;
+
+        obs_block_type *obs_block =
+            obs_data_add_block(obs_data, obs_key, obs_size, nullptr, false);
+        obs_block_iset(obs_block, 0, 5.0, 0.3);
+        obs_block_iset(obs_block, 2, 15.0, 0.5);
+
+        THEN("loading as vector") {
+            Eigen::VectorXd observation_errors =
+                obs_data_errors_as_vector(obs_data);
+            Eigen::VectorXd observation_values =
+                obs_data_values_as_vector(obs_data);
+            REQUIRE(observation_values == Eigen::Vector2d(5.0, 15.0));
+            REQUIRE(observation_errors == Eigen::Vector2d(0.3, 0.5));
+        }
     }
 }

@@ -392,3 +392,33 @@ void ies::initX(const config::Config &ies_config, const Eigen::MatrixXd &Y0,
                 ies_config.truncation(), use_aa_projection, W0, steplength,
                 iteration_nr, nullptr);
 }
+
+Eigen::MatrixXd ies::makeE(const Eigen::VectorXd &obs_errors,
+                           const Eigen::MatrixXd &noise) {
+    int active_obs_size = obs_errors.rows();
+    int active_ens_size = noise.cols();
+
+    Eigen::MatrixXd E = noise;
+    Eigen::VectorXd pert_mean = E.rowwise().mean();
+    E = E.colwise() - pert_mean;
+    Eigen::VectorXd pert_var = E.cwiseProduct(E).rowwise().sum();
+
+    for (int i = 0; i < active_obs_size; i++) {
+        double factor = obs_errors(i) * sqrt(active_ens_size / pert_var(i));
+        E.row(i) *= factor;
+    }
+
+    return E;
+}
+
+Eigen::MatrixXd ies::makeD(const Eigen::VectorXd &obs_values,
+                           const Eigen::MatrixXd &E, const Eigen::MatrixXd &S) {
+
+    Eigen::MatrixXd D = E - S;
+
+    for (int i = 0; i < obs_values.rows(); i++)
+        for (int iens = 0; iens < D.cols(); iens++)
+            D(i, iens) += obs_values(i);
+
+    return D;
+}
