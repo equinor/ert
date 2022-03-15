@@ -1,5 +1,3 @@
-import pytest
-
 from res.enkf import EnKFMain
 
 
