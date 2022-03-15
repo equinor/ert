@@ -14,7 +14,9 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
-        config = EvaluatorServerConfig(custom_port_range=custom_port_range)
+        config = EvaluatorServerConfig(
+            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+        )
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
         with evaluator.run() as monitor:
             for e in monitor.track():
@@ -36,7 +38,9 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=5).build()
-        config = EvaluatorServerConfig(custom_port_range=custom_port_range)
+        config = EvaluatorServerConfig(
+            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+        )
 
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
@@ -56,7 +60,9 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
-        config = EvaluatorServerConfig(custom_port_range=custom_port_range)
+        config = EvaluatorServerConfig(
+            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+        )
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
         with patch.object(ensemble, "get_active_reals", side_effect=RuntimeError()):

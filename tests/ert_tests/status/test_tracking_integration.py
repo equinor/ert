@@ -146,7 +146,7 @@ def test_tracking(
             model, argument = create_model(ert, parsed)
 
             evaluator_server_config = EvaluatorServerConfig(
-                custom_port_range=range(1024, 65535)
+                custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
             )
 
             thread = threading.Thread(
