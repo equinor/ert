@@ -47,8 +47,8 @@ using Eigen::MatrixXd;
 namespace ies {
 void linalg_compute_AA_projection(const Eigen::MatrixXd &A, Eigen::MatrixXd &Y);
 
-void linalg_solve_S(const Eigen::MatrixXd &W0, const Eigen::MatrixXd &Y,
-                    Eigen::MatrixXd &S);
+Eigen::MatrixXd linalg_solve_S(const Eigen::MatrixXd &W0,
+                               const Eigen::MatrixXd &Y);
 
 void linalg_subspace_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
                                const Eigen::MatrixXd &E,
@@ -78,10 +78,7 @@ void subtract_row_mean(Eigen::MatrixXd &matrix) {
 void ies::init_update(ies::data::Data &module_data,
                       const std::vector<bool> &ens_mask,
                       const std::vector<bool> &obs_mask) {
-    /* Store current ens_mask in module_data->ens_mask for each iteration */
     module_data.update_ens_mask(ens_mask);
-    /* Store obs_mask for initial iteration in module_data->obs_mask0,
-     *  for each subsequent iteration we store the current mask in module_data->obs_mask */
     module_data.store_initial_obs_mask(obs_mask);
     module_data.update_obs_mask(obs_mask);
 }
@@ -96,17 +93,12 @@ void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
 
 {
     const int ens_size = Y0.cols();
-    const int nrobs_inp = Y0.rows();
 
     Eigen::MatrixXd Y = Y0;
-    Eigen::MatrixXd S = Eigen::MatrixXd::Zero(
-        nrobs_inp,
-        ens_size); // Predicted ensemble anomalies scaled with inv(Omeaga)
-    const double nsc = 1.0 / sqrt(ens_size - 1.0);
 
     /*  Subtract mean of predictions to generate predicted ensemble anomaly matrix (Line 5) */
-    subtract_row_mean(Y); // Y=Y*(I-(1/ens_size)*11)
-    Y *= nsc;             // Y=Y / sqrt(ens_size-1)
+    subtract_row_mean(Y);      // Y=Y*(I-(1/ens_size)*11)
+    Y /= sqrt(ens_size - 1.0); // Y=Y / sqrt(ens_size-1)
 
     /* COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1) */
     if (A.rows() > 0 && A.cols() > 0) {
@@ -120,11 +112,10 @@ void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
      * When solving the system S = Y inv(Omega) we write
      *   Omega^T S^T = Y^T (line 6)
      */
-    ies::linalg_solve_S(W0, Y, S);
+    Eigen::MatrixXd S = ies::linalg_solve_S(W0, Y);
 
     /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
-    Eigen::MatrixXd H = D; // H=D=dobs + E - Y
-    H += S * W0;
+    Eigen::MatrixXd H = D + S * W0; // H=D=dobs + E - Y
 
     /* Store previous W for convergence test */
     Eigen::MatrixXd W = W0;
@@ -172,10 +163,8 @@ void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
      *   X= I + W/sqrt(N-1)
      */
     X = W0;
-    X *= nsc;
-    for (int i = 0; i < ens_size; i++) {
-        X(i, i) += 1.0;
-    }
+    X /= sqrt(ens_size - 1.0);
+    X.diagonal().array() += 1;
 
     /* COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE (Line 12)*/
     Eigen::MatrixXd DW = W0 - W;
@@ -237,21 +226,18 @@ void ies::updateA(
     D += E;
 
     double costf;
-    {
-        auto W0 = data.make_activeW();
-        ies_initX__(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin,
-                    E, D, X, ies_config.inversion(), ies_config.truncation(),
-                    ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
-                    &costf);
-        ies::linalg_store_active_W(&data, W0);
-        logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
-    }
+
+    auto W0 = data.make_activeW();
+    ies_initX__(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin, E,
+                D, X, ies_config.inversion(), ies_config.truncation(),
+                ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
+                &costf);
+    ies::linalg_store_active_W(&data, W0);
+    logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
 
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
-    {
-        Eigen::MatrixXd A0 = data.make_activeA();
-        A = A0 * X;
-    }
+    Eigen::MatrixXd A0 = data.make_activeA();
+    A = A0 * X;
 }
 
 /*  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
@@ -271,26 +257,20 @@ void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
 *  When solving the system S = Y inv(Omega) we write
 *     Omega^T S^T = Y^T
 */
-void ies::linalg_solve_S(const Eigen::MatrixXd &W0, const Eigen::MatrixXd &Y,
-                         Eigen::MatrixXd &S) {
-    double nsc = 1.0 / sqrt(W0.cols() - 1.0);
+Eigen::MatrixXd ies::linalg_solve_S(const Eigen::MatrixXd &W0,
+                                    const Eigen::MatrixXd &Y) {
 
     /*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).*/
     Eigen::MatrixXd Omega =
         W0; // Omega=data->W (from previous iteration used to solve for S)
-    subtract_row_mean(Omega);              // Omega=Omega*(I-(1/N)*11')
-    Omega *= nsc;                          // Omega/sqrt(N-1)
-    Omega.transposeInPlace();              // Omega=transpose(Omega)
-    for (int i = 0; i < Omega.cols(); i++) // Omega=Omega+I
-        Omega(i, i) += 1.0;
+    subtract_row_mean(Omega);       // Omega=Omega*(I-(1/N)*11')
+    Omega /= sqrt(W0.cols() - 1.0); // Omega/sqrt(N-1)
+    Omega.transposeInPlace();       // Omega=transpose(Omega)
+    Omega.diagonal().array() += 1.0;
 
-    Eigen::MatrixXd YT = Y.transpose(); // RHS stored in YT
+    Eigen::MatrixXd ST = Omega.fullPivLu().solve(Y.transpose());
 
-    /* Solve system                                                                                (Line 7)   */
-    Eigen::MatrixXd tmp = Omega.fullPivLu().solve(YT);
-    YT = tmp;
-
-    S = YT.transpose(); // Copy solution to S
+    return ST.transpose();
 }
 
 /*
