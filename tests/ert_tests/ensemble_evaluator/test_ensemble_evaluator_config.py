@@ -1,11 +1,12 @@
-from ert_shared import port_handler
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 def test_load_config(unused_tcp_port):
     fixed_port = range(unused_tcp_port, unused_tcp_port)
-    serv_config = EvaluatorServerConfig(custom_port_range=fixed_port)
-    expected_host = port_handler._get_ip_address()
+    serv_config = EvaluatorServerConfig(
+        custom_port_range=fixed_port, custom_host="127.0.0.1"
+    )
+    expected_host = "127.0.0.1"
     expected_port = unused_tcp_port
     expected_url = f"wss://{expected_host}:{expected_port}"
     expected_client_uri = f"{expected_url}/client"
