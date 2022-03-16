@@ -13,11 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import List, Tuple
+from res.enkf import ErtRunContext, EnkfSimulationRunner
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf.enkf_main import EnKFMain, QueueConfig
 
 from ert_shared.models import BaseRunModel, ErtRunError
+from ert_shared.models.types import Argument
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 import logging
 
@@ -31,17 +35,19 @@ class MultipleDataAssimilation(BaseRunModel):
 
     default_weights = "4, 2, 1"
 
-    def __init__(self, ert, queue_config):
+    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
         super().__init__(ert, queue_config, phase_count=2)
         self.weights = MultipleDataAssimilation.default_weights
 
-    def setAnalysisModule(self, module_name):
+    def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments, evaluator_server_config):
+    def runSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> ErtRunContext:
         context = self.create_context(arguments, 0, initialize_mask_from_arguments=True)
         self.checkMinimumActiveRealizations(context)
         weights = self.parseWeights(arguments["weights"])
@@ -101,10 +107,12 @@ class MultipleDataAssimilation(BaseRunModel):
 
         return run_context
 
-    def count_active_realizations(self, run_context):
+    def count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
-    def update(self, run_context, weight, ensemble_id):
+    def update(
+        self, run_context: ErtRunContext, weight: float, ensemble_id: str
+    ) -> str:
         source_fs = run_context.get_sim_fs()
         next_iteration = run_context.get_iter() + 1
         target_fs = run_context.get_target_fs()
@@ -132,8 +140,12 @@ class MultipleDataAssimilation(BaseRunModel):
         return update_id
 
     def _simulateAndPostProcess(
-        self, run_context, arguments, evaluator_server_config, update_id: int = None
-    ):
+        self,
+        run_context: ErtRunContext,
+        arguments: Argument,
+        evaluator_server_config: EvaluatorServerConfig,
+        update_id: str = None,
+    ) -> Tuple[int, str]:
         iteration = run_context.get_iter()
 
         phase_string = "Running simulation for iteration: %d" % iteration
@@ -167,8 +179,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return num_successful_realizations, new_ensemble_id
 
     @staticmethod
-    def normalizeWeights(weights):
-        """:rtype: list of float"""
+    def normalizeWeights(weights: List[float]) -> List[float]:
         if not weights:
             return []
         weights = [weight for weight in weights if abs(weight) != 0.0]
@@ -178,7 +189,7 @@ class MultipleDataAssimilation(BaseRunModel):
         return [x * length for x in weights]
 
     @staticmethod
-    def parseWeights(weights):
+    def parseWeights(weights: str) -> List:
         if not weights:
             return []
 
@@ -201,8 +212,12 @@ class MultipleDataAssimilation(BaseRunModel):
         return result
 
     def create_context(
-        self, arguments, itr, initialize_mask_from_arguments=True, update=True
-    ):
+        self,
+        arguments: Argument,
+        itr: int,
+        initialize_mask_from_arguments: bool = True,
+        update: bool = True,
+    ) -> ErtRunContext:
         target_case_format = arguments["target_case"]
         model_config = self.ert().getModelConfig()
         runpath_fmt = model_config.getRunpathFormat()
@@ -248,5 +263,5 @@ class MultipleDataAssimilation(BaseRunModel):
         return run_context
 
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         return "Multiple Data Assimilation (ES MDA) - Recommended"

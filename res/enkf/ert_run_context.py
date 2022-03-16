@@ -135,7 +135,9 @@ class ErtRunContext(BaseCClass):
         return cls._alloc_case_init(sim_fs, mask)
 
     @classmethod
-    def ensemble_experiment(cls, sim_fs, mask, path_fmt, jobname_fmt, subst_list, itr):
+    def ensemble_experiment(
+        cls, sim_fs, mask, path_fmt, jobname_fmt, subst_list, itr
+    ) -> "ErtRunContext":
         run_context = cls._alloc_ensemble_experiment(
             sim_fs, mask, path_fmt, jobname_fmt, subst_list, itr
         )
@@ -151,7 +153,7 @@ class ErtRunContext(BaseCClass):
     @classmethod
     def ensemble_smoother(
         cls, sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, itr
-    ):
+    ) -> "ErtRunContext":
         run_context = cls._alloc_ensemble_smoother(
             sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, itr
         )
