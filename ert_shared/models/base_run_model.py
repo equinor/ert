@@ -1,15 +1,12 @@
 import time
 import uuid
-from typing import Optional, Dict, List, Union
+from typing import Optional, List, Union
 import asyncio
 
 from ecl.util.util import BoolVector
-
-from res.enkf import EnKFMain, QueueConfig, RunArg
+from res.enkf import EnKFMain, QueueConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import (
-    ForwardModelStatus,
-    JobStatusType,
     RunStatusType,
     ForwardModel,
 )
@@ -25,11 +22,7 @@ from ert_shared.ensemble_evaluator.ensemble.builder import (
 )
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-# A method decorated with the @job_queue decorator implements the following logic:
-#
-# 1. If self._job_queue is assigned a valid value the method is run normally.
-# 2. If self._job_queue is None - the decorator argument is returned.
+from ert_shared.models.types import Argument
 
 
 class ErtRunError(Exception):
@@ -37,7 +30,7 @@ class ErtRunError(Exception):
 
 
 class BaseRunModel:
-    def __init__(self, ert, queue_config: QueueConfig, phase_count: Optional[int] = 1):
+    def __init__(self, ert: EnKFMain, queue_config: QueueConfig, phase_count: int = 1):
         """
 
         Parameters
@@ -59,7 +52,7 @@ class BaseRunModel:
         self.initial_realizations_mask: List[int] = []
         self.completed_realizations_mask: List[int] = []
         self.support_restart: bool = True
-        self._run_context: ErtRunContext = None
+        self._run_context: Optional[ErtRunContext] = None
         self._last_run_iteration: int = -1
         self._ert = ert
         self.facade = LibresFacade(ert)
@@ -81,13 +74,17 @@ class BaseRunModel:
         self._failed = False
         self._phase = 0
 
-    def start_simulations_thread(self, arguments, evaluator_server_config) -> None:
+    def start_simulations_thread(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(
             arguments=arguments, evaluator_server_config=evaluator_server_config
         )
 
-    def startSimulations(self, arguments, evaluator_server_config) -> None:
+    def startSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> None:
         try:
             self.initial_realizations_mask = arguments["active_realizations"]
             run_context = self.runSimulations(
@@ -108,10 +105,9 @@ class BaseRunModel:
             self._simulationEnded()
             raise
 
-    def runSimulations(self, arguments, evaluator_server_config):
-        raise NotImplementedError("Method must be implemented by inheritors!")
-
-    def create_context(self, arguments):
+    def runSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> ErtRunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -138,7 +134,7 @@ class BaseRunModel:
     def getPhaseName(self) -> str:
         return self._phase_name
 
-    def setIndeterminate(self, indeterminate: Union[bool, None]):
+    def setIndeterminate(self, indeterminate: Union[bool, None]) -> None:
         if indeterminate is not None:
             self._indeterminate = indeterminate
 
@@ -186,7 +182,7 @@ class BaseRunModel:
             return self.stop_time() - self.start_time()
 
     @staticmethod
-    def is_forward_model_finished(progress) -> bool:
+    def is_forward_model_finished(progress: ForwardModel) -> bool:
         return all(job.status == "Success" for job in progress)
 
     def isIndeterminate(self) -> bool:
@@ -258,7 +254,7 @@ class BaseRunModel:
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()
 
-    def get_run_context(self) -> ErtRunContext:
+    def get_run_context(self) -> Optional[ErtRunContext]:
         return self._run_context
 
     @feature_enabled("new-storage")

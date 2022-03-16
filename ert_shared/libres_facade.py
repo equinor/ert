@@ -1,4 +1,3 @@
-import os
 import logging
 from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
@@ -11,14 +10,15 @@ from res.enkf.export import (
     GenKwCollector,
 )
 from res.enkf.plot_data import PlotBlockDataLoader
+from res.enkf import EnKFMain
 
 _logger = logging.getLogger(__name__)
 
 
-class LibresFacade(object):
+class LibresFacade:
     """Facade for libres inside ERT."""
 
-    def __init__(self, enkf_main):
+    def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
 
     def get_analysis_module_names(self, iterable=False):

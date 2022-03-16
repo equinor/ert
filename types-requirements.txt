@@ -5,3 +5,5 @@ types-pkg_resources
 types-PyYAML
 types-python-dateutil
 types-six
+types-decorator
+types-docutils

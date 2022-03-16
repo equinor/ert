@@ -1,5 +1,7 @@
 import os
 import re
+from typing import Dict
+
 from ert_shared.ide.keywords.definitions import ArgumentDefinition
 
 
@@ -11,7 +13,7 @@ class PathArgument(ArgumentDefinition):
     PATTERN = re.compile(r"^[\S]+$")
     PATTERN_WITH_SPACE = re.compile(r"^[\S| ]+$")
 
-    DEFINES = {}
+    DEFINES: Dict[str, str] = {}
 
     def __init__(self, must_exist=True, **kwargs):
         super(PathArgument, self).__init__(**kwargs)

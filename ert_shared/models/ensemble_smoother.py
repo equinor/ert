@@ -1,21 +1,28 @@
-from res.enkf.enums import HookRuntime
-from res.enkf.enums import RealizationStateEnum
+from typing import Optional
+
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf.enkf_main import EnKFMain, QueueConfig
+
 from ert_shared.models import BaseRunModel, ErtRunError
+from ert_shared.models.types import Argument
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class EnsembleSmoother(BaseRunModel):
-    def __init__(self, ert, queue_config):
+    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
         super().__init__(ert, queue_config, phase_count=2)
         self.support_restart = False
 
-    def setAnalysisModule(self, module_name):
+    def setAnalysisModule(self, module_name: str) -> None:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
-    def runSimulations(self, arguments, evaluator_server_config):
+    def runSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> ErtRunContext:
         prior_context = self.create_context(arguments)
 
         self.checkMinimumActiveRealizations(prior_context)
@@ -89,7 +96,9 @@ class EnsembleSmoother(BaseRunModel):
 
         return prior_context
 
-    def create_context(self, arguments, prior_context=None):
+    def create_context(
+        self, arguments: Argument, prior_context: Optional[ErtRunContext] = None
+    ) -> ErtRunContext:
 
         model_config = self.ert().getModelConfig()
         runpath_fmt = model_config.getRunpathFormat()
@@ -119,5 +128,5 @@ class EnsembleSmoother(BaseRunModel):
         return run_context
 
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         return "Ensemble Smoother"
