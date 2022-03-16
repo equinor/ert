@@ -1,14 +1,22 @@
-from res.enkf.enums import HookRuntime, RealizationStateEnum
+from typing import Optional
+
 from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf.enkf_fs import EnkfFs
+from res.enkf.enums import HookRuntime, RealizationStateEnum
+from res.enkf.enkf_main import EnKFMain, QueueConfig
+from res.analysis.analysis_module import AnalysisModule
+
 from ert_shared.models import BaseRunModel, ErtRunError
+from ert_shared.models.types import Argument
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
-    def __init__(self, ert, queue_config):
+    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
         super().__init__(ert, queue_config, phase_count=2)
         self.support_restart = False
 
-    def setAnalysisModule(self, module_name):
+    def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
@@ -17,8 +25,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return self.ert().analysisConfig().getModule(module_name)
 
     def _runAndPostProcess(
-        self, run_context, arguments, evaluator_server_config, update_id=None
-    ):
+        self,
+        run_context: ErtRunContext,
+        arguments: Argument,
+        evaluator_server_config: EvaluatorServerConfig,
+        update_id: Optional[str] = None,
+    ) -> str:
         phase_msg = "Running iteration %d of %d simulation iterations..." % (
             run_context.get_iter(),
             self.phaseCount() - 1,
@@ -42,13 +54,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self._post_ensemble_results(ensemble_id)
         return ensemble_id
 
-    def createTargetCaseFileSystem(self, phase, target_case_format):
+    def createTargetCaseFileSystem(self, phase: int, target_case_format: str) -> EnkfFs:
         target_fs = (
             self.ert().getEnkfFsManager().getFileSystem(target_case_format % phase)
         )
         return target_fs
 
-    def analyzeStep(self, run_context, ensemble_id):
+    def analyzeStep(self, run_context: ErtRunContext, ensemble_id: str) -> str:
         target_fs = run_context.get_target_fs()
         self.setPhaseName("Analyzing...", indeterminate=True)
         source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
@@ -72,7 +84,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
         return update_id
 
-    def runSimulations(self, arguments, evaluator_server_config):
+    def runSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> ErtRunContext:
         phase_count = self.facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
@@ -136,7 +150,13 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         return run_context
 
-    def create_context(self, arguments, itr, prior_context=None, rerun=False):
+    def create_context(
+        self,
+        arguments: Argument,
+        itr: int,
+        prior_context: Optional[ErtRunContext] = None,
+        rerun: bool = False,
+    ) -> ErtRunContext:
         model_config = self.ert().getModelConfig()
         runpath_fmt = model_config.getRunpathFormat()
         jobname_fmt = model_config.getJobnameFormat()
@@ -168,5 +188,5 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return run_context
 
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         return "Iterated Ensemble Smoother"

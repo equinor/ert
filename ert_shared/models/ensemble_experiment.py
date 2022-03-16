@@ -1,14 +1,22 @@
+from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
+from ert_shared.models.types import Argument
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class EnsembleExperiment(BaseRunModel):
-    def __init__(self, ert, queue_config):
+    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
         super().__init__(ert, queue_config)
 
-    def runSimulations__(self, arguments, run_msg, evaluator_server_config):
+    def runSimulations__(
+        self,
+        arguments: Argument,
+        run_msg: str,
+        evaluator_server_config: EvaluatorServerConfig,
+    ) -> ErtRunContext:
 
         run_context = self.create_context(arguments)
 
@@ -41,12 +49,14 @@ class EnsembleExperiment(BaseRunModel):
 
         return run_context
 
-    def runSimulations(self, arguments, evaluator_server_config):
+    def runSimulations(
+        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+    ) -> ErtRunContext:
         return self.runSimulations__(
             arguments, "Running ensemble experiment...", evaluator_server_config
         )
 
-    def create_context(self, arguments):
+    def create_context(self, arguments: Argument) -> ErtRunContext:
         fs_manager = self.ert().getEnkfFsManager()
         result_fs = fs_manager.getCurrentFileSystem()
 
@@ -66,5 +76,5 @@ class EnsembleExperiment(BaseRunModel):
         return run_context
 
     @classmethod
-    def name(cls):
+    def name(cls) -> str:
         return "Ensemble Experiment"

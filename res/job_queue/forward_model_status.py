@@ -131,7 +131,7 @@ class ForwardModelStatus:
         return status
 
     @classmethod
-    def load(cls, path, num_retry=10):
+    def load(cls, path, num_retry: int = 10):
         sleep_time = 0.10
         attempt = 0
 
