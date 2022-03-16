@@ -298,9 +298,6 @@ class JobQueue(BaseCClass):
         """@rtype: JobStatusType"""
         return self._get_job_status(job_number)
 
-    def did_job_time_out(self, job_number):
-        return self.job_list[job_number].timed_out
-
     def is_active(self):
         for job in self.job_list:
             if (
