@@ -56,7 +56,6 @@ class BaseRunModel:
         self._fail_message: str = ""
         self._failed: bool = False
         self._queue_config: QueueConfig = queue_config
-        self.realization_progress: Dict[int, int] = {}
         self.initial_realizations_mask: List[int] = []
         self.completed_realizations_mask: List[int] = []
         self.support_restart: bool = True
@@ -189,55 +188,6 @@ class BaseRunModel:
     @staticmethod
     def is_forward_model_finished(progress) -> bool:
         return all(job.status == "Success" for job in progress)
-
-    def update_progress_for_index(self, iteration: int, idx, run_arg: RunArg) -> None:
-        try:
-            # will throw if not yet submitted (is in a limbo state)
-            queue_index = run_arg.getQueueIndex()
-        except (ValueError, AttributeError):
-            return
-
-        status = None
-        timed_out = False
-        if self._job_queue:
-            status = self._job_queue.getJobStatus(queue_index)
-            timed_out = self._job_queue.did_job_time_out(queue_index)
-
-        # Avoids reading from disk for jobs in these states since there's no
-        # data anyway. If timed out, never exit here as that would prevent
-        # propagation of the failure status.
-        if (
-            status
-            in [
-                JobStatusType.JOB_QUEUE_PENDING,
-                JobStatusType.JOB_QUEUE_SUBMITTED,
-                JobStatusType.JOB_QUEUE_WAITING,
-            ]
-            and not timed_out
-        ):
-            return
-
-        fms = self.realization_progress[iteration].get(run_arg.iens, None)
-        jobs = fms[0] if fms else None
-
-        # Don't load from file if you are finished
-        if not fms or not BaseRunModel.is_forward_model_finished(fms[0]):
-            loaded = ForwardModelStatus.load(run_arg.runpath, num_retry=1)
-            if not loaded and not timed_out:
-                # If this idx timed out, returning here would prevent
-                # non-successful jobs in being marked as failed (timed out). So
-                # return only in the case where it did not time out.
-                return
-
-            if loaded:
-                jobs = loaded.jobs
-
-        if timed_out:
-            for job in jobs:
-                if job.status != "Success":
-                    job.error = "The run is cancelled due to reaching MAX_RUNTIME"
-                    job.status = "Failure"
-        self.realization_progress[iteration][run_arg.iens] = jobs, status
 
     def isIndeterminate(self) -> bool:
         return not self.isFinished() and self._indeterminate
