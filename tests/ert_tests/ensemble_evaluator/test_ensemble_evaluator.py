@@ -266,9 +266,9 @@ def test_ensemble_evaluator_run_and_get_successful_realizations_connection_refus
     with patch.object(
         _Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
     ) as mock:
-        num_successfull = ee.run_and_get_successful_realizations()
+        num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 3
-    assert num_successfull == num_realizations - num_failing
+    assert num_successful == num_realizations - num_failing
 
 
 def get_connection_closed_excpetion():
@@ -307,9 +307,9 @@ def test_ensemble_evaluator_run_and_get_successful_realizations_connection_close
         + [ConnectionRefusedError("Connection error")] * 2
         + ["DUMMY TRACKING ITERATOR2"],
     ) as mock:
-        num_successfull = ee.run_and_get_successful_realizations()
+        num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 9
-    assert num_successfull == num_realizations - num_failing
+    assert num_successful == num_realizations - num_failing
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
@@ -333,6 +333,6 @@ def test_ensemble_evaluator_run_and_get_successful_realizations_connection_close
             "DUMMY TRACKING ITERATOR2"
         ],  # This should not be reached, hence we assert call_count == 9
     ) as mock:
-        num_successfull = ee.run_and_get_successful_realizations()
+        num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 9
-    assert num_successfull == num_realizations - num_failing
+    assert num_successful == num_realizations - num_failing

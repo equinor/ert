@@ -236,25 +236,25 @@ class EnsembleEvaluator:
 
     def run_and_get_successful_realizations(self) -> int:
         monitor_context = self.run()
-        unsuccessfull_connection_attempts = 0
+        unsuccessful_connection_attempts = 0
         while True:
             try:
                 with monitor_context as mon:
                     for _ in mon.track():
-                        unsuccessfull_connection_attempts = 0
+                        unsuccessful_connection_attempts = 0
                 break
             except ConnectionClosedError as e:
                 logger.debug(
                     f"Connection closed unexpectedly in run_and_get_successful_realizations: {e}"
                 )
             except ConnectionRefusedError as e:
-                unsuccessfull_connection_attempts += 1
+                unsuccessful_connection_attempts += 1
                 logger.debug(
                     f"run_and_get_successful_realizations caught {e}."
-                    f"{unsuccessfull_connection_attempts} unsuccessfull attempts"
+                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
                 )
                 if (
-                    unsuccessfull_connection_attempts
+                    unsuccessful_connection_attempts
                     == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
                 ):
                     logger.debug("Max connection attempts reached")
@@ -265,7 +265,7 @@ class EnsembleEvaluator:
                         logger.debug("Stopping current ensemble")
                         self._stop()
                     break
-                sleep_time = 0.25 * 2**unsuccessfull_connection_attempts
+                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
                 logger.debug(
                     f"Sleeping for {sleep_time} seconds before attempting to reconnect"
                 )

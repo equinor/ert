@@ -40,7 +40,7 @@ typedef enum {
     LOAD_FAIL_SILENT =
         0, // We just try to load - and if it is not there we do not care at all.
     LOAD_FAIL_WARN =
-        2, // If the key can not be found we will print a warning on stdout - but the run will still be flagged as successfull.
+        2, // If the key can not be found we will print a warning on stdout - but the run will still be flagged as successful.
     LOAD_FAIL_EXIT = 4
 } // The data is deemed important - and we let the run fail if this data can not be found.
 load_fail_type;
