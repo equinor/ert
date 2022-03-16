@@ -31,9 +31,7 @@ def test_invalid_host_name():
     invalid_host = "invalid_host"
 
     with pytest.raises(port_handler.InvalidHostException) as exc_info:
-        port_handler.find_available_port(
-            custom_host=invalid_host, custom_host="127.0.0.1"
-        )
+        port_handler.find_available_port(custom_host=invalid_host)
 
     assert (
         f"Trying to bind socket with what looks like an invalid hostname ({invalid_host})"
@@ -63,11 +61,15 @@ def test_gc_closes_socket(unused_tcp_port):
     assert orig_sock.fileno() != -1
 
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
         port_handler.find_available_port(
-            custom_range=custom_range, will_close_then_reopen_socket=True
+            custom_range=custom_range,
+            will_close_then_reopen_socket=True,
+            custom_host="127.0.0.1",
         )
 
     orig_sock = None
