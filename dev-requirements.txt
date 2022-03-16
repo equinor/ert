@@ -3,7 +3,6 @@ click
 cmake-format
 decorator
 flake8>=4.0.0
-flaky
 jsonpath_ng
 pylint
 pytest-asyncio
