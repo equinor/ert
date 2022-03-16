@@ -78,7 +78,6 @@ def _transmitter_map_storage(
 
 
 def _transmitter_map_resources(
-    experiment_run_config: ert3.config.ExperimentRunConfig,
     inputs: Tuple[ert3.config.LinkedInput, ...],
     ensemble_size: int,
     experiment_name: str,
@@ -87,7 +86,7 @@ def _transmitter_map_resources(
     futures: List[TransmitterCoroutine] = []
     for input_ in inputs:
         collection_awaitable = workspace.load_resource(
-            experiment_run_config, input_, ensemble_size=ensemble_size
+            input_, ensemble_size=ensemble_size
         )
         future = ert.storage.transmit_awaitable_record_collection(
             record_awaitable=collection_awaitable,
@@ -199,7 +198,6 @@ def run(
     transmitters = _gather_transmitter_maps(
         _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
         + _transmitter_map_resources(
-            experiment_run_config,
             resource_inputs,
             ensemble_size,
             experiment_name,
@@ -290,7 +288,6 @@ def run_sensitivity_analysis(
     transmitters = _gather_transmitter_maps(
         _transmitter_map_storage(storage_inputs, ensemble_size, records_url)
         + _transmitter_map_resources(
-            experiment_run_config,
             resource_inputs,
             ensemble_size,
             experiment_name,

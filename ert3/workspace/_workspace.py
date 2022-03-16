@@ -167,7 +167,6 @@ class Workspace:
 
     async def load_resource(
         self,
-        experiment_run_config: ert3.config.ExperimentRunConfig,
         linked_input: ert3.config.LinkedInput,
         ensemble_size: int = 1,
     ) -> ert.data.RecordCollection:
