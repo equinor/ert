@@ -170,7 +170,7 @@ bool workflow_try_compile(workflow_type *script,
         }
     }
 
-    // It is legal to remove the script after successfull compilation but
+    // It is legal to remove the script after successful compilation but
     // then the context will not be applied at subsequent invocations.
     return script->compiled;
 }

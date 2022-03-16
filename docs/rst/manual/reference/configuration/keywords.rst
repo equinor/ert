@@ -614,7 +614,7 @@ Keywords controlling the simulations
         MIN_REALIZATIONS is the minimum number of realizations run before the
         simulation is stopped. After MIN_REALIZATIONS have succeded successfully, the
         realizatons left are allowed to run for 25% of the average runtime for
-        successfull realizations, and then killed.
+        successful realizations, and then killed.
 
         *Example:*
 
