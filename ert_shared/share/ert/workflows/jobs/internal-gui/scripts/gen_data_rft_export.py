@@ -86,7 +86,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
     ):
         """The run method will export the RFT's for all wells and all cases.
 
-        The successfull operation of this method hinges on two naming
+        The successful operation of this method hinges on two naming
         conventions:
 
           1. All the GEN_DATA RFT observations have key RFT_$WELL
