@@ -492,7 +492,9 @@ def test_reuse_passive_live_linux_nok_ok(unused_tcp_port):
 
     # As long as the socket is kept alive this port can not be bound again...
     with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
-        port_handler.find_available_port(custom_range=custom_range)
+        port_handler.find_available_port(
+            custom_range=custom_range, custom_host="127.0.0.1"
+        )
 
     # ... but on Linux the port can be re-bound by setting this flag!
     # This does not seem safe in a multi-user/-process environment!
