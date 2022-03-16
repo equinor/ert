@@ -55,7 +55,7 @@ def _prepare_export_parameters(
                 continue
 
             collection = get_event_loop().run_until_complete(
-                workspace.load_resource(experiment_run_config, linked_input)
+                workspace.load_resource(linked_input)
             )
             assert len(collection) == ensemble_size
             for record in collection.records:
