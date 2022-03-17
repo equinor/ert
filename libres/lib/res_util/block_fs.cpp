@@ -144,10 +144,6 @@ struct block_fs_struct {
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
                                        only contain pointers to the objects stored in this vector. */
     int write_count; /* This just counts the number of writes since the file system was mounted. */
-    float
-        fragmentation_limit; /* If fragmentation (amount of wasted space) is above this limit - do a rotate.
-                                            fragmentation_limit == 1.0 : Never rotate.
-                                            fragmentation_limit == 0.0 : Rotate when one byte is wasted. */
     bool data_owner;
     int fsync_interval; /* 0: never  n: every nth iteration. */
 };
@@ -553,10 +549,8 @@ static void block_fs_reinit(block_fs_type *block_fs) {
 }
 
 static block_fs_type *block_fs_alloc_empty(const char *mount_file,
-                                           int block_size,
-                                           float fragmentation_limit,
-                                           int fsync_interval, bool read_only,
-                                           bool use_lockfile) {
+                                           int block_size, int fsync_interval,
+                                           bool read_only, bool use_lockfile) {
     block_fs_type *block_fs = (block_fs_type *)util_malloc(sizeof *block_fs);
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
@@ -564,7 +558,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
     block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
 
-    block_fs->fragmentation_limit = fragmentation_limit;
     util_alloc_file_components(mount_file, &block_fs->path,
                                &block_fs->base_name, NULL);
     pthread_mutex_init(&block_fs->io_lock, NULL);
@@ -909,8 +902,8 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
 }
 
 block_fs_type *block_fs_mount(const char *mount_file, int block_size,
-                              float fragmentation_limit, int fsync_interval,
-                              bool read_only, bool use_lockfile) {
+                              int fsync_interval, bool read_only,
+                              bool use_lockfile) {
     block_fs_type *block_fs;
     {
 
@@ -919,9 +912,9 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
             block_fs_fwrite_mount_info__(mount_file, 0);
         {
             std::vector<long> fix_nodes;
-            block_fs = block_fs_alloc_empty(mount_file, block_size,
-                                            fragmentation_limit, fsync_interval,
-                                            read_only, use_lockfile);
+            block_fs =
+                block_fs_alloc_empty(mount_file, block_size, fsync_interval,
+                                     read_only, use_lockfile);
             /* We build up the index & free_nodes_list based on the header/index information embedded in the datafile. */
             block_fs_open_data(block_fs, false);
             if (block_fs->data_stream != NULL) {
@@ -1141,14 +1134,7 @@ static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t data_size) {
     block_fs_aquire_wlock(block_fs);
-    {
-        block_fs_fwrite_file_unlocked(block_fs, filename, ptr, data_size);
-
-        /* OKAY - this is going to take some time ... */
-        if ((block_fs->free_size * 1.0 / block_fs->data_file_size) >
-            block_fs->fragmentation_limit)
-            block_fs_rotate__(block_fs);
-    }
+    { block_fs_fwrite_file_unlocked(block_fs, filename, ptr, data_size); }
     block_fs_release_rwlock(block_fs);
 }
 

@@ -39,7 +39,6 @@ typedef struct bfs_config_struct bfs_config_type;
 
 struct bfs_config_struct {
     int fsync_interval;
-    double fragmentation_limit;
     bool read_only;
     int block_size;
     bool bfs_lock;
@@ -59,13 +58,11 @@ struct bfs_struct {
 bfs_config_type *bfs_config_alloc(bool read_only, bool bfs_lock) {
     const int fsync_interval =
         10; /* An fsync() call is issued for every 10'th write. */
-    const double fragmentation_limit = 1.0; /* 1.0 => NO defrag is run. */
 
     {
         bfs_config_type *config =
             (bfs_config_type *)util_malloc(sizeof *config);
         config->fsync_interval = fsync_interval;
-        config->fragmentation_limit = fragmentation_limit;
         config->read_only = read_only;
         config->bfs_lock = bfs_lock;
         config->block_size = 64;
@@ -105,9 +102,9 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 
 static void bfs_mount(bfs_type *bfs) {
     const bfs_config_type *config = bfs->config;
-    bfs->block_fs = block_fs_mount(
-        bfs->mountfile, config->block_size, config->fragmentation_limit,
-        config->fsync_interval, config->read_only, config->bfs_lock);
+    bfs->block_fs = block_fs_mount(bfs->mountfile, config->block_size,
+                                   config->fsync_interval, config->read_only,
+                                   config->bfs_lock);
 }
 
 static void bfs_fsync(bfs_type *bfs) { block_fs_fsync(bfs->block_fs); }
