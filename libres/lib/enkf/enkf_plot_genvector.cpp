@@ -73,14 +73,3 @@ void enkf_plot_genvector_load(enkf_plot_genvector_type *vector,
     }
     enkf_node_free(work_node);
 }
-
-void *enkf_plot_genvector_load__(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    enkf_plot_genvector_type *vector =
-        (enkf_plot_genvector_type *)arg_pack_iget_ptr(arg_pack, 0);
-    enkf_fs_type *fs = (enkf_fs_type *)arg_pack_iget_ptr(arg_pack, 1);
-    int report_step = arg_pack_iget_int(arg_pack, 2);
-
-    enkf_plot_genvector_load(vector, fs, report_step);
-    return NULL;
-}

@@ -19,8 +19,6 @@
 
 #include <ert/util/double_vector.h>
 
-#include <ert/res_util/thread_pool.hpp>
-
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/enkf_plot_gendata.hpp>
@@ -157,23 +155,13 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
     enkf_plot_gendata_resize(plot_data, ens_size);
     enkf_plot_gendata_reset(plot_data, report_step);
     plot_data->report_step = report_step;
-    {
-        const int num_cpu = 4;
-        thread_pool_type *tp = thread_pool_alloc(num_cpu, true);
-        for (int iens = 0; iens < ens_size; iens++) {
-            if (mask[iens]) {
-                enkf_plot_genvector_type *vector =
-                    enkf_plot_gendata_iget(plot_data, iens);
-                arg_pack_type *work_arg = plot_data->work_arg[iens];
 
-                arg_pack_append_ptr(work_arg, vector);
-                arg_pack_append_ptr(work_arg, fs);
-                arg_pack_append_int(work_arg, report_step);
-                thread_pool_add_job(tp, enkf_plot_genvector_load__, work_arg);
-            }
+    for (int iens = 0; iens < ens_size; iens++) {
+        if (mask[iens]) {
+            enkf_plot_genvector_type *vector =
+                enkf_plot_gendata_iget(plot_data, iens);
+            enkf_plot_genvector_load(vector, fs, report_step);
         }
-        thread_pool_join(tp);
-        thread_pool_free(tp);
     }
 }
 
