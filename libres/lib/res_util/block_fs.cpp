@@ -21,6 +21,8 @@
 
 #include <pthread.h>
 
+#include <fmt/format.h>
+
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
 #include <ert/util/buffer.hpp>
@@ -87,8 +89,6 @@ struct block_fs_struct {
         mount_file; /* The full path to a file with some mount information - input to the mount routine. */
     char *path;
     char *base_name;
-
-    int version; /* A version number which is incremented each time the filesystem is defragmented - not implemented yet. */
 
     char *data_file;
     char *lock_file;
@@ -325,19 +325,13 @@ static void block_fs_install_node(block_fs_type *block_fs,
 }
 
 static void block_fs_set_filenames(block_fs_type *block_fs) {
-    char *data_ext = util_alloc_sprintf("data_%d", block_fs->version);
-    char *lock_ext = util_alloc_sprintf("lock_%d", block_fs->version);
-
     free(block_fs->data_file);
     free(block_fs->lock_file);
 
     block_fs->data_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, data_ext);
+        util_alloc_filename(block_fs->path, block_fs->base_name, "data_0");
     block_fs->lock_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, lock_ext);
-
-    free(data_ext);
-    free(lock_ext);
+        util_alloc_filename(block_fs->path, block_fs->base_name, "lock_0");
 }
 
 /*
@@ -365,7 +359,11 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
     {
         FILE *stream = util_fopen(mount_file, "r");
         int id = util_fread_int(stream);
-        block_fs->version = util_fread_int(stream);
+        int version = util_fread_int(stream);
+        if (version != 0)
+            throw std::runtime_error(
+                fmt::format("block_fs '{}' uses data version {} rather than 0",
+                            mount_file, version));
         fclose(stream);
 
         if (id != MOUNT_MAP_MAGIC_INT)
@@ -400,13 +398,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
 }
 
 UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
-
-static void block_fs_fwrite_mount_info__(const char *mount_file, int version) {
-    FILE *stream = util_fopen(mount_file, "w");
-    util_fwrite_int(MOUNT_MAP_MAGIC_INT, stream);
-    util_fwrite_int(version, stream);
-    fclose(stream);
-}
 
 /*
    Will seek the datafile to the end of the current file_node. So that the next read will be "guaranteed" to
@@ -629,9 +620,13 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
     block_fs_type *block_fs;
     {
 
-        if (!fs::exists(mount_file))
+        if (!fs::exists(mount_file)) {
             /* This is a brand new filesystem - create the mount map first. */
-            block_fs_fwrite_mount_info__(mount_file, 0);
+            FILE *stream = util_fopen(mount_file, "w");
+            util_fwrite_int(MOUNT_MAP_MAGIC_INT, stream);
+            util_fwrite_int(0 /* data version, always 0 */, stream);
+            fclose(stream);
+        }
         {
             std::vector<long> fix_nodes;
             block_fs =
