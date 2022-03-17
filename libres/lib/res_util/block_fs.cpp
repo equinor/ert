@@ -145,8 +145,6 @@ struct block_fs_struct {
     bool data_owner;
 };
 
-static void block_fs_rotate__(block_fs_type *block_fs);
-
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
 
 static inline void fseek__(FILE *stream, long int arg, int whence) {
@@ -1241,85 +1239,6 @@ void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
     hash_free(block_fs->index);
     vector_free(block_fs->file_nodes);
     free(block_fs);
-}
-
-/*
-   This function will 'rotate' the datafile to a new version which has
-   been defragmented, i.e. with no 'holes' in it. In the process the
-   datafile version number is increased with one. The function works
-   by using the regular block_fs read and write functions.
-
-   Observe that the block_fs instance should hold the write lock when
-   entering this function.
-*/
-
-static void block_fs_rotate__(block_fs_type *block_fs) {
-    /*
-     Write a updated mount map where the version info has been bumped
-     up with one; the new_fs will mount based on this mount_file.
-  */
-    block_fs->version++;
-    block_fs_fwrite_mount_info__(block_fs->mount_file, block_fs->version);
-    {
-        vector_type *old_nodes = block_fs->file_nodes;
-        hash_type *old_index = block_fs->index;
-        FILE *old_data_stream = block_fs->data_stream;
-        free_node_type *old_free_nodes = block_fs->free_nodes;
-        char *old_data_file = util_alloc_string_copy(block_fs->data_file);
-        char *old_lock_file = util_alloc_string_copy(block_fs->lock_file);
-
-        block_fs_reinit(block_fs);
-        /*
-        Now the block_fs pointers point to the new copy. Must use the
-        old_xxx pointers to access the existing.
-    */
-        block_fs_open_data(block_fs, block_fs->data_owner);
-        {
-            hash_iter_type *iter = hash_iter_alloc(old_index);
-            buffer_type *buffer = buffer_alloc(1024);
-
-            while (!hash_iter_is_complete(iter)) {
-                const char *key = hash_iter_get_next_key(iter);
-                file_node_type *old_node =
-                    (file_node_type *)hash_get(old_index, key);
-                buffer_clear(buffer);
-
-                /* Low level read of the old file. */
-                fseek__(old_data_stream,
-                        old_node->node_offset + old_node->data_offset,
-                        SEEK_SET);
-                buffer_stream_fread(buffer, old_node->data_size,
-                                    old_data_stream);
-
-                block_fs_fwrite_file_unlocked(
-                    block_fs, key, buffer_get_data(buffer),
-                    buffer_get_size(
-                        buffer)); /* Normal write to the new file. */
-            }
-
-            buffer_free(buffer);
-            hash_iter_free(iter);
-        }
-        /*
-         * OK - everything has been played over, and we should clean up the old fs:
-         *
-         * 1. Close the old data stream.
-         * 2. Unlink the old lockfile.
-         * 3. Delete the old data file.
-         * 4. Delete the old list of free nodes.
-         * 5. free()
-         *
-         */
-        fclose(old_data_stream);
-        unlink(old_data_file);
-        unlink(old_lock_file);
-        free(old_lock_file);
-        free(old_data_file);
-
-        free_node_free_list(old_free_nodes);
-        hash_free(old_index);
-        vector_free(old_nodes);
-    }
 }
 
 /**
