@@ -31,8 +31,6 @@ namespace fs = std::filesystem;
 
 #define MOUNT_MAP_MAGIC_INT 8861290
 #define BLOCK_FS_TYPE_ID 7100652
-#define INDEX_MAGIC_INT 1213775
-#define INDEX_FORMAT_VERSION 1
 
 /*
   During mounting a significant part of the time is spent on filling
@@ -41,9 +39,6 @@ namespace fs = std::filesystem;
   it must be resized many times. By setting a default size with the
   DEFAULT_INDEX_SIZE variable the hash table will immediately be
   resized, avoiding some of the automatic calls to hash_resize.
-
-  When the file system is loaded from an index a good size estimate
-  can be inferred directly from the index.
 */
 
 #define DEFAULT_INDEX_SIZE 2048
@@ -117,7 +112,6 @@ struct block_fs_struct {
 
     char *data_file;
     char *lock_file;
-    char *index_file;
 
     int data_fd;
     FILE *data_stream;
@@ -130,8 +124,7 @@ struct block_fs_struct {
     pthread_rwlock_t rw_lock; /* Read-write lock during all access to the fs. */
 
     int num_free_nodes;
-    hash_type *
-        index; /* THE HASH table of all the nodes/files which have been stored. */
+    hash_type *index;
     free_node_type *free_nodes;
     vector_type *
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
@@ -238,22 +231,6 @@ static file_node_type *file_node_fread_alloc(FILE *stream, char **key) {
 }
 
 /*
-   Internal index layout:
-
-   |<InUse: Bool><Key: String><node_size: Int><data_size: Int>|
-   |<InUse: Bool><node_size: Int><data_size: Int>|
-
-  /|\
-   |
-   |<-------------------------------------------------------->|
-                                                   |
-node_offset                                      offset
-
-  The node_offset and offset values are not stored on disk, but rather
-  implicitly read with ftell() calls.
-*/
-
-/*
    This function will write the node information to file, this
    includes the NODE_END_TAG identifier which shoule be written to the
    end of the node.
@@ -318,30 +295,6 @@ static void file_node_set_data_offset(file_node_type *file_node,
     file_node->data_offset =
         file_node_header_size(filename) - sizeof(NODE_END_TAG);
 }
-
-static void file_node_dump_index(const file_node_type *file_node,
-                                 FILE *index_stream) {
-    util_fwrite_int(file_node->status, index_stream);
-    util_fwrite_long(file_node->node_offset, index_stream);
-    util_fwrite_int(file_node->node_size, index_stream);
-    util_fwrite_int(file_node->data_offset, index_stream);
-    util_fwrite_int(file_node->data_size, index_stream);
-}
-
-/*
-static file_node_type * file_node_index_fread_alloc( FILE * stream ) {
-  node_status_type status = util_fread_int( stream );
-  long int node_offset    = util_fread_long( stream );
-  int node_size           = util_fread_int( stream );
-  {
-    file_node_type * file_node = file_node_alloc( status , node_offset , node_size );
-    file_node->data_offset = util_fread_int( stream );
-    file_node->data_size   = util_fread_int( stream );
-
-    return file_node;
-  }
-}
-*/
 
 static file_node_type *file_node_index_buffer_fread_alloc(buffer_type *buffer) {
     node_status_type status = (node_status_type)buffer_fread_int(buffer);
@@ -504,18 +457,14 @@ static void block_fs_install_node(block_fs_type *block_fs,
 static void block_fs_set_filenames(block_fs_type *block_fs) {
     char *data_ext = util_alloc_sprintf("data_%d", block_fs->version);
     char *lock_ext = util_alloc_sprintf("lock_%d", block_fs->version);
-    const char *index_ext = "index";
 
     free(block_fs->data_file);
     free(block_fs->lock_file);
-    free(block_fs->index_file);
 
     block_fs->data_file =
         util_alloc_filename(block_fs->path, block_fs->base_name, data_ext);
     block_fs->lock_file =
         util_alloc_filename(block_fs->path, block_fs->base_name, lock_ext);
-    block_fs->index_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, index_ext);
 
     free(data_ext);
     free(lock_ext);
@@ -560,7 +509,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
     }
     block_fs->data_file = NULL;
     block_fs->lock_file = NULL;
-    block_fs->index_file = NULL;
     block_fs_reinit(block_fs);
 
     {
@@ -813,72 +761,6 @@ static void block_fs_build_index(block_fs_type *block_fs,
     free(filename);
 }
 
-/*
-   Load an index for (slightly) faster mounting of the filesystem. The
-   function starts be reading a header and check if the current index
-   file is applicable.
-
-   Will return true of the loading succedeed, and false if no index
-   was loaded.
-*/
-
-static bool block_fs_load_index(block_fs_type *block_fs) {
-    stat_type data_stat;
-    if (fstat(block_fs->data_fd, &data_stat) == 0) {
-        FILE *stream = fopen(block_fs->index_file, "r");
-        if (stream != NULL) {
-            int id = util_fread_int(stream);
-            int version = util_fread_int(stream);
-            time_t index_mtime = util_fread_time_t(stream);
-
-            time_t data_mtime = data_stat.st_mtime;
-            fclose(stream);
-
-            if ((id == INDEX_MAGIC_INT) && /* This is indeed an index file. */
-                (version ==
-                 INDEX_FORMAT_VERSION) && /* The version on disk agrees with this version. */
-                (index_mtime ==
-                 data_mtime)) { /* The time stamp agrees with the time stamp of the data. */
-
-                /* Read the whole index file in one single read operation. */
-                buffer_type *buffer = buffer_fread_alloc(block_fs->index_file);
-
-                buffer_fskip(buffer, sizeof(time_t) + 2 * sizeof(int));
-                /*1: Loading all the active nodes. */
-                {
-                    int num_active_nodes = buffer_fread_int(buffer);
-                    hash_resize(block_fs->index, num_active_nodes * 2 + 64);
-
-                    for (int i = 0; i < num_active_nodes; i++) {
-                        const char *filename = buffer_fread_string(buffer);
-                        file_node_type *file_node =
-                            file_node_index_buffer_fread_alloc(buffer);
-                        block_fs_install_node(block_fs, file_node);
-                        block_fs_insert_index_node(block_fs, filename,
-                                                   file_node);
-                    }
-                }
-
-                /*2: Loading all the free nodes. */
-                {
-                    int num_free_nodes = buffer_fread_int(buffer);
-                    for (int i = 0; i < num_free_nodes; i++) {
-                        file_node_type *file_node =
-                            file_node_index_buffer_fread_alloc(buffer);
-                        block_fs_install_node(block_fs, file_node);
-                        block_fs_insert_free_node(block_fs, file_node);
-                    }
-                }
-                buffer_free(buffer);
-
-                return true;
-            }
-        }
-    }
-    /* No index was loaded - for whatever reason. */
-    return false;
-}
-
 bool block_fs_is_readonly(const block_fs_type *bfs) {
     if (bfs->data_owner)
         return false;
@@ -898,19 +780,10 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
             std::vector<long> fix_nodes;
             block_fs =
                 block_fs_alloc_empty(mount_file, read_only, use_lockfile);
-            /* We build up the index & free_nodes_list based on the header/index information embedded in the datafile. */
-            block_fs_open_data(block_fs, false);
-            if (block_fs->data_stream != NULL) {
-                if (!block_fs_load_index(block_fs))
-                    block_fs_build_index(block_fs, fix_nodes);
 
-                fclose(block_fs->data_stream);
-            }
-
-            block_fs_open_data(
-                block_fs,
-                block_fs
-                    ->data_owner); /* The data_stream is opened for reading AND writing (IFF we are data_owner - otherwise it is still read only) */
+            block_fs_open_data(block_fs, block_fs->data_owner);
+            if (block_fs->data_stream)
+                block_fs_build_index(block_fs, fix_nodes);
             block_fs_fix_nodes(block_fs, fix_nodes);
         }
     }
@@ -1127,50 +1000,6 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
     block_fs_release_rwlock(block_fs);
 }
 
-static void block_fs_dump_index(block_fs_type *block_fs) {
-    if (block_fs->data_owner) {
-        struct stat stat_buffer;
-        int stat_return = stat(block_fs->data_file, &stat_buffer);
-        if (stat_return != 0)
-            return;
-        {
-            time_t data_mtime = stat_buffer.st_mtime;
-            FILE *index_stream = util_fopen(block_fs->index_file, "w");
-            util_fwrite_int(INDEX_MAGIC_INT, index_stream);
-            util_fwrite_int(INDEX_FORMAT_VERSION, index_stream);
-            util_fwrite_time_t(data_mtime, index_stream);
-
-            /* 1: Dumping the hash table of active nodes. */
-            {
-                hash_iter_type *index_iter = hash_iter_alloc(block_fs->index);
-
-                util_fwrite_int(hash_get_size(block_fs->index), index_stream);
-                while (!hash_iter_is_complete(index_iter)) {
-                    const char *key = hash_iter_get_next_key(index_iter);
-                    const file_node_type *file_node =
-                        (const file_node_type *)hash_get(block_fs->index, key);
-
-                    util_fwrite_string(key, index_stream);
-                    file_node_dump_index(file_node, index_stream);
-                }
-                hash_iter_free(index_iter);
-            }
-
-            /* 2: Dumping information about empty slots in the datafile. */
-            util_fwrite_int(block_fs->num_free_nodes, index_stream);
-            {
-                free_node_type *current = block_fs->free_nodes;
-                while (current != NULL) {
-                    file_node_dump_index(current->file_node, index_stream);
-                    current = current->next;
-                }
-            }
-
-            fclose(index_stream);
-        }
-    }
-}
-
 /*
    Close/synchronize the open file descriptors and free all memory
    related to the block_fs instance.
@@ -1188,9 +1017,6 @@ void block_fs_close(block_fs_type *block_fs) {
     if (block_fs->data_stream != NULL)
         fclose(block_fs->data_stream);
 
-    if (block_fs->data_owner)
-        block_fs_dump_index(block_fs);
-
     if (block_fs->lock_fd > 0) {
         close(
             block_fs
@@ -1202,7 +1028,6 @@ void block_fs_close(block_fs_type *block_fs) {
         block_fs_release_rwlock(block_fs);
     }
 
-    free(block_fs->index_file);
     free(block_fs->lock_file);
     free(block_fs->base_name);
     free(block_fs->data_file);
