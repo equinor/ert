@@ -1,4 +1,5 @@
 import os
+import resource
 import pkg_resources
 import shutil
 from pathlib import Path
@@ -37,6 +38,19 @@ def env_save():
     ]
     set_xor = set(environment_pre).symmetric_difference(set(environment_post))
     assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def maximize_ulimits():
+    """
+    Bumps the soft-limit for max number of files up to its max-value
+    since we know that the tests may open lots of files simultaneously.
+    Resets to original when session ends.
+    """
+    limits = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (limits[1], limits[1]))
+    yield
+    resource.setrlimit(resource.RLIMIT_NOFILE, limits)
 
 
 @pytest.fixture()
