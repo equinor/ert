@@ -41,10 +41,6 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer);
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename);
-vector_type *block_fs_alloc_filelist(block_fs_type *block_fs,
-                                     const char *pattern,
-                                     block_fs_sort_type sort_mode,
-                                     bool include_free_nodes);
 
 UTIL_IS_INSTANCE_HEADER(block_fs);
 UTIL_SAFE_CAST_HEADER(block_fs);
