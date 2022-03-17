@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <future>
+
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -26,7 +28,6 @@
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/enkf/time_map.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
@@ -289,27 +290,27 @@ void simple_test_inconsistent() {
 
 #define MAP_SIZE 10000
 
-void *update_time_map(void *arg) {
-    time_map_type *time_map = time_map_safe_cast(arg);
-    int i;
-    for (i = 0; i < MAP_SIZE; i++)
-        time_map_update(time_map, i, i);
-
-    test_assert_int_equal(MAP_SIZE, time_map_get_size(time_map));
-    return NULL;
-}
-
 void thread_test() {
     time_map_type *time_map = time_map_alloc();
     test_assert_false(time_map_is_readonly(time_map));
+
+    auto update_time_map = [time_map] {
+        int i;
+        for (i = 0; i < MAP_SIZE; i++)
+            time_map_update(time_map, i, i);
+
+        test_assert_int_equal(MAP_SIZE, time_map_get_size(time_map));
+    };
+
     {
-        int pool_size = 1000;
-        thread_pool_type *tp = thread_pool_alloc(pool_size / 2, true);
+        std::vector<std::future<void>> futures;
+        int pool_size = 500;
+        for (int i{}; i < pool_size; ++i)
+            futures.emplace_back(
+                std::async(std::launch::async, update_time_map));
 
-        thread_pool_add_job(tp, update_time_map, time_map);
-
-        thread_pool_join(tp);
-        thread_pool_free(tp);
+        for (auto &future : futures)
+            future.get();
     }
     {
         int i;

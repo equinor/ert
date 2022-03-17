@@ -15,6 +15,8 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <future>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -23,24 +25,8 @@
 #include <ert/res_util/arg_pack.hpp>
 #include <ert/util/test_work_area.hpp>
 
-#include <ert/res_util/thread_pool.hpp>
-
 #include <ert/enkf/runpath_list.hpp>
 #include <ert/enkf/ert_test_context.hpp>
-
-void *add_pathlist(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    runpath_list_type *list =
-        (runpath_list_type *)arg_pack_iget_ptr(arg_pack, 0);
-    int offset = arg_pack_iget_int(arg_pack, 1);
-    int bs = arg_pack_iget_int(arg_pack, 2);
-
-    int i;
-    for (i = 0; i < bs; i++)
-        runpath_list_add(list, i + offset, 0, "Path", "Basename");
-
-    return NULL;
-}
 
 void test_runpath_list() {
     runpath_list_type *list = runpath_list_alloc("DefaultFile");
@@ -77,20 +63,19 @@ void test_runpath_list() {
     {
         const int block_size = 100;
         const int threads = 100;
-        thread_pool_type *tp = thread_pool_alloc(threads, true);
+        std::vector<std::future<void>> futures;
         int it;
 
         for (it = 0; it < threads; it++) {
             int iens_offset = it * block_size;
-            arg_pack_type *arg_pack = arg_pack_alloc();
-
-            arg_pack_append_ptr(arg_pack, list);
-            arg_pack_append_int(arg_pack, iens_offset);
-            arg_pack_append_int(arg_pack, block_size);
-
-            thread_pool_add_job(tp, add_pathlist, arg_pack);
+            futures.emplace_back(std::async(std::launch::async, [=] {
+                for (int i = 0; i < block_size; i++)
+                    runpath_list_add(list, i + iens_offset, 0, "Path",
+                                     "Basename");
+            }));
         }
-        thread_pool_join(tp);
+        for (auto &future : futures)
+            future.get();
         test_assert_int_equal(runpath_list_size(list), block_size * threads);
 
         {

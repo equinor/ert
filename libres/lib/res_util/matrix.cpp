@@ -10,7 +10,6 @@
 
 #include <fmt/format.h>
 #include <ert/util/ert_api_config.hpp>
-#include <ert/res_util/thread_pool.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/rng.hpp>
 

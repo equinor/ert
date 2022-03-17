@@ -21,7 +21,6 @@ pybind11_add_module(
   res_util/res_env.cpp
   res_util/res_portability.cpp
   res_util/block_fs.cpp
-  res_util/thread_pool.cpp
   res_util/template_loop.cpp # Highly deprecated
   python/init.cpp
   python/logging.cpp
