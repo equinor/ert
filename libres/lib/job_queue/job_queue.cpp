@@ -17,6 +17,7 @@
 */
 
 #include <algorithm>
+#include <thread>
 #include <vector>
 #include <future>
 #include <chrono>
@@ -28,7 +29,6 @@
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
-#include <ert/res_util/res_portability.hpp>
 #include <ert/logging.hpp>
 
 #include <ert/job_queue/job_queue.hpp>
@@ -879,7 +879,7 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
         } // end of read-locked scope
 
         if (!exit) {
-            res_yield();
+            std::this_thread::yield();
             job_list_reader_wait(queue->job_list, queue->usleep_time,
                                  8 * queue->usleep_time);
         }
