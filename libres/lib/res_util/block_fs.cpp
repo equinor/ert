@@ -1200,7 +1200,7 @@ static void block_fs_dump_index(block_fs_type *block_fs) {
    unlinked if the filesystem is empty.
 */
 
-void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
+void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
 
     if (block_fs->data_owner)
@@ -1220,11 +1220,6 @@ void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
     }
 
     if (block_fs->data_owner) {
-        if (unlink_empty && (hash_get_size(block_fs->index) == 0)) {
-            util_unlink_existing(block_fs->data_file);
-            util_unlink_existing(block_fs->index_file);
-            util_unlink_existing(block_fs->mount_file);
-        }
         block_fs_release_rwlock(block_fs);
     }
 

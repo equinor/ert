@@ -42,7 +42,7 @@ void test_readonly() {
     block_fs_type *bfs = block_fs_mount("test.mnt", true, false);
     test_assert_true(block_fs_is_readonly(bfs));
     test_assert_util_abort("block_fs_aquire_wlock", violating_fwrite, bfs);
-    block_fs_close(bfs, true);
+    block_fs_close(bfs);
 }
 
 void createFS1() {
@@ -69,7 +69,7 @@ void createFS1() {
                 }
             }
         }
-        block_fs_close(bfs, false);
+        block_fs_close(bfs);
         exit(0);
     }
     usleep(10000);
