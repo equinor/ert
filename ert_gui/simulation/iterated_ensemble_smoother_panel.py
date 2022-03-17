@@ -1,5 +1,6 @@
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
@@ -11,27 +12,26 @@ from ert_shared.ide.keywords.definitions import (
 from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import IteratedEnsembleSmoother
 from ert_shared.libres_facade import LibresFacade
-from res.enkf import EnKFMain
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier):
-        self.ert = ert
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
+        self.facade = facade
         self.notifier = notifier
         SimulationConfigPanel.__init__(self, IteratedEnsembleSmoother)
 
         layout = QFormLayout()
 
-        case_selector = CaseSelector(LibresFacade(ert), notifier)
+        case_selector = CaseSelector(self.facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(
-            "<b>%s</b>" % self.ert.getModelConfig().getRunpathAsString()
-        )
+        run_path_label = QLabel("<b>%s</b>" % self.facade.run_path)
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % self.ert.getEnsembleSize())
+        number_of_realizations_label = QLabel(
+            "<b>%d</b>" % self.facade.get_ensemble_size()
+        )
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -41,9 +41,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         num_iterations_spinner = QSpinBox()
         num_iterations_spinner.setMinimum(1)
         num_iterations_spinner.setMaximum(100)
-        num_iterations_spinner.setValue(
-            self.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
-        )
+        num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
         addHelpToWidget(
             num_iterations_spinner, "config/simulation/number_of_iterations"
         )
@@ -52,7 +50,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Number of iterations:", num_iterations_spinner)
 
         self._iterated_target_case_format_model = TargetCaseModel(
-            LibresFacade(self.ert), notifier, format_mode=True
+            self.facade, notifier, format_mode=True
         )
         self._iterated_target_case_format_field = StringBox(
             self._iterated_target_case_format_model,
@@ -62,20 +60,18 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
         self._analysis_module_selector = AnalysisModuleSelector(
-            LibresFacade(self.ert),
+            self.facade,
             iterable=True,
             help_link="config/analysis/analysis_module",
         )
         layout.addRow("Analysis Module:", self._analysis_module_selector)
 
-        self._active_realizations_model = ActiveRealizationsModel(
-            LibresFacade(self.ert)
-        )
+        self._active_realizations_model = ActiveRealizationsModel(self.facade)
         self._active_realizations_field = StringBox(
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(self.ert.getEnsembleSize())
+            RangeStringArgument(self.facade.get_ensemble_size())
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -89,11 +85,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def setNumberIterations(self, iteration_count):
-        if (
-            iteration_count
-            != self.ert.analysisConfig().getAnalysisIterConfig().getNumIterations()
-        ):
-            self.ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
+        if iteration_count != self.facade.get_number_of_iterations():
+            self.facade.get_analysis_config().getAnalysisIterConfig().setNumIterations(
                 iteration_count
             )
             self.notifier.emitErtChange()

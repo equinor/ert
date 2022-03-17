@@ -1,9 +1,12 @@
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_shared.libres_facade import LibresFacade
 
 
 class TargetCaseModel(ValueModel):
-    def __init__(self, facade: LibresFacade, notifier, format_mode=False):
+    def __init__(
+        self, facade: LibresFacade, notifier: ErtNotifier, format_mode: bool = False
+    ):
         self.facade = facade
         self._format_mode = format_mode
         self._custom = False

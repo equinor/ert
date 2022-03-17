@@ -12,6 +12,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert_gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
 from ert_gui.simulation import SingleTestRunPanel
@@ -24,13 +25,15 @@ from ert_gui.simulation import RunDialog
 from collections import OrderedDict
 
 from ert_shared.libres_facade import LibresFacade
+from res.enkf import EnKFMain
 
 
 class SimulationPanel(QWidget):
-    def __init__(self, ert, notifier, config_file):
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier, config_file: str):
         self.notifier = notifier
         QWidget.__init__(self)
         self.ert = ert
+        self.facade = LibresFacade(ert)
         self._config_file = config_file
 
         self.setObjectName("Simulation_panel")
@@ -79,10 +82,14 @@ class SimulationPanel(QWidget):
         """ :type: OrderedDict[BaseRunModel,SimulationConfigPanel]"""
         self.addSimulationConfigPanel(SingleTestRunPanel(ert, notifier))
         self.addSimulationConfigPanel(EnsembleExperimentPanel(ert, notifier))
-        if self.ert.have_observations():
-            self.addSimulationConfigPanel(EnsembleSmootherPanel(ert, notifier))
-            self.addSimulationConfigPanel(MultipleDataAssimilationPanel(ert, notifier))
-            self.addSimulationConfigPanel(IteratedEnsembleSmootherPanel(ert, notifier))
+        if self.facade.have_observations:
+            self.addSimulationConfigPanel(EnsembleSmootherPanel(self.facade, notifier))
+            self.addSimulationConfigPanel(
+                MultipleDataAssimilationPanel(self.facade, notifier)
+            )
+            self.addSimulationConfigPanel(
+                IteratedEnsembleSmootherPanel(self.facade, notifier)
+            )
 
         self.setLayout(layout)
 
@@ -110,7 +117,7 @@ class SimulationPanel(QWidget):
         return args
 
     def runSimulation(self):
-        case_name = LibresFacade(self.ert).get_current_case_name()
+        case_name = self.facade.get_current_case_name()
         message = (
             "Are you sure you want to use case '%s' for initialization of the initial ensemble when running the simulations?"
             % case_name

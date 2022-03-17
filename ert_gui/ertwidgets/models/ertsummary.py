@@ -1,11 +1,12 @@
 from typing import List
 
+from res.enkf import EnKFMain
 from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
 from res.enkf.enums.enkf_var_type_enum import EnkfVarType
 
 
 class ErtSummary:
-    def __init__(self, ert):
+    def __init__(self, ert: EnKFMain):
         self.ert = ert
 
     def getForwardModels(self) -> List[str]:

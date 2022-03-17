@@ -1,13 +1,11 @@
 from qtpy.QtCore import QObject, Signal, Slot
 
-from res.enkf import EnKFMain
-
 
 class ErtNotifier(QObject):
     ertChanged = Signal()
 
-    def __init__(self, config_file, parent=None):
-        QObject.__init__(self, parent)
+    def __init__(self, config_file: str):
+        QObject.__init__(self)
         self._config_file = config_file
 
     @property

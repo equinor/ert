@@ -33,8 +33,8 @@ from ert_shared.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesPanel(QWidget):
-    def __init__(self, analysis_module_name, facade: LibresFacade, parent=None):
-        QWidget.__init__(self, parent)
+    def __init__(self, analysis_module_name: str, facade: LibresFacade):
+        QWidget.__init__(self)
         self.facade = facade
         self._analysis_module_name = analysis_module_name
 

@@ -1,5 +1,7 @@
+from typing import List
+
 from ert_shared.libres_facade import LibresFacade
-from res.enkf import RealizationStateEnum
+from res.enkf import RealizationStateEnum, EnKFMain
 from res.enkf import ErtRunContext
 from ecl.util.util import BoolVector, StringList
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
@@ -39,7 +41,9 @@ def get_runnable_realizations_mask(ert, casename):
 
 
 @showWaitCursorWhileWaiting
-def initializeCurrentCaseFromScratch(parameters, members, ert):
+def initializeCurrentCaseFromScratch(
+    parameters: List[str], members: List[str], ert: EnKFMain
+):
     selected_parameters = StringList(parameters)
     mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=False)
     for member in members:
@@ -53,7 +57,12 @@ def initializeCurrentCaseFromScratch(parameters, members, ert):
 
 @showWaitCursorWhileWaiting
 def initializeCurrentCaseFromExisting(
-    source_case, target_case, source_report_step, parameters, members, ert
+    source_case: str,
+    target_case: str,
+    source_report_step: int,
+    parameters: List[str],
+    members: List[str],
+    ert: EnKFMain,
 ):
     if (
         caseExists(source_case, LibresFacade(ert))

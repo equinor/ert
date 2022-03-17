@@ -10,7 +10,11 @@ from ert_shared.libres_facade import LibresFacade
 
 class AnalysisModuleSelector(QWidget):
     def __init__(
-        self, facade: LibresFacade, iterable=False, load_all=False, help_link=""
+        self,
+        facade: LibresFacade,
+        iterable: bool = False,
+        load_all: bool = False,
+        help_link: str = "",
     ):
         self.facade = facade
         QWidget.__init__(self)

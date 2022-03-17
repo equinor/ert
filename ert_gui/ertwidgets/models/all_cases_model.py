@@ -1,10 +1,11 @@
 from qtpy.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
+from ert_shared.libres_facade import LibresFacade
 
 
 class AllCasesModel(QAbstractItemModel):
-    def __init__(self, facade):
+    def __init__(self, facade: LibresFacade):
         self.facade = facade
         QAbstractItemModel.__init__(self)
         self.__data = []

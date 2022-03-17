@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
+from res.enkf import EnKFMain
 
 
 class SummaryTemplate(object):
@@ -50,9 +51,9 @@ class SummaryTemplate(object):
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, ert, parent=None):
+    def __init__(self, ert: EnKFMain):
         self.ert = ert
-        QFrame.__init__(self, parent)
+        QFrame.__init__(self)
 
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)

@@ -68,6 +68,14 @@ class LibresFacade(object):
             self._enkf_main.analysisConfig().getAnalysisIterConfig().getNumIterations()
         )
 
+    @property
+    def have_observations(self):
+        return self._enkf_main.have_observations()
+
+    @property
+    def run_path(self):
+        return self._enkf_main.getModelConfig().getRunpathAsString()
+
     def get_observations(self):
         return self._enkf_main.getObservations()
 

@@ -10,10 +10,12 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
 )
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import getAllCases
 from ert_gui.ertwidgets.validateddialog import ValidatedDialog
 from ert_gui.ertwidgets import resourceIcon
+from ert_shared.libres_facade import LibresFacade
 
 
 class AddRemoveWidget(QWidget):
@@ -65,7 +67,7 @@ class AddRemoveWidget(QWidget):
 
 
 class CaseList(QWidget):
-    def __init__(self, facade, notifier):
+    def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self.facade = facade
         self.notifier = notifier
         QWidget.__init__(self)

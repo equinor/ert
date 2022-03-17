@@ -1,19 +1,22 @@
 from qtpy.QtWidgets import QComboBox
+
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.models.ertmodel import (
     getAllCases,
 )
+from ert_shared.libres_facade import LibresFacade
 
 
 class CaseSelector(QComboBox):
     def __init__(
         self,
-        facade,
-        notifier,
-        update_ert=True,
-        show_only_initialized=False,
-        ignore_current=False,
-        help_link="init/current_case_selection",
+        facade: LibresFacade,
+        notifier: ErtNotifier,
+        update_ert: bool = True,
+        show_only_initialized: bool = False,
+        ignore_current: bool = False,
+        help_link: str = "init/current_case_selection",
     ):
         self.facade = facade
         QComboBox.__init__(self)

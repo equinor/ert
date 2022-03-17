@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import argparse
 import os
 import logging
 import sys
@@ -60,7 +61,6 @@ def run_gui(args):
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
-    # TODO: Send ErtNotifier in explicitly
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     # window reference must be kept until app.exec returns
     notifier = ErtNotifier(args.config)
@@ -68,7 +68,7 @@ def run_gui(args):
     return app.exec_()
 
 
-def _start_window(ert, notifier, args):
+def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
 
     _check_locale()
 
@@ -122,7 +122,7 @@ def _check_locale():
         sys.stderr.write(msg)
 
 
-def _setup_main_window(ert, notifier, args):
+def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
     facade = LibresFacade(ert)
     config_file = args.config
     window = GertMainWindow(config_file)

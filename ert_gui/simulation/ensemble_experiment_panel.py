@@ -1,5 +1,6 @@
 from qtpy.QtWidgets import QFormLayout, QLabel
 
+from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -16,35 +17,34 @@ from ert_shared.models import EnsembleExperiment
 
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
-    def __init__(self, ert: EnKFMain, notifier):
-        self.ert = ert
-        facade = LibresFacade(ert)
+    def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
+        self.facade = LibresFacade(ert)
         super().__init__(EnsembleExperiment)
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
 
-        self._case_selector = CaseSelector(facade, notifier)
-        layout.addRow("Current case:", self._case_selector)
+        case_selector = CaseSelector(self.facade, notifier)
+        layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel(
-            "<b>%s</b>" % self.ert.getModelConfig().getRunpathAsString()
-        )
+        run_path_label = QLabel("<b>%s</b>" % self.facade.run_path)
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
+        number_of_realizations_label = QLabel(
+            "<b>%d</b>" % self.facade.get_ensemble_size()
+        )
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(LibresFacade(self.ert)),
+            ActiveRealizationsModel(self.facade),
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(self.ert.getEnsembleSize()),
+            RangeStringArgument(self.facade.get_ensemble_size()),
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 

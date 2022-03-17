@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from ert_shared.libres_facade import LibresFacade
 from res.analysis.analysis_module import AnalysisModule
 
 
@@ -89,7 +90,7 @@ class AnalysisModuleVariablesModel(object):
     }
 
     @classmethod
-    def getVariableNames(cls, facade, analysis_module_name):
+    def getVariableNames(cls, facade: LibresFacade, analysis_module_name: str):
         """@rtype: list of str"""
         analysis_module = facade.get_analysis_module(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
@@ -124,12 +125,16 @@ class AnalysisModuleVariablesModel(object):
         return cls._VARIABLE_NAMES[name]["pos"]
 
     @classmethod
-    def setVariableValue(cls, facade, analysis_module_name, name, value):
+    def setVariableValue(
+        cls, facade: LibresFacade, analysis_module_name: str, name: str, value: str
+    ):
         analysis_module = facade.get_analysis_module(analysis_module_name)
         result = analysis_module.setVar(name, str(value))
 
     @classmethod
-    def getVariableValue(cls, facade, analysis_module_name, name):
+    def getVariableValue(
+        cls, facade: LibresFacade, analysis_module_name: str, name: str
+    ):
         """@rtype: int or float or bool or str"""
         analysis_module = facade.get_analysis_module(analysis_module_name)
         variable_type = cls.getVariableType(name)
