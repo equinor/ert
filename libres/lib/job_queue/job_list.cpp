@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>

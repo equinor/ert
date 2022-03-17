@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
 #include <ert/util/hash.h>

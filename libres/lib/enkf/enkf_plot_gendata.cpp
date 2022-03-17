@@ -31,7 +31,6 @@ struct enkf_plot_gendata_struct {
     int report_step;
     const enkf_config_node_type *enkf_config_node;
     enkf_plot_genvector_type **ensemble;
-    arg_pack_type **work_arg;
     double_vector_type *max_values;
     double_vector_type *min_values;
 };
@@ -46,7 +45,6 @@ enkf_plot_gendata_alloc(const enkf_config_node_type *enkf_config_node) {
         UTIL_TYPE_ID_INIT(data, ENKF_PLOT_GENDATA_TYPE_ID);
         data->size = 0;
         data->enkf_config_node = enkf_config_node;
-        data->work_arg = NULL;
         data->ensemble = NULL;
 
         data->max_values = NULL;
@@ -64,11 +62,9 @@ enkf_plot_gendata_alloc_from_obs_vector(const obs_vector_type *obs_vector) {
 
 void enkf_plot_gendata_free(enkf_plot_gendata_type *data) {
     for (int iens = 0; iens < data->size; iens++) {
-        arg_pack_free(data->work_arg[iens]);
         enkf_plot_genvector_free(data->ensemble[iens]);
     }
 
-    free(data->work_arg);
     free(data->ensemble);
     free(data);
 }
@@ -116,31 +112,19 @@ static void enkf_plot_gendata_resize(enkf_plot_gendata_type *plot_gendata,
         if (new_size < plot_gendata->size) {
             for (iens = new_size; iens < plot_gendata->size; iens++) {
                 enkf_plot_genvector_free(plot_gendata->ensemble[iens]);
-                arg_pack_free(plot_gendata->work_arg[iens]);
             }
         }
 
         plot_gendata->ensemble = (enkf_plot_genvector_type **)util_realloc(
             plot_gendata->ensemble, new_size * sizeof *plot_gendata->ensemble);
-        plot_gendata->work_arg = (arg_pack_type **)util_realloc(
-            plot_gendata->work_arg, new_size * sizeof *plot_gendata->work_arg);
 
         if (new_size > plot_gendata->size) {
             for (iens = plot_gendata->size; iens < new_size; iens++) {
                 plot_gendata->ensemble[iens] = enkf_plot_genvector_alloc(
                     plot_gendata->enkf_config_node, iens);
-                plot_gendata->work_arg[iens] = arg_pack_alloc();
             }
         }
         plot_gendata->size = new_size;
-    }
-}
-
-static void enkf_plot_gendata_reset(enkf_plot_gendata_type *plot_gendata,
-                                    int report_step) {
-    int iens;
-    for (iens = 0; iens < plot_gendata->size; iens++) {
-        arg_pack_clear(plot_gendata->work_arg[iens]);
     }
 }
 
@@ -153,7 +137,6 @@ void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
     const auto &mask =
         state_map_select_matching(state_map, STATE_HAS_DATA, true);
     enkf_plot_gendata_resize(plot_data, ens_size);
-    enkf_plot_gendata_reset(plot_data, report_step);
     plot_data->report_step = report_step;
 
     for (int iens = 0; iens < ens_size; iens++) {
