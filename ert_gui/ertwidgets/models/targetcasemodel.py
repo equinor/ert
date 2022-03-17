@@ -29,12 +29,12 @@ class TargetCaseModel(ValueModel):
         """@rtype: str"""
         if self._format_mode:
             if (
-                self.facade._enkf_main.analysisConfig()
+                self.facade.get_analysis_config()
                 .getAnalysisIterConfig()
                 .caseFormatSet()
             ):
                 return (
-                    self.facade._enkf_main.analysisConfig()
+                    self.facade.get_analysis_config()
                     .getAnalysisIterConfig()
                     .getCaseFormat()
                 )
