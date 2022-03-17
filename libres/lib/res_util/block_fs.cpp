@@ -130,7 +130,6 @@ struct block_fs_struct {
 
     long int data_file_size; /* The total number of bytes in the data_file. */
     long int free_size;      /* Size of 'holes' in the data file. */
-    int block_size;          /* The size of blocks in bytes. */
     int lock_fd; /* The file descriptor for the lock_file. Set to -1 if we do not have write access. */
 
     pthread_mutex_t io_lock;  /* Lock held during fread of the data file. */
@@ -143,9 +142,7 @@ struct block_fs_struct {
     vector_type *
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
                                        only contain pointers to the objects stored in this vector. */
-    int write_count; /* This just counts the number of writes since the file system was mounted. */
     bool data_owner;
-    int fsync_interval; /* 0: never  n: every nth iteration. */
 };
 
 static void block_fs_rotate__(block_fs_type *block_fs);
@@ -542,21 +539,17 @@ static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->file_nodes = vector_alloc_new();
     block_fs->free_nodes = NULL;
     block_fs->num_free_nodes = 0;
-    block_fs->write_count = 0;
     block_fs->data_file_size = 0;
     block_fs->free_size = 0;
     block_fs_set_filenames(block_fs);
 }
 
 static block_fs_type *block_fs_alloc_empty(const char *mount_file,
-                                           int block_size, int fsync_interval,
                                            bool read_only, bool use_lockfile) {
     block_fs_type *block_fs = (block_fs_type *)util_malloc(sizeof *block_fs);
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
     block_fs->mount_file = util_alloc_string_copy(mount_file);
-    block_fs->fsync_interval = fsync_interval;
-    block_fs->block_size = block_size;
 
     util_alloc_file_components(mount_file, &block_fs->path,
                                &block_fs->base_name, NULL);
@@ -901,8 +894,7 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
         return true;
 }
 
-block_fs_type *block_fs_mount(const char *mount_file, int block_size,
-                              int fsync_interval, bool read_only,
+block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
                               bool use_lockfile) {
     block_fs_type *block_fs;
     {
@@ -913,8 +905,7 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
         {
             std::vector<long> fix_nodes;
             block_fs =
-                block_fs_alloc_empty(mount_file, block_size, fsync_interval,
-                                     read_only, use_lockfile);
+                block_fs_alloc_empty(mount_file, read_only, use_lockfile);
             /* We build up the index & free_nodes_list based on the header/index information embedded in the datafile. */
             block_fs_open_data(block_fs, false);
             if (block_fs->data_stream != NULL) {
@@ -986,12 +977,9 @@ static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
         int node_size;
         file_node_type *new_node;
 
-        {
-            div_t d = div(min_size, block_fs->block_size);
-            node_size = d.quot * block_fs->block_size;
-            if (d.rem)
-                node_size += block_fs->block_size;
-        }
+        // round min_size up to multiple of block_size
+        const size_t block_size = 64;
+        node_size = (min_size + block_size - 1) / block_size * block_size;
 
         /* Must lock the total size here ... */
         offset = block_fs->data_file_size;
@@ -1062,7 +1050,6 @@ void block_fs_fsync(block_fs_type *block_fs) {
    3. seek to correct position.
    4. Write the data with util_fwrite()
 
-   7. increase the write_count
    8. set the data_size field of the node.
 
    Observe that when 'designing' this file-system the priority has
@@ -1092,11 +1079,6 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
     /* Writes the file node header data, including the NODE_END_TAG. */
     file_node_fwrite(node, filename, block_fs->data_stream);
-
-    block_fs->write_count++;
-    if (block_fs->fsync_interval &&
-        ((block_fs->write_count % block_fs->fsync_interval) == 0))
-        block_fs_fsync(block_fs);
 }
 
 static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,

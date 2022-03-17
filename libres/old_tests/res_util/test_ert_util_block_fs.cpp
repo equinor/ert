@@ -39,7 +39,7 @@ void violating_fwrite(void *arg) {
 
 void test_readonly() {
     ecl::util::TestArea ta("readonly");
-    block_fs_type *bfs = block_fs_mount("test.mnt", 1000, 10, true, false);
+    block_fs_type *bfs = block_fs_mount("test.mnt", true, false);
     test_assert_true(block_fs_is_readonly(bfs));
     test_assert_util_abort("block_fs_aquire_wlock", violating_fwrite, bfs);
     block_fs_close(bfs, true);
@@ -49,7 +49,7 @@ void createFS1() {
     pid_t pid = fork();
 
     if (pid == 0) {
-        block_fs_type *bfs = block_fs_mount("test.mnt", 1000, 10, false, true);
+        block_fs_type *bfs = block_fs_mount("test.mnt", false, true);
         test_assert_false(block_fs_is_readonly(bfs));
         test_assert_true(fs::exists("test.lock_0"));
         {
@@ -84,7 +84,7 @@ void test_lock_conflict() {
     }
 
     {
-        block_fs_type *bfs = block_fs_mount("test.mnt", 1000, 10, false, true);
+        block_fs_type *bfs = block_fs_mount("test.mnt", false, true);
         test_assert_true(block_fs_is_readonly(bfs));
     }
     {
