@@ -31,7 +31,6 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/res_util/subst_list.hpp>

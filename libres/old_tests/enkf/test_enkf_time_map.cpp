@@ -23,7 +23,6 @@
 #include <ert/util/test_work_area.h>
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_sum.h>
@@ -82,14 +81,6 @@ void test_inconsistent_summary(const char *case1, const char *case2) {
     time_map_free(ecl_map);
     ecl_sum_free(ecl_sum1);
     ecl_sum_free(ecl_sum2);
-}
-
-static void alloc_index_map(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    time_map_type *map = (time_map_type *)arg_pack_iget_ptr(arg_pack, 0);
-    ecl_sum_type *sum = (ecl_sum_type *)arg_pack_iget_ptr(arg_pack, 1);
-
-    time_map_alloc_index_map(map, sum);
 }
 
 void test_refcase(const char *refcase_name, const char *case1,
@@ -220,13 +211,18 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
     /* case4 has a missing tstep in the middle - that is not handled; and we abort */
     test_assert_false(time_map_summary_update(ecl_map, ecl_sum4));
     {
-        arg_pack_type *arg = arg_pack_alloc();
-        arg_pack_append_ptr(arg, ecl_map);
-        arg_pack_append_ptr(arg, ecl_sum4);
+        struct data_t {
+            time_map_type *map;
+            ecl_sum_type *sum;
+        } data{ecl_map, ecl_sum4};
 
-        test_assert_util_abort("time_map_alloc_index_map", alloc_index_map,
-                               arg);
-        arg_pack_free(arg);
+        test_assert_util_abort(
+            "time_map_alloc_index_map",
+            [](void *data_) {
+                auto data = reinterpret_cast<data_t *>(data_);
+                time_map_alloc_index_map(data->map, data->sum);
+            },
+            &data);
     }
 
     time_map_free(ecl_map);

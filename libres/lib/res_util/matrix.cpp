@@ -13,7 +13,6 @@
 #include <ert/util/util.hpp>
 #include <ert/util/rng.hpp>
 
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/matrix.hpp>
 
 matrix_type *matrix_alloc(int rows, int columns) {

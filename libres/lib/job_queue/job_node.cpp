@@ -25,7 +25,6 @@
 #include <pthread.h>
 
 #include <ert/util/util.hpp>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/logging.hpp>
 
 #include <ert/job_queue/job_node.hpp>

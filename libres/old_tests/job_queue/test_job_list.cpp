@@ -19,7 +19,6 @@
 #include <stdbool.h>
 
 #include <ert/util/test_util.hpp>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>
@@ -29,14 +28,6 @@ void test_create() {
     test_assert_true(job_list_is_instance(list));
     test_assert_int_equal(0, job_list_get_size(list));
     job_list_free(list);
-}
-
-void call_add_job(void *arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(arg);
-    job_list_type *job_list = (job_list_type *)arg_pack_iget_ptr(arg_pack, 0);
-    job_queue_node_type *node =
-        (job_queue_node_type *)arg_pack_iget_ptr(arg_pack, 1);
-    job_list_add_job(job_list, node);
 }
 
 void call_iget_job(void *arg) {
@@ -52,14 +43,22 @@ void test_add_job() {
     test_assert_int_equal(job_list_get_size(list), 1);
     test_assert_int_equal(job_queue_node_get_queue_index(node), 0);
     test_assert_ptr_equal(node, job_list_iget_job(list, 0));
+
     {
-        arg_pack_type *arg_pack = arg_pack_alloc();
-        arg_pack_append_ptr(arg_pack, list);
-        arg_pack_append_ptr(arg_pack, node);
-        test_assert_util_abort("job_queue_node_set_queue_index", call_add_job,
-                               arg_pack);
-        arg_pack_free(arg_pack);
+        struct data_t {
+            job_list_type *list;
+            job_queue_node_type *node;
+        } data{list, node};
+
+        test_assert_util_abort(
+            "job_queue_node_set_queue_index",
+            [](void *data_) {
+                auto data = reinterpret_cast<data_t *>(data_);
+                job_list_add_job(data->list, data->node);
+            },
+            &data);
     }
+
     test_assert_util_abort("job_list_iget_job", call_iget_job, list);
     job_list_reset(list);
     test_assert_int_equal(0, job_list_get_size(list));

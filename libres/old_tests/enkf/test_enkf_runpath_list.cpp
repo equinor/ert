@@ -22,7 +22,6 @@
 
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/runpath_list.hpp>
