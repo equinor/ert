@@ -38,8 +38,6 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
 void block_fs_close(block_fs_type *block_fs);
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t byte_size);
-void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
-                            const buffer_type *buffer);
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer);
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename);

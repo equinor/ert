@@ -181,7 +181,8 @@ void ert::block_fs_driver::save_node(const char *node_key, int report_step,
                                      int iens, buffer_type *buffer) {
     char *key = block_fs_driver_alloc_node_key(node_key, report_step, iens);
     bfs_type *bfs = this->get_fs(iens);
-    block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
+    block_fs_fwrite_file(bfs->block_fs, key, buffer_get_data(buffer),
+                         buffer_get_size(buffer));
     free(key);
 }
 
@@ -189,7 +190,8 @@ void ert::block_fs_driver::save_vector(const char *node_key, int iens,
                                        buffer_type *buffer) {
     char *key = block_fs_driver_alloc_vector_key(node_key, iens);
     bfs_type *bfs = this->get_fs(iens);
-    block_fs_fwrite_buffer(bfs->block_fs, key, buffer);
+    block_fs_fwrite_file(bfs->block_fs, key, buffer_get_data(buffer),
+                         buffer_get_size(buffer));
     free(key);
 }
 

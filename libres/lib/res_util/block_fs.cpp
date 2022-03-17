@@ -1019,13 +1019,6 @@ static void block_fs_unlink_file__(block_fs_type *block_fs,
 }
 
 /*
-   Returns the fraction of unused space in the block_fs instance.
-*/
-static double get_fragmentation(const block_fs_type *block_fs) {
-    return block_fs->free_size * 1.0 / block_fs->data_file_size;
-}
-
-/*
    It seems it is not enough to call fsync(); must also issue this
    funny fseek + ftell combination to ensure that all data is on
    disk after an uncontrolled shutdown.
@@ -1081,7 +1074,11 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
 static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
                                           const char *filename, const void *ptr,
-                                          size_t data_size) {
+                                          size_t data_size) {}
+
+void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
+                          const void *ptr, size_t data_size) {
+    block_fs_aquire_wlock(block_fs);
     file_node_type *file_node;
     bool new_node = true;
     size_t min_size = data_size + file_node_header_size(filename);
@@ -1109,19 +1106,7 @@ static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
     block_fs_fwrite__(block_fs, filename, file_node, ptr, data_size);
     if (new_node)
         block_fs_insert_index_node(block_fs, filename, file_node);
-}
-
-void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
-                          const void *ptr, size_t data_size) {
-    block_fs_aquire_wlock(block_fs);
-    { block_fs_fwrite_file_unlocked(block_fs, filename, ptr, data_size); }
     block_fs_release_rwlock(block_fs);
-}
-
-void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
-                            const buffer_type *buffer) {
-    block_fs_fwrite_file(block_fs, filename, buffer_get_data(buffer),
-                         buffer_get_size(buffer));
 }
 
 /*
