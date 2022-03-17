@@ -5,9 +5,6 @@ from ert_gui.ertwidgets import addHelpToWidget
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
-from ert_gui.ertwidgets.models.ertmodel import (
-    get_runnable_realizations_mask,
-)
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert_shared.libres_facade import LibresFacade
@@ -62,9 +59,6 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
-
-        self._realizations_from_fs()  # update with the current case
 
     def isConfigurationValid(self):
         return self._active_realizations_field.isValid() and self._iter_field.isValid()
@@ -77,8 +71,3 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             "active_realizations": active_realizations_mask,
             "iter_num": int(self._iter_field.model.getValue()),
         }
-
-    def _realizations_from_fs(self):
-        case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.ert, case)
-        self._active_realizations_field.model.setValueFromMask(mask)

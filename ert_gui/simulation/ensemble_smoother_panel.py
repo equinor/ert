@@ -4,9 +4,6 @@ from ert_gui.ertnotifier import ErtNotifier
 from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_gui.ertwidgets.models.ertmodel import (
-    get_runnable_realizations_mask,
-)
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
@@ -65,9 +62,6 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
-
-        self._realizations_from_fs()  # update with the current case
 
     def isConfigurationValid(self):
         return (
@@ -82,8 +76,3 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
             "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
         }
         return arguments
-
-    def _realizations_from_fs(self):
-        case = str(self._case_selector.currentText())
-        mask = get_runnable_realizations_mask(self.ert, case)
-        self._active_realizations_field.model.setValueFromMask(mask)
