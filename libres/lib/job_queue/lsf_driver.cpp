@@ -170,12 +170,11 @@ struct lsf_driver_struct {
     char *bhist_cmd;
 };
 
-UTIL_SAFE_CAST_FUNCTION(lsf_driver, LSF_DRIVER_TYPE_ID)
-static UTIL_SAFE_CAST_FUNCTION_CONST(
-    lsf_driver,
-    LSF_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(lsf_job, LSF_JOB_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(lsf_driver, LSF_DRIVER_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION_CONST(lsf_driver, LSF_DRIVER_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(lsf_job, LSF_JOB_TYPE_ID);
 
-    static lsf_job_type *lsf_job_alloc(const char *job_name) {
+static lsf_job_type *lsf_job_alloc(const char *job_name) {
     lsf_job_type *job;
     job = (lsf_job_type *)util_malloc(sizeof *job);
     job->num_exec_host = 0;

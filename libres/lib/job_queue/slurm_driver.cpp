@@ -217,10 +217,10 @@ template <typename C> static std::string join_string(const C &strings) {
     return full_string;
 }
 
-UTIL_SAFE_CAST_FUNCTION(slurm_driver, SLURM_DRIVER_TYPE_ID)
-static UTIL_SAFE_CAST_FUNCTION_CONST(slurm_driver, SLURM_DRIVER_TYPE_ID)
+UTIL_SAFE_CAST_FUNCTION(slurm_driver, SLURM_DRIVER_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION_CONST(slurm_driver, SLURM_DRIVER_TYPE_ID);
 
-    void *slurm_driver_alloc() {
+void *slurm_driver_alloc() {
     slurm_driver_type *driver = new slurm_driver_type();
     UTIL_TYPE_ID_INIT(driver, SLURM_DRIVER_TYPE_ID);
     driver->sbatch_cmd = DEFAULT_SBATCH_CMD;
