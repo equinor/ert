@@ -61,7 +61,7 @@ class LoadResultsPanel(QWidget):
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        iterations_count = LoadResultsModel.getIterationCount(self.facade._enkf_main)
+        iterations_count = LoadResultsModel.getIterationCount(self.facade.run_path)
 
         self._iterations_model = ValueModel(iterations_count)
         self._iterations_field = StringBox(
@@ -74,7 +74,7 @@ class LoadResultsPanel(QWidget):
 
     def readCurrentRunPath(self):
         current_case = self.facade.get_current_case_name()
-        run_path = LoadResultsModel.getCurrentRunPath(self.facade._enkf_main)
+        run_path = self.facade.run_path
         run_path = run_path.replace("<ERTCASE>", current_case)
         run_path = run_path.replace("<ERT-CASE>", current_case)
         return run_path

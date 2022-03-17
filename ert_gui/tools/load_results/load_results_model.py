@@ -15,23 +15,22 @@
 #  for more details.
 import os
 
+from ecl.util.util import BoolVector
+
+from res.enkf import EnKFMain
+
 
 class LoadResultsModel:
     @staticmethod
-    def loadResults(ert, selected_case, realisations, iteration):
-        """
-        @type selected_case: str
-        @type realisations: BoolVector
-        @type iteration: int
-        @rtype int: number of loaded realisations
-        """
+    def loadResults(
+        ert: EnKFMain, selected_case: str, realisations: BoolVector, iteration: int
+    ) -> int:
         fs = ert.getEnkfFsManager().getFileSystem(selected_case)
         return ert.loadFromForwardModel(realisations, iteration, fs)
 
     @staticmethod
-    def isValidRunPath(ert):
+    def isValidRunPath(run_path):
         """@rtype: bool"""
-        run_path = ert.getModelConfig().getRunpathAsString()
         try:
             result = run_path % (0, 0)
             return True
@@ -47,14 +46,8 @@ class LoadResultsModel:
         return False
 
     @staticmethod
-    def getCurrentRunPath(ert):
-        """@rtype: str"""
-        return ert.getModelConfig().getRunpathAsString()
-
-    @staticmethod
-    def getIterationCount(ert):
+    def getIterationCount(run_path):
         """@rtype: int"""
-        run_path = ert.getModelConfig().getRunpathAsString()
         try:
             results = run_path % (0, 0)
         except TypeError:

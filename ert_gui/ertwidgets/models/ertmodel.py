@@ -1,7 +1,7 @@
 from typing import List
 
 from ert_shared.libres_facade import LibresFacade
-from res.enkf import RealizationStateEnum, EnKFMain
+from res.enkf import EnKFMain
 from res.enkf import ErtRunContext
 from ecl.util.util import BoolVector, StringList
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting

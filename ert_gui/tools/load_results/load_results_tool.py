@@ -30,7 +30,7 @@ class LoadResultsTool(Tool):
         )
         self.__import_widget = None
         self.__dialog = None
-        self.setEnabled(LoadResultsModel.isValidRunPath(self.facade._enkf_main))
+        self.setEnabled(LoadResultsModel.isValidRunPath(self.facade.run_path))
 
     def trigger(self):
         if self.__import_widget is None:
