@@ -19,6 +19,7 @@ from ert.ensemble_evaluator import EvaluatorTracker
 
 
 def build_snapshot(real_list: List[str] = ["0"]):
+    # passing ["0"] is required
     return (
         SnapshotBuilder()
         .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
@@ -27,8 +28,7 @@ def build_snapshot(real_list: List[str] = ["0"]):
 
 
 def build_partial(real_list: List[str] = ["0"]):
-    partial = PartialSnapshot(build_snapshot(real_list))
-    return partial
+    return PartialSnapshot(build_snapshot(real_list))
 
 
 @pytest.fixture
@@ -55,9 +55,23 @@ def make_mock_ee_monitor():
             ERT3RunModel,
             [
                 CloudEvent(
+                    # zero realizations completed
                     {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT},
                     data={
-                        **(build_snapshot(["0", "1"]).to_dict()),
+                        **(build_snapshot(["0", "1", "2"]).to_dict()),
+                        "iter": 0,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                    data={
+                        **(
+                            build_partial(["0"])
+                            # Complete one realizations completed
+                            .update_step(
+                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            ).to_dict()
+                        ),
                         "iter": 0,
                     },
                 ),
@@ -66,8 +80,29 @@ def make_mock_ee_monitor():
                     data={
                         **(
                             build_partial(["0", "1"])
+                            # Complete two realizations
                             .update_step(
                                 "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .update_step(
+                                "1", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .to_dict()
+                        ),
+                        "iter": 0,
+                    },
+                ),
+                CloudEvent(
+                    {"source": "/", "type": ids.EVTYPE_EE_SNAPSHOT_UPDATE},
+                    data={
+                        **(
+                            build_partial(["0", "2"])
+                            # Complete all three realizations
+                            .update_step(
+                                "0", "0", Step(status=state.STEP_STATE_SUCCESS)
+                            )
+                            .update_step(
+                                "2", "0", Step(status=state.STEP_STATE_SUCCESS)
                             )
                             .to_dict()
                         ),
@@ -76,8 +111,17 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 1)],
-            0.5,
-            id="ensemble_experiment_50",
+            # Expected progress matches combination of yielded snapshotevents
+            # It is calculated as sum i=1:#phases of
+            # (phase i completed realizations / phase i #realizations) / #phases.
+            # When a phase is in the past (current phase > phase),  phase progress is set to 1.0
+            [
+                (0 / 3) / 1,
+                (1 / 3) / 1,
+                (2 / 3) / 1,
+                (3 / 3) / 1,
+            ],
+            id="ensemble_experiment_100",
         ),
         pytest.param(
             BaseRunModel,
@@ -104,7 +148,7 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 1)],
-            0.5,
+            [(0 / 2) / 1, (1 / 2) / 1],
             id="ensemble_experiment_50",
         ),
         pytest.param(
@@ -132,7 +176,7 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 2)],
-            0.25,
+            [(0 / 2 + 0) / 2, (1 / 2 + 0) / 2],
             id="ensemble_smoother_25",
         ),
         pytest.param(
@@ -183,7 +227,12 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 2)],
-            0.75,
+            [
+                (0 / 2 + 0 / 2) / 2,
+                (2 / 2 + 0 / 2) / 2,
+                (2 / 2 + 0 / 2) / 2,
+                (2 / 2 + 1 / 2) / 2,
+            ],
             id="ensemble_smoother_75",
         ),
         pytest.param(
@@ -237,7 +286,12 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 2)],
-            1.0,
+            [
+                (0 / 2 + 0 / 2) / 2,
+                (2 / 2 + 0 / 2) / 2,
+                (2 / 2 + 0 / 2) / 2,
+                (2 / 2 + 2 / 2) / 2,
+            ],
             id="ensemble_smoother_100",
         ),
         pytest.param(
@@ -291,7 +345,12 @@ def make_mock_ee_monitor():
                 ),
             ],
             [("_phase_count", 3)],
-            1.0,
+            [
+                (1 + 0 / 2 + 0 / 2) / 3,
+                (1 + 2 / 2 + 0 / 2) / 3,
+                (1 + 2 / 2 + 0 / 2) / 3,
+                (1 + 2 / 2 + 2 / 2) / 3,
+            ],
             id="ensemble_smoother_100",
         ),
     ],
@@ -310,9 +369,12 @@ def test_tracking_progress(
     The CloudEvent are provided to the tracker via mocking an Ensemble
     Evaluator Monitor.
 
-    All events leading up to the final update event and end event, are
-    discarded. The test asserts that the state of the world is correct only for
-    the final update event."""
+    PartialSnapshots allow realizations to progress, while iterating "iter" in
+    CloudEvents allows phases to progress. Such progress should happen
+    when events are yielded by the tracker. This combined progress is tested.
+
+    The final update event and end event is also tested."""
+
     if issubclass(run_model, ERT3RunModel):
         brm = run_model()
     else:
@@ -333,9 +395,9 @@ def test_tracking_progress(
             setattr(brm, attr, val)
         tracker_gen = tracker.track()
         update_event = None
-        for _ in range(len(monitor_events)):
+        for i in range(len(monitor_events)):
             update_event = next(tracker_gen)
+            assert update_event.progress == expected_progress[i]
         assert isinstance(update_event, SnapshotUpdateEvent)
-        assert update_event.progress == expected_progress
         brm._phase = brm._phase_count
         assert isinstance(next(tracker_gen), EndEvent)
