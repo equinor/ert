@@ -16,13 +16,15 @@
    for more details.
 */
 
+#include <optional>
+#include <mutex>
+#include <thread>
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <pthread.h>
 
 #include <ert/util/util.hpp>
 #include <ert/res_util/arg_pack.hpp>
@@ -34,7 +36,7 @@ struct rsh_job_struct {
     UTIL_TYPE_ID_DECLARATION;
     bool active; /* Means that it allocated - not really in use */
     job_status_type status;
-    pthread_t run_thread;
+    std::optional<std::thread> run_thread;
     const char *host_name; /* Currently not set */
     char *run_path;
 };
@@ -43,7 +45,7 @@ typedef struct {
     char *host_name;
     int max_running; /* How many can the host handle. */
     int running; /* How many are currently running on the host (goverened by this driver instance that is). */
-    pthread_mutex_t host_mutex;
+    std::mutex host_mutex;
 } rsh_host_type;
 
 #define RSH_DRIVER_TYPE_ID 44963256
@@ -51,8 +53,7 @@ typedef struct {
 
 struct rsh_driver_struct {
     UTIL_TYPE_ID_DECLARATION;
-    pthread_mutex_t submit_lock;
-    pthread_attr_t thread_attr;
+    std::mutex submit_lock;
     char *rsh_command;
     int num_hosts;
     int last_host_index;
@@ -60,18 +61,17 @@ struct rsh_driver_struct {
     hash_type *__host_hash; /* Redundancy ... */
 };
 
-static UTIL_SAFE_CAST_FUNCTION_CONST(rsh_driver, RSH_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(
-    rsh_driver,
-    RSH_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(rsh_job, RSH_JOB_TYPE_ID)
+static UTIL_SAFE_CAST_FUNCTION_CONST(rsh_driver, RSH_DRIVER_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(rsh_driver, RSH_DRIVER_TYPE_ID);
+static UTIL_SAFE_CAST_FUNCTION(rsh_job, RSH_JOB_TYPE_ID);
 
-    /*
+/*
    If the host is for some reason not available, NULL should be
    returned. Will also return NULL if some funny guy tries to allocate
    with max_running <= 0.
 */
 
-    static rsh_host_type *rsh_host_alloc(const char *host_name,
-                                         int max_running) {
+static rsh_host_type *rsh_host_alloc(const char *host_name, int max_running) {
     if (max_running > 0) {
         struct addrinfo *result;
         if (getaddrinfo(host_name, NULL, NULL, &result) == 0) {
@@ -80,7 +80,6 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(rsh_driver, RSH_DRIVER_TYPE_ID) static UTIL
             host->host_name = util_alloc_string_copy(host_name);
             host->max_running = max_running;
             host->running = 0;
-            pthread_mutex_init(&host->host_mutex, NULL);
 
             freeaddrinfo(result);
             return host;
@@ -101,7 +100,7 @@ static void rsh_host_free(rsh_host_type *rsh_host) {
 static bool rsh_host_available(rsh_host_type *rsh_host) {
     bool available;
 
-    pthread_mutex_lock(&rsh_host->host_mutex);
+    std::lock_guard guard{rsh_host->host_mutex};
     {
         available = false;
         if ((rsh_host->max_running - rsh_host->running) >
@@ -110,7 +109,6 @@ static bool rsh_host_available(rsh_host_type *rsh_host) {
             rsh_host->running++;
         }
     }
-    pthread_mutex_unlock(&rsh_host->host_mutex);
 
     return available;
 }
@@ -138,35 +136,13 @@ static void rsh_host_submit_job(rsh_host_type *rsh_host, rsh_job_type *job,
                         NULL); /* This call is blocking. */
     job->status = JOB_QUEUE_DONE;
 
-    pthread_mutex_lock(&rsh_host->host_mutex);
+    std::lock_guard guard{rsh_host->host_mutex};
     rsh_host->running--;
-    pthread_mutex_unlock(&rsh_host->host_mutex);
     free(argv);
 }
 
-/*
-  static const char * rsh_host_get_hostname(const rsh_host_type * host) { return host->host_name; }
-*/
-
-static void *rsh_host_submit_job__(void *__arg_pack) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg_pack);
-    char *rsh_cmd = (char *)arg_pack_iget_ptr(arg_pack, 0);
-    rsh_host_type *rsh_host = (rsh_host_type *)arg_pack_iget_ptr(arg_pack, 1);
-    char *submit_cmd = (char *)arg_pack_iget_ptr(arg_pack, 2);
-    int num_cpu = arg_pack_iget_int(arg_pack, 3);
-    int argc = arg_pack_iget_int(arg_pack, 4);
-    const char **argv = (const char **)arg_pack_iget_ptr(arg_pack, 5);
-    rsh_job_type *job = (rsh_job_type *)arg_pack_iget_ptr(arg_pack, 6);
-
-    rsh_host_submit_job(rsh_host, job, rsh_cmd, submit_cmd, num_cpu, argc,
-                        argv);
-    pthread_exit(NULL);
-    arg_pack_free(arg_pack);
-}
-
 rsh_job_type *rsh_job_alloc(const char *run_path) {
-    rsh_job_type *job;
-    job = (rsh_job_type *)util_malloc(sizeof *job);
+    rsh_job_type *job = new rsh_job_type;
     job->active = false;
     job->status = JOB_QUEUE_WAITING;
     job->run_path = util_alloc_string_copy(run_path);
@@ -176,7 +152,7 @@ rsh_job_type *rsh_job_alloc(const char *run_path) {
 
 void rsh_job_free(rsh_job_type *job) {
     free(job->run_path);
-    free(job);
+    delete job;
 }
 
 job_status_type rsh_driver_get_job_status(void *__driver, void *__job) {
@@ -205,7 +181,7 @@ void rsh_driver_free_job(void *__job) {
 void rsh_driver_kill_job(void *__driver, void *__job) {
     rsh_job_type *job = rsh_job_safe_cast(__job);
     if (job->active)
-        pthread_cancel(job->run_thread);
+        pthread_cancel(job->run_thread->native_handle());
     rsh_job_free(job);
 }
 
@@ -220,7 +196,7 @@ void *rsh_driver_submit_job(void *__driver, const char *submit_cmd,
         /*
        command is freed in the start_routine() function
     */
-        pthread_mutex_lock(&driver->submit_lock);
+        std::lock_guard guard{driver->submit_lock};
         {
             rsh_host_type *host = NULL;
             int ihost;
@@ -243,34 +219,17 @@ void *rsh_driver_submit_job(void *__driver, const char *submit_cmd,
 
             if (host != NULL) {
                 /* A host is available */
-                arg_pack_type *arg_pack =
-                    arg_pack_alloc(); /* The arg_pack is freed() in the rsh_host_submit_job__() function.
-                                                          freeing it here is dangerous, because we might free it before the
-                                                          thread-called function is finished with it. */
-
                 job = rsh_job_alloc(run_path);
 
-                arg_pack_append_ptr(arg_pack, driver->rsh_command);
-                arg_pack_append_ptr(arg_pack, host);
-                arg_pack_append_ptr(arg_pack, (char *)submit_cmd);
-                arg_pack_append_int(arg_pack, num_cpu);
-                arg_pack_append_int(arg_pack, argc);
-                arg_pack_append_ptr(arg_pack, argv);
-                arg_pack_append_ptr(arg_pack, job);
-
-                {
-                    int pthread_return_value =
-                        pthread_create(&job->run_thread, &driver->thread_attr,
-                                       rsh_host_submit_job__, arg_pack);
-                    if (pthread_return_value != 0)
-                        util_abort("%s failed to create thread ERROR:%d  \n",
-                                   __func__, pthread_return_value);
-                }
+                job->run_thread = std::thread{[=] {
+                    rsh_host_submit_job(host, job, driver->rsh_command,
+                                        submit_cmd, num_cpu, argc, argv);
+                }};
+                job->run_thread->detach();
                 job->status = JOB_QUEUE_RUNNING;
                 job->active = true;
             }
         }
-        pthread_mutex_unlock(&driver->submit_lock);
     }
     return job;
 }
@@ -288,7 +247,6 @@ void rsh_driver_clear_host_list(rsh_driver_type *driver) {
 
 void rsh_driver_free(rsh_driver_type *driver) {
     rsh_driver_clear_host_list(driver);
-    pthread_attr_destroy(&driver->thread_attr);
     free(driver->rsh_command);
     hash_free(driver->__host_hash);
     free(driver);
@@ -324,10 +282,6 @@ void *rsh_driver_alloc() {
     rsh_driver_type *rsh_driver =
         (rsh_driver_type *)util_malloc(sizeof *rsh_driver);
     UTIL_TYPE_ID_INIT(rsh_driver, RSH_DRIVER_TYPE_ID);
-    pthread_mutex_init(&rsh_driver->submit_lock, NULL);
-    pthread_attr_init(&rsh_driver->thread_attr);
-    pthread_attr_setdetachstate(&rsh_driver->thread_attr,
-                                PTHREAD_CREATE_DETACHED);
 
     /*
       To simplify the Python wrapper it is possible to pass in NULL as

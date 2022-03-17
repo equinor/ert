@@ -16,13 +16,15 @@
    for more details.
 */
 
+#include <optional>
+#include <thread>
+#include <mutex>
+
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <pthread.h>
 
 #include <ert/util/util.hpp>
-#include <ert/res_util/arg_pack.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/local_driver.hpp>
@@ -30,31 +32,18 @@
 typedef struct local_job_struct local_job_type;
 
 struct local_job_struct {
-    UTIL_TYPE_ID_DECLARATION;
     bool active;
     job_status_type status;
-    pthread_t run_thread;
+    std::optional<std::thread> run_thread;
     pid_t child_process;
 };
 
-#define LOCAL_DRIVER_TYPE_ID 66196305
-#define LOCAL_JOB_TYPE_ID 63056619
-
 struct local_driver_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    pthread_attr_t thread_attr;
-    pthread_mutex_t submit_lock;
+    std::mutex submit_lock;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(
-    local_driver,
-    LOCAL_DRIVER_TYPE_ID) static UTIL_SAFE_CAST_FUNCTION(local_job,
-                                                         LOCAL_JOB_TYPE_ID)
-
-    static local_job_type *local_job_alloc() {
-    local_job_type *job;
-    job = (local_job_type *)util_malloc(sizeof *job);
-    UTIL_TYPE_ID_INIT(job, LOCAL_JOB_TYPE_ID);
+static local_job_type *local_job_alloc() {
+    local_job_type *job = new local_job_type;
     job->active = false;
     job->status = JOB_QUEUE_WAITING;
     return job;
@@ -65,19 +54,19 @@ job_status_type local_driver_get_job_status(void *__driver, void *__job) {
         /* The job has not been registered at all ... */
         return JOB_QUEUE_NOT_ACTIVE;
     else {
-        local_job_type *job = local_job_safe_cast(__job);
+        local_job_type *job = reinterpret_cast<local_job_type *>(__job);
         return job->status;
     }
 }
 
 void local_driver_free_job(void *__job) {
-    local_job_type *job = local_job_safe_cast(__job);
+    local_job_type *job = reinterpret_cast<local_job_type *>(__job);
     if (!job->active)
         free(job);
 }
 
 void local_driver_kill_job(void *__driver, void *__job) {
-    local_job_type *job = local_job_safe_cast(__job);
+    local_job_type *job = reinterpret_cast<local_job_type *>(__job);
     if (job->child_process > 0)
         kill(job->child_process, SIGTERM);
 }
@@ -88,93 +77,52 @@ void local_driver_kill_job(void *__driver, void *__job) {
   while the external process is running.
 */
 
-void *submit_job_thread__(void *__arg) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg);
-    const char *executable = (const char *)arg_pack_iget_const_ptr(arg_pack, 0);
-    /*
-    The arg_pack contains a run_path field as the second argument,
-    it has therefore been left here as a comment:
+void submit_job_thread(const char *executable, int argc, char **argv,
+                       local_job_type *job) {
+    int wait_status;
+    job->child_process =
+        util_spawn(executable, argc, (const char **)argv, NULL, NULL);
+    util_free_stringlist(argv, argc);
+    waitpid(job->child_process, &wait_status, 0);
 
-    const char * run_path    = arg_pack_iget_const_ptr(arg_pack , 1);
-  */
-    int argc = arg_pack_iget_int(arg_pack, 2);
-    char **argv = (char **)arg_pack_iget_ptr(arg_pack, 3);
-    local_job_type *job = (local_job_type *)arg_pack_iget_ptr(arg_pack, 4);
-    {
-        int wait_status;
-        job->child_process =
-            util_spawn(executable, argc, (const char **)argv, NULL, NULL);
-        util_free_stringlist(argv, argc);
-        arg_pack_free(arg_pack);
-        waitpid(job->child_process, &wait_status, 0);
-
-        job->active = false;
-        job->status = JOB_QUEUE_EXIT;
-        if (WIFEXITED(wait_status))
-            if (WEXITSTATUS(wait_status) == 0)
-                job->status = JOB_QUEUE_DONE;
-    }
-    return NULL;
+    job->active = false;
+    job->status = JOB_QUEUE_EXIT;
+    if (WIFEXITED(wait_status))
+        if (WEXITSTATUS(wait_status) == 0)
+            job->status = JOB_QUEUE_DONE;
 }
 
 void *local_driver_submit_job(void *__driver, const char *submit_cmd,
                               int num_cpu, /* Ignored */
                               const char *run_path, const char *job_name,
                               int argc, const char **argv) {
-    local_driver_type *driver = local_driver_safe_cast(__driver);
+    local_driver_type *driver = reinterpret_cast<local_driver_type *>(__driver);
     {
         local_job_type *job = local_job_alloc();
-        arg_pack_type *arg_pack = arg_pack_alloc();
-        arg_pack_append_const_ptr(arg_pack, submit_cmd);
-        arg_pack_append_const_ptr(arg_pack, run_path);
-        arg_pack_append_int(arg_pack, argc);
-        arg_pack_append_ptr(
-            arg_pack,
-            util_alloc_stringlist_copy(
-                argv,
-                argc)); /* Due to conflict with threads and python GC we take a local copy. */
-        arg_pack_append_ptr(arg_pack, job);
 
-        pthread_mutex_lock(&driver->submit_lock);
+        auto argv_copy = util_alloc_stringlist_copy(argv, argc);
+
+        std::lock_guard guard{driver->submit_lock};
         job->active = true;
         job->status = JOB_QUEUE_RUNNING;
 
-        if (pthread_create(&job->run_thread, &driver->thread_attr,
-                           submit_job_thread__, arg_pack) != 0)
-            util_abort("%s: failed to create run thread - aborting \n",
-                       __func__);
+        job->run_thread = std::thread{
+            [=] { submit_job_thread(submit_cmd, argc, argv_copy, job); }};
+        job->run_thread->detach();
 
-        pthread_mutex_unlock(&driver->submit_lock);
         return job;
     }
 }
 
-void local_driver_free(local_driver_type *driver) {
-    pthread_attr_destroy(&driver->thread_attr);
-    free(driver);
-    driver = NULL;
-}
+void local_driver_free(local_driver_type *driver) { delete driver; }
 
 void local_driver_free__(void *__driver) {
-    local_driver_type *driver = local_driver_safe_cast(__driver);
+    local_driver_type *driver = reinterpret_cast<local_driver_type *>(__driver);
     local_driver_free(driver);
 }
 
-void *local_driver_alloc() {
-    local_driver_type *local_driver =
-        (local_driver_type *)util_malloc(sizeof *local_driver);
-    UTIL_TYPE_ID_INIT(local_driver, LOCAL_DRIVER_TYPE_ID);
-    pthread_mutex_init(&local_driver->submit_lock, NULL);
-    pthread_attr_init(&local_driver->thread_attr);
-    pthread_attr_setdetachstate(&local_driver->thread_attr,
-                                PTHREAD_CREATE_DETACHED);
-
-    return local_driver;
-}
+void *local_driver_alloc() { return new local_driver_type; }
 
 void local_driver_init_option_list(stringlist_type *option_list) {
     //No options specific for local driver; do nothing
 }
-
-#undef LOCAL_DRIVER_ID
-#undef LOCAL_JOB_ID

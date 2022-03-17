@@ -16,10 +16,6 @@
    for more details.
 */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE /* Must define this to get access to pthread_rwlock_t */
-#endif
-
 #include <algorithm>
 #include <vector>
 #include <future>
@@ -29,11 +25,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
-#include <ert/res_util/arg_pack.hpp>
 #include <ert/res_util/res_portability.hpp>
 #include <ert/logging.hpp>
 
@@ -234,7 +228,7 @@ struct job_queue_struct {
         stop_time; /* A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
     time_t progress_timestamp; /* Global timestamp for last progress update. */
     unsigned long usleep_time; /* The sleep time before checking for updates. */
-    pthread_mutex_t
+    std::mutex
         run_mutex; /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
 
     /* This holds future results of currently running callbacks */
@@ -935,11 +929,10 @@ static void handle_run_jobs(job_queue_type *queue, int num_total_run,
 
 void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
                         bool verbose) {
-
-    int trylock = pthread_mutex_trylock(&queue->run_mutex);
-    if (trylock != 0)
+    if (!queue->run_mutex.try_lock())
         util_abort("%s: another thread is already running the queue_manager\n",
                    __func__);
+    std::lock_guard guard{queue->run_mutex, std::adopt_lock};
 
     if (!queue->user_exit)
         handle_run_jobs(queue, num_total_run, verbose);
@@ -956,32 +949,6 @@ void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
   */
     queue->open = false;
     queue->running = false;
-    pthread_mutex_unlock(&queue->run_mutex);
-}
-
-void *job_queue_run_jobs__(void *__arg_pack) {
-    arg_pack_type *arg_pack = arg_pack_safe_cast(__arg_pack);
-    job_queue_type *queue = (job_queue_type *)arg_pack_iget_ptr(arg_pack, 0);
-    int num_total_run = arg_pack_iget_int(arg_pack, 1);
-    bool verbose = arg_pack_iget_bool(arg_pack, 2);
-
-    job_queue_run_jobs(queue, num_total_run, verbose);
-    arg_pack_free(arg_pack);
-    return NULL;
-}
-
-void job_queue_start_manager_thread(job_queue_type *job_queue,
-                                    pthread_t *queue_thread, int job_size,
-                                    bool verbose) {
-
-    arg_pack_type *queue_args =
-        arg_pack_alloc(); /* This arg_pack will be freed() in the job_queue_run_jobs__() */
-    arg_pack_append_ptr(queue_args, job_queue);
-    arg_pack_append_int(queue_args, job_size);
-    arg_pack_append_bool(queue_args, verbose);
-
-    job_queue->running = true;
-    pthread_create(queue_thread, NULL, job_queue_run_jobs__, queue_args);
 }
 
 /*
@@ -1003,12 +970,10 @@ void job_queue_start_manager_thread(job_queue_type *job_queue,
 
 void job_queue_run_jobs_threaded(job_queue_type *queue, int num_total_run,
                                  bool verbose) {
-    pthread_t queue_thread;
-    job_queue_start_manager_thread(queue, &queue_thread, num_total_run,
-                                   verbose);
-    pthread_detach(
-        queue_thread); /* Signal that the thread resources should be cleaned up when
-                                                 the thread has exited. */
+    queue->running = true;
+    std::thread queue_thread{
+        [=] { job_queue_run_jobs(queue, num_total_run, verbose); }};
+    queue_thread.detach();
 }
 
 /*
@@ -1084,8 +1049,6 @@ job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
     queue->job_list = job_list_alloc();
     queue->status = job_queue_status_alloc();
     queue->progress_timestamp = time(NULL);
-
-    pthread_mutex_init(&queue->run_mutex, NULL);
 
     return queue;
 }
