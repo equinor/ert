@@ -49,7 +49,6 @@ namespace fs = std::filesystem;
 */
 
 #define NODE_IN_USE_BYTE 85 /* Binary(85)  =  01010101 */
-#define NODE_FREE_BYTE 170  /* Binary(170) =  10101010 */
 #define WRITE_START__ 77162
 
 static const int NODE_END_TAG =
@@ -60,24 +59,11 @@ static const int NODE_WRITE_ACTIVE_END = 776512;
 typedef enum {
     NODE_IN_USE =
         1431655765, /* NODE_IN_USE_BYTE * ( 1 + 256 + 256**2 + 256**3) => Binary 01010101010101010101010101010101 */
-    NODE_FREE =
-        -1431655766, /* NODE_FREE_BYTE   * ( 1 + 256 + 256**2 + 256**3) => Binary 10101010101010101010101010101010 */
     NODE_WRITE_ACTIVE = WRITE_START__, /* This */
     NODE_INVALID = 13 /* This should __never__ be written to disk */
 } node_status_type;
 
-/*
-   The free_node_struct is used to implement a doubly linked list of
-   free nodes; i.e. holes in the file which are available for other use.
-*/
 typedef struct file_node_struct file_node_type;
-typedef struct free_node_struct free_node_type;
-
-struct free_node_struct {
-    free_node_type *next;
-    free_node_type *prev;
-    file_node_type *file_node;
-};
 
 /*
   Datastructure representing one 'block' in the datafile. The block
@@ -94,12 +80,6 @@ struct file_node_struct {
     node_status_type
         status; /* This should be: NODE_IN_USE | NODE_FREE; in addition the disk can have NODE_WRITE_ACTIVE for incomplete writes. */
 };
-
-/*
-   data_size   : manipulated in block_fs_fwrite__() and block_fs_insert_free_node().
-   status      : manipulated in block_fs_fwrite__() and block_fs_unlink_file__();
-   data_offset : manipulated in block_fs_fwrite__() and block_fs_insert_free_node().
-*/
 
 struct block_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -123,9 +103,7 @@ struct block_fs_struct {
     pthread_mutex_t io_lock;  /* Lock held during fread of the data file. */
     pthread_rwlock_t rw_lock; /* Read-write lock during all access to the fs. */
 
-    int num_free_nodes;
     hash_type *index;
-    free_node_type *free_nodes;
     vector_type *
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
                                        only contain pointers to the objects stored in this vector. */
@@ -193,7 +171,7 @@ static file_node_type *file_node_fread_alloc(FILE *stream, char **key) {
     node_status_type status;
     long int node_offset = ftell(stream);
     if (fread(&status, sizeof status, 1, stream) == 1) {
-        if ((status == NODE_IN_USE) || (status == NODE_FREE)) {
+        if (status == NODE_IN_USE) {
             int node_size;
             if (status == NODE_IN_USE)
                 *key = util_fread_realloc_string(*key, stream);
@@ -311,29 +289,6 @@ static file_node_type *file_node_index_buffer_fread_alloc(buffer_type *buffer) {
     }
 }
 
-static free_node_type *free_node_alloc(file_node_type *file_node) {
-    free_node_type *free_node =
-        (free_node_type *)util_malloc(sizeof *free_node);
-
-    free_node->file_node = file_node;
-    free_node->next = NULL;
-    free_node->prev = NULL;
-
-    return free_node;
-}
-
-static void free_node_free(free_node_type *free_node) { free(free_node); }
-
-static void free_node_free_list(free_node_type *head) {
-    free_node_type *current = head;
-    free_node_type *next;
-    while (current != NULL) {
-        next = current->next;
-        free_node_free(current);
-        current = next;
-    }
-}
-
 static inline void block_fs_aquire_wlock(block_fs_type *block_fs) {
     if (block_fs->data_owner)
         pthread_rwlock_wrlock(&block_fs->rw_lock);
@@ -360,85 +315,6 @@ static void block_fs_insert_index_node(block_fs_type *block_fs,
                                        const char *filename,
                                        const file_node_type *file_node) {
     hash_insert_ref(block_fs->index, filename, file_node);
-}
-
-/*
-   Looks through the list of free nodes - looking for a node with
-   offset 'node_offset'. If no such node can be found, NULL will be
-   returned.
-*/
-
-static file_node_type *block_fs_lookup_free_node(const block_fs_type *block_fs,
-                                                 long int node_offset) {
-    free_node_type *current = block_fs->free_nodes;
-    while (current != NULL && (current->file_node->node_offset != node_offset))
-        current = current->next;
-
-    if (current == NULL)
-        return NULL;
-    else
-        return current->file_node;
-}
-
-/*
-   Inserts a file_node instance in the linked list of free nodes. The
-   list is sorted in order of increasing node size.
-*/
-
-static void block_fs_insert_free_node(block_fs_type *block_fs,
-                                      file_node_type *file_node) {
-    free_node_type *_new = free_node_alloc(file_node);
-
-    /* Special case: starting with a empty list. */
-    if (block_fs->free_nodes == NULL) {
-        _new->next = NULL;
-        _new->prev = NULL;
-        block_fs->free_nodes = _new;
-    } else {
-        free_node_type *current = block_fs->free_nodes;
-        free_node_type *prev = NULL;
-
-        while (current != NULL &&
-               (current->file_node->node_size < file_node->node_size)) {
-            prev = current;
-            current = current->next;
-        }
-
-        if (current == NULL) {
-            /*
-         The new node should be added at the end of the list - i.e. it
-         will not have a next node.
-      */
-            _new->next = NULL;
-            _new->prev = prev;
-            prev->next = _new;
-        } else {
-            /*
-        The new node should be placed BEFORE the current node.
-      */
-            if (prev == NULL) {
-                /* The new node should become the new list head. */
-                block_fs->free_nodes = _new;
-                _new->prev = NULL;
-            } else {
-                prev->next = _new;
-                _new->prev = prev;
-            }
-            current->prev = _new;
-            _new->next = current;
-        }
-        if (_new != NULL)
-            if (_new->next == _new)
-                util_abort("%s: broken LIST1 \n", __func__);
-        if (prev != NULL)
-            if (prev->next == prev)
-                util_abort("%s: broken LIST2 \n", __func__);
-        if (current != NULL)
-            if (current->next == current)
-                util_abort("%s: Broken LIST3 \n", __func__);
-    }
-    block_fs->num_free_nodes++;
-    block_fs->free_size += _new->file_node->node_size;
 }
 
 /*
@@ -478,8 +354,6 @@ static void block_fs_set_filenames(block_fs_type *block_fs) {
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
     block_fs->file_nodes = vector_alloc_new();
-    block_fs->free_nodes = NULL;
-    block_fs->num_free_nodes = 0;
     block_fs->data_file_size = 0;
     block_fs->free_size = 0;
     block_fs_set_filenames(block_fs);
@@ -573,7 +447,7 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
     int status;
     while (true) {
         if (fread(&byte, sizeof byte, 1, block_fs->data_stream) == 1) {
-            if (byte == NODE_IN_USE_BYTE || byte == NODE_FREE_BYTE) {
+            if (byte == NODE_IN_USE_BYTE) {
                 long int pos = ftell(block_fs->data_stream);
                 /*
            OK - we found one interesting byte; let us try to read the
@@ -582,7 +456,7 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
                 fseek__(block_fs->data_stream, -1, SEEK_CUR);
                 if (fread(&status, sizeof status, 1, block_fs->data_stream) ==
                     1) {
-                    if (status == NODE_IN_USE || status == NODE_FREE_BYTE) {
+                    if (status == NODE_IN_USE) {
                         /*
                OK - we have found a valid identifier. We reposition to
                the start of this valid status id and return true.
@@ -673,15 +547,8 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
                     file_node->node_size = node_end - node_offset;
                 }
 
-                file_node->status = NODE_FREE;
                 file_node->data_size = 0;
                 file_node->data_offset = 0;
-                if (block_fs_lookup_free_node(block_fs, node_offset) == NULL) {
-                    /* The node is already on the free list - we just change some metadata. */
-                    new_node = true;
-                    block_fs_install_node(block_fs, file_node);
-                    block_fs_insert_free_node(block_fs, file_node);
-                }
 
                 block_fs_fseek(block_fs, node_offset);
                 file_node_fwrite(file_node, NULL, block_fs->data_stream);
@@ -731,9 +598,6 @@ static void block_fs_build_index(block_fs_type *block_fs,
                     case (NODE_IN_USE):
                         block_fs_insert_index_node(block_fs, filename,
                                                    file_node);
-                        break;
-                    case (NODE_FREE):
-                        block_fs_insert_free_node(block_fs, file_node);
                         break;
                     default:
                         util_abort("%s: node status flag:%d not recognized - "
@@ -790,70 +654,24 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
     return block_fs;
 }
 
-static void block_fs_unlink_free_node(block_fs_type *block_fs,
-                                      free_node_type *node) {
-    free_node_type *prev = node->prev;
-    free_node_type *next = node->next;
-
-    if (prev == NULL)
-        /* Special case: popping off the head of the list. */
-        block_fs->free_nodes = next;
-    else
-        prev->next = next;
-
-    if (next != NULL)
-        next->prev = prev;
-
-    block_fs->num_free_nodes--;
-    block_fs->free_size -= node->file_node->node_size;
-    free_node_free(node);
-}
-
-/*
-   This function first checks the free nodes if any of them can be
-   used, otherwise a new node is created.
-*/
-
 static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
                                              const char *filename,
                                              size_t min_size) {
+    long int offset;
+    int node_size;
+    file_node_type *new_node;
 
-    free_node_type *current = block_fs->free_nodes;
+    // round min_size up to multiple of block_size
+    const size_t block_size = 64;
+    node_size = (min_size + block_size - 1) / block_size * block_size;
 
-    while (current != NULL && (current->file_node->node_size < min_size)) {
-        current = current->next;
-    }
-    if (current != NULL) {
-        /*
-       Current points to a file_node which can be used. Before we return current we must:
+    /* Must lock the total size here ... */
+    offset = block_fs->data_file_size;
+    new_node = file_node_alloc(NODE_IN_USE, offset, node_size);
+    block_fs_install_node(
+        block_fs, new_node); /* <- This will update the total file size. */
 
-       1. Remove current from the free_nodes list.
-       2. Add current to the index hash.
-
-    */
-        file_node_type *file_node = current->file_node;
-        block_fs_unlink_free_node(block_fs, current);
-
-        return file_node;
-    } else {
-        /* No usable nodes in the free nodes list - must allocate a brand new one. */
-
-        long int offset;
-        int node_size;
-        file_node_type *new_node;
-
-        // round min_size up to multiple of block_size
-        const size_t block_size = 64;
-        node_size = (min_size + block_size - 1) / block_size * block_size;
-
-        /* Must lock the total size here ... */
-        offset = block_fs->data_file_size;
-        new_node = file_node_alloc(NODE_IN_USE, offset, node_size);
-        block_fs_install_node(
-            block_fs, new_node); /* <- This will update the total file size. */
-
-        return new_node;
-    }
+    return new_node;
 }
 
 bool block_fs_has_file__(const block_fs_type *block_fs, const char *filename) {
@@ -866,23 +684,6 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
     { has_file = block_fs_has_file__(block_fs, filename); }
     block_fs_release_rwlock(block_fs);
     return has_file;
-}
-
-static void block_fs_unlink_file__(block_fs_type *block_fs,
-                                   const char *filename) {
-    file_node_type *node =
-        (file_node_type *)hash_pop(block_fs->index, filename);
-
-    node->status = NODE_FREE;
-    node->data_offset = 0;
-    node->data_size = 0;
-    if (block_fs->data_stream != NULL) {
-        fsync(block_fs->data_fd);
-        block_fs_fseek(block_fs, node->node_offset);
-        file_node_fwrite(node, NULL, block_fs->data_stream);
-        fsync(block_fs->data_fd);
-    }
-    block_fs_insert_free_node(block_fs, node);
 }
 
 /*
@@ -953,16 +754,6 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
     if (block_fs_has_file__(block_fs, filename)) {
         file_node = (file_node_type *)hash_get(block_fs->index, filename);
         if (file_node->node_size < min_size) {
-            /*
-         The current node is too small for the new content:
-
-         1. Remove the existing node, from the index and insert it
-         into the free_nodes list.
-
-         2. Get a new node.
-
-      */
-            block_fs_unlink_file__(block_fs, filename);
             file_node = block_fs_get_new_node(block_fs, filename, min_size);
         } else
             new_node = false; /* We are reusing the existing node. */
@@ -1034,7 +825,6 @@ void block_fs_close(block_fs_type *block_fs) {
     free(block_fs->path);
     free(block_fs->mount_file);
 
-    free_node_free_list(block_fs->free_nodes);
     hash_free(block_fs->index);
     vector_free(block_fs->file_nodes);
     free(block_fs);
