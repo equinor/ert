@@ -13,6 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import os
+
 from qtpy.QtWidgets import QWidget, QFormLayout, QComboBox, QTextEdit
 
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
@@ -60,9 +62,7 @@ class LoadResultsPanel(QWidget):
         self._active_realizations_field.setValidator(RangeStringArgument())
         layout.addRow("Realizations to load:", self._active_realizations_field)
 
-        iterations_count = LoadResultsModel.getIterationCount(self.facade.run_path)
-
-        self._iterations_model = ValueModel(iterations_count)
+        self._iterations_model = ValueModel(self.iteration_count)
         self._iterations_field = StringBox(
             self._iterations_model, "load_results_manually/iterations"
         )
@@ -70,6 +70,24 @@ class LoadResultsPanel(QWidget):
         layout.addRow("Iteration to load:", self._iterations_field)
 
         self.setLayout(layout)
+
+    @property
+    def iteration_count(self):
+        """@rtype: int"""
+        try:
+            results = self.facade.run_path % (0, 0)
+        except TypeError:
+            return 0
+
+        iteration = 0
+        valid_directory = True
+        while valid_directory:
+            formatted = self.facade.run_path % (0, iteration + 1)
+            valid_directory = os.path.exists(formatted)
+            if valid_directory:
+                iteration += 1
+
+        return iteration
 
     def readCurrentRunPath(self):
         current_case = self.facade.get_current_case_name()
@@ -93,9 +111,10 @@ class LoadResultsPanel(QWidget):
                 % (iteration, e)
             )
             return False
-        loaded = LoadResultsModel.loadResults(
-            self.facade._enkf_main, selected_case, realizations, iteration
+        loaded = self.facade.load_from_forward_model(
+            selected_case, realizations, iteration
         )
+
         if loaded > 0:
             print("Successfully loaded %d realisations." % loaded)
         else:

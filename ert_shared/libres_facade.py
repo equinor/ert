@@ -1,5 +1,7 @@
 import os
 import logging
+
+from ecl.util.util import BoolVector
 from pandas import DataFrame
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
@@ -75,6 +77,12 @@ class LibresFacade(object):
     @property
     def run_path(self):
         return self._enkf_main.getModelConfig().getRunpathAsString()
+
+    def load_from_forward_model(
+        self, case: str, realisations: BoolVector, iteration: int
+    ) -> int:
+        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case)
+        return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)
 
     def get_observations(self):
         return self._enkf_main.getObservations()
