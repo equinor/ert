@@ -95,6 +95,7 @@ def make_ensemble_builder(queue_config):
                         'if __name__ == "__main__":\n'
                         f'    print("stdout from {job_index}")\n'
                         f"    time.sleep({job_sleep})\n"
+                        f"    with open('status.txt', 'a'): pass\n"
                     )
                 mode = os.stat(ext_job_exec).st_mode
                 mode |= stat.S_IXUSR | stat.S_IXGRP

@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 import pytest
@@ -31,6 +32,10 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
         assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
         assert evaluator._ensemble.get_successful_realizations() == num_reals
 
+        # realisations should finish, each creating a status-file
+        for i in range(num_reals):
+            assert os.path.isfile(f"real_{i}/status.txt")
+
 
 @pytest.mark.timeout(60)
 def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
@@ -53,6 +58,10 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
 
         assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_CANCELLED
 
+        # realisations should not finish, thus not creating a status-file
+        for i in range(num_reals):
+            assert not os.path.isfile(f"real_{i}/status.txt")
+
 
 @pytest.mark.timeout(60)
 def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
@@ -74,3 +83,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
                     ]:
                         monitor.signal_done()
             assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
+
+        # realisations should not finish, thus not creating a status-file
+        for i in range(num_reals):
+            assert not os.path.isfile(f"real_{i}/status.txt")
