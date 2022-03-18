@@ -41,7 +41,7 @@ class CaseSelector(QComboBox):
             return [
                 case
                 for case in getAllCases(self.facade)
-                if self.facade._enkf_main.getEnkfFsManager().isCaseInitialized(case)
+                if self.facade.case_initialized(case)
             ]
         else:
             return getAllCases(self.facade)
