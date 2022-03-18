@@ -62,6 +62,9 @@ class LibresFacade(object):
 
         return realizations
 
+    def case_initialized(self, case):
+        return self._enkf_main.getEnkfFsManager().isCaseInitialized(case)
+
     def get_queue_config(self):
         return self._enkf_main.get_queue_config()
 
