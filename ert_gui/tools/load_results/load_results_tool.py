@@ -16,7 +16,6 @@
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
-from ert_gui.tools.load_results import LoadResultsModel
 from ert_gui.tools.load_results import LoadResultsPanel
 
 
@@ -30,7 +29,7 @@ class LoadResultsTool(Tool):
         )
         self.__import_widget = None
         self.__dialog = None
-        self.setEnabled(LoadResultsModel.isValidRunPath(self.facade.run_path))
+        self.setEnabled(self.is_valid_run_path())
 
     def trigger(self):
         if self.__import_widget is None:
@@ -45,3 +44,13 @@ class LoadResultsTool(Tool):
     def load(self):
         self.__import_widget.load()
         self.__dialog.accept()
+
+    def is_valid_run_path(self) -> bool:
+        """A run path is considered valid if we can
+        insert realisation and iteration numbers"""
+        try:
+            self.facade.run_path % (0, 0)
+            self.facade.run_path % 0
+            return True
+        except TypeError:
+            return False
