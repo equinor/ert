@@ -42,7 +42,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
     num_reals = 10
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
-        ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=5).build()
+        ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=30).build()
         config = EvaluatorServerConfig(
             custom_port_range=custom_port_range, custom_host="127.0.0.1"
         )
