@@ -458,18 +458,17 @@ class JobQueue(BaseCClass):
                     if not self.is_active() or self.stopped:
                         break
             except asyncio.CancelledError:
-                if self.stopped:
-                    logger.debug(
-                        "observed that the queue had stopped after cancellation, stopping jobs..."
-                    )
-                    self.stop_jobs()
-                    logger.debug("jobs now stopped (after cancellation)")
+                self.kill_all_jobs()  # make available_capacity() return false
+                logger.debug("queue cancelled, stopping jobs...")
+                await self.stop_jobs_async()
+                logger.debug("jobs stopped, re-raising CancelledError")
                 raise
 
             if self.stopped:
                 logger.debug("observed that the queue had stopped, stopping jobs...")
                 await self.stop_jobs_async()
                 logger.debug("jobs now stopped")
+
             self.assert_complete()
             self._differ.transition(self.job_list)
             await JobQueue._publish_changes(ee_id, self._differ.snapshot(), websocket)
