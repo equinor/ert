@@ -196,8 +196,6 @@ class _LegacyEnsemble(_Ensemble):
         asyncio.set_event_loop(asyncio.new_event_loop())
         logger.debug("cancelling, waiting for wakeup...")
         self._allow_cancel.wait()
-        logger.debug("got wakeup, killing all jobs...")
-        self._job_queue.kill_all_jobs()
         logger.debug("cancelling futures...")
         if self._aggregate_future.cancelled():
             logger.debug("aggregate future was already cancelled")
