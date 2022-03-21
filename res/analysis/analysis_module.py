@@ -56,11 +56,6 @@ class AnalysisModule(BaseCClass):
             "description": "Decline of step Length in Gauss Newton Iteration",
         },
         "IES_INVERSION": {"type": int, "description": "Inversion algorithm"},
-        "IES_DEBUG": {
-            "type": bool,
-            "description": "Print extensive log for IES analysis steps",
-        },
-        "IES_LOGFILE": {"type": str, "description": "IES Log File"},
         "IES_AAPROJECTION": {
             "type": str,
             "description": "Include projection Y (A^+A) for n<N-1",
