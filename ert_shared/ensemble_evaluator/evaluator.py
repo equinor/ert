@@ -135,7 +135,7 @@ class EnsembleEvaluator:
     @asynccontextmanager
     async def count_dispatcher(self):
         if self._dispatchers_connected is None:
-            self._dispatchers_connected = asyncio.Queue(loop=self._loop)
+            self._dispatchers_connected = asyncio.Queue()
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()
