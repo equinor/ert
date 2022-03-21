@@ -62,7 +62,7 @@ class SyncWebsocketDuplexer:
     def _ensure_running(self):
         try:
             asyncio.run_coroutine_threadsafe(
-                asyncio.wait_for(self._connection, None, loop=self._loop),
+                asyncio.wait_for(self._connection, None),
                 loop=self._loop,
             ).result()
         except OSError:
@@ -107,7 +107,7 @@ class SyncWebsocketDuplexer:
                 try:
                     self._loop.call_soon_threadsafe(self._connection.cancel)
                     asyncio.run_coroutine_threadsafe(
-                        asyncio.wait_for(self._connection, None, loop=self._loop),
+                        asyncio.wait_for(self._connection, None),
                         loop=self._loop,
                     ).result()
                 except (OSError, asyncio.CancelledError, CancelledError):
