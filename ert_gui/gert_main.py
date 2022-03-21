@@ -30,6 +30,8 @@ from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools.export import ExportTool
 from ert_gui.tools.load_results import LoadResultsTool
+from ert_gui.tools.event_viewer import EventViewerTool
+from ert_gui.tools.event_viewer import GUILogHandler
 from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
@@ -126,6 +128,8 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     config_file = args.config
     window = GertMainWindow(config_file)
     window.setWidget(SimulationPanel(ert, notifier, config_file))
+    gui_log_handler = GUILogHandler()
+    logging.getLogger().addHandler(gui_log_handler)
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     window.addDock(
@@ -138,5 +142,6 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addTool(PluginsTool(plugin_handler, notifier))
     window.addTool(RunAnalysisTool(ert, notifier))
     window.addTool(LoadResultsTool(facade))
+    window.addTool(EventViewerTool(gui_log_handler))
     window.adjustSize()
     return window
