@@ -77,11 +77,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                         analysis_module_variables_model,
                     )
 
-                elif variable_type == str:
-                    spinner = self.createLineEdit(
-                        variable_name, variable_value, variable_type
-                    )
-
                 elif variable_type == int:
                     spinner = self.createSpinBox(
                         variable_name,
@@ -183,18 +178,6 @@ class AnalysisModuleVariablesPanel(QWidget):
         if variable_value is not None:
             spinner.setValue(variable_value)
         spinner.valueChanged.connect(
-            partial(self.valueChanged, variable_name, variable_type, spinner)
-        )
-        return spinner
-
-    def createLineEdit(self, variable_name, variable_value, variable_type):
-        spinner = QLineEdit()
-        spinner.setMinimumWidth(250)
-        if variable_value == "None":
-            spinner.setText("")
-        else:
-            spinner.setText(variable_value)
-        spinner.editingFinished.connect(
             partial(self.valueChanged, variable_name, variable_type, spinner)
         )
         return spinner
