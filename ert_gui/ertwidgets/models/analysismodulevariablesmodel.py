@@ -27,7 +27,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 1.00,
             "step": 0.1,
             "labelname": "Gauss Newton Maximum Steplength",
-            "pos": 0,
         },
         "IES_MIN_STEPLENGTH": {
             "type": float,
@@ -35,7 +34,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 1.00,
             "step": 0.1,
             "labelname": "Gauss Newton Minimum Steplength",
-            "pos": 1,
         },
         "IES_DEC_STEPLENGTH": {
             "type": float,
@@ -43,7 +41,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 10.00,
             "step": 0.1,
             "labelname": "Gauss Newton Steplength Decline",
-            "pos": 2,
         },
         "IES_INVERSION": {
             "type": int,
@@ -51,12 +48,10 @@ class AnalysisModuleVariablesModel(object):
             "max": 3,
             "step": 1,
             "labelname": "Inversion algorithm",
-            "pos": 3,
         },
         "IES_AAPROJECTION": {
             "type": bool,
             "labelname": "Include AA projection",
-            "pos": 11,
         },
         "ENKF_TRUNCATION": {
             "type": float,
@@ -64,7 +59,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 1,
             "step": 0.01,
             "labelname": "Singular value truncation",
-            "pos": 9,
         },
         "ENKF_SUBSPACE_DIMENSION": {
             "type": int,
@@ -72,7 +66,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 2147483647,
             "step": 1,
             "labelname": "Number of singular values",
-            "pos": 10,
         },
         "ENKF_NCOMP": {
             "type": int,
@@ -80,7 +73,6 @@ class AnalysisModuleVariablesModel(object):
             "max": 2147483647,
             "step": 1,
             "labelname": "Number of singular values",
-            "pos": 10,
         },
     }
 
@@ -113,10 +105,6 @@ class AnalysisModuleVariablesModel(object):
     @classmethod
     def getVariableLabelName(cls, name):
         return cls._VARIABLE_NAMES[name]["labelname"]
-
-    @classmethod
-    def getVariablePosition(cls, name):
-        return cls._VARIABLE_NAMES[name]["pos"]
 
     @classmethod
     def setVariableValue(
