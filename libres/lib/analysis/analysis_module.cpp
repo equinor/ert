@@ -185,6 +185,10 @@ static bool analysis_module_set_string(analysis_module_type *module,
             module->module_config->inversion(
                 ies::config::IES_INVERSION_SUBSPACE_RE);
 
+        else if (strcmp(var, ies::config::IES_LOGFILE_KEY) == 0)
+            logger->warning("The key {} is ignored",
+                            ies::config::IES_LOGFILE_KEY);
+
         else
             valid_set = false;
     } else
