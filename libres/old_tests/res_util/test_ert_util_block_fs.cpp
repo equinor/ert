@@ -29,19 +29,19 @@
 
 namespace fs = std::filesystem;
 
-void test_assert_util_abort(const char *function_name, void call_func(void *),
-                            void *arg);
-
-void violating_fwrite(void *arg) {
-    block_fs_type *bfs = block_fs_safe_cast(arg);
-    block_fs_fwrite_file(bfs, "name", NULL, 100);
-}
-
 void test_readonly() {
     ecl::util::TestArea ta("readonly");
     block_fs_type *bfs = block_fs_mount("test.mnt", true, false);
     test_assert_true(block_fs_is_readonly(bfs));
-    test_assert_util_abort("block_fs_aquire_wlock", violating_fwrite, bfs);
+
+    bool exception_caught{};
+    try {
+        block_fs_fwrite_file(bfs, "name", NULL, 100);
+    } catch (std::logic_error &) {
+        exception_caught = true;
+    }
+    test_assert_true(exception_caught);
+
     block_fs_close(bfs);
 }
 

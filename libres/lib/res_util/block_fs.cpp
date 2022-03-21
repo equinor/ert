@@ -19,8 +19,7 @@
 #include <filesystem>
 #include <optional>
 #include <vector>
-
-#include <pthread.h>
+#include <mutex>
 
 #include <fmt/format.h>
 
@@ -90,8 +89,7 @@ struct block_fs_struct {
 
     int lock_fd; /* The file descriptor for the lock_file. Set to -1 if we do not have write access. */
 
-    pthread_mutex_t io_lock;  /* Lock held during fread of the data file. */
-    pthread_rwlock_t rw_lock; /* Read-write lock during all access to the fs. */
+    mutable std::recursive_mutex mutex;
 
     std::unordered_map<std::string, file_node_type> index;
     bool data_owner;
@@ -126,7 +124,8 @@ static bool file_node_verify_end_tag(const file_node_type &file_node,
         return false;
 }
 
-static std::optional<file_node_type> file_node_fread_alloc(FILE *stream, char **key) {
+static std::optional<file_node_type> file_node_fread_alloc(FILE *stream,
+                                                           char **key) {
     node_status_type status;
     long int node_offset = ftell(stream);
     if (fread(&status, sizeof status, 1, stream) == 1) {
@@ -228,28 +227,6 @@ static file_node_type file_node_index_buffer_fread_alloc(buffer_type *buffer) {
     }
 }
 
-static inline void block_fs_aquire_wlock(block_fs_type *block_fs) {
-    if (block_fs->data_owner)
-        pthread_rwlock_wrlock(&block_fs->rw_lock);
-    else
-        util_abort(
-            "%s: tried to write to read only filesystem mounted at: %s \n",
-            __func__, block_fs->mount_file);
-}
-
-static inline void block_fs_release_rwlock(block_fs_type *block_fs) {
-    pthread_rwlock_unlock(&block_fs->rw_lock);
-}
-
-static inline void block_fs_aquire_rlock(block_fs_type *block_fs) {
-    pthread_rwlock_rdlock(&block_fs->rw_lock);
-    /*
-    We just assume that the user does NOT write to the filesystem
-    with another instance; in that case we will go out of sync;
-    and things will probably fail badly.
-  */
-}
-
 static void block_fs_set_filenames(block_fs_type *block_fs) {
     free(block_fs->data_file);
     free(block_fs->lock_file);
@@ -278,8 +255,6 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
 
     util_alloc_file_components(mount_file, &block_fs->path,
                                &block_fs->base_name, NULL);
-    pthread_mutex_init(&block_fs->io_lock, NULL);
-    pthread_rwlock_init(&block_fs->rw_lock, NULL);
     {
         FILE *stream = util_fopen(mount_file, "r");
         int id = util_fread_int(stream);
@@ -569,10 +544,8 @@ static file_node_type block_fs_get_new_node(block_fs_type *block_fs,
 }
 
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
-    bool has_file;
-    block_fs_aquire_rlock(block_fs);
-    has_file = block_fs->index.count(filename) > 0;
-    block_fs_release_rwlock(block_fs);
+    std::lock_guard guard{block_fs->mutex};
+    bool has_file = block_fs->index.count(filename) > 0;
     return has_file;
 }
 
@@ -636,7 +609,13 @@ static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
 
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t data_size) {
-    block_fs_aquire_wlock(block_fs);
+    if (!block_fs->data_owner)
+        throw std::logic_error(fmt::format(
+            "tried to write to read only filesystem mouunted at: {}",
+            block_fs->mount_file));
+
+    std::lock_guard guard{block_fs->mutex};
+
     bool new_node = true;
     size_t min_size = data_size + file_node_header_size(filename);
 
@@ -655,8 +634,6 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
         if (new_node)
             block_fs->index.emplace(filename, file_node);
     }
-
-    block_fs_release_rwlock(block_fs);
 }
 
 /*
@@ -665,21 +642,18 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
 
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer) {
-    block_fs_aquire_rlock(block_fs);
+    std::lock_guard guard{block_fs->mutex};
     {
         auto node = block_fs->index[filename];
 
         buffer_clear(buffer); /* Setting: content_size = 0; pos = 0;  */
 
-        pthread_mutex_lock(&block_fs->io_lock);
         block_fs_fseek_node_data(block_fs, node);
         buffer_stream_fread(buffer, node.data_size, block_fs->data_stream);
         //file_node_verify_end_tag( node , block_fs->data_stream );
-        pthread_mutex_unlock(&block_fs->io_lock);
 
         buffer_rewind(buffer); /* Setting: pos = 0; */
     }
-    block_fs_release_rwlock(block_fs);
 }
 
 /*
@@ -694,7 +668,7 @@ void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
 
     if (block_fs->data_owner)
-        block_fs_aquire_wlock(block_fs);
+        block_fs->mutex.lock();
 
     if (block_fs->data_stream != NULL)
         fclose(block_fs->data_stream);
@@ -707,7 +681,7 @@ void block_fs_close(block_fs_type *block_fs) {
     }
 
     if (block_fs->data_owner) {
-        block_fs_release_rwlock(block_fs);
+        block_fs->mutex.unlock();
     }
 
     free(block_fs->lock_file);
