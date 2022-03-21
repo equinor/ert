@@ -85,9 +85,8 @@ class AnalysisModuleVariablesModel(object):
     }
 
     @classmethod
-    def getVariableNames(cls, facade: LibresFacade, analysis_module_name: str):
+    def getVariableNames(cls, analysis_module: AnalysisModule):
         """@rtype: list of str"""
-        analysis_module = facade.get_analysis_module(analysis_module_name)
         assert isinstance(analysis_module, AnalysisModule)
         items = []
         for name in cls._VARIABLE_NAMES:

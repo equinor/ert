@@ -40,7 +40,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         layout = QFormLayout()
         variable_names = AnalysisModuleVariablesModel.getVariableNames(
-            facade, facade.get_analysis_module(analysis_module_name)
+            facade.get_analysis_module(analysis_module_name)
         )
 
         if len(variable_names) == 0:
