@@ -84,7 +84,6 @@ struct block_fs_struct {
     char *data_file;
     char *lock_file;
 
-    int data_fd;
     FILE *data_stream;
 
     int lock_fd; /* The file descriptor for the lock_file. Set to -1 if we do not have write access. */
@@ -385,10 +384,6 @@ static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
         else
             block_fs->data_stream = NULL;
     }
-    if (block_fs->data_stream == NULL)
-        block_fs->data_fd = -1;
-    else
-        block_fs->data_fd = fileno(block_fs->data_stream);
 }
 
 /*
@@ -406,7 +401,7 @@ static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
 static void block_fs_fix_nodes(block_fs_type *block_fs,
                                const std::vector<long> &offset_list) {
     if (block_fs->data_owner) {
-        fsync(block_fs->data_fd);
+        fsync(fileno(block_fs->data_stream));
         {
             char *key = NULL;
             for (const auto &node_offset : offset_list) {
@@ -432,7 +427,7 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
             }
             free(key);
         }
-        fsync(block_fs->data_fd);
+        fsync(fileno(block_fs->data_stream));
     }
 }
 
@@ -560,7 +555,7 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
 void block_fs_fsync(block_fs_type *block_fs) {
     if (block_fs->data_owner) {
         //fdatasync( block_fs->data_fd );
-        fsync(block_fs->data_fd);
+        fsync(fileno(block_fs->data_stream));
         fseek(block_fs->data_stream, 0, SEEK_END);
         ftell(block_fs->data_stream);
     }
