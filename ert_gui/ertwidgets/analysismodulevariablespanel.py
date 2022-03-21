@@ -52,8 +52,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             analysis_module_variables_model = AnalysisModuleVariablesModel
             self.blockSignals(True)
 
-            variable_names2 = self.sortVariables(variable_names)
-            for variable_name in variable_names2:
+            for variable_name in variable_names:
                 variable_type = analysis_module_variables_model.getVariableType(
                     variable_name
                 )
@@ -126,36 +125,6 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.setLayout(layout)
         self.blockSignals(False)
-
-    def sortVariables(self, variable_list):
-        analysis_module_variables_model = AnalysisModuleVariablesModel
-        sorted_list = [
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-            "#",
-        ]
-        result = []
-        for name in variable_list:
-            pos = analysis_module_variables_model.getVariablePosition(name)
-            sorted_list.insert(pos, name)
-            sorted_list.__delitem__(pos + 1)
-
-        for item in sorted_list:
-            if item != "#":
-                result.append(item)
-
-        return result
 
     def createSpinBox(
         self,
