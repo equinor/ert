@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import logging
 from ert_shared.libres_facade import LibresFacade
 from res.analysis.analysis_module import AnalysisModule
 
@@ -52,12 +53,6 @@ class AnalysisModuleVariablesModel(object):
             "labelname": "Inversion algorithm",
             "pos": 3,
         },
-        "IES_DEBUG": {
-            "type": bool,
-            "labelname": "Print extensive log for IES",
-            "pos": 4,
-        },
-        "IES_LOGFILE": {"type": str, "labelname": "IES Log File", "pos": 5},
         "IES_AAPROJECTION": {
             "type": bool,
             "labelname": "Include AA projection",
@@ -136,13 +131,14 @@ class AnalysisModuleVariablesModel(object):
         cls, facade: LibresFacade, analysis_module_name: str, name: str
     ):
         """@rtype: int or float or bool or str"""
+        logger = logging.getLogger(__name__)
         analysis_module = facade.get_analysis_module(analysis_module_name)
         variable_type = cls.getVariableType(name)
         if variable_type == float:
             return analysis_module.getDouble(name)
         elif variable_type == bool:
             return analysis_module.getBool(name)
-        elif variable_type == str:
-            return analysis_module.getStr(name)
         elif variable_type == int:
             return analysis_module.getInt(name)
+        else:
+            logger.error(f"Unknown variable: {name} of type: {variable_type}")
