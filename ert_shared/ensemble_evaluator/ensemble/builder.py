@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 _SOURCE_TEMPLATE_BASE = "/ert/ee/{ee_id}/"
 _SOURCE_TEMPLATE_REAL = "/real/{iens}"
 _SOURCE_TEMPLATE_STEP = "/step/{step_id}"
-_SOURCE_TEMPLATE_JOB = "/job/{job_id}"
+_SOURCE_TEMPLATE_JOB = "/job/{job_id}/index/{job_index}"
 
 
 def _sort_steps(steps: List["_Step"]) -> Tuple[str, ...]:
@@ -193,6 +193,7 @@ class _BaseJobBuilder:
     def __init__(self):
         self._id = None
         self._name = None
+        self._index = None
 
     def reset(self: _BaseJobBuilder_TV) -> _BaseJobBuilder_TV:
         self._id = None
@@ -201,6 +202,10 @@ class _BaseJobBuilder:
 
     def set_id(self: _BaseJobBuilder_TV, id_) -> _BaseJobBuilder_TV:
         self._id = id_
+        return self
+
+    def set_index(self: _BaseJobBuilder_TV, index_) -> _BaseJobBuilder_TV:
+        self._index = index_
         return self
 
     def set_parent_source(self: _BaseJobBuilder_TV, source) -> _BaseJobBuilder_TV:
@@ -236,7 +241,7 @@ class _JobBuilder(_BaseJobBuilder):
         source = (
             _SOURCE_TEMPLATE_BASE
             + self._parent_source
-            + _SOURCE_TEMPLATE_JOB.format(job_id=self._id)
+            + _SOURCE_TEMPLATE_JOB.format(job_id=self._id, job_index=self._index)
         )
         try:
             cmd_is_callable = callable(pickle.loads(self._executable))
@@ -247,8 +252,12 @@ class _JobBuilder(_BaseJobBuilder):
                 raise ValueError(
                     "callable executable does not take args, use inputs instead"
                 )
-            return _FunctionJob(self._id, self._name, source, self._executable)
-        return _UnixJob(self._id, self._name, source, self._executable, self._args)
+            return _FunctionJob(
+                self._id, self._index, self._name, source, self._executable
+            )
+        return _UnixJob(
+            self._id, self._index, self._name, source, self._executable, self._args
+        )
 
 
 def create_job_builder() -> _JobBuilder:
@@ -293,7 +302,7 @@ class _LegacyJobBuilder(_BaseJobBuilder):
     def build(self):
         if self._id is None:
             self._id = str(uuid.uuid4())
-        return _LegacyJob(self._id, self._name, self._ext_job)
+        return _LegacyJob(self._id, self._index, self._name, self._ext_job)
 
 
 def create_legacy_job_builder():
@@ -301,7 +310,7 @@ def create_legacy_job_builder():
 
 
 class _BaseJob:
-    def __init__(self, id_, name, source):
+    def __init__(self, id_, index_, name, source):
         if id_ is None:
             raise ValueError(f"{self} need id")
         if name is None:
@@ -309,9 +318,13 @@ class _BaseJob:
         self._id = id_
         self._name = name
         self._source = source
+        self._index = index_
 
     def get_id(self):
         return self._id
+
+    def get_index(self):
+        return self._index
 
     def get_name(self):
         return self._name
@@ -324,12 +337,13 @@ class _UnixJob(_BaseJob):
     def __init__(
         self,
         id_,
+        index_,
         name,
         step_source,
         executable,
         args,
     ):
-        super().__init__(id_, name, step_source)
+        super().__init__(id_, index_, name, step_source)
         self._executable = executable
         self._args = args
 
@@ -344,11 +358,12 @@ class _FunctionJob(_BaseJob):
     def __init__(
         self,
         id_,
+        index_,
         name,
         step_source,
         command,
     ):
-        super().__init__(id_, name, step_source)
+        super().__init__(id_, index_, name, step_source)
         self._command = command
 
     def get_command(self):
@@ -359,10 +374,13 @@ class _LegacyJob(_BaseJob):
     def __init__(
         self,
         id_,
+        index_,
         name,
         ext_job,
     ):
-        super().__init__(id_, name, "")  # no step_source needed for legacy (pt.)
+        super().__init__(
+            id_, index_, name, ""
+        )  # no step_source needed for legacy (pt.)
         if ext_job is None:
             raise TypeError(f"{self} needs ext_job")
         self._ext_job = ext_job
@@ -911,6 +929,7 @@ class _EnsembleBuilder:
                     step.add_job(
                         create_legacy_job_builder()
                         .set_id(index)
+                        .set_index(index)
                         .set_name(ext_job.name())
                         .set_ext_job(ext_job)
                     )

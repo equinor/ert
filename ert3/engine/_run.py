@@ -144,6 +144,7 @@ def run(
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
     local_test_run: bool = False,
+    use_gui: bool = False,
 ) -> None:
     """Run a configured experiment in a workspace.
 
@@ -154,6 +155,7 @@ def run(
         local_test_run: If set, the runpath will be in the current
             directory, with a unique id (6 digit hex). The experiment
             name as registered in storage will also contain the same id.
+        use_gui: will run the graphical version
     """
     # This reassures mypy that the ensemble size is defined
     assert experiment_run_config.ensemble_config.size is not None
@@ -250,7 +252,7 @@ def run(
         step_builder,
         active_mask,
     )
-    ert3.evaluator.evaluate(ensemble)
+    ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
 
     if local_test_run:
         print("Run")

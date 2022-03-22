@@ -150,6 +150,7 @@ class _Ensemble:
                         str(job.get_id())
                     ] = Job(
                         status=state.JOB_STATE_START,
+                        index=job.get_index(),
                         data={},
                         name=job.get_name(),
                     )

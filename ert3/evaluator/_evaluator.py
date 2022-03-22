@@ -2,7 +2,9 @@ import pickle
 import sys
 import time
 from concurrent import futures
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, Any
+from anyio import fail_after
+from qtpy.QtWidgets import QApplication
 
 import ert
 from ert.ensemble_evaluator import EvaluatorTracker
@@ -17,6 +19,7 @@ from ert_shared.status.entity.state import (
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
 )
+from ert_gui.simulation import RunDialog
 
 
 class ERT3RunModel:
@@ -28,6 +31,8 @@ class ERT3RunModel:
         self._job_stop_time: int = 0
         self._fail_message: str = ""
         self._failed: bool = False
+        self._simulation_arguments: Dict[str, Any] = {}
+        self.support_restart: bool = True
 
     def teardown_context(self) -> None:
         return None
@@ -70,6 +75,28 @@ class ERT3RunModel:
     def isIndeterminate(self) -> bool:
         return False
 
+    def restart(self) -> None:
+        pass
+
+    def reset(self) -> None:
+        self._failed = False
+        self._phase = 0
+
+    def stop_time(self) -> int:
+        return self._job_stop_time
+
+    def start_time(self) -> int:
+        return self._job_start_time
+
+    def get_runtime(self) -> Union[int, float]:
+        if self.stop_time() < self.start_time():
+            return time.time() - self.start_time()
+        else:
+            return self.stop_time() - self.start_time()
+
+    def has_failed_realizations(self) -> bool:
+        return False
+
 
 def _run(
     ensemble_evaluator: EnsembleEvaluator,
@@ -96,19 +123,30 @@ def _run(
 
 
 def evaluate(
-    ensemble: Ensemble,
-    custom_port_range: Optional[range] = None,
+    ensemble: Ensemble, custom_port_range: Optional[range] = None, use_gui: bool = False
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     config = EvaluatorServerConfig(custom_port_range=custom_port_range)
 
     run_model = ERT3RunModel()
+    ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
+    if use_gui:
+        app = QApplication([])
+        dialog = RunDialog(
+            repr(ensemble),
+            run_model,
+        )
+        dialog.startSimulationErt3(config, ee)
+        app.setActiveWindow(dialog)
+        dialog.show()
+        app.exec_()
+        return
+
     tracker = EvaluatorTracker(
         run_model,
         config.get_connection_info(),
     )
-    monitor = Monitor(out=sys.stderr, color_always=False)  # type: ignore
 
-    ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
+    monitor = Monitor(out=sys.stderr, color_always=False)  # type: ignore
 
     executor = futures.ThreadPoolExecutor()
     future = executor.submit(_run, ee, run_model)

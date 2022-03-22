@@ -310,6 +310,54 @@ class RunDialog(QDialog):
         worker_thread.started.connect(worker.consume_and_emit)
         self._worker_thread.start()
 
+    def startSimulationErt3(self, evaluator_server_config, ensemble_evaluator):
+        self._run_model.reset()
+        self._snapshot_model.reset()
+        self._tab_widget.clear()
+
+        def run():
+            with ensemble_evaluator.run() as monitor:
+                self._run_model.setPhase(
+                    0, "Running simulations...", indeterminate=False
+                )
+                for event in monitor.track():
+                    if isinstance(event.data, dict) and event.data.get("status") in [
+                        ENSEMBLE_STATE_STOPPED,
+                        ENSEMBLE_STATE_FAILED,
+                    ]:
+                        monitor.signal_done()
+                        if event.data.get("status") == ENSEMBLE_STATE_FAILED:
+                            self._run_model._failed = True
+                            self._run_model._fail_message = "Ensemble evaluation failed"
+                            raise RuntimeError("Ensemble evaluation failed")
+                    if event["type"] == EVTYPE_EE_TERMINATED and isinstance(
+                        event.data, bytes
+                    ):
+                        self._run_model.setPhase(1, "Simulations completed.")
+
+        simulation_thread = Thread(name="ert_gui_simulation_thread")
+        simulation_thread.setDaemon(True)
+        simulation_thread.run = run
+        simulation_thread.start()
+
+        self._ticker.start(1000)
+
+        tracker = create_tracker(
+            self._run_model,
+            ee_con_info=evaluator_server_config.get_connection_info(),
+        )
+
+        worker = TrackerWorker(tracker)
+        worker_thread = QThread()
+        worker.done.connect(worker_thread.quit)
+        worker.consumed_event.connect(self._on_tracker_event)
+        worker.moveToThread(worker_thread)
+        self.simulation_done.connect(worker.stop)
+        self._worker = worker
+        self._worker_thread = worker_thread
+        worker_thread.started.connect(worker.consume_and_emit)
+        self._worker_thread.start()
+
     def killJobs(self):
 
         msg = "Are you sure you want to kill the currently running simulations?"

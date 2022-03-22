@@ -22,6 +22,7 @@ class TrackerWorker(QObject):
 
     def __init__(self, tracker: EvaluatorTracker, parent=None):
         super().__init__(parent)
+        logger.setLevel(logging.DEBUG)
         logger.debug("init trackerworker")
         self._tracker = tracker
         self._stopped = False

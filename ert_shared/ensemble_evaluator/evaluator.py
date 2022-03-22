@@ -57,7 +57,6 @@ class EnsembleEvaluator:
             evaluator_callback=self.dispatcher_callback,
             batcher=self._batcher,
         )
-
         self._result = None
 
         self._ws_thread = threading.Thread(

@@ -33,6 +33,31 @@ def test_success(runmodel, qtbot, mock_tracker):
     assert widget.done_button.text() == "Done"
 
 
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+
+
+def test_success_ert3(runmodel, poly_ensemble, qtbot, mock_tracker):
+    evaluator_config = EvaluatorServerConfig(
+        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+    )
+    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0, ee_id="1")
+    widget = RunDialog("poly.ert", runmodel)
+    widget.show()
+    qtbot.addWidget(widget)
+
+    with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
+        mock_tracker_factory.return_value = mock_tracker(
+            [EndEvent(failed=False, failed_msg="")]
+        )
+        widget.startSimulationErt3(evaluator_config, evaluator)
+
+    qtbot.waitForWindowShown(widget)
+    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
+    assert widget.done_button.isVisible()
+    assert widget.done_button.text() == "Done"
+
+
 def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()

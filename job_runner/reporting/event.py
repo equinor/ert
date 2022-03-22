@@ -116,7 +116,7 @@ class Event(Reporter):
     def _job_handler(self, msg: Message):
         job_name = msg.job.name()
         job_msg_attrs = {
-            _JOB_SOURCE: f"{self._step_path()}/job/{msg.job.index}",
+            _JOB_SOURCE: f"{self._step_path()}/job/{msg.job.index}/index/{msg.job.index}",
             _CONTENT_TYPE: "application/json",
         }
         if isinstance(msg, Start):

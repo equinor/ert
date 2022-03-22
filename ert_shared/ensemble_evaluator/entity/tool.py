@@ -37,3 +37,7 @@ def get_step_id(source):
 
 def get_job_id(source):
     return _match_token("job", source)
+
+
+def get_job_index(source):
+    return _match_token("index", source)

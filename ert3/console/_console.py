@@ -56,6 +56,17 @@ def _build_run_argparser(subparsers: Any) -> None:
         ),
     )
 
+    run_parser.add_argument(
+        "--gui",
+        default=False,
+        action="store_true",
+        help=(
+            "Will open a gui window, which "
+            "shows a detailed view on individual running realizations "
+            "and jobs within."
+        ),
+    )
+
 
 def _build_export_argparser(subparsers: Any) -> None:
     export_parser = subparsers.add_parser("export", help="Export experiment")
@@ -329,6 +340,7 @@ def _run(
             workspace,
             args.experiment_name,
             local_test_run=args.local_test_run,
+            use_gui=args.gui,
         )
     elif experiment_run_config.experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
