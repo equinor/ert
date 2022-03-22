@@ -1,4 +1,4 @@
-from ._config_plugin_registry import ConfigPluginRegistry
+from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 from ._ensemble_config import (
     load_ensemble_config,
     EnsembleConfig,
@@ -14,7 +14,6 @@ from ._stages_config import (
     TransportableCommand,
     Step,
     create_stages_config,
-    create_plugged_model,
     StageIO,
 )
 from ._validator import DEFAULT_RECORD_MIME_TYPE
