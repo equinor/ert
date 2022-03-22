@@ -112,7 +112,7 @@ def _check_locale():
 ** WARNING: You are using a locale with decimalpoint: '{}' - the ert application is
             written with the assumption that '.' is used as decimalpoint, and chances
             are that something will break if you continue with this locale. It is highly
-            reccomended that you set the decimalpoint to '.' using one of the environment
+            recommended that you set the decimalpoint to '.' using one of the environment
             variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
             alternatively a locale which uses '.' as decimalpoint.\n""".format(
             decimal_point
