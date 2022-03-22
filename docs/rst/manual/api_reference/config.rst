@@ -9,10 +9,10 @@ Configuration reference
     :members:
     :undoc-members:
 
-.. autoclass:: ert3.config._ensemble_config::Input
+.. autoclass:: ert3.config._ensemble_config::EnsembleInput
     :members:
     :undoc-members:
 
-.. autoclass:: ert3.config._ensemble_config::Output
+.. autoclass:: ert3.config._ensemble_config::EnsembleOutput
     :members:
     :undoc-members:

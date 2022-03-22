@@ -1,7 +1,10 @@
 import ert3
 
 
-_modified_classes = {("ert3.config", "StageIO"): ["transformation"]}
+_modified_classes = {
+    ("ert3.config", "StageIO"): ["transformation"],
+    ("ert3.config", "EnsembleInput"): ["transformation"],
+}
 _all_affected_modules = ["ert3.config"]
 
 
