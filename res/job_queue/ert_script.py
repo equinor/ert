@@ -1,8 +1,11 @@
 import inspect
 import sys
 import traceback
+import logging
 
 import importlib.util
+
+logger = logging.getLogger(__name__)
 
 
 class ErtScript:
@@ -41,6 +44,7 @@ class ErtScript:
 
     def ert(self):
         """@rtype: res.enkf.EnKFMain"""
+        logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self.__ert
 
     def isCancelled(self):
