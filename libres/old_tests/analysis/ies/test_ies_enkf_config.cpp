@@ -1,5 +1,5 @@
 
-#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 void test_create() { ies::config::Config config(true); }
 
