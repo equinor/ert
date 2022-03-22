@@ -258,13 +258,18 @@ void run_analysis_update_without_rowscaling(
     ert::utils::Benchmark benchmark(logger,
                                     "run_analysis_update_without_rowscaling");
 
-    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(S.cols(), S.cols());
-
     if (module_config.iterable()) {
         ies::init_update(module_data, ens_mask, obs_mask);
         ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
-        ies::initX(module_config, S, R, E, D, X);
+
+        int active_ens_size = S.cols();
+        Eigen::MatrixXd W0 =
+            Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+        Eigen::MatrixXd X =
+            ies::makeX({}, S, R, E, D, module_config.inversion(),
+                       module_config.truncation(), false, W0, 1, 1);
+
         A *= X;
     }
 }
@@ -285,8 +290,6 @@ void run_analysis_update_with_rowscaling(
         throw std::logic_error("No parameter matrices provided for analysis "
                                "update with rowscaling");
 
-    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(S.cols(), S.cols());
-
     if (module_config.iterable()) {
         throw std::logic_error("Sorry - row scaling for distance based "
                                "localization can not be combined with "
@@ -294,7 +297,12 @@ void run_analysis_update_with_rowscaling(
     }
 
     for (auto &[A, row_scaling] : parameters) {
-        ies::initX(module_config, S, R, E, D, X);
+        int active_ens_size = S.cols();
+        Eigen::MatrixXd W0 =
+            Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+        Eigen::MatrixXd X =
+            ies::makeX({}, S, R, E, D, module_config.inversion(),
+                       module_config.truncation(), false, W0, 1, 1);
         row_scaling->multiply(&A, &X);
     }
 }
@@ -410,15 +418,14 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
             noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng);
 
     Eigen::MatrixXd E = ies::makeE(observation_errors, noise);
-    Eigen::MatrixXd R =
-        observation_errors.cwiseProduct(observation_errors).asDiagonal();
+    Eigen::MatrixXd R = Eigen::MatrixXd::Identity(observation_errors.rows(),
+                                                  observation_errors.rows());
     Eigen::MatrixXd D = ies::makeD(observation_values, E, S);
 
     Eigen::VectorXd error_inverse = observation_errors.array().inverse();
     S = S.array().colwise() * error_inverse.array();
     E = E.array().colwise() * error_inverse.array();
     D = D.array().colwise() * error_inverse.array();
-    R = R.cwiseProduct(error_inverse * error_inverse.transpose());
 
     std::vector<int> iens_active_index = bool_vector_to_active_list(ens_mask);
     auto A = load_parameters(target_fs, ensemble_config, iens_active_index,

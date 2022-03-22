@@ -11,10 +11,12 @@ void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
     ies::config::Config ies_config(false);
     ies_config.truncation(1.00);
 
-    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(testdata.active_ens_size,
-                                              testdata.active_ens_size);
-
-    ies::initX(ies_config, testdata.S, testdata.R, testdata.E, testdata.D, X);
+    int active_ens_size = A2.cols();
+    Eigen::MatrixXd W0 =
+        Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+    Eigen::MatrixXd X = ies::makeX({}, testdata.S, testdata.R, testdata.E,
+                                   testdata.D, ies_config.inversion(),
+                                   ies_config.truncation(), false, W0, 1, 1);
 
     A2 *= X;
     rng_free(rng);

@@ -71,13 +71,13 @@ void ies::init_update(ies::data::Data &module_data,
     module_data.update_obs_mask(obs_mask);
 }
 
-void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
-                 const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
-                 const Eigen::MatrixXd &D, Eigen::MatrixXd &X,
-                 const ies::config::inversion_type ies_inversion,
-                 const std::variant<double, int> &truncation,
-                 bool use_aa_projection, Eigen::MatrixXd &W0,
-                 double ies_steplength, int iteration_nr, double *costf)
+Eigen::MatrixXd ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
+                           const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
+                           const Eigen::MatrixXd &D,
+                           const ies::config::inversion_type ies_inversion,
+                           const std::variant<double, int> &truncation,
+                           bool use_aa_projection, Eigen::MatrixXd &W0,
+                           double ies_steplength, int iteration_nr)
 
 {
     const int ens_size = Y0.cols();
@@ -152,23 +152,23 @@ void ies_initX__(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
      * CONSTRUCT TRANFORM MATRIX X FOR CURRENT ITERATION (Line 10)
      *   X= I + W/sqrt(N-1)
      */
-    X = W0;
+    Eigen::MatrixXd X = W0;
     X /= sqrt(ens_size - 1.0);
     X.diagonal().array() += 1;
 
     /* COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE (Line 12)*/
     Eigen::MatrixXd DW = W0 - W;
 
-    if (costf) {
-        std::vector<double> costJ(ens_size);
-        double local_costf = 0.0;
-        for (int i = 0; i < ens_size; i++) {
-            costJ[i] = W.col(i).dot(W.col(i)) + D.col(i).dot(D.col(i));
-            local_costf += costJ[i];
-        }
-        local_costf = local_costf / ens_size;
-        *costf = local_costf;
+    std::vector<double> costJ(ens_size);
+    double local_costf = 0.0;
+    for (int i = 0; i < ens_size; i++) {
+        costJ[i] = W.col(i).dot(W.col(i)) + D.col(i).dot(D.col(i));
+        local_costf += costJ[i];
     }
+    local_costf = local_costf / ens_size;
+
+    logger->info("IES  iter:{} cost function: {}", iteration_nr, local_costf);
+    return X;
 }
 
 void ies::updateA(
@@ -208,7 +208,6 @@ void ies::updateA(
      */
     Eigen::MatrixXd E = data.make_activeE();
     Eigen::MatrixXd D = Din;
-    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(ens_size, ens_size);
 
     /* Subtract new measurement perturbations              D=D-E    */
     D -= Ein;
@@ -218,12 +217,11 @@ void ies::updateA(
     double costf;
 
     auto W0 = data.make_activeW();
-    ies_initX__(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin, E,
-                D, X, ies_config.inversion(), ies_config.truncation(),
-                ies_config.aaprojection(), W0, ies_steplength, iteration_nr,
-                &costf);
+    Eigen::MatrixXd X =
+        makeX(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin, E, D,
+              ies_config.inversion(), ies_config.truncation(),
+              ies_config.aaprojection(), W0, ies_steplength, iteration_nr);
     ies::linalg_store_active_W(&data, W0);
-    logger->info("IES  iter:{} cost function: {}", iteration_nr, costf);
 
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
     Eigen::MatrixXd A0 = data.make_activeA();
@@ -363,32 +361,6 @@ void ies::linalg_store_active_W(ies::data::Data *data,
     }
 }
 
-/*
-  In the inner loop of the ies implementation is a function ies_initX__() which
-  calculates the X matrix based on the fundamental matrices Y/S, R, E and D and
-  additional arguments from the iterative state, including the steplength.
-
-  Here the ies_initX__() function can be called without any iteration state, the
-  minimum required iteration state - including steplength = 1 - is initialized
-  as temporary local variables.
-*/
-
-void ies::initX(const config::Config &ies_config, const Eigen::MatrixXd &Y0,
-                const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
-                const Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
-
-    bool use_aa_projection = false;
-    double steplength = 1;
-    int iteration_nr = 1;
-    int active_ens_size = X.rows();
-
-    Eigen::MatrixXd W0 =
-        Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-    ies_initX__({}, Y0, R, E, D, X, ies_config.inversion(),
-                ies_config.truncation(), use_aa_projection, W0, steplength,
-                iteration_nr, nullptr);
-}
-
 Eigen::MatrixXd ies::makeE(const Eigen::VectorXd &obs_errors,
                            const Eigen::MatrixXd &noise) {
     int active_obs_size = obs_errors.rows();
@@ -417,4 +389,19 @@ Eigen::MatrixXd ies::makeD(const Eigen::VectorXd &obs_values,
             D(i, iens) += obs_values(i);
 
     return D;
+}
+
+RES_LIB_SUBMODULE("ies", m) {
+    m.def("make_X", ies::makeX, py::arg("A"), py::arg("Y0"), py::arg("R"),
+          py::arg("E"), py::arg("D"), py::arg("ies_inversion"),
+          py::arg("truncation"), py::arg("use_aa_projection"), py::arg("W0"),
+          py::arg("ies_steplength"), py::arg("iteration_nr"));
+    m.def("make_E", ies::makeE, py::arg("obs_errors"), py::arg("noise"));
+    m.def("make_D", ies::makeD, py::arg("obs_values"), py::arg("E"),
+          py::arg("S"));
+    m.def("update_A", ies::updateA, py::arg("ies_config"), py::arg("data"),
+          py::arg("A"), py::arg("Yin"), py::arg("R"), py::arg("E"),
+          py::arg("D"));
+    m.def("init_update", ies::init_update, py::arg("module_data"),
+          py::arg("ens_mask"), py::arg("obs_mask"));
 }
