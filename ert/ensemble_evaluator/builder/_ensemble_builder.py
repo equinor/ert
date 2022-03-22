@@ -128,6 +128,7 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                     step.add_job(
                         _LegacyJobBuilder()
                         .set_id(str(index))
+                        .set_index(str(index))
                         .set_name(ext_job.name())
                         .set_ext_job(ext_job)
                     )

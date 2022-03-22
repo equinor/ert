@@ -62,6 +62,14 @@ class EnsembleEvaluator:
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
 
+    @property
+    def config(self):
+        return self._config
+
+    @property
+    def ensemble(self):
+        return self._ensemble
+
     async def dispatcher_callback(self, event_type, snapshot_update_event, result=None):
         if event_type == identifiers.EVTYPE_ENSEMBLE_STOPPED:
             self._result = result

@@ -13,6 +13,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.util._tool import (
     get_job_id,
+    get_job_index,
     get_real_id,
     get_step_id,
     recursive_update,
@@ -198,11 +199,16 @@ class PartialSnapshot:
                 for job_id, job in step.jobs.items():
                     if job.status != state.JOB_STATE_FINISHED:
                         job_error = "The run is cancelled due to reaching MAX_RUNTIME"
+                        job_index = get_job_index(e_source)
                         self.update_job(
                             get_real_id(e_source),
                             get_step_id(e_source),
                             job_id,
-                            job=Job(status=state.JOB_STATE_FAILURE, error=job_error),
+                            job=Job(
+                                status=state.JOB_STATE_FAILURE,
+                                index=job_index,
+                                error=job_error,
+                            ),
                         )
 
         elif e_type in ids.EVGROUP_FM_JOB:
@@ -212,7 +218,7 @@ class PartialSnapshot:
                 start_time = convert_iso8601_to_datetime(timestamp)
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
                 end_time = convert_iso8601_to_datetime(timestamp)
-
+            job_index = get_job_index(e_source)
             self.update_job(
                 get_real_id(e_source),
                 get_step_id(e_source),
@@ -221,6 +227,7 @@ class PartialSnapshot:
                     status=status,
                     start_time=start_time,
                     end_time=end_time,
+                    index=job_index,
                     data=event.data if e_type == ids.EVTYPE_FM_JOB_RUNNING else None,
                     stdout=event.data.get(ids.STDOUT)
                     if e_type == ids.EVTYPE_FM_JOB_START
@@ -316,6 +323,7 @@ class Job(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
+    index: Optional[str]
     data: Optional[Dict[str, Any]]
     name: Optional[str]
     error: Optional[str]
@@ -382,6 +390,7 @@ class SnapshotBuilder(BaseModel):
         self,
         step_id: str,
         job_id: str,
+        index: str,
         name: Optional[str],
         status: Optional[str],
         data: Optional[Dict[str, Any]],
@@ -393,6 +402,7 @@ class SnapshotBuilder(BaseModel):
         step = self.steps[step_id]
         step.jobs[job_id] = Job(
             status=status,
+            index=index,
             data=data,
             start_time=start_time,
             end_time=end_time,

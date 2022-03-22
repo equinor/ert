@@ -106,11 +106,16 @@ class SnapshotModel(QAbstractItemModel):
             metadata[SORTED_REALIZATION_IDS] = sorted(
                 snapshot.data()[ids.REALS].keys(), key=int
             )
+            metadata[SORTED_JOB_IDS] = {}
             for real_id, real in snapshot.data()[ids.REALS].items():
-                for step in real[ids.STEPS].values():
-                    metadata[SORTED_JOB_IDS] = sorted(step[ids.JOBS].keys(), key=int)
-                    break
-                break
+                metadata[SORTED_JOB_IDS][real_id] = {}
+                for step_id, step in real[ids.STEPS].items():
+                    indices = [
+                        (job.index, job_id) for job_id, job in step[ids.JOBS].items()
+                    ]
+                    metadata[SORTED_JOB_IDS][real_id][step_id] = [
+                        index[1] for index in sorted(indices, key=lambda indx: indx[0])
+                    ]
 
         for real_id, real in snapshot.data()[ids.REALS].items():
             if real.get(ids.STATUS):
@@ -122,7 +127,7 @@ class SnapshotModel(QAbstractItemModel):
                 for step in real[ids.STEPS].values():
                     if ids.JOBS not in step:
                         continue
-                    for job_id in sorted(step[ids.JOBS].keys(), key=int):
+                    for job_id in step[ids.JOBS].keys():
                         status = step[ids.JOBS][job_id][ids.STATUS]
                         color = _QCOLORS[state.JOB_STATE_TO_COLOR[status]]
                         metadata[REAL_JOB_STATUS_AGGREGATED][real_id][job_id] = color
@@ -218,6 +223,8 @@ class SnapshotModel(QAbstractItemModel):
                             job_node.data[ids.STDOUT] = job[ids.STDOUT]
                         if job.get(ids.STDERR):
                             job_node.data[ids.STDERR] = job[ids.STDERR]
+                        if job.get(ids.INDEX):
+                            job_node.data[ids.INDEX] = job[ids.INDEX]
 
                         # Errors may be unset as the queue restarts the job
                         job_node.data[ids.ERROR] = (
@@ -261,7 +268,7 @@ class SnapshotModel(QAbstractItemModel):
             for step_id, step in real[ids.STEPS].items():
                 step_node = Node(step_id, {ids.STATUS: step[ids.STATUS]}, NodeType.STEP)
                 real_node.add_child(step_node)
-                for job_id in metadata[SORTED_JOB_IDS]:
+                for job_id in metadata[SORTED_JOB_IDS][real_id][step_id]:
                     job = step[ids.JOBS][job_id]
                     job_dict = dict(job)
                     job_dict[ids.DATA] = job.data
@@ -278,8 +285,7 @@ class SnapshotModel(QAbstractItemModel):
         parent = QModelIndex()
         next_iter = len(self.root.children)
         self.beginInsertRows(parent, next_iter, next_iter)
-        self.root.add_child(snapshot_tree)
-        self.root.children[iter_] = snapshot_tree
+        self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
     def columnCount(self, parent=QModelIndex()):
@@ -358,8 +364,9 @@ class SnapshotModel(QAbstractItemModel):
         if role == RealJobColorHint:
             colors: List[QColor] = []
             assert node.parent  # mypy
-            for job_id in node.parent.data[SORTED_JOB_IDS]:
-                colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
+            for step_id in node.parent.data[SORTED_JOB_IDS][node.id]:
+                for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
+                    colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
         elif role == RealLabelHint:
             return node.id

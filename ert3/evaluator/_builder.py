@@ -129,16 +129,18 @@ def build_ensemble(
         step_builder.add_job(
             ert.ensemble_evaluator.JobBuilder()
             .set_name(stage.function.__name__)
+            .set_index("0")
             .set_executable(cloudpickle.dumps(stage.function))
         )
     if isinstance(stage, ert3.config.Unix):
-        for script in stage.script:
+        for index, script in enumerate(stage.script):
             name, *args = shlex.split(script)
             step_builder.add_job(
                 ert.ensemble_evaluator.JobBuilder()
                 .set_executable(stage.command_final_path_component(name))
                 .set_args(tuple(args))
                 .set_name(name)
+                .set_index(str(index))
             )
 
     builder = (

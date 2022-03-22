@@ -35,6 +35,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
         step_builder.add_job(
             ee.JobBuilder()
             .set_id(str(idx))
+            .set_index(str(idx))
             .set_name(name)
             .set_executable(executable)
             .set_args(args)

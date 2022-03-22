@@ -21,7 +21,8 @@ def test_build_ensemble(active_real):
             ee.StepBuilder()
             .add_job(
                 ee.LegacyJobBuilder()
-                .set_id(0)
+                .set_id("0")
+                .set_index("0")
                 .set_name("echo_command")
                 .set_ext_job(Mock())
             )
