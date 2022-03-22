@@ -84,7 +84,17 @@ def _validate_transformation(
     return _validator
 
 
-class Input(_EnsembleConfig):
+class EnsembleInput(_EnsembleConfig):
+    """:class:`EnsembleInput` defines inputs over the ensemble. Use it in conjunction
+    with :class:`ert3.config.SourceNS` to load resources or sample parameters.
+
+    :class:`EnsembleInput` is the basis for :class:`ert3.config.EnsembleInput` which
+    is the plugged-in version of it. Using this model directly will raise a
+    :class:`RuntimeError`. Instantiate instead this model using either
+    :py:func:`ert3.config.load_ensemble_config` or
+    :py:func:`ert3.config.create_ensemble_config`.
+    """
+
     _namespace: SourceNS
     _location: str
     record: str
@@ -93,9 +103,9 @@ class Input(_EnsembleConfig):
     @no_type_check
     def __init__(self, **data: Any) -> None:
         # isinstance is too lenient for this case, needs to specifically check
-        # for type Input, specifically not subclasses. So C0123 must be disabled.
-        # If this instance is an Input, it means no plugins which is no deal.
-        if type(self) is Input:  # pylint: disable=C0123
+        # for type EnsembleInput, specifically not subclasses. So C0123 must be disabled.
+        # If this instance is an EnsembleInput, it means no plugins which is no deal.
+        if type(self) is EnsembleInput:  # pylint: disable=C0123
             raise RuntimeError(
                 "this configuration must be obtained from 'create_ensemble_config'."
             )
@@ -119,14 +129,14 @@ class Input(_EnsembleConfig):
         return ert.data.TransformationDirection.TO_RECORD
 
 
-class Output(_EnsembleConfig):
+class EnsembleOutput(_EnsembleConfig):
     record: str
 
 
 class EnsembleConfig(_EnsembleConfig):
     forward_model: ForwardModel
-    input: Tuple[Input, ...]
-    output: Tuple[Output, ...]
+    input: Tuple[EnsembleInput, ...]
+    output: Tuple[EnsembleOutput, ...]
     size: Optional[int] = None
     storage_type: str = "ert_storage"
 
@@ -140,10 +150,10 @@ def create_ensemble_config(
     default_discriminator = plugin_registry.get_default_for_category("transformation")
 
     input_config = create_plugged_model(
-        model_name="PluggedInput",
+        model_name="PluggedEnsembleInput",
         categories=["transformation"],
         plugin_registry=plugin_registry,
-        model_base=Input,
+        model_base=EnsembleInput,
         model_module=__name__,
         validators={
             "validate_transformation": root_validator(pre=True, allow_reuse=True)(

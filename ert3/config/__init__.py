@@ -4,6 +4,7 @@ from ._ensemble_config import (
     EnsembleConfig,
     create_ensemble_config,
     SourceNS,
+    EnsembleInput,
 )
 from ._stages_config import (
     load_stages_config,
@@ -44,4 +45,5 @@ __all__ = [
     "create_stages_config",
     "create_plugged_model",
     "StageIO",
+    "EnsembleInput",
 ]
