@@ -131,7 +131,7 @@ class ConfigPluginRegistry:
         """Return the discriminator for this category."""
         return self._descriminator[category]
 
-    def get_base_config(self, category: str) -> str:
+    def get_base_config(self, category: str) -> Type[BaseModel]:
         """Return the base config class for this category."""
         return self._base_configs[category]
 
