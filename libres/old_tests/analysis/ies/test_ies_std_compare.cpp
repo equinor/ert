@@ -21,8 +21,6 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
-    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(testdata.active_ens_size,
-                                              testdata.active_ens_size);
     ies::data::Data ies_data1(testdata.active_ens_size);
     ies::config::Config ies_config1(true);
     ies::config::Config std_config(false);
@@ -40,7 +38,12 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     ies::updateA(ies_config1, ies_data1, A1, testdata.S, testdata.R, testdata.E,
                  testdata.D);
 
-    ies::initX(std_config, testdata.S, testdata.R, testdata.E, testdata.D, X);
+    int active_ens_size = A2.cols();
+    Eigen::MatrixXd W0 =
+        Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+    Eigen::MatrixXd X = ies::makeX({}, testdata.S, testdata.R, testdata.E,
+                                   testdata.D, std_config.inversion(),
+                                   std_config.truncation(), false, W0, 1, 1);
 
     A2 *= X;
     test_assert_true(A1.isApprox(A2, 5e-6));

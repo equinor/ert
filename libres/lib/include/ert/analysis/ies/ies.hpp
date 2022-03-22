@@ -35,14 +35,13 @@ Eigen::MatrixXd make_activeA(const data::Data *data);
 void init_update(data::Data &module_data, const std::vector<bool> &ens_mask,
                  const std::vector<bool> &obs_mask);
 
-/*
-  Internally in the ies algorithm there is a standard ES update step, that
-  functionality is exported so that it can be utilised in ES updates which are
-  not iterative.
-*/
-void initX(const config::Config &ies_config, const Eigen::MatrixXd &S,
-           const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
-           const Eigen::MatrixXd &D, Eigen::MatrixXd &X);
+Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
+                      const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
+                      const Eigen::MatrixXd &D,
+                      const ies::config::inversion_type ies_inversion,
+                      const std::variant<double, int> &truncation,
+                      bool use_aa_projection, Eigen::MatrixXd &W0,
+                      double ies_steplength, int iteration_nr);
 
 void updateA(
     const config::Config &ies_config, data::Data &data,
