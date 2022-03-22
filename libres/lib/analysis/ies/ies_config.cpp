@@ -20,9 +20,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <variant>
-
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
+#include <ert/python.hpp>
 
 #include <ert/analysis/ies/ies_config.hpp>
 
@@ -145,3 +143,10 @@ double ies::config::Config::steplength(int iteration_nr) const {
 }
 
 bool ies::config::Config::iterable() const { return this->m_iterable; }
+
+RES_LIB_SUBMODULE("ies", m) {
+    using namespace py::literals;
+    py::class_<ies::config::Config, std::shared_ptr<ies::config::Config>>(
+        m, "Config")
+        .def(py::init<bool>());
+}

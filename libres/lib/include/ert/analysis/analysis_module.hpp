@@ -22,7 +22,6 @@
 #include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 
-
 typedef enum {
     ENSEMBLE_SMOOTHER = 1,
     ITERATED_ENSEMBLE_SMOOTHER = 2
