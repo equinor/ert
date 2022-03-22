@@ -5,11 +5,6 @@
 #include <vector>
 #include <Eigen/Dense>
 
-#include <ert/util/rng.hpp>
-#include <ert/util/bool_vector.hpp>
-
-#include <ert/analysis/ies/ies_config.hpp>
-
 namespace ies {
 namespace data {
 

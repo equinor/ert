@@ -20,10 +20,9 @@
 #define IES_ENKF_H
 #include <variant>
 
-#include <ert/util/bool_vector.hpp>
-#include <ert/util/rng.hpp>
 #include <Eigen/Dense>
 #include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 namespace ies {
 
