@@ -10,13 +10,10 @@ class ErtScript:
         """
         @type ert: EnKFMain
         """
-        super().__init__()
-
         if not hasattr(self, "run"):
             raise UserWarning(
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
-
         self.__verbose = False
         self.__ert = ert
 
