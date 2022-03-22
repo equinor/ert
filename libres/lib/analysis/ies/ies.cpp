@@ -25,11 +25,7 @@
 #include <stdio.h>
 
 #include <ert/python.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/rng.hpp>
-#include <ert/util/bool_vector.hpp>
 
-#include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/enkf_linalg.hpp>
 
 #include <ert/analysis/ies/ies.hpp>
@@ -42,7 +38,7 @@ using Eigen::MatrixXd;
  * @brief Implementation of algorithm as described in
  * "Efficient Implementation of an Iterative Ensemble Smoother for Data Assimilation and Reservoir History Matching"
  * https://www.frontiersin.org/articles/10.3389/fams.2019.00047/full
- * 
+ *
  */
 namespace ies {
 void linalg_compute_AA_projection(const Eigen::MatrixXd &A, Eigen::MatrixXd &Y);
