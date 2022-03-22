@@ -7,6 +7,7 @@ from ert_gui.tools.workflows import RunWorkflowWidget
 class WorkflowsTool(Tool):
     def __init__(self, ert, notifier):
         self.notifier = notifier
+        self.ert = ert
         enabled = len(ert.getWorkflowList().getWorkflowNames()) > 0
         super().__init__(
             "Run Workflow",
@@ -16,7 +17,7 @@ class WorkflowsTool(Tool):
         )
 
     def trigger(self):
-        run_workflow_widget = RunWorkflowWidget()
+        run_workflow_widget = RunWorkflowWidget(self.ert)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())
         dialog.exec_()
         self.notifier.emitErtChange()  # workflow may have added new cases.
