@@ -21,7 +21,13 @@
 
 #include <variant>
 
-enum analysis_module_flag_enum : int;
+enum analysis_module_flag_enum : int {
+    ANALYSIS_USE_A =
+        4, // The module will read the content of A - but not modify it.
+    ANALYSIS_UPDATE_A =
+        8, // The update will be based on modifying A directly, and not on an X matrix.
+    ANALYSIS_ITERABLE = 32 // The module can bu used as an iterative smoother.
+};
 
 namespace ies {
 namespace config {
