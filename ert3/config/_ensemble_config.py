@@ -102,8 +102,8 @@ class EnsembleInput(_EnsembleConfig):
 
     @no_type_check
     def __init__(self, **data: Any) -> None:
-        # isinstance is too lenient for this case, needs to specifically check
-        # for type EnsembleInput, specifically not subclasses. So C0123 must be disabled.
+        # isinstance is too lenient for this case, needs to specifically check for
+        # type EnsembleInput, specifically not subclasses. So C0123 must be disabled.
         # If this instance is an EnsembleInput, it means no plugins which is no deal.
         if type(self) is EnsembleInput:  # pylint: disable=C0123
             raise RuntimeError(
