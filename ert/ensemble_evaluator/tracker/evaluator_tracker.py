@@ -141,8 +141,8 @@ class EvaluatorTracker:
                 iter_ = event.data["iter"]
                 if iter_ not in self._iter_snapshot:
                     raise OutOfOrderSnapshotUpdateException(
-                        f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored snapshot"
-                        f"for iter {iter_}"
+                        f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
+                        f"snapshot for iter {iter_}"
                     )
                 partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
                     event
