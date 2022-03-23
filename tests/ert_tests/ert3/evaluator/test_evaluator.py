@@ -92,7 +92,7 @@ def test_evaluator(
 
     if has_unix_config:
         ert3.evaluator.add_commands(
-            stage.transportable_commands,
+            stage,
             base_ensemble_dict["storage_type"],
             storage_path,
             step_builder,
