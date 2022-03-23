@@ -5,25 +5,32 @@ degree polynomial as the _true reality_. The model is `ax^2 + bx + c` where
 
 ### Observed data
 The observed data was generated with the following _Python_ code:
-```
-def p(x):
-     return 0.5*x**2 + x + 3
 
-[(p(x)+random.gauss(0, 0.25*x**2+0.1), 0.25*x**2+0.1) for x in [0, 2, 4, 6, 8]]
+```python
+import numpy as np
+
+rng = np.random.default_rng(12345)
+
+
+def p(x):
+    return 0.5 * x ** 2 + x + 3
+
+
+[(p(x) + rng.normal(loc=0, scale=0.2 * p(x)), 0.2 * p(x)) for x in [0, 2, 4, 6, 8]]
 ```
 
 This gives us observations (both a value and an uncertainty) for even `x` less
 than 10. These values appear in `poly_obs_data.txt`. Finally, these values are
-represented as an observation in `observations`. Here we give the data a name.
-And we specify that the values that should be used from the `forward_model` is only
+represented as an observation in `observations`, where they are given an identifier.
+And we specify that the values that should be used from the `forward_model` are only
 the even ones (the `forward model` spits out the image of the polynomial on the
 range `[0, 9]`). It also specifies that the time step to consider is `0`
 (`RESTART`). We do not really have a time concept in this setup and hence we
 only use `0` as a dummy value. We could of course have considered the values
-feed to the polynomial as time; but that is left as an exercise for the reader.
+fed to the polynomial as time; but that is left as an exercise for the reader.
 
 ### Parameters
-As mentioned above `a`, `b` and `c` forms the parameters of the model `ax^2 + bx + c`.
+As mentioned above `a`, `b` and `c` form the parameters of the model `ax^2 + bx + c`.
 They are all specified to be uniformly distributed over ranges in
 `coeff_priors` and are sampled by `GEN_KW` and dumped to the forward model
 following the `json`-template in `coeff.tmpl`.

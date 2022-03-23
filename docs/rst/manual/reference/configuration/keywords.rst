@@ -1271,7 +1271,7 @@ Keywords controlling the ES algorithm
         variance criterion used in Principal Component Analysis (see e.g. Mardia et
         al. 1979).
 
-        The default value of ENKF_TRUNCATION is 0.99. If ensemble collapse is a big
+        The default value of ENKF_TRUNCATION is 0.98. If ensemble collapse is a big
         problem, a smaller value should be used (e.g 0.90 or smaller). However, this
         does not guarantee that the problem of ensemble collapse will disappear. Note
         that setting the truncation factor to 1.00, will recover the Standard-EnKF
