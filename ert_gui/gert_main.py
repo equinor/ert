@@ -29,7 +29,6 @@ import ert_gui.ertwidgets
 from ert_gui.main_window import GertMainWindow
 from ert_gui.simulation.simulation_panel import SimulationPanel
 from ert_gui.tools.export import ExportTool
-from ert_gui.tools.ide import IdeTool
 from ert_gui.tools.load_results import LoadResultsTool
 from ert_gui.tools.manage_cases import ManageCasesTool
 from ert_gui.tools.plot import PlotTool
@@ -132,7 +131,6 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addDock(
         "Configuration Summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(IdeTool(config_file, notifier))
     window.addTool(PlotTool(ert, config_file))
     window.addTool(ExportTool(ert))
     window.addTool(WorkflowsTool(ert, notifier))
