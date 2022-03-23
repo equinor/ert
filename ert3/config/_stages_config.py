@@ -1,6 +1,7 @@
 import importlib.util
 from collections import OrderedDict
 from importlib.abc import Loader
+import pathlib
 from types import MappingProxyType
 from typing import (
     Any,
@@ -59,6 +60,14 @@ class _StagesConfig(BaseModel):
 class TransportableCommand(_StagesConfig):
     name: str
     location: FilePath
+    """the file path of the script or executable on disk. During execution, the script
+    or executable can be located in the execution environment's ``bin`` directory with
+    the name equivalent to the ``Pathlib.name`` property, i.e. the final component
+    excluding root and parent folders.
+
+    If ``location`` is set to ``my/bins/script.py``, in the execution environment its
+    path will be ``bin/script.py``.
+    """
     mime: str = ""
 
     _ensure_transportablecommand_mime = validator("mime", allow_reuse=True)(
@@ -190,6 +199,18 @@ class Function(_Step):
 class Unix(_Step):
     script: Tuple[str, ...]
     transportable_commands: Tuple[TransportableCommand, ...]
+
+    def command_location(self, name: str) -> pathlib.Path:
+        """Return a path to the location of the command with the given name."""
+        return next(
+            (cmd.location for cmd in self.transportable_commands if cmd.name == name),
+            pathlib.Path(name),
+        )
+
+    def command_final_path_component(self, name: str) -> pathlib.Path:
+        """Return a path using the ``pathlib.Path.name`` property of the command
+        location for the command with the given name."""
+        return pathlib.Path(self.command_location(name).name)
 
     @root_validator
     def _ensure_ios_has_transformation(cls, values: Dict[str, Any]) -> Dict[str, Any]:
