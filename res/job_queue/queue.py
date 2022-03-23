@@ -462,6 +462,8 @@ class JobQueue(BaseCClass):
     async def execute_queue_async(
         self, ws_uri, ee_id, pool_sema, evaluators, cert=None, token=None
     ):
+        if evaluators is None:
+            evaluators = []
         if cert is not None:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             ssl_context.load_verify_locations(cadata=cert)
@@ -470,35 +472,42 @@ class JobQueue(BaseCClass):
         headers = Headers()
         if token is not None:
             headers["token"] = token
-        await JobQueue._publish_changes(
-            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-        )
+
         try:
+            await JobQueue._publish_changes(
+                ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+            )
             while True:
                 self.launch_jobs(pool_sema)
 
                 await asyncio.sleep(1)
 
-                if evaluators is not None:
-                    for func in evaluators:
-                        func()
+                [func() for func in evaluators]
 
                 await JobQueue._publish_changes(
                     ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
                 )
-                if not self.is_active() or self.stopped:
+
+                if self.stopped:
+                    raise asyncio.CancelledError
+
+                if not self.is_active():
                     break
+
         except asyncio.CancelledError:
-            self.kill_all_jobs()  # make available_capacity() return false
             logger.debug("queue cancelled, stopping jobs...")
             await self.stop_jobs_async()
             logger.debug("jobs stopped, re-raising CancelledError")
             raise
 
-        if self.stopped:
-            logger.debug("observed that the queue had stopped, stopping jobs...")
+        except Exception:
+            logger.exception(
+                "unexpected exception in queue",
+                exc_info=True,
+            )
             await self.stop_jobs_async()
-            logger.debug("jobs now stopped")
+            logger.debug("jobs stopped, re-raising exception")
+            raise
 
         self.assert_complete()
         self._differ.transition(self.job_list)
