@@ -16,12 +16,3 @@ class ErtNotifier(QObject):
     @Slot()
     def emitErtChange(self):
         self.ertChanged.emit()
-
-    def reloadERT(self, config_file):
-        import sys
-        import os
-
-        python_executable = sys.executable
-        ert_gui_main = sys.argv[0]
-
-        os.execl(python_executable, python_executable, ert_gui_main, "gui", config_file)
