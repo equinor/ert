@@ -229,7 +229,7 @@ def run(
 
     if isinstance(stage, ert3.config.Unix):
         ert3.evaluator.add_commands(
-            stage.transportable_commands,
+            stage,
             experiment_run_config.ensemble_config.storage_type,
             storage_path,
             step_builder,
@@ -317,7 +317,7 @@ def run_sensitivity_analysis(
 
     if isinstance(stage, ert3.config.Unix):
         ert3.evaluator.add_commands(
-            stage.transportable_commands,
+            stage,
             experiment_run_config.ensemble_config.storage_type,
             storage_path,
             step_builder,

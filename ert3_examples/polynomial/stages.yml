@@ -18,7 +18,7 @@
   transportable_commands:
     -
       name: poly
-      location: poly.py
+      location: steps/bin/poly.py
 
 
   script:
@@ -60,7 +60,7 @@
   transportable_commands:
     -
       name: poly
-      location: poly.py
+      location: steps/bin/poly.py
 
   script:
     - poly --coefficients coefficients.json --x_uncertainties x_uncertainties.json --output output.json
@@ -94,7 +94,7 @@
   transportable_commands:
     -
       name: poly
-      location: poly.py
+      location: steps/bin/poly.py
   
   script:
     - poly --coefficients coefficients.json --output output.json

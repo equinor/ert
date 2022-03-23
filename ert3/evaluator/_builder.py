@@ -4,7 +4,6 @@ from functools import partial
 from typing import Callable, Dict, Tuple, Type, cast
 
 import cloudpickle
-from pydantic import FilePath
 
 import ert
 import ert3
@@ -41,17 +40,11 @@ def add_step_inputs(
 
 
 def add_commands(
-    transportable_commands: Tuple[ert3.config.TransportableCommand, ...],
+    stage: ert3.config.Unix,
     storage_type: str,
     storage_path: str,
     step: StepBuilder,
 ) -> None:
-    def command_location(name: str) -> FilePath:
-        return next(
-            (cmd.location for cmd in transportable_commands if cmd.name == name),
-            pathlib.Path(name),
-        )
-
     async def transform_output(
         transmitter: ert.data.RecordTransmitter, mime: str, location: pathlib.Path
     ) -> None:
@@ -59,7 +52,7 @@ def add_commands(
         record = await transformation.to_record()
         await transmitter.transmit_record(record)
 
-    for command in transportable_commands:
+    for command in stage.transportable_commands:
         transmitter: ert.data.RecordTransmitter
         if storage_type == "shared_disk":
             transmitter = ert.data.SharedDiskRecordTransmitter(
@@ -84,7 +77,7 @@ def add_commands(
             .set_name(command.name)
             .set_transformation(
                 ert.data.ExecutableTransformation(
-                    location=command_location(command.name)
+                    location=stage.command_final_path_component(command.name)
                 )
             )
             # cast necessary due to https://github.com/python/mypy/issues/9656
@@ -146,24 +139,12 @@ def build_ensemble(
             .set_executable(cloudpickle.dumps(stage.function))
         )
     if isinstance(stage, ert3.config.Unix):
-
-        def command_location(name: str) -> FilePath:
-            assert isinstance(stage, ert3.config.Unix)  # mypy
-            return next(
-                (
-                    cmd.location
-                    for cmd in stage.transportable_commands
-                    if cmd.name == name
-                ),
-                pathlib.Path(name),
-            )
-
         for script in stage.script:
             name, *args = shlex.split(script)
             step_builder.add_job(
                 create_job_builder()
                 .set_name(name)
-                .set_executable(command_location(name))
+                .set_executable(stage.command_final_path_component(name))
                 .set_args(tuple(args))
             )
 
