@@ -24,8 +24,6 @@
 #include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
 
-#include <ert/analysis/analysis_module.hpp>
-
 #include <ert/analysis/ies/ies_config.hpp>
 
 #define DEFAULT_IES_MAX_STEPLENGTH 0.60
