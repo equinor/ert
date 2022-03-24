@@ -228,7 +228,7 @@ class MockResponse:
 
 
 def test_key_def_structure(api):
-    shutil.rmtree("storage")
+    shutil.rmtree("storage", ignore_errors=True)
     key_defs = api.all_data_type_keys()
     fopr = next(x for x in key_defs if x["key"] == "FOPR")
 
