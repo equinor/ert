@@ -163,6 +163,50 @@ class Uniform(Distribution):
         return "uniform"
 
 
+class LogUniform(Distribution):
+    def __init__(
+        self,
+        lower_bound: float,
+        upper_bound: float,
+        *,
+        size: Optional[int] = None,
+        index: Optional[ert.data.RecordIndex] = None,
+    ) -> None:
+        self._lower_bound = lower_bound
+        self._upper_bound = upper_bound
+
+        def rvs(size: int) -> np.ndarray:  # type: ignore
+            return np.array(
+                scipy.stats.loguniform.rvs(
+                    a=self._lower_bound, b=self._upper_bound, size=self._size
+                )
+            )
+
+        def ppf(x: np.ndarray) -> np.ndarray:  # type: ignore
+            return np.array(
+                scipy.stats.loguniform.ppf(x, a=self._lower_bound, b=self._upper_bound)
+            )
+
+        super().__init__(
+            size=size,
+            index=index,
+            rvs=rvs,
+            ppf=ppf,
+        )
+
+    @property
+    def lower_bound(self) -> float:
+        return self._lower_bound
+
+    @property
+    def upper_bound(self) -> float:
+        return self._upper_bound
+
+    @property
+    def type(self) -> str:
+        return "loguniform"
+
+
 class Discrete(Distribution):
     """Draw a NumericalRecord of specified size (or with specified index) from
     a discrete list of values. Each value has equal weight.

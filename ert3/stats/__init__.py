@@ -1,4 +1,11 @@
-from ert3.stats._stats import Constant, Discrete, Distribution, Gaussian, Uniform
+from ert3.stats._stats import (
+    Constant,
+    Discrete,
+    Distribution,
+    Gaussian,
+    Uniform,
+    LogUniform,
+)
 
 __all__ = [
     "Constant",
@@ -6,4 +13,5 @@ __all__ = [
     "Distribution",
     "Gaussian",
     "Uniform",
+    "LogUniform",
 ]

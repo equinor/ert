@@ -200,6 +200,104 @@ def test_invalid_uniform(input_):
 
 
 @pytest.mark.parametrize(
+    ("lower_bound", "upper_bound"), ((0.1, 5.3), (1, 2), (0.01, 100))
+)
+def test_valid_loguniform(lower_bound, upper_bound):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "loguniform",
+                "input": {
+                    "lower_bound": lower_bound,
+                    "upper_bound": upper_bound,
+                },
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "loguniform"
+    assert param.distribution.input.lower_bound == lower_bound
+    assert param.distribution.input.upper_bound == upper_bound
+    assert tuple(param.variables) == ("x", "y", "z")
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.LogUniform)
+    assert tuple(param.variables) == tuple(distribution.index)
+    assert param.distribution.input.lower_bound == distribution._lower_bound
+    assert param.distribution.input.upper_bound == distribution._upper_bound
+
+
+def test_valid_loguniform_size():
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "loguniform",
+                "input": {
+                    "lower_bound": 0.1,
+                    "upper_bound": 100,
+                },
+            },
+            "size": 3,
+        }
+    ]
+    parameters_config = ert3.config.load_parameters_config(raw_config)
+    assert len(parameters_config) == 1
+    param = parameters_config[0]
+
+    assert param.name == "my_parameter_group"
+    assert param.type == "stochastic"
+    assert param.distribution.type == "loguniform"
+    assert param.distribution.input.lower_bound == 0.1
+    assert param.distribution.input.upper_bound == 100
+    assert param.size == 3
+
+    distribution = param.as_distribution()
+    assert isinstance(distribution, ert3.stats.LogUniform)
+    assert param.size == distribution._size
+    assert param.distribution.input.lower_bound == distribution._lower_bound
+    assert param.distribution.input.upper_bound == distribution._upper_bound
+
+
+@pytest.mark.parametrize(
+    "input_",
+    (
+        {"lower_bound": 2, "upper_bound": 1},
+        {"lower_bound": 0, "upper_bound": 1},
+        {"lower_bound": -0.1, "upper_bound": 1},
+        {"lower_bound": 0.1},
+        {"upper_bound": 0},
+        {"lower_bound": 2, "upper_bound": 1, "mean": 0},
+        {"lower_bound": 1, "upper_bound": 1},
+    ),
+)
+def test_invalid_loguniform(input_):
+    raw_config = [
+        {
+            "name": "my_parameter_group",
+            "type": "stochastic",
+            "distribution": {
+                "type": "loguniform",
+                "input": input_,
+            },
+            "variables": ["x", "y", "z"],
+        }
+    ]
+
+    with pytest.raises(ert.exceptions.ConfigValidationError):
+        ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.mark.parametrize(
     ("values"),
     (
         [1],

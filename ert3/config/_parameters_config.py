@@ -61,7 +61,7 @@ class _UniformInput(_ParametersConfig):
     upper_bound: float
 
     @root_validator
-    def _ensure_lower_upper(cls, values):  # type: ignore
+    def _ensure_lower_upper(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         low = values.get("lower_bound")
         up = values.get("upper_bound")
 
@@ -76,11 +76,32 @@ class _UniformInput(_ParametersConfig):
         )
 
 
+class _LogUniformInput(_ParametersConfig):
+    lower_bound: float
+    upper_bound: float
+
+    @root_validator
+    def _ensure_lower_upper(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        low = values.get("lower_bound")
+        up = values.get("upper_bound")
+
+        if low is None or up is None:
+            return values
+
+        if up > low > 0:
+            return values
+
+        raise ValueError(
+            f"Expected lower_bound ({low}) to be > 0, "
+            "and smaller than upper_bound ({up})"
+        )
+
+
 class _DiscreteInput(_ParametersConfig):
     values: List[float]
 
     @root_validator
-    def _ensure_proper_values(cls, values):  # type: ignore
+    def _ensure_proper_values(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         value_list = values.get("values")
 
         if value_list is not None and len(value_list) > 0:
@@ -101,6 +122,11 @@ class _GaussianDistribution(_ParametersConfig):
 class _UniformDistribution(_ParametersConfig):
     type: Literal["uniform"]
     input: _UniformInput
+
+
+class _LogUniformDistribution(_ParametersConfig):
+    type: Literal["loguniform"]
+    input: _LogUniformInput
 
 
 class _DiscreteDistribution(_ParametersConfig):
@@ -152,6 +178,7 @@ class _ParameterConfig(_ParametersConfig):
         _DiscreteDistribution,
         _GaussianDistribution,
         _UniformDistribution,
+        _LogUniformDistribution,
     ]
     variables: Optional[_VariablesConfig] = None
     size: Optional[int] = None
@@ -200,6 +227,16 @@ class _ParameterConfig(_ParametersConfig):
             assert dist_config.input.upper_bound is not None
 
             return ert3.stats.Uniform(
+                dist_config.input.lower_bound,
+                dist_config.input.upper_bound,
+                index=index,
+                size=size,
+            )
+        elif dist_config.type == "loguniform":
+            assert dist_config.input.lower_bound is not None
+            assert dist_config.input.upper_bound is not None
+
+            return ert3.stats.LogUniform(
                 dist_config.input.lower_bound,
                 dist_config.input.upper_bound,
                 index=index,

@@ -56,6 +56,14 @@ def presampled_uniform_ensemble(base_ensemble_dict, plugin_registry):
 
 
 @pytest.fixture()
+def presampled_loguniform_ensemble(base_ensemble_dict, plugin_registry):
+    base_ensemble_dict["input"][0]["source"] = "storage.loguniform_coefficients0"
+    yield ert3.config.load_ensemble_config(
+        base_ensemble_dict, plugin_registry=plugin_registry
+    )
+
+
+@pytest.fixture()
 def presampled_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["input"][0]["source"] = "storage.coefficients0"
     yield ert3.config.load_ensemble_config(
@@ -147,6 +155,22 @@ def uniform_parameters_config():
             "distribution": {
                 "type": "uniform",
                 "input": {"lower_bound": 0, "upper_bound": 1},
+            },
+            "variables": ["a", "b", "c"],
+        },
+    ]
+    yield ert3.config.load_parameters_config(raw_config)
+
+
+@pytest.fixture()
+def loguniform_parameters_config():
+    raw_config = [
+        {
+            "name": "loguniform_coefficients",
+            "type": "stochastic",
+            "distribution": {
+                "type": "loguniform",
+                "input": {"lower_bound": 0.01, "upper_bound": 1},
             },
             "variables": ["a", "b", "c"],
         },
@@ -399,6 +423,43 @@ def test_uniform_distribution(
     )
 
 
+@pytest.mark.usefixtures("setup_tmpdir")
+def test_loguniform_distribution(
+    presampled_big_ensemble,
+    stages_config,
+    loguniform_parameters_config,
+):
+    orig_method = ert3.stats.LogUniform.sample
+    returned_samples = []
+
+    def wrapper(self):
+        retval = orig_method(self)
+        returned_samples.append(retval)
+        return retval
+
+    with patch(
+        "ert3.stats.LogUniform.sample", side_effect=wrapper, autospec=True
+    ) as sample_calls:
+        coefficients = ert3.engine.sample_record(
+            loguniform_parameters_config,
+            "loguniform_coefficients",
+            1000,
+        )
+
+        assert 1000 == len(coefficients)
+        assert 1000 == len(sample_calls.call_args_list)
+        assert 1000 == len(returned_samples)
+
+    assert_distribution(
+        presampled_big_ensemble,
+        stages_config,
+        loguniform_parameters_config,
+        "loguniform",
+        coefficients,
+        returned_samples,
+    )
+
+
 @pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_run_presampled(
@@ -498,6 +559,63 @@ def test_run_uniform_presampled(
     export_data = _load_export_data(workspace, "presampled_uniform_evaluation")
     assert len(uniform_coeff0) == len(export_data)
     for coeff, real in zip(uniform_coeff0.records, export_data):
+        assert ["coefficients"] == list(real["input"].keys())
+        export_coeff = real["input"]["coefficients"]
+        assert sorted(coeff.index) == sorted(export_coeff.keys())
+        for key in coeff.index:
+            assert coeff.data[key] == export_coeff[key]
+
+
+@pytest.mark.integration_test
+@pytest.mark.requires_ert_storage
+def test_run_loguniform_presampled(
+    workspace_integration,
+    presampled_loguniform_ensemble,
+    stages_config,
+    evaluation_experiment_config,
+    loguniform_parameters_config,
+):
+    workspace = workspace_integration
+    presampled_dir = (
+        workspace._path / _EXPERIMENTS_BASE / "presampled_loguniform_evaluation"
+    )
+    presampled_dir.mkdir(parents=True)
+    with assert_clean_workspace(workspace):
+        loguniform_coeff0 = ert3.engine.sample_record(
+            loguniform_parameters_config,
+            "loguniform_coefficients",
+            10,
+        )
+
+        future = ert.storage.transmit_record_collection(
+            record_coll=loguniform_coeff0,
+            record_name="loguniform_coefficients0",
+            workspace_name=workspace.name,
+        )
+        get_event_loop().run_until_complete(future)
+        assert 10 == len(loguniform_coeff0)
+        for real_coeff in loguniform_coeff0.records:
+            assert sorted(("a", "b", "c")) == sorted(real_coeff.index)
+            for idx in real_coeff.index:
+                assert isinstance(real_coeff.data[idx], float)
+
+        experiment_run_config = ert3.config.ExperimentRunConfig(
+            evaluation_experiment_config,
+            stages_config,
+            presampled_loguniform_ensemble,
+            loguniform_parameters_config,
+        )
+        ert3.engine.run(
+            experiment_run_config, workspace, "presampled_loguniform_evaluation"
+        )
+    with assert_clean_workspace(workspace, allowed_files={"data.json"}):
+        ert3.engine.export(
+            workspace, "presampled_loguniform_evaluation", experiment_run_config
+        )
+
+    export_data = _load_export_data(workspace, "presampled_loguniform_evaluation")
+    assert len(loguniform_coeff0) == len(export_data)
+    for coeff, real in zip(loguniform_coeff0.records, export_data):
         assert ["coefficients"] == list(real["input"].keys())
         export_coeff = real["input"]["coefficients"]
         assert sorted(coeff.index) == sorted(export_coeff.keys())
