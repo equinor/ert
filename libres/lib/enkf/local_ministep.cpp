@@ -126,11 +126,6 @@ LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep) {
     return ministep->observations;
 }
 
-obs_data_type *
-local_ministep_get_obs_data(const local_ministep_type *ministep) {
-    return ministep->obs_data;
-}
-
 const char *local_ministep_get_name(const local_ministep_type *ministep) {
     return ministep->name.data();
 }
