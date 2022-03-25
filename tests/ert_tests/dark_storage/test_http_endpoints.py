@@ -1,12 +1,7 @@
-from argparse import ArgumentParser
-
 from numpy.testing import assert_array_equal
 from requests import Response
 import uuid
-
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ENSEMBLE_EXPERIMENT_MODE
-from ert_shared.cli.main import run_cli
-from ert_shared.main import ert_parser
+import json
 
 import pandas as pd
 import io
@@ -18,7 +13,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     answer_json = resp.json()
     assert len(answer_json) == 1
     assert "ensemble_ids" in answer_json[0]
-    assert len(answer_json[0]["ensemble_ids"]) == 2
+    assert len(answer_json[0]["ensemble_ids"]) == 3
     assert "name" in answer_json[0]
     assert answer_json[0]["name"] == "default"
 
@@ -27,7 +22,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 2
+    assert len(experiment_json[0]["ensemble_ids"]) == 3
 
     ensemble_id = experiment_json[0]["ensemble_ids"][0]
 
@@ -35,23 +30,23 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     ensemble_json = resp.json()
 
     assert ensemble_json["experiment_id"] == experiment_json[0]["id"]
-    assert ensemble_json["userdata"]["name"] == "default"
+    assert ensemble_json["userdata"]["name"] == "alpha"
 
 
 def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
     assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 2
+    assert len(experiment_json[0]["ensemble_ids"]) == 3
 
     experiment_id = experiment_json[0]["id"]
 
     resp: Response = dark_storage_client.get(f"/experiments/{experiment_id}/ensembles")
     ensembles_json = resp.json()
 
-    assert len(ensembles_json) == 2
+    assert len(ensembles_json) == 3
     assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] == "default"
+    assert ensembles_json[0]["userdata"]["name"] == "alpha"
 
 
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
@@ -71,15 +66,26 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
 
+    # The setup creates two ensembles, but there will always be one named default.
+    # Unless used, it will remain empty
+    assert len(experiment_json[0]["ensemble_ids"]) == 3, experiment_json
+
     ensemble_id1 = experiment_json[0]["ensemble_ids"][0]
     ensemble_id2 = experiment_json[0]["ensemble_ids"][1]
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id1}")
     ensemble_json = resp.json()
+    assert (
+        ensemble_json["userdata"]["name"] == "alpha"
+    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json: {json.dumps(ensemble_json, indent=1)}"
     assert ensemble_json["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id2}")
     ensemble_json2 = resp.json()
+
+    assert (
+        ensemble_json2["userdata"]["name"] == "beta"
+    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json2: {json.dumps(ensemble_json2, indent=1)}"
     assert ensemble_json2["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(
@@ -94,7 +100,9 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     stream = io.BytesIO(resp.content)
     response_df2 = pd.read_csv(stream, index_col=0, float_precision="round_trip")
 
-    assert len(response_df1.columns) == 10
+    assert (
+        len(response_df1.columns) == 10
+    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json: {json.dumps(ensemble_json, indent=1)}\n status_code: {resp.status_code}"
     assert len(response_df1.index) == 3
 
     assert len(response_df2.columns) == 10
