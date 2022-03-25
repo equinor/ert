@@ -26,15 +26,16 @@ def poly_example_tmp_dir_shared(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         poly_dir,
     )
-
     with poly_dir.as_cwd():
         parser = ArgumentParser(prog="test_main")
         parsed = ert_parser(
             parser,
             [
                 ENSEMBLE_SMOOTHER_MODE,
+                "--current-case",
+                "alpha",
                 "--target-case",
-                "poly_runpath_file",
+                "beta",
                 "--realizations",
                 "1,2,4",
                 "poly.ert",

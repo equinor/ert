@@ -26,7 +26,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert "COEFF_C" == priors["COEFFS"][2]["key"]
 
 
-def test_get_enesembles(poly_example_tmp_dir, dark_storage_client):
+def test_get_ensembles(poly_example_tmp_dir, dark_storage_client):
 
     resp: Response = dark_storage_client.post(
         "/gql", json={"query": "{experiments{ensembles{userdata}}}"}
@@ -36,21 +36,21 @@ def test_get_enesembles(poly_example_tmp_dir, dark_storage_client):
     assert len(answer_json["data"]["experiments"]) == 1
 
     assert "ensembles" in answer_json["data"]["experiments"][0]
-    assert len(answer_json["data"]["experiments"][0]["ensembles"]) == 2
+    assert len(answer_json["data"]["experiments"][0]["ensembles"]) == 3
 
     assert "userdata" in answer_json["data"]["experiments"][0]["ensembles"][0]
     userdata = json.loads(
         answer_json["data"]["experiments"][0]["ensembles"][0]["userdata"]
     )
     assert "name" in userdata
-    assert userdata["name"] == "default"
+    assert userdata["name"] == "alpha"
 
     assert "userdata" in answer_json["data"]["experiments"][0]["ensembles"][1]
     userdata = json.loads(
         answer_json["data"]["experiments"][0]["ensembles"][1]["userdata"]
     )
     assert "name" in userdata
-    assert userdata["name"] == "poly_runpath_file"
+    assert userdata["name"] == "beta"
 
 
 def test_get_response_names(poly_example_tmp_dir, dark_storage_client):
