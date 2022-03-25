@@ -11,7 +11,7 @@ class BaseRunModelTest(ErtTest):
         config_file = self.createTestPath("local/simple_config/minimum_config")
         with ErtTestContext("kjell", config_file) as work_area:
             ert = work_area.getErt()
-            brm = BaseRunModel(ert, ert.get_queue_config())
+            brm = BaseRunModel(None, ert, ert.get_queue_config())
             assert brm.support_restart
 
 

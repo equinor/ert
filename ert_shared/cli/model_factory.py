@@ -12,49 +12,48 @@ from ert_shared.models.single_test_run import SingleTestRun
 def create_model(ert, get_analysis_modules, ensemble_size, current_case_name, args):
     # Setup model
     if args.mode == "test_run":
-        model, argument = _setup_single_test_run(ert)
+        model = _setup_single_test_run(ert)
     elif args.mode == "ensemble_experiment":
-        model, argument = _setup_ensemble_experiment(ert, args, ensemble_size)
+        model = _setup_ensemble_experiment(ert, args, ensemble_size)
     elif args.mode == "ensemble_smoother":
-        model, argument = _setup_ensemble_smoother(
+        model = _setup_ensemble_smoother(
             ert, get_analysis_modules, args, ensemble_size, current_case_name
         )
     elif args.mode == "es_mda":
-        model, argument = _setup_multiple_data_assimilation(
+        model = _setup_multiple_data_assimilation(
             ert, get_analysis_modules, args, ensemble_size, current_case_name
         )
     elif args.mode == "iterative_ensemble_smoother":
-        model, argument = _setup_iterative_ensemble_smoother(
+        model = _setup_iterative_ensemble_smoother(
             ert, get_analysis_modules, args, ensemble_size, current_case_name
         )
 
     else:
         raise NotImplementedError("Run type not supported {}".format(args.mode))
 
-    return model, argument
+    return model
 
 
 def _setup_single_test_run(ert):
-    model = SingleTestRun(ert)
     simulations_argument = {
         "active_realizations": BoolVector(default_value=True, initial_size=1),
     }
-    return model, simulations_argument
+    model = SingleTestRun(simulations_argument, ert)
+    return model
 
 
 def _setup_ensemble_experiment(ert, args, ensemble_size):
-    model = EnsembleExperiment(ert, ert.get_queue_config())
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "iter_num": int(args.iter_num),
     }
-    return model, simulations_argument
+    model = EnsembleExperiment(simulations_argument, ert, ert.get_queue_config())
+    return model
 
 
 def _setup_ensemble_smoother(
     ert, get_analysis_modules, args, ensemble_size, current_case_name
 ):
-    model = EnsembleSmoother(ert, ert.get_queue_config())
     iterable = False
     modules = get_analysis_modules(iterable=iterable)
     active_name = ert.analysisConfig().activeModuleName()
@@ -67,13 +66,13 @@ def _setup_ensemble_smoother(
             active_name, modules, iterable=iterable
         ),
     }
-    return model, simulations_argument
+    model = EnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
+    return model
 
 
 def _setup_multiple_data_assimilation(
     ert, get_analysis_modules, args, ensemble_size, current_case_name
 ):
-    model = MultipleDataAssimilation(ert, ert.get_queue_config())
     iterable = False
     active_name = ert.analysisConfig().activeModuleName()
     modules = get_analysis_modules(iterable=iterable)
@@ -88,13 +87,13 @@ def _setup_multiple_data_assimilation(
         "weights": args.weights,
         "start_iteration": int(args.start_iteration),
     }
-    return model, simulations_argument
+    model = MultipleDataAssimilation(simulations_argument, ert, ert.get_queue_config())
+    return model
 
 
 def _setup_iterative_ensemble_smoother(
     ert, get_analysis_modules, args, ensemble_size, current_case_name
 ):
-    model = IteratedEnsembleSmoother(ert, ert.get_queue_config())
     iterable = True
     active_name = ert.analysisConfig().activeModuleName()
     modules = get_analysis_modules(iterable=iterable)
@@ -108,7 +107,8 @@ def _setup_iterative_ensemble_smoother(
         ),
         "num_iterations": _num_iterations(ert, args),
     }
-    return model, simulations_argument
+    model = IteratedEnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
+    return model
 
 
 def _get_analysis_module_name(active_name, modules, iterable):

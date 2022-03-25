@@ -37,6 +37,13 @@ from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
+from ert_shared.ensemble_evaluator.entity.identifiers import (
+    EVTYPE_EE_TERMINATED,
+)
+from ert_shared.status.entity.state import (
+    ENSEMBLE_STATE_STOPPED,
+    ENSEMBLE_STATE_FAILED,
+)
 
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
@@ -46,7 +53,7 @@ class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
     simulation_termination_request = Signal()
 
-    def __init__(self, config_file, run_model, simulation_arguments, parent=None):
+    def __init__(self, config_file, run_model, parent=None):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -63,8 +70,6 @@ class RunDialog(QDialog):
         ert = None
         if isinstance(run_model, BaseRunModel):
             ert = run_model.ert()
-
-        self._simulation_arguments = simulation_arguments
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -279,7 +284,6 @@ class RunDialog(QDialog):
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())
             self._run_model.startSimulations(
-                self._simulation_arguments,
                 evaluator_server_config=evaluator_server_config,
             )
 
@@ -325,7 +329,7 @@ class RunDialog(QDialog):
         self.processing_animation.hide()
         self.kill_button.setHidden(True)
         self.done_button.setHidden(False)
-        self.restart_button.setVisible(self.has_failed_realizations())
+        self.restart_button.setVisible(self._run_model.has_failed_realizations())
         self.restart_button.setEnabled(self._run_model.support_restart)
         self._total_progress_bar.setValue(100)
         self._total_progress_label.setText(
@@ -379,34 +383,6 @@ class RunDialog(QDialog):
                 )
             )
 
-    def has_failed_realizations(self):
-        completed = self._run_model.completed_realizations_mask
-        initial = self._run_model.initial_realizations_mask
-        for (index, successful) in enumerate(completed):
-            if initial[index] and not successful:
-                return True
-        return False
-
-    def count_successful_realizations(self):
-        """
-        Counts the realizations completed in the prevoius ensemble run
-        :return:
-        """
-        completed = self._run_model.completed_realizations_mask
-        return completed.count(True)
-
-    def create_mask_from_failed_realizations(self):
-        """
-        Creates a BoolVector mask representing the failed realizations
-        :return: Type BoolVector
-        """
-        completed = self._run_model.completed_realizations_mask
-        initial = self._run_model.initial_realizations_mask
-        inverted_mask = BoolVector(default_value=False)
-        for (index, successful) in enumerate(completed):
-            inverted_mask[index] = initial[index] and not successful
-        return inverted_mask
-
     def restart_failed_realizations(self):
 
         msg = QMessageBox(self)
@@ -422,14 +398,7 @@ class RunDialog(QDialog):
             self.restart_button.setVisible(False)
             self.kill_button.setVisible(True)
             self.done_button.setVisible(False)
-            active_realizations = self.create_mask_from_failed_realizations()
-            self._simulation_arguments["active_realizations"] = active_realizations
-            self._simulation_arguments[
-                "prev_successful_realizations"
-            ] = self._simulation_arguments.get("prev_successful_realizations", 0)
-            self._simulation_arguments[
-                "prev_successful_realizations"
-            ] += self.count_successful_realizations()
+            self._run_model.restart()
             self.startSimulation()
 
     @Slot()

@@ -16,11 +16,8 @@ from ert_shared.status.entity.event import (
 from qtpy.QtCore import Qt
 
 
-def test_success(runmodel, active_realizations, qtbot, mock_tracker):
-    widget = RunDialog(
-        "poly.ert", runmodel, {"active_realizations": active_realizations}
-    )
-    widget.has_failed_realizations = lambda: False
+def test_success(runmodel, qtbot, mock_tracker):
+    widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -36,13 +33,8 @@ def test_success(runmodel, active_realizations, qtbot, mock_tracker):
     assert widget.done_button.text() == "Done"
 
 
-def test_large_snapshot(
-    runmodel, active_realizations, large_snapshot, qtbot, mock_tracker
-):
-    widget = RunDialog(
-        "poly.ert", runmodel, {"active_realizations": active_realizations}
-    )
-    widget.has_failed_realizations = lambda: False
+def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
+    widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
 
@@ -285,13 +277,8 @@ def test_large_snapshot(
         ),
     ],
 )
-def test_run_dialog(
-    events, tab_widget_count, runmodel, active_realizations, qtbot, mock_tracker
-):
-    widget = RunDialog(
-        "poly.ert", runmodel, {"active_realizations": active_realizations}
-    )
-    widget.has_failed_realizations = lambda: False
+def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
+    widget = RunDialog("poly.ert", runmodel)
     widget.show()
     qtbot.addWidget(widget)
 
