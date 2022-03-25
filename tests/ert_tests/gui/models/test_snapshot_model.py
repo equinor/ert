@@ -4,8 +4,8 @@ from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
 
 from ert_gui.model.snapshot import RealJobColorHint, SnapshotModel
-from ert_shared.ensemble_evaluator.entity.snapshot import Job, PartialSnapshot
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
+from ert.ensemble_evaluator.state import (
     COLOR_PENDING,
     COLOR_RUNNING,
     JOB_STATE_RUNNING,

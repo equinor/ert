@@ -1,5 +1,3 @@
-from ert_gui.model.snapshot import COLUMNS, NodeRole
-from ert_gui.model.node import Node, NodeType
 import typing
 from qtpy.QtCore import (
     QObject,
@@ -11,10 +9,12 @@ from qtpy.QtCore import (
     QModelIndex,
     QVariant,
 )
+from ert_gui.model.snapshot import COLUMNS, NodeRole
+from ert_gui.model.node import NodeType
 
 
 class JobListProxyModel(QAbstractProxyModel):
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         parent: typing.Optional[QObject],
         iter_: int,

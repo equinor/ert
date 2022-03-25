@@ -50,9 +50,7 @@ def test_immediate_stop():
 
 
 def test_failed_connection():
-    with patch(
-        "ert_shared.ensemble_evaluator.sync_ws_duplexer.wait_for_evaluator"
-    ) as w:
+    with patch("ert.ensemble_evaluator.wait_for_evaluator") as w:
         w.side_effect = OSError("expected oserror")
         duplexer = SyncWebsocketDuplexer(
             "ws://localhost:0", "http://localhost:0", None, None

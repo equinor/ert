@@ -11,7 +11,8 @@ from http import HTTPStatus
 
 import cloudpickle
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
+import ert.ensemble_evaluator.identifiers as identifiers
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
@@ -19,8 +20,7 @@ from websockets.exceptions import ConnectionClosedError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
-from ert_shared.ensemble_evaluator.entity import serialization
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
 )
 
@@ -84,9 +84,9 @@ class EnsembleEvaluator:
     def _create_cloud_event(
         self,
         event_type,
-        data={},
-        extra_attrs={},
-        data_marshaller=serialization.evaluator_marshaller,
+        data=dict(),
+        extra_attrs=dict(),
+        data_marshaller=evaluator_marshaller,
     ):
         if isinstance(data, dict):
             data["iter"] = self._iter
@@ -116,12 +116,12 @@ class EnsembleEvaluator:
 
             async for message in websocket:
                 client_event = from_json(
-                    message, data_unmarshaller=serialization.evaluator_unmarshaller
+                    message, data_unmarshaller=evaluator_unmarshaller
                 )
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    if self._ensemble.is_cancellable():
+                    if self._ensemble.cancellable:
                         # The evaluator will stop after the ensemble has
                         # indicated it has been cancelled.
                         self._ensemble.cancel()
@@ -145,9 +145,7 @@ class EnsembleEvaluator:
         async with self.count_dispatcher():
             async for msg in websocket:
                 try:
-                    event = from_json(
-                        msg, data_unmarshaller=serialization.evaluator_unmarshaller
-                    )
+                    event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
                 except cloudevents.exceptions.DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=pickle.loads)
                 if self._get_ee_id(event["source"]) != self._ee_id:
@@ -258,7 +256,7 @@ class EnsembleEvaluator:
                     == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
                 ):
                     logger.debug("Max connection attempts reached")
-                    if self._ensemble.is_cancellable():
+                    if self._ensemble.cancellable:
                         logger.debug("Cancelling current ensemble")
                         self._ensemble.cancel()
                     else:

@@ -2,20 +2,21 @@ import copy
 import datetime
 import typing
 from collections import defaultdict
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Mapping, Optional, Sequence, Union, cast
 
+from cloudevents.http import CloudEvent
 import pyrsistent
+from pyrsistent.typing import PMap as TPMap
 from dateutil.parser import parse
 from pydantic import BaseModel
-
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.entity.tool import (
+from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator.util._tool import (
     get_job_id,
     get_real_id,
     get_step_id,
     recursive_update,
 )
-from ert_shared.status.entity import state
 
 
 class UnsupportedOperationException(ValueError):
@@ -52,7 +53,9 @@ _STEP_STATE_TO_REALIZATION_STATE = {
 }
 
 
-def convert_iso8601_to_datetime(timestamp):
+def convert_iso8601_to_datetime(
+    timestamp: Union[datetime.datetime, str]
+) -> datetime.datetime:
     if isinstance(timestamp, datetime.datetime):
         return timestamp
 
@@ -60,32 +63,38 @@ def convert_iso8601_to_datetime(timestamp):
 
 
 class PartialSnapshot:
-    def __init__(self, snapshot) -> None:
+    def __init__(self, snapshot: "Snapshot") -> None:
         """Create a PartialSnapshot. If no snapshot is provided, the object is
         a immutable POD, and any attempt at mutating it will raise an
         UnsupportedOperationException."""
-        self._data = pyrsistent.m()
+        self._data: TPMap[str, Any] = pyrsistent.m()
         self._snapshot = copy.copy(snapshot) if snapshot else None
 
-    def update_status(self, status):
+    def update_status(self, status: str) -> None:
         self._apply_update(SnapshotDict(status=status))
 
-    def update_metadata(self, metadata: Dict[str, Any]):
-        dictionary = {ids.METADATA: metadata}
+    def update_metadata(self, metadata: Dict[str, Any]) -> None:
+        if self._snapshot is None:
+            raise UnsupportedOperationException(
+                f"updating metadata on {self.__class__} without providing a snapshot"
+                + " is not supported"
+            )
+        dictionary = pyrsistent.pmap({ids.METADATA: metadata})
         self._data = recursive_update(self._data, dictionary, check_key=False)
         self._snapshot.merge_metadata(metadata)
 
     def update_real(
         self,
-        real_id,
-        real,
-    ):
+        real_id: str,
+        real: "Realization",
+    ) -> None:
         self._apply_update(SnapshotDict(reals={real_id: real}))
 
-    def _apply_update(self, update):
+    def _apply_update(self, update: "SnapshotDict") -> None:
         if self._snapshot is None:
             raise UnsupportedOperationException(
-                f"trying to mutate {self.__class__} without providing a snapshot is not supported"
+                f"trying to mutate {self.__class__} without providing a snapshot is "
+                + "not supported"
             )
         dictionary = update.dict(
             exclude_unset=True, exclude_none=True, exclude_defaults=True
@@ -93,7 +102,13 @@ class PartialSnapshot:
         self._data = recursive_update(self._data, dictionary, check_key=False)
         self._snapshot.merge(dictionary)
 
-    def update_step(self, real_id, step_id, step):
+    def update_step(
+        self, real_id: str, step_id: str, step: "Step"
+    ) -> "PartialSnapshot":
+        if self._snapshot is None:
+            raise UnsupportedOperationException(
+                f"cannot update step for {self.__class__} without providing a snapshot"
+            )
         self._apply_update(
             SnapshotDict(reals={real_id: Realization(steps={step_id: step})})
         )
@@ -117,34 +132,42 @@ class PartialSnapshot:
                 pass
             else:
                 raise ValueError(
-                    f"unknown step status {step.status} for real: {real_id} step: {step_id}"
+                    f"unknown step status {step.status} for real: {real_id} step: "
+                    + f"{step_id}"
                 )
         return self
 
     def update_job(
         self,
-        real_id,
-        step_id,
-        job_id,
-        job,
-    ):
+        real_id: str,
+        step_id: str,
+        job_id: str,
+        job: "Job",
+    ) -> "PartialSnapshot":
         self._apply_update(
             SnapshotDict(
                 reals={real_id: Realization(steps={step_id: Step(jobs={job_id: job})})}
             )
         )
+        return self
 
-    def to_dict(self):
-        return pyrsistent.thaw(self._data)
+    def to_dict(self) -> Mapping[str, Any]:
+        return cast(Mapping[str, Any], pyrsistent.thaw(self._data))
 
-    def data(self):
+    def data(self) -> TPMap[str, Any]:
         return self._data
 
-    def from_cloudevent(self, event) -> "PartialSnapshot":
+    # pylint: disable=too-many-branches
+    def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
         timestamp = event["time"]
+
+        if self._snapshot is None:
+            raise UnsupportedOperationException(
+                f"updating {self.__class__} without a snapshot is not supported"
+            )
 
         if e_type in ids.EVGROUP_FM_STEP:
             start_time = None
@@ -215,54 +238,56 @@ class PartialSnapshot:
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
             self._data = recursive_update(self._data, event.data, check_key=False)
         else:
-            raise ValueError("Unknown type: {}".format(e_type))
+            raise ValueError(f"Unknown type: {e_type}")
         return self
 
 
 class Snapshot:
-    def __init__(self, input_dict) -> None:
-        self._data = pyrsistent.freeze(input_dict)
+    def __init__(self, input_dict: Mapping[str, Any]) -> None:
+        self._data: TPMap[str, Any] = pyrsistent.freeze(input_dict)
 
-    def merge_event(self, event) -> None:
+    def merge_event(self, event: PartialSnapshot) -> None:
         self._data = recursive_update(self._data, event.data())
 
-    def merge(self, update):
+    def merge(self, update: Mapping[str, Any]) -> None:
         self._data = recursive_update(self._data, update)
 
-    def merge_metadata(self, metadata: Dict[str, Any]):
+    def merge_metadata(self, metadata: Dict[str, Any]) -> None:
         self._data = recursive_update(
-            self._data, {ids.METADATA: metadata}, check_key=False
+            self._data, pyrsistent.pmap({ids.METADATA: metadata}), check_key=False
         )
 
-    def to_dict(self):
-        return pyrsistent.thaw(self._data)
+    def to_dict(self) -> Mapping[str, Any]:
+        return cast(Mapping[str, Any], pyrsistent.thaw(self._data))
 
-    def get_status(self):
-        return self._data[ids.STATUS]
+    @property
+    def status(self) -> str:
+        return cast(str, self._data[ids.STATUS])
 
-    def get_reals(self) -> Dict[str, "Realization"]:
+    @property
+    def reals(self) -> Dict[str, "Realization"]:
         return SnapshotDict(**self._data).reals
 
-    def get_real(self, real_id):
+    def get_real(self, real_id: str) -> "Realization":
         if real_id not in self._data[ids.REALS]:
             raise ValueError(f"No realization with id {real_id}")
         return Realization(**self._data[ids.REALS][real_id])
 
-    def get_step(self, real_id, step_id):
+    def get_step(self, real_id: str, step_id: str) -> "Step":
         real = self.get_real(real_id)
         steps = real.steps
         if step_id not in steps:
             raise ValueError(f"No step with id {step_id} in {real_id}")
         return steps[step_id]
 
-    def get_job(self, real_id, step_id, job_id):
+    def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
         step = self.get_step(real_id, step_id)
         jobs = step.jobs
         if job_id not in jobs:
             raise ValueError(f"No job with id {job_id} in {step_id}")
         return jobs[job_id]
 
-    def all_steps_finished(self, real_id):
+    def all_steps_finished(self, real_id: str) -> bool:
         real = self.get_real(real_id)
         return all(
             step.status == state.STEP_STATE_SUCCESS for step in real.steps.values()
@@ -283,7 +308,7 @@ class Snapshot:
             states[real[ids.STATUS]] += 1
         return states
 
-    def data(self):
+    def data(self) -> Mapping[str, Any]:
         return self._data
 
 
@@ -291,7 +316,7 @@ class Job(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    data: Optional[Dict]
+    data: Optional[Dict[str, Any]]
     name: Optional[str]
     error: Optional[str]
     stdout: Optional[str]
@@ -302,7 +327,7 @@ class Step(BaseModel):
     status: Optional[str]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    jobs: Optional[Dict[str, Job]] = {}
+    jobs: Dict[str, Job] = {}
 
 
 class Realization(BaseModel):
@@ -310,20 +335,26 @@ class Realization(BaseModel):
     active: Optional[bool]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
-    steps: Optional[Dict[str, Step]] = {}
+    steps: Dict[str, Step] = {}
 
 
 class SnapshotDict(BaseModel):
     status: Optional[str] = state.ENSEMBLE_STATE_UNKNOWN
-    reals: Optional[Dict[str, Realization]] = {}
-    metadata: Optional[Dict[str, Any]]
+    reals: Dict[str, Realization] = {}
+    metadata: Dict[str, Any] = {}
 
 
 class SnapshotBuilder(BaseModel):
     steps: Dict[str, Step] = {}
     metadata: Dict[str, Any] = {}
 
-    def build(self, real_ids, status, start_time=None, end_time=None):
+    def build(
+        self,
+        real_ids: Sequence[str],
+        status: Optional[str],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+    ) -> Snapshot:
         top = SnapshotDict(status=status, metadata=self.metadata)
         for r_id in real_ids:
             top.reals[r_id] = Realization(
@@ -335,24 +366,30 @@ class SnapshotBuilder(BaseModel):
             )
         return Snapshot(top.dict())
 
-    def add_step(self, step_id, status, start_time=None, end_time=None):
+    def add_step(
+        self,
+        step_id: str,
+        status: Optional[str],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+    ) -> "SnapshotBuilder":
         self.steps[step_id] = Step(
             status=status, start_time=start_time, end_time=end_time
         )
         return self
 
-    def add_job(
+    def add_job(  # pylint: disable=too-many-arguments
         self,
-        step_id,
-        job_id,
-        name,
-        status,
-        data,
-        start_time=None,
-        end_time=None,
-        stdout=None,
-        stderr=None,
-    ):
+        step_id: str,
+        job_id: str,
+        name: Optional[str],
+        status: Optional[str],
+        data: Optional[Dict[str, Any]],
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+        stdout: Optional[str] = None,
+        stderr: Optional[str] = None,
+    ) -> "SnapshotBuilder":
         step = self.steps[step_id]
         step.jobs[job_id] = Job(
             status=status,
@@ -365,6 +402,6 @@ class SnapshotBuilder(BaseModel):
         )
         return self
 
-    def add_metadata(self, key, value):
+    def add_metadata(self, key: str, value: Any) -> "SnapshotBuilder":
         self.metadata[key] = value
         return self

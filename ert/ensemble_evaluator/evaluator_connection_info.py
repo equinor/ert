@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 
 class EvaluatorConnectionInfo:
@@ -9,9 +9,9 @@ class EvaluatorConnectionInfo:
         host: str,
         port: int,
         url: str,
-        cert: Optional[str] = None,
+        cert: Optional[Union[str, bytes]] = None,
         token: Optional[str] = None,
-    ):
+    ) -> None:
         # pylint: disable=too-many-arguments
         self.host = host
         self.port = port

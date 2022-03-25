@@ -105,7 +105,7 @@ class QueueConfig(BaseCClass):
                     option[ConfigKeys.NAME], option[ConfigKeys.VALUE]
                 )
 
-    def create_job_queue(self):
+    def create_job_queue(self) -> JobQueue:
         queue = JobQueue(self.driver, max_submit=self.max_submit)
         return queue
 

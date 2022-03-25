@@ -11,24 +11,25 @@ from res.job_queue import (
     ForwardModel,
 )
 from ert_shared.libres_facade import LibresFacade
+from ert_shared.feature_toggling import feature_enabled
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.models.types import Argument
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
-from ert_shared.feature_toggling import feature_enabled
-from ert_shared.ensemble_evaluator.ensemble.builder import (
-    create_ensemble_builder_from_legacy,
+from ert.ensemble_evaluator import (
+    EnsembleBuilder,
 )
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.models.types import Argument
 
 
 class ErtRunError(Exception):
     pass
 
 
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class BaseRunModel:
     def __init__(
         self,
@@ -45,7 +46,8 @@ class BaseRunModel:
             eg. activate realizations, analysis module
         queue_config : QueueConfig
         phase_count : Optional[int], optional
-            Number of data assimilation cycles / iterations an experiment will have, by default 1
+            Number of data assimilation cycles / iterations an experiment will have,
+            by default 1
         """
         self._phase: int = 0
         self._phase_count = phase_count
@@ -238,7 +240,7 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
-        elif (
+        if (
             not self.ert()
             .analysisConfig()
             .haveEnoughRealisations(
@@ -246,7 +248,8 @@ class BaseRunModel:
             )
         ):
             raise ErtRunError(
-                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
+                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS "
+                + "to allow failures in your simulations."
             )
 
     def _checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
@@ -257,7 +260,8 @@ class BaseRunModel:
             .haveEnoughRealisations(active_realizations, len(self._active_realizations))
         ):
             raise ErtRunError(
-                "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
+                "Number of active realizations is less than the specified "
+                + "MIN_REALIZATIONS in the config file"
             )
 
     def _count_active_realizations(self, run_context: ErtRunContext) -> int:
@@ -269,7 +273,7 @@ class BaseRunModel:
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
-        ensemble = create_ensemble_builder_from_legacy(
+        ensemble = EnsembleBuilder.from_legacy(
             run_context,
             self.get_forward_model(),
             self._queue_config,
@@ -283,17 +287,16 @@ class BaseRunModel:
             ensemble,
             ee_config,
             run_context.get_iter(),
-            ee_id=str(uuid.uuid1()).split("-")[0],
+            ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
         ).run_and_get_successful_realizations()
 
-        for i in range(len(run_context)):
-            if run_context.is_active(i):
-                run_arg = run_context[i]
-                if (
-                    run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
-                    or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
+        for iens, run_arg in enumerate(run_context):
+            if run_context.is_active(iens):
+                if run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
                 ):
-                    run_context.deactivate_realization(i)
+                    run_context.deactivate_realization(iens)
 
         run_context.get_sim_fs().fsync()
         return totalOk

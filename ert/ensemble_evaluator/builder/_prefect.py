@@ -10,23 +10,43 @@ import threading
 import time
 from datetime import timedelta
 from multiprocessing.context import BaseContext
-from typing import List, Optional
+from multiprocessing.process import BaseProcess
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Generator
 
 import cloudpickle
 from cloudevents.http import CloudEvent, to_json
 from dask_jobqueue.lsf import LSFJob
-from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.port_handler import find_available_port
 
 import prefect
 import prefect.utilities.logging
-from prefect import Flow
-from prefect import context as prefect_context
-from prefect.executors import DaskExecutor, LocalDaskExecutor
+
+from prefect import Flow  # type: ignore
+from prefect import context as prefect_context  # type: ignore
+from prefect.engine.state import State
+from prefect.executors import DaskExecutor, LocalDaskExecutor  # type: ignore
+
+from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
+from ert.ensemble_evaluator.identifiers import (
+    EVTYPE_FM_STEP_FAILURE,
+    EVTYPE_ENSEMBLE_STARTED,
+    EVTYPE_ENSEMBLE_STOPPED,
+    EVTYPE_ENSEMBLE_FAILED,
+    EVTYPE_ENSEMBLE_CANCELLED,
+)
+
+from ert_shared.async_utils import get_event_loop
+from ert_shared.ensemble_evaluator.client import Client
+from ert_shared.port_handler import find_available_port
+
+from ._ensemble import _Ensemble
+from ._function_task import FunctionTask
+from ._io_map import _ensemble_transmitter_mapping
+from ._realization import _Realization
+from ._step import _UnixStep, _FunctionStep
+from ._unix_task import UnixTask
+
+if TYPE_CHECKING:
+    from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 DEFAULT_MAX_RETRIES = 0
 DEFAULT_RETRY_DELAY = 5  # seconds
@@ -36,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
-def prefect_log_level_context(level):
+def prefect_log_level_context(level: Union[int, str]) -> Generator[None, None, None]:
     prefect_logger = prefect.utilities.logging.get_logger()
     prev_log_level = prefect_logger.level
     prefect_logger.setLevel(level=level)
@@ -44,8 +64,8 @@ def prefect_log_level_context(level):
     prefect_logger.setLevel(level=prev_log_level)
 
 
-async def _eq_submit_job(self, script_filename):
-    with open(script_filename) as fh:
+async def _eq_submit_job(self: Any, script_filename: str) -> Any:
+    with open(script_filename, encoding="utf-8") as fh:
         lines = fh.readlines()[1:]
     lines = [
         line.strip() if "#BSUB" not in line else line[5:].strip() for line in lines
@@ -54,10 +74,12 @@ async def _eq_submit_job(self, script_filename):
     return self._call(piped_cmd, shell=True)
 
 
-def _get_executor(custom_port_range, name="local"):
+def _get_executor(custom_port_range: Optional[range], name: str = "local") -> Any:
     # See https://github.com/equinor/ert/pull/2757#discussion_r794368854
     _, port, sock = find_available_port(custom_range=custom_port_range)
     sock.close()  # do this explicitly, not relying on GC
+
+    cluster_kwargs: Dict[str, Any] = {}
 
     if name == "local":
         cluster_kwargs = {
@@ -102,7 +124,10 @@ def _get_executor(custom_port_range, name="local"):
         raise ValueError(f"Unknown executor name {name}")
 
 
-def _on_task_failure(task, state, ee_id):
+# pylint: disable=no-member
+def _on_task_failure(
+    task: Union[UnixTask, FunctionTask], state: State, ee_id: str
+) -> None:
     if prefect_context.task_run_count > task.max_retries:
         url = prefect_context.url
         token = prefect_context.token
@@ -110,8 +135,8 @@ def _on_task_failure(task, state, ee_id):
         with Client(url, token, cert) as c:
             event = CloudEvent(
                 {
-                    "type": ids.EVTYPE_FM_STEP_FAILURE,
-                    "source": task.get_step().get_source(ee_id),
+                    "type": EVTYPE_FM_STEP_FAILURE,
+                    "source": task.step.source(ee_id),
                     "datacontenttype": "application/json",
                 },
                 {"error_msg": state.message},
@@ -119,17 +144,17 @@ def _on_task_failure(task, state, ee_id):
             c.send(to_json(event).decode())
 
 
-class PrefectEnsemble(_Ensemble):
-    def __init__(
+class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attributes
+    def __init__(  # pylint: disable=too-many-arguments
         self,
-        reals,
-        inputs,
-        outputs,
-        max_running,
-        max_retries,
-        executor,
-        retry_delay,
-        custom_port_range=None,
+        reals: List[_Realization],
+        inputs: _ensemble_transmitter_mapping,
+        outputs: _ensemble_transmitter_mapping,
+        max_running: int,
+        max_retries: int,
+        executor: str,
+        retry_delay: int,
+        custom_port_range: Optional[range] = None,
     ):
         super().__init__(reals=reals, metadata={"iter": 0})
         self._inputs = inputs
@@ -148,28 +173,26 @@ class PrefectEnsemble(_Ensemble):
             _get_executor, custom_port_range, executor
         )
 
-        self._ee_con_info = None
-        self._eval_proc = None
+        self._ee_con_info: Optional[EvaluatorConnectionInfo] = None
+        self._eval_proc: Optional[BaseProcess] = None
         self._ee_id: Optional[str] = None
-        self._iens_to_task = {}
+        self._iens_to_task = {}  # type: ignore
         self._allow_cancel = multiprocessing.Event()
 
-    def get_flow(self, ee_id, iens_range: List[int]):
+    def get_flow(self, ee_id: str, iens_range: List[int]) -> Any:
         with Flow(f"Realization range {iens_range}") as flow:
-            transmitter_map = {}  # one map pr flow (real-batch)
+            # one map pr flow (real-batch)
+            transmitter_map: _ensemble_transmitter_mapping = {}
             for iens in iens_range:
-                transmitter_map[iens] = {
-                    record: transmitter
-                    for record, transmitter in self._inputs[iens].items()
-                }
-                for step in self._reals[iens].get_steps_sorted_topologically():
+                transmitter_map[iens] = dict(self._inputs[iens].items())
+                for step in self.reals[iens].get_steps_sorted_topologically():
                     inputs = {
-                        inp.get_name(): transmitter_map[iens][inp.get_name()]
-                        for inp in step.get_inputs()
+                        inp.name: transmitter_map[iens][inp.name] for inp in step.inputs
                     }
                     outputs = self._outputs[iens]
                     # Prefect does not allow retry_delay if max_retries is 0
                     retry_delay = None if self._max_retries == 0 else self._retry_delay
+                    assert isinstance(step, (_UnixStep, _FunctionStep))  # mypy
                     step_task = step.get_task(
                         outputs,
                         ee_id,
@@ -181,10 +204,10 @@ class PrefectEnsemble(_Ensemble):
                     result = step_task(inputs=inputs)
                     if iens not in self._iens_to_task:
                         self._iens_to_task[iens] = []
-                    self._iens_to_task[iens].append(result)
-                    for output in step.get_outputs():
-                        transmitter_map[iens][output.get_name()] = result[
-                            output.get_name()
+                    self._iens_to_task[iens].append(result)  # type: ignore
+                    for output in step.outputs:
+                        transmitter_map[iens][output.name] = result[  # type: ignore
+                            output.name
                         ]
         return flow
 
@@ -192,7 +215,7 @@ class PrefectEnsemble(_Ensemble):
     def _get_multiprocessing_context() -> BaseContext:
         """See _prefect_forkserver_preload"""
         preload_module_name = (
-            "ert_shared.ensemble_evaluator.ensemble._prefect_forkserver_preload"
+            "ert.ensemble_evaluator.builder._prefect_forkserver_preload"
         )
         loader = importlib.util.find_spec(preload_module_name)
         if not loader:
@@ -201,7 +224,7 @@ class PrefectEnsemble(_Ensemble):
         ctx.set_forkserver_preload([preload_module_name])
         return ctx
 
-    def evaluate(self, config: EvaluatorServerConfig, ee_id: str):
+    def evaluate(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
         self._ee_id = ee_id
         self._ee_con_info = config.get_connection_info()
 
@@ -213,8 +236,10 @@ class PrefectEnsemble(_Ensemble):
         self._eval_proc = eval_proc
         self._allow_cancel.set()
 
-    def _evaluate(self):
+    def _evaluate(self) -> None:
         get_event_loop()
+        assert self._ee_con_info  # mypy
+        assert self._ee_id  # mypy
         try:
             with Client(
                 self._ee_con_info.dispatch_uri,
@@ -223,12 +248,12 @@ class PrefectEnsemble(_Ensemble):
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": ids.EVTYPE_ENSEMBLE_STARTED,
+                        "type": EVTYPE_ENSEMBLE_STARTED,
                         "source": f"/ert/ee/{self._ee_id}",
                     },
                 )
                 c.send(to_json(event).decode())
-            with prefect.context(
+            with prefect.context(  # type: ignore
                 url=self._ee_con_info.dispatch_uri,
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,
@@ -242,14 +267,14 @@ class PrefectEnsemble(_Ensemble):
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": ids.EVTYPE_ENSEMBLE_STOPPED,
+                        "type": EVTYPE_ENSEMBLE_STOPPED,
                         "source": f"/ert/ee/{self._ee_id}",
                         "datacontenttype": "application/octet-stream",
                     },
                     cloudpickle.dumps(self._outputs),
                 )
                 c.send(to_json(event).decode())
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-except
             logger.exception(
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
@@ -261,17 +286,17 @@ class PrefectEnsemble(_Ensemble):
             ) as c:
                 event = CloudEvent(
                     {
-                        "type": ids.EVTYPE_ENSEMBLE_FAILED,
+                        "type": EVTYPE_ENSEMBLE_FAILED,
                         "source": f"/ert/ee/{self._ee_id}",
                     },
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id):
-        """Send batches of active realizations as Prefect-flows to the Prefect flow executor"""
-        active_iens: List[int] = [
-            realization.get_iens() for realization in self.get_active_reals()
-        ]
+    def run_flow(self, ee_id: str) -> None:
+        """Send batches of active realizations as Prefect-flows to the Prefect flow
+        executor
+        """
+        active_iens: List[int] = [realization.iens for realization in self.active_reals]
 
         i = 0
         state_map = {}
@@ -292,32 +317,37 @@ class PrefectEnsemble(_Ensemble):
                 ):
                     self._outputs[iens][output_name] = transmitter
 
-    def is_cancellable(self):
+    @property
+    def cancellable(self) -> bool:
         return True
 
-    def cancel(self):
+    def cancel(self) -> None:
         threading.Thread(target=self._cancel).start()
 
-    def _cancel(self):
+    def _cancel(self) -> None:
         logger.debug("cancelling, waiting for wakeup...")
         self._allow_cancel.wait()
         logger.debug("got wakeup, killing evaluation process...")
 
+        assert self._ee_con_info  # mypy
+
         if self._eval_proc is not None:
+            if self._eval_proc.pid is None:
+                raise RuntimeError("could not cancel: no pid")
             os.kill(self._eval_proc.pid, signal.SIGINT)
             start = time.time()
             while self._eval_proc.is_alive() and time.time() - start < 3:
                 pass
             if self._eval_proc.is_alive():
                 logger.debug(
-                    "Evaluation process is not responding to SIGINT, escalating to SIGKILL"
+                    "Evaluation process not responding to SIGINT, sending SIGKILL"
                 )
                 os.kill(self._eval_proc.pid, signal.SIGKILL)
 
         self._eval_proc = None
         event = CloudEvent(
             {
-                "type": ids.EVTYPE_ENSEMBLE_CANCELLED,
+                "type": EVTYPE_ENSEMBLE_CANCELLED,
                 "source": f"/ert/ee/{self._ee_id}",
                 "datacontenttype": "application/json",
             },

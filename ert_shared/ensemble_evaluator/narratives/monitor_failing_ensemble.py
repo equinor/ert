@@ -1,8 +1,8 @@
 import re
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.status.entity.state as state
-from ert_shared.ensemble_evaluator.entity import serialization
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator import state
+from ert import serialization
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,

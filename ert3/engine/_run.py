@@ -10,7 +10,7 @@ import ert
 import ert3
 from ert3.config import SourceNS
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
+
 
 from ._entity import TransmitterCoroutine
 from ._sensitivity import (
@@ -179,13 +179,12 @@ def run(
 
     stage = experiment_run_config.get_stage()
     step_builder = (
-        create_step_builder()
+        ert.ensemble_evaluator.StepBuilder()
         .set_name(f"{stage.name}-only_step")
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
 
     local_run_path: Optional[Path] = None
-
     if local_test_run:
         local_run_path = workspace.suggest_local_run_path(run_id=test_run_id)
         step_builder.set_run_path(local_run_path)
@@ -289,7 +288,7 @@ def run_sensitivity_analysis(
 
     stage = experiment_run_config.get_stage()
     step_builder = (
-        create_step_builder()
+        ert.ensemble_evaluator.StepBuilder()
         .set_name(f"{stage.name}-only_step")
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )

@@ -221,7 +221,7 @@ class ExtJob(BaseCClass):
     def free(self):
         self._free()
 
-    def name(self):
+    def name(self) -> str:
         return self._get_name()
 
     def __ne__(self, other):

@@ -281,7 +281,7 @@ async def test_retry_on_closed_connection():
         job_queue = create_queue(SIMPLE_SCRIPT, max_submit=1)
         pool_sema = BoundedSemaphore(value=10)
 
-        with patch("websockets.connect") as f:
+        with patch("res.job_queue.queue.connect") as f:
             websocket_mock = AsyncMock()
             f.side_effect = [
                 ConnectionClosedError(1006, "expected close"),
@@ -308,5 +308,5 @@ async def test_retry_on_closed_connection():
 
         # job_queue cannot go out of scope before queue has completed
         await job_queue.stop_jobs_async()
-        while job_queue.isRunning():
+        while job_queue.isRunning:
             await asyncio.sleep(0.1)

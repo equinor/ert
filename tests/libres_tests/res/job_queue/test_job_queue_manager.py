@@ -151,7 +151,7 @@ class JobQueueManagerTest(ResTest):
             manager = JobQueueManager(job_queue)
             manager.execute_queue()
 
-            self.assertFalse(job_queue.isRunning())
+            self.assertFalse(job_queue.isRunning)
 
             for job in job_queue.job_list:
                 ok_file = os.path.realpath(os.path.join(job.run_path, "OK"))

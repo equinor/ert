@@ -3,8 +3,9 @@ from collections import defaultdict, deque, OrderedDict
 import asyncio
 from typing import Optional
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-from ert_shared.status.entity.state import (
+import ert.ensemble_evaluator.identifiers as identifiers
+
+from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STOPPED,
@@ -95,7 +96,7 @@ class Dispatcher:
         )
 
     async def _ensemble_stopped_handler(self, events):
-        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
                 self._ensemble.update_snapshot(events),
@@ -103,21 +104,21 @@ class Dispatcher:
             )
 
     async def _ensemble_started_handler(self, events):
-        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
                 self._ensemble.update_snapshot(events),
             )
 
     async def _ensemble_cancelled_handler(self, events):
-        if self._ensemble.get_status() != ENSEMBLE_STATE_FAILED:
+        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_CANCELLED,
                 self._ensemble.update_snapshot(events),
             )
 
     async def _ensemble_failed_handler(self, events):
-        if self._ensemble.get_status() not in [
+        if self._ensemble.status not in [
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
         ]:

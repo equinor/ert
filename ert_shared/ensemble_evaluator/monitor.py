@@ -4,11 +4,11 @@ import uuid
 from contextlib import ExitStack
 from typing import Optional, TYPE_CHECKING
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert.ensemble_evaluator import identifiers
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
-from ert_shared.ensemble_evaluator.entity import serialization
+from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 from ert_shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 
 if TYPE_CHECKING:
@@ -50,9 +50,7 @@ class _Monitor:
                     self._ee_con_info.token,
                 )
                 stack.callback(duplexer.stop)
-            duplexer.send(
-                to_json(cloud_event, data_marshaller=serialization.evaluator_marshaller)
-            )
+            duplexer.send(to_json(cloud_event, data_marshaller=evaluator_marshaller))
 
     def signal_cancel(self):
         logger.debug(f"monitor-{self._id} asking server to cancel...")
@@ -93,9 +91,7 @@ class _Monitor:
                 stack.callback(duplexer.stop)
             for message in duplexer.receive():
                 try:
-                    event = from_json(
-                        message, data_unmarshaller=serialization.evaluator_unmarshaller
-                    )
+                    event = from_json(message, data_unmarshaller=evaluator_unmarshaller)
                 except DataUnmarshallerError:
                     event = from_json(message, data_unmarshaller=pickle.loads)
                 yield event

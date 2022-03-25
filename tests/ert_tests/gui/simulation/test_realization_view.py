@@ -45,7 +45,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         qtbot.wait(1000)
         print(mock_delegate._max_id)
         qtbot.waitUntil(
-            lambda: mock_delegate._max_id == len(small_snapshot.get_reals()) - 1,
+            lambda: mock_delegate._max_id == len(small_snapshot.reals) - 1,
             timeout=30000,
         )
 

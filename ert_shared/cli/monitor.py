@@ -4,20 +4,19 @@ from datetime import datetime
 
 from tqdm import tqdm
 from colors import color as ansi_color
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.state import (
     ALL_REALIZATION_STATES,
     COLOR_FAILED,
     COLOR_FINISHED,
     REAL_STATE_TO_COLOR,
+    JOB_STATE_FAILURE,
 )
 from ert_shared.status.utils import format_running_time
-from ert_shared.status.entity import state
 
 
 def _ansi_color(*args, **kwargs):
@@ -77,10 +76,10 @@ class Monitor:
     def _print_job_errors(self):
         failed_jobs = {}
         for snapshot_id, snapshot in self._snapshots.items():
-            for real_id, real in snapshot.get_reals().items():
+            for real_id, real in snapshot.reals.items():
                 for step_id, step in real.steps.items():
                     for job_id, job in step.jobs.items():
-                        if job.status == state.JOB_STATE_FAILURE:
+                        if job.status == JOB_STATE_FAILURE:
                             result = failed_jobs.get(job.error, 0)
                             failed_jobs[job.error] = result + 1
         for error, number_of_jobs in failed_jobs.items():
@@ -89,16 +88,15 @@ class Monitor:
     def _get_legends(self) -> str:
         statuses = ""
         latest_snapshot = self._snapshots[max(self._snapshots.keys())]
-        total_count = len(latest_snapshot.get_reals())
+        total_count = len(latest_snapshot.reals)
         aggregate = latest_snapshot.aggregate_real_states()
-        for state in ALL_REALIZATION_STATES:
+        for state_ in ALL_REALIZATION_STATES:
             count = 0
-            if state in aggregate:
-                count = aggregate[state]
-
+            if state_ in aggregate:
+                count = aggregate[state_]
             out = "{}{:10} {:>10}".format(
-                self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state]),
-                state,
+                self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state_]),
+                state_,
                 "{}/{}".format(count, total_count),
             )
             statuses += "    {}\n".format(out)

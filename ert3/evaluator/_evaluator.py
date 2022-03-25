@@ -5,17 +5,15 @@ from concurrent import futures
 from typing import Dict, Optional
 
 import ert
-from ert.ensemble_evaluator import EvaluatorTracker
 from ert_shared.cli.monitor import Monitor
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
-from ert_shared.ensemble_evaluator.entity.identifiers import (
-    EVTYPE_EE_TERMINATED,
-)
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
+)
+from ert.ensemble_evaluator.identifiers import (
+    EVTYPE_EE_TERMINATED,
 )
 
 
@@ -96,13 +94,13 @@ def _run(
 
 
 def evaluate(
-    ensemble: Ensemble,
+    ensemble: ert.ensemble_evaluator.Ensemble,
     custom_port_range: Optional[range] = None,
 ) -> Dict[int, Dict[str, ert.data.RecordTransmitter]]:
     config = EvaluatorServerConfig(custom_port_range=custom_port_range)
 
     run_model = ERT3RunModel()
-    tracker = EvaluatorTracker(
+    tracker = ert.ensemble_evaluator.EvaluatorTracker(
         run_model,
         config.get_connection_info(),
     )

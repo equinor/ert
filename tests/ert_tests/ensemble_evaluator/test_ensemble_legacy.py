@@ -1,12 +1,12 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 import pytest
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator import state
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.status.entity import state
 
 
 @pytest.mark.timeout(60)
@@ -29,7 +29,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
                     state.ENSEMBLE_STATE_STOPPED,
                 ]:
                     monitor.signal_done()
-        assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
+        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
         assert evaluator._ensemble.get_successful_realizations() == num_reals
 
         # realisations should finish, each creating a status-file
@@ -39,7 +39,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
 
 @pytest.mark.timeout(60)
 def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
-    num_reals = 10
+    num_reals = 2
     custom_port_range = range(1024, 65535)
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=30).build()
@@ -56,7 +56,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
                     mon.signal_cancel()
                     cancel = False
 
-        assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_CANCELLED
+        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
@@ -74,7 +74,8 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
-        with patch.object(ensemble, "get_active_reals", side_effect=RuntimeError()):
+        with patch.object(ensemble._job_queue, "submit_complete") as faulty_queue:
+            faulty_queue.side_effect = RuntimeError()
             with evaluator.run() as monitor:
                 for e in monitor.track():
                     if e.data is not None and e.data.get(identifiers.STATUS) in [
@@ -82,7 +83,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
                         state.ENSEMBLE_STATE_STOPPED,
                     ]:
                         monitor.signal_done()
-            assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
+            assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
 
         # realisations should not finish, thus not creating a status-file
         for i in range(num_reals):
