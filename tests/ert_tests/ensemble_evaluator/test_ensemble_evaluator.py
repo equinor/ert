@@ -292,7 +292,9 @@ def dummy_iterator(dummy_str: str):
 def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_recover(
     make_ee_config, num_realizations, num_failing
 ):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ee_config = make_ee_config(
+        use_token=False, generate_cert=False, custom_host="localhost"
+    )
     ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
@@ -316,7 +318,9 @@ def test_ensemble_evaluator_run_and_get_successful_realizations_connection_close
 def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_no_recover(
     make_ee_config, num_realizations, num_failing
 ):
-    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ee_config = make_ee_config(
+        use_token=False, generate_cert=False, custom_host="localhost"
+    )
     ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
