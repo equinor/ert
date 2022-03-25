@@ -1,9 +1,15 @@
-import re
-from pyrsistent import freeze
 import collections
+import re
+from typing import Any, Union, Mapping
+from pyrsistent import freeze
+from pyrsistent.typing import PMap as TPMap
 
 
-def recursive_update(left, right, check_key=True):
+def recursive_update(
+    left: TPMap[str, Any],
+    right: Union[Mapping[str, Any], TPMap[str, Any]],
+    check_key: bool = True,
+) -> TPMap[str, Any]:
     for k, v in right.items():
         if check_key and k not in left:
             raise ValueError(f"Illegal field {k}")
@@ -21,19 +27,19 @@ def recursive_update(left, right, check_key=True):
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
 
-def _match_token(token, source):
+def _match_token(token: str, source: str) -> str:
     f_pattern = _regexp_pattern.format(token=token)
     match = re.search(f_pattern, source)
-    return match if match is None else match.group()
+    return match if match is None else match.group()  # type: ignore
 
 
-def get_real_id(source):
+def get_real_id(source: str) -> str:
     return _match_token("real", source)
 
 
-def get_step_id(source):
+def get_step_id(source: str) -> str:
     return _match_token("step", source)
 
 
-def get_job_id(source):
+def get_job_id(source: str) -> str:
     return _match_token("job", source)

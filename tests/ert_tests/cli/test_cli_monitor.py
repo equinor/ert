@@ -3,13 +3,13 @@ from datetime import datetime
 from io import StringIO
 
 from ert_shared.cli.monitor import Monitor
-from ert_shared.ensemble_evaluator.entity.snapshot import (
+from ert.ensemble_evaluator.snapshot import (
     Realization,
     Snapshot,
     SnapshotDict,
 )
-from ert_shared.status.entity.event import _UpdateEvent
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.event import _UpdateEvent
+from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_WAITING,

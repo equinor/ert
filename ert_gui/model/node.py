@@ -1,6 +1,5 @@
 from enum import Enum, auto
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot, SnapshotDict
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
+from typing import Dict, Optional
 
 
 class NodeType(Enum):
@@ -12,10 +11,10 @@ class NodeType(Enum):
 
 
 class Node:
-    def __init__(self, id_, data, type_) -> None:
-        self.parent = None
-        self.data = data
-        self.children = {}
+    def __init__(self, id_: int, data: Dict, type_: NodeType) -> None:
+        self.parent: Optional[Node] = None
+        self.data: Dict = data
+        self.children: Dict[int, Node] = {}
         self.id = id_
         self.type = type_
 
@@ -24,11 +23,11 @@ class Node:
         children = "no " if len(self.children) == 0 else f"{len(self.children)} "
         return f"Node<{self.type}>@{self.id} with {parent}parent and {children}children"
 
-    def add_child(self, node) -> None:
+    def add_child(self, node: "Node") -> None:
         node.parent = self
         self.children[node.id] = node
 
-    def row(self):
+    def row(self) -> int:
         if self.parent:
             return list(self.parent.children.keys()).index(self.id)
         raise ValueError(f"{self} had no parent")

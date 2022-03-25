@@ -12,12 +12,12 @@ from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator import (
     EndEvent,
+    EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
@@ -37,13 +37,6 @@ from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
-from ert_shared.ensemble_evaluator.entity.identifiers import (
-    EVTYPE_EE_TERMINATED,
-)
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STOPPED,
-    ENSEMBLE_STATE_FAILED,
-)
 
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
@@ -294,7 +287,7 @@ class RunDialog(QDialog):
 
         self._ticker.start(1000)
 
-        tracker = create_tracker(
+        tracker = EvaluatorTracker(
             self._run_model,
             ee_con_info=evaluator_server_config.get_connection_info(),
         )

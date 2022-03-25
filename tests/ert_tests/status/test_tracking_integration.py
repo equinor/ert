@@ -7,19 +7,24 @@ from argparse import ArgumentParser
 import pytest
 from jsonpath_ng import parse
 
-import ert_shared.status.entity.state as state
+from ert.ensemble_evaluator.state import (
+    JOB_STATE_FAILURE,
+    JOB_STATE_FINISHED,
+    JOB_STATE_START,
+    REALIZATION_STATE_FINISHED,
+)
+from ert.ensemble_evaluator import EvaluatorTracker
 from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
 from ert_shared.cli.model_factory import create_model
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.main import ert_parser
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.tracker.factory import create_tracker
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 
@@ -55,7 +60,7 @@ def check_expression(original, path_expression, expected, msg_start):
             0,
             1,
             [
-                (".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FAILURE),
+                (".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FAILURE),
                 (
                     ".*",
                     "reals.*.steps.*.jobs.*.error",
@@ -74,7 +79,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             1,
-            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
             id="ee_poly_experiment",
         ),
         pytest.param(
@@ -89,7 +94,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             2,
-            [(".*", "reals.*.steps.*.jobs.*.status", state.JOB_STATE_FINISHED)],
+            [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
             id="ee_poly_smoother",
         ),
         pytest.param(
@@ -105,9 +110,9 @@ def check_expression(original, path_expression, expected, msg_start):
             1,
             2,
             [
-                ("0", "reals.'0'.steps.*.jobs.'0'.status", state.JOB_STATE_FAILURE),
-                ("0", "reals.'0'.steps.*.jobs.'1'.status", state.JOB_STATE_START),
-                (".*", "reals.'1'.steps.*.jobs.*.status", state.JOB_STATE_FINISHED),
+                ("0", "reals.'0'.steps.*.jobs.'0'.status", JOB_STATE_FAILURE),
+                ("0", "reals.'0'.steps.*.jobs.'1'.status", JOB_STATE_START),
+                (".*", "reals.'1'.steps.*.jobs.*.status", JOB_STATE_FINISHED),
             ],
             id="ee_failing_poly_smoother",
         ),
@@ -164,7 +169,7 @@ def test_tracking(
         )
         thread.start()
 
-        tracker = create_tracker(
+        tracker = EvaluatorTracker(
             model,
             ee_con_info=evaluator_server_config.get_connection_info(),
         )
@@ -186,8 +191,8 @@ def test_tracking(
         for iter_, snapshot in snapshots.items():
             successful_reals = list(
                 filter(
-                    lambda item: item[1].status == state.REALIZATION_STATE_FINISHED,
-                    snapshot.get_reals().items(),
+                    lambda item: item[1].status == REALIZATION_STATE_FINISHED,
+                    snapshot.reals.items(),
                 )
             )
             assert len(successful_reals) == num_successful

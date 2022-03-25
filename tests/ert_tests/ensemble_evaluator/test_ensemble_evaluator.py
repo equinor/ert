@@ -1,34 +1,30 @@
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
 from unittest.mock import MagicMock, patch
 
 import pytest
-from websockets.exceptions import ConnectionClosedError
-from websockets.version import version as websockets_version
-from ensemble_evaluator_utils import (
-    TestEnsemble,
-    AutorunTestEnsemble,
-    send_dispatch_event,
+from ert.ensemble_evaluator import identifiers, wait_for_evaluator, Snapshot
+from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_STARTED,
+    ENSEMBLE_STATE_UNKNOWN,
+    JOB_STATE_FAILURE,
+    JOB_STATE_FINISHED,
+    JOB_STATE_RUNNING,
 )
-
-from ert_shared.ensemble_evaluator.monitor import _Monitor
-
-
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.entity.snapshot import Snapshot
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
+from ert_shared.ensemble_evaluator.monitor import _Monitor
 from ert_shared.ensemble_evaluator.narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
     monitor_failing_evaluation,
     monitor_successful_ensemble,
 )
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STARTED,
-    ENSEMBLE_STATE_UNKNOWN,
-    JOB_STATE_FAILURE,
-    JOB_STATE_FINISHED,
-    JOB_STATE_RUNNING,
+from websockets.exceptions import ConnectionClosedError
+from websockets.version import version as websockets_version
+
+from ensemble_evaluator_utils import (
+    AutorunTestEnsemble,
+    TestEnsemble,
+    send_dispatch_event,
 )
 
 
@@ -41,8 +37,9 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
         url = evaluator._config.url
         # first snapshot before any event occurs
         snapshot_event = next(events)
+        print(snapshot_event)
         snapshot = Snapshot(snapshot_event.data)
-        assert snapshot.get_status() == ENSEMBLE_STATE_UNKNOWN
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
         # two dispatchers connect
         with Client(
             url + "/dispatch",
@@ -93,7 +90,9 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
-            snapshot = Snapshot(next(events).data)
+            evt = next(events)
+            print(evt)
+            snapshot = Snapshot(evt.data)
             assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
             assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
             assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
@@ -104,7 +103,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             full_snapshot_event = next(events2)
             assert full_snapshot_event["type"] == identifiers.EVTYPE_EE_SNAPSHOT
             snapshot = Snapshot(full_snapshot_event.data)
-            assert snapshot.get_status() == ENSEMBLE_STATE_UNKNOWN
+            assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
             assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
             assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
 

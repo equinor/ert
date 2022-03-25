@@ -1,14 +1,14 @@
 from unittest.mock import patch
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
+from ert.ensemble_evaluator import identifiers as ids
 import pytest
 from ert_gui.simulation.run_dialog import RunDialog
-from ert_shared.ensemble_evaluator.entity.snapshot import (
+from ert.ensemble_evaluator.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
 )
-from ert_shared.status.entity import state
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
@@ -21,10 +21,8 @@ def test_success(runmodel, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
-        mock_tracker_factory.return_value = mock_tracker(
-            [EndEvent(failed=False, failed_msg="")]
-        )
+    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+        tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
         widget.startSimulation()
 
     qtbot.waitForWindowShown(widget)
@@ -38,7 +36,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
+    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
         iter_0 = FullSnapshotEvent(
             snapshot=large_snapshot,
             phase_name="Foo",
@@ -57,7 +55,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
             iteration=1,
             indeterminate=False,
         )
-        mock_tracker_factory.return_value = mock_tracker(
+        tracker.return_value = mock_tracker(
             [iter_0, iter_1, EndEvent(failed=False, failed_msg="")]
         )
         widget.startSimulation()
@@ -282,8 +280,8 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
-        mock_tracker_factory.return_value = mock_tracker(events)
+    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+        tracker.return_value = mock_tracker(events)
         widget.startSimulation()
 
     qtbot.waitForWindowShown(widget)

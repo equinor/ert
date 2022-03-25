@@ -4,7 +4,6 @@ import ert
 import ert3
 import pytest
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.ensemble.builder import create_step_builder
 
 
 def get_inputs(coeffs):
@@ -71,7 +70,7 @@ def test_evaluator(
     stage = experiment_run_config.get_stage()
 
     step_builder = (
-        create_step_builder()
+        ert.ensemble_evaluator.StepBuilder()
         .set_name(f"{stage.name}-only_step")
         .set_type("function" if isinstance(stage, ert3.config.Function) else "unix")
     )
@@ -141,7 +140,9 @@ def test_inactive_realizations(
     )
     stage = experiment_run_config.get_stage()
     step_builder = (
-        create_step_builder().set_name("dummy-function-only_step").set_type("function")
+        ert.ensemble_evaluator.StepBuilder()
+        .set_name("dummy-function-only_step")
+        .set_type("function")
     )
     inputs = experiment_run_config.get_linked_inputs()
     stochastic_inputs = tuple(inputs[ert3.config.SourceNS.stochastic].values())
@@ -209,12 +210,16 @@ def test_inline_script(commandline, parsed_name, parsed_args, plugin_registry):
         output=[],
         transportable_commands=tuple(),
     )
-    step_builder = create_step_builder().set_name("inline_script_test").set_type("unix")
+    step_builder = (
+        ert.ensemble_evaluator.StepBuilder()
+        .set_name("inline_script_test")
+        .set_type("unix")
+    )
 
     ensemble = ert3.evaluator.build_ensemble(
         stage=step, driver="local", ensemble_size=1, step_builder=step_builder
     )
 
-    job = ensemble.get_reals()[0].get_steps()[0].get_jobs()[0]
-    assert job.get_name() == parsed_name
-    assert job.get_args() == tuple(parsed_args)
+    job = ensemble.reals[0].steps[0].jobs[0]
+    assert job.name == parsed_name
+    assert job.args == tuple(parsed_args)

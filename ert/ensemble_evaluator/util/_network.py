@@ -2,14 +2,14 @@ import asyncio
 import logging
 import ssl
 import time
-from typing import Optional
+from typing import Optional, Union
 
 import aiohttp
 
 logger = logging.getLogger(__name__)
 
 
-def get_ssl_context(cert: Optional[str]) -> Optional[ssl.SSLContext]:
+def get_ssl_context(cert: Optional[Union[str, bytes]]) -> Optional[ssl.SSLContext]:
     if cert is None:
         return None
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -20,7 +20,7 @@ def get_ssl_context(cert: Optional[str]) -> Optional[ssl.SSLContext]:
 async def attempt_connection(
     url: str,
     token: Optional[str] = None,
-    cert: Optional[str] = None,
+    cert: Optional[Union[str, bytes]] = None,
     connection_timeout: float = 2,
 ) -> None:
     timeout = aiohttp.ClientTimeout(connect=connection_timeout)
@@ -36,10 +36,10 @@ async def attempt_connection(
             resp.raise_for_status()
 
 
-async def wait_for_evaluator(
+async def wait_for_evaluator(  # pylint: disable=too-many-arguments
     base_url: str,
     token: Optional[str] = None,
-    cert: Optional[str] = None,
+    cert: Optional[Union[str, bytes]] = None,
     healthcheck_endpoint: str = "/healthcheck",
     timeout: float = 60,
     connection_timeout: float = 2,

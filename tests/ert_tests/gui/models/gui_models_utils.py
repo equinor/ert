@@ -1,9 +1,9 @@
-from ert_shared.ensemble_evaluator.entity.snapshot import (
+from ert.ensemble_evaluator.snapshot import (
     Job,
     PartialSnapshot,
     Realization,
 )
-from ert_shared.status.entity.state import JOB_STATE_FINISHED
+from ert.ensemble_evaluator.state import JOB_STATE_FINISHED
 
 
 def partial_snapshot(snapshot) -> PartialSnapshot:

@@ -4,7 +4,7 @@
 import sys
 
 
-def _preload_scproxy():
+def _preload_scproxy() -> None:
     """
     After the introduction of the StorageTransmitter, tests and ert3 on macOS
     started crashing. The cause of these crashes are:
@@ -31,7 +31,7 @@ def _preload_scproxy():
     needs to be made here as well.
     [1] https://github.com/python/cpython/blob/main/Modules/_scproxy.c
     """
-    import requests
+    import requests  # pylint: disable=import-outside-toplevel
 
     try:
         requests.get("http://localhost")

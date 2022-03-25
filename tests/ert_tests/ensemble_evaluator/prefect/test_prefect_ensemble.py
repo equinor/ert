@@ -9,11 +9,11 @@ import cloudpickle
 import prefect
 import pytest
 
-import ert_shared.ensemble_evaluator.ensemble.builder as ee
+import ert.ensemble_evaluator as ee
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.status.entity import state
-from ert_shared.ensemble_evaluator.entity.unix_step import UnixTask
+from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator.builder._unix_task import UnixTask
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
@@ -29,7 +29,7 @@ def test_get_flow(
     for permuted_steps in permutations(
         [sum_coeffs_step, zero_degree_step, first_degree_step, second_degree_step]
     ):
-        real_builder = ee.create_realization_builder().active(True)
+        real_builder = ee.RealizationBuilder().active(True)
         for permuted_step in permuted_steps:
             real_builder.add_step(permuted_step)
 
@@ -42,19 +42,17 @@ def test_get_flow(
 
             # Get the ordered tasks and retrieve their step state.
             flow_steps = [
-                task.get_step()
-                for task in flow.sorted_tasks()
-                if isinstance(task, UnixTask)
+                task.step for task in flow.sorted_tasks() if isinstance(task, UnixTask)
             ]
             assert len(flow_steps) == 4
 
             realization_steps = list(
-                ensemble.get_reals()[iens].get_steps_sorted_topologically()
+                ensemble.reals[iens].get_steps_sorted_topologically()
             )
 
             # Testing realization steps
             for step_ordering in [realization_steps, flow_steps]:
-                mapping = {step._name: idx for idx, step in enumerate(step_ordering)}
+                mapping = {step.name: idx for idx, step in enumerate(step_ordering)}
                 assert mapping["second_degree"] < mapping["zero_degree"]
                 assert mapping["zero_degree"] < mapping["add_coeffs"]
                 assert mapping["first_degree"] < mapping["add_coeffs"]
@@ -77,7 +75,7 @@ def test_run_prefect_ensemble(evaluator_config, poly_ensemble, ensemble_size):
     with evaluator.run() as mon:
         for event in mon.track():
             wait_until_done(mon, event)
-    assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
+    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
     successful_realizations = evaluator._ensemble.get_successful_realizations()
     assert successful_realizations == ensemble_size
 
@@ -92,7 +90,7 @@ def test_cancel_run_prefect_ensemble(evaluator_config, poly_ensemble):
             if cancel:
                 mon.signal_cancel()
                 cancel = False
-    assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_CANCELLED
+    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
 
 # This function is used by test_run_prefect_ensemble_exception, but
@@ -114,7 +112,7 @@ def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
     with evaluator.run() as mon:
         for event in mon.track():
             wait_until_done(mon, event)
-    assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
+    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_FAILED
 
 
 def function_that_fails_once(coeffs):
@@ -156,7 +154,7 @@ def test_prefect_retries(
                 ):
                     error_event_reals.update(event.data["reals"].keys())
                 wait_until_done(mon, event)
-        assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
+        assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
         successful_realizations = evaluator._ensemble.get_successful_realizations()
         assert successful_realizations == ensemble_size
         # Check we get only one job error message per realization
@@ -192,7 +190,7 @@ def test_prefect_no_retries(
         # Find if job and step failed
         step_failed = False
         job_failed = False
-        for real in ensemble.snapshot.get_reals().values():
+        for real in ensemble.snapshot.reals.values():
             for step in real.steps.values():
                 for job in step.jobs.values():
                     if job.status == state.JOB_STATE_FAILURE:
@@ -200,7 +198,7 @@ def test_prefect_no_retries(
                         assert job.error == "This is an expected ERROR"
                         if step.status == state.STEP_STATE_FAILURE:
                             step_failed = True
-        assert ensemble.get_status() == state.ENSEMBLE_STATE_FAILED
+        assert ensemble.status == state.ENSEMBLE_STATE_FAILED
         assert job_failed, f"Events: {event_list}"
         assert step_failed, f"Events: {event_list}"
 
@@ -227,7 +225,7 @@ def test_run_prefect_for_function_defined_outside_py_environment(
             if event["type"] == ids.EVTYPE_EE_TERMINATED:
                 results = pickle.loads(event.data)
             wait_until_done(mon, event)
-    assert evaluator._ensemble.get_status() == state.ENSEMBLE_STATE_STOPPED
+    assert evaluator._ensemble.status == state.ENSEMBLE_STATE_STOPPED
     successful_realizations = evaluator._ensemble.get_successful_realizations()
     assert successful_realizations == ensemble_size
     expected_results = [

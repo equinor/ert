@@ -1,4 +1,4 @@
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
+from ert.ensemble_evaluator import identifiers
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,

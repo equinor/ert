@@ -3,7 +3,7 @@ import datetime
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 
-from ert_shared.ensemble_evaluator.entity import serialization
+from ert import serialization
 
 
 def test_data_marshaller_and_unmarshaller():

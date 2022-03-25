@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import threading
+from ert.ensemble_evaluator import EvaluatorTracker
 
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -15,7 +16,6 @@ from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.libres_facade import LibresFacade
-from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
 
@@ -73,7 +73,7 @@ def run_cli(args):
     )
     thread.start()
 
-    tracker = create_tracker(
+    tracker = EvaluatorTracker(
         model, ee_con_info=evaluator_server_config.get_connection_info()
     )
 

@@ -1,20 +1,29 @@
-from typing import Dict, List, Optional
-import ert
+from typing import Dict, List, Optional, TYPE_CHECKING, cast
 from beartype import beartype
 
+if TYPE_CHECKING:
+    import ert
 
-_transmitter_mapping = Dict[int, Dict[str, Optional[ert.data.RecordTransmitter]]]
+
+_ensemble_transmitter_mapping = Dict[int, Dict[str, "ert.data.RecordTransmitter"]]
+
+# recordtransmitters are never Optional for validated iomaps, but they are Optional
+# before validation
+_unvalidated_ensemble_transmitter_mapping = Dict[
+    int, Dict[str, Optional["ert.data.RecordTransmitter"]]
+]
+_stage_transmitter_mapping = Dict[str, "ert.data.RecordTransmitter"]
 
 
 class _IOMap:
     def __init__(self, iens: List[int], io_names: List[str]) -> None:
-        self._matrix: _transmitter_mapping = {
+        self._matrix: _unvalidated_ensemble_transmitter_mapping = {
             i: {name: None for name in io_names} for i in iens
         }
         self._validated = False
 
     def set_transmitter(
-        self, iens: int, io_name: str, transmitter: ert.data.RecordTransmitter
+        self, iens: int, io_name: str, transmitter: "ert.data.RecordTransmitter"
     ) -> "_IOMap":
         if self._validated:
             raise RuntimeError("mutating validated iomap")
@@ -34,14 +43,18 @@ class _IOMap:
 
     @classmethod
     @beartype
-    def from_dict(cls, mapping_dict: _transmitter_mapping) -> "_IOMap":
+    def from_dict(
+        cls, mapping_dict: _unvalidated_ensemble_transmitter_mapping
+    ) -> "_IOMap":
         mapping = cls([], [])
         mapping._matrix = mapping_dict
         return mapping
 
     @beartype
-    def to_dict(self) -> _transmitter_mapping:
-        return self._matrix
+    def to_dict(self) -> _ensemble_transmitter_mapping:
+        if self._validated:
+            return cast(_ensemble_transmitter_mapping, self._matrix)
+        raise ValueError("to_dict called on unvalidated iomap, validate first?")
 
 
 class InputMap(_IOMap):
@@ -51,7 +64,8 @@ class InputMap(_IOMap):
             for name, trans in ios.items():
                 if trans and not trans.is_transmitted():
                     raise ValueError(
-                        f"input transmitter '{name}' for real {real_id} is not transmitted"
+                        f"input transmitter '{name}' for real {real_id} is not "
+                        + "transmitted"
                     )
         return self
 

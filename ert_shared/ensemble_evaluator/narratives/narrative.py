@@ -13,14 +13,15 @@ from cloudevents.sdk import types
 from websockets.server import WebSocketServer  # type: ignore
 
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+from ert.ensemble_evaluator import wait_for_evaluator
 
 try:
     from typing import TypedDict  # >=3.8
 except ImportError:
     from mypy_extensions import TypedDict  # <=3.7
 
-import websockets
+from websockets.client import connect
+from websockets.server import serve
 from cloudevents.http import CloudEvent, from_json, to_json
 
 _DATACONTENTTYPE = "datacontenttype"
@@ -92,7 +93,6 @@ class _ConnectionInformation(TypedDict):  # type: ignore
         hostname = hostname[2:]
         path = "/" + path
         port = int(port)
-        hostname
         base_uri = f"{proto}://{hostname}:{port}"
         return cls(
             uri=uri,
@@ -278,7 +278,9 @@ class _Interaction:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(Scenario: {self.scenario})"
 
-    def assert_matches(self, event: _Event, other: CloudEvent):
+    def assert_matches(self, other: CloudEvent, event: Optional[_Event] = None):
+        if not event:
+            raise ValueError("must match against specific event for interaction")
         event.assert_matches(other)
 
     async def verify(
@@ -289,7 +291,7 @@ class _Interaction:
             assert source.represents(
                 self
             ), f"Wrong direction {source} when expecting {self}\n Got: {msg} instead"
-            self.assert_matches(event, self.ce_serializer.from_json(msg))
+            self.assert_matches(self.ce_serializer.from_json(msg), event)
 
     def generate(self):
         for event in self.events:
@@ -306,7 +308,9 @@ class _RecurringInteraction(_Interaction):
         super().__init__(provider_states, ce_serializer)
         self.terminator = terminator
 
-    def assert_matches(self, other: CloudEvent):
+    def assert_matches(self, other: CloudEvent, event: Optional[_Event] = None):
+        if event:
+            raise ValueError("cannot match against specific event")
         try:
             self.terminator.assert_matches(other)
         except AssertionError as e:
@@ -379,6 +383,8 @@ class _ProviderVerifier:
 
         # A queue on which errors will be put
         self._errors: asyncio.Queue = asyncio.Queue()
+        self._ws_thread: Optional[threading.Thread] = None
+        self._loop: Optional[asyncio.BaseEventLoop] = None
 
     def verify(self, on_connect):
         self._ws_thread = threading.Thread(
@@ -395,7 +401,7 @@ class _ProviderVerifier:
             raise AssertionError(errors)
 
     async def _mock_listener(self, on_connect):
-        async with websockets.connect(self._uri) as websocket:
+        async with connect(self._uri) as websocket:
             on_connect()
             await _mock_verify_handler(
                 websocket.recv,
@@ -460,6 +466,7 @@ class _ProviderMock:
         self._ws: Optional[WebSocketServer] = None
         self._conn_info = conn_info
         self._ce_serializer = ce_serializer
+        self._done: Optional[asyncio.Future] = None
 
         # ensure there is an event loop in case we are not on main loop
         get_event_loop()
@@ -502,7 +509,7 @@ class _ProviderMock:
 
         async def _serve():
             await asyncio.sleep(delay_startup)
-            ws = await websockets.serve(
+            ws = await serve(
                 self._mock_handler,
                 self._conn_info["hostname"],
                 self._conn_info["port"],
@@ -537,21 +544,24 @@ class _ProviderMock:
         return self
 
     def __exit__(self, *args, **kwargs):
-        self._loop.call_soon_threadsafe(self._done.set_result, None)
-        self._ws_thread.join()
+        if self._loop and self._done:
+            self._loop.call_soon_threadsafe(self._done.set_result, None)
+        if self._ws:
+            self._ws_thread.join()
         errors = get_event_loop().run_until_complete(self._verify())
         if errors:
             raise AssertionError(errors)
 
     async def __aenter__(self):
-        self._ws = await websockets.serve(
+        self._ws = await serve(
             self._mock_handler, self._conn_info["hostname"], self._conn_info["port"]
         )
         return self
 
     async def __aexit__(self, *args):
-        self._ws.close()
-        await self._ws.wait_closed()
+        if self._ws:
+            self._ws.close()
+            await self._ws.wait_closed()
         errors = await self._verify()
         if errors:
             raise AssertionError(errors)

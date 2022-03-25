@@ -170,7 +170,7 @@ class ErtRunContext(BaseCClass):
     def ensemble_smoother_update(cls, sim_fs, target_fs):
         return cls._alloc_ensemble_smoother_update(sim_fs, target_fs)
 
-    def is_active(self, index):
+    def is_active(self, index: int) -> bool:
         if 0 <= index < len(self):
             return self._iactive(index)
         else:
