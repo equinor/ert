@@ -127,20 +127,22 @@ def small_snapshot() -> Snapshot:
 
 
 @pytest.fixture
-def runmodel() -> Mock:
+def active_realizations() -> Mock:
+    active_reals = Mock()
+    active_reals.count = Mock(return_value=10)
+    return active_reals
+
+
+@pytest.fixture
+def runmodel(active_realizations) -> Mock:
     brm = Mock()
     brm.get_runtime = Mock(return_value=100)
     brm.hasRunFailed = Mock(return_value=False)
     brm.getFailMessage = Mock(return_value="")
     brm.support_restart = True
+    brm._simulation_arguments = {"active_realizations": active_realizations}
+    brm.has_failed_realizations = lambda: False
     return brm
-
-
-@pytest.fixture
-def active_realizations() -> Mock:
-    active_reals = Mock()
-    active_reals.count = Mock(return_value=10)
-    return active_reals
 
 
 class MockTracker:

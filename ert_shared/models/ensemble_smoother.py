@@ -7,11 +7,17 @@ from res.enkf.enkf_main import EnKFMain, QueueConfig
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from typing import Dict, Any
 
 
 class EnsembleSmoother(BaseRunModel):
-    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
-        super().__init__(ert, queue_config, phase_count=2)
+    def __init__(
+        self,
+        simulation_arguments: Dict[str, Any],
+        ert: EnKFMain,
+        queue_config: QueueConfig,
+    ):
+        super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name: str) -> None:
@@ -21,11 +27,11 @@ class EnsembleSmoother(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
     def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> ErtRunContext:
-        prior_context = self.create_context(arguments)
+        prior_context = self.create_context()
 
-        self.checkMinimumActiveRealizations(prior_context)
+        self._checkMinimumActiveRealizations(prior_context)
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         # self.setAnalysisModule(arguments["analysis_module"])
@@ -70,7 +76,7 @@ class EnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing...")
 
-        rerun_context = self.create_context(arguments, prior_context=prior_context)
+        rerun_context = self.create_context(prior_context=prior_context)
 
         self.ert().getEnkfSimulationRunner().createRunPath(rerun_context)
 
@@ -97,7 +103,7 @@ class EnsembleSmoother(BaseRunModel):
         return prior_context
 
     def create_context(
-        self, arguments: Argument, prior_context: Optional[ErtRunContext] = None
+        self, prior_context: Optional[ErtRunContext] = None
     ) -> ErtRunContext:
 
         model_config = self.ert().getModelConfig()
@@ -107,9 +113,11 @@ class EnsembleSmoother(BaseRunModel):
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:
             sim_fs = fs_manager.getCurrentFileSystem()
-            target_fs = fs_manager.getFileSystem(arguments["target_case"])
+            target_fs = fs_manager.getFileSystem(
+                self._simulation_arguments["target_case"]
+            )
             itr = 0
-            mask = arguments["active_realizations"]
+            mask = self._simulation_arguments["active_realizations"]
         else:
             itr = 1
             sim_fs = prior_context.get_target_fs()

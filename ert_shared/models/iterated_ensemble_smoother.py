@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from res.enkf.enkf_fs import EnkfFs
@@ -12,8 +12,13 @@ from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
-    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
-        super().__init__(ert, queue_config, phase_count=2)
+    def __init__(
+        self,
+        simulation_arguments: Dict[str, Any],
+        ert: EnKFMain,
+        queue_config: QueueConfig,
+    ):
+        super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.support_restart = False
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
@@ -27,7 +32,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def _runAndPostProcess(
         self,
         run_context: ErtRunContext,
-        arguments: Argument,
         evaluator_server_config: EvaluatorServerConfig,
         update_id: Optional[str] = None,
     ) -> str:
@@ -85,22 +89,22 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return update_id
 
     def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> ErtRunContext:
         phase_count = self.facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
-        analysis_module = self.setAnalysisModule(arguments["analysis_module"])
-        target_case_format = arguments["target_case"]
-        run_context = self.create_context(arguments, 0)
+        analysis_module = self.setAnalysisModule(
+            self._simulation_arguments["analysis_module"]
+        )
+        target_case_format = self._simulation_arguments["target_case"]
+        run_context = self.create_context(0)
 
         self.ert().analysisConfig().getAnalysisIterConfig().setCaseFormat(
             target_case_format
         )
 
-        ensemble_id = self._runAndPostProcess(
-            run_context, arguments, evaluator_server_config
-        )
+        ensemble_id = self._runAndPostProcess(run_context, evaluator_server_config)
 
         analysis_config = self.ert().analysisConfig()
         analysis_iter_config = analysis_config.getAnalysisIterConfig()
@@ -125,18 +129,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:
                 run_context = self.create_context(
-                    arguments, current_iter, prior_context=run_context
+                    current_iter, prior_context=run_context
                 )
                 ensemble_id = self._runAndPostProcess(
-                    run_context, arguments, evaluator_server_config, update_id
+                    run_context, evaluator_server_config, update_id
                 )
                 num_retries = 0
             else:
                 run_context = self.create_context(
-                    arguments, current_iter, prior_context=run_context, rerun=True
+                    current_iter, prior_context=run_context, rerun=True
                 )
                 ensemble_id = self._runAndPostProcess(
-                    run_context, arguments, evaluator_server_config, update_id
+                    run_context, evaluator_server_config, update_id
                 )
                 num_retries += 1
 
@@ -152,7 +156,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def create_context(
         self,
-        arguments: Argument,
         itr: int,
         prior_context: Optional[ErtRunContext] = None,
         rerun: bool = False,
@@ -161,12 +164,12 @@ class IteratedEnsembleSmoother(BaseRunModel):
         runpath_fmt = model_config.getRunpathFormat()
         jobname_fmt = model_config.getJobnameFormat()
         subst_list = self.ert().getDataKW()
-        target_case_format = arguments["target_case"]
+        target_case_format = self._simulation_arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
 
         if prior_context is None:
-            mask = arguments["active_realizations"]
+            mask = self._simulation_arguments["active_realizations"]
         else:
             state = (
                 RealizationStateEnum.STATE_HAS_DATA

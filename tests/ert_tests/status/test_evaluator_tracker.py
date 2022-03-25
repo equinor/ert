@@ -378,7 +378,7 @@ def test_tracking_progress(
     if issubclass(run_model, ERT3RunModel):
         brm = run_model()
     else:
-        brm = run_model(None, None)
+        brm = run_model(None, None, None)
     ee_config = EvaluatorServerConfig(
         custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
     )
