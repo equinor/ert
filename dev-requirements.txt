@@ -14,7 +14,7 @@ pytest-timeout
 jsonpath_ng
 sphinxcontrib.datatemplates
 decorator
-pylint
+pylint<2.13.0
 scikit-build
 setuptools_scm
 pytest-snapshot
