@@ -129,16 +129,12 @@ extern "C" void local_ministep_add_obsdata(local_ministep_type *ministep,
 extern "C" void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                                 LocalObsDataNode *obsdatanode);
 LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep);
-
 bool local_ministep_data_is_active(const local_ministep_type *ministep,
                                    const char *key);
 
 LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep);
 void local_ministep_add_obs_data(local_ministep_type *ministep,
                                  obs_data_type *obs_data);
-extern "C" obs_data_type *
-local_ministep_get_obs_data(const local_ministep_type *ministep);
-
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);
 
