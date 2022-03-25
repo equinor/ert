@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict, Any
 import asyncio
 
 from ecl.util.util import BoolVector
@@ -30,11 +30,19 @@ class ErtRunError(Exception):
 
 
 class BaseRunModel:
-    def __init__(self, ert: EnKFMain, queue_config: QueueConfig, phase_count: int = 1):
+    def __init__(
+        self,
+        simulation_arguments: Dict[str, Any],
+        ert: EnKFMain,
+        queue_config: QueueConfig,
+        phase_count: int = 1,
+    ):
         """
 
         Parameters
         ----------
+        simulation_arguments : Parameters for running the simulation,
+            eg. activate realizations, analysis module
         queue_config : QueueConfig
         phase_count : Optional[int], optional
             Number of data assimilation cycles / iterations an experiment will have, by default 1
@@ -49,13 +57,14 @@ class BaseRunModel:
         self._fail_message: str = ""
         self._failed: bool = False
         self._queue_config: QueueConfig = queue_config
-        self.initial_realizations_mask: List[int] = []
-        self.completed_realizations_mask: List[int] = []
+        self._initial_realizations_mask: List[int] = []
+        self._completed_realizations_mask: List[int] = []
         self.support_restart: bool = True
         self._run_context: Optional[ErtRunContext] = None
         self._last_run_iteration: int = -1
         self._ert = ert
         self.facade = LibresFacade(ert)
+        self._simulation_arguments = simulation_arguments
         self.reset()
 
     def ert(self) -> EnKFMain:
@@ -63,36 +72,74 @@ class BaseRunModel:
 
     @property
     def _ensemble_size(self) -> int:
-        return len(self.initial_realizations_mask)
+        return len(self._initial_realizations_mask)
 
     @property
     def _active_realizations(self) -> List[int]:
-        realization_mask = self.initial_realizations_mask
+        realization_mask = self._initial_realizations_mask
         return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
 
     def reset(self) -> None:
         self._failed = False
         self._phase = 0
 
+    def restart(self) -> None:
+        active_realizations = self._create_mask_from_failed_realizations()
+        self._simulation_arguments["active_realizations"] = active_realizations
+        self._simulation_arguments[
+            "prev_successful_realizations"
+        ] = self._simulation_arguments.get("prev_successful_realizations", 0)
+        self._simulation_arguments[
+            "prev_successful_realizations"
+        ] += self._count_successful_realizations()
+
+    def has_failed_realizations(self) -> bool:
+        completed = self._completed_realizations_mask
+        initial = self._initial_realizations_mask
+        for (index, successful) in enumerate(completed):
+            if initial[index] and not successful:
+                return True
+        return False
+
+    def _create_mask_from_failed_realizations(self) -> BoolVector:
+        """
+        Creates a BoolVector mask representing the failed realizations
+        :return: Type BoolVector
+        """
+        completed = self._completed_realizations_mask
+        initial = self._initial_realizations_mask
+        inverted_mask = BoolVector(default_value=False)
+        for (index, successful) in enumerate(completed):
+            inverted_mask[index] = initial[index] and not successful
+        return inverted_mask
+
+    def _count_successful_realizations(self) -> int:
+        """
+        Counts the realizations completed in the prevoius ensemble run
+        :return:
+        """
+        completed = self._completed_realizations_mask
+        return completed.count(True)
+
     def start_simulations_thread(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.startSimulations(
-            arguments=arguments, evaluator_server_config=evaluator_server_config
+            evaluator_server_config=evaluator_server_config,
         )
 
-    def startSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
-    ) -> None:
+    def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         try:
-            self.initial_realizations_mask = arguments["active_realizations"]
+            self._initial_realizations_mask = self._simulation_arguments[
+                "active_realizations"
+            ]
             run_context = self.runSimulations(
-                arguments, evaluator_server_config=evaluator_server_config
+                evaluator_server_config=evaluator_server_config,
             )
-            self.completed_realizations_mask = run_context.get_mask()
+            self._completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
-            self.completed_realizations_mask = BoolVector(default_value=False)
+            self._completed_realizations_mask = BoolVector(default_value=False)
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()
@@ -106,7 +153,7 @@ class BaseRunModel:
             raise
 
     def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> ErtRunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
@@ -202,8 +249,8 @@ class BaseRunModel:
                 "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
             )
 
-    def checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
-        active_realizations = self.count_active_realizations(run_context)
+    def _checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
+        active_realizations = self._count_active_realizations(run_context)
         if (
             not self.ert()
             .analysisConfig()
@@ -213,7 +260,7 @@ class BaseRunModel:
                 "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
             )
 
-    def count_active_realizations(self, run_context: ErtRunContext) -> int:
+    def _count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
     def run_ensemble_evaluator(

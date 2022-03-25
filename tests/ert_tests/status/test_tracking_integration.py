@@ -141,7 +141,7 @@ def test_tracking(
         ert = EnKFMain(res_config, strict=True, verbose=parsed.verbose)
         facade = LibresFacade(ert)
 
-        model, argument = create_model(
+        model = create_model(
             ert,
             facade.get_analysis_module_names,
             facade.get_ensemble_size(),
@@ -156,7 +156,7 @@ def test_tracking(
         thread = threading.Thread(
             name="ert_cli_simulation_thread",
             target=model.start_simulations_thread,
-            args=(argument, evaluator_server_config),
+            args=(evaluator_server_config,),
         )
         thread.start()
 

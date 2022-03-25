@@ -131,8 +131,7 @@ class SimulationPanel(QWidget):
             arguments = self.getSimulationArguments()
             dialog = RunDialog(
                 self._config_file,
-                run_model(self.ert, self.ert.get_queue_config()),
-                arguments,
+                run_model(arguments, self.ert, self.ert.get_queue_config()),
             )
             dialog.startSimulation()
             dialog.exec_()

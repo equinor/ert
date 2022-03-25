@@ -42,7 +42,7 @@ def run_cli(args):
     if args.mode == WORKFLOW_MODE:
         execute_workflow(ert, args.name)
         return
-    model, argument = create_model(
+    model = create_model(
         ert,
         facade.get_analysis_module_names,
         facade.get_ensemble_size(),
@@ -69,7 +69,7 @@ def run_cli(args):
     thread = threading.Thread(
         name="ert_cli_simulation_thread",
         target=model.start_simulations_thread,
-        args=(argument, evaluator_server_config),
+        args=(evaluator_server_config,),
     )
     thread.start()
 

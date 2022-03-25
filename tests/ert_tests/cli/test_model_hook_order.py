@@ -26,17 +26,17 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     across different models.
     """
     ert_mock = MagicMock()
-    test_class = EnsembleSmoother(ert_mock, MagicMock())
+    minimum_args = MagicMock()
+    test_class = EnsembleSmoother(minimum_args, ert_mock, MagicMock())
     test_class.create_context = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     mock_parent = MagicMock()
     mock_sim_runner = MagicMock()
     mock_parent.runWorkflows = mock_sim_runner
-    minimum_args = MagicMock()
     evaluator_server_config_mock = MagicMock()
     test_module = inspect.getmodule(test_class)
     monkeypatch.setattr(test_module, "EnkfSimulationRunner", mock_parent)
-    test_class.runSimulations(minimum_args, evaluator_server_config_mock)
+    test_class.runSimulations(evaluator_server_config_mock)
 
     expected_calls = [
         call(expected_call, ert=ert_mock) for expected_call in EXPECTED_CALL_ORDER
@@ -59,7 +59,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         custom_port_range=range(1024, 65535)
     )
     ert_mock = MagicMock()
-    test_class = test_class(ert_mock, MagicMock())
+    test_class = test_class(minimum_args, ert_mock, MagicMock())
     mock_sim_runner = MagicMock()
     mock_parent = MagicMock()
     mock_parent.runWorkflows = mock_sim_runner
@@ -67,14 +67,14 @@ def test_hook_call_order_es_mda(monkeypatch):
     monkeypatch.setattr(test_module, "EnkfSimulationRunner", mock_parent)
 
     test_class.create_context = MagicMock()
-    test_class.checkMinimumActiveRealizations = MagicMock()
+    test_class._checkMinimumActiveRealizations = MagicMock()
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=-1)
 
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
-    test_class.runSimulations(minimum_args, evaluator_server_config)
+    test_class.runSimulations(evaluator_server_config)
 
     expected_calls = [
         call(expected_call, ert=ert_mock) for expected_call in EXPECTED_CALL_ORDER
@@ -97,14 +97,14 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     monkeypatch.setattr(test_module, "EnkfSimulationRunner", mock_parent)
 
     test_class.create_context = MagicMock()
-    test_class.checkMinimumActiveRealizations = MagicMock()
+    test_class._checkMinimumActiveRealizations = MagicMock()
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
     ert_mock = MagicMock()
     ert_mock.return_value.analysisConfig.return_value.getAnalysisIterConfig.return_value.getNumRetries.return_value = (
         1
     )
-    test_class = test_class(MagicMock(), MagicMock())
+    test_class = test_class(MagicMock(), MagicMock(), MagicMock())
     monkeypatch.setattr(test_class, "ert", ert_mock)
     test_class.setAnalysisModule = MagicMock()
     test_class.setAnalysisModule.return_value.getInt.return_value = 1
@@ -112,7 +112,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
 
     test_class.setPhase = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
-    test_class.runSimulations(MagicMock(), MagicMock())
+    test_class.runSimulations(MagicMock())
 
     expected_calls = [
         call(expected_call, ert=ert_mock()) for expected_call in EXPECTED_CALL_ORDER

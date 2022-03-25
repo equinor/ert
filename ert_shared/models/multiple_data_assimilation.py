@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
@@ -35,8 +35,13 @@ class MultipleDataAssimilation(BaseRunModel):
 
     default_weights = "4, 2, 1"
 
-    def __init__(self, ert: EnKFMain, queue_config: QueueConfig):
-        super().__init__(ert, queue_config, phase_count=2)
+    def __init__(
+        self,
+        simulation_arguments: Dict[str, Any],
+        ert: EnKFMain,
+        queue_config: QueueConfig,
+    ):
+        super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.weights = MultipleDataAssimilation.default_weights
 
     def setAnalysisModule(self, module_name: str) -> None:
@@ -46,14 +51,14 @@ class MultipleDataAssimilation(BaseRunModel):
             raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
 
     def runSimulations(
-        self, arguments: Argument, evaluator_server_config: EvaluatorServerConfig
+        self, evaluator_server_config: EvaluatorServerConfig
     ) -> ErtRunContext:
-        context = self.create_context(arguments, 0, initialize_mask_from_arguments=True)
-        self.checkMinimumActiveRealizations(context)
-        weights = self.parseWeights(arguments["weights"])
+        context = self.create_context(0, initialize_mask_from_arguments=True)
+        self._checkMinimumActiveRealizations(context)
+        weights = self.parseWeights(self._simulation_arguments["weights"])
         iteration_count = len(weights)
 
-        self.setAnalysisModule(arguments["analysis_module"])
+        self.setAnalysisModule(self._simulation_arguments["analysis_module"])
 
         logger.info(
             "Running MDA ES for %s  iterations\t%s"
@@ -75,15 +80,15 @@ class MultipleDataAssimilation(BaseRunModel):
         update_id = None
         enumerated_weights = list(enumerate(weights))
         weights_to_run = enumerated_weights[
-            min(arguments["start_iteration"], len(weights)) :
+            min(self._simulation_arguments["start_iteration"], len(weights)) :
         ]
         for iteration, weight in weights_to_run:
             is_first_iteration = iteration == 0
             run_context = self.create_context(
-                arguments, iteration, initialize_mask_from_arguments=is_first_iteration
+                iteration, initialize_mask_from_arguments=is_first_iteration
             )
             _, ensemble_id = self._simulateAndPostProcess(
-                run_context, arguments, evaluator_server_config, update_id=update_id
+                run_context, evaluator_server_config, update_id=update_id
             )
             if is_first_iteration:
                 EnkfSimulationRunner.runWorkflows(
@@ -97,17 +102,17 @@ class MultipleDataAssimilation(BaseRunModel):
 
         self.setPhaseName("Post processing...", indeterminate=True)
         run_context = self.create_context(
-            arguments, len(weights), initialize_mask_from_arguments=False, update=False
+            len(weights), initialize_mask_from_arguments=False, update=False
         )
         self._simulateAndPostProcess(
-            run_context, arguments, evaluator_server_config, update_id=update_id
+            run_context, evaluator_server_config, update_id=update_id
         )
 
         self.setPhase(iteration_count + 1, "Simulations completed.")
 
         return run_context
 
-    def count_active_realizations(self, run_context: ErtRunContext) -> int:
+    def _count_active_realizations(self, run_context: ErtRunContext) -> int:
         return sum(run_context.get_mask())
 
     def update(
@@ -142,7 +147,6 @@ class MultipleDataAssimilation(BaseRunModel):
     def _simulateAndPostProcess(
         self,
         run_context: ErtRunContext,
-        arguments: Argument,
         evaluator_server_config: EvaluatorServerConfig,
         update_id: str = None,
     ) -> Tuple[int, str]:
@@ -169,7 +173,9 @@ class MultipleDataAssimilation(BaseRunModel):
         # Push simulation results to storage
         self._post_ensemble_results(new_ensemble_id)
 
-        num_successful_realizations += arguments.get("prev_successful_realizations", 0)
+        num_successful_realizations += self._simulation_arguments.get(
+            "prev_successful_realizations", 0
+        )
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         phase_string = "Post processing for iteration: %d" % iteration
@@ -213,12 +219,11 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def create_context(
         self,
-        arguments: Argument,
         itr: int,
         initialize_mask_from_arguments: bool = True,
         update: bool = True,
     ) -> ErtRunContext:
-        target_case_format = arguments["target_case"]
+        target_case_format = self._simulation_arguments["target_case"]
         model_config = self.ert().getModelConfig()
         runpath_fmt = model_config.getRunpathFormat()
         jobname_fmt = model_config.getJobnameFormat()
@@ -243,7 +248,7 @@ class MultipleDataAssimilation(BaseRunModel):
             target_fs = None
 
         if initialize_mask_from_arguments:
-            mask = arguments["active_realizations"]
+            mask = self._simulation_arguments["active_realizations"]
         else:
             state = (
                 RealizationStateEnum.STATE_HAS_DATA
@@ -251,7 +256,7 @@ class MultipleDataAssimilation(BaseRunModel):
             )
             mask = sim_fs.getStateMap().createMask(state)
             # Make sure to only run the realizations which was passed in as argument
-            for index, run_realization in enumerate(self.initial_realizations_mask):
+            for index, run_realization in enumerate(self._initial_realizations_mask):
                 mask[index] = mask[index] and run_realization
 
         run_context = ErtRunContext.ensemble_smoother(
