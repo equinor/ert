@@ -34,6 +34,9 @@ namespace fs = std::filesystem;
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
 
+#include <ert/logging.hpp>
+static auto logger = ert::get_logger("enkf.block_fs_driver");
+
 typedef struct bfs_struct bfs_type;
 typedef struct bfs_config_struct bfs_config_type;
 
@@ -78,6 +81,7 @@ void bfs_config_free(bfs_config_type *config) { free(config); }
 static UTIL_SAFE_CAST_FUNCTION(bfs, BFS_TYPE_ID);
 
 static void bfs_close(bfs_type *bfs) {
+//    logger->debug("bfs_close {}", bfs->mountfile);
     if (bfs->block_fs != NULL)
         block_fs_close(bfs->block_fs, false);
     free(bfs->mountfile);
@@ -210,6 +214,7 @@ bool ert::block_fs_driver::has_node(const char *node_key, int report_step,
     bfs_type *bfs = this->get_fs(iens);
     bool has_node = block_fs_has_file(bfs->block_fs, key);
     free(key);
+    logger->debug("has node {} == {}", node_key, has_node);
     return has_node;
 }
 

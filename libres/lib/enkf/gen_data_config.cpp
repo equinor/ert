@@ -460,6 +460,7 @@ void gen_data_config_update_active(
     gen_data_config_type *config, const forward_load_context_type *load_context,
     const bool_vector_type *data_mask) {
     pthread_mutex_lock(&config->update_lock);
+    logger->info("updating active...");
     int report_step = forward_load_context_get_load_step(load_context);
     if (int_vector_iget(config->data_size_vector, report_step) > 0)
         update_config_to_datamask(config, load_context, data_mask, report_step);
@@ -496,6 +497,7 @@ void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
     }
 
     pthread_mutex_lock(&config->update_lock);
+    logger->info("fs_changed = {}, curr = {}", fs_changed, enkf_fs_get_mount_point(fs));
 
     if (force_load ||
         (int_vector_iget(config->data_size_vector, report_step) > 0)) {
@@ -505,6 +507,7 @@ void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
                 enkf_fs_open_excase_tstep_file(fs, filename, report_step);
 
             if (stream != NULL) {
+                logger->info("found file for {}", enkf_fs_get_mount_point(fs));
                 bool_vector_fread(config->active_mask, stream);
                 fclose(stream);
             } else {
