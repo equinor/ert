@@ -27,6 +27,106 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.34
+------------
+
+Breaking changes:
+  - Remove the IDE (Built-in config editor) (`#3148 <https://github.com/equinor/ert/pull/3148>`_)
+  - Remove legacy tracker (`#2965 <https://github.com/equinor/ert/pull/2965>`_)
+  - Remove enkf_obs instance from local_obsdata (`#3046 <https://github.com/equinor/ert/pull/3046>`_)
+
+Bugfixes:
+  - Remove inactive analysis module options (`#3126 <https://github.com/equinor/ert/pull/3126>`_)
+  - Fix row scaling local configuration job (`#2954 <https://github.com/equinor/ert/pull/2954>`_)
+  - Improve failure behaviour from ert client to storage (`#2956 <https://github.com/equinor/ert/pull/2956>`_)
+  - Add an out of bounds check (`#2969 <https://github.com/equinor/ert/pull/2969>`_)
+  - Set strict=True when creating EnkfMain, make testname unique (`#3042 <https://github.com/equinor/ert/pull/3042>`_)
+  - Skip lazy_load flag test which is failing on jenkins (`#3038 <https://github.com/equinor/ert/pull/3038>`_)
+  - Undo removal of getAll  - collectors (`#3034 <https://github.com/equinor/ert/pull/3034>`_)
+  - [ert3] Ignore command location during step execution (`#3147 <https://github.com/equinor/ert/pull/3147>`_)
+
+New features:
+  - Support Python 3.10 (`#2834 <https://github.com/equinor/ert/pull/2834>`_)
+  - Fix removing duplicates, added test to verify, improved performance (`#2951 <https://github.com/equinor/ert/pull/2951>`_)
+  - Disable lazy_loading of summary-data by default (`#2976 <https://github.com/equinor/ert/pull/2976>`_)
+  - Ies from python (`#3145 <https://github.com/equinor/ert/pull/3145>`_)
+  - [ert3] Auto-generate documentation for plugins (`#3138 <https://github.com/equinor/ert/pull/3138>`_)
+  - [ert3] Add support for log-uniform distribution (`#3156 <https://github.com/equinor/ert/pull/3156>`_)
+  - [ert3] ERT3 local test run (`#2755 <https://github.com/equinor/ert/pull/2755>`_)
+  - [ert3] Plugin-in transformation configuration and wider transformation usage (`#3025 <https://github.com/equinor/ert/pull/3025>`_)
+  - [ert3] Cli monitor for ert3 (`#2960 <https://github.com/equinor/ert/pull/2960>`_)
+
+Improvements:
+  - Refactor interactions between JobQueue and LegacyEnsemble. (`#3144 <https://github.com/equinor/ert/pull/3144>`_)
+  - Remove sorting of variables (`#3128 <https://github.com/equinor/ert/pull/3128>`_)
+  - Add logging of EnKFMain usage in workflows (`#3140 <https://github.com/equinor/ert/pull/3140>`_)
+  - Make tests use localhost (`#3160 <https://github.com/equinor/ert/pull/3160>`_)
+  - Set proper timeout for Storage.start_server() (`#3076 <https://github.com/equinor/ert/pull/3076>`_)
+  - Print a message to user about starting Webviz-ert (`#3075 <https://github.com/equinor/ert/pull/3075>`_)
+  - Add webviz-ert documentation (`#3065 <https://github.com/equinor/ert/pull/3065>`_)
+  - Fix timing in test batch sim (`#3091 <https://github.com/equinor/ert/pull/3091>`_)
+  - Force GC to avoid conflict with running C++ dtors later (`#3100 <https://github.com/equinor/ert/pull/3100>`_)
+  - Reduce log level for MAX_RUNTIME reached and only log once (`#2770 <https://github.com/equinor/ert/pull/2770>`_)
+  - Rename test to avoid conflict (`#3098 <https://github.com/equinor/ert/pull/3098>`_)
+  - Test tracker progress (`#3110 <https://github.com/equinor/ert/pull/3110>`_)
+  - Fix typo, successfull -> successful (`#3107 <https://github.com/equinor/ert/pull/3107>`_)
+  - Automatically increase softlimit for max open files while running tests (`#3112 <https://github.com/equinor/ert/pull/3112>`_)
+  - Start statically checking code in ert_shared/models (`#3094 <https://github.com/equinor/ert/pull/3094>`_)
+  - Remove global ert (`#3118 <https://github.com/equinor/ert/pull/3118>`_)
+  - Increasing default timeout from 20s to 120s in BaseService. (`#3129 <https://github.com/equinor/ert/pull/3129>`_)
+  - Handle error publish changes (`#3130 <https://github.com/equinor/ert/pull/3130>`_)
+  - Remove usage of global ERT in run models (`#3039 <https://github.com/equinor/ert/pull/3039>`_)
+  - Remove usage of threadpool in block_fs_driver (`#3021 <https://github.com/equinor/ert/pull/3021>`_)
+  - Various improvements to flaky tests (
+    `#3119 <https://github.com/equinor/ert/pull/3119>`_,
+    `#3125 <https://github.com/equinor/ert/pull/3125>`_,
+    `#2983 <https://github.com/equinor/ert/pull/2983>`_,
+    `#2987 <https://github.com/equinor/ert/pull/2987>`_
+    )
+  - Various improvements to the analysis module (
+    `#3060 <https://github.com/equinor/ert/pull/3060>`_,
+    `#2913 <https://github.com/equinor/ert/pull/2913>`_,
+    `#3082 <https://github.com/equinor/ert/pull/3082>`_,
+    `#3087 <https://github.com/equinor/ert/pull/3087>`_,
+    `#3083 <https://github.com/equinor/ert/pull/3083>`_,
+    `#3097 <https://github.com/equinor/ert/pull/3097>`_,
+    `#2958 <https://github.com/equinor/ert/pull/2958>`_,
+    `#2948 <https://github.com/equinor/ert/pull/2948>`_,
+    `#2999 <https://github.com/equinor/ert/pull/2999>`_,
+    `#2964 <https://github.com/equinor/ert/pull/2964>`_,
+    `#3018 <https://github.com/equinor/ert/pull/3018>`_,
+    `#3028 <https://github.com/equinor/ert/pull/3028>`_,
+    `#2962 <https://github.com/equinor/ert/pull/2962>`_,
+    `#3035 <https://github.com/equinor/ert/pull/3035>`_,
+    `#3005 <https://github.com/equinor/ert/pull/3005>`_,
+    `#3058 <https://github.com/equinor/ert/pull/3058>`_,
+    `#2966 <https://github.com/equinor/ert/pull/2966>`_
+    )
+
+Dependencies:
+  - Pin pylint to version <2.13.0 (`#3161 <https://github.com/equinor/ert/pull/3161>`_)
+  - Remove requirement mypy < 0.920 (`#3090 <https://github.com/equinor/ert/pull/3090>`_)
+  - Remove dependency on semeio (`#2980 <https://github.com/equinor/ert/pull/2980>`_)
+  - Remove dependency on BLAS and LAPACK (`#3000 <https://github.com/equinor/ert/pull/3000>`_)
+
+Miscellaneous:
+  - Ignore errors in rmtree (`#3155 <https://github.com/equinor/ert/pull/3155>`_)
+  - Fix filename typo in tests (`#3072 <https://github.com/equinor/ert/pull/3072>`_)
+  - Use self._timeout in fetch_conn_info() (`#3078 <https://github.com/equinor/ert/pull/3078>`_)
+  - Add host ensemble server config (`#3096 <https://github.com/equinor/ert/pull/3096>`_)
+  - job_dispatch: Makedir in, out, err locations (`#2998 <https://github.com/equinor/ert/pull/2998>`_)
+  - Add an optional has_observations flag to the record (`#2979 <https://github.com/equinor/ert/pull/2979>`_)
+  - Remove unused job_queue from BaseRunModel (`#3019 <https://github.com/equinor/ert/pull/3019>`_)
+  - clang-format: Remove version check (`#3027 <https://github.com/equinor/ert/pull/3027>`_)
+  - Make `extern "C"` explicit for each function (`#2963 <https://github.com/equinor/ert/pull/2963>`_)
+  - Use the key_manager from enkf_main (`#3026 <https://github.com/equinor/ert/pull/3026>`_)
+  - Remove utility functions of the legacy tracker (`#3006 <https://github.com/equinor/ert/pull/3006>`_)
+  - Introduce read-only info class derived from EvaluatorServerConfig (`#3045 <https://github.com/equinor/ert/pull/3045>`_)
+  - Correct exception name typo (`#3047 <https://github.com/equinor/ert/pull/3047>`_)
+  - Make port range larger in test (`#3059 <https://github.com/equinor/ert/pull/3059>`_)
+  - [ert3] Drop experiment_run_config from load_resource (`#3102 <https://github.com/equinor/ert/pull/3102>`_)
+  - [ert3] Add better error handling when trying to rerun an experiment (`#2891 <https://github.com/equinor/ert/pull/2891>`_)
+
 
 Version 2.33
 ------------
