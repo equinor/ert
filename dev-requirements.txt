@@ -5,7 +5,7 @@ decorator
 flake8>=4.0.0
 jsonpath_ng
 mock; python_version <= '3.7' # missing AsyncMock added in py38
-pylint<2.13.0
+pylint
 pytest-asyncio
 pytest-cov
 pytest-mock

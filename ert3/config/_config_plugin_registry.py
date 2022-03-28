@@ -104,7 +104,9 @@ class ConfigPluginRegistry:
         if name in self._registry[category]:
             raise ValueError(f"{name} is already registered")
 
-        field_definitions: Any = {self._descriminator[category]: (Literal[name], ...)}
+        field_definitions: Any = {
+            self._descriminator[category]: (Literal[name], Ellipsis)
+        }
         config_name = f"Full{config.__name__}"
         full_config = create_model(
             config_name, __base__=config, __module__=__name__, **field_definitions
