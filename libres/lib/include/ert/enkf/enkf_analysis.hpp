@@ -36,8 +36,4 @@ void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
                                        double std_cutoff, double alpha,
                                        bool verbose);
 
-extern "C" PY_USED void
-enkf_analysis_deactivate_std_zero(obs_data_type *obs_data,
-                                  meas_data_type *meas_data, bool verbose);
-
 #endif
