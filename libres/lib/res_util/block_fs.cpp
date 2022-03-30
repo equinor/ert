@@ -18,10 +18,11 @@
 
 #include <filesystem>
 #include <optional>
+#include <stdexcept>
 #include <vector>
 #include <mutex>
 
-#include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include <unordered_map>
 #include <ert/util/buffer.hpp>
@@ -76,13 +77,12 @@ struct file_node_struct {
 
 struct block_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *
-        mount_file; /* The full path to a file with some mount information - input to the mount routine. */
-    char *path;
-    char *base_name;
+    fs::path mount_path;
+    std::string base_name;
 
-    char *data_file;
-    char *lock_file;
+    fs::path data_path() const { return mount_path / (base_name + ".data_0"); }
+
+    fs::path lock_path() const { return mount_path / (base_name + ".lock_0"); }
 
     FILE *data_stream;
 
@@ -226,36 +226,15 @@ static file_node_type file_node_index_buffer_fread_alloc(buffer_type *buffer) {
     }
 }
 
-static void block_fs_set_filenames(block_fs_type *block_fs) {
-    free(block_fs->data_file);
-    free(block_fs->lock_file);
-
-    block_fs->data_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, "data_0");
-    block_fs->lock_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, "lock_0");
-}
-
-/*
-   This function is called both when allocating a new block_fs
-   instance, and when an existing block_fs instance is 'rotated'.
-*/
-
-static void block_fs_reinit(block_fs_type *block_fs) {
-    block_fs_set_filenames(block_fs);
-}
-
-static block_fs_type *block_fs_alloc_empty(const char *mount_file,
+static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
                                            bool read_only, bool use_lockfile) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
-    block_fs->mount_file = util_alloc_string_copy(mount_file);
-
-    util_alloc_file_components(mount_file, &block_fs->path,
-                               &block_fs->base_name, NULL);
+    block_fs->mount_path = mount_file.parent_path();
+    block_fs->base_name = mount_file.stem();
     {
-        FILE *stream = util_fopen(mount_file, "r");
+        FILE *stream = util_fopen(mount_file.c_str(), "r");
         int id = util_fread_int(stream);
         int version = util_fread_int(stream);
         if (version != 0)
@@ -265,20 +244,16 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
         fclose(stream);
 
         if (id != MOUNT_MAP_MAGIC_INT)
-            util_abort("%s: The file:%s does not seem to be a valid block_fs "
-                       "mount map \n",
-                       __func__, mount_file);
+            throw std::runtime_error(fmt::format(
+                "The file '{}' is not a valid block_fs mount_map", mount_file));
     }
-    block_fs->data_file = NULL;
-    block_fs->lock_file = NULL;
-    block_fs_reinit(block_fs);
 
     {
         bool lock_aquired = true;
 
         if (use_lockfile) {
             lock_aquired = util_try_lockf(
-                block_fs->lock_file, S_IWUSR + S_IWGRP, &block_fs->lock_fd);
+                block_fs->lock_path().c_str(), S_IWUSR + S_IWGRP, &block_fs->lock_fd);
 
             if (!lock_aquired)
                 fprintf(stderr,
@@ -371,16 +346,17 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
 */
 
 static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
+    auto path = block_fs->data_path();
     if (read_write) {
         /* Normal read-write open.- */
-        if (fs::exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r+");
+        if (fs::exists(path))
+            block_fs->data_stream = util_fopen(path.c_str(), "r+");
         else
-            block_fs->data_stream = util_fopen(block_fs->data_file, "w+");
+            block_fs->data_stream = util_fopen(path.c_str(), "w+");
     } else {
         /* read-only open. */
-        if (fs::exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r");
+        if (fs::exists(block_fs->data_path()))
+            block_fs->data_stream = util_fopen(path.c_str(), "r");
         else
             block_fs->data_stream = NULL;
     }
@@ -448,13 +424,13 @@ static void block_fs_build_index(block_fs_type *block_fs,
                 fprintf(stderr,
                         "** Warning:: invalid node found at offset:%ld in "
                         "datafile:%s - data will be lost, node_size:%d\n",
-                        file_node.node_offset, block_fs->data_file,
+                        file_node.node_offset, block_fs->data_path().c_str(),
                         file_node.node_size);
             else
                 fprintf(stderr,
                         "** Warning:: file system was prematurely shut down "
                         "while writing node in %s/%ld - will be discarded.\n",
-                        block_fs->data_file, file_node.node_offset);
+                        block_fs->data_path().c_str(), file_node.node_offset);
 
             error_offset.push_back(file_node.node_offset);
             block_fs_fseek_valid_node(block_fs);
@@ -607,7 +583,7 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
     if (!block_fs->data_owner)
         throw std::logic_error(fmt::format(
             "tried to write to read only filesystem mouunted at: {}",
-            block_fs->mount_file));
+            block_fs->mount_path / block_fs->base_name));
 
     std::lock_guard guard{block_fs->mutex};
 
@@ -672,18 +648,12 @@ void block_fs_close(block_fs_type *block_fs) {
         close(
             block_fs
                 ->lock_fd); /* Closing the lock_file file descriptor - and releasing the lock. */
-        util_unlink_existing(block_fs->lock_file);
+        util_unlink_existing(block_fs->lock_path().c_str());
     }
 
     if (block_fs->data_owner) {
         block_fs->mutex.unlock();
     }
-
-    free(block_fs->lock_file);
-    free(block_fs->base_name);
-    free(block_fs->data_file);
-    free(block_fs->path);
-    free(block_fs->mount_file);
 
     delete block_fs;
 }
