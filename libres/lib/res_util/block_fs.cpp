@@ -319,32 +319,6 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
 }
 
 /*
-   The read-only open mode is only for the mount section, where the
-   data file is read in to load/verify the index.
-
-   If the read_only open fails - the data_stream is set to NULL. If
-   the open succeeds the calling scope should close the stream before
-   calling this function again, with read_only == false.
-*/
-
-static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
-    auto path = block_fs->data_path();
-    if (read_write) {
-        /* Normal read-write open.- */
-        if (fs::exists(path))
-            block_fs->data_stream = util_fopen(path.c_str(), "r+");
-        else
-            block_fs->data_stream = util_fopen(path.c_str(), "w+");
-    } else {
-        /* read-only open. */
-        if (fs::exists(block_fs->data_path()))
-            block_fs->data_stream = util_fopen(path.c_str(), "r");
-        else
-            block_fs->data_stream = NULL;
-    }
-}
-
-/*
    This function will 'fix' the nodes with offset in offset_list.  The
    fixing in this case means the following:
 
@@ -467,10 +441,10 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only) {
         }
         {
             std::vector<long> fix_nodes;
-            block_fs =
-                block_fs_alloc_empty(mount_file, read_only);
+            block_fs = block_fs_alloc_empty(mount_file, read_only);
 
-            block_fs_open_data(block_fs, block_fs->data_owner);
+            block_fs->data_stream = fopen(block_fs->data_path().c_str(),
+                                          block_fs->data_owner ? "ab+" : "rb");
             if (block_fs->data_stream)
                 block_fs_build_index(block_fs, fix_nodes);
             block_fs_fix_nodes(block_fs, fix_nodes);
