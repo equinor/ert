@@ -436,7 +436,7 @@ void model_config_init(model_config_type *model_config,
 
         if (util_string_equal(config_content_node_get_kw(node),
                               FORWARD_MODEL_KEY)) {
-            const char *arg = config_content_node_get_full_string(node, "");
+            const char *arg = config_content_node_get_full_string(node, " ");
             forward_model_parse_job_deprecated_args(model_config->forward_model,
                                                     arg, define_list);
         }
