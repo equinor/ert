@@ -14,10 +14,10 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-ERT - Ensemble based Reservoir Tool - is designed for running 
+ERT - Ensemble based Reservoir Tool - is designed for running
 ensembles of dynamical models such as reservoir models,
 in order to do sensitivity analysis and data assimilation.
-ERT supports data assimilation using the Ensemble Smoother (ES), 
+ERT supports data assimilation using the Ensemble Smoother (ES),
 Ensemble Smoother with Multiple Data Assimilation (ES-MDA) and
 Iterative Ensemble Smoother (IES).
 
@@ -61,7 +61,23 @@ the easiest to work with and is likely what most developers will work with.
 
 ### Developing Python
 
-To start developing the Python code, install ERT in editable mode into a virtualenv:
+You might first want to make sure that some system level packages are installed
+before attempting setup:
+
+```
+- pip
+- python include headers
+- (python) venv
+- (python) setuptools
+- (python) wheel
+```
+
+It is left as an exercise to the reader to figure out how to install these on
+their respective system.
+
+To start developing the Python code, we suggest installing ERT in editable mode
+into a [virtual environment](https://docs.python.org/3/library/venv.html) to
+isolate the install (substitute the appropriate way of sourcing venv for your shell):
 
 ```sh
 # Create and enable a virtualenv
@@ -77,14 +93,37 @@ cd ert
 pip install --editable .
 ```
 
+### Trouble with setup
+
+If you encounter problems during install and attempt to fix them, it might be
+wise to delete the `_skbuild` folder before retrying an install.
+
 Additional development packages must be installed to run the test suite:
 ```sh
 pip install -r dev-requirements.txt
 pytest tests/
 ```
 
-Since we've installed ERT in `--editable` mode, it is now possible to modify the
-Python code without reinstalling. Simply restart ERT after making your changes.
+As a simple test of your `ert` installation, you may try to run one of the
+examples, for instance:
+
+```
+cd test-data/local/poly_example
+# for non-gui trial run
+ert test_run poly.ert
+# for gui trial run
+ert gui poly.ert
+```
+
+Note that in order to parse floating point numbers from text files correctly,
+your locale must be set such that `.` is the decimal separator, e.g. by setting
+
+```
+# export LC_NUMERIC=en_US.UTF-8
+```
+
+in bash (or an equivalent way of setting that environment variable for your
+shell).
 
 ### Developing C++
 
@@ -174,7 +213,7 @@ cd test-data/local/poly_example
 ert gui poly.ert
 ````
 This opens up the ert graphical user interface.
-Finally, test ert by starting and successfully running the simulation. 
+Finally, test ert by starting and successfully running the simulation.
 
 ### ert with a reservoir simulator
 To actually get ert to work at your site you need to configure details about
