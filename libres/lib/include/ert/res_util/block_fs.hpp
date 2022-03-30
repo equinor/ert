@@ -33,8 +33,7 @@ typedef enum {
 
 void block_fs_fsync(block_fs_type *block_fs);
 bool block_fs_is_readonly(const block_fs_type *block_fs);
-block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
-                              bool use_lockfile);
+block_fs_type *block_fs_mount(const char *mount_file, bool read_only);
 void block_fs_close(block_fs_type *block_fs);
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t byte_size);

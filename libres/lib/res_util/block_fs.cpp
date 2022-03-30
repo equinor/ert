@@ -227,7 +227,7 @@ static file_node_type file_node_index_buffer_fread_alloc(buffer_type *buffer) {
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
-                                           bool read_only, bool use_lockfile) {
+                                           bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
@@ -248,25 +248,7 @@ static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
                 "The file '{}' is not a valid block_fs mount_map", mount_file));
     }
 
-    {
-        bool lock_aquired = true;
-
-        if (use_lockfile) {
-            lock_aquired = util_try_lockf(
-                block_fs->lock_path().c_str(), S_IWUSR + S_IWGRP, &block_fs->lock_fd);
-
-            if (!lock_aquired)
-                fprintf(stderr,
-                        " Another program has already opened filesystem "
-                        "read-write - this instance will be UNSYNCRONIZED "
-                        "read-only. Cross your fingers ....\n");
-        }
-
-        if (lock_aquired && (read_only == false))
-            block_fs->data_owner = true;
-        else
-            block_fs->data_owner = false;
-    }
+    block_fs->data_owner = !read_only;
     return block_fs;
 }
 
@@ -472,8 +454,7 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
         return true;
 }
 
-block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
-                              bool use_lockfile) {
+block_fs_type *block_fs_mount(const char *mount_file, bool read_only) {
     block_fs_type *block_fs;
     {
 
@@ -487,7 +468,7 @@ block_fs_type *block_fs_mount(const char *mount_file, bool read_only,
         {
             std::vector<long> fix_nodes;
             block_fs =
-                block_fs_alloc_empty(mount_file, read_only, use_lockfile);
+                block_fs_alloc_empty(mount_file, read_only);
 
             block_fs_open_data(block_fs, block_fs->data_owner);
             if (block_fs->data_stream)
