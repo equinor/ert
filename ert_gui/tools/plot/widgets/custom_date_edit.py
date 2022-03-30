@@ -23,7 +23,7 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setPopupMode(QToolButton.InstantPopup)
         self._calendar_button.setFixedSize(26, 26)
         self._calendar_button.setAutoRaise(True)
-        self._calendar_button.setIcon(resourceIcon("calendar.png"))
+        self._calendar_button.setIcon(resourceIcon("calendar_date_range.svg"))
         self._calendar_button.setStyleSheet(
             "QToolButton::menu-indicator { image: none; }"
         )

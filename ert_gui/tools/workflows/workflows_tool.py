@@ -12,7 +12,7 @@ class WorkflowsTool(Tool):
         super().__init__(
             "Run Workflow",
             "tools/workflows",
-            resourceIcon("ide/to_do_list_checked_1"),
+            resourceIcon("playlist_play.svg"),
             enabled,
         )
 

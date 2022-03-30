@@ -130,7 +130,7 @@ class RunDialog(QDialog):
         self.show_details_button.setCheckable(True)
 
         size = 20
-        spin_movie = resourceMovie("ide/loading.gif")
+        spin_movie = resourceMovie("loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

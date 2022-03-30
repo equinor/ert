@@ -15,7 +15,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
         """
         QAbstractItemModel.__init__(self)
         self._keys = keys
-        self.__icon = resourceIcon("ide/small/bullet_star")
+        self.__icon = resourceIcon("star_filled.svg")
 
     def index(self, row, column, parent=None, *args, **kwargs):
         return self.createIndex(row, column)

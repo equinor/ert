@@ -25,7 +25,7 @@ class CaseSelectionWidget(QWidget):
         self.__add_case_button = QToolButton()
         self.__add_case_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.__add_case_button.setText("Add case to plot")
-        self.__add_case_button.setIcon(resourceIcon("ide/small/add"))
+        self.__add_case_button.setIcon(resourceIcon("add_circle_outlined.svg"))
         self.__add_case_button.clicked.connect(self.addCaseSelector)
 
         add_button_layout.addStretch()
@@ -81,7 +81,7 @@ class CaseSelectionWidget(QWidget):
         button = QToolButton()
         button.setAutoRaise(True)
         button.setDisabled(disabled)
-        button.setIcon(resourceIcon("ide/small/delete"))
+        button.setIcon(resourceIcon("delete_to_trash.svg"))
         button.clicked.connect(self.__signal_mapper.map)
 
         layout.addWidget(button)

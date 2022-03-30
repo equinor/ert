@@ -45,7 +45,7 @@ class AnalysisModuleSelector(QWidget):
         )
 
         variables_popup_button = QToolButton()
-        variables_popup_button.setIcon(resourceIcon("ide/small/cog_edit.png"))
+        variables_popup_button.setIcon(resourceIcon("edit.svg"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
         variables_popup_button.setMaximumSize(20, 20)
 

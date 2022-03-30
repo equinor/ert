@@ -45,7 +45,7 @@ class RunWorkflowWidget(QWidget):
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.setText("Start Workflow")
-        self.run_button.setIcon(resourceIcon("ide/gear_in_play"))
+        self.run_button.setIcon(resourceIcon("play_circle.svg"))
         self.run_button.clicked.connect(self.startWorkflow)
         self.run_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
@@ -68,7 +68,7 @@ class RunWorkflowWidget(QWidget):
         layout = QHBoxLayout()
 
         size = 64
-        spin_movie = resourceMovie("ide/loading.gif")
+        spin_movie = resourceMovie("loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

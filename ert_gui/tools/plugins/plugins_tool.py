@@ -15,7 +15,7 @@ class PluginsTool(Tool):
         super(PluginsTool, self).__init__(
             "Plugins",
             "tools/plugins",
-            resourceIcon("ide/plugin"),
+            resourceIcon("widgets.svg"),
             enabled,
             popup_menu=True,
         )
