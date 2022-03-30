@@ -10,11 +10,12 @@ void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, const ies::config::Config &ies_config,
     ies::data::Data &ies_data, Eigen::MatrixXd &A, rng_type *rng) {
     ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-
-    ies::updateA(ies_config, ies_data, A, testdata.S, testdata.R, testdata.E,
-                 testdata.D);
+    int iteration_nr = ies_data.inc_iteration_nr();
+    ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E, testdata.D,
+                 ies_config.inversion(), ies_config.truncation(),
+                 ies_config.aaprojection(),
+                 ies_config.steplength(iteration_nr));
 }
-
 /*
 TEST 1 (Consistency between exact scheme and subspace scheme with no truncation and exact diagonal R):
  - ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         1.0

@@ -43,15 +43,20 @@ Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
                       bool use_aa_projection, Eigen::MatrixXd &W0,
                       double ies_steplength, int iteration_nr);
 
-void updateA(
-    const config::Config &ies_config, data::Data &data,
-    Eigen::MatrixXd &A,         // Updated ensemble A returned to ERT.
-    const Eigen::MatrixXd &Yin, // Ensemble of predicted measurements
-    const Eigen::MatrixXd
-        &Rin, // Measurement error covariance matrix (not used)
-    const Eigen::MatrixXd &Ein, // Ensemble of observation perturbations
-    const Eigen::MatrixXd
-        &Din); // (d+E-Y) Ensemble of perturbed observations - Y
+void updateA(data::Data &data,
+             // Updated ensemble A returned to ERT.
+             Eigen::Ref<Eigen::MatrixXd> A,
+             // Ensemble of predicted measurements
+             const Eigen::MatrixXd &Yin,
+             // Measurement error covariance matrix (not used)
+             const Eigen::MatrixXd &Rin,
+             // Ensemble of observation perturbations
+             const Eigen::MatrixXd &Ein,
+             // (d+E-Y) Ensemble of perturbed observations - Y
+             const Eigen::MatrixXd &Din,
+             const ies::config::inversion_type ies_inversion,
+             const std::variant<double, int> &truncation,
+             bool use_aa_projection, double ies_steplength);
 
 Eigen::MatrixXd makeE(const Eigen::VectorXd &obs_errors,
                       const Eigen::MatrixXd &noise);

@@ -349,8 +349,6 @@ ies::data::Data *analysis_module_get_module_data_pybind(py::object module) {
 }
 
 RES_LIB_SUBMODULE("analysis_module", m) {
-    py::class_<ies::data::Data, std::shared_ptr<ies::data::Data>>(m,
-                                                                  "ModuleData");
     m.def("get_module_config", analysis_module_get_module_config_pybind,
           py::return_value_policy::reference_internal);
     m.def("get_module_data", analysis_module_get_module_data_pybind,

@@ -81,9 +81,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
     for (int iter = 0; iter < num_iter; iter++) {
         forward_model(testdata, A1);
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-
-        ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
-                     testdata.E, testdata.D);
+        int iteration_nr = ies_data.inc_iteration_nr();
+        ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
+                     testdata.D, ies_config.inversion(),
+                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.steplength(iteration_nr));
 
         test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
 
@@ -135,9 +137,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
         }
 
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-
-        ies::updateA(ies_config, ies_data, A1, testdata.S, testdata.R,
-                     testdata.E, testdata.D);
+        int iteration_nr = ies_data.inc_iteration_nr();
+        ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
+                     testdata.D, ies_config.inversion(),
+                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.steplength(iteration_nr));
     }
 
     /* ES update with one realization removed*/
@@ -195,9 +199,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         testdata2.deactivate_obs(2);
 
         ies::init_update(ies_data, testdata2.ens_mask, testdata2.obs_mask);
-
-        ies::updateA(ies_config, ies_data, A, testdata2.S, testdata2.R,
-                     testdata2.E, testdata2.D);
+        int iteration_nr = ies_data.inc_iteration_nr();
+        ies::updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.E,
+                     testdata2.D, ies_config.inversion(),
+                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.steplength(iteration_nr));
     }
 
     for (int iter = 1; iter < num_iter; iter++) {
@@ -222,9 +228,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
             testdata.deactivate_obs(testdata.active_obs_size / 2);
 
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-
-        ies::updateA(ies_config, ies_data, A, testdata.S, testdata.R,
-                     testdata.E, testdata.D);
+        int iteration_nr = ies_data.inc_iteration_nr();
+        ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E,
+                     testdata.D, ies_config.inversion(),
+                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.steplength(iteration_nr));
     }
     rng_free(rng);
 }
