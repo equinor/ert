@@ -34,9 +34,11 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     std_config.truncation(0.95);
 
     ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask);
-
-    ies::updateA(ies_config1, ies_data1, A1, testdata.S, testdata.R, testdata.E,
-                 testdata.D);
+    int iteration_nr = ies_data1.inc_iteration_nr();
+    ies::updateA(ies_data1, A1, testdata.S, testdata.R, testdata.E, testdata.D,
+                 ies_config1.inversion(), ies_config1.truncation(),
+                 ies_config1.aaprojection(),
+                 ies_config1.steplength(iteration_nr));
 
     int active_ens_size = A2.cols();
     Eigen::MatrixXd W0 =

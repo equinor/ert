@@ -171,23 +171,26 @@ Eigen::MatrixXd ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
     return X;
 }
 
-void ies::updateA(
-    const config::Config &ies_config, data::Data &data,
-    Eigen::MatrixXd &A,         // Updated ensemble A retured to ERT.
-    const Eigen::MatrixXd &Yin, // Ensemble of predicted measurements
-    const Eigen::MatrixXd
-        &Rin, // Measurement error covariance matrix (not used)
-    const Eigen::MatrixXd &Ein, // Ensemble of observation perturbations
-    const Eigen::MatrixXd
-        &Din) { // (d+E-Y) Ensemble of perturbed observations - Y
+void ies::updateA(data::Data &data,
+                  // Updated ensemble A retured to ERT.
+                  Eigen::Ref<Eigen::MatrixXd> A,
+                  // Ensemble of predicted measurements
+                  const Eigen::MatrixXd &Yin,
+                  // Measurement error covariance matrix (not used)
+                  const Eigen::MatrixXd &Rin,
+                  // Ensemble of observation perturbations
+                  const Eigen::MatrixXd &Ein,
+                  // (d+E-Y) Ensemble of perturbed observations - Y
+                  const Eigen::MatrixXd &Din,
+                  const ies::config::inversion_type ies_inversion,
+                  const std::variant<double, int> &truncation,
+                  bool use_aa_projection, double ies_steplength) {
 
-    int ens_size =
-        Yin.cols(); // Number of active realizations in current iteration
+    // Number of active realizations in current iteration
+    int ens_size = Yin.cols();
     int state_size = A.rows();
 
-    int iteration_nr = data.inc_iteration_nr();
-
-    const double ies_steplength = ies_config.steplength(iteration_nr);
+    int iteration_nr = data.iteration_nr();
 
     data.update_state_size(state_size);
     /*
@@ -217,10 +220,13 @@ void ies::updateA(
     double costf;
 
     auto W0 = data.make_activeW();
-    Eigen::MatrixXd X =
-        makeX(ies_config.aaprojection() ? A : Eigen::MatrixXd(), Yin, Rin, E, D,
-              ies_config.inversion(), ies_config.truncation(),
-              ies_config.aaprojection(), W0, ies_steplength, iteration_nr);
+    Eigen::MatrixXd X;
+    if (use_aa_projection)
+        X = makeX(A, Yin, Rin, E, D, ies_inversion, truncation,
+                  use_aa_projection, W0, ies_steplength, iteration_nr);
+    else
+        X = makeX({}, Yin, Rin, E, D, ies_inversion, truncation,
+                  use_aa_projection, W0, ies_steplength, iteration_nr);
     ies::linalg_store_active_W(&data, W0);
 
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
@@ -399,9 +405,10 @@ RES_LIB_SUBMODULE("ies", m) {
     m.def("make_E", ies::makeE, py::arg("obs_errors"), py::arg("noise"));
     m.def("make_D", ies::makeD, py::arg("obs_values"), py::arg("E"),
           py::arg("S"));
-    m.def("update_A", ies::updateA, py::arg("ies_config"), py::arg("data"),
-          py::arg("A"), py::arg("Yin"), py::arg("R"), py::arg("E"),
-          py::arg("D"));
+    m.def("update_A", ies::updateA, py::arg("data"), py::arg("A"),
+          py::arg("Yin"), py::arg("R"), py::arg("E"), py::arg("D"),
+          py::arg("inversion"), py::arg("truncation"),
+          py::arg("use_aa_projection"), py::arg("step_length"));
     m.def("init_update", ies::init_update, py::arg("module_data"),
           py::arg("ens_mask"), py::arg("obs_mask"));
 }

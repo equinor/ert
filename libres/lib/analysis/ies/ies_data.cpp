@@ -2,6 +2,7 @@
 #include <memory>
 
 #include <ert/analysis/ies/ies_data.hpp>
+#include <ert/python.hpp>
 
 /*
   The configuration data used by the ies_enkf module is contained in a
@@ -183,4 +184,11 @@ Eigen::MatrixXd ies::data::Data::make_activeW() const {
 Eigen::MatrixXd ies::data::Data::make_activeA() const {
     std::vector<bool> state_mask(this->A0.rows(), true);
     return make_active(this->A0, state_mask, this->m_ens_mask);
+}
+
+RES_LIB_SUBMODULE("ies", m) {
+    py::class_<ies::data::Data, std::shared_ptr<ies::data::Data>>(m,
+                                                                  "ModuleData")
+        .def(py::init<int>())
+        .def("inc_iteration_nr", &ies::data::Data::inc_iteration_nr);
 }

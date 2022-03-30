@@ -148,5 +148,15 @@ RES_LIB_SUBMODULE("ies", m) {
     using namespace py::literals;
     py::class_<ies::config::Config, std::shared_ptr<ies::config::Config>>(
         m, "Config")
-        .def(py::init<bool>());
+        .def(py::init<bool>())
+        .def("step_length", &ies::config::Config::steplength);
+
+    py::enum_<ies::config::inversion_type>(m, "inversion_type")
+        .value("EXACT", ies::config::inversion_type::IES_INVERSION_EXACT)
+        .value("EE_R", ies::config::inversion_type::IES_INVERSION_SUBSPACE_EE_R)
+        .value("EXACT_R",
+               ies::config::inversion_type::IES_INVERSION_SUBSPACE_EXACT_R)
+        .value("SUBSPACE_RE",
+               ies::config::inversion_type::IES_INVERSION_SUBSPACE_RE)
+        .export_values();
 }

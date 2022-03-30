@@ -260,7 +260,10 @@ void run_analysis_update_without_rowscaling(
 
     if (module_config.iterable()) {
         ies::init_update(module_data, ens_mask, obs_mask);
-        ies::updateA(module_config, module_data, A, S, R, E, D);
+        int iteration_nr = module_data.inc_iteration_nr();
+        ies::updateA(module_data, A, S, R, E, D, module_config.inversion(),
+                     module_config.truncation(), module_config.aaprojection(),
+                     module_config.steplength(iteration_nr));
     } else {
 
         int active_ens_size = S.cols();
