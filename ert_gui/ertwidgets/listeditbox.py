@@ -100,7 +100,7 @@ class ListEditBox(QWidget):
         layout.addWidget(self._list_edit_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(resourceIcon("ide/small/add"))
+        dialog_button.setIcon(resourceIcon("add_circle_outlined.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.addChoice)
 

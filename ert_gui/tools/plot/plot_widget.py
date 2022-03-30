@@ -16,7 +16,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     def __init__(self, canvas, parent, coordinates=True):
         super(CustomNavigationToolbar, self).__init__(canvas, parent, coordinates)
 
-        gear = resourceIcon("ide/cog_edit.png")
+        gear = resourceIcon("edit.svg")
         customize_action = QAction(gear, "Customize", self)
         customize_action.setToolTip("Customize plot settings")
         customize_action.triggered.connect(self.customizationTriggered)

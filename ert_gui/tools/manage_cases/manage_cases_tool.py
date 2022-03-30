@@ -11,7 +11,7 @@ class ManageCasesTool(Tool):
         self.notifier = notifier
         self.ert = ert
         super().__init__(
-            "Manage Cases", "tools/manage_cases", resourceIcon("ide/database_gear")
+            "Manage Cases", "tools/manage_cases", resourceIcon("build_wrench.svg")
         )
 
     def trigger(self):

@@ -26,7 +26,7 @@ class DataTypeKeysWidget(QWidget):
         filter_layout.addWidget(self.search_box)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(resourceIcon("ide/cog_edit.png"))
+        filter_popup_button.setIcon(resourceIcon("filter_list.svg"))
         filter_popup_button.clicked.connect(self.showFilterPopup)
         filter_layout.addWidget(filter_popup_button)
         layout.addLayout(filter_layout)

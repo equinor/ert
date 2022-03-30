@@ -40,7 +40,7 @@ class ProcessJobDialog(QDialog):
         widget_layout = QHBoxLayout()
 
         size = 64
-        spin_movie = resourceMovie("ide/loading.gif")
+        spin_movie = resourceMovie("loading.gif")
         spin_movie.setSpeed(60)
         spin_movie.setScaledSize(QSize(size, size))
         spin_movie.start()

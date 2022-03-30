@@ -30,7 +30,6 @@ def showWaitCursorWhileWaiting(func):
 
 def resourceIcon(name):
     """Load an image as an icon"""
-    # print("Icon used: %s" % name)
     return QIcon(resource_filename("ert_gui", "resources/gui/img/" + name))
 
 

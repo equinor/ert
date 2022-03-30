@@ -63,7 +63,7 @@ class PathChooser(QWidget):
         layout.addWidget(self._path_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(resourceIcon("ide/small/folder"))
+        dialog_button.setIcon(resourceIcon("folder_open.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.selectPath)
         layout.addWidget(dialog_button)

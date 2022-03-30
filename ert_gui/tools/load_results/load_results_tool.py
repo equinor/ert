@@ -25,7 +25,7 @@ class LoadResultsTool(Tool):
         super(LoadResultsTool, self).__init__(
             "Load results manually",
             "tools/load_manually",
-            resourceIcon("ide/table_import"),
+            resourceIcon("upload.svg"),
         )
         self.__import_widget = None
         self.__dialog = None

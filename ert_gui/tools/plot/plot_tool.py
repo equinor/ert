@@ -7,7 +7,7 @@ class PlotTool(Tool):
     def __init__(self, ert, config_file):
         self.ert = ert
         super(PlotTool, self).__init__(
-            "Create Plot", "tools/plot", resourceIcon("ide/chart_curve_add")
+            "Create Plot", "tools/plot", resourceIcon("timeline.svg")
         )
         self._config_file = config_file
 

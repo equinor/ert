@@ -46,7 +46,7 @@ class RunAnalysisTool(Tool):
         self.ert = ert
         self.notifier = notifier
         super(RunAnalysisTool, self).__init__(
-            "Run Analysis", "tools/run_analysis", resourceIcon("ide/table_import")
+            "Run Analysis", "tools/run_analysis", resourceIcon("formula.svg")
         )
         self._run_widget = None
         self._dialog = None
