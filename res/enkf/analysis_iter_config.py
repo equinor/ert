@@ -115,7 +115,7 @@ class AnalysisIterConfig(BaseCClass):
         ret = "AnalysisIterConfig(iterations = %d, retries = %d, fmt = %s, %s) at 0x%x"
         its = len(self)
         rets = self.getNumRetries()
-        return ret % (its, rets, fmt, cfs, self._address)
+        return ret % (its, rets, fmt, cfs, self._address())
 
     def __ne__(self, other):
         return not self == other

@@ -23,6 +23,7 @@ from res.enkf import AnalysisIterConfig
 class AnalysisIterConfigTest(ResTest):
     def test_set_analysis_iter_config(self):
         c = AnalysisIterConfig()
+        self.assertTrue(repr(c).startswith("AnalysisIterConfig"))
 
         self.assertFalse(c.caseFormatSet())
         c.setCaseFormat("case%d")
