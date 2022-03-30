@@ -776,3 +776,45 @@ ERT script function                                                        Purpo
       eclregion = EclRegion(grid, False)
       eclregion.select_islice(10, 20)
       data_scale.addField('PERMX', eclregion)
+
+
+History Matching
+----------------
+
+General overview
+~~~~~~~~~~~~~~~~
+
+ERT supports an API for performing history matching based on data represented by numpy arrays.
+
+
+
+
+*History matching example*
+
+::
+
+   from ert.analysis import ies
+
+   # A is a matrix containing the parameters for each realization
+   # The shape of A is (nr of parameters, nr of realizations)
+   A = parameters.to_numpy()
+
+   # S is a matrix containing responses for each realization which has an observation attached.
+   # The shape of S is (nr of responses, nr of realizations)
+   S = responses.to_numpy()
+
+   noise = np.random.rand(*S.shape)
+   E = ies.makeE(observation_errors, noise)
+
+   # R is the correlation matrix. This is currenlty the squared observation errors as diagonal.
+   # Then scaled down with the squared observation errors resulting in the identity matrix with
+   # the shape (nr of observations, nr of observations).
+   R = np.identity(len(observation_values))
+   D = ies.makeD(observation_values, E, S)
+
+   D = (D.T / observation_errors).T
+   E = (E.T / observation_errors).T
+   S = (S.T / observation_errors).T
+
+   X = ies.initX(S, R, E, D)
+   new_A = A @ X
