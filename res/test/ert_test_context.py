@@ -40,7 +40,7 @@ class ErtTestContext:
             self._ert = EnKFMain(self._res_config, strict=True)
         except Exception:
             os.chdir(self._dir_before)
-            shutil.rmtree(self._tmp_dir)
+            shutil.rmtree(self._tmp_dir, ignore_errors=True)
             raise
         return self
 
@@ -48,7 +48,7 @@ class ErtTestContext:
         self._ert = None
         self._res_config = None
         os.chdir(self._dir_before)
-        shutil.rmtree(self._tmp_dir)
+        shutil.rmtree(self._tmp_dir, ignore_errors=True)
 
     def getErt(self):
         return self._ert

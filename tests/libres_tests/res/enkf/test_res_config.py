@@ -382,7 +382,8 @@ class ResConfigTest(ResTest):
 
     def assert_path(self, rel_path, config_path, model_path):
         self.assertEqual(
-            os.path.normpath(os.path.join(rel_path, config_path)), model_path
+            os.path.realpath(os.path.join(rel_path, config_path)),
+            os.path.realpath(model_path),
         )
 
     def assert_model_config(self, model_config, config_data, working_dir):
