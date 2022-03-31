@@ -253,7 +253,7 @@ void model_config_set_max_internal_submit(model_config_type *model_config,
     model_config->max_internal_submit = max_resample;
 }
 
-UTIL_IS_INSTANCE_FUNCTION(model_config, MODEL_CONFIG_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION(model_config, MODEL_CONFIG_TYPE_ID);
 
 model_config_type *model_config_alloc_empty() {
     model_config_type *model_config =
@@ -497,8 +497,9 @@ void model_config_init(model_config_type *model_config,
   */
 
     if (config_content_has_item(config, ENSPATH_KEY))
-        model_config_set_enspath(model_config, config_content_get_value_as_path(
-                                                   config, ENSPATH_KEY));
+        model_config_set_enspath(
+            model_config,
+            config_content_get_value_as_abspath(config, ENSPATH_KEY));
 
     if (config_content_has_item(config, DATA_ROOT_KEY))
         model_config_set_data_root(

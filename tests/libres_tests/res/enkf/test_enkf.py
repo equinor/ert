@@ -251,7 +251,7 @@ class EnKFTest(ResTest):
             )
             self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
-            self.assertEqual("simple_config/Ensemble", main.getMountPoint())
+            self.assertTrue(main.getMountPoint().endswith("simple_config/Ensemble"))
 
     @tmpdir()
     def test_run_context(self):
