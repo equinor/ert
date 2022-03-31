@@ -44,7 +44,8 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs);
 extern "C" int enkf_fs_decref(enkf_fs_type *fs);
 extern "C" int enkf_fs_incref(enkf_fs_type *fs);
 extern "C" int enkf_fs_get_refcount(const enkf_fs_type *fs);
-extern "C" enkf_fs_type *enkf_fs_mount(const char *path, bool read_only = false);
+extern "C" enkf_fs_type *enkf_fs_mount(const char *path,
+                                       bool read_only = false);
 extern "C" PY_USED bool enkf_fs_update_disk_version(const char *mount_point,
                                                     int src_version,
                                                     int target_version);

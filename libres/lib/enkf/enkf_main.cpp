@@ -470,8 +470,8 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
    is mainly to be able to test that the site config file is valid.
 */
 
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
-                                bool verbose, bool read_only) {
+enkf_main_type *enkf_main_alloc(const res_config_type *res_config, bool verbose,
+                                bool read_only) {
     enkf_main_type *enkf_main = enkf_main_alloc_empty();
     enkf_main->res_config = res_config;
 
