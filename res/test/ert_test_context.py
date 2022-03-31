@@ -37,7 +37,7 @@ class ErtTestContext:
             config = pathlib.Path(self._model_config).name
             copy_tree(dir, self._tmp_dir)
             self._res_config = ResConfig(user_config_file=config)
-            self._ert = EnKFMain(self._res_config, strict=True)
+            self._ert = EnKFMain(self._res_config)
         except Exception:
             os.chdir(self._dir_before)
             shutil.rmtree(self._tmp_dir)
@@ -124,7 +124,7 @@ class ErtTestSharedContext:
         try:
             config = pathlib.Path(self._model_config).name
             self._res_config = ResConfig(user_config_file=config)
-            self._ert = EnKFMain(self._res_config, strict=True)
+            self._ert = EnKFMain(self._res_config)
         except Exception:
             os.chdir(self._dir_before)
             raise
