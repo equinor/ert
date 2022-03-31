@@ -29,6 +29,9 @@ jobs:
       run: |
         pip install -r dev-requirements.txt
 
+    - name: Clang Format Version
+      run: clang-format --version
+
     - name: Clang Format
       run: ./script/clang-format --check
 
