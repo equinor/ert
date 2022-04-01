@@ -40,8 +40,7 @@ from ert_gui.tools.workflows import WorkflowsTool
 from ert_shared.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
-
-import ecl
+from ert_shared.services import Storage
 
 
 def run_gui(args):
@@ -63,10 +62,13 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    # window reference must be kept until app.exec returns
-    notifier = ErtNotifier(args.config)
-    window = _start_window(ert, notifier, args)
-    return app.exec_()
+    with Storage.connect_or_start_server(
+            res_config=os.path.basename(args.config)
+    ) as storage:
+        # window reference must be kept until app.exec returns
+        notifier = ErtNotifier(args.config)
+        window = _start_window(ert, notifier, args)
+        return app.exec_()
 
 
 def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
