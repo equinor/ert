@@ -2,25 +2,38 @@ changelog:
   categories:
     - title: Breaking Changes 🛠
       labels:
-        - breaking-change
+        - release-notes:breaking-change
       exclude:
         labels:
-          - ert3
+          - release-notes:ert3
     - title: New Features 🎉
       labels:
-        - enhancement
+        - release-notes:new-feature
       exclude:
         labels:
-          - ert3
+          - release-notes:ert3
+    - title: Improvements
+      labels:
+        - release-notes:improvement
+      exclude:
+        labels:
+          - release-notes:ert3
     - title: Bug Fixes
       labels:
-        - bug
+        - release-notes:bug-fix
       exclude:
         labels:
-          - ert3
+          - release-notes:ert3
+    - title: Dependencies
+      labels:
+        - release-notes:dependency
+      exclude:
+        labels:
+          - release-notes:ert3
     - title: ert3
       labels:
-        - ert3
+        - release-notes:ert3
     - title: Other Changes
       labels:
+        - release-notes:misc
         - "*"
