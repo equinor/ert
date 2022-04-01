@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 
 #include "catch2/catch.hpp"
 
@@ -6,6 +7,7 @@
 #include <ert/enkf/enkf_obs.hpp>
 
 #include "../tmpdir.hpp"
+#include "ert/res_util/block_fs.hpp"
 
 void enkf_fs_fwrite_misfit(enkf_fs_type *fs);
 enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point);
@@ -18,7 +20,7 @@ void misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
 void enkf_fs_init_path_fmt(enkf_fs_type *fs);
 void enkf_fs_set_read_only(enkf_fs_type *fs, bool read_only);
 
-TEST_CASE("enkf_fs_fwrite_misfit", "[enkf]") {
+TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
     GIVEN("An instance of enkf_fs") {
         WITH_TMPDIR;
         auto file_path = std::filesystem::current_path();
@@ -50,5 +52,66 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf]") {
         // which bypasses accessing these members of fs.
         enkf_fs_set_read_only(fs, true);
         enkf_fs_umount(fs);
+    }
+}
+
+TEST_CASE("block_fs", "[enkf_fs]") {
+    const int block_size = 64;
+    const float fragmentation_limit = 1.0f;
+    const int fsync_interval = 10;
+    const bool read_only = false;
+    const bool use_lockfile = false;
+    const bool unlink_empty = false;
+
+    std::vector<char> random(1000);
+    {
+        std::ifstream s{"/dev/urandom"};
+        s.read(random.data(), random.size());
+    }
+
+    GIVEN("A single read-write instance of block_fs") {
+        WITH_TMPDIR;
+        auto bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
+                                  fsync_interval, read_only, use_lockfile);
+
+        WHEN("data is written to storage") {
+            block_fs_fwrite_file(bfs, "FOO", random.data(), random.size());
+
+            THEN("data exists") {
+                REQUIRE(block_fs_has_file(bfs, "FOO"));
+                REQUIRE(!block_fs_has_file(bfs, "BAR"));
+            }
+
+            AND_THEN("data can be read from the same instance") {
+                auto buf = buffer_alloc(100);
+                block_fs_fread_realloc_buffer(bfs, "FOO", buf);
+
+                REQUIRE(random.size() == buffer_get_size(buf));
+                REQUIRE(std::memcmp(random.data(), buffer_get_data(buf),
+                                    random.size()) == 0);
+            }
+
+            AND_WHEN("block_fs is closed and opened") {
+                block_fs_close(bfs, false /* unlink_empty */);
+                bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
+                                     fsync_interval, read_only, use_lockfile);
+
+                THEN("data exists") {
+                    REQUIRE(block_fs_has_file(bfs, "FOO"));
+                    REQUIRE(!block_fs_has_file(bfs, "BAR"));
+                }
+
+                AND_THEN("data can be read") {
+                    auto buf = buffer_alloc(100);
+                    block_fs_fread_realloc_buffer(bfs, "FOO", buf);
+
+                    REQUIRE(random.size() == buffer_get_size(buf));
+                    REQUIRE(std::memcmp(random.data(), buffer_get_data(buf),
+                                        random.size()) == 0);
+                }
+            }
+        }
+
+        block_fs_close(bfs, false /* unlink_empty */);
     }
 }
