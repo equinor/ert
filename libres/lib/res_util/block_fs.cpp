@@ -120,8 +120,6 @@ struct block_fs_struct {
     char *path;
     char *base_name;
 
-    int version; /* A version number which is incremented each time the filesystem is defragmented - not implemented yet. */
-
     char *data_file;
 
     int data_fd;
@@ -141,10 +139,6 @@ struct block_fs_struct {
         file_nodes; /* This vector owns all the file_node instances - the index and free_nodes structures
                                        only contain pointers to the objects stored in this vector. */
     int write_count; /* This just counts the number of writes since the file system was mounted. */
-    float
-        fragmentation_limit; /* If fragmentation (amount of wasted space) is above this limit - do a rotate.
-                                            fragmentation_limit == 1.0 : Never rotate.
-                                            fragmentation_limit == 0.0 : Rotate when one byte is wasted. */
     bool data_owner;
     int fsync_interval; /* 0: never  n: every nth iteration. */
 
@@ -155,8 +149,6 @@ struct block_fs_struct {
         return path / (base_name + ".index");
     }
 };
-
-static void block_fs_rotate__(block_fs_type *block_fs);
 
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
 
@@ -499,8 +491,8 @@ static void block_fs_install_node(block_fs_type *block_fs,
 }
 
 static void block_fs_set_filenames(block_fs_type *block_fs) {
-    char *data_ext = util_alloc_sprintf("data_%d", block_fs->version);
-    char *lock_ext = util_alloc_sprintf("lock_%d", block_fs->version);
+    char *data_ext = util_alloc_sprintf("data_0");
+    char *lock_ext = util_alloc_sprintf("lock_0");
     const char *index_ext = "index";
 
     free(block_fs->data_file);
@@ -511,11 +503,6 @@ static void block_fs_set_filenames(block_fs_type *block_fs) {
     free(data_ext);
     free(lock_ext);
 }
-
-/*
-   This function is called both when allocating a new block_fs
-   instance, and when an existing block_fs instance is 'rotated'.
-*/
 
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
@@ -529,9 +516,8 @@ static void block_fs_reinit(block_fs_type *block_fs) {
 }
 
 static block_fs_type *block_fs_alloc_empty(const char *mount_file,
-                                           int block_size,
-                                           float fragmentation_limit,
-                                           int fsync_interval, bool read_only) {
+                                           int block_size, int fsync_interval,
+                                           bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
@@ -539,13 +525,17 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
     block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
 
-    block_fs->fragmentation_limit = fragmentation_limit;
     util_alloc_file_components(mount_file, &block_fs->path,
                                &block_fs->base_name, NULL);
     {
         FILE *stream = util_fopen(mount_file, "r");
         int id = util_fread_int(stream);
-        block_fs->version = util_fread_int(stream);
+        int version = util_fread_int(stream);
+        if (version != 0)
+            throw std::runtime_error(fmt::format(
+                "block_fs data version unexpected. Expected 0, got {}",
+                version));
+
         fclose(stream);
 
         if (id != MOUNT_MAP_MAGIC_INT)
@@ -562,10 +552,10 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
 
 UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
 
-static void block_fs_fwrite_mount_info__(const char *mount_file, int version) {
+static void block_fs_fwrite_mount_info__(const char *mount_file) {
     FILE *stream = util_fopen(mount_file, "w");
     util_fwrite_int(MOUNT_MAP_MAGIC_INT, stream);
-    util_fwrite_int(version, stream);
+    util_fwrite_int(0 /* data version; unused */, stream);
     fclose(stream);
 }
 
@@ -796,19 +786,17 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
 }
 
 block_fs_type *block_fs_mount(const char *mount_file, int block_size,
-                              float fragmentation_limit, int fsync_interval,
-                              bool read_only) {
+                              int fsync_interval, bool read_only) {
     block_fs_type *block_fs;
     {
 
         if (!fs::exists(mount_file))
             /* This is a brand new filesystem - create the mount map first. */
-            block_fs_fwrite_mount_info__(mount_file, 0);
+            block_fs_fwrite_mount_info__(mount_file);
         {
             std::vector<long> fix_nodes;
             block_fs = block_fs_alloc_empty(mount_file, block_size,
-                                            fragmentation_limit, fsync_interval,
-                                            read_only);
+                                            fsync_interval, read_only);
 
             block_fs_open_data(
                 block_fs,
@@ -922,13 +910,6 @@ static void block_fs_unlink_file__(block_fs_type *block_fs,
 }
 
 /*
-   Returns the fraction of unused space in the block_fs instance.
-*/
-static double get_fragmentation(const block_fs_type *block_fs) {
-    return block_fs->free_size * 1.0 / block_fs->data_file_size;
-}
-
-/*
    It seems it is not enough to call fsync(); must also issue this
    funny fseek + ftell combination to ensure that all data is on
    disk after an uncontrolled shutdown.
@@ -988,9 +969,14 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
         block_fs_fsync(block_fs);
 }
 
-static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
-                                          const char *filename, const void *ptr,
-                                          size_t data_size) {
+void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
+                          const void *ptr, size_t data_size) {
+    if (!block_fs->data_owner)
+        throw std::runtime_error(
+            fmt::format("tried to write to read only filesystem mounted at {}",
+                        block_fs->mount_file));
+    std::lock_guard guard{block_fs->mutex};
+
     file_node_type *file_node;
     bool new_node = true;
     size_t min_size = data_size + file_node_header_size(filename);
@@ -1018,23 +1004,6 @@ static void block_fs_fwrite_file_unlocked(block_fs_type *block_fs,
     block_fs_fwrite__(block_fs, filename, file_node, ptr, data_size);
     if (new_node)
         block_fs_insert_index_node(block_fs, filename, file_node);
-}
-
-void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
-                          const void *ptr, size_t data_size) {
-    if (!block_fs->data_owner)
-        throw std::runtime_error(
-            fmt::format("tried to write to read only filesystem mounted at {}",
-                        block_fs->mount_file));
-    std::lock_guard guard{block_fs->mutex};
-    {
-        block_fs_fwrite_file_unlocked(block_fs, filename, ptr, data_size);
-
-        /* OKAY - this is going to take some time ... */
-        if ((block_fs->free_size * 1.0 / block_fs->data_file_size) >
-            block_fs->fragmentation_limit)
-            block_fs_rotate__(block_fs);
-    }
 }
 
 void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
@@ -1091,80 +1060,4 @@ void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
     hash_free(block_fs->index);
     vector_free(block_fs->file_nodes);
     delete block_fs;
-}
-
-/*
-   This function will 'rotate' the datafile to a new version which has
-   been defragmented, i.e. with no 'holes' in it. In the process the
-   datafile version number is increased with one. The function works
-   by using the regular block_fs read and write functions.
-
-   Observe that the block_fs instance should hold the write lock when
-   entering this function.
-*/
-
-static void block_fs_rotate__(block_fs_type *block_fs) {
-    /*
-     Write a updated mount map where the version info has been bumped
-     up with one; the new_fs will mount based on this mount_file.
-  */
-    block_fs->version++;
-    block_fs_fwrite_mount_info__(block_fs->mount_file, block_fs->version);
-    {
-        vector_type *old_nodes = block_fs->file_nodes;
-        hash_type *old_index = block_fs->index;
-        FILE *old_data_stream = block_fs->data_stream;
-        free_node_type *old_free_nodes = block_fs->free_nodes;
-        char *old_data_file = util_alloc_string_copy(block_fs->data_file);
-
-        block_fs_reinit(block_fs);
-        /*
-        Now the block_fs pointers point to the new copy. Must use the
-        old_xxx pointers to access the existing.
-    */
-        block_fs_open_data(block_fs, block_fs->data_owner);
-        {
-            hash_iter_type *iter = hash_iter_alloc(old_index);
-            buffer_type *buffer = buffer_alloc(1024);
-
-            while (!hash_iter_is_complete(iter)) {
-                const char *key = hash_iter_get_next_key(iter);
-                file_node_type *old_node =
-                    (file_node_type *)hash_get(old_index, key);
-                buffer_clear(buffer);
-
-                /* Low level read of the old file. */
-                fseek__(old_data_stream,
-                        old_node->node_offset + old_node->data_offset,
-                        SEEK_SET);
-                buffer_stream_fread(buffer, old_node->data_size,
-                                    old_data_stream);
-
-                block_fs_fwrite_file_unlocked(
-                    block_fs, key, buffer_get_data(buffer),
-                    buffer_get_size(
-                        buffer)); /* Normal write to the new file. */
-            }
-
-            buffer_free(buffer);
-            hash_iter_free(iter);
-        }
-        /*
-         * OK - everything has been played over, and we should clean up the old fs:
-         *
-         * 1. Close the old data stream.
-         * 2. Unlink the old lockfile.
-         * 3. Delete the old data file.
-         * 4. Delete the old list of free nodes.
-         * 5. free()
-         *
-         */
-        fclose(old_data_stream);
-        unlink(old_data_file);
-        free(old_data_file);
-
-        free_node_free_list(old_free_nodes);
-        hash_free(old_index);
-        vector_free(old_nodes);
-    }
 }

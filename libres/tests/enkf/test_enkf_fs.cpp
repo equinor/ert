@@ -57,7 +57,6 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
 
 TEST_CASE("block_fs", "[enkf_fs]") {
     const int block_size = 64;
-    const float fragmentation_limit = 1.0f;
     const int fsync_interval = 10;
     const bool unlink_empty = false;
 
@@ -69,8 +68,8 @@ TEST_CASE("block_fs", "[enkf_fs]") {
 
     GIVEN("A single read-write instance of block_fs") {
         WITH_TMPDIR;
-        auto bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
-                                  fsync_interval, false /* read-only */);
+        auto bfs = block_fs_mount("bfs", block_size, fsync_interval,
+                                  false /* read-only */);
 
         WHEN("data is written to storage") {
             block_fs_fwrite_file(bfs, "FOO", random.data(), random.size());
@@ -91,8 +90,8 @@ TEST_CASE("block_fs", "[enkf_fs]") {
 
             AND_WHEN("block_fs is closed and opened") {
                 block_fs_close(bfs, false /* unlink_empty */);
-                bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
-                                     fsync_interval, true /* read-only */);
+                bfs = block_fs_mount("bfs", block_size, fsync_interval,
+                                     true /* read-only */);
 
                 THEN("writing new data results in exception") {
                     REQUIRE_THROWS_WITH(
