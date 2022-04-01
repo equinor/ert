@@ -60,7 +60,6 @@ TEST_CASE("block_fs", "[enkf_fs]") {
     const float fragmentation_limit = 1.0f;
     const int fsync_interval = 10;
     const bool read_only = false;
-    const bool use_lockfile = false;
     const bool unlink_empty = false;
 
     std::vector<char> random(1000);
@@ -72,7 +71,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
     GIVEN("A single read-write instance of block_fs") {
         WITH_TMPDIR;
         auto bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
-                                  fsync_interval, read_only, use_lockfile);
+                                  fsync_interval, read_only);
 
         WHEN("data is written to storage") {
             block_fs_fwrite_file(bfs, "FOO", random.data(), random.size());
@@ -94,7 +93,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
             AND_WHEN("block_fs is closed and opened") {
                 block_fs_close(bfs, false /* unlink_empty */);
                 bfs = block_fs_mount("bfs", block_size, fragmentation_limit,
-                                     fsync_interval, read_only, use_lockfile);
+                                     fsync_interval, read_only);
 
                 THEN("data exists") {
                     REQUIRE(block_fs_has_file(bfs, "FOO"));
