@@ -22,29 +22,50 @@ install_test_dependencies () {
     pip install pytest-repeat
 }
 
+run_libres_ert_tests(){
+    # If a developer would like to test a specific function, remove these
+    # lines and include the specific tests one would like to run.
+    # The internal job will use the testkomodo-repeat-flaky.sh from the branch
+    # when running a PR job. Any periodically running jobs will use the version
+    # on main - hence there will be no consequences for said jobs.
+    # A test on the internal CI is activated by writing a comment with "test flaky please"
+    # Requires that the user is allowed to run the tests.
+    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
+    pytest tests/ert_tests -k "not test_gui_load and not test_formatting" \
+    -m "not requires_window_manager"
+
+    pytest tests/libres_tests                                         \
+    --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
+    --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
+    --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
+    --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
+    --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"
+
+}
+
 start_tests () {
     export NO_PROXY=localhost,127.0.0.1
     export ERT_SHOW_BACKTRACE=1
+    ln -s /project/res-testdata/ErtTestData ${CI_TEST_ROOT}/test-data/Equinor
 
-    pushd ${CI_TEST_ROOT}/tests/ert_tests
-    # We want all of the pytest lines to execute, even if one of the fails.
+    pushd ${CI_TEST_ROOT}
     set +e
-    pytest --count=1000 -x shared/test_port_handler.py
-    pytest --count=100 -x dark_storage/test_http_endpoints.py
-    pytest --count=100 -x dark_storage/test_api_compatibility.py
-    pytest --count=100 -x ensemble_evaluator/test_ensemble_legacy.py
 
-    # engine, services and status are integration tests and time consuming,
-    # estimated a several hours just for these
-    pytest --count=30 -x ert3/engine
-    pytest --count=30 -x services
-    pytest --count=30 -x status
-    pytest --count=30 -x ert3/algorithms/test_fast.py # test fast is not fast
-    # The following should be added, but as a subclass of UnitTest TestCase it
-    # is not possible to run with --count (they will only run once)
-    # tests/libres_tests/res/enkf/plot/test_plot_data.py
-    # tests/libres_tests/res/simulator/test_batch_sim.py
-    # tests/libres_tests/res/enkf/data/test_gen_kw_config.py
+    let failures=0
+
+    if [[ -z "${N_RUNS}" ]]; then
+        n_runs=10
+    else
+        n_runs=${N_RUNS}
+    fi
+
+    for ((i = 0; i <= $n_runs; i++))
+    do
+        if ! run_libres_ert_tests; then
+            ((failures +=1))
+        fi
+    done
+    export N_FAILED_RUNS=$failures
     set -e
     popd
 }
