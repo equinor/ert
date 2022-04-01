@@ -32,23 +32,23 @@ class DefaultCustomizationView(CustomizationView):
         self.addSpacing()
         self.addLineEdit(
             "x_label",
-            "X Label",
-            "The label of the X axis. %s" % (label_msg % "label"),
-            placeholder="X Label",
+            "x-label",
+            "The label of the x-axis. %s" % (label_msg % "label"),
+            placeholder="x-label",
         )
         self.addLineEdit(
             "y_label",
-            "Y Label",
-            "The label of the Y axis. %s" % (label_msg % "label"),
-            placeholder="Y Label",
+            "y-label",
+            "The label of the y-axis. %s" % (label_msg % "label"),
+            placeholder="y-label",
         )
         self.addSpacing()
-        self.addCheckBox("legend", "Legend", "Toggle Legend visibility.")
-        self.addCheckBox("grid", "Grid", "Toggle Grid visibility.")
-        self.addCheckBox("refcase", "Refcase", "Toggle Refcase visibility.")
-        self.addCheckBox("history", "History", "Toggle History visibility.")
+        self.addCheckBox("legend", "Legend", "Toggle legend visibility.")
+        self.addCheckBox("grid", "Grid", "Toggle grid visibility.")
+        self.addCheckBox("refcase", "Refcase", "Toggle refcase visibility.")
+        self.addCheckBox("history", "History", "Toggle history visibility.")
         self.addCheckBox(
-            "observations", "Observations", "Toggle Observations visibility."
+            "observations", "Observations", "Toggle observations visibility."
         )
 
     def applyCustomization(self, plot_config):

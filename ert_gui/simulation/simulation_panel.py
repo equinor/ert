@@ -58,7 +58,7 @@ class SimulationPanel(QWidget):
 
         self.run_button = QToolButton()
         self.run_button.setObjectName("start_simulation")
-        self.run_button.setText("Start Simulation")
+        self.run_button.setText("Start simulation")
         self.run_button.setIcon(resourceIcon("play_circle.svg"))
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.runSimulation)

@@ -11,7 +11,7 @@ class ManageCasesTool(Tool):
         self.notifier = notifier
         self.ert = ert
         super().__init__(
-            "Manage Cases", "tools/manage_cases", resourceIcon("build_wrench.svg")
+            "Manage cases", "tools/manage_cases", resourceIcon("build_wrench.svg")
         )
 
     def trigger(self):
@@ -19,5 +19,5 @@ class ManageCasesTool(Tool):
             self.ert, self.notifier
         )
 
-        dialog = ClosableDialog("Manage Cases", case_management_widget, self.parent())
+        dialog = ClosableDialog("Manage cases", case_management_widget, self.parent())
         dialog.exec_()

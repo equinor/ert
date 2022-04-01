@@ -25,7 +25,7 @@ class RunAnalysisPanel(QWidget):
         self.ert = ert
         QWidget.__init__(self)
 
-        self.setWindowTitle("Run Analysis")
+        self.setWindowTitle("Run analysis")
         self.activateWindow()
 
         self.analysis_module = AnalysisModuleSelector(

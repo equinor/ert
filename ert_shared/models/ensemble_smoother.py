@@ -137,4 +137,4 @@ class EnsembleSmoother(BaseRunModel):
 
     @classmethod
     def name(cls) -> str:
-        return "Ensemble Smoother"
+        return "Ensemble smoother"

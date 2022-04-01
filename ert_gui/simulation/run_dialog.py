@@ -121,12 +121,12 @@ class RunDialog(QDialog):
         self.plot_button.clicked.connect(self.plot_tool.trigger)
         self.plot_button.setEnabled(ert is not None)
 
-        self.kill_button = QPushButton("Kill Simulations")
+        self.kill_button = QPushButton("Kill simulations")
         self.done_button = QPushButton("Done")
         self.done_button.setHidden(True)
         self.restart_button = QPushButton("Restart")
         self.restart_button.setHidden(True)
-        self.show_details_button = QPushButton("Show Details")
+        self.show_details_button = QPushButton("Show details")
         self.show_details_button.setCheckable(True)
 
         size = 20
@@ -186,14 +186,14 @@ class RunDialog(QDialog):
         self._tab_widget.setVisible(False)
         self._job_label.setVisible(False)
         self._job_view.setVisible(False)
-        self.show_details_button.setText("Show Details")
+        self.show_details_button.setText("Show details")
 
     def _setDetailedDialog(self) -> None:
         self._isDetailedDialog = True
         self._tab_widget.setVisible(True)
         self._job_label.setVisible(True)
         self._job_view.setVisible(True)
-        self.show_details_button.setText("Hide Details")
+        self.show_details_button.setText("Hide details")
 
     @Slot(QModelIndex, int, int)
     def on_new_iteration(self, parent: QModelIndex, start: int, end: int) -> None:
@@ -390,7 +390,7 @@ class RunDialog(QDialog):
         msg.setText(
             "Note that workflows will only be executed on the restarted realizations and that this might have unexpected consequences."
         )
-        msg.setWindowTitle("Restart Failed Realizations")
+        msg.setWindowTitle("Restart failed realizations")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         result = msg.exec_()
 

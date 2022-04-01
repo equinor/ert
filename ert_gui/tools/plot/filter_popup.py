@@ -34,7 +34,7 @@ class FilterPopup(QDialog):
 
         self.__layout = QVBoxLayout()
         self.__layout.setSizeConstraint(QLayout.SetFixedSize)
-        self.__layout.addWidget(QLabel("Filter by data type:"))
+        self.__layout.addWidget(QLabel("Filter by datatype:"))
 
         filters = {k["metadata"]["data_origin"] for k in key_defs}
         for f in filters:

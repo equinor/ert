@@ -64,7 +64,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             iterable=True,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis Module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_selector)
 
         self._active_realizations_model = ActiveRealizationsModel(self.facade)
         self._active_realizations_field = StringBox(

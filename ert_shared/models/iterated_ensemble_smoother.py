@@ -148,7 +148,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self.setPhase(phase_count, "Simulations completed.")
         else:
             raise ErtRunError(
-                "Iterated Ensemble Smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d"
+                "Iterated ensemble smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d"
                 % (num_retries_per_iteration, current_iter)
             )
 
@@ -192,4 +192,4 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     @classmethod
     def name(cls) -> str:
-        return "Iterated Ensemble Smoother"
+        return "Iterated ensemble smoother"

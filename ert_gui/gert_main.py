@@ -129,7 +129,7 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     window.addDock(
-        "Configuration Summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
+        "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
     window.addTool(PlotTool(ert, config_file))
     window.addTool(ExportTool(ert))

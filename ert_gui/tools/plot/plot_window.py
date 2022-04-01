@@ -16,7 +16,7 @@ from ert_gui.tools.plot.customize import PlotCustomizer
 from ert_gui.tools.plot.plot_api import PlotApi
 from ert_shared.libres_facade import LibresFacade
 
-CROSS_CASE_STATISTICS = "Cross Case Statistics"
+CROSS_CASE_STATISTICS = "Cross case statistics"
 DISTRIBUTION = "Distribution"
 GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"

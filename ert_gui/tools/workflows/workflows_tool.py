@@ -10,7 +10,7 @@ class WorkflowsTool(Tool):
         self.ert = ert
         enabled = len(ert.getWorkflowList().getWorkflowNames()) > 0
         super().__init__(
-            "Run Workflow",
+            "Run workflow",
             "tools/workflows",
             resourceIcon("playlist_play.svg"),
             enabled,

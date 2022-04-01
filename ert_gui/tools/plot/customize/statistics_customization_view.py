@@ -18,8 +18,8 @@ class StatisticsCustomizationView(CustomizationView):
         CustomizationView.__init__(self)
 
         self._presets = [
-            "Statistics Default",
-            "Cross Case Statistics Default",
+            "Statistics default",
+            "Cross case statistics default",
             "Overview",
             "All statistics",
         ]
@@ -42,7 +42,7 @@ class StatisticsCustomizationView(CustomizationView):
         )
         self.addStyleChooser(
             "min_max_style",
-            "Min/Max",
+            "Min/max",
             "Line and marker style for the min/max lines.",
             line_style_set=sc.STYLESET_AREA,
         )
@@ -69,7 +69,7 @@ class StatisticsCustomizationView(CustomizationView):
 
         self.addCheckBox(
             "distribution_lines",
-            "Connection Lines",
+            "Connection lines",
             "Toggle distribution connection lines visibility.",
         )
 
