@@ -123,7 +123,6 @@ struct block_fs_struct {
     int version; /* A version number which is incremented each time the filesystem is defragmented - not implemented yet. */
 
     char *data_file;
-    char *lock_file;
 
     int data_fd;
     FILE *data_stream;
@@ -131,7 +130,6 @@ struct block_fs_struct {
     long int data_file_size; /* The total number of bytes in the data_file. */
     long int free_size;      /* Size of 'holes' in the data file. */
     int block_size;          /* The size of blocks in bytes. */
-    int lock_fd; /* The file descriptor for the lock_file. Set to -1 if we do not have write access. */
 
     std::mutex mutex;
 
@@ -506,12 +504,9 @@ static void block_fs_set_filenames(block_fs_type *block_fs) {
     const char *index_ext = "index";
 
     free(block_fs->data_file);
-    free(block_fs->lock_file);
 
     block_fs->data_file =
         util_alloc_filename(block_fs->path, block_fs->base_name, data_ext);
-    block_fs->lock_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, lock_ext);
 
     free(data_ext);
     free(lock_ext);
@@ -536,8 +531,7 @@ static void block_fs_reinit(block_fs_type *block_fs) {
 static block_fs_type *block_fs_alloc_empty(const char *mount_file,
                                            int block_size,
                                            float fragmentation_limit,
-                                           int fsync_interval, bool read_only,
-                                           bool use_lockfile) {
+                                           int fsync_interval, bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
@@ -560,28 +554,9 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
                        __func__, mount_file);
     }
     block_fs->data_file = NULL;
-    block_fs->lock_file = NULL;
     block_fs_reinit(block_fs);
 
-    {
-        bool lock_aquired = true;
-
-        if (use_lockfile) {
-            lock_aquired = util_try_lockf(
-                block_fs->lock_file, S_IWUSR + S_IWGRP, &block_fs->lock_fd);
-
-            if (!lock_aquired)
-                fprintf(stderr,
-                        " Another program has already opened filesystem "
-                        "read-write - this instance will be UNSYNCRONIZED "
-                        "read-only. Cross your fingers ....\n");
-        }
-
-        if (lock_aquired && (read_only == false))
-            block_fs->data_owner = true;
-        else
-            block_fs->data_owner = false;
-    }
+    block_fs->data_owner = !read_only;
     return block_fs;
 }
 
@@ -822,7 +797,7 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
 
 block_fs_type *block_fs_mount(const char *mount_file, int block_size,
                               float fragmentation_limit, int fsync_interval,
-                              bool read_only, bool use_lockfile) {
+                              bool read_only) {
     block_fs_type *block_fs;
     {
 
@@ -833,7 +808,7 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
             std::vector<long> fix_nodes;
             block_fs = block_fs_alloc_empty(mount_file, block_size,
                                             fragmentation_limit, fsync_interval,
-                                            read_only, use_lockfile);
+                                            read_only);
 
             block_fs_open_data(
                 block_fs,
@@ -1100,13 +1075,6 @@ void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
     if (block_fs->data_stream != NULL)
         fclose(block_fs->data_stream);
 
-    if (block_fs->lock_fd > 0) {
-        close(
-            block_fs
-                ->lock_fd); /* Closing the lock_file file descriptor - and releasing the lock. */
-        util_unlink_existing(block_fs->lock_file);
-    }
-
     if (block_fs->data_owner) {
         if (unlink_empty && (hash_get_size(block_fs->index) == 0)) {
             util_unlink_existing(block_fs->data_file);
@@ -1114,7 +1082,6 @@ void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
         }
     }
 
-    free(block_fs->lock_file);
     free(block_fs->base_name);
     free(block_fs->data_file);
     free(block_fs->path);
@@ -1149,7 +1116,6 @@ static void block_fs_rotate__(block_fs_type *block_fs) {
         FILE *old_data_stream = block_fs->data_stream;
         free_node_type *old_free_nodes = block_fs->free_nodes;
         char *old_data_file = util_alloc_string_copy(block_fs->data_file);
-        char *old_lock_file = util_alloc_string_copy(block_fs->lock_file);
 
         block_fs_reinit(block_fs);
         /*
@@ -1195,8 +1161,6 @@ static void block_fs_rotate__(block_fs_type *block_fs) {
          */
         fclose(old_data_stream);
         unlink(old_data_file);
-        unlink(old_lock_file);
-        free(old_lock_file);
         free(old_data_file);
 
         free_node_free_list(old_free_nodes);

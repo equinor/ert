@@ -27,12 +27,9 @@
 
 #include <ert/res_util/block_fs.hpp>
 
-namespace fs = std::filesystem;
-
 void test_readonly() {
     ecl::util::TestArea ta("readonly");
-    block_fs_type *bfs =
-        block_fs_mount("test.mnt", 1000, 0.67, 10, true, false);
+    block_fs_type *bfs = block_fs_mount("test.mnt", 1000, 0.67, 10, true);
     test_assert_true(block_fs_is_readonly(bfs));
 
     bool exception_caught{};
@@ -45,62 +42,7 @@ void test_readonly() {
     block_fs_close(bfs, true);
 }
 
-void createFS1() {
-    pid_t pid = fork();
-
-    if (pid == 0) {
-        block_fs_type *bfs =
-            block_fs_mount("test.mnt", 1000, 0.67, 10, false, true);
-        test_assert_false(block_fs_is_readonly(bfs));
-        test_assert_true(fs::exists("test.lock_0"));
-        {
-            int total_sleep = 0;
-            while (true) {
-                if (fs::exists("stop")) {
-                    unlink("stop");
-                    break;
-                }
-
-                usleep(1000);
-                total_sleep += 1000;
-                if (total_sleep > 1000000 * 5) {
-                    fprintf(stderr, "Test failure - never receieved \"stop\" "
-                                    "file from parent process \n");
-                    break;
-                }
-            }
-        }
-        block_fs_close(bfs, false);
-        exit(0);
-    }
-    usleep(10000);
-}
-
-void test_lock_conflict() {
-    ecl::util::TestArea ta("lockfile");
-    createFS1();
-    while (true) {
-        if (fs::exists("test.lock_0"))
-            break;
-    }
-
-    {
-        block_fs_type *bfs =
-            block_fs_mount("test.mnt", 1000, 0.67, 10, false, true);
-        test_assert_true(block_fs_is_readonly(bfs));
-    }
-    {
-        FILE *stream = util_fopen("stop", "w");
-        fclose(stream);
-    }
-
-    while (fs::exists("stop")) {
-        usleep(1000);
-    }
-}
-
 int main(int argc, char **argv) {
     test_readonly();
-    test_lock_conflict();
     exit(0);
 }

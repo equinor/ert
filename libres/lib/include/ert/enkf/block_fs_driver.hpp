@@ -40,8 +40,7 @@ public:
     ~block_fs_driver();
 
     static block_fs_driver *new_(bool read_only, int num_fs,
-                                 const char *mountfile_fmt,
-                                 bool block_level_lock);
+                                 const char *mountfile_fmt);
     static block_fs_driver *open(FILE *fstab_stream, const char *mount_point,
                                  bool read_only);
 
