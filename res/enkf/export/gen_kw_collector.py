@@ -10,7 +10,9 @@ class GenKwCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
-        ens_mask = state_map.selectMatching(
+        ens_mask = [False] * ert.getEnsembleSize()
+        state_map.selectMatching(
+            ens_mask,
             RealizationStateEnum.STATE_INITIALIZED
             | RealizationStateEnum.STATE_HAS_DATA,
         )

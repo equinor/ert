@@ -9,7 +9,8 @@ class SummaryCollector:
     @staticmethod
     def createActiveList(ert, fs):
         state_map = fs.getStateMap()
-        ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
+        ens_mask = [False] * ert.getEnsembleSize()
+        state_map.selectMatching(ens_mask, RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod

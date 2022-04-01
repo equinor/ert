@@ -102,19 +102,26 @@ class StateMap(BaseCClass):
         """@rtype: bool"""
         return self._is_read_only()
 
-    def selectMatching(self, select_mask):
+    def selectMatching(self, select_target, select_mask):
         """
+        @type select_target: BoolVector
         @type select_mask: RealizationStateEnum
         """
+        if not isinstance(select_target, list):
+            raise TypeError("Select target must be of type list")
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, True)
+        _lib.state_map.select_matching(self, select_target, select_mask, True)
 
-    def deselectMatching(self, select_mask):
+    def deselectMatching(self, select_target, select_mask):
         """
+        @type select_target: BoolVector
         @type select_mask: RealizationStateEnum
         """
+        if not isinstance(select_target, list):
+            raise TypeError("Select target must be of type list")
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, False)
+
+        _lib.state_map.select_matching(self, select_target, select_mask, False)
 
     def realizationList(self, state_value):
         """
@@ -133,7 +140,8 @@ class StateMap(BaseCClass):
         @type state_value: RealizationStateEnum
         @rtype: ecl.util.BoolVector
         """
-        mask = self.selectMatching(state_value)
+        mask = [False] * len(self)
+        self.selectMatching(mask, state_value)
         index_list = [index for index, element in enumerate(mask) if element]
         return BoolVector.createFromList(len(mask), index_list)
 
