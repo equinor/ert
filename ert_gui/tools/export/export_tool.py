@@ -26,7 +26,7 @@ import logging
 
 class ExportTool(Tool):
     def __init__(self, ert):
-        super().__init__("Export Data", "tools/export", resourceIcon("share.svg"))
+        super().__init__("Export data", "tools/export", resourceIcon("share.svg"))
         self.__export_widget = None
         self.__dialog = None
         self.__exporter = Exporter(ert)

@@ -243,11 +243,11 @@ class LimitsCustomizationView(CustomizationView):
         limits_widget = LimitsWidget()
         self._limits_widget = limits_widget
 
-        self.addHeading("X Axis")
+        self.addHeading("X-axis")
         self.addRow("Minimum", limits_widget.x_minimum_stack)
         self.addRow("Maximum", limits_widget.x_maximum_stack)
 
-        self.addHeading("Y Axis")
+        self.addHeading("Y-axis")
         self.addRow("Minimum", limits_widget.y_minimum_stack)
         self.addRow("Maximum", limits_widget.y_maximum_stack)
 

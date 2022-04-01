@@ -232,7 +232,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         case_selector.currentIndexChanged[str].connect(self._showInfoForCase)
         self.notifier.ertChanged.connect(self._showInfoForCase)
 
-        self.addTab(case_widget, "Case Info")
+        self.addTab(case_widget, "Case info")
 
         self._showInfoForCase()
 

@@ -84,4 +84,4 @@ class EnsembleExperiment(BaseRunModel):
 
     @classmethod
     def name(cls) -> str:
-        return "Ensemble Experiment"
+        return "Ensemble experiment"

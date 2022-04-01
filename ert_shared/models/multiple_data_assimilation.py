@@ -30,7 +30,7 @@ logger = logging.getLogger(__file__)
 
 class MultipleDataAssimilation(BaseRunModel):
     """
-    Run Multiple Data Assimilation (MDA) Ensemble Smoother with custom weights.
+    Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
     default_weights = "4, 2, 1"

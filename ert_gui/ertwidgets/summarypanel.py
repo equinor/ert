@@ -31,7 +31,7 @@ class SummaryTemplate(object):
 
     def addTitle(self, title):
         if not self.__finished:
-            style = "font-size: 16px; font-weight: bold; font-variant: small-caps;"
+            style = "font-size: 16px; font-weight: bold;"
             self.text += '<div style="%s">%s</div>' % (style, title)
 
     def addRow(self, value):
@@ -75,7 +75,7 @@ class SummaryPanel(QFrame):
     def updateSummary(self):
         summary = ErtSummary(self.ert)
 
-        text = SummaryTemplate("Forward Model")
+        text = SummaryTemplate("Forward models")
 
         for job in summary.getForwardModels():
             text.addRow(job)

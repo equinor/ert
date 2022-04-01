@@ -32,9 +32,9 @@ class PlotApi(object):
         if self._facade.is_summary_key(key):
             meta["data_origin"] = "Summary"
         elif self._facade.is_gen_data_key(key):
-            meta["data_origin"] = "Gen Data"
+            meta["data_origin"] = "GEN_DATA"
         elif self._facade.is_gen_kw_key(key):
-            meta["data_origin"] = "Gen KW"
+            meta["data_origin"] = "GEN_KW"
         return meta
 
     def get_all_cases_not_running(self):

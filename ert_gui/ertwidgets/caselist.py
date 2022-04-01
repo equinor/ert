@@ -82,7 +82,7 @@ class CaseList(QWidget):
         self._default_selection_mode = self._list.selectionMode()
         self.setSelectable(False)
 
-        layout.addWidget(QLabel("Available Cases:"))
+        layout.addWidget(QLabel("Available cases:"))
         layout.addWidget(self._list)
 
         self._addRemoveWidget = AddRemoveWidget(

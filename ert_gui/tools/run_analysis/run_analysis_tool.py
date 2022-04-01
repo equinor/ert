@@ -46,7 +46,7 @@ class RunAnalysisTool(Tool):
         self.ert = ert
         self.notifier = notifier
         super(RunAnalysisTool, self).__init__(
-            "Run Analysis", "tools/run_analysis", resourceIcon("formula.svg")
+            "Run analysis", "tools/run_analysis", resourceIcon("formula.svg")
         )
         self._run_widget = None
         self._dialog = None
@@ -55,7 +55,7 @@ class RunAnalysisTool(Tool):
     def trigger(self):
         if self._run_widget is None:
             self._run_widget = RunAnalysisPanel(self.ert, self.notifier)
-        self._dialog = ClosableDialog("Run Analysis", self._run_widget, self.parent())
+        self._dialog = ClosableDialog("Run analysis", self._run_widget, self.parent())
         self._dialog.addButton("Run", self.run)
         self._dialog.exec_()
 
@@ -70,7 +70,7 @@ class RunAnalysisTool(Tool):
         success = analyse(self.ert, target, source)
 
         msg = QMessageBox()
-        msg.setWindowTitle("Run Analysis")
+        msg.setWindowTitle("Run analysis")
         msg.setStandardButtons(QMessageBox.Ok)
 
         if success:
@@ -88,7 +88,7 @@ class RunAnalysisTool(Tool):
 
     def _report_empty_target(self):
         msg = QMessageBox()
-        msg.setWindowTitle("Invalid Target")
+        msg.setWindowTitle("Invalid target")
         msg.setIcon(QMessageBox.Warning)
         msg.setText("Target case can not be empty")
         msg.setStandardButtons(QMessageBox.Ok)

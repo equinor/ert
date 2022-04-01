@@ -319,9 +319,9 @@ def get_ert_parser(parser=None):
         "--realizations",
         type=valid_realizations,
         help="These are the realizations that will be used to perform simulations."
-        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
+        "For example, if 'Number of realizations:50 and active realizations are 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
-        "while realizations 10,11, 12,...,49 will be excluded",
+        "while realizations 10,11, 12,...,49 will be excluded.",
     )
     iterative_ensemble_smoother_parser.add_argument(
         "--current-case",
@@ -354,17 +354,17 @@ def get_ert_parser(parser=None):
         "--realizations",
         type=valid_realizations,
         help="These are the realizations that will be used to perform simulations."
-        "For example, if 'Number of realizations:50 and Active realizations is 0-9', "
+        "For example, if 'Number of realizations:50 and active realizations are 0-9', "
         "then only realizations 0,1,2,3,...,9 will be used to perform simulations "
-        "while realizations 10,11, 12,...,49 will be excluded",
+        "while realizations 10,11, 12,...,49 will be excluded.",
     )
     es_mda_parser.add_argument(
         "--weights",
         type=valid_weights,
         default=MultipleDataAssimilation.default_weights,
-        help="Example Custom Relative Weights: '8,4,2,1'. This means Multiple Data "
-        "Assimilation Ensemble Smoother will half the weight applied to the "
-        "Observation Errors from one iteration to the next across 4 iterations.",
+        help="Example custom relative weights: '8,4,2,1'. This means multiple data "
+        "assimilation ensemble smoother will half the weight applied to the "
+        "observation errors from one iteration to the next across 4 iterations.",
     )
     es_mda_parser.add_argument(
         "--current-case",

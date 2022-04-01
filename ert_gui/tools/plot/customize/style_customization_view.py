@@ -49,7 +49,7 @@ class StyleCustomizationView(CustomizationView):
             self._color_boxes.append(color_box)
             color_layout.addWidget(color_box)
 
-        self.addRow("Color Cycle", color_layout)
+        self.addRow("Color cycle", color_layout)
         self.updateProperty(
             "color_cycle",
             StyleCustomizationView.getColorCycle,
@@ -57,7 +57,7 @@ class StyleCustomizationView(CustomizationView):
         )
 
         self._observs_color_box = self.createColorBox("observations_color")
-        self.addRow("Observations Color", self._observs_color_box)
+        self.addRow("Observations color", self._observs_color_box)
         self.updateProperty(
             "observs_color",
             StyleCustomizationView.getObservationsColor,

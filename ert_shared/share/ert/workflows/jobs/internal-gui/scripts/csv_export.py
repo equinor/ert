@@ -189,7 +189,7 @@ class CSVExportJob(ErtPlugin):
         )
 
         dialog.addLabeledOption("Output file path", output_path_chooser)
-        dialog.addLabeledOption("Design Matrix path", design_matrix_path_chooser)
+        dialog.addLabeledOption("Design matrix path", design_matrix_path_chooser)
         dialog.addLabeledOption("List of cases to export", list_edit)
         dialog.addLabeledOption("Infer iteration number", infer_iteration_check)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)

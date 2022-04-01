@@ -64,7 +64,7 @@ class PlotConfig(object):
             name="Distribution", line_style="", marker="o", alpha=0.5, size=10.0
         )
         self._distribution_line_style = PlotStyle(
-            name="Distribution Lines", line_style="-", alpha=0.25, width=1.0
+            name="Distribution lines", line_style="-", alpha=0.25, width=1.0
         )
         self._distribution_line_style.setEnabled(False)
         self._current_color = None
@@ -115,7 +115,7 @@ class PlotConfig(object):
         return self._title is None
 
     def defaultStyle(self):
-        style = PlotStyle("Default Style")
+        style = PlotStyle("Default style")
         style.copyStyleFrom(self._default_style)
         style.color = self.currentColor()
         return style
@@ -125,39 +125,39 @@ class PlotConfig(object):
 
     def observationsStyle(self):
         """@rtype: PlotStyle"""
-        style = PlotStyle("Observations Style")
+        style = PlotStyle("Observations style")
         style.copyStyleFrom(self._observs_style)
         return style
 
     def refcaseStyle(self):
         """@rtype: PlotStyle"""
-        style = PlotStyle("Refcase Style")
+        style = PlotStyle("Refcase style")
         style.copyStyleFrom(self._refcase_style)
         return style
 
     def historyStyle(self):
         """@rtype: PlotStyle"""
-        style = PlotStyle("History Style")
+        style = PlotStyle("History style")
         style.copyStyleFrom(self._history_style)
         return style
 
     def histogramStyle(self):
         """@rtype: PlotStyle"""
-        style = PlotStyle("Histogram Style")
+        style = PlotStyle("Histogram style")
         style.copyStyleFrom(self._histogram_style)
         style.color = self.currentColor()
         return style
 
     def distributionStyle(self):
         """@rtype: PlotStyle"""
-        style = PlotStyle("Distribution Style")
+        style = PlotStyle("Distribution style")
         style.copyStyleFrom(self._distribution_style)
         style.color = self.currentColor()
         return style
 
     def distributionLineStyle(self):
         """@rtype: ert_gui.plottery.PlotStyle"""
-        style = PlotStyle("Distribution Line Style")
+        style = PlotStyle("Distribution line style")
         style.copyStyleFrom(self._distribution_line_style)
         return style
 
