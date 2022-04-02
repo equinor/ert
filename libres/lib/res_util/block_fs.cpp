@@ -115,12 +115,6 @@ struct file_node_struct {
 
 struct block_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *
-        mount_file; /* The full path to a file with some mount information - input to the mount routine. */
-    char *path;
-    char *base_name;
-
-    char *data_file;
 
     int data_fd;
     FILE *data_stream;
@@ -141,13 +135,6 @@ struct block_fs_struct {
     int write_count; /* This just counts the number of writes since the file system was mounted. */
     bool data_owner;
     int fsync_interval; /* 0: never  n: every nth iteration. */
-
-    fs::path index_file() const {
-        fs::path mount_file{this->mount_file};
-        fs::path path = mount_file.parent_path();
-        std::string base_name = mount_file.stem();
-        return path / (base_name + ".index");
-    }
 };
 
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
@@ -490,20 +477,6 @@ static void block_fs_install_node(block_fs_type *block_fs,
     vector_append_owned_ref(block_fs->file_nodes, node, file_node_free__);
 }
 
-static void block_fs_set_filenames(block_fs_type *block_fs) {
-    char *data_ext = util_alloc_sprintf("data_0");
-    char *lock_ext = util_alloc_sprintf("lock_0");
-    const char *index_ext = "index";
-
-    free(block_fs->data_file);
-
-    block_fs->data_file =
-        util_alloc_filename(block_fs->path, block_fs->base_name, data_ext);
-
-    free(data_ext);
-    free(lock_ext);
-}
-
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
     block_fs->file_nodes = vector_alloc_new();
@@ -512,23 +485,18 @@ static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->write_count = 0;
     block_fs->data_file_size = 0;
     block_fs->free_size = 0;
-    block_fs_set_filenames(block_fs);
 }
 
-static block_fs_type *block_fs_alloc_empty(const char *mount_file,
+static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
                                            int block_size, int fsync_interval,
                                            bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
-    block_fs->mount_file = util_alloc_string_copy(mount_file);
     block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
-
-    util_alloc_file_components(mount_file, &block_fs->path,
-                               &block_fs->base_name, NULL);
     {
-        FILE *stream = util_fopen(mount_file, "r");
+        FILE *stream = util_fopen(mount_file.c_str(), "r");
         int id = util_fread_int(stream);
         int version = util_fread_int(stream);
         if (version != 0)
@@ -541,9 +509,8 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
         if (id != MOUNT_MAP_MAGIC_INT)
             util_abort("%s: The file:%s does not seem to be a valid block_fs "
                        "mount map \n",
-                       __func__, mount_file);
+                       __func__, mount_file.c_str());
     }
-    block_fs->data_file = NULL;
     block_fs_reinit(block_fs);
 
     block_fs->data_owner = !read_only;
@@ -552,8 +519,8 @@ static block_fs_type *block_fs_alloc_empty(const char *mount_file,
 
 UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
 
-static void block_fs_fwrite_mount_info__(const char *mount_file) {
-    FILE *stream = util_fopen(mount_file, "w");
+static void block_fs_fwrite_mount_info__(const fs::path &mount_file) {
+    FILE *stream = util_fopen(mount_file.c_str(), "w");
     util_fwrite_int(MOUNT_MAP_MAGIC_INT, stream);
     util_fwrite_int(0 /* data version; unused */, stream);
     fclose(stream);
@@ -632,17 +599,18 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
    calling this function again, with read_only == false.
 */
 
-static void block_fs_open_data(block_fs_type *block_fs, bool read_write) {
-    if (read_write) {
+static void block_fs_open_data(block_fs_type *block_fs,
+                               const fs::path &data_file) {
+    if (block_fs->data_owner) {
         /* Normal read-write open.- */
-        if (fs::exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r+");
+        if (fs::exists(data_file))
+            block_fs->data_stream = util_fopen(data_file.c_str(), "r+");
         else
-            block_fs->data_stream = util_fopen(block_fs->data_file, "w+");
+            block_fs->data_stream = util_fopen(data_file.c_str(), "w+");
     } else {
         /* read-only open. */
-        if (fs::exists(block_fs->data_file))
-            block_fs->data_stream = util_fopen(block_fs->data_file, "r");
+        if (fs::exists(data_file.c_str()))
+            block_fs->data_stream = util_fopen(data_file.c_str(), "r");
         else
             block_fs->data_stream = NULL;
         /*
@@ -712,6 +680,7 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
 }
 
 static void block_fs_build_index(block_fs_type *block_fs,
+                                 const fs::path &data_file,
                                  std::vector<long> &error_offset) {
     char *filename = NULL;
     file_node_type *file_node;
@@ -727,14 +696,14 @@ static void block_fs_build_index(block_fs_type *block_fs,
                     fprintf(stderr,
                             "** Warning:: invalid node found at offset:%ld in "
                             "datafile:%s - data will be lost, node_size:%d\n",
-                            file_node->node_offset, block_fs->data_file,
+                            file_node->node_offset, data_file.c_str(),
                             file_node->node_size);
                 else
                     fprintf(
                         stderr,
                         "** Warning:: file system was prematurely shut down "
                         "while writing node in %s/%ld - will be discarded.\n",
-                        block_fs->data_file, file_node->node_offset);
+                        data_file.c_str(), file_node->node_offset);
 
                 error_offset.push_back(file_node->node_offset);
                 file_node_free(file_node);
@@ -785,8 +754,12 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
         return true;
 }
 
-block_fs_type *block_fs_mount(const char *mount_file, int block_size,
+block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
                               int fsync_interval, bool read_only) {
+    fs::path path = mount_file.parent_path();
+    std::string base_name = mount_file.stem();
+    auto data_file = path / (base_name + ".data_0");
+    auto index_file = path / (base_name + ".index");
     block_fs_type *block_fs;
     {
 
@@ -798,15 +771,11 @@ block_fs_type *block_fs_mount(const char *mount_file, int block_size,
             block_fs = block_fs_alloc_empty(mount_file, block_size,
                                             fsync_interval, read_only);
 
-            block_fs_open_data(
-                block_fs,
-                block_fs
-                    ->data_owner); /* The data_stream is opened for reading AND writing (IFF we are data_owner - otherwise it is still read only) */
+            block_fs_open_data(block_fs, data_file);
             if (block_fs->data_stream != nullptr) {
                 std::error_code ec;
-                fs::remove(block_fs->index_file(),
-                           ec /* error code is ignored */);
-                block_fs_build_index(block_fs, fix_nodes);
+                fs::remove(index_file, ec /* error code is ignored */);
+                block_fs_build_index(block_fs, data_file, fix_nodes);
             }
             block_fs_fix_nodes(block_fs, fix_nodes);
         }
@@ -972,9 +941,7 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t data_size) {
     if (!block_fs->data_owner)
-        throw std::runtime_error(
-            fmt::format("tried to write to read only filesystem mounted at {}",
-                        block_fs->mount_file));
+        throw std::runtime_error("tried to write to read only filesystem");
     std::lock_guard guard{block_fs->mutex};
 
     file_node_type *file_node;
@@ -1038,23 +1005,11 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
    unlinked if the filesystem is empty.
 */
 
-void block_fs_close(block_fs_type *block_fs, bool unlink_empty) {
+void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
 
     if (block_fs->data_stream != NULL)
         fclose(block_fs->data_stream);
-
-    if (block_fs->data_owner) {
-        if (unlink_empty && (hash_get_size(block_fs->index) == 0)) {
-            util_unlink_existing(block_fs->data_file);
-            util_unlink_existing(block_fs->mount_file);
-        }
-    }
-
-    free(block_fs->base_name);
-    free(block_fs->data_file);
-    free(block_fs->path);
-    free(block_fs->mount_file);
 
     free_node_free_list(block_fs->free_nodes);
     hash_free(block_fs->index);

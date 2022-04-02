@@ -89,7 +89,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
             }
 
             AND_WHEN("block_fs is closed and opened") {
-                block_fs_close(bfs, false /* unlink_empty */);
+                block_fs_close(bfs);
                 bfs = block_fs_mount("bfs", block_size, fsync_interval,
                                      true /* read-only */);
 
@@ -117,6 +117,6 @@ TEST_CASE("block_fs", "[enkf_fs]") {
             }
         }
 
-        block_fs_close(bfs, false /* unlink_empty */);
+        block_fs_close(bfs);
     }
 }
