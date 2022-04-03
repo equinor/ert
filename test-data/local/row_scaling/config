@@ -1,3 +1,5 @@
+ANALYSIS_SET_VAR STD_ENKF IES_INVERSION 1
+
 NUM_REALIZATIONS 10
 GRID             CASE.EGRID
 FIELD            PORO    PARAMETER    poro.grdecl INIT_FILES:fields/poro%d.grdecl

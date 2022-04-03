@@ -262,7 +262,6 @@ void run_analysis_update_without_rowscaling(
         ies::init_update(module_data, ens_mask, obs_mask);
         ies::updateA(module_config, module_data, A, S, R, E, D);
     } else {
-
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);

@@ -441,13 +441,6 @@ description of an observation set in the file ``observations``. The
 required to create a `time_map` file (e.g. containing 2006-06-01) when 
 we have an observation set.
 
-The last thing we need to set in the config is the :ref:`ENKF_TRUNCATION <enkf_truncation>`,
-which must be set to 1.00 in order for this simple problem to be solved properly::
-
-    ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 1.00
-
-See documentation of :ref:`ENKF_TRUNCATION <enkf_truncation>` for details.
-
 The final config file should look like this:
 
 .. literalinclude :: with_observations/poly_final.ert
