@@ -14,6 +14,7 @@ TEST 3 (consistency between IES and STD_ENKF):
  - ANALYSIS_SET_VAR IES_ENKF IES_AAPROJECTION        false
 should give same result as:
  - ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
+ - ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
  - ANALYSIS_SELECT STD_ENKF
 */
 
@@ -32,6 +33,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     ies_config1.aaprojection(false);
 
     std_config.truncation(0.95);
+    std_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
 
     ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask);
 
