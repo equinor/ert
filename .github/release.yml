@@ -24,6 +24,12 @@ changelog:
       exclude:
         labels:
           - release-notes:ert3
+    - title: Maintenance
+      labels:
+        - release-notes:maintenance
+      exclude:
+        labels:
+          - release-notes:ert3
     - title: Dependencies
       labels:
         - release-notes:dependency
