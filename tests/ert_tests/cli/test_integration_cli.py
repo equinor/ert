@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, call, patch
 import pytest
 
 import ert_shared
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, TEST_RUN_MODE
+from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, TEST_RUN_MODE
 from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
@@ -109,6 +109,36 @@ def test_ensemble_evaluator(tmpdir, source_root):
                 "poly_example/poly.ert",
                 "--port-range",
                 "1024-65535",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        run_cli(parsed)
+        FeatureToggling.reset()
+
+
+@pytest.mark.integration_test
+def test_es_mda(tmpdir, source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ES_MDA_MODE,
+                "--target-case",
+                "iter-%d",
+                "--realizations",
+                "1,2,4,8,16",
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+                "--weights",
+                "1",
             ],
         )
         FeatureToggling.update_from_args(parsed)
