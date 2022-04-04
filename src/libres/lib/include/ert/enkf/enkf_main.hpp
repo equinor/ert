@@ -118,9 +118,8 @@ extern "C" void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
 void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
                          bool read_only = false);
 
-extern "C" state_map_type *
-enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
-                                   const char *case_path);
+StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
+                                  const char *case_path);
 
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
 extern "C" const res_config_type *

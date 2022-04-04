@@ -15,9 +15,13 @@
    for more details.
 */
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 
+#include <fstream>
+#include <mutex>
 #include <pthread.h>
+#include <stdexcept>
 #include <stdlib.h>
 
 #include <ert/python.hpp>
@@ -29,92 +33,64 @@
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/state_map.hpp>
+#include <system_error>
 
 namespace fs = std::filesystem;
 
-#define STATE_MAP_TYPE_ID 500672132
+namespace {
+void read_libecl_vector(std::istream &s, std::vector<int> &v) {
+    std::int32_t length{};
+    s.read(reinterpret_cast<char *>(&length), sizeof(length));
 
-struct state_map_struct {
-    UTIL_TYPE_ID_DECLARATION;
-    int_vector_type *state;
-    pthread_rwlock_t mutable rw_lock;
-    bool read_only;
-};
+    /* default_value is used by libecl's auto-resizeable vector_type to fill in
+     * the gaps. We don't do that here, but we still have to read the value. */
+    std::int32_t default_value{};
+    s.read(reinterpret_cast<char *>(&default_value), sizeof(default_value));
 
-UTIL_IS_INSTANCE_FUNCTION(state_map, STATE_MAP_TYPE_ID)
-
-state_map_type *state_map_alloc() {
-    state_map_type *map = (state_map_type *)util_malloc(sizeof *map);
-    UTIL_TYPE_ID_INIT(map, STATE_MAP_TYPE_ID);
-    map->state = int_vector_alloc(0, STATE_UNDEFINED);
-    pthread_rwlock_init(&map->rw_lock, NULL);
-    map->read_only = false;
-    return map;
+    v.resize(length);
+    s.read(reinterpret_cast<char *>(&v[0]), sizeof(v[0]) * v.size());
 }
 
-state_map_type *state_map_fread_alloc(const char *filename) {
-    state_map_type *map = state_map_alloc();
-    if (fs::exists(filename)) {
-        FILE *stream = util_fopen(filename, "r");
-        int_vector_fread(map->state, stream);
-        fclose(stream);
-    }
-    return map;
+void write_libecl_vector(std::ostream &s, const std::vector<int> &v) {
+    std::int32_t length = v.size();
+    s.write(reinterpret_cast<const char *>(&length), sizeof(length));
+
+    /* default_value is used by libecl's auto-resizeable vector_type to fill in
+     * the gaps. We don't do that here, but we still have to write the value. */
+    std::int32_t default_value{};
+    s.write(reinterpret_cast<const char *>(&default_value),
+            sizeof(default_value));
+
+    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(v[0]) * v.size());
+}
+} // namespace
+
+StateMap::StateMap(const fs::path &filename) { read(filename); }
+
+StateMap::StateMap(const StateMap &other) {
+    std::lock_guard guard{other.m_mutex};
+    m_state = other.m_state;
 }
 
-state_map_type *state_map_fread_alloc_readonly(const char *filename) {
-    state_map_type *map = state_map_fread_alloc(filename);
-    map->read_only = true;
-    return map;
+int StateMap::size() const {
+    std::lock_guard guard{m_mutex};
+    return m_state.size();
 }
 
-state_map_type *state_map_alloc_copy(const state_map_type *map) {
-    state_map_type *copy = state_map_alloc();
-    pthread_rwlock_rdlock(&map->rw_lock);
-    { int_vector_memcpy(copy->state, map->state); }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return copy;
+bool StateMap::operator==(const StateMap &other) const {
+    std::scoped_lock lock{m_mutex, other.m_mutex};
+    return m_state == other.m_state;
 }
 
-void state_map_free(state_map_type *map) {
-    int_vector_free(map->state);
-    free(map);
+realisation_state_enum StateMap::get(int index) const {
+    std::lock_guard guard{m_mutex};
+    if (index < m_state.size())
+        return static_cast<realisation_state_enum>(m_state.at(index));
+    return realisation_state_enum::STATE_UNDEFINED;
 }
 
-int state_map_get_size(const state_map_type *map) {
-    int size;
-    pthread_rwlock_rdlock(&map->rw_lock);
-    { size = int_vector_size(map->state); }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return size;
-}
-
-bool state_map_equal(const state_map_type *map1, const state_map_type *map2) {
-    bool equal = true;
-    pthread_rwlock_rdlock(&map1->rw_lock);
-    pthread_rwlock_rdlock(&map2->rw_lock);
-    {
-        if (int_vector_size(map1->state) != int_vector_size(map2->state))
-            equal = false;
-
-        if (equal)
-            equal = int_vector_equal(map1->state, map2->state);
-    }
-    pthread_rwlock_unlock(&map1->rw_lock);
-    pthread_rwlock_unlock(&map2->rw_lock);
-    return equal;
-}
-
-realisation_state_enum state_map_iget(const state_map_type *map, int index) {
-    realisation_state_enum state;
-    pthread_rwlock_rdlock(&map->rw_lock);
-    { state = (realisation_state_enum)int_vector_safe_iget(map->state, index); }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return state;
-}
-
-bool state_map_legal_transition(realisation_state_enum state1,
-                                realisation_state_enum state2) {
+bool StateMap::is_legal_transition(realisation_state_enum state1,
+                                   realisation_state_enum state2) {
     int target_mask = 0;
 
     if (state1 == STATE_UNDEFINED)
@@ -136,140 +112,128 @@ bool state_map_legal_transition(realisation_state_enum state1,
         return false;
 }
 
-static void state_map_assert_writable(const state_map_type *map) {
-    if (map->read_only)
-        util_abort("%s: tried to modify read_only state_map - aborting \n",
-                   __func__);
-}
+void StateMap::set(int index, realisation_state_enum new_state) {
+    std::lock_guard lock{m_mutex};
 
-static void state_map_iset__(state_map_type *map, int index,
-                             realisation_state_enum new_state) {
-    realisation_state_enum current_state =
-        (realisation_state_enum)int_vector_safe_iget(map->state, index);
+    if (index < 0)
+        index += m_state.size();
+    if (index < 0)
+        throw std::out_of_range(
+            fmt::format("index out of range: {} < 0", index));
+    if (index >= m_state.size())
+        m_state.resize(index + 1, STATE_UNDEFINED);
 
-    if (state_map_legal_transition(current_state, new_state))
-        int_vector_iset(map->state, index, new_state);
+    auto current_state = static_cast<realisation_state_enum>(m_state.at(index));
+
+    if (is_legal_transition(current_state, new_state))
+        m_state[index] = new_state;
     else
         util_abort(
             "%s: illegal state transition for realisation:%d %d -> %d \n",
             __func__, index, current_state, new_state);
 }
 
-void state_map_iset(state_map_type *map, int index,
-                    realisation_state_enum state) {
-    state_map_assert_writable(map);
-    pthread_rwlock_wrlock(&map->rw_lock);
-    { state_map_iset__(map, index, state); }
-    pthread_rwlock_unlock(&map->rw_lock);
-}
-
-void state_map_update_matching(state_map_type *map, int index, int state_mask,
+void StateMap::update_matching(size_t index, int state_mask,
                                realisation_state_enum new_state) {
-    realisation_state_enum current_state = state_map_iget(map, index);
+    realisation_state_enum current_state = get(index);
     if (current_state & state_mask)
-        state_map_iset(map, index, new_state);
+        set(index, new_state);
 }
 
-void state_map_update_undefined(state_map_type *map, int index,
-                                realisation_state_enum new_state) {
-    state_map_update_matching(map, index, STATE_UNDEFINED, new_state);
+void StateMap::write(const fs::path &path) const {
+    std::lock_guard lock{m_mutex};
+
+    std::error_code ec;
+    fs::create_directories(path.parent_path(), ec /* Error-code is ignored */);
+    std::ofstream stream{path};
+
+    if (!stream.is_open())
+        util_abort("%s: failed to open:%s for writing \n", __func__,
+                   path.c_str());
+
+    stream.exceptions(stream.failbit);
+    write_libecl_vector(stream, m_state);
 }
 
-void state_map_fwrite(const state_map_type *map, const char *filename) {
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        auto stream = mkdir_fopen(fs::path(filename), "w");
-        if (stream) {
-            int_vector_fwrite(map->state, stream);
-            fclose(stream);
-        } else
-            util_abort("%s: failed to open:%s for writing \n", __func__,
-                       filename);
+bool StateMap::read(const fs::path &filename) {
+    std::lock_guard lock{m_mutex};
+    std::ifstream stream{filename};
+    try {
+        stream.exceptions(stream.failbit);
+        read_libecl_vector(stream, m_state);
+        return true;
+    } catch (std::ios_base::failure &) {
+        m_state.clear();
+        return false;
     }
-    pthread_rwlock_unlock(&map->rw_lock);
 }
 
-bool state_map_fread(state_map_type *map, const char *filename) {
-    bool file_exists = false;
-    pthread_rwlock_wrlock(&map->rw_lock);
-    {
-        if (fs::exists(filename)) {
-            FILE *stream = util_fopen(filename, "r");
-            if (stream) {
-                int_vector_fread(map->state, stream);
-                fclose(stream);
-            } else
-                util_abort("%s: failed to open:%s for reading \n", __func__,
-                           filename);
-            file_exists = true;
-        } else
-            int_vector_reset(map->state);
+std::vector<bool> StateMap::select_matching(int select_mask) const {
+    std::lock_guard lock{m_mutex};
+    std::vector<bool> select_target(m_state.size(), false);
+    for (size_t i{}; i < m_state.size(); ++i) {
+        auto state_value = m_state[i];
+        if (state_value & select_mask)
+            select_target[i] = true;
     }
-    pthread_rwlock_unlock(&map->rw_lock);
-    return file_exists;
-}
-
-std::vector<bool> state_map_select_matching(const state_map_type *map,
-                                            int select_mask, bool select) {
-    std::vector<bool> select_target(int_vector_size(map->state), false);
-    pthread_rwlock_rdlock(&map->rw_lock);
-    {
-        const int *map_ptr = int_vector_get_ptr(map->state);
-        for (size_t i = 0; i < select_target.size(); i++) {
-            int state_value = map_ptr[i];
-            if (state_value & select_mask)
-                select_target[i] = select;
-        }
-    }
-    pthread_rwlock_unlock(&map->rw_lock);
     return select_target;
 }
 
-static void state_map_set_from_mask__(state_map_type *map,
-                                      const std::vector<bool> &mask,
-                                      realisation_state_enum state,
-                                      bool invert) {
-    for (int i = 0; i < mask.size(); i++) {
-        if (mask[i] != invert)
-            state_map_iset(map, i, state);
-    }
-}
-
-void state_map_set_from_inverted_mask(state_map_type *state_map,
-                                      const std::vector<bool> &mask,
+void StateMap::set_from_inverted_mask(const std::vector<bool> &mask,
                                       realisation_state_enum state) {
-    state_map_set_from_mask__(state_map, mask, state, true);
+    for (size_t i{}; i < mask.size(); ++i)
+        if (!mask[i])
+            set(i, state);
 }
 
-void state_map_set_from_mask(state_map_type *state_map,
-                             const std::vector<bool> &mask,
+void StateMap::set_from_mask(const std::vector<bool> &mask,
                              realisation_state_enum state) {
-    state_map_set_from_mask__(state_map, mask, state, false);
+    for (size_t i{}; i < mask.size(); ++i)
+        if (mask[i])
+            set(i, state);
 }
 
-bool state_map_is_readonly(const state_map_type *state_map) {
-    return state_map->read_only;
+size_t StateMap::count_matching(int mask) const {
+    std::lock_guard lock{m_mutex};
+    return std::count_if(m_state.begin(), m_state.end(),
+                         [mask](int value) { return value & mask; });
 }
 
-int state_map_count_matching(const state_map_type *state_map, int mask) {
-    int count = 0;
-    pthread_rwlock_rdlock(&state_map->rw_lock);
-    {
-        const int *map_ptr = int_vector_get_ptr(state_map->state);
-        for (int i = 0; i < int_vector_size(state_map->state); i++) {
-            int state_value = map_ptr[i];
-            if (state_value & mask)
-                count++;
-        }
-    }
-    pthread_rwlock_unlock(&state_map->rw_lock);
-    return count;
-}
+RES_LIB_SUBMODULE("state_map", m) {
+    using namespace py::literals;
 
-std::vector<bool> select_matching(py::object map, int select_mask,
-                                  bool select) {
-    auto map_ = ert::from_cwrap<state_map_type>(map);
-    return state_map_select_matching(map_, select_mask, select);
-}
+    const auto init_with_exception = [](const fs::path &path) -> StateMap {
+        StateMap sm;
+        if (!sm.read(path))
+            throw std::ios_base::failure{"StateMap::StateMap"};
+        return sm;
+    };
 
-RES_LIB_SUBMODULE("state_map", m) { m.def("select_matching", select_matching); }
+    const auto load_with_exception = [](StateMap &sm, const fs::path &path) {
+        if (!sm.read(path))
+            throw std::ios_base::failure{"StateMap::load"};
+    };
+
+    py::enum_<realisation_state_enum>(m, "RealizationStateEnum",
+                                      py::arithmetic{})
+        .value("STATE_UNDEFINED", STATE_UNDEFINED)
+        .value("STATE_INITIALIZED", STATE_INITIALIZED)
+        .value("STATE_HAS_DATA", STATE_HAS_DATA)
+        .value("STATE_LOAD_FAILURE", STATE_LOAD_FAILURE)
+        .value("STATE_PARENT_FAILURE", STATE_PARENT_FAILURE)
+        .export_values();
+
+    py::class_<StateMap, std::shared_ptr<StateMap>>(m, "StateMap")
+        .def_static("isLegalTransition", &StateMap::is_legal_transition)
+        .def(py::init<>())
+        .def(py::init(init_with_exception), "path"_a)
+        .def(py::self == py::self)
+        .def("__len__", &StateMap::size)
+        .def("_get", &StateMap::get, "index"_a)
+        .def("__setitem__", &StateMap::set, "index"_a, "value"_a)
+        .def("load", load_with_exception, "path"_a)
+        .def("save", &StateMap::write, "path"_a)
+        .def("selectMatching", [](const StateMap &x, int mask) {
+            return x.select_matching(mask);
+        });
+}

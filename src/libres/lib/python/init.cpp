@@ -8,6 +8,7 @@
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/string.hpp>
+#include <pyerrors.h>
 
 namespace {
 auto &submodules() {
@@ -22,6 +23,18 @@ ert::detail::Submodule::Submodule(const char *path, init_type &init)
 }
 
 PYBIND11_MODULE(_lib, m) {
+    py::register_exception_translator([](std::exception_ptr p) {
+        if (!p)
+            return;
+
+        try {
+            std::rethrow_exception(p);
+        } catch (const std::ios_base::failure &e) {
+            PyErr_SetString(PyExc_OSError, e.what());
+            return;
+        }
+    });
+
     /* Initialise submodules */
     for (auto submodule : submodules()) {
         py::module_ node = m;

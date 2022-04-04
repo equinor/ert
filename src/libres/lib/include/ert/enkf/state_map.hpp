@@ -1,62 +1,124 @@
-/*
-   Copyright (C) 2013  Equinor ASA, Norway.
-   The file 'state_map.c' is part of ERT - Ensemble based Reservoir Tool.
+#pragma once
 
-   ERT is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.
-
-   See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-   for more details.
-*/
-
-#ifndef ERT_STATE_MAP_H
-#define ERT_STATE_MAP_H
-
-#include <ert/util/bool_vector.h>
-#include <ert/util/type_macros.h>
+#include <filesystem>
+#include <mutex>
 #include <vector>
 
 #include <ert/enkf/enkf_types.hpp>
 
-typedef struct state_map_struct state_map_type;
+class StateMap {
+    std::vector<int> m_state;
+    mutable std::mutex m_mutex;
 
-extern "C" state_map_type *state_map_alloc();
-state_map_type *state_map_fread_alloc(const char *filename);
-state_map_type *state_map_fread_alloc_readonly(const char *filename);
-state_map_type *state_map_alloc_copy(const state_map_type *map);
-extern "C" bool state_map_is_readonly(const state_map_type *state_map);
-extern "C" void state_map_free(state_map_type *map);
-extern "C" int state_map_get_size(const state_map_type *map);
-extern "C" realisation_state_enum state_map_iget(const state_map_type *map,
-                                                 int index);
-void state_map_update_undefined(state_map_type *map, int index,
-                                realisation_state_enum new_state);
-void state_map_update_matching(state_map_type *map, int index, int state_mask,
-                               realisation_state_enum new_state);
-extern "C" void state_map_iset(state_map_type *map, int index,
-                               realisation_state_enum state);
-extern "C" bool state_map_equal(const state_map_type *map1,
-                                const state_map_type *map2);
-extern "C" void state_map_fwrite(const state_map_type *map,
-                                 const char *filename);
-extern "C" bool state_map_fread(state_map_type *map, const char *filename);
-std::vector<bool> state_map_select_matching(const state_map_type *map,
-                                            int select_mask, bool select);
-void state_map_set_from_inverted_mask(state_map_type *map,
-                                      const std::vector<bool> &mask,
-                                      realisation_state_enum state);
-void state_map_set_from_mask(state_map_type *map, const std::vector<bool> &mask,
-                             realisation_state_enum state);
-int state_map_count_matching(const state_map_type *state_map, int mask);
-extern "C" bool state_map_legal_transition(realisation_state_enum state1,
-                                           realisation_state_enum state2);
+public:
+    StateMap() = default;
+    StateMap(const std::filesystem::path &filename);
+    StateMap(const StateMap &other);
 
-UTIL_IS_INSTANCE_HEADER(state_map);
+    int size() const;
 
-#endif
+    /**
+     * StateMap objects are equal iff. their internal state array is equal
+     *
+     * @return True if the internal arrays are equal, false otherwise
+     */
+    bool operator==(const StateMap &) const;
+
+    /**
+     * Assign a new state at the given index, overriding previously set flags.
+     * Resize internal array to contain index if index is out of bounds
+     *
+     * @param index Index in the internal array
+     */
+    void set(int index, realisation_state_enum new_state);
+
+    /**
+     * Get the state at the given index or STATE_UNDEFINED if index is out of bounds
+     *
+     * @param index Index in the internal enum vector
+     * @returns State at index or STATE_UNDEFINED when oob
+     */
+    realisation_state_enum get(int index) const;
+
+    /**
+     * Change the value at index to new_state iff. the value is currently
+     * state_mask. Resizes internal array to contain index if the index is out
+     * of bounds
+     *
+     * @param index Index in the internal state array
+     * @param state_mask Flags that we expect the value at position index to be set
+     * @param new_state Flag that we want to set at the given position index
+     */
+    void update_matching(size_t index, int state_mask,
+                         realisation_state_enum new_state);
+
+    /**
+     * Change the value at index to new_state iff. the value was previously
+     * STATE_UNDEFINED (ie. no flags set).
+     *
+     * @param index Index in the internal state array
+     * @param new_state Flag that we want to add at the given position index
+     */
+    void update_undefined(size_t index, realisation_state_enum new_state) {
+        update_matching(index, STATE_UNDEFINED, new_state);
+    }
+
+    /**
+     * Write data to disk, creating directories as needed
+     *
+     * @param path Path to file
+     */
+    void write(const std::filesystem::path &path) const;
+
+    /**
+     * Read data from disk
+     *
+     * @returns true if file was read, false otherwise
+     */
+    bool read(const std::filesystem::path &path);
+
+    /**
+     * Get a bool vector where the elements are true at indices where the
+     * elements have the flags of select_mask set
+     */
+    std::vector<bool> select_matching(int select_mask) const;
+
+    /**
+     * Assign state to all indices where the boolean is false
+     *
+     * @param mask Boolean mask
+     * @param state State to assign
+     */
+    void set_from_inverted_mask(const std::vector<bool> &mask,
+                                realisation_state_enum state);
+
+    /**
+     * Assign state to all indices where the boolean is true
+     *
+     * @param mask Boolean mask
+     * @param state State to assign
+     */
+    void set_from_mask(const std::vector<bool> &mask,
+                       realisation_state_enum state);
+
+    /**
+     * Count the states that have all of flags set in state_mask
+     *
+     * @param state_mask Set of state flags
+     * @return Count
+     */
+    size_t count_matching(int state_mask) const;
+
+    /**
+     * Determine whether it is possible to change from state1 to state2.
+     *
+     * For example, it isn't permitted to go from STATE_PARENT_FAILURE to
+     * STATE_HAS_DATA.
+     *
+     * @param state1 Start state
+     * @param state2 Target state
+     * @return True if legal, false otherwise
+     */
+    static bool is_legal_transition(realisation_state_enum state1,
+                                    realisation_state_enum state2);
+};
