@@ -100,8 +100,8 @@ void enkf_plot_gen_kw_load(enkf_plot_gen_kw_type *plot_gen_kw, enkf_fs_type *fs,
                            bool transform_data, int report_step,
                            const bool_vector_type *input_mask) {
 
-    state_map_type *state_map = enkf_fs_get_state_map(fs);
-    int ens_size = state_map_get_size(state_map);
+    auto &state_map = enkf_fs_get_state_map(fs);
+    int ens_size = state_map.size();
     bool_vector_type *mask;
 
     if (input_mask)

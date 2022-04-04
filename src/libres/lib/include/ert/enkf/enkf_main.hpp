@@ -158,9 +158,8 @@ bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
 extern "C" const char *
 enkf_main_get_mount_root(const enkf_main_type *enkf_main);
 
-extern "C" state_map_type *
-enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
-                                   const char *case_path);
+StateMap enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
+                                            const char *case_path);
 
 extern "C" queue_config_type *
 enkf_main_get_queue_config(enkf_main_type *enkf_main);

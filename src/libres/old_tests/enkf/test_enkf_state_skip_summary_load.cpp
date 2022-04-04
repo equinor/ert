@@ -33,12 +33,12 @@ bool check_ecl_sum_loaded(const enkf_main_type *enkf_main) {
     run_arg_type *run_arg2 = run_arg_alloc_ENSEMBLE_EXPERIMENT(
         "run_id", fs, 0, 0, "simulations/run1", job_name);
 
-    state_map_type *state_map = enkf_fs_get_state_map(fs);
-    state_map_iset(state_map, 0, STATE_INITIALIZED);
+    auto &state_map = enkf_fs_get_state_map(fs);
+    state_map.set(0, STATE_INITIALIZED);
 
     auto error = enkf_state_load_from_forward_model(state1, run_arg1);
 
-    state_map_iset(state_map, 1, STATE_INITIALIZED);
+    state_map.set(1, STATE_INITIALIZED);
     error = enkf_state_load_from_forward_model(state2, run_arg2);
 
     free(job_name);

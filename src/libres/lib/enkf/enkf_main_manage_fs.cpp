@@ -76,7 +76,7 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     enkf_fs_type *target_case_fs,
                                     const std::vector<bool> &iens_mask,
                                     const std::vector<std::string> &node_list) {
-    state_map_type *target_state_map = enkf_fs_get_state_map(target_case_fs);
+    auto &target_state_map = enkf_fs_get_state_map(target_case_fs);
 
     for (auto &node : node_list) {
         enkf_config_node_type *config_node =
@@ -95,7 +95,7 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                     enkf_node_copy(config_node, source_case_fs, target_case_fs,
                                    src_id, target_id);
 
-                state_map_iset(target_state_map, src_iens, STATE_INITIALIZED);
+                target_state_map.set(src_iens, STATE_INITIALIZED);
             }
             src_iens++;
         }
@@ -486,11 +486,10 @@ bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
     return exists;
 }
 
-state_map_type *
-enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
-                                   const char *case_path) {
+StateMap enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
+                                            const char *case_path) {
     char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-    state_map_type *state_map = enkf_fs_alloc_readonly_state_map(mount_point);
+    auto state_map = enkf_fs_alloc_readonly_state_map(mount_point);
     free(mount_point);
     return state_map;
 }

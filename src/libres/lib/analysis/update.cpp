@@ -108,8 +108,7 @@ void deserialize_node(enkf_fs_type *fs,
     // deserialize the matrix into the node (and writes it to the fs)
     enkf_node_deserialize(node, fs, node_id, active_list, A, row_offset,
                           column);
-    state_map_update_undefined(enkf_fs_get_state_map(fs), iens,
-                               STATE_INITIALIZED);
+    enkf_fs_get_state_map(fs).update_undefined(iens, STATE_INITIALIZED);
     enkf_node_free(node);
 }
 
@@ -268,10 +267,9 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
             enkf_node_free(data_node);
         }
 
-        state_map_type *target_state_map = enkf_fs_get_state_map(target_fs);
-        state_map_set_from_inverted_mask(target_state_map, ens_mask,
-                                         STATE_PARENT_FAILURE);
-        state_map_set_from_mask(target_state_map, ens_mask, STATE_INITIALIZED);
+        auto &target_state_map = enkf_fs_get_state_map(target_fs);
+        target_state_map.set_from_inverted_mask(ens_mask, STATE_PARENT_FAILURE);
+        target_state_map.set_from_mask(ens_mask, STATE_INITIALIZED);
         enkf_fs_fsync(target_fs);
     }
 }

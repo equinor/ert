@@ -102,8 +102,8 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
                            const std::vector<std::string> &param_list,
                            init_mode_type init_mode) {
     int iens = enkf_state->__iens;
-    state_map_type *state_map = enkf_fs_get_state_map(fs);
-    realisation_state_enum current_state = state_map_iget(state_map, iens);
+    auto &state_map = enkf_fs_get_state_map(fs);
+    realisation_state_enum current_state = state_map.get(iens);
     if ((current_state == STATE_PARENT_FAILURE) && (init_mode != INIT_FORCE))
         return;
     else {
@@ -124,8 +124,7 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
 
             enkf_node_free(param_node);
         }
-        state_map_update_matching(state_map, iens,
-                                  STATE_UNDEFINED | STATE_LOAD_FAILURE,
+        state_map.update_matching(iens, STATE_UNDEFINED | STATE_LOAD_FAILURE,
                                   STATE_INITIALIZED);
         enkf_fs_fsync(fs);
     }
@@ -460,13 +459,12 @@ enkf_state_load_from_forward_model__(ensemble_config_type *ens_config,
         result = enkf_state_internalize_results(ens_config, model_config,
                                                 ecl_config, run_arg);
     }
-    state_map_type *state_map =
-        enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
+    auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     int iens = run_arg_get_iens(run_arg);
     if (result.first != LOAD_SUCCESSFUL)
-        state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
+        state_map.set(iens, STATE_LOAD_FAILURE);
     else
-        state_map_iset(state_map, iens, STATE_HAS_DATA);
+        state_map.set(iens, STATE_HAS_DATA);
 
     return result;
 }
@@ -531,9 +529,8 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
         run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
 
-    state_map_type *state_map =
-        enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
-    state_map_iset(state_map, run_arg_get_iens(run_arg), STATE_LOAD_FAILURE);
+    auto &state_map = enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
+    state_map.set(run_arg_get_iens(run_arg), STATE_LOAD_FAILURE);
     return false;
 }
 

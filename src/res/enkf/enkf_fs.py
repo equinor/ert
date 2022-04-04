@@ -25,6 +25,7 @@ from res.enkf.enums import EnKFFSType
 from res.enkf.state_map import StateMap
 from res.enkf.summary_key_set import SummaryKeySet
 from res.enkf.util import TimeMap
+from res import _lib
 
 from res._lib import update
 
@@ -46,7 +47,6 @@ class EnkfFs(BaseCClass):
         bind=False,
     )
     _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
-    _get_state_map = ResPrototype("state_map_ref enkf_fs_get_state_map(enkf_fs)")
     _summary_key_set = ResPrototype(
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
@@ -75,7 +75,7 @@ class EnkfFs(BaseCClass):
 
     def getStateMap(self) -> StateMap:
         """@rtype: StateMap"""
-        return self._get_state_map().setParent(self)
+        return _lib.enkf_fs.get_state_map(self)
 
     def getCaseName(self):
         """@rtype: str"""

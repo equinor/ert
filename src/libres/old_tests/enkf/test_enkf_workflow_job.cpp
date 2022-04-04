@@ -148,11 +148,11 @@ void test_init_case_job(ert_test_context_type *test_context,
 
         enkf_fs_type *default_fs =
             enkf_main_mount_alt_fs(enkf_main, "default", true);
-        state_map_type *default_state_map = enkf_fs_get_state_map(default_fs);
-        state_map_type *current_state_map =
+        auto &default_state_map = enkf_fs_get_state_map(default_fs);
+        auto &current_state_map =
             enkf_fs_get_state_map(enkf_main_get_fs(enkf_main));
-        test_assert_int_equal(state_map_get_size(default_state_map),
-                              state_map_get_size(current_state_map));
+        test_assert_int_equal(default_state_map.size(),
+                              current_state_map.size());
         enkf_fs_decref(default_fs);
     }
 
@@ -172,10 +172,9 @@ void test_init_case_job(ert_test_context_type *test_context,
 
         enkf_fs_type *default_fs =
             enkf_main_mount_alt_fs(enkf_main, "default", true);
-        state_map_type *default_state_map = enkf_fs_get_state_map(default_fs);
-        state_map_type *new_state_map = enkf_fs_get_state_map(fs);
-        test_assert_int_equal(state_map_get_size(default_state_map),
-                              state_map_get_size(new_state_map));
+        auto &default_state_map = enkf_fs_get_state_map(default_fs);
+        auto &new_state_map = enkf_fs_get_state_map(fs);
+        test_assert_int_equal(default_state_map.size(), new_state_map.size());
         enkf_fs_decref(fs);
     }
 

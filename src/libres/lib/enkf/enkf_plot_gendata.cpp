@@ -131,11 +131,10 @@ static void enkf_plot_gendata_resize(enkf_plot_gendata_type *plot_gendata,
 void enkf_plot_gendata_load(enkf_plot_gendata_type *plot_data, enkf_fs_type *fs,
                             int report_step) {
 
-    state_map_type *state_map = enkf_fs_get_state_map(fs);
-    int ens_size = state_map_get_size(state_map);
+    auto &state_map = enkf_fs_get_state_map(fs);
+    int ens_size = state_map.size();
 
-    const auto &mask =
-        state_map_select_matching(state_map, STATE_HAS_DATA, true);
+    const auto &mask = state_map.select_matching(STATE_HAS_DATA, true);
     enkf_plot_gendata_resize(plot_data, ens_size);
     plot_data->report_step = report_step;
 

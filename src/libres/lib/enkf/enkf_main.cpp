@@ -384,22 +384,19 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                         // permit is released when exiting scope.
                         std::scoped_lock lock(execution_limiter);
 
-                        auto *state_map = enkf_fs_get_state_map(
+                        auto &state_map = enkf_fs_get_state_map(
                             run_arg_get_sim_fs(ert_run_context_iget_arg(
                                 run_context, realisation)));
 
-                        state_map_update_undefined(state_map, realisation,
+                        state_map.update_undefined(realisation,
                                                    STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
                             enkf_main_iget_state(enkf_main, realisation),
                             ert_run_context_iget_arg(run_context, realisation));
-                        if (status.first == LOAD_SUCCESSFUL) {
-                            state_map_iset(state_map, realisation,
-                                           STATE_HAS_DATA);
-                        } else {
-                            state_map_iset(state_map, realisation,
-                                           STATE_LOAD_FAILURE);
-                        }
+                        state_map.set(realisation,
+                                      status.first == LOAD_SUCCESSFUL
+                                          ? STATE_HAS_DATA
+                                          : STATE_LOAD_FAILURE);
                         return status;
                     },
                     iens, std::ref(concurrently_executing_threads))));
@@ -646,6 +643,9 @@ void init_active_run(const res_config_type *res_config,
 }
 } // namespace enkf_main
 
+#include "./enkf_main_ensemble.cpp"
+#include "./enkf_main_manage_fs.cpp"
+
 RES_LIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def("get_observation_keys", get_observation_keys);
@@ -667,6 +667,3 @@ RES_LIB_SUBMODULE("enkf_main", m) {
         },
         py::arg("res_config"), py::arg("run_arg"), py::arg("subst_list"));
 }
-
-#include "enkf_main_ensemble.cpp"
-#include "enkf_main_manage_fs.cpp"

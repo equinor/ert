@@ -31,8 +31,8 @@ bool check_ecl_sum_compatible(const enkf_main_type *enkf_main) {
     run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
         "run_id", fs, 0, 0, "simulations/run0", job_name);
 
-    state_map_type *state_map = enkf_fs_get_state_map(fs);
-    state_map_iset(state_map, 0, STATE_INITIALIZED);
+    auto &state_map = enkf_fs_get_state_map(fs);
+    state_map.set(0, STATE_INITIALIZED);
 
     auto error = enkf_state_load_from_forward_model(state, run_arg);
 

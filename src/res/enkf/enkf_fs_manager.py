@@ -100,10 +100,6 @@ class EnkfFsManager(BaseCClass):
         "void enkf_main_init_current_case_from_existing(enkf_fs_manager, enkf_fs, int)"
     )
 
-    _alloc_readonly_state_map = ResPrototype(
-        "state_map_obj enkf_main_alloc_readonly_state_map(enkf_fs_manager, char*)"
-    )
-
     DEFAULT_CAPACITY = 5
 
     def __init__(self, enkf_main: "EnKFMain", capacity: int = DEFAULT_CAPACITY):
@@ -262,7 +258,7 @@ class EnkfFsManager(BaseCClass):
             fs = self.getFileSystem(case)
             return fs.getStateMap()
         else:
-            return self._alloc_readonly_state_map(case)
+            return _lib.enkf_fs.alloc_readonly_state_map(case)
 
     def isCaseHidden(self, case_name: str) -> bool:
         return case_name.startswith(".")

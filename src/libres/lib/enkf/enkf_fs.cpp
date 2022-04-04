@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include "ert/python.hpp"
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -153,7 +154,7 @@ struct enkf_fs_struct {
     /** Whether this filesystem has been mounted read-only. */
     bool read_only;
     time_map_type *time_map;
-    state_map_type *state_map;
+    std::shared_ptr<StateMap> state_map;
     summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
      * enkf_fs storage directory, but not as serialized enkf_nodes. */
@@ -211,7 +212,7 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
-    fs->state_map = state_map_alloc();
+    fs->state_map = std::make_shared<StateMap>();
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
     fs->read_only = true;
@@ -344,7 +345,11 @@ static void enkf_fs_fread_time_map(enkf_fs_type *fs) {
 
 static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
-    state_map_fwrite(fs->state_map, filename);
+    try {
+        fs->state_map->write(filename);
+    } catch (std::ios_base::failure &) {
+        // Write errors are ignored
+    }
     free(filename);
 }
 
@@ -356,7 +361,11 @@ static void enkf_fs_fsync_summary_key_set(enkf_fs_type *fs) {
 
 static void enkf_fs_fread_state_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
-    state_map_fread(fs->state_map, filename);
+    try {
+        fs->state_map->read(filename);
+    } catch (const std::ios_base::failure &) {
+        /* Read error is ignored. StateMap is reset */
+    }
     free(filename);
 }
 
@@ -366,12 +375,12 @@ static void enkf_fs_fread_summary_key_set(enkf_fs_type *fs) {
     free(filename);
 }
 
-state_map_type *enkf_fs_alloc_readonly_state_map(const char *mount_point) {
+StateMap enkf_fs_alloc_readonly_state_map(const char *mount_point) {
     path_fmt_type *path_fmt = path_fmt_alloc_directory_fmt(DEFAULT_CASE_PATH);
     char *filename =
         path_fmt_alloc_file(path_fmt, false, mount_point, STATE_MAP_FILE);
 
-    state_map_type *state_map = state_map_fread_alloc_readonly(filename);
+    StateMap state_map(filename, true);
 
     path_fmt_free(path_fmt);
     free(filename);
@@ -470,7 +479,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     path_fmt_free(fs->case_tstep_fmt);
     path_fmt_free(fs->case_tstep_member_fmt);
 
-    state_map_free(fs->state_map);
     summary_key_set_free(fs->summary_key_set);
     time_map_free(fs->time_map);
     misfit_ensemble_free(fs->misfit_ensemble);
@@ -647,9 +655,7 @@ time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs) {
     return fs->time_map;
 }
 
-state_map_type *enkf_fs_get_state_map(const enkf_fs_type *fs) {
-    return fs->state_map;
-}
+StateMap &enkf_fs_get_state_map(enkf_fs_type *fs) { return *fs->state_map; }
 
 summary_key_set_type *enkf_fs_get_summary_key_set(const enkf_fs_type *fs) {
     return fs->summary_key_set;
@@ -668,3 +674,22 @@ void enkf_fs_decrease_run_count(enkf_fs_type *fs) {
 }
 
 bool enkf_fs_is_running(const enkf_fs_type *fs) { return (fs->runcount > 0); }
+
+RES_LIB_SUBMODULE("enkf_fs", m) {
+    using namespace py::literals;
+
+    m.def(
+        "get_state_map",
+        [](py::handle self) {
+            auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+            return enkf_fs->state_map;
+        },
+        "self"_a);
+
+    m.def(
+        "alloc_readonly_state_map",
+        [](const std::string &ensemble_name) {
+            return enkf_fs_alloc_readonly_state_map(ensemble_name.c_str());
+        },
+        "ensemble_name"_a);
+}

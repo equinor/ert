@@ -37,8 +37,8 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
         "run_id", fs, iens, iter, "simulations/run0", job_name);
     {
 
-        state_map_type *state_map = enkf_fs_get_state_map(fs);
-        state_map_update_undefined(state_map, 0, STATE_INITIALIZED);
+        auto &state_map = enkf_fs_get_state_map(fs);
+        state_map.update_undefined(0, STATE_INITIALIZED);
 
         enkf_state_load_from_forward_model(enkf_main_iget_state(enkf_main, 0),
                                            run_arg);
