@@ -51,12 +51,9 @@ int main(int argc, char **argv) {
         }
 
         {
-            state_map_type *map1 =
-                enkf_fs_get_state_map(enkf_main_get_fs(enkf_main));
-            state_map_type *map2 =
-                enkf_main_alloc_readonly_state_map(enkf_main, "enkf");
-            test_assert_true(state_map_equal(map1, map2));
-            state_map_free(map2);
+            auto &map1 = enkf_fs_get_state_map(enkf_main_get_fs(enkf_main));
+            auto map2 = enkf_main_read_state_map(enkf_main, "enkf");
+            test_assert_true(map1 == map2);
         }
         {
             enkf_fs_type *fs1 =

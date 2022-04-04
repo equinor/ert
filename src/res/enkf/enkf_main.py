@@ -99,9 +99,6 @@ class EnKFMain(BaseCClass):
     _initialize_current_case_from_existing = ResPrototype(
         "void enkf_main_init_current_case_from_existing(enkf_main, enkf_fs, int)"
     )
-    _alloc_readonly_state_map = ResPrototype(
-        "state_map_obj enkf_main_alloc_readonly_state_map(enkf_main, char*)"
-    )
 
     def __init__(
         self, config: "ResConfig", strict: bool = True, read_only: bool = False
@@ -482,7 +479,7 @@ class EnKFMain(BaseCClass):
             fs = self.getFileSystem(case)
             return fs.getStateMap()
         else:
-            return self._alloc_readonly_state_map(case)
+            return enkf_main.read_state_map(self, case)
 
     def isCaseHidden(self, case_name: str) -> bool:
         return case_name.startswith(".")

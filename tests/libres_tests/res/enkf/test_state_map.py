@@ -65,8 +65,6 @@ class StateMapTest(ResTest):
         self.assertEqual(state_map[4], RealizationStateEnum.STATE_UNDEFINED)
         self.assertEqual(state_map[5], RealizationStateEnum.STATE_INITIALIZED)
 
-        self.assertFalse(state_map.isReadOnly())
-
         with TestAreaContext("python/state-map/fwrite"):
             state_map.save("MAP")
             s2 = StateMap("MAP")
