@@ -7,7 +7,6 @@
 #include <ert/analysis/ies/ies.hpp>
 
 void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
-    rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     ies::config::Config ies_config(false);
     ies_config.truncation(1.00);
 
@@ -19,7 +18,6 @@ void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
                                    ies_config.truncation(), false, W0, 1, 1);
 
     A2 *= X;
-    rng_free(rng);
 }
 
 /*
