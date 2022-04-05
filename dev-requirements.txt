@@ -4,8 +4,11 @@ cmake-format
 decorator
 flake8>=4.0.0
 jsonpath_ng
+jupytext
 mock; python_version <= '3.7' # missing AsyncMock added in py38
+nbsphinx
 pylint
+pypandoc
 pytest-asyncio
 pytest-cov
 pytest-mock
@@ -24,4 +27,3 @@ sphinx_rtd_theme
 sphinx-argparse
 sphinx-autoapi
 sphinxcontrib.datatemplates
-jupytext
