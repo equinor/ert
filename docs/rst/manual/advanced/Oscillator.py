@@ -14,7 +14,7 @@
 # ---
 
 # %% [markdown]
-# ## History matching using oscillator function
+# # Example: Oscillator
 
 # %%
 # Simple plotting of forward-model with a single response and parameters
