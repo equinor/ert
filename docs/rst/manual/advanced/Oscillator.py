@@ -45,15 +45,16 @@ import numpy as np
 from math import sqrt
 from scipy.special import erf
 
+
 def _generate_observations(K):
 
-    x =_evaluate(omega=3.5e-2, lmbda=3e-4, K=K)
+    x = _evaluate(omega=3.5e-2, lmbda=3e-4, K=K)
     rng = np.random.default_rng(12345)
     nobs = 50
     obs_points = np.linspace(0, K, nobs, endpoint=False, dtype=int)
-    
+
     obs_with_std = np.zeros(shape=(len(obs_points), 2))
-    
+
     for obs_idx, obs_point in enumerate(obs_points):
         # Set observation error's standard deviation to some
         # percentage of the amplitude of x with a minimum of, e.g., 1.
@@ -70,9 +71,7 @@ def _evaluate(omega, lmbda, K):
 
     # Looping from 2 because we have initial conditions at k=0 and k=1.
     for k in range(2, K - 1):
-        M = np.array(
-            [[2 + omega ** 2 - lmbda ** 2 * x[k] ** 2, -1], [1, 0]]
-        )
+        M = np.array([[2 + omega**2 - lmbda**2 * x[k] ** 2, -1], [1, 0]])
         u = np.array([x[k], x[k - 1]])
         u = M @ u
         x[k + 1] = u[0]
@@ -90,11 +89,13 @@ def forward_model(A, prior, response_x_axis):
     responses = []
     for [omega, lmbda] in A.T:
         r = _evaluate(
-            omega=uniform(omega, *prior[0]), lmbda=uniform(lmbda, *prior[1]),
+            omega=uniform(omega, *prior[0]),
+            lmbda=uniform(lmbda, *prior[1]),
             K=len(response_x_axis),
         )
         responses.append(r)
     return np.array(responses).T
+
 
 response_x_axis = range(2500)
 realizations = 100
@@ -150,7 +151,7 @@ def iterative_smoother():
     module_config = ies.Config(True)
 
     for i in range(iterations):
-        
+
         plot_result(A_current, response_x_axis, uniform, priors, True)
         responses_before = forward_model(A_current, priors, response_x_axis)
         S = responses_before[observation_x_axis]

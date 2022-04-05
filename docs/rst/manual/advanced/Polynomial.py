@@ -24,7 +24,7 @@ from matplotlib import pyplot as plt
 def plot_result(
     A, response_x_axis, trans_func=lambda x: x, priors=[], show_params=False
 ):
-    responses = forward_model(A,priors, response_x_axis)
+    responses = forward_model(A, priors, response_x_axis)
     plt.rcParams["figure.figsize"] = [15, 4]
     figures = 1 + len(A) if show_params else 1
     fig, axs = plt.subplots(1, figures)
@@ -44,6 +44,7 @@ def plot_result(
 import numpy as np
 from scipy.special import erf
 from math import sqrt
+
 
 def uniform(x, min_x, max_x):
     y = 0.5 * (1 + erf(x / sqrt(2.0)))
@@ -113,7 +114,7 @@ def iterative_smoother():
     module_config = ies.Config(True)
 
     for i in range(iterations):
-        
+
         plot_result(A_current, response_x_axis, uniform, priors, True)
         responses_before = forward_model(A_current, priors, response_x_axis)
         S = responses_before[observation_x_axis]

@@ -41,7 +41,7 @@ jobs:
 
     - name: Run black
       run: |
-        pip install black==22.1.0
+        pip install black[jupyter]==22.1.0
         black . --check
 
     - name: Run pylint
