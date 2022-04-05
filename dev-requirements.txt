@@ -6,7 +6,6 @@ flake8>=4.0.0
 jsonpath_ng
 jupytext
 mock; python_version <= '3.7' # missing AsyncMock added in py38
-myst-nb
 pylint
 pytest-asyncio
 pytest-cov
