@@ -122,6 +122,10 @@ def _build_status_argparser(subparsers: Any) -> None:
     subparsers.add_parser("status", help="Report the status of all experiments")
 
 
+def _build_visualise_argparser(subparsers: Any) -> None:
+    subparsers.add_parser("vis", help="Starts webviz-ert for ert3")
+
+
 def _build_clean_argparser(subparsers: Any) -> None:
     export_parser = subparsers.add_parser("clean", help="Clean experiments")
     group = export_parser.add_mutually_exclusive_group(required=True)
@@ -181,6 +185,7 @@ def _build_argparser() -> Any:
     _build_status_argparser(subparsers)
     _build_clean_argparser(subparsers)
     _build_service_argparser(subparsers)
+    _build_visualise_argparser(subparsers)
 
     return parser
 
@@ -409,6 +414,11 @@ def _clean(workspace: Workspace, args: Any) -> None:
     ert3.console.clean(workspace, args.experiment_names, args.all)
 
 
+def _visualise(args: Any) -> None:
+    assert args.sub_cmd == "vis"
+    os.system("ert vis")
+
+
 def _service_check(args: Any) -> None:
     if args.service_name == "storage":
         try:
@@ -469,6 +479,9 @@ def _main() -> None:
         return
     elif args.sub_cmd == "service":
         _service(args)
+        return
+    elif args.sub_cmd == "vis":
+        _visualise(args)
         return
 
     # The remaining commands require an existing ert workspace:
