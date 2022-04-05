@@ -71,14 +71,22 @@ def test_response_comparison(run_poly_example_new_storage):
     new_storage_responses: Response = new_storage_client.post(
         "/gql",
         json={
-            "query": "{experiments{ensembles{responses{name, realizationIndex, userdata}}}}"
+            "query": (
+                "{experiments{ensembles{responses"
+                "{name, realizationIndex, userdata}"
+                "}}}"
+            )
         },
     )
 
     dark_storage_responses: Response = dark_storage_client.post(
         "/gql",
         json={
-            "query": "{experiments{ensembles{responses{name, realizationIndex, userdata}}}}"
+            "query": (
+                "{experiments{ensembles"
+                "{responses{name, realizationIndex, userdata}"
+                "}}}"
+            )
         },
     )
 
@@ -95,9 +103,6 @@ def test_response_comparison(run_poly_example_new_storage):
     def get_resp_dataframe(resp):
         stream = io.BytesIO(resp.content)
         return pd.read_csv(stream, index_col=0, float_precision="round_trip")
-
-    ds_dfs = []
-    ns_dfs = []
 
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json_ds = resp.json()

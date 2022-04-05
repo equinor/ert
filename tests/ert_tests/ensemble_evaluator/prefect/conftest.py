@@ -399,16 +399,19 @@ def mock_ws_monitor(unused_tcp_port):
 @pytest.fixture()
 def external_sum_function(tmpdir):
     with tmpdir.as_cwd():
-        # Create temporary module that defines a function `bar`
-        # 'bar' returns a call to different function 'internal_call' defined in the same python file
+        # Create temporary module that defines a function 'bar'. 'bar' returns a
+        # call to a different function 'internal_call', defined in the same
+        # python file.
         module_path = Path(tmpdir) / "foo"
         module_path.mkdir()
         init_file = module_path / "__init__.py"
         init_file.touch()
         file_path = module_path / "bar.py"
         file_path.write_text(
-            "def bar(coeffs):\n    return internal_call(coeffs)\n"
-            "def internal_call(coeffs):\n    return {'function_output':[sum(coeffs.values())]}\n"
+            "def bar(coeffs):\n"
+            "    return internal_call(coeffs)\n"
+            "def internal_call(coeffs):\n"
+            "    return {'function_output':[sum(coeffs.values())]}\n"
         )
         spec = importlib.util.spec_from_file_location("foo", str(file_path))
         module = importlib.util.module_from_spec(spec)
@@ -422,7 +425,8 @@ def external_sum_function(tmpdir):
         with pytest.raises(ModuleNotFoundError):
             import foo.bar
 
-        # Make sure the function is no longer available before we start creating the flow and task
+        # Make sure the function is no longer available before we start creating
+        # the flow and task
         del func
 
         return pickle_func

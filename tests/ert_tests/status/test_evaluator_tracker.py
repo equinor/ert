@@ -114,7 +114,8 @@ def make_mock_ee_monitor():
             # Expected progress matches combination of yielded snapshotevents
             # It is calculated as sum i=1:#phases of
             # (phase i completed realizations / phase i #realizations) / #phases.
-            # When a phase is in the past (current phase > phase),  phase progress is set to 1.0
+            # When a phase is in the past (current phase > phase),
+            # phase progress is set to 1.0
             [
                 (0 / 3) / 1,
                 (1 / 3) / 1,

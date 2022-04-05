@@ -34,9 +34,9 @@ def test_invalid_host_name():
         port_handler.find_available_port(custom_host=invalid_host)
 
     assert (
-        f"Trying to bind socket with what looks like an invalid hostname ({invalid_host})"
-        in str(exc_info.value)
-    )
+        "Trying to bind socket with what looks "
+        f"like an invalid hostname ({invalid_host})"
+    ) in str(exc_info.value)
 
 
 def test_get_family():
@@ -60,12 +60,12 @@ def test_gc_closes_socket(unused_tcp_port):
     assert orig_sock is not None
     assert orig_sock.fileno() != -1
 
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range,
             will_close_then_reopen_socket=True,
@@ -98,7 +98,7 @@ def _simulate_server(host, port, sock):
             conn, addr = sock.accept()
             try:
                 self.data = conn.recv(1024).decode()
-            except Exception as ex:
+            except Exception:
                 pass
 
     dummy_server = ServerThread()
@@ -120,7 +120,7 @@ already used port over permutations of 3 (boolean) parameters:
     - mode when obtaining the first socket (default/reuse)
     - activity on original socket or whether it is never used
     - original socket live or closed
-    
+
 The test-names encodes the permutation, the platform and finally
 whether subsequent calls to find_available_port() succeeds with
 default-mode and/or reuse-mode. For example:
@@ -132,11 +132,11 @@ then close it. On MacOS, trying to obtain it in default mode
 fails (nok) whereas obtaining it with reuse-flag succeeds (ok)
 
 
-Test identifier                           | mode  | activated | live 
+Test identifier                           | mode  | activated | live
 ------------------------------------------+-------+-----------+------
-test_def_passive_live_nok_nok_close_ok_ok | def   | false     | both 
+test_def_passive_live_nok_nok_close_ok_ok | def   | false     | both
 
-test_def_active_live_nok_nok              | def   | true      | true 
+test_def_active_live_nok_nok              | def   | true      | true
 test_def_active_close_macos_nok_ok        | def   | true      | false
 test_def_active_close_linux_nok_nok       | def   | true      | false
 
@@ -187,12 +187,12 @@ def test_def_passive_live_nok_nok_close_ok_ok(unused_tcp_port):
 
     # When the socket is kept open, this port can not be reused
     # with or without setting will_close_then_reopen_socket
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
@@ -250,7 +250,7 @@ def test_reuse_active_close_nok_ok(unused_tcp_port):
     orig_sock.close()
 
     # Using will_close_then_reopen_socket=False fails...
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
@@ -292,12 +292,12 @@ def test_reuse_active_live_nok_nok(unused_tcp_port):
 
     # Even with "will_close_then_reopen_socket"=True when obtaining original
     # socket, subsequent calls fails
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         _, port, sock = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
@@ -327,13 +327,13 @@ def test_def_active_live_nok_nok(unused_tcp_port):
     _simulate_server(host, port, orig_sock)
 
     # Immediately trying to bind to the same port fails...
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         host, port, sock = port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
     # ... also using will_close_then_reopen_socket=True
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         host, port, sock = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
@@ -351,8 +351,10 @@ def test_def_active_close_macos_nok_ok(unused_tcp_port):
     1. the original socket is obtained in default, recommended mode
     2. activity is triggered on the socket using a dummy-server/client
     3. socket is closed
-    4. after socket is closed the port can not be re-bound in default mode (TIME_WAIT?)...
-    5. ...but it can be re-bound with will_close_then_reopen_socket=True (ignoring TIME_WAIT)
+    4. after socket is closed the port can not be re-bound in
+       default mode (TIME_WAIT?)...
+    5. ...but it can be re-bound with will_close_then_reopen_socket=True
+       (ignoring TIME_WAIT)
     """
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
 
@@ -368,7 +370,7 @@ def test_def_active_close_macos_nok_ok(unused_tcp_port):
     orig_sock.close()
 
     # Immediately trying to bind to the same port fails
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         _, _, sock = port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
@@ -395,7 +397,8 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
     1. the original socket is obtained in default, recommended mode
     2. activity is triggered on the socket using a dummy-server/client
     3. socket is closed
-    4. after socket is closed the port can not be re-bound in default mode (TIME_WAIT?)...
+    4. after socket is closed the port can not be re-bound in
+       default mode (TIME_WAIT?)...
     5. ...nor with will_close_then_reopen_socket=True (not ignoring TIME_WAIT?)
     """
     custom_range = range(unused_tcp_port, unused_tcp_port + 1)
@@ -412,14 +415,14 @@ def test_def_active_close_linux_nok_nok(unused_tcp_port):
     orig_sock.close()
 
     # Immediately trying to bind to the same port fails
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         host, port, sock = port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
     # On Linux, setting will_close_then_reopen_socket=True in subsequent calls do
     # NOT allow reusing the port in this case
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         host, port, sock = port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
@@ -451,13 +454,13 @@ def test_reuse_passive_live_macos_nok_nok(unused_tcp_port):
     assert orig_sock.fileno() != -1
 
     # As long as the socket is kept alive this port can not be bound again...
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )
 
     # ... not even when setting will_close_then_reopen_socket=True
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range,
             custom_host="127.0.0.1",
@@ -491,7 +494,7 @@ def test_reuse_passive_live_linux_nok_ok(unused_tcp_port):
     assert orig_sock.fileno() != -1
 
     # As long as the socket is kept alive this port can not be bound again...
-    with pytest.raises(port_handler.NoPortsInRangeException) as exc_info:
+    with pytest.raises(port_handler.NoPortsInRangeException):
         port_handler.find_available_port(
             custom_range=custom_range, custom_host="127.0.0.1"
         )

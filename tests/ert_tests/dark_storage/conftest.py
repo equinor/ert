@@ -108,10 +108,10 @@ def run_poly_example_new_storage(monkeypatch, tmpdir, source_root):
 
     from ert_storage.testing.testclient import testclient_factory
 
-    with poly_dir.as_cwd(), testclient_factory() as ert_storage_client, dark_storage_app_(
+    with poly_dir.as_cwd(), testclient_factory() as ert_storage_cli, dark_storage_app_(
         monkeypatch
     ) as dark_app:
-        new_storage_client_ = new_storage_client(monkeypatch, ert_storage_client)
+        new_storage_client_ = new_storage_client(monkeypatch, ert_storage_cli)
 
         from ert_shared.feature_toggling import FeatureToggling
 

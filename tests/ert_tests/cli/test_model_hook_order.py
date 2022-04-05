@@ -101,7 +101,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
     ert_mock = MagicMock()
-    ert_mock.return_value.analysisConfig.return_value.getAnalysisIterConfig.return_value.getNumRetries.return_value = (
+    ert_mock.return_value.analysisConfig.return_value.getAnalysisIterConfig.return_value.getNumRetries.return_value = (  # noqa
         1
     )
     test_class = test_class(MagicMock(), MagicMock(), MagicMock())

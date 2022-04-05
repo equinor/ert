@@ -3,7 +3,6 @@ import asyncio
 from itertools import permutations
 from pathlib import Path
 import pickle
-import sys
 from typing import Set
 
 import cloudpickle

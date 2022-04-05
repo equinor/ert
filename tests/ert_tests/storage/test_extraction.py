@@ -98,8 +98,9 @@ class ErtConfigBuilder:
         f.write("INSTALL_JOB job JOB\n" "SIMULATION_JOB job\n")
 
         if self.job_script is None:
-            # true is an executable which should exist on the path for all normal distros
-            # and it is then reasonable to expect this instead of using hardcoded path
+            # true is an executable which should exist on the path for all
+            # normal distros and it is then reasonable to expect this instead of
+            # using hardcoded path
             (path / "JOB").write_text("EXECUTABLE true\n")
         else:
             (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
@@ -110,10 +111,11 @@ class ErtConfigBuilder:
 
     def _build_observations(self, path):
         """
-        Creates a TIME_MAP and OBS_CONFIG entry in the ERT config. The TIME_MAP is
-        required for ERT to load the OBS_CONFIG.
+        Creates a TIME_MAP and OBS_CONFIG entry in the ERT config. The TIME_MAP
+        is required for ERT to load the OBS_CONFIG.
 
-        Creates an 'obs_config.txt' file into which the generate observations are written.
+        Creates an 'obs_config.txt' file into which the generate observations
+        are written.
         """
         if not self._obs:
             return
@@ -123,7 +125,10 @@ class ErtConfigBuilder:
             f.write("OBS_CONFIG obs_config.txt\n")
             f.write("TIME_MAP time_map\n")
             f.write(
-                "GEN_DATA RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII\n"
+                (
+                    "GEN_DATA RES RESULT_FILE:poly_%d.out "
+                    "REPORT_STEPS:0 INPUT_FORMAT:ASCII\n"
+                )
             )
 
         with (path / "obs_config.txt").open("w") as f:
