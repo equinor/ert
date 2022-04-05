@@ -1,5 +1,4 @@
-click==8.0.2; python_version > '3.6'
-click<8; python_version <= '3.6'
+click
 cmake-format
 decorator
 flake8>=4.0.0
