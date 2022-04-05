@@ -3,10 +3,6 @@
 #include <Eigen/Dense>
 #include <variant>
 
-Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
-                                const Eigen::MatrixXd &U0,
-                                const double *inv_sig0);
-
 int enkf_linalg_svdS(const Eigen::MatrixXd &S,
                      const std::variant<double, int> &truncation,
                      Eigen::VectorXd &inv_sig0, Eigen::MatrixXd &U0);

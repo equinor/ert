@@ -116,15 +116,6 @@ void enkf_linalg_lowrankE(
     W = U0 * Sigma_inv.transpose() * svd.matrixU();
 }
 
-/** B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
-Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
-                                const Eigen::MatrixXd &U0,
-                                const Eigen::VectorXd &inv_sig0) {
-    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
-    return (nrens - 1.0) * Sigma_inv * U0.transpose() * R * U0 *
-           Sigma_inv.transpose();
-}
-
 void enkf_linalg_lowrankCinv(
     const Eigen::MatrixXd &S, const Eigen::MatrixXd &R,
     Eigen::MatrixXd &W,   /* Corresponding to X1 from Eq. 14.29 */
@@ -141,13 +132,15 @@ void enkf_linalg_lowrankCinv(
     Eigen::VectorXd inv_sig0(nrmin);
     enkf_linalg_svdS(S, truncation, inv_sig0, U0);
 
-    Eigen::MatrixXd B = enkf_linalg_Cee(nrens, R, U0, inv_sig0);
+    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
+
+    /* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
+    Eigen::MatrixXd B = (nrens - 1.0) * Sigma_inv * U0.transpose() * R * U0 *
+                        Sigma_inv.transpose();
 
     auto svd = B.bdcSvd(Eigen::ComputeThinU);
     Z = svd.matrixU();
     eig = svd.singularValues();
-
-    Eigen::MatrixXd Sigma_inv = inv_sig0.asDiagonal();
 
     /* Lambda1 = (I + Lambda)^(-1) */
     for (int i = 0; i < nrmin; i++)
