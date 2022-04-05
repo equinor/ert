@@ -14,6 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import List
+
 from cwrap import BaseCClass
 
 from res import ResPrototype
@@ -45,27 +47,43 @@ class AnalysisModule(BaseCClass):
     VARIABLE_NAMES = {
         "IES_MAX_STEPLENGTH": {
             "type": float,
-            "description": "Max step Length of Gauss Newton Iteration",
+            "min": 0.1,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton maximum steplength",
         },
         "IES_MIN_STEPLENGTH": {
             "type": float,
-            "description": "Min step Length of Gauss Newton Iteration",
+            "min": 0.1,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton minimum steplength",
         },
         "IES_DEC_STEPLENGTH": {
             "type": float,
-            "description": "Decline of step Length in Gauss Newton Iteration",
+            "min": 1.1,
+            "max": 10.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton steplength decline",
         },
-        "IES_INVERSION": {"type": int, "description": "Inversion algorithm"},
-        "IES_AAPROJECTION": {
-            "type": str,
-            "description": "Include projection Y (A^+A) for n<N-1",
-        },
-        "ENKF_TRUNCATION": {"type": float, "description": "Singular value truncation"},
-        "ENKF_SUBSPACE_DIMENSION": {
+        "IES_INVERSION": {
             "type": int,
-            "description": "Number of singular values",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "labelname": "Inversion algorithm",
         },
-        "ENKF_NCOMP": {"type": int, "description": "Number of singular values"},
+        "IES_AAPROJECTION": {
+            "type": bool,
+            "labelname": "Include AA projection",
+        },
+        "ENKF_TRUNCATION": {
+            "type": float,
+            "min": -2.0,
+            "max": 1,
+            "step": 0.01,
+            "labelname": "Singular value truncation",
+        },
     }
 
     def __init__(self, ens_size, name):
@@ -75,8 +93,7 @@ class AnalysisModule(BaseCClass):
 
         super().__init__(c_ptr)
 
-    def getVariableNames(self):
-        """@rtype: list of str"""
+    def getVariableNames(self) -> List[str]:
         items = []
         for name in AnalysisModule.VARIABLE_NAMES:
             if self.hasVar(name):
@@ -124,8 +141,7 @@ class AnalysisModule(BaseCClass):
     def checkOption(self, flag: AnalysisModuleOptionsEnum):
         return self._check_option(flag)
 
-    def hasVar(self, var):
-        """:rtype: bool"""
+    def hasVar(self, var: str) -> bool:
         return self._has_var(var)
 
     def getDouble(self, var):

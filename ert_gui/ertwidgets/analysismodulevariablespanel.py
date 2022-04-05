@@ -80,7 +80,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                     spinner = self.createSpinBox(
                         variable_name,
                         variable_value,
-                        variable_type,
                         analysis_module_variables_model,
                     )
 
@@ -123,14 +122,36 @@ class AnalysisModuleVariablesPanel(QWidget):
                     )
                     layout.addRow(label, None)
 
+        # Truncation of the eigenvalue spectrum is not possible when using exact inversion,
+        # hence the spinners for setting the amount of truncation are deactivated for exact inversion.
+        inversion_spinner = self.widget_from_layout(layout, "IES_INVERSION")
+        truncation_spinner = self.widget_from_layout(layout, "ENKF_TRUNCATION")
+        self.update_truncation_spinners(inversion_spinner.value(), truncation_spinner)
+        inversion_spinner.valueChanged.connect(
+            lambda value: self.update_truncation_spinners(value, truncation_spinner)
+        )
+
         self.setLayout(layout)
         self.blockSignals(False)
+
+    def update_truncation_spinners(
+        self, value: int, truncation_spinner: QDoubleSpinBox
+    ) -> None:
+        if value == 0:  # Exact inversion
+            truncation_spinner.setEnabled(False)
+        else:
+            truncation_spinner.setEnabled(True)
+
+    def widget_from_layout(self, layout: QFormLayout, widget_name: str) -> QWidget:
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget.objectName() == widget_name:
+                return widget
 
     def createSpinBox(
         self,
         variable_name,
         variable_value,
-        variable_type,
         analysis_module_variables_model,
     ):
         spinner = QSpinBox()
@@ -144,11 +165,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setSingleStep(
             analysis_module_variables_model.getVariableStepValue(variable_name)
         )
+        spinner.setObjectName(variable_name)
         if variable_value is not None:
             spinner.setValue(variable_value)
-        spinner.valueChanged.connect(
-            partial(self.valueChanged, variable_name, variable_type, spinner)
-        )
         return spinner
 
     def createCheckBox(self, variable_name, variable_value, variable_type):
@@ -179,6 +198,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             analysis_module_variables_model.getVariableStepValue(variable_name)
         )
         spinner.setValue(variable_value)
+        spinner.setObjectName(variable_name)
         spinner.valueChanged.connect(
             partial(self.valueChanged, variable_name, variable_type, spinner)
         )

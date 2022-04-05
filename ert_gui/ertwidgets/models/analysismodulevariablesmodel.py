@@ -14,71 +14,18 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import logging
+from typing import List
+
 from ert_shared.libres_facade import LibresFacade
 from res.analysis.analysis_module import AnalysisModule
 
 
-class AnalysisModuleVariablesModel(object):
+class AnalysisModuleVariablesModel:
 
-    _VARIABLE_NAMES = {
-        "IES_MAX_STEPLENGTH": {
-            "type": float,
-            "min": 0.1,
-            "max": 1.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton maximum steplength",
-        },
-        "IES_MIN_STEPLENGTH": {
-            "type": float,
-            "min": 0.1,
-            "max": 1.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton minimum steplength",
-        },
-        "IES_DEC_STEPLENGTH": {
-            "type": float,
-            "min": 1.1,
-            "max": 10.00,
-            "step": 0.1,
-            "labelname": "Gauss–Newton steplength decline",
-        },
-        "IES_INVERSION": {
-            "type": int,
-            "min": 0,
-            "max": 3,
-            "step": 1,
-            "labelname": "Inversion algorithm",
-        },
-        "IES_AAPROJECTION": {
-            "type": bool,
-            "labelname": "Include AA projection",
-        },
-        "ENKF_TRUNCATION": {
-            "type": float,
-            "min": -2.0,
-            "max": 1,
-            "step": 0.01,
-            "labelname": "Singular value truncation",
-        },
-        "ENKF_SUBSPACE_DIMENSION": {
-            "type": int,
-            "min": -2,
-            "max": 2147483647,
-            "step": 1,
-            "labelname": "Number of singular values",
-        },
-        "ENKF_NCOMP": {
-            "type": int,
-            "min": -2,
-            "max": 2147483647,
-            "step": 1,
-            "labelname": "Number of singular values",
-        },
-    }
+    _VARIABLE_NAMES = AnalysisModule.VARIABLE_NAMES
 
     @classmethod
-    def getVariableNames(cls, analysis_module: AnalysisModule):
-        """@rtype: list of str"""
+    def getVariableNames(cls, analysis_module: AnalysisModule) -> List[str]:
         assert isinstance(analysis_module, AnalysisModule)
         items = []
         for name in cls._VARIABLE_NAMES:
@@ -111,7 +58,7 @@ class AnalysisModuleVariablesModel(object):
         cls, facade: LibresFacade, analysis_module_name: str, name: str, value: str
     ):
         analysis_module = facade.get_analysis_module(analysis_module_name)
-        result = analysis_module.setVar(name, str(value))
+        analysis_module.setVar(name, str(value))
 
     @classmethod
     def getVariableValue(

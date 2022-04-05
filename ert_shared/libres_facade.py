@@ -1,7 +1,8 @@
 import logging
 
-from ecl.util.util import BoolVector
 from pandas import DataFrame
+
+from ecl.util.util import BoolVector
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from res.enkf.export import (
@@ -30,7 +31,7 @@ class LibresFacade:
     def get_analysis_config(self):
         return self._enkf_main.analysisConfig()
 
-    def get_analysis_module(self, module_name):
+    def get_analysis_module(self, module_name: str) -> AnalysisModule:
         return self._enkf_main.analysisConfig().getModule(module_name)
 
     def get_analysis_modules(self, iterable=False):
