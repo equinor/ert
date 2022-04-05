@@ -56,7 +56,7 @@ extensions = [
     "ert_narratives",
     "ert3_plugin_configs",
     "ert3_plugin_references",
-    "nbsphinx",
+    "myst_nb",
 ]
 
 # Autodoc settings:

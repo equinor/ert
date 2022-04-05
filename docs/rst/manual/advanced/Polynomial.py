@@ -14,7 +14,7 @@
 # ---
 
 # %% [markdown]
-# ## History matching using polynomial function
+# # Example: Polynomial function
 
 # %%
 # Simple plotting of forward-model with a single response and parameters
