@@ -8,7 +8,12 @@
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
-TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
+namespace ies {
+void linalg_exact_inversion(Eigen::MatrixXd &W0, const Eigen::MatrixXd &S,
+                            const Eigen::MatrixXd &H, double ies_steplength);
+} // namespace ies
+
+TEST_CASE("make_activeE", "[analysis]") {
     int obs_size = 3;
     int ens_size = 2;
 
@@ -37,7 +42,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     Ein(2, 1) = 3.5;
     data.store_initialE(Ein);
 
-    SECTION("ies_enkf_linalg_extract_active() does nothing when all "
+    SECTION("make_activeE() does nothing when all "
             "observations and realizations are active") {
         auto E = data.make_activeE();
         REQUIRE(Ein == E);
@@ -88,7 +93,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     rng_free(rng);
 }
 
-TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
+TEST_CASE("make_activeW", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
     ies::Data data(ens_size);
@@ -125,7 +130,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     }
 }
 
-SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
+SCENARIO("make_activeA", "[analysis]") {
     GIVEN("Inital setup") {
         const int ens_size = 4;
         const int obs_size = 10;
@@ -163,4 +168,28 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
             }
         }
     }
+}
+
+TEST_CASE("linalg_exact_inversion", "[analysis]") {
+    int ens_size = 5;
+    int obs_size = 3;
+
+    Eigen::MatrixXd W0{{1, 2, 3, 4, 5},
+                       {6, 7, 8, 9, 10},
+                       {11, 12, 13, 14, 15},
+                       {16, 17, 18, 19, 20},
+                       {21, 22, 23, 24, 25}};
+    Eigen::MatrixXd S = Eigen::MatrixXd::Constant(obs_size, ens_size, 1.0);
+    Eigen::MatrixXd H = Eigen::MatrixXd::Constant(obs_size, ens_size, 1.0);
+    double ies_steplength = 0.5;
+
+    ies::linalg_exact_inversion(W0, S, H, ies_steplength);
+
+    Eigen::MatrixXd Expected{{0.59375, 1.09375, 1.59375, 2.09375, 2.59375},
+                             {3.09375, 3.59375, 4.09375, 4.59375, 5.09375},
+                             {5.59375, 6.09375, 6.59375, 7.09375, 7.59375},
+                             {8.09375, 8.59375, 9.09375, 9.59375, 10.0938},
+                             {10.5938, 11.0938, 11.5938, 12.0938, 12.5938}};
+
+    REQUIRE(W0.isApprox(Expected, 1e-5));
 }

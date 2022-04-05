@@ -43,9 +43,6 @@ using Eigen::MatrixXd;
 namespace ies {
 void linalg_compute_AA_projection(const Eigen::MatrixXd &A, Eigen::MatrixXd &Y);
 
-Eigen::MatrixXd linalg_solve_S(const Eigen::MatrixXd &W0,
-                               const Eigen::MatrixXd &Y);
-
 void linalg_subspace_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
                                const Eigen::MatrixXd &E,
                                const Eigen::MatrixXd &R,
@@ -54,9 +51,8 @@ void linalg_subspace_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
                                const std::variant<double, int> &truncation,
                                double ies_steplength);
 
-void linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
-                            const Eigen::MatrixXd &S, const Eigen::MatrixXd &H,
-                            double ies_steplength);
+void linalg_exact_inversion(Eigen::MatrixXd &W0, const Eigen::MatrixXd &S,
+                            const Eigen::MatrixXd &H, double ies_steplength);
 } // namespace ies
 
 namespace {
@@ -82,13 +78,15 @@ ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
 
     Eigen::MatrixXd Y = Y0;
 
-    double nsc = 1.0 / sqrt(ens_size - 1.0);
+    /* Normalized predicted ensemble anomalies.
+       Line 4 of Algorithm 1, also (Eq. 30) 
+    */
+    Y = (1.0 / sqrt(ens_size - 1.0)) * (Y.colwise() - Y.rowwise().mean());
 
-    /*  Subtract mean of predictions to generate predicted ensemble anomaly matrix (Line 5) */
-    Y = nsc * (Y.colwise() -
-               Y.rowwise().mean()); // Y = Y * (I - (1 / ens_size) * 11')
-
-    /* COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1) */
+    /* A^+A projection is necessary when the parameter matrix has less rows than columns,
+       and when the forward model is non-linear.
+       Section 2.4.3 
+    */
     if (A.rows() > 0 && A.cols() > 0) {
         const int state_size = A.rows();
         if (state_size <= ens_size - 1) {
@@ -96,23 +94,31 @@ ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
         }
     }
 
-    /*
-     * When solving the system S = Y inv(Omega) we write
-     *   Omega^T S^T = Y^T (line 6)
-     */
-    Eigen::MatrixXd S = ies::linalg_solve_S(W0, Y);
+    /* Line 5 of Algorithm 1 */
+    Eigen::MatrixXd Omega =
+        (1.0 / sqrt(ens_size - 1.0)) * (W0.colwise() - W0.rowwise().mean());
+    Omega.diagonal().array() += 1.0;
 
-    /* INNOVATION H = S*W + D - Y   from Eq. (41) (Line 8)*/
-    Eigen::MatrixXd H = D + S * W0; // H=D=dobs + E - Y
+    /* Solving for the average sensitivity matrix.
+       Line 6 of Algorithm 1, also Section 2.5 
+    */
+    Omega.transposeInPlace();
+    Eigen::MatrixXd S = Omega.fullPivLu().solve(Y.transpose()).transpose();
+
+    /* Similar to the innovation term.
+       Differs in that `D` here is defined as dobs + E - Y instead of just dobs + E as in the paper. 
+       Line 7 of Algorithm 1, also Section 2.6
+    */
+    Eigen::MatrixXd H = D + S * W0;
 
     /* Store previous W for convergence test */
     Eigen::MatrixXd W = W0;
 
     /*
      * COMPUTE NEW UPDATED W                                                                        (Line 9)
-     *    W = W + ies_steplength * ( W - S'*(S*S'+R)^{-1} H )          (a)
+     *    W = W - ies_steplength * ( W - S'*(S*S'+R)^{-1} H )          (a)
      * which in the case when R=I can be rewritten as
-     *    W = W + ies_steplength * ( W - (S'*S + I)^{-1} * S' * H )    (b)
+     *    W = W - ies_steplength * ( W - (S'*S + I)^{-1} * S' * H )    (b)
      *
      * With R=I the subspace inversion (ies_inversion=1) solving Eq. (a) with singular value
      * trucation=1.000 gives exactly the same solution as the exact inversion (ies_inversion=0).
@@ -136,26 +142,20 @@ ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
      * ies_inversion=IES_INVERSION_EXACT(0)            -> exact inversion from (b) with exact R=I
      * ies_inversion=IES_INVERSION_SUBSPACE_EXACT_R(1) -> subspace inversion from (a) with exact R
      * ies_inversion=IES_INVERSION_SUBSPACE_EE_R(2)    -> subspace inversion from (a) with R=EE
-     * ies_inversion=IES_INVERSION_SUBSPACE_RE(3)      -> subspace inversion from (a) with R represented by E
+     * ies_inversion=IES_INVERSION_SUBSPACE_RE(3)      -> subspace inversion from (a) with R represented by E * E^T
      */
 
     if (ies_inversion != ies::IES_INVERSION_EXACT) {
         ies::linalg_subspace_inversion(W0, ies_inversion, E, R, S, H,
                                        truncation, ies_steplength);
     } else if (ies_inversion == ies::IES_INVERSION_EXACT) {
-        ies::linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength);
+        ies::linalg_exact_inversion(W0, S, H, ies_steplength);
     }
 
-    /*
-     * CONSTRUCT TRANFORM MATRIX X FOR CURRENT ITERATION (Line 10)
-     *   X= I + W/sqrt(N-1)
-     */
+    /* Line 9 of Algorithm 1 */
     Eigen::MatrixXd X = W0;
     X /= sqrt(ens_size - 1.0);
     X.diagonal().array() += 1;
-
-    /* COMPUTE ||W0 - W|| AND EVALUATE COST FUNCTION FOR PREVIOUS ITERATE (Line 12)*/
-    Eigen::MatrixXd DW = W0 - W;
 
     std::vector<double> costJ(ens_size);
     double local_costf = 0.0;
@@ -184,10 +184,6 @@ void ies::updateA(Data &data,
                   const std::variant<double, int> &truncation,
                   double ies_steplength) {
 
-    // Number of active realizations in current iteration
-    int ens_size = Yin.cols();
-    int state_size = A.rows();
-
     int iteration_nr = data.iteration_nr;
     /*
       Counting number of active observations for current iteration. If the
@@ -200,7 +196,6 @@ void ies::updateA(Data &data,
     data.store_initialA(A);
 
     /*
-     * Re-structure input matrices according to new active obs_mask and ens_size.
      * Allocates the local matrices to be used.
      * Copies the initial measurement perturbations for the active observations into the current E matrix.
      * Copies the inputs in D, Y and R into their local representations
@@ -226,7 +221,7 @@ void ies::updateA(Data &data,
     A = A0 * X;
 }
 
-/**  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
+/* Section 2.4.3 */
 void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
                                        Eigen::MatrixXd &Y) {
 
@@ -238,30 +233,7 @@ void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
     Y *= AAi;
 }
 
-/**
-* COMPUTE  Omega= I + W (I-11'/sqrt(ens_size))    from Eq. (36).                                   (Line 6)
-*  When solving the system S = Y inv(Omega) we write
-*     Omega^T S^T = Y^T
-*/
-Eigen::MatrixXd ies::linalg_solve_S(const Eigen::MatrixXd &W0,
-                                    const Eigen::MatrixXd &Y) {
-
-    /*  Here we compute the W (I-11'/N) / sqrt(N-1)  and transpose it).*/
-    Eigen::MatrixXd Omega =
-        W0; // Omega=data->W (from previous iteration used to solve for S)
-    double nsc = 1.0 / sqrt(W0.cols() - 1.0);
-    Omega =
-        nsc * (Omega.colwise() -
-               Omega.rowwise().mean()); // Omega = Omega * (I - (1 / N) * 11')
-    Omega.transposeInPlace();           // Omega=transpose(Omega)
-    Omega.diagonal().array() += 1.0;
-
-    Eigen::MatrixXd ST = Omega.fullPivLu().solve(Y.transpose());
-
-    return ST.transpose();
-}
-
-/**
+/*
 *  The standard inversion works on the equation
 *          S'*(S*S'+R)^{-1} H           (a)
 */
@@ -306,19 +278,16 @@ void ies::linalg_subspace_inversion(
     W0 = ies_steplength * S.transpose() * X3 + (1.0 - ies_steplength) * W0;
 }
 
-/**
-*  The standard inversion works on the equation
-*          S'*(S*S'+R)^{-1} H           (a)
-*  which in the case when R=I can be rewritten as
-*          (S'*S + I)^{-1} * S' * H     (b)
-*/
-void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
-                                 const Eigen::MatrixXd &S,
+/* Section 3.2 - Exact inversion */
+// This calculates (S^T*S + I_N)^{-1} by taking the SVD of (S^T*S + I_N),
+// and since (S^T*S + I_N) is symmetric positive semi-definite we have that U=V and hence
+// (S^T*S + I_N)^{-1} = U * \Sigma^{-1} * U^T.
+void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const Eigen::MatrixXd &S,
                                  const Eigen::MatrixXd &H,
                                  double ies_steplength) {
     int ens_size = S.cols();
 
-    MatrixXd StS = MatrixXd::Identity(ens_size, ens_size) + S.transpose() * S;
+    MatrixXd StS = S.transpose() * S + MatrixXd::Identity(ens_size, ens_size);
 
     auto svd = StS.bdcSvd(Eigen::ComputeFullU);
     MatrixXd Z = svd.matrixU();
@@ -381,9 +350,7 @@ Eigen::MatrixXd ies::makeD(const Eigen::VectorXd &obs_values,
 
     Eigen::MatrixXd D = E - S;
 
-    for (int i = 0; i < obs_values.rows(); i++)
-        for (int iens = 0; iens < D.cols(); iens++)
-            D(i, iens) += obs_values(i);
+    D.colwise() += obs_values;
 
     return D;
 }
