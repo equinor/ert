@@ -141,6 +141,7 @@ class ActiveRange:
         ):
             if realization_index != "" and int(realization_index) >= length:
                 raise ValueError(
-                    f"Realization out of ensemble bounds in {rangestring} for size {length}"
+                    f"Realization out of ensemble bounds in {rangestring} "
+                    f"for size {length}"
                 )
         return (rangestring, length)

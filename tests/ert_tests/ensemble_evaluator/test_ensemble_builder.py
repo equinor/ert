@@ -246,7 +246,7 @@ def test_io_transformation_required_for_unix():
             marks=pytest.mark.raises(
                 exception=ValueError,
                 match=(
-                    f".+does not allow 'from_record', only "
+                    ".+does not allow 'from_record', only "
                     + f"'{TransformationDirection.TO_RECORD}'"
                 ),
                 match_flags=(re.MULTILINE | re.DOTALL),
@@ -260,7 +260,7 @@ def test_io_transformation_required_for_unix():
             marks=pytest.mark.raises(
                 exception=ValueError,
                 match=(
-                    f".+does not allow 'to_record', only "
+                    ".+does not allow 'to_record', only "
                     + f"'{TransformationDirection.FROM_RECORD}'"
                 ),
                 match_flags=(re.MULTILINE | re.DOTALL),

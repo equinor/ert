@@ -19,6 +19,7 @@ from res.enkf.export import SummaryCollector
 
 _orig_loader = SummaryCollector.loadAllSummaryData
 
+
 # Define this in the module-scope. If defined as a class-method
 # it passes "self" when calling _orig_loader. There are probably
 # ways to handle this, but it's simpler to define it here

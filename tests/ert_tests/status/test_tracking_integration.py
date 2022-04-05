@@ -30,15 +30,19 @@ def check_expression(original, path_expression, expected, msg_start):
     match_found = False
     for match in jsonpath_expr.find(original):
         match_found = True
-        assert (
-            match.value == expected
-        ), f"{msg_start}{str(match.full_path)} value ({match.value}) is not equal to ({expected})"
+        assert match.value == expected, (
+            f"{msg_start}{str(match.full_path)} value "
+            f"({match.value}) is not equal to ({expected})"
+        )
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "experiment_folder,cmd_line_arguments,num_successful,num_iters,assert_present_in_snapshot",
+    (
+        "experiment_folder,cmd_line_arguments,"
+        "num_successful,num_iters,assert_present_in_snapshot"
+    ),
     [
         pytest.param(
             "max_runtime_poly_example",

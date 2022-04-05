@@ -70,7 +70,8 @@ class ErtTest(ExtendedTestCase):
     def createSharePath(cls, path):
         if cls.SHARE_ROOT is None:
             raise Exception(
-                "Trying to create directory rooted in 'SHARE_ROOT' - variable 'SHARE_ROOT' is not set."
+                "Trying to create directory rooted in 'SHARE_ROOT' - "
+                "variable 'SHARE_ROOT' is not set."
             )
         return os.path.realpath(os.path.join(cls.SHARE_ROOT, path))
 

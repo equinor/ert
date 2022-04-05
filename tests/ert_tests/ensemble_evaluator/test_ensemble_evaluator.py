@@ -35,8 +35,6 @@ from ert_shared.status.entity.state import (
 def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
     with evaluator.run() as monitor:
         events = monitor.track()
-        host = evaluator._config.host
-        port = evaluator._config.port
         token = evaluator._config.token
         cert = evaluator._config.cert
 
@@ -253,7 +251,7 @@ def test_verify_dispatch_failing_job(make_ee_config, event_loop):
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ensemble_evaluator_run_and_get_successful_realizations_connection_refused_no_recover(
+def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_recover(
     make_ee_config, num_realizations, num_failing
 ):
 
@@ -289,7 +287,7 @@ def dummy_iterator(dummy_str: str):
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_recover(
+def test_ens_eval_run_and_get_successful_realizations_connection_closed_recover(
     make_ee_config, num_realizations, num_failing
 ):
     ee_config = make_ee_config(
@@ -315,7 +313,7 @@ def test_ensemble_evaluator_run_and_get_successful_realizations_connection_close
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ensemble_evaluator_run_and_get_successful_realizations_connection_closed_no_recover(
+def test_ens_eval_run_and_get_successful_realizations_connection_closed_no_recover(
     make_ee_config, num_realizations, num_failing
 ):
     ee_config = make_ee_config(

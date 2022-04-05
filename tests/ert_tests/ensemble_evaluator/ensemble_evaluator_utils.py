@@ -210,7 +210,7 @@ class AutorunTestEnsemble(TestEnsemble):
                         {
                             "type": identifiers.EVTYPE_EE_USER_DONE,
                             "source": f"/ert/ee/{ee_id}",
-                            "id": f"event-user-done",
+                            "id": "event-user-done",
                         }
                     )
                 )

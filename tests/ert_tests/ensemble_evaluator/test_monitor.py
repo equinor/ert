@@ -25,7 +25,7 @@ def test_monitor_successful_ensemble(make_ee_config):
     )
 
     ee.run()
-    with NarrativeProxy(monitor_successful_ensemble()).proxy(ee_config.url) as port:
+    with NarrativeProxy(monitor_successful_ensemble()).proxy(ee_config.url):
         with ee_monitor.create(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
@@ -53,7 +53,7 @@ def test_monitor_failing_evaluation(make_ee_config):
     ee.run()
     with NarrativeProxy(
         monitor_failing_evaluation().on_uri(f"ws://localhost:{ee_config.port}")
-    ).proxy(ee_config.url) as port:
+    ).proxy(ee_config.url):
         with ee_monitor.create(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:
@@ -82,7 +82,7 @@ def test_monitor_failing_ensemble(make_ee_config):
         pass
     with NarrativeProxy(
         monitor_failing_ensemble().on_uri(f"ws://localhost:{ee_config.port}")
-    ).proxy(ee_config.url) as port:
+    ).proxy(ee_config.url):
         with ee_monitor.create(ee_config.get_connection_info()) as monitor:
             for event in monitor.track():
                 if event["type"] == identifiers.EVTYPE_EE_SNAPSHOT:

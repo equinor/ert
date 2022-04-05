@@ -255,7 +255,7 @@ def test_argparse_invalid_port_range(
 ):
     with pytest.raises(SystemExit):
 
-        parsed = ert_parser(
+        ert_parser(
             None,
             [
                 ENSEMBLE_EXPERIMENT_MODE,
