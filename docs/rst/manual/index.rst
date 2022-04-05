@@ -69,6 +69,13 @@ with model updates and uncertainty estimation. You can read more about the theor
    api_reference/index
 
 .. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Advanced
+
+   advanced/index
+
+.. toctree::
    :hidden:
    :caption: About
 
