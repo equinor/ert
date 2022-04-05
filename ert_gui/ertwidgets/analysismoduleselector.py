@@ -1,5 +1,3 @@
-import sys
-
 from qtpy.QtCore import QMargins, Qt
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QComboBox, QToolButton
 
