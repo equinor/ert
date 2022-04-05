@@ -786,8 +786,6 @@ General overview
 
 ERT supports an API for performing history matching based on data represented as numpy arrays.
 
-.. toctree::
-   Polynomial
+`Example using polynomial function <../_static/Polynomial.html>`_
 
-.. toctree::
-   Oscillator
+`Example using Oscillator function <../_static/Oscillator.html>`_
