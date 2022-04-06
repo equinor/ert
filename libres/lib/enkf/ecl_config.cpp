@@ -368,14 +368,20 @@ static void handle_has_end_date_key(ecl_config_type *ecl_config,
     const char *date_string = config_content_get_value(config, END_DATE_KEY);
     time_t end_date;
     bool end_date_parsed_ok = util_sscanf_isodate(date_string, &end_date);
-    if (!end_date_parsed_ok)
+    if (!end_date_parsed_ok) {
         end_date_parsed_ok = util_sscanf_date_utc(date_string, &end_date);
+        fprintf(stderr,
+                "** Deprecation warning: The date format as in \'%s\' is "
+                "deprecated, and its support will be removed in a future "
+                "release. Please use ISO date format YYYY-MM-DD.\n",
+                date_string);
+    }
     if (end_date_parsed_ok)
         ecl_config_set_end_date(ecl_config, end_date);
     else
         fprintf(stderr,
                 "** WARNING **: Failed to parse %s as a date - should be in "
-                "format YYYY-MM-DD or DD/MM/YYYY.\n",
+                "format YYYY-MM-DD.\n",
                 date_string);
 }
 
