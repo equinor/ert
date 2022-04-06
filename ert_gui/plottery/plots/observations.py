@@ -39,7 +39,7 @@ def _plotObservations(axes, plot_config, data, value_column):
         style.width = 0
 
     errorbars = axes.errorbar(
-        x=data.columns.get_level_values("key_index").values,
+        x=data.loc["key_index"].values,
         y=data.loc["OBS"].values,
         yerr=data.loc["STD"].values,
         fmt=style.line_style,
