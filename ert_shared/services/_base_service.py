@@ -41,7 +41,7 @@ def cleanup_service_files(signum, frame):
         file = Path(f"{service_name}_server.json")
         if file.exists():
             file.unlink()
-    raise OSError(f"Signal {signum} recieved.")
+    raise OSError(f"Signal {signum} received.")
 
 
 if threading.current_thread() is threading.main_thread():
