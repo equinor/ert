@@ -249,17 +249,58 @@ def mocked_requests_get(*args, **kwargs):
     ensemble = {
         "/ensembles/ens_id_1": {"name": "ensemble_1"},
         "/ensembles/ens_id_2": {"name": ".ensemble_2"},
+        "/ensembles/ens_id_3": {"name": "default_0"},
+        "/ensembles/ens_id_4": {"name": "default_1"},
+    }
+    observations = {
+        "/ensembles/ens_id_3/records/WOPR:OP1/observations": {
+            "name": "WOPR:OP1",
+            "errors": [0.05, 0.07],
+            "values": [0.1, 0.7],
+            "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+        },
+        "/ensembles/ens_id_4/records/WOPR:OP1/observations": {
+            "name": "WOPR:OP1",
+            "errors": [0.05, 0.07],
+            "values": [0.1, 0.7],
+            "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
+        },
+        "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199/observations": {
+            "name": "SNAKE_OIL_WPR_DIFF",
+            "errors": [0.05, 0.07, 0.05],
+            "values": [0.1, 0.7, 0.5],
+            "x_axis": [
+                "2010-03-31T00:00:00",
+                "2010-12-26T00:00:00",
+                "2011-12-21T00:00:00",
+            ],
+        },
+        "/ensembles/ens_id_4/records/SNAKE_OIL_WPR_DIFF@199/observations": {
+            "name": "WOPR:OP1",
+            "errors": [0.05, 0.07, 0.05],
+            "values": [0.1, 0.7, 0.5],
+            "x_axis": [
+                "2010-03-31T00:00:00",
+                "2010-12-26T00:00:00",
+                "2011-12-21T00:00:00",
+            ],
+        },
     }
 
     if args[0] in ensemble:
         return MockResponse({"userdata": ensemble[args[0]]}, 200)
+    elif args[0] in observations:
+        return MockResponse(
+            [observations[args[0]]],
+            200,
+        )
     elif "/experiments" in args[0]:
         return MockResponse(
             [
                 {
                     "name": "default",
                     "id": "exp_1",
-                    "ensemble_ids": ["ens_id_1", "ens_id_2"],
+                    "ensemble_ids": ["ens_id_1", "ens_id_2", "ens_id_3", "ens_id_4"],
                     "priors": {},
                     "userdata": {},
                 }
@@ -270,7 +311,19 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-def test_case_structure(api, monkeypatch):
+def test_case_structure(api):
+    cases = [case["name"] for case in api.get_all_cases_not_running()]
+    hidden_case = [
+        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
+    ]
+    expected = ["ensemble_1", ".ensemble_2", 'default_0', 'default_1']
+
+    assert cases == expected
+    assert hidden_case == [".ensemble_2"]
+
+
+@pytest.fixture
+def api(tmpdir, source_root, monkeypatch):
     from contextlib import contextmanager
 
     @contextmanager
@@ -279,18 +332,6 @@ def test_case_structure(api, monkeypatch):
 
     monkeypatch.setattr(Storage, "session", session)
 
-    cases = [case["name"] for case in api.get_all_cases_not_running()]
-    hidden_case = [
-        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
-    ]
-    expected = ["ensemble_1", ".ensemble_2"]
-
-    assert cases == expected
-    assert hidden_case == [".ensemble_2"]
-
-
-@pytest.fixture
-def api(tmpdir, source_root):
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data" / "local"
         test_data_dir = os.path.join(test_data_root, "snake_oil")
@@ -318,7 +359,7 @@ def get_key_name(val):
 def test_no_storage(case_name, key_def, api):
     shutil.rmtree("storage", ignore_errors=True)
     obs = key_def["observations"]
-    obs_data = api.observations_for_obs_keys(case_name, obs)
+    obs_data = api.observations_for_key(case_name, key_def["key"])
     data = api.data_for_key(case_name, key_def["key"])
     assert isinstance(obs_data, DataFrame)
     assert isinstance(data, DataFrame)
@@ -329,7 +370,7 @@ def test_no_storage(case_name, key_def, api):
 @pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
 def test_can_load_data_and_observations(case_name, key_def, api):
     obs = key_def["observations"]
-    obs_data = api.observations_for_obs_keys(case_name, obs)
+    obs_data = api.observations_for_key(case_name, key_def["key"])
     data = api.data_for_key(case_name, key_def["key"])
 
     assert isinstance(data, DataFrame)

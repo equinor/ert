@@ -13,9 +13,13 @@ logger = logging.getLogger(__name__)
 class PlotApi(object):
     def __init__(self, facade):
         self._facade = facade
+        self._all_cases = None
 
     def _get_all_cases(self) -> List[str]:
-        cases = []
+        if self._all_cases is not None:
+            return list(self._all_cases.keys())
+
+        self._all_cases = {}
         with Storage.session() as client:
             try:
                 response = client.get("/experiments")
@@ -25,8 +29,8 @@ class PlotApi(object):
                         response = client.get(f"/ensembles/{ensemble_id}")
                         response_json = response.json()
                         case_name = response_json["userdata"]["name"]
-                        cases.append(case_name)
-                return cases
+                        self._all_cases[case_name] = ensemble_id
+                return list(self._all_cases.keys())
             except Exception as e:
                 logging.exception(f"Could not retrieve case information! {str(e)}")
                 return []
@@ -64,7 +68,7 @@ class PlotApi(object):
     def get_all_cases_not_running(self) -> List:
         """Returns a list of all cases that are not running. For each case a dict with info about the case is
         returned"""
-        # Currently the ensemble information from the storage API does not contain any hint if a case is running or not
+        # Currently, the ensemble information from the storage API does not contain any hint if a case is running or not
         # for now we return all the cases, running or not
         cases = []
 
@@ -95,31 +99,35 @@ class PlotApi(object):
         except ValueError:
             return data
 
-    def observations_for_obs_keys(self, case, obs_keys):
+    def observations_for_key(self, case, key):
         """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
         is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
         where index/date is used to relate the observation to the data point it relates to, and obs_index is
         the index for the observation itself"""
         try:
-            measured_data = MeasuredData(
-                self._facade, obs_keys, case_name=case, load_data=False
-            )
-            data = measured_data.data
-        except loader.ObservationError:
-            data = pd.DataFrame()
-        expected_keys = ["OBS", "STD"]
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(
-                "Invalid type: {}, should be type: {}".format(type(data), pd.DataFrame)
-            )
-        elif not data.empty and not set(expected_keys).issubset(data.index):
-            raise ValueError(
-                "{} should be present in DataFrame index, missing: {}".format(
-                    ["OBS", "STD"], set(expected_keys) - set(data.index)
-                )
-            )
-        else:
-            return data
+            with Storage.session() as client:
+                if self._all_cases is None:
+                    self._get_all_cases()
+                resp = client.get(
+                    f"/ensembles/{self._all_cases[case]}/records/{key}/observations"
+                ).json()
+                obs = resp[0]
+                try:
+                    int(obs["x_axis"][0])
+                    key_index = [int(v) for v in obs["x_axis"]]
+                except ValueError:
+                    key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+
+                data_stuct = {
+                    "STD": obs["errors"],
+                    "OBS": obs["values"],
+                    "key_index": key_index,
+                }
+                print(pd.DataFrame(data_stuct).T)
+                return pd.DataFrame(data_stuct).T
+        except Exception as e:
+            logger.error(f"Could not retrieve observations. \n ERROR: {e}")
+            return pd.DataFrame()
 
     def _add_index_range(self, data):
         """
