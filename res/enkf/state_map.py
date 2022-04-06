@@ -107,14 +107,14 @@ class StateMap(BaseCClass):
         @type select_mask: RealizationStateEnum
         """
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, True)
+        return _lib.state_map.select_matching(self, select_mask.value, True)
 
     def deselectMatching(self, select_mask):
         """
         @type select_mask: RealizationStateEnum
         """
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, False)
+        return _lib.state_map.select_matching(self, select_mask.value, False)
 
     def realizationList(self, state_value):
         """
