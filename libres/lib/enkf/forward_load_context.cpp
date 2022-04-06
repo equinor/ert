@@ -70,10 +70,12 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
         stringlist_type *data_files = stringlist_alloc_new();
 
         /* Should we load from a unified summary file, or from several non-unified files? */
-        if (unified_file != NULL)
+        if (unified_file != NULL) {
+            logger->info("Reading from unified file: {}", unified_file);
             /* Use unified file: */
             stringlist_append_copy(data_files, unified_file);
-        else {
+        } else {
+            logger->info("Using several non unified files, run_path: {}, eclbase: {}", run_path, eclbase);
             /* Use several non unified files. */
             /* Bypassing the query to model_config_load_results() */
             int report_step = run_arg_get_load_start(run_arg);
@@ -132,6 +134,9 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
                     ecl_config_get_end_date(load_context->ecl_config);
                 if (end_time > 0) {
                     if (ecl_sum_get_end_time(summary) < end_time) {
+                        logger->error("Summary vector shorter than expected "
+                                      "({} < {}), discarding summary instance",
+                                      ecl_sum_get_end_time(summary), end_time);
                         /* The summary vector was shorter than expected; we interpret this as
                a simulation failure and discard the current summary instance. */
 
@@ -159,8 +164,15 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
                     }
                     ecl_sum_free(summary);
                     summary = NULL;
-                }
+                } else
+                    logger->error("End time ({}) < 0 ", end_time);
             }
+        } else {
+            if (header_file)
+                logger->error("nr data_files ({}) < 0",
+                              stringlist_get_size(data_files));
+            else
+                logger->error("No header file (is NULL)");
         }
         stringlist_free(data_files);
         free(header_file);
