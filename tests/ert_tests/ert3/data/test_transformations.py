@@ -18,6 +18,7 @@ from ert.data import (
     CopyTransformation,
     EclSumTransformation,
     ExecutableTransformation,
+    FileTransformation,
     SerializationTransformation,
     NumericalRecord,
     NumericalRecordTree,
@@ -27,6 +28,8 @@ from ert.data import (
     TreeSerializationTransformation,
     TarTransformation,
 )
+from ert.exceptions import FileExistsException
+from ert.data.record._transformation import _BIN_FOLDER
 
 
 @contextlib.contextmanager
@@ -316,3 +319,53 @@ async def test_copy_with_directory(tmp_path):
         transformation = CopyTransformation(location=pathlib.Path("foo"))
         pathlib.Path(tmp_path / "foo").mkdir()
         await transformation.to_record(root_path=tmp_path)
+
+
+@pytest.mark.asyncio
+@from_record_params
+async def test_overwrite_fail(
+    record_transmitter_factory_context: ContextManager[
+        Callable[[str], RecordTransmitter]
+    ],
+    cls: Type[RecordTransformation],
+    args: list,
+    type: str,
+    files: List[str],
+    storage_path,
+    tmp_path,
+):
+    with record_transmitter_factory_context(
+        storage_path=storage_path
+    ) as record_transmitter_factory, record_factory_context(
+        tmp_path
+    ) as record_factory, tmp():
+
+        if not issubclass(cls, FileTransformation):
+            pytest.skip(
+                f"{cls} will not write anything, thus cannot be tested this way"
+            )
+
+        if cls == TarTransformation:
+            pytest.skip("this protection might not make sense for extracting archives")
+
+        transformation = cls(
+            *args, direction=TransformationDirection.FROM_RECORD
+        )  # type: ignore
+
+        record_in = record_factory(type=type)
+        transmitter = record_transmitter_factory(name="trans_custom")
+        await transmitter.transmit_record(record_in)
+        assert transmitter.is_transmitted()
+        record = await transmitter.load()
+
+        if cls == TreeSerializationTransformation:
+            for file_ in files:
+                (tmp_path / file_).touch()
+        elif cls == ExecutableTransformation:
+            (tmp_path / _BIN_FOLDER).mkdir()
+            (tmp_path / _BIN_FOLDER / transformation.location).touch()
+        else:
+            (tmp_path / transformation.location).touch()
+
+        with pytest.raises(FileExistsException):
+            await transformation.from_record(record, root_path=tmp_path)

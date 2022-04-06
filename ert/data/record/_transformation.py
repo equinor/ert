@@ -17,6 +17,7 @@ from ert.data import (
     Record,
 )
 from ert.serialization import get_serializer, has_serializer
+from ert.exceptions import FileExistsException
 from ert_shared.async_utils import get_event_loop
 
 _BIN_FOLDER = "bin"
@@ -416,6 +417,8 @@ async def _load_record_from_file(file: Path, mime: str) -> Record:
 
 
 async def _save_record_to_file(record: Record, location: Path, mime: str) -> None:
+    if location.exists():
+        raise FileExistsException(f"transformation failed: {location} exists")
     if isinstance(record, NumericalRecord):
         async with aiofiles.open(str(location), mode="wt", encoding="utf-8") as ft:
             await ft.write(get_serializer(mime).encode(record.data))
@@ -449,9 +452,10 @@ class TreeSerializationTransformation(SerializationTransformation):
             raise TypeError("Only NumericalRecordTrees can be transformed.")
         for key, leaf_record in record.flat_record_dict.items():
             location_key = f"{key}-{self.location}"
-            await get_serializer(self.mime).encode_to_path(
-                leaf_record.data, path=root_path / location_key
-            )
+            path = root_path / location_key
+            if path.exists():
+                raise FileExistsException(f"writing tree to file failed: {path} exists")
+            await get_serializer(self.mime).encode_to_path(leaf_record.data, path=path)
 
     async def to_record(self, root_path: Path = Path()) -> Record:
         raise NotImplementedError
