@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 from unittest.mock import MagicMock
@@ -33,6 +34,22 @@ def test_main_logging_argparse(monkeypatch, caplog):
     with caplog.at_level(logging.INFO):
         main.main()
     assert "mode='test_run'" in caplog.text
+
+
+def test_main_logging_config(monkeypatch, caplog, tmp_path):
+    os.chdir(tmp_path)
+    content = "Content of config.ert\nMore content."
+    with open("config.ert", "w", encoding="utf-8") as file_obj:
+        file_obj.write(content)
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+    monkeypatch.setattr(main, "run_cli", MagicMock())
+    monkeypatch.setattr(main, "start_ert_server", MagicMock())
+    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
+    monkeypatch.setattr(sys, "argv", ["ert", "test_run", "config.ert"])
+    with caplog.at_level(logging.INFO):
+        main.main()
+    assert "Content of the configuration file (config.ert):" in caplog.text
+    assert content in caplog.text
 
 
 def test_api_database_default(monkeypatch):
