@@ -96,9 +96,7 @@ class PlotWindow(QMainWindow):
                     case: self._api.data_for_key(case, key) for case in cases
                 }
                 if len(key_def["observations"]) > 0 and cases:
-                    observations = self._api.observations_for_obs_keys(
-                        cases[0], key_def["observations"]
-                    )
+                    observations = self._api.observations_for_key(cases[0], key)
                 else:
                     observations = None
 

@@ -63,7 +63,7 @@ def run_gui(args):
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     with Storage.connect_or_start_server(
-            res_config=os.path.basename(args.config)
+        res_config=os.path.basename(args.config)
     ) as storage:
         # window reference must be kept until app.exec returns
         notifier = ErtNotifier(args.config)
