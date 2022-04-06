@@ -145,16 +145,23 @@ bool time_map_fscanf(time_map_type *map, const char *filename) {
                     time_t date;
                     bool date_parsed_ok =
                         util_sscanf_isodate(date_string, &date);
-                    if (!date_parsed_ok)
+                    if (!date_parsed_ok) {
                         date_parsed_ok =
                             util_sscanf_date_utc(date_string, &date);
+                        fprintf(stderr,
+                                "** Deprecation warning: The date format as in "
+                                "\'%s\' is deprecated, and its support will be "
+                                "removed in a future release. Please use ISO "
+                                "date format YYYY-MM-DD.\n",
+                                date_string);
+                    }
                     if (date_parsed_ok) {
                         if (date > last_date)
                             time_t_vector_append(time_vector, date);
                         else {
                             fprintf(stderr,
                                     "** ERROR: The dates in %s must be in "
-                                    "stricly increasing order\n",
+                                    "strictly increasing order\n",
                                     filename);
                             fscanf_ok = false;
                             break;
@@ -162,8 +169,8 @@ bool time_map_fscanf(time_map_type *map, const char *filename) {
                     } else {
                         fprintf(stderr,
                                 "** ERROR: The string \'%s\' was not correctly "
-                                "parsed as a date (format: YYYY-MM-DD or "
-                                "DD/MM/YYYY) ",
+                                "parsed as a date. "
+                                "Please use ISO date format YYYY-MM-DD.\n",
                                 date_string);
                         fscanf_ok = false;
                         break;

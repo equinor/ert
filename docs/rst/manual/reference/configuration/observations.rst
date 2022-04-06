@@ -78,8 +78,9 @@ group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
 label for the observation within the ERT and must be unique.
 
-The recommended date format is YYYY-MM-DD (ISO 8601) while DD/MM/YYYY
-and DD.MM.YYYY are still supported.
+Date format YYYY-MM-DD (ISO 8601) is required.
+Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
+and its support will be removed in a future release.
 
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
 from the summary file. To condition on the summary key VAR in well, group or

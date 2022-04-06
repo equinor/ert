@@ -345,8 +345,9 @@ possible to do with ERT.
                 END_DATE  2010-05-10
 
         With this END_DATE setting all simulations which have gone to
-        at least May 10th 2010 are OK. Date format YYYY-MM-DD is
-        recommended, but DD.MM.YYYY is also supported.
+        at least May 10th 2010 are OK. Date format YYYY-MM-DD is required.
+        Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
+        and its support will be removed in a future release.
 
 
 .. _enspath:
