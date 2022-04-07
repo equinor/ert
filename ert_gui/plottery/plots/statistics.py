@@ -4,6 +4,7 @@ from pandas import DataFrame
 
 from .observations import plotObservations
 from .plot_tools import PlotTools
+from .plot_tools import index_is_datetime
 from ert_gui.plottery.plots.history import plotHistory
 from ert_gui.plottery.plots.refcase import plotRefcase
 
@@ -26,7 +27,7 @@ class StatisticsPlot(object):
         for case, data in case_to_data_map.items():
             data = data.T
             if not data.empty:
-                if not data.index.is_all_dates:
+                if not index_is_datetime(data):
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 

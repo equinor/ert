@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class PlotTools(object):
     @staticmethod
     def showGrid(axes, plot_context):
@@ -104,3 +107,7 @@ class PlotTools(object):
             # unit = ert.eclConfig().getRefcase().unit(key)
             # if unit != "":
             # config.setYLabel(unit)
+
+
+def index_is_datetime(data: pd.DataFrame):
+    return data.index.inferred_type == "datetime64"
