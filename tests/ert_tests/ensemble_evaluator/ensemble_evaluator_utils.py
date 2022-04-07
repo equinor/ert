@@ -62,7 +62,12 @@ class TestEnsemble(_Ensemble):
                         inputs=[],
                         outputs=[],
                         jobs=[
-                            _BaseJob(id_=job_no, name=f"job-{job_no}", source="")
+                            _BaseJob(
+                                id_=job_no,
+                                index_=job_no,
+                                name=f"job-{job_no}",
+                                source="",
+                            )
                             for job_no in range(0, jobs)
                         ],
                         name=f"step-{step_no}",
@@ -114,7 +119,7 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_JOB_RUNNING,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}/index/{job}",
                             f"event-{event_id}",
                             {"current_memory_usage": 1000},
                         )
@@ -123,7 +128,7 @@ class TestEnsemble(_Ensemble):
                             send_dispatch_event(
                                 dispatch,
                                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}/index/{job}",
                                 f"event-{event_id}",
                                 {},
                             )
@@ -134,7 +139,7 @@ class TestEnsemble(_Ensemble):
                             send_dispatch_event(
                                 dispatch,
                                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}/index/{job}",
                                 f"event-{event_id}",
                                 {"current_memory_usage": 1000},
                             )
@@ -143,7 +148,7 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_STEP_FAILURE,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}/index/{job}",
                             f"event-{event_id}",
                             {},
                         )
@@ -152,7 +157,7 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_STEP_SUCCESS,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}/index/{job}",
                             f"event-{event_id}",
                             {},
                         )

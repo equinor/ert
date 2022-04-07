@@ -33,31 +33,6 @@ def test_success(runmodel, qtbot, mock_tracker):
     assert widget.done_button.text() == "Done"
 
 
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-
-def test_success_ert3(runmodel, poly_ensemble, qtbot, mock_tracker):
-    evaluator_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
-    )
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0, ee_id="1")
-    widget = RunDialog("poly.ert", runmodel)
-    widget.show()
-    qtbot.addWidget(widget)
-
-    with patch("ert_gui.simulation.run_dialog.create_tracker") as mock_tracker_factory:
-        mock_tracker_factory.return_value = mock_tracker(
-            [EndEvent(failed=False, failed_msg="")]
-        )
-        widget.startSimulationErt3(evaluator_config, evaluator)
-
-    qtbot.waitForWindowShown(widget)
-    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
-    assert widget.done_button.isVisible()
-    assert widget.done_button.text() == "Done"
-
-
 def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
     widget = RunDialog("poly.ert", runmodel)
     widget.show()
@@ -105,6 +80,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -145,6 +121,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={
                                 ids.MAX_MEMORY_USAGE: 1000,
@@ -188,6 +165,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -195,6 +173,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="1",
+                            index="1",
                             name="job_1",
                             data={},
                             status=state.JOB_STATE_START,
@@ -215,6 +194,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             status=state.JOB_STATE_FINISHED,
                             name="job_0",
                             data={},
@@ -235,6 +215,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="1",
+                            index="1",
                             status=state.JOB_STATE_FAILURE,
                             name="job_1",
                             data={},
@@ -262,6 +243,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -282,6 +264,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,

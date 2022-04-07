@@ -95,6 +95,7 @@ def large_snapshot() -> Snapshot:
         builder.add_job(
             step_id="0",
             job_id=str(i),
+            index=str(i),
             name=f"job_{i}",
             data={ids.MAX_MEMORY_USAGE: 1000, ids.CURRENT_MEMORY_USAGE: 500},
             status=JOB_STATE_START,
