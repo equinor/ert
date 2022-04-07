@@ -26,7 +26,6 @@
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
 
-#include <ert/res_util/matrix.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/meas_data.hpp>
 
@@ -36,8 +35,6 @@ extern "C" void obs_block_free(obs_block_type *obs_block);
 active_type obs_block_iget_active_mode(const obs_block_type *obs_block,
                                        int iobs);
 extern "C" obs_block_type *obs_block_alloc(const char *obs_key, int obs_size,
-                                           matrix_type *error_covar,
-                                           bool error_covar_owner,
                                            double global_std_scaling);
 extern "C" int obs_block_get_active_size(const obs_block_type *obs_block);
 
@@ -56,10 +53,8 @@ extern "C" obs_block_type *obs_data_iget_block(obs_data_type *obs_data,
                                                int index);
 const obs_block_type *obs_data_iget_block_const(const obs_data_type *obs_data,
                                                 int block_nr);
-extern "C" obs_block_type *obs_data_add_block(obs_data_type *obs_data,
-                                              const char *obs_key, int obs_size,
-                                              matrix_type *error_covar,
-                                              bool error_covar_owner);
+extern "C" obs_block_type *
+obs_data_add_block(obs_data_type *obs_data, const char *obs_key, int obs_size);
 
 extern "C" obs_data_type *obs_data_alloc(double global_std_scaling);
 extern "C" void obs_data_free(obs_data_type *);

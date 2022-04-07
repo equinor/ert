@@ -336,9 +336,8 @@ static void enkf_obs_get_obs_and_measure_summary(
   */
 
     {
-        obs_block_type *obs_block =
-            obs_data_add_block(obs_data, obs_vector_get_obs_key(obs_vector),
-                               active_count, NULL, true);
+        obs_block_type *obs_block = obs_data_add_block(
+            obs_data, obs_vector_get_obs_key(obs_vector), active_count);
         meas_block_type *meas_block =
             meas_data_add_block(meas_data, obs_vector_get_obs_key(obs_vector),
                                 last_step, active_count);
