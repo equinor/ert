@@ -73,10 +73,6 @@ class AnalysisModule(BaseCClass):
             "step": 1,
             "labelname": "Inversion algorithm",
         },
-        "IES_AAPROJECTION": {
-            "type": bool,
-            "labelname": "Include AA projection",
-        },
         "ENKF_TRUNCATION": {
             "type": float,
             "min": -2.0,

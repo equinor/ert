@@ -29,12 +29,10 @@
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
 #define DEFAULT_IES_INVERSION ies::config::IES_INVERSION_EXACT
-#define DEFAULT_IES_AAPROJECTION false
 
 ies::config::Config::Config(bool ies_mode)
     : m_truncation(DEFAULT_TRUNCATION), m_ies_inversion(DEFAULT_IES_INVERSION),
-      m_ies_aaprojection(DEFAULT_IES_AAPROJECTION), m_iterable(ies_mode),
-      m_ies_max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
+      m_iterable(ies_mode), m_ies_max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
       m_ies_min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
       m_ies_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {
     if (ies_mode)
@@ -111,16 +109,6 @@ ies::config::inversion_type ies::config::Config::inversion() const {
 }
 void ies::config::Config::inversion(ies::config::inversion_type it) {
     this->m_ies_inversion = it;
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* IES_AAPROJECTION         */
-bool ies::config::Config::aaprojection() const {
-    return this->m_ies_aaprojection;
-}
-
-void ies::config::Config::aaprojection(bool ies_aaprojection) {
-    this->m_ies_aaprojection = ies_aaprojection;
 }
 
 double ies::config::Config::steplength(int iteration_nr) const {

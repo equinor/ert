@@ -80,11 +80,9 @@ analysis_module_type *analysis_module_alloc(int ens_size,
         module->user_name = util_alloc_string_copy("STD_ENKF");
         module->module_config = std::make_unique<ies::config::Config>(false);
         module->module_data = std::make_unique<ies::data::Data>(ens_size);
-        module->keys = {ies::data::ITER_KEY,
-                        ies::config::IES_INVERSION_KEY,
+        module->keys = {ies::data::ITER_KEY, ies::config::IES_INVERSION_KEY,
                         ies::config::IES_LOGFILE_KEY,
                         ies::config::IES_DEBUG_KEY,
-                        ies::config::IES_AAPROJECTION_KEY,
                         ies::config::ENKF_TRUNCATION_KEY};
         return module;
     } else if (mode == ITERATED_ENSEMBLE_SMOOTHER) {
@@ -100,7 +98,6 @@ analysis_module_type *analysis_module_alloc(int ens_size,
                         ies::config::IES_INVERSION_KEY,
                         ies::config::IES_LOGFILE_KEY,
                         ies::config::IES_DEBUG_KEY,
-                        ies::config::IES_AAPROJECTION_KEY,
                         ies::config::ENKF_TRUNCATION_KEY};
         return module;
     } else
@@ -183,9 +180,7 @@ static bool analysis_module_set_double(analysis_module_type *module,
 static bool analysis_module_set_bool(analysis_module_type *module,
                                      const char *var, bool value) {
     bool name_recognized = true;
-    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        module->module_config->aaprojection(value);
-    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+    if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         logger->warning("The key {} is ignored", ies::config::IES_DEBUG_KEY);
     else
         name_recognized = false;
@@ -299,10 +294,7 @@ bool analysis_module_has_var(const analysis_module_type *module,
 
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
-    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        return module->module_config->aaprojection();
-
-    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+    if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         return false;
 
     util_exit("%s: Tried to get bool variable:%s from module:%s - module "

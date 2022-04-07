@@ -262,15 +262,14 @@ void run_analysis_update_without_rowscaling(
         ies::init_update(module_data, ens_mask, obs_mask);
         int iteration_nr = module_data.inc_iteration_nr();
         ies::updateA(module_data, A, S, R, E, D, module_config.inversion(),
-                     module_config.truncation(), module_config.aaprojection(),
+                     module_config.truncation(),
                      module_config.steplength(iteration_nr));
     } else {
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X =
-            ies::makeX({}, S, R, E, D, module_config.inversion(),
-                       module_config.truncation(), false, W0, 1, 1);
+        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
+                                       module_config.truncation(), W0, 1, 1);
 
         A *= X;
     }
@@ -302,9 +301,8 @@ void run_analysis_update_with_rowscaling(
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X =
-            ies::makeX({}, S, R, E, D, module_config.inversion(),
-                       module_config.truncation(), false, W0, 1, 1);
+        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
+                                       module_config.truncation(), W0, 1, 1);
         row_scaling->multiply(&A, &X);
     }
 }

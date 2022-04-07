@@ -22,7 +22,6 @@ def make_X(  # pylint: disable=too-many-arguments
     A: npt.NDArray[np.double] = np.empty(shape=(0, 0)),
     ies_inversion: inversion_type = inversion_type.EXACT,
     truncation: Union[float, int] = 0.98,
-    use_aa_projection: bool = False,
     W0: Optional[npt.NDArray[np.double]] = None,
     step_length: float = 1.0,
     iteration: int = 1,
@@ -37,7 +36,6 @@ def make_X(  # pylint: disable=too-many-arguments
         D,
         ies_inversion,
         truncation,
-        use_aa_projection,
         W0,
         step_length,
         iteration,
@@ -53,12 +51,11 @@ def update_A(  # pylint: disable=too-many-arguments
     D: npt.NDArray[np.double],
     ies_inversion: inversion_type = inversion_type.EXACT,
     truncation: Union[float, int] = 0.98,
-    use_aa_projection: bool = False,
     step_length: float = 1.0,
 ) -> None:
 
     if not np.isfortran(A):
         raise TypeError("A matrix must be F_contiguous")
     res._lib.ies.update_A(  # pylint: disable=no-member, c-extension-no-member
-        data, A, Y, R, E, D, ies_inversion, truncation, use_aa_projection, step_length
+        data, A, Y, R, E, D, ies_inversion, truncation, step_length
     )
