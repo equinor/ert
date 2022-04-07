@@ -21,13 +21,13 @@
 
 #include <vector>
 #include <stdbool.h>
+#include <Eigen/Dense>
 
 #include <ert/util/hash.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/tooling.hpp>
-#include <ert/res_util/matrix.hpp>
 
 typedef struct meas_data_struct meas_data_type;
 typedef struct meas_block_struct meas_block_type;

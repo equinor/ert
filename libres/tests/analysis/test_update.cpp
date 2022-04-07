@@ -97,8 +97,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         const char *obs_key = "OBS1";
         meas_block_type *mb =
             meas_data_add_block(meas_data, obs_key, 1, obs_size);
-        obs_block_type *ob =
-            obs_data_add_block(obs_data, obs_key, obs_size, nullptr, false);
+        obs_block_type *ob = obs_data_add_block(obs_data, obs_key, obs_size);
         std::vector<double> xarg(obs_size);
         for (int i = 0; i < obs_size; i++) {
             xarg[i] = i;

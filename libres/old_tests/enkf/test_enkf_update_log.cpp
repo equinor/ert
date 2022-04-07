@@ -19,8 +19,7 @@ void test_obs_in_log() {
     meas_block_type *block = meas_data_add_block(meas_data, "OBS", 10, 10);
 
     obs_data_type *obs_data = obs_data_alloc(1.0);
-    obs_block_type *obs_block =
-        obs_data_add_block(obs_data, "OBS", 10, NULL, false);
+    obs_block_type *obs_block = obs_data_add_block(obs_data, "OBS", 10);
     for (int iobs = 0; iobs < 10; iobs++)
         obs_block_iset(obs_block, iobs, iobs, 0.1);
     /* Set one obs block as missing*/
@@ -52,8 +51,7 @@ void test_local_inactive() {
     meas_block_type *block = meas_data_add_block(meas_data, "OBS", 10, 10);
 
     obs_data_type *obs_data = obs_data_alloc(1.0);
-    obs_block_type *obs_block =
-        obs_data_add_block(obs_data, "OBS", 10, NULL, false);
+    obs_block_type *obs_block = obs_data_add_block(obs_data, "OBS", 10);
 
     /* By not setting all obs we set one obs block as local inactive*/
     for (int iobs = 1; iobs < 10; iobs++)

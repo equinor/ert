@@ -352,8 +352,8 @@ C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
     {
         active_mode_type active_mode = __active_list->getMode();
         int active_size = __active_list->active_size(gen_obs->obs_size);
-        obs_block_type *obs_block = obs_data_add_block(
-            obs_data, gen_obs->obs_key, active_size, NULL, false);
+        obs_block_type *obs_block =
+            obs_data_add_block(obs_data, gen_obs->obs_key, active_size);
 
         if (active_mode == ALL_ACTIVE) {
             for (int iobs = 0; iobs < gen_obs->obs_size; iobs++)

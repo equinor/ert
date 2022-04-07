@@ -94,8 +94,8 @@ void summary_obs_get_observations(const summary_obs_type *summary_obs,
 
     int active_size = __active_list->active_size(OBS_SIZE);
     if (active_size == 1) {
-        obs_block_type *obs_block = obs_data_add_block(
-            obs_data, summary_obs->obs_key, OBS_SIZE, NULL, false);
+        obs_block_type *obs_block =
+            obs_data_add_block(obs_data, summary_obs->obs_key, OBS_SIZE);
         obs_block_iset(obs_block, 0, summary_obs->value,
                        summary_obs->std * summary_obs->std_scaling);
     }

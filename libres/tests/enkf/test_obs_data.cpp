@@ -1,6 +1,7 @@
 #include <string>
 
 #include "catch2/catch.hpp"
+#include <Eigen/Dense>
 
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/obs_data.hpp>
@@ -56,11 +57,8 @@ SCENARIO(
 
         const char *obs_key = "obs_block_0";
         const int obs_size = 3;
-        // error_covar does not effect this test, but is needed to initialize obs_block.
-        matrix_type *error_covar = matrix_alloc(obs_size, obs_size);
-        bool error_covar_owner = false;
-        obs_block_type *obs_block = obs_data_add_block(
-            obs_data, obs_key, obs_size, error_covar, error_covar_owner);
+        obs_block_type *obs_block =
+            obs_data_add_block(obs_data, obs_key, obs_size);
         obs_block_iset(obs_block, 0, 5.0, 0.3);
         obs_block_iset(obs_block, 2, 15.0, 0.5);
 
@@ -84,21 +82,21 @@ SCENARIO(
 
             if (PLATFORM_NAME == "macos") {
                 THEN("Rows of E are effected by data in the block") {
-                    REQUIRE(matrix_iget(&E, 0, 0) == Approx(0.285993));
-                    REQUIRE(matrix_iget(&E, 0, 1) == Approx(-0.414393));
-                    REQUIRE(matrix_iget(&E, 0, 2) == Approx(0.128400));
-                    REQUIRE(matrix_iget(&E, 1, 0) == Approx(-0.548597));
-                    REQUIRE(matrix_iget(&E, 1, 1) == Approx(-0.112071));
-                    REQUIRE(matrix_iget(&E, 1, 2) == Approx(0.660668));
+                    REQUIRE(E(0, 0) == Approx(0.285993));
+                    REQUIRE(E(0, 1) == Approx(-0.414393));
+                    REQUIRE(E(0, 2) == Approx(0.128400));
+                    REQUIRE(E(1, 0) == Approx(-0.548597));
+                    REQUIRE(E(1, 1) == Approx(-0.112071));
+                    REQUIRE(E(1, 2) == Approx(0.660668));
                 }
             } else if (PLATFORM_NAME == "linux") {
                 THEN("Rows of E are effected by data in the block") {
-                    REQUIRE(matrix_iget(&E, 0, 0) == Approx(-0.143983));
-                    REQUIRE(matrix_iget(&E, 0, 1) == Approx(0.417609));
-                    REQUIRE(matrix_iget(&E, 0, 2) == Approx(-0.273627));
-                    REQUIRE(matrix_iget(&E, 1, 0) == Approx(-0.248757));
-                    REQUIRE(matrix_iget(&E, 1, 1) == Approx(0.697606));
-                    REQUIRE(matrix_iget(&E, 1, 2) == Approx(-0.448849));
+                    REQUIRE(E(0, 0) == Approx(-0.143983));
+                    REQUIRE(E(0, 1) == Approx(0.417609));
+                    REQUIRE(E(0, 2) == Approx(-0.273627));
+                    REQUIRE(E(1, 0) == Approx(-0.248757));
+                    REQUIRE(E(1, 1) == Approx(0.697606));
+                    REQUIRE(E(1, 2) == Approx(-0.448849));
                 }
             }
         }
@@ -106,11 +104,8 @@ SCENARIO(
         WHEN("One more block is added and E is allocated") {
             const char *obs_key = "obs_block_1";
             const int obs_size = 4;
-            // error_covar does not effect this test, but is needed to initialize obs_block.
-            matrix_type *error_covar = matrix_alloc(obs_size, obs_size);
-            bool error_covar_owner = false;
-            obs_block_type *obs_block2 = obs_data_add_block(
-                obs_data, obs_key, obs_size, error_covar, error_covar_owner);
+            obs_block_type *obs_block2 =
+                obs_data_add_block(obs_data, obs_key, obs_size);
             obs_block_iset(obs_block2, 0, 5.0, 0.3);
             obs_block_iset(obs_block2, 1, 15.0, 0.5);
             obs_block_iset(obs_block2, 2, 20.0, 0.6);
@@ -131,40 +126,39 @@ SCENARIO(
 
             if (PLATFORM_NAME == "macos") {
                 THEN("Rows of E are effected by data in the block") {
-                    REQUIRE(matrix_iget(&E, 0, 0) == Approx(0.373284));
-                    REQUIRE(matrix_iget(&E, 0, 1) == Approx(-0.012016));
-                    REQUIRE(matrix_iget(&E, 0, 2) == Approx(-0.361268));
-                    REQUIRE(matrix_iget(&E, 1, 0) == Approx(-0.667806));
-                    REQUIRE(matrix_iget(&E, 1, 1) == Approx(0.132592));
-                    REQUIRE(matrix_iget(&E, 1, 2) == Approx(0.535214));
-                    REQUIRE(matrix_iget(&E, 2, 0) == Approx(-0.369630));
-                    REQUIRE(matrix_iget(&E, 2, 1) == Approx(0.365177));
-                    REQUIRE(matrix_iget(&E, 2, 2) ==
-                            Approx(0.004453).epsilon(0.0001));
-                    REQUIRE(matrix_iget(&E, 3, 0) == Approx(0.302260));
-                    REQUIRE(matrix_iget(&E, 3, 1) == Approx(-0.704736));
-                    REQUIRE(matrix_iget(&E, 3, 2) == Approx(0.402476));
-                    REQUIRE(matrix_iget(&E, 4, 0) == Approx(0.810162));
-                    REQUIRE(matrix_iget(&E, 4, 1) == Approx(-0.623549));
-                    REQUIRE(matrix_iget(&E, 4, 2) == Approx(-0.186613));
+                    REQUIRE(E(0, 0) == Approx(0.373284));
+                    REQUIRE(E(0, 1) == Approx(-0.012016));
+                    REQUIRE(E(0, 2) == Approx(-0.361268));
+                    REQUIRE(E(1, 0) == Approx(-0.667806));
+                    REQUIRE(E(1, 1) == Approx(0.132592));
+                    REQUIRE(E(1, 2) == Approx(0.535214));
+                    REQUIRE(E(2, 0) == Approx(-0.369630));
+                    REQUIRE(E(2, 1) == Approx(0.365177));
+                    REQUIRE(E(2, 2) == Approx(0.004453).epsilon(0.0001));
+                    REQUIRE(E(3, 0) == Approx(0.302260));
+                    REQUIRE(E(3, 1) == Approx(-0.704736));
+                    REQUIRE(E(3, 2) == Approx(0.402476));
+                    REQUIRE(E(4, 0) == Approx(0.810162));
+                    REQUIRE(E(4, 1) == Approx(-0.623549));
+                    REQUIRE(E(4, 2) == Approx(-0.186613));
                 }
             } else if (PLATFORM_NAME == "linux") {
                 THEN("Rows of E are effected by data in the block") {
-                    REQUIRE(matrix_iget(&E, 0, 0) == Approx(-0.075665));
-                    REQUIRE(matrix_iget(&E, 0, 1) == Approx(-0.323700));
-                    REQUIRE(matrix_iget(&E, 0, 2) == Approx(0.399366));
-                    REQUIRE(matrix_iget(&E, 1, 0) == Approx(-0.166335));
-                    REQUIRE(matrix_iget(&E, 1, 1) == Approx(0.678356));
-                    REQUIRE(matrix_iget(&E, 1, 2) == Approx(-0.512021));
-                    REQUIRE(matrix_iget(&E, 2, 0) == Approx(0.130487));
-                    REQUIRE(matrix_iget(&E, 2, 1) == Approx(0.284370));
-                    REQUIRE(matrix_iget(&E, 2, 2) == Approx(-0.414857));
-                    REQUIRE(matrix_iget(&E, 3, 0) == Approx(-0.497966));
-                    REQUIRE(matrix_iget(&E, 3, 1) == Approx(0.683750));
-                    REQUIRE(matrix_iget(&E, 3, 2) == Approx(-0.185784));
-                    REQUIRE(matrix_iget(&E, 4, 0) == Approx(-0.826843));
-                    REQUIRE(matrix_iget(&E, 4, 1) == Approx(0.578492));
-                    REQUIRE(matrix_iget(&E, 4, 2) == Approx(0.248351));
+                    REQUIRE(E(0, 0) == Approx(-0.075665));
+                    REQUIRE(E(0, 1) == Approx(-0.323700));
+                    REQUIRE(E(0, 2) == Approx(0.399366));
+                    REQUIRE(E(1, 0) == Approx(-0.166335));
+                    REQUIRE(E(1, 1) == Approx(0.678356));
+                    REQUIRE(E(1, 2) == Approx(-0.512021));
+                    REQUIRE(E(2, 0) == Approx(0.130487));
+                    REQUIRE(E(2, 1) == Approx(0.284370));
+                    REQUIRE(E(2, 2) == Approx(-0.414857));
+                    REQUIRE(E(3, 0) == Approx(-0.497966));
+                    REQUIRE(E(3, 1) == Approx(0.683750));
+                    REQUIRE(E(3, 2) == Approx(-0.185784));
+                    REQUIRE(E(4, 0) == Approx(-0.826843));
+                    REQUIRE(E(4, 1) == Approx(0.578492));
+                    REQUIRE(E(4, 2) == Approx(0.248351));
                 }
             }
         }
@@ -182,7 +176,7 @@ SCENARIO("Creating eigen vectors from obs_data [obs_data]") {
         const int obs_size = 3;
 
         obs_block_type *obs_block =
-            obs_data_add_block(obs_data, obs_key, obs_size, nullptr, false);
+            obs_data_add_block(obs_data, obs_key, obs_size);
         obs_block_iset(obs_block, 0, 5.0, 0.3);
         obs_block_iset(obs_block, 2, 15.0, 0.5);
 
