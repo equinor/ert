@@ -274,11 +274,18 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                     cloudpickle.dumps(self._outputs),
                 )
                 c.send(to_json(event).decode())
-        except Exception:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.exception(
                 "An exception occurred while starting the ensemble evaluation",
                 exc_info=True,
             )
+
+            # Signal 2 is SIGINT, so it is assumed this exception came from
+            # cancellation. This means the ensemble failed event should not be sent.
+            if isinstance(e, OSError) and "Signal 2" in str(e):
+                logger.debug("interpreting %s as a result of cancellation", e)
+                return
+
             with Client(
                 self._ee_con_info.dispatch_uri,
                 self._ee_con_info.token,
@@ -330,20 +337,19 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         logger.debug("got wakeup, killing evaluation process...")
 
         assert self._ee_con_info  # mypy
-
-        if self._eval_proc is not None:
-            if self._eval_proc.pid is None:
-                raise RuntimeError("could not cancel: no pid")
-            os.kill(self._eval_proc.pid, signal.SIGINT)
-            start = time.time()
-            while self._eval_proc.is_alive() and time.time() - start < 3:
-                pass
-            if self._eval_proc.is_alive():
-                logger.debug(
-                    "Evaluation process not responding to SIGINT, sending SIGKILL"
-                )
-                os.kill(self._eval_proc.pid, signal.SIGKILL)
-
+        assert self._eval_proc  # mypy
+        assert self._eval_proc.pid  # mypy
+        os.kill(self._eval_proc.pid, signal.SIGINT)
+        start = time.time()
+        while self._eval_proc.is_alive() and time.time() - start < 3:
+            pass
+        if self._eval_proc.is_alive():
+            logger.debug("Evaluation process not responding to SIGINT, sending SIGKILL")
+            os.kill(self._eval_proc.pid, signal.SIGKILL)
+        logger.debug(
+            "Evaluation process is %s.",
+            "alive" if self._eval_proc.is_alive() else "dead",
+        )
         self._eval_proc = None
         event = CloudEvent(
             {
@@ -362,4 +368,5 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 cert=self._ee_con_info.cert,
             )
         )
+        logger.debug("sendt cancelled event")
         loop.close()
