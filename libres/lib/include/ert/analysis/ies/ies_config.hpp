@@ -40,7 +40,6 @@ constexpr const char *ENKF_TRUNCATION_KEY = "ENKF_TRUNCATION";
 constexpr const char *IES_MAX_STEPLENGTH_KEY = "IES_MAX_STEPLENGTH";
 constexpr const char *IES_MIN_STEPLENGTH_KEY = "IES_MIN_STEPLENGTH";
 constexpr const char *IES_DEC_STEPLENGTH_KEY = "IES_DEC_STEPLENGTH";
-constexpr const char *IES_AAPROJECTION_KEY = "IES_AAPROJECTION";
 constexpr const char *IES_DEBUG_KEY = "IES_DEBUG";
 constexpr const char *ENKF_NCOMP_KEY = "ENKF_NCOMP";
 constexpr const char *INVERSION_KEY = "INVERSION";
@@ -69,9 +68,6 @@ public:
     void set_option(analysis_module_flag_enum option);
     void del_option(analysis_module_flag_enum option);
 
-    bool aaprojection() const;
-    void aaprojection(bool aaprojection);
-
     inversion_type inversion() const;
     void inversion(inversion_type it);
 
@@ -91,8 +87,7 @@ private:
     std::variant<double, int> m_truncation;
     inversion_type
         m_ies_inversion; // Controlled by config key: DEFAULT_IES_INVERSION
-    bool
-        m_ies_aaprojection; // Controlled by config key: DEFAULT_IES_AAPROJECTION
+
     bool m_iterable;
 
     long m_option_flags = 0;

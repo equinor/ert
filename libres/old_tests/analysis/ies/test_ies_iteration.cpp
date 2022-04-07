@@ -13,9 +13,9 @@ void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
     int active_ens_size = A2.cols();
     Eigen::MatrixXd W0 =
         Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-    Eigen::MatrixXd X = ies::makeX({}, testdata.S, testdata.R, testdata.E,
-                                   testdata.D, ies_config.inversion(),
-                                   ies_config.truncation(), false, W0, 1, 1);
+    Eigen::MatrixXd X =
+        ies::makeX(A2, testdata.S, testdata.R, testdata.E, testdata.D,
+                   ies_config.inversion(), ies_config.truncation(), W0, 1, 1);
 
     A2 *= X;
 }
@@ -70,7 +70,6 @@ void cmp_std_ies(res::es_testdata &testdata) {
     ies_config.max_steplength(0.6);
     ies_config.min_steplength(0.6);
     ies_config.inversion(ies::config::IES_INVERSION_EXACT);
-    ies_config.aaprojection(false);
 
     /* ES solution */
     int num_iter = 100;
@@ -82,7 +81,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
         int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion(),
-                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.truncation(),
                      ies_config.steplength(iteration_nr));
 
         test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
@@ -111,7 +110,6 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     ies_config.min_steplength(0.6);
     ies_config.max_steplength(0.6);
     ies_config.inversion(ies::config::IES_INVERSION_EXACT);
-    ies_config.aaprojection(false);
     int iens_deact = testdata.active_ens_size / 2;
 
     /* IES solution after with one realization is inactivated */
@@ -138,7 +136,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
         int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion(),
-                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.truncation(),
                      ies_config.steplength(iteration_nr));
     }
 
@@ -190,7 +188,6 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     ies_config.max_steplength(0.50);
     ies_config.min_steplength(0.50);
     ies_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies_config.aaprojection(false);
 
     for (int iter = 0; iter < 1; iter++) {
         // deactivate an observation initially to test reactivation in the following iteration
@@ -200,7 +197,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.E,
                      testdata2.D, ies_config.inversion(),
-                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.truncation(),
                      ies_config.steplength(iteration_nr));
     }
 
@@ -229,7 +226,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
         int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion(),
-                     ies_config.truncation(), ies_config.aaprojection(),
+                     ies_config.truncation(),
                      ies_config.steplength(iteration_nr));
     }
     rng_free(rng);

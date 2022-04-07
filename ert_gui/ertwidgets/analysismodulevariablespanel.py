@@ -113,15 +113,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                     )
                     layout.addRow(label, None)
 
-                if variable_name == "IES_AAPROJECTION":
-                    label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Only impacts estimate when n less than N-1</span>'
-                    )
-                    label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Any benefit of using the projection is unclear</span>'
-                    )
-                    layout.addRow(label, None)
-
         # Truncation of the eigenvalue spectrum is not possible when using exact inversion,
         # hence the spinners for setting the amount of truncation are deactivated for exact inversion.
         inversion_spinner = self.widget_from_layout(layout, "IES_INVERSION")

@@ -40,8 +40,8 @@ Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
                       const Eigen::MatrixXd &D,
                       const ies::config::inversion_type ies_inversion,
                       const std::variant<double, int> &truncation,
-                      bool use_aa_projection, Eigen::MatrixXd &W0,
-                      double ies_steplength, int iteration_nr);
+                      Eigen::MatrixXd &W0, double ies_steplength,
+                      int iteration_nr);
 
 void updateA(data::Data &data,
              // Updated ensemble A returned to ERT.
@@ -56,7 +56,7 @@ void updateA(data::Data &data,
              const Eigen::MatrixXd &Din,
              const ies::config::inversion_type ies_inversion,
              const std::variant<double, int> &truncation,
-             bool use_aa_projection, double ies_steplength);
+             double ies_steplength);
 
 Eigen::MatrixXd makeE(const Eigen::VectorXd &obs_errors,
                       const Eigen::MatrixXd &noise);

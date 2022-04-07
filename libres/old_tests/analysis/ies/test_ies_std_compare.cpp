@@ -11,7 +11,6 @@ TEST 3 (consistency between IES and STD_ENKF):
  - ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
  - ANALYSIS_SET_VAR IES_ENKF IES_STEPLENGTH          1.0
  - ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
- - ANALYSIS_SET_VAR IES_ENKF IES_AAPROJECTION        false
 should give same result as:
  - ANALYSIS_SET_VAR IES_ENKF ENKF_TRUNCATION         0.999
  - ANALYSIS_SET_VAR IES_ENKF IES_INVERSION           1
@@ -30,7 +29,6 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     ies_config1.min_steplength(1.0);
     ies_config1.max_steplength(1.0);
     ies_config1.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
-    ies_config1.aaprojection(false);
 
     std_config.truncation(0.95);
     std_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
@@ -39,15 +37,14 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     int iteration_nr = ies_data1.inc_iteration_nr();
     ies::updateA(ies_data1, A1, testdata.S, testdata.R, testdata.E, testdata.D,
                  ies_config1.inversion(), ies_config1.truncation(),
-                 ies_config1.aaprojection(),
                  ies_config1.steplength(iteration_nr));
 
     int active_ens_size = A2.cols();
     Eigen::MatrixXd W0 =
         Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-    Eigen::MatrixXd X = ies::makeX({}, testdata.S, testdata.R, testdata.E,
-                                   testdata.D, std_config.inversion(),
-                                   std_config.truncation(), false, W0, 1, 1);
+    Eigen::MatrixXd X =
+        ies::makeX(A2, testdata.S, testdata.R, testdata.E, testdata.D,
+                   std_config.inversion(), std_config.truncation(), W0, 1, 1);
 
     A2 *= X;
     test_assert_true(A1.isApprox(A2, 5e-6));

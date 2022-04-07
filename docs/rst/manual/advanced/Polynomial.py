@@ -136,7 +136,6 @@ def iterative_smoother():
             R,
             E,
             D,
-            use_aa_projection=True,
             step_length=step_length,
         )
 
