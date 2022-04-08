@@ -20,10 +20,10 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
+#include <Eigen/Dense>
 
 #include <ert/python.hpp>
 #include <ert/enkf/row_scaling.hpp>
-#include <ert/res_util/matrix.hpp>
 #include <ert/util/util.hpp>
 
 /*
@@ -39,11 +39,11 @@
 
 namespace {
 
-void scaleX(matrix_type *X, const matrix_type *X0, double alpha) {
-    matrix_assign(X, X0);
-    matrix_scale(X, alpha);
-    for (int i = 0; i < matrix_get_rows(X); i++)
-        matrix_iset(X, i, i, (1 - alpha) + matrix_iget(X, i, i));
+void scaleX(Eigen::MatrixXd &X, const Eigen::MatrixXd &X0, double alpha) {
+    X = X0;
+    X *= alpha;
+    for (int i = 0; i < X.rows(); i++)
+        X(i, i) = (1 - alpha) + X(i, i);
 }
 
 } // namespace
@@ -97,18 +97,18 @@ double RowScaling::assign(size_t index, double value) {
   are multiplied in one go.
  */
 
-void RowScaling::multiply(matrix_type *A, const matrix_type *X0) const {
-    if (m_data.size() != matrix_get_rows(A))
+void RowScaling::multiply(Eigen::MatrixXd &A, const Eigen::MatrixXd &X0) const {
+    if (m_data.size() != A.rows())
         throw std::invalid_argument(
             "Size mismatch between row_scaling and A matrix");
 
-    if (matrix_get_columns(A) != matrix_get_rows(X0))
+    if (A.cols() != X0.rows())
         throw std::invalid_argument("Size mismatch between X0 and A matrix");
 
-    if (matrix_get_columns(X0) != matrix_get_rows(X0))
+    if (X0.cols() != X0.rows())
         throw std::invalid_argument("X0 matrix is not quadratic");
 
-    matrix_type *X = matrix_alloc(matrix_get_rows(X0), matrix_get_columns(X0));
+    Eigen::MatrixXd X = Eigen::MatrixXd::Zero(X0.rows(), X0.cols());
 
     /*
     The sort_index vector is an index permutation corresponding to sorted
@@ -160,25 +160,22 @@ void RowScaling::multiply(matrix_type *A, const matrix_type *X0) const {
 
         // 3: Calculate A' = A * X for the rows with the same alpha
         for (const auto &row : row_list) {
-            std::vector<double> src_row(matrix_get_columns(A));
-            std::vector<double> target_row(matrix_get_columns(A));
+            std::vector<double> target_row(A.cols());
+            Eigen::VectorXd src_row = A.row(row);
 
-            for (int j = 0; j < matrix_get_columns(A); j++)
-                src_row[j] = matrix_iget(A, row, j);
-
-            for (int j = 0; j < matrix_get_columns(A); j++) {
-                double sum = 0;
-                for (int i = 0; i < matrix_get_columns(A); i++)
-                    sum += src_row[i] * matrix_iget(X, i, j);
-
-                target_row[j] = sum;
+            for (int j = 0; j < A.cols(); j++) {
+                target_row[j] = src_row.cwiseProduct(X.col(j)).sum();
             }
-            matrix_set_row(A, target_row.data(), row);
+
+            if (row < 0 || row >= A.rows())
+                throw std::invalid_argument("Invalid row index");
+
+            for (int j = 0; j < A.cols(); j++)
+                A(row, j) = target_row.data()[j];
         }
 
         index_offset = end_index;
     }
-    matrix_free(X);
 }
 
 void RowScaling::assign_vector(const float *data, size_t size) {
