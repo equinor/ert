@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <ert/util/util.h>
-#include <ert/res_util/matrix.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 

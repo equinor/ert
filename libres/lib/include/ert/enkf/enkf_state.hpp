@@ -26,7 +26,6 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/rng.h>
 #include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/matrix.hpp>
 
 #include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_file.h>

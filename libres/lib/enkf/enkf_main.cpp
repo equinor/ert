@@ -34,7 +34,6 @@
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/matrix.hpp>
 #include <ert/logging.hpp>
 
 #include <ert/sched/history.hpp>

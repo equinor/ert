@@ -24,6 +24,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
+#include <ert/res_util/matrix.hpp>
 
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
