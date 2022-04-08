@@ -1,5 +1,5 @@
 #pragma once
-#include <ert/res_util/matrix.hpp>
+#include <Eigen/Dense>
 #include <vector>
 #include <memory>
 
@@ -13,7 +13,7 @@ public:
     double operator[](size_t index) const;
     double assign(size_t index, double value);
     double clamp(double value) const;
-    void multiply(matrix_type *A, const matrix_type *X0) const;
+    void multiply(Eigen::MatrixXd &A, const Eigen::MatrixXd &X0) const;
     size_t size() const;
 
     void assign_vector(const float *data, size_t size);

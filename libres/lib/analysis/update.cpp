@@ -303,7 +303,7 @@ void run_analysis_update_with_rowscaling(
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
         Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
                                        module_config.truncation(), W0, 1, 1);
-        row_scaling->multiply(&A, &X);
+        row_scaling->multiply(A, X);
     }
 }
 
