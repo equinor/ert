@@ -648,13 +648,6 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
     return result == 0;
 }
 
-bool enkf_state_complete_forward_modelOK__(void *arg) {
-    callback_arg_type *cb_arg = callback_arg_safe_cast(arg);
-
-    return enkf_state_complete_forward_modelOK(cb_arg->res_config,
-                                               cb_arg->run_arg);
-}
-
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     const int iens = run_arg_get_iens(run_arg);
     logger->error("[{:03d}:{:04d}-{:04d}] FAILED COMPLETELY.", iens,
@@ -673,66 +666,6 @@ static bool enkf_state_complete_forward_model_EXIT_handler(void *arg) {
     callback_arg_type *callback_arg = callback_arg_safe_cast(arg);
     run_arg_type *run_arg = callback_arg->run_arg;
     return enkf_state_complete_forward_model_EXIT_handler__(run_arg);
-}
-
-bool enkf_state_complete_forward_modelEXIT__(void *arg) {
-    return enkf_state_complete_forward_model_EXIT_handler(arg);
-}
-
-/*
-    This function is called when:
-
-     1. The external queue system has said that everything is OK; BUT
-        the ert layer failed to load all the data.
-
-     2. The external queue system has seen the job fail.
-
-    The parameter and state variables will be resampled before
-    retrying. And all random elements in templates+++ will be
-    resampled.
-*/
-
-static void enkf_state_internal_retry(const res_config_type *res_config,
-                                      run_arg_type *run_arg, rng_type *rng) {
-    ensemble_config_type *ens_config =
-        res_config_get_ensemble_config(res_config);
-    const int iens = run_arg_get_iens(run_arg);
-
-    logger->error("[{:03d}:{:04d} - {:04d}] Forward model failed.", iens,
-                  run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
-    if (run_arg_can_retry(run_arg)) {
-        logger->error("[{:03d}] Resampling and resubmitting realization.",
-                      iens);
-
-        std::vector<std::string> init_keys =
-            ensemble_config_keylist_from_var_type(ens_config, PARAMETER);
-        for (auto &key : init_keys) {
-            const enkf_config_node_type *config_node =
-                ensemble_config_get_node(ens_config, key.c_str());
-            enkf_node_type *node = enkf_node_alloc(config_node);
-            if (enkf_node_initialize(node, iens, rng)) {
-                node_id_type node_id = {.report_step = 0, .iens = iens};
-                enkf_node_store(node, run_arg_get_sim_fs(run_arg), node_id);
-            }
-            enkf_node_free(node);
-        }
-
-        /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
-        enkf_state_init_eclipse(res_config, run_arg);
-        run_arg_increase_submit_count(run_arg);
-    }
-}
-
-bool enkf_state_complete_forward_modelRETRY__(void *arg) {
-    callback_arg_type *cb_arg = callback_arg_safe_cast(arg);
-
-    if (run_arg_can_retry(cb_arg->run_arg)) {
-        enkf_state_internal_retry(cb_arg->res_config, cb_arg->run_arg,
-                                  cb_arg->rng);
-        return true;
-    }
-
-    return false;
 }
 
 const ensemble_config_type *
