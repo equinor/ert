@@ -186,12 +186,16 @@ class MultipleDataAssimilation(BaseRunModel):
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:
+        """Scale weights such that their reciprocals sum to 1.0,
+        i.e., sum(1.0 / x for x in weights) == 1.0.
+        See for example Equation 38 of evensen2018 - Analysis of iterative
+        ensemble smoothers for solving inverse problems.
+        """
         if not weights:
             return []
         weights = [weight for weight in weights if abs(weight) != 0.0]
-        from math import sqrt
 
-        length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
+        length = sum(1.0 / x for x in weights)
         return [x * length for x in weights]
 
     @staticmethod
