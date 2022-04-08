@@ -20,6 +20,7 @@
 #define ERT_ENKF_NODE_H
 #include <stdlib.h>
 #include <stdbool.h>
+#include <Eigen/Dense>
 
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
@@ -32,8 +33,6 @@
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/fortio.h>
 
-#include <ert/res_util/matrix.hpp>
-
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_util.hpp>
@@ -44,9 +43,9 @@
 #include <ert/enkf/value_export.hpp>
 
 typedef void(serialize_ftype)(const void *, node_id_type, const ActiveList *,
-                              matrix_type *, int, int);
+                              Eigen::MatrixXd &, int, int);
 typedef void(deserialize_ftype)(void *, node_id_type, const ActiveList *,
-                                const matrix_type *, int, int);
+                                const Eigen::MatrixXd &, int, int);
 
 typedef void(ecl_write_ftype)(const void *, /* Node object */
                               const char *, /* Directory to write to. */
@@ -76,10 +75,11 @@ typedef void(ensemble_mulX_vector_ftype)(void *, int, const void **,
                                          const double *);
 void enkf_node_serialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
                          node_id_type node_id, const ActiveList *active_list,
-                         matrix_type *A, int row_offset, int column);
+                         Eigen::MatrixXd &A, int row_offset, int column);
 void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
                            node_id_type node_id, const ActiveList *active_list,
-                           const matrix_type *A, int row_offset, int column);
+                           const Eigen::MatrixXd &A, int row_offset,
+                           int column);
 
 typedef enum {
     alloc_func = 0,

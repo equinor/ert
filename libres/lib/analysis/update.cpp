@@ -60,7 +60,7 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
-    enkf_node_serialize(node, fs, node_id, active_list, &A, row_offset, column);
+    enkf_node_serialize(node, fs, node_id, active_list, A, row_offset, column);
     enkf_node_free(node);
 }
 
@@ -109,7 +109,7 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     enkf_node_load(node, src_fs, node_id);
 
     // deserialize the matrix into the node (and writes it to the target fs)
-    enkf_node_deserialize(node, target_fs, node_id, active_list, &A, row_offset,
+    enkf_node_deserialize(node, target_fs, node_id, active_list, A, row_offset,
                           column);
     state_map_update_undefined(enkf_fs_get_state_map(target_fs), iens,
                                STATE_INITIALIZED);
