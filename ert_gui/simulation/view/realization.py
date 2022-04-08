@@ -61,11 +61,14 @@ class RealizationWidget(QWidget):
         self._real_view.clearSelection()
 
 
+# This singleton is shared among all instances of RealizationDelegate
+_image_cache = {}
+
+
 class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, width, height, parent=None) -> None:
         super(RealizationDelegate, self).__init__(parent)
         self._size = QSize(width, height)
-        self._image_cache = {}
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         text = index.data(RealLabelHint)
@@ -123,7 +126,7 @@ class RealizationDelegate(QStyledItemDelegate):
         k = 0
 
         colors_hash = hash(tuple([color.name() for color in colors]))
-        if colors_hash not in self._image_cache:
+        if colors_hash not in _image_cache:
             foreground_image = QImage(grid_dim, grid_dim, QImage.Format_ARGB32)
             foreground_image.fill(QColorConstants.Gray)
 
@@ -135,9 +138,9 @@ class RealizationDelegate(QStyledItemDelegate):
                         color = colors[k]
                     foreground_image.setPixel(x, y, color.rgb())
                     k += 1
-            self._image_cache[colors_hash] = foreground_image
+            _image_cache[colors_hash] = foreground_image
         else:
-            foreground_image = self._image_cache[colors_hash]
+            foreground_image = _image_cache[colors_hash]
 
         painter.drawImage(rect, foreground_image)
 
