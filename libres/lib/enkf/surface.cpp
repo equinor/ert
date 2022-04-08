@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <cmath>
-
+#include <Eigen/Dense>
 #include <ert/util/util.h>
 
 #include <ert/geometry/geo_surface.h>
@@ -97,7 +97,7 @@ void surface_free(surface_type *surface) {
 }
 
 void surface_serialize(const surface_type *surface, node_id_type node_id,
-                       const ActiveList *active_list, matrix_type *A,
+                       const ActiveList *active_list, Eigen::MatrixXd &A,
                        int row_offset, int column) {
     const surface_config_type *config = surface->config;
     const int data_size = surface_config_get_data_size(config);
@@ -107,8 +107,8 @@ void surface_serialize(const surface_type *surface, node_id_type node_id,
 }
 
 void surface_deserialize(surface_type *surface, node_id_type node_id,
-                         const ActiveList *active_list, const matrix_type *A,
-                         int row_offset, int column) {
+                         const ActiveList *active_list,
+                         const Eigen::MatrixXd &A, int row_offset, int column) {
     const surface_config_type *config = surface->config;
     const int data_size = surface_config_get_data_size(config);
 
