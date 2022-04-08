@@ -402,8 +402,11 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     meas_data_free(meas_data);
 
     Eigen::VectorXd observation_values = obs_data_values_as_vector(obs_data);
+    // Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+    // in for example evensen2018 - Analysis of iterative ensemble smoothers for solving inverse problems.
+    // `global_std_scaling` is 1.0 for ES.
     Eigen::VectorXd observation_errors =
-        obs_data_errors_as_vector(obs_data) * global_std_scaling;
+        obs_data_errors_as_vector(obs_data) * sqrt(global_std_scaling);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
 
     if (S.rows() == 0) {
