@@ -19,7 +19,7 @@ class EnKFFSManagerTest1(ResTest):
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
 
-            fs = fsm.getCurrentFileSystem()
+            fsm.getCurrentFileSystem()
             self.assertTrue(fsm.isCaseMounted("default_0"))
             self.assertTrue(fsm.caseExists("default_0"))
             self.assertTrue(fsm.caseHasData("default_0"))
@@ -32,7 +32,7 @@ class EnKFFSManagerTest1(ResTest):
             self.assertFalse(fsm.caseHasData("newFS"))
             self.assertFalse(fsm.isCaseRunning("newFS"))
 
-            fs2 = fsm.getFileSystem("newFS")
+            fsm.getFileSystem("newFS")
             self.assertEqual(2, fsm.getFileSystemCount())
 
             self.assertTrue(fsm.isCaseMounted("newFS"))

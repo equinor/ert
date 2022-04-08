@@ -36,18 +36,6 @@ class CanceledPlugin(ErtPlugin):
         raise CancelPluginException("Cancel test!")
 
 
-# class GUIPlugin(ErtPlugin):
-#     def getArguments(self, parent=None):
-#         value1 = QInputDialog.getInt(parent, "Enter a number!", "Enter a nice number (nothing else than 5):", value=0, min=0, max=10)
-#         value2 = QInputDialog.getInt(parent, "Enter a number!", "Enter a nice number (nothing else than 6):", value=0, min=0, max=10)
-#         print(value1, value2)
-#         return [value1[0], value2[0]]
-#
-#     def run(self, arg1, arg2, arg3=None):
-#         assert arg1 == 5
-#         assert arg2 == 6
-
-
 class ErtPluginTest(ResTest):
     def test_simple_ert_plugin(self):
 

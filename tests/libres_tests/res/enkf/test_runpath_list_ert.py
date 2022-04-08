@@ -15,7 +15,7 @@ class RunpathListTestErt(ResTest):
         # TODO this test is flaky and we need to figure out why.  See #1370
         # enkf_util_assert_buffer_type: wrong target type in file (expected:104 got:0)
         test_path = self.createTestPath("local/snake_oil_field/snake_oil.ert")
-        with ErtTestContext("runpathlist_basic", test_path) as tc:
+        with ErtTestContext("runpathlist_basic", test_path):
             pass
 
     @tmpdir()
@@ -28,7 +28,7 @@ class RunpathListTestErt(ResTest):
             runpath_list = ert.getRunpathList()
             self.assertFalse(os.path.isfile(runpath_list.getExportFile()))
 
-            ens_size = ert.getEnsembleSize()
+            ert.getEnsembleSize()
             runner = ert.getEnkfSimulationRunner()
             fs_manager = ert.getEnkfFsManager()
 

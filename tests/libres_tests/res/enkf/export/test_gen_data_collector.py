@@ -12,10 +12,10 @@ class GenDataCollectorTest(ResTest):
             ert = context.getErt()
 
             with self.assertRaises(KeyError):
-                data = GenDataCollector.loadGenData(ert, "default_0", "RFT_XX", 199)
+                GenDataCollector.loadGenData(ert, "default_0", "RFT_XX", 199)
 
             with self.assertRaises(ValueError):
-                data = GenDataCollector.loadGenData(
+                GenDataCollector.loadGenData(
                     ert, "default_0", "SNAKE_OIL_OPR_DIFF", 198
                 )
 

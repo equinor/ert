@@ -31,10 +31,12 @@ class SummaryCollectorTest(ResTest):
             self.assertFloatEqual(data["FOPR"][0]["2010-01-10"], 0.118963)
             self.assertFloatEqual(data["FOPR"][0]["2015-06-23"], 0.133601)
 
-            realization_20 = data.loc[20]
+            # realization 20:
+            data.loc[20]
 
             with self.assertRaises(KeyError):
-                realization_60 = data.loc[60]
+                # realization 60:
+                data.loc[60]
 
             data = SummaryCollector.loadAllSummaryData(
                 ert, "default_0", ["WWCT:OP1", "WWCT:OP2"]

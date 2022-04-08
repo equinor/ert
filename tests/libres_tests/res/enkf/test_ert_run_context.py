@@ -24,4 +24,4 @@ from res.enkf import ErtRunContext
 class ErtRunContextTest(ResTest):
     def test_case_init(self):
         mask = BoolVector(default_value=True, initial_size=100)
-        context = ErtRunContext.case_init(None, mask)
+        ErtRunContext.case_init(None, mask)

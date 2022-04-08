@@ -34,7 +34,6 @@ from res.enkf import (
 )
 from res.job_queue import QueueDriverEnum
 from res.sched import HistorySourceEnum
-from res.util.enums import MessageLevelEnum
 
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config
@@ -209,7 +208,9 @@ config_data_new = {
     ConfigKeys.ENSPATH: "../output/storage/<CASE_DIR>",  # model
     "PLOT_PATH": "../output/results/plot/<CASE_DIR>",  # removed, previously plot config
     ConfigKeys.UPDATE_LOG_PATH: "../output/update_log/<CASE_DIR>",  # analysis
-    ConfigKeys.RUNPATH_FILE: "../output/run_path_file/.ert-runpath-list_<CASE_DIR>",  # subst
+    ConfigKeys.RUNPATH_FILE: (
+        "../output/run_path_file/.ert-runpath-list_<CASE_DIR>"
+    ),  # subst
     ConfigKeys.DEFINE_KEY: {
         "<USER>": "TEST_USER",
         "<SCRATCH>": "scratch/ert",
@@ -375,8 +376,13 @@ class ResConfigTest(ResTest):
             )
 
     def assert_same_config_file(self, expected_filename, filename, prefix):
-        prefix_path = lambda fn: fn if os.path.isabs(fn) else os.path.join(prefix, fn)
-        canonical_path = lambda fn: os.path.realpath(os.path.abspath(prefix_path(fn)))
+        def prefix_path(filename):
+            if os.path.isabs(filename):
+                return filename
+            return os.path.join(prefix, filename)
+
+        def canonical_path(filename):
+            return os.path.realpath(os.path.abspath(prefix_path(filename)))
 
         self.assertEqual(canonical_path(expected_filename), canonical_path(filename))
 
@@ -608,7 +614,6 @@ class ResConfigTest(ResTest):
     def test_iso_date_format_iso(self):
         self.set_up_simple()
         with TestAreaContext("res_config_init_isodate_test") as work_area:
-            cwd = os.getcwd()
             work_area.copy_directory(self.case_directory)
 
             config_file = "simple_config/minimum_config"
@@ -621,7 +626,6 @@ class ResConfigTest(ResTest):
     def test_legacy_date_format_iso(self):
         self.set_up_simple()
         with TestAreaContext("res_config_init_legacydate_test") as work_area:
-            cwd = os.getcwd()
             work_area.copy_directory(self.case_directory)
 
             config_file = "simple_config/minimum_config"
@@ -653,7 +657,8 @@ class ResConfigTest(ResTest):
             # split config_file to path and filename
             cfg_path, cfg_file = os.path.split(os.path.realpath(self.config_file))
 
-            # replace define keys only in root strings, this should be updated and validated in configsuite instead
+            # replace define keys only in root strings, this should be updated
+            # and validated in configsuite instead
             for define_key in config_data_new[ConfigKeys.DEFINE_KEY]:
                 for data_key in config_data_new:
                     if isinstance(config_data_new[data_key], str):
@@ -672,7 +677,8 @@ class ResConfigTest(ResTest):
             ERT_SHARE_PATH = os.path.dirname(res_config_file.site_config.getLocation())
 
             # update dictionary
-            # commit missing entries, this should be updated and validated in configsuite instead
+            # commit missing entries, this should be updated and validated in
+            # configsuite instead
             config_data_new[ConfigKeys.CONFIG_FILE_KEY] = cfg_file
             config_data_new[ConfigKeys.INSTALL_JOB_DIRECTORY] = [
                 ERT_SHARE_PATH + "/forward-models/res",

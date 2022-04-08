@@ -16,7 +16,7 @@ class EnsembleConfigTest(ResTest):
         self.assertFalse("XYZ" in conf)
 
         with self.assertRaises(KeyError):
-            node = conf["KEY"]
+            conf["KEY"]
 
     def test_ensemble_config_constructor(self):
         config_dict = {
@@ -72,7 +72,9 @@ class EnsembleConfigTest(ResTest):
                     ConfigKeys.NAME: "TOP",
                     ConfigKeys.INIT_FILES: "configuration_tests/surface/small.irap",
                     ConfigKeys.OUT_FILE: "configuration_tests/surface/small_out.irap",
-                    ConfigKeys.BASE_SURFACE_KEY: "configuration_tests/surface/small.irap",
+                    ConfigKeys.BASE_SURFACE_KEY: (
+                        "configuration_tests/surface/small.irap"
+                    ),
                     ConfigKeys.MIN_STD: None,
                     ConfigKeys.FORWARD_INIT: False,
                 }

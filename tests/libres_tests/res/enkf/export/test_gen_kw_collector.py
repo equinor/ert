@@ -23,10 +23,12 @@ class GenKwCollectorTest(ResTest):
             self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], 0.054539)
             self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][12], 0.057807)
 
-            realization_20 = data.loc[20]
+            # realization 20:
+            data.loc[20]
 
             with self.assertRaises(KeyError):
-                realization_60 = data.loc[60]
+                # realization 60:
+                data.loc[60]
 
             data = GenKwCollector.loadAllGenKwData(
                 ert,

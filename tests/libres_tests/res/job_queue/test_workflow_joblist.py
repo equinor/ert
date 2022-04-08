@@ -21,7 +21,7 @@ class WorkflowJoblistTest(ResTest):
         self.assertEqual(job.name(), job_ref.name())
 
     def test_workflow_joblist_with_files(self):
-        with TestAreaContext("python/job_queue/workflow_joblist") as work_area:
+        with TestAreaContext("python/job_queue/workflow_joblist"):
             WorkflowCommon.createErtScriptsJob()
             WorkflowCommon.createExternalDumpJob()
             WorkflowCommon.createInternalFunctionJob()

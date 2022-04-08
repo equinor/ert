@@ -26,8 +26,7 @@ import yaml
 from ecl.summary import EclSum
 from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
-
-from res.fm.ecl import *
+from res.fm.ecl import Ecl100Config, EclRun, FlowConfig, ecl_run, run
 from res.fm.ecl.ecl_run import make_SLURM_machine_list
 
 
@@ -56,6 +55,9 @@ class EclRunTest(ResTest):
         self.monkeypatch.undo()
 
     def init_ecl100_config(self):
+        ecl14_prefix = "/prog/ecl/grid/2014.2/bin/linux_x86_64/"
+        ecl19_prefix = "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/"
+        mpi_prefix = "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/"
         conf = {
             "env": {
                 "F_UFMTENDIAN": "big",
@@ -64,32 +66,28 @@ class EclRunTest(ResTest):
             },
             "versions": {
                 "2014.2": {
-                    "scalar": {
-                        "executable": "/prog/ecl/grid/2014.2/bin/linux_x86_64/eclipse.exe"
-                    },
+                    "scalar": {"executable": ecl14_prefix + "eclipse.exe"},
                     "mpi": {
-                        "executable": "/prog/ecl/grid/2014.2/bin/linux_x86_64/eclipse_ilmpi.exe",
-                        "mpirun": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64/mpirun",
+                        "executable": ecl14_prefix + "eclipse_ilmpi.exe",
+                        "mpirun": mpi_prefix + "bin64/mpirun",
                         "env": {
-                            "I_MPI_ROOT": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/",
+                            "I_MPI_ROOT": mpi_prefix,
                             "P4_RSHCOMMAND": "ssh",
-                            "LD_LIBRARY_PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/lib64:$LD_LIBRARY_PATH",
-                            "PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64:$PATH",
+                            "LD_LIBRARY_PATH": mpi_prefix + "lib64:$LD_LIBRARY_PATH",
+                            "PATH": mpi_prefix + "bin64:$PATH",
                         },
                     },
                 },
                 "2019.3": {
-                    "scalar": {
-                        "executable": "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/eclipse.exe"
-                    },
+                    "scalar": {"executable": ecl19_prefix + "eclipse.exe"},
                     "mpi": {
-                        "executable": "/prog/res/ecl/grid/2019.3/bin/linux_x86_64/eclipse_ilmpi.exe",
-                        "mpirun": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64/mpirun",
+                        "executable": ecl19_prefix + "eclipse_ilmpi.exe",
+                        "mpirun": mpi_prefix + "bin64/mpirun",
                         "env": {
-                            "I_MPI_ROOT": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044",
+                            "I_MPI_ROOT": mpi_prefix,
                             "P4_RSHCOMMAND": "ssh",
-                            "LD_LIBRARY_PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/lib64:$LD_LIBRARY_PATH",
-                            "PATH": "/prog/ecl/grid/tools/linux_x86_64/intel/mpi/5.0.2.044/bin64:$PATH",
+                            "LD_LIBRARY_PATH": mpi_prefix + "lib64:$LD_LIBRARY_PATH",
+                            "PATH": mpi_prefix + "bin64:$PATH",
                         },
                     },
                 },
@@ -315,7 +313,7 @@ class EclRunTest(ResTest):
         self.assertEqual(lines[1].strip(), "VAL2")
 
     @tmpdir()
-    def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(
+    def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables_will_overwrite(  # noqa
         self,
     ):
         version = "1111.11"
@@ -575,10 +573,10 @@ class EclRunTest(ResTest):
         error0 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
  @           UNABLE TO OPEN INCLUDED FILE                                    
  @           /private/joaho/ERT/git/Gurbat/XXexample_grid_sim.GRDECL         
- @           SYSTEM ERROR CODE IS       29                                   """
+ @           SYSTEM ERROR CODE IS       29                                   """  # noqa
 
         error1 = """ @--  ERROR  AT TIME        0.0   DAYS    ( 1-JAN-0):
- @           INCLUDE FILES MISSING.                                          """
+ @           INCLUDE FILES MISSING.                                          """  # noqa
 
         self.assertEqual(error_list[0], error0)
         self.assertEqual(error_list[1], error1)

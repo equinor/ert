@@ -41,7 +41,8 @@ then
     exit 1
 fi
 PYPATH_EXPECTED={expected_pythonpath}
-if [[ $PYTHONPATH != $PYPATH_EXPECTED ]] # first user defined, then config defined, then rest
+# first user defined, then config defined, then rest:
+if [[ $PYTHONPATH != $PYPATH_EXPECTED ]]
 then
     echo "PYTHONPATH set incorrectly"
     echo $PYTHONPATH should be $PYPATH_EXPECTED
@@ -99,11 +100,11 @@ class RMSRunTest(ResTest):
 
     def test_create(self):
         with self.assertRaises(OSError):
-            r = RMSRun(0, "/project/does/not/exist", "workflow")
+            RMSRun(0, "/project/does/not/exist", "workflow")
 
         with TestAreaContext("test_create"):
             os.mkdir("rms")
-            r = RMSRun(0, "rms", "workflow")
+            RMSRun(0, "rms", "workflow")
 
     def test_run_class(self):
         with TestAreaContext("test_run"):
@@ -597,7 +598,6 @@ env:
 
     def test_run_allow_no_env(self):
         with TestAreaContext("test_run"):
-            wrapper_file_name = f"{os.getcwd()}/bin/rms_wrapper"
             with open("rms_config.yml", "w") as f:
                 f.write(
                     f"""\

@@ -10,11 +10,11 @@ class TestFMValidity(ResTest):
         pass
 
     def _extract_executable(self, filename):
-        with open(filename, "r") as f:
-            for line in f.readlines():
-                l = line.strip().split()
-                if len(l) > 1 and l[0] == "EXECUTABLE":
-                    return l[1]
+        with open(filename, "r") as filehandle:
+            for line in filehandle.readlines():
+                splitline = line.strip().split()
+                if len(splitline) > 1 and splitline[0] == "EXECUTABLE":
+                    return splitline[1]
         return None
 
     def _file_exist_and_is_executable(self, file_path):

@@ -14,7 +14,7 @@ class TestLoadState:
             self.TESTDATA_ROOT / "Equinor/config/with_data/config_GEN_DATA"
         ) as ctx:
             load_into = ctx.ert.getEnkfFsManager().getFileSystem("A1")
-            load_from = ctx.ert.getEnkfFsManager().getFileSystem("default")
+            ctx.ert.getEnkfFsManager().getFileSystem("default")
 
             realisations = BoolVector(default_value=True, initial_size=25)
 

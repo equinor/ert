@@ -533,8 +533,9 @@ class BatchSimulatorTest(ResTest):
             self.assertEqual(status.complete, 0)
             self.assertEqual(status.running, 0)
             for idx, _ in enumerate(case_data):
-                path = "storage/batch_sim/runpath/{}/realization-{}/iter-0/realization.number".format(
-                    case_name, idx
+                path = (
+                    f"storage/batch_sim/runpath/{case_name}"
+                    f"/realization-{idx}/iter-0/realization.number"
                 )
                 self.assertTrue(os.path.isfile(path))
                 with open(path, "r") as f:

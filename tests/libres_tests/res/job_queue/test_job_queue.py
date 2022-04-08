@@ -92,7 +92,7 @@ class JobQueueTest(ResTest):
         self.assertEnumIsFullyDefined(JobStatusType, "job_status_type", source_path)
 
     def test_kill_jobs(self):
-        with TestAreaContext("job_queue_test_kill") as work_area:
+        with TestAreaContext("job_queue_test_kill"):
             job_queue = create_queue(NEVER_ENDING_SCRIPT)
 
             assert job_queue.queue_size == 10
@@ -122,7 +122,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_add_jobs(self):
-        with TestAreaContext("job_queue_test_add") as work_area:
+        with TestAreaContext("job_queue_test_add"):
             job_queue = create_queue(SIMPLE_SCRIPT)
 
             assert job_queue.queue_size == 10
@@ -141,7 +141,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_failing_jobs(self):
-        with TestAreaContext("job_queue_test_add") as work_area:
+        with TestAreaContext("job_queue_test_add"):
             job_queue = create_queue(FAILING_SCRIPT, max_submit=1)
 
             assert job_queue.queue_size == 10
@@ -167,7 +167,7 @@ class JobQueueTest(ResTest):
                 assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
 
     def test_timeout_jobs(self):
-        with TestAreaContext("job_queue_test_kill") as work_area:
+        with TestAreaContext("job_queue_test_kill"):
             job_numbers = set()
 
             def callback(arg):
@@ -207,7 +207,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_add_ensemble_evaluator_info(self):
-        with TestAreaContext("job_queue_add_ensemble_evaluator_info") as work_area:
+        with TestAreaContext("job_queue_add_ensemble_evaluator_info"):
             job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"
@@ -240,9 +240,7 @@ class JobQueueTest(ResTest):
                     assert f.read() == cert
 
     def test_add_ensemble_evaluator_info_cert_none(self):
-        with TestAreaContext(
-            "job_queue_add_ensemble_evaluator_info_cert_none"
-        ) as work_area:
+        with TestAreaContext("job_queue_add_ensemble_evaluator_info_cert_none"):
             job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"

@@ -21,7 +21,9 @@ class MisfitCollectorTest(ResTest):
             self.assertFloatEqual(data["MISFIT:TOTAL"][0], 767.008457)
             self.assertFloatEqual(data["MISFIT:TOTAL"][24], 1359.172803)
 
-            realization_20 = data.loc[20]
+            # realization 20:
+            data.loc[20]
 
             with self.assertRaises(KeyError):
-                realization_60 = data.loc[60]
+                # realization 60:
+                data.loc[60]

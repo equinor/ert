@@ -37,7 +37,10 @@ class RunpathListDumpTest(ResTest):
             mask = BoolVector(initial_size=num_realizations, default_value=True)
             mask[13] = False
 
-            runpath_fmt = "simulations/<GEO_ID>/realization-%d/iter-%d/magic-real-<IENS>/magic-iter-<ITER>"
+            runpath_fmt = (
+                "simulations/<GEO_ID>/realization-%d/iter-%d/"
+                "magic-real-<IENS>/magic-iter-<ITER>"
+            )
             jobname_fmt = "SNAKE_OIL_%d"
 
             subst_list = res.resConfig().subst_config.subst_list

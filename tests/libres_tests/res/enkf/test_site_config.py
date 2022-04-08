@@ -90,9 +90,7 @@ class SiteConfigTest(ResTest):
             self.assertEqual(site_config_dict, site_config_user_file)
 
             with self.assertRaises(ValueError):
-                site_config = SiteConfig(
-                    user_config_file=config_file, config_dict=snake_config_dict
-                )
+                SiteConfig(user_config_file=config_file, config_dict=snake_config_dict)
 
     @tmpdir()
     def test_site_config_hook_workflow(self):

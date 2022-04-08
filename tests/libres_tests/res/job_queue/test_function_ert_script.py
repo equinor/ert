@@ -7,7 +7,7 @@ from res.job_queue import WorkflowJob
 
 class FunctionErtScriptTest(ResTest):
     def test_compare(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createInternalFunctionJob()
 
             parser = WorkflowJob.configParser()
@@ -23,7 +23,8 @@ class FunctionErtScriptTest(ResTest):
             self.assertNotEqual(result, 0)
 
             result = workflow_job.run(None, ["String", "String"])
-            # result is returned as c_void_p -> automatic conversion to None if value is 0
+            # result is returned as c_void_p -> automatic conversion to None if
+            # value is 0
             self.assertIsNone(result)
 
             workflow_job = WorkflowJob.fromFile("compare_job")
