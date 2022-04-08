@@ -269,7 +269,7 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
 
     with patch("job_runner.cli.os") as mock_os, patch(
         "job_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ) as mock_file, patch("job_runner.cli.JobRunner") as mock_runner:
+    ), patch("job_runner.cli.JobRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),

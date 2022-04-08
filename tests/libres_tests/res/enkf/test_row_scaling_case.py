@@ -62,8 +62,9 @@ def init_data(main):
     wct = []
     num_realisations = main.getEnsembleSize()
 
-    # The path fields/poro{}.grdecl must be consistent with the INIT_FILES: argument in the
-    # PORO configuration in the configuration file used for the testcase.
+    # The path fields/poro{}.grdecl must be consistent with the INIT_FILES:
+    # argument in the PORO configuration in the configuration file used for the
+    # testcase.
     os.mkdir("fields")
     random.seed(12345)
     for i in range(num_realisations):
@@ -404,7 +405,7 @@ class RowScalingTest(ResTest):
             # The first smoother update without row scaling
             es_update = ESUpdate(main)
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
-            rng = main.rng()
+            main.rng()
             es_update.smootherUpdate(run_context)
 
             # Configure the local updates
@@ -561,7 +562,8 @@ TIME_MAP timemap.txt
             updatestep.attachMinistep(ministep2)
             update_fs3 = main.getEnkfFsManager().getFileSystem("target3")
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs3)
-            # Local update with two ministeps - where one observation has been removed from the first
+            # Local update with two ministeps - where one observation has been
+            # removed from the first
             es_update.smootherUpdate(run_context)
 
             ens_config = main.ensembleConfig()

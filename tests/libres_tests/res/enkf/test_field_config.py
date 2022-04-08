@@ -26,10 +26,10 @@ from res.enkf.enums import EnkfFieldFileFormatEnum
 class FieldConfigTest(ResTest):
     def test_create(self):
         grid = EclGridGenerator.create_rectangular((10, 10, 5), (1, 1, 1))
-        field_config = FieldConfig("SWAT", grid)
+        FieldConfig("SWAT", grid)
 
     def test_field_guess_filetype(self):
-        with TestAreaContext("field_config") as test_context:
+        with TestAreaContext("field_config"):
             fname = abspath("test.kw.grdecl")
             with open(fname, "w") as f:
                 f.write("-- my comment\n")

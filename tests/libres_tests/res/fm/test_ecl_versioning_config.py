@@ -54,7 +54,6 @@ class EclConfigTest(ResTest):
             with self.assertRaises(ValueError):
                 conf = Ecl100Config()
 
-            scalar_path = "scalar"
             scalar_exe = "bin/scalar_exe"
             mpi_exe = "bin/mpi_exe"
             mpi_run = "bin/mpi_run"
@@ -117,11 +116,13 @@ class EclConfigTest(ResTest):
             with self.assertRaises(OSError):
                 sim = conf.sim("2016")
 
-            # Fails because the 2016 mpi version points to a non existing mpi executable
+            # Fails because the 2016 mpi version points to a non existing mpi
+            # executable
             with self.assertRaises(OSError):
                 sim = conf.mpi_sim("2016")
 
-            # Fails because the 2017 mpi version mpirun points to a non existing mpi executable
+            # Fails because the 2017 mpi version mpirun points to a non existing
+            # mpi executable
             with self.assertRaises(OSError):
                 sim = conf.mpi_sim("2017")
 

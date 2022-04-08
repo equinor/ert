@@ -27,7 +27,7 @@ class WorkflowJobTest(ResTest):
         self.assertEqual(workflow_job.name(), "Test")
 
     def test_read_internal_function(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createInternalFunctionJob()
             WorkflowCommon.createErtScriptsJob()
 
@@ -56,7 +56,7 @@ class WorkflowJobTest(ResTest):
             )
 
     def test_arguments(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createInternalFunctionJob()
 
             config = self._alloc_config()
@@ -77,7 +77,7 @@ class WorkflowJobTest(ResTest):
 
     def test_run_external_job(self):
 
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createExternalDumpJob()
 
             config = self._alloc_config()
@@ -94,19 +94,19 @@ class WorkflowJobTest(ResTest):
 
     def test_error_handling_external_job(self):
 
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createExternalDumpJob()
 
             config = self._alloc_config()
             job = self._alloc_from_file("DUMP", config, "dump_failing_job")
 
             self.assertFalse(job.isInternal())
-            argTypes = job.argumentTypes()
+            job.argumentTypes()
             self.assertIsNone(job.run(None, []))
             self.assertTrue(job.stderrdata().startswith("Traceback"))
 
     def test_run_internal_script(self):
-        with TestAreaContext("python/job_queue/workflow_job") as work_area:
+        with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createErtScriptsJob()
 
             config = self._alloc_config()

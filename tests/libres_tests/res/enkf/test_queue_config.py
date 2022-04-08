@@ -34,7 +34,7 @@ class QueueConfigTest(ResTest):
 
             config_file = "simple_config/minimum_config"
             queue_config = QueueConfig(config_file)
-            job_queue = queue_config.create_job_queue()
+            queue_config.create_job_queue()
             queue_config_copy = queue_config.create_local_copy()
 
             self.assertEqual(

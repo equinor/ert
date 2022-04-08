@@ -37,7 +37,7 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 ert ert3 tests/ert_tests
+        flake8 ert ert3 tests
 
     - name: Run black
       run: |

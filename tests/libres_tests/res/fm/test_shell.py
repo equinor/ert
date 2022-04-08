@@ -6,8 +6,16 @@ import unittest
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 from pytest import MonkeyPatch
-
-from res.fm.shell import *
+from res.fm.shell import (
+    careful_copy_file,
+    copy_directory,
+    copy_file,
+    delete_directory,
+    delete_file,
+    mkdir,
+    move_file,
+    symlink,
+)
 
 
 @contextlib.contextmanager

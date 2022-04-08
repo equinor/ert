@@ -179,8 +179,8 @@ def _generate_job(
     return ext_job
 
 
-def empty_list_if_none(l):
-    return [] if l is None else l
+def empty_list_if_none(_list):
+    return [] if _list is None else _list
 
 
 def default_name_if_none(name):
@@ -228,7 +228,10 @@ class ForwardModelFormattedPrintTest(ResTest):
     JOBS_JSON_FILE = "jobs.json"
 
     def validate_ext_job(self, ext_job, ext_job_config):
-        zero_if_none = lambda x: 0 if x is None else x
+        def zero_if_none(x):
+            if x is None:
+                return 0
+            return x
 
         self.assertEqual(ext_job.name(), default_name_if_none(ext_job_config["name"]))
         self.assertEqual(ext_job.get_executable(), ext_job_config["executable"])
@@ -332,7 +335,7 @@ class ForwardModelFormattedPrintTest(ResTest):
                         create_std_file(job, std=key, job_index=job_index),
                         loaded_job[key],
                     )
-                elif key is "executable":
+                elif key == "executable":
                     assert job[key] in loaded_job[key]
                 else:
                     self.assertEqual(job[key], loaded_job[key])
@@ -424,7 +427,7 @@ class ForwardModelFormattedPrintTest(ResTest):
             self.assertEqual(first_value, env_config[first])
             self.assertEqual(second_value, env_config[second])
             self.assertEqual(third_value_correct, env_config[third])
-            update_config = config[update_string]
+            config[update_string]
 
     def test_repr(self):
         with TestAreaContext("python/job_queue/forward_model_one_job"):
@@ -505,7 +508,12 @@ class ForwardModelFormattedPrintTest(ResTest):
                 run_id, os.getcwd(), "data_root", global_args, umask, varlist
             )
 
-            s = '{"start_time": null, "jobs": [{"status": "Success", "start_time": 1519653419.0, "end_time": 1519653419.0, "name": "SQUARE_PARAMS", "error": null, "current_memory_usage": 2000, "max_memory_usage": 3000}], "end_time": null, "run_id": ""}'
+            s = (
+                '{"start_time": null, "jobs": [{"status": "Success", '
+                '"start_time": 1519653419.0, "end_time": 1519653419.0, '
+                '"name": "SQUARE_PARAMS", "error": null, "current_memory_usage": 2000, '
+                '"max_memory_usage": 3000}], "end_time": null, "run_id": ""}'
+            )
 
             with open("status.json", "w") as f:
                 f.write(s)

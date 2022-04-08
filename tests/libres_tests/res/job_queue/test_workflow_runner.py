@@ -10,9 +10,7 @@ from res.util.substitution_list import SubstitutionList
 
 class WorkflowRunnerTest(ResTest):
     def test_workflow_thread_cancel_ert_script(self):
-        with TestAreaContext(
-            "python/job_queue/workflow_runner_ert_script"
-        ) as work_area:
+        with TestAreaContext("python/job_queue/workflow_runner_ert_script"):
             WorkflowCommon.createWaitJob()
 
             joblist = WorkflowJoblist()
@@ -49,7 +47,7 @@ class WorkflowRunnerTest(ResTest):
             self.assertFileDoesNotExist("wait_finished_2")
 
     def test_workflow_thread_cancel_external(self):
-        with TestAreaContext("python/job_queue/workflow_runner_external") as work_area:
+        with TestAreaContext("python/job_queue/workflow_runner_external"):
             WorkflowCommon.createWaitJob()
 
             joblist = WorkflowJoblist()
@@ -80,7 +78,7 @@ class WorkflowRunnerTest(ResTest):
             self.assertFileDoesNotExist("wait_finished_2")
 
     def test_workflow_failed_job(self):
-        with TestAreaContext("python/job_queue/workflow_runner_fails") as work_area:
+        with TestAreaContext("python/job_queue/workflow_runner_fails"):
             WorkflowCommon.createExternalDumpJob()
 
             joblist = WorkflowJoblist()
@@ -100,7 +98,7 @@ class WorkflowRunnerTest(ResTest):
                 self.assertNotEqual(workflow_runner.exception(), None)
 
     def test_workflow_success(self):
-        with TestAreaContext("python/job_queue/workflow_runner_fast") as work_area:
+        with TestAreaContext("python/job_queue/workflow_runner_fast"):
             WorkflowCommon.createWaitJob()
 
             joblist = WorkflowJoblist()

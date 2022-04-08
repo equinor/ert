@@ -41,7 +41,7 @@ class RMSConfigTest(ResTest):
         conf = RMSConfig()
 
         with self.assertRaises(OSError):
-            exe = conf.executable
+            conf.executable
 
         with TestAreaContext("yaml"):
             with open("file.yml", "w") as f:

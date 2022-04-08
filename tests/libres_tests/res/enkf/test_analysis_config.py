@@ -38,7 +38,8 @@ class AnalysisConfigTest(ResTest):
             work_area.copy_directory(self.case_directory)
             ac = AnalysisConfig(self.case_file)
 
-            # Unless the MIN_REALIZATIONS is set in config, one is required to have "all" realizations.
+            # Unless the MIN_REALIZATIONS is set in config, one is required to
+            # have "all" realizations.
             self.assertFalse(ac.haveEnoughRealisations(5, 10))
             self.assertTrue(ac.haveEnoughRealisations(10, 10))
 

@@ -27,7 +27,7 @@ class EnKFLibraryTest(ResTest):
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):
-                temp = cls()
+                cls()
 
     @tmpdir()
     def test_ecl_config_creation(self):

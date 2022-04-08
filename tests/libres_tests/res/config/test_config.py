@@ -70,7 +70,7 @@ class ConfigTest(ResTest):
         )
 
     def test_item_types(self):
-        with TestAreaContext("config/types") as test_area:
+        with TestAreaContext("config/types"):
             with open("config", "w") as f:
                 f.write("TYPE_ITEM 10 3.14 TruE  String  file\n")
 
@@ -242,13 +242,13 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
             self.assertIn("KEY", d)
             item_list = d["KEY"]
             self.assertEqual(len(item_list), 1)
-            l = item_list[0]
-            self.assertEqual(l[0], "VALUE1")
-            self.assertEqual(l[1], "VALUE2")
-            self.assertEqual(l[2], 100)
-            self.assertEqual(l[3], True)
-            self.assertEqual(l[4], 3.14)
-            self.assertEqual(l[5], "../path/file.txt")
+            line = item_list[0]
+            self.assertEqual(line[0], "VALUE1")
+            self.assertEqual(line[1], "VALUE2")
+            self.assertEqual(line[2], 100)
+            self.assertEqual(line[3], True)
+            self.assertEqual(line[4], 3.14)
+            self.assertEqual(line[5], "../path/file.txt")
 
             self.assertFalse("NOT_IN_CONTENT" in content)
             item = content["NOT_IN_CONTENT"]

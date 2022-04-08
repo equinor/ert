@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  Copyright (C) 2014  Equinor ASA, Norway.
 #
-#  The file 'test_analysis_iter_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_analysis_iter_config.py' is part of ERT
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

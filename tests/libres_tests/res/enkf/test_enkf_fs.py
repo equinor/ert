@@ -47,4 +47,4 @@ class EnKFFSTest(ResTest):
 
     def test_throws(self):
         with self.assertRaises(Exception):
-            fs = EnkfFs("/does/not/exist")
+            EnkfFs("/does/not/exist")

@@ -5,7 +5,7 @@ from libres_utils import ResTest
 
 try:
     from res.test.synthesizer import OilSimulator
-except ImportError as e:
+except ImportError:
     share_lib_path = os.path.join(ResTest.createSharePath("lib"))
 
     sys.path.insert(0, share_lib_path)

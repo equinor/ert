@@ -91,9 +91,9 @@ def wait_until(func, interval=0.5, timeout=30):
         except AssertionError:
             if t >= timeout:
                 raise AssertionError(
-                    "Timeout reached in wait_until (function {%s}, timeout {%d}) when waiting for assertion.".format(
-                        func.__name__, timeout
-                    )
+                    "Timeout reached in wait_until "
+                    f"(function {func.__name__}, timeout {timeout:g}) "
+                    "when waiting for assertion."
                 )
 
 
@@ -150,6 +150,7 @@ class ResTest(ExtendedTestCase):
     def createSharePath(cls, path):
         if cls.SHARE_ROOT is None:
             raise Exception(
-                "Trying to create directory rooted in 'SHARE_ROOT' - variable 'SHARE_ROOT' is not set."
+                "Trying to create directory rooted in 'SHARE_ROOT' "
+                "- variable 'SHARE_ROOT' is not set."
             )
         return os.path.realpath(os.path.join(cls.SHARE_ROOT, path))

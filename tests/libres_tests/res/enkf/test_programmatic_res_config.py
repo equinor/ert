@@ -1,6 +1,6 @@
 #  Copyright (C) 2017  Equinor ASA, Norway.
 #
-#  The file 'test_programmatic_res_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_programmatic_res_config.py' is part of ERT.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -248,7 +248,6 @@ class ProgrammaticResConfigTest(ResTest):
 
     def test_no_config_directory(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
@@ -258,17 +257,15 @@ class ProgrammaticResConfigTest(ResTest):
 
     def test_errors(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
 
             with self.assertRaises(ValueError):
-                res_config = ResConfig(config=self.minimum_config_error)
+                ResConfig(config=self.minimum_config_error)
 
     def test_failed_keys(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
@@ -357,7 +354,6 @@ class ProgrammaticResConfigTest(ResTest):
 
     def test_new_config(self):
         case_directory = self.createTestPath("local/simulation_model")
-        config_file = "simulation_model/sim_kw.ert"
 
         with TestAreaContext("res_config_sim_job") as work_area:
             work_area.copy_directory(case_directory)

@@ -54,7 +54,6 @@ class LoadResultsManuallyTest(ResTest):
             ert.getEnkfFsManager().switchFileSystem(load_from)
             realisations = BoolVector(default_value=True, initial_size=25)
             realisations[7] = False
-            iteration = 0
 
             run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)
 

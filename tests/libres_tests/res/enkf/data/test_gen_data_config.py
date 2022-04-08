@@ -14,7 +14,10 @@ class GenDataConfigTest(ResTest):
         "bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind=False
     )
     _update_active_mask = ResPrototype(
-        "void gen_data_config_update_active( gen_data_config, forward_load_context , bool_vector)",
+        (
+            "void gen_data_config_update_active( gen_data_config, "
+            "forward_load_context , bool_vector)"
+        ),
         bind=False,
     )
 
@@ -44,7 +47,8 @@ class GenDataConfigTest(ResTest):
             self.assertEqual(second_active_mask_len, 2560)
             self.assertEqual(first_active_mask_length, second_active_mask_len)
 
-            # Setting one element to False, load different case, check, reload, and check.
+            # Setting one element to False, load different case, check, reload,
+            # and check.
             self.assertTrue(active_mask[10])
             active_mask_modified = active_mask.copy()
             active_mask_modified[10] = False
@@ -65,7 +69,8 @@ class GenDataConfigTest(ResTest):
             active_mask = self._get_active_mask(config_node.getDataModelConfig())
             self.assertTrue(active_mask[10])
 
-            # Reload second again, should now be false at 10, due to the update further up
+            # Reload second again, should now be false at 10, due to the update
+            # further up
             data_node = EnkfNode(config_node)
             data_node.tryLoad(fs2, NodeId(60, 0))
             active_mask = self._get_active_mask(config_node.getDataModelConfig())
@@ -75,7 +80,7 @@ class GenDataConfigTest(ResTest):
         self.load_active_masks("missing-active", "default")
 
     def test_create(self):
-        conf = GenDataConfig("KEY")
+        GenDataConfig("KEY")
 
     def updateMask(self, gen_data_config, report_step, fs, active_mask, subst_list):
         run_arg = RunArg.createEnsembleExperimentRunArg(
