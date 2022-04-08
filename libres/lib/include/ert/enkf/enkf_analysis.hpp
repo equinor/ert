@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <vector>
 
-#include <ert/res_util/matrix.hpp>
 #include <ert/util/int_vector.h>
 
 #include <ert/enkf/obs_data.hpp>

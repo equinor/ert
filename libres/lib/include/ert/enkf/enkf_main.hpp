@@ -28,7 +28,6 @@
 #include <ert/util/stringlist.h>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
-#include <ert/res_util/matrix.hpp>
 #include <ert/res_util/ui_return.hpp>
 #include <ert/res_util/subst_list.hpp>
 
