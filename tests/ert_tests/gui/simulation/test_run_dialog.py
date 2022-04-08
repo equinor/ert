@@ -25,10 +25,10 @@ def test_success(runmodel, qtbot, mock_tracker):
         tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
         widget.startSimulation()
 
-    qtbot.waitForWindowShown(widget)
-    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
-    assert widget.done_button.isVisible()
-    assert widget.done_button.text() == "Done"
+    with qtbot.waitExposed(widget, timeout=30000):
+        qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
+        assert widget.done_button.isVisible()
+        assert widget.done_button.text() == "Done"
 
 
 def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
@@ -60,10 +60,10 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
         )
         widget.startSimulation()
 
-    qtbot.waitForWindowShown(widget)
-    qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100, timeout=5000)
-    qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-    qtbot.waitUntil(lambda: widget._tab_widget.count() == 2, timeout=5000)
+    with qtbot.waitExposed(widget, timeout=30000):
+        qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100, timeout=5000)
+        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(lambda: widget._tab_widget.count() == 2, timeout=5000)
 
 
 @pytest.mark.parametrize(
@@ -284,9 +284,9 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
         tracker.return_value = mock_tracker(events)
         widget.startSimulation()
 
-    qtbot.waitForWindowShown(widget)
-    qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
-    qtbot.waitUntil(
-        lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
-    )
-    qtbot.waitUntil(lambda: widget.done_button.isVisible(), timeout=5000)
+    with qtbot.waitExposed(widget, timeout=30000):
+        qtbot.mouseClick(widget.show_details_button, Qt.LeftButton)
+        qtbot.waitUntil(
+            lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
+        )
+        qtbot.waitUntil(lambda: widget.done_button.isVisible(), timeout=5000)
