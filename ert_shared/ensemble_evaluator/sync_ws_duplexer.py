@@ -2,6 +2,7 @@ import os
 import asyncio
 import ssl
 import threading
+import time
 from typing import Optional, Union, Generator
 from concurrent.futures import CancelledError
 import websockets
@@ -49,6 +50,17 @@ class SyncWebsocketDuplexer:
         self._ws: Optional[WebSocketClientProtocol] = None
         self._loop_thread = threading.Thread(target=self._loop.run_forever)
         self._loop_thread.start()
+
+        # Ensure the async thread either makes a connection, or raises the _connect()
+        # exception before returning. Not before a connection has been made, can this
+        # class be used safely.
+        while not self._connection.done():
+            time.sleep(0.1)
+        try:
+            self._connection.result()
+        except Exception:
+            self.stop()
+            raise
 
     async def _connect(self) -> None:
         connect = websockets.connect(

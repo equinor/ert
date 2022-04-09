@@ -268,7 +268,7 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
     assert num_successful == num_realizations - num_failing
 
 
-def get_connection_closed_excpetion():
+def get_connection_closed_exception():
     # The API of the websockets exception was changed in version 10,
     # and are not backwards compatible. However, we still need to
     # support version 9, as this is the latest version that also supports
@@ -282,11 +282,11 @@ def get_connection_closed_excpetion():
 def dummy_iterator(dummy_str: str):
     for c in dummy_str:
         yield c
-    raise get_connection_closed_excpetion()
+    raise get_connection_closed_exception()
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ens_eval_run_and_get_successful_realizations_connection_closed_recover(
+def test_recover_from_failure_in_run_and_get_successful_realizations(
     make_ee_config, num_realizations, num_failing
 ):
     ee_config = make_ee_config(
@@ -299,10 +299,10 @@ def test_ens_eval_run_and_get_successful_realizations_connection_closed_recover(
     with patch.object(
         _Monitor,
         "track",
-        side_effect=[get_connection_closed_excpetion()] * 2
+        side_effect=[get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")]
         + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_excpetion()] * 2
+        + [get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")] * 2
         + ["DUMMY TRACKING ITERATOR2"],
     ) as mock:
@@ -312,7 +312,7 @@ def test_ens_eval_run_and_get_successful_realizations_connection_closed_recover(
 
 
 @pytest.mark.parametrize("num_realizations, num_failing", [(10, 5), (10, 10)])
-def test_ens_eval_run_and_get_successful_realizations_connection_closed_no_recover(
+def test_exhaust_retries_in_run_and_get_successful_realizations(
     make_ee_config, num_realizations, num_failing
 ):
     ee_config = make_ee_config(
@@ -325,10 +325,10 @@ def test_ens_eval_run_and_get_successful_realizations_connection_closed_no_recov
     with patch.object(
         _Monitor,
         "track",
-        side_effect=[get_connection_closed_excpetion()] * 2
+        side_effect=[get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")]
         + [dummy_iterator("DUMMY TRACKING ITERATOR")]
-        + [get_connection_closed_excpetion()] * 2
+        + [get_connection_closed_exception()] * 2
         + [ConnectionRefusedError("Connection error")] * 3
         + [
             "DUMMY TRACKING ITERATOR2"

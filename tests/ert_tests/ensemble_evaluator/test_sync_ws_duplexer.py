@@ -2,6 +2,7 @@ import asyncio
 from contextlib import ExitStack
 from http import HTTPStatus
 from threading import Thread
+import time
 from unittest.mock import patch
 
 import pytest
@@ -44,18 +45,53 @@ def ws(event_loop: asyncio.AbstractEventLoop):
     t.join()
 
 
-def test_immediate_stop():
-    duplexer = SyncWebsocketDuplexer("ws://localhost", "", None, None)
+def test_immediate_stop(unused_tcp_port, ws):
+    # if the duplexer is immediately stopped, it should be well behaved and close
+    # the connection normally
+    closed = False
+
+    async def handler(websocket, path):
+        try:
+            await websocket.recv()
+        except ConnectionClosedOK:
+            nonlocal closed
+            closed = True
+
+    ws("localhost", unused_tcp_port, handler)
+
+    duplexer = SyncWebsocketDuplexer(
+        f"ws://localhost:{unused_tcp_port}",
+        f"ws://localhost:{unused_tcp_port}",
+        None,
+        None,
+    )
+
     duplexer.stop()
+
+    assert closed
 
 
 def test_failed_connection():
     with patch("ert.ensemble_evaluator.wait_for_evaluator") as w:
-        w.side_effect = OSError("expected oserror")
-        duplexer = SyncWebsocketDuplexer(
-            "ws://localhost:0", "http://localhost:0", None, None
-        )
-        with pytest.raises(OSError):
+        w.side_effect = OSError("expected OSError")
+        with pytest.raises(OSError, match="expected OSError"):
+            SyncWebsocketDuplexer("ws://localhost:0", "http://localhost:0", None, None)
+
+
+def test_failed_send(unused_tcp_port, ws):
+    async def handler(websocket, path):
+        await websocket.recv()
+
+    ws("localhost", unused_tcp_port, handler)
+    duplexer = SyncWebsocketDuplexer(
+        f"ws://localhost:{unused_tcp_port}",
+        f"ws://localhost:{unused_tcp_port}",
+        None,
+        None,
+    )
+    with patch("websockets.WebSocketCommonProtocol.send") as send:
+        send.side_effect = OSError("expected OSError")
+        with pytest.raises(OSError, match="expected OSError"):
             duplexer.send("hello")
 
 
