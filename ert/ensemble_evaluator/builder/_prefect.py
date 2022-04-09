@@ -312,6 +312,13 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
             flow = self.get_flow(ee_id, iens_range)
             with prefect_log_level_context(level="WARNING"):
                 state = flow.run(executor=self._new_executor())
+                if isinstance(state.result, OSError) and "Signal 2" in str(
+                    state.result
+                ):
+                    logger.debug(
+                        f"flow failed with {state.result} due to {state.result}"
+                    )
+                    raise state.result
             for iens in iens_range:
                 state_map[iens] = state
             i = i + self._real_per_batch

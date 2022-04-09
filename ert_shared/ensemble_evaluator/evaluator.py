@@ -233,13 +233,12 @@ class EnsembleEvaluator:
         self._ws_thread.join()
 
     def run_and_get_successful_realizations(self) -> int:
-        monitor_context = self.run()
+        monitor = self.run()
         unsuccessful_connection_attempts = 0
         while True:
             try:
-                with monitor_context as mon:
-                    for _ in mon.track():
-                        unsuccessful_connection_attempts = 0
+                for _ in monitor.track():
+                    unsuccessful_connection_attempts = 0
                 break
             except ConnectionClosedError as e:
                 logger.debug(
