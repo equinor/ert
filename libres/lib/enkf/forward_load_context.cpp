@@ -69,34 +69,12 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
             run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, fmt_file, -1);
         stringlist_type *data_files = stringlist_alloc_new();
 
-        /* Should we load from a unified summary file, or from several non-unified files? */
         if (unified_file != NULL)
-            /* Use unified file: */
             stringlist_append_copy(data_files, unified_file);
-        else {
-            /* Use several non unified files. */
-            /* Bypassing the query to model_config_load_results() */
-            int report_step = run_arg_get_load_start(run_arg);
-            if (report_step == 0)
-                report_step++; // Ignore looking for the .S0000 summary file (it does not exist).
-            while (true) {
-                char *summary_file = ecl_util_alloc_exfilename(
-                    run_arg_get_runpath(run_arg), eclbase, ECL_SUMMARY_FILE,
-                    fmt_file, report_step);
-
-                if (summary_file != NULL) {
-                    stringlist_append_copy(data_files, summary_file);
-                    free(summary_file);
-                } else
-                    /*
-             We stop the loading at first 'hole' in the series of summary files;
-             the internalize layer must report failure if we are missing data.
-          */
-                    break;
-
-                report_step++;
-            }
-        }
+        else
+            logger->error("Could not find SUMMARY file at: {}/{} or using non "
+                          "unified SUMMARY file",
+                          run_path, eclbase);
 
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
             bool include_restart = false;
