@@ -1,7 +1,5 @@
-import time
 import pytest
 
-from ecl.util.util import BoolVector
 from res.test import ErtTestSharedContext
 
 
@@ -16,7 +14,7 @@ class TestLoadState:
             load_into = ctx.ert.getEnkfFsManager().getFileSystem("A1")
             ctx.ert.getEnkfFsManager().getFileSystem("default")
 
-            realisations = BoolVector(default_value=True, initial_size=25)
+            realisations = [True] * 25
 
             run_context = ctx.ert.getRunContextENSEMPLE_EXPERIMENT(
                 load_into, realisations
@@ -30,6 +28,6 @@ class TestLoadState:
             self.TESTDATA_ROOT / "Equinor/config/with_data/config_GEN_DATA"
         ) as ctx:
             load_from = ctx.ert.getEnkfFsManager().getFileSystem("default")
-            realisations = BoolVector(default_value=True, initial_size=25)
+            realisations = [True] * 25
             loaded = benchmark(ctx.ert.loadFromForwardModel, realisations, 0, load_from)
             assert loaded == 25, f"Loaded {loaded} realizations, expected 25"

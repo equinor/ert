@@ -5,7 +5,6 @@ from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_shared.models import SingleTestRun
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
-from ecl.util.util import BoolVector
 
 from ert_shared.libres_facade import LibresFacade
 
@@ -33,4 +32,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
 
-        return {"active_realizations": BoolVector(default_value=True, initial_size=1)}
+        return {"active_realizations": [True]}

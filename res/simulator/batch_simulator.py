@@ -1,5 +1,3 @@
-from ecl.util.util import BoolVector
-
 from res.enkf import EnKFMain, NodeId, ResConfig
 from res.enkf.config import EnkfConfigNode
 from res.enkf.data import EnkfNode
@@ -199,7 +197,7 @@ class BatchSimulator:
         # started, and things will typically be in a quite sorry state if an
         # exception occurs.
         itr = 0
-        mask = BoolVector(default_value=True, initial_size=len(case_data))
+        mask = [True] * len(case_data)
         sim_context = BatchContext(
             self.result_keys, self.ert, file_system, mask, itr, case_data
         )

@@ -1,7 +1,7 @@
 import copy
 import time
 from datetime import datetime as dt
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -127,8 +127,9 @@ def small_snapshot() -> Snapshot:
 
 @pytest.fixture
 def active_realizations() -> Mock:
-    active_reals = Mock()
+    active_reals = MagicMock()
     active_reals.count = Mock(return_value=10)
+    active_reals.__iter__.return_value = [True] * 10
     return active_reals
 
 

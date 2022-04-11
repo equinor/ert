@@ -19,7 +19,6 @@ import os
 
 import pytest
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf.ert_run_context import ErtRunContext
@@ -55,7 +54,7 @@ class EnKFTestTransferEnv(ResTest):
                 jobname_fmt = model_config.getJobnameFormat()
                 subst_list = ert.getDataKW()
                 itr = 0
-                mask = BoolVector(default_value=True, initial_size=1)
+                mask = [True]
                 run_context = ErtRunContext.ensemble_experiment(
                     result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
                 )

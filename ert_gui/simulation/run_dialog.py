@@ -3,7 +3,6 @@ import asyncio
 from threading import Thread
 from PyQt5.QtWidgets import QAbstractItemView
 
-from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole

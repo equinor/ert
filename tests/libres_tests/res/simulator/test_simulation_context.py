@@ -1,4 +1,3 @@
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir, wait_until
 
 from res.enkf.enums import RealizationStateEnum
@@ -14,15 +13,8 @@ class SimulationContextTest(ResTest):
             ert = test_context.getErt()
 
             size = 4
-            even_mask = BoolVector(initial_size=size)
-            odd_mask = BoolVector(initial_size=size)
-
-            for iens_2 in range(size // 2):
-                even_mask[2 * iens_2] = True
-                even_mask[2 * iens_2 + 1] = False
-
-                odd_mask[2 * iens_2] = False
-                odd_mask[2 * iens_2 + 1] = True
+            even_mask = [True, False] * (size // 2)
+            odd_mask = [False, True] * (size // 2)
 
             fs_manager = ert.getEnkfFsManager()
             even_half = fs_manager.getFileSystem("even_half")

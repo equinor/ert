@@ -3,7 +3,7 @@ from typing import List
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, RealizationStateEnum
 from res.enkf import ErtRunContext
-from ecl.util.util import BoolVector, StringList
+from ecl.util.util import StringList
 from ert_gui.ertwidgets import showWaitCursorWhileWaiting
 
 
@@ -45,7 +45,7 @@ def initializeCurrentCaseFromScratch(
     parameters: List[str], members: List[str], ert: EnKFMain
 ):
     selected_parameters = StringList(parameters)
-    mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=False)
+    mask = [False] * ert.getEnsembleSize()
     for member in members:
         member = int(member.strip())
         mask[member] = True
@@ -71,7 +71,11 @@ def initializeCurrentCaseFromExisting(
     ):
         total_member_count = ert.getEnsembleSize()
 
-        member_mask = BoolVector.createFromList(total_member_count, members)
+        if set(members) != set("0", "1"):
+            raise ValueError(
+                f"Wrong member set, only 0 and 1 as strings are allowed, got {set(members)}"
+            )
+        member_mask = [bool(int(string)) for string in members]
 
         ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
             source_case, source_report_step, member_mask, parameters

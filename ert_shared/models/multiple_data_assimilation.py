@@ -254,11 +254,10 @@ class MultipleDataAssimilation(BaseRunModel):
         if initialize_mask_from_arguments:
             mask = self._simulation_arguments["active_realizations"]
         else:
-            state = (
+            mask = sim_fs.getStateMap().createMask(
                 RealizationStateEnum.STATE_HAS_DATA
                 | RealizationStateEnum.STATE_INITIALIZED
             )
-            mask = sim_fs.getStateMap().createMask(state)
             # Make sure to only run the realizations which was passed in as argument
             for idx, (valid_state, run_realization) in enumerate(
                 zip(mask, self._initial_realizations_mask)

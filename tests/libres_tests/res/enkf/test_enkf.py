@@ -18,7 +18,6 @@ import os
 import os.path
 
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import (
@@ -259,7 +258,7 @@ class EnKFTest(ResTest):
             main = EnKFMain(res_config)
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem()
-            iactive = BoolVector(initial_size=10, default_value=True)
+            iactive = [True] * 10
             iactive[0] = False
             iactive[1] = False
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
@@ -293,7 +292,7 @@ class EnKFTest(ResTest):
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem()
 
-            mask = BoolVector(default_value=False, initial_size=10)
+            mask = [False] * 10
             mask[0] = True
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, mask)
 

@@ -1,6 +1,5 @@
 import os
 
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import ErtRunContext
@@ -34,7 +33,7 @@ class RunpathListDumpTest(ResTest):
             sim_fs = fs_manager.getFileSystem("sim_fs")
 
             num_realizations = 25
-            mask = BoolVector(initial_size=num_realizations, default_value=True)
+            mask = [True] * num_realizations
             mask[13] = False
 
             runpath_fmt = (

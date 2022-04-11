@@ -14,8 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import List
+
 from cwrap import BaseCClass
-from ecl.util.util import RandomNumberGenerator
+from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
 from res.enkf.analysis_config import AnalysisConfig
@@ -434,9 +436,13 @@ class _RealEnKFMain(BaseCClass):
             keyword, path, iactive, file_type, report_step, state, enkfFs
         )
 
-    def loadFromForwardModel(self, realization, iteration, fs):
+    def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
         """Returns the number of loaded realizations"""
-        return self._load_from_forward_model(iteration, realization, fs)
+        true_indices = [idx for idx, value in enumerate(realization) if value]
+        bool_vector = BoolVector.createFromList(
+            size=len(realization), source_list=true_indices
+        )
+        return self._load_from_forward_model(iteration, bool_vector, fs)
 
     def loadFromRunContext(self, run_context, fs):
         """Returns the number of loaded realizations"""
@@ -448,8 +454,14 @@ class _RealEnKFMain(BaseCClass):
     def createRunpath(self, run_context):
         self._create_run_path(run_context)
 
-    def getRunContextENSEMPLE_EXPERIMENT(self, fs, iactive, iteration=0):
-        return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, iactive, iteration)
+    def getRunContextENSEMPLE_EXPERIMENT(
+        self, fs, iactive: List[bool], iteration: int = 0
+    ):
+        true_indices = [idx for idx, value in enumerate(iactive) if value]
+        bool_vector = BoolVector.createFromList(
+            size=len(iactive), source_list=true_indices
+        )
+        return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, bool_vector, iteration)
 
     def create_runpath_list(self):
         return self._create_runpath_list()

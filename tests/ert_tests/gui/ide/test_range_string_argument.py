@@ -1,7 +1,8 @@
 from ert_utils import ErtTest
 
-from ert_shared.ide.keywords.definitions.range_string_argument import \
-    RangeStringArgument
+from ert_shared.ide.keywords.definitions.range_string_argument import (
+    RangeStringArgument,
+)
 
 
 class RangeStringArgumentTest(ErtTest):

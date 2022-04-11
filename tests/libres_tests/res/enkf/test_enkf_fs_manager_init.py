@@ -2,7 +2,7 @@ import shutil
 import os
 import pytest
 from res.enkf import ResConfig, EnKFMain, ErtRunContext
-from ecl.util.util import BoolVector, StringList
+from ecl.util.util import StringList
 from ert_shared import __version__
 from packaging import version
 
@@ -35,12 +35,10 @@ def fail_if_not_removed():
 def test_custom_init_runs(state_mask, expected_length):
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
-    new_fs = ert.getEnkfFsManager().getFileSystem("new_case")  # new case
+    new_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     ert.getEnkfFsManager().switchFileSystem(new_fs)
-    index_list = [i for i, flag in enumerate(state_mask) if flag]
-    bool_vector = BoolVector.createFromList(len(state_mask), index_list)
     ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
-        "default_0", 0, bool_vector, StringList(["SNAKE_OIL_PARAM"])
+        "default_0", 0, state_mask, StringList(["SNAKE_OIL_PARAM"])
     )
     assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == expected_length
 
@@ -49,8 +47,8 @@ def test_custom_init_runs(state_mask, expected_length):
 def test_fs_init_from_scratch():
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
-    sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")  # new case
-    mask = BoolVector.createFromList(25, [0, 1, 2, 3, 4, 5])
+    sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
+    mask = [True] * 6 + [False] * 19
     run_context = ErtRunContext.case_init(sim_fs, mask)
 
     ert.getEnkfFsManager().initializeFromScratch(
@@ -67,13 +65,11 @@ def test_fs_init_from_scratch():
 def test_custom_init_runs_deprecated(state_mask, expected_length):
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
-    new_fs = ert.getEnkfFsManager().getFileSystem("new_case")  # new case
+    new_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     ert.getEnkfFsManager().switchFileSystem(new_fs)
-    index_list = [i for i, flag in enumerate(state_mask) if flag]
-    bool_vector = BoolVector.createFromList(len(state_mask), index_list)
     with pytest.warns(DeprecationWarning):
         ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
-            "default_0", 0, bool_vector, StringList(["SNAKE_OIL_PARAM"])
+            "default_0", 0, state_mask, StringList(["SNAKE_OIL_PARAM"])
         )
     assert len(ert.getEnkfFsManager().getStateMapForCase("new_case")) == expected_length
 
@@ -82,8 +78,8 @@ def test_custom_init_runs_deprecated(state_mask, expected_length):
 def test_fs_init_from_scratch_deprecated():
     res_config = ResConfig("snake_oil.ert")
     ert = EnKFMain(res_config)
-    sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")  # new case
-    mask = BoolVector.createFromList(25, [0, 1, 2, 3, 4, 5])
+    sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
+    mask = [True] * 6 + [False] * 19
     run_context = ErtRunContext.case_init(sim_fs, mask)
     with pytest.warns(DeprecationWarning):
         ert.getEnkfFsManager().initializeFromScratch(

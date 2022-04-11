@@ -122,11 +122,10 @@ class EnsembleSmoother(BaseRunModel):
             itr = 1
             sim_fs = prior_context.get_target_fs()
             target_fs = None
-            state = (
+            mask = sim_fs.getStateMap().createMask(
                 RealizationStateEnum.STATE_HAS_DATA
                 | RealizationStateEnum.STATE_INITIALIZED
             )
-            mask = sim_fs.getStateMap().createMask(state)
 
         run_context = ErtRunContext.ensemble_smoother(
             sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr

@@ -1,5 +1,4 @@
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import EnkfFs, ErtRunContext
@@ -15,7 +14,7 @@ class ErtRunContextTest(ResTest):
             sim_fs = EnkfFs.createFileSystem("sim_fs")
             target_fs = None
 
-            mask = BoolVector(initial_size=100, default_value=True)
+            mask = [True] * 100
             mask[50] = False
             runpath_fmt = PathFormat("path/to/sim%d")
             subst_list = SubstitutionList()
