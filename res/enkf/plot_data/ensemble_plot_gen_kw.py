@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from typing import Optional
+from typing import List, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector
@@ -58,12 +58,14 @@ class EnsemblePlotGenKW(BaseCClass):
 
         self.__load(file_system, input_mask)
 
-    def __load(self, file_system: EnkfFs, input_mask: Optional[BoolVector] = None):
+    def __load(self, file_system: EnkfFs, input_mask: Optional[List[bool]] = None):
         assert isinstance(file_system, EnkfFs)
-        if input_mask is not None:
-            assert isinstance(input_mask, BoolVector)
-
-        self._load(file_system, True, 0, input_mask)
+        if input_mask is None:
+            mask = None
+        else:
+            mask_indices = [idx for idx, value in enumerate(input_mask) if value]
+            mask = BoolVector.createFromList(mask_indices)
+        self._load(file_system, True, 0, mask)
 
     def __len__(self):
         """@rtype: int"""

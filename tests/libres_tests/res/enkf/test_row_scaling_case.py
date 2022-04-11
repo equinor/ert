@@ -21,7 +21,6 @@ import shutil
 
 import numpy as np
 from ecl.grid import EclGridGenerator
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import EnKFMain, EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig
@@ -80,7 +79,7 @@ def init_data(main):
         bhp.append(poro * 1000 + random.gauss(0, bhp_std))
         wct.append(poro * 4 + random.gauss(0, wct_std))
 
-    mask = BoolVector(initial_size=main.getEnsembleSize(), default_value=True)
+    mask = [True] * main.getEnsembleSize()
     init_context = ErtRunContext.case_init(init_fs, mask)
     main.initRun(init_context)
 

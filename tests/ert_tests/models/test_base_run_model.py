@@ -78,7 +78,7 @@ def test_failed_realizations(initials, completed, any_failed, failures):
     brm._initial_realizations_mask = initials
     brm._completed_realizations_mask = completed
 
-    assert list(brm._create_mask_from_failed_realizations()) == failures
+    assert brm._create_mask_from_failed_realizations() == failures
     assert brm._count_successful_realizations() == sum(completed)
 
     assert brm.has_failed_realizations() == any_failed

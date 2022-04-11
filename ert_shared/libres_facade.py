@@ -1,8 +1,9 @@
+from typing import List
+
 import logging
 
 from pandas import DataFrame
 
-from ecl.util.util import BoolVector
 from res.analysis.analysis_module import AnalysisModule
 from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from res.enkf.export import (
@@ -83,7 +84,7 @@ class LibresFacade:
         return self._enkf_main.getModelConfig().getRunpathAsString()
 
     def load_from_forward_model(
-        self, case: str, realisations: BoolVector, iteration: int
+        self, case: str, realisations: List[bool], iteration: int
     ) -> int:
         fs = self._enkf_main.getEnkfFsManager().getFileSystem(case)
         return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)

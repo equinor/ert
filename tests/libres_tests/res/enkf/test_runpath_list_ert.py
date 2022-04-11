@@ -1,6 +1,5 @@
 import os
 
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import ErtRunContext
@@ -33,7 +32,7 @@ class RunpathListTestErt(ResTest):
             fs_manager = ert.getEnkfFsManager()
 
             init_fs = fs_manager.getFileSystem("init_fs")
-            mask = BoolVector(initial_size=25, default_value=True)
+            mask = [True] * 25
             runpath_fmt = ert.getModelConfig().getRunpathFormat()
             subst_list = SubstitutionList()
             itr = 0
@@ -67,7 +66,7 @@ class RunpathListTestErt(ResTest):
 
             ens_size = ert.getEnsembleSize()
             runner = ert.getEnkfSimulationRunner()
-            mask = BoolVector(initial_size=ens_size, default_value=True)
+            mask = [True] * ens_size
             fs_manager = ert.getEnkfFsManager()
             init_fs = fs_manager.getFileSystem("init_fs")
 

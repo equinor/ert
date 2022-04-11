@@ -1,5 +1,4 @@
 import pytest
-from ecl.util.util import BoolVector
 from res.enkf import ErtRunContext
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
@@ -19,7 +18,7 @@ def _create_runpath(enkf_main: EnKFMain) -> ErtRunContext:
     run_context = ErtRunContext.ensemble_smoother(
         result_fs,
         None,
-        BoolVector(default_value=True, initial_size=1),
+        [True],
         runpath_fmt,
         jobname_fmt,
         subst_list,

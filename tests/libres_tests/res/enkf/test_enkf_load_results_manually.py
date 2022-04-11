@@ -1,5 +1,4 @@
 import pytest
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
@@ -23,7 +22,7 @@ class LoadResultsManuallyTest(ResTest):
             load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
 
             ert.getEnkfFsManager().switchFileSystem(load_from)
-            realisations = BoolVector(default_value=True, initial_size=25)
+            realisations = [True] * 25
             realisations[7] = False
             iteration = 0
 
@@ -52,7 +51,7 @@ class LoadResultsManuallyTest(ResTest):
             load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
 
             ert.getEnkfFsManager().switchFileSystem(load_from)
-            realisations = BoolVector(default_value=True, initial_size=25)
+            realisations = [True] * 25
             realisations[7] = False
 
             run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)

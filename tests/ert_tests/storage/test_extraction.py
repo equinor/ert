@@ -10,7 +10,6 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 import pytest
-from ecl.util.util import BoolVector
 from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert_shared.libres_facade import LibresFacade
@@ -569,7 +568,7 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     run_context = ErtRunContext.ensemble_smoother(
         result_fs,
         target_fs,
-        BoolVector(default_value=True, initial_size=ert.get_ensemble_size()),
+        [True] * ert.get_ensemble_size(),
         runpath_fmt,
         jobname_fmt,
         subst_list,

@@ -2,8 +2,6 @@ import sys
 
 import pytest
 
-from ecl.util.util import BoolVector
-
 from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
 
 
@@ -238,8 +236,8 @@ def test_localization(setup_case, expected_target_gen_kw):
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)
 
-    # Run enseble smoother
-    mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=True)
+    # Run ensemble smoother
+    mask = [True] * ert.getEnsembleSize()
     model_config = ert.getModelConfig()
     path_fmt = model_config.getRunpathFormat()
     jobname_fmt = model_config.getJobnameFormat()

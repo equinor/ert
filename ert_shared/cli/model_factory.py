@@ -1,7 +1,6 @@
-from argparse import ArgumentTypeError
+from typing import List
 
-from ecl.util.util import BoolVector
-from ert_shared.ide.keywords.definitions import RangeStringArgument
+from ert.ensemble_evaluator.activerange import ActiveRange
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
@@ -35,9 +34,7 @@ def create_model(ert, get_analysis_modules, ensemble_size, current_case_name, ar
 
 
 def _setup_single_test_run(ert):
-    simulations_argument = {
-        "active_realizations": BoolVector(default_value=True, initial_size=1),
-    }
+    simulations_argument = {"active_realizations": [True]}
     model = SingleTestRun(simulations_argument, ert)
     return model
 
@@ -125,23 +122,10 @@ def _get_analysis_module_name(active_name, modules, iterable):
     return None
 
 
-def _realizations(args, ensemble_size):
-    mask = BoolVector(default_value=False, initial_size=ensemble_size)
+def _realizations(args, ensemble_size: int) -> List[bool]:
     if args.realizations is None:
-        default = "0-{}".format(ensemble_size - 1)
-        mask.updateActiveMask(default)
-        return mask
-
-    validator = RangeStringArgument(ensemble_size)
-    validated = validator.validate(args.realizations)
-    if validated.failed():
-        raise ArgumentTypeError(
-            "Defined realizations is not within range of ensemble size: {}".format(
-                args.realizations
-            )
-        )
-    mask.updateActiveMask(args.realizations)
-    return mask
+        return [True] * ensemble_size
+    return ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
 
 
 def _target_case_name(ert, args, current_case_name, format_mode=False):

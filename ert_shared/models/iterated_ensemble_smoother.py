@@ -171,8 +171,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         if prior_context is None:
             mask = self._simulation_arguments["active_realizations"]
         else:
-            state = (
-                RealizationStateEnum.STATE_HAS_DATA
+            state: RealizationStateEnum = (
+                RealizationStateEnum.STATE_HAS_DATA  # type: ignore
                 | RealizationStateEnum.STATE_INITIALIZED
             )
             mask = sim_fs.getStateMap().createMask(state)

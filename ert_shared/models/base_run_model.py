@@ -3,7 +3,6 @@ import uuid
 from typing import Optional, List, Union, Dict, Any
 import asyncio
 
-from ecl.util.util import BoolVector
 from res.enkf import EnKFMain, QueueConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import (
@@ -59,8 +58,8 @@ class BaseRunModel:
         self._fail_message: str = ""
         self._failed: bool = False
         self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: List[int] = []
-        self._completed_realizations_mask: List[int] = []
+        self._initial_realizations_mask: List[bool] = []
+        self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self._run_context: Optional[ErtRunContext] = None
         self._last_run_iteration: int = -1
@@ -78,8 +77,11 @@ class BaseRunModel:
 
     @property
     def _active_realizations(self) -> List[int]:
-        realization_mask = self._initial_realizations_mask
-        return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
+        return [
+            idx
+            for idx, mask_val in enumerate(self._initial_realizations_mask)
+            if mask_val
+        ]
 
     def reset(self) -> None:
         self._failed = False
@@ -96,24 +98,19 @@ class BaseRunModel:
         ] += self._count_successful_realizations()
 
     def has_failed_realizations(self) -> bool:
-        completed = self._completed_realizations_mask
-        initial = self._initial_realizations_mask
-        for (index, successful) in enumerate(completed):
-            if initial[index] and not successful:
-                return True
-        return False
+        return any(self._create_mask_from_failed_realizations())
 
-    def _create_mask_from_failed_realizations(self) -> BoolVector:
+    def _create_mask_from_failed_realizations(self) -> List[bool]:
         """
-        Creates a BoolVector mask representing the failed realizations
-        :return: Type BoolVector
+        Creates a list of bools representing the failed realizations,
+        i.e., a realization that has failed is assigned a True value.
         """
-        completed = self._completed_realizations_mask
-        initial = self._initial_realizations_mask
-        inverted_mask = BoolVector(default_value=False)
-        for (index, successful) in enumerate(completed):
-            inverted_mask[index] = initial[index] and not successful
-        return inverted_mask
+        return [
+            initial and not completed
+            for initial, completed in zip(
+                self._initial_realizations_mask, self._completed_realizations_mask
+            )
+        ]
 
     def _count_successful_realizations(self) -> int:
         """
@@ -141,7 +138,7 @@ class BaseRunModel:
             )
             self._completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
-            self._completed_realizations_mask = BoolVector(default_value=False)
+            self._completed_realizations_mask = []
             self._failed = True
             self._fail_message = str(e)
             self._simulationEnded()

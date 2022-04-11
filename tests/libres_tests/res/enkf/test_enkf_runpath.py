@@ -18,7 +18,6 @@ import os
 
 import pytest
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import ResConfig
@@ -37,9 +36,7 @@ class EnKFRunpathTest(ResTest):
             work_area.copy_directory(case_directory)
             res_config = ResConfig("snake_oil_no_data/snake_oil.ert")
             main = EnKFMain(res_config)
-            iactive = BoolVector(
-                initial_size=main.getEnsembleSize(), default_value=False
-            )
+            iactive = [False] * main.getEnsembleSize()
             iactive[0] = True
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
@@ -72,9 +69,7 @@ class EnKFRunpathTest(ResTest):
             work_area.copy_directory(case_directory)
             res_config = ResConfig("snake_oil_no_data/snake_oil_no_gen_kw.ert")
             main = EnKFMain(res_config)
-            iactive = BoolVector(
-                initial_size=main.getEnsembleSize(), default_value=False
-            )
+            iactive = [False] * main.getEnsembleSize()
             iactive[0] = True
             fs = main.getEnkfFsManager().getCurrentFileSystem()
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
