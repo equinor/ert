@@ -12,7 +12,7 @@ from typing import Collection, List, Optional, Tuple, Union
 
 
 def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
-    """Convert a mask (ordered collection of booleans) into a range string
+    """Convert a mask (ordered collection of booleans or int) into a rangestring.
     For instance, `0 1 0 1 1 1` would be converted to `1, 3-5`.
 
     The length of the collection is not encoded in the resulting string and

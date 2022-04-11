@@ -53,10 +53,12 @@ def patch_enkf_main(monkeypatch, tmpdir):
         Mock(return_value=["test"]),
     )
 
+    def patched_mask_to_rangestring(mask):
+        return ""
+
     monkeypatch.setattr(
-        ert_gui.ertwidgets.models.activerealizationsmodel,
-        "mask_to_rangestring",
-        Mock(return_value=""),
+        "ert.ensemble_evaluator.activerange.mask_to_rangestring.__code__",
+        patched_mask_to_rangestring.__code__,
     )
 
     monkeypatch.setattr(
