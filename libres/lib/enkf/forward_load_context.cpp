@@ -69,14 +69,9 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
             run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, fmt_file, -1);
         stringlist_type *data_files = stringlist_alloc_new();
 
-        if (unified_file != NULL)
+        if ((unified_file != NULL) && (header_file != NULL)) {
             stringlist_append_copy(data_files, unified_file);
-        else
-            logger->error("Could not find SUMMARY file at: {}/{} or using non "
-                          "unified SUMMARY file",
-                          run_path, eclbase);
 
-        if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) {
             bool include_restart = false;
 
             /*
@@ -120,7 +115,11 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
                     summary = NULL;
                 }
             }
-        }
+        } else
+            logger->error("Could not find SUMMARY file at: {}/{} or using non "
+                          "unified SUMMARY file",
+                          run_path, eclbase);
+
         stringlist_free(data_files);
         free(header_file);
         free(unified_file);
