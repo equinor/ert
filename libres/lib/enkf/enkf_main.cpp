@@ -600,33 +600,24 @@ int enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main,
                                                int iter,
                                                bool_vector_type *iactive,
                                                enkf_fs_type *fs) {
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type **realizations_msg_list = (stringlist_type **)util_calloc(
-        ens_size, sizeof *realizations_msg_list); // CXX_CAST_ERROR
-    for (int iens = 0; iens < ens_size; ++iens)
-        realizations_msg_list[iens] = stringlist_alloc_new();
 
-    int loaded = enkf_main_load_from_forward_model_with_fs(
-        enkf_main, iter, iactive, realizations_msg_list, fs);
+    int loaded =
+        enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive, fs);
 
-    for (int iens = 0; iens < ens_size; ++iens)
-        stringlist_free(realizations_msg_list[iens]);
-
-    free(realizations_msg_list);
     return loaded;
 }
 
-int enkf_main_load_from_forward_model_with_fs(
-    enkf_main_type *enkf_main, int iter, bool_vector_type *iactive,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs) {
+int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
+                                              int iter,
+                                              bool_vector_type *iactive,
+                                              enkf_fs_type *fs) {
     model_config_type *model_config = enkf_main_get_model_config(enkf_main);
     ert_run_context_type *run_context =
         ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
             fs, iactive, model_config_get_runpath_fmt(model_config),
             model_config_get_jobname_fmt(model_config),
             enkf_main_get_data_kw(enkf_main), iter);
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context,
-                                                 realizations_msg_list, fs);
+    int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
     ert_run_context_free(run_context);
     return loaded;
 }
@@ -634,24 +625,13 @@ int enkf_main_load_from_forward_model_with_fs(
 int enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
                                              ert_run_context_type *run_context,
                                              enkf_fs_type *fs) {
-    auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type **realizations_msg_list = (stringlist_type **)util_calloc(
-        ens_size, sizeof *realizations_msg_list); // CXX_CAST_ERROR
-    for (int iens = 0; iens < ens_size; ++iens)
-        realizations_msg_list[iens] = stringlist_alloc_new();
+    int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
 
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context,
-                                                 realizations_msg_list, fs);
-
-    for (int iens = 0; iens < ens_size; ++iens)
-        stringlist_free(realizations_msg_list[iens]);
-    free(realizations_msg_list);
     return loaded;
 }
 
 int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     ert_run_context_type *run_context,
-                                    stringlist_type **realizations_msg_list,
                                     enkf_fs_type *fs) {
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
     auto const *iactive = ert_run_context_get_iactive(run_context);
@@ -688,8 +668,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 
                         return enkf_state_load_from_forward_model(
                             enkf_main_iget_state(enkf_main, realisation),
-                            ert_run_context_iget_arg(run_context, realisation),
-                            *realizations_msg_list);
+                            ert_run_context_iget_arg(run_context, realisation));
                     },
                     iens, std::ref(concurrently_executing_threads))));
         }

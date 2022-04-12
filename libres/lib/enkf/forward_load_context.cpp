@@ -175,8 +175,7 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
 
 forward_load_context_type *
 forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
-                           const ecl_config_type *ecl_config,
-                           stringlist_type *messages) {
+                           const ecl_config_type *ecl_config) {
     forward_load_context_type *load_context =
         (forward_load_context_type *)util_malloc(sizeof *load_context);
     UTIL_TYPE_ID_INIT(load_context, FORWARD_LOAD_CONTEXT_TYPE_ID);
@@ -188,7 +187,7 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
     load_context->load_step =
         -1; // Invalid - must call forward_load_context_select_step()
     load_context->load_result = 0;
-    load_context->messages = messages;
+    load_context->messages = NULL;
     load_context->ecl_config = ecl_config;
     if (ecl_config)
         load_context->ecl_active = ecl_config_active(ecl_config);

@@ -140,7 +140,6 @@ int main(int argc, char **argv) {
 
             {
                 int result;
-                stringlist_type *msg_list = stringlist_alloc_new();
 
                 test_assert_false(enkf_node_has_data(field_node, fs, node_id));
 
@@ -158,26 +157,21 @@ int main(int argc, char **argv) {
                     state_map_type *state_map = enkf_fs_get_state_map(fs);
                     state_map_iset(state_map, 0, STATE_INITIALIZED);
                 }
-                result = enkf_state_load_from_forward_model(state, run_arg,
-                                                            msg_list);
-                stringlist_free(msg_list);
+                result = enkf_state_load_from_forward_model(state, run_arg);
                 test_assert_true(LOAD_FAILURE & result);
             }
 
             util_copy_file(init_file, "simulations/run0/petro.grdecl");
             {
                 int result;
-                stringlist_type *msg_list = stringlist_alloc_new();
                 enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
 
                 test_assert_true(
                     enkf_node_forward_init(field_node, "simulations/run0", 0));
                 result = ensemble_config_forward_init(ens_config, run_arg);
                 test_assert_int_equal(result, 0);
-                result = enkf_state_load_from_forward_model(state, run_arg,
-                                                            msg_list);
+                result = enkf_state_load_from_forward_model(state, run_arg);
 
-                stringlist_free(msg_list);
                 test_assert_int_equal(result, 0);
 
                 {

@@ -24,7 +24,7 @@
 
 void test_update_result() {
     forward_load_context_type *load_context =
-        forward_load_context_alloc(NULL, false, NULL, NULL);
+        forward_load_context_alloc(NULL, false, NULL);
     test_assert_int_equal(forward_load_context_get_result(load_context), 0);
     forward_load_context_update_result(load_context, 1);
     test_assert_int_equal(forward_load_context_get_result(load_context), 1);
@@ -43,7 +43,7 @@ void test_update_result() {
 
 void test_create() {
     forward_load_context_type *load_context =
-        forward_load_context_alloc(NULL, false, NULL, NULL);
+        forward_load_context_alloc(NULL, false, NULL);
     test_assert_true(forward_load_context_is_instance(load_context));
     forward_load_context_free(load_context);
 }
@@ -55,7 +55,7 @@ void test_load_restart1() {
     ecl_config_type *ecl_config = ecl_config_alloc(NULL);
 
     forward_load_context_type *load_context =
-        forward_load_context_alloc(run_arg, false, ecl_config, NULL);
+        forward_load_context_alloc(run_arg, false, ecl_config);
 
     test_assert_false(forward_load_context_load_restart_file(load_context, 10));
 
@@ -84,7 +84,7 @@ void test_load_restart2() {
             "run_id", NULL, 0, 0, "run", "BASE", subst_list);
         ecl_config_type *ecl_config = ecl_config_alloc(NULL);
         forward_load_context_type *load_context =
-            forward_load_context_alloc(run_arg, false, ecl_config, NULL);
+            forward_load_context_alloc(run_arg, false, ecl_config);
         util_make_path("run");
         make_restart_mock("run", "BASE", 1);
         make_restart_mock("run", "BASE", 3);
@@ -105,38 +105,11 @@ void test_load_restart2() {
     }
 }
 
-void test_add_message() {
-    {
-        forward_load_context_type *load_context =
-            forward_load_context_alloc(NULL, false, NULL, NULL);
-        forward_load_context_add_message(load_context, "MESSAGE");
-        test_assert_false(forward_load_context_accept_messages(load_context));
-        forward_load_context_free(load_context);
-    }
-
-    {
-        stringlist_type *message_list = stringlist_alloc_new();
-        forward_load_context_type *load_context =
-            forward_load_context_alloc(NULL, false, NULL, message_list);
-
-        test_assert_true(forward_load_context_accept_messages(load_context));
-        forward_load_context_add_message(load_context, "MESSAGE1");
-        forward_load_context_add_message(load_context, "MESSAGE2");
-        forward_load_context_free(load_context);
-
-        test_assert_int_equal(2, stringlist_get_size(message_list));
-        test_assert_string_equal(stringlist_iget(message_list, 0), "MESSAGE1");
-        test_assert_string_equal(stringlist_iget(message_list, 1), "MESSAGE2");
-        stringlist_free(message_list);
-    }
-}
-
 int main(int argc, char **argv) {
     util_install_signals();
     test_create();
     test_load_restart1();
     test_load_restart2();
-    test_add_message();
     test_update_result();
     exit(0);
 }

@@ -433,9 +433,10 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
     stringlist_free(keylist_GEN_DATA);
 }
 
-static forward_load_context_type *enkf_state_alloc_load_context(
-    const ensemble_config_type *ens_config, const ecl_config_type *ecl_config,
-    const run_arg_type *run_arg, stringlist_type *messages) {
+static forward_load_context_type *
+enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
+                              const ecl_config_type *ecl_config,
+                              const run_arg_type *run_arg) {
     bool load_summary = false;
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
@@ -448,7 +449,7 @@ static forward_load_context_type *enkf_state_alloc_load_context(
     forward_load_context_type *load_context;
 
     load_context =
-        forward_load_context_alloc(run_arg, load_summary, ecl_config, messages);
+        forward_load_context_alloc(run_arg, load_summary, ecl_config);
     return load_context;
 }
 
@@ -463,11 +464,10 @@ static forward_load_context_type *enkf_state_alloc_load_context(
 static int enkf_state_internalize_results(ensemble_config_type *ens_config,
                                           model_config_type *model_config,
                                           const ecl_config_type *ecl_config,
-                                          const run_arg_type *run_arg,
-                                          stringlist_type *msg_list) {
+                                          const run_arg_type *run_arg) {
 
-    forward_load_context_type *load_context = enkf_state_alloc_load_context(
-        ens_config, ecl_config, run_arg, msg_list);
+    forward_load_context_type *load_context =
+        enkf_state_alloc_load_context(ens_config, ecl_config, run_arg);
     /*
      * The timing information - i.e. mainly what is the last report step
      * in these results are inferred from the loading of summary results,
@@ -496,8 +496,7 @@ static int enkf_state_internalize_results(ensemble_config_type *ens_config,
 
 static int enkf_state_load_from_forward_model__(
     ensemble_config_type *ens_config, model_config_type *model_config,
-    const ecl_config_type *ecl_config, const run_arg_type *run_arg,
-    stringlist_type *msg_list) {
+    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
 
     int result = 0;
 
@@ -505,7 +504,7 @@ static int enkf_state_load_from_forward_model__(
         result |= ensemble_config_forward_init(ens_config, run_arg);
 
     result |= enkf_state_internalize_results(ens_config, model_config,
-                                             ecl_config, run_arg, msg_list);
+                                             ecl_config, run_arg);
     state_map_type *state_map =
         enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     int iens = run_arg_get_iens(run_arg);
@@ -518,15 +517,14 @@ static int enkf_state_load_from_forward_model__(
 }
 
 int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                       run_arg_type *run_arg,
-                                       stringlist_type *msg_list) {
+                                       run_arg_type *run_arg) {
 
     ensemble_config_type *ens_config = enkf_state->ensemble_config;
     model_config_type *model_config = enkf_state->shared_info->model_config;
     const ecl_config_type *ecl_config = enkf_state->shared_info->ecl_config;
 
     return enkf_state_load_from_forward_model__(ens_config, model_config,
-                                                ecl_config, run_arg, msg_list);
+                                                ecl_config, run_arg);
 }
 
 void enkf_state_free(enkf_state_type *enkf_state) {
@@ -621,7 +619,7 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                  iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
     result = enkf_state_load_from_forward_model__(ens_config, model_config,
-                                                  ecl_config, run_arg, NULL);
+                                                  ecl_config, run_arg);
 
     if (result & REPORT_STEP_INCOMPATIBLE) {
         // If refcase has been used for observations: crash and burn.

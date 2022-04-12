@@ -136,16 +136,18 @@ extern "C" bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                                int report_step,
                                                enkf_fs_type *fs);
 
-int enkf_main_load_from_forward_model_with_fs(
-    enkf_main_type *enkf_main, int iter, bool_vector_type *iactive,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs);
+int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
+                                              int iter,
+                                              bool_vector_type *iactive,
+                                              enkf_fs_type *fs);
 extern "C" PY_USED int
 enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main, int iter,
                                            bool_vector_type *iactive,
                                            enkf_fs_type *fs);
-extern "C" int enkf_main_load_from_run_context(
-    enkf_main_type *enkf_main, ert_run_context_type *run_context,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs);
+extern "C" int
+enkf_main_load_from_run_context(enkf_main_type *enkf_main,
+                                ert_run_context_type *run_context,
+                                enkf_fs_type *fs);
 extern "C" int
 enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
                                          ert_run_context_type *run_context,
