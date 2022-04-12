@@ -98,7 +98,7 @@ class _LegacyEnsemble(_Ensemble):
         asyncio.set_event_loop(asyncio.new_event_loop())
 
         if self._config is None:
-            raise RuntimeError("no config")
+            raise ValueError("no config")
 
         async def _evaluate_inner() -> None:
             """
@@ -113,8 +113,10 @@ class _LegacyEnsemble(_Ensemble):
             timeout_queue: "asyncio.Queue[CloudEvent]" = asyncio.Queue()
             on_timeout, send_timeout_future = self.setup_timeout_callback(timeout_queue)
 
-            assert self._ee_id  # mypy
-            assert self._config  # mypy
+            if not self._ee_id:
+                raise ValueError(f"invalid ensemble evaluator id: {self._ee_id}")
+            if not self._config:
+                raise ValueError("no config")  # mypy
 
             # event for normal evaluation
             result = CloudEvent(

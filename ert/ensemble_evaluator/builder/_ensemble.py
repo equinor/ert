@@ -18,7 +18,6 @@ from ert_shared.ensemble_evaluator.client import Client
 from ._realization import _Realization
 
 if TYPE_CHECKING:
-    import ert
     from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
