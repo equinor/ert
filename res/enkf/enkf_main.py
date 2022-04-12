@@ -238,10 +238,10 @@ class _RealEnKFMain(BaseCClass):
                                              enkf_fs_manager)"
     )
     _load_from_forward_model = ResPrototype(
-        "int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)"
+        "int enkf_main_load_from_forward_model_with_fs(enkf_main, int, bool_vector, enkf_fs)"
     )
     _load_from_run_context = ResPrototype(
-        "int enkf_main_load_from_run_context_from_gui(enkf_main, ert_run_context, enkf_fs)"
+        "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
     )
     _create_run_path = ResPrototype(
         "void enkf_main_create_run_path(enkf_main , ert_run_context)"

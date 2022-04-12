@@ -596,17 +596,6 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);
 }
 
-int enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main,
-                                               int iter,
-                                               bool_vector_type *iactive,
-                                               enkf_fs_type *fs) {
-
-    int loaded =
-        enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive, fs);
-
-    return loaded;
-}
-
 int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
                                               int iter,
                                               bool_vector_type *iactive,
@@ -619,14 +608,6 @@ int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
             enkf_main_get_data_kw(enkf_main), iter);
     int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
     ert_run_context_free(run_context);
-    return loaded;
-}
-
-int enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
-                                             ert_run_context_type *run_context,
-                                             enkf_fs_type *fs) {
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
-
     return loaded;
 }
 
