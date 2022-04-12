@@ -50,7 +50,10 @@ class LoadResultsTool(Tool):
         insert realisation and iteration numbers"""
         try:
             self.facade.run_path % (0, 0)
-            self.facade.run_path % 0
             return True
         except TypeError:
-            return False
+            try:
+                self.facade.run_path % 0
+                return True
+            except TypeError:
+                return False
