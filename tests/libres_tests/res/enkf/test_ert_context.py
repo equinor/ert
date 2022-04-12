@@ -65,14 +65,6 @@ class ErtTestContextTest(ResTest):
 
         self.assertEqual(ert.getEnkfFsManager().getCurrentFileSystem(), custom_fs)
 
-    def loadResultsTest(self, context):
-        resource_file = pkg_resources.resource_filename(
-            "ert_shared", "share/ert/workflows/jobs/internal/config/LOAD_RESULTS"
-        )
-
-        context.installWorkflowJob("LOAD_RESULTS_JOB", resource_file)
-        self.assertTrue(context.runWorkflowJob("LOAD_RESULTS_JOB", 0, 1))
-
     def test_workflow_function_jobs(self):
 
         with ErtTestContext(
@@ -81,11 +73,6 @@ class ErtTestContextTest(ResTest):
             internal_config = "share/ert/workflows/jobs/internal-tui/config"
             self.createCaseTest(context, root_path=internal_config)
             self.selectCaseTest(context, root_path=internal_config)
-
-            # Due to EnKFFs caching and unmonitored C functions this will fail
-            # self.initFromCaseTest(context, root_path=internal_config)
-
-            self.loadResultsTest(context)
 
     def test_workflow_ert_script_jobs(self):
 
