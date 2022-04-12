@@ -82,7 +82,6 @@ foreach(
   enkf_executable_path
   enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
-  enkf_workflow_job2
   gen_kw
   enkf_runpath_list)
 
@@ -91,11 +90,6 @@ foreach(
 endforeach()
 
 add_config_test(enkf_executable_path enkf_executable_path)
-
-add_config_test(
-  enkf_workflow_job2 enkf_workflow_job2
-  "${LOCAL_TEST_DATA_DIR}/snake_oil_no_data/snake_oil_GEN_DATA.ert"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS")
 
 add_config_test(enkf_forward_load_context enkf_forward_load_context
                 "${TEST_DATA_DIR}/enkf/config" forward_load_context)
@@ -267,8 +261,6 @@ add_equinor_test(
   "${EQUINOR_TEST_DATA_DIR}/config/enkf_state_runpath/config_runpath_multiple_iterations"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS_ITER"
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
   "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")

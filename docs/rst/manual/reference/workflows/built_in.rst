@@ -213,43 +213,6 @@ optional arguments a range and/or list of which realizations to run.
 
 	ENSEMBLE_RUN 1-5, 8
 
-**LOAD_RESULTS**
-
-The :code:`LOAD_RESULTS` loads results from a single, or from multiple simulations. The job takes as
-optional arguments a range and/or list of which realizations to load
-results from. If no realizations are specified, results for all
-realizations are loaded.
-
-::
-
-	LOAD_RESULTS 
-
-::
-
-	LOAD_RESULTS 1-5, 8
-
-In the case of multi-iteration jobs, e.g. the integrated smoother
-update, the :code:`LOAD_RESULTS` job will load the results from `iter==0`. To
-control which iteration is loaded from, you can use the
-:code:`LOAD_RESULTS_ITER` job.
-
-**LOAD_RESULTS_ITER**
-
-The :code:`LOAD_RESULTS_ITER` job is similar to the :code:`LOAD_RESULTS` job,
-but it takes an additional first argument which specifies which iteration number to load from. 
-This should be used when manually loading results from multi-iteration workflows:
-
-::
-
-	LOAD_RESULTS_ITER 
-
-::
-
-	LOAD_RESULTS_ITER 3 1-3, 8-10
-
-Will load the realisations 1,2,3 and 8,9,10 from the fourth iteration
-(counting starts at zero).
-
 **MDA_ES**
 
 This workflow job (plugin) is used to run the *Multiple Data
