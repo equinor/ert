@@ -134,28 +134,9 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
                     if (ecl_sum_get_end_time(summary) < end_time) {
                         /* The summary vector was shorter than expected; we interpret this as
                a simulation failure and discard the current summary instance. */
-
-                        if (forward_load_context_accept_messages(
-                                load_context)) {
-                            int end_day, end_month, end_year;
-                            int sum_day, sum_month, sum_year;
-
-                            util_set_date_values_utc(end_time, &end_day,
-                                                     &end_month, &end_year);
-                            util_set_date_values_utc(
-                                ecl_sum_get_end_time(summary), &sum_day,
-                                &sum_month, &sum_year);
-                            {
-                                char *msg = util_alloc_sprintf(
-                                    "Summary ended at %02d/%02d/%4d - expected "
-                                    "at least END_DATE: %02d/%02d/%4d",
-                                    sum_day, sum_month, sum_year, end_day,
-                                    end_month, end_year);
-                                forward_load_context_add_message(load_context,
-                                                                 msg);
-                                free(msg);
-                            }
-                        }
+                        logger->error("The summary vector was shorter (end: "
+                                      "{}) than expected (end: {})",
+                                      ecl_sum_get_end_time(summary), end_time);
                     }
                     ecl_sum_free(summary);
                     summary = NULL;
@@ -187,7 +168,6 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
     load_context->load_step =
         -1; // Invalid - must call forward_load_context_select_step()
     load_context->load_result = 0;
-    load_context->messages = NULL;
     load_context->ecl_config = ecl_config;
     if (ecl_config)
         load_context->ecl_active = ecl_config_active(ecl_config);
@@ -196,24 +176,6 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
         forward_load_context_load_ecl_sum(load_context);
 
     return load_context;
-}
-
-bool forward_load_context_accept_messages(
-    const forward_load_context_type *load_context) {
-    if (load_context->messages)
-        return true;
-    else
-        return false;
-}
-
-/*
-  The messages can be NULL; in which case the message is completely ignored.
-*/
-
-void forward_load_context_add_message(forward_load_context_type *load_context,
-                                      const char *message) {
-    if (load_context->messages)
-        stringlist_append_copy(load_context->messages, message);
 }
 
 int forward_load_context_get_result(

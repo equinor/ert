@@ -190,25 +190,6 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
     return enkf_state;
 }
 
-static void
-enkf_state_log_GEN_DATA_load(const enkf_node_type *enkf_node, int report_step,
-                             forward_load_context_type *load_context) {
-    if (forward_load_context_accept_messages(load_context)) {
-        char *load_file = enkf_config_node_alloc_infile(
-            enkf_node_get_config(enkf_node), report_step);
-        int data_size = gen_data_get_size(
-            (const gen_data_type *)enkf_node_value_ptr(enkf_node));
-        char *msg = util_alloc_sprintf(
-            "Loaded GEN_DATA:%s instance for step:%d from file:%s size:%d",
-            enkf_node_get_key(enkf_node), report_step, load_file, data_size);
-
-        forward_load_context_add_message(load_context, msg);
-
-        free(msg);
-        free(load_file);
-    }
-}
-
 static int_vector_type *
 __enkf_state_get_time_index(enkf_fs_type *sim_fs, const ecl_sum_type *summary) {
     time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
@@ -251,12 +232,6 @@ static void enkf_state_check_for_missing_eclipse_summary_data(
                 "{}, but have observation for this, job will fail.",
                 iens, key);
             forward_load_context_update_result(load_context, LOAD_FAILURE);
-            if (forward_load_context_accept_messages(load_context)) {
-                char *msg =
-                    util_alloc_sprintf("Failed to load vector: %s", key);
-                forward_load_context_add_message(load_context, msg);
-                free(msg);
-            }
         }
     }
 
@@ -374,20 +349,18 @@ static void enkf_state_load_gen_data_node(
             node_id_type node_id = {.report_step = report_step, .iens = iens};
 
             enkf_node_store(node, sim_fs, node_id);
-            enkf_state_log_GEN_DATA_load(node, report_step, load_context);
+            logger->info("Loaded GEN_DATA: {} instance for step: {} from file: "
+                         "{} size: {}",
+                         enkf_node_get_key(node), report_step,
+                         enkf_config_node_alloc_infile(
+                             enkf_node_get_config(node), report_step),
+                         gen_data_get_size(
+                             (const gen_data_type *)enkf_node_value_ptr(node)));
         } else {
             forward_load_context_update_result(load_context, LOAD_FAILURE);
             logger->error(
                 "[{:03d}:{:04d}] Failed load data for GEN_DATA node:{}.", iens,
                 report_step, enkf_node_get_key(node));
-
-            if (forward_load_context_accept_messages(load_context)) {
-                char *msg =
-                    util_alloc_sprintf("Failed to load: %s at step:%d",
-                                       enkf_node_get_key(node), report_step);
-                forward_load_context_add_message(load_context, msg);
-                free(msg);
-            }
         }
         enkf_node_free(node);
     }

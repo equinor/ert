@@ -31,10 +31,6 @@
 
 typedef struct forward_load_context_struct forward_load_context_type;
 
-bool forward_load_context_accept_messages(
-    const forward_load_context_type *load_context);
-void forward_load_context_add_message(forward_load_context_type *load_context,
-                                      const char *message);
 void forward_load_context_update_result(forward_load_context_type *load_context,
                                         int flags);
 int forward_load_context_get_result(
