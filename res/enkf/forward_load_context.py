@@ -25,7 +25,7 @@ from res import ResPrototype
 class ForwardLoadContext(BaseCClass):
     TYPE_NAME = "forward_load_context"
     _alloc = ResPrototype(
-        "void* forward_load_context_alloc( run_arg , bool , ecl_config , char* , stringlist )",
+        "void* forward_load_context_alloc( run_arg , bool , ecl_config , char*)",
         bind=False,
     )
     _select_step = ResPrototype(
@@ -42,10 +42,9 @@ class ForwardLoadContext(BaseCClass):
         load_summary=False,
         ecl_config=None,
         ecl_base=None,
-        messages=None,
         report_step=None,
     ):
-        c_ptr = self._alloc(run_arg, load_summary, ecl_config, ecl_base, messages)
+        c_ptr = self._alloc(run_arg, load_summary, ecl_config, ecl_base)
         super().__init__(c_ptr)
         if not report_step is None:
             self.selectStep(report_step)

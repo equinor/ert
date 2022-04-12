@@ -41,8 +41,7 @@ int forward_load_context_get_result(
     const forward_load_context_type *load_context);
 extern "C" forward_load_context_type *
 forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
-                           const ecl_config_type *ecl_config,
-                           stringlist_type *messages);
+                           const ecl_config_type *ecl_config);
 extern "C" void
 forward_load_context_free(forward_load_context_type *load_context);
 const ecl_sum_type *
