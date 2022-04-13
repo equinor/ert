@@ -49,20 +49,9 @@ class WorkflowCommon:
             f.write("MAX_ARG 1\n")
             f.write("ARG_TYPE 0 STRING\n")
 
-        with open("printf_job", "w") as f:
-            f.write("INTERNAL True\n")
-            f.write("FUNCTION printf\n")
-            f.write("MIN_ARG 4\n")
-            f.write("MAX_ARG 5\n")
-            f.write("ARG_TYPE 0 STRING\n")
-            f.write("ARG_TYPE 1 INT\n")
-            f.write("ARG_TYPE 2 FLOAT\n")
-            f.write("ARG_TYPE 3 BOOL\n")
-            f.write("ARG_TYPE 4 STRING\n")
-
         with open("compare_job", "w") as f:
             f.write("INTERNAL True\n")
-            f.write("FUNCTION strcmp\n")
+            f.write("FUNCTION _test_compare_job\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")
