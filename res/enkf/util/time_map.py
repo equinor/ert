@@ -17,7 +17,6 @@ import errno
 import os
 
 from cwrap import BaseCClass
-from ecl.summary import EclSum
 from ecl.util.util import CTime
 
 from res import ResPrototype
@@ -44,9 +43,6 @@ class TimeMap(BaseCClass):
         "int    time_map_lookup_days( time_map ,         double)"
     )
     _last_step = ResPrototype("int    time_map_get_last_step( time_map )")
-    _upgrade107 = ResPrototype(
-        "void   time_map_summary_upgrade107( time_map , ecl_sum )"
-    )
     _free = ResPrototype("void   time_map_free( time_map )")
 
     def __init__(self, filename=None):
@@ -200,6 +196,3 @@ class TimeMap(BaseCClass):
 
     def getLastStep(self):
         return self._last_step()
-
-    def upgrade107(self, refcase: EclSum):
-        self._upgrade107(refcase)

@@ -521,28 +521,6 @@ void time_map_clear(time_map_type *map) {
     pthread_rwlock_unlock(&map->rw_lock);
 }
 
-/*
-  This is a function specifically written to upgrade an on-disk
-  time_map which is using localtime (fs_version <= 106) to a utc based
-  time_map (fs_version >= 107).
-*/
-
-void time_map_summary_upgrade107(time_map_type *map,
-                                 const ecl_sum_type *ecl_sum) {
-    int first_step = ecl_sum_get_first_report_step(ecl_sum);
-    int last_step = ecl_sum_get_last_report_step(ecl_sum);
-
-    time_t_vector_resize(map->map, last_step + 1, DEFAULT_TIME);
-    time_t_vector_iset_block(map->map, 0, first_step, DEFAULT_TIME);
-    for (int step = first_step; step <= last_step; step++) {
-        if (ecl_sum_has_report_step(ecl_sum, step)) {
-            time_t sim_time = ecl_sum_get_report_time(ecl_sum, step);
-            time_t_vector_iset(map->map, step, sim_time);
-        }
-    }
-    map->modified = true;
-}
-
 static void time_map_update_abort(time_map_type *map, int step, time_t time) {
     time_t current_time = time_map_iget__(map, step);
     int current[3];
