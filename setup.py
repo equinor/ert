@@ -93,6 +93,7 @@ setup(
         "psutil",
         "pydantic >= 1.9",
         "PyQt5",
+        "PyQt5-sip<=12.9.1; python_version <= '3.6'",
         "pyrsistent",
         "python-dateutil",
         "pyyaml",
