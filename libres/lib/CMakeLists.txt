@@ -14,7 +14,6 @@ pybind11_add_module(
   res_util/ui_return.cpp
   res_util/subst_list.cpp
   res_util/subst_func.cpp
-  res_util/matrix.cpp
   res_util/template.cpp
   res_util/path_fmt.cpp
   res_util/res_env.cpp
