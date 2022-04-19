@@ -9,7 +9,6 @@ add_executable(
   ert_test_suite
   tmpdir.cpp
   analysis/ies/test_ies_enkf_main.cpp
-  analysis/ies/test_make_matrix.cpp
   analysis/ies/test_ies_config.cpp
   analysis/test_enkf_linalg.cpp
   analysis/test_save_parameters.cpp
@@ -20,7 +19,6 @@ add_executable(
   enkf/test_analysis_config.cpp
   enkf/test_obs_data.cpp
   enkf/test_deprecated_umask.cpp
-  res_util/test_matrix.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp
   res_util/test_metric.cpp
