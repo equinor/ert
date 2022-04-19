@@ -24,7 +24,7 @@
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
-#include <ert/res_util/matrix.hpp>
+#include <Eigen/Dense>
 
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
@@ -74,7 +74,7 @@ struct gen_obs_struct {
         obs_key; /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */
     gen_data_file_format_type
         obs_format; /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
-    matrix_type *error_covar;
+    Eigen::MatrixXd error_covar;
     gen_data_config_type *data_config;
 };
 
@@ -88,8 +88,6 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(
     free(gen_obs->data_index_list);
     free(gen_obs->obs_key);
     free(gen_obs->std_scaling);
-    if (gen_obs->error_covar != NULL)
-        matrix_free(gen_obs->error_covar);
 
     free(gen_obs);
 }
@@ -201,7 +199,6 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
     obs->data_config =
         (gen_data_config_type *)data_config; // casting away the const ...
     obs->observe_all_data = true;
-    obs->error_covar = NULL;
     return obs;
 }
 
@@ -214,13 +211,26 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
 
    @error_covar_file is the name of file which contains a matrix of
    error-covariance. The file data will be read with the function
-   matrix_fscanf_data(), i.e. it should consist of formatted
-   numbers. Since the matrix is symmetric it does not matter whether
-   it is represented in row-major or column-major order; newlines for
-   pretty reading can be inserted but are not necessary.
+   _load_matrix_from_file(), i.e. it should consist of formatted
+   numbers. newlines for pretty reading can be inserted but are not necessary.
 
    The error_covar_file should contain NO header information.
 */
+
+Eigen::MatrixXd _load_matrix_from_file(int rows, int columns, FILE *stream) {
+    Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(rows, columns);
+    double value;
+    for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < columns; col++) {
+            if (fscanf(stream, "%lg", &value) == 1)
+                matrix(row, col) = value;
+            else
+                throw std::runtime_error(fmt::format(
+                    "reading of matrix failed at row:{}  col:{}", row, col));
+        }
+    }
+    return matrix;
+}
 
 gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
                             const char *obs_key, const char *obs_file,
@@ -244,12 +254,11 @@ gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
     if (error_covar_file != NULL) {
         FILE *stream = util_fopen(error_covar_file, "r");
 
-        obs->error_covar = matrix_alloc(obs->obs_size, obs->obs_size);
-        matrix_fscanf_data(obs->error_covar, false, stream);
+        obs->error_covar =
+            _load_matrix_from_file(obs->obs_size, obs->obs_size, stream);
 
         fclose(stream);
-    } else
-        obs->error_covar = NULL;
+    }
 
     return obs;
 }

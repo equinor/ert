@@ -23,14 +23,12 @@
 #include <array>
 #include <vector>
 #include <filesystem>
-
-#include <ert/res_util/matrix.hpp>
+#include <Eigen/Dense>
+#include <fmt/format.h>
 
 #include <ert/res_util/es_testdata.hpp>
 
 namespace fs = std::filesystem;
-
-#define ROW_MAJOR_STORAGE true
 
 namespace res {
 
@@ -61,21 +59,43 @@ private:
     char *org_cwd;
 };
 
+Eigen::MatrixXd load_matrix_from_file(int rows, int columns, FILE *stream) {
+    Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(rows, columns);
+    double value;
+    for (int row = 0; row < rows; row++) {
+        for (int col = 0; col < columns; col++) {
+            if (fscanf(stream, "%lg", &value) == 1)
+                matrix(row, col) = value;
+            else
+                throw std::runtime_error(fmt::format(
+                    "reading of matrix failed at row:{}  col:{}", row, col));
+        }
+    }
+    return matrix;
+}
+
 Eigen::MatrixXd load_matrix(const std::string &name, int rows, int columns) {
     if (!fs::exists(name))
         throw std::invalid_argument("File not found");
 
     FILE *stream = util_fopen(name.c_str(), "r");
-    Eigen::MatrixXd m = Eigen::MatrixXd::Zero(rows, columns);
-    matrix_fscanf_data(&m, ROW_MAJOR_STORAGE, stream);
+    Eigen::MatrixXd m = load_matrix_from_file(rows, columns, stream);
     fclose(stream);
 
     return m;
 }
 
+void save_matrix_to_file(const Eigen::MatrixXd &matrix, FILE *stream) {
+    for (int i = 0; i < matrix.rows(); i++) {
+        for (int j = 0; j < matrix.cols(); j++)
+            fprintf(stream, "%lg ", matrix(i, j));
+        fprintf(stream, "\n");
+    }
+}
+
 void save_matrix_data(const std::string &name, const Eigen::MatrixXd &m) {
     FILE *stream = util_fopen(name.c_str(), "w");
-    matrix_fprintf_data(&m, ROW_MAJOR_STORAGE, stream);
+    save_matrix_to_file(m, stream);
     fclose(stream);
 }
 
@@ -105,9 +125,33 @@ void save_size(int ens_size, int obs_size) {
     fclose(stream);
 }
 
-void matrix_delete_row_column(Eigen::MatrixXd &m1, int row_column) {
-    matrix_delete_row(&m1, row_column);
-    matrix_delete_column(&m1, row_column);
+void delete_row(Eigen::MatrixXd &m, int row) {
+    Eigen::MatrixXd new_matrix(m.rows() - 1, m.cols());
+    int index = 0;
+    for (int i = 0; i < m.rows(); i++) {
+        if (i != row) {
+            new_matrix.row(index) = m.row(i);
+            index++;
+        }
+    }
+    m = new_matrix;
+}
+
+void delete_column(Eigen::MatrixXd &m, int column) {
+    Eigen::MatrixXd new_matrix(m.rows(), m.cols() - 1);
+    int index = 0;
+    for (int i = 0; i < m.cols(); i++) {
+        if (i != column) {
+            new_matrix.col(index) = m.col(i);
+            index++;
+        }
+    }
+    m = new_matrix;
+}
+
+void delete_row_column(Eigen::MatrixXd &m1, int row_column) {
+    delete_row(m1, row_column);
+    delete_column(m1, row_column);
 }
 
 } // namespace
@@ -123,7 +167,7 @@ void es_testdata::save_matrix(const std::string &name,
     pushd tmp_path(this->path);
 
     FILE *stream = util_fopen(name.c_str(), "w");
-    matrix_fprintf_data(&m, ROW_MAJOR_STORAGE, stream);
+    save_matrix_to_file(m, stream);
     fclose(stream);
 }
 
@@ -142,12 +186,11 @@ void es_testdata::deactivate_obs(int iobs) {
 
     if (this->obs_mask[iobs]) {
         this->obs_mask[iobs] = false;
-
-        matrix_delete_row(&this->dObs, iobs);
-        matrix_delete_row(&this->S, iobs);
-        matrix_delete_row_column(this->R, iobs);
-        matrix_delete_row(&this->E, iobs);
-        matrix_delete_row(&this->D, iobs);
+        delete_row(this->dObs, iobs);
+        delete_row(this->S, iobs);
+        delete_row_column(this->R, iobs);
+        delete_row(this->E, iobs);
+        delete_row(this->D, iobs);
 
         this->active_obs_size -= 1;
     }
@@ -160,10 +203,9 @@ void es_testdata::deactivate_realization(int iens) {
 
     if (this->ens_mask[iens]) {
         this->ens_mask[iens] = false;
-
-        matrix_delete_column(&this->S, iens);
-        matrix_delete_column(&this->E, iens);
-        matrix_delete_column(&this->D, iens);
+        delete_column(this->S, iens);
+        delete_column(this->E, iens);
+        delete_column(this->D, iens);
 
         this->active_ens_size -= 1;
     }
