@@ -228,11 +228,6 @@ add_equinor_test(
   config_ecl_sum_compatible_true TRUE)
 
 add_equinor_test(
-  enkf_state_report_step_compatible_FALSE enkf_state_report_step_compatible
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_false"
-  config_ecl_sum_compatible_false FALSE)
-
-add_equinor_test(
   enkf_state_manual_load enkf_state_manual_load
   "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_true"
   config_ecl_sum_compatible_true)

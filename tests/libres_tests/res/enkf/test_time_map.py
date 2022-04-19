@@ -23,14 +23,9 @@ class TimeMapTest(ResTest):
         self.assertTrue(tm.update(0, datetime.date(2000, 1, 1)))
         self.assertEqual(tm[0], datetime.date(2000, 1, 1))
 
-        self.assertTrue(tm.isStrict())
         with self.assertRaises(Exception):
             tm.update(0, datetime.date(2000, 1, 2))
 
-        tm.setStrict(False)
-        self.assertFalse(tm.update(0, datetime.date(2000, 1, 2)))
-
-        tm.setStrict(True)
         self.assertTrue(tm.update(1, datetime.date(2000, 1, 2)))
         d = tm.dump()
         self.assertEqual(
@@ -219,8 +214,3 @@ class TimeMapTest(ResTest):
                 tolerance_seconds_before=10,
                 tolerance_seconds_after=10,
             )
-
-    def test_empty(self):
-        tm = TimeMap()
-        last_step = tm.getLastStep()
-        self.assertEqual(last_step, -1)
