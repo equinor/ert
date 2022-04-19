@@ -1,0 +1,23 @@
+{% for obs in range(gen_obs_count) %}
+GENERAL_OBSERVATION POLY_OBS_{{ obs }} {
+   DATA       = POLY_RES_{{ obs }};
+   INDEX_LIST = {{ range(0, gen_data_entries, gen_obs_every)|join(",") }};
+   RESTART    = 0;
+   OBS_FILE   = poly_obs_data_{{ obs }}.txt;
+};
+{% endfor %}
+
+{% for sum in range(sum_obs_count) %}
+{% for obs in range(0, summary_data_entries, sum_obs_every) %}
+{%- set x = obs %}
+{%- set y = 0.5598 * x**2 + 1.8083 * x + 2.6357 %}
+{%- set std = ((x/2) ** 2) + 0.1 %}
+
+SUMMARY_OBSERVATION POLY_SUM_OBS_{{ sum }}_{{ obs }} {
+   KEY        = PSUM{{ sum }};
+   ERROR      = {{std}};
+   VALUE      = {{y}};
+   RESTART    = {{obs + 1}};
+};
+{% endfor %}
+{% endfor %}
