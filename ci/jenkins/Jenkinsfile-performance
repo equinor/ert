@@ -1,0 +1,32 @@
+pipeline {
+    agent { label 'scout-ci7' }
+
+    parameters {
+        string(
+            name: 'PYTEST_OPTIONS',
+            defaultValue: '-sv  --runslow',
+            description: 'Optional parameters for pytest, eg.  -sv --runslow --benchmark-cprofile=tottime'
+        )
+    }
+
+    environment {
+        BASE_DIR = '/scratch/oompf/jenkins-ert-performance'
+        TMP_DIR = """${sh(script:"mktemp -dp ${env.BASE_DIR}", returnStdout: true).trim()}"""
+    }
+
+    stages {
+        stage('performance') {
+            steps {
+                sh """
+                python3 -m venv env
+                source env/bin/activate
+                source /opt/rh/devtoolset-9/enable
+                pip install --upgrade pip
+                pip install .
+                pip install -r dev-requirements.txt
+                pytest tests/performance_tests  --benchmark-autosave --benchmark-storage=file://${env.BASE_DIR}/.benchmarks --basetemp=${env.TMP_DIR} ${PYTEST_OPTIONS}
+                """
+            }
+        }
+    }
+}

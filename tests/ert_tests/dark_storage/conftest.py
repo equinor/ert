@@ -57,7 +57,8 @@ def poly_example_tmp_dir(poly_example_tmp_dir_shared):
 def dark_storage_client(monkeypatch):
     with dark_storage_app_(monkeypatch) as dark_app:
         monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
-        yield TestClient(dark_app)
+        with TestClient(dark_app) as client:
+            yield client
 
 
 @pytest.fixture
