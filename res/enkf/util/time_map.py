@@ -33,8 +33,6 @@ class TimeMap(BaseCClass):
     _iget = ResPrototype("time_t time_map_iget(time_map, int)")
     _size = ResPrototype("int    time_map_get_size(time_map)")
     _try_update = ResPrototype("bool   time_map_try_update(time_map , int , time_t)")
-    _is_strict = ResPrototype("bool   time_map_is_strict( time_map )")
-    _set_strict = ResPrototype("void   time_map_set_strict( time_map , bool)")
     _lookup_time = ResPrototype("int    time_map_lookup_time( time_map , time_t)")
     _lookup_time_with_tolerance = ResPrototype(
         "int    time_map_lookup_time_with_tolerance( time_map , time_t , int , int)"
@@ -71,12 +69,6 @@ class TimeMap(BaseCClass):
         else:
             raise IOError((errno.ENOENT, "File not found: %s" % filename))
 
-    def isStrict(self):
-        return self._is_strict()
-
-    def setStrict(self, strict):
-        return self._set_strict(strict)
-
     def getSimulationDays(self, step):
         """@rtype: double"""
         if not isinstance(step, int):
@@ -106,10 +98,7 @@ class TimeMap(BaseCClass):
         if self._try_update(index, CTime(time)):
             return True
         else:
-            if self.isStrict():
-                raise Exception("Tried to update with inconsistent value")
-            else:
-                return False
+            raise Exception("Tried to update with inconsistent value")
 
     def __iter__(self):
         cur = 0
@@ -180,9 +169,7 @@ class TimeMap(BaseCClass):
 
     def __repr__(self):
         ls = len(self)
-        la = self.getLastStep()
-        st = "strict" if self.isStrict() else "not strict"
-        cnt = "size = %d, last_step = %d, %s" % (ls, la, st)
+        cnt = "size = %d" % (ls)
         return self._create_repr(cnt)
 
     def dump(self):
@@ -193,6 +180,3 @@ class TimeMap(BaseCClass):
         for step, t in enumerate(self):
             step_list.append((step, t, self.getSimulationDays(step)))
         return step_list
-
-    def getLastStep(self):
-        return self._last_step()

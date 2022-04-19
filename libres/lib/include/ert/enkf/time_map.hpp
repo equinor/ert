@@ -35,8 +35,6 @@ extern "C" bool time_map_try_update(time_map_type *map, int step, time_t time);
 bool time_map_attach_refcase(time_map_type *time_map,
                              const ecl_sum_type *refcase);
 bool time_map_has_refcase(const time_map_type *time_map);
-extern "C" bool time_map_is_strict(const time_map_type *time_map);
-extern "C" void time_map_set_strict(time_map_type *time_map, bool strict);
 void time_map_clear(time_map_type *map);
 bool time_map_equal(const time_map_type *map1, const time_map_type *map2);
 extern "C" time_map_type *time_map_alloc();
