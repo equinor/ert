@@ -5,6 +5,7 @@ from typing import Any, List, TYPE_CHECKING, Mapping
 
 import graphene as gr
 
+from ert_shared.dark_storage.common import get_res_from_info
 from ert_shared.dark_storage.enkf import get_res, get_id, get_size
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
 
@@ -47,12 +48,12 @@ class Experiment(gr.ObjectType, _ExperimentMixin):
 
     @staticmethod
     def resolve_ensembles(root: None, info: "ResolveInfo") -> List[Any]:
-        res = get_res()
+        res = get_res_from_info(info)
         return res.cases()
 
     @staticmethod
     def resolve_priors(root: Any, info: "ResolveInfo") -> Mapping:
-        res = get_res()
+        res = get_res_from_info(info)
         priors = res.gen_kw_priors()
         return priors
 

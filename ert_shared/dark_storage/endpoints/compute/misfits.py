@@ -34,7 +34,7 @@ async def get_response_misfits(
 ) -> Response:
 
     ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(ensemble_name, response_name)
+    dataframe = data_for_key(res, ensemble_name, response_name)
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
@@ -44,7 +44,7 @@ async def get_response_misfits(
         response_dict[index] = data_df
 
     obs_keys = res.observation_keys(response_name)
-    obs = observations_for_obs_keys(ensemble_name, obs_keys)
+    obs = observations_for_obs_keys(res, ensemble_name, obs_keys)
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")

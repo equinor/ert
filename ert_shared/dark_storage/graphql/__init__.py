@@ -1,8 +1,9 @@
 from typing import Any
 from starlette.graphql import GraphQLApp
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 import graphene as gr
 from graphql.execution.base import ResolveInfo
+from starlette.requests import Request
 
 from ert_shared.dark_storage.enkf import get_res, get_name
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
@@ -41,4 +42,9 @@ class Mutations(gr.ObjectType):
 schema = gr.Schema(query=Query, mutation=Mutations)
 graphql_app = GraphQLApp(schema=schema)
 router = APIRouter(tags=["graphql"])
-router.add_route("/gql", graphql_app)
+
+
+@router.post("/gql")
+async def f(request: Request, res=Depends(get_res)):
+    request.state.res = res
+    return await graphql_app.handle_graphql(request=request)

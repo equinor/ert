@@ -14,7 +14,7 @@ async def get_ensemble_response_dataframe(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID, response_name: str
 ) -> Response:
     ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(ensemble_name, response_name)
+    dataframe = data_for_key(res, ensemble_name, response_name)
     return Response(
         content=dataframe.to_csv().encode(),
         media_type="text/csv",
