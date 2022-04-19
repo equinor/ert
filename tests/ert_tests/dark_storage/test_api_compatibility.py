@@ -12,6 +12,10 @@ def test_openapi(ert_storage_app, dark_storage_app):
     expect = ert_storage_app.openapi()
     actual = dark_storage_app.openapi()
 
+    # This endpoint is added explicitly only in dark_storage, to have a place to inject
+    # LibresFacade. Remove it here to make it the same as ert_storage.
+    del actual["paths"]["/gql"]
+
     # Remove textual data (descriptions and such) from ERT Storage's API.
     def _remove_text(data):
         if isinstance(data, dict):
