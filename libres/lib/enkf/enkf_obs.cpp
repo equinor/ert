@@ -1059,12 +1059,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "HOURS", false, DT_POSFLOAT, help_item_spec_hours);
         conf_item_spec_type *item_spec_restart = conf_item_spec_alloc(
             "RESTART", false, DT_INT, help_item_spec_restart);
-        conf_item_spec_type *item_spec_error_covar =
-            conf_item_spec_alloc("ERROR_COVAR", false, DT_FILE,
-                                 "Name of file containing error-covariance as "
-                                 "formatted matrix - no header");
 
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_error_covar);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_field);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_date);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_days);

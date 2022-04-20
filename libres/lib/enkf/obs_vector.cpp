@@ -425,7 +425,6 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
         const char *index_file = NULL;
         const char *index_list = NULL;
         const char *obs_file = NULL;
-        const char *error_covar_file = NULL;
 
         if (conf_instance_has_item(conf_instance, "INDEX_FILE"))
             index_file =
@@ -438,10 +437,6 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
         if (conf_instance_has_item(conf_instance, "OBS_FILE"))
             obs_file =
                 conf_instance_get_item_value_ref(conf_instance, "OBS_FILE");
-
-        if (conf_instance_has_item(conf_instance, "ERROR_COVAR"))
-            error_covar_file =
-                conf_instance_get_item_value_ref(conf_instance, "ERROR_COVAR");
 
         {
             obs_vector_type *obs_vector = NULL;
@@ -473,7 +468,7 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
                         (const gen_data_config_type *)enkf_config_node_get_ref(
                             config_node),
                         obs_key, obs_file, scalar_value, scalar_error,
-                        index_file, index_list, error_covar_file);
+                        index_file, index_list);
                     obs_vector_install_node(obs_vector, obs_restart_nr,
                                             gen_obs);
                 } else
