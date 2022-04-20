@@ -62,7 +62,7 @@ class WorkflowCommon:
 
         with open("compare_job", "w") as f:
             f.write("INTERNAL True\n")
-            f.write("FUNCTION strcmp\n")
+            f.write("FUNCTION _test_compare_job\n")
             f.write("MIN_ARG 2\n")
             f.write("MAX_ARG 2\n")
             f.write("ARG_TYPE 0 STRING\n")

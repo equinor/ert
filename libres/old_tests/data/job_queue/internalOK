@@ -1,6 +1,6 @@
 INTERNAL  True
 MODULE    NULL
-FUNCTION  workflow_job_alloc
+FUNCTION  enkf_main_exit_JOB  -- This can be any valid internal workflow function
 MIN_ARG   1
 MAX_ARG   2
 ARG_TYPE  0  STRING
