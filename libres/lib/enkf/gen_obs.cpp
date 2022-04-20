@@ -24,7 +24,6 @@
 
 #include <ert/util/util.h>
 #include <ert/util/string_util.h>
-#include <Eigen/Dense>
 
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
@@ -74,7 +73,6 @@ struct gen_obs_struct {
         obs_key; /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */
     gen_data_file_format_type
         obs_format; /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
-    Eigen::MatrixXd error_covar;
     gen_data_config_type *data_config;
 };
 
@@ -208,36 +206,13 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
    "1,2,3,4-10, 17,19,22-100" string. Only one of these items can be
    != NULL. If both are NULL it is assumed that all the indices of the
    gen_data instance should be observed.
-
-   @error_covar_file is the name of file which contains a matrix of
-   error-covariance. The file data will be read with the function
-   _load_matrix_from_file(), i.e. it should consist of formatted
-   numbers. newlines for pretty reading can be inserted but are not necessary.
-
-   The error_covar_file should contain NO header information.
 */
-
-Eigen::MatrixXd _load_matrix_from_file(int rows, int columns, FILE *stream) {
-    Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(rows, columns);
-    double value;
-    for (int row = 0; row < rows; row++) {
-        for (int col = 0; col < columns; col++) {
-            if (fscanf(stream, "%lg", &value) == 1)
-                matrix(row, col) = value;
-            else
-                throw std::runtime_error(fmt::format(
-                    "reading of matrix failed at row:{}  col:{}", row, col));
-        }
-    }
-    return matrix;
-}
 
 gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
                             const char *obs_key, const char *obs_file,
                             double scalar_value, double scalar_error,
                             const char *data_index_file,
-                            const char *data_index_string,
-                            const char *error_covar_file) {
+                            const char *data_index_string) {
     gen_obs_type *obs = gen_obs_alloc__(data_config, obs_key);
     if (obs_file)
         gen_obs_load_observation(
@@ -250,15 +225,6 @@ gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
         gen_obs_load_data_index(obs, data_index_file);
     else if (data_index_string)
         gen_obs_parse_data_index(obs, data_index_string);
-
-    if (error_covar_file != NULL) {
-        FILE *stream = util_fopen(error_covar_file, "r");
-
-        obs->error_covar =
-            _load_matrix_from_file(obs->obs_size, obs->obs_size, stream);
-
-        fclose(stream);
-    }
 
     return obs;
 }

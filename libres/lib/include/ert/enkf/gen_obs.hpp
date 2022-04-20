@@ -29,7 +29,7 @@ typedef struct gen_obs_struct gen_obs_type;
 
 gen_obs_type *gen_obs_alloc(const gen_data_config_type *config,
                             const char *obs_key, const char *, double, double,
-                            const char *, const char *, const char *);
+                            const char *, const char *);
 extern "C" gen_obs_type *
 gen_obs_alloc__(const gen_data_config_type *data_config,
                 const char *obs_key); // for python bindings
