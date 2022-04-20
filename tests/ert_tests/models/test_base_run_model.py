@@ -1,5 +1,4 @@
 import pytest
-
 from ert_utils import ErtTest
 
 from ert_shared.models import BaseRunModel
@@ -42,3 +41,44 @@ removed.
 )
 def test_is_forward_model_finished(test_input, expected):
     assert BaseRunModel.is_forward_model_finished(test_input) is expected
+
+
+@pytest.mark.parametrize(
+    "initials, expected",
+    [
+        ([], []),
+        ([True], [0]),
+        ([False], []),
+        ([False, True], [1]),
+        ([True, True], [0, 1]),
+        ([False, True], [1]),
+    ],
+)
+def test_active_realizations(initials, expected):
+    brm = BaseRunModel(None, None, None)
+    brm._initial_realizations_mask = initials
+    assert brm._active_realizations == expected
+    assert brm._ensemble_size == len(initials)
+
+
+@pytest.mark.parametrize(
+    "initials, completed, any_failed, failures",
+    [
+        ([True], [False], True, [True]),
+        ([False], [False], False, [False]),
+        ([False, True], [True, False], True, [False, True]),
+        ([False, True], [False, True], False, [False, False]),
+        ([False, False], [False, False], False, [False, False]),
+        ([False, False], [True, True], False, [False, False]),
+        ([True, True], [False, True], True, [True, False]),
+    ],
+)
+def test_failed_realizations(initials, completed, any_failed, failures):
+    brm = BaseRunModel(None, None, None)
+    brm._initial_realizations_mask = initials
+    brm._completed_realizations_mask = completed
+
+    assert list(brm._create_mask_from_failed_realizations()) == failures
+    assert brm._count_successful_realizations() == sum(completed)
+
+    assert brm.has_failed_realizations() == any_failed
