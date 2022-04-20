@@ -77,15 +77,6 @@ void local_ministep_add_obsdata(local_ministep_type *ministep,
     }
 }
 
-void local_ministep_add_obs_data(local_ministep_type *ministep,
-                                 obs_data_type *obs_data) {
-    if (ministep->obs_data != NULL) {
-        obs_data_free(ministep->obs_data);
-        ministep->obs_data = NULL;
-    }
-    ministep->obs_data = obs_data;
-}
-
 void local_ministep_add_obsdata_node(local_ministep_type *ministep,
                                      LocalObsDataNode *obsdatanode) {
     LocalObsData *obsdata = local_ministep_get_obsdata(ministep);
@@ -166,31 +157,8 @@ void attach_obsdata(py::handle obj, LocalObsData &obsdata) {
 RES_LIB_SUBMODULE("local.ministep", m) {
     using namespace py::literals;
 
-    auto get_obs_active_list_impl = [](py::handle self) -> py::dict {
-        auto ministep = ert::from_cwrap<local_ministep_type>(self);
-
-        py::dict dict;
-        if (ministep->obs_data == nullptr)
-            return dict;
-
-        int num_blocks = obs_data_get_num_blocks(ministep->obs_data);
-        for (int i{}; i < num_blocks; ++i) {
-            auto obs_block = obs_data_iget_block(ministep->obs_data, i);
-            py::str key = obs_block_get_key(obs_block);
-
-            py::list active_list;
-            int active_size = obs_block_get_size(obs_block);
-            for (int j{}; j < active_size; ++j)
-                active_list.append(
-                    py::bool_{obs_block_iget_is_active(obs_block, j)});
-            dict[key] = active_list;
-        }
-        return dict;
-    };
-
     m.def("get_or_create_row_scaling", &get_or_create_row_scaling, "self"_a,
           "name"_a);
-    m.def("get_obs_active_list", get_obs_active_list_impl, "self"_a);
     m.def("get_active_data_list", &get_active_data_list, "self"_a, "name"_a,
           py::return_value_policy::reference);
     m.def("add_obsdata_node", &add_obsdata_node, "self"_a, "node"_a);

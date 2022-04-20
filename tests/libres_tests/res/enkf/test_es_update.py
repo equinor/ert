@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import sys
 
 import pytest
@@ -288,3 +290,63 @@ def test_localization(setup_case, expected_target_gen_kw):
     assert sim_gen_kw[0] == target_gen_kw[0]
 
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
+
+
+@pytest.mark.parametrize(
+    "alpha, expected",
+    [
+        pytest.param(0.1, [], id="Low alpha, no active observations"),
+        (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (3, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (10, ["ACTIVE", "DEACTIVATED", "ACTIVE"]),
+        (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
+    ],
+)
+def test_snapshot_alpha(setup_case, alpha, expected):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+
+    obs_file = Path("observations") / "observations.txt"
+    with obs_file.open(mode="w") as fin:
+        fin.write(
+            """
+SUMMARY_OBSERVATION LOW_STD
+{
+   VALUE   = 10;
+   ERROR   = 0.1;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+SUMMARY_OBSERVATION HIGH_STD
+{
+   VALUE   = 10;
+   ERROR   = 1.0;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
+{
+   VALUE   = 10;
+   ERROR   = 10.0;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+"""
+        )
+
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    ert.analysisConfig().selectModule("IES_ENKF")
+    fsm = ert.getEnkfFsManager()
+    sim_fs = fsm.getFileSystem("default_0")
+    target_fs = fsm.getFileSystem("target")
+    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    ert.analysisConfig().setEnkfAlpha(alpha)
+    es_update.smootherUpdate(run_context)
+    result_snapshot = ert.update_snapshots[run_context.get_id()]
+    assert result_snapshot.alpha == alpha
+    assert result_snapshot.ministep_snapshots["ALL_ACTIVE"].obs_status == expected

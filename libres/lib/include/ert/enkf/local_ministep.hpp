@@ -39,22 +39,16 @@ public:
     std::string
         name; /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
     LocalObsData *observations;
-    obs_data_type *obs_data;
 
     std::unordered_map<std::string, std::shared_ptr<RowScaling>> scaling;
     std::unordered_map<std::string, ActiveList> active_size;
 
-    explicit local_ministep_type(const char *name)
-        : name(strdup(name)), obs_data(nullptr) {
+    explicit local_ministep_type(const char *name) : name(strdup(name)) {
         UTIL_TYPE_ID_INIT(this, LOCAL_MINISTEP_TYPE_ID);
         this->observations = new LocalObsData("OBSDATA_" + this->name);
     }
 
-    ~local_ministep_type() {
-        delete this->observations;
-        if (obs_data)
-            obs_data_free(obs_data);
-    }
+    ~local_ministep_type() { delete this->observations; }
 
     inline bool data_is_active(const char *key) const {
         return active_size.count(key) > 0;
@@ -133,8 +127,6 @@ bool local_ministep_data_is_active(const local_ministep_type *ministep,
                                    const char *key);
 
 LocalObsData *local_ministep_get_obsdata(const local_ministep_type *ministep);
-void local_ministep_add_obs_data(local_ministep_type *ministep,
-                                 obs_data_type *obs_data);
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);
 

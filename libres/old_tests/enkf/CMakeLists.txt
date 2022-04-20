@@ -44,7 +44,6 @@ foreach(
   enkf_plot_gen_kw_vector
   enkf_plot_genvector
   enkf_plot_tvector
-  enkf_update_log
   enkf_run_arg
   enkf_state_map
   obs_vector

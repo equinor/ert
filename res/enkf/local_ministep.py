@@ -1,4 +1,3 @@
-from typing import Dict, List
 from cwrap import BaseCClass
 
 from res import _lib
@@ -74,9 +73,6 @@ class LocalMinistep(BaseCClass):
     def getName(self):
         """@rtype: str"""
         return self.name()
-
-    def get_obs_active_list(self) -> Dict[str, List[bool]]:
-        return _lib.local.ministep.get_obs_active_list(self)
 
     def free(self):
         self._free()

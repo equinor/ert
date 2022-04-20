@@ -347,17 +347,6 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 }
 
-static FILE *create_log_file(const char *log_path) {
-    std::string log_file;
-    log_file = fmt::format("{}{}deprecated", log_path, UTIL_PATH_SEP_CHAR);
-
-    FILE *log_stream = fopen(log_file.data(), "a");
-    if (log_stream == nullptr)
-        throw std::runtime_error(fmt::format(
-            "Error opening '{}' for writing: {}", log_file, strerror(errno)));
-    return log_stream;
-}
-
 std::shared_ptr<analysis::update_data_type>
 make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                  enkf_obs_type *obs, ensemble_config_type *ensemble_config,
@@ -389,11 +378,7 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
 
     enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
                                       true);
-    FILE *log_stream =
-        create_log_file(analysis_config_get_log_path(analysis_config));
-    enkf_analysis_fprintf_obs_summary(
-        obs_data, meas_data, local_ministep_get_name(ministep), log_stream);
-    fclose(log_stream);
+    auto update_snapshot = make_update_snapshot(obs_data, meas_data);
 
     int active_obs_size = obs_data_get_active_size(obs_data);
     int active_ens_size = meas_data_get_active_ens_size(meas_data);
@@ -438,13 +423,10 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
         target_fs, ensemble_config, iens_active_index, active_ens_size,
         ministep);
 
-    /* This is not correct conceptually. Ministep should only hold the
-    configuration objects, not the actual data.*/
-    local_ministep_add_obs_data(ministep, obs_data);
-
     return std::make_shared<update_data_type>(
         std::move(S), std::move(E), std::move(D), std::move(R), std::move(A),
-        std::move(row_scaling_parameters), std::move(obs_mask));
+        std::move(row_scaling_parameters), std::move(obs_mask),
+        std::move(update_snapshot));
 }
 } // namespace analysis
 
@@ -532,7 +514,9 @@ RES_LIB_SUBMODULE("update", m) {
                        py::return_value_policy::reference_internal)
         .def_readwrite("has_observations",
                        &analysis::update_data_type::has_observations)
-        .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask);
+        .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask)
+        .def_readwrite("update_snapshot",
+                       &analysis::update_data_type::update_snapshot);
     m.def("copy_parameters", copy_parameters_pybind);
     m.def("make_update_data", make_update_data_pybind);
     m.def("save_parameters", save_parameters_pybind);
