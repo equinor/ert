@@ -13,6 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import copy
 import os
 import os.path
 import unittest
@@ -93,6 +94,12 @@ class SubstConfigTest(ResTest):
     def test_data_file_not_found_raises_error(self):
         with self.assertRaises(IOError):
             SubstConfig(config_dict=self.set_key(ConfigKeys.DATA_FILE, "not_a_file"))
+
+    def test_parallel_in_title_and_comment(self):
+        config = copy.deepcopy(self.config_data)
+        config[ConfigKeys.DATA_FILE] = "eclipse/model/SNAKE_OIL_PARALLEL.DATA"
+        subst_config = SubstConfig(config_dict=config)
+        self.assertKeyValue(subst_config, "<NUM_CPU>", "2")
 
     def remove_key(self, key):
         return {i: self.config_data[i] for i in self.config_data if i != key}
