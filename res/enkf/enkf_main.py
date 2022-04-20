@@ -70,7 +70,7 @@ class EnKFMain(BaseCClass):
 
         Note: @config is a ResConfig instance holding the configuration.
         """
-
+        self.update_snapshots = {}
         real_enkf_main = _RealEnKFMain(config, strict, verbose)
         assert isinstance(real_enkf_main, BaseCClass)
         self._init_from_real_enkf_main(real_enkf_main)

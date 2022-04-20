@@ -1,10 +1,12 @@
 from typing import List
 
 import logging
+from typing import Dict
 
 from pandas import DataFrame
 
 from res.analysis.analysis_module import AnalysisModule
+from res.enkf.es_update import SmootherSnapshot
 from res.enkf.export import (
     GenDataCollector,
     SummaryCollector,
@@ -256,8 +258,9 @@ class LibresFacade:
     def gen_kw_priors(self):
         return self._enkf_main.getKeyManager().gen_kw_priors()
 
-    def get_update_step(self):
-        return self._enkf_main.getLocalConfig().getUpdatestep()
+    @property
+    def update_snapshots(self) -> Dict[str, SmootherSnapshot]:
+        return self._enkf_main.update_snapshots
 
     def get_alpha(self):
         return self._enkf_main.analysisConfig().getEnkfAlpha()

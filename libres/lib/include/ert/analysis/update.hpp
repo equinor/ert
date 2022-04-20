@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ert/enkf/analysis_config.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
@@ -25,10 +26,12 @@ public:
         Eigen::MatrixXd R_in, std::optional<Eigen::MatrixXd> A_in,
         std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
             A_with_rowscaling_in,
-        const std::vector<bool> &obs_mask_in)
+        const std::vector<bool> &obs_mask_in,
+        const UpdateSnapshot &update_snapshot_in)
         : S(std::move(S_in)), E(std::move(E_in)), D(std::move(D_in)),
           R(std::move(R_in)), A(std::move(A_in)),
           obs_mask(std::move(obs_mask_in)),
+          update_snapshot(std::move(update_snapshot_in)),
           A_with_rowscaling(std::move(A_with_rowscaling_in)) {
         has_observations = true;
     }
@@ -39,6 +42,7 @@ public:
     Eigen::MatrixXd R;
     std::optional<Eigen::MatrixXd> A;
     std::vector<bool> obs_mask;
+    UpdateSnapshot update_snapshot;
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         A_with_rowscaling;
     bool has_observations = false;
