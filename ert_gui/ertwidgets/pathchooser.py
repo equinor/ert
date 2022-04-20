@@ -25,8 +25,8 @@ from ert_gui.ertwidgets.validationsupport import ValidationSupport
 
 class PathChooser(QWidget):
     """
-    PathChooser: shows, enables choosing of and validates paths.
-    The data structure expected and sent to the models getValue and setValue is a string.
+    PathChooser: shows, enables choosing of and validates paths.  The data
+    structure expected and sent to the models getValue and setValue is a string.
     """
 
     PATH_DOES_NOT_EXIST_MSG = "The specified path does not exist."
@@ -151,12 +151,10 @@ class PathChooser(QWidget):
 
     def selectPath(self):
         """Pops up the 'select a file/directory' dialog"""
-        # todo: This probably needs some reworking to work properly with different scenarios... (file + dir)
+        # todo: This probably needs some reworking to work properly with
+        # different scenarios... (file + dir)
         self._editing = True
         current_directory = self.getPath()
-
-        # if not os.path.exists(currentDirectory):
-        #    currentDirectory = "~"
 
         if self._model.pathMustBeAFile():
             current_directory: tuple(str, str) = QFileDialog.getOpenFileName(

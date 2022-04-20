@@ -12,8 +12,9 @@ from ert_storage.compute import calculate_misfits_from_pandas
 
 from ert_storage import exceptions as exc
 
-router = APIRouter(tags=["misfits"])
 from dateutil.parser import parse
+
+router = APIRouter(tags=["misfits"])
 
 
 @router.get(
@@ -55,7 +56,7 @@ async def get_response_misfits(
     def parse_index(x):
         try:
             return int(x)
-        except:
+        except ValueError:
             return parse(x)
 
     observation_df = pd.DataFrame(

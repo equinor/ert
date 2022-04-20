@@ -5,7 +5,8 @@ from ert_shared.ide.keywords.definitions import ArgumentDefinition
 class ProperNameArgument(ArgumentDefinition):
 
     NOT_A_VALID_NAME = (
-        "The argument must be a valid string containing only characters of these types:"
+        "The argument must be a valid string "
+        "containing only characters of these types: "
         "Letters: A-Z and a-z, "
         "numbers: 0-9, "
         "underscore: _, "

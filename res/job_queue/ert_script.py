@@ -128,7 +128,7 @@ class ErtScript:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return ErtScript.__findErtScriptImplementations(module)
-        except Exception as e:
+        except Exception:
             sys.stderr.write("The script '%s' caused an error during load:\n" % path)
             traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], None)
             return None

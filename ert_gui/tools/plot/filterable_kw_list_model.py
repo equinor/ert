@@ -3,7 +3,8 @@ from ert_gui.ertwidgets.models.selectable_list_model import SelectableListModel
 
 class FilterableKwListModel(SelectableListModel):
     """
-    Adds ERT - plotting keyword specific filtering functionality to the general SelectableListModel
+    Adds ERT - plotting keyword specific filtering functionality to the general
+    SelectableListModel
     """
 
     def __init__(self, key_defs):

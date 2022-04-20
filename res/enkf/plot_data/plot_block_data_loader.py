@@ -13,8 +13,8 @@ class PlotBlockDataLoader:
         @type obs_vector: ObsVector
         """
         if obs_vector is None:
-            raise ArgumentError(
-                "Cannot construct PlotBlockDataLoader without obs_vector.  Was None."
+            raise ValueError(
+                "Cannot construct PlotBlockDataLoader without obs_vector, was None."
             )
         super().__init__()
         self.__obs_vector = obs_vector
@@ -43,7 +43,6 @@ class PlotBlockDataLoader:
         """
 
         state_map = fs.getStateMap()
-        ensemble_size = len(state_map)
 
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
 

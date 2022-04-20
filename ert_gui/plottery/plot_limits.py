@@ -91,7 +91,8 @@ class PlotLimits(object):
     date_maximum = limit_property("date_maximum", (datetime.date, datetime.datetime))
     """ :type: datetime.datetime or datetime.date """
     date_limits = limits_property("date_minimum", "date_maximum")
-    """ :type: tuple[datetime.datetime|datetime.date, datetime.datetime|datetime.date] """
+    """ :type: tuple[datetime.datetime|datetime.date,
+    datetime.datetime|datetime.date] """
 
     def __eq__(self, other):
         """@type other: PlotLimits"""

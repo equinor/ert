@@ -15,7 +15,6 @@ def plotGaussianKDE(figure, plot_context, case_to_data_map, _observation_data):
     """
     @type plot_context: ert_gui.plottery.PlotContext
     """
-    key = plot_context.key()
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
     """:type: matplotlib.axes.Axes """

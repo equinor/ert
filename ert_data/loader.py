@@ -56,15 +56,17 @@ def _extract_data(
     data_keys = [facade.get_data_key_for_obs_key(key) for key in obs_keys]
     if len(set(obs_types)) != 1:
         raise ObservationError(
-            f"\nExpected only {expected_obs} observation type. Found: {obs_types} for {obs_keys}"
+            f"\nExpected only {expected_obs} observation type. "
+            f"Found: {obs_types} for {obs_keys}"
         )
     if len(set(data_keys)) != 1:
         raise ObservationError(
-            f"\nExpected all obs keys ({obs_keys}) to have the same data key, found: {data_keys} "
+            f"\nExpected all obs keys ({obs_keys}) to have "
+            f"the same data key, found: {data_keys} "
         )
     if include_data:
-        # Because all observations in this loop are pointing to the same data key,
-        # we can use any of them as input to the response loader.
+        # Because all observations in this loop are pointing to the same data
+        # key, we can use any of them as input to the response loader.
         data = response_loader(facade, obs_keys[0], case_name)
         data.columns = _create_multi_index(
             data.columns.to_list(), list(range(len(data.columns)))
@@ -225,10 +227,10 @@ def _load_general_obs(facade, observation_keys, case_name):
         obs_vector = facade.get_observations()[observation_key]
         data = []
         for time_step in obs_vector.getStepList():
-            # Observations and its standard deviation are a subset of the simulation data.
-            # The index_list refers to indices in the simulation data. In order to
-            # join these data in a DataFrame, pandas inserts the obs/std
-            # data into the columns representing said indices.
+            # Observations and its standard deviation are a subset of the
+            # simulation data The index_list refers to indices in the simulation
+            # data. In order to join these data in a DataFrame, pandas inserts
+            # the obs/std data into the columns representing said indices.
             # You then get something like:
             #      observation_key
             #      0   1   2

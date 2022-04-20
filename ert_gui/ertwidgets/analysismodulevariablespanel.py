@@ -1,6 +1,6 @@
 #  Copyright (C) 2013  Equinor ASA, Norway.
 #
-#  The file 'analysismodulevariablespanel.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'analysismodulevariablespanel.py' is part of ERT.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -87,34 +87,49 @@ class AnalysisModuleVariablesPanel(QWidget):
 
                 if variable_name == "IES_INVERSION":
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   0: Exact inversion with diagonal R=I</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "0: Exact inversion with diagonal R=I</span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   1: Subspace inversion with exact R  </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "1: Subspace inversion with exact R  </span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   2: Subspace inversion using R=EE\'   </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "2: Subspace inversion using R=EE'   </span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   3: Subspace inversion using E       </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "3: Subspace inversion using E       </span>"
                     )
                     layout.addRow(label, None)
 
                 if variable_name == "IES_DEC_STEPLENGTH":
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "A good start is max steplength of 0.6, min steplength of 0.3, "
+                        "and decline of 2.5</span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A steplength of 1.0 and one iteration results in ES update</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "A steplength of 1.0 and one iteration "
+                        "results in ES update</span>"
                     )
                     layout.addRow(label, None)
 
-        # Truncation of the eigenvalue spectrum is not possible when using exact inversion,
-        # hence the spinners for setting the amount of truncation are deactivated for exact inversion.
+        # Truncation of the eigenvalue spectrum is not possible when using exact
+        # inversion, hence the spinners for setting the amount of truncation are
+        # deactivated for exact inversion.
         inversion_spinner = self.widget_from_layout(layout, "IES_INVERSION")
         truncation_spinner = self.widget_from_layout(layout, "ENKF_TRUNCATION")
         self.update_truncation_spinners(inversion_spinner.value(), truncation_spinner)

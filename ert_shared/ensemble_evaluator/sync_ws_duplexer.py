@@ -133,7 +133,7 @@ class SyncWebsocketDuplexer:
                 except (OSError, asyncio.CancelledError, CancelledError):
                     # The OSError will have been raised in send/receive already.
                     pass
-        except Exception as ex:
+        except Exception:
             pass
         finally:
             self._loop.call_soon_threadsafe(self._loop.stop)

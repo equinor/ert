@@ -75,7 +75,7 @@ class LoadResultsPanel(QWidget):
     def iteration_count(self):
         """@rtype: int"""
         try:
-            results = self.facade.run_path % (0, 0)
+            self.facade.run_path % (0, 0)
         except TypeError:
             return 0
 
@@ -107,7 +107,10 @@ class LoadResultsPanel(QWidget):
             iteration = int(iteration)
         except ValueError as e:
             print(
-                'Expected a (whole) number in iteration field, got "%s". Error message: %s.'
+                (
+                    "Expected a (whole) number in iteration field, "
+                    'got "%s". Error message: %s.'
+                )
                 % (iteration, e)
             )
             return False

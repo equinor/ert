@@ -39,8 +39,9 @@ def get_responses(res: LibresFacade, ensemble_name: str):
 
 
 def data_for_key(res: LibresFacade, case, key, realization_index=None):
-    """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-    the realization number, and the columns are an index over the indexes/dates"""
+    """Returns a pandas DataFrame with the datapoints for a given key for a
+    given case. The row index is the realization number, and the columns are an
+    index over the indexes/dates"""
 
     if key.startswith("LOG10_"):
         key = key[6:]
@@ -62,10 +63,12 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None):
 
 
 def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
-    """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-    is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-    where index/date is used to relate the observation to the data point it relates to, and obs_index is
-    the index for the observation itself"""
+    """Returns a pandas DataFrame with the datapoints for a given observation
+    key for a given case. The row index is the realization number, and the
+    column index is a multi-index with (obs_key, index/date, obs_index), where
+    index/date is used to relate the observation to the data point it relates
+    to, and obs_index is the index for the observation itself"""
+
     try:
         measured_data = MeasuredData(res, obs_keys, case_name=case, load_data=False)
         data = measured_data.data

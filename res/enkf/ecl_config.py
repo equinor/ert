@@ -39,7 +39,7 @@ class EclConfig(BaseCClass):
                                                                             char*, \
                                                                             stringlist, \
                                                                             time_t, \
-                                                                            char*)",
+                                                                            char*)",  # noqa
         bind=False,
     )
     _free = ResPrototype("void  ecl_config_free( ecl_config )")

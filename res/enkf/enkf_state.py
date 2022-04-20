@@ -32,7 +32,8 @@ class EnKFState(BaseCClass):
         "ens_config_ref enkf_state_get_ensemble_config( enkf_state )"
     )
     _initialize = ResPrototype(
-        "void enkf_state_initialize( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)"
+        "void enkf_state_initialize"
+        "( enkf_state , enkf_fs , stringlist , enkf_init_mode_enum)"
     )
     _forward_model_OK = ResPrototype(
         "bool enkf_state_complete_forward_modelOK(res_config, run_arg)", bind=False

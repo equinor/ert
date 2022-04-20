@@ -1,5 +1,5 @@
 import math
-from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, QRect, Signal
+from qtpy.QtCore import QRect, QSize, QModelIndex, Qt, Signal
 from qtpy.QtWidgets import (
     QStyledItemDelegate,
     QStyleOptionViewItem,
@@ -120,7 +120,6 @@ class RealizationDelegate(QStyledItemDelegate):
         painter.restore()
 
     def _paint_inner_grid(self, painter: QPainter, rect: QRect, colors) -> None:
-        margin = 10
         job_nr = len(colors)
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0

@@ -73,7 +73,8 @@ class MeasuredData:
         )
         if filtered_dataset.empty:
             raise ValueError(
-                "This operation results in an empty dataset (could be due to one or more failed realizations)"
+                "This operation results in an empty dataset "
+                "(could be due to one or more failed realizations)"
             )
         return filtered_dataset
 
@@ -164,7 +165,8 @@ class MeasuredData:
         if isinstance(index_list, (list, tuple)):
             if max(index_list) > dataframe.shape[1]:
                 msg = (
-                    "Index list is larger than observation data, please check input, max index list:"
+                    "Index list is larger than observation data, "
+                    "please check input, max index list:"
                     "{} number of data points: {}".format(
                         max(index_list), dataframe.shape[1]
                     )

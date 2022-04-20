@@ -31,10 +31,10 @@ class EnsemblePlotGenKW(BaseCClass):
     _alloc = ResPrototype("void* enkf_plot_gen_kw_alloc(enkf_config_node)", bind=False)
     _size = ResPrototype("int   enkf_plot_gen_kw_get_size(ensemble_plot_gen_kw)")
     _load = ResPrototype(
-        "void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)"
+        "void  enkf_plot_gen_kw_load(ensemble_plot_gen_kw, enkf_fs, bool, int, bool_vector)"  # noqa
     )
     _get = ResPrototype(
-        "ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)"
+        "ensemble_plot_gen_kw_vector_ref enkf_plot_gen_kw_iget(ensemble_plot_gen_kw, int)"  # noqa
     )
     _iget_key = ResPrototype(
         "char* enkf_plot_gen_kw_iget_key(ensemble_plot_gen_kw, int)"

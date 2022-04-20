@@ -16,7 +16,8 @@ class DefaultCustomizationView(CustomizationView):
         CustomizationView.__init__(self)
         label_msg = (
             "Set to empty to use the default %s.\n"
-            "It is also possible to use LaTeX. Enclose expression with $...$ for example: \n"
+            "It is also possible to use LaTeX. "
+            "Enclose expression with $...$ for example: \n"
             "$\\alpha > \\beta$\n"
             "$r^3$\n"
             "$\\frac{1}{x}$\n"

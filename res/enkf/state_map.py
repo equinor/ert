@@ -34,7 +34,7 @@ class StateMap(BaseCClass):
     _iset = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
     _is_read_only = ResPrototype("bool  state_map_is_readonly(state_map)")
     _is_legal_transition = ResPrototype(
-        "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",
+        "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",  # noqa
         bind=False,
     )
 

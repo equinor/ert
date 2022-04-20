@@ -41,7 +41,8 @@ class LocalConfig(BaseCClass):
     _clear = ResPrototype("void   local_config_clear(local_config)")
     _clear_active = ResPrototype("void   local_config_clear_active(local_config)")
     _create_ministep = ResPrototype(
-        "local_ministep_ref local_config_alloc_ministep(local_config, char*, analysis_module)"
+        "local_ministep_ref local_config_alloc_ministep"
+        "(local_config, char*, analysis_module)"
     )
     _attach_ministep = ResPrototype(
         "void   local_updatestep_add_ministep(local_updatestep, local_ministep)",

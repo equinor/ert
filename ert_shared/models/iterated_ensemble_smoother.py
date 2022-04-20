@@ -65,9 +65,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         return target_fs
 
     def analyzeStep(self, run_context: ErtRunContext, ensemble_id: str) -> str:
-        target_fs = run_context.get_target_fs()
         self.setPhaseName("Analyzing...", indeterminate=True)
-        source_fs = self.ert().getEnkfFsManager().getCurrentFileSystem()
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
@@ -117,8 +115,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
             and num_retries < num_retries_per_iteration
         ):
             pre_analysis_iter_num = analysis_module.getInt("ITER")
-            # We run the PRE_FIRST_UPDATE hook here because the current_iter is explicitly available, versus
-            # in the run_context inside analyzeStep
+            # We run the PRE_FIRST_UPDATE hook here because the current_iter is
+            # explicitly available, versus in the run_context inside analyzeStep
             if current_iter == 0:
                 EnkfSimulationRunner.runWorkflows(
                     HookRuntime.PRE_FIRST_UPDATE, ert=self.ert()
@@ -148,7 +146,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
             self.setPhase(phase_count, "Simulations completed.")
         else:
             raise ErtRunError(
-                "Iterated ensemble smoother stopped: maximum number of iteration retries (%d retries) reached for iteration %d"
+                (
+                    "Iterated ensemble smoother stopped: "
+                    "maximum number of iteration retries "
+                    "(%d retries) reached for iteration %d"
+                )
                 % (num_retries_per_iteration, current_iter)
             )
 

@@ -165,16 +165,17 @@ class _Proc(threading.Thread):
         for i in range(3):
             if (Path.cwd() / f"{self._service_name}_server.json").exists():
                 print(
-                    f"{self._service_name}_server.json is present on this location. Retry {i}"
+                    f"{self._service_name}_server.json is "
+                    f"present on this location. Retry {i}"
                 )
                 time.sleep(1)
 
         if (Path.cwd() / f"{self._service_name}_server.json").exists():
             print(
-                f"A file called {self._service_name}_server.json is present from this location. "
-                "This indicates there is already a ert instance running. If you are "
-                "certain that is not the case, try to delete the file and try "
-                "again."
+                f"A file called {self._service_name}_server.json is present from this "
+                "location. This indicates there is already a ert instance running. "
+                "If you are certain that is not the case, try to delete the file "
+                "and try again."
             )
             sys.exit(1)
 
@@ -209,7 +210,7 @@ class _Proc(threading.Thread):
                 self._childproc.wait(self._timeout)  # ... and wait again
             except TimeoutExpired:
                 self.logger.error(
-                    f"waiting for child-process exceeded timeout {timeout}s"
+                    f"waiting for child-process exceeded timeout {self._timeout}s"
                 )
 
     def _ensure_delete_conn_info(self) -> None:

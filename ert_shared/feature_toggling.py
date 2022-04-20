@@ -13,7 +13,10 @@ class FeatureToggling:
     _conf_original = {
         "new-storage": _Feature(
             default_enabled=False,
-            msg="The new storage solution is experimental! Thank you for testing our new features.",
+            msg=(
+                "The new storage solution is experimental! "
+                "Thank you for testing our new features."
+            ),
         ),
     }
 

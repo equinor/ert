@@ -35,7 +35,7 @@ class AnalysisModule(BaseCClass):
     )
     _get_name = ResPrototype("char* analysis_module_get_name(analysis_module)")
     _check_option = ResPrototype(
-        "bool analysis_module_check_option(analysis_module, analysis_module_options_enum)"
+        "bool analysis_module_check_option(analysis_module, analysis_module_options_enum)"  # noqa
     )
     _has_var = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
     _get_double = ResPrototype(

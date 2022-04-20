@@ -120,7 +120,7 @@ class GenKw(BaseCClass):
     def setValues(self, values):
         if len(values) == len(self):
             if isinstance(values, DoubleVector):
-                self._set_values(d)
+                self._set_values(values)
             else:
                 d = DoubleVector()
                 for (index, v) in enumerate(values):

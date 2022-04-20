@@ -45,7 +45,10 @@ def process_docstring_callback(app, what, name, obj, options, lines):
             setattr(
                 cls_transformed,
                 category,
-                f"See section '{category}' under 'Plugin configuration reference' for all valid configs",
+                (
+                    f"See section '{category}' under 'Plugin configuration reference' "
+                    "for all valid configs"
+                ),
             )
 
         setattr(obj, modified_cls, cls_transformed)

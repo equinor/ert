@@ -17,8 +17,9 @@ from ert_gui.ertwidgets import addHelpToWidget, SearchBox, resourceIcon
 class CheckList(QWidget):
     def __init__(self, model, label="", help_link="", custom_filter_button=None):
         """
-        :param custom_filter_button:  if needed, add a button that opens a custom filter menu. Useful when search alone
-        isn't enough to filter the list.
+        :param custom_filter_button:  if needed, add a button that opens a
+        custom filter menu. Useful when search alone isn't enough to filter the
+        list.
         :type custom_filter_button: QToolButton
         """
         QWidget.__init__(self)
@@ -51,7 +52,8 @@ class CheckList(QWidget):
         layout.addWidget(self._list)
 
         """
-        Inserts the custom filter button, if provided. The caller is responsible for all related actions.
+        Inserts the custom filter button, if provided. The caller is responsible
+        for all related actions.
         """
         if custom_filter_button is not None:
             search_bar_layout = QHBoxLayout()

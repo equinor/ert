@@ -380,7 +380,8 @@ class RunDialog(QDialog):
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Information)
         msg.setText(
-            "Note that workflows will only be executed on the restarted realizations and that this might have unexpected consequences."
+            "Note that workflows will only be executed on the restarted "
+            "realizations and that this might have unexpected consequences."
         )
         msg.setWindowTitle("Restart failed realizations")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)

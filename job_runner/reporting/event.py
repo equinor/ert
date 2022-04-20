@@ -90,7 +90,8 @@ class Event(Reporter):
                 f"{msg} illegal state transition: {self._state} -> {new_state}"
             )
             raise TransitionError(
-                f"Illegal transition {self._state} -> {new_state} for {msg}, expected to transition into {self._transitions[self._state]}"
+                f"Illegal transition {self._state} -> {new_state} for {msg}, "
+                f"expected to transition into {self._transitions[self._state]}"
             )
 
         self._states[new_state](msg)

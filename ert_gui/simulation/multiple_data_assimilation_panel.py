@@ -94,13 +94,13 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations:", self._active_realizations_field)
 
-        self._target_case_format_field.getValidationSupport().validationChanged.connect(
+        self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
 
@@ -136,7 +136,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
             updateVisualizationOfNormalizedWeights
         )
 
@@ -151,9 +151,9 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         arguments = {
-            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
+            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
             "target_case": self._target_case_format_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
+            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
             "weights": self.weights,
             "start_iteration": int(self._iter_field.model.getValue()),
         }

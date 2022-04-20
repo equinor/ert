@@ -37,7 +37,7 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 ert ert3 tests
+        flake8
 
     - name: Run black
       run: |
@@ -48,4 +48,4 @@ jobs:
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
         pylint ert ert3
-        pylint --disable=all --enable="line-too-long, unused-import, super-with-arguments, useless-object-inheritance" res
+        pylint --disable=all --enable="unused-import, super-with-arguments, useless-object-inheritance" res

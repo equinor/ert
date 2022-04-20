@@ -106,7 +106,7 @@ class EnkfConfigNode(BaseCClass):
                                                                     char*, \
                                                                     char*, \
                                                                     char*, \
-                                                                    char*)",
+                                                                    char*)",  # noqa
         bind=False,
     )
 
@@ -118,7 +118,7 @@ class EnkfConfigNode(BaseCClass):
                                                                    char*, \
                                                                    char*, \
                                                                    char*, \
-                                                                   char*)",
+                                                                   char*)",  # noqa
         bind=False,
     )
 
@@ -513,10 +513,12 @@ class EnkfConfigNode(BaseCClass):
             )
         else:
             print(
-                "[EnkfConfigNode::getModelConfig()] Unhandled implementation model type: %i"
+                (
+                    "[EnkfConfigNode::getModelConfig()] "
+                    "Unhandled implementation model type: %i"
+                )
                 % implementation_type
             )
-            # raise NotImplementedError("Unknown model type: %i" % type)
 
     def getKey(self):
         return self._get_key()

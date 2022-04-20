@@ -60,7 +60,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)

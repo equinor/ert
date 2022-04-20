@@ -82,5 +82,6 @@ class PlotWidget(QWidget):
             sys.stderr.write("%s\n" % e)
             sys.stderr.write("%s\n" % ("-" * 80))
             sys.stderr.write(
-                "An error occurred during plotting. This stack trace is helpful for diagnosing the problem."
+                "An error occurred during plotting. "
+                "This stack trace is helpful for diagnosing the problem."
             )

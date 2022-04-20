@@ -144,7 +144,6 @@ class ESUpdate:
 
         total_ens_size = self.ert.getEnsembleSize()
         obs = self.ert.getObservations()
-        verbose = True
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 

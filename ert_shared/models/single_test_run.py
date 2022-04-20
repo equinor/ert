@@ -1,4 +1,4 @@
-from typing import Any, Dict, Any
+from typing import Any, Dict
 
 from ert_shared.models import ErtRunError, EnsembleExperiment
 from ert_shared.models.types import Argument

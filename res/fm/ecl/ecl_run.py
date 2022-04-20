@@ -230,8 +230,9 @@ class EclRun:
                 machine_list = LSB_machine_list
             else:
                 raise Exception(
-                    'LSF / MPI problems. Asked for:%s cpu. LSB_MCPU_HOSTS: "%s"  LSB_HOSTS: "%s"'
-                    % (self.num_cpu, LSB_MCPU_HOSTS, LSB_HOSTS)
+                    "LSF / MPI problems. "
+                    f"Asked for:{self.num_cpu} cpu. "
+                    f'LSB_MCPU_HOSTS: "{LSB_MCPU_HOSTS}"  LSB_HOSTS: "{LSB_HOSTS}"'
                 )
         elif os.getenv("SLURM_JOB_NODELIST"):
             machine_list = make_SLURM_machine_list(
@@ -344,10 +345,11 @@ class EclRun:
         while True:
             dt = datetime.datetime.now() - start_time
             if dt.total_seconds() > 15:
-                # We have not got a stable summary file after 15 seconds of waiting,
-                # this eitther implies that something is completely broken or this is
-                # a NOSIM simulation. Due the possibility of NOSIM solution we just return
-                # here without signalling an error.
+                # We have not got a stable summary file after 15 seconds of
+                # waiting, this eitther implies that something is completely
+                # broken or this is a NOSIM simulation. Due the possibility of
+                # NOSIM solution we just return here without signalling an
+                # error.
                 return None
 
             time.sleep(1)

@@ -85,10 +85,3 @@ class ExportPanel(QWidget):
             "column_keys": column_keys,
         }
         self.runExport.emit(values)
-
-    def selectFileDirectory(self):
-        directory = QFileDialog().getExistingDirectory(
-            self, "Directory", self._file_name.text(), QFileDialog.ShowDirsOnly
-        )
-        if str(directory).__len__() > 0:
-            self._file_name.setText(str(directory))
