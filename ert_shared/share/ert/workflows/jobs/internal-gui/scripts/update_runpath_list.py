@@ -1,8 +1,8 @@
 from res.enkf import ErtScript
 
 """
-This job is useful if you are running a workflow that requires the hook_manager runpath_list
-to be populated but your are not running any simulations.
+This job is useful if you are running a workflow that requires the hook_manager
+runpath_list to be populated but your are not running any simulations.
 """
 
 

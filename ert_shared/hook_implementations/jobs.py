@@ -15,8 +15,8 @@ def _get_jobs_from_directories(directories):
     share_path = _resolve_ert_share_path()
     directories = list(
         [
-            Template(l).render(ERT_SHARE_PATH=share_path, ERT_UI_MODE="gui")
-            for l in directories
+            Template(directory).render(ERT_SHARE_PATH=share_path, ERT_UI_MODE="gui")
+            for directory in directories
         ]
     )
 

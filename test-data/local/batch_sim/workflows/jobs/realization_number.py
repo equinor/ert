@@ -4,7 +4,7 @@ import argparse
 import re
 
 TARGET_FILE = "realization.number"
-REGEX = "realization-(\d+)"
+REGEX = r"realization-(\d+)"
 
 
 def add_file_to_realization_runpaths(runpath_file):
@@ -14,12 +14,16 @@ def add_file_to_realization_runpaths(runpath_file):
     for line in runpath_file_lines:
         realization_path = line.split()[1]
         with open(os.path.join(realization_path, TARGET_FILE), "w") as fh:
-            realization_nr = re.findall(r"realization-(\d+)", realization_path)
+            realization_nr = re.findall(REGEX, realization_path)
             fh.write("{}\n".format(realization_nr[0]))
 
 
 def job_parser():
-    description = """A workflow job that, if the komodo version is set, adds a file with the current Komodo version to the runpath of each realization."""
+    description = (
+        "A workflow job that, if the komodo version is set, "
+        "adds a file with the current Komodo version to the "
+        "runpath of each realization."
+    )
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         "runpath_file",

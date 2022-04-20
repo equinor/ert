@@ -16,7 +16,8 @@ def monitor_failing_ensemble():
         Consumer("Monitor")
         .forms_narrative_with(Provider("Ensemble Evaluator"))
         .given(
-            "Ensemble with 2 reals, with 2 steps each, with 2 jobs each, job 1 in real 1 fails"
+            "Ensemble with 2 reals, with 2 steps each, "
+            "with 2 jobs each, job 1 in real 1 fails"
         )
         .responds_with("Snapshot")
         .cloudevents_in_order(

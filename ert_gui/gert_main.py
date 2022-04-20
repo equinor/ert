@@ -49,7 +49,8 @@ def run_gui(args):
     app.setWindowIcon(resourceIcon("application/window_icon_cutout"))
     res_config = ResConfig(args.config)
 
-    # Create logger inside function to make sure all handlers have been added to the root-logger.
+    # Create logger inside function to make sure all handlers have been added to
+    # the root-logger.
     logger = logging.getLogger(__name__)
     logger.info(
         "Logging forward model jobs",
@@ -65,7 +66,7 @@ def run_gui(args):
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
     # window reference must be kept until app.exec returns
     notifier = ErtNotifier(args.config)
-    window = _start_window(ert, notifier, args)
+    _start_window(ert, notifier, args)
     return app.exec_()
 
 
@@ -112,11 +113,11 @@ def _check_locale():
     if decimal_point != ".":
         msg = """
 ** WARNING: You are using a locale with decimalpoint: '{}' - the ert application is
-            written with the assumption that '.' is used as decimalpoint, and chances
+            written with the assumption that '.' is  used as decimalpoint, and chances
             are that something will break if you continue with this locale. It is highly
             recommended that you set the decimalpoint to '.' using one of the environment
             variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-            alternatively a locale which uses '.' as decimalpoint.\n""".format(
+            alternatively a locale which uses '.' as decimalpoint.\n""".format(  # noqa
             decimal_point
         )
 

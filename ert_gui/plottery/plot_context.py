@@ -59,7 +59,7 @@ class PlotContext(object):
     @x_axis.setter
     def x_axis(self, value):
         """@type value: str"""
-        if not value in PlotContext.AXIS_TYPES:
+        if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
             )
@@ -73,7 +73,7 @@ class PlotContext(object):
     @y_axis.setter
     def y_axis(self, value):
         """@type value: str"""
-        if not value in PlotContext.AXIS_TYPES:
+        if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
                 "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
             )

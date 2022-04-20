@@ -20,8 +20,9 @@ from ert_shared.libres_facade import LibresFacade
 
 class AddRemoveWidget(QWidget):
     """
-    A simple class that provides to vertically positioned buttons for adding and removing something.
-    The addFunction and removeFunction functions must be provided.
+    A simple class that provides to vertically positioned buttons for adding and
+    removing something.  The addFunction and removeFunction functions must be
+    provided.
     """
 
     def __init__(self, addFunction=None, removeFunction=None, horizontal=False):

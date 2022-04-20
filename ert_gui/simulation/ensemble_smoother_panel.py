@@ -64,7 +64,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._target_case_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
@@ -79,9 +79,9 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         arguments = {
-            "active_realizations": self._active_realizations_field.model.getActiveRealizationsMask(),
+            "active_realizations": self._active_realizations_field.model.getActiveRealizationsMask(),  # noqa
             "target_case": self._target_case_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
+            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
         }
         return arguments
 

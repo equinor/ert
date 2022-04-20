@@ -29,7 +29,7 @@ class SchemaItem(BaseCClass):
         "config_content_type_enum config_schema_item_iget_type( schema_item, int)"
     )
     _iset_type = ResPrototype(
-        "void config_schema_item_iset_type( schema_item , int , config_content_type_enum)"
+        "void config_schema_item_iset_type( schema_item , int , config_content_type_enum)"  # noqa
     )
     _set_argc_minmax = ResPrototype(
         "void config_schema_item_set_argc_minmax( schema_item , int , int)"

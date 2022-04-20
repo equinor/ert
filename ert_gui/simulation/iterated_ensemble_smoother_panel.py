@@ -37,7 +37,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         )
         layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
 
-        # The num_iterations_spinner does not track any external changes (will that ever happen?)
+        # The num_iterations_spinner does not track any external changes (will
+        # that ever happen?)
         num_iterations_spinner = QSpinBox()
         num_iterations_spinner.setMinimum(1)
         num_iterations_spinner.setMaximum(100)
@@ -75,10 +76,10 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 
-        self._iterated_target_case_format_field.getValidationSupport().validationChanged.connect(
+        self._iterated_target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
 
@@ -101,8 +102,8 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
     def getSimulationArguments(self):
         arguments = {
-            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
+            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
             "target_case": self._iterated_target_case_format_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
+            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
         }
         return arguments

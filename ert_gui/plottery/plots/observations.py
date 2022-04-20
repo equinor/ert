@@ -19,8 +19,9 @@ def _plotObservations(axes, plot_config, data, value_column):
     """
     Observations are always plotted on top. z-order set to 1000
 
-    Since it is not possible to apply different linestyles to the errorbar, the line_style / fmt is used to toggle
-    visibility of the solid errorbar, by using the elinewidth  parameter.
+    Since it is not possible to apply different linestyles to the errorbar, the
+    line_style / fmt is used to toggle visibility of the solid errorbar, by
+    using the elinewidth parameter.
 
     @type axes: matplotlib.axes.Axes
     @type plot_config: PlotConfig
@@ -38,7 +39,7 @@ def _plotObservations(axes, plot_config, data, value_column):
     if style.line_style == "":
         style.width = 0
 
-    errorbars = axes.errorbar(
+    axes.errorbar(
         x=data.columns.get_level_values("key_index").values,
         y=data.loc["OBS"].values,
         yerr=data.loc["STD"].values,

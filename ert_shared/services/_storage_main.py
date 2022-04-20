@@ -140,7 +140,7 @@ def run_server(args=None, debug=False):
         print("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
     else:
-        print(f"\tUsername: __token__")
+        print("\tUsername: __token__")
         print(f"\tPassword: {connection_info['authtoken']}\n")
 
     if config.should_reload:

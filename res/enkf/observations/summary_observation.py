@@ -83,5 +83,8 @@ class SummaryObservation(BaseCClass):
         sd = self.getStandardDeviation()
         sc = self.getStdScaling()
         ad = self._address()
-        fmt = "SummaryObservation(key = %s, value = %f, std = %f, std_scaling = %f) at 0x%x"
+        fmt = (
+            "SummaryObservation(key = %s, "
+            "value = %f, std = %f, std_scaling = %f) at 0x%x"
+        )
         return fmt % (sk, va, sd, sc, ad)

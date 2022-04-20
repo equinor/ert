@@ -179,8 +179,9 @@ async def get_ensemble_record(
     ensemble_name = get_name("ensemble", ensemble_id)
     dataframe = data_for_key(res, ensemble_name, name, realization_index)
     if realization_index is not None:
-        # dataframe.loc returns a Series, and when we reconstruct a DataFrame from a Series, it defaults to be
-        # oriented the wrong way, so we must transpose it
+        # dataframe.loc returns a Series, and when we reconstruct a DataFrame
+        # from a Series, it defaults to be oriented the wrong way, so we must
+        # transpose it
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
     if accept == "application/x-parquet":
@@ -252,7 +253,7 @@ def get_ensemble_responses(
     for response_name in get_response_names(res):
         obs_keys = res.observation_keys(response_name)
         response_map[str(response_name)] = js.RecordOut(
-            id=get_id(f"response", f"{ensemble_id}/{response_name}"),
+            id=get_id("response", f"{ensemble_id}/{response_name}"),
             name=response_name,
             userdata={},
             has_observations=len(obs_keys) != 0,

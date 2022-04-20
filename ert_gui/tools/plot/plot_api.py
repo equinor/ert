@@ -8,8 +8,8 @@ class PlotApi(object):
         self._facade = facade
 
     def all_data_type_keys(self):
-        """Returns a list of all the keys except observation keys. For each key a dict is returned with info about
-        the key"""
+        """Returns a list of all the keys except observation keys. For each key
+        a dict is returned with info about the key"""
 
         all_keys = self._facade.all_data_type_keys()
         log_keys = [k for k in all_keys if k.startswith("LOG10_")]
@@ -38,8 +38,8 @@ class PlotApi(object):
         return meta
 
     def get_all_cases_not_running(self):
-        """Returns a list of all cases that are not running. For each case a dict with info about the case is
-        returned"""
+        """Returns a list of all cases that are not running. For each case a
+        dict with info about the case is returned"""
         facade = self._facade
         return [
             {
@@ -52,8 +52,9 @@ class PlotApi(object):
         ]
 
     def data_for_key(self, case, key):
-        """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-        the realization number, and the columns are an index over the indexes/dates"""
+        """Returns a pandas DataFrame with the datapoints for a given key for a
+        given case. The row index is the realization number, and the columns are
+        an index over the indexes/dates"""
 
         if key.startswith("LOG10_"):
             key = key[6:]
@@ -74,10 +75,12 @@ class PlotApi(object):
             return data
 
     def observations_for_obs_keys(self, case, obs_keys):
-        """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-        is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-        where index/date is used to relate the observation to the data point it relates to, and obs_index is
-        the index for the observation itself"""
+        """Returns a pandas DataFrame with the datapoints for a given
+        observation key for a given case. The row index is the realization
+        number, and the column index is a multi-index with (obs_key, index/date,
+        obs_index), where index/date is used to relate the observation to the
+        data point it relates to, and obs_index is the index for the observation
+        itself"""
         try:
             measured_data = MeasuredData(
                 self._facade, obs_keys, case_name=case, load_data=False
@@ -112,13 +115,15 @@ class PlotApi(object):
         data.columns = index
 
     def refcase_data(self, key):
-        """Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
-        The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the refcase for a
+        given data key, if any.  The row index is the index/date and the column
+        index is the key."""
         return self._facade.refcase_data(key)
 
     def history_data(self, key, case=None):
-        """Returns a pandas DataFrame with the data points for the history for a given data key, if any.
-        The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the history for a
+        given data key, if any.  The row index is the index/date and the column
+        index is the key."""
         return self._facade.history_data(key, case)
 
     def _dimensionality_of_key(self, key):

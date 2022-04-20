@@ -154,7 +154,7 @@ class SimulationContext:
                 (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
                 (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg)
             ]
-        """
+        """  # noqa
         run_arg = self.get_run_args(iens)
 
         try:

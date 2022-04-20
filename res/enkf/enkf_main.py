@@ -240,7 +240,8 @@ class _RealEnKFMain(BaseCClass):
                                              enkf_fs_manager)"
     )
     _load_from_forward_model = ResPrototype(
-        "int enkf_main_load_from_forward_model_with_fs(enkf_main, int, bool_vector, enkf_fs)"
+        "int enkf_main_load_from_forward_model_with_fs"
+        "(enkf_main, int, bool_vector, enkf_fs)"
     )
     _load_from_run_context = ResPrototype(
         "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
@@ -252,7 +253,7 @@ class _RealEnKFMain(BaseCClass):
         "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main , \
                                                                                  enkf_fs , \
                                                                                  bool_vector , \
-                                                                                 int)"
+                                                                                 int)"  # noqa
     )
     _get_runpath_list = ResPrototype(
         "runpath_list_ref enkf_main_get_runpath_list(enkf_main)"

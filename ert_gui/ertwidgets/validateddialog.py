@@ -29,9 +29,9 @@ from qtpy.QtWidgets import (
 
 class ValidatedDialog(QDialog):
     """
-    A dialog for creating a validated new value. Performs validation of name against a provided.
-    Can be used to select from the list or for creating a new value that is not on the list.
-
+    A dialog for creating a validated new value. Performs validation of name
+    against a provided.  Can be used to select from the list or for creating a
+    new value that is not on the list.
     """
 
     INVALID_COLOR = QColor(255, 235, 235)
@@ -113,7 +113,8 @@ class ValidatedDialog(QDialog):
         self.param_name.setPalette(palette)
 
     def validateName(self, value):
-        """Called to perform validation of a name. For specific needs override this function and call valid() and notValid(msg)."""
+        """Called to perform validation of a name. For specific needs override
+        this function and call valid() and notValid(msg)."""
         value = str(value)
 
         if value == "":

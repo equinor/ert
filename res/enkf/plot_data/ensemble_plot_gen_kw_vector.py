@@ -1,6 +1,6 @@
 # Copyright (C) 2014  Equinor ASA, Norway.
 #
-# The file 'ensemble_plot_gen_kw_vector.py' is part of ERT - Ensemble based Reservoir Tool.
+# The file 'ensemble_plot_gen_kw_vector.py' is part of ERT
 #
 # ERT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

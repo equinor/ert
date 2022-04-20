@@ -52,7 +52,10 @@ class ErtNarratives(Directive):
                 nodes.error(
                     None,
                     nodes.paragraph(
-                        text=f"Failed to produce ert_narratives in {basename(source)}:{self.lineno}:"
+                        text=(
+                            "Failed to produce ert_narratives in "
+                            f"{basename(source)}:{self.lineno}:"
+                        )
                     ),
                     nodes.paragraph(text=str(sys.exc_info()[1])),
                 )

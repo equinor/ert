@@ -8,17 +8,15 @@ from res.job_queue.workflow_job import WorkflowJob
 
 class WorkflowJoblist(BaseCClass):
     TYPE_NAME = "workflow_joblist"
-    _alloc = ResPrototype("void*            workflow_joblist_alloc()", bind=False)
-    _free = ResPrototype("void             workflow_joblist_free(workflow_joblist)")
+    _alloc = ResPrototype("void* workflow_joblist_alloc()", bind=False)
+    _free = ResPrototype("void workflow_joblist_free(workflow_joblist)")
     _add_job = ResPrototype(
-        "void             workflow_joblist_add_job(workflow_joblist, workflow_job)"
+        "void workflow_joblist_add_job(workflow_joblist, workflow_job)"
     )
     _add_job_from_file = ResPrototype(
-        "bool             workflow_joblist_add_job_from_file(workflow_joblist, char*, char*)"
+        "bool workflow_joblist_add_job_from_file" "(workflow_joblist, char*, char*)"
     )
-    _has_job = ResPrototype(
-        "bool             workflow_joblist_has_job(workflow_joblist, char*)"
-    )
+    _has_job = ResPrototype("bool workflow_joblist_has_job(workflow_joblist, char*)")
     _get_job = ResPrototype(
         "workflow_job_ref workflow_joblist_get_job(workflow_joblist, char*)"
     )

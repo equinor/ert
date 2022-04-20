@@ -118,7 +118,8 @@ class AnalysisConfig(BaseCClass):
 
         if configs > 1:
             raise ValueError(
-                "Attempting to create AnalysisConfig object with multiple config objects"
+                "Attempting to create AnalysisConfig object "
+                "with multiple config objects"
             )
 
         if configs == 0:

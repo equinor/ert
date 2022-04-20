@@ -1,3 +1,4 @@
+import aiohttp
 import asyncio
 import queue
 import threading

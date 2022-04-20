@@ -28,7 +28,8 @@ class Field(BaseCClass):
     _ijk_get_double = ResPrototype("double field_ijk_get_double(field, int, int, int)")
     _iget_double = ResPrototype("double field_iget_double(field, int)")
     _export = ResPrototype(
-        "void field_export(field, char* , fortio , enkf_field_file_format_enum , bool , char*)"
+        "void field_export"
+        "(field, char* , fortio , enkf_field_file_format_enum , bool , char*)"
     )
 
     def __init__(self):

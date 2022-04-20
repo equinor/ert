@@ -22,7 +22,7 @@ class GenDataConfig(BaseCClass):
     TYPE_NAME = "gen_data_config"
 
     _alloc = ResPrototype(
-        "void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)",
+        "void* gen_data_config_alloc_GEN_DATA_result( char* , gen_data_file_format_type)",  # noqa
         bind=False,
     )
     _free = ResPrototype("void  gen_data_config_free( gen_data_config )")

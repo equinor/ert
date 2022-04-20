@@ -1,6 +1,6 @@
 #  Copyright (C) 2013  Equinor ASA, Norway.
 #
-#  The file 'enkf_field_file_format_enum.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'enkf_field_file_format_enum.py' is part of ERT
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

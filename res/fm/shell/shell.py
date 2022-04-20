@@ -48,8 +48,8 @@ class Shell:
                 os.makedirs(path)
                 print("Created directory: '%s'" % path)
             except OSError as e:
-                # Seems in many cases the directory just suddenly appears; syncronization
-                # issues?
+                # Seems in many cases the directory just suddenly appears;
+                # synchronization issues?
                 if not os.path.isdir(path):
                     msg = 'ERROR: Failed to create directory "%s": %s.' % (path, e)
                     raise OSError(msg)

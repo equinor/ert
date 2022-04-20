@@ -69,11 +69,10 @@ def initializeCurrentCaseFromExisting(
         and ert.getEnkfFsManager().isCaseInitialized(source_case)
         and caseExists(target_case, LibresFacade(ert))
     ):
-        total_member_count = ert.getEnsembleSize()
-
         if set(members) != set("0", "1"):
             raise ValueError(
-                f"Wrong member set, only 0 and 1 as strings are allowed, got {set(members)}"
+                "Wrong member set, only 0 and 1 as strings are allowed, "
+                f"got {set(members)}"
             )
         member_mask = [bool(int(string)) for string in members]
 

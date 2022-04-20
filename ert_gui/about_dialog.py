@@ -93,7 +93,9 @@ class AboutDialog(QDialog):
           WARRANTY; without even the implied warranty of MERCHANTABILITY or \
           FITNESS FOR A PARTICULAR PURPOSE.  <br> <br>\
           \
-          See the GNU General Public License at <a href="http://www.gnu.org/licenses/gpl.html">www.gnu.org</a> for more details. '
+          See the GNU General Public License at \
+          <a href="http://www.gnu.org/licenses/gpl.html">www.gnu.org</a> \
+          for more details. '
         )
         gpl.setWordWrap(True)
         gpl_layout = QVBoxLayout()

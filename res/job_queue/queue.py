@@ -141,13 +141,17 @@ class JobQueue(BaseCClass):
             self._num_pending(),
         )
         isrun = "running" if self.isRunning else "not running"
-        cnt = "%s, num_running=%d, num_complete=%d, num_waiting=%d, num_pending=%d, active=%d"
+        cnt = (
+            "%s, num_running=%d, num_complete=%d, "
+            "num_waiting=%d, num_pending=%d, active=%d"
+        )
         return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
 
     def __init__(self, driver, max_submit=2, size=0):
         """
         Short doc...
-        The @max_submit argument says how many times the job be submitted (including a failure)
+        The @max_submit argument says how many times the job be submitted
+        (including a failure)
               max_submit = 2: means that we can submit job once more
         The @size argument is used to say how many jobs the queue will
         run, in total.
@@ -387,7 +391,10 @@ class JobQueue(BaseCClass):
     def assert_complete(self):
         for job in self.job_list:
             if job.thread_status != ThreadStatus.DONE:
-                msg = "Unexpected job status type after running job: {} with thread status: {}"
+                msg = (
+                    "Unexpected job status type after "
+                    "running job: {} with thread status: {}"
+                )
                 raise AssertionError(msg.format(job.status, job.thread_status))
 
     def launch_jobs(self, pool_sema):

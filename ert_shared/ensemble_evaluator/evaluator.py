@@ -150,7 +150,9 @@ class EnsembleEvaluator:
                     event = from_json(msg, data_unmarshaller=pickle.loads)
                 if self._get_ee_id(event["source"]) != self._ee_id:
                     logger.info(
-                        f"Got event from evaluator {self._get_ee_id(event['source'])} with source {event['source']}, ignoring since I am {self._ee_id}"
+                        f"Got event from evaluator {self._get_ee_id(event['source'])} "
+                        f"with source {event['source']}, "
+                        f"ignoring since I am {self._ee_id}"
                     )
                     continue
                 await self._dispatcher.handle_event(event)
@@ -242,7 +244,8 @@ class EnsembleEvaluator:
                 break
             except ConnectionClosedError as e:
                 logger.debug(
-                    f"Connection closed unexpectedly in run_and_get_successful_realizations: {e}"
+                    "Connection closed unexpectedly in "
+                    f"run_and_get_successful_realizations: {e}"
                 )
             except ConnectionRefusedError as e:
                 unsuccessful_connection_attempts += 1

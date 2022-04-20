@@ -23,7 +23,7 @@ import warnings
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
-from cwrap import Prototype
+from cwrap import Prototype  # noqa
 
 try:
     from ._version import version as __version__
@@ -70,7 +70,7 @@ class ResPrototype(Prototype):
 
 RES_LIB = ResPrototype.lib
 
-from ecl.util.util import updateAbortSignals
+from ecl.util.util import updateAbortSignals  # noqa
 
 updateAbortSignals()
 

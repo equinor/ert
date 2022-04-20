@@ -103,7 +103,7 @@ class Job:
                 transitional state, we ignore any failures. Only seen on OSX
                 thus far.
                 See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532
-                """
+                """  # noqa
                 memory = 0
             if memory > max_memory_usage:
                 max_memory_usage = memory
@@ -132,9 +132,10 @@ class Job:
                         os.killpg(process_group_id, signal.SIGKILL)
 
                     yield Exited(self, exit_code).with_error(
-                        "Job:{} has been running for more than {} minutes - explicitly killed.".format(
-                            self.name(), max_running_minutes
-                        )
+                        (
+                            "Job:{} has been running for more than {} "
+                            "minutes - explicitly killed."
+                        ).format(self.name(), max_running_minutes)
                     )
                     return
 
@@ -184,9 +185,10 @@ class Job:
                         int(arg_list[index])
                     except ValueError:
                         errors.append(
-                            "In job {}: argument with index {} is of incorrect type, should be integer.".format(
-                                self.name(), index
-                            )
+                            (
+                                "In job {}: argument with index {} is of "
+                                "incorrect type, should be integer."
+                            ).format(self.name(), index)
                         )
         return errors
 
@@ -252,8 +254,9 @@ class Job:
         # i.e. on a timeout.
         if os.path.exists(target_file):
             stat = os.stat(target_file)
-            return "The target file:{} has not been updated; this is flagged as failure. mtime:{}   stat_start_time:{}".format(
-                target_file, stat.st_mtime, target_file_mtime
-            )
+            return (
+                "The target file:{} has not been updated; "
+                "this is flagged as failure. mtime:{}   stat_start_time:{}"
+            ).format(target_file, stat.st_mtime, target_file_mtime)
         else:
             return "Could not find target_file:{}".format(target_file)

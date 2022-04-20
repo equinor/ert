@@ -328,7 +328,8 @@ class _RecurringInteraction(_Interaction):
                 return
 
         raise AssertionError(
-            f"No event in {self}\n matched {other}.\nDid not match terminator because: {terminator_error}"
+            f"No event in {self}\n matched {other}.\n"
+            f"Did not match terminator because: {terminator_error}"
         )
 
     async def verify(
@@ -393,7 +394,8 @@ class _ProviderVerifier:
         self._ws_thread.start()
         if get_event_loop().is_running():
             raise RuntimeError(
-                "sync narrative should control the loop, maybe you called verify() from within an async test?"
+                "sync narrative should control the loop, "
+                "maybe you called verify() from within an async test?"
             )
         self._ws_thread.join()
         errors = get_event_loop().run_until_complete(self._collect_errors())
@@ -444,7 +446,8 @@ async def _mock_verify_handler(
                 await interaction.verify(receive)
             else:
                 e = TypeError(
-                    "the first interaction needs to be promoted to either response or receive"
+                    "the first interaction needs to be promoted "
+                    "to either response or receive"
                 )
                 errors.put_nowait(e)
     except AssertionError as e:
@@ -536,7 +539,8 @@ class _ProviderMock:
         self._ws_thread.start()
         if get_event_loop().is_running():
             raise RuntimeError(
-                "sync narrative should control the loop, maybe you called it from within an async test?"
+                "sync narrative should control the loop, "
+                "maybe you called it from within an async test?"
             )
         get_event_loop().run_until_complete(
             wait_for_evaluator(self._conn_info["base_uri"])

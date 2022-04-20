@@ -215,7 +215,8 @@ def _create_observation_transformation(ert, db_observations) -> List[dict]:
                 active=active_mask,
             )
     observation_ids = {obs["name"]: obs["id"] for obs in db_observations}
-    # Sorting by x_axis matches the transformation with the observation, mostly needed for grouped summary obs
+    # Sorting by x_axis matches the transformation with the observation, mostly
+    # needed for grouped summary obs
     for key, obs in transformations.items():
         x_axis, active, scale = (
             list(t)

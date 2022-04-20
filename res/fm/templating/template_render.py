@@ -11,15 +11,19 @@ def load_data(filename):
     as json. If both fail, a ValueError with both of the error messages will be
     raised.
     """
+    yaml_err = ""
+    json_err = ""
     with open(filename) as fin:
         try:
             return yaml.safe_load(fin)
-        except yaml.YAMLError as yaml_err:
+        except yaml.YAMLError as err:
+            yaml_err = str(err)
             pass
 
         try:
             return json.load(fin)
-        except yaml.YAMLError as json_err:
+        except yaml.YAMLError as err:
+            json_err = str(err)
             pass
 
     err_msg = "%s is neither yaml (err_msg=%s) nor json (err_msg=%s)"

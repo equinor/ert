@@ -118,9 +118,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def update(
         self, run_context: ErtRunContext, weight: float, ensemble_id: str
     ) -> str:
-        source_fs = run_context.get_sim_fs()
         next_iteration = run_context.get_iter() + 1
-        target_fs = run_context.get_target_fs()
 
         phase_string = "Analyzing iteration: %d with weight %f" % (
             next_iteration,

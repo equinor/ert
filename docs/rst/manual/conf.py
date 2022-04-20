@@ -17,7 +17,7 @@ import sys
 
 sys.path.append(os.path.abspath("./_ext"))
 
-from pkg_resources import get_distribution
+from pkg_resources import get_distribution  # noqa
 
 # -- Project information -----------------------------------------------------
 

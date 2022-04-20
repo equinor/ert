@@ -132,7 +132,8 @@ class Dispatcher:
             if batching:
                 if self._batcher is None:
                     raise RuntimeError(
-                        f"Requested batching of {event} with handler {f}, but no batcher was specified"
+                        f"Requested batching of {event} with handler {f}, "
+                        "but no batcher was specified"
                     )
                 self._batcher.put(f, event)
             else:

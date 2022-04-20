@@ -39,13 +39,15 @@ class CSVExportJob(ErtPlugin):
 
     design_matrix: a path to a file containing the design matrix
 
-    infer_iteration: If True the script will try to infer the iteration number by looking at the suffix of the case name
-                     (i.e. default_2 = iteration 2)
-                     If False the script will use the ordering of the case list: the first item will be iteration 0,
+    infer_iteration: If True the script will try to infer the iteration number
+                     by looking at the suffix of the case name (i.e. default_2
+                     = iteration 2). If False the script will use the ordering
+                     of the case list: the first item will be iteration 0,
                      the second item will be iteration 1...
 
-    The script also looks for default values for output path and design matrix path to present in the GUI. These can
-    be specified with DATA_KW keyword in the config file:
+    The script also looks for default values for output path and design matrix
+    path to present in the GUI. These can be specified with DATA_KW keyword in
+    the config file:
         DATA_KW CSV_OUTPUT_PATH <some path>
         DATA_KW DESIGN_MATRIX_PATH <some path>
     """
@@ -69,7 +71,10 @@ class CSVExportJob(ErtPlugin):
         return "CSV Export"
 
     def getDescription(self):
-        return "Export GenKW, design matrix, misfit data and summary data into a single CSV file."
+        return (
+            "Export GenKW, design matrix, misfit data "
+            "and summary data into a single CSV file."
+        )
 
     def inferIterationNumber(self, case_name):
         pattern = re.compile("_([0-9]+$)")

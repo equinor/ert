@@ -58,7 +58,8 @@ class ErtWorkflowList(BaseCClass):
 
         if config_content is not None and config_dict is not None:
             raise ValueError(
-                "Failed to construct ErtWorkflowList instance with multiple config object"
+                "Failed to construct ErtWorkflowList "
+                "instance with multiple config object"
             )
 
         c_ptr = None

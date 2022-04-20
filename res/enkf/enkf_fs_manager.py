@@ -239,7 +239,8 @@ class EnkfFsManager(BaseCClass):
             )
         if isinstance(node_list, StringList):
             warnings.warn(
-                "Using StringList for node_list is deprecated, use a python list of strings",
+                "Using StringList for node_list is deprecated, "
+                "use a python list of strings.",
                 DeprecationWarning,
             )
             node_list = list(node_list)
@@ -268,7 +269,8 @@ class EnkfFsManager(BaseCClass):
     ):
         if isinstance(parameter_list, StringList):
             warnings.warn(
-                "Using StringList for node_list is deprecated, use a python list of strings",
+                "Using StringList for node_list is deprecated, "
+                "use a python list of strings.",
                 DeprecationWarning,
             )
             parameter_list = list(parameter_list)
