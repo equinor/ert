@@ -4,7 +4,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from ert_storage.app import app as ert_storage_app, JSONResponse
 from ert_storage.exceptions import ErtStorageError
 
-from ert_shared.version import version as _version
 from ert_shared.dark_storage.endpoints import router as endpoints_router
 from ert_shared.dark_storage.graphql import router as graphql_router
 

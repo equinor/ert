@@ -2,7 +2,7 @@ import itertools
 from ert_gui.plottery import PlotStyle, PlotLimits
 
 
-class PlotConfig(object):
+class PlotConfig:
 
     # The plot_settings input argument is an internalisation of the (quite few) plot
     # policy settings which can be set in the configuration file.

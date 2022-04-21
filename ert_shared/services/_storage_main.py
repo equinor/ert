@@ -178,6 +178,7 @@ def terminate_on_parent_death():
 
 
 if __name__ == "__main__":
+    # pylint: disable=W0611
     import ert_logging
 
     terminate_on_parent_death()

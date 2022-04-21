@@ -4,7 +4,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class CrossCaseStatisticsPlot(object):
+class CrossCaseStatisticsPlot:
     def __init__(self):
         self.dimensionality = 1
 

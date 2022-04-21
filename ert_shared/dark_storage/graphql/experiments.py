@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from uuid import UUID
 from typing import Any, List, TYPE_CHECKING, Mapping
@@ -6,7 +5,7 @@ from typing import Any, List, TYPE_CHECKING, Mapping
 import graphene as gr
 
 from ert_shared.dark_storage.common import get_res_from_info
-from ert_shared.dark_storage.enkf import get_res, get_id, get_size
+from ert_shared.dark_storage.enkf import get_id
 from ert_shared.dark_storage.graphql.ensembles import Ensemble, CreateEnsemble
 
 

@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
 from ert_shared.models import ErtRunError, EnsembleExperiment
-from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 from res.enkf.ert_run_context import ErtRunContext

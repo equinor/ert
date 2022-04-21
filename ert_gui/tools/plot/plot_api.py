@@ -3,7 +3,7 @@ import pandas as pd
 from ert_data.measured import MeasuredData
 
 
-class PlotApi(object):
+class PlotApi:
     def __init__(self, facade):
         self._facade = facade
 

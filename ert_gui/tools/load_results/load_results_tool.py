@@ -22,7 +22,7 @@ from ert_gui.tools.load_results import LoadResultsPanel
 class LoadResultsTool(Tool):
     def __init__(self, facade):
         self.facade = facade
-        super(LoadResultsTool, self).__init__(
+        super().__init__(
             "Load results manually",
             "tools/load_manually",
             resourceIcon("upload.svg"),

@@ -48,4 +48,6 @@ jobs:
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
         pylint ert ert3
-        pylint --disable=all --enable="unused-import, super-with-arguments, useless-object-inheritance" res
+        pylint --disable=all \
+          --enable="unused-import, super-with-arguments, useless-object-inheritance" \
+          docs ert_data ert_gui ert_logging ert_shared job_runner res tests

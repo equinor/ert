@@ -1,4 +1,4 @@
-class PlotStyle(object):
+class PlotStyle:
     def __init__(
         self,
         name,
@@ -10,7 +10,8 @@ class PlotStyle(object):
         size=7.5,
         enabled=True,
     ):
-        super(PlotStyle, self).__init__()
+        super().__init__()
+
         self.name = name
         self.color = color
         self.alpha = alpha

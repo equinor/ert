@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
 )
-from qtpy.QtGui import QPainter, QColorConstants, QPen, QColor, QImage
+from qtpy.QtGui import QPainter, QColorConstants, QPen, QImage
 from ert_gui.model.snapshot import (
     RealJobColorHint,
     RealStatusColorHint,
@@ -20,7 +20,7 @@ from ert_gui.model.real_list import RealListModel
 
 class RealizationWidget(QWidget):
     def __init__(self, iter: int, parent=None) -> None:
-        super(RealizationWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self._iter = iter
         self._delegateWidth = 70
@@ -67,7 +67,7 @@ _image_cache = {}
 
 class RealizationDelegate(QStyledItemDelegate):
     def __init__(self, width, height, parent=None) -> None:
-        super(RealizationDelegate, self).__init__(parent)
+        super().__init__(parent)
         self._size = QSize(width, height)
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:

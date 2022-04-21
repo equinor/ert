@@ -1,5 +1,4 @@
 import asyncio
-import os
 import ssl
 from typing import AnyStr, Optional, Any, Dict, Union
 import cloudevents

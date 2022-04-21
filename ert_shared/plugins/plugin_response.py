@@ -1,4 +1,3 @@
-import functools
 from decorator import decorator
 
 

@@ -1,7 +1,4 @@
-from .plot_config import PlotConfig
-
-
-class PlotContext(object):
+class PlotContext:
     UNKNOWN_AXIS = None
     VALUE_AXIS = "VALUE"
     DATE_AXIS = "DATE"
@@ -20,7 +17,7 @@ class PlotContext(object):
     ]
 
     def __init__(self, plot_config, cases, key):
-        super(PlotContext, self).__init__()
+        super().__init__()
         self._key = key
         self._cases = cases
         self._plot_config = plot_config

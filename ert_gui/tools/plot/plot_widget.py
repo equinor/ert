@@ -14,7 +14,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     customizationTriggered = Signal()
 
     def __init__(self, canvas, parent, coordinates=True):
-        super(CustomNavigationToolbar, self).__init__(canvas, parent, coordinates)
+        super().__init__(canvas, parent, coordinates)
 
         gear = resourceIcon("edit.svg")
         customize_action = QAction(gear, "Customize", self)

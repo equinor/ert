@@ -1,5 +1,3 @@
-import re
-
 from ert.ensemble_evaluator.activerange import ActiveRange
 from ert_shared.ide.keywords.data import ValidationStatus
 from ert_shared.ide.keywords.definitions import ArgumentDefinition
@@ -15,12 +13,12 @@ class RangeStringArgument(ArgumentDefinition):
     VALUE_NOT_IN_RANGE = "A value must be in the range from 0 to %d."
 
     def __init__(self, max_value=None, **kwargs):
-        super(RangeStringArgument, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.__max_value = max_value
 
     def validate(self, token: str) -> ValidationStatus:
 
-        validation_status = super(RangeStringArgument, self).validate(token)
+        validation_status = super().validate(token)
 
         if not validation_status:
             return validation_status

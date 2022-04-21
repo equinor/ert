@@ -121,7 +121,7 @@ class LimitsStack(StackedInput):
         return result
 
 
-class LimitsWidget(object):
+class LimitsWidget:
     def __init__(self):
         self._limits = PlotLimits()
         self._x_minimum_stack = LimitsStack()

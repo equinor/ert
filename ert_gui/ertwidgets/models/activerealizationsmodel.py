@@ -1,6 +1,5 @@
 from typing import List
 
-from ecl.util.util import BoolVector
 from ert.ensemble_evaluator.activerange import ActiveRange, mask_to_rangestring
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_shared.libres_facade import LibresFacade

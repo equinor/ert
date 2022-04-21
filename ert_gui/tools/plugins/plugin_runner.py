@@ -2,16 +2,15 @@ from functools import partial
 from threading import Thread
 import time
 from res.job_queue.ert_plugin import CancelPluginException
-from ert_gui.tools.plugins import Plugin, ProcessJobDialog
-from res.job_queue import WorkflowJob
+from ert_gui.tools.plugins import ProcessJobDialog
 
 
-class PluginRunner(object):
+class PluginRunner:
     def __init__(self, plugin):
         """
         @type plugin: Plugin
         """
-        super(PluginRunner, self).__init__()
+        super().__init__()
 
         self.__plugin = plugin
 

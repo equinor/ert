@@ -1,11 +1,6 @@
-import sys
-
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QSplashScreen, QApplication
 from qtpy.QtGui import QColor, QPen, QFont
-
-
-from ert_gui.ertwidgets import resourceImage
 
 
 class ErtSplash(QSplashScreen):

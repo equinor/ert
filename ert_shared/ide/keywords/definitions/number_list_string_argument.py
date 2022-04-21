@@ -14,10 +14,10 @@ class NumberListStringArgument(ArgumentDefinition):
     PATTERN = re.compile(r"^[0-9\.\-+, \t]+$")
 
     def __init__(self, **kwargs):
-        super(NumberListStringArgument, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def validate(self, token):
-        validation_status = super(NumberListStringArgument, self).validate(token)
+        validation_status = super().validate(token)
 
         if not validation_status:
             return validation_status

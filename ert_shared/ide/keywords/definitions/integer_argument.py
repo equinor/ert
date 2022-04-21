@@ -10,12 +10,12 @@ class IntegerArgument(ArgumentDefinition):
     pattern = re.compile("^-?[0-9]+$")
 
     def __init__(self, from_value=None, to_value=None, **kwargs):
-        super(IntegerArgument, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.from_value = from_value
         self.to_value = to_value
 
     def validate(self, token):
-        validation_status = super(IntegerArgument, self).validate(token)
+        validation_status = super().validate(token)
 
         match = IntegerArgument.pattern.match(token)
 

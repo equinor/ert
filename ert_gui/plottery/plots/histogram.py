@@ -5,7 +5,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class HistogramPlot(object):
+class HistogramPlot:
     def __init__(self):
         self.dimensionality = 1
 
