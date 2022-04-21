@@ -16,18 +16,18 @@
    for more details.
 */
 
+#include <mutex>
 #include <optional>
 #include <thread>
-#include <mutex>
 
-#include <sys/wait.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
 #include <ert/util/util.hpp>
 
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/local_driver.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 typedef struct local_job_struct local_job_type;
 

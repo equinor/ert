@@ -18,9 +18,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/hash.hpp>
 #include <ert/util/bool_vector.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 

@@ -24,8 +24,8 @@
 
 #include <ert/res_util/path_fmt.hpp>
 
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 typedef struct job_queue_struct job_queue_type;
 extern "C" PY_USED void job_queue_submit_complete(job_queue_type *queue);

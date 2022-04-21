@@ -16,13 +16,13 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/util.hpp>
 #include <ert/res_util/res_env.hpp>
 #include <ert/util/buffer.hpp>
+#include <ert/util/util.hpp>
 
 #define PATHVAR_SPLIT ":"
 

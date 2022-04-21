@@ -19,14 +19,14 @@
 #ifndef ERT_CONFIG_CONTENT_H
 #define ERT_CONFIG_CONTENT_H
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_content_item.hpp>
-#include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_root_path.hpp>
+#include <ert/config/config_schema_item.hpp>
 
 typedef struct config_content_struct config_content_type;
 

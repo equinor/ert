@@ -23,10 +23,10 @@
 #include <ert/util/stringlist.hpp>
 #include <ert/util/type_macros.hpp>
 
-#include <ert/config/config_error.hpp>
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_content_node.hpp>
+#include <ert/config/config_error.hpp>
+#include <ert/config/config_path_elm.hpp>
+#include <ert/config/config_schema_item.hpp>
 
 typedef struct config_content_item_struct config_content_item_type;
 

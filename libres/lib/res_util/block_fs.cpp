@@ -17,22 +17,22 @@
 */
 
 #include <filesystem>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
-#include <mutex>
 
+#include <errno.h>
+#include <fnmatch.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <errno.h>
 #include <unistd.h>
-#include <fnmatch.h>
 
 #include <fmt/ostream.h>
 
+#include <ert/util/buffer.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/util/buffer.hpp>
 
 #include <ert/res_util/block_fs.hpp>
 

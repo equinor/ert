@@ -15,15 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <filesystem>
-#include <vector>
-#include <string>
 #include <dirent.h>
+#include <filesystem>
+#include <string>
+#include <vector>
 
-#include <ert/util/bool_vector.h>
-#include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/summary_key_set.hpp>
 #include <ert/logging.hpp>
+#include <ert/util/bool_vector.h>
 
 namespace fs = std::filesystem;
 

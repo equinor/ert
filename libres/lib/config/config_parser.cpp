@@ -18,17 +18,17 @@
 
 #include <filesystem>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/parser.hpp>
-#include <ert/util/hash.hpp>
-#include <ert/util/path_stack.hpp>
-#include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/res_env.hpp>
 #include <ert/logging.hpp>
+#include <ert/res_util/res_env.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/path_stack.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_parser.hpp>
 

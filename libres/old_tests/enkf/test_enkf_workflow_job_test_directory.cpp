@@ -17,8 +17,8 @@
    for more details.
 */
 
-#include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/util/test_util.h>
 
 int main(int argc, const char **argv) {
     enkf_main_install_SIGNALS();

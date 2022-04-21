@@ -19,14 +19,14 @@
 #ifndef ERT_ENKF_PLOT_TVECTOR_H
 #define ERT_ENKF_PLOT_TVECTOR_H
 
-#include <time.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <ert/util/util.h>
 
+#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
 
 typedef struct enkf_plot_tvector_struct enkf_plot_tvector_type;
 

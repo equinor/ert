@@ -15,12 +15,12 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+#include <ert/util/path_stack.hpp>
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
-#include <ert/util/path_stack.hpp>
 
 #include <ert/config/config_parser.hpp>
 

@@ -19,12 +19,12 @@
 #ifndef ERT_RUN_ARG_H
 #define ERT_RUN_ARG_H
 
-#include <ert/util/type_macros.h>
-#include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/util/type_macros.h>
 
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg_type.hpp>
 
 UTIL_SAFE_CAST_HEADER(run_arg);

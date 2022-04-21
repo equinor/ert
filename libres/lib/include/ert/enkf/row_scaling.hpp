@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
-#include <vector>
 #include <memory>
+#include <vector>
 
 class RowScaling : public std::enable_shared_from_this<RowScaling> {
     size_t m_resolution = 1000;

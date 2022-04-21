@@ -1,9 +1,9 @@
-#include <ert/util/util.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
+#include <ert/util/util.h>
 
-#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 
 #include <ert/config/config_parser.hpp>

@@ -20,15 +20,15 @@
 #include <set>
 #include <string>
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/hash.hpp>
-#include <ert/util/vector.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/vector.hpp>
 
-#include <ert/config/config_root_path.hpp>
+#include <ert/config/config_content.hpp>
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_path_stack.hpp>
-#include <ert/config/config_content.hpp>
+#include <ert/config/config_root_path.hpp>
 
 #define CONFIG_CONTENT_TYPE_ID 6612520
 

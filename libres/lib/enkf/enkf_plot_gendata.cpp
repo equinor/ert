@@ -20,8 +20,8 @@
 #include <ert/util/double_vector.h>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/enkf_plot_gendata.hpp>
+#include <ert/enkf/obs_vector.hpp>
 
 #define ENKF_PLOT_GENDATA_TYPE_ID 377626666
 

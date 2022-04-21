@@ -19,11 +19,11 @@
 #ifndef ERT_LOCAL_MINISTEP_H
 #define ERT_LOCAL_MINISTEP_H
 
-#include <string>
-#include <string.h>
-#include <vector>
-#include <unordered_map>
 #include <ert/util/stringlist.h>
+#include <string.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <ert/enkf/active_list.hpp>
 #include <ert/enkf/local_obsdata.hpp>

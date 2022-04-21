@@ -15,20 +15,20 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/vector.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
 
-#include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/ert_run_context.hpp>
+#include <ert/enkf/run_arg.hpp>
 
 #define ERT_RUN_CONTEXT_TYPE_ID 55534132
 

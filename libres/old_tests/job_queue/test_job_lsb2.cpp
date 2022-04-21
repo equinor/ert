@@ -15,14 +15,14 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
 
-#include <ert/job_queue/lsf_job_stat.hpp>
-#include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsb.hpp>
+#include <ert/job_queue/lsf_driver.hpp>
+#include <ert/job_queue/lsf_job_stat.hpp>
 
 void test_server(lsf_driver_type *driver, const char *server,
                  lsf_submit_method_enum submit_method) {

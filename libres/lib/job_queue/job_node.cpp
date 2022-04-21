@@ -16,16 +16,16 @@
    for more details.
 */
 
-#include <string>
 #include <filesystem>
+#include <string>
 
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/util.hpp>
 #include <ert/logging.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/job_node.hpp>
 

@@ -22,9 +22,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ert/util/util.hpp>
-#include <ert/util/type_macros.hpp>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
 

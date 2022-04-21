@@ -16,23 +16,23 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/util.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/bool_vector.h>
 #include <ert/logging.hpp>
+#include <ert/util/bool_vector.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_util.h>
 
-#include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 
 static auto logger = ert::get_logger("enkf");
 

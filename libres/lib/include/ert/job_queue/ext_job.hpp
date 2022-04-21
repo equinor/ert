@@ -20,11 +20,11 @@
 #define ERT_EXT_JOB_H
 #include <stdio.h>
 
-#include <ert/util/hash.hpp>
-#include <ert/util/stringlist.hpp>
+#include <ert/config/config_content.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/tooling.hpp>
-#include <ert/config/config_content.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
 
 typedef struct ext_job_struct ext_job_type;
 

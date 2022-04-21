@@ -19,8 +19,8 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_plot_gen_kw.hpp>
 
 void test_create_invalid() {

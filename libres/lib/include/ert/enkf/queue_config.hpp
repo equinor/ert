@@ -19,9 +19,9 @@
 #ifndef ERT_QUEUE_CONFIG_H
 #define ERT_QUEUE_CONFIG_H
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content_item.hpp>
 #include <ert/config/config_content_node.hpp>
+#include <ert/config/config_parser.hpp>
 #include <ert/config/config_schema_item.hpp>
 
 #include <ert/job_queue/job_queue.hpp>

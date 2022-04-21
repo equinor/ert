@@ -1,5 +1,5 @@
-#include <catch2/catch.hpp>
 #include <Eigen/Dense>
+#include <catch2/catch.hpp>
 
 #include <ert/analysis/ies/ies.hpp>
 

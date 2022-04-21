@@ -18,8 +18,8 @@
 #ifndef ERT_LOCAL_OBSDATA_NODE_H
 #define ERT_LOCAL_OBSDATA_NODE_H
 
-#include <string>
 #include <ert/enkf/active_list.hpp>
+#include <string>
 
 class LocalObsDataNode {
 public:

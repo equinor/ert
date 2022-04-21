@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 
-#include <ert/util/test_util.h>
-#include <ert/util/test_work_area.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.hpp>
 
 namespace fs = std::filesystem;
 

@@ -19,9 +19,9 @@
 
 #include <stdlib.h>
 
-#include <ert/util/test_work_area.hpp>
-#include <ert/util/test_util.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.hpp>
 
 #include <ert/enkf/state_map.hpp>
 

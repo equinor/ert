@@ -19,8 +19,8 @@
 #ifndef ERT_ANALYSIS_MODULE_H
 #define ERT_ANALYSIS_MODULE_H
 
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 typedef enum {
     ENSEMBLE_SMOOTHER = 1,

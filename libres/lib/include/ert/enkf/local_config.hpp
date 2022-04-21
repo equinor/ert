@@ -25,10 +25,10 @@
 
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/local_ministep.hpp>
+#include <ert/enkf/local_updatestep.hpp>
 
 typedef struct local_config_struct local_config_type;
 

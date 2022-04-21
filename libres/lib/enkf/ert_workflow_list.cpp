@@ -16,17 +16,17 @@
    for more details.
 */
 
+#include <filesystem>
 #include <set>
 #include <string>
-#include <filesystem>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/hash.h>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/hash.h>
 
 #include <ert/config/config_parser.hpp>
 
@@ -34,11 +34,11 @@
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/site_config.hpp>
+#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/site_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

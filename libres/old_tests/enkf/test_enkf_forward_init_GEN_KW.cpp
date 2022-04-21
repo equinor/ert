@@ -15,15 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/rng.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
-#include <ert/res_util/subst_list.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/res_util/subst_list.hpp>
 
 void create_runpath(enkf_main_type *enkf_main, int iter) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);

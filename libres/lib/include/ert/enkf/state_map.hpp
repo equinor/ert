@@ -18,9 +18,9 @@
 #ifndef ERT_STATE_MAP_H
 #define ERT_STATE_MAP_H
 
-#include <vector>
-#include <ert/util/type_macros.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/type_macros.h>
+#include <vector>
 
 #include <ert/enkf/enkf_types.hpp>
 

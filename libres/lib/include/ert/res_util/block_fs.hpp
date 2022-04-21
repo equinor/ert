@@ -21,8 +21,8 @@
 #include <filesystem>
 
 #include <ert/util/buffer.hpp>
-#include <ert/util/vector.hpp>
 #include <ert/util/type_macros.hpp>
+#include <ert/util/vector.hpp>
 
 typedef struct block_fs_struct block_fs_type;
 typedef struct user_file_node_struct user_file_node_type;

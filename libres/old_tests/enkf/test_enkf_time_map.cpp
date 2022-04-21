@@ -20,16 +20,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <ert/util/test_work_area.h>
 #include <ert/util/test_util.h>
+#include <ert/util/test_work_area.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/time_map.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/enkf/time_map.hpp>
 
 void ecl_test(const char *ecl_case) {
     ecl_sum_type *ecl_sum = ecl_sum_fread_alloc_case(ecl_case, ":");

@@ -17,8 +17,8 @@
    for more details.
 */
 
-#include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/util/test_util.h>
 
 void test_create_invalid(const char *config_file) {
     ert_test_context_type *test_context =

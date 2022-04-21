@@ -17,22 +17,22 @@
 */
 
 #include <algorithm>
-#include <thread>
-#include <vector>
-#include <future>
 #include <chrono>
 #include <filesystem>
+#include <future>
+#include <thread>
+#include <vector>
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <ert/util/util.hpp>
 #include <ert/logging.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/job_list.hpp>
+#include <ert/job_queue/job_queue.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue");

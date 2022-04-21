@@ -16,17 +16,17 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
-#include <unistd.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include <stdexcept>
-#include <ctime>
 #include <cmath>
+#include <ctime>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -34,8 +34,8 @@
 #include <vector>
 
 #include <ert/logging.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>

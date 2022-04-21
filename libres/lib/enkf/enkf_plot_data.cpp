@@ -16,8 +16,8 @@
    for more details.
 */
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
+#include <ert/enkf/enkf_plot_tvector.hpp>
 
 #define ENKF_PLOT_DATA_TYPE_ID 3331063
 

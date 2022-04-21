@@ -17,13 +17,13 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/vector.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/vector.h>
 
 #include <ert/enkf/runpath_list.hpp>
 

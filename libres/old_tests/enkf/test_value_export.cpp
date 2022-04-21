@@ -17,20 +17,20 @@
 */
 
 #include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <vector>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <cjson/cJSON.h>
 
-#include <ert/util/util.h>
+#include <ert/enkf/value_export.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
-#include <ert/enkf/value_export.hpp>
+#include <ert/util/util.h>
 
 namespace fs = std::filesystem;
 

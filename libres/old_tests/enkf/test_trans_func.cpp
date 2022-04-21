@@ -16,8 +16,8 @@
    for more details.
 */
 
-#include <ert/util/test_util.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/test_util.h>
 
 #include <ert/enkf/trans_func.hpp>
 

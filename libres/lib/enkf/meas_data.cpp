@@ -22,17 +22,17 @@
 */
 
 #include <cmath>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
-#include <vector>
-#include <algorithm>
 #include <Eigen/Dense>
+#include <algorithm>
+#include <vector>
 
-#include <ert/util/type_macros.h>
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
+#include <ert/util/type_macros.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
 
 #include <ert/enkf/meas_data.hpp>
 

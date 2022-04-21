@@ -1,11 +1,11 @@
 #include <chrono>
-#include <thread>
 #include <regex>
+#include <thread>
 
 #include "catch2/catch.hpp"
 
-#include <ert/res_util/metric.hpp>
 #include "../logger_mock.hpp"
+#include <ert/res_util/metric.hpp>
 
 TEST_CASE("simple time benchmark test", "[res_util]") {
     auto logger = std::make_shared<MockLogger>();

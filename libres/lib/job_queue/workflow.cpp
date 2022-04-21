@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/int_vector.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_parser.hpp>
 

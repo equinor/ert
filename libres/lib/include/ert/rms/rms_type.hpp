@@ -18,8 +18,8 @@
 
 #ifndef ERT_RMS_TYPE_H
 #define ERT_RMS_TYPE_H
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 enum rms_type_enum_def {
     rms_char_type,

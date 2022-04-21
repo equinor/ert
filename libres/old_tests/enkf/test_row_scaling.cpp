@@ -15,13 +15,13 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
+#include <Eigen/Dense>
 #include <chrono>
+#include <ert/util/test_util.hpp>
 #include <iostream>
 #include <stdexcept>
+#include <stdlib.h>
 #include <vector>
-#include <Eigen/Dense>
-#include <ert/util/test_util.hpp>
 
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/util/rng.hpp>

@@ -17,8 +17,8 @@
 */
 
 #include <cmath>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 #include <ert/job_queue/job_queue_status.hpp>
 #include <ert/util/test_util.hpp>

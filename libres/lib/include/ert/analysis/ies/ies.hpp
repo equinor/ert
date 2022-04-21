@@ -21,8 +21,8 @@
 #include <variant>
 
 #include <Eigen/Dense>
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 namespace ies {
 

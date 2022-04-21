@@ -17,8 +17,8 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/test_util.hpp>
 #include <ert/job_queue/job_node.hpp>
+#include <ert/util/test_util.hpp>
 
 void test_create() {
     job_queue_node_type *node =

@@ -21,8 +21,8 @@
 
 #include <stdbool.h>
 
-#include <ert/util/stringlist.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/stringlist.hpp>
 
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/ext_joblist.hpp>

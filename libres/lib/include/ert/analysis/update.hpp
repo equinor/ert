@@ -1,13 +1,13 @@
 #pragma once
 
-#include <stdexcept>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/analysis_config.hpp>
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/local_updatestep.hpp>
+#include <ert/enkf/obs_data.hpp>
 #include <ert/util/rng.hpp>
+#include <stdexcept>
 
 namespace analysis {
 /**

@@ -2,13 +2,13 @@
 #include <string.h>
 #include <vector>
 
-#include <ert/util/test_util.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>
 
+#include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/enkf_analysis.hpp>
 
 void test_obs_in_log() {
     int_vector_type *ens_active_list = int_vector_alloc(0, false);

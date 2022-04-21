@@ -23,9 +23,9 @@
 
 #include <ert/analysis/analysis_module.hpp>
 
+#include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/enkf_analysis.hpp>
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type *obs_data,
                                        const meas_data_type *meas_data,

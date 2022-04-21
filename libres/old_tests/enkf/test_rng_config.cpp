@@ -18,8 +18,8 @@
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 
-#include <ert/enkf/rng_config.hpp>
 #include <../../tests/logging.hpp>
+#include <ert/enkf/rng_config.hpp>
 
 #define MAX_INT 999999
 

@@ -20,21 +20,21 @@
 #define ERT_ENSEMBLE_CONFIG_H
 #include <stdbool.h>
 
-#include <vector>
 #include <string>
+#include <vector>
 
-#include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
 
 #include <ert/ecl/ecl_grid.hpp>
 #include <ert/ecl/ecl_sum.hpp>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/summary_config.hpp>
 #include <ert/enkf/summary_key_matcher.hpp>
 
 typedef struct ensemble_config_struct ensemble_config_type;

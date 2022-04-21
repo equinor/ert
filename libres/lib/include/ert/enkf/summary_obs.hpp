@@ -25,12 +25,12 @@
 
 #include <ert/config/conf.hpp>
 
-#include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/enkf/summary_config.hpp>
-#include <ert/enkf/summary.hpp>
 #include <ert/enkf/active_list.hpp>
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/meas_data.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/summary.hpp>
+#include <ert/enkf/summary_config.hpp>
 
 typedef struct summary_obs_struct summary_obs_type;
 

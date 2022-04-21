@@ -16,22 +16,22 @@
    for more details.
 */
 
+#include <Eigen/Dense>
+#include <cmath>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <cmath>
-#include <Eigen/Dense>
 
-#include <ert/util/util.h>
-#include <ert/util/buffer.h>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/buffer.h>
+#include <ert/util/util.h>
 
+#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/gen_kw.hpp>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 

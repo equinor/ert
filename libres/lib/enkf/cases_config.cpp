@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/util.h>
 
 #include <ert/enkf/cases_config.hpp>
 

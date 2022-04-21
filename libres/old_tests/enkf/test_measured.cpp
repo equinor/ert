@@ -1,11 +1,11 @@
 #include <vector>
 
+#include <Eigen/Dense>
 #include <stdio.h>
 #include <string.h>
-#include <Eigen/Dense>
 
-#include <ert/util/test_util.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/meas_data.hpp>

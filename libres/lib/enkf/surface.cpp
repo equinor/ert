@@ -16,10 +16,10 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <cmath>
 #include <Eigen/Dense>
+#include <cmath>
 #include <ert/util/util.h>
+#include <stdlib.h>
 
 #include <ert/geometry/geo_surface.h>
 

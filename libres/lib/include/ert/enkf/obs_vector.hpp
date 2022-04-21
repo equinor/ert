@@ -32,14 +32,14 @@
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/time_map.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/time_map.hpp>
 
 typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2, BLOCK_OBS = 3 } obs_impl_type;
 

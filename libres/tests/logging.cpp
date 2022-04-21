@@ -1,8 +1,8 @@
-#include <unordered_map>
-#include <memory>
-#include <stdexcept>
 #include "ert/logging.hpp"
 #include "logging.hpp"
+#include <memory>
+#include <stdexcept>
+#include <unordered_map>
 
 namespace {
 class MockLogger : public ert::ILogger {

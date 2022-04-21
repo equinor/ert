@@ -18,8 +18,8 @@
 
 #include <stdlib.h>
 
-#include <ert/util/type_macros.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_settings.hpp>

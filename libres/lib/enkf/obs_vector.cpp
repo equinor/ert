@@ -20,17 +20,17 @@
    See the overview documentation of the observation system in enkf_obs.c
 */
 
+#include <algorithm>
+#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <cmath>
 #include <vector>
-#include <algorithm>
 
+#include <ert/util/bool_vector.h>
+#include <ert/util/double_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
-#include <ert/util/double_vector.h>
-#include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.hpp>
 
@@ -38,14 +38,14 @@
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/summary_obs.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/block_obs.hpp>
-#include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
-#include <ert/enkf/active_list.hpp>
+#include <ert/enkf/obs_vector.hpp>
+#include <ert/enkf/summary_obs.hpp>
 
 #define OBS_VECTOR_TYPE_ID 120086
 

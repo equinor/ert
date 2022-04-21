@@ -19,14 +19,14 @@
 #ifndef ERT_GEN_KW_CONFIG_H
 #define ERT_GEN_KW_CONFIG_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
 
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 
 extern "C" const char *

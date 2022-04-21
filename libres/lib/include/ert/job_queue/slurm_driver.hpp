@@ -19,8 +19,8 @@
 #ifndef ERT_SLURM_DRIVER_H
 #define ERT_SLURM_DRIVER_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/type_macros.h>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/job_queue/job_status.hpp>

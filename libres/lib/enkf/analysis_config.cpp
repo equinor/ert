@@ -17,13 +17,13 @@
 */
 
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
+#include <fmt/format.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <math.h>
-#include <fmt/format.h>
 
 #include <ert/util/util.h>
 
@@ -33,10 +33,10 @@
 #include <ert/analysis/analysis_module.hpp>
 
 #include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/site_config.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/site_config.hpp>
 
 #define UPDATE_ENKF_ALPHA_KEY "ENKF_ALPHA"
 #define UPDATE_STD_CUTOFF_KEY "STD_CUTOFF"

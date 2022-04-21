@@ -1,9 +1,9 @@
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_plot_gen_kw.hpp>
-#include <math.h>
+#include <ert/enkf/ensemble_config.hpp>
 #include <ert/python.hpp>
-#include <pybind11/pybind11.h>
+#include <math.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 static auto logger = ert::get_logger("enkf_fs");

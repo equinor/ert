@@ -17,9 +17,9 @@
 */
 #include <stdlib.h>
 
+#include <ert/util/stringlist.h>
 #include <ert/util/test_util.h>
 #include <ert/util/util.h>
-#include <ert/util/stringlist.h>
 
 #include <ert/ecl/ecl_sum.h>
 

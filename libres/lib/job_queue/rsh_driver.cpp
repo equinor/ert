@@ -16,15 +16,15 @@
    for more details.
 */
 
-#include <optional>
 #include <mutex>
-#include <thread>
-#include <stdlib.h>
+#include <netdb.h>
+#include <optional>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <netdb.h>
+#include <thread>
 
 #include <ert/util/util.hpp>
 

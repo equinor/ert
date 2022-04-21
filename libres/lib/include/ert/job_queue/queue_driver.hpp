@@ -19,9 +19,9 @@
 #ifndef ERT_QUEUE_DRIVER_H
 #define ERT_QUEUE_DRIVER_H
 
-#include <ert/util/hash.hpp>
 #include <ert/job_queue/job_status.hpp>
 #include <ert/tooling.hpp>
+#include <ert/util/hash.hpp>
 
 typedef enum {
     NULL_DRIVER = 0,

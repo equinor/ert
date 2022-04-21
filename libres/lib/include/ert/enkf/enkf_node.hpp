@@ -18,27 +18,27 @@
 
 #ifndef ERT_ENKF_NODE_H
 #define ERT_ENKF_NODE_H
-#include <stdlib.h>
-#include <stdbool.h>
 #include <Eigen/Dense>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include <ert/util/buffer.h>
-#include <ert/util/rng.h>
 #include <ert/util/hash.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/rng.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/fortio.h>
 
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/active_list.hpp>
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/value_export.hpp>
 

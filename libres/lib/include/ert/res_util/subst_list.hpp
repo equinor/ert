@@ -19,11 +19,11 @@
 #ifndef ERT_SUBST_H
 #define ERT_SUBST_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
-#include <ert/util/type_macros.hpp>
 #include <ert/util/buffer.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 

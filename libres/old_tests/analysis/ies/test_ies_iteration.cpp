@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <ert/util/test_util.hpp>
 #include <ert/util/rng.h>
+#include <ert/util/test_util.hpp>
 
-#include <ert/res_util/es_testdata.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/res_util/es_testdata.hpp>
 
 void init_stdA(const res::es_testdata &testdata, Eigen::MatrixXd &A2) {
     ies::config::Config ies_config(false);

@@ -19,10 +19,10 @@
 
 #include <time.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/int_vector.h>
-#include <ert/tooling.hpp>
 #include <ert/ecl/ecl_sum.h>
+#include <ert/tooling.hpp>
+#include <ert/util/int_vector.h>
+#include <ert/util/type_macros.h>
 
 typedef struct time_map_struct time_map_type;
 

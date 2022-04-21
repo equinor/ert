@@ -16,24 +16,24 @@
  for more details.
  */
 
-#include <unordered_map>
 #include <filesystem>
+#include <unordered_map>
 
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
 #include <ert/res_util/ui_return.hpp>
+#include <ert/util/parser.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
+#include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 
 namespace fs = std::filesystem;

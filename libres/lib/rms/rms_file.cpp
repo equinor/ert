@@ -18,18 +18,18 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include <ert/res_util/file_utils.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/res_util/file_utils.hpp>
 
+#include <ert/rms/rms_file.hpp>
+#include <ert/rms/rms_tag.hpp>
 #include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_util.hpp>
-#include <ert/rms/rms_tag.hpp>
-#include <ert/rms/rms_file.hpp>
 
 namespace fs = std::filesystem;
 

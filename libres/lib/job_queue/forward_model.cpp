@@ -16,15 +16,15 @@
    for more details.
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
 
+#include <ert/res_util/subst_list.hpp>
+#include <ert/util/parser.hpp>
 #include <ert/util/util.hpp>
 #include <ert/util/vector.hpp>
-#include <ert/util/parser.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/ext_joblist.hpp>

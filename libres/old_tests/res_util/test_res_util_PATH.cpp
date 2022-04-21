@@ -18,8 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/vector.hpp>
 #include <ert/util/test_util.hpp>
+#include <ert/util/vector.hpp>
 
 #include <ert/res_util/res_env.hpp>
 

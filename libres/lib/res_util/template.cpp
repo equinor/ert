@@ -18,14 +18,14 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/ert_api_config.hpp>
 
-#include <ert/util/util.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/template.hpp>

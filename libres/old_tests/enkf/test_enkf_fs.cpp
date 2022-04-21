@@ -18,19 +18,19 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include <ert/enkf/block_fs_driver.hpp>
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/block_fs_driver.hpp>
 
 namespace fs = std::filesystem;
 

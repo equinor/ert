@@ -1,11 +1,11 @@
 #include "../tmpdir.hpp"
 #include <catch2/catch.hpp>
+#include <ert/job_queue/ext_job.hpp>
 #include <filesystem>
 #include <fstream>
-#include <ert/job_queue/ext_job.hpp>
-#include <string>   // std::string
 #include <iostream> // std::cout
 #include <sstream>  // std::stringstream
+#include <string>   // std::string
 
 SCENARIO("Loading ext jobs with different permissions") {
     GIVEN("A non existing executable") {

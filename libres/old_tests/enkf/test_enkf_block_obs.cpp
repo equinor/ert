@@ -20,9 +20,9 @@
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/container_config.hpp>
+#include <ert/enkf/field_config.hpp>
 
 void test_create_invalid_data(ecl_grid_type *grid) {
     void *data_config = NULL;

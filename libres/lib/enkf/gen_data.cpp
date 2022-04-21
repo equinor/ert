@@ -19,10 +19,10 @@
 #include <cmath>
 #include <filesystem>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <Eigen/Dense>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <ert/util/util.h>
 
@@ -30,12 +30,12 @@
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_common.hpp>
+#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

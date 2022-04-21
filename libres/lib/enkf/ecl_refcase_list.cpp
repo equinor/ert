@@ -18,8 +18,8 @@
 
 #include <stdlib.h>
 
-#include <ert/util/vector.h>
 #include <ert/util/hash.h>
+#include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_sum.h>
 

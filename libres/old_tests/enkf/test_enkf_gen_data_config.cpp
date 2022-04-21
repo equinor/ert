@@ -16,14 +16,14 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/test_work_area.hpp>
-#include <ert/util/test_util.h>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/run_arg.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.hpp>
 
 void test_report_steps_param() {
 

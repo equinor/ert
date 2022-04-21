@@ -18,8 +18,8 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/summary_obs.hpp>

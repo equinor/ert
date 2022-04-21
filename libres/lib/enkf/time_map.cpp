@@ -20,17 +20,17 @@
 #include <fmt/format.h>
 #include <iomanip>
 
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/time_t_vector.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/time_t_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_sum.h>
 
-#include <ert/logging.hpp>
 #include <ert/enkf/time_map.hpp>
+#include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

@@ -1,6 +1,6 @@
 #include <array>
-#include <set>
 #include <list>
+#include <set>
 
 #include "catch2/catch.hpp"
 #include <ert/res_util/string.hpp>
