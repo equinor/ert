@@ -45,7 +45,6 @@ def run_cli(args):
         return
     model = create_model(
         ert,
-        facade.get_analysis_module_names,
         facade.get_ensemble_size(),
         facade.get_current_case_name(),
         args,

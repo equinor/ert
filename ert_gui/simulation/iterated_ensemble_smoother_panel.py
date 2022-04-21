@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert_gui.ertnotifier import ErtNotifier
-from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector, CaseSelector
+from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit, CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert_gui.ertwidgets.stringbox import StringBox
@@ -15,6 +15,8 @@ from ert_shared.libres_facade import LibresFacade
 
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
+    analysis_module_name = "IES_ENKF"
+
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         self.facade = facade
         self.notifier = notifier
@@ -60,12 +62,12 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         self._iterated_target_case_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Target case format:", self._iterated_target_case_format_field)
 
-        self._analysis_module_selector = AnalysisModuleSelector(
+        self._analysis_module_edit = AnalysisModuleEdit(
             self.facade,
-            iterable=True,
+            module_name=IteratedEnsembleSmootherPanel.analysis_module_name,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         self._active_realizations_model = ActiveRealizationsModel(self.facade)
         self._active_realizations_field = StringBox(
@@ -93,17 +95,15 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             self.notifier.emitErtChange()
 
     def isConfigurationValid(self):
-        analysis_module = self._analysis_module_selector.getSelectedAnalysisModuleName()
         return (
             self._iterated_target_case_format_field.isValid()
             and self._active_realizations_field.isValid()
-            and analysis_module is not None
         )
 
     def getSimulationArguments(self):
         arguments = {
             "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
             "target_case": self._iterated_target_case_format_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
+            "analysis_module": IteratedEnsembleSmootherPanel.analysis_module_name,  # noqa
         }
         return arguments

@@ -20,7 +20,7 @@ from ert_gui.ertwidgets import (
     addHelpToWidget,
     CaseSelector,
     ActiveLabel,
-    AnalysisModuleSelector,
+    AnalysisModuleEdit,
 )
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
@@ -39,6 +39,8 @@ from ert_shared.libres_facade import LibresFacade
 
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
+    analysis_module_name = "STD_ENKF"
+
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
@@ -78,12 +80,12 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
         layout.addRow("Start iteration:", self._iter_field)
 
-        self._analysis_module_selector = AnalysisModuleSelector(
+        self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            iterable=False,
+            module_name=MultipleDataAssimilationPanel.analysis_module_name,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         self._active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
@@ -153,7 +155,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         arguments = {
             "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
             "target_case": self._target_case_format_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
+            "analysis_module": MultipleDataAssimilationPanel.analysis_module_name,  # noqa
             "weights": self.weights,
             "start_iteration": int(self._iter_field.model.getValue()),
         }
