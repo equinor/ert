@@ -57,10 +57,6 @@ void workflow_job_set_function(workflow_job_type *workflow_job,
                                const char *function);
 extern "C" PY_USED char *
 workflow_job_get_function(workflow_job_type *workflow_job);
-void workflow_job_set_module(workflow_job_type *workflow_job,
-                             const char *module);
-extern "C" PY_USED char *
-workflow_job_get_module(workflow_job_type *workflow_job);
 void *workflow_job_run(const workflow_job_type *job, void *self, bool verbose,
                        const stringlist_type *arg);
 

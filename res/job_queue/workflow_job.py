@@ -26,7 +26,6 @@ class WorkflowJob(BaseCClass):
         "char*  workflow_job_get_internal_script_path(workflow_job)"
     )
     _get_function = ResPrototype("char*  workflow_job_get_function(workflow_job)")
-    _get_module = ResPrototype("char*  workflow_job_get_module(workflow_job)")
     _get_executable = ResPrototype("char*  workflow_job_get_executable(workflow_job)")
     _min_arg = ResPrototype("int  workflow_job_get_min_arg(workflow_job)")
     _max_arg = ResPrototype("int  workflow_job_get_max_arg(workflow_job)")
@@ -79,10 +78,6 @@ class WorkflowJob(BaseCClass):
     def functionName(self):
         """@rtype: str"""
         return self._get_function()
-
-    def module(self):
-        """@rtype: str"""
-        return self._get_module()
 
     def executable(self):
         """@rtype: str"""
@@ -238,9 +233,6 @@ class WorkflowJob(BaseCClass):
             return False
 
         if self._max_arg() != other._max_arg():
-            return False
-
-        if self._get_module() != other._get_module():
             return False
 
         return True
