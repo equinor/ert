@@ -43,8 +43,6 @@ extern "C" bool analysis_module_set_var(analysis_module_type *module,
 analysis_mode_enum analysis_module_get_mode(const analysis_module_type *module);
 extern "C" const char *
 analysis_module_get_name(const analysis_module_type *module);
-extern "C" bool analysis_module_check_option(const analysis_module_type *module,
-                                             analysis_module_flag_enum option);
 
 extern "C" bool analysis_module_has_var(const analysis_module_type *module,
                                         const char *var);

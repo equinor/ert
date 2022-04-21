@@ -261,21 +261,13 @@ bool analysis_config_has_module(const analysis_config_type *config,
     return (config->analysis_modules.count(module_name) > 0);
 }
 
-bool analysis_config_module_flag_is_set(const analysis_config_type *config,
-                                        analysis_module_flag_enum flag) {
-    if (config->analysis_module)
-        return analysis_module_check_option(config->analysis_module, flag);
-    else
-        return false;
-}
-
 bool analysis_config_select_module(analysis_config_type *config,
                                    const char *module_name) {
     if (analysis_config_has_module(config, module_name)) {
         analysis_module_type *module =
             analysis_config_get_module(config, module_name);
 
-        if (analysis_module_check_option(module, ANALYSIS_ITERABLE)) {
+        if (analysis_module_get_name(module) == "IES_ENKF") {
             if (analysis_config_get_single_node_update(config)) {
                 fprintf(stderr,
                         " ** Warning: the module:%s requires the setting "

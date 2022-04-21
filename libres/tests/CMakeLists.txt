@@ -9,7 +9,6 @@ add_executable(
   ert_test_suite
   tmpdir.cpp
   analysis/ies/test_ies_enkf_main.cpp
-  analysis/ies/test_ies_config.cpp
   analysis/test_enkf_linalg.cpp
   analysis/test_save_parameters.cpp
   analysis/test_copy_parameters.cpp

@@ -45,8 +45,6 @@ extern "C" bool analysis_config_has_module(const analysis_config_type *config,
                                            const char *module_name);
 void analysis_config_load_module(int ens_size, analysis_config_type *config,
                                  analysis_mode_enum mode);
-bool analysis_config_module_flag_is_set(const analysis_config_type *config,
-                                        analysis_module_flag_enum flag);
 
 std::vector<std::string>
 analysis_config_module_names(const analysis_config_type *config);

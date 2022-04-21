@@ -16,17 +16,15 @@
 
 import pytest
 
-from res.analysis import AnalysisModule, AnalysisModuleOptionsEnum, AnalysisModeEnum
+from res.analysis import AnalysisModule
 
 
 def test_analysis_module():
-    am = AnalysisModule(100, AnalysisModeEnum.ITERATED_ENSEMBLE_SMOOTHER)
+    am = AnalysisModule(100, 2)
 
     assert am.setVar("ITER", "1")
 
     assert am.name() == "IES_ENKF"
-
-    assert am.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE)
 
     assert am.hasVar("ITER")
 
@@ -36,7 +34,7 @@ def test_analysis_module():
 
 
 def test_set_get_var():
-    mod = AnalysisModule(100, AnalysisModeEnum.ENSEMBLE_SMOOTHER)
+    mod = AnalysisModule(100, 1)
 
     with pytest.raises(KeyError):
         mod.setVar("NO-NOT_THIS_KEY", 100)

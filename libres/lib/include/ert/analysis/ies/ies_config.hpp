@@ -21,14 +21,6 @@
 
 #include <variant>
 
-enum analysis_module_flag_enum : int {
-    ANALYSIS_USE_A =
-        4, // The module will read the content of A - but not modify it.
-    ANALYSIS_UPDATE_A =
-        8, // The update will be based on modifying A directly, and not on an X matrix.
-    ANALYSIS_ITERABLE = 32 // The module can bu used as an iterative smoother.
-};
-
 namespace ies {
 namespace config {
 
@@ -62,12 +54,6 @@ public:
     void subspace_dimension(int subspace_dimension);
     const std::variant<double, int> &truncation() const;
 
-    long get_option_flags() const;
-    void set_option_flags(long flags);
-    bool get_option(analysis_module_flag_enum option) const;
-    void set_option(analysis_module_flag_enum option);
-    void del_option(analysis_module_flag_enum option);
-
     inversion_type inversion() const;
     void inversion(inversion_type it);
 
@@ -90,7 +76,6 @@ private:
 
     bool m_iterable;
 
-    long m_option_flags = 0;
     double
         m_ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
     double

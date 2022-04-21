@@ -282,11 +282,6 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
     return set_ok;
 }
 
-bool analysis_module_check_option(const analysis_module_type *module,
-                                  analysis_module_flag_enum option) {
-    return module->module_config->get_option(option);
-}
-
 bool analysis_module_has_var(const analysis_module_type *module,
                              const char *var) {
     return module->keys.count(var);
