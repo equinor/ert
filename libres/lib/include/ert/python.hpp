@@ -6,11 +6,11 @@
 
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_plot_gendata.hpp>
+#include <pybind11/eigen.h>
+#include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/numpy.h>
-#include <pybind11/eigen.h>
-#include <pybind11/operators.h>
 
 #include <ert/logging.hpp>
 

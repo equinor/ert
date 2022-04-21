@@ -19,8 +19,8 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
+#include <ert/enkf/enkf_plot_tvector.hpp>
 
 void test_create() {
     enkf_plot_data_type *plot_data = enkf_plot_data_alloc(NULL);

@@ -19,8 +19,8 @@
 #ifndef ERT_RNG_CONFIG_H
 #define ERT_RNG_CONFIG_H
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/enkf/rng_manager.hpp>
 

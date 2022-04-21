@@ -19,6 +19,7 @@
 #ifndef ERT_CONTAINER_H
 #define ERT_CONTAINER_H
 
+#include <ert/enkf/enkf_macros.hpp>
 #include <ert/util/type_macros.h>
 
 typedef struct container_struct container_type;

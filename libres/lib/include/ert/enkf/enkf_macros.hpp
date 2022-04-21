@@ -19,23 +19,23 @@
 #ifndef ERT_ENKF_MACROS_H
 #define ERT_ENKF_MACROS_H
 
+#include <Eigen/Dense>
 #include <stdio.h>
 #include <stdlib.h>
-#include <Eigen/Dense>
 
-#include <ert/util/rng.hpp>
 #include <ert/util/double_vector.hpp>
 #include <ert/util/int_vector.hpp>
+#include <ert/util/rng.hpp>
 
 #include <ert/ecl/ecl_file.hpp>
 #include <ert/ecl/ecl_sum.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/active_list.hpp>
-#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/forward_load_context.hpp>
+#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/value_export.hpp>
 
 #define VOID_CONFIG_FREE(prefix)                                               \

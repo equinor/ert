@@ -16,15 +16,15 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <ert/util/util.hpp>
 
-#include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>
+#include <ert/job_queue/job_node.hpp>
 
 #define JOB_LIST_TYPE_ID 8154222
 

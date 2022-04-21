@@ -16,13 +16,13 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <cmath>
+#include <stdlib.h>
+#include <string.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/conf.hpp>
 
@@ -31,12 +31,12 @@
 
 #include <ert/analysis/enkf_linalg.hpp>
 
-#include <ert/enkf/summary_obs.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/local_config.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/local_config.hpp>
+#include <ert/enkf/local_ministep.hpp>
+#include <ert/enkf/obs_vector.hpp>
+#include <ert/enkf/summary_obs.hpp>
 
 /*
 

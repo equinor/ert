@@ -15,17 +15,17 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/vector.hpp>
-#include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/vector.hpp>
 
 #include <ert/enkf/gen_kw_config.hpp>
 

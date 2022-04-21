@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/test_util.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/obs_data.hpp>

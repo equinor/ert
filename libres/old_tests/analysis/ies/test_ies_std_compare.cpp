@@ -1,10 +1,10 @@
-#include <ert/util/test_util.hpp>
 #include <ert/util/rng.h>
+#include <ert/util/test_util.hpp>
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 /*
 TEST 3 (consistency between IES and STD_ENKF):

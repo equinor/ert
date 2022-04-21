@@ -16,17 +16,17 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
-#include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_tagkey.hpp>
+#include <ert/rms/rms_type.hpp>
 #include <ert/rms/rms_util.hpp>
 
 static const char *rms_array_string = "array";

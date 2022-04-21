@@ -16,8 +16,8 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <ert/rms/rms_type.hpp>
+#include <stdlib.h>
 
 /* A microscopic (purely internal) type object only used
    for storing the hash type_map */

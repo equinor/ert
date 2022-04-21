@@ -16,23 +16,23 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <ert/util/util.h>
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
+#include <ert/util/util.h>
 #include <ert/util/vector.h>
 
-#include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/field.hpp>
-#include <ert/enkf/surface.hpp>
-#include <ert/enkf/summary.hpp>
-#include <ert/enkf/gen_kw.hpp>
-#include <ert/enkf/gen_data.hpp>
-#include <ert/enkf/ext_param.hpp>
 #include <ert/enkf/container.hpp>
+#include <ert/enkf/enkf_node.hpp>
+#include <ert/enkf/ext_param.hpp>
+#include <ert/enkf/field.hpp>
+#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/gen_kw.hpp>
+#include <ert/enkf/summary.hpp>
+#include <ert/enkf/surface.hpp>
 
 /*
    A small illustration (says more than thousand words ...) of how the

@@ -18,8 +18,8 @@
 
 #ifndef ERT_LSF_DRIVER_H
 #define ERT_LSF_DRIVER_H
-#include <ert/util/stringlist.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <ert/util/stringlist.hpp>
 
 /*
   The options supported by the LSF driver.

@@ -19,12 +19,12 @@
 #ifndef ERT_WORKFLOW_LIST_H
 #define ERT_WORKFLOW_LIST_H
 
-#include <ert/util/type_macros.h>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/type_macros.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_error.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/workflow.hpp>
 #include <ert/job_queue/workflow_job.hpp>

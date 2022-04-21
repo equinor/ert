@@ -19,12 +19,12 @@
 #ifndef ERT_MEAS_DATA_H
 #define ERT_MEAS_DATA_H
 
-#include <vector>
-#include <stdbool.h>
 #include <Eigen/Dense>
+#include <stdbool.h>
+#include <vector>
 
-#include <ert/util/hash.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/hash.h>
 #include <ert/util/type_macros.h>
 
 #include <ert/tooling.hpp>

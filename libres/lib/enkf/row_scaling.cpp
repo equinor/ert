@@ -15,15 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
 #include <stdexcept>
 #include <vector>
-#include <Eigen/Dense>
 
-#include <ert/python.hpp>
 #include <ert/enkf/row_scaling.hpp>
+#include <ert/python.hpp>
 #include <ert/util/util.hpp>
 
 /*

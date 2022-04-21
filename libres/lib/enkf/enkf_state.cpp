@@ -16,15 +16,15 @@
    for more details.
 */
 
-#include <sys/types.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_sum.h>
@@ -32,11 +32,11 @@
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 
+#include <ert/enkf/callback_arg.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/logging.hpp>
-#include <ert/enkf/callback_arg.hpp>
 
 static auto logger = ert::get_logger("enkf");
 #define ENKF_STATE_TYPE_ID 78132

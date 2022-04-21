@@ -16,13 +16,13 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "ert/util/build_config.hpp"
-#include <ert/util/util.hpp>
 #include <ert/util/type_macros.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/res_util/path_fmt.hpp>
 

@@ -21,18 +21,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/util/util.h>
 #include <ert/util/vector.h>
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/trans_func.hpp>
-#include <ert/enkf/config_keys.hpp>
 
 namespace fs = std::filesystem;
 

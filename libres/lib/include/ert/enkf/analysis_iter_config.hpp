@@ -19,8 +19,8 @@
 #ifndef ERT_ANALYSIS_ITER_CONFIG_H
 #define ERT_ANALYSIS_ITER_CONFIG_H
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 typedef struct analysis_iter_config_struct analysis_iter_config_type;
 

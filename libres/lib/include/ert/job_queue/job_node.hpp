@@ -19,9 +19,9 @@
 #ifndef ERT_JOB_NODE_H
 #define ERT_JOB_NODE_H
 
-#include <ert/util/type_macros.hpp>
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue_status.hpp>
+#include <ert/job_queue/queue_driver.hpp>
+#include <ert/util/type_macros.hpp>
 
 /**
    This struct holds the job_queue information about one job. Observe

@@ -15,16 +15,16 @@
   for more details.
 */
 
-#include <iostream>
+#include <Eigen/Dense>
+#include <array>
+#include <filesystem>
+#include <fmt/format.h>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <stdexcept>
 #include <string>
-#include <array>
 #include <vector>
-#include <filesystem>
-#include <Eigen/Dense>
-#include <fmt/format.h>
 
 #include <ert/res_util/es_testdata.hpp>
 

@@ -17,8 +17,8 @@
 */
 
 #include <cstdlib>
-#include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/forward_load_context.hpp>

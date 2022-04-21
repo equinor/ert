@@ -18,9 +18,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ert/python.hpp>
 #include <stdexcept>
 #include <variant>
-#include <ert/python.hpp>
 
 #include <ert/analysis/ies/ies_config.hpp>
 

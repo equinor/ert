@@ -26,8 +26,8 @@
 
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_plot_tvector.hpp>
+#include <ert/enkf/enkf_types.hpp>
 
 typedef struct enkf_plot_data_struct enkf_plot_data_type;
 

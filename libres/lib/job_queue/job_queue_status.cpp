@@ -19,8 +19,8 @@
 
 #include <ert/util/type_macros.hpp>
 
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_queue_status.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 #define JOB_QUEUE_STATUS_TYPE_ID 777620306
 

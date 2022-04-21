@@ -26,13 +26,13 @@
 
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
+#include <ert/enkf/enkf_types.hpp>
 
 typedef struct analysis_config_struct analysis_config_type;
 

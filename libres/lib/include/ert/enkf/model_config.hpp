@@ -24,8 +24,8 @@
 
 #include <ert/util/type_macros.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>

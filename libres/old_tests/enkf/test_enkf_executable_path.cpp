@@ -1,6 +1,6 @@
-#include <ert/util/util.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
+#include <ert/util/util.h>
 
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/queue_config.hpp>

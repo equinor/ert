@@ -18,11 +18,11 @@
 
 #include <cassert>
 
-#include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
+#include <ert/util/stringlist.h>
 
-#include <ert/logging.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/logging.hpp>
 #include <ert/util/type_vector_functions.hpp>
 
 static auto logger = ert::get_logger("enkf");

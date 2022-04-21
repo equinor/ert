@@ -19,11 +19,10 @@
 #ifndef ERT_GEN_OBS_H
 #define ERT_GEN_OBS_H
 
-#include <ert/enkf/gen_data_config.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/active_list.hpp>
 
 typedef struct gen_obs_struct gen_obs_type;
 

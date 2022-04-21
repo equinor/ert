@@ -23,13 +23,13 @@
 
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/job_queue.hpp>
+#include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>
-#include <ert/job_queue/environment_varlist.hpp>
+#include <ert/job_queue/job_queue.hpp>
 
 #include <ert/enkf/queue_config.hpp>
 

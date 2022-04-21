@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
 #include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
 #include <ert/job_queue/workflow.hpp>
 

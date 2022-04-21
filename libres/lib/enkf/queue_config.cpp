@@ -20,17 +20,17 @@
 
 #include <ert/util/util.h>
 
-#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/slurm_driver.hpp>
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/queue_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/site_config.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/queue_config.hpp>
+#include <ert/enkf/site_config.hpp>
 
 struct queue_config_struct {
     job_driver_type driver_type;

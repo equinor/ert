@@ -19,15 +19,15 @@
 #ifndef ERT_RUN_CONTEXT_H
 #define ERT_RUN_CONTEXT_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/type_macros.h>
 
-#include <ert/res_util/subst_list.hpp>
 #include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/subst_list.hpp>
 
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 
 typedef struct ert_run_context_struct ert_run_context_type;
 

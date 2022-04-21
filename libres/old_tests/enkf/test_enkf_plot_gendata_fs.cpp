@@ -22,8 +22,8 @@
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/enkf/block_obs.hpp>
-#include <ert/enkf/ert_test_context.hpp>
 #include <ert/enkf/enkf_plot_gendata.hpp>
+#include <ert/enkf/ert_test_context.hpp>
 #include <ert/enkf/gen_obs.hpp>
 
 void test_gendata(enkf_main_type *enkf_main, const char *obs_key,

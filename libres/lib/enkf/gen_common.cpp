@@ -17,15 +17,15 @@
 */
 #include <algorithm>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/util.h>
 
 #include <ert/ecl/ecl_type.h>
 
-#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/gen_common.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 
 /*
    This file implements some (very basic) functionality which is used

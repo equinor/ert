@@ -22,12 +22,12 @@
 
 #include <ert/res_util/ui_return.hpp>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/ecl/ecl_grid.hpp>
-#include <ert/ecl/ecl_sum.hpp>
 #include <ert/ecl/ecl_io_config.hpp>
+#include <ert/ecl/ecl_sum.hpp>
 
 #include <ert/res_util/path_fmt.hpp>
 

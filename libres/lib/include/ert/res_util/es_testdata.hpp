@@ -18,10 +18,10 @@
 #ifndef ES_TESTDATA_HPP
 #define ES_TESTDATA_HPP
 
-#include <string>
-#include <vector>
 #include <Eigen/Dense>
 #include <ert/util/bool_vector.hpp>
+#include <string>
+#include <vector>
 
 namespace res {
 class es_testdata {

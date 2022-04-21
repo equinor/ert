@@ -1,9 +1,9 @@
-#include <string>
 #include <optional>
 #include <regex>
+#include <string>
 
-#include <unistd.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include <catch2/catch.hpp>
 #include <fmt/format.h>

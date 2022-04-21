@@ -1,20 +1,20 @@
+#include <algorithm>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cmath>
-#include <algorithm>
 
 #include <catch2/catch.hpp>
 
-#include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/row_scaling.hpp>
 #include <ert/enkf/meas_data.hpp>
+#include <ert/enkf/row_scaling.hpp>
+#include <ert/util/rng.h>
 
-#include <ert/analysis/update.hpp>
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/update.hpp>
 
 /**
  * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html

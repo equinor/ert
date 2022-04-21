@@ -16,11 +16,11 @@
    for more details.
 */
 
-#include <string>
-#include <iostream>
-#include <stdlib.h>
-#include <stdio.h>
 #include <dlfcn.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -32,9 +32,9 @@
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
-#include <fmt/format.h>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
+#include <fmt/format.h>
 
 auto logger = ert::get_logger("analysis");
 

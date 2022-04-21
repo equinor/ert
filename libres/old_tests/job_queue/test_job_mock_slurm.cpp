@@ -19,11 +19,11 @@
 #include <vector>
 
 #include <ert/util/test_util.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/test_work_area.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/slurm_driver.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <ert/job_queue/slurm_driver.hpp>
 
 /*
   This test tests the interaction between slurm and libres by using mock scripts

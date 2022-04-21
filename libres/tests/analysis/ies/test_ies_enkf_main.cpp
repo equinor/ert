@@ -1,7 +1,7 @@
 #include <vector>
 
-#include <catch2/catch.hpp>
 #include <Eigen/Dense>
+#include <catch2/catch.hpp>
 #include <ert/util/rng.h>
 #include <ert/util/util.h>
 

@@ -1,12 +1,12 @@
 #include "catch2/catch.hpp"
-#include <filesystem>
-#include <iostream>
-#include <fstream>
 #include <csignal>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
+#include "../tmpdir.hpp"
 #include <ert/config/config_parser.hpp>
 #include <ert/enkf/site_config.hpp>
-#include "../tmpdir.hpp"
 extern "C" void set_site_config(const char *site_config);
 SCENARIO("Using UMASK in config") {
     GIVEN("A config file with umask set to 007") {

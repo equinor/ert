@@ -21,8 +21,8 @@
 
 #include <ert/util/type_macros.hpp>
 
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/job_node.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 typedef struct job_list_struct job_list_type;
 

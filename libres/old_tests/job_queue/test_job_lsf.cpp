@@ -20,8 +20,8 @@
 #include <ert/util/test_util.hpp>
 #include <ert/util/util.hpp>
 
-#include <ert/job_queue/lsf_job_stat.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
+#include <ert/job_queue/lsf_job_stat.hpp>
 
 void test_option(lsf_driver_type *driver, const char *option,
                  const char *value) {

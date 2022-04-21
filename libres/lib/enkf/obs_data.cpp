@@ -59,8 +59,8 @@ variables of size nrobs_active:
 -------------------------------
 Matrices: S, D, E and various internal variables.
 */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <cmath>
 #include <vector>
@@ -68,8 +68,8 @@ Matrices: S, D, E and various internal variables.
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/enkf_util.hpp>
+#include <ert/enkf/obs_data.hpp>
 
 #define OBS_BLOCK_TYPE_ID 995833
 

@@ -1,9 +1,9 @@
 #ifndef IES_DATA_H
 #define IES_DATA_H
 
+#include <Eigen/Dense>
 #include <optional>
 #include <vector>
-#include <Eigen/Dense>
 
 namespace ies {
 namespace data {

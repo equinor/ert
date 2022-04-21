@@ -24,37 +24,37 @@
 
 #include <stdbool.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/ui_return.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
-#include <ert/res_util/ui_return.hpp>
-#include <ert/res_util/subst_list.hpp>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config_settings.hpp>
 
-#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>
+#include <ert/job_queue/job_queue.hpp>
 
-#include <ert/enkf/res_config.hpp>
+#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/misfit_ensemble.hpp>
-#include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/local_config.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
+#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/ert_run_context.hpp>
+#include <ert/enkf/ert_template.hpp>
+#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
+#include <ert/enkf/local_config.hpp>
+#include <ert/enkf/misfit_ensemble.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/res_config.hpp>
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/rng_manager.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/ert_run_context.hpp>
+#include <ert/enkf/site_config.hpp>
 
 typedef struct enkf_main_struct enkf_main_type;
 extern "C" const char *

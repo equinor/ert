@@ -19,8 +19,8 @@
 #ifndef ERT_RMS_TAGKEY_H
 #define ERT_RMS_TAGKEY_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <ert/util/hash.hpp>
 

@@ -19,15 +19,15 @@
 #ifndef ERT_FORWARD_LOAD_CONTEXT_H
 #define ERT_FORWARD_LOAD_CONTEXT_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_sum.hpp>
 #include <ert/ecl/ecl_file.hpp>
+#include <ert/ecl/ecl_sum.hpp>
 
+#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/run_arg_type.hpp>
-#include <ert/enkf/ecl_config.hpp>
 
 typedef struct forward_load_context_struct forward_load_context_type;
 

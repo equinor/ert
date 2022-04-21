@@ -18,8 +18,8 @@
 #include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
-#include <ert/util/util.hpp>
 #include <ert/util/test_work_area.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/config/config_parser.hpp>
 

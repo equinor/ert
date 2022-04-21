@@ -16,23 +16,23 @@
    for more details.
 */
 
-#include <filesystem>
 #include <cstdio>
+#include <filesystem>
 #include <future>
 #include <vector>
 
 namespace fs = std::filesystem;
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/buffer.h>
+#include <ert/util/util.h>
 
 #include <ert/res_util/block_fs.hpp>
 
-#include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
+#include <ert/enkf/fs_types.hpp>
 
 typedef struct bfs_struct bfs_type;
 typedef struct bfs_config_struct bfs_config_type;

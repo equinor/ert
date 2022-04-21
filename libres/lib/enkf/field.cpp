@@ -18,19 +18,19 @@
 
 #include <filesystem>
 
+#include <Eigen/Dense>
 #include <cmath>
 #include <stdlib.h>
 #include <string.h>
-#include <Eigen/Dense>
 
-#include <ert/util/util.h>
+#include <ert/res_util/file_utils.hpp>
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
-#include <ert/res_util/file_utils.hpp>
+#include <ert/util/util.h>
 
-#include <ert/ecl/fortio.h>
-#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_endian_flip.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/fortio.h>
 
 #include <ert/rms/rms_file.hpp>
 #include <ert/rms/rms_util.hpp>

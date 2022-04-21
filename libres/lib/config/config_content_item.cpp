@@ -16,12 +16,12 @@
    for more details.
 */
 
-#include <ert/util/vector.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/vector.hpp>
 
-#include <ert/config/config_schema_item.hpp>
-#include <ert/config/config_content_node.hpp>
 #include <ert/config/config_content_item.hpp>
+#include <ert/config/config_content_node.hpp>
+#include <ert/config/config_schema_item.hpp>
 
 #define CONFIG_CONTENT_ITEM_ID 8876752
 struct config_content_item_struct {

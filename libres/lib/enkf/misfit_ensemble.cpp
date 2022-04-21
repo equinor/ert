@@ -16,11 +16,11 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/util/util.h>
 #include <ert/util/vector.h>
 
 #include <ert/enkf/enkf_obs.hpp>

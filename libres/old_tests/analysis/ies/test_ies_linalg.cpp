@@ -1,10 +1,10 @@
-#include <ert/util/test_util.hpp>
 #include <ert/util/rng.h>
+#include <ert/util/test_util.hpp>
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, const ies::config::Config &ies_config,

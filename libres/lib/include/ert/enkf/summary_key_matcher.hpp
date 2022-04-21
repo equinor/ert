@@ -1,8 +1,8 @@
 #ifndef ERT_SUMMARY_KEY_MATCHER_H
 #define ERT_SUMMARY_KEY_MATCHER_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/enkf/enkf_types.hpp>
 

@@ -16,29 +16,29 @@
    for more details.
 */
 
-#include <vector>
-#include <string>
-#include <sstream>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
 #include <dlfcn.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <ert/logging.hpp>
-#include <ert/util/util.hpp>
-#include <ert/util/hash.hpp>
 #include <ert/res_util/res_env.hpp>
 #include <ert/res_util/string.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
 
-#include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/lsf_driver.hpp>
 #include <ert/job_queue/lsf_job_stat.hpp>
+#include <ert/job_queue/queue_driver.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("job_queue.lsf_driver");

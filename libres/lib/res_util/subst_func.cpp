@@ -18,9 +18,9 @@
 
 #include <cmath>
 
-#include <ert/util/util.hpp>
-#include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 

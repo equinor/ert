@@ -19,15 +19,15 @@
 #ifndef ERT_GEN_KW_H
 #define ERT_GEN_KW_H
 
-#include <ert/util/double_vector.h>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/tooling.hpp>
+#include <ert/util/double_vector.h>
 
-#include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
+#include <ert/enkf/gen_kw_config.hpp>
 
 extern "C" void gen_kw_ecl_write(const gen_kw_type *gen_kw,
                                  const char *run_path, const char *base_file,

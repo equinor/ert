@@ -2,8 +2,8 @@
 #include <cmath>
 #include <vector>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/analysis/enkf_linalg.hpp>
 

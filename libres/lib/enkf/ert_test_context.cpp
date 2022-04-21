@@ -16,14 +16,14 @@
    for more details.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <filesystem>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
-#include <ert/util/test_work_area.h>
 #include <ert/util/rng.h>
+#include <ert/util/test_work_area.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/ert_test_context.hpp>

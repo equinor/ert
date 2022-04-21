@@ -20,9 +20,9 @@
 #define ERT_EXT_JOBLIST_H
 #include <stdbool.h>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/stringlist.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/job_queue/ext_job.hpp>
 

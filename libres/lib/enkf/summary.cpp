@@ -18,15 +18,15 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/double_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_sum.h>
 
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/summary.hpp>
 
 #define SUMMARY_UNDEF -9999

@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/config/config_error.hpp>
 

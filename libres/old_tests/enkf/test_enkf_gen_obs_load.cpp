@@ -18,8 +18,8 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 
 void test_obs_check_report_steps(const char *config_file) {
     ert_test_context_type *test_context =

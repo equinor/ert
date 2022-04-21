@@ -16,8 +16,8 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <dlfcn.h>
+#include <stdlib.h>
 
 #include <ert/util/int_vector.hpp>
 

@@ -1,23 +1,23 @@
-#include <vector>
-#include <string>
-#include <assert.h>
-#include <fmt/format.h>
-#include <cerrno>
-#include <optional>
 #include <Eigen/Dense>
+#include <assert.h>
+#include <cerrno>
+#include <fmt/format.h>
+#include <optional>
+#include <string>
+#include <vector>
 
-#include <ert/analysis/update.hpp>
-#include <ert/res_util/metric.hpp>
-#include <ert/res_util/memory.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_analysis.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
-#include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/update.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/local_ministep.hpp>
+#include <ert/enkf/meas_data.hpp>
+#include <ert/enkf/obs_data.hpp>
 #include <ert/python.hpp>
+#include <ert/res_util/memory.hpp>
+#include <ert/res_util/metric.hpp>
 
 static auto logger = ert::get_logger("analysis.update");
 

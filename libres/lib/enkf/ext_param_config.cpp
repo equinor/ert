@@ -18,12 +18,12 @@
 
 #include <stdlib.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 
-#include <ert/util/util.h>
 #include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/ext_param_config.hpp>

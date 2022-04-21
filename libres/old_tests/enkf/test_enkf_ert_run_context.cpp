@@ -17,10 +17,10 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/test_util.h>
 #include <ert/res_util/path_fmt.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/ert_run_context.hpp>
 

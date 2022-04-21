@@ -1,11 +1,11 @@
+#include <fstream>
 #include <stdlib.h>
 #include <string>
-#include <fstream>
 
 #include <catch2/catch.hpp>
 
-#include <ert/enkf/enkf_obs.hpp>
 #include "../tmpdir.hpp"
+#include <ert/enkf/enkf_obs.hpp>
 
 /*
  * Write conf-file with given keywords, then parse it.

@@ -18,17 +18,17 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 
-#include <ert/util/util.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/util.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/ext_param_config.hpp>
 #include <ert/enkf/ext_param.hpp>
+#include <ert/enkf/ext_param_config.hpp>
 
 namespace fs = std::filesystem;
 

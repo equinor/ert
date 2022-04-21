@@ -16,16 +16,16 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <unordered_map>
 #include <ert/util/vector.h>
+#include <unordered_map>
 
-#include <ert/python.hpp>
+#include <ert/enkf/local_config.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/local_updatestep.hpp>
-#include <ert/enkf/local_config.hpp>
+#include <ert/python.hpp>
 
 /*
 

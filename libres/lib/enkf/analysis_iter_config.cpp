@@ -18,14 +18,14 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
+#include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 
 struct analysis_iter_config_struct {
     char *case_fmt;

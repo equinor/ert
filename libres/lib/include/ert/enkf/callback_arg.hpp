@@ -19,11 +19,11 @@
 #ifndef CALLBACK_ARG_H
 #define CALLBACK_ARG_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/rng.hpp>
+#include <ert/util/type_macros.h>
 
-#include <ert/enkf/run_arg.hpp>
 #include <ert/enkf/res_config.hpp>
+#include <ert/enkf/run_arg.hpp>
 
 typedef struct callback_arg_struct callback_arg_type;
 

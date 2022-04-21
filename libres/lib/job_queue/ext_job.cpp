@@ -18,21 +18,21 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdio.h>
-#include <fmt/format.h>
-#include <ert/util/util.hpp>
-#include <ert/util/hash.hpp>
-#include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/res_env.hpp>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/res_util/res_env.hpp>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
+#include <fmt/format.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/job_queue/job_kw_definitions.hpp>
 #include <ert/job_queue/ext_job.hpp>
+#include <ert/job_queue/job_kw_definitions.hpp>
 
 namespace fs = std::filesystem;
 

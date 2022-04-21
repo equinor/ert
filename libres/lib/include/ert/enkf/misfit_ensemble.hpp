@@ -21,9 +21,9 @@
 
 #include <stdbool.h>
 
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_member.hpp>
 
 #include <ert/enkf/misfit_ensemble_typedef.hpp>

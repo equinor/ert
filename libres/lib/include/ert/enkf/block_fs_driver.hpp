@@ -19,8 +19,8 @@
 #ifndef ERT_BLOCK_FS_DRIVER_H
 #define ERT_BLOCK_FS_DRIVER_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <ert/enkf/fs_types.hpp>
 

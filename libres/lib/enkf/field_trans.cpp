@@ -28,8 +28,8 @@
   Documentation on how to add a new transformation function is at the
   bottom of the file.
 */
-#include <string.h>
 #include <cmath>
+#include <string.h>
 
 #include <ert/util/hash.h>
 

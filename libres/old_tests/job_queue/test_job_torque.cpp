@@ -15,12 +15,12 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
  */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/test_work_area.hpp>
-#include <ert/util/test_util.hpp>
 #include <ert/job_queue/torque_driver.hpp>
+#include <ert/util/test_util.hpp>
+#include <ert/util/test_work_area.hpp>
 
 void test_option(torque_driver_type *driver, const char *option,
                  const char *value) {

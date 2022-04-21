@@ -17,9 +17,9 @@
 */
 #include <stdlib.h>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/ert_run_context.hpp>
 

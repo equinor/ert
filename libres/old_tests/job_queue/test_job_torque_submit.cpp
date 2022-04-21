@@ -18,9 +18,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <ert/util/util.hpp>
-#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.hpp>
+#include <ert/util/test_work_area.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/torque_driver.hpp>
 

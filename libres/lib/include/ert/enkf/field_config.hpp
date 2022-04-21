@@ -19,24 +19,24 @@
 #ifndef ERT_FIELD_CONFIG_H
 #define ERT_FIELD_CONFIG_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <ert/util/stringlist.h>
 #include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_type.h>
 
 #include <ert/rms/rms_file.hpp>
 
-#include <ert/enkf/enkf_util.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/active_list.hpp>
-#include <ert/enkf/field_trans.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/field_common.hpp>
+#include <ert/enkf/field_trans.hpp>
 
 /**
    This is purely a convenience structure used during initialization,

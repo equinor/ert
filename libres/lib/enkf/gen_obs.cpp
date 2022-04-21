@@ -22,15 +22,15 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/string_util.h>
+#include <ert/util/util.h>
 
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/gen_common.hpp>
+#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/gen_obs.hpp>
 
 #include "ert/python.hpp"
 /*

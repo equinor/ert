@@ -19,9 +19,9 @@
 #ifndef ERT_OBS_DATA_H
 #define ERT_OBS_DATA_H
 
-#include <vector>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <vector>
 
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>

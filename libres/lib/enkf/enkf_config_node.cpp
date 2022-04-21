@@ -18,28 +18,28 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
+#include <ert/util/stringlist.h>
 #include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/res_util/path_fmt.hpp>
 
+#include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/container_config.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/ext_param_config.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/surface_config.hpp>
-#include <ert/enkf/container_config.hpp>
 #include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/ext_param_config.hpp>
+#include <ert/enkf/field_config.hpp>
+#include <ert/enkf/gen_kw_config.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/surface_config.hpp>
 
 namespace fs = std::filesystem;
 

@@ -20,8 +20,8 @@
 
 #include <stdio.h>
 
-#include <ert/util/type_macros.hpp>
 #include <ert/job_queue/queue_driver.hpp>
+#include <ert/util/type_macros.hpp>
 
 /*
     The options supported by the Torque driver.

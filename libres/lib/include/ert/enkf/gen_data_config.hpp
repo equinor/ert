@@ -20,14 +20,14 @@
 #define ERT_GEN_DATA_CONFIG_H
 #include <stdbool.h>
 
+#include <ert/util/bool_vector.h>
 #include <ert/util/stringlist.h>
 #include <ert/util/util.h>
-#include <ert/util/bool_vector.h>
 
-#include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/gen_data_common.hpp>
 
 typedef enum {

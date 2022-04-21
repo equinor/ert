@@ -3,9 +3,9 @@
 #include "catch2/catch.hpp"
 #include <Eigen/Dense>
 
+#include <ert/analysis/ies/ies.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/analysis/ies/ies.hpp>
 
 // std::normal_distribution has a different implementation depending on platform,
 // which makes this differentiation necessary.

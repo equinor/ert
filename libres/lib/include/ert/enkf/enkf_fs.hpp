@@ -20,20 +20,19 @@
 #define ERT_ENKF_FS_H
 #include <stdbool.h>
 
-#include <ert/util/stringlist.h>
-#include <ert/util/type_macros.h>
 #include <ert/util/buffer.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
-#include <ert/enkf/fs_driver.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/fs_types.hpp>
-#include <ert/enkf/enkf_fs_type.hpp>
-#include <ert/enkf/time_map.hpp>
 #include <ert/enkf/cases_config.hpp>
-#include <ert/enkf/state_map.hpp>
+#include <ert/enkf/enkf_fs_type.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/fs_driver.hpp>
+#include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/misfit_ensemble_typedef.hpp>
+#include <ert/enkf/state_map.hpp>
 #include <ert/enkf/summary_key_set.hpp>
+#include <ert/enkf/time_map.hpp>
 
 const char *enkf_fs_get_mount_point(const enkf_fs_type *fs);
 extern "C" const char *enkf_fs_get_case_name(const enkf_fs_type *fs);
