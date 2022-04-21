@@ -86,6 +86,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
                 REQUIRE(random.size() == buffer_get_size(buf));
                 REQUIRE(std::memcmp(random.data(), buffer_get_data(buf),
                                     random.size()) == 0);
+                buffer_free(buf);
             }
 
             AND_WHEN("block_fs is closed and opened") {
@@ -113,6 +114,39 @@ TEST_CASE("block_fs", "[enkf_fs]") {
                     REQUIRE(random.size() == buffer_get_size(buf));
                     REQUIRE(std::memcmp(random.data(), buffer_get_data(buf),
                                         random.size()) == 0);
+                    buffer_free(buf);
+                }
+            }
+        }
+
+        WHEN("data is written to storage twice") {
+            const std::string expect1 = "foo";
+            const std::string expect2 = "bar";
+            block_fs_fwrite_file(bfs, "FOO", expect1.data(), expect1.size());
+
+            /* Read it back */
+            auto buf = buffer_alloc(100);
+            block_fs_fread_realloc_buffer(bfs, "FOO", buf);
+            REQUIRE(expect1.size() == buffer_get_size(buf));
+            REQUIRE(std::memcmp(expect1.data(), buffer_get_data(buf),
+                                expect1.size()) == 0);
+            buffer_free(buf);
+
+            /* Overwrite */
+            block_fs_fwrite_file(bfs, "FOO", expect2.data(), expect2.size());
+
+            AND_WHEN("block_fs is closed and opened") {
+                block_fs_close(bfs);
+                bfs = block_fs_mount("bfs", block_size, fsync_interval,
+                                     true /* read-only */);
+
+                THEN("reading FOO fill return the overwritten data") {
+                    auto buf = buffer_alloc(100);
+                    block_fs_fread_realloc_buffer(bfs, "FOO", buf);
+                    REQUIRE(expect2.size() == buffer_get_size(buf));
+                    REQUIRE(std::memcmp(expect2.data(), buffer_get_data(buf),
+                                        expect2.size()) == 0);
+                    buffer_free(buf);
                 }
             }
         }
