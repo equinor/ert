@@ -1,7 +1,7 @@
 import logging
+from typing_extensions import Literal
 from res import _lib
 from res.enkf.enums import RealizationStateEnum
-from res.analysis.enums import AnalysisModuleOptionsEnum
 
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,11 @@ def size_is_big_enough(active_ens_size, required_ens_size):
     return True
 
 
-def config_is_correct(updatestep, iterable):
+def config_is_correct(updatestep, module_name: Literal["IES_ENKF", "STD_ENKF"]):
     # exit if multi step update with iterable modules
-    if len(updatestep) > 1 and iterable:
+    if len(updatestep) > 1 and module_name == "IES_ENKF":
         logger.error(
-            "** ERROR **: Can not combine iterable modules with multi step "
+            "** ERROR **: Can not combine IES_ENKF modules with multi step "
             "updates - sorry"
         )
         return False
@@ -54,7 +54,7 @@ def analysis_smoother_update(
         min(analysis_config.minimum_required_realizations, total_ens_size),
     ) or not config_is_correct(
         updatestep,
-        module.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE),
+        module.name(),
     ):
         return False
 

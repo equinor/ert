@@ -20,23 +20,16 @@ from cwrap import BaseCClass
 
 from res import ResPrototype
 
-from .enums import AnalysisModuleOptionsEnum
-
 
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc = ResPrototype(
-        "void* analysis_module_alloc(int, analysis_mode_enum)", bind=False
-    )
+    _alloc = ResPrototype("void* analysis_module_alloc(int, int)", bind=False)
     _free = ResPrototype("void analysis_module_free(analysis_module)")
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
     )
     _get_name = ResPrototype("char* analysis_module_get_name(analysis_module)")
-    _check_option = ResPrototype(
-        "bool analysis_module_check_option(analysis_module, analysis_module_options_enum)"  # noqa
-    )
     _has_var = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
     _get_double = ResPrototype(
         "double analysis_module_get_double(analysis_module, char*)"
@@ -82,10 +75,10 @@ class AnalysisModule(BaseCClass):
         },
     }
 
-    def __init__(self, ens_size, name):
-        c_ptr = self._alloc(ens_size, name)
+    def __init__(self, ens_size, type_id):
+        c_ptr = self._alloc(ens_size, type_id)
         if not c_ptr:
-            raise KeyError("Failed to load internal module:%s" % name)
+            raise KeyError("Failed to load internal module:%s" % type_id)
 
         super().__init__(c_ptr)
 
@@ -133,9 +126,6 @@ class AnalysisModule(BaseCClass):
 
     def name(self):
         return self._get_name()
-
-    def checkOption(self, flag: AnalysisModuleOptionsEnum):
-        return self._check_option(flag)
 
     def hasVar(self, var: str) -> bool:
         return self._has_var(var)

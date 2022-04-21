@@ -5,7 +5,6 @@ import logging
 from pandas import DataFrame
 
 from res.analysis.analysis_module import AnalysisModule
-from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
 from res.enkf.export import (
     GenDataCollector,
     SummaryCollector,
