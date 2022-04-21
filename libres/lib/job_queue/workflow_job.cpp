@@ -16,7 +16,6 @@
    for more details.
 */
 
-#include <dlfcn.h>
 #include <stdlib.h>
 
 #include <ert/util/int_vector.hpp>
@@ -93,7 +92,6 @@ std::unordered_map<std::string, workflow_job_ftype *>
 #define DEFAULT_INTERNAL false
 
 #define INTERNAL_KEY "INTERNAL"
-#define MODULE_KEY "MODULE"
 #define FUNCTION_KEY "FUNCTION"
 #define SCRIPT_KEY "SCRIPT"
 
@@ -110,7 +108,6 @@ struct workflow_job_struct {
         arg_types; // Should contain values from the config_item_types enum in config.h.
     char *executable;
     char *internal_script_path;
-    char *module;
     char *function;
     char *name;
     void *lib_handle;
@@ -161,9 +158,6 @@ config_parser_type *workflow_job_alloc_config() {
         item = config_add_schema_item(config, FUNCTION_KEY, false);
         config_schema_item_set_argc_minmax(item, 1, 1);
 
-        item = config_add_schema_item(config, MODULE_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-
         item = config_add_schema_item(config, INTERNAL_KEY, false);
         config_schema_item_set_argc_minmax(item, 1, 1);
         config_schema_item_iset_type(item, 0, CONFIG_BOOL);
@@ -204,7 +198,6 @@ workflow_job_type *workflow_job_alloc(const char *name, bool internal) {
 
     workflow_job->executable = NULL;
     workflow_job->internal_script_path = NULL;
-    workflow_job->module = NULL;
     workflow_job->function = NULL;
 
     if (name == NULL)
@@ -242,19 +235,6 @@ workflow_job_get_internal_script_path(const workflow_job_type *workflow_job) {
 
 bool workflow_job_is_internal_script(const workflow_job_type *workflow_job) {
     return workflow_job->internal && workflow_job->internal_script_path != NULL;
-}
-
-void workflow_job_set_module(workflow_job_type *workflow_job,
-                             const char *module) {
-    if (strcmp(module, NULL_STRING) == 0)
-        module = NULL;
-
-    workflow_job->module =
-        util_realloc_string_copy(workflow_job->module, module);
-}
-
-char *workflow_job_get_module(workflow_job_type *workflow_job) {
-    return workflow_job->module;
 }
 
 void workflow_job_set_function(workflow_job_type *workflow_job,
@@ -318,22 +298,9 @@ static void workflow_job_validate_internal(workflow_job_type *workflow_job) {
     }
 
     if (!workflow_job->internal_script_path && workflow_job->function) {
-        if (workflow_job->module) {
-            workflow_job->lib_handle = dlopen(workflow_job->module, RTLD_NOW);
-
-            if (!workflow_job->lib_handle) {
-                fprintf(stderr, "Failed to load symbol:%s Error:%s \n",
-                        workflow_job->function, dlerror());
-                return;
-            }
-
-            workflow_job->dl_func = (workflow_job_ftype *)dlsym(
-                workflow_job->lib_handle, workflow_job->function);
-        } else {
-            auto it = workflow_internal_functions.find(workflow_job->function);
-            if (it != workflow_internal_functions.cend()) {
-                workflow_job->dl_func = it->second;
-            }
+        auto it = workflow_internal_functions.find(workflow_job->function);
+        if (it != workflow_internal_functions.cend()) {
+            workflow_job->dl_func = it->second;
         }
 
         if (workflow_job->dl_func)
@@ -348,9 +315,7 @@ static void workflow_job_validate_internal(workflow_job_type *workflow_job) {
 
 static void workflow_job_validate_external(workflow_job_type *workflow_job) {
     if (workflow_job->executable != NULL) {
-        if (util_is_executable(workflow_job->executable) &&
-            (workflow_job->module == workflow_job->function) &&
-            (workflow_job->module == NULL))
+        if (util_is_executable(workflow_job->executable))
             workflow_job->valid = true;
     }
 }
@@ -402,13 +367,6 @@ workflow_job_type *workflow_job_config_alloc(const char *name,
                 }
             }
 
-            if (config_content_has_item(content, MODULE_KEY))
-                workflow_job_set_module(
-                    workflow_job,
-                    config_content_get_value(
-                        content,
-                        MODULE_KEY)); // Could be a pure so name; or a full path ..... Like executable
-
             if (config_content_has_item(content, FUNCTION_KEY))
                 workflow_job_set_function(
                     workflow_job,
@@ -438,7 +396,6 @@ workflow_job_type *workflow_job_config_alloc(const char *name,
 }
 
 void workflow_job_free(workflow_job_type *workflow_job) {
-    free(workflow_job->module);
     free(workflow_job->function);
     free(workflow_job->executable);
     int_vector_free(workflow_job->arg_types);
