@@ -44,6 +44,24 @@ def test_get_invalid_module(minimal_config):
         es_update.getModule("STD_ENKF_XXX")
 
 
+def test_update_report(setup_case, snapshot):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    fsm = ert.getEnkfFsManager()
+    sim_fs = fsm.getFileSystem("default_0")
+    target_fs = fsm.getFileSystem("target")
+    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    es_update.smootherUpdate(run_context)
+    log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
+    snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
+
+
 @pytest.mark.parametrize(
     "module, expected_gen_kw",
     [
