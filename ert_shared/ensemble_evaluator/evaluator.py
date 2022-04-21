@@ -20,9 +20,6 @@ from websockets.exceptions import ConnectionClosedError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
 from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
-from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_CANCELLED,
-)
 
 if sys.version_info < (3, 7):
     from async_generator import asynccontextmanager

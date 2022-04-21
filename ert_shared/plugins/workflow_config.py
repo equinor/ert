@@ -4,7 +4,7 @@ import tempfile
 import logging
 
 
-class WorkflowConfigs(object):
+class WorkflowConfigs:
     """
     Top level workflow config object, holds all workflow configs.
     """
@@ -39,7 +39,7 @@ class WorkflowConfigs(object):
         return configs
 
 
-class WorkflowConfig(object):
+class WorkflowConfig:
     """
     Single workflow configuration object
 

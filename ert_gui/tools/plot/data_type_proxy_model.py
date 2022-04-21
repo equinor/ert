@@ -16,9 +16,6 @@
 from qtpy.QtCore import Qt, QSortFilterProxyModel
 
 
-from ert_gui.tools.plot import DataTypeKeysListModel
-
-
 class DataTypeProxyModel(QSortFilterProxyModel):
     def __init__(self, parent, model):
         QSortFilterProxyModel.__init__(self, parent)

@@ -1,10 +1,7 @@
 from datetime import datetime
-from ert_shared.libres_facade import LibresFacade
 from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
-from fastapi.param_functions import Depends
 import graphene as gr
-from graphene.types.scalars import ID
 from ert_shared.dark_storage.common import (
     ensemble_parameters,
     ensemble_parameter_names,
@@ -15,7 +12,6 @@ from ert_shared.dark_storage.common import (
 
 from ert_shared.dark_storage.enkf import (
     get_id,
-    get_res,
     get_size,
     get_active_realizations,
 )

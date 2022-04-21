@@ -2,7 +2,7 @@ from qtpy.QtWidgets import QMenu
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.tools import Tool
-from ert_gui.tools.plugins import PluginHandler, PluginRunner
+from ert_gui.tools.plugins import PluginRunner
 
 
 class PluginsTool(Tool):
@@ -12,7 +12,7 @@ class PluginsTool(Tool):
         """
         enabled = len(plugin_handler) > 0
         self.notifier = notifier
-        super(PluginsTool, self).__init__(
+        super().__init__(
             "Plugins",
             "tools/plugins",
             resourceIcon("widgets.svg"),

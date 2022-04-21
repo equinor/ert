@@ -1,4 +1,3 @@
-import sys
 import logging
 from copy import deepcopy
 

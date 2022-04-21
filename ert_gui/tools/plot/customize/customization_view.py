@@ -8,7 +8,6 @@ from qtpy.QtWidgets import (
 )
 
 
-from ert_gui.plottery import PlotConfig
 from ert_gui.tools.plot import StyleChooser
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
@@ -159,7 +158,7 @@ class CustomizationView(QWidget):
         )
 
 
-class WidgetProperty(object):
+class WidgetProperty:
     def __get__(self, instance, owner):
         raise UserWarning("Property is invalid!")
 

@@ -13,8 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
-
 from qtpy.QtCore import QDir, Signal
 from qtpy.QtWidgets import (
     QFormLayout,

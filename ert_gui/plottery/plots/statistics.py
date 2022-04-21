@@ -8,7 +8,7 @@ from ert_gui.plottery.plots.history import plotHistory
 from ert_gui.plottery.plots.refcase import plotRefcase
 
 
-class StatisticsPlot(object):
+class StatisticsPlot:
     def __init__(self):
         self.dimensionality = 2
 

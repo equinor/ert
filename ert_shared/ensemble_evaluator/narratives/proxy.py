@@ -15,7 +15,7 @@ from ert_shared.ensemble_evaluator.narratives.narrative import (
 from ert_shared import port_handler
 
 
-class NarrativeProxy(object):
+class NarrativeProxy:
     def __init__(self, narrative: _Narrative):
         self.narrative = narrative
         self.currentInteraction = narrative.interactions.pop()

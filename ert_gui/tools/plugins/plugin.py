@@ -1,7 +1,7 @@
-from res.job_queue import ErtScript, ErtPlugin, WorkflowJob
+from res.job_queue import ErtScript
 
 
-class Plugin(object):
+class Plugin:
     def __init__(self, ert, workflow_job):
         """
         @type ert: res.enkf.EnKFMain

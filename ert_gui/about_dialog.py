@@ -13,17 +13,12 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
-
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QLabel
 from qtpy.QtGui import QFont
 
-import res
 import ecl
 import ert_gui
-
-from ert_gui.ertwidgets import resourceImage
 
 
 class AboutDialog(QDialog):

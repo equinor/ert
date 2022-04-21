@@ -1,8 +1,6 @@
 import ipaddress
 import logging
 
-from pydantic import BaseModel
-
 from ert_shared import port_handler
 import tempfile
 

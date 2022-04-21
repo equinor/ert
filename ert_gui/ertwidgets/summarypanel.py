@@ -13,9 +13,9 @@ from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 from res.enkf import EnKFMain
 
 
-class SummaryTemplate(object):
+class SummaryTemplate:
     def __init__(self, title):
-        super(SummaryTemplate, self).__init__()
+        super().__init__()
 
         self.text = ""
         self.__finished = False

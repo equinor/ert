@@ -18,10 +18,10 @@ class ProperNameArgument(ArgumentDefinition):
     PATTERN = re.compile(r"^[A-Za-z0-9_\-.<>]+$")
 
     def __init__(self, **kwargs):
-        super(ProperNameArgument, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def validate(self, token):
-        validation_status = super(ProperNameArgument, self).validate(token)
+        validation_status = super().validate(token)
 
         if not validation_status:
             return validation_status

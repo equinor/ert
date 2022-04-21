@@ -1,9 +1,9 @@
 import datetime
 
 
-class limit_property(object):
+class limit_property:
     def __init__(self, attribute_name, types, minimum=None, maximum=None):
-        super(limit_property, self).__init__()
+        super().__init__()
         self._types = types
         self._maximum = maximum
         self._minimum = minimum
@@ -34,9 +34,9 @@ class limit_property(object):
         setattr(instance, "_%s" % self._attribute_name, value)
 
 
-class limits_property(object):
+class limits_property:
     def __init__(self, minimum_attribute_name, maximum_attribute_name):
-        super(limits_property, self).__init__()
+        super().__init__()
         self._minimum_attribute_name = minimum_attribute_name
         self._maximum_attribute_name = maximum_attribute_name
 
@@ -50,7 +50,7 @@ class limits_property(object):
         setattr(instance, "_%s" % self._maximum_attribute_name, value[1])
 
 
-class PlotLimits(object):
+class PlotLimits:
     value_minimum = limit_property("value_minimum", (float, int))
     """ :type: float """
     value_maximum = limit_property("value_maximum", (float, int))

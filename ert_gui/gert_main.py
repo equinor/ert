@@ -41,8 +41,6 @@ from ert_shared.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
 
-import ecl
-
 
 def run_gui(args):
     app = QApplication([])  # Early so that QT is initialized before other imports

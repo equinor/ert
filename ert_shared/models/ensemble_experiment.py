@@ -3,7 +3,6 @@ from res.enkf.enums import HookRuntime
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 
 from ert_shared.models import BaseRunModel
-from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from typing import Dict, Any
 

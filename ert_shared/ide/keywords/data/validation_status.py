@@ -1,6 +1,6 @@
-class ValidationStatus(object):
+class ValidationStatus:
     def __init__(self):
-        super(ValidationStatus, self).__init__()
+        super().__init__()
         self.reset()
 
     def reset(self):

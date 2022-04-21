@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QAction
 
 
-class Tool(object):
+class Tool:
     def __init__(
         self,
         name,
@@ -11,7 +11,7 @@ class Tool(object):
         checkable=False,
         popup_menu=False,
     ):
-        super(Tool, self).__init__()
+        super().__init__()
         self.__icon = icon
         self.__name = name
         self.__parent = None

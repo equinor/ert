@@ -3,7 +3,7 @@ from scipy.stats import gaussian_kde
 from .plot_tools import PlotTools
 
 
-class GaussianKDEPlot(object):
+class GaussianKDEPlot:
     def __init__(self):
         self.dimensionality = 1
 

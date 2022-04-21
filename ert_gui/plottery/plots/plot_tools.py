@@ -1,7 +1,4 @@
-import pandas as pd
-
-
-class PlotTools(object):
+class PlotTools:
     @staticmethod
     def showGrid(axes, plot_context):
         config = plot_context.plotConfig()

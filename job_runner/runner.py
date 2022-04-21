@@ -1,4 +1,3 @@
-import json
 import os
 
 from job_runner.job import Job

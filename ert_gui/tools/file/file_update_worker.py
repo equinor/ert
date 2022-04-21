@@ -9,7 +9,7 @@ class FileUpdateWorker(QObject):
     read = Signal(str)
 
     def __init__(self, file, parent=None):
-        super(FileUpdateWorker, self).__init__(parent)
+        super().__init__(parent)
         self._file = file
         self._timer = None
 

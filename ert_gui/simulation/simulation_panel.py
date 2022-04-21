@@ -1,4 +1,3 @@
-import os
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtWidgets import (
     QComboBox,

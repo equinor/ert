@@ -4,7 +4,7 @@ from ert_gui.plottery.plots.history import plotHistory
 from ert_gui.plottery.plots.refcase import plotRefcase
 
 
-class EnsemblePlot(object):
+class EnsemblePlot:
     def __init__(self):
         self.dimensionality = 2
 

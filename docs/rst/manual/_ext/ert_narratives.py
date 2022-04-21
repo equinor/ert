@@ -1,7 +1,6 @@
 import json
 import logging
 import sys
-import warnings
 from docutils import nodes, statemachine
 from docutils.parsers.rst import Directive
 from os.path import basename

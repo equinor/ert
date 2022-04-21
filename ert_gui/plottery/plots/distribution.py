@@ -2,7 +2,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class DistributionPlot(object):
+class DistributionPlot:
     def __init__(self):
         self.dimensionality = 1
 

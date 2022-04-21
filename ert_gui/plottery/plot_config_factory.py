@@ -1,7 +1,7 @@
 from ert_gui.plottery import PlotConfig
 
 
-class PlotConfigFactory(object):
+class PlotConfigFactory:
     @classmethod
     def createPlotConfigForKey(cls, key_def):
         """

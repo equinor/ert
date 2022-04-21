@@ -23,7 +23,6 @@ from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.run_analysis import RunAnalysisPanel
-import ert_shared
 
 
 def analyse(ert, target, source):
@@ -45,7 +44,7 @@ class RunAnalysisTool(Tool):
     def __init__(self, ert, notifier):
         self.ert = ert
         self.notifier = notifier
-        super(RunAnalysisTool, self).__init__(
+        super().__init__(
             "Run analysis", "tools/run_analysis", resourceIcon("formula.svg")
         )
         self._run_widget = None

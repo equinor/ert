@@ -1,12 +1,12 @@
 from ert_gui.plottery import PlotConfig
 
 
-class PlotConfigHistory(object):
+class PlotConfigHistory:
     """A Class for tracking changes to a PlotConfig class (supports undo, redo
     and reset)"""
 
     def __init__(self, name, initial):
-        super(PlotConfigHistory, self).__init__()
+        super().__init__()
         self._name = name
         self._initial = PlotConfig.createCopy(initial)
         self._undo_history = []
