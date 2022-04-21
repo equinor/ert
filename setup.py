@@ -108,7 +108,6 @@ setup(
         "websockets >= 9.0.1",
         "httpx",
     ],
-    setup_requires=["setuptools_scm"],
     entry_points={
         "console_scripts": [
             "ert3=ert3.console:main",
