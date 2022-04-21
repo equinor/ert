@@ -8,23 +8,21 @@ from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilatio
 from ert_shared.models.single_test_run import SingleTestRun
 
 
-def create_model(ert, get_analysis_modules, ensemble_size, current_case_name, args):
+def create_model(ert, ensemble_size, current_case_name, args):
     # Setup model
     if args.mode == "test_run":
         model = _setup_single_test_run(ert)
     elif args.mode == "ensemble_experiment":
         model = _setup_ensemble_experiment(ert, args, ensemble_size)
     elif args.mode == "ensemble_smoother":
-        model = _setup_ensemble_smoother(
-            ert, get_analysis_modules, args, ensemble_size, current_case_name
-        )
+        model = _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name)
     elif args.mode == "es_mda":
         model = _setup_multiple_data_assimilation(
-            ert, get_analysis_modules, args, ensemble_size, current_case_name
+            ert, args, ensemble_size, current_case_name
         )
     elif args.mode == "iterative_ensemble_smoother":
         model = _setup_iterative_ensemble_smoother(
-            ert, get_analysis_modules, args, ensemble_size, current_case_name
+            ert, args, ensemble_size, current_case_name
         )
 
     else:
@@ -48,39 +46,25 @@ def _setup_ensemble_experiment(ert, args, ensemble_size):
     return model
 
 
-def _setup_ensemble_smoother(
-    ert, get_analysis_modules, args, ensemble_size, current_case_name
-):
-    iterable = False
-    modules = get_analysis_modules(iterable=iterable)
-    active_name = ert.analysisConfig().activeModuleName()
+def _setup_ensemble_smoother(ert, args, ensemble_size, current_case_name):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
             ert, args, current_case_name, format_mode=False
         ),
-        "analysis_module": _get_analysis_module_name(
-            active_name, modules, iterable=iterable
-        ),
+        "analysis_module": "STD_ENKF",
     }
     model = EnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
     return model
 
 
-def _setup_multiple_data_assimilation(
-    ert, get_analysis_modules, args, ensemble_size, current_case_name
-):
-    iterable = False
-    active_name = ert.analysisConfig().activeModuleName()
-    modules = get_analysis_modules(iterable=iterable)
+def _setup_multiple_data_assimilation(ert, args, ensemble_size, current_case_name):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
             ert, args, current_case_name, format_mode=True
         ),
-        "analysis_module": _get_analysis_module_name(
-            active_name, modules, iterable=iterable
-        ),
+        "analysis_module": "STD_ENKF",
         "weights": args.weights,
         "start_iteration": int(args.start_iteration),
     }
@@ -88,38 +72,17 @@ def _setup_multiple_data_assimilation(
     return model
 
 
-def _setup_iterative_ensemble_smoother(
-    ert, get_analysis_modules, args, ensemble_size, current_case_name
-):
-    iterable = True
-    active_name = ert.analysisConfig().activeModuleName()
-    modules = get_analysis_modules(iterable=iterable)
+def _setup_iterative_ensemble_smoother(ert, args, ensemble_size, current_case_name):
     simulations_argument = {
         "active_realizations": _realizations(args, ensemble_size),
         "target_case": _target_case_name(
             ert, args, current_case_name, format_mode=True
         ),
-        "analysis_module": _get_analysis_module_name(
-            active_name, modules, iterable=iterable
-        ),
+        "analysis_module": "IES_ENKF",
         "num_iterations": _num_iterations(ert, args),
     }
     model = IteratedEnsembleSmoother(simulations_argument, ert, ert.get_queue_config())
     return model
-
-
-def _get_analysis_module_name(active_name, modules, iterable):
-
-    if active_name in modules:
-        return active_name
-    elif "STD_ENKF" in modules and not iterable:
-        return "STD_ENKF"
-    elif "LIB_IES" in modules and iterable:
-        return "LIB_IES"
-    elif len(modules) > 0:
-        return modules[0]
-
-    return None
 
 
 def _realizations(args, ensemble_size: int) -> List[bool]:

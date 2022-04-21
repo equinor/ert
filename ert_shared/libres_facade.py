@@ -25,30 +25,11 @@ class LibresFacade:
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
 
-    def get_analysis_module_names(self, iterable=False):
-        modules = self.get_analysis_modules(iterable)
-        return [module.getName() for module in modules]
-
     def get_analysis_config(self):
         return self._enkf_main.analysisConfig()
 
     def get_analysis_module(self, module_name: str) -> AnalysisModule:
         return self._enkf_main.analysisConfig().getModule(module_name)
-
-    def get_analysis_modules(self, iterable=False):
-        module_names = self._enkf_main.analysisConfig().getModuleList()
-
-        modules = []
-        for module_name in module_names:
-            module = self._enkf_main.analysisConfig().getModule(module_name)
-            module_is_iterable = module.checkOption(
-                AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE
-            )
-
-            if iterable == module_is_iterable:
-                modules.append(module)
-
-        return sorted(modules, key=AnalysisModule.getName)
 
     def get_ensemble_size(self):
         return self._enkf_main.getEnsembleSize()

@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertnotifier import ErtNotifier
-from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
+from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import (
@@ -17,6 +17,8 @@ from res.enkf import EnKFMain
 
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
+    analysis_module_name = "STD_ENKF"
+
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__(EnsembleSmoother)
         self.ert = ert
@@ -43,12 +45,12 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._target_case_field.setValidator(ProperNameArgument())
         layout.addRow("Target case:", self._target_case_field)
 
-        self._analysis_module_selector = AnalysisModuleSelector(
+        self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            iterable=False,
+            module_name=EnsembleSmootherPanel.analysis_module_name,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
@@ -81,7 +83,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         arguments = {
             "active_realizations": self._active_realizations_field.model.getActiveRealizationsMask(),  # noqa
             "target_case": self._target_case_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),  # noqa
+            "analysis_module": EnsembleSmootherPanel.analysis_module_name,  # noqa
         }
         return arguments
 

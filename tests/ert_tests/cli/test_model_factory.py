@@ -118,7 +118,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_ensemble_smoother(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -144,7 +143,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_multiple_data_assimilation(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -173,7 +171,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_iterative_ensemble_smoother(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -186,55 +183,3 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue("num_iterations" in model._simulation_arguments)
             self.assertTrue(facade.get_number_of_iterations() == 10)
             model.create_context(0)
-
-    def test_analysis_module_name_iterable(self):
-
-        active_name = "STD_ENKF"
-        modules = ["LIB_IES"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "LIB_IES")
-
-    def test_analysis_module_name_not_iterable(self):
-
-        active_name = "STD_ENKF"
-        modules = [
-            "STD_ENKF",
-        ]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "STD_ENKF")
-
-    def test_analysis_module_name_in_module(self):
-
-        active_name = "STD_ENKF"
-        modules = ["STD_ENKF"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "STD_ENKF")
-
-    def test_analysis_module_items_in_module(self):
-
-        active_name = "FOO"
-        modules = ["BAR"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "BAR")
-
-    def test_analysis_module_no_hit(self):
-
-        active_name = "FOO"
-        modules = []
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertIsNone(name)
