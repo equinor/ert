@@ -31,7 +31,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
-        
+
     - name: Install Conan
       run: |
         python3 -m pip install conan
@@ -185,6 +185,12 @@ jobs:
         pushd tests
         pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
 
+    - name: Test for a clean repository
+      run: |
+        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
+        git status --porcelain | sed '/ert.*.whl$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
+
     - name: Test CLI
       run: |
         ert --help
@@ -279,6 +285,8 @@ jobs:
         # Run tests
         pushd tests
         pytest libres_tests --durations=0
+        git status --porcelain | sed '/ert.*.whl$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
 
 
   publish:
