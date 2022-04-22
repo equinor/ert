@@ -335,9 +335,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
 
                 return true;
             } else {
-                logger->error("Could not load ECLIPSE summary data from: {}/{}",
-                              run_arg_get_runpath(run_arg),
-                              run_arg_get_job_name(run_arg));
+                logger->error(
+                    "Could not load ECLIPSE summary data from: {}/{}.UNSMRY",
+                    run_arg_get_runpath(run_arg),
+                    run_arg_get_job_name(run_arg));
                 return false;
             }
         }
