@@ -591,7 +591,7 @@ def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
 
 def _run_update(ert: LibresFacade, run_context: ErtRunContext):
     es_update = ert._enkf_main.getESUpdate()
-    assert es_update.smootherUpdate(run_context)
+    es_update.smootherUpdate(run_context)
 
 
 def _get_parameters() -> pd.DataFrame:

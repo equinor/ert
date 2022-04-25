@@ -57,7 +57,7 @@ from .ert_run_context import ErtRunContext
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .ert_workflow_list import ErtWorkflowList
-from .es_update import ESUpdate
+from .es_update import ESUpdate, ErtAnalysisError
 from .forward_load_context import ForwardLoadContext
 from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
@@ -158,6 +158,7 @@ __all__ = [
     "LogConfig",
     "ResConfig",
     "ESUpdate",
+    "ErtAnalysisError",
     "RunArg",
     "EnKFState",
     "ErtRunContext",

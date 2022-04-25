@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import HookRuntime, RealizationStateEnum
 from res.enkf.enkf_main import EnKFMain, QueueConfig
@@ -70,16 +70,18 @@ class IteratedEnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
         es_update = self.ert().getESUpdate()
 
-        success = es_update.smootherUpdate(run_context)
+        try:
+            es_update.smootherUpdate(run_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                f"Analysis of simulation failed with the follwing error: {e}"
+            ) from e
 
         # Push update data to new storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
         update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
-
-        if not success:
-            raise ErtRunError("Analysis of simulation failed!")
 
         self.setPhaseName("Post processing update...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())

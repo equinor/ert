@@ -4,7 +4,15 @@ import sys
 
 import pytest
 
-from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain, ResConfig
+from res.enkf import (
+    EnkfNode,
+    ErtRunContext,
+    ESUpdate,
+    NodeId,
+    EnKFMain,
+    ResConfig,
+    ErtAnalysisError,
+)
 
 
 @pytest.fixture()
@@ -295,7 +303,12 @@ def test_localization(setup_case, expected_target_gen_kw):
 @pytest.mark.parametrize(
     "alpha, expected",
     [
-        pytest.param(0.1, [], id="Low alpha, no active observations"),
+        pytest.param(
+            0.1,
+            [],
+            id="Low alpha, no active observations",
+            marks=pytest.mark.xfail(raises=ErtAnalysisError),
+        ),
         (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
         (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
         (3, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),

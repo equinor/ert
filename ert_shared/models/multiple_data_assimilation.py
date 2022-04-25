@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from typing import List, Tuple, Dict, Any
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.enkf_main import EnKFMain, QueueConfig
@@ -127,18 +127,19 @@ class MultipleDataAssimilation(BaseRunModel):
 
         es_update = self.ert().getESUpdate()
         es_update.setGlobalStdScaling(weight)
-        success = es_update.smootherUpdate(run_context)
-
+        try:
+            es_update.smootherUpdate(run_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                "Analysis of simulation failed for iteration:"
+                f"{next_iteration}. The following error occured {e}"
+            ) from e
         # Push update data to new storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
         update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
 
-        if not success:
-            raise UserWarning(
-                "Analysis of simulation failed for iteration: %d!" % next_iteration
-            )
         return update_id
 
     def _simulateAndPostProcess(

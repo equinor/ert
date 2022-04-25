@@ -47,7 +47,7 @@ def check_expression(original, path_expression, expected, msg_start):
 @pytest.mark.parametrize(
     (
         "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,assert_present_in_snapshot"
+        "num_successful,num_iters,progress,assert_present_in_snapshot"
     ),
     [
         pytest.param(
@@ -61,6 +61,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             0,
             1,
+            1.0,
             [
                 (".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FAILURE),
                 (
@@ -82,6 +83,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             1,
+            1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
             id="ee_poly_experiment",
         ),
@@ -98,6 +100,7 @@ def check_expression(original, path_expression, expected, msg_start):
             ],
             2,
             2,
+            1.0,
             [(".*", "reals.*.steps.*.jobs.*.status", JOB_STATE_FINISHED)],
             id="ee_poly_smoother",
         ),
@@ -113,7 +116,9 @@ def check_expression(original, path_expression, expected, msg_start):
                 "poly_example/poly.ert",
             ],
             1,
-            2,
+            1,
+            # Fails halfway, due to unable to run update
+            0.5,
             [
                 ("0", "reals.'0'.steps.*.jobs.'0'.status", JOB_STATE_FAILURE),
                 ("0", "reals.'0'.steps.*.jobs.'1'.status", JOB_STATE_START),
@@ -129,6 +134,7 @@ def test_tracking(
     cmd_line_arguments,
     num_successful,
     num_iters,
+    progress,
     assert_present_in_snapshot,
     tmpdir,
     source_root,
@@ -200,7 +206,7 @@ def test_tracking(
             if isinstance(event, EndEvent):
                 pass
 
-        assert tracker._progress() == 1.0
+        assert tracker._progress() == progress
 
         assert len(snapshots) == num_iters
         for iter_, snapshot in snapshots.items():
