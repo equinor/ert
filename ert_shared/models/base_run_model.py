@@ -1,6 +1,9 @@
+import logging
+from contextlib import contextmanager
+
 import time
 import uuid
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, List, Union, Dict, Any, Iterator
 import asyncio
 
 from res.enkf import EnKFMain, QueueConfig
@@ -12,7 +15,6 @@ from res.job_queue import (
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.feature_toggling import feature_enabled
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.storage.extraction import (
     post_ensemble_data,
@@ -26,6 +28,29 @@ from ert.ensemble_evaluator import (
 
 class ErtRunError(Exception):
     pass
+
+
+class _LogAggregration(logging.Handler):
+    """Logging handler which aggregates the log messages"""
+
+    def __init__(self) -> None:
+        self.messages: List[str] = []
+        super().__init__()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.messages.append(record.getMessage())
+
+
+@contextmanager
+def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
+    handler = _LogAggregration()
+    root_logger = logging.getLogger()
+    handler.setLevel(level)
+    root_logger.addHandler(handler)
+    try:
+        yield handler
+    finally:
+        root_logger.removeHandler(handler)
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -130,24 +155,25 @@ class BaseRunModel:
 
     def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         try:
-            self._initial_realizations_mask = self._simulation_arguments[
-                "active_realizations"
-            ]
-            run_context = self.runSimulations(
-                evaluator_server_config=evaluator_server_config,
-            )
-            self._completed_realizations_mask = run_context.get_mask()
+            with captured_logs() as logs:
+                self._initial_realizations_mask = self._simulation_arguments[
+                    "active_realizations"
+                ]
+                run_context = self.runSimulations(
+                    evaluator_server_config=evaluator_server_config,
+                )
+                self._completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
         except UserWarning as e:
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
         except Exception as e:
             self._failed = True
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
             raise
 
