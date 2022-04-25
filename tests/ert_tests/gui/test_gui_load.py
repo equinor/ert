@@ -135,7 +135,7 @@ def test_gui_full(monkeypatch, tmpdir, qapp):
 def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     # won't run simulations so we mock it and test whether "iter_num" is in arguments
     def _assert_iter_in_args(panel):
-        assert "iter_num" in panel.getSimulationArguments()
+        assert panel.getSimulationArguments().iter_num == 10
 
     args_mock = Mock()
     type(args_mock).config = PropertyMock(return_value="config.ert")
@@ -165,4 +165,4 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
 
     start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
-    assert sim_panel.getSimulationArguments()["iter_num"] == 10
+    assert sim_panel.getSimulationArguments().iter_num == 10

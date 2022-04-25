@@ -37,6 +37,18 @@ from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
 from ert_shared.libres_facade import LibresFacade
 
+from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_case: str
+    realizations: str
+    weights: List[float]
+    start_iteration: int
+
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
     analysis_module_name = "STD_ENKF"
@@ -152,14 +164,13 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self):
-        arguments = {
-            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
-            "target_case": self._target_case_format_model.getValue(),
-            "analysis_module": MultipleDataAssimilationPanel.analysis_module_name,  # noqa
-            "weights": self.weights,
-            "start_iteration": int(self._iter_field.model.getValue()),
-        }
-        return arguments
+        return Arguments(
+            mode="es_mda",
+            target_case=self._target_case_format_model.getValue(),
+            realizations=self._active_realizations_field.text(),
+            weights=self.weights,
+            start_iteration=int(self._iter_field.model.getValue()),
+        )
 
     def setWeights(self, weights):
         str_weights = str(weights)

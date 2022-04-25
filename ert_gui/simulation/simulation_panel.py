@@ -25,6 +25,7 @@ from collections import OrderedDict
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain
+from ert_shared.cli.model_factory import create_model
 
 
 class SimulationPanel(QWidget):
@@ -126,11 +127,16 @@ class SimulationPanel(QWidget):
         )
 
         if start_simulations == QMessageBox.Yes:
-            run_model = self.getCurrentSimulationModel()
+
             arguments = self.getSimulationArguments()
             dialog = RunDialog(
                 self._config_file,
-                run_model(arguments, self.ert, self.ert.get_queue_config()),
+                create_model(
+                    self.ert,
+                    self.facade.get_ensemble_size(),
+                    self.facade.get_current_case_name(),
+                    arguments,
+                ),
             )
             dialog.startSimulation()
             dialog.exec_()
