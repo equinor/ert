@@ -148,7 +148,7 @@ class _VariablesConfig(_ParametersConfig):
             return variables
 
         raise ValueError(
-            "Parameter group cannot have empty variable list.\n"
+            "A parameter cannot have an empty variable list.\n"
             "Avoid specifying variables to get scalars."
         )
 
@@ -189,15 +189,15 @@ class _ParameterConfig(_ParametersConfig):
     @root_validator
     def _ensure_variables_or_size(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         if values.get("variables") and values.get("size"):
-            raise ValueError("Parameter group cannot have both variables and size")
+            raise ValueError("Parameters cannot have both variables and size")
         return values
 
     @validator("name")
-    def _ensure_valid_group_name(cls, value: Any) -> str:
+    def _ensure_valid_parameter_name(cls, value: Any) -> str:
         return _ensure_valid_name(value)
 
     @validator("size")
-    def _ensure_valid_group_size(cls, value: Any) -> Optional[int]:
+    def _ensure_valid_parameter_size(cls, value: Any) -> Optional[int]:
         return _ensure_valid_size(value)
 
     def as_distribution(self) -> ert3.stats.Distribution:
@@ -269,10 +269,10 @@ class ParametersConfig(_ParametersConfig):
         if isinstance(item, int):
             return self.__root__[item]
         elif isinstance(item, str):
-            for group in self:
-                if group.name == item:
-                    return group
-            raise ValueError(f"No parameter group found named: {item}")
+            for param in self:
+                if param.name == item:
+                    return param
+            raise ValueError(f"No parameter found named: {item}")
         raise TypeError(f"Item should be int or str, not {type(item)}")
 
     def __len__(self) -> int:

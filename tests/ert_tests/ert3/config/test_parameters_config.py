@@ -42,7 +42,7 @@ def test_valid_gauss(mean, std):
 def test_valid_gauss_variables():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_coordinate",
             "type": "stochastic",
             "distribution": {
                 "type": "gaussian",
@@ -68,7 +68,7 @@ def test_valid_gauss_variables():
 def test_valid_gauss_size():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_list_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "gaussian",
@@ -85,7 +85,7 @@ def test_valid_gauss_size():
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_list_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "gaussian"
     assert param.distribution.input.mean == 0
@@ -112,7 +112,7 @@ def test_valid_gauss_size():
 def test_invalid_gauss(input_):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "gaussian",
@@ -131,7 +131,7 @@ def test_invalid_gauss(input_):
 def test_valid_uniform(lower_bound, upper_bound):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -146,7 +146,7 @@ def test_valid_uniform(lower_bound, upper_bound):
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "uniform"
     assert param.distribution.input.lower_bound == lower_bound
@@ -161,7 +161,7 @@ def test_valid_uniform(lower_bound, upper_bound):
 def test_valid_uniform_variables():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_coordinate",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -183,7 +183,7 @@ def test_valid_uniform_variables():
 def test_valid_uniform_size():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_list_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -199,7 +199,7 @@ def test_valid_uniform_size():
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_list_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "uniform"
     assert param.distribution.input.lower_bound == 0
@@ -226,7 +226,7 @@ def test_valid_uniform_size():
 def test_invalid_uniform(input_):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -245,7 +245,7 @@ def test_invalid_uniform(input_):
 def test_valid_loguniform(lower_bound, upper_bound):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_coordinate",
             "type": "stochastic",
             "distribution": {
                 "type": "loguniform",
@@ -261,7 +261,7 @@ def test_valid_loguniform(lower_bound, upper_bound):
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_coordinate"
     assert param.type == "stochastic"
     assert param.distribution.type == "loguniform"
     assert param.distribution.input.lower_bound == lower_bound
@@ -278,7 +278,7 @@ def test_valid_loguniform(lower_bound, upper_bound):
 def test_valid_loguniform_size():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_list_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "loguniform",
@@ -294,7 +294,7 @@ def test_valid_loguniform_size():
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_list_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "loguniform"
     assert param.distribution.input.lower_bound == 0.1
@@ -323,7 +323,7 @@ def test_valid_loguniform_size():
 def test_invalid_loguniform(input_):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_coordinate",
             "type": "stochastic",
             "distribution": {
                 "type": "loguniform",
@@ -349,7 +349,7 @@ def test_invalid_loguniform(input_):
 def test_valid_discrete(values):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "discrete",
@@ -362,7 +362,7 @@ def test_valid_discrete(values):
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "discrete"
     assert param.distribution.input.values == values
@@ -383,7 +383,7 @@ def test_valid_discrete(values):
 def test_invalid_discrete(input_):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "discrete",
@@ -408,7 +408,7 @@ def test_invalid_discrete(input_):
 def test_valid_constant(value):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "constant",
@@ -423,7 +423,7 @@ def test_valid_constant(value):
     assert len(parameters_config) == 1
     param = parameters_config[0]
 
-    assert param.name == "my_parameter_group"
+    assert param.name == "my_parameter"
     assert param.type == "stochastic"
     assert param.distribution.type == "constant"
     assert param.distribution.input.value == value
@@ -443,7 +443,7 @@ def test_valid_constant(value):
 def test_invalid_constant(input_):
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "constant",
@@ -571,7 +571,7 @@ def test_empty_variables():
     ]
 
     err_msg = (
-        "Parameter group cannot have empty variable list.\n"
+        "A parameter cannot have an empty variable list.\n"
         "Avoid specifying variables to get scalars. "
     )
     with pytest.raises(ert.exceptions.ConfigValidationError, match=err_msg):
@@ -605,7 +605,7 @@ def test_invalid_size(size):
 
 @pytest.mark.parametrize(
     ("variables", "size", "err_msg"),
-    ((["x", "y", "z"], 3, "Parameter group cannot have both variables and size"),),
+    ((["x", "y", "z"], 3, "Parameters cannot have both variables and size"),),
 )
 def test_duplicate_variables_size(variables, size, err_msg):
     raw_config = [
@@ -631,7 +631,7 @@ def test_duplicate_variables_size(variables, size, err_msg):
 def test_invalid_type():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "unknown_type",
             "distribution": {
                 "type": "uniform",
@@ -650,7 +650,7 @@ def test_invalid_type():
 def test_invalid_distribution():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "unknown_distribution",
@@ -669,7 +669,7 @@ def test_invalid_distribution():
 def test_unknown_keyword():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -691,7 +691,7 @@ def test_unknown_keyword():
 def test_immutable_name():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -711,7 +711,7 @@ def test_immutable_name():
 def test_immutable_distribution():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -734,7 +734,7 @@ def test_immutable_distribution():
 def test_immutable_variables():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_coordinate",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -755,7 +755,7 @@ def test_immutable_variables():
 def test_immutable_size():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_list_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -776,7 +776,7 @@ def test_immutable_size():
 def test_immutable_parameters():
     raw_config = [
         {
-            "name": "my_parameter_group",
+            "name": "my_parameter",
             "type": "stochastic",
             "distribution": {
                 "type": "uniform",
@@ -795,7 +795,7 @@ def test_immutable_parameters():
         parameters_config[0] = extra_parameter_config
 
 
-def test_multi_parameter_group():
+def test_multi_parameter():
     raw_config = [
         {
             "name": "name" * (idx + 1),

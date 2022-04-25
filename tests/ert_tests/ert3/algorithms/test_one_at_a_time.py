@@ -158,7 +158,7 @@ def test_uni_and_norm():
                 assert e == pytest.approx(r)
 
 
-def test_multi_parameter_groups():
+def test_multi_parameters():
     records = {}
 
     size = 10

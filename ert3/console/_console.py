@@ -110,7 +110,7 @@ def _build_record_argparser(subparsers: Any) -> None:
         "sample", help="Sample stochastic parameter into a record"
     )
     sample_parser.add_argument(
-        "parameter_group", help="Name of the distribution group in parameters.yml"
+        "parameter", help="Name of the parameter in parameters.yml"
     )
     sample_parser.add_argument("record_name", help="Name of the resulting record")
     sample_parser.add_argument(
@@ -357,7 +357,7 @@ def _record(workspace: Workspace, args: Any) -> None:
         parameters_config = workspace.load_parameters_config()
         collection = ert3.engine.sample_record(
             parameters_config,
-            args.parameter_group,
+            args.parameter,
             args.ensemble_size,
         )
         future = ert.storage.transmit_record_collection(
