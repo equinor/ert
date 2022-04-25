@@ -1,7 +1,7 @@
 from typing import Optional
 
 from res.enkf.enums import HookRuntime, RealizationStateEnum
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 
 from ert_shared.models import BaseRunModel, ErtRunError
@@ -61,9 +61,13 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
         es_update = self.ert().getESUpdate()
-        success = es_update.smootherUpdate(prior_context)
-        if not success:
-            raise ErtRunError("Analysis of simulation failed!")
+        try:
+            es_update.smootherUpdate(prior_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                f"Analysis of simulation failed with the follwing error: {e}"
+            ) from e
+
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
 
         # Create an update object in storage

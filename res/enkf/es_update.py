@@ -1,5 +1,4 @@
 import logging
-from typing_extensions import Literal
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any
@@ -14,28 +13,6 @@ logger = logging.getLogger(__name__)
 
 class ErtAnalysisError(Exception):
     pass
-
-
-def size_is_big_enough(active_ens_size, required_ens_size):
-    if active_ens_size < required_ens_size:
-        logger.error(
-            "** ERROR **: There are %d active realisations left, which is "
-            "less than the minimum specified - stopping assimilation.",
-            active_ens_size,
-        )
-        return False
-    return True
-
-
-def config_is_correct(updatestep, module_name: Literal["IES_ENKF", "STD_ENKF"]):
-    # exit if multi step update with iterable modules
-    if len(updatestep) > 1 and module_name == "IES_ENKF":
-        logger.error(
-            "** ERROR **: Can not combine IES_ENKF modules with multi step "
-            "updates - sorry"
-        )
-        return False
-    return True
 
 
 @dataclass
@@ -77,14 +54,17 @@ def analysis_smoother_update(
         analysis_config.getStdCutoff(),
     )
 
-    if not size_is_big_enough(
-        len(iens_active_index),
-        min(analysis_config.minimum_required_realizations, total_ens_size),
-    ) or not config_is_correct(
-        updatestep,
-        module.name(),
+    if len(iens_active_index) < min(
+        analysis_config.minimum_required_realizations, total_ens_size
     ):
-        return False, smoother_snapshot
+        raise ErtAnalysisError(
+            f"There are {iens_active_index} active realisations left, which is "
+            "less than the minimum specified - stopping assimilation.",
+        )
+    if len(updatestep) > 1 and module.name() == "IES_ENKF":
+        raise ErtAnalysisError(
+            "Can not combine IES_ENKF modules with multi step updates"
+        )
 
     _lib.update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
 
@@ -133,13 +113,13 @@ def analysis_smoother_update(
             )
 
         else:
-            logger.error(
-                "No active observations/parameters for MINISTEP: %s.", ministep.name()
+            raise ErtAnalysisError(
+                f"No active observations/parameters for MINISTEP: {ministep.name()}."
             )
     _write_update_report(
         Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
     )
-    return True, smoother_snapshot
+    return smoother_snapshot
 
 
 def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
@@ -213,7 +193,7 @@ class ESUpdate:
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
-        success, update_snapshot = analysis_smoother_update(
+        update_snapshot = analysis_smoother_update(
             updatestep,
             total_ens_size,
             obs,
@@ -224,4 +204,3 @@ class ESUpdate:
             target_fs,
         )
         self.ert.update_snapshots[run_context.get_id()] = update_snapshot
-        return success
