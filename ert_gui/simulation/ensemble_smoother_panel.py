@@ -15,6 +15,15 @@ from ert_shared.libres_facade import LibresFacade
 from ert_shared.models import EnsembleSmoother
 from res.enkf import EnKFMain
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_case: str
+    realizations: str
+
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
     analysis_module_name = "STD_ENKF"
@@ -80,11 +89,11 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self):
-        arguments = {
-            "active_realizations": self._active_realizations_field.model.getActiveRealizationsMask(),  # noqa
-            "target_case": self._target_case_model.getValue(),
-            "analysis_module": EnsembleSmootherPanel.analysis_module_name,  # noqa
-        }
+        arguments = Arguments(
+            mode="ensemble_smoother",
+            target_case=self._target_case_model.getValue(),
+            realizations=self._active_realizations_field.text(),
+        )
         return arguments
 
     def _realizations_from_fs(self):

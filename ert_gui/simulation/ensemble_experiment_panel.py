@@ -15,6 +15,15 @@ from res.enkf import EnKFMain
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_shared.models import EnsembleExperiment
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+    realizations: str
+    iter_num: int
+
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
@@ -71,13 +80,11 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         return self._active_realizations_field.isValid() and self._iter_field.isValid()
 
     def getSimulationArguments(self):
-        active_realizations_mask = (
-            self._active_realizations_field.model.getActiveRealizationsMask()
+        return Arguments(
+            mode="ensemble_experiment",
+            iter_num=int(self._iter_field.text()),
+            realizations=self._active_realizations_field.text(),
         )
-        return {
-            "active_realizations": active_realizations_mask,
-            "iter_num": int(self._iter_field.model.getValue()),
-        }
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())

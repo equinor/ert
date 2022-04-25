@@ -13,6 +13,16 @@ from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import IteratedEnsembleSmoother
 from ert_shared.libres_facade import LibresFacade
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_case: str
+    realizations: str
+    num_iterations: int
+
 
 class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
     analysis_module_name = "IES_ENKF"
@@ -41,16 +51,16 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
 
         # The num_iterations_spinner does not track any external changes (will
         # that ever happen?)
-        num_iterations_spinner = QSpinBox()
-        num_iterations_spinner.setMinimum(1)
-        num_iterations_spinner.setMaximum(100)
-        num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
+        self._num_iterations_spinner = QSpinBox()
+        self._num_iterations_spinner.setMinimum(1)
+        self._num_iterations_spinner.setMaximum(100)
+        self._num_iterations_spinner.setValue(self.facade.get_number_of_iterations())
         addHelpToWidget(
-            num_iterations_spinner, "config/simulation/number_of_iterations"
+            self._num_iterations_spinner, "config/simulation/number_of_iterations"
         )
-        num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
+        self._num_iterations_spinner.valueChanged[int].connect(self.setNumberIterations)
 
-        layout.addRow("Number of iterations:", num_iterations_spinner)
+        layout.addRow("Number of iterations:", self._num_iterations_spinner)
 
         self._iterated_target_case_format_model = TargetCaseModel(
             self.facade, notifier, format_mode=True
@@ -101,9 +111,9 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self):
-        arguments = {
-            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),  # noqa
-            "target_case": self._iterated_target_case_format_model.getValue(),
-            "analysis_module": IteratedEnsembleSmootherPanel.analysis_module_name,  # noqa
-        }
-        return arguments
+        return Arguments(
+            mode="iterative_ensemble_smoother",
+            target_case=self._iterated_target_case_format_model.getValue(),
+            realizations=self._active_realizations_field.text(),
+            num_iterations=self._num_iterations_spinner.value(),
+        )

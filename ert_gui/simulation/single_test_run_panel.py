@@ -8,6 +8,13 @@ from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 
 from ert_shared.libres_facade import LibresFacade
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+
 
 class SingleTestRunPanel(SimulationConfigPanel):
     def __init__(self, ert, notifier):
@@ -31,5 +38,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def getSimulationArguments(self):
-
-        return {"active_realizations": [True]}
+        return Arguments("test_run")
