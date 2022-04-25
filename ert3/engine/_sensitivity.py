@@ -75,8 +75,8 @@ def _load_sensitivity_parameters(
 
     sensitivity_parameters = {}
     for input_ in stochastic_inputs:
-        group_name = input_.source_location
-        sensitivity_parameters[input_.name] = all_distributions[group_name]
+        parameter_name = input_.source_location
+        sensitivity_parameters[input_.name] = all_distributions[parameter_name]
     return sensitivity_parameters
 
 

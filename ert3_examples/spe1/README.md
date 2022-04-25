@@ -15,9 +15,9 @@ that highlights the features of ert3 in a reservoir context.
 
 #### Parameters
 The available parameterizations of the model resides within
-[parameters.yml](parameters.yml). In general a parameter group is given a name,
-which can be referenced later in experiments, a distribution (`uniform` or
-`gauss`) and a list of variables that are drawn from the distribution.
+[parameters.yml](parameters.yml). In general a parameter is given a name,
+which can be referenced later in experiments and a distribution (`uniform`,
+`gauss`, etc.).
 
 #### Stages
 The forward model in ert3 is a stage and is described in
@@ -77,7 +77,7 @@ evaluation of the model described in the respective `ensembles.yml`. The
 evaluation. The `ensemble.yml` describes the size of the ensemble, maps data
 sources to input records and specifies the stage that is the forward model
 together with the queue system that is to be used. Notice in particular that by
-`stochastic.field_properties` one is pointing at the parameter group named
+`stochastic.field_properties` one is pointing at the parameter named
 `field_properties` in `parameters.yml`.
 
 The experiment can be executed by `ert3 run evaluation`. And the data can
