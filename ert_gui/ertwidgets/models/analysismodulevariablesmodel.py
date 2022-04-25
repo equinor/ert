@@ -13,7 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import logging
 from typing import List
 
 from ert_shared.libres_facade import LibresFacade
@@ -25,13 +24,11 @@ class AnalysisModuleVariablesModel:
     _VARIABLE_NAMES = AnalysisModule.VARIABLE_NAMES
 
     @classmethod
-    def getVariableNames(cls, analysis_module: AnalysisModule) -> List[str]:
-        assert isinstance(analysis_module, AnalysisModule)
-        items = []
-        for name in cls._VARIABLE_NAMES:
-            if analysis_module.hasVar(name):
-                items.append(name)
-        return items
+    def getVariableNames(
+        cls, facade: LibresFacade, analysis_module_name: str
+    ) -> List[str]:
+        analysis_module = facade.get_analysis_module(analysis_module_name)
+        return analysis_module.getVariableNames()
 
     @classmethod
     def getVariableType(cls, name):
@@ -65,14 +62,5 @@ class AnalysisModuleVariablesModel:
         cls, facade: LibresFacade, analysis_module_name: str, name: str
     ):
         """@rtype: int or float or bool or str"""
-        logger = logging.getLogger(__name__)
         analysis_module = facade.get_analysis_module(analysis_module_name)
-        variable_type = cls.getVariableType(name)
-        if variable_type == float:
-            return analysis_module.getDouble(name)
-        elif variable_type == bool:
-            return analysis_module.getBool(name)
-        elif variable_type == int:
-            return analysis_module.getInt(name)
-        else:
-            logger.error(f"Unknown variable: {name} of type: {variable_type}")
+        return analysis_module.getVariableValue(name)
