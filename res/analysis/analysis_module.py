@@ -91,6 +91,7 @@ class AnalysisModule(BaseCClass):
 
     def getVariableValue(self, name):
         """@rtype: int or float or bool or str"""
+        self.__assertVar(name)
         variable_type = self.getVariableType(name)
         if variable_type == float:
             return self.getDouble(name)
@@ -98,6 +99,8 @@ class AnalysisModule(BaseCClass):
             return self.getBool(name)
         elif variable_type == int:
             return self.getInt(name)
+        else:
+            raise ValueError(f"Variable of type {variable_type} is not supported")
 
     def getVariableType(self, name):
         """:rtype: type"""
@@ -119,10 +122,6 @@ class AnalysisModule(BaseCClass):
         self.__assertVar(var_name)
         string_value = str(value)
         return self._set_var(var_name, string_value)
-
-    def getName(self):
-        """:rtype: str"""
-        return self.name()
 
     def name(self):
         return self._get_name()
@@ -160,7 +159,7 @@ class AnalysisModule(BaseCClass):
         :return: True if the same
         """
 
-        if self.getName() != other.getName():
+        if self.name() != other.name():
             return False
 
         var_name_local = self.getVariableNames()
