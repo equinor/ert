@@ -331,11 +331,11 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            QMessageBox.critical(
-                self,
-                "Simulations failed!",
-                f"The simulation failed with the following error:\n\n{failed_msg}",
-            )
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Simulations failed!".center(100))
+            msg.setDetailedText(failed_msg)
+            msg.exec_()
 
     @Slot()
     def _on_ticker(self):
