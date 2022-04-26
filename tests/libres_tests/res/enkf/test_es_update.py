@@ -2,7 +2,15 @@ import sys
 
 import pytest
 
-from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
+from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain, ResConfig
+
+
+@pytest.fixture()
+def minimal_config(use_tmpdir):
+    with open("config_file.ert", "w") as fout:
+        fout.write("NUM_REALIZATIONS 1")
+    res_config = ResConfig("config_file.ert")
+    yield res_config
 
 
 @pytest.mark.parametrize(
@@ -12,28 +20,24 @@ from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
         "STD_ENKF",
     ],
 )
-def test_get_module(setup_case, module):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_get_module(module, minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
-
     es_update.getModule(module)
 
 
 @pytest.mark.parametrize(
     "module, expected", [("NO_NOT_THIS_MODULE", False), ("STD_ENKF", True)]
 )
-def test_has_module(setup_case, module, expected):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_has_module(module, expected, minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
 
     assert es_update.hasModule(module) is expected
 
 
-def test_get_invalid_module(setup_case):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_get_invalid_module(minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
 
     with pytest.raises(KeyError, match="No such module:STD_ENKF_XXX"):
