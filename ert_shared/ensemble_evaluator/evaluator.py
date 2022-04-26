@@ -1,25 +1,25 @@
 import asyncio
 import logging
-import threading
+import pickle
 import sys
+import threading
 import time
 from contextlib import contextmanager
-import pickle
-from typing import Optional, Set
-import cloudevents.exceptions
 from http import HTTPStatus
+from typing import Optional, Set
 
+import cloudevents.exceptions
 import cloudpickle
-
-from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
-import ert.ensemble_evaluator.identifiers as identifiers
-import ert_shared.ensemble_evaluator.monitor as ee_monitor
 import websockets
-from websockets.legacy.server import WebSocketServerProtocol
-from websockets.exceptions import ConnectionClosedError
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
-from ert_shared.ensemble_evaluator.dispatch import Dispatcher, Batcher
+from websockets.exceptions import ConnectionClosedError
+from websockets.legacy.server import WebSocketServerProtocol
+
+import ert_shared.ensemble_evaluator.monitor as ee_monitor
+from ert.ensemble_evaluator import identifiers
+from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
+from ert_shared.ensemble_evaluator.dispatch import Batcher, Dispatcher
 
 if sys.version_info < (3, 7):
     from async_generator import asynccontextmanager
@@ -32,6 +32,7 @@ _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 
 class EnsembleEvaluator:
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, ensemble, config, iter_, ee_id: str = "0"):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
@@ -47,7 +48,7 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: Optional[asyncio.Queue[None]] = None
+        self._dispatchers_connected: Optional[asyncio.Queue] = None
         self._batcher = Batcher(timeout=2, loop=self._loop)
         self._dispatcher = Dispatcher(
             ensemble=self._ensemble,
@@ -81,12 +82,15 @@ class EnsembleEvaluator:
     def _create_cloud_event(
         self,
         event_type,
-        data=dict(),
-        extra_attrs=dict(),
+        data: Optional[dict] = None,
+        extra_attrs: Optional[dict] = None,
         data_marshaller=evaluator_marshaller,
     ):
         if isinstance(data, dict):
             data["iter"] = self._iter
+        if extra_attrs is None:
+            extra_attrs = {}
+
         attrs = {
             "type": event_type,
             "source": f"/ert/ee/{self._ee_id}",
@@ -139,6 +143,8 @@ class EnsembleEvaluator:
         self._dispatchers_connected.task_done()
 
     async def handle_dispatch(self, websocket, path):
+        # pylint: disable=not-async-context-manager
+        # (false positive)
         async with self.count_dispatcher():
             async for msg in websocket:
                 try:
@@ -175,6 +181,8 @@ class EnsembleEvaluator:
             return HTTPStatus.OK, {}, b""
 
     async def evaluator_server(self, done):
+        # pylint: disable=no-member
+        # (false positive)
         async with websockets.serve(
             self.connection_handler,
             sock=self._config.get_socket(),
