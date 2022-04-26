@@ -27,8 +27,7 @@ void test_obs_check_report_steps(const char *config_file) {
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
     enkf_obs_type *obs = enkf_main_get_obs(enkf_main);
 
-    test_assert_true(enkf_obs_has_key(obs, "GEN_OBS10"));
-    test_assert_true(enkf_obs_has_key(obs, "GEN_OBS20"));
+    test_assert_true(enkf_obs_has_key(obs, "POLY_OBS"));
     test_assert_false(enkf_obs_has_key(obs, "GEN_OBS30"));
 
     ert_test_context_free(test_context);
