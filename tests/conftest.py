@@ -2,7 +2,6 @@ import os
 import resource
 import pkg_resources
 import shutil
-from pathlib import Path
 
 import pytest
 
