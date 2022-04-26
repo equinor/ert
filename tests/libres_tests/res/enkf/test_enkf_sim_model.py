@@ -1,117 +1,180 @@
-#  Copyright (C) 2017  Equinor ASA, Norway.
-#
-#  The file 'test_enkf_sim_model.py' is part of ERT - Ensemble based Reservoir Tool.
-#
-#  ERT is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
-#  FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-#  for more details.
-
-import json
-import os
+from textwrap import dedent
 
 import pytest
-from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
 
-from res.enkf.ert_run_context import ErtRunContext
-from res.test import ErtTestContext
+from res.enkf import ResConfig, EnKFMain
 
 
-@pytest.mark.unstable
-class EnKFTestSimModel(ResTest):
-    def setUp(self):
-        pass
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "job, forward_model, expected_args",
+    [
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST WORD_A
+            """
+            ),
+            "FORWARD_MODEL job_name",
+            ["WORD_A"],
+            id="No argument",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            ARGLIST <ARGUMENT>
+            """
+            ),
+            "FORWARD_MODEL job_name(<ARGUMENT>=yy)",
+            ["yy"],
+            id="With argument",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            DEFAULT <ARGUMENTA> DEFAULT_ARGA_VALUE
+            ARGLIST <ARGUMENTA> <ARGUMENTB> <ARGUMENTC>
+                """
+            ),
+            dedent(
+                """
+            DEFINE <TO_BE_DEFINED> <ARGUMENTB>
+            FORWARD_MODEL job_name(<ARGUMENTA>=configured_argumentA, <TO_BE_DEFINED>=configured_argumentB)
+            """  # noqa E501
+            ),
+            [
+                "configured_argumentA",
+                "configured_argumentB",
+                "<ARGUMENTC>",
+            ],
+            id="Using DEFINE, substituting arg name, default argument C",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            DEFAULT <ARGUMENTA> DEFAULT_ARGA_VALUE
+            ARGLIST <ARGUMENTA> <ARGUMENTB> <ARGUMENTC>
+                """
+            ),
+            dedent(
+                """
+            DEFINE <ARGUMENTB> DEFINED_ARGUMENTB_VALUE
+            FORWARD_MODEL job_name(<ARGUMENTB>=configured_argumentB)
+            """
+            ),
+            ["DEFAULT_ARGA_VALUE", "DEFINED_ARGUMENTB_VALUE", "<ARGUMENTC>"],
+            id="Resolved argument given by DEFINE, even though user specified value",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            DEFAULT <ARGUMENTA> DEFAULT_ARGA_VALUE
+            ARGLIST <ARGUMENTA> <ARGUMENTB> <ARGUMENTC>
+            """
+            ),
+            "FORWARD_MODEL job_name()",
+            ["DEFAULT_ARGA_VALUE", "<ARGUMENTB>", "<ARGUMENTC>"],
+            id="No args, parenthesis, gives default argument A",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            DEFAULT <ARGUMENTA> DEFAULT_ARGA_VALUE
+            ARGLIST <ARGUMENTA> <ARGUMENTB> <ARGUMENTC>
+            """
+            ),
+            "FORWARD_MODEL job_name",
+            ["DEFAULT_ARGA_VALUE", "<ARGUMENTB>", "<ARGUMENTC>"],
+            id="No args, gives default argument A",
+        ),
+    ],
+)
+def test_forward_model_job(job, forward_model, expected_args):
+    with open("job_file", "w") as fout:
+        fout.write(job)
 
-    @tmpdir()
-    def test_simulation_model(self):
+    with open("config_file.ert", "w") as fout:
+        # Write a minimal config file
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 1
+        """
+            )
+        )
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(forward_model)
 
-        with TestAreaContext("enkf_test_sim_model_kw") as work_area:
-            base_path = os.getcwd()
-            source_path = self.createTestPath("local/simulation_model")
+    res_config = ResConfig("config_file.ert")
+    ert = EnKFMain(res_config)
 
-            work_area.copy_directory(source_path)
-            dir_ert = os.path.join(base_path, "simulation_model")
-            assert os.path.isdir(dir_ert)
+    model_config = ert.getModelConfig()
+    forward_model = model_config.getForwardModel()
+    assert forward_model.get_size() == 1
+    assert forward_model.iget_job(0).get_argvalues() == expected_args
 
-            file_ert = os.path.join(dir_ert, "sim_kw.ert")
-            assert os.path.isfile(file_ert)
 
-            with ErtTestContext("sim_kw", model_config=file_ert) as ctx:
-                ert = ctx.getErt()
-                fs_manager = ert.getEnkfFsManager()
-                result_fs = fs_manager.getCurrentFileSystem()
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "job, forward_model, expected_args",
+    [
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            MIN_ARG    1
+            MAX_ARG    6
+            ARG_TYPE 0 STRING
+            ARG_TYPE 1 BOOL
+            ARG_TYPE 2 FLOAT
+            ARG_TYPE 3 INT
+            """
+            ),
+            "SIMULATION_JOB job_name Hello True 3.14 4",
+            ["Hello", "True", "3.14", "4"],
+            id="Not all args",
+        ),
+        pytest.param(
+            dedent(
+                """
+            EXECUTABLE echo
+            MIN_ARG    1
+            MAX_ARG    2
+            ARG_TYPE 0 STRING
+            ARG_TYPE 0 STRING
+                    """
+            ),
+            "SIMULATION_JOB job_name word <ECLBASE>",
+            ["word", "<ECLBASE>"],
+            id="Some args",
+        ),
+    ],
+)
+def test_simulation_job(job, forward_model, expected_args):
+    with open("job_file", "w") as fout:
+        fout.write(job)
 
-                model_config = ert.getModelConfig()
-                forward_model = model_config.getForwardModel()
-                self.assertEqual(forward_model.get_size(), 6)
+    with open("config_file.ert", "w") as fout:
+        # Write a minimal config file
+        fout.write("NUM_REALIZATIONS 1\n")
+        fout.write("INSTALL_JOB job_name job_file\n")
+        fout.write(forward_model)
 
-                self.assertEqual(forward_model.iget_job(3).get_arglist(), ["WORD_A"])
-                self.assertEqual(
-                    forward_model.iget_job(0).get_arglist(), ["<ARGUMENT>"]
-                )
-                self.assertEqual(
-                    forward_model.iget_job(1).get_arglist(),
-                    ["Hello", "True", "3.14", "4"],
-                )
-                self.assertEqual(
-                    forward_model.iget_job(2).get_arglist(), ["word", "<ECLBASE>"]
-                )
+    res_config = ResConfig("config_file.ert")
+    ert = EnKFMain(res_config)
 
-                self.assertEqual(forward_model.iget_job(0).get_argvalues(), ["yy"])
-                self.assertEqual(
-                    forward_model.iget_job(1).get_argvalues(),
-                    ["Hello", "True", "3.14", "4"],
-                )
-                self.assertEqual(
-                    forward_model.iget_job(2).get_argvalues(), ["word", "<ECLBASE>"]
-                )
-                self.assertEqual(forward_model.iget_job(3).get_argvalues(), ["WORD_A"])
-                self.assertEqual(
-                    list(forward_model.iget_job(4).get_argvalues()),
-                    [
-                        "configured_argumentA",
-                        "configured_argumentB",
-                        "DEFINED_ARGC_VALUE",
-                    ],
-                )
-                self.assertEqual(
-                    list(forward_model.iget_job(5).get_argvalues()),
-                    ["DEFAULT_ARGA_VALUE", "<ARGUMENTB>", "DEFINED_ARGC_VALUE"],
-                )
-
-                runpath_fmt = model_config.getRunpathFormat()
-                jobname_fmt = model_config.getJobnameFormat()
-
-                subst_list = ert.getDataKW()
-                itr = 0
-                mask = [True]
-
-                run_context = ErtRunContext.ensemble_experiment(
-                    result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
-                )
-                ert.getEnkfSimulationRunner().createRunPath(run_context)
-                queue_config = ert.get_queue_config()
-                self.assertEqual(queue_config.num_cpu, 5)
-                os.chdir("storage/sim_kw/runpath/realization-0/iter-0")
-                assert os.path.isfile("jobs.json")
-                with open("jobs.json", "r") as f:
-                    data = json.load(f)
-                    jobList = data["jobList"]
-                    old_job_A = jobList[3]
-                    self.assertEqual(old_job_A["argList"], ["WORD_A"])
-                    old_job_B = jobList[0]
-                    self.assertEqual(old_job_B["argList"], ["yy"])
-                    new_job_A = jobList[1]
-                    self.assertEqual(
-                        new_job_A["argList"], ["Hello", "True", "3.14", "4"]
-                    )
-                    new_job_B = jobList[2]
-                    self.assertEqual(new_job_B["argList"], ["word", "SIM_KW"])
+    model_config = ert.getModelConfig()
+    forward_model = model_config.getForwardModel()
+    forward_model_job = forward_model.iget_job(0)
+    assert forward_model.get_size() == 1
+    assert forward_model_job.get_argvalues() == expected_args
+    assert forward_model_job.get_arglist() == expected_args
+    assert forward_model_job.valid_args(
+        forward_model_job.arg_types, forward_model_job.get_arglist()
+    )
