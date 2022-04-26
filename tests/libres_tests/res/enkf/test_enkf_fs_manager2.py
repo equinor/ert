@@ -6,9 +6,9 @@ from res.enkf import EnkfFsManager
 from res.test import ErtTestContext
 
 
-class EnKFFSManagerTest2(ResTest):
+class TestEnKFFSManager2(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("local/mini_ert/mini_config")
+        self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     @tmpdir()
     def test_rotate(self):

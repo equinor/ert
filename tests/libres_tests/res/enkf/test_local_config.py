@@ -30,7 +30,7 @@ from res.test import ErtTestContext
 
 class LocalConfigTest(ResTest):
     def setUp(self):
-        self.config = self.createTestPath("local/mini_ert/mini_config")
+        self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
         self.local_conf_path = "python/enkf/data/local_config"
 
     def test_get_grid(self):
@@ -131,11 +131,11 @@ class LocalConfigTest(ResTest):
             local_config = main.getLocalConfig()
             updatestep = local_config.getUpdatestep()
             ministep = updatestep[0]
-            self.assertEqual(1, ministep.numActiveData())
-            self.assertTrue(ministep.hasActiveData("PERLIN_PARAM"))
+            self.assertEqual(3, ministep.numActiveData())
+            self.assertTrue(ministep.hasActiveData("SNAKE_OIL_PARAM"))
 
             obsdata = ministep.getLocalObsData()
-            self.assertEqual(len(obsdata), 3)
+            self.assertEqual(len(obsdata), 8)
 
     def test_ministep(self):
         with ErtTestContext(

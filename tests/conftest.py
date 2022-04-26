@@ -62,6 +62,14 @@ def setup_case(tmpdir, source_root):
         yield copy_case
 
 
+@pytest.fixture()
+def use_tmpdir(tmp_path):
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    yield
+    os.chdir(cwd)
+
+
 def has_equinor_test_data():
     return os.path.isdir(os.path.join(SOURCE_DIR, "test-data", "Equinor"))
 
