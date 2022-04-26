@@ -15,4 +15,5 @@ class Update(gr.ObjectType):
     )
 
     def resolve_pk(*args):
+        # pylint: disable=no-method-argument
         pass

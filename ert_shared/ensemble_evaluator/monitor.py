@@ -22,7 +22,7 @@ class _Monitor:
     def __init__(self, ee_con_info: "EvaluatorConnectionInfo") -> None:
         self._ee_con_info = ee_con_info
         self._ws_duplexer: Optional[SyncWebsocketDuplexer] = None
-        self._id = str(uuid.uuid1()).split("-")[0]
+        self._id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
 
     def __enter__(self):
         self._ws_duplexer = SyncWebsocketDuplexer(

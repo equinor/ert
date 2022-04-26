@@ -106,9 +106,8 @@ def _target_case_name(ert, args, current_case_name, format_mode=False):
     return "{}_%d".format(current_case_name)
 
 
-def _num_iterations(ert, args):
+def _num_iterations(ert, args) -> None:
     if args.num_iterations is not None:
         ert.analysisConfig().getAnalysisIterConfig().setNumIterations(
             int(args.num_iterations)
         )
-    return None

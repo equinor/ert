@@ -49,7 +49,40 @@ jobs:
         pip install .  # We need the dependencies of ERT to avoid import-error
         pylint ert ert3
         pylint --disable=all \
-          --enable="unused-import, super-with-arguments, useless-object-inheritance" \
+          --enable="\
+            access-member-before-definition, \
+            bad-thread-instantiation, \
+            chained-comparison, \
+            consider-iterating-dictionary, \
+            consider-using-dict-items, \
+            consider-using-enumerate, \
+            consider-using-from-import, \
+            consider-using-generator, \
+            consider-using-min-builtin, \
+            consider-using-set-comprehension, \
+            empty-docstring, \
+            expression-not-assigned, \
+            no-else-break, \
+            no-method-argument, \
+            not-async-context-manager, \
+            unsubscriptable-object, \
+            pointless-statement, \
+            simplifiable-if-statement, \
+            subprocess-run-check, \
+            super-with-arguments, \
+            undefined-all-variable, \
+            undefined-loop-variable, \
+            unidiomatic-typecheck, \
+            unneeded-not, \
+            unused-import, \
+            use-a-generator, \
+            use-dict-literal, \
+            use-maxsplit-arg, \
+            useless-import-alias, \
+            useless-object-inheritance \
+            useless-return, \
+            useless-super-delegation, \
+            " \
           docs ert_data ert_gui ert_logging ert_shared job_runner res tests
         pylint --disable=all \
           --enable="consider-using-f-strings" ert_data ert_gui job_runner

@@ -243,8 +243,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         states = list(self.ert.getEnkfFsManager().getStateMapForCase(case_name))
 
         html = "<table>"
-        for index in range(len(states)):
-            html += f"<tr><td width=30>{index:d}.</td><td>{states[index]}</td></tr>"
+        for index, state in states.items():
+            html += f"<tr><td width=30>{index:d}.</td><td>{state}</td></tr>"
 
         html += "</table>"
 

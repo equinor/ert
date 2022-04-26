@@ -538,8 +538,8 @@ class ResConfig(BaseCClass):
         config_content.setParser(config_parser)
 
         # Insert defines
-        for key in defines:
-            config_content.add_define(key, defines[key])
+        for key, value in defines.items():
+            config_content.add_define(key, value)
 
         # Insert key values
         if not os.path.exists(config_dir):
