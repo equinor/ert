@@ -3,7 +3,7 @@ from libres_utils import ResTest, tmpdir
 from res.test import ErtTestContext
 
 
-class EnKFFSManagerTest1(ResTest):
+class TestEnKFFSManager1(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
