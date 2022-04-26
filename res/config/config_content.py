@@ -86,7 +86,7 @@ class ContentNode(BaseCClass):
                 raise IndexError
             return index
         else:
-            raise TypeError("Invalid argument type: %s" % index)
+            raise TypeError(f"Invalid argument type: {index}")
 
     def __getitem__(self, index):
         index = self.__assertIndex(index)
@@ -120,9 +120,6 @@ class ContentNode(BaseCClass):
         index = self.__assertIndex(index)
         return self._iget(index)
 
-    def asList(self):
-        return [x for x in self]
-
 
 class ContentItem(BaseCClass):
     TYPE_NAME = "content_item"
@@ -149,12 +146,11 @@ class ContentItem(BaseCClass):
             if index < 0:
                 index += len(self)
 
-            if (index >= 0) and (index < len(self)):
+            if 0 <= index < len(self):
                 return self._iget_content_node(index).setParent(self)
             else:
                 raise IndexError(
-                    "Expected 0 <= index < %d, was 0 <= %d < %d"
-                    % (len(self), index, len(self))
+                    f"Expected 0 <= index < {len(self)}, was 0 <= {index} < {len(self)}"
                 )
         else:
             raise TypeError("[] operator must have integer index")
@@ -201,12 +197,14 @@ class ConfigContent(BaseCClass):
     def __init__(self, filename):
         c_ptr = self._alloc(filename)
 
+        self._parser = None  # To be set later
+
         if c_ptr:
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                "Failed to construct ConfigContent instance from config file %s."
-                % filename
+                "Failed to construct ConfigContent "
+                f"instance from config file {filename}."
             )
 
     def __len__(self):
@@ -228,7 +226,7 @@ class ConfigContent(BaseCClass):
                 schema_item = SchemaItem(key)
                 return ContentItem(schema_item)
             else:
-                raise KeyError("No such key: %s" % key)
+                raise KeyError("No such key: {key}")
 
     def hasKey(self, key):
         return key in self
@@ -263,11 +261,13 @@ class ConfigContent(BaseCClass):
     def keys(self):
         return self._keys()
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
+        # pylint: disable=consider-using-dict-items
+        # (false positive)
         d = {}
         for key in self.keys():
             d[key] = []
             item = self[key]
             for node in item:
-                d[key].append([x for x in node])
+                d[key].append(list(node))
         return d
