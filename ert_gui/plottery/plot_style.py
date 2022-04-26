@@ -1,4 +1,5 @@
 class PlotStyle:
+    # pylint: disable=too-many-instance-attributes, too-many-arguments
     def __init__(
         self,
         name,
@@ -65,11 +66,7 @@ class PlotStyle:
 
     @alpha.setter
     def alpha(self, alpha):
-        if alpha > 1.0:
-            alpha = 1.0
-        if alpha < 0.0:
-            alpha = 0.0
-        self._alpha = alpha
+        self._alpha = max(min(alpha, 1.0), 0.0)
 
     @property
     def marker(self):
@@ -93,9 +90,7 @@ class PlotStyle:
 
     @width.setter
     def width(self, width):
-        if width < 0.0:
-            width = 0.0
-        self._width = width
+        self._width = max(width, 0.0)
 
     @property
     def size(self):
@@ -103,9 +98,7 @@ class PlotStyle:
 
     @size.setter
     def size(self, size):
-        if size < 0.0:
-            size = 0.0
-        self._size = size
+        self._size = max(size, 0.0)
 
     def __str__(self):
         return (
