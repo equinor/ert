@@ -35,15 +35,17 @@ class TransitionError(ValueError):
 
 
 class Event(Reporter):
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, evaluator_url, token=None, cert_path=None):
         self._evaluator_url = evaluator_url
         self._token = token
         if cert_path is not None:
-            with open(cert_path) as f:
+            with open(cert_path, encoding="utf-8") as f:
                 self._cert = f.read()
         else:
             self._cert = None
 
+        self._state = None
         self._ee_id = None
         self._real_id = None
         self._step_id = None
@@ -65,7 +67,7 @@ class Event(Reporter):
         initialized = (Init,)
         jobs = (Start, Running, Exited)
         finished = (Finish,)
-        self._states = {
+        self._states: dict = {
             initialized: self._init_handler,
             jobs: self._job_handler,
             finished: self._finished_handler,
@@ -79,7 +81,7 @@ class Event(Reporter):
 
     def report(self, msg):
         new_state = None
-        for state in self._states.keys():
+        for state in self._states:
             if isinstance(msg, state):
                 new_state = state
 
