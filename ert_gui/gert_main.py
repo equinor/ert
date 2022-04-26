@@ -62,9 +62,9 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
-    # window reference must be kept until app.exec returns
     notifier = ErtNotifier(args.config)
-    _start_window(ert, notifier, args)
+    # window reference must be kept until app.exec returns:
+    window = _start_window(ert, notifier, args)  # noqa
     return app.exec_()
 
 
