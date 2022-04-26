@@ -17,13 +17,14 @@ logger = logging.getLogger(__name__)
         (logger.critical, True),
     ],
 )
-def test_default_log_capture(log_level, expect_propagation):
-    with captured_logs() as logs:
-        log_level("This is not actually an error")
-    if expect_propagation:
-        assert "This is not actually an error" in logs.messages
-    else:
-        assert "This is not actually an error" not in logs.messages
+def test_default_log_capture(log_level, expect_propagation, caplog):
+    with caplog.at_level(logging.INFO):
+        with captured_logs() as logs:
+            log_level("This is not actually an error")
+        if expect_propagation:
+            assert "This is not actually an error" in logs.messages
+        else:
+            assert "This is not actually an error" not in logs.messages
 
 
 @pytest.mark.parametrize(
