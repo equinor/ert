@@ -593,6 +593,7 @@ class _Narrative:
 
     def receives(self, scenario: str) -> "_Narrative":
         interaction = self.interactions[-1]
+        # pylint: disable=unidiomatic-typecheck
         if type(interaction) == _Interaction:
             interaction.__class__ = _Request
         elif not interaction.events:
@@ -607,6 +608,7 @@ class _Narrative:
 
     def responds_with(self, scenario: str) -> "_Narrative":
         interaction = self.interactions[-1]
+        # pylint: disable=unidiomatic-typecheck
         if type(interaction) == _Interaction:
             interaction.__class__ = _Response
         elif (
@@ -636,6 +638,7 @@ class _Narrative:
         for event in events:
             events_list.append(_Event(event))
         interaction = self.interactions[-1]
+        # pylint: disable=unidiomatic-typecheck
         if type(interaction) == _Response:
             self.interactions[-1] = _RecurringResponse(
                 interaction.provider_states, _Event(terminator), self._ce_serializer

@@ -348,7 +348,6 @@ class BaseService:
             self._proc.join()
 
     def set_conn_info(self, info: ConnInfo) -> None:
-        """ """
         if self._conn_info is not None:
             raise ValueError("Connection information already set")
         if info is None:

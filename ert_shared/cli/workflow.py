@@ -12,6 +12,6 @@ def execute_workflow(ert, workflow_name):
         return
     context = workflow_list.getContext()
     workflow.run(ert=ert, verbose=True, context=context)
-    all_successful = all([v["completed"] for k, v in workflow.getJobsReport().items()])
+    all_successful = all((v["completed"] for k, v in workflow.getJobsReport().items()))
     if not all_successful:
         logger.error(f"Workflow {workflow_name} failed!")

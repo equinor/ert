@@ -172,10 +172,7 @@ def create_observations(ert) -> List[Mapping[str, dict]]:
 
 
 def _get_status(status):
-    if status == "ACTIVE":
-        return True
-    else:
-        return False
+    return status == "ACTIVE"
 
 
 def _extract_active_observations(ert) -> Mapping[str, list]:
@@ -205,7 +202,7 @@ def _create_observation_transformation(ert, db_observations) -> List[dict]:
         EnkfObservationImplementationType.SUMMARY_OBS
     )
     active_obs = _extract_active_observations(ert)
-    transformations: Dict = dict()
+    transformations: Dict = {}
     keys = [ert.get_observation_key(i) for i, _ in enumerate(observation_vectors)]
     data = MeasuredData(ert, keys, load_data=False)
     observations = data.data.loc[["OBS", "STD"]]

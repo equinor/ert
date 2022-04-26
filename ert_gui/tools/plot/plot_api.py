@@ -1,4 +1,4 @@
-from ert_data import loader as loader
+from ert_data import loader
 import pandas as pd
 from ert_data.measured import MeasuredData
 

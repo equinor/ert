@@ -124,7 +124,7 @@ class RealizationDelegate(QStyledItemDelegate):
         grid_dim = math.ceil(math.sqrt(job_nr))
         k = 0
 
-        colors_hash = hash(tuple([color.name() for color in colors]))
+        colors_hash = hash(tuple(color.name() for color in colors))
         if colors_hash not in _image_cache:
             foreground_image = QImage(grid_dim, grid_dim, QImage.Format_ARGB32)
             foreground_image.fill(QColorConstants.Gray)

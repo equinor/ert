@@ -98,8 +98,7 @@ class TimeMap(BaseCClass):
     def update(self, index, time):
         if self._try_update(index, CTime(time)):
             return True
-        else:
-            raise Exception("Tried to update with inconsistent value")
+        raise Exception("Tried to update with inconsistent value")
 
     def __iter__(self):
         cur = 0
@@ -109,10 +108,7 @@ class TimeMap(BaseCClass):
 
     def __contains__(self, time):
         index = self._lookup_time(CTime(time))
-        if index >= 0:
-            return True
-        else:
-            return False
+        return index >= 0
 
     def lookupTime(self, time, tolerance_seconds_before=0, tolerance_seconds_after=0):
         """Will look up the report step corresponding to input @time.

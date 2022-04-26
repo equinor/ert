@@ -6,8 +6,7 @@ import signal
 import sys
 import typing
 
-import job_runner.reporting as reporting
-from job_runner import JOBS_FILE
+from job_runner import JOBS_FILE, reporting
 from job_runner.reporting.message import Finish
 from job_runner.runner import JobRunner
 

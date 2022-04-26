@@ -11,7 +11,7 @@ class ExternalErtScript(ErtScript):
         self.__executable = executable
         self.__job = None
 
-    def run(self, *args):
+    def run(self, *args) -> None:
         command = [self.__executable]
         command.extend([str(arg) for arg in args])
 
@@ -27,8 +27,6 @@ class ExternalErtScript(ErtScript):
 
         if self.__job.returncode != 0:
             raise Exception(self._stderrdata)
-
-        return None
 
     def cancel(self):
         super().cancel()

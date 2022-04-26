@@ -48,7 +48,7 @@ class JobRunner:
             self.step_id,
         )
 
-        unused = set(names_of_jobs_to_run) - set([j.name() for j in job_queue])
+        unused = set(names_of_jobs_to_run) - {j.name() for j in job_queue}
         if unused:
             init_message.with_error(
                 f"{unused} does not exist. "

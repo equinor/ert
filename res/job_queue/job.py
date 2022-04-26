@@ -47,8 +47,7 @@ class Job(BaseCClass):
                 or status == JobStatusType.JOB_QUEUE_EXIT
             ):
                 break
-            else:
-                time.sleep(1)
+            time.sleep(1)
 
     def kill(self):
         self.driver.kill_job(self)
@@ -66,26 +65,17 @@ class Job(BaseCClass):
     @property
     def running(self):
         status = self.driver.get_status(self)
-        if status == JobStatusType.JOB_QUEUE_RUNNING:
-            return True
-        else:
-            return False
+        return status == JobStatusType.JOB_QUEUE_RUNNING
 
     @property
     def pending(self):
         status = self.driver.get_status(self)
-        if status == JobStatusType.JOB_QUEUE_PENDING:
-            return True
-        else:
-            return False
+        return status == JobStatusType.JOB_QUEUE_PENDING
 
     @property
     def complete(self):
         status = self.driver.get_status(self)
-        if (
+        return (
             status == JobStatusType.JOB_QUEUE_DONE
             or status == JobStatusType.JOB_QUEUE_EXIT
-        ):
-            return True
-        else:
-            return False
+        )
