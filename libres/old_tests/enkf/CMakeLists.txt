@@ -125,7 +125,7 @@ add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
 add_config_test(enkf_runpath_list enkf_runpath_list
                 "${TEST_DATA_DIR}/enkf/config/runpath_list/config")
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
-                "${LOCAL_TEST_DATA_DIR}/config/gen_data/config")
+                "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
 add_config_test(
   enkf_ert_workflow_list enkf_ert_workflow_list
   ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/SCALE_STD)
