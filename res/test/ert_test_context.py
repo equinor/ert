@@ -15,10 +15,11 @@
 #  for more details.
 import os.path
 import pathlib
-from res.enkf import EnKFMain, ResConfig
-from distutils.dir_util import copy_tree
-import tempfile
 import shutil
+import tempfile
+from distutils.dir_util import copy_tree
+
+from res.enkf import EnKFMain, ResConfig
 
 
 class ErtTestContext:
@@ -33,9 +34,9 @@ class ErtTestContext:
         self._dir_before = os.getcwd()
         os.chdir(self._tmp_dir)
         try:
-            dir = pathlib.Path(self._model_config).parent
+            directory = pathlib.Path(self._model_config).parent
             config = pathlib.Path(self._model_config).name
-            copy_tree(dir, self._tmp_dir)
+            copy_tree(directory, self._tmp_dir)
             self._res_config = ResConfig(user_config_file=config)
             self._ert = EnKFMain(self._res_config, strict=True)
         except Exception:
@@ -60,23 +61,24 @@ class ErtTestContext:
         """@rtype: bool"""
         if os.path.exists(job_path) and os.path.isfile(job_path):
             ert = self.getErt()
+            # pylint: disable=no-member
             workflow_list = ert.getWorkflowList()
 
             workflow_list.addJob(job_name, job_path)
         else:
-            raise IOError("Could not load workflowjob from:%s" % job_path)
+            raise IOError(f"Could not load workflowjob from:{job_path}")
 
     def runWorkflowJob(self, job_name, *arguments):
         """@rtype: bool"""
         ert = self.getErt()
+        # pylint: disable=no-member
         workflow_list = ert.getWorkflowList()
 
         if workflow_list.hasJob(job_name):
             job = workflow_list.getJob(job_name)
-            job.run(ert, [arg for arg in arguments])
+            job.run(ert, arguments)
             return True
-        else:
-            return False
+        return False
 
 
 class ErtTestSharedContext:
@@ -99,6 +101,8 @@ class ErtTestSharedContext:
         self._res_config = None
         self._ert = None
         self._dir_before = None
+        self._dir_list = {}
+        self._file_list = {}
 
     def __enter__(self):
         self._dir_before = os.getcwd()
@@ -106,21 +110,16 @@ class ErtTestSharedContext:
 
         # store all files upon entering
         if self._cleanup:
-            self._dir_list = set(
-                [
-                    os.path.join(root, d)
-                    for root, dirs, files in os.walk(".")
-                    for d in dirs
-                ]
-            )
-            self._file_list = set(
-                [
-                    os.path.join(root, f)
-                    for root, dirs, files in os.walk(".")
-                    for f in files
-                ]
-            )
-
+            self._dir_list = {
+                os.path.join(root, d)
+                for root, dirs, files in os.walk(".")
+                for d in dirs
+            }
+            self._file_list = {
+                os.path.join(root, f)
+                for root, dirs, files in os.walk(".")
+                for f in files
+            }
         try:
             config = pathlib.Path(self._model_config).name
             self._res_config = ResConfig(user_config_file=config)
@@ -133,22 +132,20 @@ class ErtTestSharedContext:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._cleanup:
             # remove any files not present when entering
-            fl = set(
-                [
-                    os.path.join(root, f)
-                    for root, dirs, files in os.walk(".")
-                    for f in files
-                ]
-            )
-            dl = set(
-                [
-                    os.path.join(root, d)
-                    for root, dirs, files in os.walk(".")
-                    for d in dirs
-                ]
-            )
-            [os.remove(f) for f in fl - self._file_list]
-            [shutil.rmtree(d, ignore_errors=True) for d in dl - self._dir_list]
+            fl = {
+                os.path.join(root, f)
+                for root, dirs, files in os.walk(".")
+                for f in files
+            }
+            dl = {
+                os.path.join(root, d)
+                for root, dirs, files in os.walk(".")
+                for d in dirs
+            }
+            for _file in fl - self._file_list:
+                os.remove(_file)
+            for _dir in dl - self._dir_list:
+                shutil.rmtree(_dir, ignore_errors=True)
 
         self._ert = None
         self._res_config = None
