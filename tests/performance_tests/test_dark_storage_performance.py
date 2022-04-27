@@ -1,9 +1,7 @@
 import pytest
-
 from ert_shared.async_utils import run_in_loop
 import pandas as pd
 import io
-import os
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
@@ -132,7 +130,9 @@ def get_parameters(ert, ensemble_id1, keyword, poly_ran):
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
 @pytest.mark.integration_test
-def test_direct_dark_performance(benchmark, poly_ran, monkeypatch, function, keyword):
+def test_direct_dark_performance(
+    benchmark, template_config, monkeypatch, function, keyword
+):
 
     key = {
         "summary": "PSUM1",
@@ -141,9 +141,8 @@ def test_direct_dark_performance(benchmark, poly_ran, monkeypatch, function, key
         "gen_data_with_obs": "POLY_RES_0@0",
     }[keyword]
 
-    with poly_ran["folder"].as_cwd():
+    with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
-        os.chdir(config.config_path)
         ert = EnKFMain(config, strict=True)
         enkf_facade = LibresFacade(ert)
         experiment_json = experiments.get_experiments(res=enkf_facade)
@@ -152,4 +151,5 @@ def test_direct_dark_performance(benchmark, poly_ran, monkeypatch, function, key
             res=enkf_facade, ensemble_id=ensemble_id1
         )
         assert key in ensemble_json.response_names
-        benchmark(function, enkf_facade, ensemble_id1, key, poly_ran)
+        result = benchmark(function, enkf_facade, ensemble_id1, key, template_config)
+        print(result)

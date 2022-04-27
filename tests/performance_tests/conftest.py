@@ -8,7 +8,7 @@ from pytest import fixture
 import py
 
 
-def make_case(reals, x_size):
+def make_case(reals, x_size, marks):
     return {
         "gen_data_count": 2,
         "gen_data_entries": x_size,
@@ -22,17 +22,14 @@ def make_case(reals, x_size):
         "parameter_entries": 3,
         "parameter_count": 1,
         "ministeps": 1,
+        "marks": marks,
     }
 
 
 cases_to_run = [
-    make_case(reals=10, x_size=20),
-    make_case(reals=10, x_size=200),
-    make_case(reals=10, x_size=2000),
-    make_case(reals=100, x_size=20),
-    make_case(reals=100, x_size=200),
-    make_case(reals=100, x_size=2000),
-    make_case(reals=1000, x_size=20000),
+    make_case(reals=10, x_size=20, marks=pytest.mark.quick_only),
+    make_case(reals=100, x_size=2000, marks=pytest.mark.slow),
+    make_case(reals=1000, x_size=2000, marks=pytest.mark.slow),
 ]
 
 
@@ -41,13 +38,7 @@ cases_to_run = [
     params=[
         pytest.param(
             params,
-            marks=(
-                pytest.mark.slow
-                if params["reals"] > 10
-                or params["gen_data_entries"] > 20
-                or params["summary_data_entries"] > 20
-                else []
-            ),
+            marks=params["marks"],
         )
         for params in cases_to_run
     ],
@@ -58,7 +49,7 @@ cases_to_run = [
         for params in cases_to_run
     ],
 )
-def poly_ran(request, source_root, tmp_path_factory):
+def template_config(request, source_root, tmp_path_factory):
     tmpdir = py.path.local(tmp_path_factory.mktemp("my_poly_tmp"))
     params = request.param
     params.update()

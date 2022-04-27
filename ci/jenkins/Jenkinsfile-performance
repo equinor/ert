@@ -1,11 +1,16 @@
 pipeline {
-    agent { label 'scout-ci7' }
+    agent { label 'performance-test' }
 
     parameters {
         string(
+            name: 'COMPARE_VERSION',
+            defaultValue: '0001',
+            description: 'The checked in baseline to compare against. Will also check against previous version to guard against large inadvertent fluctuations in the baseline.'
+        )
+        string(
             name: 'PYTEST_OPTIONS',
-            defaultValue: '-sv  --runslow',
-            description: 'Optional parameters for pytest, eg.  -sv --runslow --benchmark-cprofile=tottime'
+            defaultValue: '-sv  --runslow --benchmark-disable-gc',
+            description: 'Optional parameters for pytest, eg. --benchmark-cprofile=tottime --benchmark-storage=file:///scratch/oompf/jenkins-ert-performance/.benchmarks'
         )
     }
 
@@ -15,7 +20,7 @@ pipeline {
     }
 
     stages {
-        stage('performance') {
+        stage('install') {
             steps {
                 sh """
                 python3 -m venv env
@@ -24,9 +29,32 @@ pipeline {
                 pip install --upgrade pip
                 pip install .
                 pip install -r dev-requirements.txt
-                pytest tests/performance_tests  --benchmark-autosave --benchmark-storage=file://${env.BASE_DIR}/.benchmarks --basetemp=${env.TMP_DIR} ${PYTEST_OPTIONS}
                 """
             }
+        }
+        stage('run benchmarks') {
+            steps {
+                sh """
+                source env/bin/activate
+                pytest tests/performance_tests \
+                  --benchmark-save=benchmark-jenkins \
+                  --benchmark-compare=${COMPARE_VERSION} \
+                  --benchmark-compare-fail=median:15% \
+                  --benchmark-autosave \
+                  --basetemp=${env.TMP_DIR} \
+                  --benchmark-min-rounds=25 \
+                  --benchmark-sort=fullname \
+                  --benchmark-warmup=on \
+                  ${PYTEST_OPTIONS}
+                """
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts(
+                artifacts: ".benchmarks/**"
+            )
         }
     }
 }
