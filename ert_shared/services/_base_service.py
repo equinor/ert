@@ -112,7 +112,6 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
-        global SERVICE_NAMES
         SERVICE_NAMES.add(self._service_name)
 
         self._childproc = Popen(
