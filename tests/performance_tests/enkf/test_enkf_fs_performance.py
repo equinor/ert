@@ -1,4 +1,4 @@
-from res.enkf import EnKFMain
+from res.enkf import EnKFMain, ResConfig
 
 
 def mount_and_umount(ert, case_name):
@@ -10,8 +10,8 @@ def mount_and_umount(ert, case_name):
     fs_manager.umount()
 
 
-def test_mount_fs(setup_case, benchmark):
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
-
-    ert = EnKFMain(res_config)
-    benchmark(mount_and_umount, ert, "default_1")
+def test_mount_fs(benchmark, template_config):
+    with template_config["folder"].as_cwd():
+        config = ResConfig("poly.ert")
+        ert = EnKFMain(config, strict=True)
+        benchmark(mount_and_umount, ert, "default")

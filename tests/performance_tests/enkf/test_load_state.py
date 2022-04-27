@@ -1,33 +1,25 @@
-import pytest
-
-from res.test import ErtTestSharedContext
+from res.enkf import ResConfig, EnKFMain
 
 
-@pytest.mark.equinor_test
-@pytest.mark.benchmark
-@pytest.mark.usefixtures("class_source_root")
-class TestLoadState:
-    def test_load_from_context(self, benchmark):
-        with ErtTestSharedContext(
-            self.TESTDATA_ROOT / "Equinor/config/with_data/config_GEN_DATA"
-        ) as ctx:
-            load_into = ctx.ert.getEnkfFsManager().getFileSystem("A1")
-            ctx.ert.getEnkfFsManager().getFileSystem("default")
+def test_load_from_context(benchmark, template_config):
+    with template_config["folder"].as_cwd():
+        config = ResConfig("poly.ert")
+        ert = EnKFMain(config, strict=True)
+        load_into = ert.getEnkfFsManager().getFileSystem("A1")
+        ert.getEnkfFsManager().getFileSystem("default")
+        expected_reals = template_config["reals"]
+        realisations = [True] * expected_reals
+        run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)
+        loaded_reals = benchmark(ert.loadFromRunContext, run_context, load_into)
+        assert loaded_reals == expected_reals
 
-            realisations = [True] * 25
 
-            run_context = ctx.ert.getRunContextENSEMPLE_EXPERIMENT(
-                load_into, realisations
-            )
-
-            loaded = benchmark(ctx.ert.loadFromRunContext, run_context, load_into)
-            assert loaded == 25, f"Loaded {loaded} realizations, expected 25"
-
-    def test_load_from_fs(self, benchmark):
-        with ErtTestSharedContext(
-            self.TESTDATA_ROOT / "Equinor/config/with_data/config_GEN_DATA"
-        ) as ctx:
-            load_from = ctx.ert.getEnkfFsManager().getFileSystem("default")
-            realisations = [True] * 25
-            loaded = benchmark(ctx.ert.loadFromForwardModel, realisations, 0, load_from)
-            assert loaded == 25, f"Loaded {loaded} realizations, expected 25"
+def test_load_from_fs(benchmark, template_config):
+    with template_config["folder"].as_cwd():
+        config = ResConfig("poly.ert")
+        ert = EnKFMain(config, strict=True)
+        load_from = ert.getEnkfFsManager().getFileSystem("default")
+        expected_reals = template_config["reals"]
+        realisations = [True] * expected_reals
+        loaded_reals = benchmark(ert.loadFromForwardModel, realisations, 0, load_from)
+        assert loaded_reals == expected_reals
