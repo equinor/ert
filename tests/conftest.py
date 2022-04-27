@@ -62,6 +62,16 @@ def setup_case(tmpdir, source_root):
 
 
 @pytest.fixture()
+def copy_case(tmpdir, source_root):
+    def _copy_case(path):
+        shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
+        os.chdir("test_data")
+
+    with tmpdir.as_cwd():
+        yield _copy_case
+
+
+@pytest.fixture()
 def use_tmpdir(tmp_path):
     cwd = os.getcwd()
     os.chdir(tmp_path)

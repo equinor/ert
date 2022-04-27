@@ -1,101 +1,77 @@
 import os
-
-from libres_utils import ResTest, tmpdir
-
-from res.enkf import ErtRunContext
-from res.enkf.enums import EnkfRunType
-from res.test import ErtTestContext
-from res.util.substitution_list import SubstitutionList
+from pathlib import Path
+from textwrap import dedent
 
 
-class RunpathListTestErt(ResTest):
-    @tmpdir()
-    def test_an_enkf_runpath(self):
-        # TODO this test is flaky and we need to figure out why.  See #1370
-        # enkf_util_assert_buffer_type: wrong target type in file (expected:104 got:0)
-        test_path = self.createTestPath("local/snake_oil_field/snake_oil.ert")
-        with ErtTestContext("runpathlist_basic", test_path):
-            pass
+from res.enkf import ErtRunContext, ResConfig, EnKFMain
 
-    @tmpdir()
-    def test_assert_export(self):
-        with ErtTestContext(
-            "create_runpath_export",
-            self.createTestPath("local/snake_oil_no_data/snake_oil.ert"),
-        ) as tc:
-            ert = tc.getErt()
-            runpath_list = ert.getRunpathList()
-            self.assertFalse(os.path.isfile(runpath_list.getExportFile()))
 
-            ert.getEnsembleSize()
-            runner = ert.getEnkfSimulationRunner()
-            fs_manager = ert.getEnkfFsManager()
+def test_assert_symlink_deleted(setup_case):
+    res_config = setup_case("local/snake_oil_field", "snake_oil.ert")
+    ert = EnKFMain(res_config)
+    runpath_list = ert.getRunpathList()
 
-            init_fs = fs_manager.getFileSystem("init_fs")
-            mask = [True] * 25
-            runpath_fmt = ert.getModelConfig().getRunpathFormat()
-            subst_list = SubstitutionList()
-            itr = 0
-            jobname_fmt = ert.getModelConfig().getJobnameFormat()
-            run_context1 = ErtRunContext(
-                EnkfRunType.INIT_ONLY,
-                init_fs,
-                None,
-                mask,
-                runpath_fmt,
-                jobname_fmt,
-                subst_list,
-                itr,
+    runner = ert.getEnkfSimulationRunner()
+
+    # create directory structure
+    model_config = ert.getModelConfig()
+    run_context = ErtRunContext.ensemble_experiment(
+        ert.getEnkfFsManager().getCurrentFileSystem(),
+        [True],
+        model_config.getRunpathFormat(),
+        model_config.getJobnameFormat(),
+        ert.getDataKW(),
+        0,
+    )
+    runner.createRunPath(run_context)
+
+    # replace field file with symlink
+    linkpath = "%s/permx.grdcel" % str(runpath_list[0].runpath)
+    targetpath = "%s/permx.grdcel.target" % str(runpath_list[0].runpath)
+    open(targetpath, "a").close()
+    os.remove(linkpath)
+    os.symlink(targetpath, linkpath)
+
+    # recreate directory structure
+    runner.createRunPath(run_context)
+
+    # ensure field symlink is replaced by file
+    assert not os.path.islink(linkpath)
+
+
+def test_assert_export(use_tmpdir):
+    # Write a minimal config file with env
+    with open("config_file.ert", "w") as fout:
+        fout.write(
+            dedent(
+                """
+        NUM_REALIZATIONS 1
+        JOBNAME a_name_%d
+        RUNPATH_FILE directory/test_runpath_list.txt
+        """
             )
+        )
+    res_config = ResConfig("config_file.ert")
+    ert = EnKFMain(res_config)
+    runpath_list = ert.getRunpathList()
+    assert not os.path.isfile(runpath_list.getExportFile())
 
-            runner.createRunPath(run_context1)
+    fs_manager = ert.getEnkfFsManager()
+    model_config = ert.getModelConfig()
+    run_context = ErtRunContext.ensemble_experiment(
+        fs_manager.getCurrentFileSystem(),
+        [True],
+        model_config.getRunpathFormat(),
+        model_config.getJobnameFormat(),
+        ert.getDataKW(),
+        0,
+    )
 
-            self.assertTrue(os.path.isfile(runpath_list.getExportFile()))
-            self.assertEqual(
-                "test_runpath_list.txt", os.path.basename(runpath_list.getExportFile())
-            )
+    ert.getEnkfSimulationRunner().createRunPath(run_context)
 
-    @tmpdir()
-    def test_assert_symlink_deleted(self):
-        with ErtTestContext(
-            "create_runpath_symlink_deleted",
-            self.createTestPath("local/snake_oil_field/snake_oil.ert"),
-        ) as tc:
-            ert = tc.getErt()
-            runpath_list = ert.getRunpathList()
-
-            ens_size = ert.getEnsembleSize()
-            runner = ert.getEnkfSimulationRunner()
-            mask = [True] * ens_size
-            fs_manager = ert.getEnkfFsManager()
-            init_fs = fs_manager.getFileSystem("init_fs")
-
-            # create directory structure
-            runpath_fmt = ert.getModelConfig().getRunpathFormat()
-            subst_list = SubstitutionList()
-            itr = 0
-            jobname_fmt = ert.getModelConfig().getJobnameFormat()
-            run_context = ErtRunContext(
-                EnkfRunType.INIT_ONLY,
-                init_fs,
-                None,
-                mask,
-                runpath_fmt,
-                jobname_fmt,
-                subst_list,
-                itr,
-            )
-            runner.createRunPath(run_context)
-
-            # replace field file with symlink
-            linkpath = "%s/permx.grdcel" % str(runpath_list[0].runpath)
-            targetpath = "%s/permx.grdcel.target" % str(runpath_list[0].runpath)
-            open(targetpath, "a").close()
-            os.remove(linkpath)
-            os.symlink(targetpath, linkpath)
-
-            # recreate directory structure
-            runner.createRunPath(run_context)
-
-            # ensure field symlink is replaced by file
-            self.assertFalse(os.path.islink(linkpath))
+    assert os.path.isfile(runpath_list.getExportFile())
+    assert "test_runpath_list.txt" == os.path.basename(runpath_list.getExportFile())
+    assert (
+        Path(runpath_list.getExportFile()).read_text("utf-8")
+        == f"000  {os.getcwd()}/simulations/realization0  a_name_0  000\n"
+    )

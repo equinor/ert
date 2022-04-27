@@ -21,7 +21,7 @@ def render_dynamic_values(s, itr, iens, geo_id):
 
 class RunpathListDumpTest(ResTest):
     def setUp(self):
-        self.config_rel_path = "local/snake_oil_no_data/snake_oil_GEO_ID.ert"
+        self.config_rel_path = "local/snake_oil/snake_oil.ert"
         self.config_path = self.createTestPath(self.config_rel_path)
 
     def _verify_runpath_rendering(self, itr):
