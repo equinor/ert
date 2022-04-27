@@ -125,11 +125,6 @@ class EnkfFsManager(BaseCClass):
         self._fs_rotator = FileSystemRotator(capacity)
         self._mount_root = real_enkf_main.getMountPoint()
 
-    def __del__(self):
-        # This object is a reference, so free() won't be called on it
-        # Any clean-up must be done here
-        super().__del__()
-
     def _createFullCaseName(self, mount_root, case_name):
         return os.path.join(mount_root, case_name)
 

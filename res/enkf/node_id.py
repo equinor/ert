@@ -6,16 +6,13 @@ from cwrap import Prototype
 class NodeId(Structure):
     """
     NodeId is specified in enkf_types.h
+
+    Arguments:
+        report_step: int
+        realization_number: int
     """
 
     _fields_ = [("report_step", c_int), ("iens", c_int)]
-
-    def __init__(self, report_step, realization_number):
-        """
-        @type report_step: int
-        @type realization_number: int
-        """
-        super().__init__(report_step, realization_number)
 
     def __repr__(self):
         rs = self.report_step
