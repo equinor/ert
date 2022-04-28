@@ -51,7 +51,7 @@ class RunDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
-        self.setWindowTitle("Simulations - {}".format(config_file))
+        self.setWindowTitle(f"Simulations - {config_file}")
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model

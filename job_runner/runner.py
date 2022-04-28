@@ -51,9 +51,8 @@ class JobRunner:
         unused = set(names_of_jobs_to_run) - set([j.name() for j in job_queue])
         if unused:
             init_message.with_error(
-                "{} does not exist. Available jobs: {}".format(
-                    unused, [j.name() for j in self.jobs]
-                )
+                f"{unused} does not exist. "
+                f"Available jobs: {[j.name() for j in self.jobs]}"
             )
             yield init_message
             return

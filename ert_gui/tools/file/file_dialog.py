@@ -19,9 +19,8 @@ class FileDialog(QDialog):
         super().__init__(parent)
 
         self.setWindowTitle(
-            "{} # {} Realization: {} Iteration: {}".format(
-                job_name, job_number, realization, iteration
-            )
+            f"{job_name} # {job_number} "
+            f"Realization: {realization} Iteration: {iteration}"
         )
 
         try:

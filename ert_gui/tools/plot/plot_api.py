@@ -67,7 +67,7 @@ class PlotApi:
         elif self._facade.is_gen_data_key(key):
             data = self._facade.gather_gen_data_data(case, key).T
         else:
-            raise ValueError("no such key {}".format(key))
+            raise ValueError(f"no such key {key}")
 
         try:
             return data.astype(float)
@@ -91,13 +91,13 @@ class PlotApi:
         expected_keys = ["OBS", "STD"]
         if not isinstance(data, pd.DataFrame):
             raise TypeError(
-                "Invalid type: {}, should be type: {}".format(type(data), pd.DataFrame)
+                f"Invalid type: {type(data)}, should be type: {pd.DataFrame}"
             )
         elif not data.empty and not set(expected_keys).issubset(data.index):
+            needed = ["OBS", "STD"]
+            missing = set(expected_keys) - set(data.index)
             raise ValueError(
-                "{} should be present in DataFrame index, missing: {}".format(
-                    ["OBS", "STD"], set(expected_keys) - set(data.index)
-                )
+                f"{needed} should be present in DataFrame index, missing: {missing}"
             )
         else:
             return data

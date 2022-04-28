@@ -105,11 +105,11 @@ class CustomDialog(QDialog):
             validation_support = option_widget.getValidationSupport()
             validation_support.validationChanged.connect(self.optionValidationChanged)
 
-        self.layout.addRow("%s:" % label, option_widget)
+        self.layout.addRow(f"{label}:", option_widget)
 
     def addWidget(self, widget, label=""):
         if not label.endswith(":"):
-            label = "%s:" % label
+            label = f"{label}:"
         self.layout.addRow(label, widget)
 
     def addButtons(self):

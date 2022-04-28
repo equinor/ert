@@ -51,3 +51,5 @@ jobs:
         pylint --disable=all \
           --enable="unused-import, super-with-arguments, useless-object-inheritance" \
           docs ert_data ert_gui ert_logging ert_shared job_runner res tests
+        pylint --disable=all \
+          --enable="consider-using-f-strings" ert_data ert_gui job_runner

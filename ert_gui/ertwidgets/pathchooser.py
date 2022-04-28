@@ -192,7 +192,7 @@ class PathChooser(QWidget):
         if path is None:
             path = ""
 
-        self._path_line.setText("%s" % path)
+        self._path_line.setText(str(path))
         self._editing = False
 
     def getValidationSupport(self):

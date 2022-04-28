@@ -109,9 +109,8 @@ class LoadResultsPanel(QWidget):
             print(
                 (
                     "Expected a (whole) number in iteration field, "
-                    'got "%s". Error message: %s.'
+                    f'got "{iteration}". Error message: {e}.'
                 )
-                % (iteration, e)
             )
             return False
         loaded = self.facade.load_from_forward_model(
@@ -119,7 +118,7 @@ class LoadResultsPanel(QWidget):
         )
 
         if loaded > 0:
-            print("Successfully loaded %d realisations." % loaded)
+            print(f"Successfully loaded {loaded} realisations.")
         else:
             print("No realisations loaded.")
         return loaded

@@ -28,7 +28,7 @@ class ActiveRealizationsModel(ValueModel):
 
     def getDefaultValue(self):
         size = self.facade.get_ensemble_size()
-        return "0-%d" % (size - 1)
+        return f"0-{size-1:d}"
 
     def getActiveRealizationsMask(self) -> List[bool]:
         return ActiveRange(
