@@ -50,10 +50,7 @@ class CaseSelector(QComboBox):
         if self._update_ert:
             assert (
                 0 <= index < self.count()
-            ), "Should not happen! Index out of range: 0 <= %i < %i" % (
-                index,
-                self.count(),
-            )
+            ), f"Should not happen! Index out of range: 0 <= {index} < {self.count()}"
 
             item = self._getAllCases()[index]
             self.facade.select_or_create_new_case(item)

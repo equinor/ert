@@ -61,11 +61,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % facade.run_path)
+        run_path_label = QLabel(f"<b>{facade.run_path}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
+        number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -145,7 +145,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
                 )
                 normalized_weights = MultipleDataAssimilation.normalizeWeights(weights)
                 normalized_weights_model.setValue(
-                    ", ".join("%.2f" % x for x in normalized_weights)
+                    ", ".join(f"{x:.2f}" for x in normalized_weights)
                 )
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
@@ -174,5 +174,5 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
 
     def setWeights(self, weights):
         str_weights = str(weights)
-        print("Weights changed: %s" % str_weights)
+        print(f"Weights changed: {str_weights}")
         self.weights = str_weights

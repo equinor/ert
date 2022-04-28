@@ -72,7 +72,7 @@ def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace
 
     _check_locale()
 
-    splash = ErtSplash(version_string="Version {}".format(ert_gui.__version__))
+    splash = ErtSplash(version_string=f"Version {ert_gui.__version__}")
     splash.show()
     splash.repaint()
     splash_screen_start_time = time.time()
@@ -109,15 +109,13 @@ def _check_locale():
     current_locale = QLocale()
     decimal_point = str(current_locale.decimalPoint())
     if decimal_point != ".":
-        msg = """
-** WARNING: You are using a locale with decimalpoint: '{}' - the ert application is
+        msg = f"""
+** WARNING: You are using a locale with decimalpoint: '{decimal_point}' - the ert application is
             written with the assumption that '.' is  used as decimalpoint, and chances
             are that something will break if you continue with this locale. It is highly
             recommended that you set the decimalpoint to '.' using one of the environment
             variables 'LANG', LC_ALL', or 'LC_NUMERIC' to either the 'C' locale or
-            alternatively a locale which uses '.' as decimalpoint.\n""".format(  # noqa
-            decimal_point
-        )
+            alternatively a locale which uses '.' as decimalpoint.\n"""  # noqa
 
         sys.stderr.write(msg)
 

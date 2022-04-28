@@ -18,4 +18,4 @@ class ValueModel(QObject):
         self.valueChanged.emit(value)
 
     def __repr__(self):
-        return 'ValueModel(QObject)(value = "%s")' % self._value
+        return f'ValueModel(QObject)(value = "{self._value}")'

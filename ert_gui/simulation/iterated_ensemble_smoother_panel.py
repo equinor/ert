@@ -37,12 +37,12 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         case_selector = CaseSelector(self.facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % self.facade.run_path)
+        run_path_label = QLabel(f"<b>{self.facade.run_path}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
         number_of_realizations_label = QLabel(
-            "<b>%d</b>" % self.facade.get_ensemble_size()
+            f"<b>{self.facade.get_ensemble_size()}</b>"
         )
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"

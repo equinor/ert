@@ -119,9 +119,9 @@ class SimulationPanel(QWidget):
     def runSimulation(self):
         case_name = self.facade.get_current_case_name()
         message = (
-            "Are you sure you want to use case '%s' for initialization of "
+            f"Are you sure you want to use case '{case_name}' for initialization of "
             "the initial ensemble when running the simulations?"
-        ) % case_name
+        )
         start_simulations = QMessageBox.question(
             self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
         )

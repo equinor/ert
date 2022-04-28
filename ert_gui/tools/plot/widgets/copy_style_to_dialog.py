@@ -17,7 +17,7 @@ class CopyStyleToDialog(QDialog):
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)
         self._dynamic = False
-        self.setWindowTitle("Copy the style of {0} to other keys".format(current_key))
+        self.setWindowTitle(f"Copy the style of {current_key} to other keys")
         self.activateWindow()
 
         layout = QFormLayout(self)

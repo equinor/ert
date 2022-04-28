@@ -22,7 +22,7 @@ class GertMainWindow(QMainWindow):
         self.tools = {}
 
         self.resize(300, 700)
-        self.setWindowTitle("ERT - {}".format(config_file))
+        self.setWindowTitle(f"ERT - {config_file}")
 
         self.__main_widget = None
 
@@ -55,7 +55,7 @@ class GertMainWindow(QMainWindow):
         allowed_areas=Qt.AllDockWidgetAreas,
     ):
         dock_widget = QDockWidget(name)
-        dock_widget.setObjectName("%sDock" % name)
+        dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
 

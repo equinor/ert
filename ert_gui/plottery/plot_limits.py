@@ -10,28 +10,28 @@ class limit_property:
         self._attribute_name = attribute_name
 
     def __get__(self, instance, owner):
-        if not hasattr(instance, "_%s" % self._attribute_name):
-            setattr(instance, "_%s" % self._attribute_name, None)
-        return getattr(instance, "_%s" % self._attribute_name)
+        if not hasattr(instance, f"_{self._attribute_name}"):
+            setattr(instance, f"_{self._attribute_name}", None)
+        return getattr(instance, f"_{self._attribute_name}")
 
     def __set__(self, instance, value):
         if value is not None:
             if not isinstance(value, self._types):
                 raise TypeError(
-                    "Value not (one) of type(s): %s: %s" % (self._types, repr(value))
+                    f"Value not (one) of type(s): {self._types}: {repr(value)}"
                 )
             if self._minimum is not None and value < self._minimum:
                 raise ValueError(
-                    "Value can not be less than %f: %f < %f"
-                    % (self._minimum, value, self._minimum)
+                    f"Value can not be less than {self._minimum:f}: "
+                    f"{value:f} < {self._minimum:f}"
                 )
             if self._maximum is not None and value > self._maximum:
                 raise ValueError(
-                    "Value can not be larger than %f: %f > %f"
-                    % (self._maximum, value, self._maximum)
+                    f"Value can not be larger than {self._maximum:f}: "
+                    f"{value:f} > {self._maximum:f}"
                 )
 
-        setattr(instance, "_%s" % self._attribute_name, value)
+        setattr(instance, f"_{self._attribute_name}", value)
 
 
 class limits_property:
@@ -41,13 +41,13 @@ class limits_property:
         self._maximum_attribute_name = maximum_attribute_name
 
     def __get__(self, instance, owner):
-        return getattr(instance, "%s" % self._minimum_attribute_name), getattr(
-            instance, "%s" % self._maximum_attribute_name
+        return getattr(instance, f"{self._minimum_attribute_name}"), getattr(
+            instance, f"{self._maximum_attribute_name}"
         )
 
     def __set__(self, instance, value):
-        setattr(instance, "_%s" % self._minimum_attribute_name, value[0])
-        setattr(instance, "_%s" % self._maximum_attribute_name, value[1])
+        setattr(instance, f"_{self._minimum_attribute_name}", value[0])
+        setattr(instance, f"_{self._maximum_attribute_name}", value[1])
 
 
 class PlotLimits:

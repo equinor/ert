@@ -28,7 +28,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         layout.addRow("Current case:", case_selector)
 
         run_path_label = QLabel(
-            "<b>%s</b>" % self.ert.getModelConfig().getRunpathAsString()
+            f"<b>{self.ert.getModelConfig().getRunpathAsString()}</b>"
         )
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)

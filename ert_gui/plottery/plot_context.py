@@ -58,7 +58,7 @@ class PlotContext:
         """@type value: str"""
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
-                "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
+                f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._x_axis = value
 
@@ -72,7 +72,7 @@ class PlotContext:
         """@type value: str"""
         if value not in PlotContext.AXIS_TYPES:
             raise UserWarning(
-                "Axis: '%s' is not one of: %s" % (value, PlotContext.AXIS_TYPES)
+                f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
 

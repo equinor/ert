@@ -244,10 +244,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
 
         html = "<table>"
         for index in range(len(states)):
-            html += "<tr><td width=30>%d.</td><td>%s</td></tr>" % (
-                index,
-                str(states[index]),
-            )
+            html += f"<tr><td width=30>{index:d}.</td><td>{states[index]}</td></tr>"
 
         html += "</table>"
 

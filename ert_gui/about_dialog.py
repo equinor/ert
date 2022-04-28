@@ -67,9 +67,7 @@ class AboutDialog(QDialog):
         version = QLabel()
 
         version.setAlignment(Qt.AlignHCenter)
-        version.setText(
-            "Versions: ecl:%s  ert:%s" % (ecl.__version__, ert_gui.__version__)
-        )
+        version.setText(f"Versions: ecl:{ecl.__version__}  ert:{ert_gui.__version__}")
         info_layout.addWidget(version)
 
         info_layout.addStretch(5)

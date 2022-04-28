@@ -58,22 +58,22 @@ class PluginRunner:
 
         if plugin.getWorkflowJob().hasFailed():
             dialog.presentError.emit(
-                "Job Failed!",
-                "The job '%s' has failed while running!" % plugin.getName(),
+                "Job failed!",
+                f"The job '{plugin.getName()}' has failed while running!",
                 details,
             )
             dialog.disposeDialog.emit()
         elif plugin.getWorkflowJob().isCancelled():
             dialog.presentInformation.emit(
-                "Job Cancelled!",
-                "The job '%s' was cancelled successfully!" % plugin.getName(),
+                "Job cancelled!",
+                f"The job '{plugin.getName()}' was cancelled successfully!",
                 details,
             )
             dialog.disposeDialog.emit()
         else:
             dialog.presentInformation.emit(
-                "Job Completed!",
-                "The job '%s' was completed successfully!" % plugin.getName(),
+                "Job completed!",
+                f"The job '{plugin.getName()}' was completed successfully!",
                 details,
             )
             dialog.disposeDialog.emit()

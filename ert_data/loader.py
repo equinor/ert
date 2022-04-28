@@ -37,7 +37,7 @@ def data_loader_factory(observation_type):
             obs_loader=obs_loader,
         )
     else:
-        raise TypeError("Unknown observation type: {}".format(observation_type))
+        raise TypeError(f"Unknown observation type: {observation_type}")
 
 
 def _extract_data(

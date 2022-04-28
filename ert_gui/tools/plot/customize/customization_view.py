@@ -144,8 +144,8 @@ class CustomizationView(QWidget):
         @type plot_config: PlotConfig
         """
         raise NotImplementedError(
-            "Class '%s' has not implemented the applyCustomization() function!"
-            % self.__class__.__name__
+            f"Class '{self.__class__.__name__}' has not implemented "
+            "the applyCustomization() function!"
         )
 
     def revertCustomization(self, plot_config):
@@ -153,8 +153,8 @@ class CustomizationView(QWidget):
         @type plot_config: PlotConfig
         """
         raise NotImplementedError(
-            "Class '%s' has not implemented the revertCustomization() function!"
-            % self.__class__.__name__
+            f"Class '{self.__class__.__name__}' has not implemented "
+            "the revertCustomization() function!"
         )
 
 

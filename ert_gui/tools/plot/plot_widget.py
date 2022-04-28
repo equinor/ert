@@ -76,11 +76,11 @@ class PlotWidget(QWidget):
             self._canvas.draw()
         except Exception as e:
             exc_type, exc_value, exc_tb = sys.exc_info()
-            sys.stderr.write("%s\n" % ("-" * 80))
+            sys.stderr.write("-" * 80 + "\n")
             traceback.print_tb(exc_tb)
-            sys.stderr.write("Exception type: %s\n" % exc_type.__name__)
-            sys.stderr.write("%s\n" % e)
-            sys.stderr.write("%s\n" % ("-" * 80))
+            sys.stderr.write(f"Exception type: {exc_type.__name__}\n")
+            sys.stderr.write(f"{e}\n")
+            sys.stderr.write("-" * 80 + "\n")
             sys.stderr.write(
                 "An error occurred during plotting. "
                 "This stack trace is helpful for diagnosing the problem."
