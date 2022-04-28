@@ -1,6 +1,16 @@
 from pandas import DataFrame
+from httpx import RequestError
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+from qtpy.QtWidgets import (
+    QMainWindow,
+    QDockWidget,
+    QTabWidget,
+    QWidget,
+    QVBoxLayout,
+    QMessageBox,
+)
+import os
+import logging
 
 from ert_gui.plottery.plots.ccsp import CrossCaseStatisticsPlot
 from ert_gui.plottery.plots.distribution import DistributionPlot
@@ -23,6 +33,8 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 
+logger = logging.getLogger(__name__)
+
 
 class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
@@ -35,7 +47,21 @@ class PlotWindow(QMainWindow):
 
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
-        self._key_definitions = self._api.all_data_type_keys()
+        try:
+            self._key_definitions = self._api.all_data_type_keys()
+        except (RequestError, TimeoutError) as e:
+            logger.exception(e)
+            msg = f"{e}"
+            if "None of the URLs provided" in str(e):
+                msg = (
+                    f"{e} \n Remove storage_server.json from {os.getcwd()},"
+                    f" and restart the application."
+                )
+
+            QMessageBox.critical(self, "Request Failed", msg)
+
+            self._key_definitions = []
+
         self._plot_customizer = PlotCustomizer(self, self._key_definitions)
 
         self._plot_customizer.settingsChanged.connect(self.keySelected)
@@ -63,7 +89,20 @@ class PlotWindow(QMainWindow):
 
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
 
-        cases = self._api.get_all_cases_not_running()
+        try:
+            cases = self._api.get_all_cases_not_running()
+        except (RequestError, TimeoutError) as e:
+            logger.exception(e)
+            msg = f"{e}"
+            if "None of the URLs provided" in str(e):
+                msg = (
+                    f"{e} \n Remove storage_server.json from {os.getcwd()},"
+                    f" and restart the application."
+                )
+
+            QMessageBox.critical(self, "Request Failed", msg)
+            cases = []
+
         case_names = [case["name"] for case in cases if not case["hidden"]]
 
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
@@ -92,13 +131,35 @@ class PlotWindow(QMainWindow):
             ):
                 self._updateCustomizer(plot_widget)
                 cases = self._case_selection_widget.getPlotCaseNames()
-                case_to_data_map = {
-                    case: self._api.data_for_key(case, key) for case in cases
-                }
+                case_to_data_map = {}
+                for case in cases:
+                    try:
+                        case_to_data_map[case] = self._api.data_for_key(case, key)
+                    except (RequestError, TimeoutError) as e:
+                        logger.exception(e)
+                        msg = f"{e}"
+                        if "None of the URLs provided" in str(e):
+                            msg = (
+                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
+                                f" and restart the application."
+                            )
+
+                        QMessageBox.critical(self, "Request Failed", msg)
+
+                observations = None
                 if key_def["observations"] and cases:
-                    observations = self._api.observations_for_key(cases[0], key)
-                else:
-                    observations = None
+                    try:
+                        observations = self._api.observations_for_key(cases[0], key)
+                    except (RequestError, TimeoutError) as e:
+                        logger.exception(e)
+                        msg = f"{e}"
+                        if "None of the URLs provided" in str(e):
+                            msg = (
+                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
+                                f" and restart the application."
+                            )
+
+                        QMessageBox.critical(self, "Request Failed", msg)
 
                 plot_config = PlotConfig.createCopy(
                     self._plot_customizer.getPlotConfig()
@@ -113,7 +174,19 @@ class PlotWindow(QMainWindow):
                 if str(key).endswith("H") or "H:" in str(key):
                     plot_context.history_data = DataFrame()
                 else:
-                    plot_context.history_data = self._api.history_data(key, case)
+                    try:
+                        plot_context.history_data = self._api.history_data(key, case)
+                    except (RequestError, TimeoutError) as e:
+                        logger.exception(e)
+                        msg = f"{e}"
+                        if "None of the URLs provided" in str(e):
+                            msg = (
+                                f"{e} \n Remove storage_server.json from {os.getcwd()},"
+                                f" and restart the application."
+                            )
+
+                        QMessageBox.critical(self, "Request Failed", msg)
+                        plot_context.history_data = None
 
                 plot_context.log_scale = key_def["log_scale"]
 

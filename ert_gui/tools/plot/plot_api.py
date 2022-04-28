@@ -7,6 +7,7 @@ from typing import List
 from ert_shared.services import Storage
 from pandas.errors import ParserError
 from itertools import combinations as combi
+from json.decoder import JSONDecodeError
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,14 @@ class PlotApi(object):
         with Storage.session() as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)
+                self._check_response(response)
                 experiments = response.json()
                 experiment = experiments[0]
                 for ensemble_id in experiment["ensemble_ids"]:
                     response = client.get(
                         f"/ensembles/{ensemble_id}", timeout=self._timeout
                     )
+                    self._check_response(response)
                     response_json = response.json()
                     case_name = response_json["userdata"]["name"]
                     self._all_cases.append(
@@ -46,38 +49,40 @@ class PlotApi(object):
                         )
                     )
                 return self._all_cases
-            except (httpx.RequestError, IndexError) as exc:
+            except IndexError as exc:
                 logging.exception(exc)
                 raise exc
 
+    @staticmethod
+    def _check_response(response: requests.Response):
+        if response.status_code != httpx.codes.OK:
+            raise httpx.RequestError(
+                f" Please report this error and try restarting the application."
+                f"{response.text} from url: {response.url}."
+            )
+
     def _get_experiment(self) -> dict:
         with Storage.session() as client:
-            try:
-                response: requests.Response = client.get(
-                    "/experiments", timeout=self._timeout
-                )
-                response_json = response.json()
-                return response_json[0]
-            except (httpx.RequestError, IndexError) as exc:
-                logger.exception(exc)
-                raise exc
+            response: requests.Response = client.get(
+                "/experiments", timeout=self._timeout
+            )
+            self._check_response(response)
+            response_json = response.json()
+            return response_json[0]
 
     def _get_ensembles(self, experiement_id) -> List:
         with Storage.session() as client:
-            try:
-                response: requests.Response = client.get(
-                    f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
-                )
-                response_json = response.json()
-                return response_json
-            except httpx.RequestError as exc:
-                logger.exception(exc)
-                raise exc
+            response: requests.Response = client.get(
+                f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
+            )
+            self._check_response(response)
+            response_json = response.json()
+            return response_json
 
     def all_data_type_keys(self) -> List:
         """Returns a list of all the keys except observation keys.
 
-        The keys are a unique set of all keys in the enseblems
+        The keys are a unique set of all keys in the ensembles
 
         For each key a dict is returned with info about
         the key"""
@@ -86,45 +91,35 @@ class PlotApi(object):
         experiment = self._get_experiment()
 
         with Storage.session() as client:
-
             for ensemble in self._get_ensembles(experiment["id"]):
-                try:
-                    response: requests.Response = client.get(
-                        f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
-                    )
-                    for key, value in response.json().items():
-                        user_data = value["userdata"]
-                        has_observations = value["has_observations"]
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": "VALUE",
-                            "observations": has_observations,
-                            "dimensionality": 2,
-                            "metadata": user_data,
-                            "log_scale": key.startswith("LOG10_"),
-                        }
-                except httpx.RequestError as exc:
-                    logger.exception(exc)
-                    raise exc
+                response: requests.Response = client.get(
+                    f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
+                )
+                self._check_response(response)
+                for key, value in response.json().items():
+                    all_keys[key] = {
+                        "key": key,
+                        "index_type": "VALUE",
+                        "observations": value["has_observations"],
+                        "dimensionality": 2,
+                        "metadata": value["userdata"],
+                        "log_scale": key.startswith("LOG10_"),
+                    }
 
-                try:
-                    response: requests.Response = client.get(
-                        f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
-                    )
-                    for e in response.json():
-                        key = e["name"]
-                        user_data = e["userdata"]
-                        all_keys[key] = {
-                            "key": key,
-                            "index_type": None,
-                            "observations": False,
-                            "dimensionality": 1,
-                            "metadata": user_data,
-                            "log_scale": key.startswith("LOG10_"),
-                        }
-                except httpx.RequestError as exc:
-                    logger.exception(exc)
-                    raise exc
+                response: requests.Response = client.get(
+                    f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
+                )
+                self._check_response(response)
+                for e in response.json():
+                    key = e["name"]
+                    all_keys[key] = {
+                        "key": key,
+                        "index_type": None,
+                        "observations": False,
+                        "dimensionality": 1,
+                        "metadata": e["userdata"],
+                        "log_scale": key.startswith("LOG10_"),
+                    }
 
         return list(all_keys.values())
 
@@ -147,29 +142,25 @@ class PlotApi(object):
         case = self._get_case(case_name)
 
         with Storage.session() as client:
+            response: requests.Response = client.get(
+                f"/ensembles/{case['id']}/records/{key}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_response(response)
+
+            stream = io.BytesIO(response.content)
+            df = pd.read_parquet(stream)
+
             try:
-                response: requests.Response = client.get(
-                    f"/ensembles/{case['id']}/records/{key}",
-                    headers={"accept": "application/x-parquet"},
-                    timeout=self._timeout,
-                )
+                df.columns = pd.to_datetime(df.columns)
+            except (ParserError, ValueError):
+                df.columns = [int(s) for s in df.columns]
 
-                stream = io.BytesIO(response.content)
-                df = pd.read_parquet(stream)
-
-                try:
-                    df.columns = pd.to_datetime(df.columns)
-                except (ParserError, ValueError):
-                    df.columns = [int(s) for s in df.columns]
-
-                try:
-                    return df.astype(float)
-                except ValueError:
-                    return df
-
-            except httpx.RequestError as exc:
-                logger.exception(exc)
-                raise exc
+            try:
+                return df.astype(float)
+            except ValueError:
+                return df
 
     def observations_for_key(self, case_name, key):
         """Returns a pandas DataFrame with the datapoints for a given observation key
@@ -181,28 +172,27 @@ class PlotApi(object):
         case = self._get_case(case_name)
 
         with Storage.session() as client:
+            response = client.get(
+                f"/ensembles/{case['id']}/records/{key}/observations",
+                timeout=self._timeout,
+            )
+            self._check_response(response)
             try:
-                resp = client.get(
-                    f"/ensembles/{case['id']}/records/{key}/observations",
-                    timeout=self._timeout,
-                ).json()
-                obs = resp[0]
-                try:
-                    int(obs["x_axis"][0])
-                    key_index = [int(v) for v in obs["x_axis"]]
-                except ValueError:
-                    key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                obs = response.json()[0]
+            except (KeyError, IndexError, JSONDecodeError):
+                raise httpx.RequestError("Observation schema might have changed")
+            try:
+                int(obs["x_axis"][0])
+                key_index = [int(v) for v in obs["x_axis"]]
+            except ValueError:
+                key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
-                data_struct = {
-                    "STD": obs["errors"],
-                    "OBS": obs["values"],
-                    "key_index": key_index,
-                }
-                return pd.DataFrame(data_struct).T
-
-            except httpx.RequestError as exc:
-                logger.exception(exc)
-                raise exc
+            data_struct = {
+                "STD": obs["errors"],
+                "OBS": obs["values"],
+                "key_index": key_index,
+            }
+            return pd.DataFrame(data_struct).T
 
     def _add_index_range(self, data):
         """

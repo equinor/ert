@@ -11,9 +11,11 @@ from res.enkf import EnKFMain, ResConfig
 
 
 class MockResponse:
-    def __init__(self, json_data, status_code):
+    def __init__(self, json_data, status_code, text="", url=""):
         self.json_data = json_data
         self.status_code = status_code
+        self.text = text
+        self.url = url
 
     def json(self):
         return self.json_data
@@ -240,4 +242,4 @@ def mocked_requests_get(*args, **kwargs):
     elif "/experiments" in args[0]:
         return MockResponse(experiments, 200)
 
-    return MockResponse(None, 404)
+    return MockResponse(None, 404, text="{'details': 'Not found'}", url=args[0])
