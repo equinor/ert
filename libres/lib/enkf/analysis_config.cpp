@@ -24,6 +24,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string>
 
 #include <ert/util/util.h>
 
@@ -42,6 +43,8 @@
 #define UPDATE_STD_CUTOFF_KEY "STD_CUTOFF"
 
 #define ANALYSIS_CONFIG_TYPE_ID 64431306
+
+using namespace std::string_literals;
 
 struct analysis_config_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -267,16 +270,15 @@ bool analysis_config_select_module(analysis_config_type *config,
         analysis_module_type *module =
             analysis_config_get_module(config, module_name);
 
-        if (analysis_module_get_name(module) == "IES_ENKF") {
-            if (analysis_config_get_single_node_update(config)) {
-                fprintf(stderr,
-                        " ** Warning: the module:%s requires the setting "
-                        "\"SINGLE_NODE_UPDATE FALSE\" in the config file.\n",
-                        module_name);
-                fprintf(stderr,
-                        " **          the module has NOT been selected. \n");
-                return false;
-            }
+        if (analysis_module_get_name(module) == "IES_ENKF"s &&
+            analysis_config_get_single_node_update(config)) {
+            fprintf(stderr,
+                    " ** Warning: the module:%s requires the setting "
+                    "\"SINGLE_NODE_UPDATE FALSE\" in the config file.\n",
+                    module_name);
+            fprintf(stderr,
+                    " **          the module has NOT been selected. \n");
+            return false;
         }
 
         config->analysis_module = module;

@@ -37,6 +37,11 @@ TEST_CASE("Accessing analysis modules loaded in config", "[enkf]") {
                 REQUIRE_THROWS(
                     analysis_config_get_module(analysis_config, "UNKNOWN"));
             }
+            analysis_config_set_single_node_update(analysis_config, true);
+            THEN("Feching ies module returns false") {
+                REQUIRE(analysis_config_select_module(analysis_config,
+                                                      "IES_ENKF") == false);
+            }
         }
     }
 }
