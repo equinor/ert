@@ -54,40 +54,81 @@ Documentation for ert is located at [https://ert.readthedocs.io/en/latest/](http
 
 ## Developing
 
-*ERT* is Python and C software. To start developing, install it in editable
-mode:
+*ERT* uses Python for user-facing code and C++ for some backend code. Python is
+the easiest to work with and is likely what most developers will work with.
 
-```
-$ git clone https://github.com/equinor/ert
-$ cd ert
-$ pip install -e .
+### Developing Python
+
+To start developing the Python code, install ERT in editable mode into a virtualenv:
+
+```sh
+# Create and enable a virtualenv
+python3 -m venv my_virtualenv
+source my_virtualenv/bin/activate
+
+# Update build dependencies
+pip install --upgrade pip wheel setuptools
+
+# Download and install ERT
+git clone https://github.com/equinor/ert
+cd ert
+pip install --editable .
 ```
 
 Additional development packages must be installed to run the test suite:
+```sh
+pip install -r dev-requirements.txt
+pytest tests/
 ```
-$ pip install -r dev-requirements.txt
-$ pytest tests/
-```
 
-<strong>For Mac-users</strong> <em>The default maximum number of open files is normally relatively low on MacOS.
-This is likely to make tests crash with mysterious error-messages.
-You can inspect the current limits in your shell by issuing he command 'ulimit -a'.
-In order to increase maximum number of open files, run 'ulimit -n 16384' (or some other large number)
-and put the command in your .profile to make it persist.
-</em>
+Since we've installed ERT in `--editable` mode, it is now possible to modify the
+Python code without reinstalling. Simply restart ERT after making your changes.
 
-ERT is meant to be installed using `setup.py`, directly or using `pip
-install ./`. The `CMakeLists.txt` in libres exists, but is used by `setup.py`
-to generate the ERT C library (the C library formerly known as *libres*) and
-by Github Actions to run C tests.
+### Developing C++
 
-ERT requires a recent version of `pip` - hence you are advised to upgrade
-your `pip` installation with
+C++ is the backbone of ERT 2 as in used extensively in important parts of ERT.
+There's a combination of legacy code and newer refactored code. The end goal is
+likely that some core performance-critical functionality will be implemented in
+C++ and the rest of the business logic will be implemented in Python.
+
+While running `--editable` will create the necessary Python extension module
+(`res/_lib.cpython-*.so`), changing C++ code will not take effect even when
+reloading ERT. This requires recompilation, which means reinstalling ERT from
+scratch.
+
+To avoid recompiling already-compiled source files, we provide the
+`script/build` script. From a fresh virtualenv:
 
 ```sh
-$ pip install --upgrade pip
+git clone https://github.com/equinor/ert
+cd ert
+script/build
 ```
-If your `pip` version is too old the installation of ERT will fail, and the error messages will be incomprehensible.
+
+This command will update `pip` if necessary, install the build dependencies,
+compile ERT and install in editable mode, and finally install the runtime
+requirements. Further invocations will only build the necessary source files. To
+do a full rebuild, delete the `_skbuild` directory.
+
+Note: This will create a debug build, which is faster to compile and comes with
+debugging functionality enabled. This means that, for example, Eigen
+computations will be checked and will abort if preconditions aren't met (eg.
+when inverting a matrix, it will first check that the matrix is square). The
+downside is that this makes the code unoptimised and slow. Debugging flags are
+therefore not present in builds of ERT that we release on Komodo or PyPI. To
+build a release build for development, use `script/build --release`.
+
+### Notes
+
+1. If pip reinstallation fails during the compilation step, try removing the
+`_skbuild` directory.
+
+2. The default maximum number of open files is normally relatively low on MacOS
+and some Linux distributions. This is likely to make tests crash with mysterious
+error-messages. You can inspect the current limits in your shell by issuing he
+command `ulimit -a`. In order to increase maximum number of open files, run
+`ulimit -n 16384` (or some other large number) and put the command in your
+`.profile` to make it persist.
 
 ### Testing C code
 

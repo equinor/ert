@@ -38,3 +38,4 @@ __res_lib_info.py
 .hypothesis
 /_skbuild
 .libs
+/compile_commands.json
