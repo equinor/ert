@@ -1,3 +1,4 @@
+import httpx
 import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -100,3 +101,20 @@ def test_load_history_data(api):
     assert_frame_equal(
         df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
     )
+
+
+def test_plot_api_request_errors(api, mocker):
+    # Mock the experiment name to be something unexpected
+    mocker.patch(
+        "ert_gui.tools.plot.plot_api.PlotApi._get_experiment",
+        return_value={"id": "mocked"},
+    )
+    with pytest.raises(httpx.RequestError):
+        api.all_data_type_keys()
+
+    case_name = "default_0"
+    with pytest.raises(httpx.RequestError):
+        api.observations_for_key(case_name, "should_not_be_there")
+
+    with pytest.raises(httpx.RequestError):
+        api.data_for_key(case_name, "should_not_be_there")
