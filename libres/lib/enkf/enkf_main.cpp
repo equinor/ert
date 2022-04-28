@@ -347,6 +347,9 @@ void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose) {
     enkf_main->verbose = verbose;
 }
 
+bool enkf_main_get_verbose(const enkf_main_type *enkf_main) {
+    return enkf_main->verbose;
+}
 /*
    There is NO tagging anymore - if the user wants tags - the user
    supplies the key __WITH__ tags.

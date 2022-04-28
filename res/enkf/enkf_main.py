@@ -265,6 +265,7 @@ class _RealEnKFMain(BaseCClass):
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _init_run = ResPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
+    _get_verbose = ResPrototype("bool enkf_main_get_verbose(enkf_main)")
 
     def __init__(self, config, strict=True, verbose=False):
         """Please don't use this class directly. See EnKFMain instead"""
@@ -476,3 +477,6 @@ class _RealEnKFMain(BaseCClass):
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."
         return self._get_shared_rng()
+
+    def get_verbose(self):
+        return self._get_verbose()

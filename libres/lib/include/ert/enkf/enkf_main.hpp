@@ -116,6 +116,7 @@ extern "C" const hook_manager_type *
 enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
 
 void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose);
+extern "C" bool enkf_main_get_verbose(const enkf_main_type *enkf_main);
 
 extern "C" ert_workflow_list_type *
 enkf_main_get_workflow_list(enkf_main_type *enkf_main);

@@ -65,6 +65,7 @@ struct analysis_config_struct {
     bool stop_long_running;
     int max_runtime;
     double global_std_scaling;
+    bool verbose = false;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(analysis_config, ANALYSIS_CONFIG_TYPE_ID)
@@ -596,4 +597,12 @@ void analysis_config_add_config_items(config_parser_type *config) {
     item = config_add_schema_item(config, ANALYSIS_SET_VAR_KEY, false);
     config_schema_item_set_argc_minmax(item, 3, CONFIG_DEFAULT_ARG_MAX);
     analysis_iter_config_add_config_items(config);
+}
+
+void analysis_config_set_verbose(analysis_config_type *config, bool verbose) {
+    config->verbose = verbose;
+}
+
+bool analysis_config_get_verbose(const analysis_config_type *config) {
+    return config->verbose;
 }

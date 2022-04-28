@@ -119,6 +119,10 @@ analysis_config_add_module_copy(analysis_config_type *config,
 void analysis_config_load_internal_modules(int ens_size,
                                            analysis_config_type *config);
 
+extern "C" void analysis_config_set_verbose(analysis_config_type *config,
+                                            bool verbose);
+extern "C" bool analysis_config_get_verbose(const analysis_config_type *config);
+
 UTIL_IS_INSTANCE_HEADER(analysis_config);
 
 #endif

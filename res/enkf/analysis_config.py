@@ -101,6 +101,9 @@ class AnalysisConfig(BaseCClass):
     _get_min_realizations = ResPrototype(
         "int analysis_config_get_min_realisations(analysis_config)"
     )
+    _set_verbose = ResPrototype(
+        "void analysis_config_set_verbose(analysis_config, bool)"
+    )
 
     def __init__(
         self,
@@ -269,6 +272,9 @@ class AnalysisConfig(BaseCClass):
 
     def getGlobalStdScaling(self):
         return self._get_global_std_scaling()
+
+    def set_verbose(self, verbose: bool) -> None:
+        self._set_verbose(verbose)
 
     @property
     def minimum_required_realizations(self) -> int:

@@ -187,6 +187,7 @@ class ESUpdate:
         updatestep = local_config.getUpdatestep()
 
         analysis_config = self.ert.analysisConfig()
+        analysis_config.set_verbose(self.ert.get_verbose())
 
         total_ens_size = self.ert.getEnsembleSize()
         obs = self.ert.getObservations()
