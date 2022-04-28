@@ -102,6 +102,14 @@ class EvaluatorTracker:
             except (ConnectionClosedError) as e:
                 # The monitor connection closed unexpectedly
                 drainer_logger.debug(f"connection closed error: {e}")
+            except BaseException:  # pylint: disable=broad-except
+                drainer_logger.exception("unexpected error: ")
+                # We really don't know what happened...  shut down
+                # the thread and get out of here. The monitor has
+                # been stopped by the ctx-mgr
+                self._work_queue.put(EvaluatorTracker.DONE)
+                self._work_queue.join()
+                return
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
         )
