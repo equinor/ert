@@ -47,7 +47,7 @@ class ClearableLineEdit(QLineEdit):
         frame_width = self.style().pixelMetric(QStyle.PM_DefaultFrameWidth)
         self._clear_button.move(
             right - frame_width - self._clear_button.width(),
-            (self.height() - self._clear_button.height()) / 2,
+            int((self.height() - self._clear_button.height()) / 2),
         )
         QLineEdit.resizeEvent(self, event)
 

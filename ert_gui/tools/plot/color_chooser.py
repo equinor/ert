@@ -22,7 +22,7 @@ class ColorBox(QFrame):
         painter = QPainter(self)
         rect = self.contentsRect()
         tile_count = 3
-        tile_size = rect.width() / tile_count
+        tile_size = int(rect.width() / tile_count)
         painter.save()
         painter.translate(rect.x(), rect.y())
 
