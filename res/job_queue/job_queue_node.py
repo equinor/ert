@@ -138,12 +138,13 @@ class JobQueueNode(BaseCClass):
     def run_exit_callback(self):
         return self.exit_callback_function(self.callback_arguments)
 
-    def is_running(self):
-        return (
-            self.status == JobStatusType.JOB_QUEUE_PENDING
-            or self.status == JobStatusType.JOB_QUEUE_SUBMITTED
-            or self.status == JobStatusType.JOB_QUEUE_RUNNING
-            or self.status == JobStatusType.JOB_QUEUE_UNKNOWN
+    def is_running(self, given_status=None):
+        status = given_status or self.status
+        return status in (
+            JobStatusType.JOB_QUEUE_PENDING,
+            JobStatusType.JOB_QUEUE_SUBMITTED,
+            JobStatusType.JOB_QUEUE_RUNNING,
+            JobStatusType.JOB_QUEUE_UNKNOWN,
         )  # dont stop monitoring if LSF commands are unavailable
 
     @property
@@ -168,11 +169,12 @@ class JobQueueNode(BaseCClass):
             self._set_status(JobStatusType.JOB_QUEUE_DONE)
 
         self.update_status(driver)
+        current_status = self.status
 
-        while self.is_running():
+        while self.is_running(current_status):
             if (
                 self._start_time is None
-                and self.status == JobStatusType.JOB_QUEUE_RUNNING
+                and current_status == JobStatusType.JOB_QUEUE_RUNNING
             ):
                 self._start_time = time.time()
             time.sleep(1)
@@ -195,29 +197,33 @@ class JobQueueNode(BaseCClass):
                     with self._mutex:
                         self._timed_out = True
 
+            current_status = self.status
+
         self._end_time = time.time()
 
         with self._mutex:
-            if self.status == JobStatusType.JOB_QUEUE_DONE:
+            if current_status == JobStatusType.JOB_QUEUE_DONE:
                 with pool_sema:
                     self.run_done_callback()
 
-            if self.status == JobStatusType.JOB_QUEUE_SUCCESS:
+            # refresh cached status after running the callback
+            current_status = self.status
+            if current_status == JobStatusType.JOB_QUEUE_SUCCESS:
                 pass
-            elif self.status == JobStatusType.JOB_QUEUE_EXIT:
+            elif current_status == JobStatusType.JOB_QUEUE_EXIT:
                 if self.submit_attempt < max_submit:
                     self._set_thread_status(ThreadStatus.READY)
                     return
                 else:
                     self._set_status(JobStatusType.JOB_QUEUE_FAILED)
                     self.run_exit_callback()
-            elif self.status == JobStatusType.JOB_QUEUE_IS_KILLED:
+            elif current_status == JobStatusType.JOB_QUEUE_IS_KILLED:
                 pass
             else:
                 self._set_thread_status(ThreadStatus.FAILED)
                 raise AssertionError(
                     "Unexpected job status type after running job: {}".format(
-                        self.status
+                        current_status
                     )
                 )
 
