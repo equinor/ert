@@ -6,7 +6,6 @@ def test_key_def_structure(api):
     fopr = next(x for x in key_defs if x["key"] == "FOPR")
     fopr_expected = {
         "dimensionality": 2,
-        "has_refcase": True,
         "index_type": "VALUE",
         "key": "FOPR",
         "metadata": {"data_origin": "Summary"},
@@ -18,7 +17,6 @@ def test_key_def_structure(api):
     bpr = next(x for x in key_defs if x["key"] == "BPR:1,3,8")
     bpr_expected = {
         "dimensionality": 2,
-        "has_refcase": True,
         "index_type": "VALUE",
         "key": "BPR:1,3,8",
         "metadata": {"data_origin": "Summary"},
@@ -32,7 +30,6 @@ def test_key_def_structure(api):
     )
     bpr_parameter_expected = {
         "dimensionality": 1,
-        "has_refcase": False,
         "index_type": None,
         "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
         "metadata": {"data_origin": "GEN_KW"},

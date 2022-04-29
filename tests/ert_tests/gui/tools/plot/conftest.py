@@ -41,12 +41,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")
-        config_file = "snake_oil.ert"
-        rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
-        ert = EnKFMain(rc)
-        facade = LibresFacade(ert)
-        api = PlotApi(facade)
+        api = PlotApi()
         yield api
 
 

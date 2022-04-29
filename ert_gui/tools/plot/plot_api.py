@@ -10,9 +10,8 @@ from pandas.errors import ParserError
 logger = logging.getLogger(__name__)
 
 
-class PlotApi:
-    def __init__(self, facade):
-        self._facade = facade
+class PlotApi(object):
+    def __init__(self):
         self._all_cases: List[dict] = None
 
     def _get_case(self, name: str) -> dict:
@@ -77,7 +76,7 @@ class PlotApi:
         For each key a dict is returned with info about
         the key"""
 
-        all_keys = dict()
+        all_keys = {}
         experiment = self._get_experiment()
 
         with Storage.session() as client:
@@ -94,7 +93,6 @@ class PlotApi:
                             "key": key,
                             "index_type": "VALUE",
                             "observations": has_observations,
-                            "has_refcase": self._facade.has_refcase(key),
                             "dimensionality": 2,
                             "metadata": user_data,
                             "log_scale": key.startswith("LOG10_"),
@@ -114,7 +112,6 @@ class PlotApi:
                             "key": key,
                             "index_type": None,
                             "observations": False,
-                            "has_refcase": False,
                             "dimensionality": 1,
                             "metadata": user_data,
                             "log_scale": key.startswith("LOG10_"),
@@ -221,4 +218,10 @@ class PlotApi:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
-        return self._facade.history_data(key, case)
+
+        if ":" in key:
+            head, tail = key.split(":", 2)
+            history_key = f"{head}H:{tail}"
+        else:
+            history_key = f"{key}H"
+        return self.data_for_key(case, history_key)

@@ -135,7 +135,7 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addDock(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(PlotTool(ert, config_file))
+    window.addTool(PlotTool(config_file))
     window.addTool(ExportTool(ert))
     window.addTool(WorkflowsTool(ert, notifier))
     window.addTool(ManageCasesTool(ert, notifier))

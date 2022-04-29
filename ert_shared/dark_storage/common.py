@@ -46,6 +46,9 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None):
     given case. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
 
+    if key.split(":")[0][-1] == "H":
+        return res.history_data(key, case)
+
     if key.startswith("LOG10_"):
         key = key[6:]
 
