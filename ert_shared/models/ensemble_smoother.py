@@ -65,7 +65,7 @@ class EnsembleSmoother(BaseRunModel):
             es_update.smootherUpdate(prior_context)
         except ErtAnalysisError as e:
             raise ErtRunError(
-                f"Analysis of simulation failed with the follwing error: {e}"
+                f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())

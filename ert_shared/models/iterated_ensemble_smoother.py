@@ -74,7 +74,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             es_update.smootherUpdate(run_context)
         except ErtAnalysisError as e:
             raise ErtRunError(
-                f"Analysis of simulation failed with the follwing error: {e}"
+                f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
         # Push update data to new storage
