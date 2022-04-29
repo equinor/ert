@@ -4,8 +4,8 @@ from pytestqt.qt_compat import qt_api
 
 from ert_gui.model.progress_proxy import ProgressProxyModel
 from ert_gui.model.snapshot import ProgressRole, SnapshotModel
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Realization
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, Realization
+from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
 )

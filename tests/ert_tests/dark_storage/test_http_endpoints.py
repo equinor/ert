@@ -1,11 +1,10 @@
-from numpy.testing import assert_array_equal
-from requests import Response
-import uuid
+import io
 import json
+import uuid
 
 import pandas as pd
-import io
-import pytest
+from numpy.testing import assert_array_equal
+from requests import Response
 
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
@@ -59,7 +58,7 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
 
     assert "POLY_RES@0" in ensemble_json
     assert "has_observations" in ensemble_json["POLY_RES@0"]
-    assert ensemble_json["POLY_RES@0"]["has_observations"] == True
+    assert ensemble_json["POLY_RES@0"]["has_observations"] is True
 
 
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
@@ -75,17 +74,19 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id1}")
     ensemble_json = resp.json()
-    assert (
-        ensemble_json["userdata"]["name"] == "alpha"
-    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json: {json.dumps(ensemble_json, indent=1)}"
+    assert ensemble_json["userdata"]["name"] == "alpha", (
+        f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
+        f"ensemble_json: {json.dumps(ensemble_json, indent=1)}"
+    )
     assert ensemble_json["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id2}")
     ensemble_json2 = resp.json()
 
-    assert (
-        ensemble_json2["userdata"]["name"] == "beta"
-    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json2: {json.dumps(ensemble_json2, indent=1)}"
+    assert ensemble_json2["userdata"]["name"] == "beta", (
+        f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
+        f"ensemble_json2: {json.dumps(ensemble_json2, indent=1)}"
+    )
     assert ensemble_json2["response_names"][0] == "POLY_RES@0"
 
     resp: Response = dark_storage_client.get(
@@ -100,9 +101,11 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     stream = io.BytesIO(resp.content)
     response_df2 = pd.read_csv(stream, index_col=0, float_precision="round_trip")
 
-    assert (
-        len(response_df1.columns) == 10
-    ), f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\nensemble_json: {json.dumps(ensemble_json, indent=1)}\n status_code: {resp.status_code}"
+    assert len(response_df1.columns) == 10, (
+        f"\nexperiment_json: {json.dumps(experiment_json, indent=1)} \n\n"
+        f"ensemble_json: {json.dumps(ensemble_json, indent=1)}\n"
+        f" status_code: {resp.status_code}"
+    )
     assert len(response_df1.index) == 3
 
     assert len(response_df2.columns) == 10

@@ -1,7 +1,6 @@
 from ert_gui.model.snapshot import SnapshotModel
-import typing
 from ert.ensemble_evaluator import EvaluatorTracker
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,

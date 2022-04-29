@@ -18,8 +18,8 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/misfit_member.hpp>
 

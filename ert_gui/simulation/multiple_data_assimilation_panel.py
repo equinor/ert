@@ -20,7 +20,7 @@ from ert_gui.ertwidgets import (
     addHelpToWidget,
     CaseSelector,
     ActiveLabel,
-    AnalysisModuleSelector,
+    AnalysisModuleEdit,
 )
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.init_iter_value import IterValueModel
@@ -37,8 +37,22 @@ from ert_gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
 from ert_shared.libres_facade import LibresFacade
 
+from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_case: str
+    realizations: str
+    weights: List[float]
+    start_iteration: int
+
 
 class MultipleDataAssimilationPanel(SimulationConfigPanel):
+    analysis_module_name = "STD_ENKF"
+
     def __init__(self, facade: LibresFacade, notifier: ErtNotifier):
         SimulationConfigPanel.__init__(self, MultipleDataAssimilation)
 
@@ -47,11 +61,11 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % facade.run_path)
+        run_path_label = QLabel(f"<b>{facade.run_path}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
+        number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -78,12 +92,12 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
         layout.addRow("Start iteration:", self._iter_field)
 
-        self._analysis_module_selector = AnalysisModuleSelector(
+        self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            iterable=False,
+            module_name=MultipleDataAssimilationPanel.analysis_module_name,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         self._active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
@@ -94,13 +108,13 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
         layout.addRow("Active realizations:", self._active_realizations_field)
 
-        self._target_case_format_field.getValidationSupport().validationChanged.connect(
+        self._target_case_format_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
 
@@ -131,12 +145,12 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
                 )
                 normalized_weights = MultipleDataAssimilation.normalizeWeights(weights)
                 normalized_weights_model.setValue(
-                    ", ".join("%.2f" % x for x in normalized_weights)
+                    ", ".join(f"{x:.2f}" for x in normalized_weights)
                 )
             else:
                 normalized_weights_model.setValue("The weights are invalid!")
 
-        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
+        self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(  # noqa
             updateVisualizationOfNormalizedWeights
         )
 
@@ -150,16 +164,15 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self):
-        arguments = {
-            "active_realizations": self._active_realizations_model.getActiveRealizationsMask(),
-            "target_case": self._target_case_format_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
-            "weights": self.weights,
-            "start_iteration": int(self._iter_field.model.getValue()),
-        }
-        return arguments
+        return Arguments(
+            mode="es_mda",
+            target_case=self._target_case_format_model.getValue(),
+            realizations=self._active_realizations_field.text(),
+            weights=self.weights,
+            start_iteration=int(self._iter_field.model.getValue()),
+        )
 
     def setWeights(self, weights):
         str_weights = str(weights)
-        print("Weights changed: %s" % str_weights)
+        print(f"Weights changed: {str_weights}")
         self.weights = str_weights

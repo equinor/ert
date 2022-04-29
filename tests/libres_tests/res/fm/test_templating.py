@@ -12,11 +12,11 @@ from res.fm.templating import load_parameters, render_template
 
 class TemplatingTest(ResTest):
     well_drill_tmpl = (
-        'PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n'
-        'PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}\n'
+        'PROD1 takes value {{ well_drill.PROD1 }}, implying {{ "on" if well_drill.PROD1 >= 0.5 else "off" }}\n'  # noqa
+        'PROD2 takes value {{ well_drill.PROD2 }}, implying {{ "on" if well_drill.PROD2 >= 0.5 else "off" }}\n'  # noqa
         "---------------------------------- \n"
         "{%- for well in well_drill.INJ %}\n"
-        '{{ well.name }} takes value {{  well.value|round(1) }}, implying {{ "on" if  well.value >= 0.5 else "off"}}\n'
+        '{{ well.name }} takes value {{  well.value|round(1) }}, implying {{ "on" if  well.value >= 0.5 else "off"}}\n'  # noqa
         "{%- endfor %}"
     )
 
@@ -44,7 +44,7 @@ class TemplatingTest(ResTest):
 
     @tmpdir()
     def test_render_invalid(self):
-        with TestAreaContext("templating") as tac:
+        with TestAreaContext("templating"):
 
             prod_wells = {"PROD%d" % idx: 0.3 * idx for idx in range(4)}
             prod_in = "well_drill.json"
@@ -179,7 +179,7 @@ class TemplatingTest(ResTest):
 
     @tmpdir()
     def test_template_executable(self):
-        with TestAreaContext("templating") as tac:
+        with TestAreaContext("templating"):
             with open("template", "w") as template_file:
                 template_file.write(
                     "FILENAME\n"
@@ -198,7 +198,11 @@ class TemplatingTest(ResTest):
                 }
                 json_file.write(json.dumps(parameters))
 
-            params = " --output_file out_file --template_file template --input_files other.json"
+            params = (
+                " --output_file out_file "
+                "--template_file template "
+                "--input_files other.json"
+            )
             template_render_exec = pkg_resources.resource_filename(
                 "ert_shared",
                 "share/ert/forward-models/templating/script/template_render",
@@ -215,7 +219,7 @@ class TemplatingTest(ResTest):
     @tmpdir()
     def test_load_parameters(self):
 
-        with TestAreaContext("templating") as tac:
+        with TestAreaContext("templating"):
             with open("parameters.json", "w") as json_file:
                 json_file.write(json.dumps(self.default_parameters))
 

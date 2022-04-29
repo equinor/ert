@@ -23,7 +23,7 @@ class SummaryObservation(BaseCClass):
     TYPE_NAME = "summary_obs"
 
     _alloc = ResPrototype(
-        "void*  summary_obs_alloc(char*, char*, double, double, char*, double)",
+        "void*  summary_obs_alloc(char*, char*, double, double)",
         bind=False,
     )
     _free = ResPrototype("void   summary_obs_free(summary_obs)")
@@ -35,27 +35,13 @@ class SummaryObservation(BaseCClass):
         "void   summary_obs_set_std_scale(summary_obs , double)"
     )
 
-    def __init__(
-        self,
-        summary_key,
-        observation_key,
-        value,
-        std,
-        auto_corrf_name=None,
-        auto_corrf_param=0.0,
-    ):
+    def __init__(self, summary_key, observation_key, value, std):
         assert isinstance(summary_key, str)
         assert isinstance(observation_key, str)
         assert isinstance(value, float)
         assert isinstance(std, float)
 
-        if auto_corrf_name is not None:
-            assert isinstance(auto_corrf_name, str)
-
-        assert isinstance(auto_corrf_param, float)
-        c_ptr = self._alloc(
-            summary_key, observation_key, value, std, auto_corrf_name, auto_corrf_param
-        )
+        c_ptr = self._alloc(summary_key, observation_key, value, std)
         if c_ptr:
             super().__init__(c_ptr)
         else:
@@ -97,5 +83,8 @@ class SummaryObservation(BaseCClass):
         sd = self.getStandardDeviation()
         sc = self.getStdScaling()
         ad = self._address()
-        fmt = "SummaryObservation(key = %s, value = %f, std = %f, std_scaling = %f) at 0x%x"
+        fmt = (
+            "SummaryObservation(key = %s, "
+            "value = %f, std = %f, std_scaling = %f) at 0x%x"
+        )
         return fmt % (sk, va, sd, sc, ad)

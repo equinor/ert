@@ -21,20 +21,20 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 #include <ert/util/vector.h>
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/field.hpp>
-#include <ert/enkf/summary.hpp>
+#include "ert/python.hpp"
+#include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/container.hpp>
 #include <ert/enkf/container_config.hpp>
+#include <ert/enkf/enkf_util.hpp>
+#include <ert/enkf/field.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/block_obs.hpp>
-#include "ert/python.hpp"
+#include <ert/enkf/summary.hpp>
 
 #define BLOCK_OBS_TYPE_ID 661098
 #define POINT_OBS_TYPE_ID 778196
@@ -255,7 +255,7 @@ void block_obs_get_observations(const block_obs_type *block_obs,
     int active_size = __active_list->active_size(obs_size);
     active_mode_type active_mode = __active_list->getMode();
     obs_block_type *obs_block =
-        obs_data_add_block(obs_data, block_obs->obs_key, obs_size, NULL, false);
+        obs_data_add_block(obs_data, block_obs->obs_key, obs_size);
 
     if (active_mode == ALL_ACTIVE) {
         for (i = 0; i < obs_size; i++) {

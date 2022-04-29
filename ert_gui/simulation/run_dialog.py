@@ -3,7 +3,6 @@ import asyncio
 from threading import Thread
 from PyQt5.QtWidgets import QAbstractItemView
 
-from ecl.util.util import BoolVector
 from ert_gui.ertwidgets import resourceMovie
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole
@@ -12,12 +11,12 @@ from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator import (
     EndEvent,
+    EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.tracker.factory import create_tracker
 from ert_shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
@@ -37,13 +36,6 @@ from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
-from ert_shared.ensemble_evaluator.entity.identifiers import (
-    EVTYPE_EE_TERMINATED,
-)
-from ert_shared.status.entity.state import (
-    ENSEMBLE_STATE_STOPPED,
-    ENSEMBLE_STATE_FAILED,
-)
 
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
@@ -59,7 +51,7 @@ class RunDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setModal(True)
         self.setWindowModality(Qt.WindowModal)
-        self.setWindowTitle("Simulations - {}".format(config_file))
+        self.setWindowTitle(f"Simulations - {config_file}")
 
         self._snapshot_model = SnapshotModel(self)
         self._run_model = run_model
@@ -294,7 +286,7 @@ class RunDialog(QDialog):
 
         self._ticker.start(1000)
 
-        tracker = create_tracker(
+        tracker = EvaluatorTracker(
             self._run_model,
             ee_con_info=evaluator_server_config.get_connection_info(),
         )
@@ -339,11 +331,11 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            QMessageBox.critical(
-                self,
-                "Simulations failed!",
-                f"The simulation failed with the following error:\n\n{failed_msg}",
-            )
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Simulations failed!".center(100))
+            msg.setDetailedText(failed_msg)
+            msg.exec_()
 
     @Slot()
     def _on_ticker(self):
@@ -388,7 +380,8 @@ class RunDialog(QDialog):
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Information)
         msg.setText(
-            "Note that workflows will only be executed on the restarted realizations and that this might have unexpected consequences."
+            "Note that workflows will only be executed on the restarted "
+            "realizations and that this might have unexpected consequences."
         )
         msg.setWindowTitle("Restart failed realizations")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)

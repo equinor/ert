@@ -18,9 +18,9 @@
 
 #ifndef ERT_RMS_TAG_H
 #define ERT_RMS_TAG_H
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/hash.hpp>
 

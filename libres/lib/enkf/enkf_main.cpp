@@ -15,27 +15,26 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <unordered_map>
-#include <vector>
-#include <tuple>
 #include <future>
 #include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
-#include <ert/util/rng.h>
-#include <ert/util/vector.hpp>
-#include <ert/util/int_vector.h>
+#include <ert/res_util/path_fmt.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/hash.h>
-#include <ert/res_util/path_fmt.hpp>
+#include <ert/util/int_vector.h>
+#include <ert/util/rng.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.hpp>
 
-#include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/matrix.hpp>
 #include <ert/logging.hpp>
+#include <ert/res_util/subst_list.hpp>
 
 #include <ert/sched/history.hpp>
 
@@ -43,14 +42,14 @@
 #include <ert/analysis/enkf_linalg.hpp>
 #include <ert/analysis/update.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_main.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/enkf_main.hpp>
+#include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field.hpp>
+#include <ert/enkf/obs_data.hpp>
 
 #include <ert/concurrency.hpp>
 
@@ -596,70 +595,23 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);
 }
 
-int enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main,
-                                               int iter,
-                                               bool_vector_type *iactive,
-                                               enkf_fs_type *fs) {
-    const int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type **realizations_msg_list = (stringlist_type **)util_calloc(
-        ens_size, sizeof *realizations_msg_list); // CXX_CAST_ERROR
-    for (int iens = 0; iens < ens_size; ++iens)
-        realizations_msg_list[iens] = stringlist_alloc_new();
-
-    int loaded = enkf_main_load_from_forward_model_with_fs(
-        enkf_main, iter, iactive, realizations_msg_list, fs);
-
-    for (int iens = 0; iens < ens_size; ++iens)
-        stringlist_free(realizations_msg_list[iens]);
-
-    free(realizations_msg_list);
-    return loaded;
-}
-
-int enkf_main_load_from_forward_model(enkf_main_type *enkf_main, int iter,
-                                      bool_vector_type *iactive,
-                                      stringlist_type **realizations_msg_list) {
-    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive,
-                                                     realizations_msg_list, fs);
-}
-
-int enkf_main_load_from_forward_model_with_fs(
-    enkf_main_type *enkf_main, int iter, bool_vector_type *iactive,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs) {
+int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
+                                              int iter,
+                                              bool_vector_type *iactive,
+                                              enkf_fs_type *fs) {
     model_config_type *model_config = enkf_main_get_model_config(enkf_main);
     ert_run_context_type *run_context =
         ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
             fs, iactive, model_config_get_runpath_fmt(model_config),
             model_config_get_jobname_fmt(model_config),
             enkf_main_get_data_kw(enkf_main), iter);
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context,
-                                                 realizations_msg_list, fs);
+    int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
     ert_run_context_free(run_context);
-    return loaded;
-}
-
-int enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
-                                             ert_run_context_type *run_context,
-                                             enkf_fs_type *fs) {
-    auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type **realizations_msg_list = (stringlist_type **)util_calloc(
-        ens_size, sizeof *realizations_msg_list); // CXX_CAST_ERROR
-    for (int iens = 0; iens < ens_size; ++iens)
-        realizations_msg_list[iens] = stringlist_alloc_new();
-
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context,
-                                                 realizations_msg_list, fs);
-
-    for (int iens = 0; iens < ens_size; ++iens)
-        stringlist_free(realizations_msg_list[iens]);
-    free(realizations_msg_list);
     return loaded;
 }
 
 int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     ert_run_context_type *run_context,
-                                    stringlist_type **realizations_msg_list,
                                     enkf_fs_type *fs) {
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
     auto const *iactive = ert_run_context_get_iactive(run_context);
@@ -696,8 +648,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 
                         return enkf_state_load_from_forward_model(
                             enkf_main_iget_state(enkf_main, realisation),
-                            ert_run_context_iget_arg(run_context, realisation),
-                            *realizations_msg_list);
+                            ert_run_context_iget_arg(run_context, realisation));
                     },
                     iens, std::ref(concurrently_executing_threads))));
         }

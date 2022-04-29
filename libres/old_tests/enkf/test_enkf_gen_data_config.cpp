@@ -16,14 +16,14 @@
    for more details.
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/test_work_area.hpp>
-#include <ert/util/test_util.h>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/run_arg.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.hpp>
 
 void test_report_steps_param() {
 
@@ -87,7 +87,7 @@ void test_gendata_fload(const char *filename) {
     run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
         "run_id", write_fs, 0, 0, "path", "base", subst_list);
     forward_load_context_type *load_context =
-        forward_load_context_alloc(run_arg, false, NULL, NULL);
+        forward_load_context_alloc(run_arg, false, NULL);
     forward_load_context_select_step(load_context, 0);
     gen_data_fload_with_report_step(gen_data, filename, load_context);
     int data_size = gen_data_config_get_data_size(config, 0);
@@ -113,7 +113,7 @@ void test_gendata_fload_empty_file(const char *filename) {
     run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
         "run_id", write_fs, 0, 0, "path", "base", subst_list);
     forward_load_context_type *load_context =
-        forward_load_context_alloc(run_arg, false, NULL, NULL);
+        forward_load_context_alloc(run_arg, false, NULL);
 
     forward_load_context_select_step(load_context, 0);
     gen_data_fload_with_report_step(gen_data, filename, load_context);

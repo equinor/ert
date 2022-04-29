@@ -21,32 +21,30 @@
 
 #include <stdbool.h>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
 #include <ert/util/stringlist.h>
-#include <ert/util/rng.h>
-#include <ert/res_util/subst_list.hpp>
-#include <ert/res_util/matrix.hpp>
 
-#include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_file.h>
+#include <ert/ecl/fortio.h>
 
-#include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
+#include <ert/job_queue/forward_model.hpp>
 #include <ert/job_queue/job_queue.hpp>
 
-#include <ert/enkf/model_config.hpp>
-#include <ert/enkf/site_config.hpp>
 #include <ert/enkf/ecl_config.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/res_config.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_node.hpp>
-#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/enkf_util.hpp>
+#include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/ert_template.hpp>
+#include <ert/enkf/model_config.hpp>
+#include <ert/enkf/res_config.hpp>
 #include <ert/enkf/run_arg.hpp>
+#include <ert/enkf/site_config.hpp>
 
 typedef struct enkf_state_struct enkf_state_type;
 
@@ -55,8 +53,7 @@ extern "C" void enkf_state_initialize(
     const std::vector<std::string> &param_list, init_mode_type init_mode);
 
 int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                       run_arg_type *run_arg,
-                                       stringlist_type *msg_list);
+                                       run_arg_type *run_arg);
 
 void enkf_state_init_eclipse(const res_config_type *res_config,
                              const run_arg_type *run_arg);
@@ -76,10 +73,6 @@ extern "C" void enkf_state_free(enkf_state_type *);
 
 extern "C" const ensemble_config_type *
 enkf_state_get_ensemble_config(const enkf_state_type *enkf_state);
-
-bool enkf_state_complete_forward_modelOK__(void *arg);
-bool enkf_state_complete_forward_modelRETRY__(void *arg);
-bool enkf_state_complete_forward_modelEXIT__(void *arg);
 
 extern "C" bool
 enkf_state_complete_forward_modelOK(const res_config_type *res_config,

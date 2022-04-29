@@ -22,7 +22,7 @@ from ert_gui.tools.load_results import LoadResultsPanel
 class LoadResultsTool(Tool):
     def __init__(self, facade):
         self.facade = facade
-        super(LoadResultsTool, self).__init__(
+        super().__init__(
             "Load results manually",
             "tools/load_manually",
             resourceIcon("upload.svg"),
@@ -50,7 +50,10 @@ class LoadResultsTool(Tool):
         insert realisation and iteration numbers"""
         try:
             self.facade.run_path % (0, 0)
-            self.facade.run_path % 0
             return True
         except TypeError:
-            return False
+            try:
+                self.facade.run_path % 0
+                return True
+            except TypeError:
+                return False

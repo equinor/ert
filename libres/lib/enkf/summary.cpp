@@ -18,15 +18,15 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/double_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_sum.h>
 
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
-#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/summary.hpp>
 
 #define SUMMARY_UNDEF -9999
@@ -100,7 +100,7 @@ void summary_free(summary_type *summary) {
 }
 
 void summary_serialize(const summary_type *summary, node_id_type node_id,
-                       const ActiveList *active_list, matrix_type *A,
+                       const ActiveList *active_list, Eigen::MatrixXd &A,
                        int row_offset, int column) {
     double value = summary_get(summary, node_id.report_step);
     enkf_matrix_serialize(&value, 1, ECL_DOUBLE, active_list, A, row_offset,
@@ -108,8 +108,8 @@ void summary_serialize(const summary_type *summary, node_id_type node_id,
 }
 
 void summary_deserialize(summary_type *summary, node_id_type node_id,
-                         const ActiveList *active_list, const matrix_type *A,
-                         int row_offset, int column) {
+                         const ActiveList *active_list,
+                         const Eigen::MatrixXd &A, int row_offset, int column) {
     double value;
     enkf_matrix_deserialize(&value, 1, ECL_DOUBLE, active_list, A, row_offset,
                             column);

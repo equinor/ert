@@ -19,11 +19,11 @@
 
 #include <stdlib.h>
 
+#include <ert/res_util/subst_list.hpp>
+#include <ert/util/rng.h>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.hpp>
 #include <ert/util/util.h>
-#include <ert/util/rng.h>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/enkf_main.hpp>
 
@@ -139,7 +139,6 @@ int main(int argc, char **argv) {
 
             {
                 int error;
-                stringlist_type *msg_list = stringlist_alloc_new();
 
                 test_assert_false(
                     enkf_node_has_data(surface_node, fs, node_id));
@@ -156,24 +155,19 @@ int main(int argc, char **argv) {
                     state_map_type *state_map = enkf_fs_get_state_map(fs);
                     state_map_iset(state_map, 0, STATE_INITIALIZED);
                 }
-                error = enkf_state_load_from_forward_model(state, run_arg,
-                                                           msg_list);
-                stringlist_free(msg_list);
+                error = enkf_state_load_from_forward_model(state, run_arg);
                 test_assert_true(LOAD_FAILURE & error);
             }
 
             util_copy_file(init_file, "simulations/run0/Surface.irap");
             {
                 int error;
-                stringlist_type *msg_list = stringlist_alloc_new();
 
                 test_assert_true(enkf_node_forward_init(surface_node,
                                                         "simulations/run0", 0));
                 error = ensemble_config_forward_init(ens_config, run_arg);
                 test_assert_int_equal(0, error);
-                error = enkf_state_load_from_forward_model(state, run_arg,
-                                                           msg_list);
-                stringlist_free(msg_list);
+                error = enkf_state_load_from_forward_model(state, run_arg);
                 test_assert_int_equal(0, error);
 
                 {

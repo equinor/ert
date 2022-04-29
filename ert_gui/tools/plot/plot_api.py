@@ -4,14 +4,13 @@ import requests
 import io
 import httpx
 from typing import List
-from ert_data import loader as loader
 from ert_shared.services import Storage
 from pandas.errors import ParserError
 
 logger = logging.getLogger(__name__)
 
 
-class PlotApi(object):
+class PlotApi:
     def __init__(self, facade):
         self._facade = facade
         self._all_cases: List[dict] = None
@@ -127,15 +126,17 @@ class PlotApi(object):
         return list(all_keys.values())
 
     def get_all_cases_not_running(self) -> List:
-        """Returns a list of all cases that are not running. For each case a dict with info about the case is
-        returned"""
-        # Currently, the ensemble information from the storage API does not contain any hint if a case is running or not
-        # for now we return all the cases, running or not
+        """Returns a list of all cases that are not running. For each case a dict with
+        info about the case is returned"""
+        # Currently, the ensemble information from the storage API does not contain any
+        # hint if a case is running or not for now we return all the cases, running or
+        # not
         return self._get_all_cases()
 
     def data_for_key(self, case_name, key) -> pd.DataFrame:
-        """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-        the realization number, and the columns are an index over the indexes/dates"""
+        """Returns a pandas DataFrame with the datapoints for a given key for a given
+        case. The row index is the realization number, and the columns are an index
+        over the indexes/dates"""
 
         if key.startswith("LOG10_"):
             key = key[6:]
@@ -167,10 +168,11 @@ class PlotApi(object):
                 raise exc
 
     def observations_for_key(self, case_name, key):
-        """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-        is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-        where index/date is used to relate the observation to the data point it relates to, and obs_index is
-        the index for the observation itself"""
+        """Returns a pandas DataFrame with the datapoints for a given observation key
+        for a given case. The row index is the realization number, and the column index
+        is a multi-index with (obs_key, index/date, obs_index), where index/date is
+        used to relate the observation to the data point it relates to, and obs_index
+        is the index for the observation itself"""
 
         case = self._get_case(case_name)
 
@@ -210,11 +212,13 @@ class PlotApi(object):
         data.columns = index
 
     def refcase_data(self, key):
-        """Returns a pandas DataFrame with the data points for the refcase for a given data key, if any.
-        The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the refcase for a
+        given data key, if any.  The row index is the index/date and the column
+        index is the key."""
         return self._facade.refcase_data(key)
 
     def history_data(self, key, case=None):
-        """Returns a pandas DataFrame with the data points for the history for a given data key, if any.
-        The row index is the index/date and the column index is the key."""
+        """Returns a pandas DataFrame with the data points for the history for a
+        given data key, if any.  The row index is the index/date and the column
+        index is the key."""
         return self._facade.history_data(key, case)

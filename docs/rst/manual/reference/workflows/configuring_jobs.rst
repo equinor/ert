@@ -10,25 +10,9 @@ should be passed from the workflow to the job.
 Configure an internal job
 -------------------------
 
-When configuring an internal workflow job the keyword :code:`INTERNAL`
-is given the value :code:`TRUE` to indicate that this is an internal
-job. In addition you give the name of the C function you wish to
-invoke. By default the workflow job will search for the function
-symbol in the current process space, but by passing the :code:`MODULE`
-keyword you can request the loading of an external shared library:
-
-::
-
-    INTERNAL  TRUE                     -- The job will call an internal function or script of the currently running ERT instance.
-    FUNCTION  enkf_main_plot_all       -- Name of the ERT function we are calling; must be marked exportable.
-    MODULE    /name/of/shared/library  -- Optional - to load an extra shared library.
-
-Configure an internal job: Python
------------------------------------
-
 If you wish to implement your job as a Python class, derived from
-:code:`ErtScript` you should use the :code:`SCRIPT` keyword instead of
-:code:`FUNCTION`, to point to an existing Python script:
+:code:`ErtScript` you should use the :code:`SCRIPT` keyword to point to an
+existing Python script:
 
 ::
 
@@ -64,7 +48,7 @@ configuration file, not the configuration file provided to ert.
 Configuring the arguments
 -------------------------
 
-In addition to the :code:`INTERNAL`, :code:`FUNCTION`, :code:`MODULE` and :code:`EXECUTABLE` keys
+In addition to the :code:`INTERNAL` and :code:`EXECUTABLE` keys
 which are used to configure what the job should do, there are some keys
 which can be used to configure the number of arguments and their
 type. These arguments apply to both internal and external jobs:
@@ -88,20 +72,7 @@ named options such as :code:`--some-option` cannot be used
 since they are treated as comments by the configuration compiler.
 Single letter options, i.e. :code:`-s`, are needed.
 
-**Example 1 : Plot variables**
-
-::
-
-	-- FILE: PLOT --
-	INTERNAL  TRUE
-	FUNCTION  ert_tui_plot_JOB
-	MIN_ARG   1
-
-This job will use the ERT internal function :code:`ert_tui_plot_JOB` to plot
-an ensemble of an arbitrary ERT variable. The job needs at least one
-argument; there is no upper limit on the number of arguments.
-
-**Example 2 : Run external script**
+**Example : Run external script**
 
 ::
 

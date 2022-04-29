@@ -84,7 +84,7 @@ class ProgressProxyModel(QAbstractItemModel):
             self._progress = None
             return
         for v in current_iter_node.children.values():
-            ## realizations
+            # realizations
             status = v.data["status"]
             nr_reals += 1
             d[status] += 1

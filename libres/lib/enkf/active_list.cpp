@@ -21,8 +21,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include <ert/enkf/active_list.hpp>
 #include "ert/python.hpp"
+#include <ert/enkf/active_list.hpp>
 
 /*
    This file implements a small structure used to denote which

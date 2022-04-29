@@ -17,12 +17,12 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/hash.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/hash.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/summary_key_set.hpp>
 

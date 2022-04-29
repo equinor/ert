@@ -13,10 +13,12 @@ class DefaultCustomizationView(CustomizationView):
     observations = WidgetProperty()
 
     def __init__(self):
+        # pylint: disable=consider-using-f-string
         CustomizationView.__init__(self)
         label_msg = (
             "Set to empty to use the default %s.\n"
-            "It is also possible to use LaTeX. Enclose expression with $...$ for example: \n"
+            "It is also possible to use LaTeX. "
+            "Enclose expression with $...$ for example: \n"
             "$\\alpha > \\beta$\n"
             "$r^3$\n"
             "$\\frac{1}{x}$\n"
@@ -26,20 +28,20 @@ class DefaultCustomizationView(CustomizationView):
         self.addLineEdit(
             "title",
             "Title",
-            "The title of the plot. %s" % (label_msg % "title"),
+            f'The title of the plot. {label_msg % "title"}',
             placeholder="Title",
         )
         self.addSpacing()
         self.addLineEdit(
             "x_label",
             "x-label",
-            "The label of the x-axis. %s" % (label_msg % "label"),
+            f'The label of the x-axis. {label_msg % "label"}',
             placeholder="x-label",
         )
         self.addLineEdit(
             "y_label",
             "y-label",
-            "The label of the y-axis. %s" % (label_msg % "label"),
+            f'The label of the y-axis. {label_msg % "label"}',
             placeholder="y-label",
         )
         self.addSpacing()

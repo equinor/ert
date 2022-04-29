@@ -30,10 +30,12 @@ class EnsemblePlotGenData(BaseCClass):
     _alloc = ResPrototype("void* enkf_plot_gendata_alloc(enkf_config_node)", bind=False)
     _size = ResPrototype("int   enkf_plot_gendata_get_size(ensemble_plot_gen_data)")
     _load = ResPrototype(
-        "void  enkf_plot_gendata_load(ensemble_plot_gen_data, enkf_fs, int, bool_vector)"
+        "void  enkf_plot_gendata_load"
+        "(ensemble_plot_gen_data, enkf_fs, int, bool_vector)"
     )
     _get = ResPrototype(
-        "ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget(ensemble_plot_gen_data, int)"
+        "ensemble_plot_gen_data_vector_ref enkf_plot_gendata_iget"
+        "(ensemble_plot_gen_data, int)"
     )
     _min_values = ResPrototype(
         "double_vector_ref enkf_plot_gendata_get_min_values(ensemble_plot_gen_data)"

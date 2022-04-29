@@ -19,10 +19,10 @@
 
 #include <time.h>
 
-#include <ert/util/type_macros.h>
-#include <ert/util/int_vector.h>
-#include <ert/tooling.hpp>
 #include <ert/ecl/ecl_sum.h>
+#include <ert/tooling.hpp>
+#include <ert/util/int_vector.h>
+#include <ert/util/type_macros.h>
 
 typedef struct time_map_struct time_map_type;
 
@@ -35,8 +35,6 @@ extern "C" bool time_map_try_update(time_map_type *map, int step, time_t time);
 bool time_map_attach_refcase(time_map_type *time_map,
                              const ecl_sum_type *refcase);
 bool time_map_has_refcase(const time_map_type *time_map);
-extern "C" bool time_map_is_strict(const time_map_type *time_map);
-extern "C" void time_map_set_strict(time_map_type *time_map, bool strict);
 void time_map_clear(time_map_type *map);
 bool time_map_equal(const time_map_type *map1, const time_map_type *map2);
 extern "C" time_map_type *time_map_alloc();
@@ -62,7 +60,5 @@ extern "C" int time_map_lookup_time_with_tolerance(time_map_type *map,
                                                    time_t time,
                                                    int seconds_before_tolerance,
                                                    int seconds_after_tolerance);
-extern "C" PY_USED void
-time_map_summary_upgrade107(time_map_type *map, const ecl_sum_type *ecl_sum);
 
 #endif

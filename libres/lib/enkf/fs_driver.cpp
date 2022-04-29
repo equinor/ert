@@ -19,8 +19,8 @@
 
 #include <ert/util/util.h>
 
-#include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/fs_driver.hpp>
+#include <ert/enkf/fs_types.hpp>
 
 namespace fs = std::filesystem;
 

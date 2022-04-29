@@ -2,26 +2,25 @@ import pathlib
 import re
 from graphlib import CycleError
 from unittest.mock import MagicMock, Mock
-
-import ert_shared.ensemble_evaluator.ensemble.builder as ee
 import pytest
+
+import ert.ensemble_evaluator as ee
 from ert.data import (
     SerializationTransformation,
     CopyTransformation,
-    EclSumTransformation,
     TransformationDirection,
 )
 
 
 @pytest.mark.parametrize("active_real", [True, False])
 def test_build_ensemble(active_real):
-    ensemble = ee.create_ensemble_builder().add_realization(
-        ee.create_realization_builder()
+    ensemble = ee.EnsembleBuilder().add_realization(
+        ee.RealizationBuilder()
         .set_iens(0)
         .add_step(
-            ee.create_step_builder()
+            ee.StepBuilder()
             .add_job(
-                ee.create_legacy_job_builder()
+                ee.LegacyJobBuilder()
                 .set_id(0)
                 .set_name("echo_command")
                 .set_ext_job(Mock())
@@ -34,15 +33,16 @@ def test_build_ensemble(active_real):
         .active(active_real)
     )
     ensemble = ensemble.build()
-    real = ensemble.get_reals()[0]
-    assert real.is_active() == active_real
+
+    real = ensemble.reals[0]
+    assert real.active == active_real
 
 
 def test_build_ensemble_legacy():
 
     run_context = MagicMock()
-    run_context.__len__.return_value = 1
-    run_context.is_active = lambda i: True if i == 0 else False
+    run_context.is_active = lambda i: bool(i == 0)
+    run_context.__iter__.return_value = [MagicMock()]
 
     ext_job = MagicMock()
     ext_job.get_executable = MagicMock(return_value="junk.exe")
@@ -60,7 +60,7 @@ def test_build_ensemble_legacy():
 
     res_config = MagicMock()
 
-    ensemble_builder = ee.create_ensemble_builder_from_legacy(
+    ensemble_builder = ee.EnsembleBuilder.from_legacy(
         run_context=run_context,
         forward_model=forward_model,
         queue_config=queue_config,
@@ -70,8 +70,8 @@ def test_build_ensemble_legacy():
 
     ensemble = ensemble_builder.build()
 
-    real = ensemble.get_reals()[0]
-    assert real.is_active()
+    real = ensemble.reals[0]
+    assert real.active
 
 
 @pytest.mark.parametrize(
@@ -176,20 +176,15 @@ def test_topological_sort(steps, expected, ambiguous):
     For expected steps, assert that they are equal to the sorted steps, minus
     any ambiguous steps.
     """
-    real = ee.create_realization_builder().set_iens(0).active(True)
+    real = ee.RealizationBuilder().set_iens(0).active(True)
     transmitted_factory = MagicMock()
     non_transmitted_factory = MagicMock().return_value = MagicMock()
     non_transmitted_factory.return_value.is_transmitted.return_value = False
     for step_def in steps:
-        step = (
-            ee.create_step_builder()
-            .set_id("0")
-            .set_name(step_def["name"])
-            .set_type("unix")
-        )
+        step = ee.StepBuilder().set_id("0").set_name(step_def["name"]).set_type("unix")
         for input_ in step_def["inputs"]:
             step.add_input(
-                ee.create_input_builder()
+                ee.InputBuilder()
                 .set_name(input_)
                 .set_transmitter_factory(transmitted_factory)
                 .set_transformation(
@@ -198,7 +193,7 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         for output in step_def["outputs"]:
             step.add_output(
-                ee.create_output_builder()
+                ee.OutputBuilder()
                 .set_name(output)
                 .set_transmitter_factory(non_transmitted_factory)
                 .set_transformation(
@@ -207,29 +202,27 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         real.add_step(step)
 
-    ensemble = ee.create_ensemble_builder().add_realization(real).build()
-    real = ensemble.get_reals()[0]
+    ensemble = ee.EnsembleBuilder().add_realization(real).build()
+    real = ensemble.reals[0]
 
     if ambiguous:
-        sorted_ = [
-            step.get_name() for step in list(real.get_steps_sorted_topologically())
-        ]
+        sorted_ = [step.name for step in list(real.get_steps_sorted_topologically())]
         for step in ambiguous:
             assert step in sorted_
 
     if expected:
         assert expected == [
-            step.get_name()
+            step.name
             for step in real.get_steps_sorted_topologically()
-            if step.get_name() not in ambiguous
+            if step.name not in ambiguous
         ]
 
 
 def test_io_transformation_required_for_unix():
     with pytest.raises(ValueError, match="has no transformation"):
         (
-            ee.create_step_builder()
-            .add_input(ee.create_input_builder().set_name("input"))
+            ee.StepBuilder()
+            .add_input(ee.InputBuilder().set_name("input"))
             .set_type("unix")
             .set_name("stage")
             .set_parent_source("/")
@@ -241,37 +234,37 @@ def test_io_transformation_required_for_unix():
     "builder,transformation",
     [
         pytest.param(
-            ee.create_input_builder(),
+            ee.InputBuilder(),
             CopyTransformation(pathlib.Path("foo"), TransformationDirection.TO_RECORD),
             marks=pytest.mark.raises(
                 exception=ValueError,
                 match=(
-                    f".+does not allow 'from_record', only "
+                    ".+does not allow 'from_record', only "
                     + f"'{TransformationDirection.TO_RECORD}'"
                 ),
                 match_flags=(re.MULTILINE | re.DOTALL),
             ),
         ),
         pytest.param(
-            ee.create_output_builder(),
+            ee.OutputBuilder(),
             CopyTransformation(
                 pathlib.Path("foo"), TransformationDirection.FROM_RECORD
             ),
             marks=pytest.mark.raises(
                 exception=ValueError,
                 match=(
-                    f".+does not allow 'to_record', only "
+                    ".+does not allow 'to_record', only "
                     + f"'{TransformationDirection.FROM_RECORD}'"
                 ),
                 match_flags=(re.MULTILINE | re.DOTALL),
             ),
         ),
         pytest.param(
-            ee.create_input_builder(),
+            ee.InputBuilder(),
             CopyTransformation(pathlib.Path("foo")),
         ),
         pytest.param(
-            ee.create_output_builder(),
+            ee.OutputBuilder(),
             CopyTransformation(pathlib.Path("foo")),
         ),
     ],

@@ -12,6 +12,10 @@ def test_openapi(ert_storage_app, dark_storage_app):
     expect = ert_storage_app.openapi()
     actual = dark_storage_app.openapi()
 
+    # This endpoint is added explicitly only in dark_storage, to have a place to inject
+    # LibresFacade. Remove it here to make it the same as ert_storage.
+    del actual["paths"]["/gql"]
+
     # Remove textual data (descriptions and such) from ERT Storage's API.
     def _remove_text(data):
         if isinstance(data, dict):
@@ -71,14 +75,22 @@ def test_response_comparison(run_poly_example_new_storage):
     new_storage_responses: Response = new_storage_client.post(
         "/gql",
         json={
-            "query": "{experiments{ensembles{responses{name, realizationIndex, userdata}}}}"
+            "query": (
+                "{experiments{ensembles{responses"
+                "{name, realizationIndex, userdata}"
+                "}}}"
+            )
         },
     )
 
     dark_storage_responses: Response = dark_storage_client.post(
         "/gql",
         json={
-            "query": "{experiments{ensembles{responses{name, realizationIndex, userdata}}}}"
+            "query": (
+                "{experiments{ensembles"
+                "{responses{name, realizationIndex, userdata}"
+                "}}}"
+            )
         },
     )
 
@@ -95,9 +107,6 @@ def test_response_comparison(run_poly_example_new_storage):
     def get_resp_dataframe(resp):
         stream = io.BytesIO(resp.content)
         return pd.read_csv(stream, index_col=0, float_precision="round_trip")
-
-    ds_dfs = []
-    ns_dfs = []
 
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json_ds = resp.json()

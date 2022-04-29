@@ -140,7 +140,7 @@ def run_server(args=None, debug=False):
         print("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
     else:
-        print(f"\tUsername: __token__")
+        print("\tUsername: __token__")
         print(f"\tPassword: {connection_info['authtoken']}\n")
 
     if config.should_reload:
@@ -178,6 +178,7 @@ def terminate_on_parent_death():
 
 
 if __name__ == "__main__":
+    # pylint: disable=W0611
     import ert_logging
 
     terminate_on_parent_death()

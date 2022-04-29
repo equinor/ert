@@ -21,8 +21,8 @@
 
 #include <stdbool.h>
 
-#include <ert/util/type_macros.hpp>
 #include <ert/tooling.hpp>
+#include <ert/util/type_macros.hpp>
 
 typedef struct ui_return_struct ui_return_type;
 

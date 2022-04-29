@@ -1,11 +1,11 @@
 from ert_shared.ide.keywords.data import ValidationStatus
 
 
-class ArgumentDefinition(object):
+class ArgumentDefinition:
     MISSING_ARGUMENT = "Missing argument!"
 
     def __init__(self, optional=False, built_in=False, rest_of_line=False):
-        super(ArgumentDefinition, self).__init__()
+        super().__init__()
         self.__optional = optional
         self.__built_in = built_in
         self.__rest_of_line = rest_of_line

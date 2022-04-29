@@ -15,10 +15,10 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <ert/util/util.h>
+#include <ert/util/bool_vector.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/time_t_vector.h>
-#include <ert/util/bool_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/enkf_plot_tvector.hpp>
 #include <ert/enkf/summary.hpp>

@@ -1,12 +1,15 @@
+import os
 import asyncio
 import ssl
 import threading
-from typing import Optional, Union
+import time
+from typing import Optional, Union, Generator
 from concurrent.futures import CancelledError
 import websockets
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+import ert.ensemble_evaluator
 from websockets.client import WebSocketClientProtocol  # type: ignore
 from websockets.datastructures import Headers
+from cloudevents.http import CloudEvent
 
 
 class SyncWebsocketDuplexer:
@@ -14,7 +17,13 @@ class SyncWebsocketDuplexer:
     synchronous API. Reentrant, but not thread-safe. One must call stop() after
     communication ends."""
 
-    def __init__(self, uri: str, health_check_uri: str, cert, token):
+    def __init__(
+        self,
+        uri: str,
+        health_check_uri: str,
+        cert: Union[str, bytes, os.PathLike],
+        token: str,
+    ) -> None:
         self._uri = uri
         self._hc_uri = health_check_uri
         self._token = token
@@ -42,7 +51,18 @@ class SyncWebsocketDuplexer:
         self._loop_thread = threading.Thread(target=self._loop.run_forever)
         self._loop_thread.start()
 
-    async def _connect(self):
+        # Ensure the async thread either makes a connection, or raises the _connect()
+        # exception before returning. Not before a connection has been made, can this
+        # class be used safely.
+        while not self._connection.done():
+            time.sleep(0.1)
+        try:
+            self._connection.result()
+        except Exception:
+            self.stop()
+            raise
+
+    async def _connect(self) -> None:
         connect = websockets.connect(
             self._uri,
             ssl=self._ssl_context,
@@ -51,7 +71,7 @@ class SyncWebsocketDuplexer:
             max_queue=500,
         )
 
-        await wait_for_evaluator(
+        await ert.ensemble_evaluator.wait_for_evaluator(
             base_url=self._hc_uri,
             token=self._token,
             cert=self._cert,
@@ -59,7 +79,7 @@ class SyncWebsocketDuplexer:
 
         self._ws = await connect
 
-    def _ensure_running(self):
+    def _ensure_running(self) -> None:
         try:
             asyncio.run_coroutine_threadsafe(
                 asyncio.wait_for(self._connection, None),
@@ -82,7 +102,7 @@ class SyncWebsocketDuplexer:
             self.stop()
             raise
 
-    def receive(self):
+    def receive(self) -> Generator[CloudEvent, None, None]:
         """Create a generator with which you can iterate over incoming
         websocket messages."""
         self._ensure_running()
@@ -113,7 +133,7 @@ class SyncWebsocketDuplexer:
                 except (OSError, asyncio.CancelledError, CancelledError):
                     # The OSError will have been raised in send/receive already.
                     pass
-        except Exception as ex:
+        except Exception:
             pass
         finally:
             self._loop.call_soon_threadsafe(self._loop.stop)

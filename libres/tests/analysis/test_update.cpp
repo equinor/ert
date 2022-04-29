@@ -1,20 +1,20 @@
+#include <algorithm>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cmath>
-#include <algorithm>
 
 #include <catch2/catch.hpp>
 
-#include <ert/util/rng.h>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/row_scaling.hpp>
 #include <ert/enkf/meas_data.hpp>
+#include <ert/enkf/row_scaling.hpp>
+#include <ert/util/rng.h>
 
-#include <ert/analysis/update.hpp>
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/update.hpp>
 
 /**
  * @brief Test of analysis update using posterior properties described in ert-docs: https://ert.readthedocs.io/en/latest/theory/ensemble_based_methods.html
@@ -97,8 +97,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
         const char *obs_key = "OBS1";
         meas_block_type *mb =
             meas_data_add_block(meas_data, obs_key, 1, obs_size);
-        obs_block_type *ob =
-            obs_data_add_block(obs_data, obs_key, obs_size, nullptr, false);
+        obs_block_type *ob = obs_data_add_block(obs_data, obs_key, obs_size);
         std::vector<double> xarg(obs_size);
         for (int i = 0; i < obs_size; i++) {
             xarg[i] = i;

@@ -24,7 +24,6 @@ def test_logging_widget(qtbot, caplog, log_func, expected):
     widget.show()
     qtbot.addWidget(widget)
 
-    qtbot.waitForWindowShown(widget)
-    with caplog.at_level(logging.DEBUG):
+    with qtbot.waitExposed(widget), caplog.at_level(logging.DEBUG):
         log_func("Writing some text")
-    assert widget.text_box.toPlainText() == expected
+        assert widget.text_box.toPlainText() == expected

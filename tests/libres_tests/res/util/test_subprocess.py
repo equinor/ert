@@ -23,9 +23,10 @@ from libres_utils import tmpdir
 
 from res.util.subprocess import await_process_tee
 
-# This method finds the limit of the system pipe-buffer which
-# might be taken into account when using subprocesses with pipes
+
 def _find_system_pipe_max_size():
+    """This method finds the limit of the system pipe-buffer which
+    might be taken into account when using subprocesses with pipes."""
     p = Popen(["dd", "if=/dev/zero", "bs=1"], stdin=PIPE, stdout=PIPE)
     try:
         p.wait(timeout=1)

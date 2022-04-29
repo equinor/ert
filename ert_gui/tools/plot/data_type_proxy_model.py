@@ -16,9 +16,6 @@
 from qtpy.QtCore import Qt, QSortFilterProxyModel
 
 
-from ert_gui.tools.plot import DataTypeKeysListModel
-
-
 class DataTypeProxyModel(QSortFilterProxyModel):
     def __init__(self, parent, model):
         QSortFilterProxyModel.__init__(self, parent)
@@ -56,7 +53,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         return QSortFilterProxyModel.sourceModel(self)
 
     def setFilterOnMetadata(self, key, value, visible):
-        if not key in self._metadata_filters:
+        if key not in self._metadata_filters:
             self._metadata_filters[key] = {}
 
         self._metadata_filters[key][value] = visible

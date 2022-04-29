@@ -19,8 +19,8 @@
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
 
-#include <ert/enkf/container_config.hpp>
 #include <ert/enkf/container.hpp>
+#include <ert/enkf/container_config.hpp>
 
 struct container_struct {
     int __type_id;

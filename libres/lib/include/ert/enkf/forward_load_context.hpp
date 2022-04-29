@@ -19,30 +19,25 @@
 #ifndef ERT_FORWARD_LOAD_CONTEXT_H
 #define ERT_FORWARD_LOAD_CONTEXT_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/stringlist.h>
+#include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_sum.hpp>
 #include <ert/ecl/ecl_file.hpp>
+#include <ert/ecl/ecl_sum.hpp>
 
+#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/run_arg_type.hpp>
-#include <ert/enkf/ecl_config.hpp>
 
 typedef struct forward_load_context_struct forward_load_context_type;
 
-bool forward_load_context_accept_messages(
-    const forward_load_context_type *load_context);
-void forward_load_context_add_message(forward_load_context_type *load_context,
-                                      const char *message);
 void forward_load_context_update_result(forward_load_context_type *load_context,
                                         int flags);
 int forward_load_context_get_result(
     const forward_load_context_type *load_context);
 extern "C" forward_load_context_type *
 forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
-                           const ecl_config_type *ecl_config,
-                           stringlist_type *messages);
+                           const ecl_config_type *ecl_config);
 extern "C" void
 forward_load_context_free(forward_load_context_type *load_context);
 const ecl_sum_type *

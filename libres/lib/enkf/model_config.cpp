@@ -16,13 +16,13 @@
    for more details.
 */
 
-#include <sys/types.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
-#include <ert/util/type_macros.h>
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/util/hash.h>
 #include <ert/util/bool_vector.h>
+#include <ert/util/hash.h>
+#include <ert/util/type_macros.h>
 
 #include <ert/sched/history.hpp>
 
@@ -32,14 +32,14 @@
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/model_config.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
-#include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/analysis_config.hpp>
+#include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/rng_config.hpp>
+#include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/hook_manager.hpp>
+#include <ert/enkf/model_config.hpp>
+#include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/site_config.hpp>
 
 static auto logger = ert::get_logger("enkf");

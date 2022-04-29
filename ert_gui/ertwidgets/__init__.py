@@ -1,7 +1,7 @@
+# isort: skip_file
 from pkg_resources import resource_filename
-
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QCursor, QIcon, QPixmap, QMovie
+from qtpy.QtGui import QCursor, QIcon, QMovie, QPixmap
 from qtpy.QtWidgets import QApplication
 
 
@@ -53,17 +53,18 @@ def resourceMovie(name):
     return movie
 
 
-from .legend import Legend
-from .validationsupport import ValidationSupport
-from .closabledialog import ClosableDialog
-from .analysismoduleselector import AnalysisModuleSelector
-from .activelabel import ActiveLabel
-from .searchbox import SearchBox
-from .caseselector import CaseSelector
-from .caselist import CaseList
-from .checklist import CheckList
-from .stringbox import StringBox
-from .listeditbox import ListEditBox
-from .customdialog import CustomDialog
-from .summarypanel import SummaryPanel
-from .pathchooser import PathChooser
+# The following imports utilize the functions defined above:
+from .legend import Legend  # noqa
+from .validationsupport import ValidationSupport  # noqa
+from .closabledialog import ClosableDialog  # noqa
+from .analysismoduleedit import AnalysisModuleEdit  # noqa
+from .activelabel import ActiveLabel  # noqa
+from .searchbox import SearchBox  # noqa
+from .caseselector import CaseSelector  # noqa
+from .caselist import CaseList  # noqa
+from .checklist import CheckList  # noqa
+from .stringbox import StringBox  # noqa
+from .listeditbox import ListEditBox  # noqa
+from .customdialog import CustomDialog  # noqa
+from .summarypanel import SummaryPanel  # noqa
+from .pathchooser import PathChooser  # noqa

@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
@@ -18,22 +19,22 @@ from typing import (
     cast,
 )
 
-import typing
-
 from beartype import beartype
 from beartype.roar import BeartypeDecorHintPepDeprecationWarning, BeartypeException
 from pydantic import PositiveInt
 
 import ert
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from ._transformation import RecordTransformation
 
 # Mute PEP-585 warnings from Python 3.9:
 warnings.simplefilter(action="ignore", category=BeartypeDecorHintPepDeprecationWarning)
 
 number = Union[int, float]
-numerical_record_data = Union[List[number], Dict[str, number], Dict[int, number]]
+numerical_record_data = Union[
+    number, List[number], Dict[str, number], Dict[int, number]
+]
 blob_record_data = bytes
 record_data = Union[
     numerical_record_data,
@@ -47,6 +48,8 @@ RecordIndex = Union[Tuple[int, ...], Tuple[str, ...]]
 def _build_record_index(
     data: numerical_record_data,
 ) -> Tuple[Any, ...]:
+    if isinstance(data, (int, float)):
+        return ()
     if isinstance(data, MutableMapping):
         return tuple(data.keys())
     else:
@@ -59,6 +62,7 @@ class RecordValidationError(Exception):
 
 class RecordType(str, Enum):
     # NumericalRecord types
+    SCALAR_FLOAT = "SCALAR_FLOAT"
     LIST_FLOAT = "LIST_FLOAT"
     MAPPING_INT_FLOAT = "MAPPING_INT_FLOAT"
     MAPPING_STR_FLOAT = "MAPPING_STR_FLOAT"
@@ -134,7 +138,7 @@ class BlobRecord(Record):
 
 class NumericalRecord(Record):
     """The :class:`NumericalRecord` is an implementation of the Record class
-    that handles an indexed list of numerical data.
+    that handles a scalar or an indexed list of numerical data.
     """
 
     def __init__(
@@ -142,10 +146,11 @@ class NumericalRecord(Record):
     ) -> None:
         """Creates a NumericalRecord instance.
         It automatically assigns :class:`RecordType` as either
-        :class:`RecordType.LIST_FLOAT`, :class:`RecordType.MAPPING_INT_FLOAT` or
-        :class:`RecordType.MAPPING_STR_FLOAT`.
+        :class:`RecordType.SCALAR_FLOAT`, :class:`RecordType.LIST_FLOAT`,
+        :class:`RecordType.MAPPING_INT_FLOAT` or :class:`RecordType.MAPPING_STR_FLOAT`.
         The data index is either automatically inferred from the data or
-        can be provided as a parameter.
+        can be provided as a parameter. Index should not be specified for scalar.
+        Scalar data will always be stored as floats internally.
 
         Args:
             data: numerics that cannot be None
@@ -163,7 +168,14 @@ class NumericalRecord(Record):
             self._validate_data(data)
         except BeartypeException as e:
             raise RecordValidationError(str(e))
-        self._data = data
+
+        self._data: numerical_record_data
+        if isinstance(data, int):
+            # This is for consistency with how serializers may
+            # handle scalar data:
+            self._data = float(data)
+        else:
+            self._data = data
 
         if index is None:
             index = _build_record_index(data)
@@ -187,9 +199,7 @@ class NumericalRecord(Record):
                 if not isinstance(val, val_type) or not isinstance(val, (int, float)):
                     raise RecordValidationError(f"unexpected value type {type(val)}")
 
-    def _validate_index(
-        self, data: numerical_record_data, index: Optional[RecordIndex] = None
-    ) -> None:
+    def _validate_index(self, data: numerical_record_data, index: RecordIndex) -> None:
         norm_record_index = _build_record_index(data)
         if norm_record_index != index:
             raise RecordValidationError(
@@ -206,6 +216,8 @@ class NumericalRecord(Record):
                 )
 
     def _infer_type(self, data: numerical_record_data) -> RecordType:
+        if isinstance(data, (int, float)):
+            return RecordType.SCALAR_FLOAT
         if isinstance(data, (list, tuple)):
             if not data or isinstance(data[0], (int, float)):
                 return RecordType.LIST_FLOAT
@@ -224,14 +236,14 @@ class NumericalRecord(Record):
         return self._index
 
     @property
-    def data(self) -> record_data:
+    def data(self) -> numerical_record_data:
         return self._data
 
     @property
     def record_type(self) -> RecordType:
         """Returns the :class:`RecordType` of the record data, which is either
-        :class:`RecordType.LIST_FLOAT`, :class:`RecordType.MAPPING_INT_FLOAT` or
-        :class:`RecordType.MAPPING_STR_FLOAT`.
+        :class:`RecordType.LIST_FLOAT`, :class:`RecordType.MAPPING_INT_FLOAT`,
+        :class:`RecordType.MAPPING_STR_FLOAT` or :class:`RecordType.SCALAR_FLOAT`.
         """
         return self._type
 

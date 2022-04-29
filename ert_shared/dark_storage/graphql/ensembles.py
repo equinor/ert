@@ -1,20 +1,17 @@
 from datetime import datetime
-from ert_shared.libres_facade import LibresFacade
 from typing import Any, List, Optional, TYPE_CHECKING
 from uuid import UUID
-from fastapi.param_functions import Depends
 import graphene as gr
-from graphene.types.scalars import ID
 from ert_shared.dark_storage.common import (
     ensemble_parameters,
     ensemble_parameter_names,
     get_response_names,
     get_responses,
+    get_res_from_info,
 )
 
 from ert_shared.dark_storage.enkf import (
     get_id,
-    get_res,
     get_size,
     get_active_realizations,
 )
@@ -50,11 +47,11 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_size(root: Any, info: "ResolveInfo") -> int:
-        return get_size(root)
+        return get_size(get_res_from_info(info))
 
     @staticmethod
     def resolve_active_realizations(root: Any, info: "ResolveInfo") -> List[int]:
-        return get_active_realizations(root)
+        return get_active_realizations(get_res_from_info(info), root)
 
     @staticmethod
     def resolve_time_created(root: Any, info: "ResolveInfo") -> datetime:
@@ -70,11 +67,11 @@ class _EnsembleMixin:
 
     @staticmethod
     def resolve_parameter_names(root: Any, info: "ResolveInfo") -> List[str]:
-        return ensemble_parameter_names()
+        return ensemble_parameter_names(get_res_from_info(info))
 
     @staticmethod
     def resolve_response_names(root: Any, info: "ResolveInfo") -> List[str]:
-        return get_response_names()
+        return get_response_names(get_res_from_info(info))
 
     @staticmethod
     def resolve_userdata(root: Any, info: "ResolveInfo") -> Any:
@@ -116,7 +113,7 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
 
     @staticmethod
     def resolve_responses(root: Any, info: "ResolveInfo") -> "Response":
-        return get_responses(root)
+        return get_responses(get_res_from_info(info), root)
 
     @staticmethod
     def resolve_unique_responses(root: Any, info: "ResolveInfo") -> "UniqueResponse":
@@ -124,7 +121,7 @@ class Ensemble(gr.ObjectType, _EnsembleMixin):
 
     @staticmethod
     def resolve_parameters(root: Any, info: "ResolveInfo") -> List[dict]:
-        return ensemble_parameters(root)
+        return ensemble_parameters(get_res_from_info(info))
 
 
 class CreateEnsemble(gr.Mutation, _EnsembleMixin):

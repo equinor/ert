@@ -20,17 +20,17 @@
    See the overview documentation of the observation system in enkf_obs.c
 */
 
+#include <algorithm>
+#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <cmath>
 #include <vector>
-#include <algorithm>
 
+#include <ert/util/bool_vector.h>
+#include <ert/util/double_vector.h>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
-#include <ert/util/double_vector.h>
-#include <ert/util/bool_vector.h>
 
 #include <ert/sched/history.hpp>
 
@@ -38,14 +38,14 @@
 
 #include <ert/ecl/ecl_grid.h>
 
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/summary_obs.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/block_obs.hpp>
-#include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/gen_obs.hpp>
 #include <ert/enkf/local_obsdata.hpp>
 #include <ert/enkf/local_obsdata_node.hpp>
-#include <ert/enkf/active_list.hpp>
+#include <ert/enkf/obs_vector.hpp>
+#include <ert/enkf/summary_obs.hpp>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -425,7 +425,6 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
         const char *index_file = NULL;
         const char *index_list = NULL;
         const char *obs_file = NULL;
-        const char *error_covar_file = NULL;
 
         if (conf_instance_has_item(conf_instance, "INDEX_FILE"))
             index_file =
@@ -438,10 +437,6 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
         if (conf_instance_has_item(conf_instance, "OBS_FILE"))
             obs_file =
                 conf_instance_get_item_value_ref(conf_instance, "OBS_FILE");
-
-        if (conf_instance_has_item(conf_instance, "ERROR_COVAR"))
-            error_covar_file =
-                conf_instance_get_item_value_ref(conf_instance, "ERROR_COVAR");
 
         {
             obs_vector_type *obs_vector = NULL;
@@ -473,7 +468,7 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
                         (const gen_data_config_type *)enkf_config_node_get_ref(
                             config_node),
                         obs_key, obs_file, scalar_value, scalar_error,
-                        index_file, index_list, error_covar_file);
+                        index_file, index_list);
                     obs_vector_install_node(obs_vector, obs_restart_nr,
                                             gen_obs);
                 } else

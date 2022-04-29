@@ -15,9 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <ert/util/test_util.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
+#include <ert/util/test_util.hpp>
+#include <stdlib.h>
 
 void load_job_directory(ext_joblist_type *joblist, const char *path,
                         const char *license_root_path) {

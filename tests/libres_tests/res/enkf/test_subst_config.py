@@ -104,10 +104,9 @@ class SubstConfigTest(ResTest):
 
     def assertKeyValue(self, subst_config, key, val):
         actual_val = subst_config.__getitem__(key)
-        assert (
-            actual_val == val
-        ), "subst_config does not contain key/value pair ({}, {}). Actual value was: {}".format(
-            key, val, actual_val
+        assert actual_val == val, (
+            f"subst_config does not contain key/value pair ({key}, {val})"
+            f". Actual value was: {actual_val}"
         )
 
     def make_config_file(self, filename):

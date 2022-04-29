@@ -18,7 +18,6 @@ import os
 import os.path
 
 from ecl.util.test import TestAreaContext
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import (
@@ -93,7 +92,7 @@ class EnKFTest(ResTest):
 
     @tmpdir()
     def test_site_bootstrap(self):
-        with TestAreaContext("enkf_test", store_area=True) as work_area:
+        with TestAreaContext("enkf_test", store_area=True):
             with self.assertRaises(ValueError):
                 EnKFMain(None)
 
@@ -113,23 +112,21 @@ class EnKFTest(ResTest):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(TypeError):
                 work_area.copy_directory(self.case_directory)
-                main = EnKFMain(res_config="This is not a ResConfig instance")
+                EnKFMain(res_config="This is not a ResConfig instance")
 
     @tmpdir()
     def test_invalid_parameter_count_2_res_config(self):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(ValueError):
                 work_area.copy_directory(self.case_directory)
-                res_config = ResConfig(user_config_file="a", config="b")
+                ResConfig(user_config_file="a", config="b")
 
     @tmpdir()
     def test_invalid_parameter_count_3_res_config(self):
         with TestAreaContext("enkf_test") as work_area:
             with self.assertRaises(ValueError):
                 work_area.copy_directory(self.case_directory)
-                res_config = ResConfig(
-                    user_config_file="a", config="b", config_dict="c"
-                )
+                ResConfig(user_config_file="a", config="b", config_dict="c")
 
     @tmpdir()
     def test_enum(self):
@@ -261,7 +258,7 @@ class EnKFTest(ResTest):
             main = EnKFMain(res_config)
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem()
-            iactive = BoolVector(initial_size=10, default_value=True)
+            iactive = [True] * 10
             iactive[0] = False
             iactive[1] = False
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
@@ -295,7 +292,7 @@ class EnKFTest(ResTest):
             fs_manager = main.getEnkfFsManager()
             fs = fs_manager.getCurrentFileSystem()
 
-            mask = BoolVector(default_value=False, initial_size=10)
+            mask = [False] * 10
             mask[0] = True
             run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, mask)
 

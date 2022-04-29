@@ -118,7 +118,8 @@ class AnalysisConfig(BaseCClass):
 
         if configs > 1:
             raise ValueError(
-                "Attempting to create AnalysisConfig object with multiple config objects"
+                "Attempting to create AnalysisConfig object "
+                "with multiple config objects"
             )
 
         if configs == 0:
@@ -223,14 +224,14 @@ class AnalysisConfig(BaseCClass):
         """@rtype: AnalysisIterConfig"""
         return self._get_iter_config().setParent(self)
 
-    def get_stop_long_running(self):
+    def get_stop_long_running(self) -> bool:
         """@rtype: bool"""
         return self._get_stop_long_running()
 
     def set_stop_long_running(self, stop_long_running):
         self._set_stop_long_running(stop_long_running)
 
-    def get_max_runtime(self):
+    def get_max_runtime(self) -> int:
         """@rtype: int"""
         return self._get_max_runtime()
 
@@ -270,7 +271,7 @@ class AnalysisConfig(BaseCClass):
         return self._get_global_std_scaling()
 
     @property
-    def minimum_required_realizations(self):
+    def minimum_required_realizations(self) -> int:
         return self._get_min_realizations()
 
     def haveEnoughRealisations(self, realizations, ensemble_size):

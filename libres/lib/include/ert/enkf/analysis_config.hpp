@@ -26,13 +26,13 @@
 
 #include <ert/util/stringlist.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 #include <ert/analysis/analysis_module.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
+#include <ert/enkf/enkf_types.hpp>
 
 typedef struct analysis_config_struct analysis_config_type;
 
@@ -45,8 +45,6 @@ extern "C" bool analysis_config_has_module(const analysis_config_type *config,
                                            const char *module_name);
 void analysis_config_load_module(int ens_size, analysis_config_type *config,
                                  analysis_mode_enum mode);
-bool analysis_config_module_flag_is_set(const analysis_config_type *config,
-                                        analysis_module_flag_enum flag);
 
 std::vector<std::string>
 analysis_config_module_names(const analysis_config_type *config);

@@ -10,7 +10,6 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 import pytest
-from ecl.util.util import BoolVector
 from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert_shared.libres_facade import LibresFacade
@@ -98,8 +97,9 @@ class ErtConfigBuilder:
         f.write("INSTALL_JOB job JOB\n" "SIMULATION_JOB job\n")
 
         if self.job_script is None:
-            # true is an executable which should exist on the path for all normal distros
-            # and it is then reasonable to expect this instead of using hardcoded path
+            # true is an executable which should exist on the path for all
+            # normal distros and it is then reasonable to expect this instead of
+            # using hardcoded path
             (path / "JOB").write_text("EXECUTABLE true\n")
         else:
             (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
@@ -110,10 +110,11 @@ class ErtConfigBuilder:
 
     def _build_observations(self, path):
         """
-        Creates a TIME_MAP and OBS_CONFIG entry in the ERT config. The TIME_MAP is
-        required for ERT to load the OBS_CONFIG.
+        Creates a TIME_MAP and OBS_CONFIG entry in the ERT config. The TIME_MAP
+        is required for ERT to load the OBS_CONFIG.
 
-        Creates an 'obs_config.txt' file into which the generate observations are written.
+        Creates an 'obs_config.txt' file into which the generate observations
+        are written.
         """
         if not self._obs:
             return
@@ -123,7 +124,10 @@ class ErtConfigBuilder:
             f.write("OBS_CONFIG obs_config.txt\n")
             f.write("TIME_MAP time_map\n")
             f.write(
-                "GEN_DATA RES RESULT_FILE:poly_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII\n"
+                (
+                    "GEN_DATA RES RESULT_FILE:poly_%d.out "
+                    "REPORT_STEPS:0 INPUT_FORMAT:ASCII\n"
+                )
             )
 
         with (path / "obs_config.txt").open("w") as f:
@@ -564,7 +568,7 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     run_context = ErtRunContext.ensemble_smoother(
         result_fs,
         target_fs,
-        BoolVector(default_value=True, initial_size=ert.get_ensemble_size()),
+        [True] * ert.get_ensemble_size(),
         runpath_fmt,
         jobname_fmt,
         subst_list,
@@ -587,7 +591,7 @@ def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
 
 def _run_update(ert: LibresFacade, run_context: ErtRunContext):
     es_update = ert._enkf_main.getESUpdate()
-    assert es_update.smootherUpdate(run_context)
+    es_update.smootherUpdate(run_context)
 
 
 def _get_parameters() -> pd.DataFrame:

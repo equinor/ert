@@ -19,18 +19,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
 #include <ert/util/string_util.h>
+#include <ert/util/util.h>
 
-#include <ert/ecl/ecl_grid.h>
 #include <ert/ecl/ecl_endian_flip.h>
+#include <ert/ecl/ecl_grid.h>
 
 #include <ert/rms/rms_file.hpp>
 
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/field_config.hpp>
 
 /*
    About transformations and truncations

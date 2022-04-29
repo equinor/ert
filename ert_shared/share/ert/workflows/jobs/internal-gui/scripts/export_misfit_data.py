@@ -1,10 +1,10 @@
 from collections import OrderedDict
 import os
 from res.enkf import ErtScript, RealizationStateEnum
-from ecl.util.util import BoolVector
 
 """
-This job exports misfit data into a chosen file or to the default gen_kw export file (parameters.txt)
+This job exports misfit data into a chosen file or to the default gen_kw export
+file (parameters.txt)
 """
 
 
@@ -57,7 +57,10 @@ class ExportMisfitDataJob(ErtScript):
                         parameters[tokens[0]] = tokens[1]
                     else:
                         raise UserWarning(
-                            "The file '%s' contains errors. Expected format for each line: KEY VALUE"
+                            (
+                                "The file '%s' contains errors. "
+                                "Expected format for each line: KEY VALUE"
+                            )
                             % target_path
                         )
 

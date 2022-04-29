@@ -1,5 +1,6 @@
+from typing import List
+
 from res import _lib
-from ecl.util.util import BoolVector
 from pandas import DataFrame
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
@@ -7,15 +8,12 @@ from res.enkf.enums import RealizationStateEnum
 
 class GenKwCollector:
     @staticmethod
-    def createActiveList(ert, fs):
-        state_map = fs.getStateMap()
-        ens_mask = state_map.selectMatching(
+    def createActiveList(ert, fs) -> List[int]:
+        ens_mask = fs.getStateMap().selectMatching(
             RealizationStateEnum.STATE_INITIALIZED
             | RealizationStateEnum.STATE_HAS_DATA,
         )
-        index_list = [index for index, element in enumerate(ens_mask) if element]
-        bool_vec = BoolVector.createFromList(len(index_list), index_list)
-        return bool_vec.createActiveList()
+        return [index for index, active in enumerate(ens_mask) if active]
 
     @staticmethod
     def getAllGenKwKeys(ert):

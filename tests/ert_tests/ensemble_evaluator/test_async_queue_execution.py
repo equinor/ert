@@ -3,11 +3,11 @@ import threading
 from http import HTTPStatus
 
 import pytest
-import websockets
+from websockets.server import serve
 from cloudevents.http import from_json
 
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
+from ert.ensemble_evaluator import wait_for_evaluator
 
 
 async def mock_ws(host, port, done):
@@ -25,7 +25,7 @@ async def mock_ws(host, port, done):
             if cloud_event["type"] == "com.equinor.ert.forward_model_stage.success":
                 break
 
-    async with websockets.serve(_handler, host, port, process_request=process_request):
+    async with serve(_handler, host, port, process_request=process_request):
         await done
     return events
 
@@ -45,8 +45,8 @@ async def test_happy_path(
 
     ensemble = make_ensemble_builder(tmpdir, 1, 1).build()
     queue = queue_config.create_job_queue()
-    for real in ensemble.get_reals():
-        queue.add_ee_stage(real.get_steps()[0], None)
+    for real in ensemble.reals:
+        queue.add_ee_stage(real.steps[0], None)
     queue.submit_complete()
 
     await queue.execute_queue_async(

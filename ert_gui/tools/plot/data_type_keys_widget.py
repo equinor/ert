@@ -41,7 +41,6 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        # layout.addWidget(Legend("Default types", DataTypeKeysListModel.DEFAULT_DATA_TYPE))
         layout.addWidget(
             Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
         )

@@ -110,7 +110,7 @@ def _build_record_argparser(subparsers: Any) -> None:
         "sample", help="Sample stochastic parameter into a record"
     )
     sample_parser.add_argument(
-        "parameter_group", help="Name of the distribution group in parameters.yml"
+        "parameter", help="Name of the parameter in parameters.yml"
     )
     sample_parser.add_argument("record_name", help="Name of the resulting record")
     sample_parser.add_argument(
@@ -120,6 +120,10 @@ def _build_record_argparser(subparsers: Any) -> None:
 
 def _build_status_argparser(subparsers: Any) -> None:
     subparsers.add_parser("status", help="Report the status of all experiments")
+
+
+def _build_visualise_argparser(subparsers: Any) -> None:
+    subparsers.add_parser("vis", help="Starts webviz-ert for ert3")
 
 
 def _build_clean_argparser(subparsers: Any) -> None:
@@ -181,6 +185,7 @@ def _build_argparser() -> Any:
     _build_status_argparser(subparsers)
     _build_clean_argparser(subparsers)
     _build_service_argparser(subparsers)
+    _build_visualise_argparser(subparsers)
 
     return parser
 
@@ -352,7 +357,7 @@ def _record(workspace: Workspace, args: Any) -> None:
         parameters_config = workspace.load_parameters_config()
         collection = ert3.engine.sample_record(
             parameters_config,
-            args.parameter_group,
+            args.parameter,
             args.ensemble_size,
         )
         future = ert.storage.transmit_record_collection(
@@ -407,6 +412,11 @@ def _status(workspace: Workspace, args: Any) -> None:
 def _clean(workspace: Workspace, args: Any) -> None:
     assert args.sub_cmd == "clean"
     ert3.console.clean(workspace, args.experiment_names, args.all)
+
+
+def _visualise(args: Any) -> None:
+    assert args.sub_cmd == "vis"
+    os.system("ert vis")
 
 
 def _service_check(args: Any) -> None:
@@ -469,6 +479,9 @@ def _main() -> None:
         return
     elif args.sub_cmd == "service":
         _service(args)
+        return
+    elif args.sub_cmd == "vis":
+        _visualise(args)
         return
 
     # The remaining commands require an existing ert workspace:

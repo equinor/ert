@@ -16,24 +16,24 @@
  for more details.
  */
 
-#include <unordered_map>
 #include <filesystem>
+#include <unordered_map>
 
-#include <time.h>
 #include <stdlib.h>
+#include <time.h>
 
-#include <ert/util/util.h>
-#include <ert/util/parser.h>
 #include <ert/res_util/ui_return.hpp>
+#include <ert/util/parser.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/ecl/ecl_grid.h>
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_io_config.h>
+#include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 
 namespace fs = std::filesystem;
@@ -368,14 +368,20 @@ static void handle_has_end_date_key(ecl_config_type *ecl_config,
     const char *date_string = config_content_get_value(config, END_DATE_KEY);
     time_t end_date;
     bool end_date_parsed_ok = util_sscanf_isodate(date_string, &end_date);
-    if (!end_date_parsed_ok)
+    if (!end_date_parsed_ok) {
         end_date_parsed_ok = util_sscanf_date_utc(date_string, &end_date);
+        fprintf(stderr,
+                "** Deprecation warning: The date format as in \'%s\' is "
+                "deprecated, and its support will be removed in a future "
+                "release. Please use ISO date format YYYY-MM-DD.\n",
+                date_string);
+    }
     if (end_date_parsed_ok)
         ecl_config_set_end_date(ecl_config, end_date);
     else
         fprintf(stderr,
                 "** WARNING **: Failed to parse %s as a date - should be in "
-                "format YYYY-MM-DD or DD/MM/YYYY.\n",
+                "format YYYY-MM-DD.\n",
                 date_string);
 }
 

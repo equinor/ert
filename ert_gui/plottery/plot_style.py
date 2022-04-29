@@ -1,4 +1,4 @@
-class PlotStyle(object):
+class PlotStyle:
     def __init__(
         self,
         name,
@@ -10,7 +10,8 @@ class PlotStyle(object):
         size=7.5,
         enabled=True,
     ):
-        super(PlotStyle, self).__init__()
+        super().__init__()
+
         self.name = name
         self.color = color
         self.alpha = alpha
@@ -107,16 +108,10 @@ class PlotStyle(object):
         self._size = size
 
     def __str__(self):
-        return "%s c:%s a:%f ls:%s m:%s w:%f s:%f enabled:%s copy:%s" % (
-            self.name,
-            self.color,
-            self.alpha,
-            self.line_style,
-            self.marker,
-            self.width,
-            self.size,
-            self.isEnabled(),
-            self._is_copy,
+        return (
+            f"{self.name} c:{self.color} a:{self.alpha} "
+            f"ls:{self.line_style} m:{self.marker} w:{self.width} "
+            f"s:{self.size} enabled:{self.isEnabled()} copy:{self._is_copy}"
         )
 
     def __eq__(self, other):

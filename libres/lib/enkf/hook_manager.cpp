@@ -18,17 +18,17 @@
 
 #include <stdlib.h>
 
+#include <ert/res_util/subst_list.hpp>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/job_queue/workflow.hpp>
 
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/site_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
+#include <ert/enkf/site_config.hpp>
 
 struct hook_manager_struct {
     vector_type

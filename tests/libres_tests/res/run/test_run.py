@@ -10,7 +10,7 @@ class RunTest(ResTest):
         # Slightly weird - tests need existing file,
         # but it can be empty ....
         self.testConfig = "/tmp/config-%06d" % random.randint(100000, 999999)
-        with open(self.testConfig, "w") as f:
+        with open(self.testConfig, "w"):
             pass
 
     def test_init(self):
@@ -62,4 +62,4 @@ class RunTest(ResTest):
             tr.add_check(25, "arg")
 
         with self.assertRaises(Exception):
-            tr.add_check(func_does_not_exist, "arg")
+            tr.add_check(func_does_not_exist, "arg")  # noqa

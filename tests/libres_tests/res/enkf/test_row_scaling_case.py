@@ -21,7 +21,6 @@ import shutil
 
 import numpy as np
 from ecl.grid import EclGridGenerator
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import EnKFMain, EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig
@@ -62,8 +61,9 @@ def init_data(main):
     wct = []
     num_realisations = main.getEnsembleSize()
 
-    # The path fields/poro{}.grdecl must be consistent with the INIT_FILES: argument in the
-    # PORO configuration in the configuration file used for the testcase.
+    # The path fields/poro{}.grdecl must be consistent with the INIT_FILES:
+    # argument in the PORO configuration in the configuration file used for the
+    # testcase.
     os.mkdir("fields")
     random.seed(12345)
     for i in range(num_realisations):
@@ -79,7 +79,7 @@ def init_data(main):
         bhp.append(poro * 1000 + random.gauss(0, bhp_std))
         wct.append(poro * 4 + random.gauss(0, wct_std))
 
-    mask = BoolVector(initial_size=main.getEnsembleSize(), default_value=True)
+    mask = [True] * main.getEnsembleSize()
     init_context = ErtRunContext.case_init(init_fs, mask)
     main.initRun(init_context)
 
@@ -404,7 +404,7 @@ class RowScalingTest(ResTest):
             # The first smoother update without row scaling
             es_update = ESUpdate(main)
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
-            rng = main.rng()
+            main.rng()
             es_update.smootherUpdate(run_context)
 
             # Configure the local updates
@@ -561,7 +561,8 @@ TIME_MAP timemap.txt
             updatestep.attachMinistep(ministep2)
             update_fs3 = main.getEnkfFsManager().getFileSystem("target3")
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs3)
-            # Local update with two ministeps - where one observation has been removed from the first
+            # Local update with two ministeps - where one observation has been
+            # removed from the first
             es_update.smootherUpdate(run_context)
 
             ens_config = main.ensembleConfig()

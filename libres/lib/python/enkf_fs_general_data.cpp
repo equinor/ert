@@ -1,7 +1,7 @@
 #include <ert/enkf/enkf_plot_gendata.hpp>
 #include <ert/python.hpp>
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 RES_LIB_SUBMODULE("enkf_fs_general_data", m) {

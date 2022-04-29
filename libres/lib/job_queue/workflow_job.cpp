@@ -17,7 +17,6 @@
 */
 
 #include <stdlib.h>
-#include <dlfcn.h>
 
 #include <ert/util/int_vector.hpp>
 
@@ -25,12 +24,74 @@
 
 #include <ert/job_queue/job_kw_definitions.hpp>
 #include <ert/job_queue/workflow_job.hpp>
+#include <string>
+#include <unordered_map>
+
+using namespace std::string_literals;
+
+extern "C" void *enkf_main_exit_JOB(void *self, const stringlist_type *args);
+extern "C" void *enkf_main_select_case_JOB(void *self,
+                                           const stringlist_type *args);
+extern "C" void *enkf_main_create_case_JOB(void *self,
+                                           const stringlist_type *args);
+extern "C" void *
+enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args);
+extern "C" void *enkf_main_export_field_JOB(void *self,
+                                            const stringlist_type *args);
+extern "C" void *enkf_main_export_field_to_RMS_JOB(void *self,
+                                                   const stringlist_type *args);
+extern "C" void *enkf_main_export_field_to_ECL_JOB(void *self,
+                                                   const stringlist_type *args);
+extern "C" void *enkf_main_init_misfit_table_JOB(void *self,
+                                                 const stringlist_type *args);
+extern "C" void *enkf_main_export_runpath_file_JOB(void *self,
+                                                   const stringlist_type *args);
+extern "C" void *enkf_main_pre_simulation_copy_JOB(void *self,
+                                                   const stringlist_type *args);
+
+namespace {
+void *dummy_job(void *, const stringlist_type *) { return nullptr; }
+
+void *test_job(void *self, const stringlist_type *args) {
+    int *value = reinterpret_cast<int *>(self);
+    FILE *stream = fopen(stringlist_iget(args, 0), "r");
+    int read_count = fscanf(stream, "%d", value);
+    fclose(stream);
+
+    if (read_count == 1) {
+        int *return_value = reinterpret_cast<int *>(malloc(sizeof(int)));
+        return_value[0] = value[0];
+        return return_value;
+    }
+    return nullptr;
+}
+
+std::unordered_map<std::string, workflow_job_ftype *>
+    workflow_internal_functions{
+        {"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
+        {"enkf_main_select_case_JOB"s, &enkf_main_select_case_JOB},
+        {"enkf_main_create_case_JOB"s, &enkf_main_create_case_JOB},
+        {"enkf_main_init_case_from_existing_JOB"s,
+         &enkf_main_init_case_from_existing_JOB},
+        {"enkf_main_export_field_JOB"s, &enkf_main_export_field_JOB},
+        {"enkf_main_export_field_to_RMS_JOB"s,
+         &enkf_main_export_field_to_RMS_JOB},
+        {"enkf_main_export_field_to_ECL_JOB"s,
+         &enkf_main_export_field_to_ECL_JOB},
+        {"enkf_main_init_misfit_table_JOB"s, &enkf_main_init_misfit_table_JOB},
+        {"enkf_main_export_runpath_file_JOB"s,
+         &enkf_main_export_runpath_file_JOB},
+        {"enkf_main_pre_simulation_copy_JOB"s,
+         &enkf_main_pre_simulation_copy_JOB},
+        {"printf"s, &dummy_job},
+        {"strcmp"s, &dummy_job},
+        {"read_file"s, &test_job}};
+} // namespace
 
 /* The default values are interepreted as no limit. */
 #define DEFAULT_INTERNAL false
 
 #define INTERNAL_KEY "INTERNAL"
-#define MODULE_KEY "MODULE"
 #define FUNCTION_KEY "FUNCTION"
 #define SCRIPT_KEY "SCRIPT"
 
@@ -47,7 +108,6 @@ struct workflow_job_struct {
         arg_types; // Should contain values from the config_item_types enum in config.h.
     char *executable;
     char *internal_script_path;
-    char *module;
     char *function;
     char *name;
     void *lib_handle;
@@ -98,9 +158,6 @@ config_parser_type *workflow_job_alloc_config() {
         item = config_add_schema_item(config, FUNCTION_KEY, false);
         config_schema_item_set_argc_minmax(item, 1, 1);
 
-        item = config_add_schema_item(config, MODULE_KEY, false);
-        config_schema_item_set_argc_minmax(item, 1, 1);
-
         item = config_add_schema_item(config, INTERNAL_KEY, false);
         config_schema_item_set_argc_minmax(item, 1, 1);
         config_schema_item_iset_type(item, 0, CONFIG_BOOL);
@@ -141,7 +198,6 @@ workflow_job_type *workflow_job_alloc(const char *name, bool internal) {
 
     workflow_job->executable = NULL;
     workflow_job->internal_script_path = NULL;
-    workflow_job->module = NULL;
     workflow_job->function = NULL;
 
     if (name == NULL)
@@ -179,19 +235,6 @@ workflow_job_get_internal_script_path(const workflow_job_type *workflow_job) {
 
 bool workflow_job_is_internal_script(const workflow_job_type *workflow_job) {
     return workflow_job->internal && workflow_job->internal_script_path != NULL;
-}
-
-void workflow_job_set_module(workflow_job_type *workflow_job,
-                             const char *module) {
-    if (strcmp(module, NULL_STRING) == 0)
-        module = NULL;
-
-    workflow_job->module =
-        util_realloc_string_copy(workflow_job->module, module);
-}
-
-char *workflow_job_get_module(workflow_job_type *workflow_job) {
-    return workflow_job->module;
 }
 
 void workflow_job_set_function(workflow_job_type *workflow_job,
@@ -241,40 +284,38 @@ static void workflow_job_iset_argtype_string(workflow_job_type *workflow_job,
 }
 
 static void workflow_job_validate_internal(workflow_job_type *workflow_job) {
-    if (workflow_job->executable == NULL) {
-        if ((workflow_job->internal_script_path == NULL) &&
-            (workflow_job->function != NULL)) {
-            workflow_job->lib_handle = dlopen(workflow_job->module, RTLD_NOW);
-            if (workflow_job->lib_handle != NULL) {
-                workflow_job->dl_func = (workflow_job_ftype *)dlsym(
-                    workflow_job->lib_handle, workflow_job->function);
-                if (workflow_job->dl_func != NULL)
-                    workflow_job->valid = true;
-                else
-                    fprintf(stderr, "Failed to load symbol:%s Error:%s \n",
-                            workflow_job->function, dlerror());
-            } else {
-                if (workflow_job->module != NULL)
-                    fprintf(stderr, "Failed to load module:%s Error:%s \n",
-                            workflow_job->module, dlerror());
-            }
-        } else if ((workflow_job->internal_script_path != NULL) &&
-                   (workflow_job->function == NULL)) {
-            workflow_job->valid = true;
-        } else {
-            fprintf(stderr, "Must have function != NULL or internal_script != "
-                            "NULL for internal jobs");
-        }
-    } else {
+    workflow_job->dl_func = nullptr;
+    workflow_job->valid = false;
+
+    if (workflow_job->executable != nullptr) {
         fprintf(stderr, "Must have executable == NULL for internal jobs\n");
+        return;
     }
+
+    if (workflow_job->internal_script_path && !workflow_job->function) {
+        workflow_job->valid = true;
+        return;
+    }
+
+    if (!workflow_job->internal_script_path && workflow_job->function) {
+        auto it = workflow_internal_functions.find(workflow_job->function);
+        if (it != workflow_internal_functions.cend()) {
+            workflow_job->dl_func = it->second;
+        }
+
+        if (workflow_job->dl_func)
+            workflow_job->valid = true;
+
+        return;
+    }
+
+    fprintf(stderr, "Must have function != NULL or internal_script != "
+                    "NULL for internal jobs");
 }
 
 static void workflow_job_validate_external(workflow_job_type *workflow_job) {
     if (workflow_job->executable != NULL) {
-        if (util_is_executable(workflow_job->executable) &&
-            (workflow_job->module == workflow_job->function) &&
-            (workflow_job->module == NULL))
+        if (util_is_executable(workflow_job->executable))
             workflow_job->valid = true;
     }
 }
@@ -326,13 +367,6 @@ workflow_job_type *workflow_job_config_alloc(const char *name,
                 }
             }
 
-            if (config_content_has_item(content, MODULE_KEY))
-                workflow_job_set_module(
-                    workflow_job,
-                    config_content_get_value(
-                        content,
-                        MODULE_KEY)); // Could be a pure so name; or a full path ..... Like executable
-
             if (config_content_has_item(content, FUNCTION_KEY))
                 workflow_job_set_function(
                     workflow_job,
@@ -362,7 +396,6 @@ workflow_job_type *workflow_job_config_alloc(const char *name,
 }
 
 void workflow_job_free(workflow_job_type *workflow_job) {
-    free(workflow_job->module);
     free(workflow_job->function);
     free(workflow_job->executable);
     int_vector_free(workflow_job->arg_types);

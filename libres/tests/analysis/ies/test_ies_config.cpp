@@ -1,7 +1,7 @@
 #include <catch2/catch.hpp>
 
-#include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/ies/ies_config.hpp>
 
 TEST_CASE("ies_config", "[analysis]") {
     ies::config::Config config(true);

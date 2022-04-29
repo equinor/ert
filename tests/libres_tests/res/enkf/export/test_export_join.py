@@ -102,7 +102,8 @@ class ExportJoinTest(ResTest):
             self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.700855)
 
             with self.assertRaises(KeyError):
-                realization_13 = result.loc[60]
+                # realization 13:
+                result.loc[60]
 
             column_count = len(result.columns)
             self.assertEqual(result.dtypes[0], numpy.float64)

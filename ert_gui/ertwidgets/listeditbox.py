@@ -31,7 +31,7 @@ from ert_gui.ertwidgets.validationsupport import ValidationSupport
 class AutoCompleteLineEdit(QLineEdit):
     # http://blog.elentok.com/2011/08/autocomplete-textbox-for-multiple.html
     def __init__(self, items, parent=None):
-        super(AutoCompleteLineEdit, self).__init__(parent)
+        super().__init__(parent)
 
         self._separators = [",", " "]
 
@@ -63,7 +63,7 @@ class AutoCompleteLineEdit(QLineEdit):
                 event.ignore()
                 return
 
-        super(AutoCompleteLineEdit, self).keyPressEvent(event)
+        super().keyPressEvent(event)
 
         completion_prefix = self.textUnderCursor()
         if completion_prefix != self._completer.completionPrefix():

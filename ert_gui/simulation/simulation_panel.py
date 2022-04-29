@@ -1,4 +1,3 @@
-import os
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtWidgets import (
     QComboBox,
@@ -26,6 +25,7 @@ from collections import OrderedDict
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain
+from ert_shared.cli.model_factory import create_model
 
 
 class SimulationPanel(QWidget):
@@ -119,19 +119,24 @@ class SimulationPanel(QWidget):
     def runSimulation(self):
         case_name = self.facade.get_current_case_name()
         message = (
-            "Are you sure you want to use case '%s' for initialization of the initial ensemble when running the simulations?"
-            % case_name
+            f"Are you sure you want to use case '{case_name}' for initialization of "
+            "the initial ensemble when running the simulations?"
         )
         start_simulations = QMessageBox.question(
             self, "Start simulations?", message, QMessageBox.Yes | QMessageBox.No
         )
 
         if start_simulations == QMessageBox.Yes:
-            run_model = self.getCurrentSimulationModel()
+
             arguments = self.getSimulationArguments()
             dialog = RunDialog(
                 self._config_file,
-                run_model(arguments, self.ert, self.ert.get_queue_config()),
+                create_model(
+                    self.ert,
+                    self.facade.get_ensemble_size(),
+                    self.facade.get_current_case_name(),
+                    arguments,
+                ),
             )
             dialog.startSimulation()
             dialog.exec_()

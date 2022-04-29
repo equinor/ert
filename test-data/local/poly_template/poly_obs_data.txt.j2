@@ -1,0 +1,5 @@
+{%- for x in range(0, gen_data_entries, gen_obs_every) %}
+{%- set y = 0.5598 * x**2 + 1.8083 * x + 2.6357 %}
+{%- set std = ((x/2) ** 2) + 0.1 %}
+{{- y}} {{std}}
+{% endfor %}

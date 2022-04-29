@@ -1,7 +1,11 @@
 import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, Any
+
 from res import _lib
 from res.enkf.enums import RealizationStateEnum
-from res.analysis.enums import AnalysisModuleOptionsEnum
+from res._lib.enkf_analysis import UpdateSnapshot
 
 
 logger = logging.getLogger(__name__)
@@ -11,26 +15,15 @@ class ErtAnalysisError(Exception):
     pass
 
 
-def size_is_big_enough(active_ens_size, required_ens_size):
-    if active_ens_size < required_ens_size:
-        logger.error(
-            "** ERROR **: There are %d active realisations left, which is "
-            "less than the minimum specified - stopping assimilation.",
-            active_ens_size,
-        )
-        return False
-    return True
-
-
-def config_is_correct(updatestep, iterable):
-    # exit if multi step update with iterable modules
-    if len(updatestep) > 1 and iterable:
-        logger.error(
-            "** ERROR **: Can not combine iterable modules with multi step "
-            "updates - sorry"
-        )
-        return False
-    return True
+@dataclass
+class SmootherSnapshot:
+    source_case: str
+    target_case: str
+    analyis_module: str
+    analysis_configuration: Dict[str, Any]
+    alpha: float
+    std_cutoff: float
+    ministep_snapshots: Dict[str, UpdateSnapshot] = field(default_factory=dict)
 
 
 def analysis_smoother_update(
@@ -49,20 +42,34 @@ def analysis_smoother_update(
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
     module = analysis_config.getActiveModule()
 
-    if not size_is_big_enough(
-        len(iens_active_index),
-        min(analysis_config.minimum_required_realizations, total_ens_size),
-    ) or not config_is_correct(
-        updatestep,
-        module.checkOption(AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE),
+    smoother_snapshot = SmootherSnapshot(
+        source_fs.getCaseName(),
+        target_fs.getCaseName(),
+        analysis_config.activeModuleName(),
+        {
+            name: analysis_config.getActiveModule().getVariableValue(name)
+            for name in analysis_config.getActiveModule().getVariableNames()
+        },
+        analysis_config.getEnkfAlpha(),
+        analysis_config.getStdCutoff(),
+    )
+
+    if len(iens_active_index) < min(
+        analysis_config.minimum_required_realizations, total_ens_size
     ):
-        return False
+        raise ErtAnalysisError(
+            f"There are {iens_active_index} active realisations left, which is "
+            "less than the minimum specified - stopping assimilation.",
+        )
+    if len(updatestep) > 1 and module.name() == "IES_ENKF":
+        raise ErtAnalysisError(
+            "Can not combine IES_ENKF modules with multi step updates"
+        )
 
     _lib.update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
 
     # Looping over local analysis ministep
-    for i in range(len(updatestep)):
-        ministep = updatestep[i]
+    for ministep in updatestep:
 
         update_data = _lib.update.make_update_data(
             source_fs,
@@ -74,6 +81,9 @@ def analysis_smoother_update(
             ministep,
             shared_rng,
         )
+        smoother_snapshot.ministep_snapshots[
+            ministep.name()
+        ] = update_data.update_snapshot
         if update_data.has_observations:
 
             """
@@ -103,11 +113,47 @@ def analysis_smoother_update(
             )
 
         else:
-            logger.error(
-                "No active observations/parameters for MINISTEP: %s.", ministep.name()
+            raise ErtAnalysisError(
+                f"No active observations/parameters for MINISTEP: {ministep.name()}."
             )
+    _write_update_report(
+        Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
+    )
+    return smoother_snapshot
 
-    return True
+
+def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
+    for ministep_name, ministep in snapshot.ministep_snapshots.items():
+        with open(fname, "w") as fout:
+            fout.write("=" * 127 + "\n")
+            fout.write("Report step...: deprecated\n")
+            fout.write(f"Ministep......: {ministep_name:<13}\n")
+            fout.write("-" * 127 + "\n")
+            fout.write(
+                "Observed history".rjust(73)
+                + "|".rjust(16)
+                + "Simulated data".rjust(27)
+                + "\n".rjust(9)
+            )
+            fout.write("-" * 127 + "\n")
+            for nr, (name, val, std, status, ens_val, ens_std) in enumerate(
+                zip(
+                    ministep.obs_name,
+                    ministep.obs_value,
+                    ministep.obs_std,
+                    ministep.obs_status,
+                    ministep.response_mean,
+                    ministep.response_std,
+                )
+            ):
+                if status in ["DEACTIVATED", "LOCAL_INACTIVE"]:
+                    status = "Inactive"
+                fout.write(
+                    f"{nr+1:^6}: {name:30} {val:>16.3f} +/- {std:>17.3f} "
+                    f"{status.capitalize():9} | {ens_val:>17.3f} +/- {ens_std:>15.3f}  "
+                    f"\n"
+                )
+            fout.write("=" * 127 + "\n")
 
 
 class ESUpdate:
@@ -144,11 +190,10 @@ class ESUpdate:
 
         total_ens_size = self.ert.getEnsembleSize()
         obs = self.ert.getObservations()
-        verbose = True
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
-        return analysis_smoother_update(
+        update_snapshot = analysis_smoother_update(
             updatestep,
             total_ens_size,
             obs,
@@ -158,3 +203,4 @@ class ESUpdate:
             source_fs,
             target_fs,
         )
+        self.ert.update_snapshots[run_context.get_id()] = update_snapshot

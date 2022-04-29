@@ -84,7 +84,9 @@ class EclConfigTest(ResTest):
             ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
             ConfigKeys.REFCASE: "configuration_tests/input/SNAKE_OIL_FIELD",
             ConfigKeys.END_DATE: "2010-10-10",
-            ConfigKeys.SCHEDULE_PREDICTION_FILE: "configuration_tests/input/schedule.sch",
+            ConfigKeys.SCHEDULE_PREDICTION_FILE: (
+                "configuration_tests/input/schedule.sch"
+            ),
         }
 
         self.case_directory = self.createTestPath("local/configuration_tests/")

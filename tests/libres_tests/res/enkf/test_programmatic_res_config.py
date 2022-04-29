@@ -1,6 +1,6 @@
 #  Copyright (C) 2017  Equinor ASA, Norway.
 #
-#  The file 'test_programmatic_res_config.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'test_programmatic_res_config.py' is part of ERT.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+from textwrap import dedent
+import tempfile
 
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
@@ -94,13 +96,11 @@ class ProgrammaticResConfigTest(ResTest):
                 "ECLBASE": "SIM_KW",
                 "NUM_REALIZATIONS": 10,
                 "INSTALL_JOB": [
-                    {"NAME": "NEW_JOB_A", "PATH": "simulation_model/jobs/NEW_TYPE_A"},
-                    {"NAME": "NEW_JOB_B", "PATH": "simulation_model/jobs/NEW_TYPE_B"},
-                    {"NAME": "NEW_JOB_C", "PATH": "simulation_model/jobs/NEW_TYPE_C"},
+                    {"NAME": "NEW_JOB_A", "PATH": "NEW_TYPE_A"},
                 ],
                 "SIMULATION_JOB": [
                     {"NAME": "NEW_JOB_A", "ARGLIST": ["Hello", True, 3.14, 4]},
-                    {"NAME": "NEW_JOB_B", "ARGLIST": ["word"]},
+                    {"NAME": "NEW_JOB_A", "ARGLIST": ["word"]},
                 ],
             },
         }
@@ -248,7 +248,6 @@ class ProgrammaticResConfigTest(ResTest):
 
     def test_no_config_directory(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
@@ -258,17 +257,15 @@ class ProgrammaticResConfigTest(ResTest):
 
     def test_errors(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
 
             with self.assertRaises(ValueError):
-                res_config = ResConfig(config=self.minimum_config_error)
+                ResConfig(config=self.minimum_config_error)
 
     def test_failed_keys(self):
         case_directory = self.createTestPath("local/simple_config")
-        config_file = "simple_config/minimum_config"
 
         with TestAreaContext("res_config_prog_test") as work_area:
             work_area.copy_directory(case_directory)
@@ -356,18 +353,27 @@ class ProgrammaticResConfigTest(ResTest):
         )
 
     def test_new_config(self):
-        case_directory = self.createTestPath("local/simulation_model")
-        config_file = "simulation_model/sim_kw.ert"
-
-        with TestAreaContext("res_config_sim_job") as work_area:
-            work_area.copy_directory(case_directory)
-
-            prog_res_config = ResConfig(config=self.new_config)
-            forward_model = prog_res_config.model_config.getForwardModel()
-            job_A = forward_model.iget_job(0)
-            job_B = forward_model.iget_job(1)
-            self.assertEqual(job_A.get_arglist(), ["Hello", "True", "3.14", "4"])
-            self.assertEqual(job_B.get_arglist(), ["word"])
+        os.chdir(tempfile.mkdtemp())
+        with open("NEW_TYPE_A", "w") as fout:
+            fout.write(
+                dedent(
+                    """
+            EXECUTABLE echo
+            MIN_ARG    1
+            MAX_ARG    4
+            ARG_TYPE 0 STRING
+            ARG_TYPE 1 BOOL
+            ARG_TYPE 2 FLOAT
+            ARG_TYPE 3 INT
+            """
+                )
+            )
+        prog_res_config = ResConfig(config=self.new_config)
+        forward_model = prog_res_config.model_config.getForwardModel()
+        job_A = forward_model.iget_job(0)
+        job_B = forward_model.iget_job(1)
+        self.assertEqual(job_A.get_arglist(), ["Hello", "True", "3.14", "4"])
+        self.assertEqual(job_B.get_arglist(), ["word"])
 
     def test_large_config(self):
         case_directory = self.createTestPath("local/snake_oil_structure")

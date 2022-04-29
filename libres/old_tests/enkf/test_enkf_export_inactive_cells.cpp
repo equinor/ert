@@ -15,11 +15,11 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/util/test_util.h>
 
 #include <ert/rms/rms_util.hpp>
 

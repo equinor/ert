@@ -21,8 +21,8 @@
 #include <ert/util/vector.h>
 
 #include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
+#include <ert/enkf/gen_data.hpp>
 
 #define ENKF_PLOT_GENVECTOR_TYPE_ID 66862669
 

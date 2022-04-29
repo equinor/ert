@@ -33,7 +33,7 @@ class PlotWindow(QMainWindow):
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
-        self.setWindowTitle("Plotting - {}".format(config_file))
+        self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
         self._key_definitions = self._api.all_data_type_keys()
         self._plot_customizer = PlotCustomizer(self, self._key_definitions)
@@ -164,7 +164,7 @@ class PlotWindow(QMainWindow):
         allowed_areas=Qt.AllDockWidgetAreas,
     ):
         dock_widget = QDockWidget(name)
-        dock_widget.setObjectName("%sDock" % name)
+        dock_widget.setObjectName(f"{name}Dock")
         dock_widget.setWidget(widget)
         dock_widget.setAllowedAreas(allowed_areas)
         dock_widget.setFeatures(

@@ -1,20 +1,19 @@
 #include <filesystem>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <optional>
 
 #include "catch2/catch.hpp"
 
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/analysis/update.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_node.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/local_ministep.hpp>
-#include <ert/util/type_vector_functions.hpp>
 #include <ert/enkf/row_scaling.hpp>
+#include <ert/util/type_vector_functions.hpp>
 
 #include "../tmpdir.hpp"
 
@@ -94,7 +93,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
             A(0, i) = double(i) / 10.0;
 
         auto update_data = analysis::update_data_type(
-            {}, {}, {}, {}, std::make_optional(A), {}, {});
+            {}, {}, {}, {}, std::make_optional(A), {}, {}, {});
 
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
@@ -177,7 +176,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
 
         std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
         auto update_data = analysis::update_data_type({}, {}, {}, {}, {},
-                                                      row_scaling_list, {});
+                                                      row_scaling_list, {}, {});
         analysis::save_parameters(fs, ensemble_config, active_index, ministep,
                                   update_data);
 

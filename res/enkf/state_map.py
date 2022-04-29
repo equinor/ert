@@ -13,8 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import List
+
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector
 
 from res import ResPrototype, _lib
 from res.enkf.enums import RealizationStateEnum
@@ -33,7 +34,7 @@ class StateMap(BaseCClass):
     _iset = ResPrototype("void  state_map_iset(state_map, int, realisation_state_enum)")
     _is_read_only = ResPrototype("bool  state_map_is_readonly(state_map)")
     _is_legal_transition = ResPrototype(
-        "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",
+        "bool  state_map_legal_transition(realisation_state_enum, realisation_state_enum)",  # noqa
         bind=False,
     )
 
@@ -102,40 +103,24 @@ class StateMap(BaseCClass):
         """@rtype: bool"""
         return self._is_read_only()
 
-    def selectMatching(self, select_mask):
-        """
-        @type select_mask: RealizationStateEnum
-        """
+    def selectMatching(self, select_mask: RealizationStateEnum) -> List[bool]:
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, True)
+        return list(_lib.state_map.select_matching(self, select_mask.value, True))
 
-    def deselectMatching(self, select_mask):
-        """
-        @type select_mask: RealizationStateEnum
-        """
+    def deselectMatching(self, select_mask: RealizationStateEnum) -> List[bool]:
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, False)
+        return list(_lib.state_map.select_matching(self, select_mask.value, False))
 
-    def realizationList(self, state_value):
-        """
-        Will create a list of all realisations with state equal to state_value.
-
-        @type state_value: RealizationStateEnum
-        @rtype: ecl.util.IntVector
-        """
+    def realizationList(self, state_value: RealizationStateEnum) -> List[int]:
+        """Will create an integer list of all realisations with state equal to
+        state_value."""
         mask = self.createMask(state_value)
-        return BoolVector.createActiveList(mask)
+        return [idx for idx, value in enumerate(mask) if value]
 
-    def createMask(self, state_value):
-        """
-        Will create a bool vector of all realisations with state equal to state_value.
-
-        @type state_value: RealizationStateEnum
-        @rtype: ecl.util.BoolVector
-        """
-        mask = self.selectMatching(state_value)
-        index_list = [index for index, element in enumerate(mask) if element]
-        return BoolVector.createFromList(len(mask), index_list)
+    def createMask(self, state_value: RealizationStateEnum) -> List[bool]:
+        """Will create a bool list of all realisations with state equal to
+        state_value."""
+        return self.selectMatching(state_value)
 
     def free(self):
         self._free()

@@ -6,9 +6,7 @@ from ert_gui.tools.plot import PlotWindow
 class PlotTool(Tool):
     def __init__(self, ert, config_file):
         self.ert = ert
-        super(PlotTool, self).__init__(
-            "Create plot", "tools/plot", resourceIcon("timeline.svg")
-        )
+        super().__init__("Create plot", "tools/plot", resourceIcon("timeline.svg"))
         self._config_file = config_file
 
     def trigger(self):

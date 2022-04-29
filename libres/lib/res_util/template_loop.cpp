@@ -17,13 +17,13 @@
 */
 
 #include <ctype.h>
-#include <sys/types.h>
 #include <regex.h>
+#include <sys/types.h>
 
 #include <ert/util/parser.hpp>
 
-#include <ert/res_util/template_type.hpp>
 #include <ert/res_util/template.hpp>
+#include <ert/res_util/template_type.hpp>
 
 #define END_REGEXP "[{]%[[:space:]]+endfor[[:space:]]+%[}]"
 #define LOOP_REGEXP                                                            \

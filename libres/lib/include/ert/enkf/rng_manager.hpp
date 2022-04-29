@@ -19,8 +19,8 @@
 #ifndef ERT_RNG_MANAGER_H
 #define ERT_RNG_MANAGER_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/rng.h>
+#include <ert/util/type_macros.h>
 
 /*
  * The number of unsigned int's necessary to represent the state of the rng

@@ -15,18 +15,18 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <set>
-#include <vector>
-#include <string>
 #include <filesystem>
 #include <iostream>
+#include <set>
+#include <string>
+#include <vector>
 
 #include <assert.h>
 #include <string.h>
 
 #include <ert/util/hash.hpp>
-#include <ert/util/vector.hpp>
 #include <ert/util/path_stack.hpp>
+#include <ert/util/vector.hpp>
 
 #include <ert/config/conf.hpp>
 #include <ert/config/conf_util.hpp>

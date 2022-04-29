@@ -1,16 +1,15 @@
 #include <filesystem>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "catch2/catch.hpp"
 
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/analysis/update.hpp>
-#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/enkf_node.hpp>
+#include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/local_ministep.hpp>
 #include <ert/util/type_vector_functions.hpp>
 

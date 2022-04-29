@@ -19,23 +19,23 @@
 #include <filesystem>
 #include <memory>
 
-#include <sys/types.h>
-#include <string.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include <ert/util/util.h>
 #include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
+#include <ert/logging.hpp>
 #include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/logging.hpp>
 
 #include <ert/enkf/block_fs_driver.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 
 namespace fs = std::filesystem;

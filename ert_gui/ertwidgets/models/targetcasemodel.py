@@ -40,10 +40,10 @@ class TargetCaseModel(ValueModel):
                 )
             else:
                 case_name = self.facade.get_current_case_name()
-                return "%s_%%d" % case_name
+                return f"{case_name}_%d"
         else:
             case_name = self.facade.get_current_case_name()
-            return "%s_smoother_update" % case_name
+            return f"{case_name}_smoother_update"
 
     def _caseChanged(self):
         if not self._custom:

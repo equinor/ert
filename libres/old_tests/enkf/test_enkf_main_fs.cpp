@@ -18,10 +18,10 @@
 
 #include <stdlib.h>
 
-#include <ert/util/test_util.h>
-#include <ert/util/test_work_area.h>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.h>
 
 int main(int argc, char **argv) {
     const char *config_file = argv[1];

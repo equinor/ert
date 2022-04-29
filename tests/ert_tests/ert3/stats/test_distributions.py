@@ -4,7 +4,20 @@ import numpy as np
 import pytest
 import scipy
 
+import ert
 import ert3
+
+
+def test_gaussian_scalar():
+    gauss = ert3.stats.Gaussian(0, 1)
+
+    assert gauss.mean == 0
+    assert gauss.std == 1
+    assert gauss.size == 1
+    sample = gauss.sample()
+    assert isinstance(sample.data, float)
+    assert sample.record_type == ert.data.RecordType.SCALAR_FLOAT
+    assert sample.index == ()
 
 
 @pytest.mark.parametrize(
@@ -87,13 +100,21 @@ def test_gaussian_index(index, mean, std):
 
 
 def test_gaussian_distribution_invalid():
-    err_msg_neither = "Cannot create distribution with neither size nor index"
-    with pytest.raises(ValueError, match=err_msg_neither):
-        ert3.stats.Gaussian(0, 1)
-
     err_msg_both = "Cannot create distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.Gaussian(0, 1, size=10, index=list(range(10)))
+
+
+def test_uniform_scalar():
+    uniform = ert3.stats.Uniform(0, 1)
+
+    assert uniform.lower_bound == 0
+    assert uniform.upper_bound == 1
+    assert uniform.size == 1
+    sample = uniform.sample()
+    assert 0 <= sample.data <= 1
+    assert sample.record_type == ert.data.RecordType.SCALAR_FLOAT
+    assert sample.index == ()
 
 
 @pytest.mark.parametrize(
@@ -178,10 +199,6 @@ def test_uniform_index(index, lower_bound, upper_bound):
 
 
 def test_uniform_distribution_invalid():
-    err_msg_neither = "Cannot create distribution with neither size nor index"
-    with pytest.raises(ValueError, match=err_msg_neither):
-        ert3.stats.Uniform(0, 1)
-
     err_msg_both = "Cannot create distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.Uniform(0, 1, size=10, index=list(range(10)))
@@ -230,6 +247,7 @@ def test_discrete_validvalues_index(index, values):
 @pytest.mark.parametrize(
     ("mean", "std", "q", "size", "index"),
     (
+        (0, 1, 0.005, None, None),
         (0, 1, 0.005, 3, None),
         (0, 1, 0.995, 1, None),
         (2, 5, 0.1, 5, None),
@@ -241,17 +259,17 @@ def test_discrete_validvalues_index(index, values):
     ),
 )
 def test_gaussian_ppf(mean, std, q, size, index):
-    if size is not None:
-        gauss = ert3.stats.Gaussian(mean, std, size=size)
-    else:
-        gauss = ert3.stats.Gaussian(mean, std, index=index)
+    gauss = ert3.stats.Gaussian(mean, std, size=size, index=index)
 
     expected_value = scipy.stats.norm.ppf(q, loc=mean, scale=std)
     ppf_result = gauss.ppf(q)
-    assert len(gauss.index) == len(ppf_result.data)
-    assert sorted(gauss.index) == sorted(ppf_result.index)
-    for idx in gauss.index:
-        assert ppf_result.data[idx] == pytest.approx(expected_value)
+    if size is None and index is None:
+        assert ppf_result.data == pytest.approx(expected_value)
+    else:
+        assert len(gauss.index) == len(ppf_result.data)
+        assert sorted(gauss.index) == sorted(ppf_result.index)
+        for idx in gauss.index:
+            assert ppf_result.data[idx] == pytest.approx(expected_value)
 
 
 @pytest.mark.parametrize(
@@ -267,17 +285,17 @@ def test_gaussian_ppf(mean, std, q, size, index):
     ),
 )
 def test_uniform_ppf(lower, upper, q, size, index):
-    if size is not None:
-        dist = ert3.stats.Uniform(lower, upper, size=size)
-    else:
-        dist = ert3.stats.Uniform(lower, upper, index=index)
+    dist = ert3.stats.Uniform(lower, upper, size=size, index=index)
 
     expected_value = scipy.stats.uniform.ppf(q, loc=lower, scale=upper - lower)
     ppf_result = dist.ppf(q)
-    assert len(dist.index) == len(ppf_result.data)
-    assert sorted(dist.index) == sorted(ppf_result.index)
-    for idx in dist.index:
-        assert ppf_result.data[idx] == pytest.approx(expected_value)
+    if size is None and index is None:
+        assert ppf_result.data == pytest.approx(expected_value)
+    else:
+        assert len(dist.index) == len(ppf_result.data)
+        assert sorted(dist.index) == sorted(ppf_result.index)
+        for idx in dist.index:
+            assert ppf_result.data[idx] == pytest.approx(expected_value)
 
 
 @pytest.mark.parametrize(
@@ -426,10 +444,6 @@ def test_loguniform_index(index, lower_bound, upper_bound):
 
 
 def test_loguniform_distribution_invalid():
-    err_msg_neither = "Cannot create distribution with neither size nor index"
-    with pytest.raises(ValueError, match=err_msg_neither):
-        ert3.stats.LogUniform(0.001, 1)
-
     err_msg_both = "Cannot create distribution with both size and index"
     with pytest.raises(ValueError, match=err_msg_both):
         ert3.stats.LogUniform(0.001, 1, size=10, index=list(range(10)))

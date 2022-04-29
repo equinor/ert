@@ -147,7 +147,10 @@ class _VariablesConfig(_ParametersConfig):
         if len(variables) > 0:
             return variables
 
-        raise ValueError("Parameter group cannot have no variables")
+        raise ValueError(
+            "A parameter cannot have an empty variable list.\n"
+            "Avoid specifying variables to get scalars."
+        )
 
     @validator("__root__", each_item=True)
     def _ensure_valid_variable_names(cls, variable: Any) -> str:
@@ -185,22 +188,16 @@ class _ParameterConfig(_ParametersConfig):
 
     @root_validator
     def _ensure_variables_or_size(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        has_variables = values.get("variables")
-        has_size = values.get("size")
-        if has_variables and has_size:
-            raise AssertionError("Parameter group cannot have both variables and size")
-        if not has_variables and not has_size:
-            raise AssertionError(
-                "Parameter group cannot have neither variables nor size"
-            )
+        if values.get("variables") and values.get("size"):
+            raise ValueError("Parameters cannot have both variables and size")
         return values
 
     @validator("name")
-    def _ensure_valid_group_name(cls, value: Any) -> str:
+    def _ensure_valid_parameter_name(cls, value: Any) -> str:
         return _ensure_valid_name(value)
 
     @validator("size")
-    def _ensure_valid_group_size(cls, value: Any) -> Optional[int]:
+    def _ensure_valid_parameter_size(cls, value: Any) -> Optional[int]:
         return _ensure_valid_size(value)
 
     def as_distribution(self) -> ert3.stats.Distribution:
@@ -272,10 +269,10 @@ class ParametersConfig(_ParametersConfig):
         if isinstance(item, int):
             return self.__root__[item]
         elif isinstance(item, str):
-            for group in self:
-                if group.name == item:
-                    return group
-            raise ValueError(f"No parameter group found named: {item}")
+            for param in self:
+                if param.name == item:
+                    return param
+            raise ValueError(f"No parameter found named: {item}")
         raise TypeError(f"Item should be int or str, not {type(item)}")
 
     def __len__(self) -> int:

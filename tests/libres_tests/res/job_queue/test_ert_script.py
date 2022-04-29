@@ -56,10 +56,10 @@ class ErtScriptTest(ResTest):
 
     def test_ert_script_failed_implementation(self):
         with self.assertRaises(UserWarning):
-            script = FailScript("ert")
+            FailScript("ert")
 
     def test_ert_script_from_file(self):
-        with TestAreaContext("python/job_queue/ert_script") as work_area:
+        with TestAreaContext("python/job_queue/ert_script"):
             ErtScriptTest.createScripts()
 
             script_object = ErtScript.loadScriptFromFile("subtract_script.py")

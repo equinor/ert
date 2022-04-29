@@ -18,8 +18,8 @@
 
 #include <stdlib.h>
 
-#include <string>
 #include <set>
+#include <string>
 
 #include <ert/util/util.h>
 

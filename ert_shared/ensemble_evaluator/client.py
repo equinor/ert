@@ -1,23 +1,29 @@
-import websockets
 import asyncio
-import cloudevents
 import ssl
+from typing import AnyStr, Optional, Any, Dict, Union
+import cloudevents
+from websockets.client import WebSocketClientProtocol, connect
 from websockets.exceptions import ConnectionClosed, ConnectionClosedOK
 from websockets.datastructures import Headers
 
 
-class Client:
-    def __enter__(self):
+class Client:  # pylint: disable=too-many-instance-attributes
+    def __enter__(self) -> "Client":
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
         if self.websocket is not None:
             self.loop.run_until_complete(self.websocket.close())
         self.loop.close()
 
-    def __init__(
-        self, url, token=None, cert=None, max_retries=10, timeout_multiplier=5
-    ):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        url: str,
+        token: Optional[str] = None,
+        cert: Optional[Union[str, bytes]] = None,
+        max_retries=10,
+        timeout_multiplier=5,
+    ) -> None:
         if url is None:
             raise ValueError("url was None")
         self.url = url
@@ -40,15 +46,15 @@ class Client:
 
         self._max_retries = max_retries
         self._timeout_multiplier = timeout_multiplier
-        self.websocket = None
+        self.websocket: Optional[WebSocketClientProtocol] = None
         self.loop = asyncio.new_event_loop()
 
-    async def get_websocket(self):
-        return await websockets.connect(
+    async def get_websocket(self) -> WebSocketClientProtocol:
+        return await connect(
             self.url, ssl=self._ssl_context, extra_headers=self._extra_headers
         )
 
-    async def _send(self, msg):
+    async def _send(self, msg: AnyStr) -> None:
         for retry in range(self._max_retries + 1):
             try:
                 if self.websocket is None:
@@ -64,10 +70,12 @@ class Client:
                 await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
                 self.websocket = None
 
-    def send(self, msg):
+    def send(self, msg: AnyStr) -> None:
         self.loop.run_until_complete(self._send(msg))
 
-    def send_event(self, ev_type, ev_source, ev_data=None):
+    def send_event(
+        self, ev_type: str, ev_source: str, ev_data: Optional[Dict[str, Any]] = None
+    ) -> None:
         if ev_data is None:
             ev_data = {}
         event = cloudevents.http.CloudEvent(

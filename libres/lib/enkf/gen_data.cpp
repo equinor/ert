@@ -19,23 +19,23 @@
 #include <cmath>
 #include <filesystem>
 
-#include <stdlib.h>
+#include <Eigen/Dense>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <ert/util/util.h>
-#include <ert/res_util/matrix.hpp>
 
 #include <ert/ecl/ecl_sum.h>
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/gen_data_config.hpp>
-#include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_common.hpp>
+#include <ert/enkf/gen_data.hpp>
+#include <ert/enkf/gen_data_config.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -179,7 +179,7 @@ C_USED void gen_data_read_from_buffer(gen_data_type *gen_data,
 }
 
 void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
-                        const ActiveList *active_list, matrix_type *A,
+                        const ActiveList *active_list, Eigen::MatrixXd &A,
                         int row_offset, int column) {
     const gen_data_config_type *config = gen_data->config;
     const int data_size = gen_data_config_get_data_size(
@@ -191,8 +191,9 @@ void gen_data_serialize(const gen_data_type *gen_data, node_id_type node_id,
 }
 
 void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
-                          const ActiveList *active_list, const matrix_type *A,
-                          int row_offset, int column) {
+                          const ActiveList *active_list,
+                          const Eigen::MatrixXd &A, int row_offset,
+                          int column) {
     {
         const gen_data_config_type *config = gen_data->config;
         const int data_size = gen_data_config_get_data_size(
@@ -366,7 +367,7 @@ C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
     bool ret = false;
     if (init_file) {
         forward_load_context_type *load_context =
-            forward_load_context_alloc(NULL, false, NULL, NULL);
+            forward_load_context_alloc(NULL, false, NULL);
 
         forward_load_context_select_step(load_context, 0);
         if (!gen_data_fload_with_report_step(gen_data, init_file, load_context))

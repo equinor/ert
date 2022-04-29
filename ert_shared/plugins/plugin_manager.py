@@ -1,8 +1,6 @@
-import functools
 import logging
 import os
 import shutil
-import sys
 import tempfile
 from itertools import chain
 
@@ -15,8 +13,8 @@ hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
 # Imports below hook_implementation and hook_specification to avoid circular imports
-import ert_shared.plugins.hook_specifications
-import ert_shared.hook_implementations
+import ert_shared.plugins.hook_specifications  # noqa
+import ert_shared.hook_implementations  # noqa
 
 
 class ErtPluginManager(pluggy.PluginManager):
@@ -155,9 +153,10 @@ class ErtPluginManager(pluggy.PluginManager):
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
             logging.info(
-                "Duplicate key: {} in workflow hook implementations, config path 1: {}, config path 2: {}".format(
-                    ck, config_jobs[ck], hooked_jobs[ck]
-                )
+                (
+                    "Duplicate key: {} in workflow hook implementations, "
+                    "config path 1: {}, config path 2: {}"
+                ).format(ck, config_jobs[ck], hooked_jobs[ck])
             )
         merged_jobs = config_jobs.copy()
         merged_jobs.update(hooked_jobs)

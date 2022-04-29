@@ -5,9 +5,15 @@ from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_shared.models import SingleTestRun
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
-from ecl.util.util import BoolVector
 
 from ert_shared.libres_facade import LibresFacade
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
 
 
 class SingleTestRunPanel(SimulationConfigPanel):
@@ -22,7 +28,7 @@ class SingleTestRunPanel(SimulationConfigPanel):
         layout.addRow("Current case:", case_selector)
 
         run_path_label = QLabel(
-            "<b>%s</b>" % self.ert.getModelConfig().getRunpathAsString()
+            f"<b>{self.ert.getModelConfig().getRunpathAsString()}</b>"
         )
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
@@ -32,5 +38,4 @@ class SingleTestRunPanel(SimulationConfigPanel):
         self.setLayout(layout)
 
     def getSimulationArguments(self):
-
-        return {"active_realizations": BoolVector(default_value=True, initial_size=1)}
+        return Arguments("test_run")

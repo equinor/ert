@@ -28,13 +28,13 @@
   to the lsf libraries.
 */
 
-#include <stdlib.h>
 #include <dlfcn.h>
+#include <stdlib.h>
 
 #include <lsf/lsbatch.h>
 
-#include <ert/util/util.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/lsb.hpp>
 

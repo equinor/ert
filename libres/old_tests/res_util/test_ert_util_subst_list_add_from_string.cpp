@@ -15,10 +15,10 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ert/util/test_util.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/test_util.hpp>
+#include <stdarg.h>
+#include <stdlib.h>
 
 void call_func_util_abort(void *args) {
     subst_list_type *subst_list = subst_list_alloc(NULL);

@@ -1,7 +1,7 @@
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert_gui.ertnotifier import ErtNotifier
-from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleSelector
+from ert_gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit
 from ert_gui.ertwidgets.caseselector import CaseSelector
 from ert_gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert_gui.ertwidgets.models.ertmodel import (
@@ -15,8 +15,19 @@ from ert_shared.libres_facade import LibresFacade
 from ert_shared.models import EnsembleSmoother
 from res.enkf import EnKFMain
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+    target_case: str
+    realizations: str
+
 
 class EnsembleSmootherPanel(SimulationConfigPanel):
+    analysis_module_name = "STD_ENKF"
+
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
         super().__init__(EnsembleSmoother)
         self.ert = ert
@@ -26,11 +37,11 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._case_selector = CaseSelector(facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % facade.run_path)
+        run_path_label = QLabel(f"<b>{facade.run_path}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel("<b>%d</b>" % facade.get_ensemble_size())
+        number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -43,12 +54,12 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._target_case_field.setValidator(ProperNameArgument())
         layout.addRow("Target case:", self._target_case_field)
 
-        self._analysis_module_selector = AnalysisModuleSelector(
+        self._analysis_module_edit = AnalysisModuleEdit(
             facade,
-            iterable=False,
+            module_name=EnsembleSmootherPanel.analysis_module_name,
             help_link="config/analysis/analysis_module",
         )
-        layout.addRow("Analysis module:", self._analysis_module_selector)
+        layout.addRow("Analysis module:", self._analysis_module_edit)
 
         active_realizations_model = ActiveRealizationsModel(facade)
         self._active_realizations_field = StringBox(
@@ -64,7 +75,7 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         self._target_case_field.getValidationSupport().validationChanged.connect(
             self.simulationConfigurationChanged
         )
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
@@ -78,11 +89,11 @@ class EnsembleSmootherPanel(SimulationConfigPanel):
         )
 
     def getSimulationArguments(self):
-        arguments = {
-            "active_realizations": self._active_realizations_field.model.getActiveRealizationsMask(),
-            "target_case": self._target_case_model.getValue(),
-            "analysis_module": self._analysis_module_selector.getSelectedAnalysisModuleName(),
-        }
+        arguments = Arguments(
+            mode="ensemble_smoother",
+            target_case=self._target_case_model.getValue(),
+            realizations=self._active_realizations_field.text(),
+        )
         return arguments
 
     def _realizations_from_fs(self):

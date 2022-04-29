@@ -19,11 +19,11 @@
 #ifndef ERT_TEMPLATE_H
 #define ERT_TEMPLATE_H
 
-#include <ert/util/stringlist.h>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/stringlist.h>
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
 typedef struct ert_template_struct ert_template_type;
 typedef struct ert_templates_struct ert_templates_type;

@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import threading
+from ert.ensemble_evaluator import EvaluatorTracker
 
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -15,7 +16,6 @@ from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.libres_facade import LibresFacade
-from ert_shared.status.tracker.factory import create_tracker
 from res.enkf import EnKFMain, ResConfig
 
 
@@ -26,7 +26,8 @@ class ErtCliError(Exception):
 def run_cli(args):
     res_config = ResConfig(args.config)
 
-    # Create logger inside function to make sure all handlers have been added to the root-logger.
+    # Create logger inside function to make sure all handlers have been added to
+    # the root-logger.
     logger = logging.getLogger(__name__)
     logger.info(
         "Logging forward model jobs",
@@ -44,7 +45,6 @@ def run_cli(args):
         return
     model = create_model(
         ert,
-        facade.get_analysis_module_names,
         facade.get_ensemble_size(),
         facade.get_current_case_name(),
         args,
@@ -73,7 +73,7 @@ def run_cli(args):
     )
     thread.start()
 
-    tracker = create_tracker(
+    tracker = EvaluatorTracker(
         model, ee_con_info=evaluator_server_config.get_connection_info()
     )
 

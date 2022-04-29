@@ -31,7 +31,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y valgrind
-        
+
     - name: Install Conan
       run: |
         python3 -m pip install conan
@@ -176,14 +176,20 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         brew install geos # this line should be removed once Shapely is distributed to mac x86_64 for Python 3.10, see https://github.com/shapely/shapely/issues/1348
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+
+    - name: Test for a clean repository
+      run: |
+        # Run this before the 'Test CLI' entry below, which produces a few files that are accepted for now. Exclude the wheel.
+        git status --porcelain | sed '/ert.*.whl$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
 
     - name: Test CLI
       run: |
@@ -279,6 +285,8 @@ jobs:
         # Run tests
         pushd tests
         pytest libres_tests --durations=0
+        git status --porcelain | sed '/ert.*.whl$/d'
+        test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
 
 
   publish:

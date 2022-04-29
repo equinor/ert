@@ -2,7 +2,6 @@ import os
 import resource
 import pkg_resources
 import shutil
-from pathlib import Path
 
 import pytest
 from unittest.mock import MagicMock
@@ -64,6 +63,24 @@ def setup_case(tmpdir, source_root):
         yield copy_case
 
 
+@pytest.fixture()
+def copy_case(tmpdir, source_root):
+    def _copy_case(path):
+        shutil.copytree(os.path.join(source_root, "test-data", path), "test_data")
+        os.chdir("test_data")
+
+    with tmpdir.as_cwd():
+        yield _copy_case
+
+
+@pytest.fixture()
+def use_tmpdir(tmp_path):
+    cwd = os.getcwd()
+    os.chdir(tmp_path)
+    yield
+    os.chdir(cwd)
+
+
 def has_equinor_test_data():
     return os.path.isdir(os.path.join(SOURCE_DIR, "test-data", "Equinor"))
 
@@ -82,3 +99,19 @@ def mock_start_server(monkeypatch):
     connect_or_start_server = MagicMock()
     monkeypatch.setattr(Storage, "connect_or_start_server", connect_or_start_server)
     yield connect_or_start_server
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="run slow tests"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runslow"):
+        # --runslow given in cli: do not skip slow tests
+        return
+    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)

@@ -35,13 +35,13 @@ class MeasuredData:
         expected_keys = ["OBS", "STD"]
         if not isinstance(data, pd.DataFrame):
             raise TypeError(
-                "Invalid type: {}, should be type: {}".format(type(data), pd.DataFrame)
+                f"Invalid type: {type(data)}, should be type: {pd.DataFrame}"
             )
         elif not set(expected_keys).issubset(data.index):
+            needed = ["OBS", "STD"]
+            missing = set(expected_keys) - set(data.index)
             raise ValueError(
-                "{} should be present in DataFrame index, missing: {}".format(
-                    ["OBS", "STD"], set(expected_keys) - set(data.index)
-                )
+                f"{needed} should be present in DataFrame index, missing: {missing}"
             )
         else:
             self._data = data
@@ -73,7 +73,8 @@ class MeasuredData:
         )
         if filtered_dataset.empty:
             raise ValueError(
-                "This operation results in an empty dataset (could be due to one or more failed realizations)"
+                "This operation results in an empty dataset "
+                "(could be due to one or more failed realizations)"
             )
         return filtered_dataset
 
@@ -164,10 +165,9 @@ class MeasuredData:
         if isinstance(index_list, (list, tuple)):
             if max(index_list) > dataframe.shape[1]:
                 msg = (
-                    "Index list is larger than observation data, please check input, max index list:"
-                    "{} number of data points: {}".format(
-                        max(index_list), dataframe.shape[1]
-                    )
+                    "Index list is larger than observation data, "
+                    "please check input, max index list:"
+                    f"{max(index_list)} number of data points: {dataframe.shape[1]}"
                 )
                 raise IndexError(msg)
             return dataframe.iloc[:, list(index_list)]

@@ -38,14 +38,12 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
     run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
         "run_id", fs, iens, iter, "simulations/run0", job_name, subst_list);
     {
-        stringlist_type *msg_list = stringlist_alloc_new();
 
         state_map_type *state_map = enkf_fs_get_state_map(fs);
         state_map_update_undefined(state_map, 0, STATE_INITIALIZED);
 
         enkf_state_load_from_forward_model(enkf_main_iget_state(enkf_main, 0),
-                                           run_arg, msg_list);
-        stringlist_free(msg_list);
+                                           run_arg);
     }
     free(job_name);
     return result;

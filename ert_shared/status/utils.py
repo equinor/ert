@@ -1,5 +1,3 @@
-from ert_shared.status.entity import state
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
 import math
 
 

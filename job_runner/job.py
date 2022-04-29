@@ -77,7 +77,7 @@ class Job:
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open("{}_exec_env.json".format(exec_name), "w") as f:
+            with open(f"{exec_name}_exec_env.json", "w") as f:
                 f.write(json.dumps(exec_env, indent=4))
 
         max_running_minutes = self.job_data.get("max_running_minutes")
@@ -103,7 +103,7 @@ class Job:
                 transitional state, we ignore any failures. Only seen on OSX
                 thus far.
                 See https://github.com/giampaolo/psutil/issues/1044#issuecomment-298745532
-                """
+                """  # noqa
                 memory = 0
             if memory > max_memory_usage:
                 max_memory_usage = memory
@@ -132,8 +132,10 @@ class Job:
                         os.killpg(process_group_id, signal.SIGKILL)
 
                     yield Exited(self, exit_code).with_error(
-                        "Job:{} has been running for more than {} minutes - explicitly killed.".format(
-                            self.name(), max_running_minutes
+                        (
+                            f"Job:{self.name()} has been running "
+                            f"for more than {max_running_minutes} "
+                            "minutes - explicitly killed."
                         )
                     )
                     return
@@ -142,7 +144,7 @@ class Job:
 
         if exit_code != 0:
             yield exited_message.with_error(
-                "Process exited with status code {}".format(exit_code)
+                f"Process exited with status code {exit_code}"
             )
             return
 
@@ -151,9 +153,7 @@ class Job:
         if self.job_data.get("error_file"):
             if os.path.exists(self.job_data["error_file"]):
                 yield exited_message.with_error(
-                    "Found the error file:{} - job failed.".format(
-                        self.job_data["error_file"]
-                    )
+                    f'Found the error file:{self.job_data["error_file"]} - job failed.'
                 )
                 return
 
@@ -175,17 +175,17 @@ class Job:
                     file_path = os.path.join(os.getcwd(), arg_list[index])
                     if not os.path.isfile(file_path):
                         errors.append(
-                            "In job {}: RUNTIME_FILE {} does not exist.".format(
-                                self.name(), arg_list[index]
-                            )
+                            f"In job {self.name()}: RUNTIME_FILE {arg_list[index]} "
+                            "does not exist."
                         )
                 if arg_type == "RUNTIME_INT":
                     try:
                         int(arg_list[index])
                     except ValueError:
                         errors.append(
-                            "In job {}: argument with index {} is of incorrect type, should be integer.".format(
-                                self.name(), index
+                            (
+                                f"In job {self.name()}: argument with index {index} "
+                                "is of incorrect type, should be integer."
                             )
                         )
         return errors
@@ -199,7 +199,7 @@ class Job:
             exec_name, _ = os.path.splitext(
                 os.path.basename(self.job_data.get("executable"))
             )
-            with open("{}_exec_env.json".format(exec_name), "w") as f:
+            with open(f"{exec_name}_exec_env.json", "w") as f:
                 f.write(json.dumps(exec_env))
 
     def _check_job_files(self):
@@ -210,14 +210,12 @@ class Job:
         errors = []
         if self.job_data.get("stdin"):
             if not os.path.exists(self.job_data["stdin"]):
-                errors.append(
-                    "Could not locate stdin file: {}".format(self.job_data["stdin"])
-                )
+                errors.append(f'Could not locate stdin file: {self.job_data["stdin"]}')
 
         if self.job_data.get("start_file"):
             if not os.path.exists(self.job_data["start_file"]):
                 errors.append(
-                    "Could not locate start_file:{}".format(self.job_data["start_file"])
+                    f'Could not locate start_file:{self.job_data["start_file"]}'
                 )
 
         if self.job_data.get("error_file"):
@@ -252,8 +250,9 @@ class Job:
         # i.e. on a timeout.
         if os.path.exists(target_file):
             stat = os.stat(target_file)
-            return "The target file:{} has not been updated; this is flagged as failure. mtime:{}   stat_start_time:{}".format(
-                target_file, stat.st_mtime, target_file_mtime
+            return (
+                f"The target file:{target_file} has not been updated; "
+                f"this is flagged as failure. mtime:{stat.st_mtime}   "
+                f"stat_start_time:{target_file_mtime}"
             )
-        else:
-            return "Could not find target_file:{}".format(target_file)
+        return f"Could not find target_file:{target_file}"

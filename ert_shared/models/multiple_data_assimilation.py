@@ -14,13 +14,12 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from typing import List, Tuple, Dict, Any
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 
 from ert_shared.models import BaseRunModel, ErtRunError
-from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 import logging
@@ -118,9 +117,7 @@ class MultipleDataAssimilation(BaseRunModel):
     def update(
         self, run_context: ErtRunContext, weight: float, ensemble_id: str
     ) -> str:
-        source_fs = run_context.get_sim_fs()
         next_iteration = run_context.get_iter() + 1
-        target_fs = run_context.get_target_fs()
 
         phase_string = "Analyzing iteration: %d with weight %f" % (
             next_iteration,
@@ -130,18 +127,19 @@ class MultipleDataAssimilation(BaseRunModel):
 
         es_update = self.ert().getESUpdate()
         es_update.setGlobalStdScaling(weight)
-        success = es_update.smootherUpdate(run_context)
-
+        try:
+            es_update.smootherUpdate(run_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                "Analysis of simulation failed for iteration:"
+                f"{next_iteration}. The following error occured {e}"
+            ) from e
         # Push update data to new storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
         update_id = self._post_update_data(
             parent_ensemble_id=ensemble_id, algorithm=analysis_module_name
         )
 
-        if not success:
-            raise UserWarning(
-                "Analysis of simulation failed for iteration: %d!" % next_iteration
-            )
         return update_id
 
     def _simulateAndPostProcess(
@@ -186,12 +184,16 @@ class MultipleDataAssimilation(BaseRunModel):
 
     @staticmethod
     def normalizeWeights(weights: List[float]) -> List[float]:
+        """Scale weights such that their reciprocals sum to 1.0,
+        i.e., sum(1.0 / x for x in weights) == 1.0.
+        See for example Equation 38 of evensen2018 - Analysis of iterative
+        ensemble smoothers for solving inverse problems.
+        """
         if not weights:
             return []
         weights = [weight for weight in weights if abs(weight) != 0.0]
-        from math import sqrt
 
-        length = sqrt(sum((1.0 / x) * (1.0 / x) for x in weights))
+        length = sum(1.0 / x for x in weights)
         return [x * length for x in weights]
 
     @staticmethod
@@ -250,11 +252,10 @@ class MultipleDataAssimilation(BaseRunModel):
         if initialize_mask_from_arguments:
             mask = self._simulation_arguments["active_realizations"]
         else:
-            state = (
+            mask = sim_fs.getStateMap().createMask(
                 RealizationStateEnum.STATE_HAS_DATA
                 | RealizationStateEnum.STATE_INITIALIZED
             )
-            mask = sim_fs.getStateMap().createMask(state)
             # Make sure to only run the realizations which was passed in as argument
             for idx, (valid_state, run_realization) in enumerate(
                 zip(mask, self._initial_realizations_mask)

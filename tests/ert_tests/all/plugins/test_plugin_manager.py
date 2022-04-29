@@ -119,9 +119,9 @@ def test_workflows_merge_duplicate(caplog):
     assert result == {"some_job": "/a/path"}
 
     assert (
-        "Duplicate key: some_job in workflow hook implementations, config path 1: /a/path, config path 2: /a/path"
-        in caplog.text
-    )
+        "Duplicate key: some_job in workflow hook implementations, "
+        "config path 1: /a/path, config path 2: /a/path"
+    ) in caplog.text
 
 
 def test_add_logging_handle(tmpdir):

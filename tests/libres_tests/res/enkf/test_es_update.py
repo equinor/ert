@@ -1,10 +1,26 @@
+from pathlib import Path
+
 import sys
 
 import pytest
 
-from ecl.util.util import BoolVector
+from res.enkf import (
+    EnkfNode,
+    ErtRunContext,
+    ESUpdate,
+    NodeId,
+    EnKFMain,
+    ResConfig,
+    ErtAnalysisError,
+)
 
-from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
+
+@pytest.fixture()
+def minimal_config(use_tmpdir):
+    with open("config_file.ert", "w") as fout:
+        fout.write("NUM_REALIZATIONS 1")
+    res_config = ResConfig("config_file.ert")
+    yield res_config
 
 
 @pytest.mark.parametrize(
@@ -14,32 +30,46 @@ from res.enkf import EnkfNode, ErtRunContext, ESUpdate, NodeId, EnKFMain
         "STD_ENKF",
     ],
 )
-def test_get_module(setup_case, module):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_get_module(module, minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
-
     es_update.getModule(module)
 
 
 @pytest.mark.parametrize(
     "module, expected", [("NO_NOT_THIS_MODULE", False), ("STD_ENKF", True)]
 )
-def test_has_module(setup_case, module, expected):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_has_module(module, expected, minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
 
     assert es_update.hasModule(module) is expected
 
 
-def test_get_invalid_module(setup_case):
-    res_config = setup_case("local/mini_ert", "mini_config")
-    ert = EnKFMain(res_config)
+def test_get_invalid_module(minimal_config):
+    ert = EnKFMain(minimal_config)
     es_update = ESUpdate(ert)
 
     with pytest.raises(KeyError, match="No such module:STD_ENKF_XXX"):
         es_update.getModule("STD_ENKF_XXX")
+
+
+def test_update_report(setup_case, snapshot):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    fsm = ert.getEnkfFsManager()
+    sim_fs = fsm.getFileSystem("default_0")
+    target_fs = fsm.getFileSystem("target")
+    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    es_update.smootherUpdate(run_context)
+    log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
+    snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
 
 
 @pytest.mark.parametrize(
@@ -48,16 +78,16 @@ def test_get_invalid_module(setup_case):
         pytest.param(
             "IES_ENKF",
             [
-                -1.1382059686811712,
-                -0.10706650113784337,
-                -0.5321174510859479,
-                0.16314430250454545,
-                -0.7140756660858336,
-                -1.5863225705846462,
-                -0.061532565899646424,
-                -0.3881321947200636,
-                1.0849199162367573,
-                -0.2026982960301163,
+                0.19646461221617806,
+                -0.8580650655205431,
+                -1.7033885637717783,
+                0.2143913913285077,
+                -0.6416317135179632,
+                -0.9655917323739145,
+                0.33111809209873133,
+                -0.39486155020884783,
+                1.6583030240523025,
+                -1.2083505536978683,
             ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
@@ -67,16 +97,16 @@ def test_get_invalid_module(setup_case):
         pytest.param(
             "IES_ENKF",
             [
-                -1.1286562142358219,
-                -0.07357477296944821,
-                -0.5840952488968133,
-                0.3057016147126608,
-                -0.6721257967032032,
-                -1.545169986269137,
-                -0.4528695575362665,
-                -0.3521622538356382,
-                1.0495218946126155,
-                -0.23061011158425496,
+                0.4017777704668615,
+                -0.9277413075241868,
+                -1.8045946565215083,
+                0.23176385196876714,
+                -0.8300453517964581,
+                -0.9828660162918067,
+                -0.051783268233953655,
+                -0.40210522896061107,
+                1.8186815661449791,
+                -1.1306332986095615,
             ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
@@ -86,16 +116,16 @@ def test_get_invalid_module(setup_case):
         pytest.param(
             "STD_ENKF",
             [
-                -1.0279886752792073,
-                -0.7266247822582957,
-                -0.12686045273301966,
-                -0.22659509892534876,
-                -1.120792349644604,
-                -1.4956547646687188,
-                -0.15332787834835337,
-                -0.9161628056286735,
-                1.7415219166473932,
-                -0.4014927497171072,
+                1.196462292883038,
+                -1.9782890562294615,
+                -2.078978973876065,
+                -0.14118328421874526,
+                -1.0000524286981523,
+                -0.461103367650835,
+                0.5010898849822789,
+                -0.9273783981099771,
+                2.6971604296733,
+                -2.077579845830024,
             ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("darwin"),
@@ -105,16 +135,16 @@ def test_get_invalid_module(setup_case):
         pytest.param(
             "STD_ENKF",
             [
-                -1.0120724178702936,
-                -0.6708052353109712,
-                -0.2134901157511208,
-                0.01100042142150413,
-                -1.0508759006735606,
-                -1.4270671241428736,
-                -0.8055561977427175,
-                -0.8562129041546276,
-                1.682525213940497,
-                -0.4480124423073352,
+                1.5386508899675102,
+                -2.0944161262355347,
+                -2.247655795125614,
+                -0.11222918315164569,
+                -1.3140751591623103,
+                -0.4898938408473217,
+                -0.13707904890552972,
+                -0.9394511960295817,
+                2.9644579998277614,
+                -1.948051087349513,
             ],
             marks=pytest.mark.skipif(
                 sys.platform.startswith("linux"),
@@ -176,8 +206,8 @@ def test_update(setup_case, module, expected_gen_kw):
         pytest.param(
             [
                 -1.3035319087841115,
-                0.6759029719309165,
-                -0.7802509588954853,
+                0.478900928107711,
+                -0.2960474299371837,
                 0.7477534046493867,
                 -0.10400064074767973,
                 -1.7223242794585338,
@@ -194,8 +224,8 @@ def test_update(setup_case, module, expected_gen_kw):
         pytest.param(
             [
                 -1.3035319087841115,
-                0.867127147787121,
-                -1.2502532947839953,
+                0.927500805607199,
+                -1.3986433196044348,
                 0.7477534046493867,
                 -0.10400064074767973,
                 -1.7223242794585338,
@@ -238,8 +268,8 @@ def test_localization(setup_case, expected_target_gen_kw):
     updatestep = local_config.getUpdatestep()
     updatestep.attachMinistep(ministep)
 
-    # Run enseble smoother
-    mask = BoolVector(initial_size=ert.getEnsembleSize(), default_value=True)
+    # Run ensemble smoother
+    mask = [True] * ert.getEnsembleSize()
     model_config = ert.getModelConfig()
     path_fmt = model_config.getRunpathFormat()
     jobname_fmt = model_config.getJobnameFormat()
@@ -268,3 +298,68 @@ def test_localization(setup_case, expected_target_gen_kw):
     assert sim_gen_kw[0] == target_gen_kw[0]
 
     assert target_gen_kw == pytest.approx(expected_target_gen_kw)
+
+
+@pytest.mark.parametrize(
+    "alpha, expected",
+    [
+        pytest.param(
+            0.1,
+            [],
+            id="Low alpha, no active observations",
+            marks=pytest.mark.xfail(raises=ErtAnalysisError),
+        ),
+        (1, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (2, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (3, ["ACTIVE", "DEACTIVATED", "DEACTIVATED"]),
+        (10, ["ACTIVE", "DEACTIVATED", "ACTIVE"]),
+        (100, ["ACTIVE", "ACTIVE", "ACTIVE"]),
+    ],
+)
+def test_snapshot_alpha(setup_case, alpha, expected):
+    """
+    Note that this is now a snapshot test, so there is no guarantee that the
+    snapshots are correct, they are just documenting the current behavior.
+    """
+    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+
+    obs_file = Path("observations") / "observations.txt"
+    with obs_file.open(mode="w") as fin:
+        fin.write(
+            """
+SUMMARY_OBSERVATION LOW_STD
+{
+   VALUE   = 10;
+   ERROR   = 0.1;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+SUMMARY_OBSERVATION HIGH_STD
+{
+   VALUE   = 10;
+   ERROR   = 1.0;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
+{
+   VALUE   = 10;
+   ERROR   = 10.0;
+   DATE    = 2015-06-23;
+   KEY     = FOPR;
+};
+"""
+        )
+
+    ert = EnKFMain(res_config)
+    es_update = ESUpdate(ert)
+    ert.analysisConfig().selectModule("IES_ENKF")
+    fsm = ert.getEnkfFsManager()
+    sim_fs = fsm.getFileSystem("default_0")
+    target_fs = fsm.getFileSystem("target")
+    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    ert.analysisConfig().setEnkfAlpha(alpha)
+    es_update.smootherUpdate(run_context)
+    result_snapshot = ert.update_snapshots[run_context.get_id()]
+    assert result_snapshot.alpha == alpha
+    assert result_snapshot.ministep_snapshots["ALL_ACTIVE"].obs_status == expected

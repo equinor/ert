@@ -1,6 +1,5 @@
 import os
 
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import ErtRunContext
@@ -22,7 +21,7 @@ def render_dynamic_values(s, itr, iens, geo_id):
 
 class RunpathListDumpTest(ResTest):
     def setUp(self):
-        self.config_rel_path = "local/snake_oil_no_data/snake_oil_GEO_ID.ert"
+        self.config_rel_path = "local/snake_oil/snake_oil.ert"
         self.config_path = self.createTestPath(self.config_rel_path)
 
     def _verify_runpath_rendering(self, itr):
@@ -34,10 +33,13 @@ class RunpathListDumpTest(ResTest):
             sim_fs = fs_manager.getFileSystem("sim_fs")
 
             num_realizations = 25
-            mask = BoolVector(initial_size=num_realizations, default_value=True)
+            mask = [True] * num_realizations
             mask[13] = False
 
-            runpath_fmt = "simulations/<GEO_ID>/realization-%d/iter-%d/magic-real-<IENS>/magic-iter-<ITER>"
+            runpath_fmt = (
+                "simulations/<GEO_ID>/realization-%d/iter-%d/"
+                "magic-real-<IENS>/magic-iter-<ITER>"
+            )
             jobname_fmt = "SNAKE_OIL_%d"
 
             subst_list = res.resConfig().subst_config.subst_list

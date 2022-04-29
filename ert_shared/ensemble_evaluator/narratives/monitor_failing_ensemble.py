@@ -1,8 +1,8 @@
 import re
 
-import ert_shared.ensemble_evaluator.entity.identifiers as identifiers
-import ert_shared.status.entity.state as state
-from ert_shared.ensemble_evaluator.entity import serialization
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator import state
+from ert import serialization
 from ert_shared.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,
@@ -16,7 +16,8 @@ def monitor_failing_ensemble():
         Consumer("Monitor")
         .forms_narrative_with(Provider("Ensemble Evaluator"))
         .given(
-            "Ensemble with 2 reals, with 2 steps each, with 2 jobs each, job 1 in real 1 fails"
+            "Ensemble with 2 reals, with 2 steps each, "
+            "with 2 jobs each, job 1 in real 1 fails"
         )
         .responds_with("Snapshot")
         .cloudevents_in_order(

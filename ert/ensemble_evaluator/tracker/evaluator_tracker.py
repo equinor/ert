@@ -3,34 +3,39 @@ import logging
 import queue
 import threading
 import time
-from typing import Generator, Union, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Generator, Union
 
 from aiohttp import ClientError
 from websockets.exceptions import ConnectionClosedError
 
+from ert.ensemble_evaluator.identifiers import (
+    EVTYPE_EE_SNAPSHOT_UPDATE,
+    EVTYPE_EE_SNAPSHOT,
+    EVTYPE_EE_TERMINATED,
+    STATUS,
+)
 from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
-
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
-from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.entity.snapshot import PartialSnapshot, Snapshot
-from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
-from ert_shared.ensemble_evaluator.utils import wait_for_evaluator
-from ert_shared.status.entity.event import (
+from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.snapshot import PartialSnapshot, Snapshot
+from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STOPPED,
+    REALIZATION_STATE_FAILED,
+    REALIZATION_STATE_FINISHED,
 )
-from ert_shared.status.utils import state
+from ert.ensemble_evaluator.util._network import wait_for_evaluator
+from ert_shared.async_utils import get_event_loop
+from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:
+    from cloudevents.http.event import CloudEvent
     from ert3.evaluator._evaluator import ERT3RunModel
     from ert_shared.models.base_run_model import BaseRunModel
-    from cloudevents.http.event import CloudEvent  # type: ignore
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
@@ -67,11 +72,11 @@ class EvaluatorTracker:
                     drainer_logger.debug("connected")
                     for event in monitor.track():
                         if event["type"] in (
-                            ids.EVTYPE_EE_SNAPSHOT,
-                            ids.EVTYPE_EE_SNAPSHOT_UPDATE,
+                            EVTYPE_EE_SNAPSHOT,
+                            EVTYPE_EE_SNAPSHOT_UPDATE,
                         ):
                             self._work_queue.put(event)
-                            if event.data.get(ids.STATUS) in [
+                            if event.data.get(STATUS) in [
                                 ENSEMBLE_STATE_STOPPED,
                                 ENSEMBLE_STATE_FAILED,
                             ]:
@@ -79,14 +84,14 @@ class EvaluatorTracker:
                                     "observed evaluation stopped event, signal done"
                                 )
                                 monitor.signal_done()
-                            if event.data.get(ids.STATUS) == ENSEMBLE_STATE_CANCELLED:
+                            if event.data.get(STATUS) == ENSEMBLE_STATE_CANCELLED:
                                 drainer_logger.debug(
                                     "observed evaluation cancelled event, exit drainer"
                                 )
                                 # Allow track() to emit an EndEvent.
                                 self._work_queue.put(EvaluatorTracker.DONE)
                                 return
-                        elif event["type"] == ids.EVTYPE_EE_TERMINATED:
+                        elif event["type"] == EVTYPE_EE_TERMINATED:
                             drainer_logger.debug("got terminator event")
                 # This sleep needs to be there. Refer to issue #1250: `Authority
                 # on information about evaluations/experiments`
@@ -97,6 +102,14 @@ class EvaluatorTracker:
             except (ConnectionClosedError) as e:
                 # The monitor connection closed unexpectedly
                 drainer_logger.debug(f"connection closed error: {e}")
+            except BaseException:  # pylint: disable=broad-except
+                drainer_logger.exception("unexpected error: ")
+                # We really don't know what happened...  shut down
+                # the thread and get out of here. The monitor has
+                # been stopped by the ctx-mgr
+                self._work_queue.put(EvaluatorTracker.DONE)
+                self._work_queue.join()
+                return
         drainer_logger.debug(
             "observed that model was finished, waiting tasks completion..."
         )
@@ -124,7 +137,7 @@ class EvaluatorTracker:
                     pass
                 self._work_queue.task_done()
                 break
-            if event["type"] == ids.EVTYPE_EE_SNAPSHOT:
+            if event["type"] == EVTYPE_EE_SNAPSHOT:
                 iter_ = event.data["iter"]
                 snapshot = Snapshot(event.data)
                 self._iter_snapshot[iter_] = snapshot
@@ -137,11 +150,11 @@ class EvaluatorTracker:
                     iteration=iter_,
                     snapshot=snapshot,
                 )
-            elif event["type"] == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
+            elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
                 iter_ = event.data["iter"]
                 if iter_ not in self._iter_snapshot:
                     raise OutOfOrderSnapshotUpdateException(
-                        f"got {ids.EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
+                        f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
                         f"snapshot for iter {iter_}"
                     )
                 partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
@@ -173,14 +186,15 @@ class EvaluatorTracker:
             # Calculate completed realizations
             current_iter = max(list(self._iter_snapshot.keys()))
             done_reals = 0
-            all_reals = self._iter_snapshot[current_iter].get_reals()
+            all_reals = self._iter_snapshot[current_iter].reals
             if not all_reals:
                 # Empty ensemble or all realizations deactivated
                 return 1.0
             for real in all_reals.values():
+
                 if real.status in [
-                    state.REALIZATION_STATE_FINISHED,
-                    state.REALIZATION_STATE_FAILED,
+                    REALIZATION_STATE_FINISHED,
+                    REALIZATION_STATE_FAILED,
                 ]:
                     done_reals += 1
             real_progress = float(done_reals) / len(all_reals)

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from cloudevents.http.event import CloudEvent
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
-from ert_shared.ensemble_evaluator.entity.snapshot import (
+import ert.ensemble_evaluator.identifiers as ids
+from ert.ensemble_evaluator.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
     Step,
@@ -13,8 +13,8 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models.base_run_model import BaseRunModel
 from ert3.evaluator._evaluator import ERT3RunModel
-from ert_shared.status.entity import state
-from ert_shared.status.entity.event import EndEvent, SnapshotUpdateEvent
+from ert.ensemble_evaluator import state
+from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator import EvaluatorTracker
 
 
@@ -114,7 +114,8 @@ def make_mock_ee_monitor():
             # Expected progress matches combination of yielded snapshotevents
             # It is calculated as sum i=1:#phases of
             # (phase i completed realizations / phase i #realizations) / #phases.
-            # When a phase is in the past (current phase > phase),  phase progress is set to 1.0
+            # When a phase is in the past (current phase > phase),
+            # phase progress is set to 1.0
             [
                 (0 / 3) / 1,
                 (1 / 3) / 1,

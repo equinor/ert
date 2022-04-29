@@ -80,7 +80,7 @@ class RunWorkflowWidget(QWidget):
         layout.addWidget(processing_animation)
 
         processing_label = QLabel(
-            "Processing workflow '%s'" % self.getCurrentWorkflowName()
+            f"Processing workflow '{self.getCurrentWorkflowName()}'"
         )
         layout.addWidget(processing_label, Qt.AlignBottom)
 
@@ -157,7 +157,7 @@ class RunWorkflowWidget(QWidget):
         QMessageBox.information(
             self,
             "Workflow completed!",
-            "The workflow '{}' completed {}".format(workflow_name, jobs_msg),
+            f"The workflow '{workflow_name}' completed {jobs_msg}",
         )
         self._running_workflow_dialog.accept()
         self._running_workflow_dialog = None
@@ -170,7 +170,7 @@ class RunWorkflowWidget(QWidget):
         QMessageBox.critical(
             self,
             "Workflow failed!",
-            "The workflow '%s' failed!\n\n%s" % (workflow_name, error),
+            f"The workflow '{workflow_name}' failed!\n\n{error}",
         )
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None
@@ -180,7 +180,7 @@ class RunWorkflowWidget(QWidget):
         QMessageBox.information(
             self,
             "Workflow killed!",
-            "The workflow '%s' was killed successfully!" % workflow_name,
+            f"The workflow '{workflow_name}' was killed successfully!",
         )
         self._running_workflow_dialog.reject()
         self._running_workflow_dialog = None

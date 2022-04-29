@@ -1,7 +1,7 @@
 #ifndef ERT_ENKF_LINALG_H
 #define ERT_ENKF_LINALG_H
-#include <variant>
 #include <Eigen/Dense>
+#include <variant>
 
 Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
                                 const Eigen::MatrixXd &U0,

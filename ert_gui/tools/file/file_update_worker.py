@@ -4,12 +4,12 @@ from qtpy.QtCore import Signal, Slot, QObject, QTimer
 class FileUpdateWorker(QObject):
     POLL_TIMER_MS = 1000
     POLL_BUFFER_SIZE = 2**16  # 16KiB
-    INIT_BUFFER_SIZE = 2**20  #  1MiB
+    INIT_BUFFER_SIZE = 2**20  # 1MiB
 
     read = Signal(str)
 
     def __init__(self, file, parent=None):
-        super(FileUpdateWorker, self).__init__(parent)
+        super().__init__(parent)
         self._file = file
         self._timer = None
 

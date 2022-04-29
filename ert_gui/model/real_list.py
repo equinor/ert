@@ -3,13 +3,11 @@ from ert_gui.model.node import NodeType
 import typing
 from qtpy.QtCore import (
     QObject,
-    Qt,
     Signal,
     Slot,
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
-    QVariant,
 )
 
 

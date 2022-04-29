@@ -19,20 +19,20 @@
 #ifndef ERT_CONFIG_H
 #define ERT_CONFIG_H
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/stringlist.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/stringlist.hpp>
 
-#include <ert/tooling.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/tooling.hpp>
 
-#include <ert/config/config_schema_item.hpp>
+#include <ert/config/config_content.hpp>
 #include <ert/config/config_content_item.hpp>
 #include <ert/config/config_content_node.hpp>
-#include <ert/config/config_content.hpp>
+#include <ert/config/config_schema_item.hpp>
 
 typedef struct config_parser_struct config_parser_type;
 

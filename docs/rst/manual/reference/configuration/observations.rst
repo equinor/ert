@@ -78,8 +78,9 @@ group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
 label for the observation within the ERT and must be unique.
 
-The recommended date format is YYYY-MM-DD (ISO 8601) while DD/MM/YYYY
-and DD.MM.YYYY are still supported.
+Date format YYYY-MM-DD (ISO 8601) is required.
+Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
+and its support will be removed in a future release.
 
 The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
 from the summary file. To condition on the summary key VAR in well, group or
@@ -315,43 +316,6 @@ Here we see that the observation is active at report step 20, and we
 expect the forward model to create a file rft_BH67_20 in each
 realization directory.
 
-Error covariance
-----------------
-
-ERROR_COVAR keyword
-^^^^^^^^^^^^^^^^^^^
-
-The optional keyword ERROR_COVAR can be used to point to an existing
-file, containing an error covariance matrix. The file should contain
-the elements of the matrix as formatted numbers; newline formatting is
-allowed but not necessary. Since the matrix should by construction be
-symmetric there is no difference between column-major and row-major
-order. The covariance matrix::
-
-         [ 1      0.75  -0.25]
-    C =  [ 0.75   1.25  -0.50]
-         [-0.25  -0.50   0.85]
-
-Can be represented by the file::
-
- 1
- 0.75
- -0.25
- 0.75
- 1.25
- -0.50
- -0.25
- -0.50
- 0.85
-
-without newlines, or alternatively::
-
- 1       0.75  -0.25
- 0.75    1.25  -0.50
- -0.25  -0.50   0.85
-
-with newlines.
-
 
 .. _history_observation:
 
@@ -510,28 +474,3 @@ The items START and STOP set the start and stop of the segment in
 terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
 ERROR_MIN behave like before. If the segments overlap, they are
 computed in alphabetical order.
-
-Error covariance for "merged" updates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When merging the historical observations from several report steps
-together in one update the different steps are not independent, and it
-is beneficial to use a error covariance matrix. By using the keywords
-AUTO_CORRF and AUTO_CORRF_PARAM, ERT will automatically estimate a
-error-covariance matrix based on the auto correlation function
-specified by the AUTO_CORRF keyword, with the parameter given by the
-AUTO_CORRF_PARAM parameter (i.e. the auto correlation length). The
-currently available auto correlation functions are:
-
-.. math::
-
-  \begin{align}
-    \texttt{EXP} &\sim \exp(-x) \\
-    \texttt{GAUSS} &\sim \exp(-x^2/2)
-  \end{align}
-
-where the parameter *x* is given as:
-
-.. math::
-
-  x = \frac{t_2 - t_1}{\texttt{AUTO_CORRF_PARAM}}

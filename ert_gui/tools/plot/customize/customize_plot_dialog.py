@@ -28,7 +28,7 @@ class PlotCustomizer(QObject):
     settingsChanged = Signal()
 
     def __init__(self, parent, key_defs):
-        super(PlotCustomizer, self).__init__()
+        super().__init__()
 
         self._plot_config_key = None
         self._previous_key = None
@@ -153,7 +153,7 @@ class PlotCustomizer(QObject):
     def switchPlotConfigHistory(self, key_def):
         key = key_def["key"]
         if key != self._plot_config_key:
-            if not key in self._plot_configs:
+            if key not in self._plot_configs:
                 self._plot_configs[key] = PlotConfigHistory(
                     key, PlotConfigFactory.createPlotConfigForKey(key_def)
                 )

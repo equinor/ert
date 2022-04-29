@@ -18,18 +18,19 @@
 
 #include <filesystem>
 
+#include <Eigen/Dense>
 #include <cmath>
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.h>
+#include <ert/res_util/file_utils.hpp>
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
-#include <ert/res_util/file_utils.hpp>
+#include <ert/util/util.h>
 
-#include <ert/ecl/fortio.h>
-#include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_endian_flip.h>
+#include <ert/ecl/ecl_kw.h>
+#include <ert/ecl/fortio.h>
 
 #include <ert/rms/rms_file.hpp>
 #include <ert/rms/rms_util.hpp>
@@ -826,7 +827,7 @@ void field_free(field_type *field) {
 }
 
 void field_serialize(const field_type *field, node_id_type node_id,
-                     const ActiveList *active_list, matrix_type *A,
+                     const ActiveList *active_list, Eigen::MatrixXd &A,
                      int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
@@ -837,7 +838,7 @@ void field_serialize(const field_type *field, node_id_type node_id,
 }
 
 void field_deserialize(field_type *field, node_id_type node_id,
-                       const ActiveList *active_list, const matrix_type *A,
+                       const ActiveList *active_list, const Eigen::MatrixXd &A,
                        int row_offset, int column) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);

@@ -3,7 +3,17 @@ import logging
 import json
 from functools import partial
 from http import HTTPStatus
-from typing import Any, Awaitable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Awaitable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 import httpx
 import pandas as pd
 import ert
@@ -12,7 +22,6 @@ from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)
 read_csv = partial(pd.read_csv, index_col=0, float_precision="round_trip")
-DictStrAny = Dict[str, Any]
 
 _ENSEMBLE_RECORDS = "__ensemble_records__"
 _SPECIAL_KEYS = (_ENSEMBLE_RECORDS,)
@@ -268,8 +277,10 @@ async def _put_to_server_async(
 
 
 def _set_content_header(
-    header: str, record_type: ert.data.RecordType, headers: Optional[DictStrAny] = None
-) -> DictStrAny:
+    header: str,
+    record_type: ert.data.RecordType,
+    headers: Optional[Dict[str, str]] = None,
+) -> Dict[str, str]:
     content_type = _OCTET_STREAM if record_type == ert.data.RecordType.BYTES else _CSV
     if headers is None:
         return {header: content_type}
@@ -309,8 +320,8 @@ def _interpret_series(row: pd.Series, record_type: ert.data.RecordType) -> Any:
 
 async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Record:
     if record_type in (
-        ert.data.RecordType.NUMERICAL_TREE,
         ert.data.RecordType.BLOB_TREE,
+        ert.data.RecordType.NUMERICAL_TREE,
     ):
         headers = _set_content_header(
             header="accept", record_type=ert.data.RecordType.BYTES
@@ -321,10 +332,13 @@ async def load_record(url: str, record_type: ert.data.RecordType) -> ert.data.Re
     content = response.content
     if record_type in (
         ert.data.RecordType.LIST_FLOAT,
-        ert.data.RecordType.MAPPING_STR_FLOAT,
         ert.data.RecordType.MAPPING_INT_FLOAT,
+        ert.data.RecordType.MAPPING_STR_FLOAT,
+        ert.data.RecordType.SCALAR_FLOAT,
     ):
         dataframe: pd.DataFrame = read_csv(io.BytesIO(content))
+        if record_type == ert.data.RecordType.SCALAR_FLOAT:
+            return ert.data.NumericalRecord(data=float(dataframe.iloc[0, 0]))
         for _, row in dataframe.iterrows():  # pylint: disable=no-member
             return ert.data.NumericalRecord(
                 data=_interpret_series(row=row, record_type=record_type)

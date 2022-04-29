@@ -51,7 +51,7 @@ class ProcessJobDialog(QDialog):
         processing_animation.setMovie(spin_movie)
         widget_layout.addWidget(processing_animation)
 
-        self.processing_label = QLabel("Processing job: '%s'" % title)
+        self.processing_label = QLabel(f"Processing job: '{title}'")
         widget_layout.addWidget(self.processing_label, Qt.AlignBottom)
 
         widget.setLayout(widget_layout)

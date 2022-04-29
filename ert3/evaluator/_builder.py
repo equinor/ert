@@ -7,24 +7,15 @@ import cloudpickle
 import ert
 import ert3
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.ensemble.base import Ensemble
-from ert_shared.ensemble_evaluator.ensemble.builder import (
-    StepBuilder,
-    create_ensemble_builder,
-    create_input_builder,
-    create_job_builder,
-    create_output_builder,
-    create_realization_builder,
-)
 
 
 def add_step_inputs(
     inputs: Tuple[ert3.config.LinkedInput, ...],
     transmitters: Dict[int, Dict[str, ert.data.RecordTransmitter]],
-    step: StepBuilder,
+    step: ert.ensemble_evaluator.StepBuilder,
 ) -> None:
     for input_ in inputs:
-        step_input = create_input_builder().set_name(input_.name)
+        step_input = ert.ensemble_evaluator.InputBuilder().set_name(input_.name)
 
         if input_.stage_transformation:
             step_input.set_transformation(input_.stage_transformation)
@@ -42,7 +33,7 @@ def add_commands(
     stage: ert3.config.Unix,
     storage_type: str,
     storage_path: str,
-    step: StepBuilder,
+    step: ert.ensemble_evaluator.StepBuilder,
 ) -> None:
     async def transform_output(
         transmitter: ert.data.RecordTransmitter, mime: str, location: pathlib.Path
@@ -72,7 +63,7 @@ def add_commands(
             )
         )
         step.add_input(
-            create_input_builder()
+            ert.ensemble_evaluator.InputBuilder()
             .set_name(command.name)
             .set_transformation(
                 ert.data.ExecutableTransformation(
@@ -91,11 +82,11 @@ def add_step_outputs(
     step_config: ert3.config.Step,
     storage_path: str,
     ensemble_size: int,
-    step: StepBuilder,
+    step: ert.ensemble_evaluator.StepBuilder,
 ) -> None:
     for record_name, output in step_config.output.items():
         transformation = output.get_transformation_instance()
-        output = create_output_builder().set_name(record_name)
+        output = ert.ensemble_evaluator.OutputBuilder().set_name(record_name)
 
         if transformation:
             output.set_transformation(transformation)
@@ -129,14 +120,14 @@ def build_ensemble(
     stage: ert3.config.Step,
     driver: str,
     ensemble_size: int,
-    step_builder: StepBuilder,
+    step_builder: ert.ensemble_evaluator.StepBuilder,
     active_mask: Optional[List[bool]] = None,
-) -> Ensemble:
+) -> ert.ensemble_evaluator.Ensemble:
     if active_mask is None:
         active_mask = [True] * ensemble_size
     if isinstance(stage, ert3.config.Function):
         step_builder.add_job(
-            create_job_builder()
+            ert.ensemble_evaluator.JobBuilder()
             .set_name(stage.function.__name__)
             .set_executable(cloudpickle.dumps(stage.function))
         )
@@ -144,14 +135,14 @@ def build_ensemble(
         for script in stage.script:
             name, *args = shlex.split(script)
             step_builder.add_job(
-                create_job_builder()
-                .set_name(name)
+                ert.ensemble_evaluator.JobBuilder()
                 .set_executable(stage.command_final_path_component(name))
                 .set_args(tuple(args))
+                .set_name(name)
             )
 
     builder = (
-        create_ensemble_builder()
+        ert.ensemble_evaluator.EnsembleBuilder()
         .set_ensemble_size(ensemble_size)
         .set_max_running(10000)
         .set_max_retries(0)
@@ -159,7 +150,7 @@ def build_ensemble(
     )
     for iens, active_flag in enumerate(active_mask):
         builder = builder.add_realization(
-            create_realization_builder()
+            ert.ensemble_evaluator.RealizationBuilder()
             .set_iens(iens)
             .active(active_flag)
             .add_step(step_builder)

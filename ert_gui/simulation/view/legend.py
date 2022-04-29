@@ -1,21 +1,21 @@
 import math
 from PyQt5.QtWidgets import QListView
-from qtpy.QtCore import QSize, QModelIndex, Qt
+from qtpy.QtCore import QModelIndex, Qt
 from qtpy.QtWidgets import (
-    QTreeView,
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QFrame,
     QApplication,
 )
 from qtpy.QtGui import QPainter, QColor, QPalette
-from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
+from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
+
 from ert_gui.model.progress_proxy import ProgressRole
 
 
 class LegendView(QListView):
     def __init__(self, parent=None) -> None:
-        super(LegendView, self).__init__(parent)
+        super().__init__(parent)
         self.setItemDelegate(LegendDelegate(self))
         self.setFixedHeight(30)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -24,7 +24,7 @@ class LegendView(QListView):
 
 class LegendDelegate(QStyledItemDelegate):
     def __init__(self, parent=None) -> None:
-        super(LegendDelegate, self).__init__(parent)
+        super().__init__(parent)
 
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         data = index.data(ProgressRole)

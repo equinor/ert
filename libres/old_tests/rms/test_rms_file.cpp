@@ -19,8 +19,8 @@
 
 #include <ert/util/test_util.hpp>
 
-#include <ert/rms/rms_util.hpp>
 #include <ert/rms/rms_file.hpp>
+#include <ert/rms/rms_util.hpp>
 
 void test_rms_file_fread_alloc_data_tag(rms_file_type *rms_file) {
     rms_tag_type *parameter_tag =

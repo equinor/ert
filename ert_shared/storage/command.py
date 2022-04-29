@@ -6,7 +6,10 @@ def add_parser_options(ap: ArgumentParser) -> None:
     ap.add_argument(
         "config",
         type=str,
-        help="ERT config file to start the server from (ignored if --database-url is set)",
+        help=(
+            "ERT config file to start the server from "
+            "(ignored if --database-url is set)"
+        ),
         nargs="?",  # optional
     )
     ap.add_argument(

@@ -38,7 +38,8 @@ class HookManagerTest(ResTest):
             ConfigKeys.CONFIG_DIRECTORY: self.work_area.get_cwd(),
             ConfigKeys.CONFIG_FILE_KEY: "config",
             ConfigKeys.HOOK_WORKFLOW_KEY: [("MAGIC_PRINT", "PRE_SIMULATION")],
-            # these two entries makes the workflow_list load this workflow, but are not needed by hook_manager directly
+            # these two entries makes the workflow_list load this workflow, but
+            # are not needed by hook_manager directly
             ConfigKeys.LOAD_WORKFLOW_JOB: "workflowjobs/MAGIC_PRINT",
             ConfigKeys.LOAD_WORKFLOW: "workflows/MAGIC_PRINT",
         }

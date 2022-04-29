@@ -15,6 +15,15 @@ from res.enkf import EnKFMain
 from ert_gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert_shared.models import EnsembleExperiment
 
+from dataclasses import dataclass
+
+
+@dataclass
+class Arguments:
+    mode: str
+    realizations: str
+    iter_num: int
+
 
 class EnsembleExperimentPanel(SimulationConfigPanel):
     def __init__(self, ert: EnKFMain, notifier: ErtNotifier):
@@ -28,12 +37,12 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         self._case_selector = CaseSelector(self.facade, notifier)
         layout.addRow("Current case:", self._case_selector)
 
-        run_path_label = QLabel("<b>%s</b>" % self.facade.run_path)
+        run_path_label = QLabel(f"<b>{self.facade.run_path}</b>")
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
         number_of_realizations_label = QLabel(
-            "<b>%d</b>" % self.facade.get_ensemble_size()
+            f"<b>{self.facade.get_ensemble_size()}</b>"
         )
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
@@ -60,7 +69,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
 
         self.setLayout(layout)
 
-        self._active_realizations_field.getValidationSupport().validationChanged.connect(
+        self._active_realizations_field.getValidationSupport().validationChanged.connect(  # noqa
             self.simulationConfigurationChanged
         )
         self._case_selector.currentIndexChanged.connect(self._realizations_from_fs)
@@ -71,13 +80,11 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         return self._active_realizations_field.isValid() and self._iter_field.isValid()
 
     def getSimulationArguments(self):
-        active_realizations_mask = (
-            self._active_realizations_field.model.getActiveRealizationsMask()
+        return Arguments(
+            mode="ensemble_experiment",
+            iter_num=int(self._iter_field.text()),
+            realizations=self._active_realizations_field.text(),
         )
-        return {
-            "active_realizations": active_realizations_mask,
-            "iter_num": int(self._iter_field.model.getValue()),
-        }
 
     def _realizations_from_fs(self):
         case = str(self._case_selector.currentText())

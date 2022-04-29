@@ -18,11 +18,11 @@
 
 #include <filesystem>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/test_util.h>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/util/test_util.h>
 
 namespace fs = std::filesystem;
 
@@ -179,32 +179,6 @@ void test_init_case_job(ert_test_context_type *test_context,
         enkf_fs_decref(fs);
     }
 
-    stringlist_free(args);
-}
-
-void test_load_results_job(ert_test_context_type *test_context,
-                           const char *job_name, const char *job_file) {
-    stringlist_type *args = stringlist_alloc_new();
-    ert_test_context_install_workflow_job(test_context, job_name, job_file);
-    stringlist_append_copy(args, "0");
-    stringlist_append_copy(args, ",");
-    stringlist_append_copy(args, "1");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-    stringlist_free(args);
-}
-
-void test_load_results_iter_job(ert_test_context_type *test_context,
-                                const char *job_name, const char *job_file) {
-
-    stringlist_type *args = stringlist_alloc_new();
-    ert_test_context_install_workflow_job(test_context, job_name, job_file);
-    stringlist_append_copy(args, "0");
-    stringlist_append_copy(args, "0");
-    stringlist_append_copy(args, ",");
-    stringlist_append_copy(args, "1");
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
     stringlist_free(args);
 }
 
@@ -475,20 +449,15 @@ int main(int argc, const char **argv) {
     const char *config_file_iterations = argv[2];
     const char *job_file_create_case = argv[3];
     const char *job_file_init_case_job = argv[4];
-    const char *job_file_load_results = argv[5];
-    const char *job_file_load_results_iter = argv[6];
-    const char *job_file_init_misfit_table = argv[7];
-    const char *job_file_export_runpath = argv[8];
-    const char *job_file_pre_simulation_copy = argv[9];
+    const char *job_file_init_misfit_table = argv[5];
+    const char *job_file_export_runpath = argv[6];
+    const char *job_file_pre_simulation_copy = argv[7];
 
     ert_test_context_type *test_context =
         create_context(config_file, "enkf_workflow_job_test");
     {
         test_create_case_job(test_context, "JOB1", job_file_create_case);
         test_init_case_job(test_context, "JOB2", job_file_init_case_job);
-        test_load_results_job(test_context, "JOB3", job_file_load_results);
-        test_load_results_iter_job(test_context, "JOB4",
-                                   job_file_load_results_iter);
         test_init_misfit_table(test_context, "JOB5",
                                job_file_init_misfit_table);
         test_pre_simulation_copy(test_context, "JOBB",

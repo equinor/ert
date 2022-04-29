@@ -8,7 +8,6 @@ from qtpy.QtWidgets import (
 )
 
 
-from ert_gui.plottery import PlotConfig
 from ert_gui.tools.plot import StyleChooser
 from ert_gui.tools.plot.widgets.clearable_line_edit import ClearableLineEdit
 
@@ -145,8 +144,8 @@ class CustomizationView(QWidget):
         @type plot_config: PlotConfig
         """
         raise NotImplementedError(
-            "Class '%s' has not implemented the applyCustomization() function!"
-            % self.__class__.__name__
+            f"Class '{self.__class__.__name__}' has not implemented "
+            "the applyCustomization() function!"
         )
 
     def revertCustomization(self, plot_config):
@@ -154,12 +153,12 @@ class CustomizationView(QWidget):
         @type plot_config: PlotConfig
         """
         raise NotImplementedError(
-            "Class '%s' has not implemented the revertCustomization() function!"
-            % self.__class__.__name__
+            f"Class '{self.__class__.__name__}' has not implemented "
+            "the revertCustomization() function!"
         )
 
 
-class WidgetProperty(object):
+class WidgetProperty:
     def __get__(self, instance, owner):
         raise UserWarning("Property is invalid!")
 

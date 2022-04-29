@@ -17,13 +17,12 @@
 from qtpy.QtWidgets import QMessageBox
 
 from res.enkf import ErtRunContext
-from res.enkf import ESUpdate
+from res.enkf import ESUpdate, ErtAnalysisError
 
 from ert_gui.ertwidgets import resourceIcon
 from ert_gui.ertwidgets.closabledialog import ClosableDialog
 from ert_gui.tools import Tool
 from ert_gui.tools.run_analysis import RunAnalysisPanel
-import ert_shared
 
 
 def analyse(ert, target, source):
@@ -38,14 +37,14 @@ def analyse(ert, target, source):
         source_fs,
         target_fs,
     )
-    return es_update.smootherUpdate(run_context)
+    es_update.smootherUpdate(run_context)
 
 
 class RunAnalysisTool(Tool):
     def __init__(self, ert, notifier):
         self.ert = ert
         self.notifier = notifier
-        super(RunAnalysisTool, self).__init__(
+        super().__init__(
             "Run analysis", "tools/run_analysis", resourceIcon("formula.svg")
         )
         self._run_widget = None
@@ -67,19 +66,28 @@ class RunAnalysisTool(Tool):
             self._report_empty_target()
             return
 
-        success = analyse(self.ert, target, source)
+        try:
+            analyse(self.ert, target, source)
+            error = None
+        except ErtAnalysisError as e:
+            error = str(e)
+        except Exception as e:
+            error = f"Uknown exception occured with error: {str(e)}"
 
         msg = QMessageBox()
         msg.setWindowTitle("Run analysis")
         msg.setStandardButtons(QMessageBox.Ok)
 
-        if success:
+        if not error:
             msg.setIcon(QMessageBox.Information)
-            msg.setText("Successfully ran analysis for case '{}'.".format(source))
+            msg.setText(f"Successfully ran analysis for case '{source}'.")
             msg.exec_()
         else:
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("Unable to run analysis for case '{}'.".format(source))
+            msg.setText(
+                f"Unable to run analysis for case '{source}'.\n"
+                f"The following error occured: {error}"
+            )
             msg.exec_()
             return
 

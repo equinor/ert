@@ -13,7 +13,7 @@ class TimeMapTest(ResTest):
 
         tm = TimeMap()
         with self.assertRaises(IndexError):
-            t = tm[10]
+            tm[10]
 
         pfx = "TimeMap("
         rep = repr(tm)
@@ -23,14 +23,9 @@ class TimeMapTest(ResTest):
         self.assertTrue(tm.update(0, datetime.date(2000, 1, 1)))
         self.assertEqual(tm[0], datetime.date(2000, 1, 1))
 
-        self.assertTrue(tm.isStrict())
         with self.assertRaises(Exception):
             tm.update(0, datetime.date(2000, 1, 2))
 
-        tm.setStrict(False)
-        self.assertFalse(tm.update(0, datetime.date(2000, 1, 2)))
-
-        tm.setStrict(True)
         self.assertTrue(tm.update(1, datetime.date(2000, 1, 2)))
         d = tm.dump()
         self.assertEqual(
@@ -43,7 +38,7 @@ class TimeMapTest(ResTest):
         with self.assertRaises(IOError):
             tm.fload("Does/not/exist")
 
-        with TestAreaContext("timemap/fload1") as work_area:
+        with TestAreaContext("timemap/fload1"):
             with open("map.txt", "w") as fileH:
                 fileH.write("2000-10-10\n")
                 fileH.write("2000-10-12\n")
@@ -55,7 +50,7 @@ class TimeMapTest(ResTest):
             self.assertEqual(datetime.date(2000, 10, 10), tm[0])
             self.assertEqual(datetime.date(2000, 10, 16), tm[3])
 
-        with TestAreaContext("timemap/fload2") as work_area:
+        with TestAreaContext("timemap/fload2"):
             with open("map.txt", "w") as fileH:
                 fileH.write("10/10/2000\n")
                 fileH.write("12/10/2000\n")
@@ -67,7 +62,7 @@ class TimeMapTest(ResTest):
             self.assertEqual(datetime.date(2000, 10, 10), tm[0])
             self.assertEqual(datetime.date(2000, 10, 16), tm[3])
 
-        with TestAreaContext("timemap/fload3") as work_area:
+        with TestAreaContext("timemap/fload3"):
             with open("map.txt", "w") as fileH:
                 fileH.write("10/10/200X\n")
 
@@ -78,7 +73,7 @@ class TimeMapTest(ResTest):
             self.assertEqual(datetime.date(2000, 10, 10), tm[0])
             self.assertEqual(datetime.date(2000, 10, 16), tm[3])
 
-        with TestAreaContext("timemap/fload2") as work_area:
+        with TestAreaContext("timemap/fload2"):
             with open("map.txt", "w") as fileH:
                 fileH.write("12/10/2000\n")
                 fileH.write("10/10/2000\n")
@@ -219,8 +214,3 @@ class TimeMapTest(ResTest):
                 tolerance_seconds_before=10,
                 tolerance_seconds_after=10,
             )
-
-    def test_empty(self):
-        tm = TimeMap()
-        last_step = tm.getLastStep()
-        self.assertEqual(last_step, -1)

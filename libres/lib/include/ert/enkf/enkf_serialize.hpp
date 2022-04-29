@@ -19,18 +19,19 @@
 #ifndef ERT_ENKF_SERIALIZE_H
 #define ERT_ENKF_SERIALIZE_H
 
-#include <ert/res_util/matrix.hpp>
-#include <ert/enkf/active_list.hpp>
+#include <Eigen/Dense>
 #include <ert/ecl/ecl_type.h>
+#include <ert/enkf/active_list.hpp>
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const ActiveList *__active_list, matrix_type *A,
+                           const ActiveList *__active_list, Eigen::MatrixXd &A,
                            int row_offset, int column);
 
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
                              const ActiveList *__active_list,
-                             const matrix_type *A, int row_offset, int column);
+                             const Eigen::MatrixXd &A, int row_offset,
+                             int column);
 
 #endif

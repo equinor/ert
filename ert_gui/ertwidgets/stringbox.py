@@ -21,7 +21,8 @@ from ert_gui.ertwidgets import ValidationSupport, addHelpToWidget
 
 
 class StringBox(QLineEdit):
-    """StringBox shows a string. The data structure expected and sent to the getter and setter is a string."""
+    """StringBox shows a string. The data structure expected and sent to the
+    getter and setter is a string."""
 
     def __init__(self, model, help_link="", default_string="", continuous_update=False):
         """

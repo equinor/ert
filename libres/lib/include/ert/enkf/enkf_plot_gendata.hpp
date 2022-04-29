@@ -19,13 +19,13 @@
 #ifndef ERT_ENKF_PLOT_GENDATA_H
 #define ERT_ENKF_PLOT_GENDATA_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/double_vector.h>
+#include <ert/util/type_macros.h>
 
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
+#include <ert/enkf/obs_vector.hpp>
 
 typedef struct enkf_plot_gendata_struct enkf_plot_gendata_type;
 

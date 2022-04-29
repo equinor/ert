@@ -18,11 +18,11 @@
 
 #include <vector>
 
-#include <ert/util/test_util.h>
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/summary_obs.hpp>
 #include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/gen_obs.hpp>
+#include <ert/enkf/obs_vector.hpp>
+#include <ert/enkf/summary_obs.hpp>
+#include <ert/util/test_util.h>
 
 bool alloc_strippedparameters_noerrors() {
     obs_vector_type *obs_vector =
@@ -204,8 +204,8 @@ bool scale_std_gen_withdata_no_errors() {
 
     gen_obs_type *observations[num_observations];
     for (int i = 0; i < num_observations; i++) {
-        gen_obs_type *gen_obs = gen_obs_alloc(NULL, "WWCT-GEN", NULL, value,
-                                              std_dev, NULL, NULL, NULL);
+        gen_obs_type *gen_obs =
+            gen_obs_alloc(NULL, "WWCT-GEN", NULL, value, std_dev, NULL, NULL);
         obs_vector_install_node(obs_vector, i, gen_obs);
         observations[i] = gen_obs;
     }

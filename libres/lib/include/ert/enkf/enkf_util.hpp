@@ -18,15 +18,15 @@
 
 #ifndef ERT_ENKF_UTIL_H
 #define ERT_ENKF_UTIL_H
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/buffer.h>
 #include <ert/util/rng.h>
 
-#include <ert/ecl/ecl_util.h>
 #include <ert/ecl/ecl_type.h>
+#include <ert/ecl/ecl_util.h>
 
 #include <ert/enkf/enkf_types.hpp>
 

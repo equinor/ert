@@ -44,7 +44,6 @@ foreach(
   enkf_plot_gen_kw_vector
   enkf_plot_genvector
   enkf_plot_tvector
-  enkf_update_log
   enkf_run_arg
   enkf_state_map
   obs_vector
@@ -82,7 +81,6 @@ foreach(
   enkf_executable_path
   enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
-  enkf_workflow_job2
   gen_kw
   enkf_runpath_list)
 
@@ -91,11 +89,6 @@ foreach(
 endforeach()
 
 add_config_test(enkf_executable_path enkf_executable_path)
-
-add_config_test(
-  enkf_workflow_job2 enkf_workflow_job2
-  "${LOCAL_TEST_DATA_DIR}/snake_oil_no_data/snake_oil_GEN_DATA.ert"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS")
 
 add_config_test(enkf_forward_load_context enkf_forward_load_context
                 "${TEST_DATA_DIR}/enkf/config" forward_load_context)
@@ -131,7 +124,7 @@ add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
 add_config_test(enkf_runpath_list enkf_runpath_list
                 "${TEST_DATA_DIR}/enkf/config/runpath_list/config")
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
-                "${LOCAL_TEST_DATA_DIR}/config/gen_data/config")
+                "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
 add_config_test(
   enkf_ert_workflow_list enkf_ert_workflow_list
   ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/SCALE_STD)
@@ -234,11 +227,6 @@ add_equinor_test(
   config_ecl_sum_compatible_true TRUE)
 
 add_equinor_test(
-  enkf_state_report_step_compatible_FALSE enkf_state_report_step_compatible
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_false"
-  config_ecl_sum_compatible_false FALSE)
-
-add_equinor_test(
   enkf_state_manual_load enkf_state_manual_load
   "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_true"
   config_ecl_sum_compatible_true)
@@ -267,8 +255,6 @@ add_equinor_test(
   "${EQUINOR_TEST_DATA_DIR}/config/enkf_state_runpath/config_runpath_multiple_iterations"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS"
-  "${SHARE_DIR}/workflows/jobs/internal/config/LOAD_RESULTS_ITER"
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
   "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")

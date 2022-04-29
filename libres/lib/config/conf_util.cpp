@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.hpp>
 #include <ert/util/parser.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/config/conf_util.hpp>
 

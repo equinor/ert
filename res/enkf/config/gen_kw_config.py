@@ -57,7 +57,7 @@ class GenKwConfig(BaseCClass):
         "stringlist_ref gen_kw_config_iget_function_parameter_names(gen_kw_config, int)"
     )
     _get_function_parameter_values = ResPrototype(
-        "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"
+        "double_vector_ref gen_kw_config_iget_function_parameter_values(gen_kw_config, int)"  # noqa
     )
 
     def __init__(self, key, template_file, parameter_file, tag_fmt="<%s>"):

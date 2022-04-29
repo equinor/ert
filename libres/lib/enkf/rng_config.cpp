@@ -24,9 +24,9 @@
 
 #include <ert/logging.hpp>
 
-#include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/rng_config.hpp>
 
 static auto logger = ert::get_logger("enkf");
 

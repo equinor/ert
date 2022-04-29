@@ -18,8 +18,8 @@
 #include <stdexcept>
 
 #include <ert/res_util/es_testdata.hpp>
-#include <ert/util/test_work_area.hpp>
 #include <ert/util/test_util.hpp>
+#include <ert/util/test_work_area.hpp>
 
 res::es_testdata make_testdata(int ens_size, int obs_size) {
     Eigen::MatrixXd S = Eigen::MatrixXd::Zero(obs_size, ens_size);

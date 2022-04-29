@@ -201,8 +201,8 @@ def mocked_requests_get(*args, **kwargs):
     records = {
         "/ensembles/ens_id_3/records/FOPR": summary_parquet_data,
         "/ensembles/ens_id_3/records/BPR:1,3,8": summary_parquet_data,
-        "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": parameter_parquet_data,
-        "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE": parameter_parquet_data,
+        "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": parameter_parquet_data,  # noqa
+        "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE": parameter_parquet_data,  # noqa
         "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199": gen_parquet_data,
     }
 

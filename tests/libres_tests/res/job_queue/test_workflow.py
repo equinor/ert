@@ -8,7 +8,7 @@ from res.util.substitution_list import SubstitutionList
 
 class WorkflowTest(ResTest):
     def test_workflow(self):
-        with TestAreaContext("python/job_queue/workflow") as work_area:
+        with TestAreaContext("python/job_queue/workflow"):
             WorkflowCommon.createExternalDumpJob()
 
             joblist = WorkflowJoblist()
@@ -32,7 +32,7 @@ class WorkflowTest(ResTest):
             self.assertEqual(job, joblist["DUMP"])
 
     def test_workflow_run(self):
-        with TestAreaContext("python/job_queue/workflow") as work_area:
+        with TestAreaContext("python/job_queue/workflow"):
             WorkflowCommon.createExternalDumpJob()
 
             joblist = WorkflowJoblist()
@@ -55,7 +55,7 @@ class WorkflowTest(ResTest):
                 self.assertEqual(f.read(), "dump_text_2")
 
     def test_failing_workflow_run(self):
-        with TestAreaContext("python/job_queue/workflow") as work_area:
+        with TestAreaContext("python/job_queue/workflow"):
             WorkflowCommon.createExternalDumpJob()
 
             joblist = WorkflowJoblist()

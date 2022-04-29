@@ -30,7 +30,7 @@ from res.test import ErtTestContext
 
 class LocalConfigTest(ResTest):
     def setUp(self):
-        self.config = self.createTestPath("local/mini_ert/mini_config")
+        self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
         self.local_conf_path = "python/enkf/data/local_config"
 
     def test_get_grid(self):
@@ -131,11 +131,11 @@ class LocalConfigTest(ResTest):
             local_config = main.getLocalConfig()
             updatestep = local_config.getUpdatestep()
             ministep = updatestep[0]
-            self.assertEqual(1, ministep.numActiveData())
-            self.assertTrue(ministep.hasActiveData("PERLIN_PARAM"))
+            self.assertEqual(3, ministep.numActiveData())
+            self.assertTrue(ministep.hasActiveData("SNAKE_OIL_PARAM"))
 
             obsdata = ministep.getLocalObsData()
-            self.assertEqual(len(obsdata), 3)
+            self.assertEqual(len(obsdata), 8)
 
     def test_ministep(self):
         with ErtTestContext(
@@ -157,8 +157,6 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 _ = ministep.getActiveList("DATA")
 
-            self.assertEqual(ministep.get_obs_active_list(), {})
-
     def test_attach_ministep(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
             main = test_context.getErt()
@@ -178,44 +176,6 @@ class LocalConfigTest(ResTest):
             updatestep.attachMinistep(ministep)
             self.assertTrue(isinstance(updatestep[0], LocalMinistep))
             self.assertEqual(len(updatestep), upd_size + 1)
-
-    @tmpdir()
-    def test_attach_obs_data_to_ministep(self):
-        config = self.createTestPath("local/snake_oil/snake_oil.ert")
-
-        expected_keys = {
-            "WPR_DIFF_1",
-            "WOPR_OP1_108",
-            "FOPR",
-            "WOPR_OP1_144",
-            "WOPR_OP1_190",
-            "WOPR_OP1_9",
-            "WOPR_OP1_36",
-            "WOPR_OP1_72",
-        }
-
-        with ErtTestContext("obs_data_ministep_test", config) as context:
-            ert = context.getErt()
-            es_update = ESUpdate(ert)
-            fsm = ert.getEnkfFsManager()
-
-            sim_fs = fsm.getFileSystem("default_0")
-            target_fs = fsm.getFileSystem("target")
-            run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
-            es_update.smootherUpdate(run_context)
-
-            update_step = ert.getLocalConfig().getUpdatestep()
-            ministep = update_step[len(update_step) - 1]
-            active_dict = ministep.get_obs_active_list()
-            self.assertEqual(len(expected_keys), len(active_dict))
-
-            observed_obs_keys = set()
-            for obs_key, block in active_dict.items():
-                observed_obs_keys.add(obs_key)
-                for i in range(len(block)):
-                    self.assertTrue(block[i])
-
-            self.assertSetEqual(expected_keys, observed_obs_keys)
 
     def test_local_obsdata_node(self):
         node = LocalObsdataNode("OBS_NODE")

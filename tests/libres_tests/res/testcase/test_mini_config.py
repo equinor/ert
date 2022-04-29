@@ -12,10 +12,10 @@ class MiniConfigTest(ResTest):
         #
         # 0 OK
         # 1 GenData report step 1 missing
-        # 2 GenData report step 2 missing, Forward Model Component Target File not found.
-        # 3 GenData report step 3 missing, Forward Model Component Target File not found.
+        # 2 GenData report step 2 missing, Forward Model Component Target File not found
+        # 3 GenData report step 3 missing, Forward Model Component Target File not found
         # 4 GenData report step 1 missing
-        # 5 GenData report step 2 missing, Forward Model Component Target File not found.
+        # 5 GenData report step 2 missing, Forward Model Component Target File not found
         # 6 GenData report step 3 missing
         # 7 Forward Model Target File not found.
         # 8 OK

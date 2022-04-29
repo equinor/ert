@@ -4,7 +4,7 @@ from ert_gui.plottery.plots.history import plotHistory
 from ert_gui.plottery.plots.refcase import plotRefcase
 
 
-class EnsemblePlot(object):
+class EnsemblePlot:
     def __init__(self):
         self.dimensionality = 2
 
@@ -24,7 +24,7 @@ class EnsemblePlot(object):
             data = data.T
 
             if not data.empty:
-                if not data.index.is_all_dates:
+                if data.index.inferred_type != "datetime64":
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
 

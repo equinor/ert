@@ -15,13 +15,13 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
 
-#include <ert/job_queue/job_node.hpp>
 #include <ert/job_queue/job_list.hpp>
+#include <ert/job_queue/job_node.hpp>
 
 void test_create() {
     job_list_type *list = job_list_alloc();

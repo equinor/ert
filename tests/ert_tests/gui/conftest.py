@@ -1,16 +1,15 @@
 import copy
 import time
 from datetime import datetime as dt
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
-import ert_shared.ensemble_evaluator.entity.identifiers as ids
-from ert_shared.ensemble_evaluator.entity.identifiers import (
-    CURRENT_MEMORY_USAGE,
+from ert.ensemble_evaluator.identifiers import (
     MAX_MEMORY_USAGE,
+    CURRENT_MEMORY_USAGE,
 )
-from ert_shared.ensemble_evaluator.entity.snapshot import (
+from ert.ensemble_evaluator.snapshot import (
     Job,
     Realization,
     Snapshot,
@@ -18,7 +17,7 @@ from ert_shared.ensemble_evaluator.entity.snapshot import (
     SnapshotDict,
     Step,
 )
-from ert_shared.status.entity.state import (
+from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     JOB_STATE_START,
     REALIZATION_STATE_UNKNOWN,
@@ -96,7 +95,7 @@ def large_snapshot() -> Snapshot:
             step_id="0",
             job_id=str(i),
             name=f"job_{i}",
-            data={ids.MAX_MEMORY_USAGE: 1000, ids.CURRENT_MEMORY_USAGE: 500},
+            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
@@ -115,7 +114,7 @@ def small_snapshot() -> Snapshot:
             step_id="0",
             job_id=str(i),
             name=f"job_{i}",
-            data={ids.MAX_MEMORY_USAGE: 1000, ids.CURRENT_MEMORY_USAGE: 500},
+            data={MAX_MEMORY_USAGE: 1000, CURRENT_MEMORY_USAGE: 500},
             status=JOB_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
@@ -128,8 +127,9 @@ def small_snapshot() -> Snapshot:
 
 @pytest.fixture
 def active_realizations() -> Mock:
-    active_reals = Mock()
+    active_reals = MagicMock()
     active_reals.count = Mock(return_value=10)
+    active_reals.__iter__.return_value = [True] * 10
     return active_reals
 
 

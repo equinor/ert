@@ -20,8 +20,8 @@
 #define ERT_SUMMARY_H
 #include <ert/util/double_vector.h>
 
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_file.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_util.hpp>

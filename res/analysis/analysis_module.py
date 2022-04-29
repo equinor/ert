@@ -14,27 +14,22 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import List
+
 from cwrap import BaseCClass
 
 from res import ResPrototype
-
-from .enums import AnalysisModuleOptionsEnum
 
 
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc = ResPrototype(
-        "void* analysis_module_alloc(int, analysis_mode_enum)", bind=False
-    )
+    _alloc = ResPrototype("void* analysis_module_alloc(int, int)", bind=False)
     _free = ResPrototype("void analysis_module_free(analysis_module)")
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
     )
     _get_name = ResPrototype("char* analysis_module_get_name(analysis_module)")
-    _check_option = ResPrototype(
-        "bool analysis_module_check_option(analysis_module, analysis_module_options_enum)"
-    )
     _has_var = ResPrototype("bool analysis_module_has_var(analysis_module, char*)")
     _get_double = ResPrototype(
         "double analysis_module_get_double(analysis_module, char*)"
@@ -45,38 +40,49 @@ class AnalysisModule(BaseCClass):
     VARIABLE_NAMES = {
         "IES_MAX_STEPLENGTH": {
             "type": float,
-            "description": "Max step Length of Gauss Newton Iteration",
+            "min": 0.1,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton maximum steplength",
         },
         "IES_MIN_STEPLENGTH": {
             "type": float,
-            "description": "Min step Length of Gauss Newton Iteration",
+            "min": 0.1,
+            "max": 1.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton minimum steplength",
         },
         "IES_DEC_STEPLENGTH": {
             "type": float,
-            "description": "Decline of step Length in Gauss Newton Iteration",
+            "min": 1.1,
+            "max": 10.00,
+            "step": 0.1,
+            "labelname": "Gauss–Newton steplength decline",
         },
-        "IES_INVERSION": {"type": int, "description": "Inversion algorithm"},
-        "IES_AAPROJECTION": {
-            "type": str,
-            "description": "Include projection Y (A^+A) for n<N-1",
-        },
-        "ENKF_TRUNCATION": {"type": float, "description": "Singular value truncation"},
-        "ENKF_SUBSPACE_DIMENSION": {
+        "IES_INVERSION": {
             "type": int,
-            "description": "Number of singular values",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "labelname": "Inversion algorithm",
         },
-        "ENKF_NCOMP": {"type": int, "description": "Number of singular values"},
+        "ENKF_TRUNCATION": {
+            "type": float,
+            "min": -2.0,
+            "max": 1,
+            "step": 0.01,
+            "labelname": "Singular value truncation",
+        },
     }
 
-    def __init__(self, ens_size, name):
-        c_ptr = self._alloc(ens_size, name)
+    def __init__(self, ens_size, type_id):
+        c_ptr = self._alloc(ens_size, type_id)
         if not c_ptr:
-            raise KeyError("Failed to load internal module:%s" % name)
+            raise KeyError("Failed to load internal module:%s" % type_id)
 
         super().__init__(c_ptr)
 
-    def getVariableNames(self):
-        """@rtype: list of str"""
+    def getVariableNames(self) -> List[str]:
         items = []
         for name in AnalysisModule.VARIABLE_NAMES:
             if self.hasVar(name):
@@ -85,6 +91,7 @@ class AnalysisModule(BaseCClass):
 
     def getVariableValue(self, name):
         """@rtype: int or float or bool or str"""
+        self.__assertVar(name)
         variable_type = self.getVariableType(name)
         if variable_type == float:
             return self.getDouble(name)
@@ -92,6 +99,8 @@ class AnalysisModule(BaseCClass):
             return self.getBool(name)
         elif variable_type == int:
             return self.getInt(name)
+        else:
+            raise ValueError(f"Variable of type {variable_type} is not supported")
 
     def getVariableType(self, name):
         """:rtype: type"""
@@ -114,18 +123,10 @@ class AnalysisModule(BaseCClass):
         string_value = str(value)
         return self._set_var(var_name, string_value)
 
-    def getName(self):
-        """:rtype: str"""
-        return self.name()
-
     def name(self):
         return self._get_name()
 
-    def checkOption(self, flag: AnalysisModuleOptionsEnum):
-        return self._check_option(flag)
-
-    def hasVar(self, var):
-        """:rtype: bool"""
+    def hasVar(self, var: str) -> bool:
         return self._has_var(var)
 
     def getDouble(self, var):
@@ -158,7 +159,7 @@ class AnalysisModule(BaseCClass):
         :return: True if the same
         """
 
-        if self.getName() != other.getName():
+        if self.name() != other.name():
             return False
 
         var_name_local = self.getVariableNames()

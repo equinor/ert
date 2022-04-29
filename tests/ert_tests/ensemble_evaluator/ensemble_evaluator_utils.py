@@ -5,9 +5,11 @@ import websockets
 from cloudevents.http import CloudEvent, to_json
 
 from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.entity import identifiers as identifiers
-from ert_shared.ensemble_evaluator.ensemble.builder import _BaseJob, _Realization, _Step
-from ert_shared.ensemble_evaluator.ensemble.base import _Ensemble
+from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.builder._job import _BaseJob
+from ert.ensemble_evaluator.builder._realization import _Realization
+from ert.ensemble_evaluator.builder._step import _Step
+from ert.ensemble_evaluator.builder._ensemble import _Ensemble
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
@@ -45,7 +47,7 @@ class TestEnsemble(_Ensemble):
 
     def __init__(self, iter, reals, steps, jobs):
         self.iter = iter
-        self.reals = reals
+        self.test_reals = reals
         self.steps = steps
         self.jobs = jobs
         self.fail_jobs = []
@@ -99,7 +101,7 @@ class TestEnsemble(_Ensemble):
                 return
 
             event_id = event_id + 1
-            for real in range(0, self.reals):
+            for real in range(0, self.test_reals):
                 for step in range(0, self.steps):
                     job_failed = False
                     send_dispatch_event(
@@ -210,7 +212,7 @@ class AutorunTestEnsemble(TestEnsemble):
                         {
                             "type": identifiers.EVTYPE_EE_USER_DONE,
                             "source": f"/ert/ee/{ee_id}",
-                            "id": f"event-user-done",
+                            "id": "event-user-done",
                         }
                     )
                 )
@@ -228,5 +230,6 @@ class AutorunTestEnsemble(TestEnsemble):
     def cancel(self):
         pass
 
-    def is_cancellable(self):
+    @property
+    def cancellable(self) -> bool:
         return True

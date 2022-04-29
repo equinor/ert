@@ -16,20 +16,20 @@
    for more details.
 */
 
-#include <unordered_map>
+#include <filesystem>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include <filesystem>
 
+#include <pthread.h> /* must have rw locking on the config_nodes ... */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <pthread.h> /* must have rw locking on the config_nodes ... */
 
-#include <ert/util/util.h>
 #include <ert/util/hash.h>
+#include <ert/util/util.h>
 
 #include <ert/ecl/ecl_grid.h>
 
@@ -37,12 +37,12 @@
 
 #include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/enkf_obs.hpp>
+#include <ert/enkf/ensemble_config.hpp>
+#include <ert/enkf/gen_kw_config.hpp>
 
 namespace fs = std::filesystem;
 

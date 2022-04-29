@@ -60,8 +60,9 @@ class ERT3Plugins(Directive):
                 category=category
             )
 
-            # Find parent of config base class, as we want to document all inherited members
-            # from all base classes up to this class (but NOT including).
+            # Find parent of config base class, as we want to document all
+            # inherited members from all base classes up to this class (but NOT
+            # including).
             base_cls = (
                 ""
                 if len(config_base_class.__bases__) == 0
@@ -79,13 +80,15 @@ class ERT3Plugins(Directive):
             return []
         except Exception:
             logging.exception(
-                f"Failed to produce plugin documentation for category {category} on {basename(source)}:{self.lineno}:"
+                "Failed to produce plugin documentation for "
+                f"category {category} on {basename(source)}:{self.lineno}:"
             )
             return [
                 nodes.error(
                     None,
                     nodes.paragraph(
-                        text=f"Failed to produce plugin documentation for category {category} on {basename(source)}:{self.lineno}:"
+                        text="Failed to produce plugin documentation for category "
+                        f"{category} on {basename(source)}:{self.lineno}:"
                     ),
                     nodes.paragraph(text=str(sys.exc_info()[1])),
                 )

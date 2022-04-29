@@ -23,14 +23,14 @@
 
 #include <ert/config/conf.hpp>
 
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_grid.h>
+#include <ert/ecl/ecl_sum.h>
 
-#include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/field.hpp>
 #include <ert/enkf/active_list.hpp>
+#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/field.hpp>
+#include <ert/enkf/field_config.hpp>
+#include <ert/enkf/obs_data.hpp>
 
 typedef struct block_obs_struct block_obs_type;
 

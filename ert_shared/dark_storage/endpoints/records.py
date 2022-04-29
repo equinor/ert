@@ -138,7 +138,7 @@ async def get_record_observations(
 ) -> List[js.ObservationOut]:
     obs_keys = res.observation_keys(name)
     case = get_name("ensemble", ensemble_id)
-    obss = observations_for_obs_keys(case, obs_keys)
+    obss = observations_for_obs_keys(res, case, obs_keys)
     return [
         js.ObservationOut(
             id=uuid4(),
@@ -174,10 +174,11 @@ async def get_ensemble_record(
     label: Optional[str] = None,
 ) -> Any:
     ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(ensemble_name, name, realization_index)
+    dataframe = data_for_key(res, ensemble_name, name, realization_index)
     if realization_index is not None:
-        # dataframe.loc returns a Series, and when we reconstruct a DataFrame from a Series, it defaults to be
-        # oriented the wrong way, so we must transpose it
+        # dataframe.loc returns a Series, and when we reconstruct a DataFrame
+        # from a Series, it defaults to be oriented the wrong way, so we must
+        # transpose it
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
     if accept == "application/x-parquet":
@@ -211,8 +212,7 @@ async def get_record_labels(
 async def get_ensemble_parameters(
     *, res: LibresFacade = Depends(get_res), ensemble_id: UUID
 ) -> List[dict]:
-    ensemble_name = get_name(type="ensemble", uuid=ensemble_id)
-    return ensemble_parameters(ensemble_name)
+    return ensemble_parameters(res)
 
 
 @router.get(
@@ -253,7 +253,7 @@ def get_ensemble_responses(
     for name in res.get_summary_keys():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
-            id=get_id(f"response", f"{ensemble_id}/{name}"),
+            id=get_id("response", f"{ensemble_id}/{name}"),
             name=name,
             userdata={"data_origin": "Summary"},
             has_observations=len(obs_keys) != 0,
@@ -262,7 +262,7 @@ def get_ensemble_responses(
     for name in res.get_gen_data_keys():
         obs_keys = res.observation_keys(name)
         response_map[str(name)] = js.RecordOut(
-            id=get_id(f"response", f"{ensemble_id}/{name}"),
+            id=get_id("response", f"{ensemble_id}/{name}"),
             name=name,
             userdata={"data_origin": "GEN_DATA"},
             has_observations=len(obs_keys) != 0,

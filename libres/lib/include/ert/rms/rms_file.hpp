@@ -20,8 +20,8 @@
 #define ERT_RMS_FILE_H
 
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/rms/rms_tag.hpp>
 

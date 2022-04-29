@@ -1,5 +1,3 @@
-import sys
-from pathlib import Path
 from ert_shared.services._base_service import BaseService, local_exec_args
 
 

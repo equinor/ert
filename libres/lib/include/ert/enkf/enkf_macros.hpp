@@ -19,24 +19,23 @@
 #ifndef ERT_ENKF_MACROS_H
 #define ERT_ENKF_MACROS_H
 
+#include <Eigen/Dense>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <ert/util/rng.hpp>
 #include <ert/util/double_vector.hpp>
 #include <ert/util/int_vector.hpp>
+#include <ert/util/rng.hpp>
 
 #include <ert/ecl/ecl_file.hpp>
 #include <ert/ecl/ecl_sum.hpp>
 
-#include <ert/res_util/matrix.hpp>
-
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/active_list.hpp>
-#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
+#include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/forward_load_context.hpp>
+#include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/value_export.hpp>
 
 #define VOID_CONFIG_FREE(prefix)                                               \
@@ -200,26 +199,27 @@
 
 #define VOID_SERIALIZE(prefix)                                                 \
     void prefix##_serialize__(const void *void_arg, node_id_type node_id,      \
-                              const ActiveList *active_list, matrix_type *A,   \
-                              int row_offset, int column) {                    \
+                              const ActiveList *active_list,                   \
+                              Eigen::MatrixXd &A, int row_offset,              \
+                              int column) {                                    \
         const prefix##_type *arg = prefix##_safe_cast_const(void_arg);         \
         prefix##_serialize(arg, node_id, active_list, A, row_offset, column);  \
     }
 #define VOID_SERIALIZE_HEADER(prefix)                                          \
     void prefix##_serialize__(const void *, node_id_type, const ActiveList *,  \
-                              matrix_type *, int, int);
+                              Eigen::MatrixXd &, int, int);
 
 #define VOID_DESERIALIZE(prefix)                                               \
     void prefix##_deserialize__(                                               \
         void *void_arg, node_id_type node_id, const ActiveList *active_list,   \
-        const matrix_type *A, int row_offset, int column) {                    \
+        const Eigen::MatrixXd &A, int row_offset, int column) {                \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
         prefix##_deserialize(arg, node_id, active_list, A, row_offset,         \
                              column);                                          \
     }
 #define VOID_DESERIALIZE_HEADER(prefix)                                        \
     void prefix##_deserialize__(void *, node_id_type, const ActiveList *,      \
-                                const matrix_type *, int, int);
+                                const Eigen::MatrixXd &, int, int);
 
 #define VOID_INITIALIZE(prefix)                                                \
     bool prefix##_initialize__(void *void_arg, int iens,                       \

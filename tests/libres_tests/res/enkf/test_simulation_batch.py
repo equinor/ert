@@ -1,4 +1,3 @@
-from ecl.util.util import BoolVector
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import EnkfConfigNode, EnkfNode, ErtRunContext, NodeId
@@ -62,7 +61,7 @@ class SimulationBatchTest(ResTest):
                 injection_node.save(sim_fs, node_id)
                 state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
-            mask = BoolVector(default_value=True, initial_size=batch_size)
+            mask = [True] * batch_size
             model_config = ert.getModelConfig()
             runpath_fmt = model_config.getRunpathFormat()
             jobname_fmt = model_config.getJobnameFormat()

@@ -1,6 +1,6 @@
 #  Copyright (C) 2013  Equinor ASA, Norway.
 #
-#  The file 'analysismodulevariablespanel.py' is part of ERT - Ensemble based Reservoir Tool.
+#  The file 'analysismodulevariablespanel.py' is part of ERT.
 #
 #  ERT is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         layout = QFormLayout()
         variable_names = AnalysisModuleVariablesModel.getVariableNames(
-            facade.get_analysis_module(analysis_module_name)
+            facade=self.facade, analysis_module_name=self._analysis_module_name
         )
 
         if len(variable_names) == 0:
@@ -80,7 +80,6 @@ class AnalysisModuleVariablesPanel(QWidget):
                     spinner = self.createSpinBox(
                         variable_name,
                         variable_value,
-                        variable_type,
                         analysis_module_variables_model,
                     )
 
@@ -88,49 +87,77 @@ class AnalysisModuleVariablesPanel(QWidget):
 
                 if variable_name == "IES_INVERSION":
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   0: Exact inversion with diagonal R=I</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "0: Exact inversion with diagonal R=I</span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   1: Subspace inversion with exact R  </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "1: Subspace inversion with exact R  </span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   2: Subspace inversion using R=EE\'   </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "2: Subspace inversion using R=EE'   </span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   3: Subspace inversion using E       </span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "3: Subspace inversion using E       </span>"
                     )
                     layout.addRow(label, None)
 
                 if variable_name == "IES_DEC_STEPLENGTH":
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A good start is max steplength of 0.6, min steplength of 0.3, and decline of 2.5</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "A good start is max steplength of 0.6, min steplength of 0.3, "
+                        "and decline of 2.5</span>"
                     )
                     layout.addRow(label, None)
                     label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   A steplength of 1.0 and one iteration results in ES update</span>'
+                        "<span style="
+                        '"font-size:10pt; font-weight:300;font-style:italic;">   '
+                        "A steplength of 1.0 and one iteration "
+                        "results in ES update</span>"
                     )
                     layout.addRow(label, None)
 
-                if variable_name == "IES_AAPROJECTION":
-                    label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Only impacts estimate when n less than N-1</span>'
-                    )
-                    label = QLabel(
-                        '<span style="font-size:10pt; font-weight:300;font-style:italic;">   Any benefit of using the projection is unclear</span>'
-                    )
-                    layout.addRow(label, None)
+        # Truncation of the eigenvalue spectrum is not possible when using exact
+        # inversion, hence the spinners for setting the amount of truncation are
+        # deactivated for exact inversion.
+        inversion_spinner = self.widget_from_layout(layout, "IES_INVERSION")
+        truncation_spinner = self.widget_from_layout(layout, "ENKF_TRUNCATION")
+        self.update_truncation_spinners(inversion_spinner.value(), truncation_spinner)
+        inversion_spinner.valueChanged.connect(
+            lambda value: self.update_truncation_spinners(value, truncation_spinner)
+        )
 
         self.setLayout(layout)
         self.blockSignals(False)
+
+    def update_truncation_spinners(
+        self, value: int, truncation_spinner: QDoubleSpinBox
+    ) -> None:
+        if value == 0:  # Exact inversion
+            truncation_spinner.setEnabled(False)
+        else:
+            truncation_spinner.setEnabled(True)
+
+    def widget_from_layout(self, layout: QFormLayout, widget_name: str) -> QWidget:
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget.objectName() == widget_name:
+                return widget
 
     def createSpinBox(
         self,
         variable_name,
         variable_value,
-        variable_type,
         analysis_module_variables_model,
     ):
         spinner = QSpinBox()
@@ -144,11 +171,9 @@ class AnalysisModuleVariablesPanel(QWidget):
         spinner.setSingleStep(
             analysis_module_variables_model.getVariableStepValue(variable_name)
         )
+        spinner.setObjectName(variable_name)
         if variable_value is not None:
             spinner.setValue(variable_value)
-        spinner.valueChanged.connect(
-            partial(self.valueChanged, variable_name, variable_type, spinner)
-        )
         return spinner
 
     def createCheckBox(self, variable_name, variable_value, variable_type):
@@ -179,6 +204,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             analysis_module_variables_model.getVariableStepValue(variable_name)
         )
         spinner.setValue(variable_value)
+        spinner.setObjectName(variable_name)
         spinner.valueChanged.connect(
             partial(self.valueChanged, variable_name, variable_type, spinner)
         )

@@ -16,22 +16,22 @@
    for more details.
 */
 
+#include <Eigen/Dense>
+#include <cmath>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <cmath>
 
-#include <ert/util/util.h>
-#include <ert/util/buffer.h>
-#include <ert/res_util/matrix.hpp>
 #include <ert/res_util/subst_list.hpp>
+#include <ert/util/buffer.h>
+#include <ert/util/util.h>
 
+#include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/enkf_macros.hpp>
+#include <ert/enkf/gen_kw.hpp>
 #include <ert/enkf/gen_kw_common.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
-#include <ert/enkf/gen_kw.hpp>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -187,7 +187,7 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens, const char *init_file,
 }
 
 void gen_kw_serialize(const gen_kw_type *gen_kw, node_id_type node_id,
-                      const ActiveList *active_list, matrix_type *A,
+                      const ActiveList *active_list, Eigen::MatrixXd &A,
                       int row_offset, int column) {
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     enkf_matrix_serialize(gen_kw->data, data_size, ECL_DOUBLE, active_list, A,
@@ -195,7 +195,7 @@ void gen_kw_serialize(const gen_kw_type *gen_kw, node_id_type node_id,
 }
 
 void gen_kw_deserialize(gen_kw_type *gen_kw, node_id_type node_id,
-                        const ActiveList *active_list, const matrix_type *A,
+                        const ActiveList *active_list, const Eigen::MatrixXd &A,
                         int row_offset, int column) {
     const int data_size = gen_kw_config_get_data_size(gen_kw->config);
     enkf_matrix_deserialize(gen_kw->data, data_size, ECL_DOUBLE, active_list, A,

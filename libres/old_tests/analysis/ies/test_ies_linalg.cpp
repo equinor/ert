@@ -1,10 +1,10 @@
-#include <ert/util/test_util.hpp>
 #include <ert/util/rng.h>
+#include <ert/util/test_util.hpp>
 
 #include <ert/res_util/es_testdata.hpp>
 
-#include <ert/analysis/ies/ies_data.hpp>
 #include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
 
 void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, const ies::config::Config &ies_config,
@@ -13,7 +13,6 @@ void update_exact_scheme_subspace_no_truncation_diagR(
     int iteration_nr = ies_data.inc_iteration_nr();
     ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E, testdata.D,
                  ies_config.inversion(), ies_config.truncation(),
-                 ies_config.aaprojection(),
                  ies_config.steplength(iteration_nr));
 }
 /*

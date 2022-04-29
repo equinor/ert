@@ -45,7 +45,7 @@ class SummaryObservationCollectorTest(ResTest):
             self.assertFloatEqual(data["STD_WOPR:OP1"]["2010-03-31"], 0.05)
 
             with self.assertRaises(KeyError):
-                fgir = data["FGIR"]
+                data["FGIR"]
 
             data = SummaryObservationCollector.loadObservationData(
                 ert, "default_0", ["WOPR:OP1"]

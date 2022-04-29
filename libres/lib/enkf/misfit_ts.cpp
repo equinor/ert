@@ -18,10 +18,10 @@
 
 #include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/type_macros.h>
 #include <ert/util/double_vector.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/type_macros.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/misfit_ts.hpp>
 

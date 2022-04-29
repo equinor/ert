@@ -24,38 +24,37 @@
 
 #include <stdbool.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
+#include <ert/res_util/subst_list.hpp>
+#include <ert/res_util/ui_return.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
-#include <ert/res_util/matrix.hpp>
-#include <ert/res_util/ui_return.hpp>
-#include <ert/res_util/subst_list.hpp>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 
 #include <ert/config/config_settings.hpp>
 
-#include <ert/job_queue/job_queue.hpp>
 #include <ert/job_queue/ext_joblist.hpp>
 #include <ert/job_queue/forward_model.hpp>
+#include <ert/job_queue/job_queue.hpp>
 
-#include <ert/enkf/res_config.hpp>
+#include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/enkf_state.hpp>
-#include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/misfit_ensemble.hpp>
-#include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/site_config.hpp>
-#include <ert/enkf/local_config.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/enkf_plot_data.hpp>
+#include <ert/enkf/enkf_state.hpp>
+#include <ert/enkf/enkf_types.hpp>
+#include <ert/enkf/ert_run_context.hpp>
+#include <ert/enkf/ert_template.hpp>
+#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
+#include <ert/enkf/local_config.hpp>
+#include <ert/enkf/misfit_ensemble.hpp>
+#include <ert/enkf/obs_data.hpp>
+#include <ert/enkf/res_config.hpp>
 #include <ert/enkf/rng_config.hpp>
 #include <ert/enkf/rng_manager.hpp>
-#include <ert/enkf/field_config.hpp>
-#include <ert/enkf/ert_run_context.hpp>
+#include <ert/enkf/site_config.hpp>
 
 typedef struct enkf_main_struct enkf_main_type;
 extern "C" const char *
@@ -136,23 +135,15 @@ extern "C" bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                                int report_step,
                                                enkf_fs_type *fs);
 
-int enkf_main_load_from_forward_model_with_fs(
-    enkf_main_type *enkf_main, int iter, bool_vector_type *iactive,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs);
-int enkf_main_load_from_forward_model(enkf_main_type *enkf_main, int iter,
-                                      bool_vector_type *iactive,
-                                      stringlist_type **realizations_msg_list);
-extern "C" PY_USED int
-enkf_main_load_from_forward_model_from_gui(enkf_main_type *enkf_main, int iter,
-                                           bool_vector_type *iactive,
-                                           enkf_fs_type *fs);
-extern "C" int enkf_main_load_from_run_context(
-    enkf_main_type *enkf_main, ert_run_context_type *run_context,
-    stringlist_type **realizations_msg_list, enkf_fs_type *fs);
 extern "C" int
-enkf_main_load_from_run_context_from_gui(enkf_main_type *enkf_main,
-                                         ert_run_context_type *run_context,
-                                         enkf_fs_type *fs);
+enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main, int iter,
+                                          bool_vector_type *iactive,
+                                          enkf_fs_type *fs);
+
+extern "C" int
+enkf_main_load_from_run_context(enkf_main_type *enkf_main,
+                                ert_run_context_type *run_context,
+                                enkf_fs_type *fs);
 
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path);

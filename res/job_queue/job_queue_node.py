@@ -31,7 +31,7 @@ class JobQueueNode(BaseCClass):
     )
     _free = ResPrototype("void job_queue_node_free(job_queue_node)")
     _submit = ResPrototype(
-        "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"
+        "job_submit_status_type_enum job_queue_node_submit_simple(job_queue_node, driver)"  # noqa
     )
     _run_kill = ResPrototype("bool job_queue_node_kill_simple(job_queue_node, driver)")
 

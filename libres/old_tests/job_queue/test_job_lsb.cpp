@@ -15,9 +15,9 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <stdbool.h>
 #include <dlfcn.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
 

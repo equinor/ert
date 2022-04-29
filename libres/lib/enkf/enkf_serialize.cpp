@@ -175,23 +175,23 @@ vector (marked with X2 above)). Now - that was clear ehhh?
 
 void enkf_matrix_serialize(const void *__node_data, int node_size,
                            ecl_data_type node_type,
-                           const ActiveList *__active_list, matrix_type *A,
+                           const ActiveList *__active_list, Eigen::MatrixXd &A,
                            int row_offset, int column) {
     const int *active_list = __active_list->active_list_get_active();
     auto active_size = __active_list->active_size(node_size);
 
     if (ecl_type_is_double(node_type)) {
         const double *node_data = (const double *)__node_data;
-        if (active_size == node_size) /* All elements active */
-            matrix_set_many_on_column(A, row_offset, node_size, node_data,
-                                      column);
-        else {
-            int row_index;
-            int node_index;
-            for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
-                matrix_iset(A, row_index + row_offset, column,
-                            node_data[node_index]);
+        if (active_size == node_size) { /* All elements active */
+            if ((row_offset + node_size) <= A.rows()) {
+                for (int i = 0; i < node_size; i++)
+                    A(row_offset + i, column) = node_data[i];
+            } else
+                throw std::out_of_range("range violation");
+        } else {
+            for (int row_index = 0; row_index < active_size; row_index++) {
+                int node_index = active_list[row_index];
+                A(row_index + row_offset, column) = node_data[node_index];
             }
         }
     } else if (ecl_type_is_float(node_type)) {
@@ -199,17 +199,12 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
         int row_index;
         if (active_size == node_size) { /* All elements active */
             for (row_index = 0; row_index < node_size; row_index++)
-                matrix_iset(
-                    A, row_index + row_offset, column,
-                    node_data
-                        [row_index]); /* Must have float -> double conversion; can not use memcpy() based approach */
+                /* Must have float -> double conversion; can not use memcpy() based approach */
+                A(row_index + row_offset, column) = node_data[row_index];
         } else {
-            int row_index;
-            int node_index;
-            for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
-                matrix_iset(A, row_index + row_offset, column,
-                            node_data[node_index]);
+            for (int row_index = 0; row_index < active_size; row_index++) {
+                int node_index = active_list[row_index];
+                A(row_index + row_offset, column) = node_data[node_index];
             }
         }
     } else
@@ -221,7 +216,8 @@ void enkf_matrix_serialize(const void *__node_data, int node_size,
 void enkf_matrix_deserialize(void *__node_data, int node_size,
                              ecl_data_type node_type,
                              const ActiveList *__active_list,
-                             const matrix_type *A, int row_offset, int column) {
+                             const Eigen::MatrixXd &A, int row_offset,
+                             int column) {
     const int *active_list = __active_list->active_list_get_active();
     auto active_size = __active_list->active_size(node_size);
 
@@ -229,17 +225,12 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
         double *node_data = (double *)__node_data;
 
         if (active_size == node_size) { /* All elements active */
-            int row_index;
-            for (row_index = 0; row_index < active_size; row_index++)
-                node_data[row_index] =
-                    matrix_iget(A, row_index + row_offset, column);
+            for (int row_index = 0; row_index < active_size; row_index++)
+                node_data[row_index] = A(row_index + row_offset, column);
         } else {
-            int row_index;
-            int node_index;
-            for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
-                node_data[node_index] =
-                    matrix_iget(A, row_index + row_offset, column);
+            for (int row_index = 0; row_index < active_size; row_index++) {
+                int node_index = active_list[row_index];
+                node_data[node_index] = A(row_index + row_offset, column);
             }
         }
 
@@ -249,15 +240,11 @@ void enkf_matrix_deserialize(void *__node_data, int node_size,
         if (active_size == node_size) { /* All elements active */
             int row_index;
             for (row_index = 0; row_index < active_size; row_index++)
-                node_data[row_index] =
-                    matrix_iget(A, row_index + row_offset, column);
+                node_data[row_index] = A(row_index + row_offset, column);
         } else {
-            int row_index;
-            int node_index;
-            for (row_index = 0; row_index < active_size; row_index++) {
-                node_index = active_list[row_index];
-                node_data[node_index] =
-                    matrix_iget(A, row_index + row_offset, column);
+            for (int row_index = 0; row_index < active_size; row_index++) {
+                int node_index = active_list[row_index];
+                node_data[node_index] = A(row_index + row_offset, column);
             }
         }
     } else

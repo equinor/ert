@@ -20,13 +20,13 @@
 
 #include <string.h>
 
-#include <ert/util/type_macros.hpp>
 #include <ert/util/stringlist.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/res_util/res_env.hpp>
 
-#include <ert/config/config_schema_item.hpp>
 #include <ert/config/config_content_node.hpp>
+#include <ert/config/config_schema_item.hpp>
 
 namespace fs = std::filesystem;
 

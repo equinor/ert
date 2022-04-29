@@ -19,13 +19,13 @@
 #ifndef ERT_MISFIT_RANKING_H
 #define ERT_MISFIT_RANKING_H
 
-#include <ert/util/type_macros.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/perm_vector.h>
+#include <ert/util/type_macros.h>
 
+#include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/enkf_fs.hpp>
 
 typedef struct misfit_ranking_struct misfit_ranking_type;
 

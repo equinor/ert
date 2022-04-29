@@ -24,7 +24,6 @@
 
 bool check_ecl_sum_loaded(const enkf_main_type *enkf_main) {
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    stringlist_type *msg_list = stringlist_alloc_new();
     enkf_state_type *state1 = enkf_main_iget_state(enkf_main, 0);
     char *job_name =
         model_config_alloc_jobname(enkf_main_get_model_config(enkf_main), 0);
@@ -39,13 +38,12 @@ bool check_ecl_sum_loaded(const enkf_main_type *enkf_main) {
     state_map_type *state_map = enkf_fs_get_state_map(fs);
     state_map_iset(state_map, 0, STATE_INITIALIZED);
 
-    int error = enkf_state_load_from_forward_model(state1, run_arg1, msg_list);
+    int error = enkf_state_load_from_forward_model(state1, run_arg1);
 
     state_map_iset(state_map, 1, STATE_INITIALIZED);
-    error = enkf_state_load_from_forward_model(state2, run_arg2, msg_list);
+    error = enkf_state_load_from_forward_model(state2, run_arg2);
 
     free(job_name);
-    stringlist_free(msg_list);
     return (0 == error);
 }
 

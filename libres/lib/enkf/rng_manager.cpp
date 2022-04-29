@@ -21,10 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/rng.h>
-#include <ert/util/vector.h>
 #include <ert/enkf/rng_manager.hpp>
 #include <ert/logging.hpp>
+#include <ert/util/rng.h>
+#include <ert/util/vector.h>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");

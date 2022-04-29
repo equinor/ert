@@ -20,15 +20,15 @@
 #define ERT_FIELD_H
 #include <ert/util/type_macros.h>
 
-#include <ert/ecl/fortio.h>
 #include <ert/ecl/ecl_kw.h>
 #include <ert/ecl/ecl_type.h>
+#include <ert/ecl/fortio.h>
 
 #include <ert/enkf/enkf_macros.hpp>
-#include <ert/enkf/enkf_util.hpp>
-#include <ert/enkf/field_config.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
+#include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/field_common.hpp>
+#include <ert/enkf/field_config.hpp>
 
 /* Typedef field_type moved to field_config.h */
 

@@ -1,6 +1,6 @@
 from ert_utils import ErtTest
 
-from ert_gui.ertwidgets.models.activerealizationsmodel import mask_to_rangestring
+from ert.ensemble_evaluator.activerange import mask_to_rangestring
 
 
 class ActiveRealizationsModelTest(ErtTest):

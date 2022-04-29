@@ -119,7 +119,8 @@ class ObsVector(BaseCClass):
             return step_list[0]
         else:
             raise ValueError(
-                "The activeStep() method can *ONLY* be called for obervations with one active step"
+                "The activeStep() method can *ONLY* be called "
+                "for obervations with one active step"
             )
 
     def firstActiveStep(self):

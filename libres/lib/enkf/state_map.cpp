@@ -17,15 +17,15 @@
 #include <algorithm>
 #include <filesystem>
 
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 #include <ert/python.hpp>
 
-#include <ert/util/util.h>
-#include <ert/util/int_vector.h>
-#include <ert/util/bool_vector.h>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/bool_vector.h>
+#include <ert/util/int_vector.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/state_map.hpp>

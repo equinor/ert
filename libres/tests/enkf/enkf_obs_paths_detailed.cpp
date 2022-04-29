@@ -1,11 +1,11 @@
+#include <fstream>
 #include <stdlib.h>
 #include <string>
-#include <fstream>
 
 #include <catch2/catch.hpp>
 
-#include <ert/enkf/enkf_obs.hpp>
 #include "../tmpdir.hpp"
+#include <ert/enkf/enkf_obs.hpp>
 
 /*
  * Write conf-file with given keywords, then parse it.
@@ -70,7 +70,6 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
             THEN("There are no errors") {
                 std::string errors = get_path_error(enkf_conf);
                 REQUIRE(!contains(errors, "OBS_FILE"));
-                REQUIRE(!contains(errors, "ERROR_COVAR"));
                 REQUIRE(!contains(errors, "INDEX_FILE"));
             }
             conf_instance_free(enkf_conf);
@@ -86,7 +85,6 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                         errors, "OBS_FILE=>" +
                                     std::filesystem::current_path().native() +
                                     "/obs_path/obs.txt"));
-                    REQUIRE(!contains(errors, "ERROR_COVAR"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
@@ -95,7 +93,6 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                 THEN("There are no errors") {
                     std::string errors = get_path_error(enkf_conf);
                     REQUIRE(!contains(errors, "OBS_FILE"));
-                    REQUIRE(!contains(errors, "ERROR_COVAR"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
@@ -114,7 +111,6 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                         errors, "OBS_FILE=>" +
                                     std::filesystem::current_path().native() +
                                     "/obs_path/obs_path/obs.txt"));
-                    REQUIRE(!contains(errors, "ERROR_COVAR"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
@@ -124,43 +120,34 @@ TEST_CASE("Test parsing keywords in configuration", "[unittest]") {
                 THEN("There are no errors") {
                     std::string errors = get_path_error(enkf_conf);
                     REQUIRE(!contains(errors, "OBS_FILE"));
-                    REQUIRE(!contains(errors, "ERROR_COVAR"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }
             conf_instance_free(enkf_conf);
         }
 
-        GIVEN(
-            "A conf file with OBS_FILE, ERROR_COVAR and INDEX_FILE keywords") {
+        GIVEN("A conf file with OBS_FILE and INDEX_FILE keywords") {
             conf_instance_type *enkf_conf =
                 write_conf({"OBS_FILE    = obs.txt;"
-                            "ERROR_COVAR = covar.txt;"
                             "INDEX_FILE  = index.txt;"});
 
             WHEN("Only OBS_FILE exists") {
                 touch_file("obs_path/obs.txt");
-                THEN("Error refer to missing covar and index file") {
+                THEN("Error refer to missing index file") {
                     std::string errors = get_path_error(enkf_conf);
                     REQUIRE(!contains(errors, "OBS_FILE"));
-                    REQUIRE(contains(
-                        errors, "ERROR_COVAR=>" +
-                                    std::filesystem::current_path().native() +
-                                    "/obs_path/covar.txt"));
                     REQUIRE(contains(
                         errors, "INDEX_FILE=>" +
                                     std::filesystem::current_path().native() +
                                     "/obs_path/index.txt"));
                 }
             }
-            WHEN("covar, obs, and index files exist") {
+            WHEN("obs, and index files exist") {
                 touch_file("obs_path/obs.txt");
-                touch_file("obs_path/covar.txt");
                 touch_file("obs_path/index.txt");
                 THEN("There are no errors") {
                     std::string errors = get_path_error(enkf_conf);
                     REQUIRE(!contains(errors, "OBS_FILE"));
-                    REQUIRE(!contains(errors, "ERROR_COVAR"));
                     REQUIRE(!contains(errors, "INDEX_FILE"));
                 }
             }

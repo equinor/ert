@@ -11,14 +11,16 @@ class Distribution:
     """A distribution is an object that can draw stochastic numbers in the
     form of a NumericalRecord.
 
-    The record is a collection with size, and either a dummy integer index or
-    an explicit index. Either size or index must be provided. When an index
-    is provided, the size is implicit from the length of the index.
+    The record is a scalar or a collection with size, and either a dummy integer
+    index or an explicit index. Either size or index must be provided. When an
+    index is provided, the size is implicit from the length of the index.
 
-    Every number in the sampled NumericalRecord (if size > 1) is independent.￼
+    Every number in the sampled NumericalRecord (if size > 1) is independent.
 
     Args:
-        size: Length of the NumericalRecord
+        size: Length of the NumericalRecord. Do not supply size if a scalar
+            record is wanted, supplying size=1 will make a LIST_FLOAT record with
+            size 1.
         index: Explicit integer or string index if size is not provided.
         rvs: Callback to a function that draws the numbers.
         ppf: Callback to a function that computes the percentile function.
@@ -32,27 +34,39 @@ class Distribution:
         rvs: Callable[[int], np.ndarray],  # type: ignore
         ppf: Callable[[np.ndarray], np.ndarray],  # type: ignore
     ) -> None:
-        if size is None and index is None:
-            raise ValueError("Cannot create distribution with neither size nor index")
         if size is not None and index is not None:
             raise ValueError("Cannot create distribution with both size and index")
 
         self._index: ert.data.RecordIndex = ()
 
+        if (size is None or size == 0) and index is None:
+            self._is_scalar = True
+            self._index = ()
+            self._size = 1
         if size is not None:
             self._size = size
             self._as_array = True
             self._index = tuple(range(self._size))
+            self._is_scalar = False
         elif index is not None:
             self._size = len(tuple(index))
             self._as_array = False
             self._index = cast(ert.data.RecordIndex, tuple(idx for idx in index))
+            self._is_scalar = False
 
         self._raw_rvs = rvs
         self._raw_ppf = ppf
 
     @property
+    def is_scalar(self) -> bool:
+        """Returns True of NumericalRecords of a scalar type will be produced."""
+        return self._is_scalar
+
+    @property
     def size(self) -> int:
+        """Return the length of the NumericalRecord produces.
+
+        A scalar record will return size 1."""
         return self._size
 
     @property
@@ -60,6 +74,8 @@ class Distribution:
         return self._index
 
     def _to_record(self, x: np.ndarray) -> ert.data.Record:  # type: ignore
+        if self._is_scalar:
+            return ert.data.NumericalRecord(data=x[0])
         if self._as_array:
             return ert.data.NumericalRecord(data=x.tolist())
         else:

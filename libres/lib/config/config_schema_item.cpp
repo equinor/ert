@@ -16,18 +16,18 @@
    for more details.
 */
 
+#include <filesystem>
 #include <set>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/type_macros.hpp>
-#include <ert/util/parser.hpp>
-#include <ert/util/hash.hpp>
 #include <ert/res_util/res_env.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>

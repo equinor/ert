@@ -1,5 +1,4 @@
-import os
-from uuid import UUID, uuid4
+from uuid import UUID
 from typing import Any, Mapping, List
 
 from fastapi import APIRouter, Body, Depends
@@ -58,7 +57,7 @@ def get_experiment_ensembles(
             parent=None,
             experiment_id=get_id("experiment", "default"),
             userdata={"name": case},
-            size=get_size(case),
+            size=get_size(res),
             parameter_names=[],
             response_names=[],
             child_ensemble_ids=[],

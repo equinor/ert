@@ -17,8 +17,8 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/test_util.hpp>
 #include <ert/config/config_parser.hpp>
+#include <ert/util/test_util.hpp>
 
 int main(int argc, char **argv) {
     const char *config_file = argv[1];

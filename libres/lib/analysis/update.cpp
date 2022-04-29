@@ -1,23 +1,23 @@
-#include <vector>
-#include <string>
-#include <assert.h>
-#include <fmt/format.h>
-#include <cerrno>
-#include <optional>
 #include <Eigen/Dense>
+#include <assert.h>
+#include <cerrno>
+#include <fmt/format.h>
+#include <optional>
+#include <string>
+#include <vector>
 
-#include <ert/analysis/update.hpp>
-#include <ert/res_util/metric.hpp>
-#include <ert/res_util/memory.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/enkf_analysis.hpp>
-#include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/meas_data.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
-#include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/analysis_module.hpp>
+#include <ert/analysis/ies/ies.hpp>
+#include <ert/analysis/ies/ies_data.hpp>
+#include <ert/analysis/update.hpp>
+#include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/enkf_config_node.hpp>
+#include <ert/enkf/local_ministep.hpp>
+#include <ert/enkf/meas_data.hpp>
+#include <ert/enkf/obs_data.hpp>
 #include <ert/python.hpp>
+#include <ert/res_util/memory.hpp>
+#include <ert/res_util/metric.hpp>
 
 static auto logger = ert::get_logger("analysis.update");
 
@@ -60,7 +60,7 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
 
     enkf_node_type *node = enkf_node_alloc(config_node);
     node_id_type node_id = {.report_step = 0, .iens = iens};
-    enkf_node_serialize(node, fs, node_id, active_list, &A, row_offset, column);
+    enkf_node_serialize(node, fs, node_id, active_list, A, row_offset, column);
     enkf_node_free(node);
 }
 
@@ -109,7 +109,7 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     enkf_node_load(node, src_fs, node_id);
 
     // deserialize the matrix into the node (and writes it to the target fs)
-    enkf_node_deserialize(node, target_fs, node_id, active_list, &A, row_offset,
+    enkf_node_deserialize(node, target_fs, node_id, active_list, A, row_offset,
                           column);
     state_map_update_undefined(enkf_fs_get_state_map(target_fs), iens,
                                STATE_INITIALIZED);
@@ -262,15 +262,14 @@ void run_analysis_update_without_rowscaling(
         ies::init_update(module_data, ens_mask, obs_mask);
         int iteration_nr = module_data.inc_iteration_nr();
         ies::updateA(module_data, A, S, R, E, D, module_config.inversion(),
-                     module_config.truncation(), module_config.aaprojection(),
+                     module_config.truncation(),
                      module_config.steplength(iteration_nr));
     } else {
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X =
-            ies::makeX({}, S, R, E, D, module_config.inversion(),
-                       module_config.truncation(), false, W0, 1, 1);
+        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
+                                       module_config.truncation(), W0, 1, 1);
 
         A *= X;
     }
@@ -302,10 +301,9 @@ void run_analysis_update_with_rowscaling(
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X =
-            ies::makeX({}, S, R, E, D, module_config.inversion(),
-                       module_config.truncation(), false, W0, 1, 1);
-        row_scaling->multiply(&A, &X);
+        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
+                                       module_config.truncation(), W0, 1, 1);
+        row_scaling->multiply(A, X);
     }
 }
 
@@ -349,17 +347,6 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 }
 
-static FILE *create_log_file(const char *log_path) {
-    std::string log_file;
-    log_file = fmt::format("{}{}deprecated", log_path, UTIL_PATH_SEP_CHAR);
-
-    FILE *log_stream = fopen(log_file.data(), "a");
-    if (log_stream == nullptr)
-        throw std::runtime_error(fmt::format(
-            "Error opening '{}' for writing: {}", log_file, strerror(errno)));
-    return log_stream;
-}
-
 std::shared_ptr<analysis::update_data_type>
 make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                  enkf_obs_type *obs, ensemble_config_type *ensemble_config,
@@ -391,11 +378,7 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
 
     enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
                                       true);
-    FILE *log_stream =
-        create_log_file(analysis_config_get_log_path(analysis_config));
-    enkf_analysis_fprintf_obs_summary(
-        obs_data, meas_data, local_ministep_get_name(ministep), log_stream);
-    fclose(log_stream);
+    auto update_snapshot = make_update_snapshot(obs_data, meas_data);
 
     int active_obs_size = obs_data_get_active_size(obs_data);
     int active_ens_size = meas_data_get_active_ens_size(meas_data);
@@ -404,8 +387,11 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     meas_data_free(meas_data);
 
     Eigen::VectorXd observation_values = obs_data_values_as_vector(obs_data);
+    // Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
+    // in for example evensen2018 - Analysis of iterative ensemble smoothers for solving inverse problems.
+    // `global_std_scaling` is 1.0 for ES.
     Eigen::VectorXd observation_errors =
-        obs_data_errors_as_vector(obs_data) * global_std_scaling;
+        obs_data_errors_as_vector(obs_data) * sqrt(global_std_scaling);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
 
     if (S.rows() == 0) {
@@ -437,13 +423,10 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
         target_fs, ensemble_config, iens_active_index, active_ens_size,
         ministep);
 
-    /* This is not correct conceptually. Ministep should only hold the
-    configuration objects, not the actual data.*/
-    local_ministep_add_obs_data(ministep, obs_data);
-
     return std::make_shared<update_data_type>(
         std::move(S), std::move(E), std::move(D), std::move(R), std::move(A),
-        std::move(row_scaling_parameters), std::move(obs_mask));
+        std::move(row_scaling_parameters), std::move(obs_mask),
+        std::move(update_snapshot));
 }
 } // namespace analysis
 
@@ -531,7 +514,9 @@ RES_LIB_SUBMODULE("update", m) {
                        py::return_value_policy::reference_internal)
         .def_readwrite("has_observations",
                        &analysis::update_data_type::has_observations)
-        .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask);
+        .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask)
+        .def_readwrite("update_snapshot",
+                       &analysis::update_data_type::update_snapshot);
     m.def("copy_parameters", copy_parameters_pybind);
     m.def("make_update_data", make_update_data_pybind);
     m.def("save_parameters", save_parameters_pybind);

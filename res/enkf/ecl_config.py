@@ -39,7 +39,7 @@ class EclConfig(BaseCClass):
                                                                             char*, \
                                                                             stringlist, \
                                                                             time_t, \
-                                                                            char*)",
+                                                                            char*)",  # noqa
         bind=False,
     )
     _free = ResPrototype("void  ecl_config_free( ecl_config )")
@@ -118,6 +118,11 @@ class EclConfig(BaseCClass):
                     )
                 )
             except ValueError:
+                print(
+                    "Deprecation warning: The date format DD/MM/YYYY is deprecated, "
+                    "and its support will be removed in a future release. "
+                    "Please use ISO date format YYYY-MM-DD."
+                )
                 end_date = CTime(
                     datetime.strptime(
                         config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"

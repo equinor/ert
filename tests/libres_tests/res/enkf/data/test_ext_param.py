@@ -18,7 +18,7 @@ class ExtParamTest(ResTest):
             self.assertEqual(configkey, input_keys[i])
 
         with self.assertRaises(IndexError):
-            c = config[100]
+            config[100]
 
         keys = []
         for key in config.keys():
@@ -57,10 +57,10 @@ class ExtParamTest(ResTest):
             self.assertIn(configsuffixes, input_suffixes)
 
         with self.assertRaises(IndexError):
-            c = config[100]
+            config[100]
 
         with self.assertRaises(IndexError):
-            c = config["no_such_key"]
+            config["no_such_key"]
 
         self.assertEqual(set(config.keys()), set(input_dict.keys()))
 
@@ -117,15 +117,15 @@ class ExtParamTest(ResTest):
         data = ExtParam(config)
 
         with self.assertRaises(IndexError):
-            d = data[0]  # Cannot use indices when we have suffixes
+            data[0]  # Cannot use indices when we have suffixes
         with self.assertRaises(TypeError):
-            d = data["key1", 1]
+            data["key1", 1]
         with self.assertRaises(KeyError):
-            d = data["NoSuchKey"]
+            data["NoSuchKey"]
         with self.assertRaises(KeyError):
-            d = data["key1"]  # requires a suffix
+            data["key1"]  # requires a suffix
         with self.assertRaises(KeyError):
-            d = data["key1", "no_such_suffix"]
+            data["key1", "no_such_suffix"]
 
         data["key1", "a"] = 1
         data["key1", "b"] = 500.5

@@ -1,9 +1,12 @@
-import logging
+from typing import List
 
-from ecl.util.util import BoolVector
+import logging
+from typing import Dict
+
 from pandas import DataFrame
+
 from res.analysis.analysis_module import AnalysisModule
-from res.analysis.enums.analysis_module_options_enum import AnalysisModuleOptionsEnum
+from res.enkf.es_update import SmootherSnapshot
 from res.enkf.export import (
     GenDataCollector,
     SummaryCollector,
@@ -23,30 +26,11 @@ class LibresFacade:
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
 
-    def get_analysis_module_names(self, iterable=False):
-        modules = self.get_analysis_modules(iterable)
-        return [module.getName() for module in modules]
-
     def get_analysis_config(self):
         return self._enkf_main.analysisConfig()
 
-    def get_analysis_module(self, module_name):
+    def get_analysis_module(self, module_name: str) -> AnalysisModule:
         return self._enkf_main.analysisConfig().getModule(module_name)
-
-    def get_analysis_modules(self, iterable=False):
-        module_names = self._enkf_main.analysisConfig().getModuleList()
-
-        modules = []
-        for module_name in module_names:
-            module = self._enkf_main.analysisConfig().getModule(module_name)
-            module_is_iterable = module.checkOption(
-                AnalysisModuleOptionsEnum.ANALYSIS_ITERABLE
-            )
-
-            if iterable == module_is_iterable:
-                modules.append(module)
-
-        return sorted(modules, key=AnalysisModule.getName)
 
     def get_ensemble_size(self):
         return self._enkf_main.getEnsembleSize()
@@ -82,7 +66,7 @@ class LibresFacade:
         return self._enkf_main.getModelConfig().getRunpathAsString()
 
     def load_from_forward_model(
-        self, case: str, realisations: BoolVector, iteration: int
+        self, case: str, realisations: List[bool], iteration: int
     ) -> int:
         fs = self._enkf_main.getEnkfFsManager().getFileSystem(case)
         return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)
@@ -274,8 +258,9 @@ class LibresFacade:
     def gen_kw_priors(self):
         return self._enkf_main.getKeyManager().gen_kw_priors()
 
-    def get_update_step(self):
-        return self._enkf_main.getLocalConfig().getUpdatestep()
+    @property
+    def update_snapshots(self) -> Dict[str, SmootherSnapshot]:
+        return self._enkf_main.update_snapshots
 
     def get_alpha(self):
         return self._enkf_main.analysisConfig().getEnkfAlpha()

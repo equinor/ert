@@ -15,16 +15,16 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/config/config_parser.hpp>
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/analysis_iter_config.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 
 #define TMP_PATH "/tmp"
 char *create_config_file(const char *enspath_fmt, const char *runpath_fmt,

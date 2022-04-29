@@ -1,10 +1,9 @@
-import os
 from argparse import Namespace
 
 from _pytest.tmpdir import tmp_path
-from ecl.util.util import BoolVector
 from ert_utils import ErtTest
 
+from ert.ensemble_evaluator.activerange import ActiveRange
 import ert_shared.cli.model_factory as model_factory
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
@@ -62,9 +61,7 @@ class ModelFactoryTest(ErtTest):
             args = Namespace(realizations=None)
             ensemble_size = ert.getEnsembleSize()
             res = model_factory._realizations(args, ensemble_size)
-            mask = BoolVector(default_value=False, initial_size=ensemble_size)
-            mask.updateActiveMask("0-99")
-            self.assertEqual(mask, res)
+            self.assertEqual([True] * 100, res)
 
     def test_init_iteration_number(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
@@ -86,9 +83,9 @@ class ModelFactoryTest(ErtTest):
             args = Namespace(realizations="0-4,7,8")
             ensemble_size = ert.getEnsembleSize()
             res = model_factory._realizations(args, ensemble_size)
-            mask = BoolVector(default_value=False, initial_size=ensemble_size)
-            mask.updateActiveMask("0-4,7,8")
-            self.assertEqual(mask, res)
+            self.assertEqual(
+                ActiveRange(rangestring="0-4,7,8", length=ensemble_size).mask, res
+            )
 
     def test_setup_single_test_run(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
@@ -121,7 +118,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_ensemble_smoother(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -147,7 +143,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_multiple_data_assimilation(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -176,7 +171,6 @@ class ModelFactoryTest(ErtTest):
 
             model = model_factory._setup_iterative_ensemble_smoother(
                 ert,
-                facade.get_analysis_module_names,
                 args,
                 facade.get_ensemble_size(),
                 facade.get_current_case_name(),
@@ -189,55 +183,3 @@ class ModelFactoryTest(ErtTest):
             self.assertTrue("num_iterations" in model._simulation_arguments)
             self.assertTrue(facade.get_number_of_iterations() == 10)
             model.create_context(0)
-
-    def test_analysis_module_name_iterable(self):
-
-        active_name = "STD_ENKF"
-        modules = ["LIB_IES"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "LIB_IES")
-
-    def test_analysis_module_name_not_iterable(self):
-
-        active_name = "STD_ENKF"
-        modules = [
-            "STD_ENKF",
-        ]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "STD_ENKF")
-
-    def test_analysis_module_name_in_module(self):
-
-        active_name = "STD_ENKF"
-        modules = ["STD_ENKF"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "STD_ENKF")
-
-    def test_analysis_module_items_in_module(self):
-
-        active_name = "FOO"
-        modules = ["BAR"]
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertEqual(name, "BAR")
-
-    def test_analysis_module_no_hit(self):
-
-        active_name = "FOO"
-        modules = []
-        name = model_factory._get_analysis_module_name(
-            active_name, modules, iterable=True
-        )
-
-        self.assertIsNone(name)

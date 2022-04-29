@@ -93,6 +93,7 @@ setup(
         "psutil",
         "pydantic >= 1.9",
         "PyQt5",
+        "PyQt5-sip<=12.9.1; python_version <= '3.6'",
         "pyrsistent",
         "python-dateutil",
         "pyyaml",
@@ -107,7 +108,6 @@ setup(
         "websockets >= 9.0.1",
         "httpx",
     ],
-    setup_requires=["pytest-runner", "setuptools_scm"],
     entry_points={
         "console_scripts": [
             "ert3=ert3.console:main",
@@ -139,5 +139,4 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
-    test_suite="tests",
 )

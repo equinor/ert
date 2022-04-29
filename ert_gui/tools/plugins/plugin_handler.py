@@ -1,8 +1,7 @@
-from res.job_queue import WorkflowJob
 from .plugin import Plugin
 
 
-class PluginHandler(object):
+class PluginHandler:
     def __init__(self, ert, plugin_jobs, parent_window):
         """@type plugin_jobs: list of WorkflowJob"""
         self.__ert = ert

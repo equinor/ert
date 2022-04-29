@@ -16,10 +16,10 @@
    for more details.
 */
 
-#include <util.h>
-#include <field_config.h>
-#include <field.h>
 #include <ecl_grid.h>
+#include <field.h>
+#include <field_config.h>
+#include <util.h>
 
 void usage(const char *cmd) {
     printf("%s:  GRID_FILE OUTPATH field1  field2  field3 ....\n", cmd);

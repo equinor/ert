@@ -18,8 +18,8 @@
 
 #ifndef ERT_TRANS_FUNC_H
 #define ERT_TRANS_FUNC_H
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <ert/util/double_vector.h>
 

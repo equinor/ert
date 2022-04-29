@@ -22,12 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ert/util/util.hpp>
-#include <ert/util/hash.hpp>
-#include <ert/util/vector.hpp>
-#include <ert/util/buffer.hpp>
-#include <ert/util/parser.hpp>
 #include <ert/res_util/file_utils.hpp>
+#include <ert/util/buffer.hpp>
+#include <ert/util/hash.hpp>
+#include <ert/util/parser.hpp>
+#include <ert/util/util.hpp>
+#include <ert/util/vector.hpp>
 
 #include <ert/res_util/subst_func.hpp>
 #include <ert/res_util/subst_list.hpp>

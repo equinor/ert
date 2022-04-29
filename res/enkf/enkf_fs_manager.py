@@ -5,7 +5,7 @@ import warnings
 from typing import List
 
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector, StringList
+from ecl.util.util import StringList
 
 from res import ResPrototype
 from res import _lib
@@ -224,28 +224,23 @@ class EnkfFsManager(BaseCClass):
         self,
         source_case,
         source_report_step,
-        member_mask: List[str],
+        member_mask: List[bool],
         node_list: List[str],
     ):
         """
         @type source_case: str
         @type source_report_step: int
-        @type member_mask: ecl.util.BoolVector
+        @type member_mask: list
         @type node_list: ecl.util.StringList
         """
         if source_case not in self.getCaseList():
             raise KeyError(
                 f"No such source case: {source_case} in {self.getCaseList()}"
             )
-        if isinstance(member_mask, BoolVector):
-            warnings.warn(
-                "Using BoolVector for member_mask is deprecated, use a python list of bool",
-                DeprecationWarning,
-            )
-            member_mask = list(member_mask)
         if isinstance(node_list, StringList):
             warnings.warn(
-                "Using StringList for node_list is deprecated, use a python list of bool",
+                "Using StringList for node_list is deprecated, "
+                "use a python list of strings.",
                 DeprecationWarning,
             )
             node_list = list(node_list)
@@ -274,7 +269,8 @@ class EnkfFsManager(BaseCClass):
     ):
         if isinstance(parameter_list, StringList):
             warnings.warn(
-                "Using StringList for node_list is deprecated, use a python list of bools instead",
+                "Using StringList for node_list is deprecated, "
+                "use a python list of strings.",
                 DeprecationWarning,
             )
             parameter_list = list(parameter_list)

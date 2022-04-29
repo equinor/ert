@@ -19,11 +19,11 @@
 
 #include <ert/config/config_content.hpp>
 
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/subst_config.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/runpath_list.hpp>
+#include <ert/enkf/subst_config.hpp>
 
 namespace fs = std::filesystem;
 

@@ -11,11 +11,10 @@ from prefect import Flow
 from functools import partial
 import ert
 from ert_utils import tmp
-import ert_shared.ensemble_evaluator.ensemble.builder as ee
+import ert.ensemble_evaluator as ee
 from ert_shared.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.entity import identifiers as ids
-from ert_shared.ensemble_evaluator.ensemble.prefect import (
-    PrefectEnsemble,
+from ert.ensemble_evaluator import identifiers as ids
+from ert.ensemble_evaluator.builder._prefect import (
     _on_task_failure,
 )
 
@@ -26,7 +25,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
     real_source = "/real/0"
     step_source = "/real/0/step/0"
     step_builder = (
-        ee.create_step_builder()
+        ee.StepBuilder()
         .set_parent_source(source=real_source)
         .set_id("0")
         .set_name(step_name)
@@ -34,7 +33,7 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
     )
     for idx, (name, executable, args) in enumerate(jobs):
         step_builder.add_job(
-            ee.create_job_builder()
+            ee.JobBuilder()
             .set_id(str(idx))
             .set_name(name)
             .set_executable(executable)
@@ -46,14 +45,14 @@ def get_step(step_name, inputs, outputs, jobs, type_="unix"):
             location=Path(path), mime=mime
         )
         step_builder.add_input(
-            ee.create_input_builder()
+            ee.InputBuilder()
             .set_name(name)
             .set_transformation(transformation)
             .set_transmitter_factory(factory)
         )
     for name, path, mime, factory in outputs:
         step_builder.add_output(
-            ee.create_output_builder()
+            ee.OutputBuilder()
             .set_name(name)
             .set_transformation(
                 ert.data.SerializationTransformation(location=path, mime=mime)

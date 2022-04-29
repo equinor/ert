@@ -17,13 +17,14 @@
 */
 
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
+#include <fmt/format.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <math.h>
-#include <fmt/format.h>
+#include <string>
 
 #include <ert/util/util.h>
 
@@ -33,15 +34,17 @@
 #include <ert/analysis/analysis_module.hpp>
 
 #include <ert/enkf/analysis_config.hpp>
-#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/config_keys.hpp>
-#include <ert/enkf/site_config.hpp>
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
+#include <ert/enkf/site_config.hpp>
 
 #define UPDATE_ENKF_ALPHA_KEY "ENKF_ALPHA"
 #define UPDATE_STD_CUTOFF_KEY "STD_CUTOFF"
 
 #define ANALYSIS_CONFIG_TYPE_ID 64431306
+
+using namespace std::string_literals;
 
 struct analysis_config_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -261,30 +264,21 @@ bool analysis_config_has_module(const analysis_config_type *config,
     return (config->analysis_modules.count(module_name) > 0);
 }
 
-bool analysis_config_module_flag_is_set(const analysis_config_type *config,
-                                        analysis_module_flag_enum flag) {
-    if (config->analysis_module)
-        return analysis_module_check_option(config->analysis_module, flag);
-    else
-        return false;
-}
-
 bool analysis_config_select_module(analysis_config_type *config,
                                    const char *module_name) {
     if (analysis_config_has_module(config, module_name)) {
         analysis_module_type *module =
             analysis_config_get_module(config, module_name);
 
-        if (analysis_module_check_option(module, ANALYSIS_ITERABLE)) {
-            if (analysis_config_get_single_node_update(config)) {
-                fprintf(stderr,
-                        " ** Warning: the module:%s requires the setting "
-                        "\"SINGLE_NODE_UPDATE FALSE\" in the config file.\n",
-                        module_name);
-                fprintf(stderr,
-                        " **          the module has NOT been selected. \n");
-                return false;
-            }
+        if (analysis_module_get_name(module) == "IES_ENKF"s &&
+            analysis_config_get_single_node_update(config)) {
+            fprintf(stderr,
+                    " ** Warning: the module:%s requires the setting "
+                    "\"SINGLE_NODE_UPDATE FALSE\" in the config file.\n",
+                    module_name);
+            fprintf(stderr,
+                    " **          the module has NOT been selected. \n");
+            return false;
         }
 
         config->analysis_module = module;

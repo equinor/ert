@@ -14,8 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+from typing import List
+
 from cwrap import BaseCClass
-from ecl.util.util import RandomNumberGenerator
+from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
 from res.enkf.analysis_config import AnalysisConfig
@@ -68,7 +70,7 @@ class EnKFMain(BaseCClass):
 
         Note: @config is a ResConfig instance holding the configuration.
         """
-
+        self.update_snapshots = {}
         real_enkf_main = _RealEnKFMain(config, strict, verbose)
         assert isinstance(real_enkf_main, BaseCClass)
         self._init_from_real_enkf_main(real_enkf_main)
@@ -238,10 +240,11 @@ class _RealEnKFMain(BaseCClass):
                                              enkf_fs_manager)"
     )
     _load_from_forward_model = ResPrototype(
-        "int enkf_main_load_from_forward_model_from_gui(enkf_main, int, bool_vector, enkf_fs)"
+        "int enkf_main_load_from_forward_model_with_fs"
+        "(enkf_main, int, bool_vector, enkf_fs)"
     )
     _load_from_run_context = ResPrototype(
-        "int enkf_main_load_from_run_context_from_gui(enkf_main, ert_run_context, enkf_fs)"
+        "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
     )
     _create_run_path = ResPrototype(
         "void enkf_main_create_run_path(enkf_main , ert_run_context)"
@@ -250,7 +253,7 @@ class _RealEnKFMain(BaseCClass):
         "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main , \
                                                                                  enkf_fs , \
                                                                                  bool_vector , \
-                                                                                 int)"
+                                                                                 int)"  # noqa
     )
     _get_runpath_list = ResPrototype(
         "runpath_list_ref enkf_main_get_runpath_list(enkf_main)"
@@ -434,9 +437,13 @@ class _RealEnKFMain(BaseCClass):
             keyword, path, iactive, file_type, report_step, state, enkfFs
         )
 
-    def loadFromForwardModel(self, realization, iteration, fs):
+    def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
         """Returns the number of loaded realizations"""
-        return self._load_from_forward_model(iteration, realization, fs)
+        true_indices = [idx for idx, value in enumerate(realization) if value]
+        bool_vector = BoolVector.createFromList(
+            size=len(realization), source_list=true_indices
+        )
+        return self._load_from_forward_model(iteration, bool_vector, fs)
 
     def loadFromRunContext(self, run_context, fs):
         """Returns the number of loaded realizations"""
@@ -448,8 +455,14 @@ class _RealEnKFMain(BaseCClass):
     def createRunpath(self, run_context):
         self._create_run_path(run_context)
 
-    def getRunContextENSEMPLE_EXPERIMENT(self, fs, iactive, iteration=0):
-        return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, iactive, iteration)
+    def getRunContextENSEMPLE_EXPERIMENT(
+        self, fs, iactive: List[bool], iteration: int = 0
+    ):
+        true_indices = [idx for idx, value in enumerate(iactive) if value]
+        bool_vector = BoolVector.createFromList(
+            size=len(iactive), source_list=true_indices
+        )
+        return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, bool_vector, iteration)
 
     def create_runpath_list(self):
         return self._create_runpath_list()

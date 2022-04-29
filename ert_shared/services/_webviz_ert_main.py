@@ -1,4 +1,3 @@
-import subprocess
 import shutil
 import signal
 import sys

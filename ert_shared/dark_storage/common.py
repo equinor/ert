@@ -1,14 +1,19 @@
+from graphql import ResolveInfo
+
 from ert_data import loader
 from ert_data.measured import MeasuredData
-from ert_shared.dark_storage.enkf import get_res
 from typing import List, Union
 import pandas as pd
 
+from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnkfObservationImplementationType
 
 
-def ensemble_parameter_names(ensemble_name: str) -> List[str]:
-    res = get_res()
+def get_res_from_info(info: ResolveInfo) -> LibresFacade:
+    return info.context["request"].state.res
+
+
+def ensemble_parameter_names(res: LibresFacade) -> List[str]:
     return res.gen_kw_keys()
 
 
@@ -19,16 +24,14 @@ def ensemble_parameters(ensemble_name: str) -> List[dict]:
     ]
 
 
-def get_response_names():
-    res = get_res()
+def get_response_names(res: LibresFacade) -> List[str]:
     result = res.get_summary_keys().copy()
     result.extend(res.get_gen_data_keys().copy())
     return result
 
 
-def get_responses(ensemble_name: str):
-    res = get_res()
-    response_names = get_response_names()
+def get_responses(res: LibresFacade, ensemble_name: str):
+    response_names = get_response_names(res)
     responses = []
     active_realizations = res.get_active_realizations(ensemble_name)
 
@@ -38,11 +41,11 @@ def get_responses(ensemble_name: str):
     return responses
 
 
-def data_for_key(case, key, realization_index=None):
-    """Returns a pandas DataFrame with the datapoints for a given key for a given case. The row index is
-    the realization number, and the columns are an index over the indexes/dates"""
+def data_for_key(res: LibresFacade, case, key, realization_index=None):
+    """Returns a pandas DataFrame with the datapoints for a given key for a
+    given case. The row index is the realization number, and the columns are an
+    index over the indexes/dates"""
 
-    res = get_res()
     if key.startswith("LOG10_"):
         key = key[6:]
 
@@ -62,12 +65,13 @@ def data_for_key(case, key, realization_index=None):
         return data
 
 
-def observations_for_obs_keys(case, obs_keys):
-    """Returns a pandas DataFrame with the datapoints for a given observation key for a given case. The row index
-    is the realization number, and the column index is a multi-index with (obs_key, index/date, obs_index),
-    where index/date is used to relate the observation to the data point it relates to, and obs_index is
-    the index for the observation itself"""
-    res = get_res()
+def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
+    """Returns a pandas DataFrame with the datapoints for a given observation
+    key for a given case. The row index is the realization number, and the
+    column index is a multi-index with (obs_key, index/date, obs_index), where
+    index/date is used to relate the observation to the data point it relates
+    to, and obs_index is the index for the observation itself"""
+
     try:
         measured_data = MeasuredData(res, obs_keys, case_name=case, load_data=False)
         data = measured_data.data

@@ -24,8 +24,8 @@
 
 #include <ert/util/type_macros.h>
 
-#include <ert/ecl/ecl_sum.h>
 #include <ert/ecl/ecl_smspec.h>
+#include <ert/ecl/ecl_sum.h>
 
 #include <ert/enkf/enkf_macros.hpp>
 

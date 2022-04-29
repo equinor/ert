@@ -16,13 +16,13 @@
    for more details.
 */
 
+#include <dirent.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <dirent.h>
 
-#include <ert/util/util.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/util.hpp>
 
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/ext_joblist.hpp>

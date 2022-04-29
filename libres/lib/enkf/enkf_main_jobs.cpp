@@ -18,11 +18,11 @@
 
 #include <cassert>
 
-#include <ert/util/stringlist.h>
 #include <ert/util/string_util.h>
+#include <ert/util/stringlist.h>
 
-#include <ert/logging.hpp>
 #include <ert/enkf/enkf_main.hpp>
+#include <ert/logging.hpp>
 #include <ert/util/type_vector_functions.hpp>
 
 static auto logger = ert::get_logger("enkf");
@@ -103,73 +103,6 @@ enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args) {
         enkf_fs_decref(target_fs);
     }
     enkf_fs_decref(source_fs);
-
-    return NULL;
-}
-
-static void *enkf_main_load_results_JOB__(enkf_main_type *enkf_main, int iter,
-                                          const stringlist_type *args) {
-    bool_vector_type *iactive =
-        alloc_iactive_vector_from_range(args, 0, stringlist_get_size(args),
-                                        enkf_main_get_ensemble_size(enkf_main));
-    int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    stringlist_type **realizations_msg_list = (stringlist_type **)util_calloc(
-        ens_size, sizeof *realizations_msg_list);
-    for (int iens = 0; iens < ens_size; ++iens)
-        realizations_msg_list[iens] = stringlist_alloc_new();
-
-    enkf_main_load_from_forward_model(enkf_main, iter, iactive,
-                                      realizations_msg_list);
-
-    for (int iens = 0; iens < ens_size; ++iens) {
-        stringlist_type *msg = realizations_msg_list[iens];
-        if (stringlist_get_size(msg)) {
-            int msg_count = 0;
-            for (; msg_count < stringlist_get_size(msg); ++msg_count)
-                fprintf(stderr,
-                        "** Warning: Function %s : Load of realization number "
-                        "%d returned the following warning: %s\n",
-                        __func__, iens, stringlist_iget(msg, msg_count));
-        }
-        stringlist_free(msg);
-    }
-
-    free(realizations_msg_list);
-    bool_vector_free(iactive);
-    return NULL;
-}
-
-// Internal workflow job
-extern "C" C_USED void *
-enkf_main_load_results_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    int iter = 0;
-    {
-        const model_config_type *model_config =
-            enkf_main_get_model_config(enkf_main);
-        if (model_config_runpath_requires_iter(model_config))
-            fprintf(
-                stderr,
-                "**Warning: the runpath format:%s requires an iteration number "
-                "- using default:0. Use the job: LOAD_RESULT_ITER instead.\n",
-                model_config_get_runpath_as_char(model_config));
-    }
-    return enkf_main_load_results_JOB__(enkf_main, iter, args);
-}
-
-// Internal Workflow job
-extern "C" C_USED void *
-enkf_main_load_results_iter_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    stringlist_type *iens_args = stringlist_alloc_new();
-    int iter;
-
-    for (int i = 1; i < stringlist_get_size(args); i++)
-        stringlist_append_copy(iens_args, stringlist_iget(args, i));
-
-    util_sscanf_int(stringlist_iget(args, 0), &iter);
-    enkf_main_load_results_JOB__(enkf_main, iter, iens_args);
-    stringlist_free(iens_args);
 
     return NULL;
 }

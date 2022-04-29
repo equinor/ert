@@ -30,16 +30,16 @@ class EnkfSimulationRunner(BaseCClass):
 
     def runSimpleStep(self, job_queue, run_context):
         """@rtype: int"""
-        #### run simplestep ####
+        # run simplestep
         self._enkf_main().initRun(run_context)
 
         if run_context.get_step():
-            ecl_config = self._enkf_main().ecl_config.assert_restart()
+            self._enkf_main().ecl_config.assert_restart()
 
-        #### start queue ####
+        # start queue
         self.start_queue(run_context, job_queue)
 
-        #### deactivate failed realizations ####
+        # deactivate failed realizations
         totalOk = 0
         totalFailed = 0
         for i in range(len(run_context)):

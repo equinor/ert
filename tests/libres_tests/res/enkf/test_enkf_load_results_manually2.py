@@ -1,7 +1,6 @@
 import logging
 import pytest
 
-from ecl.util.util import BoolVector
 from res.enkf import EnKFMain
 
 
@@ -18,9 +17,9 @@ def test_load_results_manually2(setup_case, caplog, monkeypatch, lazy_load):
     ert = EnKFMain(res_config, strict=True)
     load_from = ert.getEnkfFsManager().getFileSystem("default_0")
     ert.getEnkfFsManager().switchFileSystem(load_from)
-    realisations = BoolVector(default_value=False, initial_size=25)
+    realisations = [False] * 25
     realisations[0] = True  # only need one to test what we want
     with caplog.at_level(logging.INFO):
         loaded = ert.loadFromForwardModel(realisations, 0, load_from)
-        assert 0 == loaded  # they will  in fact all fail, but that's ok
+        assert 0 == loaded  # they will in fact all fail, but that's ok
         assert f"lazy={lazy_load}".lower() in caplog.text

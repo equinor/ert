@@ -1,3 +1,5 @@
+from typing import List
+
 from res.job_queue import JobQueueManager, ForwardModelStatus
 from res.enkf import ErtRunContext, EnkfSimulationRunner
 from res.enkf.enums import EnkfRunType, HookRuntime
@@ -6,7 +8,7 @@ from time import sleep
 
 
 class SimulationContext:
-    def __init__(self, ert, sim_fs, mask, itr, case_data):
+    def __init__(self, ert, sim_fs, mask: List[bool], itr, case_data):
         self._ert = ert
         """ :type: res.enkf.EnKFMain """
         max_runtime = ert.analysisConfig().get_max_runtime()
@@ -66,8 +68,8 @@ class SimulationContext:
         sim_thread.start()
         return sim_thread
 
-    def __len__(self):
-        return self._mask.count()
+    def __len__(self) -> int:
+        return len(self._mask)
 
     def isRunning(self):
         # TODO: Should separate between running jobs and having loaded all data
@@ -152,7 +154,7 @@ class SimulationContext:
                 (job2.name, job2.start_time, job2.end_time, job2.status, job2.error_msg),
                 (jobN.name, jobN.start_time, jobN.end_time, jobN.status, jobN.error_msg)
             ]
-        """
+        """  # noqa
         run_arg = self.get_run_args(iens)
 
         try:

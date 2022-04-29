@@ -19,6 +19,5 @@ def test_createSpinBox(qtbot):
                 variable_dialog.createSpinBox(
                     variable_name,
                     variable_value,
-                    int,
                     analysis_module_variables_model,
                 )

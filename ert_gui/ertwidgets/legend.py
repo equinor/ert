@@ -1,5 +1,3 @@
-import sys
-
 from qtpy.QtCore import QSize
 from qtpy.QtGui import QPainter
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel

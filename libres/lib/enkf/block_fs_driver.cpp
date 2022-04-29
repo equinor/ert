@@ -16,33 +16,31 @@
    for more details.
 */
 
-#include <filesystem>
 #include <cstdio>
+#include <filesystem>
 #include <future>
 #include <vector>
 
 namespace fs = std::filesystem;
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
 #include <ert/util/buffer.h>
+#include <ert/util/util.h>
 
 #include <ert/res_util/block_fs.hpp>
 
-#include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/block_fs_driver.hpp>
+#include <ert/enkf/fs_types.hpp>
 
 typedef struct bfs_struct bfs_type;
 typedef struct bfs_config_struct bfs_config_type;
 
 struct bfs_config_struct {
     int fsync_interval;
-    double fragmentation_limit;
     bool read_only;
     int block_size;
-    bool bfs_lock;
 };
 
 #define BFS_TYPE_ID 5510643
@@ -56,18 +54,15 @@ struct bfs_struct {
     const bfs_config_type *config;
 };
 
-bfs_config_type *bfs_config_alloc(bool read_only, bool bfs_lock) {
+bfs_config_type *bfs_config_alloc(bool read_only) {
     const int fsync_interval =
         10; /* An fsync() call is issued for every 10'th write. */
-    const double fragmentation_limit = 1.0; /* 1.0 => NO defrag is run. */
 
     {
         bfs_config_type *config =
             (bfs_config_type *)util_malloc(sizeof *config);
         config->fsync_interval = fsync_interval;
-        config->fragmentation_limit = fragmentation_limit;
         config->read_only = read_only;
-        config->bfs_lock = bfs_lock;
         config->block_size = 64;
         return config;
     }
@@ -79,7 +74,7 @@ static UTIL_SAFE_CAST_FUNCTION(bfs, BFS_TYPE_ID);
 
 static void bfs_close(bfs_type *bfs) {
     if (bfs->block_fs != NULL)
-        block_fs_close(bfs->block_fs, false);
+        block_fs_close(bfs->block_fs);
     free(bfs->mountfile);
     free(bfs);
 }
@@ -105,9 +100,8 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 
 static void bfs_mount(bfs_type *bfs) {
     const bfs_config_type *config = bfs->config;
-    bfs->block_fs = block_fs_mount(
-        bfs->mountfile, config->block_size, config->fragmentation_limit,
-        config->fsync_interval, config->read_only, config->bfs_lock);
+    bfs->block_fs = block_fs_mount(bfs->mountfile, config->block_size,
+                                   config->fsync_interval, config->read_only);
 }
 
 static void bfs_fsync(bfs_type *bfs) { block_fs_fsync(bfs->block_fs); }
@@ -251,10 +245,9 @@ ert::block_fs_driver::block_fs_driver(int num_fs) : num_fs(num_fs) {
 }
 
 ert::block_fs_driver *ert::block_fs_driver::new_(bool read_only, int num_fs,
-                                                 const char *mountfile_fmt,
-                                                 bool block_level_lock) {
+                                                 const char *mountfile_fmt) {
     ert::block_fs_driver *driver = new ert::block_fs_driver(num_fs);
-    driver->config = bfs_config_alloc(read_only, block_level_lock);
+    driver->config = bfs_config_alloc(read_only);
     {
         for (int ifs = 0; ifs < driver->num_fs; ifs++)
             driver->fs_list[ifs] = bfs_alloc_new(
@@ -319,10 +312,9 @@ ert::block_fs_driver *ert::block_fs_driver::open(FILE *fstab_stream,
     char *tmp_fmt = util_fread_alloc_string(fstab_stream);
     char *mountfile_fmt =
         util_alloc_sprintf("%s%c%s", mount_point, UTIL_PATH_SEP_CHAR, tmp_fmt);
-    const bool block_level_lock = false;
 
-    ert::block_fs_driver *driver = ert::block_fs_driver::new_(
-        read_only, num_fs, mountfile_fmt, block_level_lock);
+    ert::block_fs_driver *driver =
+        ert::block_fs_driver::new_(read_only, num_fs, mountfile_fmt);
 
     driver->mount();
 

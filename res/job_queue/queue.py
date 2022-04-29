@@ -22,11 +22,11 @@ import asyncio
 import json
 import logging
 import ssl
+import threading
 import time
-import typing
 from collections import deque
+from typing import Any, Callable, Dict, Mapping, Optional, Union, TYPE_CHECKING
 
-import websockets
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
 from job_runner import CERT_FILE, JOBS_FILE
@@ -37,6 +37,12 @@ from res.job_queue.queue_differ import QueueDiffer
 from res.job_queue.thread_status_type_enum import ThreadStatus
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosedError
+from websockets.client import connect
+
+if TYPE_CHECKING:
+    from res.enkf.run_arg import RunArg
+    from res.enkf.res_config import ResConfig
+
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +77,7 @@ _queue_state_to_event_type_map = {
 }
 
 
-def _queue_state_event_type(state):
+def _queue_state_event_type(state: JobStatusType) -> str:
     return _queue_state_to_event_type_map[state]
 
 
@@ -134,14 +140,18 @@ class JobQueue(BaseCClass):
             self._num_waiting(),
             self._num_pending(),
         )
-        isrun = "running" if self.isRunning() else "not running"
-        cnt = "%s, num_running=%d, num_complete=%d, num_waiting=%d, num_pending=%d, active=%d"
+        isrun = "running" if self.isRunning else "not running"
+        cnt = (
+            "%s, num_running=%d, num_complete=%d, "
+            "num_waiting=%d, num_pending=%d, active=%d"
+        )
         return self._create_repr(cnt % (isrun, nrun, ncom, nwait, npend, len(self)))
 
     def __init__(self, driver, max_submit=2, size=0):
         """
         Short doc...
-        The @max_submit argument says how many times the job be submitted (including a failure)
+        The @max_submit argument says how many times the job be submitted
+        (including a failure)
               max_submit = 2: means that we can submit job once more
         The @size argument is used to say how many jobs the queue will
         run, in total.
@@ -214,18 +224,23 @@ class JobQueue(BaseCClass):
         """
         self._submit_complete()
 
+    @property
     def isRunning(self):
         return self._is_running()
 
+    @property
     def num_running(self):
         return self._num_running()
 
+    @property
     def num_pending(self):
         return self._num_pending()
 
+    @property
     def num_waiting(self):
         return self._num_waiting()
 
+    @property
     def num_complete(self):
         return self._num_complete()
 
@@ -267,7 +282,7 @@ class JobQueue(BaseCClass):
         # along.
         user_exit = self._start_user_exit()
         if user_exit:
-            while self.isRunning():
+            while self.isRunning:
                 time.sleep(0.1)
             return True
         else:
@@ -323,7 +338,7 @@ class JobQueue(BaseCClass):
     def stopped(self):
         return self._stopped
 
-    def kill_all_jobs(self):
+    def kill_all_jobs(self) -> None:
         self._stopped = True
 
     @property
@@ -376,7 +391,10 @@ class JobQueue(BaseCClass):
     def assert_complete(self):
         for job in self.job_list:
             if job.thread_status != ThreadStatus.DONE:
-                msg = "Unexpected job status type after running job: {} with thread status: {}"
+                msg = (
+                    "Unexpected job status type after "
+                    "running job: {} with thread status: {}"
+                )
                 raise AssertionError(msg.format(job.status, job.thread_status))
 
     def launch_jobs(self, pool_sema):
@@ -407,7 +425,9 @@ class JobQueue(BaseCClass):
         self.assert_complete()
 
     @staticmethod
-    def _translate_change_to_cloudevent(ee_id, real_id, status):
+    def _translate_change_to_cloudevent(
+        ee_id: str, real_id: str, status: JobStatusType
+    ) -> CloudEvent:
         return CloudEvent(
             {
                 "type": _queue_state_event_type(status),
@@ -420,7 +440,13 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
-    async def _publish_changes(ee_id, changes, ws_uri, ssl_context, headers):
+    async def _publish_changes(
+        ee_id: str,
+        changes,
+        ws_uri: str,
+        ssl_context: ssl.SSLContext,
+        headers: Mapping[str, str],
+    ):
         events = deque(
             [
                 JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
@@ -430,7 +456,7 @@ class JobQueue(BaseCClass):
         retries = 0
         while True:
             try:
-                async with websockets.connect(
+                async with connect(
                     ws_uri, ssl=ssl_context, extra_headers=headers
                 ) as websocket:
                     while events:
@@ -440,8 +466,7 @@ class JobQueue(BaseCClass):
             except (ConnectionClosedError, asyncio.TimeoutError) as e:
                 if retries >= 10:
                     logger.exception(
-                        "Connection to websocket %s failed, "
-                        + "unable to publish changes",
+                        "Connection to websocket %s failed, unable to publish changes",
                         ws_uri,
                     )
                     raise
@@ -459,9 +484,15 @@ class JobQueue(BaseCClass):
 
                 await asyncio.sleep(backoff)
 
-    async def execute_queue_async(
-        self, ws_uri, ee_id, pool_sema, evaluators, cert=None, token=None
-    ):
+    async def execute_queue_async(  # pylint: disable=too-many-arguments
+        self,
+        ws_uri: str,
+        ee_id: str,
+        pool_sema: threading.BoundedSemaphore,
+        evaluators: Callable[..., Any],
+        cert: Optional[Union[str, bytes]] = None,
+        token: Optional[str] = None,
+    ) -> None:
         if evaluators is None:
             evaluators = []
         if cert is not None:
@@ -482,7 +513,8 @@ class JobQueue(BaseCClass):
 
                 await asyncio.sleep(1)
 
-                [func() for func in evaluators]
+                for func in evaluators:
+                    func()
 
                 await JobQueue._publish_changes(
                     ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
@@ -515,7 +547,15 @@ class JobQueue(BaseCClass):
             ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
         )
 
-    def add_job_from_run_arg(self, run_arg, res_config, max_runtime, ok_cb, exit_cb):
+    # pylint: disable=too-many-arguments
+    def add_job_from_run_arg(
+        self,
+        run_arg: "RunArg",
+        res_config: "ResConfig",
+        max_runtime: Optional[int],
+        ok_cb: Callable[..., Any],
+        exit_cb: Callable[..., Any],
+    ) -> None:
         job_name = run_arg.job_name
         run_path = run_arg.runpath
         job_script = res_config.queue_config.job_script
@@ -543,26 +583,26 @@ class JobQueue(BaseCClass):
 
     def add_ee_stage(self, stage, callback_timeout=None):
         job = JobQueueNode(
-            job_script=stage.get_job_script(),
-            job_name=stage.get_job_name(),
-            run_path=stage.get_run_path(),
-            num_cpu=stage.get_num_cpu(),
+            job_script=stage.job_script,
+            job_name=stage.job_name,
+            run_path=stage.run_path,
+            num_cpu=stage.num_cpu,
             status_file=self.status_file,
             ok_file=self.ok_file,
             exit_file=self.exit_file,
-            done_callback_function=stage.get_done_callback(),
-            exit_callback_function=stage.get_exit_callback(),
-            callback_arguments=stage.get_callback_arguments(),
-            max_runtime=stage.get_max_runtime(),
+            done_callback_function=stage.done_callback,
+            exit_callback_function=stage.exit_callback,
+            callback_arguments=stage.callback_arguments,
+            max_runtime=stage.max_runtime,
             callback_timeout=callback_timeout,
         )
         if job is None:
             raise ValueError("JobQueueNode constructor created None job")
 
-        iens = stage.get_run_arg().iens
-        stage.get_run_arg()._set_queue_index(self.add_job(job, iens))
+        iens = stage.run_arg.iens
+        stage.run_arg._set_queue_index(self.add_job(job, iens))
 
-    def stop_long_running_jobs(self, minimum_required_realizations):
+    def stop_long_running_jobs(self, minimum_required_realizations: int) -> None:
         finished_realizations = self.count_status(JobStatusType.JOB_QUEUE_DONE)
         if finished_realizations < minimum_required_realizations:
             return
@@ -578,17 +618,21 @@ class JobQueue(BaseCClass):
             if job.runtime > LONG_RUNNING_FACTOR * average_runtime:
                 job.stop()
 
-    def snapshot(self) -> typing.Optional[typing.Dict[int, str]]:
+    def snapshot(self) -> Optional[Dict[int, str]]:
         """Return the whole state, or None if there was no snapshot."""
         return self._differ.snapshot()
 
-    def changes_after_transition(self) -> typing.Dict[int, str]:
+    def changes_after_transition(self) -> Dict[int, str]:
         old_state, new_state = self._differ.transition(self.job_list)
         return self._differ.diff_states(old_state, new_state)
 
     def add_ensemble_evaluator_information_to_jobs_file(
-        self, ee_id, dispatch_url, cert, token
-    ):
+        self,
+        ee_id: str,
+        dispatch_url: str,
+        cert: Optional[Union[str, bytes]],
+        token: Optional[str],
+    ) -> None:
         for q_index, q_node in enumerate(self.job_list):
             if cert is not None:
                 cert_path = f"{q_node.run_path}/{CERT_FILE}"

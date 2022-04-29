@@ -75,7 +75,7 @@ class LoadResultsPanel(QWidget):
     def iteration_count(self):
         """@rtype: int"""
         try:
-            results = self.facade.run_path % (0, 0)
+            self.facade.run_path % (0, 0)
         except TypeError:
             return 0
 
@@ -107,8 +107,10 @@ class LoadResultsPanel(QWidget):
             iteration = int(iteration)
         except ValueError as e:
             print(
-                'Expected a (whole) number in iteration field, got "%s". Error message: %s.'
-                % (iteration, e)
+                (
+                    "Expected a (whole) number in iteration field, "
+                    f'got "{iteration}". Error message: {e}.'
+                )
             )
             return False
         loaded = self.facade.load_from_forward_model(
@@ -116,7 +118,7 @@ class LoadResultsPanel(QWidget):
         )
 
         if loaded > 0:
-            print("Successfully loaded %d realisations." % loaded)
+            print(f"Successfully loaded {loaded} realisations.")
         else:
             print("No realisations loaded.")
         return loaded

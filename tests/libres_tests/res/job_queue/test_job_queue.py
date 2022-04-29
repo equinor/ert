@@ -92,7 +92,7 @@ class JobQueueTest(ResTest):
         self.assertEnumIsFullyDefined(JobStatusType, "job_status_type", source_path)
 
     def test_kill_jobs(self):
-        with TestAreaContext("job_queue_test_kill") as work_area:
+        with TestAreaContext("job_queue_test_kill"):
             job_queue = create_queue(NEVER_ENDING_SCRIPT)
 
             assert job_queue.queue_size == 10
@@ -122,7 +122,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_add_jobs(self):
-        with TestAreaContext("job_queue_test_add") as work_area:
+        with TestAreaContext("job_queue_test_add"):
             job_queue = create_queue(SIMPLE_SCRIPT)
 
             assert job_queue.queue_size == 10
@@ -141,7 +141,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_failing_jobs(self):
-        with TestAreaContext("job_queue_test_add") as work_area:
+        with TestAreaContext("job_queue_test_add"):
             job_queue = create_queue(FAILING_SCRIPT, max_submit=1)
 
             assert job_queue.queue_size == 10
@@ -167,7 +167,7 @@ class JobQueueTest(ResTest):
                 assert job_queue.snapshot()[iens] == str(JobStatusType.JOB_QUEUE_FAILED)
 
     def test_timeout_jobs(self):
-        with TestAreaContext("job_queue_test_kill") as work_area:
+        with TestAreaContext("job_queue_test_kill"):
             job_numbers = set()
 
             def callback(arg):
@@ -207,7 +207,7 @@ class JobQueueTest(ResTest):
                 job.wait_for()
 
     def test_add_ensemble_evaluator_info(self):
-        with TestAreaContext("job_queue_add_ensemble_evaluator_info") as work_area:
+        with TestAreaContext("job_queue_add_ensemble_evaluator_info"):
             job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"
@@ -240,9 +240,7 @@ class JobQueueTest(ResTest):
                     assert f.read() == cert
 
     def test_add_ensemble_evaluator_info_cert_none(self):
-        with TestAreaContext(
-            "job_queue_add_ensemble_evaluator_info_cert_none"
-        ) as work_area:
+        with TestAreaContext("job_queue_add_ensemble_evaluator_info_cert_none"):
             job_queue = create_queue(SIMPLE_SCRIPT)
             ee_id = "some_id"
             dispatch_url = "wss://some_url.com"
@@ -281,7 +279,7 @@ async def test_retry_on_closed_connection():
         job_queue = create_queue(SIMPLE_SCRIPT, max_submit=1)
         pool_sema = BoundedSemaphore(value=10)
 
-        with patch("websockets.connect") as f:
+        with patch("res.job_queue.queue.connect") as f:
             websocket_mock = AsyncMock()
             f.side_effect = [
                 ConnectionClosedError(1006, "expected close"),
@@ -308,5 +306,5 @@ async def test_retry_on_closed_connection():
 
         # job_queue cannot go out of scope before queue has completed
         await job_queue.stop_jobs_async()
-        while job_queue.isRunning():
+        while job_queue.isRunning:
             await asyncio.sleep(0.1)

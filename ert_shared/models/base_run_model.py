@@ -1,9 +1,11 @@
+import logging
+from contextlib import contextmanager
+
 import time
 import uuid
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, List, Union, Dict, Any, Iterator
 import asyncio
 
-from ecl.util.util import BoolVector
 from res.enkf import EnKFMain, QueueConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import (
@@ -11,24 +13,47 @@ from res.job_queue import (
     ForwardModel,
 )
 from ert_shared.libres_facade import LibresFacade
+from ert_shared.feature_toggling import feature_enabled
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
-from ert_shared.feature_toggling import feature_enabled
-from ert_shared.ensemble_evaluator.ensemble.builder import (
-    create_ensemble_builder_from_legacy,
+from ert.ensemble_evaluator import (
+    EnsembleBuilder,
 )
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.models.types import Argument
 
 
 class ErtRunError(Exception):
     pass
 
 
+class _LogAggregration(logging.Handler):
+    """Logging handler which aggregates the log messages"""
+
+    def __init__(self) -> None:
+        self.messages: List[str] = []
+        super().__init__()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.messages.append(record.getMessage())
+
+
+@contextmanager
+def captured_logs(level: int = logging.ERROR) -> Iterator[_LogAggregration]:
+    handler = _LogAggregration()
+    root_logger = logging.getLogger()
+    handler.setLevel(level)
+    root_logger.addHandler(handler)
+    try:
+        yield handler
+    finally:
+        root_logger.removeHandler(handler)
+
+
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class BaseRunModel:
     def __init__(
         self,
@@ -45,7 +70,8 @@ class BaseRunModel:
             eg. activate realizations, analysis module
         queue_config : QueueConfig
         phase_count : Optional[int], optional
-            Number of data assimilation cycles / iterations an experiment will have, by default 1
+            Number of data assimilation cycles / iterations an experiment will have,
+            by default 1
         """
         self._phase: int = 0
         self._phase_count = phase_count
@@ -57,8 +83,8 @@ class BaseRunModel:
         self._fail_message: str = ""
         self._failed: bool = False
         self._queue_config: QueueConfig = queue_config
-        self._initial_realizations_mask: List[int] = []
-        self._completed_realizations_mask: List[int] = []
+        self._initial_realizations_mask: List[bool] = []
+        self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
         self._run_context: Optional[ErtRunContext] = None
         self._last_run_iteration: int = -1
@@ -76,8 +102,11 @@ class BaseRunModel:
 
     @property
     def _active_realizations(self) -> List[int]:
-        realization_mask = self._initial_realizations_mask
-        return [idx for idx, mask_val in enumerate(realization_mask) if mask_val]
+        return [
+            idx
+            for idx, mask_val in enumerate(self._initial_realizations_mask)
+            if mask_val
+        ]
 
     def reset(self) -> None:
         self._failed = False
@@ -94,24 +123,19 @@ class BaseRunModel:
         ] += self._count_successful_realizations()
 
     def has_failed_realizations(self) -> bool:
-        completed = self._completed_realizations_mask
-        initial = self._initial_realizations_mask
-        for (index, successful) in enumerate(completed):
-            if initial[index] and not successful:
-                return True
-        return False
+        return any(self._create_mask_from_failed_realizations())
 
-    def _create_mask_from_failed_realizations(self) -> BoolVector:
+    def _create_mask_from_failed_realizations(self) -> List[bool]:
         """
-        Creates a BoolVector mask representing the failed realizations
-        :return: Type BoolVector
+        Creates a list of bools representing the failed realizations,
+        i.e., a realization that has failed is assigned a True value.
         """
-        completed = self._completed_realizations_mask
-        initial = self._initial_realizations_mask
-        inverted_mask = BoolVector(default_value=False)
-        for (index, successful) in enumerate(completed):
-            inverted_mask[index] = initial[index] and not successful
-        return inverted_mask
+        return [
+            initial and not completed
+            for initial, completed in zip(
+                self._initial_realizations_mask, self._completed_realizations_mask
+            )
+        ]
 
     def _count_successful_realizations(self) -> int:
         """
@@ -131,24 +155,25 @@ class BaseRunModel:
 
     def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
         try:
-            self._initial_realizations_mask = self._simulation_arguments[
-                "active_realizations"
-            ]
-            run_context = self.runSimulations(
-                evaluator_server_config=evaluator_server_config,
-            )
-            self._completed_realizations_mask = run_context.get_mask()
+            with captured_logs() as logs:
+                self._initial_realizations_mask = self._simulation_arguments[
+                    "active_realizations"
+                ]
+                run_context = self.runSimulations(
+                    evaluator_server_config=evaluator_server_config,
+                )
+                self._completed_realizations_mask = run_context.get_mask()
         except ErtRunError as e:
-            self._completed_realizations_mask = BoolVector(default_value=False)
+            self._completed_realizations_mask = []
             self._failed = True
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
         except UserWarning as e:
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
         except Exception as e:
             self._failed = True
-            self._fail_message = str(e)
+            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
             self._simulationEnded()
             raise
 
@@ -238,7 +263,7 @@ class BaseRunModel:
     def checkHaveSufficientRealizations(self, num_successful_realizations: int) -> None:
         if num_successful_realizations == 0:
             raise ErtRunError("Simulation failed! All realizations failed!")
-        elif (
+        if (
             not self.ert()
             .analysisConfig()
             .haveEnoughRealisations(
@@ -246,7 +271,8 @@ class BaseRunModel:
             )
         ):
             raise ErtRunError(
-                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS to allow failures in your simulations."
+                "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS "
+                + "to allow failures in your simulations."
             )
 
     def _checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
@@ -257,7 +283,8 @@ class BaseRunModel:
             .haveEnoughRealisations(active_realizations, len(self._active_realizations))
         ):
             raise ErtRunError(
-                "Number of active realizations is less than the specified MIN_REALIZATIONS in the config file"
+                "Number of active realizations is less than the specified "
+                + "MIN_REALIZATIONS in the config file"
             )
 
     def _count_active_realizations(self, run_context: ErtRunContext) -> int:
@@ -269,7 +296,7 @@ class BaseRunModel:
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
 
-        ensemble = create_ensemble_builder_from_legacy(
+        ensemble = EnsembleBuilder.from_legacy(
             run_context,
             self.get_forward_model(),
             self._queue_config,
@@ -283,17 +310,16 @@ class BaseRunModel:
             ensemble,
             ee_config,
             run_context.get_iter(),
-            ee_id=str(uuid.uuid1()).split("-")[0],
+            ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
         ).run_and_get_successful_realizations()
 
-        for i in range(len(run_context)):
-            if run_context.is_active(i):
-                run_arg = run_context[i]
-                if (
-                    run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
-                    or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
+        for iens, run_arg in enumerate(run_context):
+            if run_context.is_active(iens):
+                if run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
                 ):
-                    run_context.deactivate_realization(i)
+                    run_context.deactivate_realization(iens)
 
         run_context.get_sim_fs().fsync()
         return totalOk

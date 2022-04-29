@@ -19,17 +19,16 @@
 #ifndef ERT_GEN_OBS_H
 #define ERT_GEN_OBS_H
 
-#include <ert/enkf/gen_data_config.hpp>
+#include <ert/enkf/active_list.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/gen_data_config.hpp>
 #include <ert/enkf/obs_data.hpp>
-#include <ert/enkf/active_list.hpp>
 
 typedef struct gen_obs_struct gen_obs_type;
 
 gen_obs_type *gen_obs_alloc(const gen_data_config_type *config,
                             const char *obs_key, const char *, double, double,
-                            const char *, const char *, const char *);
+                            const char *, const char *);
 extern "C" gen_obs_type *
 gen_obs_alloc__(const gen_data_config_type *data_config,
                 const char *obs_key); // for python bindings

@@ -2,7 +2,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class DistributionPlot(object):
+class DistributionPlot:
     def __init__(self):
         self.dimensionality = 1
 
@@ -12,7 +12,6 @@ class DistributionPlot(object):
 
 def plotDistribution(figure, plot_context, case_to_data_map, _observation_data):
     """@type plot_context: ert_gui.plottery.PlotContext"""
-    key = plot_context.key()
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
     """:type: matplotlib.axes.Axes """
@@ -92,7 +91,7 @@ def _plotDistribution(axes, plot_config, data, label, index, previous_data):
             line_style = plot_config.distributionLineStyle()
             x = [index - 1, index]
             y = [previous_data[0], data]
-            lines = axes.plot(
+            axes.plot(
                 x,
                 y,
                 color=line_style.color,

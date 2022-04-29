@@ -4,7 +4,6 @@ from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QLabel,
-    QHBoxLayout,
 )
 
 from ert_gui.plottery import PlotStyle
@@ -79,7 +78,7 @@ class StyleChooser(QWidget):
 
         self._styles = (
             STYLES["default"]
-            if not line_style_set in STYLES
+            if line_style_set not in STYLES
             else STYLES[line_style_set]
         )
 
@@ -113,7 +112,8 @@ class StyleChooser(QWidget):
         self.size_spinner.setDecimals(1)
         self.size_spinner.setSingleStep(0.1)
 
-        # the text content of the spinner varies, but shouldn't push the control out of boundaries
+        # the text content of the spinner varies, but shouldn't push the control
+        # out of boundaries
         self.line_chooser.setMinimumWidth(110)
         layout.addWidget(self.line_chooser)
         layout.addWidget(self.thickness_spinner)

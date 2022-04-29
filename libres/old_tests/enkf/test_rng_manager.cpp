@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 
-#include <ert/util/test_util.h>
-#include <ert/util/rng.h>
-#include <ert/util/test_work_area.h>
 #include <ert/enkf/rng_manager.hpp>
+#include <ert/util/rng.h>
+#include <ert/util/test_util.h>
+#include <ert/util/test_work_area.h>
 
 namespace fs = std::filesystem;
 

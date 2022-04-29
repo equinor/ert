@@ -19,10 +19,11 @@
 #ifndef ERT_GEN_COMMON_H
 #define ERT_GEN_COMMON_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/ecl/ecl_type.h>
+#include <ert/enkf/gen_data_config.hpp>
 
 void *gen_common_fscanf_alloc(const char *, ecl_data_type, int *);
 void *gen_common_fread_alloc(const char *, ecl_data_type, int *);

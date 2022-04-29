@@ -23,8 +23,8 @@
 #include <ert/util/test_util.hpp>
 #include <ert/util/test_work_area.hpp>
 
-#include <ert/res_util/subst_list.hpp>
 #include <ert/job_queue/ext_job.hpp>
+#include <ert/res_util/subst_list.hpp>
 
 void test_angular() {
     subst_list_type *subst_list = subst_list_alloc(NULL);

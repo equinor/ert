@@ -1,16 +1,6 @@
 """Utility to compensate for a weak job type."""
 import time
-from job_runner.reporting.message import (
-    Exited,
-    Finish,
-    Init,
-    Running,
-    Start,
-    _JOB_STATUS_SUCCESS,
-    _JOB_STATUS_RUNNING,
-    _JOB_STATUS_FAILURE,
-    _JOB_STATUS_WAITING,
-)
+from job_runner.reporting.message import _JOB_STATUS_WAITING
 
 
 def create_job_dict(job):

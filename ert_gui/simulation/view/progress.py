@@ -9,13 +9,15 @@ from qtpy.QtWidgets import (
     QProgressBar,
 )
 from qtpy.QtGui import QPainter, QColor
-from ert_shared.status.entity.state import REAL_STATE_TO_COLOR
+
+from ert.ensemble_evaluator.state import REAL_STATE_TO_COLOR
+
 from ert_gui.model.snapshot import ProgressRole
 
 
 class ProgressView(QWidget):
     def __init__(self, parent=None) -> None:
-        super(ProgressView, self).__init__(parent)
+        super().__init__(parent)
 
         self._progress_tree_view = QTreeView(self)
         self._progress_tree_view.setHeaderHidden(True)
@@ -54,7 +56,7 @@ class ProgressView(QWidget):
 
 class ProgressDelegate(QStyledItemDelegate):
     def __init__(self, parent=None) -> None:
-        super(ProgressDelegate, self).__init__(parent)
+        super().__init__(parent)
 
         self.background_color = QColor(200, 210, 210)
 

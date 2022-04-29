@@ -23,7 +23,7 @@ import warnings
 
 warnings.filterwarnings(action="always", category=DeprecationWarning, module=r"res|ert")
 
-from cwrap import Prototype
+from cwrap import Prototype  # noqa
 
 try:
     from ._version import version as __version__
@@ -35,7 +35,7 @@ def _load_lib():
     import res._lib
     import ctypes
 
-    lib = ctypes.CDLL(res._lib.__file__, ctypes.RTLD_GLOBAL)
+    lib = ctypes.CDLL(res._lib.__file__)
 
     # Configure site_config to be a ctypes.CFUNCTION with type:
     # void set_site_config(char *);
@@ -70,7 +70,7 @@ class ResPrototype(Prototype):
 
 RES_LIB = ResPrototype.lib
 
-from ecl.util.util import updateAbortSignals
+from ecl.util.util import updateAbortSignals  # noqa
 
 updateAbortSignals()
 

@@ -17,11 +17,11 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/hash.h>
 #include <ert/res_util/template.hpp>
+#include <ert/util/hash.h>
 
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/enkf/ert_template.hpp>
 
 #define ERT_TEMPLATE_TYPE_ID 7731963
 #define ERT_TEMPLATES_TYPE_ID 6677330

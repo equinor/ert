@@ -4,7 +4,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class CrossCaseStatisticsPlot(object):
+class CrossCaseStatisticsPlot:
     def __init__(self):
         self.dimensionality = 1
 
@@ -16,7 +16,6 @@ class CrossCaseStatisticsPlot(object):
 
 def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation_data):
     """@type plot_context: ert_gui.plottery.PlotContext"""
-    key = plot_context.key()
     config = plot_context.plotConfig()
     axes = figure.add_subplot(111)
     """:type: matplotlib.axes.Axes """
@@ -48,7 +47,7 @@ def plotCrossCaseStatistics(figure, plot_context, case_to_data_map, _observation
 
         if not data.empty:
             data = _assertNumeric(data)
-            if not data is None:
+            if data is not None:
                 ccs["index"].append(case_index)
                 ccs["mean"][case_index] = data.mean()
                 ccs["min"][case_index] = data.min()

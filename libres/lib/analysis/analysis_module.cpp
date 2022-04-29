@@ -16,11 +16,11 @@
    for more details.
 */
 
-#include <string>
-#include <iostream>
-#include <stdlib.h>
-#include <stdio.h>
 #include <dlfcn.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -32,9 +32,9 @@
 #include <ert/analysis/ies/ies_config.hpp>
 #include <ert/analysis/ies/ies_data.hpp>
 
-#include <fmt/format.h>
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
+#include <fmt/format.h>
 
 auto logger = ert::get_logger("analysis");
 
@@ -45,6 +45,7 @@ struct analysis_module_struct {
         user_name; /* String used to identify this module for the user; not used in
                                                    the linking process. */
     analysis_mode_enum mode;
+    std::unordered_set<std::string> keys;
 };
 
 analysis_mode_enum
@@ -73,12 +74,34 @@ analysis_module_type *analysis_module_alloc_named(int ens_size,
 
 analysis_module_type *analysis_module_alloc(int ens_size,
                                             analysis_mode_enum mode) {
-    if (mode == ENSEMBLE_SMOOTHER)
-        return analysis_module_alloc_named(ens_size, mode, "STD_ENKF");
-    else if (mode == ITERATED_ENSEMBLE_SMOOTHER)
-        return analysis_module_alloc_named(ens_size, mode, "IES_ENKF");
-    else
-        throw std::logic_error("Undandled enum value");
+    if (mode == ENSEMBLE_SMOOTHER) {
+        analysis_module_type *module = new analysis_module_type();
+        module->mode = mode;
+        module->user_name = util_alloc_string_copy("STD_ENKF");
+        module->module_config = std::make_unique<ies::config::Config>(false);
+        module->module_data = std::make_unique<ies::data::Data>(ens_size);
+        module->keys = {ies::data::ITER_KEY, ies::config::IES_INVERSION_KEY,
+                        ies::config::IES_LOGFILE_KEY,
+                        ies::config::IES_DEBUG_KEY,
+                        ies::config::ENKF_TRUNCATION_KEY};
+        return module;
+    } else if (mode == ITERATED_ENSEMBLE_SMOOTHER) {
+        analysis_module_type *module = new analysis_module_type();
+        module->mode = mode;
+        module->user_name = util_alloc_string_copy("IES_ENKF");
+        module->module_config = std::make_unique<ies::config::Config>(true);
+        module->module_data = std::make_unique<ies::data::Data>(ens_size);
+        module->keys = {ies::data::ITER_KEY,
+                        ies::config::IES_MAX_STEPLENGTH_KEY,
+                        ies::config::IES_MIN_STEPLENGTH_KEY,
+                        ies::config::IES_DEC_STEPLENGTH_KEY,
+                        ies::config::IES_INVERSION_KEY,
+                        ies::config::IES_LOGFILE_KEY,
+                        ies::config::IES_DEBUG_KEY,
+                        ies::config::ENKF_TRUNCATION_KEY};
+        return module;
+    } else
+        throw std::logic_error("Unhandled enum value");
 }
 
 const char *analysis_module_get_name(const analysis_module_type *module) {
@@ -157,9 +180,7 @@ static bool analysis_module_set_double(analysis_module_type *module,
 static bool analysis_module_set_bool(analysis_module_type *module,
                                      const char *var, bool value) {
     bool name_recognized = true;
-    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        module->module_config->aaprojection(value);
-    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+    if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         logger->warning("The key {} is ignored", ies::config::IES_DEBUG_KEY);
     else
         name_recognized = false;
@@ -261,36 +282,14 @@ bool analysis_module_set_var(analysis_module_type *module, const char *var_name,
     return set_ok;
 }
 
-bool analysis_module_check_option(const analysis_module_type *module,
-                                  analysis_module_flag_enum option) {
-    return module->module_config->get_option(option);
-}
-
 bool analysis_module_has_var(const analysis_module_type *module,
                              const char *var) {
-
-    static const std::unordered_set<std::string> keys = {
-        ies::data::ITER_KEY,
-        ies::config::IES_MAX_STEPLENGTH_KEY,
-        ies::config::IES_MIN_STEPLENGTH_KEY,
-        ies::config::IES_DEC_STEPLENGTH_KEY,
-        ies::config::IES_INVERSION_KEY,
-        ies::config::IES_LOGFILE_KEY,
-        ies::config::IES_DEBUG_KEY,
-        ies::config::IES_AAPROJECTION_KEY,
-        ies::config::ENKF_TRUNCATION_KEY,
-        ies::config::ENKF_SUBSPACE_DIMENSION_KEY,
-        ies::config::ENKF_NCOMP_KEY};
-
-    return (keys.count(var) == 1);
+    return module->keys.count(var);
 }
 
 bool analysis_module_get_bool(const analysis_module_type *module,
                               const char *var) {
-    if (strcmp(var, ies::config::IES_AAPROJECTION_KEY) == 0)
-        return module->module_config->aaprojection();
-
-    else if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
+    if (strcmp(var, ies::config::IES_DEBUG_KEY) == 0)
         return false;
 
     util_exit("%s: Tried to get bool variable:%s from module:%s - module "

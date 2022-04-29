@@ -18,11 +18,11 @@
 #ifndef ERT_HOOK_MANAGER_H
 #define ERT_HOOK_MANAGER_H
 
-#include <ert/config/config_parser.hpp>
 #include <ert/config/config_content.hpp>
+#include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/hook_workflow.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
+#include <ert/enkf/hook_workflow.hpp>
 #include <ert/enkf/runpath_list.hpp>
 
 typedef struct hook_manager_struct hook_manager_type;

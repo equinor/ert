@@ -13,9 +13,9 @@ from ert_gui.ertwidgets.models.ertsummary import ErtSummary
 from res.enkf import EnKFMain
 
 
-class SummaryTemplate(object):
+class SummaryTemplate:
     def __init__(self, title):
-        super(SummaryTemplate, self).__init__()
+        super().__init__()
 
         self.text = ""
         self.__finished = False
@@ -26,18 +26,18 @@ class SummaryTemplate(object):
             style = (
                 "display: inline-block; width: 150px; vertical-align: top; float: left"
             )
-            self.text += '<div style="%s">\n' % style
+            self.text += f'<div style="{style}">\n'
             self.addTitle(title)
 
     def addTitle(self, title):
         if not self.__finished:
             style = "font-size: 16px; font-weight: bold;"
-            self.text += '<div style="%s">%s</div>' % (style, title)
+            self.text += f'<div style="{style}">{title}</div>'
 
     def addRow(self, value):
         if not self.__finished:
             style = "text-indent: 5px;"
-            self.text += '<div style="%s">%s</div>' % (style, value)
+            self.text += f'<div style="{style}">{value}</div>'
 
     def endGroup(self):
         if not self.__finished:
@@ -47,7 +47,7 @@ class SummaryTemplate(object):
         if not self.__finished:
             self.__finished = True
             self.endGroup()
-        return "<html>%s</html>" % self.text
+        return f"<html>{self.text}</html>"
 
 
 class SummaryPanel(QFrame):

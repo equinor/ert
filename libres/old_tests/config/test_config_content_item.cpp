@@ -17,8 +17,8 @@
 */
 #include <stdlib.h>
 
-#include <ert/util/test_util.hpp>
 #include <ert/util/hash.hpp>
+#include <ert/util/test_util.hpp>
 
 #include <ert/config/config_parser.hpp>
 

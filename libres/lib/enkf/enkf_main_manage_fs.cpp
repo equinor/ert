@@ -15,15 +15,15 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <filesystem>
-#include <vector>
-#include <string>
 #include <dirent.h>
+#include <filesystem>
+#include <string>
+#include <vector>
 
-#include <ert/util/bool_vector.h>
-#include <ert/enkf/summary_key_set.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
+#include <ert/enkf/summary_key_set.hpp>
 #include <ert/logging.hpp>
+#include <ert/util/bool_vector.h>
 
 namespace fs = std::filesystem;
 
@@ -416,9 +416,7 @@ enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
 
                 if (refcase) {
                     time_map_type *time_map = enkf_fs_get_time_map(new_fs);
-                    if (time_map_attach_refcase(time_map, refcase))
-                        time_map_set_strict(time_map, false);
-                    else
+                    if (!time_map_attach_refcase(time_map, refcase))
                         logger->error("Warning mismatch between refcase:{} "
                                       "and existing case:{}",
                                       ecl_sum_get_case(refcase),

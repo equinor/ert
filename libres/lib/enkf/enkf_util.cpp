@@ -17,11 +17,11 @@
 */
 
 #include <cmath>
-#include <stdlib.h>
-#include <random>
-#include <ert/util/util.h>
-#include <ert/util/rng.h>
 #include <ert/ecl/ecl_util.h>
+#include <ert/util/rng.h>
+#include <ert/util/util.h>
+#include <random>
+#include <stdlib.h>
 
 #include <ert/enkf/enkf_util.hpp>
 

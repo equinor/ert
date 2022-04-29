@@ -28,7 +28,7 @@ class GenDataCollector:
             realizations = IntVector.active_list(str(realization_index))
 
         config_node = ert.ensembleConfig().getNode(key)
-        gen_data_config = config_node.getModelConfig()
+        config_node.getModelConfig()
 
         ensemble_data = EnsemblePlotGenData(config_node, fs, report_step)
         data_array = ensemble_data.getRealizations(realizations)

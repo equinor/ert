@@ -1,9 +1,9 @@
-#include <sstream>
-#include <fmt/format.h>
 #include "catch2/catch.hpp"
+#include <fmt/format.h>
+#include <sstream>
 
-#include <ert/res_util/memory.hpp>
 #include "../logger_mock.hpp"
+#include <ert/res_util/memory.hpp>
 
 static int callno = 0;
 

@@ -623,9 +623,9 @@ def test_run_loguniform_presampled(
             assert coeff.data[key] == export_coeff[key]
 
 
-def test_sample_unknown_parameter_group(uniform_parameters_config):
+def test_sample_unknown_parameter(uniform_parameters_config):
 
-    with pytest.raises(ValueError, match="No parameter group found named: coeffs"):
+    with pytest.raises(ValueError, match="No parameter found named: coeffs"):
         ert3.engine.sample_record(uniform_parameters_config, "coeffs", 100)
 
 

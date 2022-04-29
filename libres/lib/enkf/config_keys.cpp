@@ -1,5 +1,5 @@
-#include <ert/python.hpp>
 #include <ert/enkf/config_keys.hpp>
+#include <ert/python.hpp>
 #include <pybind11/pytypes.h>
 
 RES_LIB_SUBMODULE("config_keys", m) {

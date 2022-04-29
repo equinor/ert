@@ -15,10 +15,10 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
-#include <stdlib.h>
-#include <vector>
 #include <algorithm>
 #include <ert/enkf/local_obsdata_node.hpp>
+#include <stdlib.h>
+#include <vector>
 
 #include "ert/python.hpp"
 

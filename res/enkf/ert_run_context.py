@@ -13,6 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import List
+
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector, StringList
 
@@ -21,6 +23,11 @@ from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.run_arg import RunArg
 from res.util import PathFormat, SubstitutionList
+
+
+def boolvector_from_boollist(bool_list: List[bool]) -> BoolVector:
+    true_indices = [idx for idx, value in enumerate(bool_list) if value]
+    return BoolVector.createFromList(size=len(bool_list), source_list=true_indices)
 
 
 class ErtRunContext(BaseCClass):
@@ -104,7 +111,7 @@ class ErtRunContext(BaseCClass):
         run_type,
         sim_fs: EnkfFs,
         target_fs: EnkfFs,
-        mask,
+        mask: List[bool],
         path_fmt: PathFormat,
         jobname_fmt,
         subst_list: SubstitutionList,
@@ -116,7 +123,7 @@ class ErtRunContext(BaseCClass):
             init_mode,
             sim_fs,
             target_fs,
-            mask,
+            boolvector_from_boollist(mask),
             path_fmt,
             jobname_fmt,
             subst_list,
@@ -126,25 +133,30 @@ class ErtRunContext(BaseCClass):
 
         # The C object ert_run_context uses a shared object for the
         # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibt Python GC of these objects.
+        # to a reference here - to inhibit Python GC of these objects.
         self._path_fmt = path_fmt
         self._subst_list = subst_list
 
     @classmethod
     def case_init(cls, sim_fs, mask):
-        return cls._alloc_case_init(sim_fs, mask)
+        return cls._alloc_case_init(sim_fs, boolvector_from_boollist(mask))
 
     @classmethod
     def ensemble_experiment(
-        cls, sim_fs, mask, path_fmt, jobname_fmt, subst_list, itr
+        cls, sim_fs, mask: List[bool], path_fmt, jobname_fmt, subst_list, itr
     ) -> "ErtRunContext":
         run_context = cls._alloc_ensemble_experiment(
-            sim_fs, mask, path_fmt, jobname_fmt, subst_list, itr
+            sim_fs,
+            boolvector_from_boollist(mask),
+            path_fmt,
+            jobname_fmt,
+            subst_list,
+            itr,
         )
 
         # The C object ert_run_context uses a shared object for the
         # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibt Python GC of these objects.
+        # to a reference here - to inhibit Python GC of these objects.
         run_context._path_fmt = path_fmt
         run_context._subst_list = subst_list
 
@@ -152,15 +164,21 @@ class ErtRunContext(BaseCClass):
 
     @classmethod
     def ensemble_smoother(
-        cls, sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, itr
+        cls, sim_fs, target_fs, mask: List[bool], path_fmt, jobname_fmt, subst_list, itr
     ) -> "ErtRunContext":
         run_context = cls._alloc_ensemble_smoother(
-            sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, itr
+            sim_fs,
+            target_fs,
+            boolvector_from_boollist(mask),
+            path_fmt,
+            jobname_fmt,
+            subst_list,
+            itr,
         )
 
         # The C object ert_run_context uses a shared object for the
         # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibt Python GC of these objects.
+        # to a reference here - to inhibit Python GC of these objects.
         run_context._path_fmt = path_fmt
         run_context._subst_list = subst_list
 
@@ -170,7 +188,7 @@ class ErtRunContext(BaseCClass):
     def ensemble_smoother_update(cls, sim_fs, target_fs):
         return cls._alloc_ensemble_smoother_update(sim_fs, target_fs)
 
-    def is_active(self, index):
+    def is_active(self, index: int) -> bool:
         if 0 <= index < len(self):
             return self._iactive(index)
         else:
@@ -183,7 +201,7 @@ class ErtRunContext(BaseCClass):
 
     def __getitem__(self, index) -> RunArg:
         if not isinstance(index, int):
-            raise TypeError("Invalid type - expetected integer")
+            raise TypeError("Invalid type - expected integer")
 
         if 0 <= index < len(self):
             run_arg = self._iget(index)
@@ -202,13 +220,15 @@ class ErtRunContext(BaseCClass):
     @classmethod
     def createRunpathList(
         cls,
-        mask: BoolVector,
+        mask: List[bool],
         runpath_fmt: PathFormat,
         subst_list: SubstitutionList,
         iter=0,
     ) -> StringList:
         """@rtype: ecl.util.stringlist.StringList"""
-        return cls._alloc_runpath_list(mask, runpath_fmt, subst_list, iter)
+        return cls._alloc_runpath_list(
+            boolvector_from_boollist(mask), runpath_fmt, subst_list, iter
+        )
 
     @classmethod
     def createRunpath(
@@ -220,8 +240,8 @@ class ErtRunContext(BaseCClass):
     def get_id(self):
         return self._get_id()
 
-    def get_mask(self) -> BoolVector:
-        return self._get_mask()
+    def get_mask(self) -> List[bool]:
+        return list(self._get_mask())
 
     def get_iter(self) -> int:
         return self._get_iter()

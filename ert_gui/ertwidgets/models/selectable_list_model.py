@@ -1,5 +1,3 @@
-import sys
-
 from qtpy.QtCore import QObject, Signal
 
 

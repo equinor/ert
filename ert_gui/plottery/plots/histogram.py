@@ -5,7 +5,7 @@ from .plot_tools import PlotTools
 import pandas as pd
 
 
-class HistogramPlot(object):
+class HistogramPlot:
     def __init__(self):
         self.dimensionality = 1
 
@@ -83,7 +83,7 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
     for index, case in enumerate(case_list):
         axes[case] = figure.add_subplot(case_count, 1, index + 1)
 
-        axes[case].set_title("%s (%s)" % (config.title(), case))
+        axes[case].set_title(f"{config.title()} ({case})")
 
         if use_log_scale:
             axes[case].set_xscale("log")

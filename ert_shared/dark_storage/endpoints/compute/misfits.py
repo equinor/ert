@@ -12,8 +12,9 @@ from ert_storage.compute import calculate_misfits_from_pandas
 
 from ert_storage import exceptions as exc
 
-router = APIRouter(tags=["misfits"])
 from dateutil.parser import parse
+
+router = APIRouter(tags=["misfits"])
 
 
 @router.get(
@@ -34,7 +35,7 @@ async def get_response_misfits(
 ) -> Response:
 
     ensemble_name = get_name("ensemble", ensemble_id)
-    dataframe = data_for_key(ensemble_name, response_name)
+    dataframe = data_for_key(res, ensemble_name, response_name)
     if realization_index is not None:
         dataframe = pd.DataFrame(dataframe.loc[realization_index]).T
 
@@ -44,7 +45,7 @@ async def get_response_misfits(
         response_dict[index] = data_df
 
     obs_keys = res.observation_keys(response_name)
-    obs = observations_for_obs_keys(ensemble_name, obs_keys)
+    obs = observations_for_obs_keys(res, ensemble_name, obs_keys)
 
     if not obs_keys:
         raise ValueError(f"No observations for key {response_name}")
@@ -55,7 +56,7 @@ async def get_response_misfits(
     def parse_index(x):
         try:
             return int(x)
-        except:
+        except ValueError:
             return parse(x)
 
     observation_df = pd.DataFrame(

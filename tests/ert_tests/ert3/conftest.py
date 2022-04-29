@@ -271,6 +271,8 @@ def stages_config(stages_config_list, plugin_registry):
         stages_config_list, plugin_registry=plugin_registry
     )
 
+    script_file.unlink()
+
 
 @pytest.fixture()
 def double_stages_config_list():
@@ -337,6 +339,8 @@ def double_stages_config(double_stages_config_list, plugin_registry):
         double_stages_config_list, plugin_registry=plugin_registry
     )
 
+    script_file.unlink()
+
 
 @pytest.fixture()
 def x_uncertainty_stages_config(plugin_registry):
@@ -386,6 +390,8 @@ def x_uncertainty_stages_config(plugin_registry):
     os.chmod(script_file, st.st_mode | stat.S_IEXEC)
 
     yield ert3.config.load_stages_config(config_list, plugin_registry=plugin_registry)
+
+    script_file.unlink()
 
 
 @pytest.fixture()

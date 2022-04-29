@@ -1,11 +1,10 @@
 from typing import Optional
 
 from res.enkf.enums import HookRuntime, RealizationStateEnum
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 
 from ert_shared.models import BaseRunModel, ErtRunError
-from ert_shared.models.types import Argument
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from typing import Dict, Any
 
@@ -62,9 +61,13 @@ class EnsembleSmoother(BaseRunModel):
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
         es_update = self.ert().getESUpdate()
-        success = es_update.smootherUpdate(prior_context)
-        if not success:
-            raise ErtRunError("Analysis of simulation failed!")
+        try:
+            es_update.smootherUpdate(prior_context)
+        except ErtAnalysisError as e:
+            raise ErtRunError(
+                f"Analysis of simulation failed with the following error: {e}"
+            ) from e
+
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
 
         # Create an update object in storage
@@ -122,11 +125,10 @@ class EnsembleSmoother(BaseRunModel):
             itr = 1
             sim_fs = prior_context.get_target_fs()
             target_fs = None
-            state = (
+            mask = sim_fs.getStateMap().createMask(
                 RealizationStateEnum.STATE_HAS_DATA
                 | RealizationStateEnum.STATE_INITIALIZED
             )
-            mask = sim_fs.getStateMap().createMask(state)
 
         run_context = ErtRunContext.ensemble_smoother(
             sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr

@@ -41,10 +41,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
      case_list: a comma separated list of cases to export (no spaces allowed)
                 if no list is provided the current case is exported
 
-     infer_iteration: If True the script will try to infer the iteration number by looking at the suffix of the case name
-                      (i.e. default_2 = iteration 2)
-                      If False the script will use the ordering of the case list: the first item will be iteration 0,
-                      the second item will be iteration 1...
+     infer_iteration: If True the script will try to infer the iteration number
+                by looking at the suffix of the case name (i.e. default_2 = iteration 2)
+                If False the script will use the ordering of the case list: the first
+                item will be iteration 0, the second item will be iteration 1...
     """
 
     INFER_HELP = (
@@ -90,7 +90,8 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         conventions:
 
           1. All the GEN_DATA RFT observations have key RFT_$WELL
-          2. The trajectory files are in $trajectory_path/$WELL.txt or $trajectory_path/$WELL_R.txt
+          2. The trajectory files are in $trajectory_path/$WELL.txt
+             or $trajectory_path/$WELL_R.txt
 
         """
 
@@ -143,7 +144,6 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 if not os.path.isfile(trajectory_file):
                     trajectory_file = os.path.join(trajectory_path, "%s_R.txt" % well)
 
-                trajectory = WellTrajectory(trajectory_file)
                 arg = ArgLoader.load(
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
                 )

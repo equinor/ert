@@ -13,8 +13,6 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-import sys
-
 from qtpy.QtCore import QDir, Signal
 from qtpy.QtWidgets import (
     QFormLayout,
@@ -85,10 +83,3 @@ class ExportPanel(QWidget):
             "column_keys": column_keys,
         }
         self.runExport.emit(values)
-
-    def selectFileDirectory(self):
-        directory = QFileDialog().getExistingDirectory(
-            self, "Directory", self._file_name.text(), QFileDialog.ShowDirsOnly
-        )
-        if str(directory).__len__() > 0:
-            self._file_name.setText(str(directory))

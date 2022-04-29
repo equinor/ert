@@ -12,16 +12,16 @@ class StateMapTest(ResTest):
         self.assertEqual(len(state_map), 0)
 
         with self.assertRaises(TypeError):
-            r = state_map["r"]
+            state_map["r"]
 
         with self.assertRaises(IOError):
-            s2 = StateMap("DoesNotExist")
+            StateMap("DoesNotExist")
 
         with self.assertRaises(IOError):
             state_map.load("/file/does/not/exist")
 
         with self.assertRaises(IndexError):
-            v = state_map[0]
+            state_map[0]
 
         with self.assertRaises(TypeError):
             state_map["r"] = RealizationStateEnum.STATE_INITIALIZED
@@ -66,7 +66,7 @@ class StateMapTest(ResTest):
 
         self.assertFalse(state_map.isReadOnly())
 
-        with TestAreaContext("python/state-map/fwrite") as work_area:
+        with TestAreaContext("python/state-map/fwrite"):
             state_map.save("MAP")
             s2 = StateMap("MAP")
             self.assertTrue(state_map == s2)

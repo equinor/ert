@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <ert/util/test_util.h>
 #include <ert/util/int_vector.h>
+#include <ert/util/test_util.h>
 #include <ert/util/type_vector_functions.h>
 
 #include <ert/enkf/obs_data.hpp>
@@ -12,8 +12,7 @@
 void test_obs_mask_deactivate() {
 
     obs_data_type *obs_data = obs_data_alloc(1.0);
-    obs_block_type *obs_block =
-        obs_data_add_block(obs_data, "OBS", 2, NULL, false);
+    obs_block_type *obs_block = obs_data_add_block(obs_data, "OBS", 2);
 
     for (int iobs = 0; iobs < 2; iobs++)
         obs_block_iset(obs_block, iobs, iobs, 0.1);

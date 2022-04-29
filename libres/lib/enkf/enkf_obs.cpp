@@ -16,13 +16,13 @@
    for more details.
 */
 
-#include <string.h>
-#include <stdlib.h>
 #include <cmath>
+#include <stdlib.h>
+#include <string.h>
 
 #include <ert/util/hash.h>
-#include <ert/util/vector.h>
 #include <ert/util/type_vector_functions.h>
+#include <ert/util/vector.h>
 
 #include <ert/config/conf.hpp>
 
@@ -31,12 +31,12 @@
 
 #include <ert/analysis/enkf_linalg.hpp>
 
-#include <ert/enkf/summary_obs.hpp>
-#include <ert/enkf/enkf_fs.hpp>
-#include <ert/enkf/obs_vector.hpp>
-#include <ert/enkf/local_ministep.hpp>
-#include <ert/enkf/local_config.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
+#include <ert/enkf/enkf_fs.hpp>
+#include <ert/enkf/local_config.hpp>
+#include <ert/enkf/local_ministep.hpp>
+#include <ert/enkf/obs_vector.hpp>
+#include <ert/enkf/summary_obs.hpp>
 
 /*
 
@@ -336,9 +336,8 @@ static void enkf_obs_get_obs_and_measure_summary(
   */
 
     {
-        obs_block_type *obs_block =
-            obs_data_add_block(obs_data, obs_vector_get_obs_key(obs_vector),
-                               active_count, NULL, true);
+        obs_block_type *obs_block = obs_data_add_block(
+            obs_data, obs_vector_get_obs_key(obs_vector), active_count);
         meas_block_type *meas_block =
             meas_data_add_block(meas_data, obs_vector_get_obs_key(obs_vector),
                                 last_step, active_count);
@@ -1060,12 +1059,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
             "HOURS", false, DT_POSFLOAT, help_item_spec_hours);
         conf_item_spec_type *item_spec_restart = conf_item_spec_alloc(
             "RESTART", false, DT_INT, help_item_spec_restart);
-        conf_item_spec_type *item_spec_error_covar =
-            conf_item_spec_alloc("ERROR_COVAR", false, DT_FILE,
-                                 "Name of file containing error-covariance as "
-                                 "formatted matrix - no header");
 
-        conf_class_insert_owned_item_spec(gen_obs_class, item_spec_error_covar);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_field);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_date);
         conf_class_insert_owned_item_spec(gen_obs_class, item_spec_days);

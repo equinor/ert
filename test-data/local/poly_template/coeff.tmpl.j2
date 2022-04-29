@@ -1,0 +1,5 @@
+{
+{%- for p in range(parameter_entries) %}
+  "c{{p}}": <COEFF_{{p}}>{% if p < (parameter_entries - 1) %},{% endif %}
+{%- endfor %}
+}

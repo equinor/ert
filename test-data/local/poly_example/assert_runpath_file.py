@@ -12,7 +12,11 @@ def run():
         iteration = 1
 
     curdir = sys.argv[2]
-    runpath_line = "{iens:03d}  {pwd}/poly_example/poly_out/realization-{iens}/iter-{iter}  poly_{iens}  {iter:03d}\n"
+    runpath_line = (
+        "{iens:03d}  "
+        "{pwd}/poly_example/poly_out/realization-{iens}/iter-{iter}  "
+        "poly_{iens}  {iter:03d}\n"
+    )
     with open(runpath_file) as fh:
         rpf = "".join(
             [

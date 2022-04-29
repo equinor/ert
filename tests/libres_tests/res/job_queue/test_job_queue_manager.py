@@ -146,12 +146,12 @@ class JobQueueManagerTest(ResTest):
 
     def test_execute_queue(self):
 
-        with TestAreaContext("job_queue_manager_test") as work_area:
+        with TestAreaContext("job_queue_manager_test"):
             job_queue = create_queue(simple_script)
             manager = JobQueueManager(job_queue)
             manager.execute_queue()
 
-            self.assertFalse(job_queue.isRunning())
+            self.assertFalse(job_queue.isRunning)
 
             for job in job_queue.job_list:
                 ok_file = os.path.realpath(os.path.join(job.run_path, "OK"))
@@ -160,7 +160,7 @@ class JobQueueManagerTest(ResTest):
                     assert f.read() == "success"
 
     def test_max_submit_reached(self):
-        with TestAreaContext("job_queue_manager_test") as work_area:
+        with TestAreaContext("job_queue_manager_test"):
             max_submit_num = 5
             job_queue = create_queue(failing_script, max_submit=max_submit_num)
             manager = JobQueueManager(job_queue)
@@ -176,7 +176,7 @@ class JobQueueManagerTest(ResTest):
                 assert job.submit_attempt == job_queue.max_submit
 
     def test_kill_queue(self):
-        with TestAreaContext("job_queue_manager_test") as work_area:
+        with TestAreaContext("job_queue_manager_test"):
             max_submit_num = 5
             job_queue = create_queue(simple_script, max_submit=max_submit_num)
             manager = JobQueueManager(job_queue)

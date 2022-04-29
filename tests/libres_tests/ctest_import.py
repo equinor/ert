@@ -5,7 +5,7 @@ import sys
 PYTHONPATH = sys.argv[1]
 sys.path.insert(0, PYTHONPATH)
 
-from import_tester import ImportTester
+from import_tester import ImportTester  # noqa
 
 package_name = sys.argv[2]
 package_path = os.path.join(PYTHONPATH, package_name)

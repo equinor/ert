@@ -17,12 +17,12 @@
 */
 
 #include <cmath>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include <ert/util/util.h>
-#include <ert/util/stringlist.h>
 #include <ert/util/double_vector.h>
+#include <ert/util/stringlist.h>
+#include <ert/util/util.h>
 
 #include <ert/enkf/trans_func.hpp>
 

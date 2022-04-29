@@ -17,15 +17,15 @@
 */
 #include <future>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <ert/util/test_util.h>
-#include <ert/util/util.h>
 #include <ert/util/test_work_area.hpp>
+#include <ert/util/util.h>
 
-#include <ert/enkf/runpath_list.hpp>
 #include <ert/enkf/ert_test_context.hpp>
+#include <ert/enkf/runpath_list.hpp>
 
 void test_runpath_list() {
     runpath_list_type *list = runpath_list_alloc("DefaultFile");

@@ -11,7 +11,7 @@ import cloudpickle
 import pytest
 
 import ert
-import ert_shared.ensemble_evaluator.ensemble.builder as ee
+import ert.ensemble_evaluator as ee
 from ensemble_evaluator_utils import _mock_ws
 
 from ert_shared.async_utils import get_event_loop
@@ -96,12 +96,12 @@ def get_degree_step(
     degree, degree_spelled, transmitter_factory, test_data_path, coefficients
 ):
     step_builder = (
-        ee.create_step_builder().set_name(f"{degree_spelled}_degree").set_type("unix")
+        ee.StepBuilder().set_name(f"{degree_spelled}_degree").set_type("unix")
     )
 
     input_name = f"generate_{degree_spelled}_degree"
     step_builder.add_input(
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name(input_name)
         .set_transformation(
             ert.data.ExecutableTransformation(
@@ -119,7 +119,7 @@ def get_degree_step(
     )
 
     coeffs_input = (
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name("coeffs")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -134,7 +134,7 @@ def get_degree_step(
 
     output_name = f"input{degree}"
     step_builder.add_output(
-        ee.create_output_builder()
+        ee.OutputBuilder()
         .set_name(output_name)
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -144,7 +144,7 @@ def get_degree_step(
         .set_transmitter_factory(partial(transmitter_factory, output_name))
     )
     step_builder.add_job(
-        ee.create_job_builder()
+        ee.JobBuilder()
         .set_name(f"generate_{degree_spelled}_degree")
         .set_executable(Path("evaluate_coeffs.py"))
         .set_args([f"{degree}"])
@@ -163,7 +163,7 @@ def zero_degree_step(transmitter_factory, test_data_path, coefficients):
     )
 
     step_builder.add_input(
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name("input2")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -199,9 +199,9 @@ def second_degree_step(transmitter_factory, test_data_path, coefficients):
 
 @pytest.fixture()
 def sum_coeffs_step(test_data_path, transmitter_factory):
-    step_builder = ee.create_step_builder().set_name("add_coeffs").set_type("unix")
+    step_builder = ee.StepBuilder().set_name("add_coeffs").set_type("unix")
     step_builder.add_input(
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name("sum_up")
         .set_transformation(
             ert.data.ExecutableTransformation(
@@ -219,7 +219,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.create_output_builder()
+        ee.InputBuilder()
         .set_name("input0")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -230,7 +230,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.create_output_builder()
+        ee.InputBuilder()
         .set_name("input1")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -241,7 +241,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_input(
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name("input2")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -252,7 +252,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_output(
-        ee.create_output_builder()
+        ee.OutputBuilder()
         .set_name("sum_output")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -263,7 +263,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
     )
 
     step_builder.add_job(
-        ee.create_job_builder()
+        ee.JobBuilder()
         .set_name("sum_up")
         .set_executable(Path("sum_coeffs.py"))
         .set_args([])
@@ -275,7 +275,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
 def real_builder(
     sum_coeffs_step, zero_degree_step, first_degree_step, second_degree_step
 ):
-    real_builder = ee.create_realization_builder().active(True)
+    real_builder = ee.RealizationBuilder().active(True)
     real_builder.add_step(sum_coeffs_step)
     real_builder.add_step(zero_degree_step)
     real_builder.add_step(first_degree_step)
@@ -286,7 +286,7 @@ def real_builder(
 @pytest.fixture()
 def poly_ensemble_builder(real_builder, ensemble_size):
     builder = (
-        ee.create_ensemble_builder()
+        ee.EnsembleBuilder()
         .set_custom_port_range(custom_port_range=range(1024, 65535))
         .set_ensemble_size(ensemble_size)
         .set_max_running(6)
@@ -308,14 +308,12 @@ def function_ensemble_builder_factory(
     transmitter_factory,
     coefficients,
 ):
-    job_builder = ee.create_job_builder().set_name("user_defined_function")
+    job_builder = ee.JobBuilder().set_name("user_defined_function")
 
-    step_builder = (
-        ee.create_step_builder().set_name("function_evaluation").set_type("function")
-    )
+    step_builder = ee.StepBuilder().set_name("function_evaluation").set_type("function")
 
     coeffs_input = (
-        ee.create_input_builder()
+        ee.InputBuilder()
         .set_name("coeffs")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -330,7 +328,7 @@ def function_ensemble_builder_factory(
     step_builder.add_input(coeffs_input)
 
     step_builder.add_output(
-        ee.create_output_builder()
+        ee.OutputBuilder()
         .set_name("function_output")
         .set_transformation(
             ert.data.SerializationTransformation(
@@ -340,10 +338,10 @@ def function_ensemble_builder_factory(
         .set_transmitter_factory(partial(transmitter_factory, "function_output"))
     )
     step_builder.add_job(job_builder)
-    real_builder = ee.create_realization_builder().active(True).add_step(step_builder)
+    real_builder = ee.RealizationBuilder().active(True).add_step(step_builder)
 
     builder = (
-        ee.create_ensemble_builder()
+        ee.EnsembleBuilder()
         .set_custom_port_range(custom_port_range=range(1024, 65535))
         .set_ensemble_size(ensemble_size)
         .set_max_running(6)
@@ -399,16 +397,19 @@ def mock_ws_monitor(unused_tcp_port):
 @pytest.fixture()
 def external_sum_function(tmpdir):
     with tmpdir.as_cwd():
-        # Create temporary module that defines a function `bar`
-        # 'bar' returns a call to different function 'internal_call' defined in the same python file
+        # Create temporary module that defines a function 'bar'. 'bar' returns a
+        # call to a different function 'internal_call', defined in the same
+        # python file.
         module_path = Path(tmpdir) / "foo"
         module_path.mkdir()
         init_file = module_path / "__init__.py"
         init_file.touch()
         file_path = module_path / "bar.py"
         file_path.write_text(
-            "def bar(coeffs):\n    return internal_call(coeffs)\n"
-            "def internal_call(coeffs):\n    return {'function_output':[sum(coeffs.values())]}\n"
+            "def bar(coeffs):\n"
+            "    return internal_call(coeffs)\n"
+            "def internal_call(coeffs):\n"
+            "    return {'function_output':[sum(coeffs.values())]}\n"
         )
         spec = importlib.util.spec_from_file_location("foo", str(file_path))
         module = importlib.util.module_from_spec(spec)
@@ -422,7 +423,8 @@ def external_sum_function(tmpdir):
         with pytest.raises(ModuleNotFoundError):
             import foo.bar
 
-        # Make sure the function is no longer available before we start creating the flow and task
+        # Make sure the function is no longer available before we start creating
+        # the flow and task
         del func
 
         return pickle_func

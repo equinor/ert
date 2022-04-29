@@ -14,7 +14,7 @@ class EnkfNodeTest(ResTest):
             config = EnkfConfigNode.create_ext_param("key", keys)
             node = EnkfNode(config)
             ext_node = node.as_ext_param()
-            ext_config = config.getModelConfig()
+            config.getModelConfig()
 
             ext_node.set_vector([1, 2, 3])
             node.ecl_write("path")
