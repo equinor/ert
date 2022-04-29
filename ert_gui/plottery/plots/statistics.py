@@ -5,7 +5,6 @@ from pandas import DataFrame
 from .observations import plotObservations
 from .plot_tools import PlotTools
 from ert_gui.plottery.plots.history import plotHistory
-from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class StatisticsPlot:
@@ -55,7 +54,6 @@ class StatisticsPlot:
 
         _addStatisticsLegends(plot_config=config)
 
-        plotRefcase(plot_context, axes)
         plotObservations(_observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 

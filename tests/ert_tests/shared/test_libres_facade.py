@@ -229,16 +229,6 @@ class LibresFacadeTest(TestCase):
         self.assertEqual([], obs_keys)
 
     @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
-    def test_case_has_refcase(self):
-        facade = self.facade()
-        self.assertTrue(facade.has_refcase("FOPR"))
-
-    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
-    def test_case_has_refcase_missing_key(self):
-        facade = self.facade()
-        self.assertFalse(facade.has_refcase("nokey"))
-
-    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_refcase_data(self):
         facade = self.facade()
         data = facade.refcase_data("FOPR")
@@ -253,11 +243,14 @@ class LibresFacadeTest(TestCase):
     @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_case_history_data(self):
         facade = self.facade()
-        data = facade.history_data("FOPR")
+        data = facade.history_data("FOPRH")
+        self.assertIsInstance(data, PandasObject)
+
+        data = facade.history_data("FOPRH", case="default_1")
         self.assertIsInstance(data, PandasObject)
 
         facade = self.facade()
-        data = facade.history_data("WOPR:OP1")
+        data = facade.history_data("WOPRH:OP1")
         self.assertIsInstance(data, PandasObject)
 
     @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")

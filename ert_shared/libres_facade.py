@@ -178,10 +178,6 @@ class LibresFacade:
             data = data.unstack(level="Realization").droplevel(0, axis=1)
         return data
 
-    def has_refcase(self, key):
-        refcase = self._enkf_main.eclConfig().getRefcase()
-        return refcase is not None and key in refcase
-
     def refcase_data(self, key):
         refcase = self._enkf_main.eclConfig().getRefcase()
 
@@ -200,16 +196,12 @@ class LibresFacade:
         if not self.is_summary_key(key):
             return DataFrame()
 
-        # create history key
-        if ":" in key:
-            head, tail = key.split(":", 2)
-            key = "{}H:{}".format(head, tail)
-        else:
-            key = "{}H".format(key)
+        if case is None:
+            return self.refcase_data(key)
 
-        data = self.refcase_data(key)
+        data = self.gather_summary_data(case, key)
         if data.empty and case is not None:
-            data = self.gather_summary_data(case, key)
+            data = self.refcase_data(key)
 
         return data
 

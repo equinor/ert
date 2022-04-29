@@ -1,7 +1,6 @@
 from .observations import plotObservations
 from .plot_tools import PlotTools
 from ert_gui.plottery.plots.history import plotHistory
-from ert_gui.plottery.plots.refcase import plotRefcase
 
 
 class EnsemblePlot:
@@ -33,7 +32,6 @@ class EnsemblePlot:
                 )
                 config.nextColor()
 
-        plotRefcase(plot_context, axes)
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 

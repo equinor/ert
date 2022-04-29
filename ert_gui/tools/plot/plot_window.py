@@ -14,7 +14,6 @@ from ert_gui.tools.plot import DataTypeKeysWidget, CaseSelectionWidget, PlotWidg
 from ert_gui.tools.plot.customize import PlotCustomizer
 
 from ert_gui.tools.plot.plot_api import PlotApi
-from ert_shared.libres_facade import LibresFacade
 
 CROSS_CASE_STATISTICS = "Cross case statistics"
 DISTRIBUTION = "Distribution"
@@ -25,10 +24,10 @@ STATISTICS = "Statistics"
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, ert, config_file, parent):
+    def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        self._api = PlotApi(LibresFacade(ert))
+        self._api = PlotApi()
 
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
@@ -105,9 +104,6 @@ class PlotWindow(QMainWindow):
                 )
                 plot_config.setTitle(key)
                 plot_context = PlotContext(plot_config, cases, key)
-
-                if key_def["has_refcase"]:
-                    plot_context.refcase_data = self._api.refcase_data(key)
 
                 case = plot_context.cases()[0] if plot_context.cases() else None
                 plot_context.history_data = self._api.history_data(key, case)
