@@ -42,14 +42,13 @@ class EnkfSimulationRunner(BaseCClass):
         # deactivate failed realizations
         totalOk = 0
         totalFailed = 0
-        for i in range(len(run_context)):
-            if run_context.is_active(i):
-                run_arg = run_context[i]
+        for index, run_arg in enumerate(run_context):
+            if run_context.is_active(index):
                 if (
                     run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
                     or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
                 ):
-                    run_context.deactivate_realization(i)
+                    run_context.deactivate_realization(index)
                     totalFailed += 1
                 else:
                     totalOk += 1
@@ -85,10 +84,9 @@ class EnkfSimulationRunner(BaseCClass):
         exit_callback_function = EnKFState.forward_model_exit_callback
 
         # submit jobs
-        for i in range(len(run_context)):
-            if not run_context.is_active(i):
+        for index, run_arg in enumerate(run_context):
+            if not run_context.is_active(index):
                 continue
-            run_arg = run_context[i]
             job_queue.add_job_from_run_arg(
                 run_arg,
                 self._enkf_main().resConfig(),

@@ -23,9 +23,6 @@ class LegendView(QListView):
 
 
 class LegendDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-
     def paint(self, painter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         data = index.data(ProgressRole)
         nr_reals = 0

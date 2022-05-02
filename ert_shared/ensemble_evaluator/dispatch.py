@@ -3,7 +3,7 @@ from collections import defaultdict, deque, OrderedDict
 import asyncio
 from typing import Optional
 
-import ert.ensemble_evaluator.identifiers as identifiers
+from ert.ensemble_evaluator import identifiers
 
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,

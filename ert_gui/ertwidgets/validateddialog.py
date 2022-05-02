@@ -22,17 +22,13 @@ from qtpy.QtWidgets import (
     QWidget,
     QDialogButtonBox,
     QLineEdit,
-    QComboBox,
     QLayout,
 )
 
 
 class ValidatedDialog(QDialog):
-    """
-    A dialog for creating a validated new value. Performs validation of name
-    against a provided.  Can be used to select from the list or for creating a
-    new value that is not on the list.
-    """
+    """A dialog for creating a validated new value that is not already on
+    a deny-list."""
 
     INVALID_COLOR = QColor(255, 235, 235)
 
@@ -41,19 +37,15 @@ class ValidatedDialog(QDialog):
         title="Title",
         description="Description",
         unique_names=None,
-        choose_from_list=False,
     ):
         QDialog.__init__(self)
         self.setModal(True)
         self.setWindowTitle(title)
-        # self.setMinimumWidth(250)
-        # self.setMinimumHeight(150)
 
         if unique_names is None:
             unique_names = []
 
         self.unique_names = unique_names
-        self.choose_from_list = choose_from_list
 
         self.layout = QFormLayout()
         self.layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -71,21 +63,14 @@ class ValidatedDialog(QDialog):
         self.ok_button = buttons.button(QDialogButtonBox.Ok)
         self.ok_button.setEnabled(False)
 
-        if choose_from_list:
-            self.param_name_combo = QComboBox()
-            self.param_name.currentIndexChanged.connect(self.validateChoice)
-            for item in unique_names:
-                self.param_name_combo.addItem(item)
-            self.layout.addRow("Job:", self.param_name_combo)
-        else:
-            self.param_name = QLineEdit(self)
-            self.param_name.setFocus()
-            self.param_name.textChanged.connect(self.validateName)
-            self.validColor = self.param_name.palette().color(
-                self.param_name.backgroundRole()
-            )
+        self.param_name = QLineEdit(self)
+        self.param_name.setFocus()
+        self.param_name.textChanged.connect(self.validateName)
+        self.validColor = self.param_name.palette().color(
+            self.param_name.backgroundRole()
+        )
 
-            self.layout.addRow("Name:", self.param_name)
+        self.layout.addRow("Name:", self.param_name)
 
         self.layout.addRow(self.createSpace(10))
 
@@ -119,7 +104,7 @@ class ValidatedDialog(QDialog):
 
         if value == "":
             self.notValid("Can not be empty!")
-        elif not value.find(" ") == -1:
+        elif value.find(" ") != -1:
             self.notValid("No spaces allowed!")
         elif value in self.unique_names:
             self.notValid("Name must be unique!")
@@ -132,10 +117,7 @@ class ValidatedDialog(QDialog):
 
     def getName(self):
         """Return the new name chosen by the user"""
-        if self.choose_from_list:
-            return str(self.param_name_combo.currentText())
-        else:
-            return str(self.param_name.text())
+        return str(self.param_name.text())
 
     def showAndTell(self):
         """Shows the dialog and returns the result"""

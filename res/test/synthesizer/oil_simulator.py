@@ -95,7 +95,7 @@ class OilSimulator:
         self._fwpr = 0.0
         self._fgor = 0.0
         self._fwct = 0.0
-        for key in self._wells:
+        for key, well in self._wells.items():
             oprFunction = self._oprFunc[key]
             gprFunction = self._gprFunc[key]
             wprFunction = self._wprFunc[key]
@@ -103,7 +103,6 @@ class OilSimulator:
             gpr_value = gprFunction(self._current_step, scale)
             wpr_value = wprFunction(self._current_step, scale)
 
-            well = self._wells[key]
             if self._foip > 0.0:
                 well["opr"] = opr_value
                 well["opt"] += opr_value

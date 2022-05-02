@@ -49,10 +49,12 @@ class LoadResultsTool(Tool):
         """A run path is considered valid if we can
         insert realisation and iteration numbers"""
         try:
+            # pylint: disable=pointless-statement
             self.facade.run_path % (0, 0)
             return True
         except TypeError:
             try:
+                # pylint: disable=pointless-statement
                 self.facade.run_path % 0
                 return True
             except TypeError:

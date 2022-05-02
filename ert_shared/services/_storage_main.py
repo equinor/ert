@@ -134,8 +134,8 @@ def run_server(args=None, debug=False):
     print("Storage server is ready to accept requests. Listening on:")
     for url in connection_info["urls"]:
         print(f"  {url}")
+        print(f"\nOpenAPI Docs: {url}/docs", file=sys.stderr)
 
-    print(f"\nOpenAPI Docs: {url}/docs", file=sys.stderr)
     if args.debug or debug:
         print("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"

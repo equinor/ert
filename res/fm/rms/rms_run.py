@@ -198,5 +198,5 @@ class RMSRun:
 
         if self.config.threads:
             args += ["-threads", str(self.config.threads)]
-        comp_process = subprocess.run(args=args)
+        comp_process = subprocess.run(args=args, check=False)
         return comp_process.returncode

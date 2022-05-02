@@ -112,7 +112,6 @@ class _Proc(threading.Thread):
         env = os.environ.copy()
         env["ERT_COMM_FD"] = str(fd_write)
 
-        global SERVICE_NAMES
         SERVICE_NAMES.add(self._service_name)
 
         self._childproc = Popen(
@@ -349,7 +348,6 @@ class BaseService:
             self._proc.join()
 
     def set_conn_info(self, info: ConnInfo) -> None:
-        """ """
         if self._conn_info is not None:
             raise ValueError("Connection information already set")
         if info is None:
