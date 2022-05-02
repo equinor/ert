@@ -49,8 +49,8 @@ class ForwardModel(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                "Failed to construct forward model from provided ext_joblist %s"
-                % ext_joblist
+                "Failed to construct forward model "
+                f"from provided ext_joblist {ext_joblist}"
             )
 
     def __len__(self):
@@ -88,7 +88,7 @@ class ForwardModel(BaseCClass):
         )
 
     def __repr__(self):
-        return self._create_repr("joblist=%s" % self.joblist())
+        return self._create_repr(f"joblist={self.joblist()}")
 
     def get_size(self):
         return len(self)

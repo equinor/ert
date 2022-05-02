@@ -27,13 +27,13 @@ class LocalUpdateStep(BaseCClass):
     def __getitem__(self, index):
         """@rtype: LocalMinistep"""
         if not isinstance(index, int):
-            raise TypeError("Keys must be ints, not %s" % str(type(index)))
+            raise TypeError(f"Keys must be ints, not {type(index)}")
         if index < 0:
             index += len(self)
         if 0 <= index < len(self):
             return self._iget_ministep(index)
         else:
-            raise IndexError("Invalid index, valid range: [0, %d)" % len(self))
+            raise IndexError(f"Invalid index, valid range: [0, {len(self)})")
 
     def attachMinistep(self, ministep):
         assert isinstance(ministep, LocalMinistep)

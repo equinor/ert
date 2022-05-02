@@ -115,9 +115,8 @@ class ModelConfig(BaseCClass):
         hist_src_enum = ModelConfig._get_history_src_enum(config_dict, config_content)
         if hist_src_enum == HistorySourceEnum.SCHEDULE:
             raise ValueError(
-                "{} as {} is not supported".format(
-                    HistorySourceEnum.SCHEDULE, ConfigKeys.HISTORY_SOURCE
-                )
+                f"{HistorySourceEnum.SCHEDULE} as "
+                f"{ConfigKeys.HISTORY_SOURCE} is not supported"
             )
 
         if config_dict is None:

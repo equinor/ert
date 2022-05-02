@@ -92,13 +92,13 @@ class ErtScript:
             if not hasattr(self, "run"):
                 self.__failed = True
                 return (
-                    "Script '%s' has not implemented a 'run' function"
-                    % self.__class__.__name__
+                    f"Script '{self.__class__.__name__}' "
+                    "has not implemented a 'run' function"
                 )
             self.outputStackTrace(e)
             return None
         except KeyboardInterrupt:
-            return "Script '%s' cancelled (CTRL+C)" % self.__class__.__name__
+            return f"Script '{self.__class__.__name__}' cancelled (CTRL+C)"
         except Exception as e:
             self.outputStackTrace(e)
             return None
@@ -121,7 +121,7 @@ class ErtScript:
     def loadScriptFromFile(path):
         """@rtype: type ErtScript"""
         try:
-            module_name = "ErtScriptModule_%d" % ErtScript.__module_count
+            module_name = f"ErtScriptModule_{ErtScript.__module_count}"
             ErtScript.__module_count += 1
 
             spec = importlib.util.spec_from_file_location(module_name, path)
@@ -129,7 +129,7 @@ class ErtScript:
             spec.loader.exec_module(module)
             return ErtScript.__findErtScriptImplementations(module)
         except Exception:
-            sys.stderr.write("The script '%s' caused an error during load:\n" % path)
+            sys.stderr.write(f"The script '{path}' caused an error during load:\n")
             traceback.print_exception(sys.exc_info()[0], sys.exc_info()[1], None)
             return None
 

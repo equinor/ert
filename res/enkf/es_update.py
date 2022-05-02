@@ -174,7 +174,7 @@ class ESUpdate:
         if self.hasModule(name):
             self._analysis_config.getModule(name)
         else:
-            raise KeyError("No such module:%s " % name)
+            raise KeyError(f"No such module:{name}")
 
     def setGlobalStdScaling(self, weight):
         self._analysis_config.setGlobalStdScaling(weight)

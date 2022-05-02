@@ -113,4 +113,4 @@ class BlockObservation(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "BlockObservation(size = %d) at 0x%x" % (len(self), self._address())
+        return f"BlockObservation(size = {len(self)}) at 0x{self._address():x}"

@@ -33,7 +33,7 @@ class ConfigError(BaseCClass):
 
         size = len(self)
         if index >= size:
-            raise IndexError("Index out of range: %d < %d" % (index, size))
+            raise IndexError(f"Index out of range: {index} < {size}")
 
         return self._iget(index)
 

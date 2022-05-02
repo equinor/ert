@@ -32,7 +32,7 @@ class RunpathList(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise IOError(
-                'Could not construct RunpathList with export_file "%s".' % export_file
+                f'Could not construct RunpathList with export_file "{export_file}".'
             )
 
     def __len__(self):
@@ -46,7 +46,7 @@ class RunpathList(BaseCClass):
             if idx < 0:
                 idx += ls
             if not 0 <= idx < ls:
-                raise IndexError("Index not in range: 0 <= %d < %d" % (index, ls))
+                raise IndexError(f"Index not in range: 0 <= {index} < {ls}")
             realization = self._iens(idx)
             iteration = self._iteration(idx)
             runpath = self._runpath(idx)
@@ -54,7 +54,7 @@ class RunpathList(BaseCClass):
             return RunpathNode(realization, iteration, runpath, basename)
         elif isinstance(index, slice):
             return [self[i] for i in range(*index.indices(ls))]
-        raise TypeError("List indices must be integers, not %s." % str(type(index)))
+        raise TypeError(f"List indices must be integers, not {type(index)}.")
 
     def __iter__(self):
         index = 0
@@ -84,11 +84,11 @@ class RunpathList(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "RunpathList(size = %d) %s" % (len(self), self._ad_str())
+        return f"RunpathList(size = {len(self)}) {self._ad_str()}"
 
     def export(self):
         self._export()
 
     def load(self):
         if not self._load():
-            raise IOError("Could not load from:%s" % self._get_export_file())
+            raise IOError(f"Could not load from:{self._get_export_file()}")

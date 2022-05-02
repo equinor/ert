@@ -32,7 +32,7 @@ class SummaryConfig(BaseCClass):
         super().__init__(c_ptr)
 
     def __repr__(self):
-        return "SummaryConfig() %s" % self._ad_str()
+        return f"SummaryConfig() {self._ad_str()}"
 
     def free(self):
         self._free()

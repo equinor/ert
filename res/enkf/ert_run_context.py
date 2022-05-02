@@ -192,9 +192,7 @@ class ErtRunContext(BaseCClass):
         if 0 <= index < len(self):
             return self._iactive(index)
         else:
-            raise IndexError(
-                "Index:%d invalid. Legal range: [0,%d)" % (index, len(self))
-            )
+            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)})")
 
     def __len__(self):
         return self._get_size()
@@ -207,15 +205,13 @@ class ErtRunContext(BaseCClass):
             run_arg = self._iget(index)
             return run_arg
         else:
-            raise IndexError(
-                "Index:%d invalid. Legal range: [0,%d)" % (index, len(self))
-            )
+            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)}")
 
     def free(self):
         self._free()
 
     def __repr__(self):
-        return "ErtRunContext(size = %d) %s" % (len(self), self._ad_str())
+        return f"ErtRunContext(size = {len(self)}) {self._ad_str()}"
 
     @classmethod
     def createRunpathList(

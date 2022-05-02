@@ -87,7 +87,7 @@ class LocalConfig(BaseCClass):
             assert isinstance(analysis_module, AnalysisModule)
         ministep = self._create_ministep(mini_step_key, analysis_module)
         if ministep is None:
-            raise KeyError("Ministep:  {} already exists".format(mini_step_key))
+            raise KeyError(f"Ministep: {mini_step_key} already exists")
         ministep.set_ensemble_config(self.__getEnsembleConfig())
         return ministep
 
@@ -95,7 +95,7 @@ class LocalConfig(BaseCClass):
         """@rtype: Obsdata"""
         assert isinstance(obsdata_key, str)
         if self._has_obsdata(obsdata_key):
-            raise ValueError("Tried to add existing observation key:%s " % obsdata_key)
+            raise ValueError(f"Tried to add existing observation key: {obsdata_key}")
 
         return _lib.local.local_config.create_obsdata(self, obsdata_key)
 

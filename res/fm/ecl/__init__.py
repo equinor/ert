@@ -13,12 +13,12 @@ def simulate(simulator, version, data_file, num_cpu=1, check=True):
     elif simulator == "ecl300":
         config = Ecl300Config()
     else:
-        raise Exception("No such simulator: {}".format(simulator))
+        raise Exception(f"No such simulator: {simulator}")
 
-    argv = [data_file, "--num-cpu={}".format(num_cpu)]
+    argv = [data_file, f"--num-cpu={num_cpu}"]
 
     if version is not None:
-        argv.append("--version={}".format(version))
+        argv.append(f"--version={version}")
 
     if not check:
         argv.append("--ignore-errors")

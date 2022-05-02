@@ -60,7 +60,7 @@ class ExtParamConfig(BaseCClass):
             suffixmap = {}
 
         if len(keys) != len(set(keys)):
-            raise ValueError("Duplicate keys for key '{}' - keys: {}".format(key, keys))
+            raise ValueError(f"Duplicate keys for key '{key}' - keys: {keys}")
 
         keys = StringList(initial=input_keys)
         c_ptr = self._alloc(key, keys)
@@ -70,21 +70,16 @@ class ExtParamConfig(BaseCClass):
             suffixlist = StringList(initial=suffixes)
             if len(suffixes) == 0:
                 raise ValueError(
-                    "No suffixes for key '{}/{}' - suffixes: {}".format(
-                        key, k, suffixes
-                    )
+                    f"No suffixes for key '{key}/{k}' - suffixes: {suffixes}"
                 )
             if len(suffixes) != len(set(suffixes)):
                 raise ValueError(
-                    "Duplicate suffixes for key '{}/{}' - suffixes: {}".format(
-                        key, k, suffixes
-                    )
+                    f"Duplicate suffixes for key '{key}/{k}' - " f"suffixes: {suffixes}"
                 )
             if any(len(s) == 0 for s in suffixes):
                 raise ValueError(
-                    "Empty suffix encountered for key '{}/{}' - suffixes: {}".format(
-                        key, k, suffixes
-                    )
+                    f"Empty suffix encountered for key '{key}/{k}' "
+                    f"- suffixes: {suffixes}"
                 )
             self._ikey_set_suffixes(self._key_index(k), suffixlist)
 
@@ -118,7 +113,7 @@ class ExtParamConfig(BaseCClass):
         if isinstance(index, str):
             index = self._key_index(index)
             if index < 0:
-                raise IndexError('Key "{}" not found'.format(index))
+                raise IndexError(f'Key "{index}" not found')
             return self._get_suffixes(index)
 
         # assume index is an integer
@@ -126,7 +121,7 @@ class ExtParamConfig(BaseCClass):
             return index + len(self)
         if index >= len(self):
             raise IndexError(
-                "Invalid key index {}. Valid range is [0, {})".format(index, len(self))
+                f"Invalid key index {index}. Valid range is [0, {len(self)})"
             )
         key = self._iget_key(index)
         suffixes = self._get_suffixes(index)

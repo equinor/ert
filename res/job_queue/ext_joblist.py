@@ -81,4 +81,4 @@ class ExtJoblist(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return self._create_repr("size=%d, joblist=%s" % (len(self), self.get_jobs()))
+        return self._create_repr(f"size={len(self)}, joblist={self.get_jobs()}")

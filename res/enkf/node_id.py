@@ -15,9 +15,7 @@ class NodeId(Structure):
     _fields_ = [("report_step", c_int), ("iens", c_int)]
 
     def __repr__(self):
-        rs = self.report_step
-        ie = self.iens
-        return "NodeId(report_step = %d, iens = %d)" % (rs, ie)
+        return f"NodeId(report_step = {self.report_step}, iens = {self.iens})"
 
 
 Prototype.registerType("node_id", NodeId)

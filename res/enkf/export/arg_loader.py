@@ -33,7 +33,7 @@ class ArgLoader:
         if column_names is None:
             column_names = []
             for column in range(columns):
-                column_names.append("Column%d" % column)
+                column_names.append(f"Column{column:d}")
 
         data_frame = DataFrame(data=data, columns=column_names)
         return data_frame

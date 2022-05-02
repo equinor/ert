@@ -42,12 +42,10 @@ class HookManager(BaseCClass):
             config_dir = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
             if not isinstance(config_dir, str):
                 raise ValueError(
-                    "HookManager needs {} to be configured".format(
-                        ConfigKeys.CONFIG_DIRECTORY
-                    )
+                    f"HookManager needs {ConfigKeys.CONFIG_DIRECTORY} to be configured"
                 )
 
-            # RUNPATH_FILE #
+            # RUNPATH_FILE
             runpath_file_name = config_dict.get(
                 ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
             )
@@ -65,9 +63,7 @@ class HookManager(BaseCClass):
                     if run_mode_name not in [
                         runtime.name for runtime in HookRuntime.enums()
                     ]:
-                        raise ValueError(
-                            "Run mode {} not supported".format(run_mode_name)
-                        )
+                        raise ValueError(f"Run mode {run_mode_name} not supported")
                     hook_workflow_names.append(hook_workflow_name)
                     hook_workflow_run_modes.append(run_mode_name)
 
@@ -97,7 +93,7 @@ class HookManager(BaseCClass):
         return self._size()
 
     def __repr__(self):
-        return "HookManager({})".format(", ".join([str(x) for x in self]))
+        return f'HookManager({", ".join([str(x) for x in self])})'
 
     def __getitem__(self, index) -> HookWorkflow:
         assert isinstance(index, int)
@@ -106,7 +102,7 @@ class HookManager(BaseCClass):
         if 0 <= index < len(self):
             return self._iget_hook_workflow(index)
         else:
-            raise IndexError("Invalid index.  Valid range: [0, %d)." % len(self))
+            raise IndexError(f"Invalid index.  Valid range: [0, {len(self)}).")
 
     def getRunpathListFile(self):
         return self._get_runpath_list_file()

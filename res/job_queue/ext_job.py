@@ -89,16 +89,16 @@ class ExtJob(BaseCClass):
                 super().__init__(c_ptr)
             else:
                 raise ValueError(
-                    "Unable to construct ExtJob(name=%s, config_file=%s, private=%s)"
-                    % (name, config_file, private)
+                    f"Unable to construct ExtJob(name={name}, "
+                    f"config_file={config_file}, private={private})"
                 )
         else:
-            raise IOError('No such config file "%s".' % config_file)
+            raise IOError(f'No such config file "{config_file}".')
 
     def __repr__(self):
         if self._address():
             return self._create_repr(
-                "{}, config_file = {}".format(self.name(), self.get_config_file())
+                f"{self.name()}, config_file = {self.get_config_file()}"
             )
         else:
             return "UNINITIALIZED ExtJob"

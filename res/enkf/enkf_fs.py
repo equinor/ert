@@ -97,7 +97,7 @@ class EnkfFs(BaseCClass):
     def diskVersion(cls, path):
         disk_version = cls._disk_version(path)
         if disk_version < 0:
-            raise IOError("No such filesystem: %s" % path)
+            raise IOError(f"No such filesystem: {path}")
         return disk_version
 
     @classmethod
@@ -137,9 +137,7 @@ class EnkfFs(BaseCClass):
             self.umount()
 
     def __repr__(self):
-        cn = self.getCaseName()
-        ad = self._ad_str()
-        return "EnkfFs(case_name = %s) %s" % (cn, ad)
+        return f"EnkfFs(case_name = {self.getCaseName()}) {self._ad_str()}"
 
     def fsync(self):
         self._fsync()

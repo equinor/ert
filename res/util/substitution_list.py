@@ -52,7 +52,7 @@ class SubstitutionList(BaseCClass):
         if key in self:
             return self._get_value(key)
         else:
-            raise KeyError("No such key:%s" % key)
+            raise KeyError(f"No such key:{key}")
 
     def get(self, key, default=None):
         return self[key] if key in self else default
@@ -61,11 +61,11 @@ class SubstitutionList(BaseCClass):
         if key in self:
             return self._get_doc(key)
         else:
-            raise KeyError("No such key:%s" % key)
+            raise KeyError(f"No such key:{key}")
 
     def indexForKey(self, key):
         if key not in self:
-            raise KeyError("Key '%s' not in substitution list!" % key)
+            raise KeyError(f"Key '{key}' not in substitution list!")
 
         for index, key_val_doc in enumerate(self):
             if key == key_val_doc[0]:
@@ -77,7 +77,7 @@ class SubstitutionList(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return self._create_repr("len=%d" % len(self))
+        return self._create_repr(f"len={len(self)}")
 
     def __str__(self):
-        return "SubstitutionList{%s}" % ", ".join(map(str, self.keys()))
+        return f"SubstitutionList{{{', '.join(map(str, self.keys()))}}}"

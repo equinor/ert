@@ -56,7 +56,7 @@ class EnkfNode(BaseCClass):
         else:
             p_err = "private " if private else ""
             raise ValueError(
-                "Unable to create %sEnkfNode from given config node." % p_err
+                f"Unable to create {p_err}EnkfNode from given config node."
             )
 
     @classmethod
@@ -76,10 +76,10 @@ class EnkfNode(BaseCClass):
             node_id = NodeId(report_step, iens)
             if node.tryLoad(fs, node_id):
                 if node.export(filename, file_type=file_type, arg=arg):
-                    print("%s[%03d] -> %s" % (config_node.getKey(), iens, filename))
+                    print(f"{config_node.getKey()}[{iens:03d}] -> {filename}")
             else:
                 sys.stderr.write(
-                    "** ERROR: Could not load realisation:%d - export failed" % iens
+                    f"** ERROR: Could not load realisation:{iens} - export failed"
                 )
 
     def export(self, filename, file_type=None, arg=None):
@@ -139,9 +139,9 @@ class EnkfNode(BaseCClass):
         @rtype: bool
         """
         if not isinstance(fs, EnkfFs):
-            raise TypeError("fs must be an EnkfFs, not %s" % type(fs))
+            raise TypeError(f"fs must be an EnkfFs, not {type(fs)}")
         if not isinstance(node_id, NodeId):
-            raise TypeError("node_id must be a NodeId, not %s" % type(node_id))
+            raise TypeError(f"node_id must be a NodeId, not {type(node_id)}")
 
         return self._try_load(fs, node_id)
 
@@ -152,8 +152,8 @@ class EnkfNode(BaseCClass):
     def load(self, fs, node_id):
         if not self.tryLoad(fs, node_id):
             raise Exception(
-                "Could not load node: %s iens: %d report: %d"
-                % (self.name(), node_id.iens, node_id.report_step)
+                f"Could not load node: {self.name()} iens: {node_id.iens} "
+                f"report: {node_id.report_step}"
             )
 
     def save(self, fs, node_id):
@@ -167,7 +167,7 @@ class EnkfNode(BaseCClass):
 
     def __repr__(self):
         pp = ", private" if self._private else ""
-        return 'EnkfNode(name = "%s"%s) %s' % (self.name(), pp, self._ad_str())
+        return f'EnkfNode(name = "{self.name()}"{pp}) {self._ad_str()}'
 
     def ecl_write(self, path):
         filestream_ptr = None

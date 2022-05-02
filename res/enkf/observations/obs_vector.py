@@ -96,7 +96,7 @@ class ObsVector(BaseCClass):
         elif node_type == EnkfObservationImplementationType.GEN_OBS:
             return GenObservation.createCReference(pointer, self)
         else:
-            raise AssertionError("Node type '%s' currently not supported!" % node_type)
+            raise AssertionError(f"Node type '{node_type}' currently not supported!")
 
     def __iter__(self):
         """Iterate over active report steps; return node"""
@@ -169,11 +169,11 @@ class ObsVector(BaseCClass):
         self._free()
 
     def __repr__(self):
-        dk = "data_key = %s" % self.getDataKey()
-        kk = "key = %s" % self.getKey()
-        ok = "obs_key = %s" % self.getObsKey()
-        na = "num_active = %d" % len(self)
-        return "ObsVector(%s, %s, %s, %s) %s" % (na, kk, ok, dk, self._ad_str())
+        return (
+            f"ObsVector(data_key = {self.getDataKey()}, "
+            f"key = {self.getKey()}, obs_key = {self.getObsKey()}, "
+            f"num_active = {len(self)}) {self._ad_str()}"
+        )
 
     def getTotalChi2(self, fs, realization_number):
         """@rtype: float"""

@@ -60,9 +60,7 @@ class SubstConfig(BaseCClass):
                     " - the location of the config file.",
                 )
             else:
-                raise ValueError(
-                    "{} must be configured".format(ConfigKeys.CONFIG_DIRECTORY)
-                )
+                raise ValueError(f"{ConfigKeys.CONFIG_DIRECTORY} must be configured")
 
             # FILE #
             filename = config_dict.get(ConfigKeys.CONFIG_FILE_KEY)
@@ -105,13 +103,11 @@ class SubstConfig(BaseCClass):
                     num_cpu = self._get_num_cpu(file_path)
                     subst_list.addItem(
                         "<NUM_CPU>",
-                        "{}".format(num_cpu),
+                        str(num_cpu),
                         "The number of CPU used for one forward model.",
                     )
                 else:
-                    raise IOError(
-                        "Could not find ECLIPSE data file: {}".format(file_path)
-                    )
+                    raise IOError(f"Could not find ECLIPSE data file: {file_path}")
 
             c_ptr = self._alloc_full(subst_list)
 
@@ -158,10 +154,7 @@ class SubstConfig(BaseCClass):
         return (
             "["
             + ",\n".join(
-                [
-                    "({}, {}, {})".format(key, value, doc)
-                    for key, value, doc in self.subst_list
-                ]
+                [f"({key}, {value}, {doc})" for key, value, doc in self.subst_list]
             )
             + "]"
         )

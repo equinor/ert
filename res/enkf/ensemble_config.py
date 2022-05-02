@@ -223,7 +223,7 @@ class EnsembleConfig(BaseCClass):
         if key in self:
             return self._get_node(key).setParent(self)
         else:
-            raise KeyError("The key:%s is not in the ensemble configuration" % key)
+            raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
     def getNode(self, key):
         return self[key]

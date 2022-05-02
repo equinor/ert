@@ -280,7 +280,7 @@ class _RealEnKFMain(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                "Failed to construct EnKFMain instance from config %s." % res_config
+                f"Failed to construct EnKFMain instance from config {res_config}."
             )
 
         self.__key_manager = KeyManager(self)
@@ -297,7 +297,7 @@ class _RealEnKFMain(BaseCClass):
             config.convertToCReference(self)
             return config
 
-        raise TypeError("Expected ResConfig, received: %r" % config)
+        raise TypeError(f"Expected ResConfig, received: {repr(config)}")
 
     def get_queue_config(self) -> QueueConfig:
         return self._get_queue_config()
@@ -308,8 +308,8 @@ class _RealEnKFMain(BaseCClass):
             return self._iget_state(iens).setParent(self)
         else:
             raise IndexError(
-                "iens value:%d invalid Valid range: [0,%d)"
-                % (iens, self.getEnsembleSize())
+                f"iens value:{iens} invalid Valid range: "
+                f"[0,{self.getEnsembleSize()})"
             )
 
     def free(self):
@@ -318,7 +318,7 @@ class _RealEnKFMain(BaseCClass):
     def __repr__(self):
         ens = self.getEnsembleSize()
         cfg = self.getUserConfigFile()
-        cnt = "ensemble_size = %d, config_file = %s" % (ens, cfg)
+        cnt = f"ensemble_size = {ens}, config_file = {cfg}"
         return self._create_repr(cnt)
 
     def getEnsembleSize(self) -> int:

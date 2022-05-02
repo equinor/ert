@@ -54,8 +54,7 @@ class Field(BaseCClass):
                 file_type = FieldConfig.exportFormat(filename)
             except ValueError:
                 sys.stderr.write(
-                    "Sorry - could not infer output format from filename:%s\n"
-                    % filename
+                    f"Sorry - could not infer output format from filename:{filename}\n"
                 )
                 return False
 

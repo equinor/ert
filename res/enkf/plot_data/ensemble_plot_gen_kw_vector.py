@@ -50,4 +50,4 @@ class EnsemblePlotGenKWVector(BaseCClass):
         return self._get_value(index)
 
     def __repr__(self):
-        return "EnsemblePlotGenKWVector(size = %d) %s" % (len(self), self._ad_str())
+        return f"EnsemblePlotGenKWVector(size = {len(self)}) {self._ad_str()}"

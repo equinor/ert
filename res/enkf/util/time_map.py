@@ -53,7 +53,7 @@ class TimeMap(BaseCClass):
         if os.path.isfile(filename):
             self._load(filename)
         else:
-            raise IOError((errno.ENOENT, "File not found: %s" % filename))
+            raise IOError((errno.ENOENT, f"File not found: {filename}"))
 
     def fwrite(self, filename):
         self._save(filename)
@@ -66,9 +66,9 @@ class TimeMap(BaseCClass):
         if os.path.isfile(filename):
             OK = self._fload(filename)
             if not OK:
-                raise Exception("Error occured when loading timemap from:%s" % filename)
+                raise Exception(f"Error occured when loading timemap from:{filename}")
         else:
-            raise IOError((errno.ENOENT, "File not found: %s" % filename))
+            raise IOError((errno.ENOENT, f"File not found: {filename}"))
 
     def getSimulationDays(self, step):
         """@rtype: double"""
@@ -77,7 +77,7 @@ class TimeMap(BaseCClass):
 
         size = len(self)
         if step < 0 or step >= size:
-            raise IndexError("Index out of range: 0 <= %d < %d" % (step, size))
+            raise IndexError(f"Index out of range: 0 <= {step} < {size}")
 
         return self._iget_sim_days(step)
 
@@ -88,7 +88,7 @@ class TimeMap(BaseCClass):
 
         size = len(self)
         if index < 0 or index >= size:
-            raise IndexError("Index out of range: 0 <= %d < %d" % (index, size))
+            raise IndexError(f"Index out of range: 0 <= {index} < {size}")
 
         return self._iget(index)
 
@@ -144,18 +144,14 @@ class TimeMap(BaseCClass):
         if index >= 0:
             return index
         else:
-            raise ValueError(
-                "The time:%s was not found in the time_map instance" % time
-            )
+            raise ValueError(f"The time:{time} was not found in the time_map instance")
 
     def lookupDays(self, days):
         index = self._lookup_days(days)
         if index >= 0:
             return index
         else:
-            raise ValueError(
-                "The days: %s was not found in the time_map instance" % days
-            )
+            raise ValueError(f"The days: {days} was not found in the time_map instance")
 
     def __len__(self):
         """@rtype: int"""
@@ -165,9 +161,7 @@ class TimeMap(BaseCClass):
         self._free()
 
     def __repr__(self):
-        ls = len(self)
-        cnt = "size = %d" % (ls)
-        return self._create_repr(cnt)
+        return self._create_repr(f"size = {len(self)}")
 
     def dump(self):
         """
