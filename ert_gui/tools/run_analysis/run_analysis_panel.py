@@ -30,7 +30,6 @@ class RunAnalysisPanel(QWidget):
 
         self.analysis_module = AnalysisModuleEdit(
             LibresFacade(ert),
-            load_all=True,
             help_link="config/analysis/analysis_module",
         )
         self.target_case_text = QLineEdit()
