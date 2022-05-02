@@ -38,9 +38,7 @@ class UIReturn(BaseCClass):
         if c_ptr:
             super().__init__(c_ptr)
         else:
-            raise ValueError(
-                "Unable to construct UIReturn with status = %s" % str(status)
-            )
+            raise ValueError(f"Unable to construct UIReturn with status = {status}")
 
     # For python 3, corresponds to __nonzero__
     def __bool__(self):
@@ -60,7 +58,7 @@ class UIReturn(BaseCClass):
             if 0 <= index < len(self):
                 return self._iget_error(index)
             else:
-                raise IndexError("Invalid index.  Valid range: [0, %d)" % len(self))
+                raise IndexError(f"Invalid index.  Valid range: [0, {len(self)})")
         else:
             raise TypeError("Lookup type must be integer")
 
@@ -100,7 +98,7 @@ class UIReturn(BaseCClass):
         self._free()
 
     def __repr__(self):
-        ec = len(self)
-        st = self.status()
-        ad = self._ad_str()
-        return "UIReturn(error_count = %d, status = %s) %s" % (ec, st, ad)
+        return (
+            f"UIReturn(error_count = {len(self)}, status = {self.status()}) "
+            f"{self._ad_str()}"
+        )

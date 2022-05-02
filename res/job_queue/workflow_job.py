@@ -49,7 +49,7 @@ class WorkflowJob(BaseCClass):
             # NB: Observe argument reoredring.
             return cls._alloc_from_file(name, parser, config_file)
         else:
-            raise IOError("Could not open config_file:%s" % config_file)
+            raise IOError(f"Could not open config_file:{config_file}")
 
     def __init__(self, name, internal=True):
         c_ptr = self._alloc(name, internal)
@@ -138,15 +138,15 @@ class WorkflowJob(BaseCClass):
         min_arg = self.minimumArgumentCount()
         if min_arg > 0 and len(arguments) < min_arg:
             raise UserWarning(
-                "The job: %s requires at least %d arguments, %d given."
-                % (self.name(), min_arg, len(arguments))
+                f"The job: {self.name()} requires at least "
+                f"{min_arg} arguments, {len(arguments)} given."
             )
 
         max_arg = self.maximumArgumentCount()
         if 0 < max_arg < len(arguments):
             raise UserWarning(
-                "The job: %s can only have %d arguments, %d given."
-                % (self.name(), max_arg, len(arguments))
+                f"The job: {self.name()} can only have "
+                f"{max_arg} arguments, {len(arguments)} given."
             )
 
         if self.isInternalScript():

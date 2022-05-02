@@ -66,18 +66,18 @@ class GenKwConfig(BaseCClass):
         @type tag_fmt: str
         """
         if not os.path.isfile(template_file):
-            raise IOError("No such file:%s" % template_file)
+            raise IOError(f"No such file:{template_file}")
 
         if not os.path.isfile(parameter_file):
-            raise IOError("No such file:%s" % parameter_file)
+            raise IOError(f"No such file:{parameter_file}")
 
         c_ptr = self._alloc_empty(key, tag_fmt)
         if c_ptr:
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                'Could not instantiate GenKwConfig with key="%s" and tag_fmt="%s"'
-                % (key, tag_fmt)
+                "Could not instantiate GenKwConfig with "
+                f'key="{key}" and tag_fmt="{tag_fmt}"'
             )
         self._set_parameter_file(parameter_file)
         self._set_template_file(template_file)
@@ -101,10 +101,9 @@ class GenKwConfig(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return 'GenKwConfig(key = "%s", tag_fmt = "%s") at 0x%x' % (
-            self.getKey(),
-            self.tag_fmt,
-            self._address(),
+        return (
+            f'GenKwConfig(key = "{self.getKey()}", '
+            f'tag_fmt = "{self.tag_fmt}") at 0x{self._address():x}'
         )
 
     def getKey(self):

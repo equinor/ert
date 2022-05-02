@@ -67,11 +67,11 @@ def setenv(var, value):
 # Set up the full LSF environment - based onf LSF_HOME
 LSF_HOME = os.getenv("LSF_HOME")
 if LSF_HOME:
-    setenv("LSF_BINDIR", "%s/bin" % LSF_HOME)
-    setenv("LSF_LIBDIR", "%s/lib" % LSF_HOME)
-    setenv("XLSF_UIDDIR", "%s/lib/uid" % LSF_HOME)
-    setenv("LSF_SERVERDIR", "%s/etc" % LSF_HOME)
-    setenv("LSF_ENVDIR", "%s/conf" % LSF_HOME)  # This is wrong: Equinor: /prog/LSF/conf
+    setenv("LSF_BINDIR", f"{LSF_HOME}/bin")
+    setenv("LSF_LIBDIR", f"{LSF_HOME}/lib")
+    setenv("XLSF_UIDDIR", f"{LSF_HOME}/lib/uid")
+    setenv("LSF_SERVERDIR", f"{LSF_HOME}/etc")
+    setenv("LSF_ENVDIR", f"{LSF_HOME}/conf")  # This is wrong: Equinor: /prog/LSF/conf
 
 from .driver import Driver, LocalDriver, LSFDriver, QueueDriverEnum, RSHDriver  # noqa
 from .environment_varlist import EnvironmentVarlist  # noqa

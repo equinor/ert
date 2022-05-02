@@ -49,7 +49,7 @@ class SimulationContext:
 
     def get_run_args(self, iens):
         """
-        raises an  exception if no iens simulation found
+        raises an exception if no iens simulation found
 
         :param iens: realization number
         :return: run_args for the realization
@@ -57,7 +57,7 @@ class SimulationContext:
         for run_arg in self._run_context:
             if run_arg is not None and run_arg.iens == iens:
                 return run_arg
-        raise KeyError("No such simulation: %s" % iens)
+        raise KeyError(f"No such realization: {iens}")
 
     def _run_simulations_simple_step(self):
         sim_thread = Thread(
@@ -119,9 +119,10 @@ class SimulationContext:
         numSucc = self.getNumSuccess()
         numFail = self.getNumFailed()
         numWait = self.getNumWaiting()
-        fmt = "%s, #running = %d, #success = %d, #failed = %d, #waiting = %d"
-        fmt = fmt % (running, numRunn, numSucc, numFail, numWait)
-        return "SimulationContext(%s)" % fmt
+        return (
+            f"SimulationContext({running}, #running = {numRunn}, "
+            f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
+        )
 
     def get_sim_fs(self):
         return self._run_context.get_sim_fs()

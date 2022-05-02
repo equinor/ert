@@ -43,9 +43,7 @@ class ErtTemplate(BaseCClass):
     def get_args_as_string(self):
         """@rtype: str"""
         args_list = self._get_arg_list()
-        return ", ".join(
-            ["{}={}".format(key, args_list.get(key)) for key in args_list.keys()]
-        )
+        return ", ".join([f"{key}={args_list.get(key)}" for key in args_list.keys()])
 
     def __eq__(self, other):
         return (
@@ -58,8 +56,9 @@ class ErtTemplate(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        return "ErtTemplate({}, {}, {})".format(
-            self.get_template_file(), self.get_target_file(), self.get_args_as_string()
+        return (
+            f"ErtTemplate({self.get_template_file()}, "
+            f"{self.get_target_file()}, {self.get_args_as_string()})"
         )
 
     def free(self):

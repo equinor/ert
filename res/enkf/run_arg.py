@@ -78,7 +78,7 @@ class RunArg(BaseCClass):
             su = "not submitted"
             qi = "--"
 
-        return "RunArg(queue_index = %s, %s) %s" % (qi, su, self._ad_str())
+        return f"RunArg(queue_index = {qi}, {su}) {self._ad_str()}"
 
     def get_run_id(self):
         return self._get_run_id()

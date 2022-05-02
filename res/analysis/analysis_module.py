@@ -78,7 +78,7 @@ class AnalysisModule(BaseCClass):
     def __init__(self, ens_size, type_id):
         c_ptr = self._alloc(ens_size, type_id)
         if not c_ptr:
-            raise KeyError("Failed to load internal module:%s" % type_id)
+            raise KeyError(f"Failed to load internal module:{type_id}")
 
         super().__init__(c_ptr)
 
@@ -116,7 +116,7 @@ class AnalysisModule(BaseCClass):
 
     def __assertVar(self, var_name):
         if not self.hasVar(var_name):
-            raise KeyError("Module does not support key:%s" % var_name)
+            raise KeyError(f"Module does not support key:{var_name}")
 
     def setVar(self, var_name, value):
         self.__assertVar(var_name)

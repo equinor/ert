@@ -46,7 +46,7 @@ class ContentTypeEnum(BaseCEnum):
 
     def convert_string(self, string):
         if not self.valid_string(string, runtime=True):
-            raise ValueError("Can not convert %s to %s" % (string, self))
+            raise ValueError(f"Can not convert {string} to {self}")
 
         if self == ContentTypeEnum.CONFIG_INT:
             return int(string)

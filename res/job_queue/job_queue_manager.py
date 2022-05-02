@@ -83,13 +83,13 @@ class JobQueueManager:
         return JobStatusType(int_status)
 
     def __repr__(self):
-        nw = self.getNumWaiting()
-        nr = self.getNumRunning()
-        ns = self.getNumSuccess()
-        nf = self.getNumFailed()
-        ir = "running" if self.isRunning() else "not running"
-        status = "waiting=%d, running=%d, success=%d, failed=%d" % (nw, nr, ns, nf)
-        return "JobQueueManager(%s, %s)" % (status, ir)
+        return (
+            "JobQueueManager("
+            f"waiting={self.getNumWaiting()}, running={self.getNumRunning()}, "
+            f"success={self.getNumSuccess()}, failed={self.getNumFailed()}"
+            f", {'running' if self.isRunning() else 'not running'}"
+            ")"
+        )
 
     def execute_queue(self):
         self._queue.execute_queue(self._pool_sema, self._queue_evaluators)

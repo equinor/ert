@@ -31,7 +31,7 @@ class SummaryObservationCollector:
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
         columns = summary_keys
-        std_columns = ["STD_%s" % key for key in summary_keys]
+        std_columns = [f"STD_{key}" for key in summary_keys]
         df = DataFrame(index=dates, columns=columns + std_columns)
         for key in summary_keys:
             observation_keys = ert.ensembleConfig().getNode(key).getObservationKeys()
@@ -44,7 +44,7 @@ class SummaryObservationCollector:
                         value = node.getValue()
                         std = node.getStandardDeviation()
                         df[key][obs_time] = value
-                        df["STD_%s" % key][obs_time] = std
+                        df[f"STD_{key}"][obs_time] = std
         return df
 
     @classmethod

@@ -51,8 +51,7 @@ class GenKw(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                "Cannot issue a GenKw from the given keyword config: %s."
-                % str(gen_kw_config)
+                f"Cannot issue a GenKw from the given keyword config: {gen_kw_config}."
             )
 
     def __str__(self):
@@ -74,15 +73,15 @@ class GenKw(BaseCClass):
         do_transform = False
         if isinstance(key, str):
             if key not in self:
-                raise KeyError("Key %s does not exist" % (key))
+                raise KeyError(f"Key {key} does not exist")
             return self._data_get(key, do_transform)
         elif isinstance(key, int):
             if not 0 <= key < len(self):
-                raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
+                raise IndexError(f"Index out of range 0 <= {key} < {len(self)}")
             return self._data_iget(key, do_transform)
         else:
             raise TypeError(
-                "Illegal type for indexing, must be int or str, got: %s" % (key)
+                f"Illegal type for indexing, must be int or str, got: {key}"
             )
 
     def __setitem__(self, key, value):
@@ -92,15 +91,15 @@ class GenKw(BaseCClass):
         """
         if isinstance(key, str):
             if key not in self:
-                raise KeyError("Key %s does not exist" % (key))
+                raise KeyError(f"Key {key} does not exist")
             self._data_set(key, value)
         elif isinstance(key, int):
             if not 0 <= key < len(self):
-                raise IndexError("Index out of range 0 <= %d < %d" % (key, len(self)))
+                raise IndexError(f"Index out of range 0 <= {key} < {len(self)}")
             self._data_iset(key, value)
         else:
             raise TypeError(
-                "Illegal type for indexing, must be int or str, got: %s" % (key)
+                f"Illegal type for indexing, must be int or str, got: {key}"
             )
 
     def items(self):
@@ -113,7 +112,7 @@ class GenKw(BaseCClass):
     def eclWrite(self, path, filename):
         if path is not None:
             if not os.path.isdir(path):
-                raise IOError("The directory:%s does not exist" % path)
+                raise IOError(f"The directory:{path} does not exist")
 
         self._ecl_write(path, filename, None)
 
@@ -127,7 +126,7 @@ class GenKw(BaseCClass):
                     if isinstance(v, numbers.Number):
                         d[index] = v
                     else:
-                        raise TypeError("Values must numeric: %s is invalid" % v)
+                        raise TypeError(f"Values must numeric: {v} is invalid")
                 self._set_values(d)
         else:
             raise ValueError("Size mismatch between GenKW and values")
@@ -143,4 +142,4 @@ class GenKw(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "GenKw(len = %d) at 0x%x" % (len(self), self._address())
+        return f"GenKw(len = {len(self)}) at 0x{self._address():x}"

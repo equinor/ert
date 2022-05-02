@@ -287,7 +287,7 @@ class EnkfConfigNode(BaseCClass):
 
         config_node = cls._alloc_gen_data_everest(key, file_fmt, active_steps)
         if config_node is None:
-            raise ValueError("Failed to create GEN_DATA node for:%s" % key)
+            raise ValueError(f"Failed to create GEN_DATA node for:{key}")
 
         return config_node
 
@@ -320,7 +320,7 @@ class EnkfConfigNode(BaseCClass):
         )
         if config_node is None:
             raise ValueError(
-                "Failed to create GEN_DATA with FULL specs node for:%s" % key
+                f"Failed to create GEN_DATA with FULL specs node for:{key}"
             )
 
         return config_node
@@ -352,7 +352,7 @@ class EnkfConfigNode(BaseCClass):
             data_key,
         )
         if config_node is None:
-            raise ValueError("Failed to create GEN_PARAM node for:%s" % key)
+            raise ValueError(f"Failed to create GEN_PARAM node for:{key}")
 
         return config_node
 
@@ -381,7 +381,7 @@ class EnkfConfigNode(BaseCClass):
             init_file_fmt,
         )
         if config_node is None:
-            raise ValueError("Failed to create GEN KW node for:%s" % key)
+            raise ValueError(f"Failed to create GEN KW node for:{key}")
 
         return config_node
 
@@ -408,7 +408,7 @@ class EnkfConfigNode(BaseCClass):
             init_file_fmt,
         )
         if config_node is None:
-            raise ValueError("Failed to create SURFACE node for:%s" % key)
+            raise ValueError(f"Failed to create SURFACE node for:{key}")
 
         return config_node
 
@@ -444,7 +444,7 @@ class EnkfConfigNode(BaseCClass):
 
         config_node = cls._alloc_field_node(key, grid, field_trans_table, forward_init)
         if config_node is None:
-            raise ValueError("Failed to create FIELD node for:%s" % key)
+            raise ValueError(f"Failed to create FIELD node for:{key}")
 
         if var_type_string == ConfigKeys.PARAMETER_KEY:
             config_node._update_parameter_field(
@@ -480,7 +480,7 @@ class EnkfConfigNode(BaseCClass):
         config_node = cls._alloc_container(key)
 
         if config_node is None:
-            raise ValueError("Failed to create CONTAINER node for:%s" % key)
+            raise ValueError(f"Failed to create CONTAINER node for:{key}")
 
         return config_node
 
@@ -488,11 +488,10 @@ class EnkfConfigNode(BaseCClass):
         self._free()
 
     def __repr__(self):
-        key = self.getKey()
-        vt = self.getVariableType()
-        imp = self.getImplementationType()
-        content = "key = %s, var_type = %s, implementation = %s" % (key, vt, imp)
-        return self._create_repr(content)
+        return self._create_repr(
+            f"key = {self.getKey()}, var_type = {self.getVariableType()}, "
+            f"implementation = {self.getImplementationType()}"
+        )
 
     def getModelConfig(self):
         implementation_type = self.getImplementationType()
@@ -515,9 +514,8 @@ class EnkfConfigNode(BaseCClass):
             print(
                 (
                     "[EnkfConfigNode::getModelConfig()] "
-                    "Unhandled implementation model type: %i"
+                    f"Unhandled implementation model type: {implementation_type:i}"
                 )
-                % implementation_type
             )
 
     def getKey(self):

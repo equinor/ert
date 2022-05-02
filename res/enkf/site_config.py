@@ -69,7 +69,7 @@ class SiteConfig(BaseCClass):
         c_ptr = None
         if user_config_file is not None:
             if not os.path.isfile(user_config_file):
-                raise IOError('No such configuration file "%s".' % user_config_file)
+                raise IOError(f'No such configuration file "{user_config_file}".')
             c_ptr = self._alloc_load_user_config(user_config_file)
 
         elif config_content is not None:
@@ -88,11 +88,7 @@ class SiteConfig(BaseCClass):
             ext_job_list = ExtJoblist()
             for job in config_dict.get(ConfigKeys.INSTALL_JOB, []):
                 if not os.path.isfile(job[ConfigKeys.PATH]):
-                    print(
-                        "WARNING: Unable to locate job file {}".format(
-                            job[ConfigKeys.PATH]
-                        )
-                    )
+                    print(f"WARNING: Unable to locate job file {job[ConfigKeys.PATH]}")
                     continue
                 try:
                     new_job = ExtJob(
@@ -104,15 +100,11 @@ class SiteConfig(BaseCClass):
                     new_job.convertToCReference(None)
                     ext_job_list.add_job(job[ConfigKeys.NAME], new_job)
                 except (ValueError, OSError):
-                    print(
-                        "WARNING: Unable to create job from {}".format(
-                            job[ConfigKeys.PATH]
-                        )
-                    )
+                    print(f"WARNING: Unable to create job from {job[ConfigKeys.PATH]}")
 
             for job_path in config_dict.get(ConfigKeys.INSTALL_JOB_DIRECTORY, []):
                 if not os.path.isdir(job_path):
-                    print("WARNING: Unable to locate job directory {}".format(job_path))
+                    print(f"WARNING: Unable to locate job directory {job_path}")
                     continue
                 files = os.listdir(job_path)
                 for file_name in files:
@@ -127,15 +119,11 @@ class SiteConfig(BaseCClass):
                             new_job.convertToCReference(None)
                             ext_job_list.add_job(new_job.name(), new_job)
                         except (ValueError, OSError):
-                            print(
-                                "WARNING: Unable to create job from {}".format(
-                                    full_path
-                                )
-                            )
+                            print(f"WARNING: Unable to create job from {full_path}")
 
             ext_job_list.convertToCReference(None)
 
-            # Create varlist)
+            # Create varlist
             env_var_list = EnvironmentVarlist()
             for (var, value) in config_dict.get(ConfigKeys.SETENV, []):
                 env_var_list[var] = value
@@ -151,7 +139,7 @@ class SiteConfig(BaseCClass):
         super().__init__(c_ptr)
 
     def __repr__(self):
-        return "Site Config {}".format(SiteConfig.getLocation())
+        return f"Site Config {SiteConfig.getLocation()}"
 
     @property
     def config_file(self):

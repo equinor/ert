@@ -76,10 +76,10 @@ class KeyManager:
                 assert isinstance(gen_kw_config, GenKwConfig)
 
                 for keyword_index, keyword in enumerate(gen_kw_config):
-                    gen_kw_list.append("%s:%s" % (key, keyword))
+                    gen_kw_list.append(f"{key}:{keyword}")
 
                     if gen_kw_config.shouldUseLogScale(keyword_index):
-                        gen_kw_list.append("LOG10_%s:%s" % (key, keyword))
+                        gen_kw_list.append(f"LOG10_{key}:{keyword}")
 
             self.__gen_kw_keys = sorted(gen_kw_list, key=lambda k: k.lower())
 
@@ -97,7 +97,7 @@ class KeyManager:
                 gen_data_config = enkf_config_node.getDataModelConfig()
 
                 for report_step in gen_data_config.getReportSteps():
-                    gen_data_list.append("%s@%d" % (key, report_step))
+                    gen_data_list.append(f"{key}@{report_step}")
 
             self.__gen_data_keys = sorted(gen_data_list, key=lambda k: k.lower())
 
@@ -116,7 +116,7 @@ class KeyManager:
                     report_step = obs_vector.activeStep()
                     key = obs_vector.getDataKey()
 
-                    gen_data_key = "%s@%d" % (key, report_step)
+                    gen_data_key = f"{key}@{report_step}"
                     if gen_data_key in self.genDataKeys():
                         gen_data_obs_keys.append(gen_data_key)
 
@@ -129,8 +129,7 @@ class KeyManager:
         if self.__misfit_keys is None:
             keys = []
             for obs_vector in self._ert().getObservations():
-                key = "MISFIT:%s" % obs_vector.getObservationKey()
-                keys.append(key)
+                keys.append(f"MISFIT:{obs_vector.getObservationKey()}")
 
             keys.append("MISFIT:TOTAL")
 

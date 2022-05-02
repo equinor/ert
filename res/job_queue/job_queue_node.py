@@ -222,9 +222,7 @@ class JobQueueNode(BaseCClass):
             else:
                 self._set_thread_status(ThreadStatus.FAILED)
                 raise AssertionError(
-                    "Unexpected job status type after running job: {}".format(
-                        current_status
-                    )
+                    f"Unexpected job status type after running job: {current_status}"
                 )
 
             self._set_thread_status(ThreadStatus.DONE)

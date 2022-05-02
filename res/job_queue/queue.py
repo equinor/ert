@@ -251,9 +251,7 @@ class JobQueue(BaseCClass):
             idx += ls
         if 0 <= idx < ls:
             return self._iget_driver_data(idx)
-        raise IndexError(
-            "index out of range, was: %d should be in [0, %d)" % (index, ls)
-        )
+        raise IndexError(f"index out of range, was: {index} should be in [0, {ls})")
 
     def exists(self, index):
         return self[index]

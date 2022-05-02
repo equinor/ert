@@ -105,4 +105,4 @@ class EnsemblePlotGenKW(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "EnsemblePlotGenKW(size = %d) %s" % (len(self), self._ad_str())
+        return f"EnsemblePlotGenKW(size = {len(self)}) {self._ad_str()}"

@@ -140,10 +140,10 @@ class RSHDriver(Driver):
 
     def __init__(self, max_running, rsh_host_list, rsh_cmd="/usr/bin/ssh"):
         """
-        @rsh_host_list should be a list of tuples like: (hostname , max_running)
+        @rsh_host_list should be a list of tuples like: (hostname, max_running)
         """
 
         options = [("RSH_CMD", rsh_cmd)]
         for (host, host_max) in rsh_host_list:
-            options.append(("RSH_HOST", "%s:%d" % (host, host_max)))
+            options.append(("RSH_HOST", f"{host}:{host_max:d}"))
         Driver.__init__(self, QueueDriverEnum.RSH_DRIVER, max_running, options=options)

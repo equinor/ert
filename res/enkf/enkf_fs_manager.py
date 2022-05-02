@@ -66,7 +66,7 @@ class FileSystemRotator:
             case_name = self._fs_list[case]
             return self.__get_fs(case_name)
         else:
-            raise IndexError("Value '%s' is not a proper index or case name." % case)
+            raise IndexError(f"Value '{case}' is not a proper index or case name.")
 
     def umountAll(self):
         while len(self._fs_list) > 0:

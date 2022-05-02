@@ -38,4 +38,4 @@ class EnsemblePlotDataVector(BaseCClass):
         return self._is_active(index)
 
     def __repr__(self):
-        return "EnsemblePlotDataVector(size = %d) %s" % (len(self), self._ad_str())
+        return f"EnsemblePlotDataVector(size = {len(self)}) {self._ad_str()}"

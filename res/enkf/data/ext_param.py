@@ -52,7 +52,7 @@ class ExtParam(BaseCClass):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
             if not isinstance(key, str) or not isinstance(suffix, str):
-                raise TypeError("Expected a pair of strings, got {}".format(index))
+                raise TypeError(f"Expected a pair of strings, got {index}")
             self._check_key_suffix(key, suffix)
             return self._key_suffix_get(key, suffix)
 
@@ -70,7 +70,7 @@ class ExtParam(BaseCClass):
             # if the index is key suffix, assume they are both strings
             key, suffix = index
             if not isinstance(key, str) or not isinstance(suffix, str):
-                raise TypeError("Expected a pair of strings, got {}".format(index))
+                raise TypeError(f"Expected a pair of strings, got {index}")
             self._check_key_suffix(key, suffix)
             self._key_suffix_set(key, suffix, value)
             return
@@ -98,26 +98,24 @@ class ExtParam(BaseCClass):
         """
         if kidx < 0 or kidx >= len(self):
             raise IndexError(
-                "Invalid key index {}. Valid range is [0, {})".format(kidx, len(self))
+                f"Invalid key index {kidx}. Valid range is [0, {len(self)})"
             )
         key, suffixes = self.config[kidx]
         if not suffixes:
             if sidx is None:
                 return  # we are good
-            raise IndexError(
-                "Key {} has no suffixes, but suffix {} requested".format(key, sidx)
-            )
+            raise IndexError(f"Key {key} has no suffixes, but suffix {sidx} requested")
         assert len(suffixes) > 0
         if sidx is None:
             raise IndexError(
-                "Key {} has suffixes, a suffix index must be specified".format(key)
+                f"Key {key} has suffixes, a suffix index must be specified"
             )
         if sidx < 0 or sidx >= len(suffixes):
             raise IndexError(
                 (
-                    "Suffix index {} is out of range for key {}. Valid range is "
-                    "[0, {})"
-                ).format(sidx, key, len(suffixes))
+                    f"Suffix index {sidx} is out of range for key {key}. "
+                    f"Valid range is [0, {len(suffixes)})"
+                )
             )
 
     def _check_key_suffix(self, key, suffix=None):
@@ -128,24 +126,19 @@ class ExtParam(BaseCClass):
         - key has suffixes but suffix is not among them
         """
         if key not in self:
-            raise KeyError("No such key: {}".format(key))
+            raise KeyError(f"No such key: {key}")
         suffixes = self.config[key]
         if not suffixes:
             if suffix is None:
                 return
-            raise KeyError(
-                "Key {} has no suffixes, but suffix {} requested".format(key, suffix)
-            )
+            raise KeyError(f"Key {key} has no suffixes, but suffix {suffix} requested")
         assert len(suffixes) > 0
         if suffix is None:
-            raise KeyError(
-                "Key {} has suffixes, a suffix must be specified".format(key)
-            )
+            raise KeyError(f"Key {key} has suffixes, a suffix must be specified")
         if suffix not in suffixes:
             raise KeyError(
-                "Key {} has suffixes {}. Can't find the requested suffix {}".format(
-                    key, suffixes, suffix
-                )
+                f"Key {key} has suffixes {suffixes}. "
+                f"Can't find the requested suffix {suffix}"
             )
 
     @property

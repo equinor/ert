@@ -15,7 +15,7 @@ class MessageLevelEnum(BaseCEnum):
         if isinstance(val, MessageLevelEnum):
             return val
         if not isinstance(val, int):
-            raise TypeError("Cannot convert %s to MessageLevelEnum." % type(val))
+            raise TypeError(f"Cannot convert {type(val)} to MessageLevelEnum.")
         if val is None:
             return MessageLevelEnum.LOG_WARNING
         if val >= 50:
