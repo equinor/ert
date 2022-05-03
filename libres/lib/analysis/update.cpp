@@ -376,8 +376,7 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
                                       ens_active_list, meas_data, obs_data);
 
-    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
-                                      true);
+    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha);
     auto update_snapshot = make_update_snapshot(obs_data, meas_data);
 
     int active_obs_size = obs_data_get_active_size(obs_data);

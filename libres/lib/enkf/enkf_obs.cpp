@@ -372,7 +372,7 @@ static void enkf_obs_get_obs_and_measure_summary(
                         "differ: %d vs. %d ",
                         step, smlength);
                     meas_block_deactivate(meas_block, active_count);
-                    obs_block_deactivate(obs_block, active_count, true, msg);
+                    obs_block_deactivate(obs_block, active_count, msg);
                     free(msg);
                     break;
                 } else {

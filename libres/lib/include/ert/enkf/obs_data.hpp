@@ -38,8 +38,7 @@ extern "C" obs_block_type *obs_block_alloc(const char *obs_key, int obs_size,
                                            double global_std_scaling);
 extern "C" int obs_block_get_active_size(const obs_block_type *obs_block);
 
-void obs_block_deactivate(obs_block_type *obs_block, int iobs, bool verbose,
-                          const char *msg);
+void obs_block_deactivate(obs_block_type *obs_block, int iobs, const char *msg);
 extern "C" int obs_block_get_size(const obs_block_type *obs_block);
 extern "C" void obs_block_iset(obs_block_type *obs_block, int iobs,
                                double value, double std);

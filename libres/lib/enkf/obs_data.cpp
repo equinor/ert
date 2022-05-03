@@ -70,6 +70,9 @@ Matrices: S, D, E and various internal variables.
 
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/obs_data.hpp>
+#include <ert/python.hpp>
+
+static auto logger = ert::get_logger("analysis.update");
 
 #define OBS_BLOCK_TYPE_ID 995833
 
@@ -128,12 +131,11 @@ static void obs_block_free__(void *arg) {
     obs_block_free(obs_block);
 }
 
-void obs_block_deactivate(obs_block_type *obs_block, int iobs, bool verbose,
+void obs_block_deactivate(obs_block_type *obs_block, int iobs,
                           const char *msg) {
     if (obs_block->active_mode[iobs] == ACTIVE) {
-        if (verbose)
-            printf("Deactivating: %s(%d) : %s \n", obs_block->obs_key, iobs,
-                   msg);
+        logger->warning("Deactivating: {}({}) : {} \n", obs_block->obs_key,
+                        iobs, msg);
         obs_block->active_mode[iobs] = DEACTIVATED;
         obs_block->active_size--;
     }
