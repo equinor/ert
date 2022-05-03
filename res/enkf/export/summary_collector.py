@@ -1,3 +1,4 @@
+import numpy as np
 from pandas import DataFrame, MultiIndex
 from res import _lib
 from res.enkf import EnKFMain
@@ -17,7 +18,9 @@ class SummaryCollector:
         return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod
-    def loadAllSummaryData(ert: EnKFMain, case_name, keys=None, realization_index=None):
+    def loadAllSummaryData(
+        ert: EnKFMain, case_name, keys=None, realization_index=None
+    ) -> DataFrame:
         """
         @type ert: EnKFMain
         @type case_name: str
@@ -46,10 +49,11 @@ class SummaryCollector:
             ert.ensembleConfig(), fs, summary_keys, realizations, len(dates)
         )
 
+        if np.isnan(summary_data).all():
+            return DataFrame()
+
         multi_index = MultiIndex.from_product(
             [realizations, dates], names=["Realization", "Date"]
         )
 
-        df = DataFrame(data=summary_data, index=multi_index, columns=summary_keys)
-
-        return df
+        return DataFrame(data=summary_data, index=multi_index, columns=summary_keys)

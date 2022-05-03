@@ -1,4 +1,6 @@
 import pytest
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
 
 def test_key_def_structure(api):
@@ -91,3 +93,10 @@ def test_all_data_type_keys(api):
         "WOPPER",
         "I_AM_A_PARAM",
     ]
+
+
+def test_load_history_data(api):
+    df = api.history_data(case="default_0", key="FOPR")
+    assert_frame_equal(
+        df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
+    )

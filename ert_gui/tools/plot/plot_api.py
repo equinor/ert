@@ -1,11 +1,12 @@
-import pandas as pd
 import logging
 import requests
 import io
 import httpx
+import pandas as pd
 from typing import List
 from ert_shared.services import Storage
 from pandas.errors import ParserError
+from itertools import combinations as combi
 
 logger = logging.getLogger(__name__)
 
@@ -208,13 +209,7 @@ class PlotApi(object):
         index = pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
         data.columns = index
 
-    def refcase_data(self, key):
-        """Returns a pandas DataFrame with the data points for the refcase for a
-        given data key, if any.  The row index is the index/date and the column
-        index is the key."""
-        return self._facade.refcase_data(key)
-
-    def history_data(self, key, case=None):
+    def history_data(self, key, case=None) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
@@ -224,4 +219,15 @@ class PlotApi(object):
             history_key = f"{head}H:{tail}"
         else:
             history_key = f"{key}H"
-        return self.data_for_key(case, history_key)
+
+        df = self.data_for_key(case, history_key)
+
+        if not df.empty:
+            df = df.T
+            # Drop columns with equal data
+            duplicate_cols = [
+                cc[0] for cc in combi(df.columns, r=2) if (df[cc[0]] == df[cc[1]]).all()
+            ]
+            return df.drop(columns=duplicate_cols)
+
+        return pd.DataFrame()
