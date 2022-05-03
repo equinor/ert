@@ -39,7 +39,6 @@ typedef struct bfs_config_struct bfs_config_type;
 
 struct bfs_config_struct {
     bool read_only;
-    int block_size;
 };
 
 #define BFS_TYPE_ID 5510643
@@ -58,7 +57,6 @@ bfs_config_type *bfs_config_alloc(bool read_only) {
         bfs_config_type *config =
             (bfs_config_type *)util_malloc(sizeof *config);
         config->read_only = read_only;
-        config->block_size = 64;
         return config;
     }
 }
@@ -95,8 +93,7 @@ static bfs_type *bfs_alloc_new(const bfs_config_type *config, char *mountfile) {
 
 static void bfs_mount(bfs_type *bfs) {
     const bfs_config_type *config = bfs->config;
-    bfs->block_fs =
-        block_fs_mount(bfs->mountfile, config->block_size, config->read_only);
+    bfs->block_fs = block_fs_mount(bfs->mountfile, config->read_only);
 }
 
 static void bfs_fsync(bfs_type *bfs) { block_fs_fsync(bfs->block_fs); }
