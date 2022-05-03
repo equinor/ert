@@ -60,7 +60,8 @@ namespace fs = std::filesystem;
    to go on a wild chase through a binary stream and look for them.
 */
 
-#define NODE_IN_USE_BYTE 85 /* Binary(85)  =  01010101 */
+/** Binary(85)  =  01010101 */
+#define NODE_IN_USE_BYTE 85
 #define WRITE_START__ 77162
 
 static const int NODE_END_TAG =
@@ -113,10 +114,7 @@ struct block_fs_struct {
      * contain pointers to the objects stored in this vector. */
     vector_type *file_nodes;
     /** This just counts the number of writes since the file system was mounted. */
-    int write_count;
     bool data_owner;
-    /** 0: never  n: every nth iteration. */
-    int fsync_interval;
 };
 
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
@@ -306,17 +304,14 @@ static void block_fs_install_node(block_fs_type *block_fs,
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
     block_fs->file_nodes = vector_alloc_new();
-    block_fs->write_count = 0;
     block_fs->data_file_size = 0;
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
-                                           int block_size, int fsync_interval,
-                                           bool read_only) {
+                                           int block_size, bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
-    block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
 
     FILE *stream = util_fopen(mount_file.c_str(), "r");
@@ -366,7 +361,7 @@ static void block_fs_fseek_node_data(block_fs_type *block_fs,
    This function will read through the datafile seeking for the identifier:
    NODE_IN_USE. If the valid status identifier is found the stream is
    repositioned at the beginning of the valid node.
-   
+
    If no valid status ID is found whatsover the data_stream
    indicator is left at the end of the file; and the calling scope
    will finish from there.
@@ -404,6 +399,7 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
     fseek__(block_fs->data_stream, 0, SEEK_END);
     return false;
 }
+
 /**
    The read-only open mode is only for the mount section, where the
    data file is read in to load/verify the index.
@@ -552,20 +548,18 @@ static bool block_fs_is_readonly(const block_fs_type *bfs) {
 }
 
 block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
-                              int fsync_interval, bool read_only) {
+                              bool read_only) {
     fs::path path = mount_file.parent_path();
     std::string base_name = mount_file.stem();
     auto data_file = path / (base_name + ".data_0");
     auto index_file = path / (base_name + ".index");
     block_fs_type *block_fs;
-
     if (!fs::exists(mount_file))
         /* This is a brand new filesystem - create the mount map first. */
         block_fs_fwrite_mount_info(mount_file);
     {
         std::vector<long> fix_nodes;
-        block_fs = block_fs_alloc_empty(mount_file, block_size, fsync_interval,
-                                        read_only);
+        block_fs = block_fs_alloc_empty(mount_file, block_size, read_only);
 
         block_fs_open_data(block_fs, data_file);
         if (block_fs->data_stream != nullptr) {
@@ -575,7 +569,6 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
         }
         block_fs_fix_nodes(block_fs, fix_nodes);
     }
-
     return block_fs;
 }
 
@@ -626,7 +619,6 @@ void block_fs_fsync(block_fs_type *block_fs) {
    3. seek to correct position.
    4. Write the data with util_fwrite()
 
-   7. increase the write_count
    8. set the data_size field of the node.
 
    Observe that when 'designing' this file-system the priority has
@@ -656,11 +648,6 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
     /* Writes the file node header data, including the NODE_END_TAG. */
     file_node_fwrite(node, filename, block_fs->data_stream);
-
-    block_fs->write_count++;
-    if (block_fs->fsync_interval &&
-        ((block_fs->write_count % block_fs->fsync_interval) == 0))
-        block_fs_fsync(block_fs);
 }
 
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
