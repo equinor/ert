@@ -287,10 +287,13 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
             int data_index = gen_obs->data_index_list[iobs];
 
             if (forward_model_active != NULL) {
-                if (!bool_vector_iget(forward_model_active, data_index))
-                    continue; /* Forward model has deactivated this index - just continue. */
+                if (!bool_vector_iget(forward_model_active, data_index)) {
+                    meas_block_iset(
+                        meas_block, node_id.iens, iobs,
+                        NAN); /* Forward model has deactivated this index */
+                    continue;
+                }
             }
-
             meas_block_iset(meas_block, node_id.iens, iobs,
                             gen_data_iget_double(gen_data, data_index));
         }
@@ -300,32 +303,12 @@ void gen_obs_measure(const gen_obs_type *gen_obs, const gen_data_type *gen_data,
 C_USED void gen_obs_get_observations(gen_obs_type *gen_obs,
                                      obs_data_type *obs_data, enkf_fs_type *fs,
                                      int report_step) {
-    const bool_vector_type *forward_model_active = NULL;
-    if (gen_data_config_has_active_mask(gen_obs->data_config, fs,
-                                        report_step)) {
-        gen_data_config_load_active(gen_obs->data_config, fs, report_step,
-                                    true);
-        forward_model_active =
-            gen_data_config_get_active_mask(gen_obs->data_config);
-    }
+    obs_block_type *obs_block =
+        obs_data_add_block(obs_data, gen_obs->obs_key, gen_obs->obs_size);
 
-    {
-        obs_block_type *obs_block =
-            obs_data_add_block(obs_data, gen_obs->obs_key, gen_obs->obs_size);
-
-        for (int iobs = 0; iobs < gen_obs->obs_size; iobs++)
-            obs_block_iset(obs_block, iobs, gen_obs->obs_data[iobs],
-                           IGET_SCALED_STD(gen_obs, iobs));
-
-        /* Setting some of the elements as missing, i.e. deactivated by the forward model. */
-        if (forward_model_active != NULL) {
-            for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-                int data_index = gen_obs->data_index_list[iobs];
-                if (!bool_vector_iget(forward_model_active, data_index))
-                    obs_block_iset_missing(obs_block, iobs);
-            }
-        }
-    }
+    for (int iobs = 0; iobs < gen_obs->obs_size; iobs++)
+        obs_block_iset(obs_block, iobs, gen_obs->obs_data[iobs],
+                       IGET_SCALED_STD(gen_obs, iobs));
 }
 
 /*

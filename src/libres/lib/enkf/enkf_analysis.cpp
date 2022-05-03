@@ -141,7 +141,8 @@ void enkf_analysis_deactivate_outliers(
                         meas_block_deactivate(meas_block, iobs);
                     }
                 }
-            }
+            } else
+                obs_block_iset_missing(obs_block, iobs);
         }
     }
 }

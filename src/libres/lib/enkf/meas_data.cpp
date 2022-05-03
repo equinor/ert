@@ -22,6 +22,7 @@
 */
 
 #include <cmath>
+#include <math.h>
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -201,7 +202,8 @@ void meas_block_iset(meas_block_type *meas_block, int iens, int iobs,
                     iobs * meas_block->obs_stride;
         meas_block->data[index] = value;
         if (!meas_block->active[iobs])
-            meas_block->active[iobs] = true;
+            if (!std::isnan(value))
+                meas_block->active[iobs] = true;
 
         meas_block->stat_calculated = false;
     }
