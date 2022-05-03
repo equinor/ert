@@ -99,7 +99,6 @@ struct enkf_main_struct {
 
     enkf_state_type **ensemble; /* The ensemble ... */
     int ens_size;               /* The size of the ensemble */
-    bool verbose;
 };
 
 void enkf_main_init_internalization(enkf_main_type *);
@@ -343,10 +342,6 @@ void enkf_main_create_all_active_config(const enkf_main_type *enkf_main) {
     }
 }
 
-void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose) {
-    enkf_main->verbose = verbose;
-}
-
 /*
    There is NO tagging anymore - if the user wants tags - the user
    supplies the key __WITH__ tags.
@@ -372,7 +367,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main->obs = NULL;
     enkf_main->local_config = local_config_alloc();
 
-    enkf_main_set_verbose(enkf_main, false);
     enkf_main_init_fs(enkf_main);
 
     return enkf_main;
@@ -467,12 +461,10 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
    is mainly to be able to test that the site config file is valid.
 */
 
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
-                                bool verbose) {
+enkf_main_type *enkf_main_alloc(const res_config_type *res_config) {
     enkf_main_type *enkf_main = enkf_main_alloc_empty();
     enkf_main->res_config = res_config;
 
-    enkf_main_set_verbose(enkf_main, verbose);
     enkf_main_rng_init(enkf_main);
     enkf_main_user_select_initial_fs(enkf_main);
     enkf_main_init_obs(enkf_main);

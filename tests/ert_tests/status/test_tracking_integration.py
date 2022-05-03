@@ -169,7 +169,7 @@ def test_tracking(
 
         res_config = ResConfig(parsed.config)
         os.chdir(res_config.config_path)
-        ert = EnKFMain(res_config, strict=True, verbose=parsed.verbose)
+        ert = EnKFMain(res_config, strict=True)
         facade = LibresFacade(ert)
 
         model = create_model(
