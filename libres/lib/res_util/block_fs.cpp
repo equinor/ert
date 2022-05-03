@@ -104,9 +104,7 @@ struct block_fs_struct {
         *file_nodes; /* This vector owns all the file_node instances - the index
                        structure only contain pointers to the objects stored in
                        this vector. */
-    int write_count; /* This just counts the number of writes since the file system was mounted. */
     bool data_owner;
-    int fsync_interval; /* 0: never  n: every nth iteration. */
 };
 
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
@@ -345,17 +343,14 @@ static void block_fs_install_node(block_fs_type *block_fs,
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
     block_fs->file_nodes = vector_alloc_new();
-    block_fs->write_count = 0;
     block_fs->data_file_size = 0;
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
-                                           int block_size, int fsync_interval,
-                                           bool read_only) {
+                                           int block_size, bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
 
-    block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
     {
         FILE *stream = util_fopen(mount_file.c_str(), "r");
@@ -606,7 +601,7 @@ bool block_fs_is_readonly(const block_fs_type *bfs) {
 }
 
 block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
-                              int fsync_interval, bool read_only) {
+                              bool read_only) {
     fs::path path = mount_file.parent_path();
     std::string base_name = mount_file.stem();
     auto data_file = path / (base_name + ".data_0");
@@ -619,8 +614,7 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
             block_fs_fwrite_mount_info__(mount_file);
         {
             std::vector<long> fix_nodes;
-            block_fs = block_fs_alloc_empty(mount_file, block_size,
-                                            fsync_interval, read_only);
+            block_fs = block_fs_alloc_empty(mount_file, block_size, read_only);
 
             block_fs_open_data(block_fs, data_file);
             if (block_fs->data_stream != nullptr) {
@@ -690,7 +684,6 @@ void block_fs_fsync(block_fs_type *block_fs) {
    3. seek to correct position.
    4. Write the data with util_fwrite()
 
-   7. increase the write_count
    8. set the data_size field of the node.
 
    Observe that when 'designing' this file-system the priority has
@@ -720,11 +713,6 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
     /* Writes the file node header data, including the NODE_END_TAG. */
     file_node_fwrite(node, filename, block_fs->data_stream);
-
-    block_fs->write_count++;
-    if (block_fs->fsync_interval &&
-        ((block_fs->write_count % block_fs->fsync_interval) == 0))
-        block_fs_fsync(block_fs);
 }
 
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
