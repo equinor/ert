@@ -56,8 +56,6 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
 }
 
 TEST_CASE("block_fs", "[enkf_fs]") {
-    const int block_size = 64;
-
     std::vector<char> random(1000);
     {
         std::ifstream s{"/dev/urandom"};
@@ -66,7 +64,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
 
     GIVEN("A single read-write instance of block_fs") {
         WITH_TMPDIR;
-        auto bfs = block_fs_mount("bfs", block_size, false /* read-only */);
+        auto bfs = block_fs_mount("bfs", false /* read-only */);
 
         WHEN("data is written to storage") {
             block_fs_fwrite_file(bfs, "FOO", random.data(), random.size());
@@ -88,7 +86,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
 
             AND_WHEN("block_fs is closed and opened") {
                 block_fs_close(bfs);
-                bfs = block_fs_mount("bfs", block_size, true /* read-only */);
+                bfs = block_fs_mount("bfs", true /* read-only */);
 
                 THEN("writing new data results in exception") {
                     REQUIRE_THROWS_WITH(
@@ -133,7 +131,7 @@ TEST_CASE("block_fs", "[enkf_fs]") {
 
             AND_WHEN("block_fs is closed and opened") {
                 block_fs_close(bfs);
-                bfs = block_fs_mount("bfs", block_size, true /* read-only */);
+                bfs = block_fs_mount("bfs", true /* read-only */);
 
                 THEN("reading FOO fill return the overwritten data") {
                     auto buf = buffer_alloc(100);

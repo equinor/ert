@@ -103,8 +103,6 @@ struct block_fs_struct {
 
     /** The total number of bytes in the data_file. */
     long int data_file_size;
-    /** The size of blocks in bytes. */
-    int block_size;
 
     std::mutex mutex;
 
@@ -308,11 +306,9 @@ static void block_fs_reinit(block_fs_type *block_fs) {
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
-                                           int block_size, bool read_only) {
+                                           bool read_only) {
     block_fs_type *block_fs = new block_fs_type;
     UTIL_TYPE_ID_INIT(block_fs, BLOCK_FS_TYPE_ID);
-
-    block_fs->block_size = block_size;
 
     FILE *stream = util_fopen(mount_file.c_str(), "r");
     int id = util_fread_int(stream);
@@ -547,8 +543,7 @@ static bool block_fs_is_readonly(const block_fs_type *bfs) {
         return true;
 }
 
-block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
-                              bool read_only) {
+block_fs_type *block_fs_mount(const fs::path &mount_file, bool read_only) {
     fs::path path = mount_file.parent_path();
     std::string base_name = mount_file.stem();
     auto data_file = path / (base_name + ".data_0");
@@ -557,36 +552,29 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
     if (!fs::exists(mount_file))
         /* This is a brand new filesystem - create the mount map first. */
         block_fs_fwrite_mount_info(mount_file);
-    {
-        std::vector<long> fix_nodes;
-        block_fs = block_fs_alloc_empty(mount_file, block_size, read_only);
+    std::vector<long> fix_nodes;
+    block_fs = block_fs_alloc_empty(mount_file, read_only);
 
-        block_fs_open_data(block_fs, data_file);
-        if (block_fs->data_stream != nullptr) {
-            std::error_code ec;
-            fs::remove(index_file, ec /* error code is ignored */);
-            block_fs_build_index(block_fs, data_file, fix_nodes);
-        }
-        block_fs_fix_nodes(block_fs, fix_nodes);
+    block_fs_open_data(block_fs, data_file);
+    if (block_fs->data_stream != nullptr) {
+        std::error_code ec;
+        fs::remove(index_file, ec /* error code is ignored */);
+        block_fs_build_index(block_fs, data_file, fix_nodes);
     }
+    block_fs_fix_nodes(block_fs, fix_nodes);
     return block_fs;
 }
 
 static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
-                                             size_t min_size) {
+                                             const char *filename,
+                                             size_t size) {
 
     long int offset;
-    int node_size;
     file_node_type *new_node;
-
-    div_t d = div(min_size, block_fs->block_size);
-    node_size = d.quot * block_fs->block_size;
-    if (d.rem)
-        node_size += block_fs->block_size;
 
     /* Must lock the total size here ... */
     offset = block_fs->data_file_size;
-    new_node = file_node_alloc(NODE_IN_USE, offset, node_size);
+    new_node = file_node_alloc(NODE_IN_USE, offset, size);
     block_fs_install_node(
         block_fs, new_node); /* <- This will update the total file size. */
 
