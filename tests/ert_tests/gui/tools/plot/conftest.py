@@ -75,6 +75,16 @@ def mocked_requests_get(*args, **kwargs):
     gen_df.to_parquet(gen_stream)
     gen_parquet_data = gen_stream.getvalue()
 
+    history_data = {
+        "0": [1.0, 0.2, 1.0, 1.0, 1.0],
+        "1": [1.1, 0.2, 1.1, 1.1, 1.1],
+        "2": [1.2, 1.2, 1.2, 1.2, 1.3],
+    }
+    history_df = pd.DataFrame(history_data)
+    history_stream = io.BytesIO()
+    history_df.to_parquet(history_stream)
+    history_parquet_data = history_stream.getvalue()
+
     ensemble = {
         "/ensembles/ens_id_1": {"name": "ensemble_1"},
         "/ensembles/ens_id_2": {"name": ".ensemble_2"},
@@ -199,6 +209,7 @@ def mocked_requests_get(*args, **kwargs):
         "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": parameter_parquet_data,  # noqa
         "/ensembles/ens_id_3/records/SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE": parameter_parquet_data,  # noqa
         "/ensembles/ens_id_3/records/SNAKE_OIL_WPR_DIFF@199": gen_parquet_data,
+        "/ensembles/ens_id_3/records/FOPRH": history_parquet_data,
     }
 
     experiments = [

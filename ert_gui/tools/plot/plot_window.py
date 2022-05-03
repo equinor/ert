@@ -1,3 +1,4 @@
+from pandas import DataFrame
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 
@@ -106,7 +107,13 @@ class PlotWindow(QMainWindow):
                 plot_context = PlotContext(plot_config, cases, key)
 
                 case = plot_context.cases()[0] if plot_context.cases() else None
-                plot_context.history_data = self._api.history_data(key, case)
+
+                # Check if key is a history key.
+                # If it is it already has the data it needs
+                if str(key).endswith("H") or "H:" in str(key):
+                    plot_context.history_data = DataFrame()
+                else:
+                    plot_context.history_data = self._api.history_data(key, case)
 
                 plot_context.log_scale = key_def["log_scale"]
 
