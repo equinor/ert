@@ -476,7 +476,10 @@ def main():
     args = ert_parser(None, sys.argv[1:])
     logger = logging.getLogger(__name__)
     if args.verbose:
-        logger.setLevel("DEBUG")
+        root_logger = logging.getLogger()
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+        root_logger.addHandler(handler)
 
     FeatureToggling.update_from_args(args)
     try:
