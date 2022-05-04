@@ -93,8 +93,6 @@ struct block_fs_struct {
     int data_fd;
     FILE *data_stream;
 
-    long int data_file_size; /* The total number of bytes in the data_file. */
-
     std::mutex mutex;
 
     hash_type *
@@ -332,17 +330,12 @@ static void block_fs_insert_index_node(block_fs_type *block_fs,
 
 static void block_fs_install_node(block_fs_type *block_fs,
                                   file_node_type *node) {
-    block_fs->data_file_size = util_size_t_max(
-        block_fs->data_file_size,
-        node->node_offset +
-            node->node_size); /* Updating the total size of the file - i.e the next available offset. */
     vector_append_owned_ref(block_fs->file_nodes, node, file_node_free__);
 }
 
 static void block_fs_reinit(block_fs_type *block_fs) {
     block_fs->index = hash_alloc();
     block_fs->file_nodes = vector_alloc_new();
-    block_fs->data_file_size = 0;
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
@@ -633,10 +626,10 @@ static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
     file_node_type *new_node;
 
     /* Must lock the total size here ... */
-    offset = block_fs->data_file_size;
+    fseek(block_fs->data_stream, 0, SEEK_END);
+    offset = ftell(block_fs->data_stream);
     new_node = file_node_alloc(NODE_IN_USE, offset, size);
-    block_fs_install_node(
-        block_fs, new_node); /* <- This will update the total file size. */
+    block_fs_install_node(block_fs, new_node);
 
     return new_node;
 }
@@ -650,20 +643,9 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
     return block_fs_has_file__(block_fs, filename);
 }
 
-/*
-   It seems it is not enough to call fsync(); must also issue this
-   funny fseek + ftell combination to ensure that all data is on
-   disk after an uncontrolled shutdown.
-
-   Could possibly use fdatasync() to improve speed slightly?
-*/
-
 void block_fs_fsync(block_fs_type *block_fs) {
     if (block_fs->data_owner) {
-        //fdatasync( block_fs->data_fd );
         fsync(block_fs->data_fd);
-        block_fs_fseek(block_fs, block_fs->data_file_size);
-        ftell(block_fs->data_stream);
     }
 }
 
