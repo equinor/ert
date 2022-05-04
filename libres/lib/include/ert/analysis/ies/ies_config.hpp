@@ -53,9 +53,13 @@ public:
     void truncation(double truncation);
     void subspace_dimension(int subspace_dimension);
     const std::variant<double, int> &truncation() const;
+    const std::variant<double, int> &get_truncation() const {
+        return this->truncation();
+    }
 
     inversion_type inversion() const;
     void inversion(inversion_type it);
+    inversion_type get_inversion() const { return this->inversion(); }
 
     double max_steplength() const;
     void max_steplength(double max_step);

@@ -22,11 +22,6 @@
  */
 
 namespace analysis {
-void run_analysis_update_without_rowscaling(
-    const ies::config::Config &module_config, ies::data::Data &module_data,
-    const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
-    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
-    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R, Eigen::MatrixXd &A);
 
 void run_analysis_update_with_rowscaling(
     const ies::config::Config &module_config, ies::data::Data &module_data,
@@ -57,6 +52,21 @@ struct model {
     double eval(double x) const { return this->a * x + this->b; }
 
     int size() { return 2; }
+};
+
+void simple_update(const ies::config::Config &module_config,
+                   ies::data::Data &module_data,
+                   const std::vector<bool> &ens_mask,
+                   const std::vector<bool> &obs_mask, const Eigen::MatrixXd &S,
+                   const Eigen::MatrixXd &E, const Eigen::MatrixXd &D,
+                   const Eigen::MatrixXd &R, Eigen::MatrixXd &A) {
+    int active_ens_size = S.cols();
+    Eigen::MatrixXd W0 =
+        Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+    Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
+                                   module_config.truncation(), W0, 1, 1);
+
+    A *= X;
 };
 
 SCENARIO("Running analysis update with and without row scaling on linear model",
@@ -181,9 +191,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 const std::vector<bool> obs_mask =
                     obs_data_get_active_mask(obs_data);
                 Eigen::MatrixXd A_iter = A; // Preserve prior
-                analysis::run_analysis_update_without_rowscaling(
-                    config, module_data, ens_mask, obs_mask, S, E, D, R,
-                    A_iter);
+                simple_update(config, module_data, ens_mask, obs_mask, S, E, D,
+                              R, A_iter);
 
                 // Extract estimates
                 a_avg_posterior[i_sd] = A_iter.row(0).sum() / ens_size;
@@ -309,9 +318,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
             const std::vector<bool> obs_mask =
                 obs_data_get_active_mask(obs_data);
-            analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, S, E, D, R,
-                A_no_scaling);
+            simple_update(config, module_data, ens_mask, obs_mask, S, E, D, R,
+                          A_no_scaling);
             analysis::run_analysis_update_with_rowscaling(
                 config, module_data, S, E, D, R, parameters);
 
@@ -361,9 +369,8 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
                 obs_data_get_active_mask(obs_data);
             analysis::run_analysis_update_with_rowscaling(
                 config, module_data, S, E, D, R, parameters);
-            analysis::run_analysis_update_without_rowscaling(
-                config, module_data, ens_mask, obs_mask, S, E, D, R,
-                A_no_scaling);
+            simple_update(config, module_data, ens_mask, obs_mask, S, E, D, R,
+                          A_no_scaling);
 
             THEN("First row of scaled parameters should equal first row of "
                  "unscaled parameters, while second row of scaled parameters "

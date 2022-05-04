@@ -3,10 +3,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any
 
-from res import _lib
 from res.enkf.enums import RealizationStateEnum
 from res._lib.enkf_analysis import UpdateSnapshot
-
+from res._lib import update, analysis_module
+from ert.analysis import ies
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +66,12 @@ def analysis_smoother_update(
             "Can not combine IES_ENKF modules with multi step updates"
         )
 
-    _lib.update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
+    update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
 
     # Looping over local analysis ministep
     for ministep in updatestep:
 
-        update_data = _lib.update.make_update_data(
+        update_data = update.make_update_data(
             source_fs,
             target_fs,
             obs,
@@ -98,18 +98,43 @@ def analysis_smoother_update(
                 scaling attached. These parameters are updated one at a time.
             """
 
-            module_config = _lib.analysis_module.get_module_config(module)
-            module_data = _lib.analysis_module.get_module_data(module)
+            module_config = analysis_module.get_module_config(module)
+            module_data = analysis_module.get_module_data(module)
+
             if update_data.A is not None:
-                _lib.update.run_analysis_update_without_rowscaling(
-                    module_config, module_data, ens_mask, update_data
-                )
+                if module_config.iterable():
+                    ies.init_update(module_data, ens_mask, update_data.obs_mask)
+                    iteration_nr = module_data.inc_iteration_nr()
+
+                    ies.update_A(
+                        module_data,
+                        update_data.get_A(),
+                        update_data.S,
+                        update_data.R,
+                        update_data.E,
+                        update_data.D,
+                        ies_inversion=module_config.inversion(),
+                        truncation=module_config.truncation(),
+                        step_length=module_config.step_length(iteration_nr),
+                    )
+                else:
+                    X = ies.make_X(
+                        update_data.S,
+                        update_data.R,
+                        update_data.E,
+                        update_data.D,
+                        update_data.A,
+                        ies_inversion=module_config.inversion(),
+                        truncation=module_config.truncation(),
+                    )
+                    update_data.A = update_data.A @ X
+
             if update_data.A_with_rowscaling:
-                _lib.update.run_analysis_update_with_rowscaling(
+                update.run_analysis_update_with_rowscaling(
                     module_config, module_data, update_data
                 )
 
-            _lib.update.save_parameters(
+            update.save_parameters(
                 target_fs, ensemble_config, iens_active_index, ministep, update_data
             )
 
