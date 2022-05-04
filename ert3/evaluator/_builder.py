@@ -4,7 +4,9 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Type, cast
 
 import cloudpickle
-import ert
+import ert.data
+import ert.ensemble_evaluator
+import ert.storage
 import ert3
 from ert_shared.async_utils import get_event_loop
 

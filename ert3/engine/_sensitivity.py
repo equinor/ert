@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
-import ert
+import ert.data
+import ert.storage
 import ert3
 
 from ._entity import TransmitterCoroutine

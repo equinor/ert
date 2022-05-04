@@ -1,7 +1,7 @@
 import mimetypes
 from typing import Any, Callable
 
-import ert
+import ert.serialization
 
 DEFAULT_RECORD_MIME_TYPE: str = "application/octet-stream"
 

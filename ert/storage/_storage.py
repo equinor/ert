@@ -16,7 +16,8 @@ from typing import (
 )
 import httpx
 import pandas as pd
-import ert
+import ert.data
+import ert.exceptions
 from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
 
@@ -403,7 +404,7 @@ async def transmit_record_collection(
     # Handle special case of a uniform record collection
     if record_coll.collection_type == ert.data.RecordCollectionType.UNIFORM:
         record = record_coll.records[0]
-        transmitter = ert.storage.StorageRecordTransmitter(
+        transmitter = StorageRecordTransmitter(
             name=record_name, storage_url=records_url, iens=0
         )
         await transmitter.transmit_record(record)
@@ -671,7 +672,7 @@ def get_ensemble_record(
     experiment_name: Optional[str] = None,
     source: Optional[str] = None,
 ) -> ert.data.RecordCollection:
-    records_url = ert.storage.get_records_url(
+    records_url = get_records_url(
         workspace_name=workspace_name, experiment_name=experiment_name
     )
 
