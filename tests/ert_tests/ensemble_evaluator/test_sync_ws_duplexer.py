@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import ExitStack
 from http import HTTPStatus
-from threading import Thread
+from threading import Thread, Event
 import time
 from unittest.mock import patch
 
@@ -48,14 +48,13 @@ def ws(event_loop: asyncio.AbstractEventLoop):
 def test_immediate_stop(unused_tcp_port, ws):
     # if the duplexer is immediately stopped, it should be well behaved and close
     # the connection normally
-    closed = False
+    closed = Event()
 
     async def handler(websocket, path):
         try:
             await websocket.recv()
         except ConnectionClosedOK:
-            nonlocal closed
-            closed = True
+            closed.set()
 
     ws("localhost", unused_tcp_port, handler)
 
@@ -68,7 +67,7 @@ def test_immediate_stop(unused_tcp_port, ws):
 
     duplexer.stop()
 
-    assert closed
+    assert closed.wait(10)
 
 
 def test_failed_connection():
