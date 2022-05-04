@@ -9,7 +9,7 @@ from typing import Any, List, Union
 
 import pkg_resources as pkg
 
-import ert
+import ert.storage
 import ert3
 from ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
 from ert3.workspace import Workspace

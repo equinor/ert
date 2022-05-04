@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, TYPE_CHECKING, cast
 from beartype import beartype
 
 if TYPE_CHECKING:
-    import ert
+    import ert.data
 
 
 _ensemble_transmitter_mapping = Dict[int, Dict[str, "ert.data.RecordTransmitter"]]

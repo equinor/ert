@@ -6,7 +6,11 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import ert
+import ert.storage
+import ert.exceptions
+import ert.data
+import ert.ensemble_evaluator
+
 import ert3
 from ert3.config import SourceNS
 from ert_shared.async_utils import get_event_loop
