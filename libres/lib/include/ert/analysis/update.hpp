@@ -36,6 +36,8 @@ public:
         has_observations = true;
     }
 
+    Eigen::Ref<Eigen::MatrixXd> get_A() { return A.value(); }
+
     Eigen::MatrixXd S;
     Eigen::MatrixXd E;
     Eigen::MatrixXd D;

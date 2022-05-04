@@ -249,32 +249,6 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
     return parameters;
 }
 
-void run_analysis_update_without_rowscaling(
-    const ies::config::Config &module_config, ies::data::Data &module_data,
-    const std::vector<bool> &ens_mask, const std::vector<bool> &obs_mask,
-    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
-    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R, Eigen::MatrixXd &A) {
-
-    ert::utils::Benchmark benchmark(logger,
-                                    "run_analysis_update_without_rowscaling");
-
-    if (module_config.iterable()) {
-        ies::init_update(module_data, ens_mask, obs_mask);
-        int iteration_nr = module_data.inc_iteration_nr();
-        ies::updateA(module_data, A, S, R, E, D, module_config.inversion(),
-                     module_config.truncation(),
-                     module_config.steplength(iteration_nr));
-    } else {
-        int active_ens_size = S.cols();
-        Eigen::MatrixXd W0 =
-            Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
-                                       module_config.truncation(), W0, 1, 1);
-
-        A *= X;
-    }
-}
-
 /*
 Run the row-scaling enabled update algorithm on a set of A matrices.
 */
@@ -474,16 +448,6 @@ static void save_parameters_pybind(py::object target_fs,
                                      iens_active_index, ministep_, update_data);
 }
 
-static void run_analysis_update_without_rowscaling_pybind(
-    const ies::config::Config &module_config, ies::data::Data &module_data,
-    std::vector<bool> ens_mask, analysis::update_data_type &update_data) {
-
-    analysis::run_analysis_update_without_rowscaling(
-        module_config, module_data, ens_mask, update_data.obs_mask,
-        update_data.S, update_data.E, update_data.D, update_data.R,
-        update_data.A.value());
-}
-
 static void run_analysis_update_with_rowscaling_pybind(
     const ies::config::Config &module_config, ies::data::Data &module_data,
     analysis::update_data_type &update_data) {
@@ -498,6 +462,7 @@ RES_LIB_SUBMODULE("update", m) {
     py::class_<analysis::update_data_type,
                std::shared_ptr<analysis::update_data_type>>(m, "UpdateData")
         .def(py::init<>())
+        .def("get_A", &analysis::update_data_type::get_A)
         .def_readwrite("S", &analysis::update_data_type::S,
                        py::return_value_policy::reference_internal)
         .def_readwrite("E", &analysis::update_data_type::E,
@@ -519,8 +484,6 @@ RES_LIB_SUBMODULE("update", m) {
     m.def("copy_parameters", copy_parameters_pybind);
     m.def("make_update_data", make_update_data_pybind);
     m.def("save_parameters", save_parameters_pybind);
-    m.def("run_analysis_update_without_rowscaling",
-          run_analysis_update_without_rowscaling_pybind);
     m.def("run_analysis_update_with_rowscaling",
           run_analysis_update_with_rowscaling_pybind);
 }

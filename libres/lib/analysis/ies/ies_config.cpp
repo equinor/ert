@@ -110,7 +110,10 @@ RES_LIB_SUBMODULE("ies", m) {
     py::class_<ies::config::Config, std::shared_ptr<ies::config::Config>>(
         m, "Config")
         .def(py::init<bool>())
-        .def("step_length", &ies::config::Config::steplength);
+        .def("step_length", &ies::config::Config::steplength)
+        .def("iterable", &ies::config::Config::iterable)
+        .def("inversion", &ies::config::Config::get_inversion)
+        .def("truncation", &ies::config::Config::get_truncation);
 
     py::enum_<ies::config::inversion_type>(m, "inversion_type")
         .value("EXACT", ies::config::inversion_type::IES_INVERSION_EXACT)
