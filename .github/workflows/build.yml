@@ -164,7 +164,6 @@ jobs:
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
-        brew install geos # this line should be removed once Shapely is distributed to mac x86_64 for Python 3.10, see https://github.com/shapely/shapely/issues/1348
         pushd tests
         pytest ert_tests -sv --durations=0 -m "not integration_test"
 
@@ -181,7 +180,6 @@ jobs:
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
-        brew install geos # this line should be removed once Shapely is distributed to mac x86_64 for Python 3.10, see https://github.com/shapely/shapely/issues/1348
         pushd tests
         pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
 
