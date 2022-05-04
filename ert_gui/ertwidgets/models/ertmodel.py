@@ -69,12 +69,9 @@ def initializeCurrentCaseFromExisting(
         and ert.getEnkfFsManager().isCaseInitialized(source_case)
         and caseExists(target_case, LibresFacade(ert))
     ):
-        if set(members) != set("0", "1"):
-            raise ValueError(
-                "Wrong member set, only 0 and 1 as strings are allowed, "
-                f"got {set(members)}"
-            )
-        member_mask = [bool(int(string)) for string in members]
+        member_mask = [False] * ert.getEnsembleSize()
+        for member in members:
+            member_mask[int(member)] = True
 
         ert.getEnkfFsManager().customInitializeCurrentFromExistingCase(
             source_case, source_report_step, member_mask, parameters
