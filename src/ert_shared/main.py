@@ -4,6 +4,7 @@ import os
 import sys
 import re
 import yaml
+import atexit
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
@@ -471,6 +472,42 @@ def log_config(config_path: str, logger: logging.Logger) -> None:
                 config_context += line + "\n"
         logger.info(
             f"Content of the configuration file ({config_path}):\n" + config_context
+        )
+
+
+@atexit.register
+def log_process_usage():
+    try:
+        import resource
+
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+
+        if sys.platform == "darwin":
+            # macOS apparently outputs the maxrss value as bytes rather than
+            # kilobytes as on Linux.
+            #
+            # https://stackoverflow.com/questions/59913657/strange-values-of-get-rusage-maxrss-on-macos-and-linux
+            rss_scale = 1000
+        else:
+            rss_scale = 1
+
+        maxrss = usage.ru_maxrss // rss_scale
+
+        usage = {
+            "User time": usage.ru_utime,
+            "System time": usage.ru_stime,
+            "File system inputs": usage.ru_inblock,
+            "File system outputs": usage.ru_oublock,
+            "Socket messages sent": usage.ru_msgsnd,
+            "Socket messages Received": usage.ru_msgrcv,
+            "Signals received": usage.ru_nsignals,
+            "Swaps": usage.ru_nswap,
+            "Peak memory use (kB)": maxrss,
+        }
+        logging.info(f"Peak memory use: {maxrss} kB", extra=usage)
+    except Exception as exc:
+        logging.warning(
+            f"Exception while trying to log ERT process resource usage: {exc}"
         )
 
 
