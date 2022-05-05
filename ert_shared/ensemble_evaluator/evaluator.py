@@ -130,14 +130,9 @@ class EnsembleEvaluator:
                 logger.debug(f"got message from client: {client_event}")
                 if client_event["type"] == identifiers.EVTYPE_EE_USER_CANCEL:
                     logger.debug(f"Client {websocket.remote_address} asked to cancel.")
-                    if self._ensemble.cancellable:
-                        # The evaluator will stop after the ensemble has
-                        # indicated it has been cancelled.
-                        self._ensemble.cancel()
-                    else:
-                        self._stop()
+                    self._signal_cancel()
 
-                if client_event["type"] == identifiers.EVTYPE_EE_USER_DONE:
+                elif client_event["type"] == identifiers.EVTYPE_EE_USER_DONE:
                     logger.debug(f"Client {websocket.remote_address} signalled done.")
                     self._stop()
 
@@ -247,46 +242,69 @@ class EnsembleEvaluator:
         self._loop.call_soon_threadsafe(self._stop)
         self._ws_thread.join()
 
+    def _signal_cancel(self):
+        """
+        This is just a wrapper around logic for whether to sgnal cancel via
+        a cancellable ensemble or to use internal stop-mechanism directly
+
+        I.e. if the ensemble can be cancelled, it is, otherwise cancel
+        is signalled internally. In both cases the evaluator waits for
+        the  cancel-message to arrive before it shuts down properly.
+        """
+        if self._ensemble.cancellable:
+            logger.debug("Cancelling current ensemble")
+            self._ensemble.cancel()
+        else:
+            logger.debug("Stopping current ensemble")
+            self._stop()
+
     def run_and_get_successful_realizations(self) -> int:
-        monitor = self.run()
         unsuccessful_connection_attempts = 0
-        while True:
-            try:
-                for _ in monitor.track():
-                    unsuccessful_connection_attempts = 0
-                break
-            except ConnectionClosedError as e:
-                logger.debug(
-                    "Connection closed unexpectedly in "
-                    f"run_and_get_successful_realizations: {e}"
-                )
-            except ConnectionRefusedError as e:
-                unsuccessful_connection_attempts += 1
-                logger.debug(
-                    f"run_and_get_successful_realizations caught {e}."
-                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                )
-                if (
-                    unsuccessful_connection_attempts
-                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                ):
-                    logger.debug("Max connection attempts reached")
-                    if self._ensemble.cancellable:
-                        logger.debug("Cancelling current ensemble")
-                        self._ensemble.cancel()
-                    else:
-                        logger.debug("Stopping current ensemble")
-                        self._stop()
+        with self.run() as monitor:
+            while True:
+                try:
+                    for _ in monitor.track():
+                        unsuccessful_connection_attempts = 0
+
+                    logger.debug("Waiting for evaluator shutdown")
                     break
-                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                logger.debug(
-                    f"Sleeping for {sleep_time} seconds before attempting to reconnect"
-                )
-                time.sleep(sleep_time)
-        logger.debug("Waiting for evaluator shutdown")
-        self._ws_thread.join()
-        logger.debug("Evaluator is done")
-        return self._ensemble.get_successful_realizations()
+                except ConnectionClosedError as e:
+                    logger.debug(
+                        "Connection closed unexpectedly in "
+                        f"run_and_get_successful_realizations: {e}"
+                    )
+                    # The monitor went away...  what the h*** does that mean?
+                    # TODO: terminate and break out?
+                except ConnectionRefusedError as e:
+                    unsuccessful_connection_attempts += 1
+                    logger.debug(
+                        f"run_and_get_successful_realizations caught {e}."
+                        f"{unsuccessful_connection_attempts} unsuccessful attempts"
+                    )
+                    if (
+                        unsuccessful_connection_attempts
+                        < _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
+                    ):
+                        # Simple backoff-strategy...
+                        sleep_time = 0.25 * 2**unsuccessful_connection_attempts
+                        logger.debug(
+                            f"Sleeping for {sleep_time} seconds before attempting to reconnect"  # noqa: E501
+                        )
+                        time.sleep(sleep_time)
+                    else:
+                        logger.debug("Max connection attempts reached")
+                        self._signal_cancel()
+                        break
+                except BaseException:  # pylint: disable=broad-except
+                    logger.exception("unexpected error: ")
+                    # We really don't know what happened...  shut down and
+                    # get out of here. The monitor has been stopped by context
+                    self._signal_cancel()
+                    break
+
+            self._ws_thread.join()
+            logger.debug("Evaluator is done")
+            return self._ensemble.get_successful_realizations()
 
     @staticmethod
     def _get_ee_id(source) -> str:
