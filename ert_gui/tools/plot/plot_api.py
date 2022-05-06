@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 class PlotApi(object):
     def __init__(self):
         self._all_cases: List[dict] = None
+        self._timeout = 120
 
     def _get_case(self, name: str) -> dict:
         for e in self._get_all_cases():
@@ -28,11 +29,13 @@ class PlotApi(object):
         self._all_cases = []
         with Storage.session() as client:
             try:
-                response = client.get("/experiments")
+                response = client.get("/experiments", timeout=self._timeout)
                 experiments = response.json()
                 experiment = experiments[0]
                 for ensemble_id in experiment["ensemble_ids"]:
-                    response = client.get(f"/ensembles/{ensemble_id}")
+                    response = client.get(
+                        f"/ensembles/{ensemble_id}", timeout=self._timeout
+                    )
                     response_json = response.json()
                     case_name = response_json["userdata"]["name"]
                     self._all_cases.append(
@@ -50,7 +53,9 @@ class PlotApi(object):
     def _get_experiment(self) -> dict:
         with Storage.session() as client:
             try:
-                response: requests.Response = client.get("/experiments")
+                response: requests.Response = client.get(
+                    "/experiments", timeout=self._timeout
+                )
                 response_json = response.json()
                 return response_json[0]
             except (httpx.RequestError, IndexError) as exc:
@@ -61,7 +66,7 @@ class PlotApi(object):
         with Storage.session() as client:
             try:
                 response: requests.Response = client.get(
-                    f"/experiments/{experiement_id}/ensembles"
+                    f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
                 )
                 response_json = response.json()
                 return response_json
@@ -85,7 +90,7 @@ class PlotApi(object):
             for ensemble in self._get_ensembles(experiment["id"]):
                 try:
                     response: requests.Response = client.get(
-                        f"/ensembles/{ensemble['id']}/responses", timeout=None
+                        f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
                     )
                     for key, value in response.json().items():
                         user_data = value["userdata"]
@@ -104,7 +109,7 @@ class PlotApi(object):
 
                 try:
                     response: requests.Response = client.get(
-                        f"/ensembles/{ensemble['id']}/parameters"
+                        f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
                     )
                     for e in response.json():
                         key = e["name"]
@@ -146,6 +151,7 @@ class PlotApi(object):
                 response: requests.Response = client.get(
                     f"/ensembles/{case['id']}/records/{key}",
                     headers={"accept": "application/x-parquet"},
+                    timeout=self._timeout,
                 )
 
                 stream = io.BytesIO(response.content)
@@ -177,7 +183,8 @@ class PlotApi(object):
         with Storage.session() as client:
             try:
                 resp = client.get(
-                    f"/ensembles/{case['id']}/records/{key}/observations"
+                    f"/ensembles/{case['id']}/records/{key}/observations",
+                    timeout=self._timeout,
                 ).json()
                 obs = resp[0]
                 try:
