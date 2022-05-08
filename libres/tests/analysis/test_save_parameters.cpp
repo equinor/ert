@@ -11,7 +11,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/row_scaling.hpp>
 #include <ert/util/type_vector_functions.hpp>
 
@@ -24,20 +23,20 @@ namespace analysis {
 std::optional<Eigen::MatrixXd>
 load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
                 const std::vector<int> &iens_active_index, int active_ens_size,
-                const local_ministep_type *ministep);
+                const std::vector<analysis::Parameter> &parameters);
 
-void save_parameters(enkf_fs_type *target_fs,
-                     ensemble_config_type *ensemble_config,
-                     const std::vector<int> &iens_active_index,
-                     const local_ministep_type *ministep,
-                     const update_data_type &update_data);
+void save_parameters(
+    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+    const std::vector<int> &iens_active_index,
+    const std::vector<analysis::Parameter> &parameters,
+    const std::vector<analysis::RowScalingParameter> &scaled_parameters,
+    const update_data_type &update_data);
 
 std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
-load_row_scaling_parameters(enkf_fs_type *target_fs,
-                            ensemble_config_type *ensemble_config,
-                            const std::vector<int> &iens_active_index,
-                            int active_ens_size,
-                            const local_ministep_type *ministep);
+load_row_scaling_parameters(
+    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+    const std::vector<int> &iens_active_index, int active_ens_size,
+    const std::vector<analysis::RowScalingParameter> &scaled_parameters);
 
 } // namespace analysis
 
@@ -78,10 +77,6 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         }
         enkf_node_free(node);
 
-        // set up ministep with one parmater and N realizations
-        local_ministep_type *ministep =
-            new local_ministep_type("not-important");
-        ministep->add_active_data("TEST");
         std::vector<int> active_index;
         for (int i = 0; i < ensemble_size; i++) {
             active_index.push_back(i);
@@ -95,12 +90,14 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         auto update_data = analysis::update_data_type(
             {}, {}, {}, {}, std::make_optional(A), {}, {}, {});
 
-        analysis::save_parameters(fs, ensemble_config, active_index, ministep,
-                                  update_data);
+        std::vector<analysis::Parameter> parameters{
+            analysis::Parameter("TEST")};
+        analysis::save_parameters(fs, ensemble_config, active_index, parameters,
+                                  {}, update_data);
 
         WHEN("loading parameters from enkf_fs") {
             auto B = analysis::load_parameters(
-                fs, ensemble_config, active_index, ensemble_size, ministep);
+                fs, ensemble_config, active_index, ensemble_size, parameters);
             THEN("Loading parameters yield the same matrix") {
                 REQUIRE(B.has_value());
                 REQUIRE(A == B.value());
@@ -108,7 +105,6 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         }
 
         //cleanup
-        delete ministep;
         ensemble_config_free(ensemble_config);
         enkf_fs_decref(fs);
     }
@@ -153,14 +149,8 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         }
         enkf_node_free(node);
 
-        // set up ministep with one parmater and N realizations
-        local_ministep_type *ministep =
-            new local_ministep_type("not-important");
-        ministep->add_active_data("TEST");
-
         // Must assing values to each row of the matrix
-        auto scaling =
-            local_ministep_get_or_create_row_scaling(ministep, "TEST");
+        auto scaling = std::make_shared<RowScaling>(RowScaling());
         scaling->assign(0, 0.1);
         scaling->assign(1, 0.2);
         std::vector<int> active_index;
@@ -173,16 +163,17 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
             A(0, i) = double(i) / 10.0;
             A(1, i) = double(i) / 20.0;
         }
-
-        std::vector row_scaling_list{std::pair{A, scaling->shared_from_this()}};
+        std::vector<analysis::RowScalingParameter> parameter{
+            analysis::RowScalingParameter("TEST", scaling)};
+        std::vector row_scaling_list{std::pair{A, scaling}};
         auto update_data = analysis::update_data_type({}, {}, {}, {}, {},
                                                       row_scaling_list, {}, {});
-        analysis::save_parameters(fs, ensemble_config, active_index, ministep,
-                                  update_data);
+        analysis::save_parameters(fs, ensemble_config, active_index, {},
+                                  parameter, update_data);
 
         WHEN("loading parameters from enkf_fs") {
             auto parameter_matrices = analysis::load_row_scaling_parameters(
-                fs, ensemble_config, active_index, ensemble_size, ministep);
+                fs, ensemble_config, active_index, ensemble_size, parameter);
             THEN("Loading parameters yield the same matrix") {
                 for (int i = 0; i < parameter_matrices.size(); i++) {
                     auto A = parameter_matrices[i].first;
@@ -193,7 +184,6 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         }
 
         //cleanup
-        delete ministep;
         ensemble_config_free(ensemble_config);
         enkf_fs_decref(fs);
     }

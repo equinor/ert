@@ -1,84 +1,126 @@
-from cwrap import BaseCClass
+from dataclasses import field, dataclass
+from typing import Dict, List
 
-from res import _lib
-from res import ResPrototype
+from deprecation import deprecated
+
 from res.enkf.row_scaling import RowScaling
 from res.enkf.local_obsdata import LocalObsdata
+from res._lib.update import RowScalingParameter, Parameter
 
 
-class LocalMinistep(BaseCClass):
-    TYPE_NAME = "local_ministep"
+@dataclass
+class Observation:
+    name: str
+    active_index: List[int] = field(default_factory=list)
 
-    _free = ResPrototype("void local_ministep_free(local_ministep)")
-    _name = ResPrototype("char* local_ministep_get_name(local_ministep)")
-    _data_size = ResPrototype("int local_ministep_num_active_data(local_ministep)")
-    _has_active_data = ResPrototype(
-        "bool local_ministep_data_is_active(local_ministep, char*)"
-    )
-    _add_active_data = ResPrototype(
-        "void local_ministep_activate_data(local_ministep, char*)"
-    )
+    def key(self):
+        return self.name
 
-    def __init__(self, ministep_key):
-        raise NotImplementedError("Class can not be instantiated directly!")
 
-    def set_ensemble_config(self, config):
-        self.ensemble_config = config
+@dataclass
+class LocalMinistep:
+    _name: str
+    observations: Dict[str, Observation] = field(default_factory=dict)
+    parameters: Dict[str, Parameter] = field(default_factory=dict)
+    row_scaling_parameters: Dict[str, RowScalingParameter] = field(default_factory=dict)
 
+    @deprecated("Will be removed or renamed")
     def hasActiveData(self, key):
-        assert isinstance(key, str)
-        return self._has_active_data(key)
+        return key in self.parameters or key in self.row_scaling_parameters
 
+    @deprecated(
+        "Will be removed, use: add_parameter",
+    )
     def addActiveData(self, key):
-        assert isinstance(key, str)
-        if key in self.ensemble_config:
-            # TODO: Why bother? Why not make it idempotent?
-            if not self._has_active_data(key):
-                self._add_active_data(key)
-            else:
-                raise KeyError(f'Tried to add existing data key "{key}".')
-        else:
-            raise KeyError(f'Tried to add data key "{key}" not in ensemble.')
+        self.add_parameter(key)
 
+    @deprecated("Will be removed")
     def getActiveList(self, key):
         """@rtype: ActiveList"""
-        if self._has_active_data(key):
-            return _lib.local.ministep.get_active_data_list(self, key)
+        if key in self.parameters:
+            return self.parameters[key].active_list
+        elif key in self.row_scaling_parameters:
+            return self.row_scaling_parameters[key].active_list
         else:
             raise KeyError(f'Local key "{key}" not recognized.')
 
+    @deprecated("Will be removed")
     def numActiveData(self):
-        return self._data_size()
+        return len(self.parameters) + len(self.row_scaling_parameters)
 
+    @deprecated("Will be removed")
     def addNode(self, node):
-        _lib.local.ministep.add_obsdata_node(self, node)
+        raise NotImplementedError("Adding node to ministep is not supported")
 
+    @deprecated(
+        "Will be removed, use: add_observation",
+    )
     def attachObsset(self, obs_set):
         assert isinstance(obs_set, LocalObsdata)
-        _lib.local.ministep.attach_obsdata(self, obs_set)
+        for node in obs_set:
+            self.observations[node.key()] = Observation(
+                node.key(), node.getActiveList().get_active_index_list()
+            )
 
-    def row_scaling(self, key) -> RowScaling:
-        if not self._has_active_data(key):
-            raise KeyError(f"Unknown key: {key}")
+    @deprecated(
+        "Will be removed, use: add_row_scaling and get the row_scaling property",
+    )
+    def get_or_create_row_scaling(self, name):
+        return self.row_scaling(name)
 
-        return _lib.local.ministep.get_or_create_row_scaling(self, key)
+    @deprecated(
+        "Will be removed, use: add_row_scaling",
+    )
+    def row_scaling(self, parameter_name) -> RowScaling:
+        if parameter_name in self.row_scaling_parameters:
+            return self.row_scaling_parameters[parameter_name].row_scaling
+        elif parameter_name in self.parameters:
+            parameter = self.parameters[parameter_name]
+            row_scaling = RowScaling()
+            self.row_scaling_parameters[parameter_name] = RowScalingParameter(
+                parameter.name, row_scaling, parameter.index_list
+            )
+            # We have converted a parameter -> row_scaling_parameter, so remove it from
+            # parameters
+            del self.parameters[parameter_name]
+            return row_scaling
+        raise KeyError(f"No such parameter: {parameter_name}")
 
+    @deprecated("Use property: observations")
     def getLocalObsData(self):
         """@rtype: LocalObsdata"""
-        return _lib.local.ministep.get_obsdata(self)
+        return self.observations.values()
 
+    @deprecated(
+        "Will be turned into property: name",
+    )
     def name(self):
-        return self._name()
+        return self._name
 
+    @deprecated(
+        "Will be removed, and turned into property: name",
+    )
     def getName(self):
         """@rtype: str"""
         return self.name()
 
-    def free(self):
-        self._free()
+    def observation_config(self):
+        return [(key, value.active_index) for key, value in self.observations.items()]
 
-    def __repr__(self):
-        return (
-            f"LocalMinistep(name = {self.name()}, "
-            f"len = {len(self)}) at 0x{self._address():x}"
-        )
+    def parameter_config(self):
+        return list(self.parameters.values())
+
+    def row_scaling_config(self):
+        return list(self.row_scaling_parameters.values())
+
+    def add_observation(self, name, index_list=None):
+        index_list = [] if index_list is None else index_list
+        self.observations[name] = Observation(name, index_list)
+
+    def add_parameter(self, name, index_list=None):
+        index_list = [] if index_list is None else index_list
+        self.parameters[name] = Parameter(name, index_list)
+
+    def add_row_scaling_parameter(self, name, row_scaling: RowScaling, index_list=None):
+        index_list = [] if index_list is None else index_list
+        self.parameters[name] = RowScalingParameter(name, row_scaling, index_list)

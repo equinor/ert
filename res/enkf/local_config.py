@@ -13,120 +13,128 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from dataclasses import dataclass, field
+from typing import List, Union, Tuple
 
-from cwrap import BaseCClass
+from deprecation import deprecated
+from res._lib.local.row_scaling import RowScaling
 
-from res import ResPrototype
-from res import _lib
-from res.analysis import AnalysisModule
+from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_ministep import LocalMinistep
-from res.enkf.local_updatestep import LocalUpdateStep
 
 
-class LocalConfig(BaseCClass):
-    """The LocalConfig class is created as a reference to an existing underlying C
-    structure by the method EnkFMain.local_config(). When the pointer to the C
-    local_config_type object has been properly wrapped we 'decorate' the Python
-    object with references to the ensemble_config , observations and grid.
+@dataclass
+class LocalConfig:
+    ministeps: List[LocalMinistep] = field(default_factory=list)
 
-    This implies that the Python object LocalConfig is richer than the
-    underlying C object local_config_type; the extra attributes are only used
-    for validation.
-
-    """
-
-    TYPE_NAME = "local_config"
-
-    _free = ResPrototype("void   local_config_free(local_config)")
-    _clear = ResPrototype("void   local_config_clear(local_config)")
-    _clear_active = ResPrototype("void   local_config_clear_active(local_config)")
-    _create_ministep = ResPrototype(
-        "local_ministep_ref local_config_alloc_ministep"
-        "(local_config, char*, analysis_module)"
+    @deprecated(
+        "Create a new LocalConfig instead",
     )
-    _attach_ministep = ResPrototype(
-        "void   local_updatestep_add_ministep(local_updatestep, local_ministep)",
-        bind=False,
-    )
-    _has_obsdata = ResPrototype("bool   local_config_has_obsdata(local_config, char*)")
-
-    _get_updatestep = ResPrototype(
-        "local_updatestep_ref local_config_get_updatestep(local_config)"
-    )
-    _get_ministep = ResPrototype(
-        "local_ministep_ref   local_config_get_ministep(local_config, char*)"
-    )
-
-    def __init__(self):
-        raise NotImplementedError("Class can not be instantiated directly!")
-
-    def initAttributes(self, ensemble_config, grid):
-        self.ensemble_config = ensemble_config
-        self.grid = grid
-
-    def __getEnsembleConfig(self):
-        return self.ensemble_config
-
-    def getGrid(self):
-        # The grid can be None
-        return self.grid
-
-    def free(self):
-        self._free()
-
     def clear(self):
-        self._clear()
+        self.ministeps = []
 
     def clear_active(self):
-        self._clear_active()
+        raise NotImplementedError("This functionality has been removed, use: clear")
 
-    def createMinistep(self, mini_step_key, analysis_module=None):
+    @deprecated("Use add_ministep instead")
+    def createMinistep(self, mini_step_key, _=None):
         """@rtype: Ministep"""
-        assert isinstance(mini_step_key, str)
-        if analysis_module:
-            assert isinstance(analysis_module, AnalysisModule)
-        ministep = self._create_ministep(mini_step_key, analysis_module)
-        if ministep is None:
-            raise KeyError(f"Ministep: {mini_step_key} already exists")
-        ministep.set_ensemble_config(self.__getEnsembleConfig())
-        return ministep
+        if mini_step_key in [ministep.name() for ministep in self.ministeps]:
+            raise KeyError(f"Ministep: {mini_step_key} already in local_config")
+        return self.add_ministep(mini_step_key)
 
+    @deprecated(
+        "Add observations to ministep directly",
+    )
     def createObsdata(self, obsdata_key):
         """@rtype: Obsdata"""
-        assert isinstance(obsdata_key, str)
-        if self._has_obsdata(obsdata_key):
-            raise ValueError(f"Tried to add existing observation key: {obsdata_key}")
+        return LocalObsdata(obsdata_key)
 
-        return _lib.local.local_config.create_obsdata(self, obsdata_key)
+    @deprecated(
+        "Add observations to ministep directly",
+    )
+    def copyObsdata(self, _, new_key):
+        return LocalObsdata(new_key)
 
-    def copyObsdata(self, src_key, target_key):
-        """@rtype: Obsdata"""
-        assert isinstance(src_key, str)
-        assert isinstance(target_key, str)
-        if not self._has_obsdata(src_key):
-            raise KeyError(f"The observation set {src_key} does not exist")
-
-        obsdata = _lib.local.local_config.get_obsdata_copy(self, src_key, target_key)
-        return obsdata
-
+    @deprecated(
+        "Loop over configuration directly",
+    )
     def getUpdatestep(self):
         """@rtype: UpdateStep"""
-        return self._get_updatestep()
+        return self
 
-    def getMinistep(self, mini_step_key):
+    @deprecated(
+        "Add observations to ministep directly",
+    )
+    def getMinistep(self, key):
         """@rtype: Ministep"""
-        assert isinstance(mini_step_key, str)
-        return self._get_ministep(mini_step_key)
+        for ministep in self.ministeps:
+            if ministep.name() == key:
+                return ministep
+        raise KeyError(f"No ministep named: {key}")
 
+    @deprecated(
+        "Add observations to ministep directly",
+    )
     def getObsdata(self, obsdata_key):
         """@rtype: Obsdata"""
-        assert isinstance(obsdata_key, str)
-        return _lib.local.local_config.get_obsdata_ref(self, obsdata_key)
+        return obsdata_key
 
-    def attachMinistep(self, update_step, mini_step):
-        assert isinstance(mini_step, LocalMinistep)
-        assert isinstance(update_step, LocalUpdateStep)
-        self._attach_ministep(update_step, mini_step)
+    @deprecated("Use add_ministep")
+    def attachMinistep(self, mini_step):
+        if mini_step.name not in [ministep.name for ministep in self.ministeps]:
+            self.ministeps.append(mini_step)
 
-    def __repr__(self):
-        return self._create_repr()
+    def add_ministep(
+        self,
+        name,
+        observations: List[Union[str, Tuple[str, List[int]]]],
+        parameters: List[
+            Union[str, Tuple[str, List[int]], Tuple[str, RowScaling, List[int]]]
+        ],
+    ):
+        ministep = LocalMinistep(name)
+        for observation in observations:
+            if isinstance(observation, str):
+                observation = [observation]
+            ministep.add_observation(*observation)
+        for parameter in parameters:
+            if isinstance(parameter, str):
+                parameter = [parameter]
+            if len(parameter) > 1 and isinstance(parameter[1], RowScaling):
+                ministep.add_row_scaling_parameter(*parameter)
+            else:
+                ministep.add_parameter(*parameter)
+
+        self.ministeps.append(ministep)
+
+    def __iter__(self):
+        yield from self.ministeps
+
+    def __len__(self):
+        return len(self.ministeps)
+
+    def __getitem__(self, item):
+        return self.ministeps[item]
+
+    def context_validate(
+        self, valid_observations: List[str], valid_parameters: List[str]
+    ) -> bool:
+        errors = []
+        for ministep in self.ministeps:
+            for observation in ministep.observations:
+                if observation not in valid_observations:
+                    errors.append(
+                        f"Observation: {observation} not in valid observations"
+                    )
+            for parameter in list(ministep.parameters.keys()) + list(
+                ministep.row_scaling_parameters.keys()
+            ):
+                if parameter not in valid_parameters:
+                    errors.append(f"Parameter: {parameter} not in valid parameters")
+        if errors:
+            raise ValueError(
+                f"Update configuration not valid, "
+                f"valid observations: {valid_observations}, "
+                f"valid parameters: {valid_parameters}, errors: {errors}"
+            )

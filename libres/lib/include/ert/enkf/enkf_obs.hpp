@@ -34,8 +34,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/obs_vector.hpp>
@@ -64,12 +62,11 @@ extern "C" void enkf_obs_clear(enkf_obs_type *enkf_obs);
 extern "C" obs_impl_type enkf_obs_get_type(const enkf_obs_type *enkf_obs,
                                            const char *key);
 
-void enkf_obs_get_obs_and_measure_data(const enkf_obs_type *enkf_obs,
-                                       enkf_fs_type *fs,
-                                       const LocalObsData *local_obsdata,
-                                       const std::vector<int> &ens_active_list,
-                                       meas_data_type *meas_data,
-                                       obs_data_type *obs_data);
+void enkf_obs_get_obs_and_measure_data(
+    const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
+    const std::vector<std::pair<std::string, std::vector<int>>> &observations,
+    const std::vector<int> &ens_active_list, meas_data_type *meas_data,
+    obs_data_type *obs_data);
 
 extern "C" stringlist_type *
 enkf_obs_alloc_typed_keylist(enkf_obs_type *enkf_obs, obs_impl_type);
@@ -85,10 +82,6 @@ enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
                                 const char *input_string);
 extern "C" time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs,
                                          int report_step);
-void enkf_obs_add_local_nodes_with_data(const enkf_obs_type *enkf_obs,
-                                        LocalObsData *local_obs,
-                                        enkf_fs_type *fs,
-                                        const bool_vector_type *ens_mask);
 conf_class_type *enkf_obs_get_obs_conf_class();
 UTIL_IS_INSTANCE_HEADER(enkf_obs);
 

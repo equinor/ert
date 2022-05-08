@@ -18,7 +18,6 @@
 
 #ifndef ERT_ENKF_ANALYSIS_H
 #define ERT_ENKF_ANALYSIS_H
-
 #include <stdio.h>
 #include <vector>
 
@@ -52,8 +51,9 @@ public:
 UpdateSnapshot make_update_snapshot(const obs_data_type *obs_data,
                                     const meas_data_type *meas_data);
 
-void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
-                                       meas_data_type *meas_data,
-                                       double std_cutoff, double alpha);
+void enkf_analysis_deactivate_outliers(
+    obs_data_type *obs_data, meas_data_type *meas_data, double std_cutoff,
+    double alpha,
+    const std::vector<std::pair<std::string, std::vector<int>>> &selected_obs);
 
 #endif

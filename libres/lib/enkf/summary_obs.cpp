@@ -89,26 +89,20 @@ const char *summary_obs_get_summary_key(const summary_obs_type *summary_obs) {
 */
 void summary_obs_get_observations(const summary_obs_type *summary_obs,
                                   obs_data_type *obs_data, enkf_fs_type *fs,
-                                  int report_step,
-                                  const ActiveList *__active_list) {
+                                  int report_step) {
 
-    int active_size = __active_list->active_size(OBS_SIZE);
-    if (active_size == 1) {
-        obs_block_type *obs_block =
-            obs_data_add_block(obs_data, summary_obs->obs_key, OBS_SIZE);
-        obs_block_iset(obs_block, 0, summary_obs->value,
-                       summary_obs->std * summary_obs->std_scaling);
-    }
+    obs_block_type *obs_block =
+        obs_data_add_block(obs_data, summary_obs->obs_key, OBS_SIZE);
+    obs_block_iset(obs_block, 0, summary_obs->value,
+                   summary_obs->std * summary_obs->std_scaling);
 }
 
 void summary_obs_measure(const summary_obs_type *obs,
                          const summary_type *summary, node_id_type node_id,
-                         meas_data_type *meas_data,
-                         const ActiveList *__active_list) {
-    int active_size = __active_list->active_size(OBS_SIZE);
-    if (active_size == 1) {
+                         meas_data_type *meas_data) {
+    {
         meas_block_type *meas_block = meas_data_add_block(
-            meas_data, obs->obs_key, node_id.report_step, active_size);
+            meas_data, obs->obs_key, node_id.report_step, OBS_SIZE);
         meas_block_iset(meas_block, node_id.iens, 0,
                         summary_get(summary, node_id.report_step));
     }

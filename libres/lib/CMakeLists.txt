@@ -126,11 +126,6 @@ pybind11_add_module(
   enkf/gen_obs.cpp
   enkf/hook_manager.cpp
   enkf/hook_workflow.cpp
-  enkf/local_config.cpp
-  enkf/local_ministep.cpp
-  enkf/local_obsdata.cpp
-  enkf/local_obsdata_node.cpp
-  enkf/local_updatestep.cpp
   enkf/meas_data.cpp
   enkf/misfit_ensemble.cpp
   enkf/misfit_member.cpp

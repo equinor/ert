@@ -10,7 +10,6 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/local_ministep.hpp>
 #include <ert/util/type_vector_functions.hpp>
 
 #include "../tmpdir.hpp"

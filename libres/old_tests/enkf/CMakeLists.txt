@@ -31,8 +31,6 @@ foreach(
   enkf_fs
   enkf_gen_data_config_parse
   enkf_iter_config
-  enkf_local_obsdata
-  enkf_local_obsdata_node
   enkf_meas_data
   enkf_model_config
   enkf_obs_invalid_path
