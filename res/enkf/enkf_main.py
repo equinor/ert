@@ -20,6 +20,8 @@ from cwrap import BaseCClass
 from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
+from res._lib import enkf_main
+from res.enkf.local_ministep import LocalMinistep, Parameter, Observation
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
@@ -75,6 +77,18 @@ class EnKFMain(BaseCClass):
         self._init_from_real_enkf_main(real_enkf_main)
         self._monkey_patch_methods(real_enkf_main)
 
+        observations = {
+            observation: Observation(observation)
+            for observation in self._observation_keys
+        }
+        parameters = {
+            parameter: Parameter(parameter) for parameter in self._parameter_keys
+        }
+        initial_ministep = LocalMinistep(
+            "ALL_ACTIVE", observations=observations, parameters=parameters
+        )
+        self._local_config = LocalConfig([initial_ministep])
+
     def _init_from_real_enkf_main(self, real_enkf_main):
         super().__init__(
             real_enkf_main.from_param(real_enkf_main).value,
@@ -85,6 +99,23 @@ class EnKFMain(BaseCClass):
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
         self.__es_update = ESUpdate(self)
+
+    @property
+    def local_config(self):
+        return self._local_config
+
+    @local_config.setter
+    def local_config(self, config: LocalConfig):
+        config.context_validate(self._observation_keys, self._parameter_keys)
+        self._local_config = config
+
+    @property
+    def _observation_keys(self):
+        return enkf_main.get_observation_keys(self)
+
+    @property
+    def _parameter_keys(self):
+        return enkf_main.get_parameter_keys(self)
 
     def _real_enkf_main(self):
         return self.parent()
@@ -105,6 +136,10 @@ class EnKFMain(BaseCClass):
         if self.__fs_manager is not None:
             self.__fs_manager.umount()
             self.__fs_manager = None
+
+    def getLocalConfig(self) -> LocalConfig:
+        """@rtype: LocalConfig"""
+        return self.local_config
 
     # --- Overridden methods --------------------
 
@@ -177,9 +212,6 @@ class _RealEnKFMain(BaseCClass):
     )
     _get_model_config = ResPrototype(
         "model_config_ref enkf_main_get_model_config( enkf_main )"
-    )
-    _get_local_config = ResPrototype(
-        "local_config_ref enkf_main_get_local_config( enkf_main )"
     )
     _get_analysis_config = ResPrototype(
         "analysis_config_ref enkf_main_get_analysis_config( enkf_main)"
@@ -299,12 +331,6 @@ class _RealEnKFMain(BaseCClass):
     def getModelConfig(self) -> ModelConfig:
         """@rtype: ModelConfig"""
         return self._get_model_config().setParent(self)
-
-    def getLocalConfig(self) -> LocalConfig:
-        """@rtype: LocalConfig"""
-        config = self._get_local_config().setParent(self)
-        config.initAttributes(self.ensembleConfig(), self.eclConfig().getGrid())
-        return config
 
     def siteConfig(self) -> SiteConfig:
         """@rtype: SiteConfig"""

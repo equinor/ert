@@ -535,32 +535,15 @@ TIME_MAP timemap.txt
             es_update.smootherUpdate(run_context)
 
             local_config = main.getLocalConfig()
-            local_config.clear_active()
-            with self.assertRaises(KeyError):
-                obs_data = local_config.copyObsdata("NO_SUCH_OBS", "my_obs")
-
-            obs_data = local_config.copyObsdata("ALL_OBS", "my_obs")
-            ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.addActiveData("PORO")
-            ministep.attachObsset(obs_data)
             updatestep = local_config.getUpdatestep()
-            updatestep.attachMinistep(ministep)
-
-            update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
-            rng.setState(random_seed)
-            # Local update with reused ALL_OBS observation configuration
-            es_update.smootherUpdate(run_context)
-
-            del obs_data["WBHP0"]
             ministep2 = local_config.createMinistep("MINISTEP_LOCAL2")
             obs_data2 = local_config.createObsdata("OBSDATA2")
             obs_data2.addNode("WBHP0")
             ministep2.addActiveData("PORO")
             ministep2.attachObsset(obs_data2)
             updatestep.attachMinistep(ministep2)
-            update_fs3 = main.getEnkfFsManager().getFileSystem("target3")
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs3)
+            update_fs2 = main.getEnkfFsManager().getFileSystem("target3")
+            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
             # Local update with two ministeps - where one observation has been
             # removed from the first
             es_update.smootherUpdate(run_context)
@@ -569,32 +552,25 @@ TIME_MAP timemap.txt
             poro_config = ens_config["PORO"]
             update_node1 = EnkfNode(poro_config)
             update_node2 = EnkfNode(poro_config)
-            update_node3 = EnkfNode(poro_config)
             for iens in range(main.getEnsembleSize()):
                 node_id = NodeId(0, iens)
 
                 update_node1.load(update_fs1, node_id)
                 update_node2.load(update_fs2, node_id)
-                update_node3.load(update_fs3, node_id)
 
                 field1 = update_node1.asField()
                 field2 = update_node2.asField()
-                field3 = update_node3.asField()
 
                 for k in range(grid.nz):
                     for j in range(grid.ny):
                         for i in range(grid.nx):
-                            assert field1.ijk_get_double(
-                                i, j, k
-                            ) == field2.ijk_get_double(i, j, k)
-
                             f1 = field1.ijk_get_double(i, j, k)
-                            f3 = field3.ijk_get_double(i, j, k)
+                            f2 = field2.ijk_get_double(i, j, k)
 
                             # Due to the randomness in the sampling process,
                             # which becomes different when the update steps is
                             # split in two ministeps we can not enforce
                             # equality here.
 
-                            diff = abs(f1 - f3)
+                            diff = abs(f1 - f2)
                             assert diff < 0.01

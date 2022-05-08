@@ -17,12 +17,11 @@
 
 from libres_utils import ResTest
 
-from res.enkf.local_ministep import LocalMinistep
-from res.enkf.local_obsdata import LocalObsdata
-from res.enkf.local_obsdata_node import LocalObsdataNode
+from res.enkf import LocalObsdata, LocalConfig
 from res.enkf.active_list import ActiveList
-from res.enkf.local_updatestep import LocalUpdateStep
 from res.enkf.enums import ActiveMode
+from res.enkf.local_ministep import LocalMinistep
+from res.enkf.local_obsdata import LocalObsdataNode
 from res.test import ErtTestContext
 
 
@@ -30,14 +29,6 @@ class LocalConfigTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
         self.local_conf_path = "python/enkf/data/local_config"
-
-    def test_get_grid(self):
-        with ErtTestContext(self.local_conf_path, self.config) as test_context:
-            main = test_context.getErt()
-            local_config = main.getLocalConfig()
-            grid = local_config.getGrid()
-            dimens = grid.getNX(), grid.getNY(), grid.getNZ()
-            self.assertEqual((10, 10, 5), dimens)
 
     def test_local_obs_data(self):
         with ErtTestContext(self.local_conf_path, self.config) as test_context:
@@ -54,9 +45,6 @@ class LocalConfigTest(ResTest):
             local_obs_data_1 = local_config.createObsdata("OBSSET_1")
             self.assertTrue(isinstance(local_obs_data_1, LocalObsdata))
 
-            # Try to add existing obsdata
-            with self.assertRaises(ValueError):
-                local_config.createObsdata("OBSSET_1")
             local_obs_data_1.addNode("GEN_PERLIN_1")
             local_obs_data_1.addNode("GEN_PERLIN_2")
             self.assertEqual(len(local_obs_data_1), 2)
@@ -77,12 +65,7 @@ class LocalConfigTest(ResTest):
             with self.assertRaises(KeyError):
                 local_obs_data_1.addNode("GEN_PERLIN_1")
 
-            with self.assertRaises(KeyError):
-                local_config.getObsdata("NO_SUCH_KEY")
-
-            local_obs_data_2 = local_config.getObsdata("OBSSET_1")
-            self.assertEqual(local_obs_data_1, local_obs_data_2)
-            al = local_obs_data_2.getActiveList("GEN_PERLIN_1")
+            al = local_obs_data_1.getActiveList("GEN_PERLIN_1")
             al.addActiveIndex(10)
             self.assertEqual(al.getMode(), ActiveMode.PARTLY_ACTIVE)
 
@@ -95,10 +78,7 @@ class LocalConfigTest(ResTest):
             local_config.clear()
             local_obs_data_1 = local_config.createObsdata("OBSSET_1")
             local_obs_data_1.addNode("GEN_PERLIN_1")
-            l1 = local_obs_data_1.copy_active_list("GEN_PERLIN_1")
             l2 = local_obs_data_1.getActiveList("GEN_PERLIN_1")
-            assert l1 != l2
-            assert isinstance(l1, ActiveList)
             assert isinstance(l2, ActiveList)
 
     def test_attach_obs_data(self):
@@ -163,7 +143,7 @@ class LocalConfigTest(ResTest):
 
             # Update step
             updatestep = local_config.getUpdatestep()
-            self.assertTrue(isinstance(updatestep, LocalUpdateStep))
+            self.assertTrue(isinstance(updatestep, LocalConfig))
             upd_size = len(updatestep)
 
             # Ministep

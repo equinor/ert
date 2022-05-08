@@ -63,8 +63,6 @@ from .hook_workflow import HookWorkflow
 from .local_config import LocalConfig
 from .local_ministep import LocalMinistep
 from .local_obsdata import LocalObsdata
-from .local_obsdata_node import LocalObsdataNode
-from .local_updatestep import LocalUpdateStep
 from .model_config import ModelConfig
 from .node_id import NodeId
 from .observations import (
@@ -116,10 +114,8 @@ __all__ = [
     "EnkfFs",
     "RowScaling",
     "ActiveList",
-    "LocalObsdataNode",
     "LocalObsdata",
     "LocalMinistep",
-    "LocalUpdateStep",
     "EnkfFieldFileFormatEnum",
     "LoadFailTypeEnum",
     "EnkfVarType",

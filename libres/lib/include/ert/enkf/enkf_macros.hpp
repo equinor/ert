@@ -231,38 +231,38 @@
     bool prefix##_initialize__(void *, int, const char *, rng_type *);
 
 #define VOID_GET_OBS(prefix)                                                   \
-    void prefix##_get_observations__(                                          \
-        const void *void_arg, obs_data_type *obs_data, enkf_fs_type *fs,       \
-        int report_step, const ActiveList *__active_list) {                    \
+    void prefix##_get_observations__(const void *void_arg,                     \
+                                     obs_data_type *obs_data,                  \
+                                     enkf_fs_type *fs, int report_step) {      \
         prefix##_get_observations((prefix##_type *)void_arg, obs_data, fs,     \
-                                  report_step, __active_list);                 \
+                                  report_step);                                \
     }
 
 #define VOID_GET_OBS_HEADER(prefix)                                            \
     void prefix##_get_observations__(const void *, obs_data_type *,            \
-                                     enkf_fs_type *, int, const ActiveList *)
+                                     enkf_fs_type *, int)
 
 #define VOID_MEASURE(obs_prefix, state_prefix)                                 \
-    void obs_prefix##_measure__(                                               \
-        const void *void_obs, const void *void_state, node_id_type node_id,    \
-        meas_data_type *meas_data, const ActiveList *__active_list) {          \
+    void obs_prefix##_measure__(const void *void_obs, const void *void_state,  \
+                                node_id_type node_id,                          \
+                                meas_data_type *meas_data) {                   \
         const obs_prefix##_type *obs = obs_prefix##_safe_cast_const(void_obs); \
         const state_prefix##_type *state =                                     \
             state_prefix##_safe_cast_const(void_state);                        \
-        obs_prefix##_measure(obs, state, node_id, meas_data, __active_list);   \
+        obs_prefix##_measure(obs, state, node_id, meas_data);                  \
     }
 
 #define VOID_MEASURE_UNSAFE(obs_prefix, state_prefix)                          \
-    void obs_prefix##_measure__(                                               \
-        const void *void_obs, const void *state, node_id_type node_id,         \
-        meas_data_type *meas_data, const ActiveList *__active_list) {          \
+    void obs_prefix##_measure__(const void *void_obs, const void *state,       \
+                                node_id_type node_id,                          \
+                                meas_data_type *meas_data) {                   \
         const obs_prefix##_type *obs = obs_prefix##_safe_cast_const(void_obs); \
-        obs_prefix##_measure(obs, state, node_id, meas_data, __active_list);   \
+        obs_prefix##_measure(obs, state, node_id, meas_data);                  \
     }
 
 #define VOID_MEASURE_HEADER(obs_prefix)                                        \
     void obs_prefix##_measure__(const void *, const void *, node_id_type,      \
-                                meas_data_type *, const ActiveList *)
+                                meas_data_type *)
 
 #define VOID_UPDATE_STD_SCALE(prefix)                                          \
     void prefix##_update_std_scale__(void *void_obs, double std_multiplier,    \

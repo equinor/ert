@@ -42,8 +42,6 @@
 #include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/gen_obs.hpp>
-#include <ert/enkf/local_obsdata.hpp>
-#include <ert/enkf/local_obsdata_node.hpp>
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
 
@@ -653,24 +651,6 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
     }
 }
 
-void obs_vector_scale_std(obs_vector_type *obs_vector,
-                          const LocalObsDataNode *local_node,
-                          double std_multiplier) {
-    const auto *active_list = local_node->active_list();
-    int tstep = -1;
-
-    while (true) {
-        tstep = obs_vector_get_next_active_step(obs_vector, tstep);
-        if (tstep < 0)
-            break;
-
-        void *observation = obs_vector_iget_node(obs_vector, tstep);
-        if (observation)
-            obs_vector->update_std_scale(observation, std_multiplier,
-                                         active_list);
-    }
-}
-
 static const char *__summary_kw(const char *field_name) {
     if (strcmp(field_name, "PRESSURE") == 0)
         return "BPR";
@@ -874,18 +854,16 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
 
 void obs_vector_iget_observations(const obs_vector_type *obs_vector,
                                   int report_step, obs_data_type *obs_data,
-                                  const ActiveList *active_list,
                                   enkf_fs_type *fs) {
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL)
-        obs_vector->get_obs(obs_node, obs_data, fs, report_step, active_list);
+        obs_vector->get_obs(obs_node, obs_data, fs, report_step);
 }
 
 void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
                         int report_step,
                         const std::vector<int> &ens_active_list,
-                        meas_data_type *meas_data,
-                        const ActiveList *active_list) {
+                        meas_data_type *meas_data) {
 
     void *obs_node = (void *)vector_iget(obs_vector->nodes, report_step);
     if (obs_node != NULL) {
@@ -901,7 +879,7 @@ void obs_vector_measure(const obs_vector_type *obs_vector, enkf_fs_type *fs,
 
             enkf_node_load(enkf_node, fs, node_id);
             obs_vector->measure(obs_node, enkf_node_value_ptr(enkf_node),
-                                node_id, meas_data, active_list);
+                                node_id, meas_data);
         }
 
         enkf_node_free(enkf_node);
@@ -1075,11 +1053,6 @@ double obs_vector_total_chi2(const obs_vector_type *obs_vector,
 
 const char *obs_vector_get_obs_key(const obs_vector_type *obs_vector) {
     return obs_vector->obs_key;
-}
-
-LocalObsDataNode *
-obs_vector_alloc_local_node(const obs_vector_type *obs_vector) {
-    return new LocalObsDataNode(obs_vector->obs_key);
 }
 
 VOID_FREE(obs_vector)

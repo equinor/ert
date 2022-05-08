@@ -31,15 +31,6 @@ bool alloc_strippedparameters_noerrors() {
     return true;
 }
 
-bool scale_std_summary_nodata_no_errors() {
-    obs_vector_type *obs_vector =
-        obs_vector_alloc(SUMMARY_OBS, "WHAT", NULL, 0);
-    auto local_node = obs_vector_alloc_local_node(obs_vector);
-    obs_vector_scale_std(obs_vector, local_node, 2.0);
-    obs_vector_free(obs_vector);
-    return true;
-}
-
 bool scale_std_summarysingleobservation_no_errors() {
     obs_vector_type *obs_vector =
         obs_vector_alloc(SUMMARY_OBS, "WHAT", NULL, 1);
@@ -49,10 +40,8 @@ bool scale_std_summarysingleobservation_no_errors() {
     test_assert_double_equal(2.0, summary_obs_get_std(summary_obs));
     test_assert_double_equal(1.0, summary_obs_get_std_scaling(summary_obs));
 
-    {
-        auto local_node = obs_vector_alloc_local_node(obs_vector);
-        obs_vector_scale_std(obs_vector, local_node, 2.0);
-    }
+    ActiveList active_list;
+    summary_obs_update_std_scale(summary_obs, 2.0, &active_list);
     test_assert_double_equal(2.0, summary_obs_get_std_scaling(summary_obs));
 
     obs_vector_free(obs_vector);
@@ -83,10 +72,12 @@ bool scale_std_summarymanyobservations_no_errors() {
 
     test_assert_bool_equal(num_observations,
                            obs_vector_get_num_active(obs_vector));
-    {
-        auto local_node = obs_vector_alloc_local_node(obs_vector);
-        obs_vector_scale_std(obs_vector, local_node, scaling_factor);
-    }
+
+    ActiveList active_list;
+    for (int i = 0; i < num_observations; i++)
+        summary_obs_update_std_scale(observations[i], scaling_factor,
+                                     &active_list);
+
     for (int i = 0; i < num_observations; i++) {
         summary_obs_type *after_scale = observations[i];
         test_assert_double_equal(scaling_factor,
@@ -99,8 +90,6 @@ bool scale_std_summarymanyobservations_no_errors() {
 
 bool scale_std_block_nodata_no_errors() {
     obs_vector_type *obs_vector = obs_vector_alloc(BLOCK_OBS, "WHAT", NULL, 0);
-    auto local_node = obs_vector_alloc_local_node(obs_vector);
-    obs_vector_scale_std(obs_vector, local_node, 2.0);
     obs_vector_free(obs_vector);
     return true;
 }
@@ -163,10 +152,9 @@ bool scale_std_block100observations_no_errors() {
         }
     }
 
-    {
-        auto local_node = obs_vector_alloc_local_node(obs_vector);
-        obs_vector_scale_std(obs_vector, local_node, scale_factor);
-    }
+    ActiveList active_list;
+    for (int i = 0; i < num_observations; i++)
+        block_obs_update_std_scale(observations[i], scale_factor, &active_list);
 
     for (int i = 0; i < num_observations; i++) {
         for (int point_nr = 0; point_nr < num_points; point_nr++) {
@@ -187,8 +175,6 @@ bool scale_std_block100observations_no_errors() {
 
 bool scale_std_gen_nodata_no_errors() {
     obs_vector_type *obs_vector = obs_vector_alloc(GEN_OBS, "WHAT", NULL, 0);
-    auto local_node = obs_vector_alloc_local_node(obs_vector);
-    obs_vector_scale_std(obs_vector, local_node, 2.0);
     obs_vector_free(obs_vector);
     return true;
 }
@@ -210,10 +196,9 @@ bool scale_std_gen_withdata_no_errors() {
         observations[i] = gen_obs;
     }
 
-    {
-        auto local_node = obs_vector_alloc_local_node(obs_vector);
-        obs_vector_scale_std(obs_vector, local_node, multiplier);
-    }
+    ActiveList active_list;
+    for (int i = 0; i < num_observations; i++)
+        gen_obs_update_std_scale(observations[i], multiplier, &active_list);
 
     for (int i = 0; i < num_observations; i++) {
         char *index_key = util_alloc_sprintf("%d", 0);
@@ -234,7 +219,6 @@ bool scale_std_gen_withdata_no_errors() {
 
 int main(int argc, char **argv) {
     test_assert_bool_equal(alloc_strippedparameters_noerrors(), true);
-    test_assert_bool_equal(scale_std_summary_nodata_no_errors(), true);
     test_assert_bool_equal(scale_std_summarysingleobservation_no_errors(),
                            true);
     test_assert_bool_equal(scale_std_summarymanyobservations_no_errors(), true);

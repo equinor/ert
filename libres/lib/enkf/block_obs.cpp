@@ -248,31 +248,16 @@ void block_obs_free(block_obs_type *block_obs) {
 
 void block_obs_get_observations(const block_obs_type *block_obs,
                                 obs_data_type *obs_data, enkf_fs_type *fs,
-                                int report_step,
-                                const ActiveList *__active_list) {
-    int i;
+                                int report_step) {
     int obs_size = block_obs_get_size(block_obs);
-    int active_size = __active_list->active_size(obs_size);
-    active_mode_type active_mode = __active_list->getMode();
     obs_block_type *obs_block =
         obs_data_add_block(obs_data, block_obs->obs_key, obs_size);
 
-    if (active_mode == ALL_ACTIVE) {
-        for (i = 0; i < obs_size; i++) {
-            const point_obs_type *point_obs =
-                block_obs_iget_point_const(block_obs, i);
-            obs_block_iset(obs_block, i, point_obs->value,
-                           point_obs->std * point_obs->std_scaling);
-        }
-    } else if (active_mode == PARTLY_ACTIVE) {
-        const int *active_list = __active_list->active_list_get_active();
-        for (i = 0; i < active_size; i++) {
-            int iobs = active_list[i];
-            const point_obs_type *point_obs =
-                block_obs_iget_point_const(block_obs, i);
-            obs_block_iset(obs_block, iobs, point_obs->value,
-                           point_obs->std * point_obs->std_scaling);
-        }
+    for (int i = 0; i < obs_size; i++) {
+        const point_obs_type *point_obs =
+            block_obs_iget_point_const(block_obs, i);
+        obs_block_iset(obs_block, i, point_obs->value,
+                       point_obs->std * point_obs->std_scaling);
     }
 }
 
@@ -297,34 +282,15 @@ double block_obs_iget_data(const block_obs_type *block_obs, const void *state,
 }
 
 void block_obs_measure(const block_obs_type *block_obs, const void *state,
-                       node_id_type node_id, meas_data_type *meas_data,
-                       const ActiveList *__active_list) {
+                       node_id_type node_id, meas_data_type *meas_data) {
     block_obs_assert_data(block_obs, state);
-    {
-        int obs_size = block_obs_get_size(block_obs);
-        int active_size = __active_list->active_size(obs_size);
-        meas_block_type *meas_block = meas_data_add_block(
-            meas_data, block_obs->obs_key, node_id.report_step, obs_size);
-        int iobs;
+    int obs_size = block_obs_get_size(block_obs);
+    meas_block_type *meas_block = meas_data_add_block(
+        meas_data, block_obs->obs_key, node_id.report_step, obs_size);
 
-        active_mode_type active_mode = __active_list->getMode();
-        if (active_mode == ALL_ACTIVE) {
-            for (iobs = 0; iobs < obs_size; iobs++) {
-                double value =
-                    block_obs_iget_data(block_obs, state, iobs, node_id);
-                meas_block_iset(meas_block, node_id.iens, iobs, value);
-            }
-        } else if (active_mode == PARTLY_ACTIVE) {
-            const int *active_list = __active_list->active_list_get_active();
-            for (int i = 0; i < active_size; i++) {
-                iobs = active_list[i];
-                {
-                    double value =
-                        block_obs_iget_data(block_obs, state, iobs, node_id);
-                    meas_block_iset(meas_block, node_id.iens, i, value);
-                }
-            }
-        }
+    for (int iobs = 0; iobs < obs_size; iobs++) {
+        double value = block_obs_iget_data(block_obs, state, iobs, node_id);
+        meas_block_iset(meas_block, node_id.iens, iobs, value);
     }
 }
 

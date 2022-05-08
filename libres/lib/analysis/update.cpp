@@ -12,7 +12,6 @@
 #include <ert/analysis/update.hpp>
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
-#include <ert/enkf/local_ministep.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
 #include <ert/python.hpp>
@@ -64,23 +63,21 @@ void serialize_node(enkf_fs_type *fs, const enkf_config_node_type *config_node,
     enkf_node_free(node);
 }
 
-void serialize_ministep(const ensemble_config_type *ens_config,
-                        const local_ministep_type *ministep,
-                        enkf_fs_type *target_fs,
-                        const std::vector<int> &iens_active_index,
-                        Eigen::MatrixXd &A) {
+void serialize_parameter(const ensemble_config_type *ens_config,
+                         const std::vector<Parameter> &parameters,
+                         enkf_fs_type *target_fs,
+                         const std::vector<int> &iens_active_index,
+                         Eigen::MatrixXd &A) {
 
     int ens_size = A.cols();
     int current_row = 0;
 
-    for (auto &key : ministep->unscaled_keys()) {
-        const ActiveList *active_list =
-            ministep->get_active_data_list(key.data());
+    for (const auto &parameter : parameters) {
         const enkf_config_node_type *config_node =
-            ensemble_config_get_node(ens_config, key.c_str());
+            ensemble_config_get_node(ens_config, parameter.name.c_str());
 
         ensure_node_loaded(config_node, target_fs);
-        int active_size = active_list->active_size(
+        int active_size = parameter.active_list.active_size(
             enkf_config_node_get_data_size(config_node, 0));
 
         if ((active_size + current_row) > A.rows())
@@ -89,7 +86,7 @@ void serialize_ministep(const ensemble_config_type *ens_config,
             for (int column = 0; column < ens_size; column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, current_row,
-                               column, active_list, A);
+                               column, &parameter.active_list, A);
             }
             current_row += active_size;
         }
@@ -126,27 +123,26 @@ void assert_matrix_size(const Eigen::MatrixXd &m, const char *name, int rows,
                                     "," + std::to_string(columns) + "]");
 }
 
-void deserialize_ministep(ensemble_config_type *ensemble_config,
-                          const local_ministep_type *ministep,
-                          enkf_fs_type *target_fs,
-                          const std::vector<int> &iens_active_index,
-                          const Eigen::MatrixXd &A) {
+void deserialize_parameter(ensemble_config_type *ensemble_config,
+                           const std::vector<Parameter> &parameters,
+                           enkf_fs_type *target_fs,
+                           const std::vector<int> &iens_active_index,
+                           const Eigen::MatrixXd &A) {
 
     int ens_size = iens_active_index.size();
     int current_row = 0;
-    for (auto &key : ministep->unscaled_keys()) {
-        const ActiveList *active_list =
-            ministep->get_active_data_list(key.data());
+    for (auto &parameter : parameters) {
         const enkf_config_node_type *config_node =
-            ensemble_config_get_node(ensemble_config, key.c_str());
+            ensemble_config_get_node(ensemble_config, parameter.name.c_str());
         ensure_node_loaded(config_node, target_fs);
-        int active_size = active_list->active_size(
+        int active_size = parameter.active_list.active_size(
             enkf_config_node_get_data_size(config_node, 0));
         if (active_size > 0) {
             for (int column = 0; column < ens_size; column++) {
                 int iens = iens_active_index[column];
                 deserialize_node(target_fs, target_fs, config_node, iens,
-                                 current_row, column, active_list, A);
+                                 current_row, column, &parameter.active_list,
+                                 A);
             }
             current_row += active_size;
         }
@@ -160,16 +156,15 @@ matrices.
 std::optional<Eigen::MatrixXd>
 load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
                 const std::vector<int> &iens_active_index, int active_ens_size,
-                const local_ministep_type *ministep) {
+                const std::vector<Parameter> &parameters) {
 
-    const auto &unscaled_keys = ministep->unscaled_keys();
-    if (unscaled_keys.size() != 0) {
+    if (!parameters.empty()) {
         int matrix_start_size = 250000;
         Eigen::MatrixXd A =
             Eigen::MatrixXd::Zero(matrix_start_size, active_ens_size);
 
-        serialize_ministep(ensemble_config, ministep, target_fs,
-                           iens_active_index, A);
+        serialize_parameter(ensemble_config, parameters, target_fs,
+                            iens_active_index, A);
         return A;
     }
 
@@ -182,26 +177,25 @@ Store a parameters into a enkf_fs_type storage
 void save_parameters(enkf_fs_type *target_fs,
                      ensemble_config_type *ensemble_config,
                      const std::vector<int> &iens_active_index,
-                     const local_ministep_type *ministep,
+                     const std::vector<Parameter> &parameters,
+                     const std::vector<RowScalingParameter> &scaled_parameters,
                      const update_data_type &update_data) {
     if (update_data.A)
-        deserialize_ministep(ensemble_config, ministep, target_fs,
-                             iens_active_index, update_data.A.value());
+        deserialize_parameter(ensemble_config, parameters, target_fs,
+                              iens_active_index, update_data.A.value());
     if (update_data.A_with_rowscaling.size() > 0) {
-        const auto &scaled_keys = ministep->scaled_keys();
-
-        for (size_t ikw = 0; ikw < scaled_keys.size(); ikw++) {
-            const auto &key = scaled_keys[ikw];
-            const ActiveList *active_list =
-                ministep->get_active_data_list(key.data());
+        int ikw = 0;
+        for (auto &scaled_parameter : scaled_parameters) {
             auto &A = update_data.A_with_rowscaling[ikw].first;
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 deserialize_node(
                     target_fs, target_fs,
-                    ensemble_config_get_node(ensemble_config, key.c_str()),
-                    iens, 0, column, active_list, A);
+                    ensemble_config_get_node(ensemble_config,
+                                             scaled_parameter.name.c_str()),
+                    iens, 0, column, &scaled_parameter.active_list, A);
             }
+            ikw++;
         }
     }
 }
@@ -211,25 +205,21 @@ load a set of parameters from a enkf_fs_type storage into a set of
 matrices with the corresponding row-scaling object.
 */
 std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
-load_row_scaling_parameters(enkf_fs_type *target_fs,
-                            ensemble_config_type *ensemble_config,
-                            const std::vector<int> &iens_active_index,
-                            int active_ens_size,
-                            const local_ministep_type *ministep) {
+load_row_scaling_parameters(
+    enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
+    const std::vector<int> &iens_active_index, int active_ens_size,
+    const std::vector<RowScalingParameter> &config_parameters) {
 
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
         parameters;
 
-    const auto &scaled_keys = ministep->scaled_keys();
-    if (scaled_keys.size() > 0) {
+    if (!config_parameters.empty()) {
         int matrix_start_size = 250000;
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(250000, active_ens_size);
 
-        for (const auto &key : scaled_keys) {
-            const ActiveList *active_list =
-                ministep->get_active_data_list(key.data());
-            const auto *config_node =
-                ensemble_config_get_node(ensemble_config, key.c_str());
+        for (const auto &parameter : config_parameters) {
+            const auto *config_node = ensemble_config_get_node(
+                ensemble_config, parameter.name.c_str());
             const int node_size =
                 enkf_config_node_get_data_size(config_node, 0);
             if (A.rows() < node_size)
@@ -237,9 +227,9 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 serialize_node(target_fs, config_node, iens, 0, column,
-                               active_list, A);
+                               &parameter.active_list, A);
             }
-            auto row_scaling = ministep->get_row_scaling(key);
+            auto row_scaling = parameter.row_scaling;
 
             A.conservativeResize(row_scaling->size(), A.cols());
             parameters.emplace_back(std::move(A), row_scaling);
@@ -294,7 +284,11 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
                  enkf_obs_type *obs, ensemble_config_type *ensemble_config,
                  const analysis_config_type *analysis_config,
                  const std::vector<bool> &ens_mask,
-                 local_ministep_type *ministep, rng_type *shared_rng) {
+                 const std::vector<std::pair<std::string, std::vector<int>>>
+                     &selected_observations,
+                 std::vector<analysis::Parameter> &parameters,
+                 std::vector<analysis::RowScalingParameter> &scaled_parameters,
+                 rng_type *shared_rng) {
     /*
     Observations and measurements are collected in these temporary
     structures. obs_data is a precursor for the 'd' vector, and
@@ -313,12 +307,10 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
 
     std::vector<int> ens_active_list = bool_vector_to_active_list(ens_mask);
-
-    LocalObsData *selected_observations = local_ministep_get_obsdata(ministep);
     enkf_obs_get_obs_and_measure_data(obs, source_fs, selected_observations,
                                       ens_active_list, meas_data, obs_data);
-
-    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha);
+    enkf_analysis_deactivate_outliers(obs_data, meas_data, std_cutoff, alpha,
+                                      selected_observations);
     auto update_snapshot = make_update_snapshot(obs_data, meas_data);
 
     int active_obs_size = obs_data_get_active_size(obs_data);
@@ -357,12 +349,13 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     D = D.array().colwise() * error_inverse.array();
 
     std::vector<int> iens_active_index = bool_vector_to_active_list(ens_mask);
+
     auto A = load_parameters(target_fs, ensemble_config, iens_active_index,
-                             active_ens_size, ministep);
+                             active_ens_size, parameters);
 
     auto row_scaling_parameters = load_row_scaling_parameters(
         target_fs, ensemble_config, iens_active_index, active_ens_size,
-        ministep);
+        scaled_parameters);
 
     return std::make_shared<update_data_type>(
         std::move(S), std::move(E), std::move(D), std::move(R), std::move(A),
@@ -384,11 +377,15 @@ static void copy_parameters_pybind(py::object source_fs, py::object target_fs,
                                      ens_mask);
 }
 
-static std::shared_ptr<analysis::update_data_type>
-make_update_data_pybind(py::object source_fs, py::object target_fs,
-                        py::object obs, py::object ensemble_config,
-                        py::object analysis_config, std::vector<bool> ens_mask,
-                        py::object ministep, py::object shared_rng) {
+static std::shared_ptr<analysis::update_data_type> make_update_data_pybind(
+    py::object source_fs, py::object target_fs, py::object obs,
+    py::object ensemble_config, py::object analysis_config,
+    std::vector<bool> ens_mask,
+    const std::vector<std::pair<std::string, std::vector<int>>>
+        &selected_observations,
+    std::vector<analysis::Parameter> &parameters,
+    std::vector<analysis::RowScalingParameter> &scaled_parameters,
+    py::object shared_rng) {
     auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
     auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
     auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
@@ -396,29 +393,58 @@ make_update_data_pybind(py::object source_fs, py::object target_fs,
         ert::from_cwrap<ensemble_config_type>(ensemble_config);
     auto analysis_config_ =
         ert::from_cwrap<analysis_config_type>(analysis_config);
-    auto ministep_ = ert::from_cwrap<local_ministep_type>(ministep);
     auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
-    return analysis::make_update_data(source_fs_, target_fs_, obs_,
-                                      ensemble_config_, analysis_config_,
-                                      ens_mask, ministep_, shared_rng_);
+
+    return analysis::make_update_data(
+        source_fs_, target_fs_, obs_, ensemble_config_, analysis_config_,
+        ens_mask, selected_observations, parameters, scaled_parameters,
+        shared_rng_);
 }
 
-static void save_parameters_pybind(py::object target_fs,
-                                   py::object ensemble_config,
-                                   std::vector<int> iens_active_index,
-                                   py::object ministep,
-                                   analysis::update_data_type &update_data) {
+static void save_parameters_pybind(
+    py::object target_fs, py::object ensemble_config,
+    std::vector<int> iens_active_index,
+    std::vector<analysis::Parameter> &parameters,
+    std::vector<analysis::RowScalingParameter> &scaled_parameters,
+    analysis::update_data_type &update_data) {
     auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
     auto ensemble_config_ =
         ert::from_cwrap<ensemble_config_type>(ensemble_config);
-    auto ministep_ = ert::from_cwrap<local_ministep_type>(ministep);
     return analysis::save_parameters(target_fs_, ensemble_config_,
-                                     iens_active_index, ministep_, update_data);
+                                     iens_active_index, parameters,
+                                     scaled_parameters, update_data);
 }
 
 } // namespace
 RES_LIB_SUBMODULE("update", m) {
     using namespace py::literals;
+    py::class_<analysis::RowScalingParameter,
+               std::shared_ptr<analysis::RowScalingParameter>>(
+        m, "RowScalingParameter")
+        .def(py::init<std::string, std::shared_ptr<RowScaling>,
+                      std::vector<int>>(),
+             py::arg("name"), py::arg("row_scaling"),
+             py::arg("index_list") = py::list())
+        .def_readwrite("name", &analysis::RowScalingParameter::name)
+        .def_readwrite("row_scaling",
+                       &analysis::RowScalingParameter::row_scaling)
+        .def_readonly("active_list",
+                      &analysis::RowScalingParameter::active_list)
+        .def_property("index_list",
+                      &analysis::RowScalingParameter::get_index_list,
+                      &analysis::RowScalingParameter::set_index_list)
+        .def("__repr__", &::analysis::RowScalingParameter::to_string);
+
+    py::class_<analysis::Parameter, std::shared_ptr<analysis::Parameter>>(
+        m, "Parameter")
+        .def(py::init<std::string, std::vector<int>>(), py::arg("name"),
+             py::arg("index_list") = py::list())
+        .def_readwrite("name", &analysis::Parameter::name)
+        .def_readonly("active_list", &analysis::Parameter::active_list)
+        .def_property("index_list", &analysis::Parameter::get_index_list,
+                      &analysis::Parameter::set_index_list)
+        .def("__repr__", &::analysis::Parameter::to_string);
+
     py::class_<analysis::update_data_type,
                std::shared_ptr<analysis::update_data_type>>(m, "UpdateData")
         .def(py::init<>())

@@ -18,8 +18,8 @@ config commands by writing a Python script, and invoking it from a workflow.
 ::
 
  from res.enkf import ErtScript
- from res.enkf import (LocalConfig, LocalObsdata, LocalObsdataNode,
-                       LocalMinistep, LocalUpdateStep, LocalDataset, ActiveList)
+ from res.enkf import (LocalConfig, LocalObsdata,
+                       LocalMinistep, ActiveList)
  from ert.ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
 
  class LocalConfigJob(ErtScript):
@@ -84,7 +84,6 @@ ERT script function                                                        Purpo
 :ref:`createDataset                    <create_dataset>`                   Creates dataset
 :ref:`copyDataset                      <copy_dataset>`                     Deep copy of dataset
 :ref:`createObsdata                    <create_obsset>`                    Creates observation set
-:ref:`copyObsdata                      <copy_obsset>`                      Deep copy of observation set
 :ref:`attachMinistep                   <attach_ministep>`                  Attaches ministep to update step
 :ref:`attachDataset                    <attach_dataset>`                   Attaches dataset to mini step
 :ref:`attachObsset                     <attach_obsset>`                    Attaches observation set to mini step
@@ -234,24 +233,6 @@ ERT script function                                                        Purpo
    ::
 
       obsset_obs_well = local_config.createObsdata("OBS_WELL")
-
-
-.. #####################################################################
-.. _copy_obsset:
-.. topic:: copyObsdata
-
-   Will create a new ``local_obsset`` instance which is a copy of the source
-   ``dataset``; this is a deep copy where also the lowest level ``active_list``
-   instances are copied, and can then subsequently be updated independently of
-   each other.
-
-
-   *Example:*
-
-   ::
-
-      obsset_obs_well_copy = local_config.copyObsdata("OBS_WELL", "OBS_WELL_COPY")
-
 
 .. #####################################################################
 .. _attach_ministep:

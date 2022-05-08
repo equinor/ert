@@ -70,7 +70,6 @@ def analysis_smoother_update(
 
     # Looping over local analysis ministep
     for ministep in updatestep:
-
         update_data = update.make_update_data(
             source_fs,
             target_fs,
@@ -78,7 +77,9 @@ def analysis_smoother_update(
             ensemble_config,
             analysis_config,
             ens_mask,
-            ministep,
+            ministep.observation_config(),
+            ministep.parameter_config(),
+            ministep.row_scaling_config(),
             shared_rng,
         )
         # pylint: disable=unsupported-assignment-operation
@@ -149,7 +150,12 @@ def analysis_smoother_update(
                     row_scaling.multiply(A, X)
 
             update.save_parameters(
-                target_fs, ensemble_config, iens_active_index, ministep, update_data
+                target_fs,
+                ensemble_config,
+                iens_active_index,
+                ministep.parameter_config(),
+                ministep.row_scaling_config(),
+                update_data,
             )
 
         else:
@@ -223,8 +229,7 @@ class ESUpdate:
         source_fs = run_context.get_sim_fs()
         target_fs = run_context.get_target_fs()
 
-        local_config = self.ert.getLocalConfig()
-        updatestep = local_config.getUpdatestep()
+        updatestep = self.ert.getLocalConfig()
 
         analysis_config = self.ert.analysisConfig()
 
