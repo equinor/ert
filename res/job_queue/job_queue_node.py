@@ -38,8 +38,9 @@ class JobQueueNode(BaseCClass):
     _get_status = ResPrototype(
         "job_status_type_enum job_queue_node_get_status(job_queue_node)"
     )
-    _update_status = ResPrototype(
-        "bool job_queue_node_update_status_simple(job_queue_node, driver)"
+
+    _refresh_status = ResPrototype(
+        "job_status_type_enum job_queue_node_refresh_status(job_queue_node, driver)"
     )
     _set_status = ResPrototype(
         "void job_queue_node_set_status(job_queue_node, job_status_type_enum)"
@@ -114,6 +115,9 @@ class JobQueueNode(BaseCClass):
     def submit_attempt(self):
         return self._get_submit_attempt()
 
+    def refresh_status(self, driver):
+        return self._refresh_status(driver)
+
     @property
     def status(self):
         return self._get_status()
@@ -171,8 +175,7 @@ class JobQueueNode(BaseCClass):
         if submit_status is not JobSubmitStatusType.SUBMIT_OK:
             self._set_status(JobStatusType.JOB_QUEUE_DONE)
 
-        self.update_status(driver)
-        current_status = self.status
+        current_status = self.refresh_status(driver)
 
         while self.is_running(current_status):
             if (
@@ -181,7 +184,6 @@ class JobQueueNode(BaseCClass):
             ):
                 self._start_time = time.time()
             time.sleep(1)
-            self.update_status(driver)
             if self._should_be_killed():
                 self._kill(driver)
                 if self._max_runtime and self.runtime >= self._max_runtime:
@@ -200,7 +202,7 @@ class JobQueueNode(BaseCClass):
                     with self._mutex:
                         self._timed_out = True
 
-            current_status = self.status
+            current_status = self.refresh_status(driver)
 
         self._end_time = time.time()
 
@@ -210,7 +212,7 @@ class JobQueueNode(BaseCClass):
                     self.run_done_callback()
 
             # refresh cached status after running the callback
-            current_status = self.status
+            current_status = self.refresh_status(driver)
             if current_status == JobStatusType.JOB_QUEUE_SUCCESS:
                 pass
             elif current_status == JobStatusType.JOB_QUEUE_EXIT:
@@ -269,10 +271,6 @@ class JobQueueNode(BaseCClass):
     def wait_for(self):
         if self._thread is not None and self._thread.is_alive():
             self._thread.join()
-
-    def update_status(self, driver):
-        if self.status != JobStatusType.JOB_QUEUE_WAITING:
-            self._update_status(driver)
 
     def _set_thread_status(self, new_status):
         self._thread_status = new_status

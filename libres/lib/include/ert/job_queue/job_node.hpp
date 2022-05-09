@@ -87,9 +87,8 @@ void job_queue_node_free_driver_data(job_queue_node_type *node,
 PY_USED bool job_queue_node_update_status(job_queue_node_type *node,
                                           job_queue_status_type *status,
                                           queue_driver_type *driver);
-extern "C" PY_USED bool
-job_queue_node_update_status_simple(job_queue_node_type *node,
-                                    queue_driver_type *driver);
+extern "C" PY_USED job_status_type job_queue_node_refresh_status(
+    job_queue_node_type *node, queue_driver_type *driver);
 extern "C" int
 job_queue_node_get_submit_attempt(const job_queue_node_type *node);
 void job_queue_node_reset_submit_attempt(job_queue_node_type *node);
