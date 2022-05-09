@@ -92,9 +92,9 @@ typedef enum {
     JOB_QUEUE_EXIT =
         64, /* The job has exited - check attempts to determine if we retry or go to complete_fail   */
     JOB_QUEUE_IS_KILLED =
-        128, /* The job has been killed, following a  JOB_QUEUE_DO_KILL*/
+        128, /* The job has been killed, following a JOB_QUEUE_DO_KILL*/
     JOB_QUEUE_DO_KILL =
-        256, /* The the job should be killed, either due to user request, or automated measures - the job can NOT be restarted. */
+        256, /* The job should be killed, either due to user request, or automated measures - the job can NOT be restarted. */
     JOB_QUEUE_SUCCESS = 512,
     JOB_QUEUE_RUNNING_DONE_CALLBACK = 1024,
     JOB_QUEUE_RUNNING_EXIT_CALLBACK = 2048,

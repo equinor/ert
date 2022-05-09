@@ -557,20 +557,17 @@ cleanup:
     return status_change;
 }
 
-bool job_queue_node_update_status_simple(job_queue_node_type *node,
-                                         queue_driver_type *driver) {
-    bool status_change = false;
+job_status_type job_queue_node_refresh_status(job_queue_node_type *node,
+                                              queue_driver_type *driver) {
     pthread_mutex_lock(&node->data_mutex);
-    job_status_type current_status;
+    job_status_type current_status = job_queue_node_get_status(node);
     bool confirmed;
 
     if (!node->job_data) {
         job_queue_node_update_timestamp(node);
         pthread_mutex_unlock(&node->data_mutex);
-        return status_change;
+        return current_status;
     }
-
-    current_status = job_queue_node_get_status(node);
 
     confirmed = job_queue_node_status_update_confirmed_running__(node);
 
@@ -592,9 +589,10 @@ bool job_queue_node_update_status_simple(job_queue_node_type *node,
         job_status_type new_status =
             queue_driver_get_status(driver, node->job_data);
         job_queue_node_set_status(node, new_status);
+        current_status = job_queue_node_get_status(node);
     }
     pthread_mutex_unlock(&node->data_mutex);
-    return status_change;
+    return current_status;
 }
 
 bool job_queue_node_status_transition(job_queue_node_type *node,
