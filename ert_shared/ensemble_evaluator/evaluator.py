@@ -61,6 +61,7 @@ class EnsembleEvaluator:
         self._ws_thread = threading.Thread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
+        self._server_exited = False
 
     @property
     def config(self):
@@ -69,6 +70,10 @@ class EnsembleEvaluator:
     @property
     def ensemble(self):
         return self._ensemble
+
+    @property
+    def model_finished(self):
+        return self._server_exited
 
     async def dispatcher_callback(self, event_type, snapshot_update_event, result=None):
         if event_type == identifiers.EVTYPE_ENSEMBLE_STOPPED:
@@ -220,6 +225,7 @@ class EnsembleEvaluator:
             if self._clients:
                 await asyncio.gather(
                     *[client.send(message) for client in self._clients]
+                    #,return_exceptions = True
                 )
             logger.debug("Sent terminated to clients.")
 
@@ -227,12 +233,18 @@ class EnsembleEvaluator:
 
     def _run_server(self, loop):
         loop.run_until_complete(self.evaluator_server(self._done))
+        self._server_exited = True
         logger.debug("Server thread exiting.")
 
-    def run(self) -> ee_monitor._Monitor:
+    def run(self):
         self._ws_thread.start()
         self._ensemble.evaluate(self._config, self._ee_id)
-        return ee_monitor.create(self._config.get_connection_info())
+
+#    def old_run(self) -> ee_monitor._Monitor:
+#        if not self._ws_thread.is_alive():
+#            self._ws_thread.start()
+#            self._ensemble.evaluate(self._config, self._ee_id)
+#        return ee_monitor.create(self._config.get_connection_info())
 
     def _stop(self):
         if not self._done.done():
@@ -260,51 +272,62 @@ class EnsembleEvaluator:
 
     def run_and_get_successful_realizations(self) -> int:
         unsuccessful_connection_attempts = 0
-        with self.run() as monitor:
-            while True:
-                try:
+        # keep_running = True
+        # while not self.model_finished:
+        # while keep_running:
+        self.run()
+        while True:
+            try:
+                logger.debug("Evaluator connecting to new monitor...")
+                with ee_monitor.create(self._config.get_connection_info()) as monitor:
+                # with self.run() as monitor:
+                    logger.debug("Evaluator connected")
                     for _ in monitor.track():
                         unsuccessful_connection_attempts = 0
 
                     logger.debug("Waiting for evaluator shutdown")
                     break
-                except ConnectionClosedError as e:
+                    # keep_running = False
+            except ConnectionClosedError as e:
+                logger.debug(
+                    "Connection closed unexpectedly in "
+                    f"run_and_get_successful_realizations: {e}"
+                )
+                # This exception means that the "other end" closed
+                # connection without performing the end-handshake.
+                # Not much more we can do than loop back and try again
+            except ConnectionRefusedError as e:
+                unsuccessful_connection_attempts += 1
+                logger.debug(
+                    f"run_and_get_successful_realizations caught {e}."
+                    f"{unsuccessful_connection_attempts} unsuccessful attempts"
+                )
+                if (
+                    unsuccessful_connection_attempts
+                    < _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
+                ):
+                    # Simple backoff-strategy...
+                    sleep_time = 0.25 * 2**unsuccessful_connection_attempts
                     logger.debug(
-                        "Connection closed unexpectedly in "
-                        f"run_and_get_successful_realizations: {e}"
+                        f"Sleeping for {sleep_time} seconds before attempting to reconnect"  # noqa: E501
                     )
-                    # The monitor went away...  what the h*** does that mean?
-                    # TODO: terminate and break out?
-                except ConnectionRefusedError as e:
-                    unsuccessful_connection_attempts += 1
-                    logger.debug(
-                        f"run_and_get_successful_realizations caught {e}."
-                        f"{unsuccessful_connection_attempts} unsuccessful attempts"
-                    )
-                    if (
-                        unsuccessful_connection_attempts
-                        < _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                    ):
-                        # Simple backoff-strategy...
-                        sleep_time = 0.25 * 2**unsuccessful_connection_attempts
-                        logger.debug(
-                            f"Sleeping for {sleep_time} seconds before attempting to reconnect"  # noqa: E501
-                        )
-                        time.sleep(sleep_time)
-                    else:
-                        logger.debug("Max connection attempts reached")
-                        self._signal_cancel()
-                        break
-                except BaseException:  # pylint: disable=broad-except
-                    logger.exception("unexpected error: ")
-                    # We really don't know what happened...  shut down and
-                    # get out of here. The monitor has been stopped by context
+                    time.sleep(sleep_time)
+                else:
+                    logger.debug("Max connection attempts reached")
                     self._signal_cancel()
                     break
+                    # keep_running = False
+            except BaseException:  # pylint: disable=broad-except
+                logger.exception("unexpected error: ")
+                # We really don't know what happened...  shut down and
+                # get out of here. Monitor is stopped by context-mgr
+                self._signal_cancel()
+                break
+                # keep_running = False
 
-            self._ws_thread.join()
-            logger.debug("Evaluator is done")
-            return self._ensemble.get_successful_realizations()
+        self._ws_thread.join()
+        logger.debug("Evaluator is done")
+        return self._ensemble.get_successful_realizations()
 
     @staticmethod
     def _get_ee_id(source) -> str:
