@@ -1,4 +1,5 @@
-from qtpy.QtCore import QThread, Slot, Qt
+from qtpy.QtCore import QThread, Slot, Qt, QSize
+from math import ceil, floor
 from qtpy.QtWidgets import (
     QDialog,
     QMessageBox,
@@ -59,10 +60,47 @@ class FileDialog(QDialog):
         self._thread.quit()
         self._thread.wait()
 
-    def _init_layout(self):
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(400)
+    def _get_file_line_count(self):
+        return len(self._view.toPlainText().split("\n"))
 
+    def _get_length_of_files_longest_line(self):
+        return max(map(len, self._view.toPlainText().split("\n")))
+
+    def _calculate_desired_width(self):
+        font_metrics = self._view.fontMetrics()
+        chars_in_longest_line = self._get_length_of_files_longest_line()
+        extra_bit_of_margin_space = 2
+        extra_space_for_vertical_scroll_bar = 5
+        font_based_width = (
+            chars_in_longest_line
+            + extra_bit_of_margin_space
+            + extra_space_for_vertical_scroll_bar
+        ) * font_metrics.averageCharWidth()
+        screen_width = QApplication.primaryScreen().geometry().width()
+        max_ratio_of_screen = 1.0 / 3.0
+        max_width = floor(screen_width * max_ratio_of_screen)
+        return min(font_based_width, max_width)
+
+    def _calculate_desired_height(self):
+        font_metrics = self._view.fontMetrics()
+
+        line_height = ceil(font_metrics.lineSpacing())
+        extra_lines_to_make_it_actually_fit = 5
+        extra_lines_for_horizontal_scroll_bar = 3
+        file_line_count = self._get_file_line_count()
+        screen_height = QApplication.primaryScreen().geometry().height()
+        max_ratio_of_screen = 1.0 / 3.0
+        show_max_lines = floor(screen_height * max_ratio_of_screen / line_height)
+        min_lines = min(
+            file_line_count
+            + extra_lines_to_make_it_actually_fit
+            + extra_lines_for_horizontal_scroll_bar,
+            show_max_lines,
+        )
+        font_based_height = min_lines * line_height
+        return font_based_height
+
+    def _init_layout(self):
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         dialog_buttons.accepted.connect(self.accept)
 
@@ -129,3 +167,9 @@ class FileDialog(QDialog):
         if self._follow_mode:
             self._view.moveCursor(QTextCursor.End)
         self._view.appendPlainText(text)
+        self.adjustSize()
+
+    def sizeHint(self) -> QSize:
+        width = self._calculate_desired_width()
+        height = self._calculate_desired_height()
+        return QSize(width, height)
