@@ -1,4 +1,5 @@
-from qtpy.QtCore import QThread, Slot, Qt
+from math import floor
+from qtpy.QtCore import QThread, Slot, Qt, QSize
 from qtpy.QtWidgets import (
     QDialog,
     QMessageBox,
@@ -59,10 +60,23 @@ class FileDialog(QDialog):
         self._thread.quit()
         self._thread.wait()
 
-    def _init_layout(self):
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(400)
+    def _calculate_font_based_width(self):
+        font_metrics = self._view.fontMetrics()
+        desired_width_in_characters = 120
+        extra_bit_of_margin_space = 2
+        extra_space_for_vertical_scroll_bar = 5
+        return (
+            desired_width_in_characters
+            + extra_bit_of_margin_space
+            + extra_space_for_vertical_scroll_bar
+        ) * font_metrics.averageCharWidth()
 
+    def _calculate_screen_size_based_height(self):
+        screen_height = QApplication.primaryScreen().geometry().height()
+        max_ratio_of_screen = 1.0 / 3.0
+        return floor(screen_height * max_ratio_of_screen)
+
+    def _init_layout(self):
         dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         dialog_buttons.accepted.connect(self.accept)
 
@@ -129,3 +143,10 @@ class FileDialog(QDialog):
         if self._follow_mode:
             self._view.moveCursor(QTextCursor.End)
         self._view.appendPlainText(text)
+        self.adjustSize()
+
+    def sizeHint(self) -> QSize:
+        return QSize(
+            self._calculate_font_based_width(),
+            self._calculate_screen_size_based_height(),
+        )
