@@ -139,6 +139,8 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addTool(PluginsTool(plugin_handler, notifier))
     window.addTool(RunAnalysisTool(ert, notifier))
     window.addTool(LoadResultsTool(facade))
-    window.addTool(EventViewerTool(gui_log_handler))
+    event_viewer = EventViewerTool(gui_log_handler)
+    window.addTool(event_viewer)
+    window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()
     return window

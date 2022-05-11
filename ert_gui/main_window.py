@@ -2,7 +2,7 @@ import functools
 
 import webbrowser
 
-from qtpy.QtCore import QSettings, Qt
+from qtpy.QtCore import QSettings, Qt, Signal
 from qtpy.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -17,6 +17,8 @@ from ert_shared.plugins import ErtPluginManager
 
 
 class GertMainWindow(QMainWindow):
+    close_signal = Signal()
+
     def __init__(self, config_file):
         QMainWindow.__init__(self)
         self.tools = {}
@@ -102,6 +104,7 @@ class GertMainWindow(QMainWindow):
         # Use QT settings saving mechanism
         # settings stored in ~/.config/Equinor/ErtGui.conf
         self.__saveSettings()
+        self.close_signal.emit()
         QMainWindow.closeEvent(self, event)
 
     def __fetchSettings(self):
