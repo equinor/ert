@@ -8,11 +8,6 @@ import re
 from typing import Optional, Union
 from pathlib import Path
 
-
-if sys.prefix == sys.base_prefix:
-    sys.exit("This script must be run from a virtualenv")
-
-
 SOURCE_ROOT = Path(__file__).parent.parent
 VERBOSE = False
 
@@ -221,12 +216,22 @@ def parse() -> argparse.Namespace:
         help="Compile project with full optimisations",
     )
 
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        default=False,
+        help="Run script outside of virtualenv",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     should_setup = not (SOURCE_ROOT / "_skbuild").is_dir()
     args = parse()
+
+    if not args.force and sys.prefix == sys.base_prefix:
+        sys.exit("This script must be run from a virtualenv (override with -f).")
 
     if args.verbose:
         global VERBOSE
