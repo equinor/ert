@@ -34,7 +34,7 @@ List of keywords
 ----------------
 
 
-* Experiment Constants
+* Experiment constants
 
    * :ref:`RUNPATH_FILE <ms_runpath_file>`
    * :ref:`CONFIG_PATH <ms_config_path>`
@@ -42,7 +42,7 @@ List of keywords
    * :ref:`CONFIG_FILE_BASE <ms_config_file_base>`
    * :ref:`CWD <ms_cwd>`
 
-* Experiment Variables
+* Experiment variables
 
    * :ref:`IENS <ms_iens>`
    * :ref:`ITER <ms_iter>`
@@ -56,7 +56,7 @@ List of keywords
 
 .. _ms_exp_constants:
 
-Experiment Constants
+Experiment constants
 --------------------
 
 .. _ms_runpath_file:
@@ -152,7 +152,7 @@ Experiment Constants
 
 .. _ms_exp_variables:
 
-Experiment Variables
+Experiment variables
 --------------------
 
 .. warning::
@@ -198,7 +198,7 @@ Experiment Variables
 
 .. _ms_exp_dependent_variables:
 
-Experiment Dependent Variables
+Experiment dependent variables
 ------------------------------
 
 .. _ms_eclbase:

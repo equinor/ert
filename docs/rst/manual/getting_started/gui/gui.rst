@@ -1,4 +1,4 @@
-Graphical User Interface
+Graphical user interface
 ========================
 
 Restarting ES-MDA

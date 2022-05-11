@@ -67,7 +67,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.ert = ert
         self.notifier = notifier
         QTabWidget.__init__(self)
-        self.setWindowTitle("Case Management")
+        self.setWindowTitle("Case management")
         self.setMinimumWidth(600)
 
         self.addCreateNewCaseTab()

@@ -1,4 +1,4 @@
-Installation Guide (todo)
+Installation guide (todo)
 =========================
 
 See installation guide on `Github <https://github.com/equinor/ert>`_.
