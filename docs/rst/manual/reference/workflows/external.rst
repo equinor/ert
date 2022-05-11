@@ -1,4 +1,4 @@
-External Workflow Jobs
+External workflow jobs
 ======================
 
 External workflow jobs invoke programs and scripts that are not bundled with ERT, 

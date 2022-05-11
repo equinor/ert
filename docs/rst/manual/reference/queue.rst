@@ -1,5 +1,5 @@
-Queue System
-===================
+Queue system
+============
 
 The Queue System is responsible for scheduling, running, monitoring and acting
 on a set of realizations.

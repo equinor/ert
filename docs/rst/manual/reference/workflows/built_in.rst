@@ -1,6 +1,6 @@
 .. _built_in_workflow_jobs:
 
-Built in Workflow Jobs
+Built in workflow jobs
 ======================
 
 .. todo::

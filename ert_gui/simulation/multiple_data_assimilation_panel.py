@@ -128,7 +128,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             continuous_update=True,
         )
         self._relative_iteration_weights_box.setValidator(NumberListStringArgument())
-        layout.addRow("Relative Weights:", self._relative_iteration_weights_box)
+        layout.addRow("Relative weights:", self._relative_iteration_weights_box)
 
         relative_iteration_weights_model.valueChanged.connect(self.setWeights)
 

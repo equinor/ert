@@ -1,4 +1,4 @@
-Configuration File
+Configuration file
 ==================
 
 .. todo::

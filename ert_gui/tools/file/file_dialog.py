@@ -67,7 +67,7 @@ class FileDialog(QDialog):
         dialog_buttons.accepted.connect(self.accept)
 
         self._copy_all_button = dialog_buttons.addButton(
-            "Copy All", QDialogButtonBox.ActionRole
+            "Copy all", QDialogButtonBox.ActionRole
         )
         self._copy_all_button.clicked.connect(self._copy_all)
 
