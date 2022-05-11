@@ -1,16 +1,16 @@
 input:
   -
     source: stochastic.coefficients
-    record: coefficients
+    name: coefficients
   -
     source: storage.coefficients
-    record: other_coefficients
+    name: other_coefficients
 
 output:
   -
-    record: polynomial_output
+    name: polynomial_output
   -
-    record: other_polynomial_output
+    name: other_polynomial_output
 
 forward_model:
   driver: local

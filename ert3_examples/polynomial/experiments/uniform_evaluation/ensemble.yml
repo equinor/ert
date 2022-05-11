@@ -3,11 +3,11 @@ size: 10
 input:
   -
     source: stochastic.uniform_coefficients
-    record: coefficients
+    name: coefficients
 
 output:
   -
-    record: polynomial_output
+    name: polynomial_output
 
 forward_model:
   driver: local

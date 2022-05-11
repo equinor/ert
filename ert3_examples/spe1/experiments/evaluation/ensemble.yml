@@ -3,25 +3,25 @@ size: 10
 input:
   -
     source: stochastic.field_properties
-    record: field_properties
+    name: field_properties
   -
     source: stochastic.wells_no_delay
-    record: wells
+    name: wells
   -
     source: resources.case
-    record: spe1_template
+    name: spe1_template
     transformation:
       type: directory
 
 output:
     -
-      record: WOPT:PROD
+      name: WOPT:PROD
     -
-      record: WWPT:PROD
+      name: WWPT:PROD
     -
-      record: WGPT:PROD
+      name: WGPT:PROD
     -
-      record: WWIT:INJ
+      name: WWIT:INJ
 
 forward_model:
   driver: local
