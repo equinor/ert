@@ -6,5 +6,7 @@ from res.fm.shell import move_file
 if __name__ == "__main__":
     src = sys.argv[1]
     target = sys.argv[2]
-
-    move_file(src, target)
+    try:
+        move_file(src, target)
+    except IOError as e:
+        sys.exit(f"MOVE_FILE failed with the following error: {e}")
