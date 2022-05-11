@@ -127,7 +127,7 @@ class ExperimentRunConfig:
         }
         stage = self.get_stage()
         for ensemble_input in self._ensemble_config.input:
-            name = ensemble_input.record
+            name = ensemble_input.name
 
             # Ignore typing errors caused by dynamic attributes. mypy docs
             # suggest overriding __getattr__ and __setattr__, but that's not
@@ -189,9 +189,7 @@ class ExperimentRunConfig:
                 + ", ".join(f"'{stage.name}'" for stage in self._stages_config)
             )
         stage_input_names = set(stage.input.keys())
-        ensemble_input_names = set(
-            input.record for input in self._ensemble_config.input
-        )
+        ensemble_input_names = set(input.name for input in self._ensemble_config.input)
         if ensemble_input_names != stage_input_names:
             msg: str = ""
 

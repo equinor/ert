@@ -114,7 +114,7 @@ def test_workspace_validate_resources(tmpdir, base_ensemble_dict, plugin_registr
     ensemble_dict["input"] += [
         {
             "source": "resources.coefficients.json",
-            "record": "coefficients",
+            "name": "coefficients",
             "transformation": {"type": "serialization"},
         }
     ]
@@ -295,7 +295,7 @@ def test_workspace_load_experiment_config_resources_validation(
     ensemble_dict["input"] += [
         {
             "source": "resources.coefficients.json",
-            "record": "coefficients",
+            "name": "coefficients",
             "transformation": {
                 "type": "serialization",
             },

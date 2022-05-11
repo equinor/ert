@@ -43,9 +43,9 @@ def _validate_transformation(
     def _validator(cls: Type[BaseModel], values: Dict[str, Any]) -> Dict[str, Any]:
         try:
             source = values["source"]
-            record = values["record"]
+            name = values["name"]
         except KeyError:
-            # defer validation of source/record to other, more specific validators
+            # defer validation of source/name to other, more specific validators
             return values
         try:
             namespace, location = source.split(".", maxsplit=1)
@@ -72,7 +72,7 @@ def _validate_transformation(
                     "location": location,
                 }
             else:
-                raise ValueError(f"no 'transformation' for input '{record}'") from error
+                raise ValueError(f"no 'transformation' for input '{name}'") from error
 
         if "location" in config and config["location"] != location:
             raise ValueError(
@@ -99,7 +99,7 @@ class EnsembleInput(_EnsembleConfig):
 
     _namespace: SourceNS
     _location: str
-    record: str
+    name: str
     source: str
 
     @no_type_check
@@ -132,7 +132,7 @@ class EnsembleInput(_EnsembleConfig):
 
 
 class EnsembleOutput(_EnsembleConfig):
-    record: str
+    name: str
 
 
 class EnsembleConfig(_EnsembleConfig):

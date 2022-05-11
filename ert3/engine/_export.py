@@ -21,7 +21,7 @@ def _prepare_export_parameters(
     linked_inputs = experiment_run_config.get_linked_inputs()
 
     for input_record in experiment_run_config.ensemble_config.input:
-        name = input_record.record
+        name = input_record.name
         namespace = input_record.source_namespace
         location = input_record.source_location
 

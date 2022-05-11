@@ -40,7 +40,7 @@ def uniform_ensemble(base_ensemble_dict, plugin_registry):
 def x_uncertainty_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict["forward_model"]["stage"] = "evaluate_x_uncertainty_polynomial"
     base_ensemble_dict["input"].append(
-        {"record": "x_uncertainties", "source": "stochastic.x_normals"}
+        {"name": "x_uncertainties", "source": "stochastic.x_normals"}
     )
     yield ert3.config.load_ensemble_config(
         base_ensemble_dict, plugin_registry=plugin_registry
@@ -102,9 +102,9 @@ def presampled_big_ensemble(base_ensemble_dict, plugin_registry):
 def partial_sensitivity_ensemble(base_ensemble_dict, plugin_registry):
     base_ensemble_dict.pop("size")
     base_ensemble_dict["input"].append(
-        {"record": "other_coefficients", "source": "storage.other_coefficients"}
+        {"name": "other_coefficients", "source": "storage.other_coefficients"}
     )
-    base_ensemble_dict["output"].append({"record": "other_polynomial_output"})
+    base_ensemble_dict["output"].append({"name": "other_polynomial_output"})
     yield ert3.config.load_ensemble_config(
         base_ensemble_dict, plugin_registry=plugin_registry
     )
@@ -913,12 +913,12 @@ def test_export_resources(
             "input": [
                 {
                     "source": "resources.coefficients.json",
-                    "record": "coefficients",
+                    "name": "coefficients",
                     "transformation": {"type": "serialization"},
                 },
                 {
                     "source": "resources.my_blob",
-                    "record": "my_blob",
+                    "name": "my_blob",
                 },
             ],
             "output": [],

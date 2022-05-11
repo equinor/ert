@@ -17,7 +17,7 @@ def assert_ensemble_size(config, export_data):
 def assert_input_records(config, export_data):
     input_records = {}
     for input_data in config["ensemble"].input:
-        record = input_data.record
+        record = input_data.name
         source = input_data.source
 
         for p in config["parameters"]:

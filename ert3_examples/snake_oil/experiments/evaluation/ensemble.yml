@@ -3,49 +3,49 @@ size: 5
 input:
   -
     source: stochastic.SEED
-    record: SEED
+    name: SEED
   -
     source: stochastic.OP1_PERSISTENCE
-    record: op1_persistence
+    name: op1_persistence
   -
     source: stochastic.OP1_OCTAVES
-    record: op1_octaves
+    name: op1_octaves
   -
     source: stochastic.OP1_DIVERGENCE_SCALE
-    record: op1_divergence_scale
+    name: op1_divergence_scale
   -
     source: stochastic.OP1_OFFSET
-    record: op1_offset
+    name: op1_offset
   -
     source: stochastic.OP2_PERSISTENCE
-    record: op2_persistence
+    name: op2_persistence
   -
     source: stochastic.OP2_OCTAVES
-    record: op2_octaves
+    name: op2_octaves
   -
     source: stochastic.OP2_DIVERGENCE_SCALE
-    record: op2_divergence_scale
+    name: op2_divergence_scale
   -
     source: stochastic.OP2_OFFSET
-    record: op2_offset
+    name: op2_offset
   -
     source: stochastic.BPR_555_PERSISTENCE
-    record: bpr_555_persistence
+    name: bpr_555_persistence
   -
     source: stochastic.BPR_138_PERSISTENCE
-    record: bpr_138_persistence
+    name: bpr_138_persistence
   -
     source: resources.seed_tmpl
-    record: seed_tmpl
+    name: seed_tmpl
   -
     source: resources.snake_oil_txt_tmpl
-    record: snake_oil_params_txt_tmpl
+    name: snake_oil_params_txt_tmpl
 
 output:
   -
-    record: FOPR
+    name: FOPR
   -
-    record: FOPT
+    name: FOPT
 
 forward_model:
   driver: local

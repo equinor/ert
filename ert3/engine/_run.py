@@ -36,8 +36,8 @@ def _prepare_experiment(
             f"\nTo re-run, first clean the experiment: ert3 clean {experiment_name}"
         )
 
-    parameters = [elem.record for elem in ensemble.input]
-    responses = [elem.record for elem in ensemble.output]
+    parameters = [elem.name for elem in ensemble.input]
+    responses = [elem.name for elem in ensemble.output]
     ert.storage.init_experiment(
         experiment_name=experiment_name,
         parameters=parameters,

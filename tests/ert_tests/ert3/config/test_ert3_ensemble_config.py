@@ -13,8 +13,8 @@ def base_ensemble_config():
     yield {
         "size": 1000,
         "active_range": "0-999",
-        "input": [{"source": "stochastic.coefficients", "record": "coefficients"}],
-        "output": [{"record": "polynomial_output"}],
+        "input": [{"source": "stochastic.coefficients", "name": "coefficients"}],
+        "output": [{"name": "polynomial_output"}],
         "forward_model": {
             "driver": "local",
             "stage": "evaluate_polynomial",
@@ -116,7 +116,7 @@ def test_invalid_active_range(
         (
             "input_config",
             "expected_source",
-            "expected_record",
+            "expected_name",
             "expected_namespace",
             "expected_location",
             "expected_transformation_cls",
@@ -124,7 +124,7 @@ def test_invalid_active_range(
     ),
     [
         pytest.param(
-            {"source": "some.source", "record": "coeffs"},
+            {"source": "some.source", "name": "coeffs"},
             "some.source",
             "coeffs",
             "",
@@ -133,7 +133,7 @@ def test_invalid_active_range(
             marks=pytest.mark.xfail(),
         ),
         (
-            {"source": "stochastic.source", "record": "coeffs"},
+            {"source": "stochastic.source", "name": "coeffs"},
             "stochastic.source",
             "coeffs",
             "stochastic",
@@ -143,7 +143,7 @@ def test_invalid_active_range(
         pytest.param(
             {
                 "source": "resources.some.json",
-                "record": "coeffs",
+                "name": "coeffs",
             },
             "resources.some.json",
             "coeffs",
@@ -155,7 +155,7 @@ def test_invalid_active_range(
         pytest.param(
             {
                 "source": "resources.some.json",
-                "record": "coeffs",
+                "name": "coeffs",
                 "transformation": {
                     "type": "copy",
                 },
@@ -170,7 +170,7 @@ def test_invalid_active_range(
         pytest.param(
             {
                 "source": "resources.some.json",
-                "record": "coeffs",
+                "name": "coeffs",
                 "transformation": {
                     "type": "copy",
                     "location": "foo.json",
@@ -191,7 +191,7 @@ def test_invalid_active_range(
         pytest.param(
             {
                 "source": "resources.some.json",
-                "record": "coeffs",
+                "name": "coeffs",
                 "transformation": {
                     "type": "copy",
                     "location": "some.json",
@@ -207,7 +207,7 @@ def test_invalid_active_range(
         (
             {
                 "source": "resources.some.json",
-                "record": "coeffs",
+                "name": "coeffs",
                 "transformation": {
                     "type": "serialization",
                 },
@@ -221,7 +221,7 @@ def test_invalid_active_range(
         (
             {
                 "source": "resources.my_folder",
-                "record": "my_folder",
+                "name": "my_folder",
                 "transformation": {
                     "type": "directory",
                 },
@@ -237,7 +237,7 @@ def test_invalid_active_range(
 def test_input(
     input_config,
     expected_source,
-    expected_record,
+    expected_name,
     expected_namespace,
     expected_location,
     expected_transformation_cls,
@@ -249,7 +249,7 @@ def test_input(
         base_ensemble_config, plugin_registry=plugin_registry
     )
     assert config.input[0].source == expected_source
-    assert config.input[0].record == expected_record
+    assert config.input[0].name == expected_name
     assert config.input[0].source_namespace == expected_namespace
     assert config.input[0].source_location == expected_location
 
@@ -266,8 +266,8 @@ def test_input(
     "input_config, expected_error",
     [
         ({}, "2 validation errors for PluggedEnsembleConfig"),
-        ({"record": "coeffs"}, "source\n  field required"),
-        ({"source": "storage.source"}, "record\n  field required"),
+        ({"name": "coeffs"}, "source\n  field required"),
+        ({"source": "storage.source"}, "name\n  field required"),
     ],
 )
 def test_invalid_input(
@@ -347,24 +347,24 @@ def test_missing_ouput(base_ensemble_config, plugin_registry):
 
 
 @pytest.mark.parametrize(
-    "output_config, expected_record",
+    "output_config, expected_name",
     [
-        ({"record": "coeffs"}, "coeffs"),
+        ({"name": "coeffs"}, "coeffs"),
     ],
 )
-def test_output(output_config, expected_record, base_ensemble_config, plugin_registry):
+def test_output(output_config, expected_name, base_ensemble_config, plugin_registry):
     base_ensemble_config["output"] = [output_config]
     config = ert3.config.load_ensemble_config(
         base_ensemble_config, plugin_registry=plugin_registry
     )
-    assert config.output[0].record == expected_record
+    assert config.output[0].name == expected_name
 
 
 @pytest.mark.parametrize(
     "output_config, expected_error",
     [
         ({}, "1 validation error for PluggedEnsembleConfig"),
-        ({"something": "coeffs"}, "record\n  field required"),
+        ({"something": "coeffs"}, "name\n  field required"),
     ],
 )
 def test_invalid_output(

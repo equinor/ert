@@ -3,28 +3,28 @@ size: 10
 input:
   -
     source: storage.designed_field_properties
-    record: field_properties
+    name: field_properties
   -
     source: resources.wells.json
-    record: wells
+    name: wells
     transformation:
       type: serialization
   -
     source: resources.case
-    record: spe1_template
+    name: spe1_template
     transformation:
       type: directory
 
 
 output:
     -
-      record: WOPT:PROD
+      name: WOPT:PROD
     -
-      record: WWPT:PROD
+      name: WWPT:PROD
     -
-      record: WGPT:PROD
+      name: WGPT:PROD
     -
-      record: WWIT:INJ
+      name: WWIT:INJ
 
 forward_model:
   driver: local
