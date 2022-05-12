@@ -1,12 +1,14 @@
+from typing import List, Tuple
+
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QFrame,
-    QLabel,
-    QVBoxLayout,
-    QHBoxLayout,
-    QScrollArea,
-    QWidget,
     QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert_gui.ertwidgets.models.ertsummary import ErtSummary
@@ -77,8 +79,11 @@ class SummaryPanel(QFrame):
 
         text = SummaryTemplate("Forward models")
 
-        for job in summary.getForwardModels():
-            text.addRow(job)
+        for fm_name, fm_count in _runlength_encode_list(summary.getForwardModels()):
+            if fm_count == 1:
+                text.addRow(fm_name)
+            else:
+                text.addRow(f"{fm_name} x{fm_count}")
 
         self.addColumn(text.getText())
 
@@ -103,3 +108,18 @@ class SummaryPanel(QFrame):
         layout.addStretch(1)
 
         self.layout.addLayout(layout)
+
+
+def _runlength_encode_list(strings: List[str]) -> List[Tuple[str, int]]:
+    """Runlength encode a list of strings.
+
+    Returns a list of tuples, first element is the string, and the second
+    element is the count of consecutive occurences of the string at the current
+    position."""
+    string_counts: List[Tuple[str, int]] = []
+    for string in strings:
+        if not string_counts or string_counts[-1][0] != string:
+            string_counts.append((string, 1))
+        else:
+            string_counts[-1] = (string, string_counts[-1][1] + 1)
+    return string_counts
