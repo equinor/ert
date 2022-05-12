@@ -1,3 +1,5 @@
+size: 10
+
 input:
   -
     source: stochastic.uniform_coefficients
@@ -9,4 +11,7 @@ output:
 
 forward_model:
   driver: local
-  stage: function_polynomial
+  stage: evaluate_polynomial
+
+experiment:
+  type: evaluation

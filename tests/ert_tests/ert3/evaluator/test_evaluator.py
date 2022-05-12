@@ -62,7 +62,6 @@ def test_evaluator(
     )
 
     experiment_run_config = ert3.config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"),
         stages_config,
         ensemble_config,
         ert3.config.ParametersConfig.parse_obj([]),
@@ -133,7 +132,6 @@ def test_inactive_realizations(
     )
 
     experiment_run_config = ert3.config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"),
         function_stages_config,
         ensemble_config,
         ert3.config.ParametersConfig.parse_obj([]),

@@ -8,7 +8,6 @@ import ert
 
 def test_experiment_run_config_validate(workspace, ensemble, stages_config):
     ert3.config._experiment_run_config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="evaluation"),
         stages_config,
         ensemble,
         ert3.config.ParametersConfig.parse_obj([]),
@@ -16,7 +15,7 @@ def test_experiment_run_config_validate(workspace, ensemble, stages_config):
 
 
 def test_experiment_run_config_validate_ensemble_size(
-    workspace, ensemble, stages_config, base_ensemble_dict, plugin_registry
+    workspace, stages_config, base_ensemble_dict, plugin_registry
 ):
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["size"] = None
@@ -28,27 +27,31 @@ def test_experiment_run_config_validate_ensemble_size(
         match="An ensemble size must be specified.",
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="evaluation"),
             stages_config,
             ensemble_config.parse_obj(ensemble_dict),
             ert3.config.ParametersConfig.parse_obj([]),
         )
 
+    ensemble_dict["experiment"].update(
+        {"type": "sensitivity", "algorithm": "one-at-a-time"}
+    )
+    ensemble_dict["size"] = 10
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
         match="No ensemble size should be specified for a sensitivity analysis.",
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
             stages_config,
-            ensemble,
+            ensemble_config.parse_obj(ensemble_dict),
             ert3.config.ParametersConfig.parse_obj([]),
         )
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
+    ensemble_dict["experiment"].update(
+        {"type": "sensitivity", "algorithm": "one-at-a-time"}
+    )
     ensemble_dict["size"] = None
     ert3.config.ExperimentRunConfig(
-        ert3.config.ExperimentConfig(type="sensitivity", algorithm="one-at-a-time"),
         stages_config,
         ensemble_config.parse_obj(ensemble_dict),
         ert3.config.ParametersConfig.parse_obj([]),
@@ -66,7 +69,6 @@ def test_experiment_run_config_validate_stage(
         ),
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="evaluation"),
             double_stages_config,
             ensemble,
             ert3.config.ParametersConfig.parse_obj([]),
@@ -85,7 +87,6 @@ def test_experiment_run_config_validate_stage(
         ),
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="evaluation"),
             double_stages_config,
             ensemble_config.parse_obj(ensemble_dict),
             ert3.config.ParametersConfig.parse_obj([]),
@@ -111,7 +112,6 @@ def test_experiment_run_config_validate_stage_missing_stage_record(
         ),
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="evaluation"),
             stages_config,
             ensemble_config.parse_obj(ensemble_dict),
             ert3.config.ParametersConfig.parse_obj([]),
@@ -137,7 +137,6 @@ def test_conflicting_transformation_type(
         + "data and stage prefers numerical data",
     ):
         ert3.config.ExperimentRunConfig(
-            ert3.config.ExperimentConfig(type="evaluation"),
             stages_config,
             ensemble_config,
             ert3.config.load_parameters_config([]),

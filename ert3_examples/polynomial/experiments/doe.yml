@@ -1,6 +1,8 @@
+size: 50
+
 input:
   -
-    source: stochastic.uniform_coefficients
+    source: storage.designed_coefficients
     name: coefficients
 
 output:
@@ -10,3 +12,6 @@ output:
 forward_model:
   driver: local
   stage: evaluate_polynomial
+
+experiment:
+  type: evaluation

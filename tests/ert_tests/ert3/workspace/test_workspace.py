@@ -46,7 +46,9 @@ def test_workspace_assert_experiment_exists(tmpdir, ert_storage):
 
     workspace = ert3.workspace.initialize(tmpdir)
     ert.storage.init(workspace_name=workspace.name)
-    Path(experiments_dir / "test1").mkdir(parents=True)
+
+    Path(experiments_dir).mkdir(parents=True)
+    Path(experiments_dir / "test1.yml").touch()
 
     workspace.assert_experiment_exists("test1")
 
@@ -63,8 +65,9 @@ def test_workspace_get_experiment_names(tmpdir, ert_storage):
 
     workspace = ert3.workspace.initialize(tmpdir)
     ert.storage.init(workspace_name=workspace.name)
-    Path(experiments_dir / "test1").mkdir(parents=True)
-    Path(experiments_dir / "test2").mkdir(parents=True)
+    Path(experiments_dir).mkdir(parents=True)
+    Path(experiments_dir / "test1.yml").touch()
+    Path(experiments_dir / "test2.yml").touch()
 
     assert workspace.get_experiment_names() == {"test1", "test2"}
 
@@ -75,8 +78,9 @@ def test_workspace_experiment_has_run(tmpdir, ert_storage):
 
     workspace = ert3.workspace.initialize(tmpdir)
     ert.storage.init(workspace_name=tmpdir)
-    Path(experiments_dir / "test1").mkdir(parents=True)
-    Path(experiments_dir / "test2").mkdir(parents=True)
+    Path(experiments_dir).mkdir(parents=True)
+    Path(experiments_dir / "test1.yml").touch()
+    Path(experiments_dir / "test2.yml").touch()
 
     ert.storage.init_experiment(
         experiment_name="test1",
@@ -96,13 +100,14 @@ def test_workspace_export_json(tmpdir, ert_storage):
     experiments_dir = Path(tmpdir) / _EXPERIMENTS_BASE
 
     workspace = ert3.workspace.initialize(tmpdir)
-    Path(experiments_dir / "test1").mkdir(parents=True)
+    Path(experiments_dir).mkdir(parents=True)
+    Path(experiments_dir / "test1.yml").touch()
 
-    workspace.export_json("test1", {1: "x", 2: "y"})
-    assert (experiments_dir / "test1" / "data.json").exists()
+    workspace.export_json("test1", {1: "x", 2: "y"}, output_file="test1_data.json")
+    assert (workspace._path / "test1_data.json").exists()
 
-    workspace.export_json("test1", {1: "x", 2: "y"}, output_file="test.json")
-    assert (experiments_dir / "test1" / "test.json").exists()
+    workspace.export_json("test1", {1: "x", 2: "y"}, output_file="test1_test.json")
+    assert (workspace._path / "test1_test.json").exists()
 
 
 def test_workspace_validate_resources(tmpdir, base_ensemble_dict, plugin_registry):
@@ -166,11 +171,9 @@ def test_workspace_load_experiment_config_validation(
     plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
-    (experiments_dir / "test").mkdir(parents=True)
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    experiments_dir.mkdir(parents=True)
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
     with open(workspace._path / "parameters.yml", "w") as f:
@@ -179,10 +182,11 @@ def test_workspace_load_experiment_config_validation(
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["size"] = None
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    ensemble_dict["experiment"].update(
+        {"type": "sensitivity", "algorithm": "one-at-a-time"}
+    )
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
     workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
@@ -196,14 +200,12 @@ def test_workspace_load_experiment_config_size_validation(
     plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
-    (experiments_dir / "test").mkdir(parents=True)
+    experiments_dir.mkdir(parents=True)
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["size"] = None
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "evaluation"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
     with open(workspace._path / "parameters.yml", "w") as f:
@@ -214,10 +216,11 @@ def test_workspace_load_experiment_config_size_validation(
     ):
         workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
 
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
+        base_ensemble_dict["experiment"].update(
+            {"type": "sensitivity", "algorithm": "one-at-a-time"}
+        )
         yaml.dump(base_ensemble_dict, f)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "sensitivity", "algorithm": "one-at-a-time"}, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
     with pytest.raises(
@@ -236,10 +239,8 @@ def test_workspace_load_experiment_config_stages_validation(
     plugin_registry,
 ):
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
-    (experiments_dir / "test").mkdir(parents=True)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "evaluation"}, f)
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    experiments_dir.mkdir(parents=True)
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(double_stages_config_list, f)
@@ -253,9 +254,7 @@ def test_workspace_load_experiment_config_stages_validation(
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["forward_model"]["stage"] = "foo"
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "evaluation"}, f)
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
@@ -283,9 +282,7 @@ def test_workspace_load_experiment_config_resources_validation(
     script_file.touch()
 
     experiments_dir = Path(workspace._path) / _EXPERIMENTS_BASE
-    (experiments_dir / "test").mkdir(parents=True)
-    with open(experiments_dir / "test" / "experiment.yml", "w") as f:
-        yaml.dump({"type": "evaluation"}, f)
+    experiments_dir.mkdir(parents=True)
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(stages_config_list, f)
     with open(workspace._path / "parameters.yml", "w") as f:
@@ -301,7 +298,7 @@ def test_workspace_load_experiment_config_resources_validation(
             },
         }
     ]
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
@@ -313,13 +310,13 @@ def test_workspace_load_experiment_config_resources_validation(
     ensemble_dict["input"][-1]["transformation"] = {
         "type": "directory",
     }
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
     ensemble_dict["input"][-1]["transformation"] = {
         "type": "serialization",
     }
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,
@@ -329,13 +326,13 @@ def test_workspace_load_experiment_config_resources_validation(
 
     (resources_dir / "coefficients.json").rmdir()
     (resources_dir / "coefficients.json").touch()
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     workspace.load_experiment_run_config("test", plugin_registry=plugin_registry)
     ensemble_dict["input"][-1]["transformation"] = {
         "type": "directory",
     }
-    with open(experiments_dir / "test" / "ensemble.yml", "w") as f:
+    with open(experiments_dir / "test.yml", "w") as f:
         yaml.dump(ensemble_dict, f)
     with pytest.raises(
         ert.exceptions.ConfigValidationError,

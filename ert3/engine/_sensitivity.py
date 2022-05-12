@@ -27,8 +27,11 @@ def analyze_sensitivity(
             sensitivity_parameters, model_output, experiment_config.harmonics
         )
         workspace.export_json(
-            experiment_name, analysis, output_file="fast_analysis.json"
+            experiment_name,
+            analysis,
+            output_file=f"{experiment_name}_fast_analysis.json",
         )
+
     else:
         raise ValueError(
             "Unable to determine analysis step "

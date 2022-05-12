@@ -1,9 +1,7 @@
 import sys
 from typing import Optional, Dict, Any
-from pydantic import root_validator, BaseModel, ValidationError
+from pydantic import root_validator, BaseModel
 from pydantic.class_validators import validator
-
-import ert
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -96,10 +94,3 @@ class ExperimentConfig(_ExperimentConfig):
                 raise ValueError("Sample_size cannot be <= 0")
             return sample_size
         return sample_size
-
-
-def load_experiment_config(config_dict: Dict[str, Any]) -> ExperimentConfig:
-    try:
-        return ExperimentConfig(**config_dict)
-    except ValidationError as err:
-        raise ert.exceptions.ConfigValidationError(str(err), source="experiment")

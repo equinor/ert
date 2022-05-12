@@ -47,3 +47,7 @@ output:
 forward_model:
   driver: local
   stage: run_simulator
+
+experiment:
+  type: sensitivity
+  algorithm: one-at-a-time

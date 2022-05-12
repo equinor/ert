@@ -1,5 +1,3 @@
-size: 10
-
 input:
   -
     source: stochastic.field_properties
@@ -26,3 +24,7 @@ output:
 forward_model:
   driver: local
   stage: simulate_SPE1
+
+experiment:
+  type: sensitivity
+  algorithm: one-at-a-time

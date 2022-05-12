@@ -282,7 +282,8 @@ def _assert_done_or_pending(captured, experiments, done_indices):
 @pytest.mark.requires_ert_storage
 def test_cli_status_no_runs(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
     experiments = workspace.get_experiment_names()
 
     args = ["ert3", "status"]
@@ -295,10 +296,11 @@ def test_cli_status_no_runs(workspace, capsys):
 @pytest.mark.requires_ert_storage
 def test_cli_status_some_runs(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
-    (experiments_folder / "E1").mkdir(parents=True)
-    (experiments_folder / "E2").mkdir(parents=True)
-    (experiments_folder / "E3").mkdir(parents=True)
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
+    (experiments_folder / "E1.yml").touch()
+    (experiments_folder / "E2.yml").touch()
+    (experiments_folder / "E3.yml").touch()
     experiments = list(workspace.get_experiment_names())
 
     done_indices = [1, 3]
@@ -320,7 +322,8 @@ def test_cli_status_some_runs(workspace, capsys):
 @pytest.mark.requires_ert_storage
 def test_cli_status_all_run(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
 
     experiments = workspace.get_experiment_names()
 
@@ -365,7 +368,8 @@ def test_cli_status_no_experiments_root(workspace):
 @pytest.mark.requires_ert_storage
 def test_cli_clean_no_runs(workspace):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
 
     assert ert.storage.get_experiment_names(workspace_name=workspace.name) == set()
 
@@ -379,9 +383,10 @@ def test_cli_clean_no_runs(workspace):
 @pytest.mark.requires_ert_storage
 def test_cli_clean_all(workspace):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder).mkdir(parents=True)
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        (experiments_folder / experiment).mkdir(parents=True)
+        (experiments_folder / f"{experiment}.yml").touch()
 
     experiments = workspace.get_experiment_names()
 
@@ -407,9 +412,10 @@ def test_cli_clean_all(workspace):
 @pytest.mark.requires_ert_storage
 def test_cli_clean_one(workspace):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder).mkdir(parents=True)
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        (experiments_folder / experiment).mkdir(parents=True)
+        (experiments_folder / f"{experiment}.yml").touch()
         ert.storage.init_experiment(
             experiment_name=experiment,
             parameters={},
@@ -435,9 +441,10 @@ def test_cli_clean_one(workspace):
 @pytest.mark.requires_ert_storage
 def test_cli_clean_non_existent_experiment(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
+    (experiments_folder).mkdir(parents=True)
     experiments = {"E0", " E1"}
     for experiment in experiments:
-        (experiments_folder / experiment).mkdir(parents=True)
+        (experiments_folder / f"{experiment}.yml").touch()
 
     for experiment in experiments:
         ert.storage.init_experiment(
@@ -484,17 +491,17 @@ def test_cli_validation_ensemble_function(base_ensemble_dict, capsys, plugin_reg
     assert "not a valid integer" in capture.out
 
 
-def test_cli_validation_experiment_function(capsys):
-    config = {"type": "evaluation"}
-    ert3.config.load_experiment_config(config)
-
-    config["type"] = []
+def test_cli_validation_experiment_function(
+    capsys, base_ensemble_dict, plugin_registry
+):
+    config = copy.deepcopy(base_ensemble_dict)
+    config["experiment"]["type"] = []
     with pytest.raises(ert.exceptions.ConfigValidationError) as exc_info:
-        ert3.config.load_experiment_config(config)
+        ert3.config.load_ensemble_config(config, plugin_registry=plugin_registry)
     ert3.console.report_validation_errors(exc_info.value)
     capture = capsys.readouterr()
-    assert "Error while loading experiment configuration data:" in capture.out
-    assert "unhashable type" in capture.out
+    assert "Error while loading ensemble configuration data:" in capture.out
+    assert "Unexpected experiment type" in capture.out
 
 
 @pytest.mark.parametrize(
@@ -531,13 +538,11 @@ def test_cli_validation_ensemble_command(
         base_ensemble_dict, plugin_registry=plugin_registry
     )
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
     config = copy.deepcopy(base_ensemble_dict)
     config["size"] = "a"
-    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
-        yaml.dump(config, f)
-    config = {"type": "evaluation"}
-    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
+    with open(experiments_folder / "E0.yml", "w") as f:
         yaml.dump(config, f)
     config = []
     with open(workspace._path / "stages.yml", "w") as f:
@@ -554,12 +559,10 @@ def test_cli_validation_ensemble_command(
 @pytest.mark.requires_ert_storage
 def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
-    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
+    with open(experiments_folder / "E0.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
-    config = {"type": "evaluation"}
-    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
-        yaml.dump(config, f)
     config = [{"name": "name", "type": "unix", "input": [], "output": []}]
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(config, f)
@@ -574,12 +577,10 @@ def test_cli_validation_experiment_command(base_ensemble_dict, workspace, capsys
 @pytest.mark.requires_ert_storage
 def test_cli_validation_stages_command(base_ensemble_dict, workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
-    (experiments_folder / "E0").mkdir(parents=True)
-    with open(experiments_folder / "E0" / "ensemble.yml", "w") as f:
+    (experiments_folder).mkdir(parents=True)
+    (experiments_folder / "E0.yml").touch()
+    with open(experiments_folder / "E0.yml", "w") as f:
         yaml.dump(base_ensemble_dict, f)
-    config = {"type": "evaluation"}
-    with open(experiments_folder / "E0" / "experiment.yml", "w") as f:
-        yaml.dump(config, f)
     config = [{"name": {}, "type": "unix", "input": [], "output": []}]
     with open(workspace._path / "stages.yml", "w") as f:
         yaml.dump(config, f)
@@ -642,9 +643,7 @@ def test_cli_local_test_run_specific_realization(tmpdir):
                     ert3.console._console._main()
 
             poly_size = yaml.safe_load(
-                pathlib.Path("experiments/evaluation/ensemble.yml").read_text(
-                    encoding="utf-8"
-                )
+                pathlib.Path("experiments/evaluation.yml").read_text(encoding="utf-8")
             )["size"]
             not_existing_realization = poly_size  # zero-indexed realizations
 

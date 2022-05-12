@@ -1,3 +1,0 @@
-type: sensitivity
-algorithm: one-at-a-time
-tail: 0.99

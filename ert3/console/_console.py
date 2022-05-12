@@ -292,7 +292,6 @@ def _build_local_test_run_config(
     raw_ensemble_config["forward_model"]["driver"] = "local"
 
     return ert3.config.ExperimentRunConfig(
-        experiment_run_config.experiment_config,
         experiment_run_config.stages_config,
         ert3.config.load_ensemble_config(
             raw_ensemble_config, plugin_registry=plugin_registry
