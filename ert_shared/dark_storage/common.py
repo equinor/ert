@@ -1,12 +1,13 @@
+import pandas as pd
+import numpy as np
+import fnmatch
 from graphql import ResolveInfo
-
 from ert_data import loader
 from ert_data.measured import MeasuredData
 from typing import List, Union
-import pandas as pd
-
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnkfObservationImplementationType
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
 
 
 def get_res_from_info(info: ResolveInfo) -> LibresFacade:
@@ -144,3 +145,39 @@ def _prepare_x_axis(x_axis: List[Union[int, float, str, pd.Timestamp]]) -> List[
         return [pd.Timestamp(x).isoformat() for x in x_axis]
 
     return [str(x) for x in x_axis]
+
+
+
+
+def export_eclipse_summary_data(res: LibresFacade, ensemble_name, time_index, column_keys: List[str]) -> pd.DataFrame:
+
+    key_set = set()
+    all_keys= res.get_summary_keys()
+
+    for key in list(column_keys):
+        matching = fnmatch.filter(all_keys, str(key))
+        key_set.update(matching)
+
+    composite_df= None
+
+    for key in key_set:
+        df=  data_for_key(res, case=ensemble_name, key=key)
+
+        if composite_df is None:
+            array = []
+            array.append([ensemble_name])
+            array.append(df.index.to_list())
+            array.append([str(e) for e in df.columns.to_list()])
+
+            mi=pd.MultiIndex.from_product(array, names=("ENSEMBLE", "REAL", "DATE"))
+
+            composite_df= pd.DataFrame(index=mi)
+
+        if df.empty:
+            composite_df[key] = np.nan
+
+        for index, row in df.iterrows():
+            for t, value in row.items():
+                composite_df.at[(ensemble_name, index, str(t)), key] = value
+
+    return composite_df

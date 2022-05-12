@@ -6,6 +6,8 @@ import pandas as pd
 from numpy.testing import assert_array_equal
 from requests import Response
 
+from ert_utils import tmpdir
+from utils import SOURCE_DIR
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
@@ -226,3 +228,24 @@ def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
     labels = resp.json()
 
     assert labels == []
+
+
+
+
+def test_export_csv(snake_oil_tmp_dir, dark_storage_snake_oil_client):
+    resp: Response = dark_storage_snake_oil_client.get("/experiments")
+    experiment_json = resp.json()
+    ensemble_id = experiment_json[0]["ensemble_ids"][0]
+    
+    # %3f = ?
+    # %2a = *
+    resp: Response = dark_storage_snake_oil_client.get(
+        f"/ensembles/{ensemble_id}/export/csv?column_keys=FOPR&column_keys=FG%3f%3f&column_keys=B%2a"
+    )
+
+    stream = io.BytesIO(resp.content)
+    exported_csv= pd.read_csv(stream, index_col=0, float_precision="round_trip")
+
+    print (exported_csv)
+
+    assert False

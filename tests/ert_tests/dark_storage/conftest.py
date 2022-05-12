@@ -15,6 +15,21 @@ from ert_shared.dark_storage import enkf
 from ert_shared.main import ert_parser
 
 
+@pytest.fixture()
+def snake_oil_tmp_dir(tmp_path_factory, source_root):
+    tmp_root = tmp_path_factory.mktemp("snake_oil_tmp")
+    tmp_dir = py.path.local(os.path.join(tmp_root, "snake_oil"))
+    source_dir = py.path.local(os.path.join(source_root, "test-data", "local", "snake_oil"))
+
+    shutil.copytree(
+        source_dir,
+        tmp_dir
+    )
+
+    with tmp_dir.as_cwd():
+        yield
+
+
 @pytest.fixture(scope="session")
 def poly_example_tmp_dir_shared(
     tmp_path_factory,
@@ -143,10 +158,8 @@ def run_poly_example_new_storage(monkeypatch, tmpdir, source_root):
 @contextlib.contextmanager
 def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
-    monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
     monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
     from ert_shared.dark_storage.app import app
-
     yield app
     reset_enkf()
 
@@ -155,3 +168,14 @@ def dark_storage_app_(monkeypatch):
 def dark_storage_app(monkeypatch):
     with dark_storage_app_(monkeypatch) as app:
         yield app
+
+
+
+@pytest.fixture
+def dark_storage_snake_oil_client(monkeypatch):
+    with dark_storage_app_(monkeypatch) as dark_app:
+        monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "snake_oil.ert")
+        with TestClient(dark_app) as client:
+            yield client
+
+
