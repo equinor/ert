@@ -46,7 +46,6 @@ def get_name(type, uuid):
 
 
 def get_res(*, _: None = Depends(security)) -> LibresFacade:
-    global _libres_facade
     if _libres_facade is None:
         init_facade()
     return _libres_facade

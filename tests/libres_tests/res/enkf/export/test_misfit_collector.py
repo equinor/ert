@@ -21,6 +21,7 @@ class MisfitCollectorTest(ResTest):
             self.assertFloatEqual(data["MISFIT:TOTAL"][0], 767.008457)
             self.assertFloatEqual(data["MISFIT:TOTAL"][24], 1359.172803)
 
+            # pylint: disable=pointless-statement
             # realization 20:
             data.loc[20]
 

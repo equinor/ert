@@ -2,7 +2,6 @@ import asyncio
 from contextlib import ExitStack
 from http import HTTPStatus
 from threading import Thread, Event
-import time
 from unittest.mock import patch
 
 import pytest

@@ -154,6 +154,7 @@ class BaseRunModel:
         )
 
     def startSimulations(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+        logs: _LogAggregration = _LogAggregration()
         try:
             with captured_logs() as logs:
                 self._initial_realizations_mask = self._simulation_arguments[

@@ -44,6 +44,7 @@ class SummaryObservationCollectorTest(ResTest):
             self.assertFloatEqual(data["WOPR:OP1"]["2010-03-31"], 0.1)
             self.assertFloatEqual(data["STD_WOPR:OP1"]["2010-03-31"], 0.05)
 
+            # pylint: disable=pointless-statement
             with self.assertRaises(KeyError):
                 data["FGIR"]
 

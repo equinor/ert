@@ -1,19 +1,11 @@
-import os
-
 import pytest
-from performance_utils import make_poly_template, dark_storage_app
+from performance_utils import make_poly_template
 from argparse import ArgumentParser
 from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
-from starlette.testclient import TestClient
-import pandas as pd
-import io
-from requests import Response
 from pytest import fixture
 import py
-import json
-from pathlib import Path
 
 
 def make_case(reals, x_size):

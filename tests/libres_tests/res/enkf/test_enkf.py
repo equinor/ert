@@ -37,7 +37,6 @@ from res.enkf import (
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.enums import (
-    ActiveMode,
     EnkfFieldFileFormatEnum,
     EnkfInitModeEnum,
     EnkfObservationImplementationType,
@@ -250,6 +249,7 @@ class EnKFTest(ResTest):
 
     @tmpdir()
     def test_run_context(self):
+        # pylint: disable=pointless-statement
         with TestAreaContext("enkf_test") as work_area:
             work_area.copy_directory(self.case_directory)
             res_config = ResConfig("simple_config/minimum_config")

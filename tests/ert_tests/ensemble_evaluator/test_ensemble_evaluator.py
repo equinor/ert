@@ -287,7 +287,7 @@ def get_connection_closed_exception():
     # and are not backwards compatible. However, we still need to
     # support version 9, as this is the latest version that also supports
     # Python 3.6
-    if int(websockets_version.split(".")[0]) < 10:
+    if int(websockets_version.split(".", maxsplit=1)[0]) < 10:
         return ConnectionClosedError(1006, "Connection closed")
     else:
         return ConnectionClosedError(None, None)

@@ -97,7 +97,9 @@ class ErtTemplatesTest(ResTest):
         self.assertNotEqual(templates, templates2)
 
     def remove_key(self, key):
-        return {i: self.config_data[i] for i in self.config_data if i != key}
+        return {
+            index: value for index, value in self.config_data.items() if index != key
+        }
 
     def change_template_arg(self, template_index, arg_index, new_key, new_val):
         conf_copy = copy.deepcopy(self.config_data)

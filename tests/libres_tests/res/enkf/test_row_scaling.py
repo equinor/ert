@@ -63,12 +63,13 @@ def test_basic():
     assert row_scaling[9] == 0.25
 
     with pytest.raises(IndexError):
+        # pylint: disable=pointless-statement
         row_scaling[10]
 
-    for i in range(len(row_scaling)):
+    for index, _ in enumerate(row_scaling):
         r = random.random()
-        row_scaling[i] = r
-        assert row_scaling[i] == row_scaling.clamp(r)
+        row_scaling[index] = r
+        assert row_scaling[index] == row_scaling.clamp(r)
 
     nx = 10
     ny = 10

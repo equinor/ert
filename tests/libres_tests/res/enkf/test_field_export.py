@@ -44,6 +44,8 @@ class FieldExportTest(ResTest):
 
             field_node = EnkfNode(fc)
             self.assertEqual(grid.get_num_active(), len(field_node))
+            # pylint: disable=pointless-statement,unsubscriptable-object
+            # pylint: disable=expression-not-assigned
             with self.assertRaises(IndexError):
                 field_node[grid.get_num_active()]
             field_node[0]

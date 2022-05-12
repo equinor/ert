@@ -111,6 +111,7 @@ class RunpathListTest(ResTest):
             nodeslice = [node3, node4, node5, node6]
             self.assertEqual(nodeslice, runpath_list[3:7])
             self.assertEqual(node6, runpath_list[-2])
+            # pylint: disable=pointless-statement
             with self.assertRaises(TypeError):
                 runpath_list["key"]
             with self.assertRaises(IndexError):

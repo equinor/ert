@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 
@@ -31,14 +30,14 @@ def assert_input_records(config, export_data):
 
     for realisation in export_data:
         assert sorted(input_records.keys()) == sorted(realisation["input"].keys())
-        for record_name in input_records.keys():
-            has_variables = not isinstance(input_records[record_name], int)
+        for record_name, record_value in input_records.items():
+            has_variables = not isinstance(record_value, int)
             if has_variables:
-                input_variables = sorted(input_records[record_name])
+                input_variables = sorted(record_value)
                 realisation_variables = sorted(realisation["input"][record_name].keys())
                 assert input_variables == realisation_variables
             else:
-                input_size = input_records[record_name]
+                input_size = record_value
                 realisation_size = len(realisation["input"][record_name])
                 assert input_size == realisation_size
 

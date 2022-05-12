@@ -23,6 +23,7 @@ class GenKwCollectorTest(ResTest):
             self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], 0.054539)
             self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][12], 0.057807)
 
+            # pylint: disable=pointless-statement
             # realization 20:
             data.loc[20]
 

@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 
 import pytest
 

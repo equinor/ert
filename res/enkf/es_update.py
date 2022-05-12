@@ -81,6 +81,7 @@ def analysis_smoother_update(
             ministep,
             shared_rng,
         )
+        # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.ministep_snapshots[
             ministep.name()
         ] = update_data.update_snapshot

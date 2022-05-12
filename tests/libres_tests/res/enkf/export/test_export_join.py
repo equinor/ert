@@ -101,6 +101,7 @@ class ExportJoinTest(ResTest):
             self.assertFloatEqual(result["MISFIT:TOTAL"][0][last_date], 468.479944)
             self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.700855)
 
+            # pylint: disable=pointless-statement
             with self.assertRaises(KeyError):
                 # realization 13:
                 result.loc[60]

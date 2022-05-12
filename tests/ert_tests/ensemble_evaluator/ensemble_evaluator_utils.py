@@ -137,15 +137,14 @@ class TestEnsemble(_Ensemble):
                             event_id = event_id + 1
                             job_failed = True
                             break
-                        else:
-                            send_dispatch_event(
-                                dispatch,
-                                identifiers.EVTYPE_FM_JOB_SUCCESS,
-                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
-                                f"event-{event_id}",
-                                {"current_memory_usage": 1000},
-                            )
-                            event_id = event_id + 1
+                        send_dispatch_event(
+                            dispatch,
+                            identifiers.EVTYPE_FM_JOB_SUCCESS,
+                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"event-{event_id}",
+                            {"current_memory_usage": 1000},
+                        )
+                        event_id = event_id + 1
                     if job_failed:
                         send_dispatch_event(
                             dispatch,

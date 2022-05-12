@@ -1,4 +1,3 @@
-import pytest
 from libres_utils import ResTest
 
 from res.enkf.data.enkf_node import EnkfNode

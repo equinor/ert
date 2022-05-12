@@ -26,6 +26,7 @@ def create_gen_kw():
 
 
 class GenKwTest(ResTest):
+    # pylint: disable=pointless-statement
     def test_gen_kw_get_set(self):
         with TestAreaContext("enkf/data/gen_kwt"):
 

@@ -1,12 +1,6 @@
 import json
-import uuid
-from argparse import ArgumentParser
 
 from requests import Response
-
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE
-from ert_shared.cli.main import run_cli
-from ert_shared.main import ert_parser
 
 
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):

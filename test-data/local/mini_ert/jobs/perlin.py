@@ -502,8 +502,7 @@ if __name__ == "__main__":
         3: PerlinNoise(prime_1=10657, prime_2=105767, prime_3=2902956923),
     }
 
-    for report_step in observations:
-        observation = observations[report_step]
+    for report_step, observation in observations.items():
         # createObservationFile(report_step, observation, count)
 
         params = readParameters("perlin_params.txt")

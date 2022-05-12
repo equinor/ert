@@ -4,12 +4,8 @@ from ecl.summary import EclSum
 
 def writeDiff(filename, vector1, vector2):
     with open(filename, "w") as f:
-        for index in range(len(vector1)):
-            node1 = vector1[index]
-            node2 = vector2[index]
-
-            diff = node1 - node2
-            f.write("%f\n" % diff)
+        for node1, node2 in zip(vector1, vector2):
+            f.write(f"{node1-node2:f}\n")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,5 @@
 import re
 from copy import deepcopy
-from email.mime import base
-from nis import match
 
 import ert
 import ert3

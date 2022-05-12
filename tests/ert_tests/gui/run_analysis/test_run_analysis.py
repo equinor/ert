@@ -1,4 +1,3 @@
-import sys
 from unittest.mock import Mock, patch
 
 from ert_utils import ErtTest

@@ -12,6 +12,8 @@ from typing import Collection, List, Optional, Tuple, Union
 
 
 def mask_to_rangestring(mask: Collection[Union[bool, int]]) -> str:
+    # pylint-bug on Python 3.6:
+    # pylint: disable=unsubscriptable-object
     """Convert a mask (ordered collection of booleans or int) into a rangestring.
     For instance, `0 1 0 1 1 1` would be converted to `1, 3-5`.
 

@@ -7,7 +7,6 @@ import tempfile
 import threading
 import time
 from functools import partial
-from pathlib import Path
 
 import decorator
 import pytest

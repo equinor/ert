@@ -14,11 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os.path
 
-from libres_utils import ResTest, tmpdir
+from libres_utils import ResTest
 
-from res.enkf import ErtRunContext, ESUpdate
 from res.enkf.local_ministep import LocalMinistep
 from res.enkf.local_obsdata import LocalObsdata
 from res.enkf.local_obsdata_node import LocalObsdataNode

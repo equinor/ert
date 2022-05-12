@@ -8,14 +8,14 @@ from res.enkf.data import ExtParam
 
 
 class ExtParamTest(ResTest):
+    # pylint: disable=pointless-statement
     def test_config(self):
         input_keys = ["key1", "key2", "key3"]
         config = ExtParamConfig("Key", input_keys)
         self.assertTrue(len(config), 3)
 
-        for i in range(len(config)):
-            configkey, _ = config[i]
-            self.assertEqual(configkey, input_keys[i])
+        for index, (configkey, _) in enumerate(config):
+            self.assertEqual(configkey, input_keys[index])
 
         with self.assertRaises(IndexError):
             config[100]
@@ -47,8 +47,7 @@ class ExtParamTest(ResTest):
         self.assertNotIn(("key3", "not_me_either"), config)
         self.assertNotIn(("who", "b"), config)
 
-        for i in range(len(config)):
-            configkey, configsuffixes = config[i]
+        for (configkey, configsuffixes) in config:
             self.assertIn(configkey, input_dict)
             self.assertIn(configsuffixes, input_suffixes)
 
@@ -93,8 +92,8 @@ class ExtParamTest(ResTest):
             data.set_vector([1, 2])
 
         data.set_vector([1, 2, 3])
-        for i in range(len(data)):
-            self.assertEqual(i + 1, data[i])
+        for index, value in enumerate(data):
+            self.assertEqual(index + 1, value)
 
         with TestAreaContext("json"):
             data.export("file.json")

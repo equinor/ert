@@ -283,12 +283,10 @@ def expand_config_data():
 
     """
 
-    for define_key in config_defines:
-        for data_key in config_data:
-            if isinstance(config_data[data_key], str):
-                config_data[data_key] = config_data[data_key].replace(
-                    define_key, config_defines[define_key]
-                )
+    for define_key, define_value in config_defines.items():
+        for data_key, data_value in config_data.items():
+            if isinstance(data_value, str):
+                config_data[data_key] = data_value.replace(define_key, define_value)
 
 
 class ResConfigTest(ResTest):
@@ -660,9 +658,9 @@ class ResConfigTest(ResTest):
             # replace define keys only in root strings, this should be updated
             # and validated in configsuite instead
             for define_key in config_data_new[ConfigKeys.DEFINE_KEY]:
-                for data_key in config_data_new:
-                    if isinstance(config_data_new[data_key], str):
-                        config_data_new[data_key] = config_data_new[data_key].replace(
+                for data_key, data_value in config_data_new.items():
+                    if isinstance(data_value, str):
+                        config_data_new[data_key] = data_value.replace(
                             define_key,
                             config_data_new[ConfigKeys.DEFINE_KEY].get(define_key),
                         )
