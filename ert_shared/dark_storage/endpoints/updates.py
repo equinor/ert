@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from ert_storage import json_schema as js
 
-from ert_shared.dark_storage.enkf import LibresFacade, get_res
+from ert_shared.dark_storage.enkf import LibresFacade, get_res, reset_res
 
 router = APIRouter(tags=["ensemble"])
 
@@ -24,3 +24,12 @@ def get_update(
     update_id: UUID,
 ) -> js.UpdateOut:
     raise NotImplementedError
+
+
+@router.post("/updates/facade")
+def refresh_facade(
+    *,
+    res: LibresFacade = Depends(reset_res),
+) -> None:
+    if res is not None:
+        raise ValueError("Could not clean the ert facade")
