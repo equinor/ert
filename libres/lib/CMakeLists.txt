@@ -27,6 +27,7 @@ pybind11_add_module(
   python/enkf_fs_keyword_data.cpp
   python/enkf_defaults.cpp
   python/enkf_fs_summary_data.cpp
+  python/model_callbacks.cpp
   config/conf_util.cpp
   config/conf.cpp
   config/conf_data.cpp
