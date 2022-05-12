@@ -40,14 +40,13 @@ class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
-        self._api = PlotApi()
-
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
         try:
+            self._api = PlotApi()
             self._key_definitions = self._api.all_data_type_keys()
         except (RequestError, TimeoutError) as e:
             logger.exception(e)

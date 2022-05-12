@@ -16,6 +16,11 @@ class PlotApi(object):
     def __init__(self):
         self._all_cases: List[dict] = None
         self._timeout = 120
+        self._reset_storage_facade()
+
+    def _reset_storage_facade(self):
+        with Storage.session() as client:
+            client.post("/updates/facade", timeout=self._timeout)
 
     def _get_case(self, name: str) -> dict:
         for e in self._get_all_cases():
