@@ -1,17 +1,18 @@
-size: 10
-
 input:
   -
     source: stochastic.coefficients
     name: coefficients
-  -
-    source: stochastic.x_normals
-    name: x_uncertainties
 
 output:
   -
     name: polynomial_output
 
+
 forward_model:
   driver: local
-  stage: evaluate_x_uncertainty_polynomial
+  stage: evaluate_polynomial
+
+experiment:
+  type: sensitivity
+  algorithm: one-at-a-time
+  tail: 0.99

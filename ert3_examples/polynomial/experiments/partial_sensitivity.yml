@@ -1,0 +1,21 @@
+input:
+  -
+    source: stochastic.coefficients
+    name: coefficients
+  -
+    source: storage.coefficients
+    name: other_coefficients
+
+output:
+  -
+    name: polynomial_output
+  -
+    name: other_polynomial_output
+
+forward_model:
+  driver: local
+  stage: evaluate_two_polynomials
+
+experiment:
+  type: sensitivity
+  algorithm: one-at-a-time

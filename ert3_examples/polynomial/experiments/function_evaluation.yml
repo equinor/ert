@@ -1,8 +1,8 @@
-size: 50
+size: 10
 
 input:
   -
-    source: storage.designed_coefficients
+    source: stochastic.coefficients
     name: coefficients
 
 output:
@@ -11,4 +11,7 @@ output:
 
 forward_model:
   driver: local
-  stage: evaluate_polynomial
+  stage: function_polynomial
+
+experiment:
+  type: evaluation

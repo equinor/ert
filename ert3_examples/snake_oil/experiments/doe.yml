@@ -1,38 +1,37 @@
-size: 5
+size: 10
 
 input:
-  -
-    source: stochastic.SEED
+  - source: stochastic.SEED
     name: SEED
   -
-    source: stochastic.OP1_PERSISTENCE
+    source: storage.OP1_PERSISTENCE
     name: op1_persistence
   -
-    source: stochastic.OP1_OCTAVES
+    source: storage.OP1_OCTAVES
     name: op1_octaves
   -
-    source: stochastic.OP1_DIVERGENCE_SCALE
+    source: storage.OP1_DIVERGENCE_SCALE
     name: op1_divergence_scale
   -
-    source: stochastic.OP1_OFFSET
+    source: storage.OP1_OFFSET
     name: op1_offset
   -
-    source: stochastic.OP2_PERSISTENCE
+    source: storage.OP2_PERSISTENCE
     name: op2_persistence
   -
-    source: stochastic.OP2_OCTAVES
+    source: storage.OP2_OCTAVES
     name: op2_octaves
   -
-    source: stochastic.OP2_DIVERGENCE_SCALE
+    source: storage.OP2_DIVERGENCE_SCALE
     name: op2_divergence_scale
   -
-    source: stochastic.OP2_OFFSET
+    source: storage.OP2_OFFSET
     name: op2_offset
   -
-    source: stochastic.BPR_555_PERSISTENCE
+    source: storage.BPR_555_PERSISTENCE
     name: bpr_555_persistence
   -
-    source: stochastic.BPR_138_PERSISTENCE
+    source: storage.BPR_138_PERSISTENCE
     name: bpr_138_persistence
   -
     source: resources.seed_tmpl
@@ -50,3 +49,6 @@ output:
 forward_model:
   driver: local
   stage: run_simulator
+
+experiment:
+  type: evaluation

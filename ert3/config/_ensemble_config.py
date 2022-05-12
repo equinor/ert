@@ -8,6 +8,7 @@ import ert
 import ert.ensemble_evaluator
 
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
+from ._experiment_config import ExperimentConfig
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -142,6 +143,7 @@ class EnsembleConfig(_EnsembleConfig):
     size: Optional[int] = None
     storage_type: str = "ert_storage"
     active_range: Optional[str] = None
+    experiment: ExperimentConfig
     """Specifies list of ranges of realizations that are active.
     Default (``None``) means all realizations are active.
     Empty string means no realizations are active."""

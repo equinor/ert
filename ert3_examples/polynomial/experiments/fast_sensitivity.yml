@@ -1,8 +1,6 @@
-size: 10
-
 input:
   -
-    source: stochastic.coefficients
+    source: stochastic.uniform_coefficients
     name: coefficients
 
 output:
@@ -12,3 +10,9 @@ output:
 forward_model:
   driver: local
   stage: function_polynomial
+
+experiment:
+  type: sensitivity
+  algorithm: fast
+  harmonics: 4
+  sample_size: 500

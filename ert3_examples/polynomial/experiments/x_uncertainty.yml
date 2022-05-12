@@ -4,6 +4,9 @@ input:
   -
     source: stochastic.coefficients
     name: coefficients
+  -
+    source: stochastic.x_normals
+    name: x_uncertainties
 
 output:
   -
@@ -11,4 +14,7 @@ output:
 
 forward_model:
   driver: local
-  stage: evaluate_polynomial
+  stage: evaluate_x_uncertainty_polynomial
+
+experiment:
+  type: evaluation

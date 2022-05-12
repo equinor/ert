@@ -32,8 +32,8 @@ class ExperimentRunConfig:
     """The :py:class:`ExperimentRunConfig` class encapsulates the configuration
     objects needed to run an experiment.
 
-    It encapsulates the specialized configuration objects: an experiment
-    configuration object, a stages configuration object, an ensemble
+    It encapsulates the specialized configuration objects: a stages configuration
+    object, an ensemble configuration object, containing also an experiment
     configuration object, and a parameter configuration object. These objects
     must already have been constructed and validated when initializing the
     :py:class:`ExperimentRunConfig` object. These configuration objects are then
@@ -43,7 +43,6 @@ class ExperimentRunConfig:
 
     def __init__(
         self,
-        experiment_config: ExperimentConfig,
         stages_config: StagesConfig,
         ensemble_config: EnsembleConfig,
         parameters_config: ParametersConfig,
@@ -52,12 +51,10 @@ class ExperimentRunConfig:
         experiment.
 
         Args:
-            experiment_config (ExperimentConfig): Experiment configuration object.
             stages_config (StagesConfig): Stages configuration object.
             ensemble_config (EnsembleConfig): Ensemble configuration object.
             parameters_config (ParametersConfig): Paramters configuration object.
         """
-        self._experiment_config = experiment_config
         self._stages_config = stages_config
         self._ensemble_config = ensemble_config
         self._parameters_config = parameters_config
@@ -72,7 +69,7 @@ class ExperimentRunConfig:
         Returns:
             ExperimentConfig: The encapsulated experiment configuration object.
         """
-        return self._experiment_config
+        return self._ensemble_config.experiment
 
     @property
     def stages_config(self) -> StagesConfig:
@@ -165,14 +162,14 @@ class ExperimentRunConfig:
 
     def _validate_ensemble_size(self) -> None:
         if (
-            self._experiment_config.type == "sensitivity"
+            self.experiment_config.type == "sensitivity"
             and self._ensemble_config.size is not None
         ):
             raise ert.exceptions.ConfigValidationError(
                 "No ensemble size should be specified for a sensitivity analysis."
             )
         if (
-            self._experiment_config.type != "sensitivity"
+            self.experiment_config.type != "sensitivity"
             and self._ensemble_config.size is None
         ):
             raise ert.exceptions.ConfigValidationError(

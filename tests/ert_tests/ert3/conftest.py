@@ -215,6 +215,7 @@ def base_ensemble_dict():
         "input": [{"source": "stochastic.coefficients", "name": "coefficients"}],
         "output": [{"name": "polynomial_output"}],
         "forward_model": {"driver": "local", "stage": "evaluate_polynomial"},
+        "experiment": {"type": "evaluation"},
     }
 
 

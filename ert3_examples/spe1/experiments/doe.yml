@@ -29,3 +29,6 @@ output:
 forward_model:
   driver: local
   stage: simulate_SPE1
+
+experiment:
+  type: evaluation
