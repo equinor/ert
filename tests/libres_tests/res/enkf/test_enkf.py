@@ -25,7 +25,6 @@ from res.enkf import (
     EclConfig,
     EnkfFs,
     EnkfObs,
-    EnKFState,
     EnkfVarType,
     EnsembleConfig,
     ErtTemplates,
@@ -246,7 +245,6 @@ class EnKFTest(ResTest):
             self.assertIsInstance(
                 main.getEnkfFsManager().getCurrentFileSystem(), EnkfFs
             )
-            self.assertIsInstance(main.getMemberRunningState(0), EnKFState)
 
             self.assertTrue(main.getMountPoint().endswith("simple_config/Ensemble"))
 

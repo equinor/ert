@@ -36,7 +36,6 @@ from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs
 from .enkf_simulation_runner import EnkfSimulationRunner
-from .enkf_state import EnKFState
 from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
@@ -157,7 +156,6 @@ __all__ = [
     "ESUpdate",
     "ErtAnalysisError",
     "RunArg",
-    "EnKFState",
     "ErtRunContext",
     "EnkfSimulationRunner",
     "EnkfFsManager",
