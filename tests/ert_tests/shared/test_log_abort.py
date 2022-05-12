@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 from ert_logging._log_util_abort import _log_util_abort
 
 

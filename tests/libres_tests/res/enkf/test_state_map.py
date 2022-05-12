@@ -6,6 +6,7 @@ from res.enkf.state_map import StateMap
 
 
 class StateMapTest(ResTest):
+    # pylint: disable=pointless-statement
     def test_state_map(self):
         state_map = StateMap()
 

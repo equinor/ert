@@ -2,7 +2,7 @@ import functools
 import pickle
 from datetime import timedelta
 from pathlib import Path
-from typing import Type, Dict
+from typing import Dict
 
 import cloudpickle
 import prefect

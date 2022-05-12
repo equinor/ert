@@ -3,7 +3,6 @@ import json
 import uuid
 
 import pandas as pd
-import requests
 from numpy.testing import assert_array_equal
 from requests import Response
 

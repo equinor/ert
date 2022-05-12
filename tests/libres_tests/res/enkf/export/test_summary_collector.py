@@ -31,6 +31,7 @@ class SummaryCollectorTest(ResTest):
             self.assertFloatEqual(data["FOPR"][0]["2010-01-10"], 0.118963)
             self.assertFloatEqual(data["FOPR"][0]["2015-06-23"], 0.133601)
 
+            # pylint: disable=pointless-statement
             # realization 20:
             data.loc[20]
 

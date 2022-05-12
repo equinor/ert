@@ -5,6 +5,7 @@ from res.enkf.data.summary import Summary
 
 
 class SummaryTest(ResTest):
+    # pylint: disable=pointless-statement
     def test_create(self):
         config = SummaryConfig("WWCT:OP_5")
         summary = Summary(config)

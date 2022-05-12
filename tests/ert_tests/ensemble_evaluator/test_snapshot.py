@@ -161,8 +161,8 @@ def test_update_partial_from_multiple_cloudevents(snapshot):
         )
     )
     jobs = partial.to_dict()["reals"]["0"]["steps"]["0"]["jobs"]
-    jobs["0"]["status"] == state.JOB_STATE_FAILURE
-    jobs["1"]["status"] == state.JOB_STATE_FINISHED
+    assert jobs["0"]["status"] == state.JOB_STATE_FAILURE
+    assert jobs["1"]["status"] == state.JOB_STATE_FINISHED
 
 
 def test_multiple_cloud_events_trigger_non_communicated_change():

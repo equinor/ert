@@ -241,10 +241,8 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
                 records=tuple(
-                    [
-                        ert.data.NumericalRecord(data=[nid * eid * rid])
-                        for rid in range(ensemble_size)
-                    ]
+                    ert.data.NumericalRecord(data=[nid * eid * rid])
+                    for rid in range(ensemble_size)
                 )
             )
             get_event_loop().run_until_complete(
@@ -262,10 +260,8 @@ def test_add_and_get_experiment_ensemble_record(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
                 records=tuple(
-                    [
-                        ert.data.NumericalRecord(data=[nid * eid * rid])
-                        for rid in range(ensemble_size)
-                    ]
+                    ert.data.NumericalRecord(data=[nid * eid * rid])
+                    for rid in range(ensemble_size)
                 )
             )
             fetched_ensemble_record = ert.storage.get_ensemble_record(
@@ -330,7 +326,7 @@ def test_get_record_names(tmpdir, ert_storage):
             name = nid * "n"
             ensemble_record = ert.data.RecordCollection(
                 records=tuple(
-                    [ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)]
+                    ert.data.NumericalRecord(data=[0]) for rid in range(ensemble_size)
                 )
             )
             future = ert.storage.transmit_record_collection(
@@ -412,7 +408,7 @@ def test_get_ensemble_responses(responses, expected_result, tmpdir, ert_storage)
             )
         else:
             ensemble_record = ert.data.RecordCollection(
-                records=tuple([ert.data.NumericalRecord(data=[0]) for rid in range(1)])
+                records=tuple(ert.data.NumericalRecord(data=[0]) for rid in range(1))
             )
         future = ert.storage.transmit_record_collection(
             record_coll=ensemble_record,

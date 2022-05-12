@@ -1,6 +1,3 @@
-import ert3
-
-
 def test_no_plugins(plugin_registry):
     assert plugin_registry.get_factory("transformation", "copy")
     assert plugin_registry.get_factory("transformation", "serialization")

@@ -1,9 +1,8 @@
 import os
 import shutil
 import threading
-import time
 from argparse import ArgumentParser
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, call
 
 import pytest
 

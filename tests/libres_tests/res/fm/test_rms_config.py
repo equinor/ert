@@ -41,6 +41,7 @@ class RMSConfigTest(ResTest):
         conf = RMSConfig()
 
         with self.assertRaises(OSError):
+            # pylint: disable=pointless-statement
             conf.executable
 
         with TestAreaContext("yaml"):
@@ -77,6 +78,7 @@ class RMSConfigTest(ResTest):
             conf = RMSConfig()
 
             with self.assertRaises(OSError):
+                # pylint: disable=pointless-statement
                 conf.wrapper
 
             with open("file.yml", "w") as f:

@@ -26,6 +26,7 @@ class PluginContextTest(unittest.TestCase):
         self.monkeypatch.undo()
 
     def test_no_plugins(self):
+        # pylint: disable=pointless-statement
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
         with ErtPluginContext(plugins=[]) as c:
             with self.assertRaises(KeyError):
@@ -48,6 +49,7 @@ class PluginContextTest(unittest.TestCase):
         self.assertFalse(os.path.isfile(path))
 
     def test_with_plugins(self):
+        # pylint: disable=pointless-statement
         self.monkeypatch.delenv("ERT_SITE_CONFIG", raising=False)
         # We are comparing two function calls, both of which generate a tmpdir,
         # this makes sure that the same tmpdir is called on both occasions.

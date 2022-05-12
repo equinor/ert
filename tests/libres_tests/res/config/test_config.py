@@ -139,6 +139,7 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
         content_item = content["RSH_HOST"]
         self.assertIsInstance(content_item, ContentItem)
         self.assertEqual(len(content_item), 1)
+        # pylint: disable=pointless-statement
         with self.assertRaises(TypeError):
             content_item["BJARNE"]
 
@@ -254,6 +255,7 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
             item = content["NOT_IN_CONTENT"]
             self.assertEqual(len(item), 0)
 
+            # pylint: disable=pointless-statement
             with self.assertRaises(KeyError):
                 content["Nokey"]
 

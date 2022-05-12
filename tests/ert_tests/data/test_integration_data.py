@@ -1,6 +1,5 @@
 import os
 import pathlib
-import random
 import shutil
 import time
 from distutils.dir_util import copy_tree

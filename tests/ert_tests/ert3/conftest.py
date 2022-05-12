@@ -8,7 +8,6 @@ import contextlib
 
 import ert.storage
 
-import requests
 import pytest
 import typing
 

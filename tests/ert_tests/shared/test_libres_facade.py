@@ -1,4 +1,3 @@
-import os
 import logging
 import pytest
 from unittest import TestCase

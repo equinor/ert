@@ -55,6 +55,8 @@ jobs:
             chained-comparison, \
             consider-iterating-dictionary, \
             consider-using-dict-items, \
+            consider-using-dict-iterms, \
+            consider-using-enumerate, \
             consider-using-enumerate, \
             consider-using-from-import, \
             consider-using-generator, \
@@ -62,10 +64,12 @@ jobs:
             consider-using-set-comprehension, \
             empty-docstring, \
             expression-not-assigned, \
+            global-variable-not-assigned, \
+            missing-final-newline, \
             no-else-break, \
             no-method-argument, \
             not-async-context-manager, \
-            unsubscriptable-object, \
+            parse-error, \
             pointless-statement, \
             simplifiable-if-statement, \
             subprocess-run-check, \
@@ -74,15 +78,18 @@ jobs:
             undefined-loop-variable, \
             unidiomatic-typecheck, \
             unneeded-not, \
+            unsubscriptable-object, \
+            unsupported-assignment-operation, \
             unused-import, \
             use-a-generator, \
             use-dict-literal, \
             use-maxsplit-arg, \
+            used-before-assignment, \
             useless-import-alias, \
             useless-object-inheritance \
             useless-return, \
             useless-super-delegation, \
             " \
-          docs ert_data ert_gui ert_logging ert_shared job_runner res tests
+          docs ert_data ert_gui ert_logging ert_shared job_runner res tests/*
         pylint --disable=all \
           --enable="consider-using-f-string" ert_data ert_gui job_runner res

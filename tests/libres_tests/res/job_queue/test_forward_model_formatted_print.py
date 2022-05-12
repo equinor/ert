@@ -317,8 +317,8 @@ class ForwardModelFormattedPrintTest(ResTest):
         self.assertEqual(umask, int(config["umask"], 8))
         self.assertEqual(len(selected_jobs), len(config["jobList"]))
 
-        for job_index in range(len(selected_jobs)):
-            job = joblist[selected_jobs[job_index]]
+        for job_index, selected_job in enumerate(selected_jobs):
+            job = joblist[selected_job]
             loaded_job = config["jobList"][job_index]
 
             # Since no argList is loaded as an empty list by ext_job
@@ -427,6 +427,7 @@ class ForwardModelFormattedPrintTest(ResTest):
             self.assertEqual(first_value, env_config[first])
             self.assertEqual(second_value, env_config[second])
             self.assertEqual(third_value_correct, env_config[third])
+            # pylint: disable=pointless-statement
             config[update_string]
 
     def test_repr(self):

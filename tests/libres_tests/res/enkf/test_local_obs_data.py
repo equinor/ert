@@ -37,6 +37,7 @@ def test_exception(index, error, expected_msg):
     local_obs_data = LocalObsdata("LOCAL_OBS")
 
     with pytest.raises(error, match=expected_msg):
+        # pylint: disable=pointless-statement
         local_obs_data[index]
 
 

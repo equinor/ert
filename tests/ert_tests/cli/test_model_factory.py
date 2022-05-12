@@ -1,10 +1,9 @@
 from argparse import Namespace
 
-from _pytest.tmpdir import tmp_path
 from ert_utils import ErtTest
 
 from ert.ensemble_evaluator.activerange import ActiveRange
-import ert_shared.cli.model_factory as model_factory
+from ert_shared.cli import model_factory
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother

@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 import logging
 import tempfile
 import unittest
-from os import uname
 from unittest.mock import Mock
 
 import dummy_plugins

@@ -309,6 +309,7 @@ class _RecurringInteraction(_Interaction):
         self.terminator = terminator
 
     def assert_matches(self, other: CloudEvent, event: Optional[_Event] = None):
+        terminator_error = None
         if event:
             raise ValueError("cannot match against specific event")
         try:

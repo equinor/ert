@@ -8,6 +8,7 @@ from res.enkf import TimeMap
 
 class TimeMapTest(ResTest):
     def test_time_map(self):
+        # pylint: disable=pointless-statement
         with self.assertRaises(IOError):
             TimeMap("Does/not/exist")
 

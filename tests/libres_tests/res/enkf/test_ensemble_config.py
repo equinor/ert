@@ -16,6 +16,7 @@ class EnsembleConfigTest(ResTest):
         self.assertFalse("XYZ" in conf)
 
         with self.assertRaises(KeyError):
+            # pylint: disable=pointless-statement
             conf["KEY"]
 
     def test_ensemble_config_constructor(self):

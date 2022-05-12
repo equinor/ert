@@ -1,7 +1,6 @@
 import json
 import pathlib
 from contextlib import contextmanager
-import resource
 
 import pytest
 
