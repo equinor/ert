@@ -56,6 +56,14 @@ def get_update(
     return _update_from_db(update_obj)
 
 
+@router.post("/updates/facade")
+def refresh_facade(
+    *,
+    db: Session = Depends(get_db),
+) -> None:
+    raise NotImplementedError
+
+
 def _update_from_db(update_obj: ds.Update) -> js.UpdateOut:
     return js.UpdateOut(
         id=update_obj.id,
