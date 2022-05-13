@@ -250,39 +250,6 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 }
 
 /*
-Run the row-scaling enabled update algorithm on a set of A matrices.
-*/
-void run_analysis_update_with_rowscaling(
-    const ies::Config &module_config, ies::data::Data &module_data,
-    const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
-    const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
-    std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
-        &parameters) {
-
-    ert::utils::Benchmark benchmark(logger,
-                                    "run_analysis_update_with_rowscaling");
-    if (parameters.size() == 0)
-        throw std::logic_error("No parameter matrices provided for analysis "
-                               "update with rowscaling");
-
-    if (module_config.iterable) {
-        throw std::logic_error("Sorry - row scaling for distance based "
-                               "localization can not be combined with "
-                               "analysis modules which update the A matrix");
-    }
-
-    for (auto &[A, row_scaling] : parameters) {
-        int active_ens_size = S.cols();
-        Eigen::MatrixXd W0 =
-            Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X =
-            ies::makeX(A, S, R, E, D, module_config.inversion,
-                       module_config.get_truncation(), W0, 1, 1);
-        row_scaling->multiply(A, X);
-    }
-}
-
-/*
 Copy all parameters from source_fs to target_fs
 */
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
@@ -449,14 +416,6 @@ static void save_parameters_pybind(py::object target_fs,
                                      iens_active_index, ministep_, update_data);
 }
 
-static void run_analysis_update_with_rowscaling_pybind(
-    const ies::Config &module_config, ies::data::Data &module_data,
-    analysis::update_data_type &update_data) {
-
-    analysis::run_analysis_update_with_rowscaling(
-        module_config, module_data, update_data.S, update_data.E, update_data.D,
-        update_data.R, update_data.A_with_rowscaling);
-}
 } // namespace
 RES_LIB_SUBMODULE("update", m) {
     using namespace py::literals;
@@ -464,6 +423,8 @@ RES_LIB_SUBMODULE("update", m) {
                std::shared_ptr<analysis::update_data_type>>(m, "UpdateData")
         .def(py::init<>())
         .def("get_A", &analysis::update_data_type::get_A)
+        .def("get_A_with_rowscaling",
+             &analysis::update_data_type::get_A_with_rowscaling)
         .def_readwrite("S", &analysis::update_data_type::S,
                        py::return_value_policy::reference_internal)
         .def_readwrite("E", &analysis::update_data_type::E,
@@ -485,6 +446,4 @@ RES_LIB_SUBMODULE("update", m) {
     m.def("copy_parameters", copy_parameters_pybind);
     m.def("make_update_data", make_update_data_pybind);
     m.def("save_parameters", save_parameters_pybind);
-    m.def("run_analysis_update_with_rowscaling",
-          run_analysis_update_with_rowscaling_pybind);
 }

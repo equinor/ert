@@ -97,7 +97,8 @@ double RowScaling::assign(size_t index, double value) {
   are multiplied in one go.
  */
 
-void RowScaling::multiply(Eigen::MatrixXd &A, const Eigen::MatrixXd &X0) const {
+void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
+                          const Eigen::MatrixXd &X0) const {
     if (m_data.size() != A.rows())
         throw std::invalid_argument(
             "Size mismatch between row_scaling and A matrix");
@@ -240,5 +241,6 @@ RES_LIB_SUBMODULE("local.row_scaling", m) {
         .def("clamp", &RowScaling::clamp, "value"_a)
         .def("assign_vector", &assign_vector<float>, py::doc{assign_vector_doc},
              "scaling_vector"_a)
-        .def("assign_vector", &assign_vector<double>, "scaling_vector"_a);
+        .def("assign_vector", &assign_vector<double>, "scaling_vector"_a)
+        .def("multiply", &RowScaling::multiply);
 }
