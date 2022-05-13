@@ -59,7 +59,7 @@ int analysis_module_ens_size(const analysis_module_type *module);
 ies::data::Data *
 analysis_module_get_module_data(const analysis_module_type *module);
 
-ies::config::Config *
+ies::Config *
 analysis_module_get_module_config(const analysis_module_type *module);
 
 #endif

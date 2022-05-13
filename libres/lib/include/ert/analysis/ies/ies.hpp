@@ -38,7 +38,7 @@ void init_update(data::Data &module_data, const std::vector<bool> &ens_mask,
 Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
                       const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
                       const Eigen::MatrixXd &D,
-                      const ies::config::inversion_type ies_inversion,
+                      const ies::inversion_type ies_inversion,
                       const std::variant<double, int> &truncation,
                       Eigen::MatrixXd &W0, double ies_steplength,
                       int iteration_nr);
@@ -54,7 +54,7 @@ void updateA(data::Data &data,
              const Eigen::MatrixXd &Ein,
              // (d+E-Y) Ensemble of perturbed observations - Y
              const Eigen::MatrixXd &Din,
-             const ies::config::inversion_type ies_inversion,
+             const ies::inversion_type ies_inversion,
              const std::variant<double, int> &truncation,
              double ies_steplength);
 

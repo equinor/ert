@@ -22,7 +22,6 @@
 #include <variant>
 
 namespace ies {
-namespace config {
 
 constexpr double DEFAULT_TRUNCATION = 0.98;
 constexpr const char *IES_LOGFILE_KEY = "IES_LOGFILE";
@@ -50,44 +49,29 @@ typedef enum {
 class Config {
 public:
     explicit Config(bool ies_mode);
-    void truncation(double truncation);
+
     void subspace_dimension(int subspace_dimension);
-    const std::variant<double, int> &truncation() const;
-    const std::variant<double, int> &get_truncation() const {
-        return this->truncation();
-    }
+    void set_truncation(double truncation);
+    const std::variant<double, int> &get_truncation() const;
+    double get_dec_steplength() const;
+    void set_dec_steplength(double dec_step);
 
-    inversion_type inversion() const;
-    void inversion(inversion_type it);
-    inversion_type get_inversion() const { return this->inversion(); }
+    double get_steplength(int iteration_nr) const;
 
-    double max_steplength() const;
-    void max_steplength(double max_step);
-
-    double min_steplength() const;
-    void min_steplength(double min_step);
-
-    double dec_steplength() const;
-    void dec_steplength(double dec_step);
-
-    double steplength(int iteration_nr) const;
-    bool iterable() const;
+    // Controlled by config key: DEFAULT_IES_INVERSION
+    inversion_type inversion;
+    bool iterable;
+    // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
+    double max_steplength;
+    // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
+    double min_steplength;
 
 private:
+    // Used for setting threshold of eigen values or number of eigen values
     std::variant<double, int> m_truncation;
-    inversion_type
-        m_ies_inversion; // Controlled by config key: DEFAULT_IES_INVERSION
-
-    bool m_iterable;
-
-    double
-        m_ies_max_steplength; // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
-    double
-        m_ies_min_steplength; // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
-    double
-        m_ies_dec_steplength; // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
+    // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
+    double m_dec_steplength;
 };
 
-} // namespace config
 } // namespace ies
 #endif
