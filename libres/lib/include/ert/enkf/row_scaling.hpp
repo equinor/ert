@@ -13,7 +13,8 @@ public:
     double operator[](size_t index) const;
     double assign(size_t index, double value);
     double clamp(double value) const;
-    void multiply(Eigen::MatrixXd &A, const Eigen::MatrixXd &X0) const;
+    void multiply(Eigen::Ref<Eigen::MatrixXd> A,
+                  const Eigen::MatrixXd &X0) const;
     size_t size() const;
 
     void assign_vector(const float *data, size_t size);

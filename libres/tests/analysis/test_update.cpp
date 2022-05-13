@@ -28,7 +28,17 @@ void run_analysis_update_with_rowscaling(
     const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
     const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
-        &parameters);
+        &parameters) {
+    for (auto &[A, row_scaling] : parameters) {
+        int active_ens_size = S.cols();
+        Eigen::MatrixXd W0 =
+            Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
+        Eigen::MatrixXd X =
+            ies::makeX(A, S, R, E, D, module_config.inversion,
+                       module_config.get_truncation(), W0, 1, 1);
+        row_scaling->multiply(A, X);
+    }
+};
 } // namespace analysis
 const double a_true = 1.0;
 const double b_true = 5.0;

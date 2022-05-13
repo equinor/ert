@@ -36,7 +36,19 @@ public:
         has_observations = true;
     }
 
+    // These functions are needed for pybind to return a writable numpy array
+    // using pybind.
     Eigen::Ref<Eigen::MatrixXd> get_A() { return A.value(); }
+    std::vector<
+        std::pair<Eigen::Ref<Eigen::MatrixXd>, std::shared_ptr<RowScaling>>>
+    get_A_with_rowscaling() {
+        std::vector<
+            std::pair<Eigen::Ref<Eigen::MatrixXd>, std::shared_ptr<RowScaling>>>
+            tmp;
+        for (auto &[A, row_scaling] : A_with_rowscaling)
+            tmp.push_back({A, row_scaling});
+        return tmp;
+    }
 
     Eigen::MatrixXd S;
     Eigen::MatrixXd E;
