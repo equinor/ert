@@ -22,29 +22,29 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
     ies::data::Data ies_data1(testdata.active_ens_size);
-    ies::config::Config ies_config1(true);
-    ies::config::Config std_config(false);
+    ies::Config ies_config1(true);
+    ies::Config std_config(false);
 
-    ies_config1.truncation(0.95);
-    ies_config1.min_steplength(1.0);
-    ies_config1.max_steplength(1.0);
-    ies_config1.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    ies_config1.set_truncation(0.95);
+    ies_config1.min_steplength = 1.0;
+    ies_config1.max_steplength = 1.0;
+    ies_config1.inversion = ies::IES_INVERSION_SUBSPACE_EXACT_R;
 
-    std_config.truncation(0.95);
-    std_config.inversion(ies::config::IES_INVERSION_SUBSPACE_EXACT_R);
+    std_config.set_truncation(0.95);
+    std_config.inversion = ies::IES_INVERSION_SUBSPACE_EXACT_R;
 
     ies::init_update(ies_data1, testdata.ens_mask, testdata.obs_mask);
     int iteration_nr = ies_data1.inc_iteration_nr();
     ies::updateA(ies_data1, A1, testdata.S, testdata.R, testdata.E, testdata.D,
-                 ies_config1.inversion(), ies_config1.truncation(),
-                 ies_config1.steplength(iteration_nr));
+                 ies_config1.inversion, ies_config1.get_truncation(),
+                 ies_config1.get_steplength(iteration_nr));
 
     int active_ens_size = A2.cols();
     Eigen::MatrixXd W0 =
         Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
     Eigen::MatrixXd X =
         ies::makeX(A2, testdata.S, testdata.R, testdata.E, testdata.D,
-                   std_config.inversion(), std_config.truncation(), W0, 1, 1);
+                   std_config.inversion, std_config.get_truncation(), W0, 1, 1);
 
     A2 *= X;
     test_assert_true(A1.isApprox(A2, 5e-6));

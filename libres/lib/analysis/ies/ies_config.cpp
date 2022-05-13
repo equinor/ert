@@ -28,66 +28,41 @@
 #define DEFAULT_IES_MIN_STEPLENGTH 0.30
 #define DEFAULT_IES_DEC_STEPLENGTH 2.50
 #define MIN_IES_DEC_STEPLENGTH 1.1
-#define DEFAULT_IES_INVERSION ies::config::IES_INVERSION_EXACT
+#define DEFAULT_IES_INVERSION ies::IES_INVERSION_EXACT
 
-ies::config::Config::Config(bool ies_mode)
-    : m_truncation(DEFAULT_TRUNCATION), m_ies_inversion(DEFAULT_IES_INVERSION),
-      m_iterable(ies_mode), m_ies_max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
-      m_ies_min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
-      m_ies_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {}
+ies::Config::Config(bool ies_mode)
+    : m_truncation(DEFAULT_TRUNCATION), inversion(DEFAULT_IES_INVERSION),
+      iterable(ies_mode), max_steplength(DEFAULT_IES_MAX_STEPLENGTH),
+      min_steplength(DEFAULT_IES_MIN_STEPLENGTH),
+      m_dec_steplength(DEFAULT_IES_DEC_STEPLENGTH) {}
 
 /*------------------------------------------------------------------------------------------------*/
 /* TRUNCATION -> SUBSPACE_DIMENSION */
 
-const std::variant<double, int> &ies::config::Config::truncation() const {
+const std::variant<double, int> &ies::Config::get_truncation() const {
     return this->m_truncation;
 }
 
-void ies::config::Config::truncation(double truncation) {
+void ies::Config::set_truncation(double truncation) {
     this->m_truncation = truncation;
 }
 
-void ies::config::Config::subspace_dimension(int subspace_dimension) {
+void ies::Config::subspace_dimension(int subspace_dimension) {
     this->m_truncation = subspace_dimension;
 }
 
-double ies::config::Config::max_steplength() const {
-    return this->m_ies_max_steplength;
+double ies::Config::get_dec_steplength() const {
+    return this->m_dec_steplength;
 }
 
-void ies::config::Config::max_steplength(double max_step) {
-    this->m_ies_max_steplength = max_step;
+void ies::Config::set_dec_steplength(double dec_step) {
+    this->m_dec_steplength = std::max(dec_step, MIN_IES_DEC_STEPLENGTH);
 }
 
-double ies::config::Config::min_steplength() const {
-    return this->m_ies_min_steplength;
-}
-
-void ies::config::Config::min_steplength(double min_step) {
-    this->m_ies_min_steplength = min_step;
-}
-
-double ies::config::Config::dec_steplength() const {
-    return this->m_ies_dec_steplength;
-}
-
-void ies::config::Config::dec_steplength(double dec_step) {
-    this->m_ies_dec_steplength = std::max(dec_step, MIN_IES_DEC_STEPLENGTH);
-}
-
-/*------------------------------------------------------------------------------------------------*/
-/* IES_INVERSION          */
-ies::config::inversion_type ies::config::Config::inversion() const {
-    return this->m_ies_inversion;
-}
-void ies::config::Config::inversion(ies::config::inversion_type it) {
-    this->m_ies_inversion = it;
-}
-
-double ies::config::Config::steplength(int iteration_nr) const {
-    double ies_max_step = this->m_ies_max_steplength;
-    double ies_min_step = this->m_ies_min_steplength;
-    double ies_decline_step = this->m_ies_dec_steplength;
+double ies::Config::get_steplength(int iteration_nr) const {
+    double ies_max_step = this->max_steplength;
+    double ies_min_step = this->min_steplength;
+    double ies_decline_step = this->m_dec_steplength;
 
     /*
       This is an implementation of Eq. (49) from the book:
@@ -103,24 +78,19 @@ double ies::config::Config::steplength(int iteration_nr) const {
     return ies_steplength;
 }
 
-bool ies::config::Config::iterable() const { return this->m_iterable; }
-
 RES_LIB_SUBMODULE("ies", m) {
     using namespace py::literals;
-    py::class_<ies::config::Config, std::shared_ptr<ies::config::Config>>(
-        m, "Config")
+    py::class_<ies::Config, std::shared_ptr<ies::Config>>(m, "Config")
         .def(py::init<bool>())
-        .def("step_length", &ies::config::Config::steplength)
-        .def("iterable", &ies::config::Config::iterable)
-        .def("inversion", &ies::config::Config::get_inversion)
-        .def("truncation", &ies::config::Config::get_truncation);
+        .def("get_steplength", &ies::Config::get_steplength)
+        .def("get_truncation", &ies::Config::get_truncation)
+        .def_readwrite("iterable", &ies::Config::iterable)
+        .def_readwrite("inversion", &ies::Config::inversion);
 
-    py::enum_<ies::config::inversion_type>(m, "inversion_type")
-        .value("EXACT", ies::config::inversion_type::IES_INVERSION_EXACT)
-        .value("EE_R", ies::config::inversion_type::IES_INVERSION_SUBSPACE_EE_R)
-        .value("EXACT_R",
-               ies::config::inversion_type::IES_INVERSION_SUBSPACE_EXACT_R)
-        .value("SUBSPACE_RE",
-               ies::config::inversion_type::IES_INVERSION_SUBSPACE_RE)
+    py::enum_<ies::inversion_type>(m, "inversion_type")
+        .value("EXACT", ies::inversion_type::IES_INVERSION_EXACT)
+        .value("EE_R", ies::inversion_type::IES_INVERSION_SUBSPACE_EE_R)
+        .value("EXACT_R", ies::inversion_type::IES_INVERSION_SUBSPACE_EXACT_R)
+        .value("SUBSPACE_RE", ies::inversion_type::IES_INVERSION_SUBSPACE_RE)
         .export_values();
 }

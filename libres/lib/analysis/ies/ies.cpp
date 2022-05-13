@@ -71,13 +71,12 @@ void ies::init_update(ies::data::Data &module_data,
     module_data.update_obs_mask(obs_mask);
 }
 
-Eigen::MatrixXd ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
-                           const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
-                           const Eigen::MatrixXd &D,
-                           const ies::config::inversion_type ies_inversion,
-                           const std::variant<double, int> &truncation,
-                           Eigen::MatrixXd &W0, double ies_steplength,
-                           int iteration_nr)
+Eigen::MatrixXd
+ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
+           const Eigen::MatrixXd &R, const Eigen::MatrixXd &E,
+           const Eigen::MatrixXd &D, const ies::inversion_type ies_inversion,
+           const std::variant<double, int> &truncation, Eigen::MatrixXd &W0,
+           double ies_steplength, int iteration_nr)
 
 {
     const int ens_size = Y0.cols();
@@ -141,10 +140,10 @@ Eigen::MatrixXd ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
      * ies_inversion=IES_INVERSION_SUBSPACE_RE(3)      -> subspace inversion from (a) with R represented by E
      */
 
-    if (ies_inversion != ies::config::IES_INVERSION_EXACT) {
+    if (ies_inversion != ies::IES_INVERSION_EXACT) {
         ies::linalg_subspace_inversion(W0, ies_inversion, E, R, S, H,
                                        truncation, ies_steplength);
-    } else if (ies_inversion == ies::config::IES_INVERSION_EXACT) {
+    } else if (ies_inversion == ies::IES_INVERSION_EXACT) {
         ies::linalg_exact_inversion(W0, ies_inversion, S, H, ies_steplength);
     }
 
@@ -182,7 +181,7 @@ void ies::updateA(data::Data &data,
                   const Eigen::MatrixXd &Ein,
                   // (d+E-Y) Ensemble of perturbed observations - Y
                   const Eigen::MatrixXd &Din,
-                  const ies::config::inversion_type ies_inversion,
+                  const ies::inversion_type ies_inversion,
                   const std::variant<double, int> &truncation,
                   double ies_steplength) {
 
@@ -284,19 +283,19 @@ void ies::linalg_subspace_inversion(
         nrobs, std::min(ens_size, nrobs)); // Used in subspace inversion
     Eigen::VectorXd eig(ens_size);
 
-    if (ies_inversion == config::IES_INVERSION_SUBSPACE_RE) {
+    if (ies_inversion == IES_INVERSION_SUBSPACE_RE) {
         Eigen::MatrixXd scaledE = E;
         scaledE *= nsc;
         enkf_linalg_lowrankE(S, scaledE, X1, eig, truncation);
 
-    } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EE_R) {
+    } else if (ies_inversion == IES_INVERSION_SUBSPACE_EE_R) {
         Eigen::MatrixXd Et = E.transpose();
         MatrixXd Cee = E * Et;
         Cee *= 1.0 / ((ens_size - 1) * (ens_size - 1));
 
         enkf_linalg_lowrankCinv(S, Cee, X1, eig, truncation);
 
-    } else if (ies_inversion == config::IES_INVERSION_SUBSPACE_EXACT_R) {
+    } else if (ies_inversion == IES_INVERSION_SUBSPACE_EXACT_R) {
         Eigen::MatrixXd scaledR = R;
         scaledR *= nsc * nsc;
         enkf_linalg_lowrankCinv(S, scaledR, X1, eig, truncation);

@@ -102,7 +102,7 @@ def analysis_smoother_update(
             module_data = analysis_module.get_module_data(module)
 
             if update_data.A is not None:
-                if module_config.iterable():
+                if module_config.iterable:
                     ies.init_update(module_data, ens_mask, update_data.obs_mask)
                     iteration_nr = module_data.inc_iteration_nr()
 
@@ -113,9 +113,9 @@ def analysis_smoother_update(
                         update_data.R,
                         update_data.E,
                         update_data.D,
-                        ies_inversion=module_config.inversion(),
-                        truncation=module_config.truncation(),
-                        step_length=module_config.step_length(iteration_nr),
+                        ies_inversion=module_config.inversion,
+                        truncation=module_config.get_truncation(),
+                        step_length=module_config.get_steplength(iteration_nr),
                     )
                 else:
                     X = ies.make_X(
@@ -124,8 +124,8 @@ def analysis_smoother_update(
                         update_data.E,
                         update_data.D,
                         update_data.A,
-                        ies_inversion=module_config.inversion(),
-                        truncation=module_config.truncation(),
+                        ies_inversion=module_config.inversion,
+                        truncation=module_config.get_truncation(),
                     )
                     update_data.A = update_data.A @ X
 

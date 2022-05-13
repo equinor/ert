@@ -253,7 +253,7 @@ load_row_scaling_parameters(enkf_fs_type *target_fs,
 Run the row-scaling enabled update algorithm on a set of A matrices.
 */
 void run_analysis_update_with_rowscaling(
-    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const ies::Config &module_config, ies::data::Data &module_data,
     const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
     const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
@@ -265,7 +265,7 @@ void run_analysis_update_with_rowscaling(
         throw std::logic_error("No parameter matrices provided for analysis "
                                "update with rowscaling");
 
-    if (module_config.iterable()) {
+    if (module_config.iterable) {
         throw std::logic_error("Sorry - row scaling for distance based "
                                "localization can not be combined with "
                                "analysis modules which update the A matrix");
@@ -275,8 +275,9 @@ void run_analysis_update_with_rowscaling(
         int active_ens_size = S.cols();
         Eigen::MatrixXd W0 =
             Eigen::MatrixXd::Zero(active_ens_size, active_ens_size);
-        Eigen::MatrixXd X = ies::makeX(A, S, R, E, D, module_config.inversion(),
-                                       module_config.truncation(), W0, 1, 1);
+        Eigen::MatrixXd X =
+            ies::makeX(A, S, R, E, D, module_config.inversion,
+                       module_config.get_truncation(), W0, 1, 1);
         row_scaling->multiply(A, X);
     }
 }
@@ -449,7 +450,7 @@ static void save_parameters_pybind(py::object target_fs,
 }
 
 static void run_analysis_update_with_rowscaling_pybind(
-    const ies::config::Config &module_config, ies::data::Data &module_data,
+    const ies::Config &module_config, ies::data::Data &module_data,
     analysis::update_data_type &update_data) {
 
     analysis::run_analysis_update_with_rowscaling(
