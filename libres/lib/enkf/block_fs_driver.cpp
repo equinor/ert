@@ -117,47 +117,6 @@ static char *block_fs_driver_alloc_vector_key(const char *node_key, int iens) {
     return key;
 }
 
-/*
-   This function will take an input string, and try to to parse it as
-   string.int.int, where string is the normal enkf key, and the two
-   integers are report_step and ensemble number respectively. The
-   storage for the enkf_key is allocated here in this function, and
-   must be freed by the calling scope.
-
-   If the parsing fails the function will return false, and *config_key
-   will be set to NULL; in this case the report_step and iens poinyers
-   will not be touched.
-*/
-
-bool block_fs_sscanf_key(const char *key, char **config_key, int *__report_step,
-                         int *__iens) {
-    char **tmp;
-    int num_items;
-
-    *config_key = NULL;
-    util_split_string(
-        key, ".", &num_items,
-        &tmp); /* The key can contain additional '.' - can not use sscanf(). */
-    if (num_items >= 3) {
-        int report_step, iens;
-        if (util_sscanf_int(tmp[num_items - 2], &report_step) &&
-            util_sscanf_int(tmp[num_items - 1], &iens)) {
-            /* OK - all is hunkadory */
-            *__report_step = report_step;
-            *__iens = iens;
-            *config_key = util_alloc_joined_string(
-                (const char **)tmp, num_items - 2,
-                "."); /* This must bee freed by the calling scope */
-            util_free_stringlist(tmp, num_items);
-            return true;
-        } else
-            /* Failed to parse the two last items as integers. */
-            return false;
-    } else
-        /* Did not have at least three items. */
-        return false;
-}
-
 bfs_type *ert::block_fs_driver::get_fs(int iens) {
     int phase = (iens % this->num_fs);
     return this->fs_list[phase];
