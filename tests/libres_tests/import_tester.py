@@ -12,17 +12,17 @@ class ImportTester:
                 # python 3 hack
                 return True
             else:
-                print("Importing module %s." % str(module))
+                print(f"Importing module {module}.")
             __import__(module)
             return True
         except ImportError:
             tb = traceback.format_exc()
-            sys.stderr.write("Error importing module %s!\n\n" % module)
+            sys.stderr.write(f"Error importing module {module}!\n\n")
             sys.stderr.write(str(tb))
             sys.stderr.write("\n")
         except Exception:
             tb = traceback.format_exc()
-            sys.stderr.write("Import of module %s caused errors!\n\n" % module)
+            sys.stderr.write(f"Import of module {module} caused errors!\n\n")
             sys.stderr.write(str(tb))
             sys.stderr.write("\n")
 
@@ -39,7 +39,7 @@ class ImportTester:
 
             entry_path = os.path.join(path, entry)
             if os.path.isdir(entry_path):
-                package = "%s.%s" % (package_name, entry)
+                package = f"{package_name}.{entry}"
                 import_success = ImportTester.testImport(package)
                 new_path = os.path.join(path, entry)
                 import_success = import_success and ImportTester.importRecursively(
@@ -48,9 +48,7 @@ class ImportTester:
             elif os.path.isfile(entry_path):
                 if not entry.startswith("__init__") and entry.endswith(".py"):
                     module = entry[0 : len(entry) - 3]
-                    import_success = ImportTester.testImport(
-                        "%s.%s" % (package_name, module)
-                    )
+                    import_success = ImportTester.testImport(f"{package_name}.{module}")
             else:
                 # skip other files
                 pass

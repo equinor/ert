@@ -25,7 +25,7 @@ class ActiveRealizationsModelTest(ErtTest):
                 nospaces(rngstr),
                 nospaces(expected),
                 msg=(
-                    "Mask {} was converted to {} which is different from the "
-                    "expected range {}"
-                ).format(mask, rngstr, expected),
+                    f"Mask {mask} was converted to {rngstr} which is different "
+                    f"from the expected range {expected}"
+                ),
             )

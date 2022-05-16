@@ -76,7 +76,7 @@ class ErtTemplatesTest(ResTest):
             )
             self.assertEqual(template.get_target_file(), configured_template[1])
             expected_arg_string = ", ".join(
-                ["{}={}".format(key, val) for key, val in configured_template[2]]
+                [f"{key}={val}" for key, val in configured_template[2]]
             )
             self.assertEqual(expected_arg_string, template.get_args_as_string())
 
@@ -116,11 +116,9 @@ class ErtTemplatesTest(ResTest):
             config.write("NUM_REALIZATIONS  1\n")
 
             for template, target, args in self.config_data[ConfigKeys.RUN_TEMPLATE]:
-                argstring = " ".join("{}:{}".format(key, val) for key, val in args)
+                argstring = " ".join(f"{key}:{val}" for key, val in args)
                 config.write(
-                    "{} {} {} {}\n".format(
-                        ConfigKeys.RUN_TEMPLATE, template, target, argstring
-                    )
+                    f"{ConfigKeys.RUN_TEMPLATE} {template} {target} {argstring}\n"
                 )
 
     def make_empty_file(self, filename):

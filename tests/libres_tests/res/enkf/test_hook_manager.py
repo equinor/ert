@@ -132,11 +132,11 @@ class HookManagerTest(ResTest):
                 ):
                     continue
                 if isinstance(val, str):
-                    config.write("{} {}\n".format(key, val))
+                    config.write(f"{key} {val}\n")
                 else:
                     # assume this is the list of tuple for hook workflows
                     for val1, val2 in val:
-                        config.write("{} {} {}\n".format(key, val1, val2))
+                        config.write(f"{key} {val1} {val2}\n")
 
     def make_empty_file(self, filename):
         open(filename, "a").close()

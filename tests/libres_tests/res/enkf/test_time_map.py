@@ -18,7 +18,6 @@ class TimeMapTest(ResTest):
 
         pfx = "TimeMap("
         rep = repr(tm)
-        print('repr(time_map) = "%s"' % repr(tm))
         self.assertEqual(pfx, rep[: len(pfx)])
 
         self.assertTrue(tm.update(0, datetime.date(2000, 1, 1)))

@@ -381,8 +381,8 @@ class EclRunTest(ResTest):
         ecl_run = EclRun("SPE1.DATA", sim)
         ecl_run.runEclipse()
 
-        ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
-        log_path = os.path.join(ecl_run.runPath(), "{}.LOG".format(ecl_run.baseName()))
+        ok_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OK")
+        log_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.LOG")
 
         self.assertTrue(os.path.isfile(ok_path))
         self.assertTrue(os.path.isfile(log_path))
@@ -414,8 +414,8 @@ class EclRunTest(ResTest):
         ecl_run = EclRun("SPE1.DATA", sim)
         ecl_run.runEclipse()
 
-        ok_path = os.path.join(ecl_run.runPath(), "{}.OK".format(ecl_run.baseName()))
-        log_path = os.path.join(ecl_run.runPath(), "{}.OUT".format(ecl_run.baseName()))
+        ok_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OK")
+        log_path = os.path.join(ecl_run.runPath(), f"{ecl_run.baseName()}.OUT")
 
         self.assertTrue(os.path.isfile(ok_path))
         self.assertTrue(os.path.isfile(log_path))

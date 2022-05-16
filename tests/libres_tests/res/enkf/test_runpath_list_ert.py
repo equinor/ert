@@ -26,8 +26,8 @@ def test_assert_symlink_deleted(setup_case):
     runner.createRunPath(run_context)
 
     # replace field file with symlink
-    linkpath = "%s/permx.grdcel" % str(runpath_list[0].runpath)
-    targetpath = "%s/permx.grdcel.target" % str(runpath_list[0].runpath)
+    linkpath = f"{runpath_list[0].runpath}/permx.grdcel"
+    targetpath = f"{runpath_list[0].runpath}/permx.grdcel.target"
     open(targetpath, "a").close()
     os.remove(linkpath)
     os.symlink(targetpath, linkpath)

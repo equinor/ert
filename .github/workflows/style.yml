@@ -58,6 +58,7 @@ jobs:
             consider-using-dict-iterms, \
             consider-using-enumerate, \
             consider-using-enumerate, \
+            consider-using-f-string
             consider-using-from-import, \
             consider-using-generator, \
             consider-using-min-builtin, \
@@ -91,5 +92,3 @@ jobs:
             useless-super-delegation, \
             " \
           docs ert_data ert_gui ert_logging ert_shared job_runner res tests/*
-        pylint --disable=all \
-          --enable="consider-using-f-string" ert_data ert_gui job_runner res

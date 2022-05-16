@@ -119,22 +119,23 @@ class SubstConfigTest(ResTest):
 
             # write the rest of the relevant config items to the file
             config.write(
-                "{} {}\n".format(
-                    ConfigKeys.RUNPATH_FILE, self.config_data[ConfigKeys.RUNPATH_FILE]
-                )
+                f"{ConfigKeys.RUNPATH_FILE} "
+                f"{self.config_data[ConfigKeys.RUNPATH_FILE]}\n"
             )
             defines = self.config_data[ConfigKeys.DEFINE_KEY]
             for key in defines:
                 val = defines[key]
-                config.write("{} {} {}\n".format(ConfigKeys.DEFINE_KEY, key, val))
+                config.write(f"{ConfigKeys.DEFINE_KEY} {key} {val}\n")
             data_kws = self.config_data[ConfigKeys.DATA_KW_KEY]
             for key in data_kws:
                 val = data_kws[key]
-                config.write("{} {} {}\n".format(ConfigKeys.DATA_KW_KEY, key, val))
-            config.write(
-                "{} {}\n".format(
-                    ConfigKeys.DATA_FILE, self.config_data[ConfigKeys.DATA_FILE]
+                config.write(
+                    f"{ConfigKeys.DATA_KW_KEY} {key} {val}\n".format(
+                        ConfigKeys.DATA_KW_KEY, key, val
+                    )
                 )
+            config.write(
+                f"{ConfigKeys.DATA_FILE} {self.config_data[ConfigKeys.DATA_FILE]}\n"
             )
 
 

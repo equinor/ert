@@ -9,7 +9,7 @@ class RunTest(ResTest):
     def setUp(self):
         # Slightly weird - tests need existing file,
         # but it can be empty ....
-        self.testConfig = "/tmp/config-%06d" % random.randint(100000, 999999)
+        self.testConfig = f"/tmp/config-{random.randint(100000, 999999):06d}"
         with open(self.testConfig, "w"):
             pass
 

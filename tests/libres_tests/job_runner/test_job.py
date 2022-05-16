@@ -41,7 +41,7 @@ class JobTests(TestCase):
                 "executable": "/bin/bash",
                 "stdout": "exit_out",
                 "stderr": "exit_err",
-                "argList": ["-c", 'echo "failed with {}" 1>&2 ; exit {}'.format(1, 1)],
+                "argList": ["-c", 'echo "failed with 1" 1>&2 ; exit 1'],
             },
             0,
         )

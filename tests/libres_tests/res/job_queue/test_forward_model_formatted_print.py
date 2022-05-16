@@ -163,7 +163,7 @@ def _generate_job(
     conf = open(config_file, "w")
     for key, val in zip(ext_job_keywords, values):
         if val is not None:
-            conf.write("%s %s\n" % (key, val))
+            conf.write(f"{key} {val}\n")
     conf.close()
 
     exec_file = open(executable, "w")
@@ -213,14 +213,14 @@ def load_configs(config_file):
 def create_std_file(config, std="stdout", job_index=None):
     if job_index is None:
         if config[std]:
-            return "{}".format(config[std])
+            return f"{config[std]}"
         else:
-            return "{}.{}".format(config["name"], std)
+            return f'{config["name"]}.{std}'
     else:
         if config[std]:
-            return "{}.{}".format(config[std], job_index)
+            return f"{config[std]}.{job_index}"
         else:
-            return "{}.{}.{}".format(config["name"], std, job_index)
+            return f'{config["name"]}.{std}.{job_index}'
 
 
 class ForwardModelFormattedPrintTest(ResTest):
@@ -408,7 +408,7 @@ class ForwardModelFormattedPrintTest(ResTest):
         first_value = "TheFirstValue"
         second_value = "TheSecondValue"
         third_value = "$FIRST:$SECOND"
-        third_value_correct = "%s:%s" % (first_value, second_value)
+        third_value_correct = f"{first_value}:{second_value}"
         varlist = EnvironmentVarlist()
         varlist[first] = first_value
         varlist[second] = second_value

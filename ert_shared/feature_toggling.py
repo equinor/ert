@@ -29,9 +29,9 @@ class FeatureToggling:
     def add_feature_toggling_args(parser):
         for feature_name in FeatureToggling._conf.keys():
             parser.add_argument(
-                "--{}".format(FeatureToggling._get_arg_name(feature_name)),
+                f"--{FeatureToggling._get_arg_name(feature_name)}",
                 action="store_true",
-                help="Toggle {} (Warning: This is experimental)".format(feature_name),
+                help=f"Toggle {feature_name} (Warning: This is experimental)",
                 default=False,
             )
 
@@ -58,7 +58,7 @@ class FeatureToggling:
     def _get_arg_name(feature_name):
         default_state = FeatureToggling._conf[feature_name].is_enabled
         arg_default_state = "disable" if default_state else "enable"
-        return "{}-{}".format(arg_default_state, feature_name)
+        return f"{arg_default_state}-{feature_name}"
 
     @staticmethod
     def reset():

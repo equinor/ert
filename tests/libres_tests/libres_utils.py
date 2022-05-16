@@ -51,7 +51,7 @@ def tmp(path=None, teardown=True):
     if path:
         if not os.path.isdir(path):
             logging.debug("tmp:raise no such path")
-            raise IOError("No such directory: %s" % path)
+            raise IOError(f"No such directory: {path}")
         shutil.copytree(path, fname)
     else:
         # no path to copy, create empty dir
@@ -67,7 +67,7 @@ def tmp(path=None, teardown=True):
         try:
             shutil.rmtree(fname)
         except OSError as oserr:
-            logging.debug("tmp:rmtree failed %s (%s)" % (fname, oserr))
+            logging.debug(f"tmp:rmtree failed {fname} ({oserr})")
             shutil.rmtree(fname, ignore_errors=True)
 
 

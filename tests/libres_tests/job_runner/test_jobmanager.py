@@ -109,8 +109,8 @@ class JobRunnerTest(TestCase):
 
         for status in enumerate(jobm.run([])):
             if isinstance(status, Start):
-                self.assertEqual(status.job.std_err, "err.{}".format(status.job.index))
-                self.assertEqual(status.job.std_out, "out.{}".format(status.job.index))
+                self.assertEqual(status.job.std_err, f"err.{status.job.index}")
+                self.assertEqual(status.job.std_out, f"out.{status.job.index}")
 
     @tmpdir(None)
     def test_run_multiple_ok(self):
@@ -120,8 +120,8 @@ class JobRunnerTest(TestCase):
             job = {
                 "name": "MKDIR",
                 "executable": "/bin/mkdir",
-                "stdout": "mkdir_out.{}".format(job_index),
-                "stderr": "mkdir_err.{}".format(job_index),
+                "stdout": f"mkdir_out.{job_index}",
+                "stderr": f"mkdir_err.{job_index}",
                 "argList": ["-p", "-v", job_index],
             }
             joblist.append(job)
@@ -136,9 +136,9 @@ class JobRunnerTest(TestCase):
 
         for dir_number in dir_list:
             self.assertTrue(os.path.isdir(dir_number))
-            self.assertTrue(os.path.isfile("mkdir_out.{}".format(dir_number)))
-            self.assertTrue(os.path.isfile("mkdir_err.{}".format(dir_number)))
-            self.assertEqual(0, os.path.getsize("mkdir_err.{}".format(dir_number)))
+            self.assertTrue(os.path.isfile(f"mkdir_out.{dir_number}"))
+            self.assertTrue(os.path.isfile(f"mkdir_err.{dir_number}"))
+            self.assertEqual(0, os.path.getsize(f"mkdir_err.{dir_number}"))
 
     @tmpdir(None)
     def test_run_multiple_fail_only_runs_one(self):
@@ -152,7 +152,7 @@ class JobRunnerTest(TestCase):
                 # produces something on stderr, and exits with
                 "argList": [
                     "-c",
-                    'echo "failed with {}" 1>&2 ; exit {}'.format(index, index),
+                    f'echo "failed with {index}" 1>&2 ; exit {index}',
                 ],
             }
             joblist.append(job)

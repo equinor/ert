@@ -33,14 +33,14 @@ class IntegerArgumentTest(ErtTest):
         from_value = 99
         integer = IntegerArgument(from_value=from_value)
 
-        validation_status = integer.validate("%d" % from_value)
+        validation_status = integer.validate(f"{from_value}")
         self.assertTrue(validation_status)
 
         value = 98
-        validation_status = integer.validate("%d" % value)
+        validation_status = integer.validate(f"{value}")
         self.assertFalse(validation_status)
 
-        range_string = "%d <= %d" % (from_value, value)
+        range_string = f"{from_value} <= {value}"
         self.assertEqual(
             validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
         )
@@ -49,14 +49,14 @@ class IntegerArgumentTest(ErtTest):
         to_value = 99
         integer = IntegerArgument(to_value=to_value)
 
-        validation_status = integer.validate("%d" % to_value)
+        validation_status = integer.validate(f"{to_value}")
         self.assertTrue(validation_status)
 
         value = 100
-        validation_status = integer.validate("%d" % value)
+        validation_status = integer.validate(f"{value}")
         self.assertFalse(validation_status)
 
-        range_string = "%d <= %d" % (value, to_value)
+        range_string = f"{value} <= {to_value}"
         self.assertEqual(
             validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
         )
@@ -66,29 +66,29 @@ class IntegerArgumentTest(ErtTest):
         to_value = 20
         integer = IntegerArgument(from_value=from_value, to_value=to_value)
 
-        validation_status = integer.validate("%d" % to_value)
+        validation_status = integer.validate(f"{to_value}")
         self.assertTrue(validation_status)
 
-        validation_status = integer.validate("%d" % from_value)
+        validation_status = integer.validate(f"{from_value}")
         self.assertTrue(validation_status)
 
-        validation_status = integer.validate("%d" % 15)
+        validation_status = integer.validate("15")
         self.assertTrue(validation_status)
 
         value = 9
-        validation_status = integer.validate("%d" % value)
+        validation_status = integer.validate(f"{value}")
         self.assertFalse(validation_status)
 
-        range_string = "%d <= %d <= %d" % (from_value, value, to_value)
+        range_string = f"{from_value} <= {value} <= {to_value}"
         self.assertEqual(
             validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
         )
 
         value = 21
-        validation_status = integer.validate("%d" % value)
+        validation_status = integer.validate(f"{value}")
         self.assertFalse(validation_status)
 
-        range_string = "%d <= %d <= %d" % (from_value, value, to_value)
+        range_string = f"{from_value} <= {value} <= {to_value}"
         self.assertEqual(
             validation_status.message(), IntegerArgument.NOT_IN_RANGE % range_string
         )

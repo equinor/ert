@@ -78,7 +78,7 @@ class FileReporterTests(TestCase):
 
         with open(self.reporter.STATUS_file, "r") as f:
             self.assertIn(
-                "EXIT: {}/{}".format(-10, "massive_failure"),
+                "EXIT: -10/massive_failure",
                 f.readline(),
                 "STATUS file missing EXIT message",
             )
@@ -122,7 +122,7 @@ class FileReporterTests(TestCase):
         self.reporter.report(msg)
 
         with open(self.reporter.STATUS_file, "r") as f:
-            self.assertIn("EXIT: {}/{}".format(1, "massive_failure"), f.readline())
+            self.assertIn("EXIT: 1/massive_failure", f.readline())
         with open(self.reporter.ERROR_file, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn("<job>job1</job>", contents, "ERROR file missing job")
@@ -217,7 +217,7 @@ class FileReporterTests(TestCase):
         r._delete_old_status_files()
 
         for f in [r.ERROR_file, r.STATUS_file, r.OK_file]:
-            self.assertFalse(os.path.isfile(f), "{} was not deleted".format(r))
+            self.assertFalse(os.path.isfile(f), f"{r} was not deleted")
 
     @tmpdir(None)
     def test_status_file_is_correct(self):
@@ -238,16 +238,14 @@ class FileReporterTests(TestCase):
             self.reporter.report(msg)
 
         expected_j1_line = (
-            "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}  \n".format(  # noqa
-                j_1.name(), start_ts=start_j_1.timestamp, end_ts=exited_j_1.timestamp
-            )
+            f"{j_1.name():32}: {start_j_1.timestamp:%H:%M:%S} .... "
+            f"{exited_j_1.timestamp:%H:%M:%S}  \n"
         )
-        expected_j2_line = "{:32}: {start_ts:%H:%M:%S} .... {end_ts:%H:%M:%S}   EXIT: {code}/{msg}\n".format(  # noqa
-            j_2.name(),
-            start_ts=start_j_2.timestamp,
-            end_ts=exited_j_2.timestamp,
-            code=exited_j_2.exit_code,
-            msg=exited_j_2.error_message,
+        expected_j2_line = (
+            f"{j_2.name():32}: "
+            f"{start_j_2.timestamp:%H:%M:%S} .... "
+            f"{exited_j_2.timestamp:%H:%M:%S}   "
+            f"EXIT: {exited_j_2.exit_code}/{exited_j_2.error_message}\n"
         )
 
         with open(self.reporter.STATUS_file, "r") as f:

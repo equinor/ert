@@ -24,7 +24,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
-            raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
+            raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
         return self.ert().analysisConfig().getModule(module_name)
 
@@ -34,9 +34,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         update_id: Optional[str] = None,
     ) -> str:
-        phase_msg = "Running iteration %d of %d simulation iterations..." % (
-            run_context.get_iter(),
-            self.phaseCount() - 1,
+        phase_msg = (
+            f"Running iteration {run_context.get_iter()} of "
+            f"{self.phaseCount() - 1} simulation iterations..."
         )
         self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
 
@@ -150,9 +150,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 (
                     "Iterated ensemble smoother stopped: "
                     "maximum number of iteration retries "
-                    "(%d retries) reached for iteration %d"
+                    f"({num_retries_per_iteration} retries) reached "
+                    f"for iteration {current_iter}"
                 )
-                % (num_retries_per_iteration, current_iter)
             )
 
         return run_context

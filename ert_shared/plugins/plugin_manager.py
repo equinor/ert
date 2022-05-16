@@ -45,15 +45,13 @@ class ErtPluginManager(pluggy.PluginManager):
         response = hook()
 
         if response is None:
-            logging.debug("Got no {} config path from any plugins".format(config_name))
+            logging.debug(f"Got no {config_name} config path from any plugins")
             return None
 
         logging.debug(
-            "Got {} config path from {} ({})".format(
-                config_name,
-                response.plugin_metadata.plugin_name,
-                response.plugin_metadata.function_name,
-            )
+            f"Got {config_name} config path from "
+            f"{response.plugin_metadata.plugin_name} "
+            f"({response.plugin_metadata.function_name,})"
         )
         return response.data
 
@@ -63,9 +61,7 @@ class ErtPluginManager(pluggy.PluginManager):
         response = hook(job_name=job_name)
 
         if response is None:
-            logging.debug(
-                "Got no documentation for {} from any plugins".format(job_name)
-            )
+            logging.debug(f"Got no documentation for {job_name} from any plugins")
             return {}
 
         return response.data
@@ -97,10 +93,9 @@ class ErtPluginManager(pluggy.PluginManager):
             return []
         plugin_site_config_lines = [
             [
-                "-- Content below originated from {} ({})".format(
-                    plugin_response.plugin_metadata.plugin_name,
-                    plugin_response.plugin_metadata.function_name,
-                )
+                "-- Content below originated from "
+                f"{plugin_response.plugin_metadata.plugin_name} "
+                f"({plugin_response.plugin_metadata.function_name})"
             ]
             + plugin_response.data
             for plugin_response in plugin_responses
@@ -125,14 +120,14 @@ class ErtPluginManager(pluggy.PluginManager):
             "RMS_SITE_CONFIG": self.get_rms_config_path(),
         }
         config_lines = [
-            "SETENV {} {}".format(env_var, env_value)
+            f"SETENV {env_var} {env_value}"
             for env_var, env_value in config_env_vars.items()
             if env_value is not None
         ]
         site_config_lines.extend(config_lines + [""])
 
         install_job_lines = [
-            "INSTALL_JOB {} {}".format(job_name, job_path)
+            f"INSTALL_JOB {job_name} {job_path}"
             for job_name, job_path in self.get_installable_jobs().items()
         ]
 
@@ -141,7 +136,7 @@ class ErtPluginManager(pluggy.PluginManager):
         installable_workflow_jobs = self.get_installable_workflow_jobs()
 
         install_workflow_job_lines = [
-            "LOAD_WORKFLOW_JOB {}".format(job_path)
+            f"LOAD_WORKFLOW_JOB {job_path}"
             for job_name, job_path in installable_workflow_jobs.items()
         ]
         site_config_lines.extend(install_workflow_job_lines + [""])
@@ -153,10 +148,9 @@ class ErtPluginManager(pluggy.PluginManager):
         conflicting_keys = set(config_jobs.keys()) & set(hooked_jobs.keys())
         for ck in conflicting_keys:
             logging.info(
-                (
-                    "Duplicate key: {} in workflow hook implementations, "
-                    "config path 1: {}, config path 2: {}"
-                ).format(ck, config_jobs[ck], hooked_jobs[ck])
+                f"Duplicate key: {ck} in workflow hook implementations, "
+                f"config path 1: {config_jobs[ck]}, "
+                f"config path 2: {hooked_jobs[ck]}"
             )
         merged_jobs = config_jobs.copy()
         merged_jobs.update(hooked_jobs)
@@ -174,13 +168,11 @@ class ErtPluginManager(pluggy.PluginManager):
             conflicting_keys = set(merged_dict.keys()) & set(d.data.keys())
             for ck in conflicting_keys:
                 logging.info(
-                    "Overwriting {} from {}({}) with data from {}({})".format(
-                        ck,
-                        merged_dict[ck][1].plugin_name,
-                        merged_dict[ck][1].function_name,
-                        d.plugin_metadata.plugin_name,
-                        d.plugin_metadata.function_name,
-                    )
+                    f"Overwriting {ck} from "
+                    f"{merged_dict[ck][1].plugin_name}"
+                    f"({merged_dict[ck][1].function_name}) "
+                    f"with data from {d.plugin_metadata.plugin_name}"
+                    f"({d.plugin_metadata.function_name})"
                 )
             merged_dict.update(ErtPluginManager._add_plugin_info_to_dict(d.data, d))
 
@@ -253,15 +245,13 @@ class ErtPluginContext:
             tmp_site_config_filename = os.path.join(self.tmp_dir, "site-config")
             with open(tmp_site_config_filename, "w") as fh:
                 fh.write(site_config_content)
-            logging.debug(
-                "Temporary site-config created: {}".format(tmp_site_config_filename)
-            )
+            logging.debug(f"Temporary site-config created: {tmp_site_config_filename}")
         return tmp_site_config_filename
 
     def __enter__(self):
         logging.debug("Creating temporary directory for site-config")
         self.tmp_dir = tempfile.mkdtemp()
-        logging.debug("Temporary directory created: {}".format(self.tmp_dir))
+        logging.debug(f"Temporary directory created: {self.tmp_dir}")
         self.tmp_site_config_filename = self._create_site_config()
         env = {
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
@@ -276,21 +266,18 @@ class ErtPluginContext:
         for name, value in env.items():
             if self.backup_env.get(name) is None:
                 if value is not None:
-                    logging.debug(
-                        "Setting environment variable {}={}".format(name, value)
-                    )
+                    logging.debug(f"Setting environment variable {name}={value}")
                     os.environ[name] = value
             else:
                 logging.debug(
-                    "Environment variable already set {}={}, leaving it as is".format(
-                        name, self.backup_env.get(name)
-                    )
+                    f"Environment variable already set "
+                    f"{name}={self.backup_env.get(name)}, leaving it as is"
                 )
 
     def _reset_environment(self):
         for name, value in self.env.items():
             if self.backup_env.get(name) is None and name in os.environ:
-                logging.debug("Resetting environment variable {}".format(name))
+                logging.debug(f"Resetting environment variable {name}")
                 del os.environ[name]
 
     def __exit__(self, *args):

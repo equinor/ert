@@ -16,13 +16,13 @@ from res.job_queue import (
 
 
 def dummy_ok_callback(args):
-    print("success {}".format(args[1]))
+    print(f"success {args[1]}")
     with open(os.path.join(args[1], "OK"), "w") as f:
         f.write("success")
 
 
 def dummy_exit_callback(args):
-    print("failure {}".format(args))
+    print(f"failure {args}")
     with open("ERROR", "w") as f:
         f.write("failure")
 

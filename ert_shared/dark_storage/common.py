@@ -54,7 +54,7 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None):
     elif res.is_gen_data_key(key):
         data = res.gather_gen_data_data(case, key, realization_index).T
     else:
-        raise ValueError("no such key {}".format(key))
+        raise ValueError(f"no such key {key}")
 
     try:
         return data.astype(float)
@@ -76,16 +76,13 @@ def observations_for_obs_keys(res: LibresFacade, case, obs_keys):
         data = pd.DataFrame()
     expected_keys = ["OBS", "STD"]
     if not isinstance(data, pd.DataFrame):
-        raise TypeError(
-            "Invalid type: {}, should be type: {}".format(type(data), pd.DataFrame)
-        )
+        raise TypeError(f"Invalid type: {type(data)}, should be type: {pd.DataFrame}")
     elif data.empty:
         return []
     elif not data.empty and not set(expected_keys).issubset(data.index):
         raise ValueError(
-            "{} should be present in DataFrame index, missing: {}".format(
-                ["OBS", "STD"], set(expected_keys) - set(data.index)
-            )
+            '["OBS", "STD"] should be present in DataFrame index, '
+            f"missing: {set(expected_keys) - set(data.index)}"
         )
     else:
         observation_vectors = res.get_observations()

@@ -26,7 +26,7 @@ def create_model(ert, ensemble_size, current_case_name, args):
         )
 
     else:
-        raise NotImplementedError("Run type not supported {}".format(args.mode))
+        raise NotImplementedError(f"Run type not supported {args.mode}")
 
     return model
 
@@ -97,13 +97,13 @@ def _target_case_name(ert, args, current_case_name, format_mode=False):
         return args.target_case
 
     if not format_mode:
-        return "{}_smoother_update".format(current_case_name)
+        return f"{current_case_name}_smoother_update"
 
     aic = ert.analysisConfig().getAnalysisIterConfig()
     if aic.caseFormatSet():
         return aic.getCaseFormat()
 
-    return "{}_%d".format(current_case_name)
+    return f"{current_case_name}_%d"
 
 
 def _num_iterations(ert, args) -> None:

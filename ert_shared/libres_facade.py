@@ -203,9 +203,9 @@ class LibresFacade:
         # create history key
         if ":" in key:
             head, tail = key.split(":", 2)
-            key = "{}H:{}".format(head, tail)
+            key = f"{head}H:{tail}"
         else:
-            key = "{}H".format(key)
+            key = f"{key}H"
 
         data = self.refcase_data(key)
         if data.empty and case is not None:
