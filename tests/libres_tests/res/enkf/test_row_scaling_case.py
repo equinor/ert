@@ -67,14 +67,14 @@ def init_data(main):
     os.mkdir("fields")
     random.seed(12345)
     for i in range(num_realisations):
-        with open("fields/poro{}.grdecl".format(i), "w") as f:
+        with open(f"fields/poro{i}.grdecl", "w") as f:
             poro = random.gauss(poro_mean, poro_std)
             f.write("PORO")
             for i in range(grid.get_num_active()):
                 if i % 10 == 0:
                     f.write("\n")
 
-                f.write("{:<7.5} ".format(poro))
+                f.write(f"{poro:<7.5} ")
             f.write("\n/\n")
         bhp.append(poro * 1000 + random.gauss(0, bhp_std))
         wct.append(poro * 4 + random.gauss(0, wct_std))

@@ -45,7 +45,7 @@ class TemplatingTest(ResTest):
     def test_render_invalid(self):
         with TestAreaContext("templating"):
 
-            prod_wells = {"PROD%d" % idx: 0.3 * idx for idx in range(4)}
+            prod_wells = {f"PROD{idx}": 0.3 * idx for idx in range(4)}
             prod_in = "well_drill.json"
             with open(prod_in, "w") as fout:
                 json.dump(prod_wells, fout)
@@ -79,12 +79,11 @@ class TemplatingTest(ResTest):
     @tmpdir()
     def test_render(self):
 
-        wells = {"PROD%d" % idx: 0.2 * idx for idx in range(1, 5)}
+        wells = {f"PROD{idx}": 0.2 * idx for idx in range(1, 5)}
         wells.update(
             {
                 "INJ": [
-                    {"name": "INJ{0}".format(idx), "value": 1 - 0.2 * idx}
-                    for idx in range(1, 5)
+                    {"name": f"INJ{idx}", "value": 1 - 0.2 * idx} for idx in range(1, 5)
                 ]
             }
         )

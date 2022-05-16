@@ -75,7 +75,7 @@ def strip_error_message_and_raise_exception(validated):
 
 def valid_file(fname):
     if not os.path.isfile(fname):
-        raise ArgumentTypeError("File was not found: {}".format(fname))
+        raise ArgumentTypeError(f"File was not found: {fname}")
     return fname
 
 
@@ -177,7 +177,7 @@ def get_ert_parser(parser=None):
     parser.add_argument(
         "--version",
         action="version",
-        version="{}".format(ert_shared.__version__),
+        version=f"{ert_shared.__version__}",
     )
 
     subparsers = parser.add_subparsers(
@@ -224,7 +224,7 @@ def get_ert_parser(parser=None):
     ert_api_add_parser_options(ert_vis_parser)  # ert vis shares args with ert api
 
     # test_run_parser
-    test_run_description = "Run '{}' in cli".format(TEST_RUN_MODE)
+    test_run_description = f"Run '{TEST_RUN_MODE}' in cli"
     test_run_parser = subparsers.add_parser(
         TEST_RUN_MODE, help=test_run_description, description=test_run_description
     )
@@ -338,7 +338,7 @@ def get_ert_parser(parser=None):
     )
 
     # es_mda_parser
-    es_mda_description = "Run '{}' in cli".format(ES_MDA_MODE)
+    es_mda_description = f"Run '{ES_MDA_MODE}' in cli"
     es_mda_parser = subparsers.add_parser(
         ES_MDA_MODE, description=es_mda_description, help=es_mda_description
     )
@@ -485,7 +485,7 @@ def main():
     try:
         with start_ert_server(args.mode), ErtPluginContext() as context:
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
-            logger.info("Running ert with {}".format(str(args)))
+            logger.info(f"Running ert with {args}")
             log_config(args.config, logger)
             args.func(args)
     except ErtCliError as err:

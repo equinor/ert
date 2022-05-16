@@ -24,13 +24,13 @@ def _wait_for_completion(ctx):
     while ctx.running():
         status = ctx.status
         time.sleep(1)
-        sys.stderr.write("status: %s\n" % str(status))
+        sys.stderr.write(f"status: {status}\n")
         for job_index in range(len(ctx)):
             status = ctx.job_status(job_index)
             progress = ctx.job_progress(job_index)
             if progress:
                 for job in progress.jobs:
-                    sys.stderr.write("   %s: \n" % str(job))
+                    sys.stderr.write(f"   {job}: \n")
 
 
 class BatchSimulatorTest(ResTest):
@@ -490,7 +490,7 @@ class BatchSimulatorTest(ResTest):
             self.assertEqual(status.complete, 0)
             self.assertEqual(status.running, 0)
 
-            runpath = "storage/batch_sim/runpath/%s/realization-0" % case_name
+            runpath = f"storage/batch_sim/runpath/{case_name}/realization-0"
             self.assertTrue(os.path.exists(runpath))
 
     @tmpdir()

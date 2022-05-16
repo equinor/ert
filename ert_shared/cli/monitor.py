@@ -94,19 +94,17 @@ class Monitor:
             count = 0
             if state_ in aggregate:
                 count = aggregate[state_]
-            out = "{}{:10} {:>10}".format(
-                self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state_]),
-                state_,
-                "{}/{}".format(count, total_count),
+            _countstring = f"{count}/{total_count}"
+            out = (
+                f"{self._colorize(self.dot, fg=REAL_STATE_TO_COLOR[state_])}"
+                f"{state_:10} {_countstring:>10}"
             )
-            statuses += "    {}\n".format(out)
+            statuses += f"    {out}\n"
         return statuses
 
     def _print_result(self, failed, failed_message):
         if failed:
-            msg = "Simulations failed with the following error: {}".format(
-                failed_message
-            )
+            msg = f"Simulations failed with the following error: {failed_message}"
             print(self._colorize(msg, fg=COLOR_FAILED), file=self._out)
         else:
             print(
@@ -130,7 +128,7 @@ class Monitor:
         tqdm.write("\n", end="", file=self._out)
         with tqdm(total=100, ncols=100, bar_format=bar_format, file=self._out) as pbar:
             pbar.set_description_str(nphase, refresh=False)
-            pbar.unit = "{runtime}".format(runtime=format_running_time(elapsed.seconds))
+            pbar.unit = f"{format_running_time(elapsed.seconds)}"
             pbar.update(event.progress * 100)
         tqdm.write("\n", end="", file=self._out)
         tqdm.write(self._get_legends(), file=self._out)

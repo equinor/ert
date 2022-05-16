@@ -72,44 +72,44 @@ class PlotLimitsTest(ErtTest):
         }
 
         for attribute_name in limit_names:
-            self.assertIsNone(getattr(plot_limits, "%s_minimum" % attribute_name))
-            self.assertIsNone(getattr(plot_limits, "%s_maximum" % attribute_name))
+            self.assertIsNone(getattr(plot_limits, f"{attribute_name}_minimum"))
+            self.assertIsNone(getattr(plot_limits, f"{attribute_name}_maximum"))
             self.assertTupleEqual(
-                getattr(plot_limits, "%s_limits" % attribute_name), (None, None)
+                getattr(plot_limits, f"{attribute_name}_limits"), (None, None)
             )
 
             with self.assertNotRaises():
-                setattr(plot_limits, "%s_minimum" % attribute_name, None)
-                setattr(plot_limits, "%s_maximum" % attribute_name, None)
-                setattr(plot_limits, "%s_limits" % attribute_name, (None, None))
+                setattr(plot_limits, f"{attribute_name}_minimum", None)
+                setattr(plot_limits, f"{attribute_name}_maximum", None)
+                setattr(plot_limits, f"{attribute_name}_limits", (None, None))
 
             with self.assertRaises(TypeError):
-                setattr(plot_limits, "%s_limits" % attribute_name, None)
+                setattr(plot_limits, f"{attribute_name}_limits", None)
 
             for value in setter_should_fail_values[attribute_name]:
                 with self.assertRaises((TypeError, ValueError)):
-                    setattr(plot_limits, "%s_minimum" % attribute_name, value)
+                    setattr(plot_limits, f"{attribute_name}_minimum", value)
 
                 with self.assertRaises((TypeError, ValueError)):
-                    setattr(plot_limits, "%s_maximum" % attribute_name, value)
+                    setattr(plot_limits, f"{attribute_name}_maximum", value)
 
                 self.assertTupleEqual(
-                    getattr(plot_limits, "%s_limits" % attribute_name), (None, None)
+                    getattr(plot_limits, f"{attribute_name}_limits"), (None, None)
                 )
 
             for value in setter_should_succeed_values[attribute_name]:
                 with self.assertNotRaises():
-                    setattr(plot_limits, "%s_minimum" % attribute_name, value)
-                    setattr(plot_limits, "%s_maximum" % attribute_name, value)
+                    setattr(plot_limits, f"{attribute_name}_minimum", value)
+                    setattr(plot_limits, f"{attribute_name}_maximum", value)
 
-                minimum = getattr(plot_limits, "%s_minimum" % attribute_name)
-                maximum = getattr(plot_limits, "%s_maximum" % attribute_name)
+                minimum = getattr(plot_limits, f"{attribute_name}_minimum")
+                maximum = getattr(plot_limits, f"{attribute_name}_maximum")
 
                 self.assertEqual(minimum, value)
                 self.assertEqual(maximum, value)
 
                 self.assertTupleEqual(
-                    getattr(plot_limits, "%s_limits" % attribute_name),
+                    getattr(plot_limits, f"{attribute_name}_limits"),
                     (minimum, maximum),
                 )
 

@@ -60,7 +60,7 @@ def run_cli(args):
     ):
         msg = (
             "ERROR: Target file system and source file system can not be the same. "
-            "They were both: {}.".format(args.target_case)
+            f"They were both: {args.target_case}."
         )
         raise ErtCliError(msg)
 

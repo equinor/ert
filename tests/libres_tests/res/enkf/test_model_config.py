@@ -166,7 +166,8 @@ class ModelConfigTest(ResTest):
 
             # Any assert should per the unittest documentation be outside the
             # scope of the assertRaises with-block.
-            expected = "{} as {} is not supported".format(
-                str(HistorySourceEnum.SCHEDULE), ConfigKeys.HISTORY_SOURCE
+            expected = (
+                f"{HistorySourceEnum.SCHEDULE} as "
+                f"{ConfigKeys.HISTORY_SOURCE} is not supported"
             )
             self.assertIn(expected, str(cm.exception))

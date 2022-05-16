@@ -59,7 +59,7 @@ class RunpathListDumpTest(ResTest):
                 if not mask[i]:
                     continue
 
-                self.assertTrue(os.path.isdir("simulations/%d" % run_arg.geo_id))
+                self.assertTrue(os.path.isdir(f"simulations/{run_arg.geo_id}"))
 
             runpath_list_path = ".ert_runpath_list"
             self.assertTrue(os.path.isfile(runpath_list_path))

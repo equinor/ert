@@ -26,7 +26,7 @@ class TestEnKFFSManager2(ResTest):
 
             fs_list = []
             for index in range(EnkfFsManager.DEFAULT_CAPACITY):
-                fs_list.append(fsm.getFileSystem("fs_fill_%d" % index))
+                fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
             for fs in fs_list:
                 self.assertEqual(2, fs.refCount())
@@ -39,9 +39,9 @@ class TestEnKFFSManager2(ResTest):
 
             self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
 
-            for i in range(3 * EnkfFsManager.DEFAULT_CAPACITY):
-                fs_name = "fs_test_%d" % i
-                sys.stderr.write("Mounting: %s\n" % fs_name)
+            for index in range(3 * EnkfFsManager.DEFAULT_CAPACITY):
+                fs_name = f"fs_test_{index}"
+                sys.stderr.write(f"Mounting: {fs_name}\n")
                 fs = fsm.getFileSystem(fs_name)
                 self.assertEqual(
                     EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount()

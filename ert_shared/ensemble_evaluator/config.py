@@ -76,7 +76,7 @@ def _generate_certificate(
             x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Bergen"),
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Sandsli"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Equinor"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "{}".format(cert_name)),
+            x509.NameAttribute(NameOID.COMMON_NAME, f"{cert_name}"),
         ]
     )
     cert = (
@@ -90,7 +90,7 @@ def _generate_certificate(
         .add_extension(
             x509.SubjectAlternativeName(
                 [
-                    x509.DNSName("{}".format(cert_name)),
+                    x509.DNSName(f"{cert_name}"),
                     x509.DNSName(ip_address),
                     x509.IPAddress(ipaddress.ip_address(ip_address)),
                 ]

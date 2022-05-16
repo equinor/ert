@@ -47,7 +47,7 @@ class MultipleDataAssimilation(BaseRunModel):
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
 
         if not module_load_success:
-            raise ErtRunError("Unable to load analysis module '%s'!" % module_name)
+            raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -60,18 +60,18 @@ class MultipleDataAssimilation(BaseRunModel):
         self.setAnalysisModule(self._simulation_arguments["analysis_module"])
 
         logger.info(
-            "Running MDA ES for %s  iterations\t%s"
-            % (iteration_count, ", ".join(str(weight) for weight in weights))
+            f"Running MDA ES for {iteration_count}  "
+            f'iterations\t{", ".join(str(weight) for weight in weights)}'
         )
         weights = self.normalizeWeights(weights)
 
         weight_string = ", ".join(str(round(weight, 3)) for weight in weights)
-        logger.info("Running MDA ES on (weights normalized)\t%s" % weight_string)
+        logger.info(f"Running MDA ES on (weights normalized)\t{weight_string}")
 
         self.setPhaseCount(iteration_count + 1)  # weights + post
-        phase_string = "Running MDA ES %d iteration%s." % (
-            iteration_count,
-            ("s" if (iteration_count != 1) else ""),
+        phase_string = (
+            f"Running MDA ES {iteration_count} "
+            f'iteration{"s" if (iteration_count != 1) else ""}.'
         )
         self.setPhaseName(phase_string, indeterminate=True)
 
@@ -119,10 +119,7 @@ class MultipleDataAssimilation(BaseRunModel):
     ) -> str:
         next_iteration = run_context.get_iter() + 1
 
-        phase_string = "Analyzing iteration: %d with weight %f" % (
-            next_iteration,
-            weight,
-        )
+        phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
         es_update = self.ert().getESUpdate()
@@ -150,18 +147,18 @@ class MultipleDataAssimilation(BaseRunModel):
     ) -> Tuple[int, str]:
         iteration = run_context.get_iter()
 
-        phase_string = "Running simulation for iteration: %d" % iteration
+        phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
 
-        phase_string = "Pre processing for iteration: %d" % iteration
+        phase_string = f"Pre processing for iteration: {iteration}"
         self.setPhaseName(phase_string)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
 
         # Push ensemble, parameters, observations to new storage
         new_ensemble_id = self._post_ensemble_data(update_id=update_id)
 
-        phase_string = "Running forecast for iteration: %d" % iteration
+        phase_string = f"Running forecast for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=False)
 
         num_successful_realizations = self.run_ensemble_evaluator(
@@ -176,7 +173,7 @@ class MultipleDataAssimilation(BaseRunModel):
         )
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
-        phase_string = "Post processing for iteration: %d" % iteration
+        phase_string = f"Post processing for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
 
@@ -215,7 +212,7 @@ class MultipleDataAssimilation(BaseRunModel):
                 else:
                     result.append(f)
             except ValueError:
-                raise ValueError("Warning: cannot parse weight %s" % element)
+                raise ValueError(f"Warning: cannot parse weight {element}")
 
         return result
 
@@ -235,12 +232,10 @@ class MultipleDataAssimilation(BaseRunModel):
         source_case_name = target_case_format % itr
         if itr > 0 and not fs_manager.caseExists(source_case_name):
             raise ErtRunError(
-                "Source case {} for iteration {} does not exists. "
+                f"Source case {source_case_name} for iteration {itr} does not exists. "
                 "If you are attempting to restart ESMDA from a iteration other than 0, "
                 "make sure the target case format is the same as for the original run! "
-                "(Current target case format: {})".format(
-                    source_case_name, itr, target_case_format
-                )
+                f"(Current target case format: {target_case_format})"
             )
 
         sim_fs = fs_manager.getFileSystem(source_case_name)
