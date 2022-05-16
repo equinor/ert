@@ -62,9 +62,6 @@ private:
 };
 
 } // namespace ert
-
-bool block_fs_sscanf_key(const char *key, char **config_key, int *__report_step,
-                         int *__iens);
 void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
                                fs_driver_enum driver_type, int num_fs,
                                const char *ens_path_fmt, const char *filename);
