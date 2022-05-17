@@ -145,6 +145,7 @@ def get_degree_step(
     )
     step_builder.add_job(
         ee.JobBuilder()
+        .set_index("0")
         .set_name(f"generate_{degree_spelled}_degree")
         .set_executable(Path("evaluate_coeffs.py"))
         .set_args([f"{degree}"])
@@ -264,6 +265,7 @@ def sum_coeffs_step(test_data_path, transmitter_factory):
 
     step_builder.add_job(
         ee.JobBuilder()
+        .set_index("0")
         .set_name("sum_up")
         .set_executable(Path("sum_coeffs.py"))
         .set_args([])
@@ -308,7 +310,7 @@ def function_ensemble_builder_factory(
     transmitter_factory,
     coefficients,
 ):
-    job_builder = ee.JobBuilder().set_name("user_defined_function")
+    job_builder = ee.JobBuilder().set_name("user_defined_function").set_index("0")
 
     step_builder = ee.StepBuilder().set_name("function_evaluation").set_type("function")
 

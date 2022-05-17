@@ -3,6 +3,7 @@ import json
 import uuid
 
 import pandas as pd
+import requests
 from numpy.testing import assert_array_equal
 from requests import Response
 
@@ -164,6 +165,11 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
         "name": "COEFFS:COEFF_C",
         "userdata": {"data_origin": "GEN_KW"},
     }
+
+
+def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.post("/updates/facade")
+    assert resp.status_code == 200
 
 
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):

@@ -54,7 +54,6 @@ UpdateSnapshot make_update_snapshot(const obs_data_type *obs_data,
 
 void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
                                        meas_data_type *meas_data,
-                                       double std_cutoff, double alpha,
-                                       bool verbose);
+                                       double std_cutoff, double alpha);
 
 #endif

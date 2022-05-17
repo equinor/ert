@@ -98,7 +98,7 @@ def test_experiment_run_config_validate_stage_missing_stage_record(
 
     ensemble_dict = copy.deepcopy(base_ensemble_dict)
     ensemble_dict["input"].append(
-        {"source": "stochastic.other_coefficients", "record": "other_coefficients"}
+        {"source": "stochastic.other_coefficients", "name": "other_coefficients"}
     )
     ensemble_config = ert3.config.create_ensemble_config(
         plugin_registry=plugin_registry

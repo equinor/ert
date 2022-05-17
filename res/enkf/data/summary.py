@@ -36,7 +36,7 @@ class Summary(BaseCClass):
         return self._length()
 
     def __repr__(self):
-        return "Summary(key=%s, length=%d) %s" % (self.key, len(self), self._ad_str())
+        return f"Summary(key={self.key}, length={len(self)}) {self._ad_str()}"
 
     #  The Summary class is intended to contain results loaded from an Eclipse
     #  formatted summary file, the class has internal functionality for reading
@@ -66,9 +66,7 @@ class Summary(BaseCClass):
             raise ValueError("Invalid index")
 
         if index >= len(self):
-            raise IndexError(
-                "Invalid index:%d  Valid range: [0,%d>" % (index, len(self))
-            )
+            raise IndexError(f"Invalid index:{index}  Valid range: [0,{len(self)}>")
 
         value = self._iget_value(index)
         if value == self._undefined_value:

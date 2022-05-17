@@ -85,9 +85,7 @@ class BatchContext(SimulationContext):
         for sim_id in range(len(self)):
             node_id = NodeId(0, sim_id)
             if not self.didRealizationSucceed(sim_id):
-                logging.error(
-                    "Simulation %d (node %s) failed." % (sim_id, str(node_id))
-                )
+                logging.error(f"Simulation {sim_id} (node {str(node_id)}) failed.")
                 res.append(None)
                 continue
             d = {}

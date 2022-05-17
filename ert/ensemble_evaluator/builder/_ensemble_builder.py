@@ -2,7 +2,8 @@ import copy
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from res.enkf import EnKFState, QueueConfig
+from res import _lib
+from res.enkf import QueueConfig
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.res_config import ResConfig
@@ -128,15 +129,16 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                     step.add_job(
                         _LegacyJobBuilder()
                         .set_id(str(index))
+                        .set_index(str(index))
                         .set_name(ext_job.name())
                         .set_ext_job(ext_job)
                     )
                 step.set_max_runtime(
                     analysis_config.get_max_runtime()
                 ).set_callback_arguments((run_arg, res_config)).set_done_callback(
-                    EnKFState.forward_model_ok_callback
+                    _lib.model_callbacks.forward_model_ok
                 ).set_exit_callback(
-                    EnKFState.forward_model_exit_callback
+                    _lib.model_callbacks.forward_model_exit
                 ).set_num_cpu(
                     num_cpu
                 ).set_run_path(

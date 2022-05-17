@@ -4,5 +4,8 @@ from res.fm.shell import delete_file
 
 
 if __name__ == "__main__":
-    for file in sys.argv[1:]:
-        delete_file(file)
+    try:
+        for file in sys.argv[1:]:
+            delete_file(file)
+    except IOError as e:
+        sys.exit(f"DELETE_FILE failed with the following error: {e}")

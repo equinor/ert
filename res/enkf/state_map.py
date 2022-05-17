@@ -69,7 +69,7 @@ class StateMap(BaseCClass):
             index += size
         if 0 <= index < size:
             return self._iget(index)
-        raise IndexError("Invalid index.  Valid range: [0, %d)" % size)
+        raise IndexError(f"Invalid index. Valid range: [0, {size})")
 
     def __setitem__(self, index, value):
         if self.isReadOnly():
@@ -84,7 +84,7 @@ class StateMap(BaseCClass):
         if index < 0:
             index += len(self)
         if index < 0:
-            raise IndexError("Index out of range: %d < 0" % index)
+            raise IndexError(f"Index out of range: {index} < 0")
 
         self._iset(index, value)
 
@@ -127,11 +127,11 @@ class StateMap(BaseCClass):
 
     def __repr__(self):
         ro = "read only" if self.isReadOnly() else "read/write"
-        return "StateMap(size = %d, %s) %s" % (len(self), ro, self._ad_str())
+        return f"StateMap(size = {len(self)}, {ro}) {self._ad_str()}"
 
     def load(self, filename):
         if not self._fread(filename):
-            raise IOError("Failed to load state map from:%s" % filename)
+            raise IOError(f"Failed to load state map from:{filename}")
 
     def save(self, filename):
         self._fwrite(filename)

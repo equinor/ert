@@ -4,7 +4,9 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Type, cast
 
 import cloudpickle
-import ert
+import ert.data
+import ert.ensemble_evaluator
+import ert.storage
 import ert3
 from ert_shared.async_utils import get_event_loop
 
@@ -129,16 +131,18 @@ def build_ensemble(
         step_builder.add_job(
             ert.ensemble_evaluator.JobBuilder()
             .set_name(stage.function.__name__)
+            .set_index("0")
             .set_executable(cloudpickle.dumps(stage.function))
         )
     if isinstance(stage, ert3.config.Unix):
-        for script in stage.script:
+        for index, script in enumerate(stage.script):
             name, *args = shlex.split(script)
             step_builder.add_job(
                 ert.ensemble_evaluator.JobBuilder()
                 .set_executable(stage.command_final_path_component(name))
                 .set_args(tuple(args))
                 .set_name(name)
+                .set_index(str(index))
             )
 
     builder = (

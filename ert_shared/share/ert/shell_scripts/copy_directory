@@ -6,5 +6,7 @@ from res.fm.shell import copy_directory
 if __name__ == "__main__":
     src_path = sys.argv[1]
     target_path = sys.argv[2]
-
-    copy_directory(src_path, target_path)
+    try:
+        copy_directory(src_path, target_path)
+    except IOError as e:
+        sys.exit(f"COPY_DIRECTORY failed with the following error: {e}")

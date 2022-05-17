@@ -76,7 +76,7 @@ class GenObservation(BaseCClass):
         if obs_file is not None:
             if not os.path.isfile(obs_file):
                 raise IOError(
-                    "The file with observation data:%s does not exist" % obs_file
+                    f"The file with observation data:{obs_file} does not exist"
                 )
             else:
                 self._load(obs_file)
@@ -101,7 +101,7 @@ class GenObservation(BaseCClass):
         if 0 <= obs_index < len(self):
             return (self.getValue(obs_index), self.getStandardDeviation(obs_index))
         else:
-            raise IndexError("Invalid index.  Valid range: [0,%d)" % len(self))
+            raise IndexError(f"Invalid index.  Valid range: [0,{len(self)})")
 
     def getValue(self, obs_index):
         """@rtype: float"""
@@ -147,6 +147,4 @@ class GenObservation(BaseCClass):
         self._free()
 
     def __repr__(self):
-        si = len(self)
-        ad = self._ad_str()
-        return "GenObservation(size = %d) %s" % (si, ad)
+        return f"GenObservation(size = {len(self)}) {self._ad_str()}"

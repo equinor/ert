@@ -6,7 +6,11 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import ert
+import ert.storage
+import ert.exceptions
+import ert.data
+import ert.ensemble_evaluator
+
 import ert3
 from ert3.config import SourceNS
 from ert_shared.async_utils import get_event_loop
@@ -36,8 +40,8 @@ def _prepare_experiment(
             f"\nTo re-run, first clean the experiment: ert3 clean {experiment_name}"
         )
 
-    parameters = [elem.record for elem in ensemble.input]
-    responses = [elem.record for elem in ensemble.output]
+    parameters = [elem.name for elem in ensemble.input]
+    responses = [elem.name for elem in ensemble.output]
     ert.storage.init_experiment(
         experiment_name=experiment_name,
         parameters=parameters,
@@ -144,6 +148,7 @@ def run(
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
     local_test_run: bool = False,
+    use_gui: bool = False,
 ) -> None:
     """Run a configured experiment in a workspace.
 
@@ -154,6 +159,7 @@ def run(
         local_test_run: If set, the runpath will be in the current
             directory, with a unique id (6 digit hex). The experiment
             name as registered in storage will also contain the same id.
+        use_gui: will run the graphical version
     """
     # This reassures mypy that the ensemble size is defined
     assert experiment_run_config.ensemble_config.size is not None
@@ -249,7 +255,7 @@ def run(
         step_builder,
         active_mask,
     )
-    ert3.evaluator.evaluate(ensemble)
+    ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
 
     if local_test_run:
         print("Run")
@@ -262,6 +268,7 @@ def run_sensitivity_analysis(
     experiment_run_config: ert3.config.ExperimentRunConfig,
     workspace: ert3.workspace.Workspace,
     experiment_name: str,
+    use_gui: bool = False,
 ) -> None:
     inputs = experiment_run_config.get_linked_inputs()
     storage_inputs = tuple(inputs[SourceNS.storage].values())
@@ -338,7 +345,7 @@ def run_sensitivity_analysis(
         step_builder,
     )
 
-    output_transmitters = ert3.evaluator.evaluate(ensemble)
+    output_transmitters = ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
     analyze_sensitivity(
         stochastic_inputs,
         experiment_run_config.experiment_config,

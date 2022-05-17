@@ -8,7 +8,6 @@ from res.enkf import (
     EclConfig,
     EnkfConfigNode,
     EnKFMain,
-    EnKFState,
     ErtTemplate,
     LocalConfig,
     ResConfig,
@@ -23,7 +22,7 @@ class EnKFLibraryTest(ResTest):
         self.case_directory = self.createTestPath("local/simple_config/")
 
     def test_failed_class_creation(self):
-        classes = [EnkfConfigNode, EnKFState, ErtTemplate, LocalConfig]
+        classes = [EnkfConfigNode, ErtTemplate, LocalConfig]
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):

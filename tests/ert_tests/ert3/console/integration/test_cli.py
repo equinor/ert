@@ -1,6 +1,9 @@
 import copy
+import glob
+import json
 import os
 import pathlib
+import shutil
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -433,7 +436,7 @@ def test_cli_clean_one(workspace):
 
 
 @pytest.mark.requires_ert_storage
-def test_cli_clean_non_Existent_experiment(workspace, capsys):
+def test_cli_clean_non_existent_experiment(workspace, capsys):
     experiments_folder = workspace._path / _EXPERIMENTS_BASE
     experiments = {"E0", " E1"}
     for experiment in experiments:
@@ -453,7 +456,7 @@ def test_cli_clean_non_Existent_experiment(workspace, capsys):
 
     deleted_experiment = experiments.pop()
 
-    args = ["ert3", "clean", deleted_experiment, "non_Existent_experiment"]
+    args = ["ert3", "clean", deleted_experiment, "non_existent_experiment"]
     with patch.object(sys, "argv", args):
         ert3.console.main()
 
@@ -464,7 +467,7 @@ def test_cli_clean_non_Existent_experiment(workspace, capsys):
     captured = capsys.readouterr()
     assert (
         captured.out.strip() == "Following experiment(s) did not exist:\n"
-        "    non_Existent_experiment\n"
+        "    non_existent_experiment\n"
         "Perhaps you mistyped an experiment name?"
     )
 
@@ -609,12 +612,6 @@ def test_cli_local_test_run(tmpdir):
                 ):
                     ert3.console._console._main()
 
-            with pytest.raises(NotImplementedError):
-                with patch.object(
-                    sys, "argv", ["ert3", "run", "doe", "--local-test-run"]
-                ):
-                    ert3.console._console._main()
-
             with patch.object(
                 sys, "argv", ["ert3", "run", "evaluation", "--local-test-run"]
             ):
@@ -644,6 +641,32 @@ def test_cli_local_test_run_specific_realization(tmpdir):
             with pytest.raises(ert.exceptions.ExperimentError):
                 with patch.object(
                     sys, "argv", ["ert3", "run", "evaluation", "--realization", "2"]
+                ):
+                    ert3.console._console._main()
+
+            poly_size = yaml.safe_load(
+                pathlib.Path("experiments/evaluation/ensemble.yml").read_text(
+                    encoding="utf-8"
+                )
+            )["size"]
+            not_existing_realization = poly_size  # zero-indexed realizations
+
+            with pytest.raises(
+                ert.exceptions.ConfigValidationError,
+                match="Realization out of ensemble bounds",
+            ):
+                assert not_existing_realization > poly_size - 1
+                with patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "ert3",
+                        "run",
+                        "evaluation",
+                        "--local-test-run",
+                        "--realization",
+                        str(not_existing_realization),
+                    ],
                 ):
                     ert3.console._console._main()
 

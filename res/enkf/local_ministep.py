@@ -36,16 +36,16 @@ class LocalMinistep(BaseCClass):
             if not self._has_active_data(key):
                 self._add_active_data(key)
             else:
-                raise KeyError('Tried to add existing data key "%s".' % key)
+                raise KeyError(f'Tried to add existing data key "{key}".')
         else:
-            raise KeyError('Tried to add data key "%s" not in ensemble.' % key)
+            raise KeyError(f'Tried to add data key "{key}" not in ensemble.')
 
     def getActiveList(self, key):
         """@rtype: ActiveList"""
         if self._has_active_data(key):
             return _lib.local.ministep.get_active_data_list(self, key)
         else:
-            raise KeyError('Local key "%s" not recognized.' % key)
+            raise KeyError(f'Local key "{key}" not recognized.')
 
     def numActiveData(self):
         return self._data_size()
@@ -78,8 +78,7 @@ class LocalMinistep(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "LocalMinistep(name = %s, len = %d) at 0x%x" % (
-            self.name(),
-            len(self),
-            self._address(),
+        return (
+            f"LocalMinistep(name = {self.name()}, "
+            f"len = {len(self)}) at 0x{self._address():x}"
         )

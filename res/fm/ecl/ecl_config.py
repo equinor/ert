@@ -41,9 +41,7 @@ class Simulator:
     def __init__(self, version, executable, env, mpirun=None):
         self.version = version
         if not os.access(executable, os.X_OK):
-            raise OSError(
-                "The executable: '{}' can not be executed by user".format(executable)
-            )
+            raise OSError(f"The executable: '{executable}' can not be executed by user")
 
         self.executable = executable
         self.env = env
@@ -53,17 +51,16 @@ class Simulator:
         if mpirun is not None:
             if not os.access(mpirun, os.X_OK):
                 raise OSError(
-                    "The mpirun argument: '{}' is not executable by user".format(
-                        executable
-                    )
+                    f"The mpirun argument: '{executable}' is not executable by user"
                 )
 
     def __repr__(self):
         mpistring = ""
         if self.mpirun:
             mpistring = " MPI"
-        return "{}(version={}, executable={}{})".format(
-            self.name, self.version, self.executable, mpistring
+        return (
+            f"{self.name}(version={self.version}, "
+            f"executable={self.executable}{mpistring})"
         )
 
 
@@ -83,7 +80,7 @@ class EclConfig:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError:
-                raise ValueError("Failed parse: {} as yaml".format(config_file))
+                raise ValueError(f"Failed parse: {config_file} as yaml")
 
         self._config = config
         self._config_file = os.path.abspath(config_file)
@@ -112,9 +109,8 @@ class EclConfig:
 
         if version is None:
             raise ValueError(
-                "The default version has not not been set in the config file:{}".format(
-                    self._config_file
-                )
+                "The default version has not not been "
+                f"set in the config file:{self._config_file}"
             )
 
         return version

@@ -67,7 +67,7 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         self.ert = ert
         self.notifier = notifier
         QTabWidget.__init__(self)
-        self.setWindowTitle("Case Management")
+        self.setWindowTitle("Case management")
         self.setMinimumWidth(600)
 
         self.addCreateNewCaseTab()
@@ -243,8 +243,8 @@ class CaseInitializationConfigurationPanel(QTabWidget):
         states = list(self.ert.getEnkfFsManager().getStateMapForCase(case_name))
 
         html = "<table>"
-        for index, state in states.items():
-            html += f"<tr><td width=30>{index:d}.</td><td>{state}</td></tr>"
+        for index, value in enumerate(states):
+            html += f"<tr><td width=30>{index:d}.</td><td>{value}</td></tr>"
 
         html += "</table>"
 

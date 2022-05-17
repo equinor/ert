@@ -52,10 +52,12 @@ class TimeMapTest(ResTest):
 
         with TestAreaContext("timemap/fload2"):
             with open("map.txt", "w") as fileH:
+                # First date will trigger a DeprecationWarning
+                # on legacy date format
                 fileH.write("10/10/2000\n")
-                fileH.write("12/10/2000\n")
-                fileH.write("14/10/2000\n")
-                fileH.write("16/10/2000\n")
+                fileH.write("2000-10-12\n")
+                fileH.write("2000-10-14\n")
+                fileH.write("2000-10-16\n")
 
             tm.fload("map.txt")
             self.assertEqual(4, len(tm))
@@ -75,8 +77,8 @@ class TimeMapTest(ResTest):
 
         with TestAreaContext("timemap/fload2"):
             with open("map.txt", "w") as fileH:
-                fileH.write("12/10/2000\n")
-                fileH.write("10/10/2000\n")
+                fileH.write("2000-10-12\n")
+                fileH.write("2000-10-10\n")
 
             with self.assertRaises(Exception):
                 tm.fload("map.txt")

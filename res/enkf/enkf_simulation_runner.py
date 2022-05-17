@@ -2,8 +2,7 @@ from functools import partial
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.enkf_state import EnKFState
+from res import ResPrototype, _lib
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import JobQueueManager, RunStatusType
 
@@ -56,9 +55,9 @@ class EnkfSimulationRunner(BaseCClass):
         run_context.get_sim_fs().fsync()
 
         if totalFailed == 0:
-            print("All {} active jobs complete and data loaded.".format(totalOk))
+            print(f"All {totalOk} active jobs complete and data loaded.")
         else:
-            print("{} active job(s) failed.".format(totalFailed))
+            print(f"{totalFailed} active job(s) failed.")
 
         return totalOk
 
@@ -80,8 +79,8 @@ class EnkfSimulationRunner(BaseCClass):
         if max_runtime == 0:
             max_runtime = None
 
-        done_callback_function = EnKFState.forward_model_ok_callback
-        exit_callback_function = EnKFState.forward_model_exit_callback
+        done_callback_function = _lib.model_callbacks.forward_model_ok
+        exit_callback_function = _lib.model_callbacks.forward_model_exit
 
         # submit jobs
         for index, run_arg in enumerate(run_context):

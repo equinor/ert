@@ -9,7 +9,7 @@ from typing import Any, List, Union
 
 import pkg_resources as pkg
 
-import ert
+import ert.storage
 import ert3
 from ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
 from ert3.workspace import Workspace
@@ -53,6 +53,17 @@ def _build_run_argparser(subparsers: Any) -> None:
         help=(
             "Which realization to run for local test runs. Must be unset "
             "for other runs. Default is 0."
+        ),
+    )
+
+    run_parser.add_argument(
+        "--gui",
+        default=False,
+        action="store_true",
+        help=(
+            "Will open a gui window, which "
+            "shows a detailed view on individual running realizations "
+            "and jobs within."
         ),
     )
 
@@ -274,17 +285,6 @@ def _build_local_test_run_config(
             f"{experiment_run_config.experiment_config.type}"
         )
 
-    for input_record in experiment_run_config.ensemble_config.input:
-        if input_record.source_namespace not in (
-            ert3.config.SourceNS.resources,
-            ert3.config.SourceNS.stochastic,
-        ):
-            raise NotImplementedError(
-                "Local test runs are currently only supported for "
-                "stochastic and resources input sources. "
-                f"Found:\n'{input_record.source_namespace}'."
-            )
-
     raw_ensemble_config = experiment_run_config.ensemble_config.dict()
 
     raw_ensemble_config["active_range"] = str(realization)
@@ -334,10 +334,14 @@ def _run(
             workspace,
             args.experiment_name,
             local_test_run=args.local_test_run,
+            use_gui=args.gui,
         )
     elif experiment_run_config.experiment_config.type == "sensitivity":
         ert3.engine.run_sensitivity_analysis(
-            experiment_run_config, workspace, args.experiment_name
+            experiment_run_config,
+            workspace,
+            args.experiment_name,
+            use_gui=args.gui,
         )
 
 

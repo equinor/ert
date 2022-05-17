@@ -1,6 +1,6 @@
 .. _forward_model_chapter:
 
-Forward Model
+Forward model
 =============
 
 .. todo::

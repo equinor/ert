@@ -25,6 +25,7 @@ def snapshot():
         .add_job(
             step_id="0",
             job_id="0",
+            index="0",
             name="job0",
             data={},
             status="Unknown",
@@ -32,6 +33,7 @@ def snapshot():
         .add_job(
             step_id="0",
             job_id="1",
+            index="1",
             name="job1",
             data={},
             status="Unknown",
@@ -39,6 +41,7 @@ def snapshot():
         .add_job(
             step_id="0",
             job_id="2",
+            index="2",
             name="job2",
             data={},
             status="Unknown",
@@ -46,6 +49,7 @@ def snapshot():
         .add_job(
             step_id="0",
             job_id="3",
+            index="3",
             name="job3",
             data={},
             status="Unknown",
@@ -137,7 +141,8 @@ def make_ensemble_builder(queue_config):
                 for index, job in enumerate(ext_job_list):
                     step.add_job(
                         ert.ensemble_evaluator.LegacyJobBuilder()
-                        .set_id(index)
+                        .set_id(str(index))
+                        .set_index(str(index))
                         .set_name(f"dummy job {index}")
                         .set_ext_job(job)
                     )

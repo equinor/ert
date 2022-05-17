@@ -4,7 +4,7 @@ from typing import Callable, List, Optional, cast
 import numpy as np
 import scipy.stats
 
-import ert
+import ert.data
 
 
 class Distribution:

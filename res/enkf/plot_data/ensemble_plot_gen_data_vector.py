@@ -36,7 +36,7 @@ class EnsemblePlotGenDataVector(BaseCClass):
         return self._size()
 
     def __repr__(self):
-        return "EnsemblePlotGenDataVector(size = %d) %s" % (len(self), self._ad_str())
+        return f"EnsemblePlotGenDataVector(size = {len(self)}) {self._ad_str()})"
 
     def getValue(self, index):
         """@rtype: float"""

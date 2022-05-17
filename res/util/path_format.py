@@ -34,10 +34,10 @@ class PathFormat(BaseCClass):
         if c_ptr:
             super().__init__(c_ptr)
         else:
-            raise ValueError('Unable to construct path format "%s"' % path_fmt)
+            raise ValueError(f'Unable to construct path format "{path_fmt}"')
 
     def __repr__(self):
-        return self._create_repr("fmt=%s" % self._str())
+        return self._create_repr(f"fmt={self._str()}")
 
     def free(self):
         self._free()

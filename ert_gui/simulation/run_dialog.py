@@ -1,6 +1,8 @@
 import logging
 import asyncio
+import pickle
 from threading import Thread
+from concurrent import futures
 from PyQt5.QtWidgets import QAbstractItemView
 
 from ert_gui.ertwidgets import resourceMovie
@@ -20,6 +22,7 @@ from ert.ensemble_evaluator import (
 from ert_shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
+    QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -32,10 +35,21 @@ from qtpy.QtWidgets import (
     QHeaderView,
     QProgressBar,
 )
+from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STOPPED,
+)
+from ert.ensemble_evaluator.identifiers import EVTYPE_EE_TERMINATED
 from ert_gui.simulation.view.progress import ProgressView
 from ert_gui.simulation.view.legend import LegendView
 from ert_gui.simulation.view.realization import RealizationWidget
 from ert_gui.model.progress_proxy import ProgressProxyModel
+from typing import Dict, TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from ert.data import RecordTransmitter
+    from ert3.evaluator._evaluator import ERT3RunModel
+    from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
@@ -302,6 +316,58 @@ class RunDialog(QDialog):
         worker_thread.started.connect(worker.consume_and_emit)
         self._worker_thread.start()
 
+    def startSimulationErt3(
+        self, ensemble_evaluator: "EnsembleEvaluator"
+    ) -> futures.Future:
+        self._run_model.reset()
+        self._snapshot_model.reset()  # type: ignore
+        self._tab_widget.clear()
+
+        def run() -> Dict[int, Dict[str, "RecordTransmitter"]]:
+            result: Dict[int, Dict[str, "RecordTransmitter"]] = {}
+            with ensemble_evaluator.run() as monitor:
+                self._run_model.setPhase(
+                    0, "Running simulations...", indeterminate=False
+                )
+                for event in monitor.track():
+                    if isinstance(event.data, dict) and event.data.get("status") in [
+                        ENSEMBLE_STATE_STOPPED,
+                        ENSEMBLE_STATE_FAILED,
+                    ]:
+                        monitor.signal_done()
+                        if event.data.get("status") == ENSEMBLE_STATE_FAILED:
+                            self._run_model._failed = True
+                            self._run_model._fail_message = "Ensemble evaluation failed"
+                            raise RuntimeError("Ensemble evaluation failed")
+                    if event["type"] == EVTYPE_EE_TERMINATED and isinstance(
+                        event.data, bytes
+                    ):
+                        result = pickle.loads(event.data)
+                        self._run_model.setPhase(1, "Simulations completed.")
+            return result
+
+        executor = futures.ThreadPoolExecutor()
+        future = executor.submit(run)
+
+        self._ticker.start(1000)
+
+        tracker = EvaluatorTracker(
+            self._run_model,
+            ee_con_info=ensemble_evaluator.config.get_connection_info(),
+        )
+
+        worker = TrackerWorker(tracker)
+        worker_thread = QThread(parent=self)
+        worker.done.connect(worker_thread.quit)
+        worker.consumed_event.connect(self._on_tracker_event)
+        worker.moveToThread(worker_thread)
+        self.simulation_done.connect(worker.stop)
+        self._worker = worker
+        self._worker_thread = worker_thread
+        worker_thread.started.connect(worker.consume_and_emit)
+        self._worker_thread.start()
+        return future
+
     def killJobs(self):
 
         msg = "Are you sure you want to kill the currently running simulations?"
@@ -402,3 +468,20 @@ class RunDialog(QDialog):
             self._setDetailedDialog()
 
         self.adjustSize()
+
+
+def run_monitoring_ert3(
+    ensemble_evaluator: "EnsembleEvaluator", run_model: "ERT3RunModel"
+) -> Dict[int, Dict[str, "RecordTransmitter"]]:
+    app = QApplication([])
+    dialog = RunDialog(
+        repr(ensemble_evaluator.ensemble),
+        run_model,
+    )  # type: ignore
+    # We don't do kill simulations in ert3 yet
+    dialog.kill_button.setHidden(True)
+    app.setActiveWindow(dialog)
+    dialog.show()
+    future = dialog.startSimulationErt3(ensemble_evaluator)
+    app.exec_()
+    return cast(Dict[int, Dict[str, "RecordTransmitter"]], future.result())

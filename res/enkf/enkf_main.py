@@ -25,7 +25,6 @@ from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
 from res.enkf.enkf_obs import EnkfObs
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
-from res.enkf.enkf_state import EnKFState
 from res.enkf.ensemble_config import EnsembleConfig
 from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.es_update import ESUpdate
@@ -65,13 +64,13 @@ class EnKFMain(BaseCClass):
         else:
             return None
 
-    def __init__(self, config, strict=True, verbose=False):
+    def __init__(self, config, strict=True):
         """Initializes an instance of EnkfMain.
 
         Note: @config is a ResConfig instance holding the configuration.
         """
         self.update_snapshots = {}
-        real_enkf_main = _RealEnKFMain(config, strict, verbose)
+        real_enkf_main = _RealEnKFMain(config, strict)
         assert isinstance(real_enkf_main, BaseCClass)
         self._init_from_real_enkf_main(real_enkf_main)
         self._monkey_patch_methods(real_enkf_main)
@@ -166,7 +165,7 @@ class _RealEnKFMain(BaseCClass):
 
     """
 
-    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
+    _alloc = ResPrototype("void* enkf_main_alloc(res_config)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_queue_config = ResPrototype(
@@ -219,7 +218,6 @@ class _RealEnKFMain(BaseCClass):
         "int enkf_main_get_observation_count(enkf_main, char*)"
     )
     _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
-    _iget_state = ResPrototype("enkf_state_ref enkf_main_iget_state(enkf_main, int)")
     _get_workflow_list = ResPrototype(
         "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
     )
@@ -266,7 +264,7 @@ class _RealEnKFMain(BaseCClass):
     _init_run = ResPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
-    def __init__(self, config, strict=True, verbose=False):
+    def __init__(self, config, strict=True):
         """Please don't use this class directly. See EnKFMain instead"""
 
         res_config = self._init_res_config(config)
@@ -275,12 +273,12 @@ class _RealEnKFMain(BaseCClass):
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
 
-        c_ptr = self._alloc(res_config, verbose)
+        c_ptr = self._alloc(res_config)
         if c_ptr:
             super().__init__(c_ptr)
         else:
             raise ValueError(
-                "Failed to construct EnKFMain instance from config %s." % res_config
+                f"Failed to construct EnKFMain instance from config {res_config}."
             )
 
         self.__key_manager = KeyManager(self)
@@ -297,20 +295,10 @@ class _RealEnKFMain(BaseCClass):
             config.convertToCReference(self)
             return config
 
-        raise TypeError("Expected ResConfig, received: %r" % config)
+        raise TypeError(f"Expected ResConfig, received: {repr(config)}")
 
     def get_queue_config(self) -> QueueConfig:
         return self._get_queue_config()
-
-    def getRealisation(self, iens) -> EnKFState:
-        """@rtype: EnKFState"""
-        if 0 <= iens < self.getEnsembleSize():
-            return self._iget_state(iens).setParent(self)
-        else:
-            raise IndexError(
-                "iens value:%d invalid Valid range: [0,%d)"
-                % (iens, self.getEnsembleSize())
-            )
 
     def free(self):
         self._free()
@@ -318,7 +306,7 @@ class _RealEnKFMain(BaseCClass):
     def __repr__(self):
         ens = self.getEnsembleSize()
         cfg = self.getUserConfigFile()
-        cnt = "ensemble_size = %d, config_file = %s" % (ens, cfg)
+        cnt = f"ensemble_size = {ens}, config_file = {cfg}"
         return self._create_repr(cnt)
 
     def getEnsembleSize(self) -> int:
@@ -397,10 +385,6 @@ class _RealEnKFMain(BaseCClass):
 
     def getHistoryLength(self):
         return self._get_history_length()
-
-    def getMemberRunningState(self, ensemble_member):
-        """@rtype: EnKFState"""
-        return self._iget_state(ensemble_member).setParent(self)
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)

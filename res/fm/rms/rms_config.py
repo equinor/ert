@@ -13,7 +13,7 @@ class RMSConfig:
             try:
                 config = yaml.safe_load(f)
             except yaml.YAMLError:
-                raise ValueError("Failed to parse: {} as yaml".format(config_file))
+                raise ValueError(f"Failed to parse: {config_file} as yaml")
 
         self._config = config
 
@@ -21,7 +21,7 @@ class RMSConfig:
     def executable(self):
         exe = self._config["executable"]
         if not os.access(exe, os.X_OK):
-            raise OSError("The executable: {} can not run".format(exe))
+            raise OSError(f"The executable: {exe} can not run")
 
         return exe
 
@@ -29,7 +29,7 @@ class RMSConfig:
     def wrapper(self):
         exe = self._config.get("wrapper", None)
         if exe is not None and shutil.which(exe) is None:
-            raise OSError("The executable: {} is not found".format(exe))
+            raise OSError(f"The executable: {exe} is not found")
         return exe
 
     @property

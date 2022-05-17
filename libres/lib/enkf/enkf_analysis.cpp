@@ -87,8 +87,7 @@ UpdateSnapshot make_update_snapshot(const obs_data_type *obs_data,
 
 void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
                                        meas_data_type *meas_data,
-                                       double std_cutoff, double alpha,
-                                       bool verbose) {
+                                       double std_cutoff, double alpha) {
     for (int block_nr = 0; block_nr < obs_data_get_num_blocks(obs_data);
          block_nr++) {
         obs_block_type *obs_block = obs_data_iget_block(obs_data, block_nr);
@@ -105,7 +104,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
                          * Deactivated because the ensemble has too small
                          * variation for this particular measurement.
                          */
-                        obs_block_deactivate(obs_block, iobs, verbose,
+                        obs_block_deactivate(obs_block, iobs,
                                              "No ensemble variation");
                         meas_block_deactivate(meas_block, iobs);
                     } else {
@@ -123,8 +122,7 @@ void enkf_analysis_deactivate_outliers(obs_data_type *obs_data,
                          */
 
                         if (std::abs(innov) > alpha * (ens_std + obs_std)) {
-                            obs_block_deactivate(obs_block, iobs, verbose,
-                                                 "No overlap");
+                            obs_block_deactivate(obs_block, iobs, "No overlap");
                             meas_block_deactivate(meas_block, iobs);
                         }
                     }

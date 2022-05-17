@@ -4,5 +4,8 @@ from res.fm.shell import delete_directory
 
 
 if __name__ == "__main__":
-    for d in sys.argv[1:]:
-        delete_directory(d)
+    try:
+        for d in sys.argv[1:]:
+            delete_directory(d)
+    except IOError as e:
+        sys.exit(f"DELETE_DIRECTORY failed with the following error: {e}")

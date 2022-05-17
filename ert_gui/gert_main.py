@@ -63,7 +63,7 @@ def run_gui(args):
     # Changing current working directory means we need to update the config file to
     # be the base name of the original config
     args.config = os.path.basename(args.config)
-    ert = EnKFMain(res_config, strict=True, verbose=args.verbose)
+    ert = EnKFMain(res_config, strict=True)
     with Storage.connect_or_start_server(res_config=os.path.basename(args.config)):
         notifier = ErtNotifier(args.config)
         # window reference must be kept until app.exec returns:

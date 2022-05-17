@@ -44,9 +44,7 @@ class RMSRun:
         allow_no_env=False,
     ):
         if not os.path.isdir(project):
-            raise OSError(
-                "The project:{} does not exist as a directory.".format(project)
-            )
+            raise OSError(f"The project:{project} does not exist as a directory.")
 
         self.config = RMSConfig()
         self.project = os.path.abspath(project)
@@ -107,7 +105,7 @@ class RMSRun:
             raise RMSRunException(
                 f"RMS environment not specified for version: {self.version}"
             )
-        exec_env_file = "%s_exec_env.json" % self_exe
+        exec_env_file = f"{self_exe}_exec_env.json"
         user_env = {}
         if os.path.isfile(exec_env_file):
             with open(exec_env_file) as f:
@@ -122,13 +120,8 @@ class RMSRun:
 
         with pushd(self.run_path):
             fileH = open("RMS_SEED_USED", "a+")
-            fileH.write(
-                "%s ... %d\n"
-                % (
-                    time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time())),
-                    self.seed,
-                )
-            )
+            now = time.strftime("%d-%m-%Y %H:%M:%S", time.localtime(time.time()))
+            fileH.write(f"{now} ... {self.seed}\n")
             fileH.close()
 
             if not os.path.exists(self.export_path):
@@ -140,18 +133,14 @@ class RMSRun:
             exit_status = self.exec_rms(exec_env)
 
         if exit_status != 0:
-            raise RMSRunException(
-                "The RMS run failed with exit status: {}".format(exit_status)
-            )
+            raise RMSRunException(f"The RMS run failed with exit status: {exit_status}")
 
         if self.target_file is None:
             return
 
         if not os.path.isfile(self.target_file):
             raise RMSRunException(
-                "The RMS run did not produce the expected  file: {}".format(
-                    self.target_file
-                )
+                f"The RMS run did not produce the expected file: {self.target_file}"
             )
 
         if self.target_file_mtime is None:
@@ -159,9 +148,8 @@ class RMSRun:
 
         if os.path.getmtime(self.target_file) == self.target_file_mtime:
             raise RMSRunException(
-                "The target file:{} is unmodified - interpreted as failure".format(
-                    self.target_file
-                )
+                f"The target file:{self.target_file} is unmodified - "
+                "interpreted as failure"
             )
 
     def exec_rms(self, exec_env):

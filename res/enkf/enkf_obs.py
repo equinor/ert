@@ -61,7 +61,7 @@ class EnkfObs(BaseCClass):
             if self.hasKey(key_or_index):
                 return self._get_vector(key_or_index).setParent(self)
             else:
-                raise KeyError("Unknown key: %s" % key_or_index)
+                raise KeyError(f"Unknown key: {key_or_index}")
         elif isinstance(key_or_index, int):
             idx = key_or_index
             if idx < 0:
@@ -70,13 +70,11 @@ class EnkfObs(BaseCClass):
                 return self._iget_vector(idx).setParent(self)
             else:
                 raise IndexError(
-                    "Invalid index: %d.  Valid range is [0, %d)."
-                    % (key_or_index, len(self))
+                    f"Invalid index: {key_or_index}.  Valid range is [0, {len(self)})."
                 )
         else:
             raise TypeError(
-                "Key or index must be of type str or int, not %s."
-                % str(type(key_or_index))
+                f"Key or index must be of type str or int, not {type(key_or_index)}."
             )
 
     def getTypedKeylist(
@@ -92,7 +90,7 @@ class EnkfObs(BaseCClass):
         if key in self:
             return self._obs_type(key)
         else:
-            raise KeyError("Unknown observation key:%s" % key)
+            raise KeyError(f"Unknown observation key: {key}")
 
     def getMatchingKeys(self, pattern, obs_type=None):
         """
@@ -133,4 +131,4 @@ class EnkfObs(BaseCClass):
 
     def __repr__(self):
         validity = "valid" if self.valid else "invalid"
-        return self._create_repr("%s, len=%d" % (validity, len(self)))
+        return self._create_repr(f"{validity}, len={len(self)}")

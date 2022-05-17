@@ -131,15 +131,15 @@ class AnalysisConfig(BaseCClass):
 
         if user_config_file is not None:
             if not isfile(user_config_file):
-                raise IOError('No such configuration file "%s".' % user_config_file)
+                raise IOError(f'No such configuration file "{user_config_file}".')
 
             c_ptr = self._alloc_load(user_config_file)
             if c_ptr:
                 super().__init__(c_ptr)
             else:
                 raise ValueError(
-                    "Failed to construct AnalysisConfig instance from config file %s."
-                    % user_config_file
+                    "Failed to construct AnalysisConfig instance "
+                    f"from config file {user_config_file}."
                 )
 
         if config_content is not None:

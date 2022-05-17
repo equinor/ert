@@ -93,6 +93,7 @@ class _Ensemble:
                 for job in step.jobs:
                     reals[str(real.iens)].steps[str(step.id_)].jobs[str(job.id_)] = Job(
                         status=state.JOB_STATE_START,
+                        index=job.index,
                         data={},
                         name=job.name,
                     )

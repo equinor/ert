@@ -1,4 +1,4 @@
-Internal Workflows Jobs
+Internal workflows jobs
 =======================
 
 These jobs invoke a function in the address space of the ERT program
@@ -17,7 +17,7 @@ Feel free to reach out if you have suggestions for new predefined workflow jobs.
 
 .. _ert_script:
 
-Run a Python Script
+Run a Python script
 -------------------
 
 If you are using one of the Python based frontends, *GUI* or

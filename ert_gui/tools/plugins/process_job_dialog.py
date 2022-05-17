@@ -120,7 +120,7 @@ class ProcessJobDialog(QDialog):
 
     def __confirmCancel(self):
         cancel_box = self.__createMsgBox(
-            "Confirm Cancel", "Are you sure you want to cancel the running job?", ""
+            "Confirm cancel", "Are you sure you want to cancel the running job?", ""
         )
         cancel_box.setIcon(QMessageBox.Question)
         cancel_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)

@@ -78,6 +78,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -118,6 +119,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={
                                 ids.MAX_MEMORY_USAGE: 1000,
@@ -161,6 +163,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -168,6 +171,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="1",
+                            index="1",
                             name="job_1",
                             data={},
                             status=state.JOB_STATE_START,
@@ -188,6 +192,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             status=state.JOB_STATE_FINISHED,
                             name="job_0",
                             data={},
@@ -208,6 +213,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="1",
+                            index="1",
                             status=state.JOB_STATE_FAILURE,
                             name="job_1",
                             data={},
@@ -235,6 +241,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,
@@ -255,6 +262,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
                         .add_job(
                             step_id="0",
                             job_id="0",
+                            index="0",
                             name="job_0",
                             data={},
                             status=state.JOB_STATE_START,

@@ -35,6 +35,4 @@ class HookWorkflow(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        return "HookWorkflow({}, {})".format(
-            self.getWorkflow().src_file, self.getRunMode()
-        )
+        return f"HookWorkflow({self.getWorkflow().src_file}, {self.getRunMode()})"

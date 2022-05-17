@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+import re
+from typing import Optional, Union
+from pathlib import Path
+
+SOURCE_ROOT = Path(__file__).parent.parent
+VERBOSE = False
+
+sys.path.append(str(SOURCE_ROOT))
+
+# Colours
+ANSI_BLUE = "\x1b[94;20m"
+ANSI_RED = "\x1b[91;20m"
+ANSI_RESET = "\x1b[0m"
+
+# Compiler versions
+MIN_GCC_VERSION = 8
+MIN_CLANG_VERSION = 11
+
+
+def print_error(message):
+    """
+    Print a message in ANSI red to STDERR
+    """
+    print(ANSI_RED + message + ANSI_RESET, file=sys.stderr)
+
+
+def print_info(message):
+    """
+    Print a message in ANSI blue to STDERR
+    """
+    print(ANSI_BLUE + message + ANSI_RESET, file=sys.stderr)
+
+
+def check_cxx_version() -> None:
+    """
+    Check that the user's compiler is compatible with ERT.
+    """
+    cxx = shutil.which(os.environ.get("CXX", "c++"))
+    print_info(f"Using C++ compiler: {cxx}")
+
+    version_line = subprocess.check_output([cxx, "--version"]).splitlines()[0].decode()
+    version_match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_line)
+    if version_match is None:
+        print_error("Could not extract version information from C++ compiler")
+        sys.exit(1)
+    version = tuple(int(version_match[x + 1]) for x in range(3))
+
+    if "GCC" in version_line:
+        min_version = MIN_GCC_VERSION
+    elif "clang" in version_line:
+        min_version = MIN_CLANG_VERSION
+    else:
+        print_error("Unknown C++ compiler. (Neither GCC nor clang)")
+        sys.exit(1)
+
+    if version[0] < min_version:
+        print_error(
+            f"Your C++ compiler is too old. ERT needs GCC {MIN_GCC_VERSION}+ or clang {MIN_CLANG_VERSION}+"
+        )
+        sys.exit(1)
+
+
+def check_pip_version() -> None:
+    """
+    Check that the version of pip is above a certain version. This is
+    necessary because distributions of Python often come with outdated versions.
+    For example, the RHEL7 version of Python 3.6 comes with pip 9, which is
+    positively ancient.
+    """
+    from pip import __version__
+
+    min_pip_version = 19
+
+    version_info = __version__.split(".")
+    if int(version_info[0]) >= min_pip_version:
+        return
+
+    if input(f"ERT requires pip >= {min_pip_version}. Install it? (Y/n) ") == "y":
+        run(
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--upgrade",
+            f"pip>={min_pip_version}",
+        )
+    else:
+        sys.exit("Please upgrade pip.")
+
+
+def make_compile_commands_symlink():
+    """
+    Find `compile_commands.json` heuristically by searching subdirectories of
+    `_skbuild`. This is easier than asking `skbuild` directly from this script
+    as the directory will change based on the arguments we give the `setup`
+    function.
+    """
+    from_path = SOURCE_ROOT / "compile_commands.json"
+
+    paths = list((SOURCE_ROOT / "_skbuild").glob("**/compile_commands.json"))
+    if len(paths) == 0:
+        print_error("'compile_commands.json' in '_skbuild' directory")
+    elif len(paths) == 1:
+        if from_path.exists():
+            print_info(f"Deleting {from_path}")
+            from_path.unlink()
+        from_path.symlink_to(paths[0])
+        print_info(f"Symlinking {from_path} -> {paths[0]}")
+    else:
+        print_error(
+            "Too many 'compile_commands.json' files found in the '_skbuild' directory. "
+            "Try deleting it?"
+        )
+
+
+def run(*args: Union[str, os.PathLike], verbose: Optional[bool] = None) -> None:
+    """
+    Run a command and optionally ignore its output
+    """
+    if verbose is None:
+        verbose = VERBOSE
+
+    print_info(f"Running: {' '.join(map(str, args))}")
+    kwargs = {}
+    if not verbose:
+        kwargs["stdout"] = subprocess.DEVNULL
+        kwargs["stderr"] = subprocess.DEVNULL
+    subprocess.run(args, check=True, **kwargs)
+
+
+def install_build_requires() -> None:
+    """
+    Install the `build-system.requires` section from `pyproject.toml` using
+    pip-vendored `tomli` package
+    """
+    try:
+        from pip._vendor import tomli
+    except ImportError:
+        sys.exit(
+            "Could not import 'tomli' from 'pip._vendor'. "
+            "pip has likely changed their vendored packages."
+        )
+
+    extra_req: List[str] = []
+    try:
+        import importlib.metadata
+    except ImportError:
+        # Add 'importlib_metadata' to dependencies so that we can later detect
+        # the runtime dependencies of this project.
+        extra_req += ["importlib_metadata"]
+
+    # Update pip, setuptools, wheel
+    run(
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "pip",
+        "setuptools",
+        "wheel",
+        *extra_req,
+    )
+
+    # Install build requirements
+    with open(SOURCE_ROOT / "pyproject.toml") as f:
+        pyproject = tomli.load(f)
+
+    reqs = pyproject["build-system"]["requires"]
+    run(sys.executable, "-m", "pip", "install", *reqs)
+
+
+def install_requires() -> None:
+    """
+    Install the runtime dependencies of the package after it's been installed.
+    We do it this way because I couldn't figure out how to detect the
+    requirements of a 'setup.py' project before it's installed like pip manages
+    to do.
+    """
+    try:
+        from importlib.metadata import requires
+    except ImportError:
+        from importlib_metadata import requires
+
+    run(
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        *requires("ert"),
+    )
+
+
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Print output from commands",
+    )
+
+    parser.add_argument(
+        "-r",
+        "--release",
+        action="store_true",
+        default=False,
+        help="Compile project with full optimisations",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        default=False,
+        help="Run script outside of virtualenv",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    should_setup = not (SOURCE_ROOT / "_skbuild").is_dir()
+    args = parse()
+
+    if not args.force and sys.prefix == sys.base_prefix:
+        sys.exit("This script must be run from a virtualenv (override with -f).")
+
+    if args.verbose:
+        global VERBOSE
+        VERBOSE = True
+
+    setup_args: List[str] = []
+    cmake_args: List[str] = [
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    ]
+
+    if args.release:
+        setup_args += ["--build-type=Release"]
+    else:
+        setup_args += ["--build-type=Debug"]
+
+    if should_setup:
+        check_cxx_version()
+        check_pip_version()
+        install_build_requires()
+
+        run(
+            sys.executable,
+            SOURCE_ROOT / "setup.py",
+            "develop",
+            "--no-deps",
+            *setup_args,
+            "--",
+            *cmake_args,
+            verbose=True,
+        )
+    else:
+        try:
+            run(
+                sys.executable,
+                SOURCE_ROOT / "setup.py",
+                "build_ext",
+                "--inplace",
+                *setup_args,
+                "--",
+                *cmake_args,
+                verbose=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print_error("Build failed. If the output makes no sense, try these steps:")
+            print_error("1. Delete '_skbuild' directory")
+            print_error(f"2. Delete conan directory: {Path.home() / '.conan'}")
+            sys.exit(1)
+
+    if should_setup:
+        install_requires()
+        make_compile_commands_symlink()
+
+
+if __name__ == "__main__":
+    main()

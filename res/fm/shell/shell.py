@@ -24,7 +24,7 @@ class Shell:
             target_check = target
         else:
             if not os.path.isdir(link_path):
-                print("Creating directory for link: %s" % link_path)
+                print(f"Creating directory for link: {link_path}")
                 os.makedirs(link_path)
             target_check = os.path.join(link_path, target)
 
@@ -37,21 +37,21 @@ class Shell:
         if os.path.islink(link_name):
             os.unlink(link_name)
         os.symlink(target, link_name)
-        print("Linking '%s' -> '%s' [ cwd:%s ]" % (link_name, target, os.getcwd()))
+        print(f"Linking '{link_name}' -> '{target}' [ cwd:{os.getcwd()} ]")
 
     @staticmethod
     def mkdir(path):
         if os.path.isdir(path):
-            print("OK - directory: '%s' already exists" % path)
+            print(f"OK - directory: '{path}' already exists")
         else:
             try:
                 os.makedirs(path)
-                print("Created directory: '%s'" % path)
-            except OSError as e:
+                print(f"Created directory: '{path}'")
+            except OSError as error:
                 # Seems in many cases the directory just suddenly appears;
                 # synchronization issues?
                 if not os.path.isdir(path):
-                    msg = 'ERROR: Failed to create directory "%s": %s.' % (path, e)
+                    msg = f'ERROR: Failed to create directory "{path}": {error}.'
                     raise OSError(msg)
 
     @staticmethod
@@ -66,7 +66,7 @@ class Shell:
                 target = os.path.join(target, os.path.basename(src_file))
             shutil.move(src_file, target)
         else:
-            raise IOError("Input argument %s is not an existing file" % src_file)
+            raise IOError(f"Input argument {src_file} is not an existing file")
 
     @staticmethod
     def __deleteFile(filename):
@@ -74,10 +74,10 @@ class Shell:
         uid = stat_info.st_uid
         if uid == os.getuid():
             os.unlink(filename)
-            print("Removing file:'%s'" % filename)
+            print(f"Removing file:'{filename}'")
         else:
             sys.stderr.write(
-                "Sorry you are not owner of file:%s - not deleted\n" % filename
+                f"Sorry you are not owner of file:{filename} - not deleted\n"
             )
 
     @staticmethod
@@ -87,21 +87,21 @@ class Shell:
         if uid == os.getuid():
             if os.path.islink(dirname):
                 os.remove(dirname)
-                print("Removing symbolic link:'%s'" % dirname)
+                print(f"Removing symbolic link:'{dirname}'")
             else:
                 try:
                     os.rmdir(dirname)
-                    print("Removing directory:'%s'" % dirname)
-                except OSError as e:
-                    if e.errno == 39:
+                    print(f"Removing directory:'{dirname}'")
+                except OSError as error:
+                    if error.errno == 39:
                         sys.stderr.write(
-                            "Failed to remove directory:%s - not empty\n" % dirname
+                            f"Failed to remove directory:{dirname} - not empty\n"
                         )
                     else:
                         raise
         else:
             sys.stderr.write(
-                "Sorry you are not owner of directory:%s - not deleted\n" % dirname
+                f"Sorry you are not owner of directory:{dirname} - not deleted\n"
             )
 
     @staticmethod
@@ -110,12 +110,14 @@ class Shell:
             if os.path.isfile(filename):
                 Shell.__deleteFile(filename)
             else:
-                raise IOError("Entry:'%s' is not a regular file" % filename)
+                raise IOError(f"Entry:'{filename}' is not a regular file")
         else:
             if os.path.islink(filename):
                 os.remove(filename)
             else:
-                sys.stderr.write("File: '%s' not exist - delete ignored\n" % filename)
+                sys.stderr.write(
+                    f"File: '{filename}' does not exist - delete ignored\n"
+                )
 
     @staticmethod
     def deleteDirectory(path):
@@ -135,11 +137,11 @@ class Shell:
                             Shell.__deleteDirectory(os.path.join(root, dir))
 
             else:
-                raise IOError("Entry:'%s' is not a directory" % path)
+                raise IOError(f"Entry:'{path}' is not a directory")
 
             Shell.__deleteDirectory(path)
         else:
-            sys.stderr.write("Directory:'%s' not exist - delete ignored\n" % path)
+            sys.stderr.write(f"Directory:'{path}' not exist - delete ignored\n")
 
     @staticmethod
     def copyDirectory(src_path, target_path):
@@ -149,17 +151,17 @@ class Shell:
 
             if target_root:
                 if not os.path.isdir(target_root):
-                    print("Creating empty folder structure %s" % target_root)
+                    print(f"Creating empty folder structure {target_root}")
                     Shell.mkdir(target_root)
 
-            print("Copying directory structure %s -> %s" % (src_path, target_path))
+            print(f"Copying directory structure {src_path} -> {target_path}")
             if os.path.isdir(target_path):
                 target_path = os.path.join(target_path, src_basename)
             distutils.dir_util.copy_tree(src_path, target_path, preserve_times=0)
         else:
             raise IOError(
-                "Input argument:'%s' does not correspond to an existing directory"
-                % src_path
+                f"Input argument:'{src_path}' "
+                "does not correspond to an existing directory"
             )
 
     @staticmethod
@@ -171,28 +173,28 @@ class Shell:
             if os.path.isdir(target):
                 target_file = os.path.join(target, os.path.basename(src))
                 shutil.copyfile(src, target_file)
-                print("Copying file '%s' -> '%s'" % (src, target_file))
+                print(f"Copying file '{src}' -> '{target_file}'")
             else:
                 target_path = os.path.dirname(target)
                 if target_path:
                     if not os.path.isdir(target_path):
                         os.makedirs(target_path)
-                        print("Creating directory '%s' " % target_path)
+                        print(f"Creating directory '{target_path}' ")
                 if os.path.isdir(target):
                     target_file = os.path.join(target, os.path.basename(src))
                 else:
                     target_file = target
 
-                print("Copying file '%s' -> '%s'" % (src, target_file))
+                print(f"Copying file '{src}' -> '{target_file}'")
                 shutil.copyfile(src, target_file)
         else:
             raise IOError(
-                "Input argument:'%s' does not correspond to an existing file" % src
+                f"Input argument:'{src}' does not correspond to an existing file"
             )
 
     @staticmethod
     def carefulCopyFile(src, target=None):
         if os.path.exists(target):
-            print("File: {} already present - not updated".format(target))
+            print(f"File: {target} already present - not updated")
             return
         Shell.copyFile(src, target)

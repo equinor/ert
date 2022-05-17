@@ -1,4 +1,4 @@
-Configuring Workflow Jobs
+Configuring workflow jobs
 =========================
 
 Workflow jobs are configured with a small configuration file much like

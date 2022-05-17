@@ -11,9 +11,7 @@ class FunctionErtScript(ErtScript):
         parsed_argument_types = []
 
         if ert is not None:
-            self.__function = ResPrototype(
-                "void* %s(void*, stringlist)" % function_name
-            )
+            self.__function = ResPrototype(f"void* {function_name}(void*, stringlist)")
 
         else:
             for arg in argument_types:
@@ -26,11 +24,11 @@ class FunctionErtScript(ErtScript):
                 elif arg is float:
                     parsed_argument_types.append("float")
                 else:
-                    raise TypeError("Unknown type: %s" % arg)
+                    raise TypeError(f"Unknown type: {arg}")
 
             self.__function = ResPrototype(
-                "void* %s(%s)"
-                % (function_name, ", ".join(parsed_argument_types[:argument_count]))
+                f"void* {function_name}("
+                f"{', '.join(parsed_argument_types[:argument_count])})"
             )
 
     def run(self, *args):

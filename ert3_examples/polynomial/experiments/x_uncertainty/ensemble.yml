@@ -3,14 +3,14 @@ size: 10
 input:
   -
     source: stochastic.coefficients
-    record: coefficients
+    name: coefficients
   -
     source: stochastic.x_normals
-    record: x_uncertainties
+    name: x_uncertainties
 
 output:
   -
-    record: polynomial_output
+    name: polynomial_output
 
 forward_model:
   driver: local

@@ -85,8 +85,10 @@ class ForwardModelJobStatus:
         )
 
     def __str__(self):
-        return "name:{} start_time:{}  end_time:{}  status:{}  error:{} ".format(
-            self.name, self.start_time, self.end_time, self.status, self.error
+        return (
+            f"name:{self.name} start_time:{self.start_time}  "
+            f"end_time:{self.end_time}  status:{self.status}  "
+            f"error:{self.error} "
         )
 
     def dump_data(self):

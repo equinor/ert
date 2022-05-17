@@ -51,4 +51,4 @@ class EnsemblePlotData(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "EnsemblePlotData(size = %d) %s" % (len(self), self._ad_str())
+        return f"EnsemblePlotData(size = {len(self)}) {self._ad_str()}"

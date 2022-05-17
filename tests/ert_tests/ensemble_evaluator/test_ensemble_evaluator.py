@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from aiohttp import ServerTimeoutError
 
 import pytest
 from ert.ensemble_evaluator import identifiers, wait_for_evaluator, Snapshot
@@ -266,6 +267,19 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 3
     assert num_successful == num_realizations - num_failing
+
+
+def test_ens_eval_run_and_get_successful_realizations_timeout(make_ee_config):
+    ee_config = make_ee_config(use_token=False, generate_cert=False)
+    ensemble = AutorunTestEnsemble(iter=1, reals=1, steps=1, jobs=2)
+    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+
+    with patch.object(
+        _Monitor, "track", side_effect=ServerTimeoutError("timed out")
+    ) as mock:
+        num_successful = ee.run_and_get_successful_realizations()
+        assert mock.call_count == 3
+    assert num_successful == 1
 
 
 def get_connection_closed_exception():

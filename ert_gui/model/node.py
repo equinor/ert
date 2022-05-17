@@ -23,9 +23,11 @@ class Node:
         children = "no " if len(self.children) == 0 else f"{len(self.children)} "
         return f"Node<{self.type}>@{self.id} with {parent}parent and {children}children"
 
-    def add_child(self, node: "Node") -> None:
+    def add_child(self, node: "Node", node_id: Optional[int] = None) -> None:
         node.parent = self
-        self.children[node.id] = node
+        if node_id is None:
+            node_id = node.id
+        self.children[node_id] = node
 
     def row(self) -> int:
         if self.parent:

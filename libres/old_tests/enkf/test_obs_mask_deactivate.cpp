@@ -25,7 +25,7 @@ void test_obs_mask_deactivate() {
 
     /* Check that the we can deactivate a single block in the mask:*/
     obs_block_type *block = obs_data_iget_block(obs_data, 0);
-    obs_block_deactivate(block, 0, false, "---");
+    obs_block_deactivate(block, 0, "---");
     const std::vector<bool> mask = obs_data_get_active_mask(obs_data);
     test_assert_false(mask[0]);
     test_assert_true(mask[1]);

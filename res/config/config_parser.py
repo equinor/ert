@@ -69,7 +69,7 @@ class ConfigParser(BaseCClass):
         return self._size()
 
     def __repr__(self):
-        return self._create_repr("size=%d" % len(self))
+        return self._create_repr(f"size={len(self)}")
 
     def add(self, keyword, required=False, value_type=None):
         item = self._add(keyword, required).setParent(self)
@@ -83,7 +83,7 @@ class ConfigParser(BaseCClass):
             item.setParent(self)
             return item
         else:
-            raise KeyError("Config parser does not have item:%s" % keyword)
+            raise KeyError(f"Config parser does not have item:{keyword}")
 
     def parse(
         self,
@@ -100,7 +100,7 @@ class ConfigParser(BaseCClass):
         assert isinstance(unrecognized, UnrecognizedEnum)
 
         if not os.path.exists(config_file):
-            raise IOError("File: %s does not exists" % config_file)
+            raise IOError(f"File: {config_file} does not exists")
         config_content = self._parse(
             config_file,
             comment_string,
@@ -113,10 +113,10 @@ class ConfigParser(BaseCClass):
         config_content.setParser(self)
 
         if validate and not config_content.isValid():
-            sys.stderr.write("Errors parsing:%s \n" % config_file)
+            sys.stderr.write(f"Errors parsing:{config_file} \n")
             for count, error in enumerate(config_content.getErrors()):
-                sys.stderr.write("  %02d:%s\n" % (count, error))
-            raise ValueError("Parsing:%s failed" % config_file)
+                sys.stderr.write(f"  {count:02d}:{error}\n")
+            raise ValueError(f"Parsing:{config_file} failed")
 
         return config_content
 

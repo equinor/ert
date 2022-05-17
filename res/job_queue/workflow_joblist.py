@@ -37,7 +37,7 @@ class WorkflowJoblist(BaseCClass):
         @rtype: bool
         """
         if not os.path.exists(filepath):
-            raise UserWarning("Job file '%s' does not exist!" % filepath)
+            raise UserWarning(f"Job file '{filepath}' does not exist!")
 
         return self._add_job_from_file(name, filepath)
 

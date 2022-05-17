@@ -61,10 +61,10 @@ def _assert_input(input_files, template_file, output_file):
     """
     for input_file in input_files:
         if not os.path.isfile(input_file):
-            raise ValueError("Input file: %s, does not exist.." % input_file)
+            raise ValueError(f"Input file: {input_file}, does not exist..")
 
     if not os.path.isfile(template_file):
-        raise ValueError("Template file: %s, does not exist.." % template_file)
+        raise ValueError(f"Template file: {template_file}, does not exist..")
 
     if not isinstance(output_file, str):
         raise TypeError("Expected output path to be a string")

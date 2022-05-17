@@ -77,7 +77,7 @@ class FieldConfig(BaseCClass):
             return export_format
         else:
             raise ValueError(
-                "Could not determine grdecl / roff format from:%s" % filename
+                f"Could not determine grdecl / roff format from:{filename}"
             )
 
     @classmethod
@@ -124,10 +124,10 @@ class FieldConfig(BaseCClass):
         self._free()
 
     def __repr__(self):
-        tp = self.get_type()
-        nx, ny, nz = self.get_nx(), self.get_ny(), self.get_nz()
-        cnt = "type = %s, nx = %d, ny = %d, nz = %d" % (tp, nx, ny, nz)
-        return self._create_repr(cnt)
+        return self._create_repr(
+            f"type = {self.get_type()}, "
+            f"nx = {self.get_nx()}, ny = {self.get_ny()}, nz = {self.get_nz()}"
+        )
 
     def __ne__(self, other):
         return not self == other

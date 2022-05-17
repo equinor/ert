@@ -63,15 +63,14 @@ class ErtTemplates(BaseCClass):
                     path = config_dict.get(ConfigKeys.CONFIG_DIRECTORY)
                     if not isinstance(path, str):
                         raise ValueError(
-                            "ErtTemplates requires {} to be set".format(
-                                ConfigKeys.CONFIG_DIRECTORY
-                            )
+                            f"ErtTemplates requires {ConfigKeys.CONFIG_DIRECTORY} "
+                            "to be set"
                         )
                     template_path = os.path.normpath(
                         os.path.join(path, template_file_name)
                     )
                     arguments_string = ", ".join(
-                        ["{}={}".format(key, val) for key, val in arguments]
+                        [f"{key}={val}" for key, val in arguments]
                     )
                     self._add_template(
                         None, template_path, target_file, arguments_string
@@ -116,11 +115,10 @@ class ErtTemplates(BaseCClass):
         return not self == other
 
     def __repr__(self):
-        return "ErtTemplates({})".format(
-            ", ".join(
-                x + "=" + str(self.get_template(x)) for x in self.getTemplateNames()
-            )
+        erttemplates = ", ".join(
+            x + "=" + str(self.get_template(x)) for x in self.getTemplateNames()
         )
+        return f"ErtTemplates({erttemplates})"
 
     def free(self):
         self._free()

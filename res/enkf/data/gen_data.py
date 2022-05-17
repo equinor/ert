@@ -29,7 +29,7 @@ class GenData(BaseCClass):
         self._free()
 
     def __repr__(self):
-        return "GenData(len = %d) %s" % (len(self), self._ad_str())
+        return f"GenData(len = {len(self)}) {self._ad_str()}"
 
     def export(self, file_name, file_format_type, fortio):
         """
@@ -58,4 +58,4 @@ class GenData(BaseCClass):
         if isinstance(idx, slice):
             vec = self.getData()
             return [vec[i] for i in range(*idx.indices(ls))]
-        raise TypeError("List indices must be integers, not %s." % str(type(idx)))
+        raise TypeError(f"List indices must be integers, not {type(idx)}.")

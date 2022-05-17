@@ -6,4 +6,7 @@ from res.fm.shell import symlink
 if __name__ == "__main__":
     target = sys.argv[1]
     link_name = sys.argv[2]
-    symlink(target, link_name)
+    try:
+        symlink(target, link_name)
+    except IOError as e:
+        sys.exit(f"SYMLINK failed with the following error: {e}")

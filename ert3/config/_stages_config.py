@@ -25,7 +25,8 @@ from pydantic import (
 )
 
 
-import ert
+import ert.data
+import ert.exceptions
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 
 from ._validator import ensure_mime
