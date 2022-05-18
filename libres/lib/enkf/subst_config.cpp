@@ -114,10 +114,6 @@ void subst_config_add_subst_kw(subst_config_type *subst_config, const char *key,
                            "Supplied by the user in the configuration file.");
 }
 
-void subst_config_clear(subst_config_type *subst_config) {
-    subst_list_clear(subst_config->subst_list);
-}
-
 static void subst_config_install_num_cpu(subst_config_type *subst_config,
                                          int num_cpu) {
     char *num_cpu_string = util_alloc_sprintf("%d", num_cpu);
