@@ -184,25 +184,6 @@ bool enkf_config_node_vector_storage(const enkf_config_node_type *config_node) {
     return config_node->vector_storage;
 }
 
-static bool
-enkf_config_node_is_valid_FIELD(const enkf_config_node_type *config_node) {
-    bool valid = false;
-    if (config_node->var_type != INVALID_VAR)
-        valid =
-            field_config_is_valid((const field_config_type *)config_node->data);
-
-    return valid;
-}
-
-static bool
-enkf_config_node_is_valid_GEN_DATA(const enkf_config_node_type *config_node) {
-    bool valid =
-        gen_kw_config_is_valid((const gen_kw_config_type *)config_node->data);
-    valid = (valid && (config_node->enkf_outfile_fmt != NULL));
-
-    return valid;
-}
-
 void enkf_config_node_update_min_std(enkf_config_node_type *config_node,
                                      const char *min_std_file) {
     if (!util_string_equal(config_node->min_std_file, min_std_file)) {

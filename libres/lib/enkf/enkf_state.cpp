@@ -73,11 +73,10 @@ struct enkf_state_struct {
     int __iens;
 };
 
-static UTIL_SAFE_CAST_FUNCTION(enkf_state, ENKF_STATE_TYPE_ID)
-
-    static shared_info_type *shared_info_alloc(
-        const site_config_type *site_config, model_config_type *model_config,
-        const ecl_config_type *ecl_config, ert_templates_type *templates) {
+static shared_info_type *shared_info_alloc(const site_config_type *site_config,
+                                           model_config_type *model_config,
+                                           const ecl_config_type *ecl_config,
+                                           ert_templates_type *templates) {
     shared_info_type *shared_info =
         (shared_info_type *)util_malloc(sizeof *shared_info);
     shared_info->joblist = site_config_get_installed_jobs(site_config);
@@ -643,17 +642,6 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
         enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
     return false;
-}
-
-static bool enkf_state_complete_forward_model_EXIT_handler(void *arg) {
-    callback_arg_type *callback_arg = callback_arg_safe_cast(arg);
-    run_arg_type *run_arg = callback_arg->run_arg;
-    return enkf_state_complete_forward_model_EXIT_handler__(run_arg);
-}
-
-const ensemble_config_type *
-enkf_state_get_ensemble_config(const enkf_state_type *enkf_state) {
-    return enkf_state->ensemble_config;
 }
 
 /*

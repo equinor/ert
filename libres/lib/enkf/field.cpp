@@ -926,45 +926,6 @@ float field_iget_float(const field_type *field, int index) {
                 (t)[index[i]] = (s)[i];                                        \
     }
 
-static void field_indexed_update(field_type *field, ecl_data_type src_type,
-                                 int len, const int *index_list,
-                                 const void *value, bool add) {
-    ecl_data_type target_type = field_config_get_ecl_data_type(field->config);
-
-    switch (target_type.type) {
-    case (ECL_FLOAT_TYPE): {
-        float *field_data = (float *)field->data;
-        if (ecl_type_is_double(src_type)) {
-            double *src_data = (double *)value;
-            INDEXED_UPDATE_MACRO(field_data, src_data, len, index_list, add);
-        } else if (ecl_type_is_float(src_type)) {
-            float *src_data = (float *)value;
-            INDEXED_UPDATE_MACRO(field_data, src_data, len, index_list, add);
-        } else
-            util_abort("%s both existing field - and indexed values must be "
-                       "float / double - aborting\n",
-                       __func__);
-    } break;
-    case (ECL_DOUBLE_TYPE): {
-        double *field_data = (double *)field->data;
-        if (ecl_type_is_double(src_type)) {
-            double *src_data = (double *)value;
-            INDEXED_UPDATE_MACRO(field_data, src_data, len, index_list, add);
-        } else if (ecl_type_is_float(src_type)) {
-            float *src_data = (float *)value;
-            INDEXED_UPDATE_MACRO(field_data, src_data, len, index_list, add);
-        } else
-            util_abort("%s both existing field - and indexed values must be "
-                       "float / double - aborting\n",
-                       __func__);
-    } break;
-    default:
-        util_abort(
-            "%s existing field must be of type float/double - aborting \n",
-            __func__);
-    }
-}
-
 /*
    Copying data from a (PACKED) ecl_kw instance down to a fields data.
 */

@@ -70,8 +70,6 @@ bfs_config_type *bfs_config_alloc(bool read_only) {
 
 void bfs_config_free(bfs_config_type *config) { free(config); }
 
-static UTIL_SAFE_CAST_FUNCTION(bfs, BFS_TYPE_ID);
-
 static void bfs_close(bfs_type *bfs) {
     if (bfs->block_fs != NULL)
         block_fs_close(bfs->block_fs);

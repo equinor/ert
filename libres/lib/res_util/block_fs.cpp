@@ -284,45 +284,6 @@ static void file_node_set_data_offset(file_node_type *file_node,
         file_node_header_size(filename) - sizeof(NODE_END_TAG);
 }
 
-static void file_node_dump_index(const file_node_type *file_node,
-                                 FILE *index_stream) {
-    util_fwrite_int(file_node->status, index_stream);
-    util_fwrite_long(file_node->node_offset, index_stream);
-    util_fwrite_int(file_node->node_size, index_stream);
-    util_fwrite_int(file_node->data_offset, index_stream);
-    util_fwrite_int(file_node->data_size, index_stream);
-}
-
-/*
-static file_node_type * file_node_index_fread_alloc( FILE * stream ) {
-  node_status_type status = util_fread_int( stream );
-  long int node_offset    = util_fread_long( stream );
-  int node_size           = util_fread_int( stream );
-  {
-    file_node_type * file_node = file_node_alloc( status , node_offset , node_size );
-    file_node->data_offset = util_fread_int( stream );
-    file_node->data_size   = util_fread_int( stream );
-
-    return file_node;
-  }
-}
-*/
-
-static file_node_type *file_node_index_buffer_fread_alloc(buffer_type *buffer) {
-    node_status_type status = (node_status_type)buffer_fread_int(buffer);
-    long int node_offset = buffer_fread_long(buffer);
-    int node_size = buffer_fread_int(buffer);
-    {
-        file_node_type *file_node =
-            file_node_alloc(status, node_offset, node_size);
-
-        file_node->data_offset = buffer_fread_int(buffer);
-        file_node->data_size = buffer_fread_int(buffer);
-
-        return file_node;
-    }
-}
-
 static void block_fs_insert_index_node(block_fs_type *block_fs,
                                        const char *filename,
                                        const file_node_type *file_node) {
