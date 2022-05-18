@@ -21,11 +21,6 @@ def test_with_gen_kw(copy_case):
     assert len(os.listdir("storage/snake_oil/runpath")) == 1
     assert len(os.listdir("storage/snake_oil/runpath/realization-0")) == 1
 
-    rp = main.create_runpath_list()
-    assert len(rp) == 0
-    rp.load()
-    assert len(rp), 1
-
 
 def test_without_gen_kw(copy_case):
     copy_case("local/snake_oil")

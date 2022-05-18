@@ -57,11 +57,6 @@
 #include <ert/enkf/site_config.hpp>
 
 typedef struct enkf_main_struct enkf_main_type;
-extern "C" const char *
-enkf_main_get_user_config_file(const enkf_main_type *enkf_main);
-
-extern "C" ert_templates_type *
-enkf_main_get_templates(enkf_main_type *enkf_main);
 
 extern "C" void enkf_main_free(enkf_main_type *);
 void enkf_main_exit(enkf_main_type *enkf_main);
@@ -95,11 +90,9 @@ enkf_main_get_analysis_config(const enkf_main_type *);
 subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main);
 extern "C" subst_list_type *
 enkf_main_get_data_kw(const enkf_main_type *enkf_main);
-extern "C" PY_USED void enkf_main_clear_data_kw(enkf_main_type *enkf_main);
 extern "C" const site_config_type *
 enkf_main_get_site_config(const enkf_main_type *enkf_main);
-extern "C" void enkf_main_resize_ensemble(enkf_main_type *enkf_main,
-                                          int new_ens_size);
+void enkf_main_increase_ensemble(enkf_main_type *enkf_main, int new_ens_size);
 extern "C" void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                            const char *user_key, int obs_count,
                                            time_t *obs_time, double *y,
@@ -108,8 +101,6 @@ extern "C" int enkf_main_get_observation_count(const enkf_main_type *enkf_main,
                                                const char *user_key);
 
 void enkf_main_install_SIGNALS(void);
-extern "C" void enkf_main_add_node(enkf_main_type *enkf_main,
-                                   enkf_config_node_type *enkf_config_node);
 
 extern "C" const hook_manager_type *
 enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
@@ -127,12 +118,11 @@ bool enkf_main_export_field(const enkf_main_type *enkf_main, const char *kw,
                             const char *path, bool_vector_type *iactive,
                             field_file_format_type file_type, int report_step);
 
-extern "C" bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
-                                               const char *kw, const char *path,
-                                               bool_vector_type *iactive,
-                                               field_file_format_type file_type,
-                                               int report_step,
-                                               enkf_fs_type *fs);
+bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
+                                    const char *kw, const char *path,
+                                    bool_vector_type *iactive,
+                                    field_file_format_type file_type,
+                                    int report_step, enkf_fs_type *fs);
 
 extern "C" int
 enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main, int iter,
@@ -192,8 +182,6 @@ enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path);
 
 extern "C" runpath_list_type *
-enkf_main_alloc_runpath_list(const enkf_main_type *enkf_main);
-extern "C" runpath_list_type *
 enkf_main_get_runpath_list(const enkf_main_type *enkf_main);
 extern "C" PY_USED ert_run_context_type *
 enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
@@ -208,8 +196,6 @@ void enkf_main_isubmit_job(enkf_main_type *enkf_main, run_arg_type *run_arg,
                            job_queue_type *job_queue);
 extern "C" const char *
 enkf_main_get_site_config_file(const enkf_main_type *enkf_main);
-extern "C" const char *
-enkf_main_get_schedule_prediction_file(const enkf_main_type *enkf_main);
 extern "C" void enkf_main_add_data_kw(enkf_main_type *enkf_main,
                                       const char *key, const char *value);
 extern "C" const res_config_type *

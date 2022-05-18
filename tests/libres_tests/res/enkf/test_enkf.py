@@ -27,7 +27,6 @@ from res.enkf import (
     EnkfObs,
     EnkfVarType,
     EnsembleConfig,
-    ErtTemplates,
     ModelConfig,
     ObsVector,
     ResConfig,
@@ -240,7 +239,6 @@ class EnKFTest(ResTest):
             self.assertIsInstance(main.eclConfig(), EclConfig)
 
             self.assertIsInstance(main.getObservations(), EnkfObs)
-            self.assertIsInstance(main.get_templates(), ErtTemplates)
             self.assertIsInstance(
                 main.getEnkfFsManager().getCurrentFileSystem(), EnkfFs
             )

@@ -1,6 +1,6 @@
 
 mask = util.bool_vector_alloc(ens_size , false) 
-# Første arg: størrelse
+# Fï¿½rste arg: stï¿½rrelse
 # Andre arg: init verdi.
 
 util.bool_vector_iset( mask , 67 , true )
@@ -30,28 +30,28 @@ Missing initializer: install_job
 
 INSTALL_JOB:
 -----------
-1. Denne bør endre navn til "Private jobs"
+1. Denne bï¿½r endre navn til "Private jobs"
 
 2. Her blir get/set ganske komplisert - det er to grunner til det:
 
-   a) Listen over installerte jobber inneholder både globale jobber,
-      som brukeren ikke har anledning til å manipulere, og "Private"
-      jobber som brukeren har installert og således må få lov til å
+   a) Listen over installerte jobber inneholder bï¿½de globale jobber,
+      som brukeren ikke har anledning til ï¿½ manipulere, og "Private"
+      jobber som brukeren har installert og sï¿½ledes mï¿½ fï¿½ lov til ï¿½
       manipulere.
 
-   b) Foreløpig er det bare basert en config_file, men når vi først
-      lager GUI ville det være veldig naturlig å lage mulighet for å
+   b) Forelï¿½pig er det bare basert en config_file, men nï¿½r vi fï¿½rst
+      lager GUI ville det vï¿½re veldig naturlig ï¿½ lage mulighet for ï¿½
       konfigurere en jobb via GUI.
 
-3. Det opprinnelige GUI panelet består av to felt. Kutt ut det ene
-   feltet, men la det sprette opp ett vindu når man legger til en
+3. Det opprinnelige GUI panelet bestï¿½r av to felt. Kutt ut det ene
+   feltet, men la det sprette opp ett vindu nï¿½r man legger til en
    jobb.
 
 
 Get:
 s  = enkf_main_get_site_config( enkf_main )
 jl = site_config_get_installed_jobs( s )
-h  = ext_joblist_get_jobs( jl )                  <- Nå er h en hash tabell.
+h  = ext_joblist_get_jobs( jl )                  <- Nï¿½ er h en hash tabell.
 
 #Itererer over hash_tabellen:
 python_joblist = []
@@ -64,8 +64,8 @@ OK : python_joblist skal inneholde de job_navnene som skal
 
 
 
-Set: Her tror jeg det er enklest å respondere eksplisitt på add_job og
-     del_job events, istedet for å ta en batch prosess til slutt
+Set: Her tror jeg det er enklest ï¿½ respondere eksplisitt pï¿½ add_job og
+     del_job events, istedet for ï¿½ ta en batch prosess til slutt
 
 add_job:
 --------
@@ -84,8 +84,8 @@ ext_joblist_del_job( jl , job_name )
 
 #Missing initializer: num_realizations
 #   enkf_main_get_ensemble_size( enkf_main );
-#   enkf_main_resize_ensemble( enkf_main );                  <- Denne kan potensielt ta en del tid, og
-                                                               bør være beskyttet av en APPLY knapp.
+#   enkf_main_increase_ensemble( enkf_main );                  <- Denne kan potensielt ta en del tid, og
+                                                               bï¿½r vï¿½re beskyttet av en APPLY knapp.
 
 
 Missing initializer: parameters
@@ -147,7 +147,6 @@ Missing initializer: update_log_path
 #     subst_list_get_size( s )
 #     subst_list_iget_key( s )
 #     subst_list_iget_value( s )
-#Set: enkf_main_clear_data_kw( enkf_main )
 #     enkf_main_add_data_kw( enkf_main , key , value )
 
 #Get    l = enkf_main_get_local_config( enkf_main );

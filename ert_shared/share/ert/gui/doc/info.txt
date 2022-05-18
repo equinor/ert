@@ -5,7 +5,7 @@ get:
 ----
 model_config   = enkf_main_get_model_config( enkf_main )
 forward_model  = model_config_get_forward_model( model_config )
-names          = forward_model_alloc_joblist( forward_model )     <- Allokerer en stringlist() med navnene på jobbene.
+names          = forward_model_alloc_joblist( forward_model )     <- Allokerer en stringlist() med navnene pï¿½ jobbene.
 
 
 
@@ -62,7 +62,6 @@ TEMPLATES:
 ----------
 Get:
 ----
-templates = enkf_main_get_templates( enkf_main );
 s         = ert_templates_alloc_list( templates );   <- Returnerer en stringlist med navn
 template  = ert_templates_get_template( templates , "Navn")
 template_file = ert_template_get_template_file( template ); 
@@ -70,9 +69,8 @@ target_file   = ert_template_get_target_file( template );
 arg_string    = ert_template_get_args_as_string( template )
 
 
-Set: (kan enten gjøres med manuelle add / del eller ved hjelp av clear og add).
+Set: (kan enten gjï¿½res med manuelle add / del eller ved hjelp av clear og add).
 ----
-templates = enkf_main_get_templates( enkf_main );
 ert_templates_clear( templates );
 ert_templates_del_template( templates , "Key");
 template = ert_templates_add_template( templates , "Key", "Template_file" , "target_file" , arg_string /* Can be None / NULL */);
@@ -100,12 +98,6 @@ node_list ~ stringlist med de valgt nodene.
 iens_mask = bool_vector_alloc(0 , false);   <- Allokereres med false som default.
 iens_mask ~ bool_vector hvor alle de aktive indeksene er satt til true
  
-
-
-SCHEDULE_PREDICTION_FILE
-------------------------
-Get:  enkf_main_get_schedule_prediction_file( enkf_main )
-Set:  enkf_main_set_schedule_prediction_file( enkf_main , filename )
 
 
 REFCASE
@@ -182,9 +174,9 @@ Plotting:
  4.  xxx_vector_free  () naar du er ferdi.
 
 
-5. (Ekstraoppgave:) en ecl_sum instans kan også loades fra filsystemet (helt utenfor ERT sin database) med
+5. (Ekstraoppgave:) en ecl_sum instans kan ogsï¿½ loades fra filsystemet (helt utenfor ERT sin database) med
 
-    ecl_sum = ecl_sum_fread_alloc_case( "Navn på en ECLIPSE.DATA fil" )
+    ecl_sum = ecl_sum_fread_alloc_case( "Navn pï¿½ en ECLIPSE.DATA fil" )
 
 ---------------------
 
@@ -199,10 +191,10 @@ size = gen_date_config_get_initial_size( gen_data_config )
 
 Value:
 -----
-value = enkf_node_user_get( enkf_node , "KEY:tall" , &valid)     <----- NB Det er helt avgjørende å sjekke at valid returnerer true,  
-                                                                        gen_data typen er (altfor) fleksibel, og kan endre størrelse runtime. 
-                                                                        At du har sjekket initiell størrelse er derfor desverre ikke tilstrekkelig 
-                                                                        til å validere input.
+value = enkf_node_user_get( enkf_node , "KEY:tall" , &valid)     <----- NB Det er helt avgjï¿½rende ï¿½ sjekke at valid returnerer true,  
+                                                                        gen_data typen er (altfor) fleksibel, og kan endre stï¿½rrelse runtime. 
+                                                                        At du har sjekket initiell stï¿½rrelse er derfor desverre ikke tilstrekkelig 
+                                                                        til ï¿½ validere input.
 
 
 ----------------

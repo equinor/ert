@@ -116,10 +116,6 @@ enkf_main_get_analysis_config(const enkf_main_type *enkf_main) {
     return res_config_get_analysis_config(enkf_main->res_config);
 }
 
-const char *enkf_main_get_user_config_file(const enkf_main_type *enkf_main) {
-    return res_config_get_user_config_file(enkf_main->res_config);
-}
-
 const char *enkf_main_get_site_config_file(const enkf_main_type *enkf_main) {
     return site_config_get_config_file(enkf_main_get_site_config(enkf_main));
 }
@@ -352,10 +348,6 @@ void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
                               value);
 }
 
-void enkf_main_clear_data_kw(enkf_main_type *enkf_main) {
-    subst_config_clear(enkf_main_get_subst_config(enkf_main));
-}
-
 static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main_type *enkf_main = new enkf_main_type;
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
@@ -374,28 +366,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
 
 runpath_list_type *enkf_main_get_runpath_list(const enkf_main_type *enkf_main) {
     return hook_manager_get_runpath_list(enkf_main_get_hook_manager(enkf_main));
-}
-
-runpath_list_type *
-enkf_main_alloc_runpath_list(const enkf_main_type *enkf_main) {
-    return runpath_list_alloc(hook_manager_get_runpath_list_file(
-        enkf_main_get_hook_manager(enkf_main)));
-}
-
-void enkf_main_add_node(enkf_main_type *enkf_main,
-                        enkf_config_node_type *enkf_config_node) {
-    for (int iens = 0; iens < enkf_main_get_ensemble_size(enkf_main); iens++) {
-
-        enkf_state_add_node(enkf_main->ensemble[iens],
-                            enkf_config_node_get_key(enkf_config_node),
-                            enkf_config_node);
-    }
-}
-
-const char *
-enkf_main_get_schedule_prediction_file(const enkf_main_type *enkf_main) {
-    return ecl_config_get_schedule_prediction_file(
-        enkf_main_get_ecl_config(enkf_main));
 }
 
 rng_config_type *enkf_main_get_rng_config(const enkf_main_type *enkf_main) {
@@ -435,7 +405,7 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
     const model_config_type *model_config =
         enkf_main_get_model_config(enkf_main);
     int num_realizations = model_config_get_num_realizations(model_config);
-    enkf_main_resize_ensemble(enkf_main, num_realizations);
+    enkf_main_increase_ensemble(enkf_main, num_realizations);
 }
 
 /*
@@ -578,10 +548,6 @@ int enkf_main_get_observation_count(const enkf_main_type *enkf_main,
 }
 
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
-
-ert_templates_type *enkf_main_get_templates(enkf_main_type *enkf_main) {
-    return res_config_get_templates(enkf_main->res_config);
-}
 
 ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);

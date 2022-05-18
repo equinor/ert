@@ -36,6 +36,5 @@ void subst_config_add_internal_subst_kw(subst_config_type *, const char *,
                                         const char *, const char *);
 void subst_config_add_subst_kw(subst_config_type *subst_config, const char *key,
                                const char *value);
-void subst_config_clear(subst_config_type *subst_config);
 
 #endif
