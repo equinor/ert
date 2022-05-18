@@ -2,6 +2,7 @@ from collections import defaultdict, deque, OrderedDict
 
 import asyncio
 from typing import Optional
+import concurrent.futures
 
 from ert.ensemble_evaluator import identifiers
 
@@ -11,6 +12,8 @@ from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STOPPED,
 )
 
+from ._update_snapshot import _calculate_updated_snapshot
+from distributed.comm.inproc import new_address
 
 class Batcher:
     def __init__(self, timeout, loop=None):
@@ -56,6 +59,9 @@ class Dispatcher:
         self._evaluator_callback = evaluator_callback
         self._register_event_handlers()
 
+        self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        #self._pool = concurrent.futures.ProcessPoolExecutor(max_workers=5)
+
     def register_event_handler(self, event_types, function, batching=False):
         if not isinstance(event_types, set):
             event_types = {event_types}
@@ -89,32 +95,44 @@ class Dispatcher:
             batching=True,
         )
 
+    async def _update_snapshot(self, events):
+        (new_snapshot, mutate_snapshot) = await asyncio.get_event_loop().run_in_executor(
+                                        self._pool,
+                                        _calculate_updated_snapshot,
+                                        self._ensemble.snapshot, events)
+        
+        self._ensemble.snapshot = new_snapshot
+        return mutate_snapshot
+
     async def _fm_handler(self, events):
-        snapshot_update_event = self._ensemble.update_snapshot(events)
+        snapshot_update_event = await self._update_snapshot(events)
         await self._evaluator_callback(
             identifiers.EVTYPE_EE_SNAPSHOT_UPDATE, snapshot_update_event
         )
 
     async def _ensemble_stopped_handler(self, events):
         if self._ensemble.status != ENSEMBLE_STATE_FAILED:
+            snapshot_update_event = await self._update_snapshot(events)
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                self._ensemble.update_snapshot(events),
+                snapshot_update_event,
                 events[0].data,
             )
 
     async def _ensemble_started_handler(self, events):
         if self._ensemble.status != ENSEMBLE_STATE_FAILED:
+            snapshot_update_event = await self._update_snapshot(events)
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
-                self._ensemble.update_snapshot(events),
+                snapshot_update_event,
             )
 
     async def _ensemble_cancelled_handler(self, events):
         if self._ensemble.status != ENSEMBLE_STATE_FAILED:
+            snapshot_update_event = await self._update_snapshot(events)
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-                self._ensemble.update_snapshot(events),
+                snapshot_update_event,
             )
 
     async def _ensemble_failed_handler(self, events):
@@ -122,9 +140,10 @@ class Dispatcher:
             ENSEMBLE_STATE_STOPPED,
             ENSEMBLE_STATE_CANCELLED,
         ]:
+            snapshot_update_event = await self._update_snapshot(events)
             await self._evaluator_callback(
                 identifiers.EVTYPE_ENSEMBLE_FAILED,
-                self._ensemble.update_snapshot(events),
+                snapshot_update_event,
             )
 
     async def handle_event(self, event):

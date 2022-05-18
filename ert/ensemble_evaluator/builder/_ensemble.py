@@ -54,15 +54,12 @@ class _Ensemble:
     def snapshot(self) -> Snapshot:
         return self._snapshot
 
-    def update_snapshot(self, events: List[CloudEvent]) -> PartialSnapshot:
-        snapshot_mutate_event = PartialSnapshot(self._snapshot)
-        for event in events:
-            snapshot_mutate_event.from_cloudevent(event)
-        self._snapshot.merge_event(snapshot_mutate_event)
+    @snapshot.setter
+    def snapshot(self, new_snapshot: Snapshot):
+        self._snapshot = new_snapshot
         if self.status != self._snapshot.status:
             self.status = self._status_tracker.update_state(self._snapshot.status)
-        return snapshot_mutate_event
-
+        
     async def send_cloudevent(  # pylint: disable=too-many-arguments
         self,
         url: str,
