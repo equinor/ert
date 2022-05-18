@@ -87,21 +87,6 @@ static bool setting_node_set_value(setting_node_type *node, const char *value) {
         return false;
 }
 
-static void setting_node_set_string_value(setting_node_type *node,
-                                          const char *value) {
-    setting_node_assert_type(node, CONFIG_STRING);
-    setting_node_set_value(node, value);
-}
-
-static void setting_node_set_int_value(setting_node_type *node, int value) {
-    setting_node_assert_type(node, CONFIG_INT);
-    {
-        char *string_value = (char *)util_alloc_sprintf("%d", value);
-        setting_node_set_value(node, string_value);
-        free(string_value);
-    }
-}
-
 static void setting_node_set_double_value(setting_node_type *node,
                                           double value) {
     setting_node_assert_type(node, CONFIG_FLOAT);
@@ -112,39 +97,9 @@ static void setting_node_set_double_value(setting_node_type *node,
     }
 }
 
-static void setting_node_set_bool_value(setting_node_type *node, bool value) {
-    setting_node_assert_type(node, CONFIG_BOOL);
-    if (value)
-        setting_node_set_value(node, "True");
-    else
-        setting_node_set_value(node, "False");
-}
-
-static const char *setting_node_get_value(const setting_node_type *node) {
-    return node->string_value;
-}
-
-static const char *
-setting_node_get_string_value(const setting_node_type *node) {
-    setting_node_assert_type(node, CONFIG_STRING);
-    return node->string_value;
-}
-
-static int setting_node_get_int_value(const setting_node_type *node) {
-    setting_node_assert_type(node, CONFIG_INT);
-    return strtol(node->string_value, NULL, 10);
-}
-
 static double setting_node_get_double_value(const setting_node_type *node) {
     setting_node_assert_type(node, CONFIG_FLOAT);
     return strtod(node->string_value, NULL);
-}
-
-static bool setting_node_get_bool_value(const setting_node_type *node) {
-    bool bool_value;
-    setting_node_assert_type(node, CONFIG_BOOL);
-    util_sscanf_bool(node->string_value, &bool_value);
-    return bool_value;
 }
 
 config_settings_type *config_settings_alloc(const char *root_key) {

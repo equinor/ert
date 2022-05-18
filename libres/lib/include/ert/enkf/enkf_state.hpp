@@ -71,9 +71,6 @@ void enkf_state_ecl_write(const ensemble_config_type *ens_config,
                           const run_arg_type *run_arg, enkf_fs_type *fs);
 extern "C" void enkf_state_free(enkf_state_type *);
 
-extern "C" const ensemble_config_type *
-enkf_state_get_ensemble_config(const enkf_state_type *enkf_state);
-
 extern "C" bool
 enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                     run_arg_type *run_arg);
