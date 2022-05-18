@@ -76,8 +76,6 @@ class GertMainWindow(QMainWindow):
             tool_button.setPopupMode(QToolButton.InstantPopup)
 
     def __createMenu(self):
-        file_menu = self.menuBar().addMenu("&File")
-        file_menu.addAction("Close", self.close)
         self.__view_menu = self.menuBar().addMenu("&View")
         self.__help_menu = self.menuBar().addMenu("&Help")
         """:type: QMenu"""
