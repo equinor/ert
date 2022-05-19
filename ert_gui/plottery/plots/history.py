@@ -21,10 +21,9 @@ def plotHistory(plot_context, axes):
         y=data,
         color=style.color,
         alpha=style.alpha,
-        marker=style.marker,
-        linestyle=style.line_style,
         linewidth=style.width,
         markersize=style.size,
+        fmt=f"{style.marker}{style.line_style}",
     )
 
     if len(lines) > 0 and style.isVisible():
