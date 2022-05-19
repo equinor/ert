@@ -9,7 +9,8 @@ import json
 
 def get_single_record_csv(dark_storage_client, ensemble_id1, keyword, poly_ran):
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/{keyword}?realization_index={poly_ran['reals'] - 1}"
+        f"/ensembles/{ensemble_id1}/records/"
+        f"{keyword}?realization_index={poly_ran['reals'] - 1}"
     )
     stream = io.BytesIO(resp.content)
     record_df1_indexed = pd.read_csv(stream, index_col=0, float_precision="round_trip")
@@ -27,7 +28,8 @@ def get_observations(dark_storage_client, ensemble_id1, keyword, poly_ran):
 
 def get_single_record_parquet(dark_storage_client, ensemble_id1, keyword, poly_ran):
     resp: Response = dark_storage_client.get(
-        f"/ensembles/{ensemble_id1}/records/{keyword}?realization_index={poly_ran['reals'] - 1}",
+        f"/ensembles/{ensemble_id1}/records/"
+        f"{keyword}?realization_index={poly_ran['reals'] - 1}",
         headers={"accept": "application/x-parquet"},
     )
     stream = io.BytesIO(resp.content)
