@@ -38,6 +38,8 @@
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 
+#include <ert/python.hpp>
+
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
 
@@ -783,3 +785,47 @@ void enkf_fs_decrease_run_count(enkf_fs_type *fs) {
 }
 
 bool enkf_fs_is_running(const enkf_fs_type *fs) { return (fs->runcount > 0); }
+
+RES_LIB_SUBMODULE("enkf_fs", m) {
+    using namespace py::literals;
+
+    const auto write_fn = [](py::handle self, py::array_t<double> data, const std::string &name, int iens) -> void {
+        auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+
+        auto bufsiz = data.nbytes() + sizeof(int) + sizeof(int) * data.ndim() * 2;
+        auto buffer = buffer_alloc(data.nbytes());
+        buffer_fwrite_int(buffer, data.ndim());
+        for (size_t i{}; i < data.ndim(); ++i) {
+            buffer_fwrite_int(buffer, data.shape(i));
+            buffer_fwrite_int(buffer, data.strides(i));
+        }
+        buffer_fwrite(buffer, data.data(), 1, data.nbytes());
+
+        enkf_fs->parameter->save_vector(name.c_str(), iens, buffer);
+    };
+
+    const auto read_fn = [](py::handle self, const std::string &name, int iens) -> py::array_t<double> {
+        using array_t = py::array_t<double>;
+
+        auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+
+        auto buffer = buffer_alloc(100);
+        enkf_fs->parameter->load_vector(name.c_str(), iens, buffer);
+
+        auto ndim = buffer_fread_int(buffer);
+        array_t::ShapeContainer shape{};
+        array_t::StridesContainer stride{};
+        for (int i{}; i < ndim; ++i) {
+            shape->push_back(buffer_fread_int(buffer));
+            stride->push_back(buffer_fread_int(buffer));
+        }
+
+        auto data = reinterpret_cast<double*>(buffer_iget_data(buffer, buffer_get_offset(buffer)));
+
+        py::array_t<double> array(shape, stride, data);
+        return array;
+};
+
+    m.def("write_param_vector_raw", write_fn, "self"_a, "data"_a, "name"_a, "iens"_a);
+    m.def("read_param_vector_raw", read_fn, "self"_a, "name"_a, "iens"_a);
+}
