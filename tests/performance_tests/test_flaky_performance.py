@@ -93,7 +93,9 @@ def get_parameters(dark_storage_client, ensemble_id1, keyword, poly_ran):
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
 @pytest.mark.integration_test
-def test_dark_storage_performance(benchmark, template_config, monkeypatch, function, keyword):
+def test_dark_storage_performance(
+    benchmark, template_config, monkeypatch, function, keyword
+):
 
     key = {
         "summary": "PSUM1",
