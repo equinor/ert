@@ -18,11 +18,11 @@ from cwrap import BaseCEnum
 
 class HookRuntime(BaseCEnum):
     TYPE_NAME = "hook_runtime_enum"
-    PRE_SIMULATION = None
-    POST_SIMULATION = None
-    PRE_UPDATE = None
-    POST_UPDATE = None
-    PRE_FIRST_UPDATE = None
+    PRE_SIMULATION = 0
+    POST_SIMULATION = 1
+    PRE_UPDATE = 2
+    POST_UPDATE = 3
+    PRE_FIRST_UPDATE = 4
 
 
 HookRuntime.addEnum("PRE_SIMULATION", 0)

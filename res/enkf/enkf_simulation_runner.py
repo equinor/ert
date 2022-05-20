@@ -2,19 +2,20 @@ from functools import partial
 
 from cwrap import BaseCClass
 
-from res import ResPrototype, _lib
+from res import _lib
 from res.enkf.ert_run_context import ErtRunContext
-from res.job_queue import JobQueueManager, RunStatusType
+from res.job_queue import JobQueue, JobQueueManager, RunStatusType
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from res.enkf import EnKFMain
 
 
 class EnkfSimulationRunner(BaseCClass):
     TYPE_NAME = "enkf_simulation_runner"
 
-    _create_run_path = ResPrototype(
-        "void enkf_main_create_run_path(enkf_simulation_runner, ert_run_context)"
-    )
-
-    def __init__(self, enkf_main):
+    def __init__(self, enkf_main: "EnKFMain") -> None:
         assert isinstance(enkf_main, BaseCClass)
         # enkf_main should be an EnKFMain, get the _RealEnKFMain object
         real_enkf_main = enkf_main.parent()
@@ -24,11 +25,10 @@ class EnkfSimulationRunner(BaseCClass):
             is_reference=True,
         )
 
-    def _enkf_main(self):
+    def _enkf_main(self) -> "EnKFMain":
         return self.parent()
 
-    def runSimpleStep(self, job_queue, run_context):
-        """@rtype: int"""
+    def runSimpleStep(self, job_queue: JobQueue, run_context: ErtRunContext) -> int:
         # run simplestep
         self._enkf_main().initRun(run_context)
 
@@ -61,20 +61,20 @@ class EnkfSimulationRunner(BaseCClass):
 
         return totalOk
 
-    def createRunPath(self, run_context: ErtRunContext):
-        self._create_run_path(run_context)
+    def createRunPath(self, run_context: ErtRunContext) -> None:
+        _lib.enkf_main.create_run_path(self, run_context)
 
-    def runEnsembleExperiment(self, job_queue, run_context):
-        """@rtype: int"""
+    def runEnsembleExperiment(
+        self, job_queue: JobQueue, run_context: ErtRunContext
+    ) -> int:
         return self.runSimpleStep(job_queue, run_context)
 
     @staticmethod
-    def runWorkflows(runtime, ert):
-        """:type res.enkf.enum.HookRuntimeEnum"""
+    def runWorkflows(runtime: int, ert: "EnKFMain") -> None:
         hook_manager = ert.getHookManager()
         hook_manager.runWorkflows(runtime, ert)
 
-    def start_queue(self, run_context, job_queue):
+    def start_queue(self, run_context: ErtRunContext, job_queue: JobQueue) -> None:
         max_runtime = self._enkf_main().analysisConfig().get_max_runtime()
         if max_runtime == 0:
             max_runtime = None

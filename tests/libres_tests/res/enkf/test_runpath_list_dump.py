@@ -53,7 +53,7 @@ class RunpathListDumpTest(ResTest):
                 if mask[i]:
                     run_arg.geo_id = 10 * i
 
-            res.createRunpath(run_context)
+            res.getEnkfSimulationRunner().createRunPath(run_context)
 
             for i, run_arg in enumerate(run_context):
                 if not mask[i]:

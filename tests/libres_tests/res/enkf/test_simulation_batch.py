@@ -73,7 +73,7 @@ class SimulationBatchTest(ResTest):
             ert.getEnkfSimulationRunner().createRunPath(run_context)
             job_queue = ert.get_queue_config().create_job_queue()
 
-            ert.createRunpath(run_context)
+            ert.getEnkfSimulationRunner().createRunPath(run_context)
             num = ert.getEnkfSimulationRunner().runEnsembleExperiment(
                 job_queue, run_context
             )

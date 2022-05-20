@@ -257,9 +257,6 @@ class _RealEnKFMain(BaseCClass):
     _load_from_run_context = ResPrototype(
         "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
     )
-    _create_run_path = ResPrototype(
-        "void enkf_main_create_run_path(enkf_main , ert_run_context)"
-    )
     _alloc_run_context_ENSEMBLE_EXPERIMENT = ResPrototype(
         "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main , \
                                                                                  enkf_fs , \
@@ -402,9 +399,6 @@ class _RealEnKFMain(BaseCClass):
 
     def initRun(self, run_context):
         self._init_run(run_context)
-
-    def createRunpath(self, run_context):
-        self._create_run_path(run_context)
 
     def getRunContextENSEMPLE_EXPERIMENT(
         self, fs, iactive: List[bool], iteration: int = 0
