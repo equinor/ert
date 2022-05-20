@@ -18,6 +18,8 @@
 
 #include <filesystem>
 #include <memory>
+#include <chrono>
+#include <thread>
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -192,6 +194,7 @@ int enkf_fs_incref(enkf_fs_type *fs) {
 }
 
 int enkf_fs_decref(enkf_fs_type *fs) {
+    return fs->refcount;
     fs->refcount--;
     int refcount = fs->refcount;
 
@@ -791,6 +794,8 @@ RES_LIB_SUBMODULE("enkf_fs", m) {
 
     const auto write_fn = [](py::handle self, py::array_t<double> data, const std::string &name, int iens) -> void {
         auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+        enkf_fs_incref(enkf_fs);
+        py::gil_scoped_release guard;
 
         auto bufsiz = data.nbytes() + sizeof(int) + sizeof(int) * data.ndim() * 2;
         auto buffer = buffer_alloc(data.nbytes());
@@ -802,10 +807,12 @@ RES_LIB_SUBMODULE("enkf_fs", m) {
         buffer_fwrite(buffer, data.data(), 1, data.nbytes());
 
         enkf_fs->parameter->save_vector(name.c_str(), iens, buffer);
+        enkf_fs_decref(enkf_fs);
     };
 
     const auto read_fn = [](py::handle self, const std::string &name, int iens) -> py::array_t<double> {
         using array_t = py::array_t<double>;
+        fmt::print("> {}\n", name);
 
         auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
 
