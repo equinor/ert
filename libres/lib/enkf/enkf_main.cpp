@@ -54,6 +54,8 @@
 
 #include <ert/concurrency.hpp>
 
+#include <ert/python.hpp>
+
 static auto logger = ert::get_logger("enkf");
 
 /*
@@ -678,6 +680,15 @@ RES_LIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
+    m.def(
+        "create_run_path",
+        [](py::object self, py::object run_context_py) {
+            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+            auto run_context =
+                ert::from_cwrap<ert_run_context_type>(run_context_py);
+            return enkf_main_create_run_path(enkf_main, run_context);
+        },
+        py::arg("self"), py::arg("run_context"));
 }
 
 #include "enkf_main_ensemble.cpp"

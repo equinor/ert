@@ -78,10 +78,6 @@ class ErtRunContext(BaseCClass):
                                                            int)",
         bind=False,
     )
-    _alloc_runpath = ResPrototype(
-        "char* ert_run_context_alloc_runpath(int, path_fmt, subst_list, int)",
-        bind=False,
-    )
     _get_size = ResPrototype("int ert_run_context_get_size( ert_run_context )")
     _free = ResPrototype("void ert_run_context_free( ert_run_context )")
     _iactive = ResPrototype("bool ert_run_context_iactive( ert_run_context , int)")
@@ -225,13 +221,6 @@ class ErtRunContext(BaseCClass):
         return cls._alloc_runpath_list(
             boolvector_from_boollist(mask), runpath_fmt, subst_list, iter
         )
-
-    @classmethod
-    def createRunpath(
-        cls, iens, runpath_fmt: PathFormat, subst_list: SubstitutionList, iter=0
-    ):
-        """@rtype: str"""
-        return cls._alloc_runpath(iens, runpath_fmt, subst_list, iter)
 
     def get_id(self):
         return self._get_id()
