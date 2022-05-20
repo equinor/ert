@@ -1,6 +1,8 @@
-from collections import defaultdict, deque, OrderedDict
-
+import logging
 import asyncio
+import time
+
+from collections import defaultdict, OrderedDict
 from typing import Optional
 
 from ert.ensemble_evaluator import identifiers
@@ -11,26 +13,35 @@ from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STOPPED,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Batcher:
-    def __init__(self, timeout, loop=None):
+    def __init__(self, timeout, max_batch=1000, loop=None):
         self._timeout = timeout
+        self._max_batch = max_batch
         self._running = True
-        self._buffer = deque()
+        self._buffer = []
 
         # Schedule task
         self._task = asyncio.ensure_future(self._job(), loop=loop)
 
     async def _work(self):
-        event_buffer, self._buffer = self._buffer, deque()
-        if event_buffer:
-            function_to_events_map = OrderedDict()
-            for f, event in event_buffer:
-                if f not in function_to_events_map:
-                    function_to_events_map[f] = []
-                function_to_events_map[f].append(event)
-            for f, events in function_to_events_map.items():
-                await f(events)
+        t0 = time.time()
+        event_buffer, self._buffer = (
+            self._buffer[: self._max_batch],
+            self._buffer[self._max_batch :],
+        )
+        function_to_events_map = OrderedDict()
+        for f, event in event_buffer:
+            if f not in function_to_events_map:
+                function_to_events_map[f] = []
+            function_to_events_map[f].append(event)
+        logger.debug(
+            f"processed {len(event_buffer)} events in {(time.time()-t0):.6f}s. {len(self._buffer)} left in queue"  # noqa: E501
+        )
+        for f, events in function_to_events_map.items():
+            await f(events)
 
     def put(self, f, event):
         self._buffer.append((f, event))

@@ -50,7 +50,7 @@ class EnsembleEvaluator:
 
         self._clients: Set[WebSocketServerProtocol] = set()
         self._dispatchers_connected: Optional[asyncio.Queue] = None
-        self._batcher = Batcher(timeout=2, loop=self._loop)
+        self._batcher = Batcher(timeout=2, max_batch=1000, loop=self._loop)
         self._dispatcher = Dispatcher(
             ensemble=self._ensemble,
             evaluator_callback=self.dispatcher_callback,
