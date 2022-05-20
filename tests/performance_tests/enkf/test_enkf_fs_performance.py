@@ -1,4 +1,5 @@
 from res.enkf import EnKFMain, ResConfig
+import pytest
 
 
 def mount_and_umount(ert, case_name):
@@ -10,6 +11,7 @@ def mount_and_umount(ert, case_name):
     fs_manager.umount()
 
 
+@pytest.mark.integration_test
 def test_mount_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")

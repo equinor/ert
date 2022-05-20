@@ -1,6 +1,8 @@
 from res.enkf import ResConfig, EnKFMain
+import pytest
 
 
+@pytest.mark.integration_test
 def test_load_from_context(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
@@ -14,6 +16,7 @@ def test_load_from_context(benchmark, template_config):
         assert loaded_reals == expected_reals
 
 
+@pytest.mark.integration_test
 def test_load_from_fs(benchmark, template_config):
     with template_config["folder"].as_cwd():
         config = ResConfig("poly.ert")
