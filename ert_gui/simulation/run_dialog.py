@@ -6,6 +6,7 @@ from concurrent import futures
 from PyQt5.QtWidgets import QAbstractItemView
 
 from ert_gui.ertwidgets import resourceMovie
+from ert_gui.ertwidgets.message_box import ErtMessageBox
 from ert_gui.model.job_list import JobListProxyModel
 from ert_gui.model.snapshot import RealIens, SnapshotModel, FileRole
 from ert_gui.simulation.tracker_worker import TrackerWorker
@@ -397,10 +398,7 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Critical)
-            msg.setText("Simulations failed!".center(100))
-            msg.setDetailedText(failed_msg)
+            msg = ErtMessageBox("Ert simulations failed!", failed_msg)
             msg.exec_()
 
     @Slot()
