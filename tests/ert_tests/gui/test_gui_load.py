@@ -8,6 +8,7 @@ from qtpy.QtCore import Qt
 
 import ert_gui
 from ert_gui.ertnotifier import ErtNotifier
+from ert_gui.ertwidgets.message_box import ErtMessageBox
 from ert_gui.gert_main import _start_window, run_gui
 
 
@@ -166,3 +167,10 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     start_simulation = gui.findChild(qtpy.QtWidgets.QWidget, name="start_simulation")
     qtbot.mouseClick(start_simulation, Qt.LeftButton)
     assert sim_panel.getSimulationArguments().iter_num == 10
+
+
+def test_dialog(qtbot):
+    msg = ErtMessageBox("Simulations failed!", "failed_msg")
+    qtbot.addWidget(msg)
+    assert msg.label_text.text() == "Simulations failed!"
+    assert msg.details_text.toPlainText() == "failed_msg"
