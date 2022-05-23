@@ -60,9 +60,6 @@ from .es_update import ESUpdate, ErtAnalysisError
 from .forward_load_context import ForwardLoadContext
 from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
-from .local_config import LocalConfig
-from .local_ministep import LocalMinistep
-from .local_obsdata import LocalObsdata
 from .model_config import ModelConfig
 from .node_id import NodeId
 from .observations import (
@@ -114,8 +111,6 @@ __all__ = [
     "EnkfFs",
     "RowScaling",
     "ActiveList",
-    "LocalObsdata",
-    "LocalMinistep",
     "EnkfFieldFileFormatEnum",
     "LoadFailTypeEnum",
     "EnkfVarType",
@@ -141,7 +136,6 @@ __all__ = [
     "EnkfObs",
     "ErtTemplate",
     "ErtTemplates",
-    "LocalConfig",
     "ModelConfig",
     "RunpathList",
     "RunpathNode",

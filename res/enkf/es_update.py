@@ -78,13 +78,13 @@ def analysis_smoother_update(
             analysis_config,
             ens_mask,
             ministep.observation_config(),
-            ministep.parameter_config(),
-            ministep.row_scaling_config(),
+            ministep.parameters,
+            ministep.row_scaling_parameters,
             shared_rng,
         )
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.ministep_snapshots[
-            ministep.name()
+            ministep.name
         ] = update_data.update_snapshot
         if update_data.has_observations:
 
@@ -153,14 +153,14 @@ def analysis_smoother_update(
                 target_fs,
                 ensemble_config,
                 iens_active_index,
-                ministep.parameter_config(),
-                ministep.row_scaling_config(),
+                ministep.parameters,
+                ministep.row_scaling_parameters,
                 update_data,
             )
 
         else:
             raise ErtAnalysisError(
-                f"No active observations/parameters for MINISTEP: {ministep.name()}."
+                f"No active observations/parameters for MINISTEP: {ministep.name}."
             )
     _write_update_report(
         Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot

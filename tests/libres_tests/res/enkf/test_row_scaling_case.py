@@ -22,8 +22,16 @@ import shutil
 import numpy as np
 from ecl.grid import EclGridGenerator
 from libres_utils import ResTest, tmpdir
+from res._lib.local.row_scaling import RowScaling
 
-from res.enkf import EnKFMain, EnkfNode, ErtRunContext, ESUpdate, NodeId, ResConfig
+from res.enkf import (
+    EnKFMain,
+    EnkfNode,
+    ErtRunContext,
+    ESUpdate,
+    NodeId,
+    ResConfig,
+)
 from res.enkf.enums import RealizationStateEnum
 from res.test import ErtTestContext
 
@@ -224,18 +232,15 @@ class RowScalingTest(ResTest):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
 
-            local_config = main.getLocalConfig()
-            local_config.clear()
-            obs = local_config.createObsdata("OBSSET_LOCAL")
-            obs.addNode("WBHP0")
-            obs.addNode("WWCT0")
-            ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.addActiveData("PORO")
-            ministep.attachObsset(obs)
-            updatestep = local_config.getUpdatestep()
-            updatestep.attachMinistep(ministep)
-
-            row_scaling = ministep.row_scaling("PORO")
+            row_scaling = RowScaling()
+            ministeps = [
+                {
+                    "name": "MINISTEP_LOCAL",
+                    "observations": ["WBHP0", "WWCT0"],
+                    "row_scaling_parameters": [("PORO", row_scaling)],
+                },
+            ]
+            main.update_configuration = ministeps
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -273,19 +278,16 @@ class RowScalingTest(ResTest):
             es_update.smootherUpdate(run_context)
 
             # Configure the local updates
-            local_config = main.getLocalConfig()
-            local_config.clear()
-            obs = local_config.createObsdata("OBSSET_LOCAL")
-            obs.addNode("WWCT0")
-            obs.addNode("WBHP0")
-            ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.addActiveData("PORO")
-            ministep.attachObsset(obs)
-            updatestep = local_config.getUpdatestep()
-            updatestep.attachMinistep(ministep)
+            row_scaling = RowScaling()
+            ministeps = [
+                {
+                    "name": "MINISTEP_LOCAL",
+                    "observations": ["WWCT0", "WBHP0"],
+                    "row_scaling_parameters": [("PORO", row_scaling)],
+                },
+            ]
+            main.update_configuration = ministeps
 
-            # Apply the row scaling
-            row_scaling = ministep.row_scaling("PORO")
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -337,19 +339,16 @@ class RowScalingTest(ResTest):
             es_update.smootherUpdate(run_context)
 
             # Configure the local updates
-            local_config = main.getLocalConfig()
-            local_config.clear()
-            obs = local_config.createObsdata("OBSSET_LOCAL")
-            obs.addNode("WWCT0")
-            obs.addNode("WBHP0")
-            ministep = local_config.createMinistep("MINISTEP_LOCAL")
-            ministep.addActiveData("PORO")
-            ministep.attachObsset(obs)
-            updatestep = local_config.getUpdatestep()
-            updatestep.attachMinistep(ministep)
-
+            row_scaling = RowScaling()
+            ministeps = [
+                {
+                    "name": "MINISTEP_LOCAL",
+                    "observations": ["WWCT0", "WBHP0"],
+                    "row_scaling_parameters": [("PORO", row_scaling)],
+                },
+            ]
+            main.update_configuration = ministeps
             # Apply the row scaling
-            row_scaling = ministep.row_scaling("PORO")
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -408,24 +407,22 @@ class RowScalingTest(ResTest):
             es_update.smootherUpdate(run_context)
 
             # Configure the local updates
-            local_config = main.getLocalConfig()
-            local_config.clear()
-            obs = local_config.createObsdata("OBSSET_LOCAL")
-            obs.addNode("WBHP0")
+            row_scaling1 = RowScaling()
+            row_scaling2 = RowScaling()
 
-            ministep1 = local_config.createMinistep("MINISTEP1")
-            ministep1.addActiveData("PORO")
-            row_scaling1 = ministep1.row_scaling("PORO")
-            ministep1.attachObsset(obs)
-
-            ministep2 = local_config.createMinistep("MINISTEP2")
-            ministep2.addActiveData("PORO")
-            row_scaling2 = ministep2.row_scaling("PORO")
-            ministep2.attachObsset(obs)
-
-            updatestep = local_config.getUpdatestep()
-            updatestep.attachMinistep(ministep1)
-            updatestep.attachMinistep(ministep2)
+            ministeps = [
+                {
+                    "name": "MINISTEP1",
+                    "observations": ["WBHP0"],
+                    "row_scaling_parameters": [("PORO", row_scaling1)],
+                },
+                {
+                    "name": "MINISTEP2",
+                    "observations": ["WBHP0"],
+                    "row_scaling_parameters": [("PORO", row_scaling2)],
+                },
+            ]
+            main.update_configuration = ministeps
 
             # Apply the row scaling
             ens_config = main.ensembleConfig()
@@ -487,18 +484,17 @@ TIME_MAP timemap.txt
         init_fs = init_data(main)
 
         # Configure the local updates
-        local_config = main.getLocalConfig()
-        local_config.clear()
-        obs = local_config.createObsdata("OBSSET_LOCAL")
-        obs.addNode("WBHP0")
-        ministep = local_config.createMinistep("MINISTEP_LOCAL")
-        ministep.addActiveData("PORO")
-        ministep.attachObsset(obs)
-        updatestep = local_config.getUpdatestep()
-        updatestep.attachMinistep(ministep)
+        row_scaling = RowScaling()
+        ministep = [
+            {
+                "name": "MINISTEP_LOCAL",
+                "observations": ["WBHP0"],
+                "row_scaling_parameters": [("PORO", row_scaling)],
+            },
+        ]
+        main.update_configuration = ministep
 
         # Apply the row scaling
-        row_scaling = ministep.row_scaling("PORO")
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]
         field_config = poro_config.getFieldModelConfig()
@@ -514,10 +510,7 @@ TIME_MAP timemap.txt
     # 1. A normal update with the default configuration and no explicit local
     #    config.
     #
-    # 2. We have a local configuration, but it is based on a trivial reuse of
-    #    the autogenerated ALL_OBS observation set.
-    #
-    # 3. The update consists of two ministeps. The first is created by deleting
+    # 2. The update consists of two ministeps. The first is created by deleting
     #    an entry from the ALL_OBS set, and then that same entry is added to
     #    the next.
     def test_reuse_ALL_ACTIVE(self):
@@ -533,15 +526,15 @@ TIME_MAP timemap.txt
             rng.setState(random_seed)
             # Normal update without any local configuration
             es_update.smootherUpdate(run_context)
+            ministep = [
+                {
+                    "name": "MINISTEP_LOCAL",
+                    "observations": ["WBHP0"],
+                    "parameters": ["PORO"],
+                },
+            ]
+            main.update_configuration = ministep
 
-            local_config = main.getLocalConfig()
-            updatestep = local_config.getUpdatestep()
-            ministep2 = local_config.createMinistep("MINISTEP_LOCAL2")
-            obs_data2 = local_config.createObsdata("OBSDATA2")
-            obs_data2.addNode("WBHP0")
-            ministep2.addActiveData("PORO")
-            ministep2.attachObsset(obs_data2)
-            updatestep.attachMinistep(ministep2)
             update_fs2 = main.getEnkfFsManager().getFileSystem("target3")
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
             # Local update with two ministeps - where one observation has been
