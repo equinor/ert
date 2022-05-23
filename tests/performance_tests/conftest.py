@@ -21,7 +21,7 @@ def make_case(reals, x_size, marks):
         "gen_obs_every": 2,
         "parameter_entries": 3,
         "parameter_count": 1,
-        "ministeps": 1,
+        "update_steps": 1,
         "marks": marks,
     }
 

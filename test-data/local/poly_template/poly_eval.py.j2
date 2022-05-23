@@ -34,14 +34,14 @@ def write_summary_spec(file, restarts, keywords):
     eclio.write(file, content)
 
 
-def write_summary_data(file, x_size, keywords, coeffs, ministeps):
+def write_summary_data(file, x_size, keywords, coeffs, update_steps):
     num_keys = len(keywords)
 
     def content_generator():
         for x in range(x_size):
             yield 'SEQHDR  ', [0]
-            for m in range(ministeps):
-                step = x*ministeps + m
+            for m in range(update_steps):
+                step = x*update_steps + m
                 day = float(step + 1)
                 values = [_evaluate(coeffs[key % len(coeffs)], step) for key in range(num_keys)]
                 yield 'MINISTEP', [step]
@@ -50,7 +50,7 @@ def write_summary_data(file, x_size, keywords, coeffs, ministeps):
     eclio.write(file, content_generator())
 
 
-def make_summary(count, x_size, coeffs, ministeps):
+def make_summary(count, x_size, coeffs, update_steps):
     if count <= 0:
         return
 
@@ -62,16 +62,16 @@ def make_summary(count, x_size, coeffs, ministeps):
     if use_ecl_data_io:
         keywords = [f"PSUM{s}" for s in range(count)]
         write_summary_spec("summary/POLY_SUMMARY.SMSPEC", x_size, keywords)
-        write_summary_data("summary/POLY_SUMMARY.UNSMRY", x_size, keywords, coeffs, ministeps)
+        write_summary_data("summary/POLY_SUMMARY.UNSMRY", x_size, keywords, coeffs, update_steps)
 
     else:
         ecl_sum = EclSum.writer("summary/POLY_SUMMARY", datetime.datetime(2010, 1, 1), 10, 10, 10)
         for s in range(count):
             ecl_sum.addVariable(f"PSUM{s}")
 
-        for x in range(x_size*ministeps):
+        for x in range(x_size*update_steps):
             t_step = ecl_sum.addTStep(
-                x//ministeps + 1, sim_days=x + 1
+                x//update_steps + 1, sim_days=x + 1
             )
             for s in range(count):
                 t_step[f"PSUM{s}"] = _evaluate(coeffs[s % len(coeffs)], x)
@@ -93,5 +93,5 @@ if __name__ == "__main__":
     coeffs = {}
     for s in range({{parameter_count}}):
         coeffs[s] = _load_coeffs(f"coeffs_{s}.json")
-    make_summary({{summary_data_count}}, {{summary_data_entries}}, coeffs, {{ministeps}})
+    make_summary({{summary_data_count}}, {{summary_data_entries}}, coeffs, {{update_steps}})
     make_gen_data({{gen_data_count}}, {{gen_data_entries}}, coeffs)

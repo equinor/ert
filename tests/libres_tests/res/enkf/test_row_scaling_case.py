@@ -233,14 +233,14 @@ class RowScalingTest(ResTest):
             main = tc.getErt()
 
             row_scaling = RowScaling()
-            ministeps = [
+            update_steps = [
                 {
-                    "name": "MINISTEP_LOCAL",
+                    "name": "update_step_LOCAL",
                     "observations": ["WBHP0", "WWCT0"],
                     "row_scaling_parameters": [("PORO", row_scaling)],
                 },
             ]
-            main.update_configuration = ministeps
+            main.update_configuration = update_steps
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
@@ -279,14 +279,14 @@ class RowScalingTest(ResTest):
 
             # Configure the local updates
             row_scaling = RowScaling()
-            ministeps = [
+            update_steps = [
                 {
-                    "name": "MINISTEP_LOCAL",
+                    "name": "update_step_LOCAL",
                     "observations": ["WWCT0", "WBHP0"],
                     "row_scaling_parameters": [("PORO", row_scaling)],
                 },
             ]
-            main.update_configuration = ministeps
+            main.update_configuration = update_steps
 
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
@@ -340,14 +340,14 @@ class RowScalingTest(ResTest):
 
             # Configure the local updates
             row_scaling = RowScaling()
-            ministeps = [
+            update_steps = [
                 {
-                    "name": "MINISTEP_LOCAL",
+                    "name": "update_step_LOCAL",
                     "observations": ["WWCT0", "WBHP0"],
                     "row_scaling_parameters": [("PORO", row_scaling)],
                 },
             ]
-            main.update_configuration = ministeps
+            main.update_configuration = update_steps
             # Apply the row scaling
             ens_config = main.ensembleConfig()
             poro_config = ens_config["PORO"]
@@ -389,12 +389,12 @@ class RowScalingTest(ResTest):
                     update_node2.asField(),
                 )
 
-    # This test has a configuration where the update consists of two ministeps,
+    # This test has a configuration where the update consists of two update_steps,
     # where the same field is updated in both steps. Because the
     # obs_data_makeE() function uses random state it is difficult to get
-    # identical results from one ministep updating everything and two ministeps
+    # identical results from one update_step updating everything and two update_steps
     # updating different parts of the field.
-    def test_2ministep(self):
+    def test_2update_step(self):
         with ErtTestContext("row_scaling", self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
@@ -410,19 +410,19 @@ class RowScalingTest(ResTest):
             row_scaling1 = RowScaling()
             row_scaling2 = RowScaling()
 
-            ministeps = [
+            update_steps = [
                 {
-                    "name": "MINISTEP1",
+                    "name": "update_step1",
                     "observations": ["WBHP0"],
                     "row_scaling_parameters": [("PORO", row_scaling1)],
                 },
                 {
-                    "name": "MINISTEP2",
+                    "name": "update_step2",
                     "observations": ["WBHP0"],
                     "row_scaling_parameters": [("PORO", row_scaling2)],
                 },
             ]
-            main.update_configuration = ministeps
+            main.update_configuration = update_steps
 
             # Apply the row scaling
             ens_config = main.ensembleConfig()
@@ -485,14 +485,14 @@ TIME_MAP timemap.txt
 
         # Configure the local updates
         row_scaling = RowScaling()
-        ministep = [
+        update_step = [
             {
-                "name": "MINISTEP_LOCAL",
+                "name": "update_step_LOCAL",
                 "observations": ["WBHP0"],
                 "row_scaling_parameters": [("PORO", row_scaling)],
             },
         ]
-        main.update_configuration = ministep
+        main.update_configuration = update_step
 
         # Apply the row scaling
         ens_config = main.ensembleConfig()
@@ -510,7 +510,7 @@ TIME_MAP timemap.txt
     # 1. A normal update with the default configuration and no explicit local
     #    config.
     #
-    # 2. The update consists of two ministeps. The first is created by deleting
+    # 2. The update consists of two update_steps. The first is created by deleting
     #    an entry from the ALL_OBS set, and then that same entry is added to
     #    the next.
     def test_reuse_ALL_ACTIVE(self):
@@ -526,18 +526,18 @@ TIME_MAP timemap.txt
             rng.setState(random_seed)
             # Normal update without any local configuration
             es_update.smootherUpdate(run_context)
-            ministep = [
+            update_step = [
                 {
-                    "name": "MINISTEP_LOCAL",
+                    "name": "update_step_LOCAL",
                     "observations": ["WBHP0"],
                     "parameters": ["PORO"],
                 },
             ]
-            main.update_configuration = ministep
+            main.update_configuration = update_step
 
             update_fs2 = main.getEnkfFsManager().getFileSystem("target3")
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
-            # Local update with two ministeps - where one observation has been
+            # Local update with two update_steps - where one observation has been
             # removed from the first
             es_update.smootherUpdate(run_context)
 
@@ -562,7 +562,7 @@ TIME_MAP timemap.txt
 
                             # Due to the randomness in the sampling process,
                             # which becomes different when the update steps is
-                            # split in two ministeps we can not enforce
+                            # split in two update_steps we can not enforce
                             # equality here.
 
                             diff = abs(f1 - f2)

@@ -19,12 +19,12 @@ class RowScalingJob1(ErtScript):
     def run(self):
         main = self.ert()
         row_scaling = RowScaling()
-        ministep = {
-            "name": "MINISTEP",
+        update_step = {
+            "name": "update_step",
             "observations": ["WBHP0"],
             "parameters": ["PORO"],
         }
-        main.update_configuration = [ministep]
+        main.update_configuration = [update_step]
 
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]

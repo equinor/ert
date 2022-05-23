@@ -42,9 +42,9 @@ def test_row_scaling_parameter_default_init():
 
 def test_configuration():
     config = UpdateConfiguration(
-        ministeps=[
+        update_steps=[
             {
-                "name": "ministep_name",
+                "name": "update_step_name",
                 "observations": ["MY_OBS"],
                 "parameters": ["MY_PARAMETER"],
                 "row_scaling_parameters": [("MY_ROW_SCALING", RowScaling())],
@@ -64,7 +64,7 @@ def test_configuration():
         ],
         [
             {"name": "not_relevant", "parameters": ["not_relevant"]},
-            pytest.raises(ValidationError, match="ministeps -> 0 -> observations"),
+            pytest.raises(ValidationError, match="update_steps -> 0 -> observations"),
         ],
         [
             {
@@ -105,13 +105,13 @@ def test_configuration():
                 "observations": ["not_relevant"],
                 "parameters": ["not_relevant"],
             },
-            pytest.raises(ValidationError, match="ministeps -> 0 -> name"),
+            pytest.raises(ValidationError, match="update_steps -> 0 -> name"),
         ],
     ],
 )
 def test_missing(config, expectation):
     with expectation:
-        UpdateConfiguration(ministeps=[config])
+        UpdateConfiguration(update_steps=[config])
 
 
 @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ def test_missing(config, expectation):
 )
 def test_missing_multiple(config, expectation):
     with expectation:
-        UpdateConfiguration(ministeps=config)
+        UpdateConfiguration(update_steps=config)
 
 
 @pytest.mark.parametrize(
@@ -159,7 +159,7 @@ def test_missing_multiple(config, expectation):
 )
 def test_configuration_valid_obs_input(input_obs):
     config = UpdateConfiguration(
-        ministeps=[
+        update_steps=[
             {
                 "name": "not_relevant",
                 "observations": input_obs,
@@ -173,7 +173,7 @@ def test_configuration_valid_obs_input(input_obs):
 def test_user_setup():
     test_input = [
         {
-            "name": "MINISTEP_NAME",
+            "name": "update_step_NAME",
             "observations": [
                 "WOPR_OP1_72",
                 ("MY_INDEX_OBS", [1, 2, 3]),
@@ -186,4 +186,4 @@ def test_user_setup():
             ],
         }
     ]
-    UpdateConfiguration(ministeps=test_input)
+    UpdateConfiguration(update_steps=test_input)

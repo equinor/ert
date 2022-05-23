@@ -182,16 +182,18 @@ def _extract_active_observations(ert) -> Mapping[str, list]:
     # We make way to many assumptions here
     try:
         last_snapshot = list(update_step.keys())[-1]
-        ministeps = update_step[last_snapshot].ministep_snapshots
-        global_ministep = ministeps["ALL_ACTIVE"]
+        update_steps = update_step[last_snapshot].update_step_snapshots
+        global_update_step = update_steps["ALL_ACTIVE"]
     except KeyError:
         logger.error(
-            f"Failed to load gloabl ministep snapshot, probably "
-            f"using ministeps, expected only ALL_ACTIVE, found: {ministeps.keys()}"
+            f"Failed to load global update_step snapshot, probably using "
+            f"update_steps, expected only ALL_ACTIVE, found: {update_steps.keys()}"
         )
         return {}
     result = defaultdict(list)
-    for obs_name, status in zip(global_ministep.obs_name, global_ministep.obs_status):
+    for obs_name, status in zip(
+        global_update_step.obs_name, global_update_step.obs_status
+    ):
         result[obs_name].append(_get_status(status))
     return result
 

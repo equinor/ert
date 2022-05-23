@@ -285,11 +285,11 @@ bool summary_forward_load_vector(summary_type *summary,
 
         if (summary_index >= 0) {
             if (ecl_sum_has_report_step(ecl_sum, summary_index)) {
-                int last_ministep_index =
+                int last_update_step_index =
                     ecl_sum_iget_report_end(ecl_sum, summary_index);
                 double_vector_iset(
                     summary->data_vector, store_index,
-                    ecl_sum_iget(ecl_sum, last_ministep_index, key_index));
+                    ecl_sum_iget(ecl_sum, last_update_step_index, key_index));
             }
         }
     }
