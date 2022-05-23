@@ -8,18 +8,23 @@ import os
 import signal
 import threading
 import time
+import warnings
 from datetime import timedelta
 from multiprocessing.context import BaseContext
 from multiprocessing.process import BaseProcess
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Generator
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 
 import cloudpickle
 from cloudevents.http import CloudEvent, to_json
-from dask_jobqueue.lsf import LSFJob
+
+with warnings.catch_warnings():
+    # This is needed until dask_jobqueue is tagged by something newer
+    # than 0.7.3
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    from dask_jobqueue.lsf import LSFJob
 
 import prefect
 import prefect.utilities.logging
-
 from prefect import Flow  # type: ignore
 from prefect import context as prefect_context  # type: ignore
 from prefect.engine.state import State
@@ -27,13 +32,12 @@ from prefect.executors import DaskExecutor, LocalDaskExecutor  # type: ignore
 
 from ert.ensemble_evaluator.evaluator_connection_info import EvaluatorConnectionInfo
 from ert.ensemble_evaluator.identifiers import (
-    EVTYPE_FM_STEP_FAILURE,
+    EVTYPE_ENSEMBLE_CANCELLED,
+    EVTYPE_ENSEMBLE_FAILED,
     EVTYPE_ENSEMBLE_STARTED,
     EVTYPE_ENSEMBLE_STOPPED,
-    EVTYPE_ENSEMBLE_FAILED,
-    EVTYPE_ENSEMBLE_CANCELLED,
+    EVTYPE_FM_STEP_FAILURE,
 )
-
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.port_handler import find_available_port
@@ -42,7 +46,7 @@ from ._ensemble import _Ensemble
 from ._function_task import FunctionTask
 from ._io_map import _ensemble_transmitter_mapping
 from ._realization import _Realization
-from ._step import _UnixStep, _FunctionStep
+from ._step import _FunctionStep, _UnixStep
 from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
