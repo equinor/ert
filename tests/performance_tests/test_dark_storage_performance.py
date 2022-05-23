@@ -146,10 +146,14 @@ def test_direct_dark_performance(
         ert = EnKFMain(config, strict=True)
         enkf_facade = LibresFacade(ert)
         experiment_json = experiments.get_experiments(res=enkf_facade)
-        ensemble_id1 = experiment_json[0].ensemble_ids[0]
-        ensemble_json = ensembles.get_ensemble(
-            res=enkf_facade, ensemble_id=ensemble_id1
-        )
-        assert key in ensemble_json.response_names
-        result = benchmark(function, enkf_facade, ensemble_id1, key, template_config)
-        print(result)
+        ensemble_json_default = None
+        ensemble_id_default = None
+        for ensemble_id in experiment_json[0].ensemble_ids:
+            ensemble_json = ensembles.get_ensemble(
+                res=enkf_facade, ensemble_id=ensemble_id
+            )
+            if ensemble_json.userdata["name"] == "default":
+                ensemble_json_default = ensemble_json
+                ensemble_id_default = ensemble_id
+        assert key in ensemble_json_default.response_names
+        benchmark(function, enkf_facade, ensemble_id_default, key, template_config)

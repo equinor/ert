@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 import pytest
 from performance_utils import make_poly_template
 from argparse import ArgumentParser
@@ -6,6 +9,8 @@ from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
 from pytest import fixture
 import py
+
+template_config_path = None
 
 
 def make_case(reals, x_size, marks):
@@ -50,24 +55,50 @@ cases_to_run = [
     ],
 )
 def template_config(request, source_root, tmp_path_factory):
-    tmpdir = py.path.local(tmp_path_factory.mktemp("my_poly_tmp"))
+    if template_config_path:
+        tmpdir = py.path.local(template_config_path)
+    else:
+        tmpdir = py.path.local(tmp_path_factory.mktemp("my_poly_tmp"))
+
     params = request.param
     params.update()
+    template_sorted = sorted([(k, v) for k, v in params.items() if k != "marks"])
+    print(template_sorted)
+    template_hash = hashlib.sha1(json.dumps(template_sorted).encode()).hexdigest()
+    template_dir = tmpdir / template_hash
 
-    poly_folder = make_poly_template(tmpdir, source_root, **params)
-    params["folder"] = poly_folder
+    if template_dir.isdir():
+        poly_folder = template_dir / "poly"
+        params["folder"] = poly_folder
+        yield params
+    else:
+        poly_folder = make_poly_template(template_dir, source_root, **params)
+        params["folder"] = poly_folder
 
-    with poly_folder.as_cwd():
-        parser = ArgumentParser(prog="test_main")
-        parsed = ert_parser(
-            parser,
-            [
-                ENSEMBLE_EXPERIMENT_MODE,
-                "poly.ert",
-                "--port-range",
-                "1024-65535",
-            ],
-        )
-        run_cli(parsed)
+        with poly_folder.as_cwd():
+            parser = ArgumentParser(prog="test_main")
+            parsed = ert_parser(
+                parser,
+                [
+                    ENSEMBLE_EXPERIMENT_MODE,
+                    "poly.ert",
+                    "--port-range",
+                    "1024-65535",
+                ],
+            )
+            run_cli(parsed)
 
-    yield params
+        yield params
+
+
+def pytest_configure(config):
+    global template_config_path
+    template_config_path = config.getoption("--template-config-path")
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--template-config-path",
+        default=None,
+        help="specify to share previously generated template-config runs",
+    )
