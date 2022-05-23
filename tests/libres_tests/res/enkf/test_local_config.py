@@ -30,11 +30,11 @@ class LocalConfigTest(ResTest):
             main = test_context.getErt()
 
             updatestep = main.update_configuration
-            ministep = updatestep[0]
-            self.assertEqual(3, len(ministep.parameters))
+            update_step = updatestep[0]
+            self.assertEqual(3, len(update_step.parameters))
             self.assertEqual(
                 ["PERMX", "PORO", "SNAKE_OIL_PARAM"],
-                [param.name for param in ministep.parameters],
+                [param.name for param in update_step.parameters],
             )
 
-            self.assertEqual(len(ministep.observations), 8)
+            self.assertEqual(len(update_step.observations), 8)

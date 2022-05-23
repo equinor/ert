@@ -29,7 +29,7 @@
     analysis.
 
   LOCAL_INACTIVE: The cell is not included in the current local
-    analysis ministep
+    analysis update_step
 
   DEACTIVATED: The cell has been deactivated by the functionality
     deactivating outliers.

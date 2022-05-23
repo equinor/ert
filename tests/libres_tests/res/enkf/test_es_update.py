@@ -253,15 +253,15 @@ def test_localization(setup_case, expected_target_gen_kw):
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
     # perform localization
-    ministep = [
+    update_step = [
         {
-            "name": "MINISTEP_LOCA",
+            "name": "update_step_LOCA",
             "observations": ["WOPR_OP1_72"],
             "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
         }
     ]
 
-    ert.update_configuration = ministep
+    ert.update_configuration = update_step
 
     # Run ensemble smoother
     mask = [True] * ert.getEnsembleSize()
@@ -357,4 +357,4 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     es_update.smootherUpdate(run_context)
     result_snapshot = ert.update_snapshots[run_context.get_id()]
     assert result_snapshot.alpha == alpha
-    assert result_snapshot.ministep_snapshots["ALL_ACTIVE"].obs_status == expected
+    assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected

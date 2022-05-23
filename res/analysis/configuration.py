@@ -81,28 +81,30 @@ class UpdateStep(BaseModel):
 
 
 class UpdateConfiguration(BaseModel):
-    ministeps: conlist(UpdateStep, min_items=1)
+    update_steps: conlist(UpdateStep, min_items=1)
 
     def __iter__(self):
-        yield from self.ministeps
+        yield from self.update_steps
 
     def __getitem__(self, item):
         return self.update_steps[item]
 
     def __len__(self):
-        return len(self.ministeps)
+        return len(self.update_steps)
 
     def context_validate(
         self, valid_observations: List[str], valid_parameters: List[str]
     ) -> None:
         errors = []
-        for ministep in self.ministeps:
-            for observation in ministep.observations:
+        for update_step in self.update_steps:
+            for observation in update_step.observations:
                 if observation.name not in valid_observations:
                     errors.append(
                         f"Observation: {observation} not in valid observations"
                     )
-            for parameter in ministep.parameters + ministep.row_scaling_parameters:
+            for parameter in (
+                update_step.parameters + update_step.row_scaling_parameters
+            ):
                 if parameter.name not in valid_parameters:
                     errors.append(f"Parameter: {parameter} not in valid parameters")
         if errors:

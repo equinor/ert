@@ -82,7 +82,7 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
             active_index.push_back(i);
         }
 
-        // Create matrix and save as as the parameter defined in the ministep
+        // Create matrix and save as as the parameter defined in the update_step
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(1, ensemble_size);
         for (int i = 0; i < ensemble_size; i++)
             A(0, i) = double(i) / 10.0;
@@ -157,7 +157,7 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         for (int i = 0; i < ensemble_size; i++)
             active_index.push_back(i);
 
-        // Create matrix and save as as the parameter defined in the ministep
+        // Create matrix and save as as the parameter defined in the update_step
         Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, ensemble_size);
         for (int i = 0; i < ensemble_size; i++) {
             A(0, i) = double(i) / 10.0;

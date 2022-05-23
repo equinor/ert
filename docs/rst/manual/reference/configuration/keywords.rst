@@ -873,7 +873,7 @@ and/or history matching project.
         ERT configuration file:
 
         Naming a `GEN_KW` parameter `PRED` will prevent the parameter from being
-        added to a ministep dataset.
+        added to a update_step dataset.
 
         ::
 

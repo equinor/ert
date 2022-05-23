@@ -30,13 +30,13 @@ config commands by writing a Python script, and invoking it from a workflow.
          # Get the ert object
          ert = self.ert()
 
-         # A ministep
-         ministep = {
-            "name": "MINISTEP_NAME",
+         # An update_step
+         update_step = {
+            "name": "UPDATE_STEP_NAME",
             "observations": [("WOPR:OP_1_10", list(range(10))], # Add some observations from WOPR:OP_1
             "parameters": [("MULTFLT", [0])} # Add some dataset you want to localize here.
 
-        ert.update_configuration = [ministep]
+        ert.update_configuration = [update_step]
 
 =========================================================================  ===================================================================================
 ERT script function                                                        Purpose

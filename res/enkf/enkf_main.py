@@ -92,19 +92,21 @@ class EnKFMain(BaseCClass):
     @property
     def update_configuration(self):
         if not self._update_configuration:
-            initial_ministep = [
+            global_update_step = [
                 {
                     "name": "ALL_ACTIVE",
                     "observations": self._observation_keys,
                     "parameters": self._parameter_keys,
                 }
             ]
-            self._update_configuration = UpdateConfiguration(ministeps=initial_ministep)
+            self._update_configuration = UpdateConfiguration(
+                update_steps=global_update_step
+            )
         return self._update_configuration
 
     @update_configuration.setter
     def update_configuration(self, user_config: List):
-        config = UpdateConfiguration(ministeps=user_config)
+        config = UpdateConfiguration(update_steps=user_config)
         config.context_validate(self._observation_keys, self._parameter_keys)
         self._update_configuration = config
 

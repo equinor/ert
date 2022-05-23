@@ -23,7 +23,7 @@ class SmootherSnapshot:
     analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
-    ministep_snapshots: Dict[str, UpdateSnapshot] = field(default_factory=dict)
+    update_step_snapshots: Dict[str, UpdateSnapshot] = field(default_factory=dict)
 
 
 def analysis_smoother_update(
@@ -68,8 +68,8 @@ def analysis_smoother_update(
 
     update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
 
-    # Looping over local analysis ministep
-    for ministep in updatestep:
+    # Looping over local analysis update_step
+    for update_step in updatestep:
         update_data = update.make_update_data(
             source_fs,
             target_fs,
@@ -77,14 +77,14 @@ def analysis_smoother_update(
             ensemble_config,
             analysis_config,
             ens_mask,
-            ministep.observation_config(),
-            ministep.parameters,
-            ministep.row_scaling_parameters,
+            update_step.observation_config(),
+            update_step.parameters,
+            update_step.row_scaling_parameters,
             shared_rng,
         )
         # pylint: disable=unsupported-assignment-operation
-        smoother_snapshot.ministep_snapshots[
-            ministep.name
+        smoother_snapshot.update_step_snapshots[
+            update_step.name
         ] = update_data.update_snapshot
         if update_data.has_observations:
 
@@ -153,14 +153,14 @@ def analysis_smoother_update(
                 target_fs,
                 ensemble_config,
                 iens_active_index,
-                ministep.parameters,
-                ministep.row_scaling_parameters,
+                update_step.parameters,
+                update_step.row_scaling_parameters,
                 update_data,
             )
 
         else:
             raise ErtAnalysisError(
-                f"No active observations/parameters for MINISTEP: {ministep.name}."
+                f"No active observations for update step: {update_step.name}."
             )
     _write_update_report(
         Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
@@ -169,11 +169,11 @@ def analysis_smoother_update(
 
 
 def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
-    for ministep_name, ministep in snapshot.ministep_snapshots.items():
+    for update_step_name, update_step in snapshot.update_step_snapshots.items():
         with open(fname, "w") as fout:
             fout.write("=" * 127 + "\n")
             fout.write("Report step...: deprecated\n")
-            fout.write(f"Ministep......: {ministep_name:<13}\n")
+            fout.write(f"Update step......: {update_step_name:<10}\n")
             fout.write("-" * 127 + "\n")
             fout.write(
                 "Observed history".rjust(73)
@@ -184,12 +184,12 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
             fout.write("-" * 127 + "\n")
             for nr, (name, val, std, status, ens_val, ens_std) in enumerate(
                 zip(
-                    ministep.obs_name,
-                    ministep.obs_value,
-                    ministep.obs_std,
-                    ministep.obs_status,
-                    ministep.response_mean,
-                    ministep.response_std,
+                    update_step.obs_name,
+                    update_step.obs_value,
+                    update_step.obs_std,
+                    update_step.obs_status,
+                    update_step.response_mean,
+                    update_step.response_std,
                 )
             ):
                 if status in ["DEACTIVATED", "LOCAL_INACTIVE"]:

@@ -27,14 +27,14 @@ def write_summary_spec(file, keywords):
     eclio.write(file, content)
 
 
-def write_summary_data(file, x_size, keywords, ministeps):
+def write_summary_data(file, x_size, keywords, update_steps):
     num_keys = len(keywords)
 
     def content_generator():
         for x in range(x_size):
             yield "SEQHDR  ", [0]
-            for m in range(ministeps):
-                step = x * ministeps + m
+            for m in range(update_steps):
+                step = x * update_steps + m
                 day = float(step + 1)
                 values = [5.0] * num_keys
                 yield "MINISTEP", [step]
@@ -55,7 +55,7 @@ def make_poly_example(folder, source, **kwargs):
     summary_count = kwargs["summary_data_count"]
     gen_obs_count = kwargs["gen_obs_count"]
     summary_data_entries = kwargs["summary_data_entries"]
-    ministeps = kwargs["ministeps"]
+    update_steps = kwargs["update_steps"]
     file_loader = FileSystemLoader(str(folder))  # directory of template file
     env = Environment(loader=file_loader)
     shutil.copytree(source, folder)
@@ -93,7 +93,7 @@ def make_poly_example(folder, source, **kwargs):
             str(folder) + "/refcase/REFCASE.UNSMRY",
             summary_data_entries,
             keywords,
-            ministeps,
+            update_steps,
         )
     else:
         ecl_sum = EclSum.writer(
@@ -109,8 +109,8 @@ def make_poly_example(folder, source, **kwargs):
                 **kwargs,
             )
 
-        for x in range(summary_data_entries * ministeps):
-            t_step = ecl_sum.addTStep(x // ministeps + 1, sim_days=x + 1)
+        for x in range(summary_data_entries * update_steps):
+            t_step = ecl_sum.addTStep(x // update_steps + 1, sim_days=x + 1)
             for s in range(summary_count):
                 t_step[f"PSUM{s}"] = 5.0
 
@@ -165,6 +165,6 @@ if __name__ == "__main__":
         gen_obs_every=1,
         parameter_entries=10,
         parameter_count=8,
-        ministeps=1,
+        update_steps=1,
     )
     print(folder)
