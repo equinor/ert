@@ -37,8 +37,8 @@ def assign(self, target_size, func):
         ...     )
 
         >>> # Some local configuration boilerplate has been skipped here.
-        >>> local_config = main.getLocalConfig()
-        >>> local_data = local_config.createDataset("LOCAL")
+        >>> update_configuration = main.getLocalConfig()
+        >>> local_data = update_configuration.createDataset("LOCAL")
         >>> row_scaling = local_data.row_scaling("PORO")
         >>> row_scaling.assign(
         ...     field_config.get_data_size(),

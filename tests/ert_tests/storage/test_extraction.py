@@ -306,6 +306,7 @@ def test_observation_transformation(client):
     builder = ErtConfigBuilder()
     builder.ensemble_size = 5
     builder.add_general_observation("OBS", "RES", data)
+    builder.add_prior("PARAMETER", "NORMAL 0.4 0.07")
     builder.job_script = dedent(
         """\
     #!/usr/bin/python3

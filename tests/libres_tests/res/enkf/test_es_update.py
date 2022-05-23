@@ -252,21 +252,16 @@ def test_localization(setup_case, expected_target_gen_kw):
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
-
     # perform localization
-    localized_idxs = (1, 2)
-    local_config = ert.getLocalConfig()
-    local_config.clear()
-    obs = local_config.createObsdata("OBSSET_LOCA")
-    obs.addNode("WOPR_OP1_72")
-    ministep = local_config.createMinistep("MINISTEP_LOCA")
-    ministep.addActiveData("SNAKE_OIL_PARAM")  # replace dataset.addNode()
-    active_list = ministep.getActiveList("SNAKE_OIL_PARAM")
-    for i in localized_idxs:
-        active_list.addActiveIndex(i)
-    ministep.attachObsset(obs)
-    updatestep = local_config.getUpdatestep()
-    updatestep.attachMinistep(ministep)
+    ministep = [
+        {
+            "name": "MINISTEP_LOCA",
+            "observations": ["WOPR_OP1_72"],
+            "parameters": [("SNAKE_OIL_PARAM", [1, 2])],
+        }
+    ]
+
+    ert.update_configuration = ministep
 
     # Run ensemble smoother
     mask = [True] * ert.getEnsembleSize()

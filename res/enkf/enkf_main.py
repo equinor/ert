@@ -21,7 +21,6 @@ from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
 from res._lib import enkf_main
-from res.enkf.local_ministep import LocalMinistep, Parameter, Observation
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
@@ -32,7 +31,7 @@ from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.es_update import ESUpdate
 from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
-from res.enkf.local_config import LocalConfig
+from res.analysis.configuration import UpdateConfiguration
 from res.enkf.model_config import ModelConfig
 from res.enkf.queue_config import QueueConfig
 from res.enkf.res_config import ResConfig
@@ -77,17 +76,7 @@ class EnKFMain(BaseCClass):
         self._init_from_real_enkf_main(real_enkf_main)
         self._monkey_patch_methods(real_enkf_main)
 
-        observations = {
-            observation: Observation(observation)
-            for observation in self._observation_keys
-        }
-        parameters = {
-            parameter: Parameter(parameter) for parameter in self._parameter_keys
-        }
-        initial_ministep = LocalMinistep(
-            "ALL_ACTIVE", observations=observations, parameters=parameters
-        )
-        self._local_config = LocalConfig([initial_ministep])
+        self._update_configuration = None
 
     def _init_from_real_enkf_main(self, real_enkf_main):
         super().__init__(
@@ -101,13 +90,23 @@ class EnKFMain(BaseCClass):
         self.__es_update = ESUpdate(self)
 
     @property
-    def local_config(self):
-        return self._local_config
+    def update_configuration(self):
+        if not self._update_configuration:
+            initial_ministep = [
+                {
+                    "name": "ALL_ACTIVE",
+                    "observations": self._observation_keys,
+                    "parameters": self._parameter_keys,
+                }
+            ]
+            self._update_configuration = UpdateConfiguration(ministeps=initial_ministep)
+        return self._update_configuration
 
-    @local_config.setter
-    def local_config(self, config: LocalConfig):
+    @update_configuration.setter
+    def update_configuration(self, user_config: List):
+        config = UpdateConfiguration(ministeps=user_config)
         config.context_validate(self._observation_keys, self._parameter_keys)
-        self._local_config = config
+        self._update_configuration = config
 
     @property
     def _observation_keys(self):
@@ -137,9 +136,9 @@ class EnKFMain(BaseCClass):
             self.__fs_manager.umount()
             self.__fs_manager = None
 
-    def getLocalConfig(self) -> LocalConfig:
-        """@rtype: LocalConfig"""
-        return self.local_config
+    def getLocalConfig(self) -> UpdateConfiguration:
+        """@rtype: UpdateConfiguration"""
+        return self.update_configuration
 
     # --- Overridden methods --------------------
 

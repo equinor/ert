@@ -1,3 +1,5 @@
+from res._lib.local.row_scaling import RowScaling
+
 from res.enkf import ErtScript
 from functools import partial
 import math
@@ -16,12 +18,13 @@ def gaussian_decay(obs_pos, length_scale, grid, data_index):
 class RowScalingJob1(ErtScript):
     def run(self):
         main = self.ert()
-        local_config = main.getLocalConfig()
-        local_config.clear()
-        ministep = local_config.createMinistep("MINISTEP")
-
-        ministep.addActiveData("PORO")
-        row_scaling = ministep.get_or_create_row_scaling("PORO")
+        row_scaling = RowScaling()
+        ministep = {
+            "name": "MINISTEP",
+            "observations": ["WBHP0"],
+            "parameters": ["PORO"],
+        }
+        main.update_configuration = [ministep]
 
         ens_config = main.ensembleConfig()
         poro_config = ens_config["PORO"]
@@ -34,7 +37,3 @@ class RowScalingJob1(ErtScript):
         gaussian = partial(gaussian_decay, obs_pos, length_scale, grid)
         row_scaling.assign(field_config.get_data_size(), gaussian)
         # -------------------------------------------------------------------------------------
-
-        obs = local_config.createObsdata("OBSSET_LOCAL")
-        obs.addNode("WBHP0")
-        ministep.attachObsset(obs)
