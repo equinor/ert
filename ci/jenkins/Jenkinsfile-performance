@@ -15,8 +15,7 @@ pipeline {
     }
 
     environment {
-        BASE_DIR = '/scratch/oompf/jenkins-ert-performance'
-        TMP_DIR = """${sh(script:"mktemp -dp ${env.BASE_DIR}", returnStdout: true).trim()}"""
+        BASE_DIR = '/scratch/oompf/jenkins-ert-performance/share_template'
     }
 
     stages {
@@ -32,16 +31,33 @@ pipeline {
                 """
             }
         }
-        stage('run benchmarks') {
+        stage('run benchmarks dark storage') {
             steps {
                 sh """
                 source env/bin/activate
-                pytest tests/performance_tests \
-                  --benchmark-save=benchmark-jenkins \
+                pytest tests/performance_tests/test_dark_storage_performance.py \
+                  --benchmark-save=benchmark-dark-storage-jenkins \
                   --benchmark-compare=${COMPARE_VERSION} \
                   --benchmark-compare-fail=median:15% \
                   --benchmark-autosave \
-                  --basetemp=${env.TMP_DIR} \
+                  --template-config-path=${env.BASE_DIR} \
+                  --benchmark-min-rounds=25 \
+                  --benchmark-sort=fullname \
+                  --benchmark-warmup=on \
+                  ${PYTEST_OPTIONS}
+                """
+            }
+        }
+        stage('run benchmarks enkf_fs') {
+            steps {
+                sh """
+                source env/bin/activate
+                pytest tests/performance_tests/enkf \
+                  --benchmark-save=benchmark-enkf-fs-jenkins \
+                  --benchmark-compare=${COMPARE_VERSION} \
+                  --benchmark-compare-fail=median:50% \
+                  --benchmark-autosave \
+                  --template-config-path=${env.BASE_DIR} \
                   --benchmark-min-rounds=25 \
                   --benchmark-sort=fullname \
                   --benchmark-warmup=on \
