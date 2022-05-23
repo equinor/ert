@@ -114,7 +114,8 @@ class SnapshotModel(QAbstractItemModel):
                         (job.index, job_id) for job_id, job in step[ids.JOBS].items()
                     ]
                     metadata[SORTED_JOB_IDS][real_id][step_id] = [
-                        index[1] for index in sorted(indices, key=lambda indx: indx[0])
+                        index[1]
+                        for index in sorted(indices, key=lambda indx: int(indx[0]))
                     ]
 
         for real_id, real in snapshot.data()[ids.REALS].items():

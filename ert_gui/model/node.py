@@ -30,6 +30,8 @@ class Node:
         self.children[node_id] = node
 
     def row(self) -> int:
+        if "index" in self.data:
+            return int(self.data["index"])
         if self.parent:
             return list(self.parent.children.keys()).index(self.id)
         raise ValueError(f"{self} had no parent")
