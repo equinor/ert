@@ -206,24 +206,8 @@ class ESUpdate:
     def __init__(self, enkf_main):
         self.ert = enkf_main
 
-    @property
-    def _analysis_config(self):
-        return self.ert.analysisConfig()
-
-    def hasModule(self, name):
-        """
-        Will check if we have analysis module @name.
-        """
-        return self._analysis_config.hasModule(name)
-
-    def getModule(self, name):
-        if self.hasModule(name):
-            self._analysis_config.getModule(name)
-        else:
-            raise KeyError(f"No such module:{name}")
-
     def setGlobalStdScaling(self, weight):
-        self._analysis_config.setGlobalStdScaling(weight)
+        self.ert.analysisConfig().setGlobalStdScaling(weight)
 
     def smootherUpdate(self, run_context):
         source_fs = run_context.get_sim_fs()
