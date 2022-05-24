@@ -94,7 +94,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Build Linux Wheel
-      uses: docker://quay.io/pypa/manylinux2014_x86_64:2022-04-03-da6ecb3
+      uses: docker://quay.io/pypa/manylinux2014_x86_64
       with:
         entrypoint: /github/workspace/ci/github/build_linux_wheel.sh
         args: ${{ matrix.python-version }}
