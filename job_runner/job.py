@@ -66,11 +66,12 @@ class Job:
         else:
             stdout = None
 
-        if self.job_data.get("target_file"):
-            target_file_mtime = 0
-            if os.path.exists(self.job_data["target_file"]):
-                stat = os.stat(self.job_data["target_file"])
-                target_file_mtime = stat.st_mtime
+        target_file = self.job_data.get("target_file")
+        if target_file:
+            target_file_mtime: int = 0
+            if os.path.exists(target_file):
+                stat = os.stat(target_file)
+                target_file_mtime = stat.st_mtime_ns
 
         exec_env = self.job_data.get("exec_env")
         if exec_env:
@@ -157,7 +158,7 @@ class Job:
                 )
                 return
 
-        if self.job_data.get("target_file"):
+        if target_file:
             target_file_error = self._check_target_file_is_written(target_file_mtime)
             if target_file_error:
                 yield exited_message.with_error(target_file_error)
@@ -224,7 +225,7 @@ class Job:
 
         return errors
 
-    def _check_target_file_is_written(self, target_file_mtime, timeout=5):
+    def _check_target_file_is_written(self, target_file_mtime: int, timeout=5):
         """
         Check whether or not a target_file eventually appear. Returns None in
         case of success, an error message in the case of failure.
@@ -239,7 +240,7 @@ class Job:
         while True:
             if os.path.exists(target_file):
                 stat = os.stat(target_file)
-                if stat.st_mtime > target_file_mtime:
+                if stat.st_mtime_ns > target_file_mtime:
                     return None
 
             time.sleep(self.sleep_interval)
