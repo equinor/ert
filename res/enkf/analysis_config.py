@@ -274,8 +274,8 @@ class AnalysisConfig(BaseCClass):
     def minimum_required_realizations(self) -> int:
         return self._get_min_realizations()
 
-    def haveEnoughRealisations(self, realizations, ensemble_size):
-        return realizations >= min(self.minimum_required_realizations, ensemble_size)
+    def haveEnoughRealisations(self, realizations):
+        return realizations >= self.minimum_required_realizations
 
     def __ne__(self, other):
         return not self == other
