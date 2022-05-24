@@ -75,8 +75,6 @@ def analysis_smoother_update(
             analysis_config,
             ens_mask,
             update_step.observation_config(),
-            update_step.parameters,
-            update_step.row_scaling_parameters,
             shared_rng,
         )
         # pylint: disable=unsupported-assignment-operation
@@ -95,18 +93,27 @@ def analysis_smoother_update(
             2. The second chunk is loop over all the parameters which have row
                 scaling attached. These parameters are updated one at a time.
             """
+            A = update.load_parameters(
+                target_fs, ensemble_config, iens_active_index, update_step.parameters
+            )
+            A_with_rowscaling = update.load_row_scaling_parameters(
+                target_fs,
+                ensemble_config,
+                iens_active_index,
+                update_step.row_scaling_parameters,
+            )
 
             module_config = analysis_module.get_module_config(module)
             module_data = analysis_module.get_module_data(module)
 
-            if update_data.A is not None:
+            if A is not None:
                 if module_config.iterable:
                     ies.init_update(module_data, ens_mask, update_data.obs_mask)
                     iteration_nr = module_data.inc_iteration_nr()
 
                     ies.update_A(
                         module_data,
-                        update_data.get_A(),
+                        A,
                         update_data.S,
                         update_data.R,
                         update_data.E,
@@ -121,20 +128,28 @@ def analysis_smoother_update(
                         update_data.R,
                         update_data.E,
                         update_data.D,
-                        update_data.A,
+                        A,
                         ies_inversion=module_config.inversion,
                         truncation=module_config.get_truncation(),
                     )
-                    update_data.A = update_data.A @ X
+                    A = A @ X
 
-            if update_data.A_with_rowscaling:
+                update.save_parameters(
+                    target_fs,
+                    ensemble_config,
+                    iens_active_index,
+                    update_step.parameters,
+                    A,
+                )
+
+            if A_with_rowscaling:
                 if module_config.iterable:
                     raise ErtAnalysisError(
                         "Sorry - row scaling for distance based "
                         "localization can not be combined with "
                         "analysis modules which update the A matrix"
                     )
-                for (A, row_scaling) in update_data.get_A_with_rowscaling():
+                for (A, row_scaling) in A_with_rowscaling:
                     X = ies.make_X(
                         update_data.S,
                         update_data.R,
@@ -146,14 +161,13 @@ def analysis_smoother_update(
                     )
                     row_scaling.multiply(A, X)
 
-            update.save_parameters(
-                target_fs,
-                ensemble_config,
-                iens_active_index,
-                update_step.parameters,
-                update_step.row_scaling_parameters,
-                update_data,
-            )
+                update.save_row_scaling_parameters(
+                    target_fs,
+                    ensemble_config,
+                    iens_active_index,
+                    update_step.row_scaling_parameters,
+                    A_with_rowscaling,
+                )
 
         else:
             raise ErtAnalysisError(

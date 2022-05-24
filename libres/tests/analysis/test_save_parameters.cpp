@@ -22,20 +22,25 @@ namespace analysis {
 
 std::optional<Eigen::MatrixXd>
 load_parameters(enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-                const std::vector<int> &iens_active_index, int active_ens_size,
+                const std::vector<int> &iens_active_index,
                 const std::vector<analysis::Parameter> &parameters);
 
-void save_parameters(
+void save_parameters(enkf_fs_type *target_fs,
+                     ensemble_config_type *ensemble_config,
+                     const std::vector<int> &iens_active_index,
+                     const std::vector<Parameter> &parameters,
+                     const Eigen::MatrixXd &A);
+void save_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
     const std::vector<int> &iens_active_index,
-    const std::vector<analysis::Parameter> &parameters,
-    const std::vector<analysis::RowScalingParameter> &scaled_parameters,
-    const update_data_type &update_data);
+    const std::vector<RowScalingParameter> &scaled_parameters,
+    const std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
+        &scaled_A);
 
 std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
 load_row_scaling_parameters(
     enkf_fs_type *target_fs, ensemble_config_type *ensemble_config,
-    const std::vector<int> &iens_active_index, int active_ens_size,
+    const std::vector<int> &iens_active_index,
     const std::vector<analysis::RowScalingParameter> &scaled_parameters);
 
 } // namespace analysis
@@ -87,17 +92,14 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         for (int i = 0; i < ensemble_size; i++)
             A(0, i) = double(i) / 10.0;
 
-        auto update_data = analysis::update_data_type(
-            {}, {}, {}, {}, std::make_optional(A), {}, {}, {});
-
         std::vector<analysis::Parameter> parameters{
             analysis::Parameter("TEST")};
         analysis::save_parameters(fs, ensemble_config, active_index, parameters,
-                                  {}, update_data);
+                                  A);
 
         WHEN("loading parameters from enkf_fs") {
-            auto B = analysis::load_parameters(
-                fs, ensemble_config, active_index, ensemble_size, parameters);
+            auto B = analysis::load_parameters(fs, ensemble_config,
+                                               active_index, parameters);
             THEN("Loading parameters yield the same matrix") {
                 REQUIRE(B.has_value());
                 REQUIRE(A == B.value());
@@ -166,14 +168,13 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         std::vector<analysis::RowScalingParameter> parameter{
             analysis::RowScalingParameter("TEST", scaling)};
         std::vector row_scaling_list{std::pair{A, scaling}};
-        auto update_data = analysis::update_data_type({}, {}, {}, {}, {},
-                                                      row_scaling_list, {}, {});
-        analysis::save_parameters(fs, ensemble_config, active_index, {},
-                                  parameter, update_data);
+
+        analysis::save_row_scaling_parameters(fs, ensemble_config, active_index,
+                                              parameter, row_scaling_list);
 
         WHEN("loading parameters from enkf_fs") {
             auto parameter_matrices = analysis::load_row_scaling_parameters(
-                fs, ensemble_config, active_index, ensemble_size, parameter);
+                fs, ensemble_config, active_index, parameter);
             THEN("Loading parameters yield the same matrix") {
                 for (int i = 0; i < parameter_matrices.size(); i++) {
                     auto A = parameter_matrices[i].first;
