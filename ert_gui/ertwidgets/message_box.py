@@ -19,7 +19,8 @@ class ErtMessageBox(QDialog):
         )
         box.accepted.connect(self.accept)
 
-        self.details_text = QTextEdit(detailed_text)
+        self.details_text = QTextEdit()
+        self.details_text.setPlainText(detailed_text)
         self.details_text.setReadOnly(True)
 
         self.label_text = QLabel(text)

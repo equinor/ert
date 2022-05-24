@@ -170,7 +170,7 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
 
 
 def test_dialog(qtbot):
-    msg = ErtMessageBox("Simulations failed!", "failed_msg")
+    msg = ErtMessageBox("Simulations failed!", "failed_msg\nwith two lines")
     qtbot.addWidget(msg)
     assert msg.label_text.text() == "Simulations failed!"
-    assert msg.details_text.toPlainText() == "failed_msg"
+    assert msg.details_text.toPlainText() == "failed_msg\nwith two lines"
