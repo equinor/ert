@@ -81,8 +81,6 @@
    Defaults for the EnKF analysis. The analysis_config object is
    instantiated with these values.
 */
-#define DEFAULT_NCOMP 1
-#define DEFAULT_ENKF_TRUNCATION 0.99
 #define DEFAULT_ENKF_ALPHA 3.0
 #define DEFAULT_ENKF_STD_CUTOFF 1e-6
 #define DEFAULT_RERUN false
@@ -92,7 +90,6 @@
 #define DEFAULT_ANALYSIS_MODULE "STD_ENKF"
 #define DEFAULT_ANALYSIS_NUM_ITERATIONS 4
 #define DEFAULT_ANALYSIS_ITER_CASE "ITERATED_ENSEMBLE_SMOOTHER%d"
-#define DEFAULT_ANALYSIS_ITER_RUNPATH "Simulations/Real%d"
 #define DEFAULT_ANALYSIS_MIN_REALISATIONS 0 // 0: No lower limit
 #define DEFAULT_ANALYSIS_STOP_LONG_RUNNING false
 #define DEFAULT_MAX_RUNTIME 0
@@ -102,7 +99,6 @@
 #define DEFAULT_RUNPATH "simulations/realization%d"
 #define DEFAULT_ENSPATH "storage"
 #define DEFAULT_RFTPATH "rft"
-#define DEFAULT_REPORT_TIMEOUT 120
 
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING ":"
@@ -116,11 +112,6 @@
 #define CONFIG_FLOAT_OPTION_FORMAT " %s:%g"
 #define CONFIG_KEY_FORMAT "%-24s"
 #define CONFIG_VALUE_FORMAT " %-32s"
-#define CONFIG_FLOAT_FORMAT " %32.4f" /* One size - fits all :-) */
-#define CONFIG_SHORT_VALUE_FORMAT " %-12s"
-#define CONFIG_ENDVALUE_FORMAT " %-32s\n"
-#define CONFIG_COMMENTLINE_FORMAT                                              \
-    "----------------------------------------------------------------------\n"
 
 /*
    The string added at the beginning and end of string which should be
