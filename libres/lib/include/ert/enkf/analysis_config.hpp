@@ -92,8 +92,6 @@ void analysis_config_set_single_node_update(analysis_config_type *config,
                                             bool single_node_update);
 bool analysis_config_get_single_node_update(const analysis_config_type *config);
 
-bool analysis_config_have_enough_realisations(
-    const analysis_config_type *config, int realisations, int ensemble_size);
 extern "C" void
 analysis_config_set_stop_long_running(analysis_config_type *config,
                                       bool stop_long_running);

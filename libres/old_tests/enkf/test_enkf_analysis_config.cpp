@@ -45,7 +45,7 @@ void test_create() {
 
 void test_min_realizations(const char *num_realizations_str,
                            const char *min_realizations_str,
-                           int min_realizations_expected_needed) {
+                           int min_realizations_expected) {
     ecl::util::TestArea ta("min_realizations");
     {
         FILE *config_file_stream = fopen("config_file", "w");
@@ -72,41 +72,14 @@ void test_min_realizations(const char *num_realizations_str,
             analysis_config_type *ac = create_analysis_config();
             analysis_config_init(ac, content);
 
-            int num_realizations =
-                config_content_get_value_as_int(content, NUM_REALIZATIONS_KEY);
-
-            test_assert_false(analysis_config_have_enough_realisations(
-                ac, min_realizations_expected_needed - 1, num_realizations));
-            test_assert_true(analysis_config_have_enough_realisations(
-                ac, min_realizations_expected_needed, num_realizations));
-            test_assert_true(analysis_config_have_enough_realisations(
-                ac, min_realizations_expected_needed + 1, num_realizations));
-
             int min_realizations = analysis_config_get_min_realisations(ac);
-            if (min_realizations > 0) {
-                test_assert_true(analysis_config_have_enough_realisations(
-                    ac, min_realizations - 1, min_realizations - 2));
-            }
+            test_assert_true(min_realizations == min_realizations_expected);
+
             analysis_config_free(ac);
             config_content_free(content);
             config_free(c);
         }
     }
-}
-
-void test_have_enough_realisations_defaulted() {
-    analysis_config_type *ac = create_analysis_config();
-    int ensemble_size = 20;
-
-    // min_realizations not set, should then require 20 (ensemble_size)
-    test_assert_false(
-        analysis_config_have_enough_realisations(ac, 0, ensemble_size));
-    test_assert_false(
-        analysis_config_have_enough_realisations(ac, 10, ensemble_size));
-    test_assert_true(
-        analysis_config_have_enough_realisations(ac, 20, ensemble_size));
-
-    analysis_config_free(ac);
 }
 
 void test_stop_long_running() {
@@ -203,7 +176,6 @@ void test_min_realizations_number() {
 
 int main(int argc, char **argv) {
     test_create();
-    test_have_enough_realisations_defaulted();
     test_min_realizations_percent();
     test_min_realizations_number();
     test_stop_long_running();

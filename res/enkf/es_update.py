@@ -28,7 +28,6 @@ class SmootherSnapshot:
 
 def analysis_smoother_update(
     updatestep,
-    total_ens_size,
     obs,
     shared_rng,
     analysis_config,
@@ -54,11 +53,9 @@ def analysis_smoother_update(
         analysis_config.getStdCutoff(),
     )
 
-    if len(iens_active_index) < min(
-        analysis_config.minimum_required_realizations, total_ens_size
-    ):
+    if not analysis_config.haveEnoughRealisations(len(iens_active_index)):
         raise ErtAnalysisError(
-            f"There are {iens_active_index} active realisations left, which is "
+            f"There are {len(iens_active_index)} active realisations left, which is "
             "less than the minimum specified - stopping assimilation.",
         )
     if len(updatestep) > 1 and module.name() == "IES_ENKF":
@@ -217,14 +214,12 @@ class ESUpdate:
 
         analysis_config = self.ert.analysisConfig()
 
-        total_ens_size = self.ert.getEnsembleSize()
         obs = self.ert.getObservations()
         shared_rng = self.ert.rng()
         ensemble_config = self.ert.ensembleConfig()
 
         update_snapshot = analysis_smoother_update(
             updatestep,
-            total_ens_size,
             obs,
             shared_rng,
             analysis_config,

@@ -110,17 +110,6 @@ ANALYSIS_SELECT  ModuleName
 
 */
 
-bool analysis_config_have_enough_realisations(
-    const analysis_config_type *config, int realisations, int ensemble_size) {
-    if (config->min_realisations > 0) {
-        /* A value > 0 has been set in the config; compare with this value. */
-        return realisations >=
-               std::min(config->min_realisations, ensemble_size);
-    } else {
-        return realisations >= ensemble_size;
-    }
-}
-
 void analysis_config_set_stop_long_running(analysis_config_type *config,
                                            bool stop_long_running) {
     config->stop_long_running = stop_long_running;
@@ -353,6 +342,8 @@ void analysis_config_init(analysis_config_type *analysis,
         analysis_config_set_rerun_start(
             analysis, config_content_get_value_as_int(config, RERUN_START_KEY));
 
+    int num_realizations =
+        config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
     if (config_content_has_item(config, MIN_REALIZATIONS_KEY)) {
 
         config_content_node_type *config_content =
@@ -360,8 +351,6 @@ void analysis_config_init(analysis_config_type *analysis,
         char *min_realizations_string =
             config_content_node_alloc_joined_string(config_content, " ");
 
-        int num_realizations =
-            config_content_get_value_as_int(config, NUM_REALIZATIONS_KEY);
         int min_realizations = DEFAULT_ANALYSIS_MIN_REALISATIONS;
         double percent = 0.0;
         if (util_sscanf_percent(min_realizations_string, &percent)) {
@@ -376,11 +365,13 @@ void analysis_config_init(analysis_config_type *analysis,
                         __func__);
         }
 
-        if (min_realizations > num_realizations)
+        if (min_realizations > num_realizations || min_realizations == 0)
             min_realizations = num_realizations;
 
         analysis_config_set_min_realisations(analysis, min_realizations);
         free(min_realizations_string);
+    } else {
+        analysis_config_set_min_realisations(analysis, num_realizations);
     }
 
     if (config_content_has_item(config, STOP_LONG_RUNNING_KEY))

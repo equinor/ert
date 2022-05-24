@@ -23,37 +23,6 @@ def minimal_config(use_tmpdir):
     yield res_config
 
 
-@pytest.mark.parametrize(
-    "module",
-    [
-        "IES_ENKF",
-        "STD_ENKF",
-    ],
-)
-def test_get_module(module, minimal_config):
-    ert = EnKFMain(minimal_config)
-    es_update = ESUpdate(ert)
-    es_update.getModule(module)
-
-
-@pytest.mark.parametrize(
-    "module, expected", [("NO_NOT_THIS_MODULE", False), ("STD_ENKF", True)]
-)
-def test_has_module(module, expected, minimal_config):
-    ert = EnKFMain(minimal_config)
-    es_update = ESUpdate(ert)
-
-    assert es_update.hasModule(module) is expected
-
-
-def test_get_invalid_module(minimal_config):
-    ert = EnKFMain(minimal_config)
-    es_update = ESUpdate(ert)
-
-    with pytest.raises(KeyError, match="No such module:STD_ENKF_XXX"):
-        es_update.getModule("STD_ENKF_XXX")
-
-
 def test_update_report(setup_case, snapshot):
     """
     Note that this is now a snapshot test, so there is no guarantee that the

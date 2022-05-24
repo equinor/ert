@@ -38,8 +38,8 @@ class AnalysisConfigTest(ResTest):
 
             # Unless the MIN_REALIZATIONS is set in config, one is required to
             # have "all" realizations.
-            self.assertFalse(ac.haveEnoughRealisations(5, 10))
-            self.assertTrue(ac.haveEnoughRealisations(10, 10))
+            self.assertFalse(ac.haveEnoughRealisations(5))
+            self.assertTrue(ac.haveEnoughRealisations(10))
 
             ac.set_max_runtime(50)
             self.assertEqual(50, ac.get_max_runtime())

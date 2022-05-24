@@ -267,9 +267,7 @@ class BaseRunModel:
         if (
             not self.ert()
             .analysisConfig()
-            .haveEnoughRealisations(
-                num_successful_realizations, len(self._active_realizations)
-            )
+            .haveEnoughRealisations(num_successful_realizations)
         ):
             raise ErtRunError(
                 "Too many simulations have failed! You can add/adjust MIN_REALIZATIONS "
@@ -278,11 +276,7 @@ class BaseRunModel:
 
     def _checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
         active_realizations = self._count_active_realizations(run_context)
-        if (
-            not self.ert()
-            .analysisConfig()
-            .haveEnoughRealisations(active_realizations, len(self._active_realizations))
-        ):
+        if not self.ert().analysisConfig().haveEnoughRealisations(active_realizations):
             raise ErtRunError(
                 "Number of active realizations is less than the specified "
                 + "MIN_REALIZATIONS in the config file"
