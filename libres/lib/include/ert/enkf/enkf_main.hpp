@@ -121,7 +121,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                     field_file_format_type file_type,
                                     int report_step, enkf_fs_type *fs);
 
-extern "C" int
+int
 enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main, int iter,
                                           bool_vector_type *iactive,
                                           enkf_fs_type *fs);

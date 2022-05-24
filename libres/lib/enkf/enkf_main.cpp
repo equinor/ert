@@ -674,10 +674,21 @@ std::vector<std::string> get_parameter_keys(py::object self) {
     return parameters;
 }
 
+int load_from_forward_model_with_fs_pybind(py::object self, int iter,
+                                           py::object iactive, py::object fs) {
+    auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+    auto iactive_ = ert::from_cwrap<bool_vector_type>(iactive);
+    auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
+    return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive_,
+                                                     fs_);
+}
+
 RES_LIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
+    m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
+          py::arg("self"), py::arg("iter"), py::arg("iactive"), py::arg("fs"));
 }
 
 #include "enkf_main_ensemble.cpp"

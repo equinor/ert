@@ -525,6 +525,8 @@ static void time_map_summary_log_mismatch(time_map_type *map,
      If the normal summary update fails we just play through all
      time steps to pinpoint exactly the step where the update fails.
   */
+    return;
+    /* There is something about the ert logger going on*/
 
     int first_step = ecl_sum_get_first_report_step(ecl_sum);
     int last_step = ecl_sum_get_last_report_step(ecl_sum);

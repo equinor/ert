@@ -16,12 +16,12 @@
    for more details.
 */
 
+#include <stdexcept>
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <sys/types.h>
 #include <vector>
-#include <stdexcept>
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
@@ -269,10 +269,11 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                     __enkf_state_get_time_index(sim_fs, summary);
                 if (!time_index) {
                     // Something has gone wrong in checking time map, fail
-                    logger->error("Inconsistent time map for summary data "
+
+/*                    logger->error("Inconsistent time map for summary data "
                                   "from: {}/{}, realisation failed",
                                   run_arg_get_runpath(run_arg),
-                                  run_arg_get_job_name(run_arg));
+                                  run_arg_get_job_name(run_arg));*/
                     forward_load_context_update_result(load_context,
                                                        LOAD_FAILURE);
                     throw std::invalid_argument("Inconsistent time map");
