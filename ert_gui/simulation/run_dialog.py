@@ -398,7 +398,7 @@ class RunDialog(QDialog):
         )
 
         if failed:
-            msg = ErtMessageBox("Ert simulations failed!", failed_msg)
+            msg = ErtMessageBox("ERT simulation failed!", failed_msg)
             msg.exec_()
 
     @Slot()
