@@ -2,6 +2,7 @@ import json
 import os
 import signal
 import time
+import hashlib
 from datetime import datetime as dt
 from subprocess import Popen
 
@@ -66,11 +67,12 @@ class Job:
         else:
             stdout = None
 
-        if self.job_data.get("target_file"):
-            target_file_mtime = 0
-            if os.path.exists(self.job_data["target_file"]):
-                stat = os.stat(self.job_data["target_file"])
-                target_file_mtime = stat.st_mtime
+        target_file = self.job_data.get("target_file")
+        if target_file:
+            target_file_hash = ""
+            if os.path.exists(target_file):
+                with open(target_file, "rb") as tf:
+                    target_file_hash = hashlib.md5(tf.read()).hexdigest()
 
         exec_env = self.job_data.get("exec_env")
         if exec_env:
@@ -157,8 +159,8 @@ class Job:
                 )
                 return
 
-        if self.job_data.get("target_file"):
-            target_file_error = self._check_target_file_is_written(target_file_mtime)
+        if target_file:
+            target_file_error = self._check_target_file_is_written(target_file_hash)
             if target_file_error:
                 yield exited_message.with_error(target_file_error)
                 return
@@ -224,7 +226,7 @@ class Job:
 
         return errors
 
-    def _check_target_file_is_written(self, target_file_mtime, timeout=5):
+    def _check_target_file_is_written(self, target_file_hash, timeout=5):
         """
         Check whether or not a target_file eventually appear. Returns None in
         case of success, an error message in the case of failure.
@@ -238,9 +240,10 @@ class Job:
         start_time = time.time()
         while True:
             if os.path.exists(target_file):
-                stat = os.stat(target_file)
-                if stat.st_mtime > target_file_mtime:
-                    return None
+                with open(target_file, "rb") as tf:
+                    new_hash = hashlib.md5(tf.read()).hexdigest()
+                    if new_hash != target_file_hash:
+                        return None
 
             time.sleep(self.sleep_interval)
             if time.time() - start_time > timeout:
@@ -249,10 +252,8 @@ class Job:
         # We have gone out of the loop via the break statement,
         # i.e. on a timeout.
         if os.path.exists(target_file):
-            stat = os.stat(target_file)
             return (
                 f"The target file:{target_file} has not been updated; "
-                f"this is flagged as failure. mtime:{stat.st_mtime}   "
-                f"stat_start_time:{target_file_mtime}"
+                f"this is flagged as failure."
             )
         return f"Could not find target_file:{target_file}"
