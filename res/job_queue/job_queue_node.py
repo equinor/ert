@@ -126,7 +126,11 @@ class JobQueueNode(BaseCClass):
         return self._submit(driver)
 
     def run_done_callback(self):
-        callback_status = self.done_callback_function(self.callback_arguments)
+        try:
+            callback_status = self.done_callback_function(self.callback_arguments)
+        except ValueError:
+            callback_status = False
+            self._set_status(JobStatusType.JOB_QUEUE_FAILED)
 
         if callback_status:
             self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)

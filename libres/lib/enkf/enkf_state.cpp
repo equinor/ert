@@ -21,6 +21,7 @@
 #include <string>
 #include <sys/types.h>
 #include <vector>
+#include <stdexcept>
 
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
@@ -274,7 +275,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                                   run_arg_get_job_name(run_arg));
                     forward_load_context_update_result(load_context,
                                                        LOAD_FAILURE);
-                    return false;
+                    throw std::invalid_argument("Inconsistent time map");
                 }
                 /*
                  * Now there are two related / conflicting(?) systems for
