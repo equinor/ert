@@ -16,9 +16,9 @@
    for more details.
 */
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
-#include <chrono>
 #include <thread>
 
 #include <fcntl.h>
@@ -789,28 +789,34 @@ void enkf_fs_decrease_run_count(enkf_fs_type *fs) {
 
 bool enkf_fs_is_running(const enkf_fs_type *fs) { return (fs->runcount > 0); }
 
+namespace {
+using driver_type = std::unique_ptr<ert::block_fs_driver> enkf_fs_type::*;
+
+void bind_write(driver_type dri, py::handle self, py::array_t<double> data,
+                const std::string &name, int iens) {
+    auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+    enkf_fs_incref(enkf_fs);
+    py::gil_scoped_release guard;
+
+    auto bufsiz = data.nbytes() + sizeof(int) + sizeof(int) * data.ndim() * 2;
+    auto buffer = buffer_alloc(data.nbytes());
+    buffer_fwrite_int(buffer, data.ndim());
+    for (size_t i{}; i < data.ndim(); ++i) {
+        buffer_fwrite_int(buffer, data.shape(i));
+        buffer_fwrite_int(buffer, data.strides(i));
+    }
+    buffer_fwrite(buffer, data.data(), 1, data.nbytes());
+
+    (*(enkf_fs->*dri)).save_vector(name.c_str(), iens, buffer);
+    enkf_fs_decref(enkf_fs);
+};
+} // namespace
+
 RES_LIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
-    const auto write_fn = [](py::handle self, py::array_t<double> data, const std::string &name, int iens) -> void {
-        auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
-        enkf_fs_incref(enkf_fs);
-        py::gil_scoped_release guard;
-
-        auto bufsiz = data.nbytes() + sizeof(int) + sizeof(int) * data.ndim() * 2;
-        auto buffer = buffer_alloc(data.nbytes());
-        buffer_fwrite_int(buffer, data.ndim());
-        for (size_t i{}; i < data.ndim(); ++i) {
-            buffer_fwrite_int(buffer, data.shape(i));
-            buffer_fwrite_int(buffer, data.strides(i));
-        }
-        buffer_fwrite(buffer, data.data(), 1, data.nbytes());
-
-        enkf_fs->parameter->save_vector(name.c_str(), iens, buffer);
-        enkf_fs_decref(enkf_fs);
-    };
-
-    const auto read_fn = [](py::handle self, const std::string &name, int iens) -> py::array_t<double> {
+    const auto read_fn = [](py::handle self, const std::string &name,
+                            int iens) -> py::array_t<double> {
         using array_t = py::array_t<double>;
         fmt::print("> {}\n", name);
 
@@ -827,12 +833,26 @@ RES_LIB_SUBMODULE("enkf_fs", m) {
             stride->push_back(buffer_fread_int(buffer));
         }
 
-        auto data = reinterpret_cast<double*>(buffer_iget_data(buffer, buffer_get_offset(buffer)));
+        auto data = reinterpret_cast<double *>(
+            buffer_iget_data(buffer, buffer_get_offset(buffer)));
 
         py::array_t<double> array(shape, stride, data);
         return array;
-};
+    };
 
-    m.def("write_param_vector_raw", write_fn, "self"_a, "data"_a, "name"_a, "iens"_a);
+    m.def(
+        "write_param_vector_raw",
+        [=](py::handle self, py::array_t<double> data, const std::string &name,
+            int iens) {
+            bind_write(&enkf_fs_type::parameter, self, data, name, iens);
+        },
+        "self"_a, "data"_a, "name"_a, "iens"_a);
+    m.def(
+        "write_resp_vector_raw",
+        [=](py::handle self, py::array_t<double> data, const std::string &name,
+            int iens) {
+            bind_write(&enkf_fs_type::dynamic_forecast, self, data, name, iens);
+        },
+        "self"_a, "data"_a, "name"_a, "iens"_a);
     m.def("read_param_vector_raw", read_fn, "self"_a, "name"_a, "iens"_a);
 }
