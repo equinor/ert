@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+import asyncio
 import logging
 import os
 import sys
 import threading
+from typing import Any
 from ert.ensemble_evaluator import EvaluatorTracker
+from ert_shared.feature_toggling import FeatureToggling
 
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
@@ -17,6 +20,18 @@ from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
+
+if sys.version_info < (3, 7):
+    from async_generator import asynccontextmanager
+else:
+    from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def start_experiment_server(ee_config: EvaluatorServerConfig):
+    from ert.experiment_server import ExperimentServer
+
+    yield ExperimentServer(ee_config)
 
 
 class ErtCliError(Exception):
@@ -43,6 +58,25 @@ def run_cli(args):
     if args.mode == WORKFLOW_MODE:
         execute_workflow(ert, args.name)
         return
+
+    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
+
+    if FeatureToggling.is_enabled("experiment-server"):
+        # TODO: need to perform same case checks as for non-experiment-server.
+        # TODO: asyncio.run should be called once in ert_shared/main.py
+        # see https://github.com/equinor/ert/issues/3443 for both of these TODOs
+        asyncio.run(
+            _run_cli_async(
+                ert,
+                facade.get_ensemble_size(),
+                facade.get_current_case_name(),
+                args,
+                evaluator_server_config,
+            ),
+            debug=True,
+        )
+        return
+
     model = create_model(
         ert,
         facade.get_ensemble_size(),
@@ -63,8 +97,6 @@ def run_cli(args):
             f"They were both: {args.target_case}."
         )
         raise ErtCliError(msg)
-
-    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
 
     thread = threading.Thread(
         name="ert_cli_simulation_thread",
@@ -93,3 +125,17 @@ def run_cli(args):
 
     if model.hasRunFailed():
         raise ErtCliError(model.getFailMessage())
+
+
+async def _run_cli_async(
+    ert: EnKFMain,
+    ensemble_size: int,
+    current_case_name: str,
+    args: Any,
+    ee_config: EvaluatorServerConfig,
+):
+    async with start_experiment_server(ee_config) as experiment_server:
+        experiment_id = experiment_server.add_legacy_experiment(
+            ert, ensemble_size, current_case_name, args, create_model
+        )
+        await experiment_server.run_experiment(experiment_id=experiment_id)

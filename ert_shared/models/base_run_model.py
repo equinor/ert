@@ -1,29 +1,32 @@
+import asyncio
+import concurrent
 import logging
-from contextlib import contextmanager
-
 import time
 import uuid
-from typing import Optional, List, Union, Dict, Any, Iterator
-import asyncio
+from abc import abstractmethod
+from contextlib import contextmanager
+from typing import Any, Dict, Iterator, List, Optional, Union
 
-from res.enkf import EnKFMain, QueueConfig
-from res.enkf.ert_run_context import ErtRunContext
-from res.job_queue import (
-    RunStatusType,
-    ForwardModel,
-)
-from ert_shared.libres_facade import LibresFacade
-from ert_shared.feature_toggling import feature_enabled
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from cloudevents.http import CloudEvent
+from ert.ensemble_evaluator import Ensemble, EnsembleBuilder, identifiers
+from ert.ensemble_evaluator.util._tool import get_real_id
+from ert.experiment_server import StateMachine
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert_shared.feature_toggling import feature_enabled
+from ert_shared.libres_facade import LibresFacade
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,
     post_update_data,
 )
-from ert.ensemble_evaluator import (
-    EnsembleBuilder,
-)
+from res.enkf import EnKFMain, QueueConfig
+from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
+from res.enkf.ert_run_context import ErtRunContext
+from res.job_queue import ForwardModel, RunStatusType
+
+event_logger = logging.getLogger("ert.event_log")
+experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
 
 
 class ErtRunError(Exception):
@@ -92,6 +95,10 @@ class BaseRunModel:
         self.facade = LibresFacade(ert)
         self._simulation_arguments = simulation_arguments
         self.reset()
+
+        # experiment-server
+        self._id: Optional[str] = None
+        self._state_machine = StateMachine()
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -318,6 +325,136 @@ class BaseRunModel:
 
         run_context.get_sim_fs().fsync()
         return totalOk
+
+    async def _evaluate(
+        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
+    ) -> None:
+        """Start asynchronous evaluation of an ensemble."""
+        experiment_logger.debug("_evaluate")
+        loop = asyncio.get_running_loop()
+        if run_context.get_step():
+            self.ert().eclConfig().assert_restart()
+        experiment_logger.debug("building...")
+        ensemble = EnsembleBuilder.from_legacy(
+            run_context,
+            self.get_forward_model(),
+            self._queue_config,
+            self.ert().analysisConfig(),
+            self.ert().resConfig(),
+        ).build()
+        experiment_logger.debug("built")
+
+        ensemble_listener = asyncio.create_task(
+            self._ensemble_listener(ensemble, iter_=run_context.get_iter())
+        )
+
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            await loop.run_in_executor(
+                pool,
+                self.ert().initRun,
+                run_context,
+            )
+
+            await ensemble.evaluate_async(ee_config, self.id_)
+
+            await ensemble_listener
+
+            for iens, run_arg in enumerate(run_context):
+                if run_context.is_active(iens):
+                    if run_arg.run_status in (
+                        RunStatusType.JOB_LOAD_FAILURE,
+                        RunStatusType.JOB_RUN_FAILURE,
+                    ):
+                        run_context.deactivate_realization(iens)
+
+            await loop.run_in_executor(
+                pool,
+                run_context.get_sim_fs().fsync,
+            )
+
+    @abstractmethod
+    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+        raise NotImplementedError
+
+    async def successful_realizations(self, iter_: int) -> int:
+        return self._state_machine.successful_realizations(iter_)
+
+    async def _run_hook(
+        self,
+        hook: int,  # HookRuntime
+        iter_: int,
+        loop: asyncio.AbstractEventLoop,
+        executor: concurrent.futures.Executor,
+    ) -> None:
+        # Send HOOK_STARTED
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_STARTED,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                },
+                {
+                    "name": str(hook),
+                },
+            ),
+            iter_,
+        )
+
+        # Run hook
+        await loop.run_in_executor(
+            executor,
+            EnkfSimulationRunner.runWorkflows,
+            hook,
+            self.ert(),
+        )
+
+        # Send HOOK_ENDED
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_ENDED,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                },
+                {
+                    "name": str(hook),
+                },
+            ),
+            iter_,
+        )
+
+    @property
+    def id_(self) -> str:
+        if not self._id:
+            raise RuntimeError(f"{self} does not have an ID")
+        return self._id
+
+    @id_.setter
+    def id_(self, value: str) -> None:
+        if self._id is not None:
+            raise ValueError("experiment id can only be set once")
+        self._id = value
+
+    async def _ensemble_listener(self, ensemble: Ensemble, iter_: int) -> None:
+        """Redirect events emitted by the ensemble to this experiment."""
+        while True:
+            event: CloudEvent = await ensemble.output_bus.get()
+            await self.dispatch(event, iter_)
+            if event["type"] in (
+                identifiers.EVTYPE_ENSEMBLE_FAILED,
+                identifiers.EVTYPE_ENSEMBLE_CANCELLED,
+                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+            ):
+                break
+
+    async def dispatch(self, event: CloudEvent, iter_: int) -> None:
+        event_logger.debug(
+            "dispatch: %s (experiment: %s, iter: %d)", event, self.id_, iter_
+        )
+        if event["type"] == identifiers.EVTYPE_FM_STEP_SUCCESS:
+            real = int(get_real_id(event["source"]))
+            self._state_machine.add_successful_realization(iter_, real)
 
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()
