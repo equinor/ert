@@ -169,7 +169,7 @@ def install_build_requires() -> None:
     )
 
     # Install build requirements
-    with open(SOURCE_ROOT / "pyproject.toml") as f:
+    with open(SOURCE_ROOT / "pyproject.toml", "rb") as f:
         pyproject = tomli.load(f)
 
     reqs = pyproject["build-system"]["requires"]
