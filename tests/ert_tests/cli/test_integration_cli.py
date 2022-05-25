@@ -1,19 +1,20 @@
 import os
 import shutil
+import sys
 import threading
 from argparse import ArgumentParser
 from unittest.mock import Mock, call
 
-import pytest
-
 import ert_shared
+import pytest
 from ert_shared.cli import (
+    ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
-    TEST_RUN_MODE,
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+    TEST_RUN_MODE,
 )
-from ert_shared.cli.main import run_cli, ErtCliError
+from ert_shared.cli.main import ErtCliError, run_cli
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
 
@@ -232,3 +233,36 @@ def test_ies(tmpdir, source_root):
 
         run_cli(parsed)
         FeatureToggling.reset()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
+@pytest.mark.integration_test
+@pytest.mark.timeout(20)
+def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ENSEMBLE_EXPERIMENT_MODE,
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+                "--enable-experiment-server",
+                "--realizations",
+                "0-4",
+            ],
+        )
+
+        FeatureToggling.update_from_args(parsed)
+
+        run_cli(parsed)
+        captured = capsys.readouterr()
+        assert captured.out == "Successful realizations: 5\n"
+
+    FeatureToggling.reset()
