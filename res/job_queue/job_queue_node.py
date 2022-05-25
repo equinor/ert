@@ -126,12 +126,15 @@ class JobQueueNode(BaseCClass):
         return self._submit(driver)
 
     def run_done_callback(self):
-        callback_status = self.done_callback_function(self.callback_arguments)
-
-        if callback_status:
-            self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
-        else:
-            self._set_status(JobStatusType.JOB_QUEUE_EXIT)
+        try:
+            callback_status = self.done_callback_function(self.callback_arguments)
+            if callback_status:
+                self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
+            else:
+                self._set_status(JobStatusType.JOB_QUEUE_EXIT)
+        except ValueError:
+            callback_status = False
+            self._set_status(JobStatusType.JOB_QUEUE_FAILED)
 
         return callback_status
 
@@ -219,6 +222,8 @@ class JobQueueNode(BaseCClass):
                     self.run_exit_callback()
             elif current_status == JobStatusType.JOB_QUEUE_IS_KILLED:
                 pass
+            elif current_status == JobStatusType.JOB_QUEUE_FAILED:
+                self.run_exit_callback()
             else:
                 self._set_thread_status(ThreadStatus.FAILED)
                 raise AssertionError(
