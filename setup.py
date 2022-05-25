@@ -87,7 +87,7 @@ setup(
         "matplotlib",
         "numpy",
         "packaging",
-        "pandas <= 1.3.5",
+        "pandas",
         "pluggy",
         "prefect",
         "psutil",
