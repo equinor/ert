@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
@@ -18,6 +19,7 @@ from ert_shared.ensemble_evaluator.client import Client
 from ._realization import _Realization
 
 if TYPE_CHECKING:
+    import asyncio
     from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
@@ -37,6 +39,9 @@ class _Ensemble:
         return f"Ensemble with {len(self.reals)} members"
 
     def evaluate(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
+        pass
+
+    async def evaluate_async(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
         pass
 
     def cancel(self) -> None:
@@ -75,6 +80,21 @@ class _Ensemble:
         await client._send(to_json(event, data_marshaller=evaluator_marshaller))
         assert client.websocket  # mypy
         await client.websocket.close()
+
+    # TODO: make legacy-only?
+    @property
+    @abstractmethod
+    def output_bus(
+        self,
+    ) -> "asyncio.Queue[CloudEvent]":
+        raise NotImplementedError
+
+    # TODO: make legacy-only?
+    async def queue_cloudevent(
+        self,
+        event: CloudEvent,
+    ) -> None:
+        self.output_bus.put_nowait(event)
 
     def get_successful_realizations(self) -> int:
         return self._snapshot.get_successful_realizations()
