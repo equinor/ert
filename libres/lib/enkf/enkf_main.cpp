@@ -517,6 +517,11 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     Semafoor concurrently_executing_threads(100);
     std::vector<std::tuple<int, std::future<int>>> futures;
 
+    // If this function is called via pybind11 we need to release
+    // the GIL here because this function may spin up several
+    // threads which also may need the GIL (e.g. for logging)
+	py::gil_scoped_release gil;
+
     for (int iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive, iens)) {
 

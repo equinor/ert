@@ -270,10 +270,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                 if (!time_index) {
                     // Something has gone wrong in checking time map, fail
 
-/*                    logger->error("Inconsistent time map for summary data "
+                    logger->error("Inconsistent time map for summary data "
                                   "from: {}/{}, realisation failed",
                                   run_arg_get_runpath(run_arg),
-                                  run_arg_get_job_name(run_arg));*/
+                                  run_arg_get_job_name(run_arg));
                     forward_load_context_update_result(load_context,
                                                        LOAD_FAILURE);
                     throw std::invalid_argument("Inconsistent time map");

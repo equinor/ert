@@ -91,8 +91,8 @@ forward_load_context_load_ecl_sum(forward_load_context_type *load_context) {
                 lazy_load = true;
 
             {
-                /*ert::utils::scoped_memory_logger memlogger(
-                    logger, fmt::format("lazy={}", lazy_load));*/
+                ert::utils::scoped_memory_logger memlogger(
+                    logger, fmt::format("lazy={}", lazy_load));
 
                 int file_options = 0;
                 summary = ecl_sum_fread_alloc(
