@@ -8,6 +8,7 @@ from res.analysis.analysis_module import AnalysisModule
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from res._lib import ies
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
@@ -19,6 +20,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ):
         super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.support_restart = False
+        self._w_container = ies.ModuleData(
+            len(simulation_arguments["active_realizations"])
+        )
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
@@ -71,7 +75,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         es_update = self.ert().getESUpdate()
 
         try:
-            es_update.smootherUpdate(run_context)
+            es_update.smootherUpdate(run_context, self._w_container)
+            self._w_container.iteration_nr += 1
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"

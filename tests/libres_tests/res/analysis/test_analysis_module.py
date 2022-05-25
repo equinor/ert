@@ -20,21 +20,19 @@ from res.analysis import AnalysisModule
 
 
 def test_analysis_module():
-    am = AnalysisModule(100, 2)
+    am = AnalysisModule(2)
 
-    assert am.setVar("ITER", "1")
+    assert am.setVar("ENKF_TRUNCATION", "1.0")
 
     assert am.name() == "IES_ENKF"
 
-    assert am.hasVar("ITER")
+    assert am.hasVar("IES_INVERSION")
 
     assert isinstance(am.getDouble("ENKF_TRUNCATION"), float)
 
-    assert isinstance(am.getInt("ITER"), int)
-
 
 def test_set_get_var():
-    mod = AnalysisModule(100, 1)
+    mod = AnalysisModule(1)
 
     with pytest.raises(KeyError):
         mod.setVar("NO-NOT_THIS_KEY", 100)

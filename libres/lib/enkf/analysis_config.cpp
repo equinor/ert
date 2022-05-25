@@ -217,9 +217,9 @@ int analysis_config_get_rerun_start(const analysis_config_type *config) {
     return config->rerun_start;
 }
 
-void analysis_config_load_module(int ens_size, analysis_config_type *config,
+void analysis_config_load_module(analysis_config_type *config,
                                  analysis_mode_enum mode) {
-    analysis_module_type *module = analysis_module_alloc(ens_size, mode);
+    analysis_module_type *module = analysis_module_alloc(mode);
     if (module)
         config->analysis_modules[analysis_module_get_name(module)] = module;
     else
@@ -232,7 +232,6 @@ void analysis_config_add_module_copy(analysis_config_type *config,
     const analysis_module_type *src_module =
         analysis_config_get_module(config, src_name);
     analysis_module_type *target_module = analysis_module_alloc_named(
-        analysis_module_ens_size(src_module),
         analysis_module_get_mode(src_module), target_name);
     config->analysis_modules[target_name] = target_module;
 }
@@ -300,10 +299,9 @@ analysis_config_get_active_module_name(const analysis_config_type *config) {
         return NULL;
 }
 
-void analysis_config_load_internal_modules(int ens_size,
-                                           analysis_config_type *config) {
-    analysis_config_load_module(ens_size, config, ITERATED_ENSEMBLE_SMOOTHER);
-    analysis_config_load_module(ens_size, config, ENSEMBLE_SMOOTHER);
+void analysis_config_load_internal_modules(analysis_config_type *config) {
+    analysis_config_load_module(config, ITERATED_ENSEMBLE_SMOOTHER);
+    analysis_config_load_module(config, ENSEMBLE_SMOOTHER);
     analysis_config_select_module(config, DEFAULT_ANALYSIS_MODULE);
 }
 
@@ -466,12 +464,10 @@ void analysis_config_free(analysis_config_type *config) {
     delete config;
 }
 
-analysis_config_type *
-analysis_config_alloc_full(int ens_size, double alpha, bool rerun,
-                           int rerun_start, const char *log_path,
-                           double std_cutoff, bool stop_long_running,
-                           bool single_node_update, double global_std_scaling,
-                           int max_runtime, int min_realisations) {
+analysis_config_type *analysis_config_alloc_full(
+    double alpha, bool rerun, int rerun_start, const char *log_path,
+    double std_cutoff, bool stop_long_running, bool single_node_update,
+    double global_std_scaling, int max_runtime, int min_realisations) {
     analysis_config_type *config = new analysis_config_type();
     UTIL_TYPE_ID_INIT(config, ANALYSIS_CONFIG_TYPE_ID);
 
@@ -494,7 +490,7 @@ analysis_config_alloc_full(int ens_size, double alpha, bool rerun,
     config->iter_config = analysis_iter_config_alloc();
     config->global_std_scaling = global_std_scaling;
 
-    analysis_config_load_internal_modules(ens_size, config);
+    analysis_config_load_internal_modules(config);
 
     return config;
 }
@@ -548,9 +544,7 @@ analysis_config_alloc(const config_content_type *config_content) {
     analysis_config_type *analysis_config = analysis_config_alloc_default();
 
     if (config_content) {
-        int ens_size = config_content_get_value_as_int(config_content,
-                                                       NUM_REALIZATIONS_KEY);
-        analysis_config_load_internal_modules(ens_size, analysis_config);
+        analysis_config_load_internal_modules(analysis_config);
         analysis_config_init(analysis_config, config_content);
     }
 

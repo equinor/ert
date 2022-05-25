@@ -5,10 +5,9 @@
 
 void test_steplength1() {
 
-    analysis_module_type *std_module =
-        analysis_module_alloc(100, ENSEMBLE_SMOOTHER);
+    analysis_module_type *std_module = analysis_module_alloc(ENSEMBLE_SMOOTHER);
     analysis_module_type *ies_module =
-        analysis_module_alloc(100, ITERATED_ENSEMBLE_SMOOTHER);
+        analysis_module_alloc(ITERATED_ENSEMBLE_SMOOTHER);
 
     test_assert_true(
         analysis_module_set_var(std_module, ies::ENKF_TRUNCATION_KEY, "0.95"));
@@ -21,7 +20,7 @@ void test_steplength1() {
 
 void test_load() {
     analysis_module_type *module =
-        analysis_module_alloc(100, ITERATED_ENSEMBLE_SMOOTHER);
+        analysis_module_alloc(ITERATED_ENSEMBLE_SMOOTHER);
     test_assert_not_NULL(module);
     analysis_module_free(module);
 }
