@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include <stdexcept>
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -274,7 +275,7 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                                   run_arg_get_job_name(run_arg));
                     forward_load_context_update_result(load_context,
                                                        LOAD_FAILURE);
-                    return false;
+                    throw std::invalid_argument("Inconsistent time map");
                 }
                 /*
                  * Now there are two related / conflicting(?) systems for
@@ -458,8 +459,13 @@ static int enkf_state_internalize_results(ensemble_config_type *ens_config,
      * hence we must load the summary results first.
      */
 
-    enkf_state_internalize_dynamic_eclipse_results(ens_config, load_context,
-                                                   model_config);
+    try {
+        enkf_state_internalize_dynamic_eclipse_results(ens_config, load_context,
+                                                       model_config);
+    } catch (const std::invalid_argument) {
+        forward_load_context_free(load_context);
+        throw;
+    }
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));

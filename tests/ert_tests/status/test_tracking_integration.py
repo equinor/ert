@@ -1,11 +1,16 @@
+import logging
 import os
 import re
 import shutil
 import threading
 import fileinput
 from argparse import ArgumentParser
+from datetime import datetime
+from pathlib import Path
+from textwrap import dedent
 
 import pytest
+from ecl.summary import EclSum
 from jsonpath_ng import parse
 
 from ert.ensemble_evaluator.state import (
@@ -15,7 +20,11 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.ensemble_evaluator import EvaluatorTracker
-from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE, ENSEMBLE_SMOOTHER_MODE
+from ert_shared.cli import (
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    TEST_RUN_MODE,
+)
 from ert_shared.cli.model_factory import create_model
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
@@ -231,5 +240,108 @@ def test_tracking(
                         expected,
                         f"Snapshot {i} did not match:\n",
                     )
+        thread.join()
+    FeatureToggling.reset()
+
+
+def run_sim(start_date):
+    """
+    Create a summary file, the contents of which are not important
+    """
+    ecl_sum = EclSum.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
+    ecl_sum.addVariable("FOPR", unit="SM3/DAY")
+    t_step = ecl_sum.addTStep(1, sim_days=1)
+    t_step["FOPR"] = 1
+    ecl_sum.fwrite()
+
+
+@pytest.mark.integration_test
+def test_tracking_time_map(
+    tmpdir,
+    source_root,
+    caplog,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        SUMMARY *
+        MAX_SUBMIT 5 -- strictly not needed, but to make sure it is > 1
+        REFCASE ECLIPSE_CASE
+
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        # We create a reference case
+        run_sim(datetime(2014, 9, 10))
+        cwd = Path().absolute()
+        sim_path = Path("simulations") / "realization0"
+        sim_path.mkdir(parents=True, exist_ok=True)
+        os.chdir(sim_path)
+        # We are a bit sneaky here, there is no forward model creating any responses
+        # but ert will happily accept the results of files that are already present in
+        # the run_path (feature?). So we just create a response that does not match the
+        # reference case for time.
+        run_sim(datetime(2017, 5, 2))
+        os.chdir(cwd)
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                TEST_RUN_MODE,
+                "config.ert",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        res_config = ResConfig(parsed.config)
+        os.chdir(res_config.config_path)
+        ert = EnKFMain(res_config, strict=True)
+        facade = LibresFacade(ert)
+
+        model = create_model(
+            ert,
+            facade.get_ensemble_size(),
+            facade.get_current_case_name(),
+            parsed,
+        )
+
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+        )
+
+        thread = threading.Thread(
+            name="ert_cli_simulation_thread",
+            target=model.start_simulations_thread,
+            args=(evaluator_server_config,),
+        )
+        with caplog.at_level(logging.INFO):
+            thread.start()
+
+            tracker = EvaluatorTracker(
+                model,
+                ee_con_info=evaluator_server_config.get_connection_info(),
+            )
+
+            failures = []
+
+            for event in tracker.track():
+                if isinstance(event, EndEvent):
+                    failures.append(event)
+        # Check that max submit > 1
+        assert res_config.queue_config.max_submit == 5
+        # We check that the job was submitted first time
+        assert "Submitted job ECLIPSE_CASE (attempt 0)" in caplog.messages
+        # We check that the job was not submitted after the first failed
+        assert "Submitted job ECLIPSE_CASE (attempt 1)" not in caplog.messages
+
+        # Just also check that it failed for the expected reason
+        assert len(failures) == 1
+        assert (
+            "Inconsistency in time_map - loading SUMMARY from" in failures[0].failed_msg
+        )
         thread.join()
     FeatureToggling.reset()

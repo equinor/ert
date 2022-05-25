@@ -538,10 +538,16 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 
                         state_map_update_undefined(state_map, realisation,
                                                    STATE_INITIALIZED);
-
-                        return enkf_state_load_from_forward_model(
-                            enkf_main_iget_state(enkf_main, realisation),
-                            ert_run_context_iget_arg(run_context, realisation));
+                        try {
+                            return enkf_state_load_from_forward_model(
+                                enkf_main_iget_state(enkf_main, realisation),
+                                ert_run_context_iget_arg(run_context,
+                                                         realisation));
+                        } catch (const std::invalid_argument) {
+                            state_map_iset(state_map, realisation,
+                                           STATE_LOAD_FAILURE);
+                            return (int) LOAD_FAILURE;
+                        }
                     },
                     iens, std::ref(concurrently_executing_threads))));
         }
