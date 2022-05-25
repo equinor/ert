@@ -103,7 +103,7 @@ class StateMap(BaseCClass):
         """@rtype: bool"""
         return self._is_read_only()
 
-    def selectMatching(self, select_mask: RealizationStateEnum) -> List[bool]:
+    def selectMatching(self, select_mask) -> List[bool]:
         assert isinstance(select_mask, RealizationStateEnum)
         return list(_lib.state_map.select_matching(self, select_mask.value, True))
 
