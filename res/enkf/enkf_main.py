@@ -394,7 +394,9 @@ class _RealEnKFMain(BaseCClass):
         bool_vector = BoolVector.createFromList(
             size=len(realization), source_list=true_indices
         )
-        return self._load_from_forward_model(iteration, bool_vector, fs)
+        nr_loaded = self._load_from_forward_model(iteration, bool_vector, fs)
+        fs.sync()
+        return nr_loaded
 
     def loadFromRunContext(self, run_context, fs):
         """Returns the number of loaded realizations"""
