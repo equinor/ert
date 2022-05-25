@@ -365,6 +365,20 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
+    async def _queue_changes(
+        ee_id: str,
+        changes,
+        output_bus: "asyncio.Queue[CloudEvent]",
+    ):
+        events = [
+            JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+            for real_id, status in changes.items()
+        ]
+
+        for event in events:
+            output_bus.put_nowait(event)
+
+    @staticmethod
     async def _publish_changes(
         ee_id: str,
         changes,
@@ -378,6 +392,7 @@ class JobQueue(BaseCClass):
                 for real_id, status in changes.items()
             ]
         )
+
         retries = 0
         while True:
             try:
@@ -409,7 +424,7 @@ class JobQueue(BaseCClass):
 
                 await asyncio.sleep(backoff)
 
-    async def execute_queue_async(  # pylint: disable=too-many-arguments
+    async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
         ws_uri: str,
         ee_id: str,
@@ -471,6 +486,53 @@ class JobQueue(BaseCClass):
         await JobQueue._publish_changes(
             ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
         )
+
+    async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
+        self,
+        ee_id: str,
+        pool_sema: threading.BoundedSemaphore,
+        evaluators: Callable[..., Any],
+        output_bus: "asyncio.Queue[CloudEvent]",
+    ) -> None:
+        if evaluators is None:
+            evaluators = []
+        try:
+            await JobQueue._queue_changes(ee_id, self._differ.snapshot(), output_bus)
+            while True:
+                self.launch_jobs(pool_sema)
+
+                await asyncio.sleep(1)
+
+                for func in evaluators:
+                    func()
+
+                changes = self.changes_after_transition()
+                await JobQueue._queue_changes(ee_id, changes, output_bus)
+
+                if self.stopped:
+                    raise asyncio.CancelledError
+
+                if not self.is_active():
+                    break
+
+        except asyncio.CancelledError:
+            logger.debug("queue cancelled, stopping jobs...")
+            await self.stop_jobs_async()
+            logger.debug("jobs stopped, re-raising CancelledError")
+            raise
+
+        except Exception:
+            logger.exception(
+                "unexpected exception in queue",
+                exc_info=True,
+            )
+            await self.stop_jobs_async()
+            logger.debug("jobs stopped, re-raising exception")
+            raise
+
+        self.assert_complete()
+        self._differ.transition(self.job_list)
+        await JobQueue._queue_changes(ee_id, self._differ.snapshot(), output_bus)
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(

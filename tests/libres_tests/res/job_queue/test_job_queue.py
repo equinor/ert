@@ -303,7 +303,7 @@ async def test_retry_on_closed_connection(tmpdir):
         # the queue ate both the exception, and the websocket_mock, trying to
         # consume a third item from the mock causes an (expected) exception
         with pytest.raises(RuntimeError, match="coroutine raised StopIteration"):
-            await job_queue.execute_queue_async(
+            await job_queue.execute_queue_via_websockets(
                 ws_uri="ws://example.org",
                 ee_id="",
                 pool_sema=pool_sema,
