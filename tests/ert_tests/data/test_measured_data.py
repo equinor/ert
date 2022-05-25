@@ -27,6 +27,7 @@ def measured_data_setup():
         mock_data = pd.concat(
             {"obs_key": pd.concat([valid_obs_data, input_dataframe])}, axis=1
         )
+
         mocked_data_loader = Mock(return_value=mock_data)
         factory = Mock(return_value=(mocked_data_loader))
         monkeypatch.setattr(loader, "data_loader_factory", factory)
@@ -78,11 +79,11 @@ def test_get_data(
             ),
         ),
         (
-            pd.DataFrame(data=[[None, None, None]], index=[1]),
+            pd.DataFrame(data=[[None, None, None]], dtype=float, index=[1]),
             pd.DataFrame(data=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], index=["OBS", "STD"]),
         ),
         (
-            pd.DataFrame(data=[[7, 8, None]], index=[1]),
+            pd.DataFrame(data=[[7, 8, None]], dtype=float, index=[1]),
             pd.DataFrame(
                 data=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, None]],
                 index=["OBS", "STD", 1],
@@ -104,7 +105,9 @@ def test_remove_failed_realizations(
     md.remove_failed_realizations()
 
     expected_result.columns = _set_multiindex(expected_result)
+
     expected_result = pd.concat({"obs_key": expected_result}, axis=1)
+
     assert md.data.equals(expected_result)
 
 
