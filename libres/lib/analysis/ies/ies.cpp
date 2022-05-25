@@ -189,7 +189,7 @@ void ies::updateA(data::Data &data,
     int ens_size = Yin.cols();
     int state_size = A.rows();
 
-    int iteration_nr = data.iteration_nr();
+    int iteration_nr = data.iteration_nr;
 
     data.update_state_size(state_size);
     /*

@@ -23,22 +23,11 @@
 */
 
 ies::data::Data::Data(int ens_size)
-    : m_ens_size(ens_size), m_converged(false), m_iteration_nr(0),
-      W(Eigen::MatrixXd::Zero(ens_size, ens_size)) {}
-
-void ies::data::Data::iteration_nr(int iteration_nr) {
-    this->m_iteration_nr = iteration_nr;
-}
-
-int ies::data::Data::iteration_nr() const { return this->m_iteration_nr; }
-
-int ies::data::Data::inc_iteration_nr() { return ++this->m_iteration_nr; }
+    : W(Eigen::MatrixXd::Zero(ens_size, ens_size)) {}
 
 void ies::data::Data::update_ens_mask(const std::vector<bool> &mask) {
     this->m_ens_mask = mask;
 }
-
-int ies::data::Data::ens_size() const { return this->m_ens_size; }
 
 void ies::data::Data::store_initial_obs_mask(const std::vector<bool> &mask) {
     if (this->m_obs_mask0.empty())
@@ -50,10 +39,6 @@ void ies::data::Data::update_obs_mask(const std::vector<bool> &mask) {
 }
 
 int ies::data::Data::obs_mask_size() const { return this->m_obs_mask.size(); }
-
-int ies::data::Data::active_obs_count() const {
-    return std::count(this->m_obs_mask.begin(), this->m_obs_mask.end(), true);
-}
 
 int ies::data::Data::ens_mask_size() const { return (this->m_ens_mask.size()); }
 
@@ -190,5 +175,5 @@ RES_LIB_SUBMODULE("ies", m) {
     py::class_<ies::data::Data, std::shared_ptr<ies::data::Data>>(m,
                                                                   "ModuleData")
         .def(py::init<int>())
-        .def("inc_iteration_nr", &ies::data::Data::inc_iteration_nr);
+        .def_readwrite("iteration_nr", &ies::data::Data::iteration_nr);
 }

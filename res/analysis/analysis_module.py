@@ -24,7 +24,7 @@ from res import ResPrototype
 class AnalysisModule(BaseCClass):
     TYPE_NAME = "analysis_module"
 
-    _alloc = ResPrototype("void* analysis_module_alloc(int, int)", bind=False)
+    _alloc = ResPrototype("void* analysis_module_alloc(int)", bind=False)
     _free = ResPrototype("void analysis_module_free(analysis_module)")
     _set_var = ResPrototype(
         "bool analysis_module_set_var(analysis_module, char*, char*)"
@@ -75,8 +75,8 @@ class AnalysisModule(BaseCClass):
         },
     }
 
-    def __init__(self, ens_size, type_id):
-        c_ptr = self._alloc(ens_size, type_id)
+    def __init__(self, type_id):
+        c_ptr = self._alloc(type_id)
         if not c_ptr:
             raise KeyError(f"Failed to load internal module:{type_id}")
 

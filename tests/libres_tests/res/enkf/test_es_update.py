@@ -13,6 +13,7 @@ from res.enkf import (
     ResConfig,
     ErtAnalysisError,
 )
+from res._lib import ies
 
 
 @pytest.fixture()
@@ -136,7 +137,11 @@ def test_update(setup_case, module, expected_gen_kw):
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
     run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
-    es_update.smootherUpdate(run_context)
+    w_container = None
+    if module == "IES_ENKF":
+        w_container = ies.ModuleData(ert.getEnsembleSize())
+
+    es_update.smootherUpdate(run_context, w_container)
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)
@@ -323,7 +328,9 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     target_fs = fsm.getFileSystem("target")
     run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
     ert.analysisConfig().setEnkfAlpha(alpha)
-    es_update.smootherUpdate(run_context)
+    w_container = ies.ModuleData(ert.getEnsembleSize())
+    w_container.iteration_nr += 1
+    es_update.smootherUpdate(run_context, w_container)
     result_snapshot = ert.update_snapshots[run_context.get_id()]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected

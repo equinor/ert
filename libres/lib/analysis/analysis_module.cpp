@@ -30,7 +30,6 @@
 #include <ert/analysis/analysis_module.hpp>
 #include <ert/analysis/ies/ies.hpp>
 #include <ert/analysis/ies/ies_config.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
 
 #include <ert/logging.hpp>
 #include <ert/python.hpp>
@@ -39,7 +38,6 @@
 auto logger = ert::get_logger("analysis");
 
 struct analysis_module_struct {
-    std::unique_ptr<ies::data::Data> module_data;
     std::unique_ptr<ies::Config> module_config;
     char *
         user_name; /* String used to identify this module for the user; not used in
@@ -53,12 +51,7 @@ analysis_module_get_mode(const analysis_module_type *module) {
     return module->mode;
 }
 
-int analysis_module_ens_size(const analysis_module_type *module) {
-    return module->module_data->ens_size();
-}
-
-analysis_module_type *analysis_module_alloc_named(int ens_size,
-                                                  analysis_mode_enum mode,
+analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
                                                   const char *module_name) {
     analysis_module_type *module = new analysis_module_type();
 
@@ -66,35 +59,30 @@ analysis_module_type *analysis_module_alloc_named(int ens_size,
     module->user_name = util_alloc_string_copy(module_name);
     module->module_config =
         std::make_unique<ies::Config>(mode == ITERATED_ENSEMBLE_SMOOTHER);
-    module->module_data = std::make_unique<ies::data::Data>(ens_size);
     module->user_name = util_alloc_string_copy(module_name);
 
     return module;
 }
 
-analysis_module_type *analysis_module_alloc(int ens_size,
-                                            analysis_mode_enum mode) {
+analysis_module_type *analysis_module_alloc(analysis_mode_enum mode) {
     if (mode == ENSEMBLE_SMOOTHER) {
         analysis_module_type *module = new analysis_module_type();
         module->mode = mode;
         module->user_name = util_alloc_string_copy("STD_ENKF");
         module->module_config = std::make_unique<ies::Config>(false);
-        module->module_data = std::make_unique<ies::data::Data>(ens_size);
-        module->keys = {ies::data::ITER_KEY, ies::IES_INVERSION_KEY,
-                        ies::IES_LOGFILE_KEY, ies::IES_DEBUG_KEY,
-                        ies::ENKF_TRUNCATION_KEY};
+        module->keys = {ies::IES_INVERSION_KEY, ies::IES_LOGFILE_KEY,
+                        ies::IES_DEBUG_KEY, ies::ENKF_TRUNCATION_KEY};
         return module;
     } else if (mode == ITERATED_ENSEMBLE_SMOOTHER) {
         analysis_module_type *module = new analysis_module_type();
         module->mode = mode;
         module->user_name = util_alloc_string_copy("IES_ENKF");
         module->module_config = std::make_unique<ies::Config>(true);
-        module->module_data = std::make_unique<ies::data::Data>(ens_size);
         module->keys = {
-            ies::data::ITER_KEY,         ies::IES_MAX_STEPLENGTH_KEY,
-            ies::IES_MIN_STEPLENGTH_KEY, ies::IES_DEC_STEPLENGTH_KEY,
-            ies::IES_INVERSION_KEY,      ies::IES_LOGFILE_KEY,
-            ies::IES_DEBUG_KEY,          ies::ENKF_TRUNCATION_KEY};
+            ies::IES_MAX_STEPLENGTH_KEY, ies::IES_MIN_STEPLENGTH_KEY,
+            ies::IES_DEC_STEPLENGTH_KEY, ies::IES_INVERSION_KEY,
+            ies::IES_LOGFILE_KEY,        ies::IES_DEBUG_KEY,
+            ies::ENKF_TRUNCATION_KEY};
         return module;
     } else
         throw std::logic_error("Unhandled enum value");
@@ -117,9 +105,6 @@ static bool analysis_module_set_int(analysis_module_type *module,
     else if (strcmp(flag, ies::ENKF_SUBSPACE_DIMENSION_KEY) == 0)
         module->module_config->subspace_dimension(value);
 
-    else if (strcmp(flag, ies::data::ITER_KEY) == 0)
-        module->module_data->iteration_nr(value);
-
     else if (strcmp(flag, ies::IES_INVERSION_KEY) == 0)
         module->module_config->inversion =
             static_cast<ies::inversion_type>(value);
@@ -141,9 +126,6 @@ int analysis_module_get_int(const analysis_module_type *module,
         else
             return -1;
     }
-
-    else if (strcmp(var, ies::data::ITER_KEY) == 0)
-        return module->module_data->iteration_nr();
 
     else if (strcmp(var, ies::IES_INVERSION_KEY) == 0)
         return module->module_config->inversion;
@@ -318,11 +300,6 @@ double analysis_module_get_double(const analysis_module_type *module,
     return -1;
 }
 
-ies::data::Data *
-analysis_module_get_module_data(const analysis_module_type *module) {
-    return module->module_data.get();
-}
-
 ies::Config *
 analysis_module_get_module_config(const analysis_module_type *module) {
     return module->module_config.get();
@@ -333,14 +310,7 @@ ies::Config *analysis_module_get_module_config_pybind(py::object module) {
     return analysis_module_get_module_config(module_);
 }
 
-ies::data::Data *analysis_module_get_module_data_pybind(py::object module) {
-    auto module_ = ert::from_cwrap<analysis_module_type>(module);
-    return analysis_module_get_module_data(module_);
-}
-
 RES_LIB_SUBMODULE("analysis_module", m) {
     m.def("get_module_config", analysis_module_get_module_config_pybind,
-          py::return_value_policy::reference_internal);
-    m.def("get_module_data", analysis_module_get_module_data_pybind,
           py::return_value_policy::reference_internal);
 }

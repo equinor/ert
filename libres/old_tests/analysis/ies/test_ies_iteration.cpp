@@ -78,13 +78,11 @@ void cmp_std_ies(res::es_testdata &testdata) {
     for (int iter = 0; iter < num_iter; iter++) {
         forward_model(testdata, A1);
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-        int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion,
                      ies_config.get_truncation(),
-                     ies_config.get_steplength(iteration_nr));
-
-        test_assert_int_equal(ies_data.iteration_nr(), iter + 1);
+                     ies_config.get_steplength(ies_data.iteration_nr));
+        ies_data.iteration_nr++;
 
         if (A1.isApprox(A2, 1e-5))
             break;
@@ -133,11 +131,11 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
         }
 
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-        int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A1, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion,
                      ies_config.get_truncation(),
-                     ies_config.get_steplength(iteration_nr));
+                     ies_config.get_steplength(ies_data.iteration_nr));
+        ies_data.iteration_nr++;
     }
 
     /* ES update with one realization removed*/
@@ -189,17 +187,14 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     ies_config.min_steplength = 0.50;
     ies_config.inversion = ies::IES_INVERSION_SUBSPACE_EXACT_R;
 
-    for (int iter = 0; iter < 1; iter++) {
-        // deactivate an observation initially to test reactivation in the following iteration
-        testdata2.deactivate_obs(2);
+    // deactivate an observation initially to test reactivation in the following iteration
+    testdata2.deactivate_obs(2);
 
-        ies::init_update(ies_data, testdata2.ens_mask, testdata2.obs_mask);
-        int iteration_nr = ies_data.inc_iteration_nr();
-        ies::updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.E,
-                     testdata2.D, ies_config.inversion,
-                     ies_config.get_truncation(),
-                     ies_config.get_steplength(iteration_nr));
-    }
+    ies::init_update(ies_data, testdata2.ens_mask, testdata2.obs_mask);
+    ies::updateA(ies_data, A, testdata2.S, testdata2.R, testdata2.E,
+                 testdata2.D, ies_config.inversion, ies_config.get_truncation(),
+                 ies_config.get_steplength(ies_data.iteration_nr));
+    ies_data.iteration_nr++;
 
     for (int iter = 1; iter < num_iter; iter++) {
         // Deactivate a realization
@@ -223,11 +218,11 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
             testdata.deactivate_obs(testdata.active_obs_size / 2);
 
         ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
-        int iteration_nr = ies_data.inc_iteration_nr();
         ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E,
                      testdata.D, ies_config.inversion,
                      ies_config.get_truncation(),
-                     ies_config.get_steplength(iteration_nr));
+                     ies_config.get_steplength(ies_data.iteration_nr));
+        ies_data.iteration_nr++;
     }
     rng_free(rng);
 }
