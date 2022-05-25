@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING, Optional
 
 from ecl.util.util import RandomNumberGenerator
 from res.enkf.enums import RealizationStateEnum
@@ -43,6 +43,7 @@ def analysis_smoother_update(
     ensemble_config: EnsembleConfig,
     source_fs: EnkfFs,
     target_fs: EnkfFs,
+    w_container: Optional[ies.ModuleData],
 ) -> SmootherSnapshot:
     source_state_map = source_fs.getStateMap()
 
@@ -107,15 +108,17 @@ def analysis_smoother_update(
         )
 
         module_config = analysis_module.get_module_config(module)
-        module_data = analysis_module.get_module_data(module)
 
         if A is not None:
             if module_config.iterable:
-                ies.init_update(module_data, ens_mask, update_data.obs_mask)
-                iteration_nr = module_data.inc_iteration_nr()
+                if w_container is None:
+                    raise ErtAnalysisError(
+                        "Trying to run IES without coffecient matrix container!"
+                    )
+                ies.init_update(w_container, ens_mask, update_data.obs_mask)
 
                 ies.update_A(
-                    module_data,
+                    w_container,
                     A,
                     update_data.S,
                     update_data.R,
@@ -123,7 +126,7 @@ def analysis_smoother_update(
                     update_data.D,
                     ies_inversion=module_config.inversion,
                     truncation=module_config.get_truncation(),
-                    step_length=module_config.get_steplength(iteration_nr),
+                    step_length=module_config.get_steplength(w_container.iteration_nr),
                 )
             else:
                 X = ies.make_X(
@@ -219,7 +222,9 @@ class ESUpdate:
     def setGlobalStdScaling(self, weight: float) -> None:
         self.ert.analysisConfig().setGlobalStdScaling(weight)
 
-    def smootherUpdate(self, run_context: "ErtRunContext") -> None:
+    def smootherUpdate(
+        self, run_context: "ErtRunContext", w_container: Optional[ies.ModuleData] = None
+    ) -> None:
         source_fs = run_context.get_sim_fs()
         target_fs = run_context.get_target_fs()
 
@@ -239,5 +244,6 @@ class ESUpdate:
             ensemble_config,
             source_fs,
             target_fs,
+            w_container,
         )
         self.ert.update_snapshots[run_context.get_id()] = update_snapshot

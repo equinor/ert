@@ -20,7 +20,6 @@
 #define ERT_ANALYSIS_MODULE_H
 
 #include <ert/analysis/ies/ies_config.hpp>
-#include <ert/analysis/ies/ies_data.hpp>
 
 typedef enum {
     ENSEMBLE_SMOOTHER = 1,
@@ -29,10 +28,8 @@ typedef enum {
 
 typedef struct analysis_module_struct analysis_module_type;
 
-extern "C" analysis_module_type *analysis_module_alloc(int ens_size,
-                                                       analysis_mode_enum mode);
-analysis_module_type *analysis_module_alloc_named(int ens_size,
-                                                  analysis_mode_enum mode,
+extern "C" analysis_module_type *analysis_module_alloc(analysis_mode_enum mode);
+analysis_module_type *analysis_module_alloc_named(analysis_mode_enum mode,
                                                   const char *module_name);
 
 extern "C" void analysis_module_free(analysis_module_type *module);
@@ -54,10 +51,6 @@ extern "C" bool analysis_module_get_bool(const analysis_module_type *module,
                                          const char *var);
 void *analysis_module_get_ptr(const analysis_module_type *module,
                               const char *var);
-int analysis_module_ens_size(const analysis_module_type *module);
-
-ies::data::Data *
-analysis_module_get_module_data(const analysis_module_type *module);
 
 ies::Config *
 analysis_module_get_module_config(const analysis_module_type *module);

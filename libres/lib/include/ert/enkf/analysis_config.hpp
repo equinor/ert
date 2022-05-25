@@ -53,12 +53,10 @@ extern "C" const char *
 analysis_config_get_log_path(const analysis_config_type *config);
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config);
-extern "C" PY_USED analysis_config_type *
-analysis_config_alloc_full(int ens_size, double alpha, bool rerun,
-                           int rerun_start, const char *log_path,
-                           double std_cutoff, bool stop_long_running,
-                           bool single_node_update, double global_std_scaling,
-                           int max_runtime, int min_realisations);
+extern "C" PY_USED analysis_config_type *analysis_config_alloc_full(
+    double alpha, bool rerun, int rerun_start, const char *log_path,
+    double std_cutoff, bool stop_long_running, bool single_node_update,
+    double global_std_scaling, int max_runtime, int min_realisations);
 analysis_config_type *analysis_config_alloc_default(void);
 extern "C" analysis_config_type *
 analysis_config_alloc_load(const char *user_config_file);
