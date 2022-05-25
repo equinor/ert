@@ -1,12 +1,21 @@
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, TYPE_CHECKING
 
+from ecl.util.util import RandomNumberGenerator
 from res.enkf.enums import RealizationStateEnum
+from res.enkf.analysis_config import AnalysisConfig
+from res.enkf.ensemble_config import EnsembleConfig
 from res._lib.enkf_analysis import UpdateSnapshot
 from res._lib import update, analysis_module
+from res.analysis.configuration import UpdateConfiguration
+from res.enkf.enkf_obs import EnkfObs
+from res.enkf.enkf_fs import EnkfFs
 from ert.analysis import ies
+
+if TYPE_CHECKING:
+    from res.enkf import EnKFMain, ErtRunContext
 
 logger = logging.getLogger(__name__)
 
@@ -27,14 +36,14 @@ class SmootherSnapshot:
 
 
 def analysis_smoother_update(
-    updatestep,
-    obs,
-    shared_rng,
-    analysis_config,
-    ensemble_config,
-    source_fs,
-    target_fs,
-):
+    updatestep: UpdateConfiguration,
+    obs: EnkfObs,
+    shared_rng: RandomNumberGenerator,
+    analysis_config: AnalysisConfig,
+    ensemble_config: EnsembleConfig,
+    source_fs: EnkfFs,
+    target_fs: EnkfFs,
+) -> SmootherSnapshot:
     source_state_map = source_fs.getStateMap()
 
     ens_mask = source_state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
@@ -81,105 +90,95 @@ def analysis_smoother_update(
         smoother_snapshot.update_step_snapshots[
             update_step.name
         ] = update_data.update_snapshot
-        if update_data.has_observations:
 
-            """
-            The update for one local_dataset instance consists of two main chunks:
-
-            1. The first chunk updates all the parameters which don't have row
-                scaling attached. These parameters are serialized together to the A
-                matrix and all the parameters are updated in one go.
-
-            2. The second chunk is loop over all the parameters which have row
-                scaling attached. These parameters are updated one at a time.
-            """
-            A = update.load_parameters(
-                target_fs, ensemble_config, iens_active_index, update_step.parameters
+        if not update_data.has_observations:
+            raise ErtAnalysisError(
+                f"No active observations for update step: {update_step.name}."
             )
-            A_with_rowscaling = update.load_row_scaling_parameters(
+
+        A = update.load_parameters(
+            target_fs, ensemble_config, iens_active_index, update_step.parameters
+        )
+        A_with_rowscaling = update.load_row_scaling_parameters(
+            target_fs,
+            ensemble_config,
+            iens_active_index,
+            update_step.row_scaling_parameters,
+        )
+
+        module_config = analysis_module.get_module_config(module)
+        module_data = analysis_module.get_module_data(module)
+
+        if A is not None:
+            if module_config.iterable:
+                ies.init_update(module_data, ens_mask, update_data.obs_mask)
+                iteration_nr = module_data.inc_iteration_nr()
+
+                ies.update_A(
+                    module_data,
+                    A,
+                    update_data.S,
+                    update_data.R,
+                    update_data.E,
+                    update_data.D,
+                    ies_inversion=module_config.inversion,
+                    truncation=module_config.get_truncation(),
+                    step_length=module_config.get_steplength(iteration_nr),
+                )
+            else:
+                X = ies.make_X(
+                    update_data.S,
+                    update_data.R,
+                    update_data.E,
+                    update_data.D,
+                    A,
+                    ies_inversion=module_config.inversion,
+                    truncation=module_config.get_truncation(),
+                )
+                A = A @ X
+
+            update.save_parameters(
+                target_fs,
+                ensemble_config,
+                iens_active_index,
+                update_step.parameters,
+                A,
+            )
+
+        if A_with_rowscaling:
+            if module_config.iterable:
+                raise ErtAnalysisError(
+                    "Sorry - row scaling for distance based "
+                    "localization can not be combined with "
+                    "analysis modules which update the A matrix"
+                )
+            for (A, row_scaling) in A_with_rowscaling:
+                X = ies.make_X(
+                    update_data.S,
+                    update_data.R,
+                    update_data.E,
+                    update_data.D,
+                    A,
+                    ies_inversion=module_config.inversion,
+                    truncation=module_config.get_truncation(),
+                )
+                row_scaling.multiply(A, X)
+
+            update.save_row_scaling_parameters(
                 target_fs,
                 ensemble_config,
                 iens_active_index,
                 update_step.row_scaling_parameters,
+                A_with_rowscaling,
             )
 
-            module_config = analysis_module.get_module_config(module)
-            module_data = analysis_module.get_module_data(module)
-
-            if A is not None:
-                if module_config.iterable:
-                    ies.init_update(module_data, ens_mask, update_data.obs_mask)
-                    iteration_nr = module_data.inc_iteration_nr()
-
-                    ies.update_A(
-                        module_data,
-                        A,
-                        update_data.S,
-                        update_data.R,
-                        update_data.E,
-                        update_data.D,
-                        ies_inversion=module_config.inversion,
-                        truncation=module_config.get_truncation(),
-                        step_length=module_config.get_steplength(iteration_nr),
-                    )
-                else:
-                    X = ies.make_X(
-                        update_data.S,
-                        update_data.R,
-                        update_data.E,
-                        update_data.D,
-                        A,
-                        ies_inversion=module_config.inversion,
-                        truncation=module_config.get_truncation(),
-                    )
-                    A = A @ X
-
-                update.save_parameters(
-                    target_fs,
-                    ensemble_config,
-                    iens_active_index,
-                    update_step.parameters,
-                    A,
-                )
-
-            if A_with_rowscaling:
-                if module_config.iterable:
-                    raise ErtAnalysisError(
-                        "Sorry - row scaling for distance based "
-                        "localization can not be combined with "
-                        "analysis modules which update the A matrix"
-                    )
-                for (A, row_scaling) in A_with_rowscaling:
-                    X = ies.make_X(
-                        update_data.S,
-                        update_data.R,
-                        update_data.E,
-                        update_data.D,
-                        A,
-                        ies_inversion=module_config.inversion,
-                        truncation=module_config.get_truncation(),
-                    )
-                    row_scaling.multiply(A, X)
-
-                update.save_row_scaling_parameters(
-                    target_fs,
-                    ensemble_config,
-                    iens_active_index,
-                    update_step.row_scaling_parameters,
-                    A_with_rowscaling,
-                )
-
-        else:
-            raise ErtAnalysisError(
-                f"No active observations for update step: {update_step.name}."
-            )
     _write_update_report(
         Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
     )
     return smoother_snapshot
 
 
-def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
+def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
     for update_step_name, update_step in snapshot.update_step_snapshots.items():
         with open(fname, "w") as fout:
             fout.write("=" * 127 + "\n")
@@ -214,13 +213,13 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot):
 
 
 class ESUpdate:
-    def __init__(self, enkf_main):
+    def __init__(self, enkf_main: "EnKFMain"):
         self.ert = enkf_main
 
-    def setGlobalStdScaling(self, weight):
+    def setGlobalStdScaling(self, weight: float) -> None:
         self.ert.analysisConfig().setGlobalStdScaling(weight)
 
-    def smootherUpdate(self, run_context):
+    def smootherUpdate(self, run_context: "ErtRunContext") -> None:
         source_fs = run_context.get_sim_fs()
         target_fs = run_context.get_target_fs()
 
