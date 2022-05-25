@@ -113,3 +113,12 @@ EVGROUP_ENSEMBLE = {
     EVTYPE_ENSEMBLE_CANCELLED,
     EVTYPE_ENSEMBLE_FAILED,
 }
+
+EVTYPE_EXPERIMENT_STARTED = "com.equinor.ert.experiment.started"
+EVTYPE_EXPERIMENT_SUCCEEDED = "com.equinor.ert.experiment.succeeded"
+EVTYPE_EXPERIMENT_FAILED = "com.equinor.ert.experiment.failed"
+EVTYPE_EXPERIMENT_CANCELLED = "com.equinor.ert.experiment.cancelled"
+EVTYPE_EXPERIMENT_HOOK_STARTED = "com.equinor.ert.experiment.hook_started"
+EVTYPE_EXPERIMENT_HOOK_ENDED = "com.equinor.ert.experiment.hook_ended"
+EVTYPE_EXPERIMENT_ANALYSIS_STARTED = "com.equinor.ert.experiment.analysis_started"
+EVTYPE_EXPERIMENT_ANALYSIS_ENDED = "com.equinor.ert.experiment.analysis_ended"

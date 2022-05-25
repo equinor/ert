@@ -438,6 +438,20 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
+    async def _queue_changes(
+        ee_id: str,
+        changes,
+        output_bus: "asyncio.Queue[CloudEvent]",
+    ):
+        events = [
+            JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+            for real_id, status in changes.items()
+        ]
+
+        for event in events:
+            output_bus.put_nowait(event)
+
+    @staticmethod
     async def _publish_changes(
         ee_id: str,
         changes,
@@ -451,6 +465,7 @@ class JobQueue(BaseCClass):
                 for real_id, status in changes.items()
             ]
         )
+
         retries = 0
         while True:
             try:
@@ -490,6 +505,7 @@ class JobQueue(BaseCClass):
         evaluators: Callable[..., Any],
         cert: Optional[Union[str, bytes]] = None,
         token: Optional[str] = None,
+        output_bus: Optional["asyncio.Queue[CloudEvent]"] = None,
     ) -> None:
         if evaluators is None:
             evaluators = []
@@ -503,9 +519,18 @@ class JobQueue(BaseCClass):
             headers["token"] = token
 
         try:
-            await JobQueue._publish_changes(
-                ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-            )
+            if output_bus:
+                await JobQueue._queue_changes(
+                    ee_id, self._differ.snapshot(), output_bus
+                )
+            else:
+                await JobQueue._publish_changes(
+                    ee_id,
+                    self._differ.snapshot(),
+                    ws_uri,
+                    ssl_context,
+                    headers,
+                )
             while True:
                 self.launch_jobs(pool_sema)
 
@@ -514,9 +539,17 @@ class JobQueue(BaseCClass):
                 for func in evaluators:
                     func()
 
-                await JobQueue._publish_changes(
-                    ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
-                )
+                changes = self.changes_after_transition()
+                if output_bus:
+                    await JobQueue._queue_changes(ee_id, changes, output_bus)
+                else:
+                    await JobQueue._publish_changes(
+                        ee_id,
+                        changes,
+                        ws_uri,
+                        ssl_context,
+                        headers,
+                    )
 
                 if self.stopped:
                     raise asyncio.CancelledError
@@ -541,9 +574,12 @@ class JobQueue(BaseCClass):
 
         self.assert_complete()
         self._differ.transition(self.job_list)
-        await JobQueue._publish_changes(
-            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
-        )
+        if output_bus:
+            await JobQueue._queue_changes(ee_id, self._differ.snapshot(), output_bus)
+        else:
+            await JobQueue._publish_changes(
+                ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+            )
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(

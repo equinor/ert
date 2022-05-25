@@ -183,6 +183,15 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         self._iens_to_task = {}  # type: ignore
         self._allow_cancel = multiprocessing.Event()
 
+    @property
+    def output_bus(
+        self,
+    ) -> "asyncio.Queue[CloudEvent]":
+        # TODO: the prefect ensemble needs to return the multiprocessing.Queue or keep
+        # using websockets. See https://github.com/equinor/ert/issues/3456
+        # It cannot use asyncio.Queue as it is unpicklable.
+        raise NotImplementedError
+
     def get_flow(self, ee_id: str, iens_range: List[int]) -> Any:
         with Flow(f"Realization range {iens_range}") as flow:
             # one map pr flow (real-batch)
