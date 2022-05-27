@@ -190,8 +190,6 @@ void ies::updateA(data::Data &data,
     int state_size = A.rows();
 
     int iteration_nr = data.iteration_nr;
-
-    data.update_state_size(state_size);
     /*
       Counting number of active observations for current iteration. If the
       observations have been used in previous iterations they are contained in
