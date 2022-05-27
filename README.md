@@ -14,10 +14,12 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-ERT - Ensemble based Reservoir Tool - is a tool to run ensemble based on
-reservoir models. ERT was originally devised as tool to do model updating
-(history matching) with the EnKF method, now the primary method for model
-updating is the Ensemble Smoother (ES).
+ERT - Ensemble based Reservoir Tool - is designed for running 
+ensembles of dynamical models such as reservoir models,
+in order to do sensitivity analysis and data assimilation.
+ERT supports data assimilation using the Ensemble Smoother (ES), 
+Ensemble Smoother with Multiple Data Assimilation (ES-MDA) and
+Iterative Ensemble Smoother (IES).
 
 ## Prerequisites
 
