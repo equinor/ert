@@ -42,10 +42,6 @@ int ies::data::Data::obs_mask_size() const { return this->m_obs_mask.size(); }
 
 int ies::data::Data::ens_mask_size() const { return (this->m_ens_mask.size()); }
 
-void ies::data::Data::update_state_size(int state_size) {
-    this->m_state_size = state_size;
-}
-
 /* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
 void ies::data::Data::store_initialE(const Eigen::MatrixXd &E0) {

@@ -2,7 +2,6 @@
 #define IES_DATA_H
 
 #include <Eigen/Dense>
-#include <optional>
 #include <vector>
 
 namespace ies {
@@ -15,7 +14,6 @@ public:
     void update_ens_mask(const std::vector<bool> &mask);
     void store_initial_obs_mask(const std::vector<bool> &mask);
     void update_obs_mask(const std::vector<bool> &mask);
-    void update_state_size(int state_size);
 
     const std::vector<bool> &obs_mask0() const;
     const std::vector<bool> &obs_mask() const;
@@ -44,7 +42,6 @@ private:
     Eigen::MatrixXd
         W; // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
 
-    std::optional<int> m_state_size;
     std::vector<bool> m_ens_mask{};
     std::vector<bool> m_obs_mask0{};
     std::vector<bool> m_obs_mask{};
