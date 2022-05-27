@@ -517,7 +517,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     // executing* threads. The number of instantiated and stored futures
     // will be equal to the number of active realizations.
     Semafoor concurrently_executing_threads(100);
-    std::vector<std::tuple<int, std::future<int>>> futures;
+    std::vector<std::tuple<int, std::future<enkf_fw_load_result_enum>>> futures;
 
     for (int iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive, iens)) {
@@ -546,7 +546,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                         } catch (const std::invalid_argument) {
                             state_map_iset(state_map, realisation,
                                            STATE_LOAD_FAILURE);
-                            return (int) LOAD_FAILURE;
+                            return LOAD_FAILURE;
                         }
                     },
                     iens, std::ref(concurrently_executing_threads))));
@@ -556,10 +556,12 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     int loaded = 0;
     for (auto &[iens, fut] : futures) {
         int result = fut.get();
-        if (result & LOAD_FAILURE) {
+        if (result == LOAD_SUCCESSFUL) {
+            loaded++;
+        } else if (result == LOAD_FAILURE) {
             logger->warning("Function {}: Realization {} load failure",
                             __func__, iens);
-        } else if (result & REPORT_STEP_INCOMPATIBLE) {
+        } else if (result == REPORT_STEP_INCOMPATIBLE) {
             logger->warning("The timesteps in refcase and "
                             "current simulation are "
                             "not in accordance - something wrong with "
@@ -568,7 +570,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                             "incompatible",
                             __func__, iens);
         } else
-            loaded++;
+            logger->error("Unknown load enum");
     }
     return loaded;
 }

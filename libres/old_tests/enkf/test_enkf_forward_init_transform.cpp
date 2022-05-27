@@ -129,10 +129,9 @@ int main(int argc, char **argv) {
         enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
         bool_vector_type *iactive =
             bool_vector_alloc(enkf_main_get_ensemble_size(enkf_main), true);
-        int error;
-        error = enkf_state_load_from_forward_model(state, run_arg);
+        auto error = enkf_state_load_from_forward_model(state, run_arg);
         bool_vector_free(iactive);
-        test_assert_int_equal(error, 0);
+        test_assert_true(error == LOAD_SUCCESSFUL);
     }
 
     test_assert_true(check_original_exported_data_equal(field_node));
