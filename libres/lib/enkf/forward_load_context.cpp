@@ -45,7 +45,7 @@ struct forward_load_context_struct {
 
     /* The variables below are updated during the load process. */
     int load_step;
-    enkf_fw_load_result_enum load_result;
+    fw_load_status load_result;
     bool ecl_active;
 };
 
@@ -155,13 +155,13 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
     return load_context;
 }
 
-enkf_fw_load_result_enum
+fw_load_status
 forward_load_context_get_result(const forward_load_context_type *load_context) {
     return load_context->load_result;
 }
 
 void forward_load_context_update_result(forward_load_context_type *load_context,
-                                        enkf_fw_load_result_enum flags) {
+                                        fw_load_status flags) {
     load_context->load_result = flags;
 }
 

@@ -446,7 +446,7 @@ enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static enkf_fw_load_result_enum enkf_state_internalize_results(
+static fw_load_status enkf_state_internalize_results(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
 
@@ -483,7 +483,7 @@ static enkf_fw_load_result_enum enkf_state_internalize_results(
     return result;
 }
 
-static enkf_fw_load_result_enum enkf_state_load_from_forward_model__(
+static fw_load_status enkf_state_load_from_forward_model__(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
     auto result = LOAD_SUCCESSFUL;
@@ -504,9 +504,8 @@ static enkf_fw_load_result_enum enkf_state_load_from_forward_model__(
     return result;
 }
 
-enkf_fw_load_result_enum
-enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                   run_arg_type *run_arg) {
+fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                                  run_arg_type *run_arg) {
 
     ensemble_config_type *ens_config = enkf_state->ensemble_config;
     model_config_type *model_config = enkf_state->shared_info->model_config;

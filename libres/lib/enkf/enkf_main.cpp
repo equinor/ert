@@ -517,7 +517,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     // executing* threads. The number of instantiated and stored futures
     // will be equal to the number of active realizations.
     Semafoor concurrently_executing_threads(100);
-    std::vector<std::tuple<int, std::future<enkf_fw_load_result_enum>>> futures;
+    std::vector<std::tuple<int, std::future<fw_load_status>>> futures;
 
     for (int iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive, iens)) {
