@@ -45,7 +45,7 @@ struct forward_load_context_struct {
 
     /* The variables below are updated during the load process. */
     int load_step;
-    int load_result;
+    enkf_fw_load_result_enum load_result;
     bool ecl_active;
 };
 
@@ -144,7 +144,7 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
     load_context->run_arg = run_arg;
     load_context->load_step =
         -1; // Invalid - must call forward_load_context_select_step()
-    load_context->load_result = 0;
+    load_context->load_result = LOAD_SUCCESSFUL;
     load_context->ecl_config = ecl_config;
     if (ecl_config)
         load_context->ecl_active = ecl_config_active(ecl_config);
@@ -155,14 +155,14 @@ forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
     return load_context;
 }
 
-int forward_load_context_get_result(
-    const forward_load_context_type *load_context) {
+enkf_fw_load_result_enum
+forward_load_context_get_result(const forward_load_context_type *load_context) {
     return load_context->load_result;
 }
 
 void forward_load_context_update_result(forward_load_context_type *load_context,
-                                        int flags) {
-    load_context->load_result |= flags;
+                                        enkf_fw_load_result_enum flags) {
+    load_context->load_result = flags;
 }
 
 void forward_load_context_free(forward_load_context_type *load_context) {

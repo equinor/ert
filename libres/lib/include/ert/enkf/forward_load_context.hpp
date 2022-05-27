@@ -27,14 +27,15 @@
 
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_fs_type.hpp>
+#include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg_type.hpp>
 
 typedef struct forward_load_context_struct forward_load_context_type;
 
 void forward_load_context_update_result(forward_load_context_type *load_context,
-                                        int flags);
-int forward_load_context_get_result(
-    const forward_load_context_type *load_context);
+                                        enkf_fw_load_result_enum flags);
+enkf_fw_load_result_enum
+forward_load_context_get_result(const forward_load_context_type *load_context);
 extern "C" forward_load_context_type *
 forward_load_context_alloc(const run_arg_type *run_arg, bool load_summary,
                            const ecl_config_type *ecl_config);

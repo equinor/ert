@@ -26,17 +26,21 @@ void test_update_result() {
     forward_load_context_type *load_context =
         forward_load_context_alloc(NULL, false, NULL);
     test_assert_int_equal(forward_load_context_get_result(load_context), 0);
-    forward_load_context_update_result(load_context, 1);
-    test_assert_int_equal(forward_load_context_get_result(load_context), 1);
+    forward_load_context_update_result(load_context, REPORT_STEP_INCOMPATIBLE);
+    test_assert_true(forward_load_context_get_result(load_context) ==
+                     REPORT_STEP_INCOMPATIBLE);
 
-    forward_load_context_update_result(load_context, 1);
-    test_assert_int_equal(forward_load_context_get_result(load_context), 1);
+    forward_load_context_update_result(load_context, REPORT_STEP_INCOMPATIBLE);
+    test_assert_true(forward_load_context_get_result(load_context) ==
+                     REPORT_STEP_INCOMPATIBLE);
 
-    forward_load_context_update_result(load_context, 2);
-    test_assert_int_equal(forward_load_context_get_result(load_context), 3);
+    forward_load_context_update_result(load_context, LOAD_FAILURE);
+    test_assert_true(forward_load_context_get_result(load_context) ==
+                     LOAD_FAILURE);
 
-    forward_load_context_update_result(load_context, 5);
-    test_assert_int_equal(forward_load_context_get_result(load_context), 7);
+    forward_load_context_update_result(load_context, LOAD_SUCCESSFUL);
+    test_assert_true(forward_load_context_get_result(load_context) ==
+                     LOAD_SUCCESSFUL);
 
     forward_load_context_free(load_context);
 }

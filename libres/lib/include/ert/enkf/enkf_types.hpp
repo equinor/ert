@@ -97,6 +97,7 @@ typedef enum {
 */
 
 typedef enum {
+    LOAD_SUCCESSFUL = 0,
     REPORT_STEP_INCOMPATIBLE = 1,
     LOAD_FAILURE = 2
 } enkf_fw_load_result_enum;
