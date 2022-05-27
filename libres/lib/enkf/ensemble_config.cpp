@@ -969,10 +969,11 @@ int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
     return ensemble_config->config_nodes.size();
 }
 
-int ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                                 const run_arg_type *run_arg) {
+enkf_fw_load_result_enum
+ensemble_config_forward_init(const ensemble_config_type *ens_config,
+                             const run_arg_type *run_arg) {
 
-    int result = 0;
+    auto result = LOAD_SUCCESSFUL;
     if (run_arg_get_step1(run_arg) == 0) {
         int iens = run_arg_get_iens(run_arg);
         for (auto &config_pair : ens_config->config_nodes) {
@@ -1007,7 +1008,7 @@ int ensemble_config_forward_init(const ensemble_config_type *ens_config,
                                     enkf_node_get_key(node));
 
                         free(init_file);
-                        result |= LOAD_FAILURE;
+                        result = LOAD_FAILURE;
                     }
                 }
                 enkf_node_free(node);

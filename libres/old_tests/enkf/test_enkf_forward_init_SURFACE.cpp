@@ -138,8 +138,6 @@ int main(int argc, char **argv) {
             test_assert_true(util_is_directory("simulations/run0"));
 
             {
-                int error;
-
                 test_assert_false(
                     enkf_node_has_data(surface_node, fs, node_id));
 
@@ -147,8 +145,8 @@ int main(int argc, char **argv) {
 
                 test_assert_false(enkf_node_forward_init(
                     surface_node, "simulations/run0", 0));
-                error = ensemble_config_forward_init(ens_config, run_arg);
-                test_assert_true(LOAD_FAILURE & error);
+                auto error = ensemble_config_forward_init(ens_config, run_arg);
+                test_assert_true(LOAD_FAILURE == error);
 
                 {
                     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
@@ -156,19 +154,18 @@ int main(int argc, char **argv) {
                     state_map_iset(state_map, 0, STATE_INITIALIZED);
                 }
                 error = enkf_state_load_from_forward_model(state, run_arg);
-                test_assert_true(LOAD_FAILURE & error);
+                test_assert_true(LOAD_FAILURE == error);
             }
 
             util_copy_file(init_file, "simulations/run0/Surface.irap");
             {
-                int error;
 
                 test_assert_true(enkf_node_forward_init(surface_node,
                                                         "simulations/run0", 0));
-                error = ensemble_config_forward_init(ens_config, run_arg);
-                test_assert_int_equal(0, error);
+                auto error = ensemble_config_forward_init(ens_config, run_arg);
+                test_assert_true(error == LOAD_SUCCESSFUL);
                 error = enkf_state_load_from_forward_model(state, run_arg);
-                test_assert_int_equal(0, error);
+                test_assert_true(error == LOAD_SUCCESSFUL);
 
                 {
                     double value;

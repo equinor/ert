@@ -121,8 +121,9 @@ ensemble_config_get_summary_key_matcher(
     const ensemble_config_type *ensemble_config);
 extern "C" int
 ensemble_config_get_size(const ensemble_config_type *ensemble_config);
-int ensemble_config_forward_init(const ensemble_config_type *ens_config,
-                                 const run_arg_type *run_arg);
+enkf_fw_load_result_enum
+ensemble_config_forward_init(const ensemble_config_type *ens_config,
+                             const run_arg_type *run_arg);
 
 UTIL_IS_INSTANCE_HEADER(ensemble_config);
 UTIL_SAFE_CAST_HEADER(ensemble_config);

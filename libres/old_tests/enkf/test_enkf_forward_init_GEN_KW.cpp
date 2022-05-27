@@ -112,7 +112,6 @@ int main(int argc, char **argv) {
             test_assert_true(util_is_directory("simulations/run0"));
 
             {
-                int error;
                 bool_vector_type *iactive = bool_vector_alloc(
                     enkf_main_get_ensemble_size(enkf_main), true);
 
@@ -121,8 +120,8 @@ int main(int argc, char **argv) {
 
                 test_assert_false(
                     enkf_node_forward_init(gen_kw_node, "simulations/run0", 0));
-                error = ensemble_config_forward_init(ens_config, run_arg);
-                test_assert_true(LOAD_FAILURE & error);
+                auto error = ensemble_config_forward_init(ens_config, run_arg);
+                test_assert_true(LOAD_FAILURE == error);
 
                 {
                     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
@@ -131,7 +130,7 @@ int main(int argc, char **argv) {
                 }
                 error = enkf_state_load_from_forward_model(state, run_arg);
                 bool_vector_free(iactive);
-                test_assert_true(LOAD_FAILURE & error);
+                test_assert_true(LOAD_FAILURE == error);
             }
 
             {
@@ -141,15 +140,13 @@ int main(int argc, char **argv) {
             }
 
             {
-                int error;
-
                 test_assert_true(
                     enkf_node_forward_init(gen_kw_node, "simulations/run0", 0));
-                error = ensemble_config_forward_init(ens_config, run_arg);
-                test_assert_int_equal(0, error);
+                auto error = ensemble_config_forward_init(ens_config, run_arg);
+                test_assert_true(error == LOAD_SUCCESSFUL);
                 error = enkf_state_load_from_forward_model(state, run_arg);
 
-                test_assert_int_equal(0, error);
+                test_assert_true(error == LOAD_SUCCESSFUL);
 
                 {
                     double value;

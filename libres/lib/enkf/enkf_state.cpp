@@ -446,10 +446,9 @@ enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static int enkf_state_internalize_results(ensemble_config_type *ens_config,
-                                          model_config_type *model_config,
-                                          const ecl_config_type *ecl_config,
-                                          const run_arg_type *run_arg) {
+static enkf_fw_load_result_enum enkf_state_internalize_results(
+    ensemble_config_type *ens_config, model_config_type *model_config,
+    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
 
     forward_load_context_type *load_context =
         enkf_state_alloc_load_context(ens_config, ecl_config, run_arg);
@@ -479,26 +478,25 @@ static int enkf_state_internalize_results(ensemble_config_type *ens_config,
     enkf_state_internalize_GEN_DATA(ens_config, load_context, model_config,
                                     last_report);
 
-    int result = forward_load_context_get_result(load_context);
+    auto result = forward_load_context_get_result(load_context);
     forward_load_context_free(load_context);
     return result;
 }
 
-static int enkf_state_load_from_forward_model__(
+static enkf_fw_load_result_enum enkf_state_load_from_forward_model__(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
-
-    int result = 0;
-
+    auto result = LOAD_SUCCESSFUL;
     if (ensemble_config_have_forward_init(ens_config))
-        result |= ensemble_config_forward_init(ens_config, run_arg);
-
-    result |= enkf_state_internalize_results(ens_config, model_config,
-                                             ecl_config, run_arg);
+        result = ensemble_config_forward_init(ens_config, run_arg);
+    if (result == LOAD_SUCCESSFUL) {
+        result = enkf_state_internalize_results(ens_config, model_config,
+                                                ecl_config, run_arg);
+    }
     state_map_type *state_map =
         enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     int iens = run_arg_get_iens(run_arg);
-    if (result & LOAD_FAILURE)
+    if (result == LOAD_FAILURE)
         state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
     else
         state_map_iset(state_map, iens, STATE_HAS_DATA);
@@ -506,8 +504,9 @@ static int enkf_state_load_from_forward_model__(
     return result;
 }
 
-int enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                       run_arg_type *run_arg) {
+enkf_fw_load_result_enum
+enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                   run_arg_type *run_arg) {
 
     ensemble_config_type *ens_config = enkf_state->ensemble_config;
     model_config_type *model_config = enkf_state->shared_info->model_config;
@@ -596,7 +595,6 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
     const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
     model_config_type *model_config = res_config_get_model_config(res_config);
     const int iens = run_arg_get_iens(run_arg);
-    int result;
 
     /*
      The queue system has reported that the run is OK, i.e. it has
@@ -608,19 +606,19 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                  "load results.",
                  iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
 
-    result = enkf_state_load_from_forward_model__(ens_config, model_config,
-                                                  ecl_config, run_arg);
+    auto result = enkf_state_load_from_forward_model__(ens_config, model_config,
+                                                       ecl_config, run_arg);
 
-    if (result & REPORT_STEP_INCOMPATIBLE) {
+    if (result == REPORT_STEP_INCOMPATIBLE) {
         // If refcase has been used for observations: crash and burn.
         fprintf(
             stderr,
             "** Warning the timesteps in refcase and current simulation are "
             "not in accordance - something wrong with schedule file?\n");
-        result -= REPORT_STEP_INCOMPATIBLE;
+        result = LOAD_SUCCESSFUL;
     }
 
-    if (result == 0) {
+    if (result == LOAD_SUCCESSFUL) {
         /*
       The loading succeded - so this is a howling success! We set
       the main status to JOB_QUEUE_ALL_OK and inform the queue layer
@@ -633,7 +631,7 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                      run_arg_get_step2(run_arg));
     }
 
-    return result == 0;
+    return (result == LOAD_SUCCESSFUL);
 }
 
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
