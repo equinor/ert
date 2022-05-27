@@ -15,7 +15,7 @@ how to set up a project that uses a polynomial evaluation as the
 Minimal config
 --------------
 To test that our setup is working, we will create the minimal configuration we
-need to launch the Graphical user interface and run an empty experiment that
+need to launch the GUI and run an empty experiment that
 does nothing. First create a folder with the name ``poly_example``.
 
 Create a config
@@ -33,9 +33,7 @@ Then create a file ``poly.ert`` inside the folder with the following content:
 :ref:`QUEUE_SYSTEM <QUEUE_SYSTEM>`
     Finally, we must specify where each simulation is to run, which is handled
     by the queue system. ``LOCAL`` means that everything will run on you local
-    computer. Other possibilities are ``LSF`` and ``TORQUE``, which are queuing
-    systems for remote execution. To use these you must have an environment
-    available where this is supported and configured.
+    computer. See :ref:`QUEUE_SYSTEM <QUEUE_SYSTEM>` for other options.
 
 Launch the user interface
 *************************
@@ -49,13 +47,12 @@ is expected, so click OK. You will see the main ERT user interface window.
 
 .. image:: minimal/ert.png
 
-In the main window you will see some elements, some of which are irrelevant to
-this guide. The ones we care about are:
+The elements relevant to this guide are:
 
-* Simulation mode: Lets you select which algorithm to run (since we don't have a complete setup yet, we can only choose ensemble experiment or single realization).
-* Runpath: shows where each realization of the experiment will be executed. The `%d` in this path is replaced by the number of the realization. Here we see a default used, since we have not configured the runpath yet.
-* The Configuration summary will show us what we have configured, and is empty at this moment.
-* The Start Simulation button will start an experiment with the current configuration and simulation mode.
+* Simulation mode: List of available algorithms. Only a limited set is available since we are not done configuring ERT.
+* Runpath: Configurable path where each realization of the experiment will be executed. The `%d` will be replaced by the number of the realization.
+* Configuration summary: Empty by default, but will show us what has been configured.
+* Start simulation: Start an experiment with the current configuration and simulation mode.
 
 Run an empty experiment
 ***********************
@@ -82,7 +79,7 @@ Inspect the results
 *******************
 Now in the project folder there should be two new folders, ``simulations`` and
 ``storage``. Storage is ERT's internal data, and should not be touched. The
-``simulations`` folder is created based on the RUNPATH configuration. If you
+``simulations`` folder is created based on the :ref:`RUNPATH <runpath>` configuration. If you
 open this folder you will see one folder for each realization, labeled
 ``realization0``, ``realization1``, etc. Inside each of these folders is where
 each realization has run. If you look inside, you will see a few files that ERT
@@ -154,8 +151,9 @@ to specify the executable name. Create a file called ``POLY_EVAL`` with the
 following content:
 
     .. include:: with_simple_script/POLY_EVAL
+        :code:
 
-Now we must refer to this job definition in the configuration. Add the line::
+Now we must refer to this job definition in the configuration. Add the lines::
 
     INSTALL_JOB poly_eval POLY_EVAL
     SIMULATION_JOB poly_eval
@@ -178,8 +176,7 @@ Before we run again delete the old output files by running the command::
 
     rm -r simulations
 
-Now start up ERT by again running ``ert gui poly.ert``. The main window should
-now reflect the new runpath:
+Start ERT by again running ``ert gui poly.ert``.
 
     .. image:: with_simple_script/ert.png
 
@@ -260,7 +257,7 @@ put. Create a file called ``coeff.tmpl`` and add the following:
         :code:
 
 The text within angle brackets (``<`` and ``>``), will be replaced by the
-samples from the corresponding distribution from the coeff_priors file. The
+samples from the corresponding distribution from the ``coeff_priors`` file. The
 result will be put in a file with a name we specify in the configuration.
 
 Configuring the parameter set and and corresponding template
@@ -465,7 +462,7 @@ observations, as in the picture below:
 
 .. image:: with_observations/plot_obs.png
 
-It is also instructive to have a look at the update estimates of the parameters
+It is also instructive to look at the updated estimates of the parameters
 `a`, `b` and `c`.
 Recall that we defined uniform priors and note how ERT's updating algorithms reduce
 the uncertainty of each parameter:
