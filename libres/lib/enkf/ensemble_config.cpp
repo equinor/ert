@@ -969,7 +969,7 @@ int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
     return ensemble_config->config_nodes.size();
 }
 
-enkf_fw_load_result_enum
+fw_load_status
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const run_arg_type *run_arg) {
 

@@ -52,9 +52,8 @@ extern "C" void enkf_state_initialize(
     enkf_state_type *enkf_state, rng_type *rng, enkf_fs_type *fs,
     const std::vector<std::string> &param_list, init_mode_type init_mode);
 
-enkf_fw_load_result_enum
-enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                   run_arg_type *run_arg);
+fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                                  run_arg_type *run_arg);
 
 void enkf_state_init_eclipse(const res_config_type *res_config,
                              const run_arg_type *run_arg);
