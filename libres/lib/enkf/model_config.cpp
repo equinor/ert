@@ -789,17 +789,3 @@ config_content_type *model_config_alloc_content(const char *user_config_file,
 
     return content;
 }
-
-bool model_config_report_step_compatible(
-    const model_config_type *model_config,
-    const ecl_sum_type *ecl_sum_simulated) {
-    bool ret = true;
-    const ecl_sum_type *ecl_sum_reference =
-        model_config_get_refcase(model_config);
-
-    if (ecl_sum_reference) //Can be NULL
-        ret = ecl_sum_report_step_compatible(ecl_sum_reference,
-                                             ecl_sum_simulated);
-
-    return ret;
-}

@@ -561,14 +561,6 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
         } else if (result == LOAD_FAILURE) {
             logger->warning("Function {}: Realization {} load failure",
                             __func__, iens);
-        } else if (result == REPORT_STEP_INCOMPATIBLE) {
-            logger->warning("The timesteps in refcase and "
-                            "current simulation are "
-                            "not in accordance - something wrong with "
-                            "schedule file?");
-            logger->warning("Function {}: Realization {} report step "
-                            "incompatible",
-                            __func__, iens);
         } else
             logger->error("Unknown load enum");
     }
