@@ -26,13 +26,6 @@ void test_update_result() {
     forward_load_context_type *load_context =
         forward_load_context_alloc(NULL, false, NULL);
     test_assert_int_equal(forward_load_context_get_result(load_context), 0);
-    forward_load_context_update_result(load_context, REPORT_STEP_INCOMPATIBLE);
-    test_assert_true(forward_load_context_get_result(load_context) ==
-                     REPORT_STEP_INCOMPATIBLE);
-
-    forward_load_context_update_result(load_context, REPORT_STEP_INCOMPATIBLE);
-    test_assert_true(forward_load_context_get_result(load_context) ==
-                     REPORT_STEP_INCOMPATIBLE);
 
     forward_load_context_update_result(load_context, LOAD_FAILURE);
     test_assert_true(forward_load_context_get_result(load_context) ==

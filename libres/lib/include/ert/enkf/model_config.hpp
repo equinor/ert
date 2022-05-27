@@ -124,8 +124,6 @@ model_config_get_gen_kw_export_name(const model_config_type *model_config);
 config_content_type *model_config_alloc_content(const char *,
                                                 config_parser_type *);
 void model_config_init_config_parser(config_parser_type *config_parser);
-bool model_config_report_step_compatible(const model_config_type *model_config,
-                                         const ecl_sum_type *ecl_sum_simulated);
 
 UTIL_IS_INSTANCE_HEADER(model_config);
 
