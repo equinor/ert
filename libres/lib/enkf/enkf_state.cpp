@@ -277,17 +277,6 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                                                        LOAD_FAILURE);
                     throw std::invalid_argument("Inconsistent time map");
                 }
-                /*
-                 * Now there are two related / conflicting(?) systems for
-                 * checking summary time consistency, both internally in the
-                 * time_map and also through the
-                 * model_config_report_step_compatible() function.
-                 */
-
-                /*Check the loaded summary against the reference ecl_sum_type */
-                if (!model_config_report_step_compatible(model_config, summary))
-                    forward_load_context_update_result(
-                        load_context, REPORT_STEP_INCOMPATIBLE);
 
                 /* The actual loading internalizing - from ecl_sum -> enkf_node. */
                 const int iens = run_arg_get_iens(run_arg);
@@ -607,15 +596,6 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
 
     auto result = enkf_state_load_from_forward_model__(ens_config, model_config,
                                                        ecl_config, run_arg);
-
-    if (result == REPORT_STEP_INCOMPATIBLE) {
-        // If refcase has been used for observations: crash and burn.
-        fprintf(
-            stderr,
-            "** Warning the timesteps in refcase and current simulation are "
-            "not in accordance - something wrong with schedule file?\n");
-        result = LOAD_SUCCESSFUL;
-    }
 
     if (result == LOAD_SUCCESSFUL) {
         /*
