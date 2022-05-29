@@ -7,18 +7,13 @@ from asyncio.events import AbstractEventLoop
 from asyncio.queues import QueueEmpty
 from enum import Enum
 from http import HTTPStatus
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypedDict, Union
 
 from cloudevents.sdk import types
 from websockets.server import WebSocketServer  # type: ignore
 
 from ert_shared.async_utils import get_event_loop
 from ert.ensemble_evaluator import wait_for_evaluator
-
-try:
-    from typing import TypedDict  # >=3.8
-except ImportError:
-    from mypy_extensions import TypedDict  # <=3.7
 
 from websockets.client import connect
 from websockets.server import serve

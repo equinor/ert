@@ -1,5 +1,4 @@
 import shutil
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, call
 
@@ -13,7 +12,6 @@ from ert_shared.plugins.plugin_manager import ErtPluginContext
 from res.enkf import EnKFMain, ResConfig
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
 @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_exporter_is_valid():
     with ErtPluginContext():
@@ -25,7 +23,6 @@ def test_exporter_is_valid():
         assert ex.is_valid(), "Missing CSV_EXPORT2 or EXPORT_RUNPATH jobs"
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
 @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_exporter_is_not_valid():
     config_file = "snake_oil.ert"
@@ -36,7 +33,6 @@ def test_exporter_is_not_valid():
     assert not ex.is_valid()
 
 
-@pytest.mark.skipif(sys.version_info.major < 3, reason="requires python3")
 @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_run_export():
     with ErtPluginContext():

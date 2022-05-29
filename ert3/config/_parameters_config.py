@@ -1,5 +1,4 @@
-import sys
-from typing import Any, Dict, Iterator, List, Union, Optional
+from typing import Any, Dict, Iterator, List, Literal, Union, Optional
 from pydantic import (
     BaseModel,
     ValidationError,
@@ -9,11 +8,6 @@ from pydantic import (
 
 import ert
 import ert3
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 
 class _ParametersConfig(BaseModel):

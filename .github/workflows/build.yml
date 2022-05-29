@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10']
         os: [ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
@@ -117,13 +117,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10']
         os: [ubuntu-latest, macos-latest]
         test-type: ['integration-tests', 'unit-tests']
         # Excluded to keep build times down on Github actions
         exclude:
-          - os: macos-latest
-            python-version: '3.7'
           - os: macos-latest
             python-version: '3.9'
     runs-on: ${{ matrix.os }}
@@ -247,12 +245,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.8', '3.9', '3.10']
         os: [ubuntu-latest, macos-latest]
         # Excluded to keep build times down on Github actions
         exclude:
-          - os: macos-latest
-            python-version: '3.7'
           - os: macos-latest
             python-version: '3.9'
     runs-on: ${{ matrix.os }}

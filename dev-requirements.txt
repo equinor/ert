@@ -4,7 +4,6 @@ decorator
 flake8>=4.0.0
 jsonpath_ng
 jupytext
-mock; python_version <= '3.7' # missing AsyncMock added in py38
 pylint
 pytest-asyncio
 pytest-benchmark
@@ -16,7 +15,6 @@ pytest-snapshot
 pytest-timeout
 pytest>=6.2.0
 requests
-schemathesis==1.3.4; python_version <= '3.6'
 scikit-build
 semeio>=1.4.1
 setuptools_scm

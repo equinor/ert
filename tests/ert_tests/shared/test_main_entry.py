@@ -125,7 +125,6 @@ def test_vis_database_url_forwarded(monkeypatch):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="mock_open is not iterable")
 @pytest.mark.parametrize(
     "config_content, expected",
     [

@@ -23,7 +23,7 @@ Iterative Ensemble Smoother (IES).
 
 ## Prerequisites
 
-Python 3.6+ with development headers.
+Python 3.8+ with development headers.
 
 ## Installation
 

@@ -95,7 +95,7 @@ enable_environment () {
 	run source_build_tools
 
 	export ERT_SHOW_BACKTRACE=Y
-	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py36-rhel7/root/lib/python3.6/site-packages/ert_configurations/resources/rms_config.yml
+	export RMS_SITE_CONFIG=/prog/res/komodo/bleeding-py38-rhel7/root/lib/python3.8/site-packages/ert_configurations/resources/rms_config.yml
 
 	# Conan v1 bundles its own certs due to legacy reasons, so we point it
 	# to the system's certs instead.
@@ -118,6 +118,7 @@ clone_repos () {
 
 create_virtualenv () {
 	mkdir $ENV
+	source /opt/rh/rh-python38/enable
 	python3 -m venv $ENV
 	source $ENV/bin/activate
 	pip install -U pip wheel setuptools cmake pybind11

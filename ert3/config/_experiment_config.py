@@ -1,12 +1,6 @@
-import sys
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional, Literal
 from pydantic import root_validator, BaseModel
 from pydantic.class_validators import validator
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 
 class _ExperimentConfig(BaseModel):

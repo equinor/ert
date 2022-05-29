@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import pickle
-import sys
 import threading
 import time
 from contextlib import contextmanager
@@ -13,6 +12,7 @@ import cloudpickle
 import websockets
 from cloudevents.http import from_json, to_json
 from cloudevents.http.event import CloudEvent
+from contextlib import asynccontextmanager
 from websockets.exceptions import ConnectionClosedError
 from aiohttp import ClientError
 from websockets.legacy.server import WebSocketServerProtocol
@@ -28,10 +28,6 @@ from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STOPPED,
 )
 
-if sys.version_info < (3, 7):
-    from async_generator import asynccontextmanager
-else:
-    from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
