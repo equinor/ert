@@ -1,6 +1,5 @@
-import sys
 from enum import Enum
-from typing import Any, Callable, Dict, Optional, Tuple, Type, no_type_check
+from typing import Any, Callable, Dict, Literal, Optional, Tuple, Type, no_type_check
 
 from pydantic import BaseModel, ValidationError, create_model, root_validator, validator
 
@@ -9,11 +8,6 @@ import ert.ensemble_evaluator
 
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 from ._experiment_config import ExperimentConfig
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 
 class SourceNS(str, Enum):
