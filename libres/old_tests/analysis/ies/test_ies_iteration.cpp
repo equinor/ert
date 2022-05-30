@@ -62,7 +62,7 @@ void cmp_std_ies(res::es_testdata &testdata) {
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
 
-    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::Data ies_data(testdata.active_ens_size);
     ies::Config ies_config(true);
 
     forward_model(testdata, A1);
@@ -100,7 +100,7 @@ void cmp_std_ies_delrel(res::es_testdata &testdata) {
     Eigen::MatrixXd A2 = testdata.make_state("prior");
     Eigen::MatrixXd A1c = A1;
     Eigen::MatrixXd A2c = A2;
-    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::Data ies_data(testdata.active_ens_size);
     ies::Config ies_config(true);
 
     forward_model(testdata, A1);
@@ -176,7 +176,7 @@ void test_deactivate_observations_and_realizations(const char *testdata_file) {
     int num_iter = 10;
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
 
-    ies::data::Data ies_data(testdata.active_ens_size);
+    ies::Data ies_data(testdata.active_ens_size);
     ies::Config ies_config(true);
 
     Eigen::MatrixXd A0 = testdata.make_state("prior");
