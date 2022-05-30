@@ -11,9 +11,9 @@ def plotRefcase(plot_context, axes):
     data = plot_context.refcase_data
     style = plot_config.refcaseStyle()
 
-    lines = axes.plot_date(
-        x=data.index.values,
-        y=data,
+    lines = axes.plot(
+        data.index.values,
+        data.values,
         color=style.color,
         alpha=style.alpha,
         marker=style.marker,

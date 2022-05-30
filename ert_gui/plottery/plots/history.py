@@ -15,10 +15,10 @@ def plotHistory(plot_context, axes):
     data = plot_context.history_data
 
     style = plot_config.historyStyle()
-
-    lines = axes.plot_date(
-        x=data.index.values,
-        y=data,
+    
+    lines = axes.plot(
+        data.index.values,
+        data.values,
         color=style.color,
         alpha=style.alpha,
         marker=style.marker,
