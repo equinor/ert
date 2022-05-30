@@ -250,10 +250,6 @@ class _RealEnKFMain(BaseCClass):
         "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
     )
     _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
-    _load_from_forward_model = ResPrototype(
-        "int enkf_main_load_from_forward_model_with_fs"
-        "(enkf_main, int, bool_vector, enkf_fs)"
-    )
     _load_from_run_context = ResPrototype(
         "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
     )
@@ -391,7 +387,7 @@ class _RealEnKFMain(BaseCClass):
         bool_vector = BoolVector.createFromList(
             size=len(realization), source_list=true_indices
         )
-        nr_loaded = self._load_from_forward_model(iteration, bool_vector, fs)
+        nr_loaded = enkf_main.load_from_forward_model(self, iteration, bool_vector, fs)
         fs.sync()
         return nr_loaded
 
