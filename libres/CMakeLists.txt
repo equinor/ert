@@ -75,7 +75,7 @@ endif()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 if(NOT SKBUILD)
-  set(conan_opts REQUIRES pybind11/2.8.1)
+  set(conan_opts REQUIRES pybind11/2.9.1)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
