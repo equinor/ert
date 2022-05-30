@@ -30,10 +30,8 @@
 void job_queue_set_driver_(job_driver_type driver_type) {
     job_queue_type *queue = job_queue_alloc(10, "OK", "STATUS", "ERROR");
     queue_driver_type *driver = queue_driver_alloc(driver_type);
-    test_assert_false(job_queue_has_driver(queue));
 
     job_queue_set_driver(queue, driver);
-    test_assert_true(job_queue_has_driver(queue));
 
     job_queue_free(queue);
     queue_driver_free(driver);

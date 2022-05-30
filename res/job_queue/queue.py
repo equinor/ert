@@ -95,18 +95,12 @@ class JobQueue(BaseCClass):
     _alloc = ResPrototype(
         "void* job_queue_alloc( int , char* , char* , char* )", bind=False
     )
-    _start_user_exit = ResPrototype("bool job_queue_start_user_exit( job_queue )")
-    _get_user_exit = ResPrototype("bool job_queue_get_user_exit( job_queue )")
     _free = ResPrototype("void job_queue_free( job_queue )")
     _set_max_job_duration = ResPrototype(
         "void job_queue_set_max_job_duration( job_queue , int)"
     )
-    _get_max_job_duration = ResPrototype(
-        "int  job_queue_get_max_job_duration( job_queue )"
-    )
     _set_driver = ResPrototype("void job_queue_set_driver( job_queue , void* )")
     _kill_job = ResPrototype("bool job_queue_kill_job( job_queue , int )")
-    _run_jobs = ResPrototype("void job_queue_run_jobs_threaded(job_queue , int , bool)")
     _iget_driver_data = ResPrototype(
         "void* job_queue_iget_driver_data( job_queue , int)"
     )
@@ -118,15 +112,7 @@ class JobQueue(BaseCClass):
 
     _is_running = ResPrototype("bool job_queue_is_running( job_queue )")
     _submit_complete = ResPrototype("void job_queue_submit_complete( job_queue )")
-    _iget_sim_start = ResPrototype("time_t job_queue_iget_sim_start( job_queue , int)")
-    _get_active_size = ResPrototype("int  job_queue_get_active_size( job_queue )")
-    _set_pause_on = ResPrototype("void job_queue_set_pause_on(job_queue)")
-    _set_pause_off = ResPrototype("void job_queue_set_pause_off(job_queue)")
     _get_max_submit = ResPrototype("int job_queue_get_max_submit(job_queue)")
-
-    _get_job_status = ResPrototype(
-        "job_status_type_enum job_queue_iget_job_status(job_queue, int)"
-    )
 
     _get_ok_file = ResPrototype("char* job_queue_get_ok_file(job_queue)")
     _get_exit_file = ResPrototype("char* job_queue_get_exit_file(job_queue)")
@@ -187,27 +173,6 @@ class JobQueue(BaseCClass):
         """
         self._kill_job(queue_index)
 
-    def start(self, blocking=False):
-        verbose = False
-        self._run_jobs(self.size, verbose)
-
-    def clear(self):
-        pass
-
-    def block_waiting(self):
-        """
-        Will block as long as there are waiting jobs.
-        """
-        while self.num_waiting > 0:
-            time.sleep(1)
-
-    def block(self):
-        """
-        Will block as long as there are running jobs.
-        """
-        while self.isRunning:
-            time.sleep(1)
-
     def submit_complete(self):
         """
         Method to inform the queue that all jobs have been submitted.
@@ -262,9 +227,6 @@ class JobQueue(BaseCClass):
     def set_max_running(self, max_running):
         self.driver.set_max_running(max_running)
 
-    def get_max_job_duration(self):
-        return self._get_max_job_duration()
-
     def set_max_job_duration(self, max_duration):
         self._set_max_job_duration(max_duration)
 
@@ -272,46 +234,11 @@ class JobQueue(BaseCClass):
     def max_submit(self):
         return self._get_max_submit()
 
-    def killAllJobs(self):
-        # The queue will not set the user_exit flag before the
-        # queue is in a running state. If the queue does not
-        # change to running state within a timeout the C function
-        # will return False, and that False value is just passed
-        # along.
-        user_exit = self._start_user_exit()
-        if user_exit:
-            while self.isRunning:
-                time.sleep(0.1)
-            return True
-        else:
-            return False
-
-    def igetSimStart(self, job_index):
-        return self._iget_sim_start(self, job_index)
-
-    def getUserExit(self) -> bool:
-        # Will check if a user_exit has been initated on the job. The
-        # queue can be queried about this status until a
-        # job_queue_reset() call is invoked, and that should not be
-        # done before the queue is recycled to run another batch of
-        # simulations.
-        return self._get_user_exit()
-
-    def set_pause_on(self):
-        self._set_pause_on()
-
-    def set_pause_off(self):
-        self._set_pause_off()
-
     def free(self):
         self._free()
 
     def __len__(self):
         return self._get_active_size()
-
-    def getJobStatus(self, job_number):
-        """@rtype: JobStatusType"""
-        return self._get_job_status(job_number)
 
     def is_active(self):
         for job in self.job_list:
