@@ -63,8 +63,7 @@ namespace {
 auto logger = ert::get_logger("ies");
 } // namespace
 
-void ies::init_update(ies::data::Data &module_data,
-                      const std::vector<bool> &ens_mask,
+void ies::init_update(ies::Data &module_data, const std::vector<bool> &ens_mask,
                       const std::vector<bool> &obs_mask) {
     module_data.update_ens_mask(ens_mask);
     module_data.store_initial_obs_mask(obs_mask);
@@ -170,7 +169,7 @@ ies::makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
     return X;
 }
 
-void ies::updateA(data::Data &data,
+void ies::updateA(Data &data,
                   // Updated ensemble A retured to ERT.
                   Eigen::Ref<Eigen::MatrixXd> A,
                   // Ensemble of predicted measurements
@@ -340,8 +339,7 @@ void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
 * the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */
-void ies::linalg_store_active_W(ies::data::Data *data,
-                                const Eigen::MatrixXd &W0) {
+void ies::linalg_store_active_W(ies::Data *data, const Eigen::MatrixXd &W0) {
     int ens_size_msk = data->ens_mask_size();
     int i = 0;
     int j;

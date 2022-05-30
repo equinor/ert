@@ -21,7 +21,7 @@ void cmp_std_ies(const res::es_testdata &testdata) {
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
-    ies::data::Data ies_data1(testdata.active_ens_size);
+    ies::Data ies_data1(testdata.active_ens_size);
     ies::Config ies_config1(true);
     ies::Config std_config(false);
 
