@@ -60,9 +60,8 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
         self.addPlotWidget(DISTRIBUTION, DistributionPlot())
         self.addPlotWidget(CROSS_CASE_STATISTICS, CrossCaseStatisticsPlot())
-
         self._central_tab.currentChanged.connect(self.currentPlotChanged)
-
+        self._prev_tab_widget = None
         cases = self._api.get_all_cases_not_running()
         case_names = [case["name"] for case in cases if not case["hidden"]]
 
@@ -85,7 +84,6 @@ class PlotWindow(QMainWindow):
 
         for plot_widget in self._plot_widgets:
             index = self._central_tab.indexOf(plot_widget)
-
             if (
                 index == self._central_tab.currentIndex()
                 and plot_widget._plotter.dimensionality == key_def["dimensionality"]
@@ -186,13 +184,23 @@ class PlotWindow(QMainWindow):
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def["dimensionality"]
         ]
-        self._central_tab.currentChanged.disconnect()
+
+        current_widget = self._central_tab.currentWidget()
         for plot_widget in self._plot_widgets:
             self._central_tab.setTabEnabled(
                 self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
             )
-        self._central_tab.currentChanged.connect(self.currentPlotChanged)
-        self._central_tab.setCurrentWidget(available_widgets[0])
+
+        # Remember which tab widget was selected when switching between
+        # both same and different data-types.
+        if current_widget in available_widgets:
+            self._central_tab.setCurrentWidget(current_widget)
+        else:
+            if self._prev_tab_widget is None:
+                self._central_tab.setCurrentWidget(available_widgets[0])
+            else:
+                self._central_tab.setCurrentWidget(self._prev_tab_widget)
+            self._prev_tab_widget = current_widget
 
         self.currentPlotChanged()
 
