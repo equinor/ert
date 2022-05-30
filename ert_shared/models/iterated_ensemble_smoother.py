@@ -8,7 +8,7 @@ from res.analysis.analysis_module import AnalysisModule
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from res._lib import ies
+from ert.analysis import ies
 
 
 class IteratedEnsembleSmoother(BaseRunModel):

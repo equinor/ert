@@ -221,7 +221,7 @@ void ies::updateA(Data &data,
     X = makeX(A, Yin, Rin, E, D, ies_inversion, truncation, W0, ies_steplength,
               iteration_nr);
 
-    ies::linalg_store_active_W(&data, W0);
+    ies::linalg_store_active_W(data, W0);
 
     /* COMPUTE NEW ENSEMBLE SOLUTION FOR CURRENT ITERATION  Ei=A0*X (Line 11)*/
     Eigen::MatrixXd A0 = data.make_activeA();
@@ -339,12 +339,12 @@ void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
 * the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */
-void ies::linalg_store_active_W(ies::Data *data, const Eigen::MatrixXd &W0) {
-    int ens_size_msk = data->ens_mask_size();
+void ies::linalg_store_active_W(ies::Data &data, const Eigen::MatrixXd &W0) {
+    int ens_size_msk = data.ens_mask_size();
     int i = 0;
     int j;
-    Eigen::MatrixXd &dataW = data->getW();
-    const std::vector<bool> &ens_mask = data->ens_mask();
+    Eigen::MatrixXd &dataW = data.getW();
+    const std::vector<bool> &ens_mask = data.ens_mask();
     dataW.setConstant(0.0);
     for (int iens = 0; iens < ens_size_msk; iens++) {
         if (ens_mask[iens]) {
