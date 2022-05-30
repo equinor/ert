@@ -240,11 +240,11 @@ def _load_general_obs(facade, observation_keys, case_name):
             index_list = [node.getIndex(nr) for nr in range(len(node))]
             index = _create_multi_index(index_list, index_list)
 
-            data.append(
-                pd.DataFrame(
-                    [node.get_data_points()], columns=index, index=["OBS"]
-                ).append(pd.DataFrame([node.get_std()], columns=index, index=["STD"]))
+            df_obs = pd.DataFrame(
+                [node.get_data_points()], columns=index, index=["OBS"]
             )
+            df_std = pd.DataFrame([node.get_std()], columns=index, index=["STD"])
+            data.append(pd.concat([df_obs, df_std]))
         data = pd.concat(data, axis=1)
         data = pd.concat({observation_key: data}, axis=1)
         observations.append(data)
