@@ -13,7 +13,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
     int ens_size = 2;
 
     rng_type *rng = rng_alloc(MZRAN, INIT_DEFAULT);
-    ies::data::Data data(ens_size);
+    ies::Data data(ens_size);
 
     // Initialising masks such that all observations and realizations are active
     std::vector<bool> ens_mask(ens_size, true);
@@ -91,7 +91,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_E", "[analysis]") {
 TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
     const int ens_size = 4;
     const int obs_size = 10;
-    ies::data::Data data(ens_size);
+    ies::Data data(ens_size);
     std::vector<bool> ens_mask(ens_size, true);
     std::vector<bool> obs_mask(obs_size, true);
 
@@ -130,7 +130,7 @@ SCENARIO("ies_enkf_linalg_extract_active_A", "[analysis]") {
         const int ens_size = 4;
         const int obs_size = 10;
         const int state_size = 10;
-        ies::data::Data data(ens_size);
+        ies::Data data(ens_size);
         std::vector<bool> ens_mask(ens_size, true);
         std::vector<bool> obs_mask(obs_size, true);
         Eigen::MatrixXd A0 = Eigen::MatrixXd::Zero(state_size, ens_size);

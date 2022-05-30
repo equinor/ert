@@ -6,7 +6,7 @@
 
 void test_create() {
     const int ens_size = 100;
-    ies::data::Data data(ens_size);
+    ies::Data data(ens_size);
 }
 
 int main(int argc, char **argv) { test_create(); }

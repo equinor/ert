@@ -26,13 +26,13 @@
 
 namespace ies {
 
-void linalg_store_active_W(data::Data *data, const Eigen::MatrixXd &W0);
+void linalg_store_active_W(Data *data, const Eigen::MatrixXd &W0);
 
-Eigen::MatrixXd make_activeE(const data::Data *data);
-Eigen::MatrixXd make_activeW(const data::Data *data);
-Eigen::MatrixXd make_activeA(const data::Data *data);
+Eigen::MatrixXd make_activeE(const Data *data);
+Eigen::MatrixXd make_activeW(const Data *data);
+Eigen::MatrixXd make_activeA(const Data *data);
 
-void init_update(data::Data &module_data, const std::vector<bool> &ens_mask,
+void init_update(Data &module_data, const std::vector<bool> &ens_mask,
                  const std::vector<bool> &obs_mask);
 
 Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
@@ -43,7 +43,7 @@ Eigen::MatrixXd makeX(const Eigen::MatrixXd &A, const Eigen::MatrixXd &Y0,
                       Eigen::MatrixXd &W0, double ies_steplength,
                       int iteration_nr);
 
-void updateA(data::Data &data,
+void updateA(Data &data,
              // Updated ensemble A returned to ERT.
              Eigen::Ref<Eigen::MatrixXd> A,
              // Ensemble of predicted measurements

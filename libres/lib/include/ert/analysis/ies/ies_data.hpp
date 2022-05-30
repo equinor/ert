@@ -5,7 +5,6 @@
 #include <vector>
 
 namespace ies {
-namespace data {
 
 class Data {
 public:
@@ -50,7 +49,6 @@ private:
     Eigen::MatrixXd E;
 };
 
-} // namespace data
 } // namespace ies
 
 #endif

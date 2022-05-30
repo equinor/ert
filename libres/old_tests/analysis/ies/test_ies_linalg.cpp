@@ -8,7 +8,7 @@
 
 void update_exact_scheme_subspace_no_truncation_diagR(
     const res::es_testdata &testdata, const ies::Config &ies_config,
-    ies::data::Data &ies_data, Eigen::MatrixXd &A, rng_type *rng) {
+    ies::Data &ies_data, Eigen::MatrixXd &A, rng_type *rng) {
     ies::init_update(ies_data, testdata.ens_mask, testdata.obs_mask);
     ies::updateA(ies_data, A, testdata.S, testdata.R, testdata.E, testdata.D,
                  ies_config.inversion, ies_config.get_truncation(),
@@ -34,10 +34,10 @@ void test_consistency_exact_scheme_subspace_no_truncation_diagR(
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
 
-    ies::data::Data ies_data1(testdata.active_ens_size);
+    ies::Data ies_data1(testdata.active_ens_size);
     ies::Config ies_config1(true);
 
-    ies::data::Data ies_data2(testdata.active_ens_size);
+    ies::Data ies_data2(testdata.active_ens_size);
     ies::Config ies_config2(true);
 
     ies_config1.set_truncation(1.0);
@@ -75,10 +75,10 @@ void test_consistency_scheme_inversions(const res::es_testdata &testdata) {
     Eigen::MatrixXd A1 = testdata.make_state("prior");
     Eigen::MatrixXd A2 = testdata.make_state("prior");
 
-    ies::data::Data ies_data1(testdata.active_ens_size);
+    ies::Data ies_data1(testdata.active_ens_size);
     ies::Config ies_config1(true);
 
-    ies::data::Data ies_data2(testdata.active_ens_size);
+    ies::Data ies_data2(testdata.active_ens_size);
     ies::Config ies_config2(true);
 
     ies_config1.set_truncation(0.95);

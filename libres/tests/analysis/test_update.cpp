@@ -24,7 +24,7 @@
 namespace analysis {
 
 void run_analysis_update_with_rowscaling(
-    const ies::Config &module_config, ies::data::Data &module_data,
+    const ies::Config &module_config, ies::Data &module_data,
     const Eigen::MatrixXd &S, const Eigen::MatrixXd &E,
     const Eigen::MatrixXd &D, const Eigen::MatrixXd &R,
     std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
@@ -64,8 +64,7 @@ struct model {
     int size() { return 2; }
 };
 
-void simple_update(const ies::Config &module_config,
-                   ies::data::Data &module_data,
+void simple_update(const ies::Config &module_config, ies::Data &module_data,
                    const std::vector<bool> &ens_mask,
                    const std::vector<bool> &obs_mask, const Eigen::MatrixXd &S,
                    const Eigen::MatrixXd &E, const Eigen::MatrixXd &D,
@@ -84,7 +83,7 @@ SCENARIO("Running analysis update with and without row scaling on linear model",
 
     GIVEN("Fixed prior and measurements") {
         int ens_size = GENERATE(10, 100, 200);
-        ies::data::Data module_data(ens_size);
+        ies::Data module_data(ens_size);
         ies::Config config(false);
 
         auto rng = rng_alloc(MZRAN, INIT_DEFAULT);
