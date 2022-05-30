@@ -103,7 +103,7 @@ TEST_CASE("ies_enkf_linalg_extract_active_W", "[analysis]") {
         for (int j = 0; j < ens_size; j++)
             W0(i, j) = i * ens_size + j;
     }
-    ies::linalg_store_active_W(&data, W0);
+    ies::linalg_store_active_W(data, W0);
 
     {
         auto W = data.make_activeW();

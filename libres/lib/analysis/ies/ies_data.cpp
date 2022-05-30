@@ -90,9 +90,19 @@ void ies::Data::augment_initialE(const Eigen::MatrixXd &E0) {
     }
 }
 
-void ies::Data::store_initialA(const Eigen::MatrixXd &A) {
-    if (A0.rows() == 0 || A0.cols() == 0)
-        this->A0 = A;
+void ies::Data::store_initialA(const Eigen::MatrixXd &A0) {
+    if (this->A0.rows() != 0 || this->A0.cols() != 0)
+        return;
+    this->A0 = Eigen::MatrixXd::Zero(A0.rows(), this->m_ens_mask.size());
+    for (int irow = 0; irow < this->A0.rows(); irow++) {
+        int active_idx = 0;
+        for (int iens = 0; iens < this->m_ens_mask.size(); iens++) {
+            if (this->m_ens_mask[iens]) {
+                this->A0(irow, iens) = A0(irow, active_idx);
+                active_idx++;
+            }
+        }
+    }
 }
 
 const std::vector<bool> &ies::Data::obs_mask0() const {
@@ -122,7 +132,6 @@ Eigen::MatrixXd make_active(const Eigen::MatrixXd &full_matrix,
                             const std::vector<bool> &column_mask) {
     int rows = row_mask.size();
     int columns = column_mask.size();
-
     Eigen::MatrixXd active = Eigen::MatrixXd::Zero(
         std::count(row_mask.begin(), row_mask.end(), true),
         std::count(column_mask.begin(), column_mask.end(), true));
@@ -162,8 +171,8 @@ Eigen::MatrixXd ies::Data::make_activeW() const {
 }
 
 Eigen::MatrixXd ies::Data::make_activeA() const {
-    std::vector<bool> state_mask(this->A0.rows(), true);
-    return make_active(this->A0, state_mask, this->m_ens_mask);
+    std::vector<bool> row_mask(this->A0.rows(), true);
+    return make_active(this->A0, row_mask, this->m_ens_mask);
 }
 
 RES_LIB_SUBMODULE("ies", m) {
