@@ -56,7 +56,7 @@ def update_A(  # pylint: disable=too-many-arguments
     step_length: float = 1.0,
 ) -> None:
 
-    if not np.isfortran(A):
+    if not A.flags.fortran:
         raise TypeError("A matrix must be F_contiguous")
     res._lib.ies.update_A(  # pylint: disable=no-member, c-extension-no-member
         data, A, Y, R, E, D, ies_inversion, truncation, step_length
