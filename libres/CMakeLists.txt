@@ -54,7 +54,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 if(COVERAGE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Wall")
+  add_compile_options("--coverage")
+  add_compile_options("-fPIC")
+  add_compile_options("-O0")
+  add_link_options("--coverage")
 endif()
 
 # -----------------------------------------------------------------
