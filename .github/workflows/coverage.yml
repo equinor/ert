@@ -1,12 +1,10 @@
-name: Python coverage
+name: coverage
 
-on:
- push:
-   branches:
-     - main
-     - 'version-**'
-   tags: "*"
- pull_request:
+on: [push]
+
+env:
+  ERT_SHOW_BACKTRACE: 1
+  ECL_SKIP_SIGNAL: 1
 
 jobs:
   python-test-coverage:
@@ -15,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        system-under-test: ['res', 'ert']
+        system-under-test: ['res', 'ert', 'libres']
     steps:
     - uses: actions/checkout@v2
       with:
@@ -30,7 +28,9 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install with dependencies
+
+    - name: Install pip package with dependencies
+      if: matrix.system-under-test == 'ert' || matrix.system-under-test == 'res'
       run: |
         pip install .
         pip install -r dev-requirements.txt
@@ -54,7 +54,27 @@ jobs:
         cd tests
         pytest libres_tests --cov=res --cov-report=xml:cov.xml
 
-    - name: Upload python coverage to Codecov
+    - name: Run libres tests
+      if: matrix.system-under-test == 'libres'
+      run: |
+        sudo apt-get install -y valgrind
+        python3 -m pip install conan
+        git clone https://github.com/equinor/libecl
+        mkdir libecl/build
+        cmake -S libecl -B libecl/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        sudo cmake --build libecl/build --target install
+        sudo rm -rf libecl
+        mkdir cmake-build
+        cmake -S libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON
+        cmake --build cmake-build
+        pushd cmake-build
+        export PATH=$PWD/bin:$PATH
+        ctest --output-on-failure
+        popd
+        python3 -m pip install gcovr
+        gcovr -r libres/ --exclude-directories ".*tests" cmake-build/ --xml -o tests/cov.xml
+
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
