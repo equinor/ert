@@ -519,6 +519,13 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
     Semafoor concurrently_executing_threads(100);
     std::vector<std::tuple<int, std::future<fw_load_status>>> futures;
 
+    // If this function is called via pybind11 we need to release
+    // the GIL here because this function may spin up several
+    // threads which also may need the GIL (e.g. for logging)
+    PyThreadState *state = nullptr;
+    if (PyGILState_Check() == 1)
+        state = PyEval_SaveThread();
+
     for (int iens = 0; iens < ens_size; ++iens) {
         if (bool_vector_iget(iactive, iens)) {
 
@@ -564,6 +571,9 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
         } else
             logger->error("Unknown load enum");
     }
+    if (state)
+        PyEval_RestoreThread(state);
+
     return loaded;
 }
 
@@ -676,6 +686,15 @@ std::vector<std::string> get_parameter_keys(py::object self) {
     return parameters;
 }
 
+int load_from_forward_model_with_fs_pybind(py::object self, int iter,
+                                           py::object iactive, py::object fs) {
+    auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+    auto iactive_ = ert::from_cwrap<bool_vector_type>(iactive);
+    auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
+    return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive_,
+                                                     fs_);
+}
+
 RES_LIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def("get_observation_keys", get_observation_keys);
@@ -689,6 +708,8 @@ RES_LIB_SUBMODULE("enkf_main", m) {
             return enkf_main_create_run_path(enkf_main, run_context);
         },
         py::arg("self"), py::arg("run_context"));
+    m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
+          py::arg("self"), py::arg("iter"), py::arg("iactive"), py::arg("fs"));
 }
 
 #include "enkf_main_ensemble.cpp"
