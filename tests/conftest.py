@@ -4,8 +4,10 @@ import pkg_resources
 import shutil
 
 import pytest
+from unittest.mock import MagicMock
 
 from utils import SOURCE_DIR
+from ert_shared.services import Storage
 from res.enkf import ResConfig
 
 
@@ -90,6 +92,13 @@ def pytest_runtest_setup(item):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "equinor_test")
+
+
+@pytest.fixture()
+def mock_start_server(monkeypatch):
+    connect_or_start_server = MagicMock()
+    monkeypatch.setattr(Storage, "connect_or_start_server", connect_or_start_server)
+    yield connect_or_start_server
 
 
 def pytest_addoption(parser):

@@ -1,20 +1,17 @@
 from uuid import UUID, uuid4
 from typing import Any, Mapping, Optional, List
-
 from fastapi import APIRouter, Body, Depends, File, Header, Request, UploadFile, status
-
 from ert_shared.dark_storage.common import (
-    get_response_names,
     data_for_key,
     ensemble_parameters,
     observations_for_obs_keys,
 )
 from ert_storage import json_schema as js
-
 from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_name
 from fastapi.responses import Response
 import pandas as pd
 import io
+
 
 router = APIRouter(tags=["record"])
 
@@ -192,6 +189,8 @@ async def get_ensemble_record(
             content=stream.getvalue(),
             media_type=accept,
         )
+    elif accept == "application/json":
+        return Response(dataframe.to_json(), media_type=accept)
     else:
         return Response(
             content=dataframe.to_csv().encode(),
@@ -250,12 +249,23 @@ def get_ensemble_responses(
 ) -> Mapping[str, js.RecordOut]:
 
     response_map: Mapping[str, js.RecordOut] = {}
-    for response_name in get_response_names(res):
-        obs_keys = res.observation_keys(response_name)
-        response_map[str(response_name)] = js.RecordOut(
-            id=get_id("response", f"{ensemble_id}/{response_name}"),
-            name=response_name,
-            userdata={},
+
+    for name in res.get_summary_keys():
+        obs_keys = res.observation_keys(name)
+        response_map[str(name)] = js.RecordOut(
+            id=get_id("response", f"{ensemble_id}/{name}"),
+            name=name,
+            userdata={"data_origin": "Summary"},
             has_observations=len(obs_keys) != 0,
         )
+
+    for name in res.get_gen_data_keys():
+        obs_keys = res.observation_keys(name)
+        response_map[str(name)] = js.RecordOut(
+            id=get_id("response", f"{ensemble_id}/{name}"),
+            name=name,
+            userdata={"data_origin": "GEN_DATA"},
+            has_observations=len(obs_keys) != 0,
+        )
+
     return response_map
