@@ -262,6 +262,8 @@ def _get_block_measured(ensemble_size, block_data):
 def _load_summary_response(facade, obs_key, case_name):
     data_key = facade.get_data_key_for_obs_key(obs_key)
     data = facade.load_all_summary_data(case_name, [data_key])
+    if data.empty:
+        return data
     data = data[data_key].unstack(level=-1)
     data = data.set_index(data.index.values)
     return data

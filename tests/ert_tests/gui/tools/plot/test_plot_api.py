@@ -1,296 +1,120 @@
-import os
-import shutil
-from unittest import TestCase
-
+import httpx
 import pytest
-from utils import SOURCE_DIR
-from ert_utils import tmpdir
-from pandas import DataFrame
-
-from ert_gui.tools.plot.plot_api import PlotApi
-from ert_shared.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
-
-_KEY_DEFS = (
-    {
-        "key": "BPR:1,3,8",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "BPR:445",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "FOPT",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "FOPTH",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "WGOR:OP1",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "WGORH:OP1",
-        "index_type": "VALUE",
-        "observations": [],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "WOPR:OP1",
-        "index_type": "VALUE",
-        "observations": [
-            "WOPR_OP1_108",
-            "WOPR_OP1_190",
-            "WOPR_OP1_144",
-            "WOPR_OP1_9",
-            "WOPR_OP1_72",
-            "WOPR_OP1_36",
-        ],
-        "has_refcase": True,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Summary"},
-        "log_scale": False,
-    },
-    {
-        "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-        "index_type": None,
-        "observations": [],
-        "has_refcase": False,
-        "dimensionality": 1,
-        "metadata": {"data_origin": "Gen KW"},
-        "log_scale": False,
-    },
-    {
-        "key": "SNAKE_OIL_GPR_DIFF@199",
-        "index_type": "INDEX",
-        "observations": [],
-        "has_refcase": False,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Gen Data"},
-        "log_scale": False,
-    },
-    {
-        "key": "SNAKE_OIL_WPR_DIFF@199",
-        "index_type": "INDEX",
-        "observations": ["WPR_DIFF_1"],
-        "has_refcase": False,
-        "dimensionality": 2,
-        "metadata": {"data_origin": "Gen Data"},
-        "log_scale": False,
-    },
-)
-
-
-class PlotApiTest(TestCase):
-    def api(self):
-        config_file = "snake_oil.ert"
-
-        rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
-        ert = EnKFMain(rc)
-        facade = LibresFacade(ert)
-        api = PlotApi(facade)
-        return api
-
-    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
-    def test_all_keys_present(self):
-        api = self.api()
-
-        key_defs = api.all_data_type_keys()
-        keys = {x["key"] for x in key_defs}
-        expected = {
-            "BPR:1,3,8",
-            "BPR:445",
-            "BPR:5,5,5",
-            "BPR:721",
-            "FGIP",
-            "FGIPH",
-            "FGOR",
-            "FGORH",
-            "FGPR",
-            "FGPRH",
-            "FGPT",
-            "FGPTH",
-            "FOIP",
-            "FOIPH",
-            "FOPR",
-            "FOPRH",
-            "FOPT",
-            "FOPTH",
-            "FWCT",
-            "FWCTH",
-            "FWIP",
-            "FWIPH",
-            "FWPR",
-            "FWPRH",
-            "FWPT",
-            "FWPTH",
-            "TIME",
-            "WGOR:OP1",
-            "WGOR:OP2",
-            "WGORH:OP1",
-            "WGORH:OP2",
-            "WGPR:OP1",
-            "WGPR:OP2",
-            "WGPRH:OP1",
-            "WGPRH:OP2",
-            "WOPR:OP1",
-            "WOPR:OP2",
-            "WOPRH:OP1",
-            "WOPRH:OP2",
-            "WWCT:OP1",
-            "WWCT:OP2",
-            "WWCTH:OP1",
-            "WWCTH:OP2",
-            "WWPR:OP1",
-            "WWPR:OP2",
-            "WWPRH:OP1",
-            "WWPRH:OP2",
-            "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-            "SNAKE_OIL_PARAM:BPR_555_PERSISTENCE",
-            "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
-            "SNAKE_OIL_PARAM:OP1_OCTAVES",
-            "SNAKE_OIL_PARAM:OP1_OFFSET",
-            "SNAKE_OIL_PARAM:OP1_PERSISTENCE",
-            "SNAKE_OIL_PARAM:OP2_DIVERGENCE_SCALE",
-            "SNAKE_OIL_PARAM:OP2_OCTAVES",
-            "SNAKE_OIL_PARAM:OP2_OFFSET",
-            "SNAKE_OIL_PARAM:OP2_PERSISTENCE",
-            "SNAKE_OIL_GPR_DIFF@199",
-            "SNAKE_OIL_OPR_DIFF@199",
-            "SNAKE_OIL_WPR_DIFF@199",
-        }
-        self.assertSetEqual(expected, keys)
-
-    @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
-    def test_observation_key_present(self):
-        api = self.api()
-        key_defs = api.all_data_type_keys()
-        expected_obs = {
-            "FOPR": ["FOPR"],
-            "WOPR:OP1": [
-                "WOPR_OP1_108",
-                "WOPR_OP1_190",
-                "WOPR_OP1_144",
-                "WOPR_OP1_9",
-                "WOPR_OP1_72",
-                "WOPR_OP1_36",
-            ],
-            "SNAKE_OIL_WPR_DIFF@199": ["WPR_DIFF_1"],
-        }
-
-        for key_def in key_defs:
-            if key_def["key"] in expected_obs:
-                expected = expected_obs[key_def["key"]]
-                self.assertEqual(expected, key_def["observations"])
-            else:
-                self.assertEqual(0, len(key_def["observations"]))
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
 
 def test_key_def_structure(api):
-    shutil.rmtree("storage", ignore_errors=True)
     key_defs = api.all_data_type_keys()
     fopr = next(x for x in key_defs if x["key"] == "FOPR")
-
-    expected = {
+    fopr_expected = {
         "dimensionality": 2,
-        "has_refcase": True,
         "index_type": "VALUE",
         "key": "FOPR",
         "metadata": {"data_origin": "Summary"},
-        "observations": ["FOPR"],
+        "observations": True,
         "log_scale": False,
     }
+    assert fopr == fopr_expected
 
-    assert fopr == expected
+    bpr = next(x for x in key_defs if x["key"] == "BPR:1,3,8")
+    bpr_expected = {
+        "dimensionality": 2,
+        "index_type": "VALUE",
+        "key": "BPR:1,3,8",
+        "metadata": {"data_origin": "Summary"},
+        "observations": False,
+        "log_scale": False,
+    }
+    assert bpr == bpr_expected
+
+    bpr_parameter = next(
+        x for x in key_defs if x["key"] == "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
+    )
+    bpr_parameter_expected = {
+        "dimensionality": 1,
+        "index_type": None,
+        "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+        "metadata": {"data_origin": "GEN_KW"},
+        "observations": False,
+        "log_scale": False,
+    }
+    assert bpr_parameter == bpr_parameter_expected
 
 
 def test_case_structure(api):
-    cases = api.get_all_cases_not_running()
-    case = next(x for x in cases if x["name"] == "default_0")
+    cases = [case["name"] for case in api.get_all_cases_not_running()]
+    hidden_case = [
+        case["name"] for case in api.get_all_cases_not_running() if case["hidden"]
+    ]
+    expected = ["ensemble_1", ".ensemble_2", "default_0", "default_1"]
 
-    expected = {"has_data": True, "hidden": False, "name": "default_0"}
-
-    assert case == expected
-
-
-@pytest.fixture
-def api(tmpdir, source_root):
-    with tmpdir.as_cwd():
-        test_data_root = source_root / "test-data" / "local"
-        test_data_dir = os.path.join(test_data_root, "snake_oil")
-        shutil.copytree(test_data_dir, "test_data")
-        os.chdir("test_data")
-        config_file = "snake_oil.ert"
-        rc = ResConfig(user_config_file=config_file)
-        rc.convertToCReference(None)
-        ert = EnKFMain(rc)
-        facade = LibresFacade(ert)
-        api = PlotApi(facade)
-        yield api
+    assert cases == expected
+    assert hidden_case == [".ensemble_2"]
 
 
-def get_id(val):
-    return f"case name: {val}"
+def test_can_load_data_and_observations(api):
+
+    keys = {
+        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE": {
+            "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+            "observations": False,
+            "userdata": {"data_origin": "GEN_KW"},
+        },
+        "BPR:1,3,8": {
+            "key": "BPR:1,3,8",
+            "userdata": {"data_origin": "Summary"},
+            "observations": False,
+        },
+        "FOPR": {
+            "key": "FOPR",
+            "userdata": {"data_origin": "Summary"},
+            "observations": True,
+        },
+    }
+
+    case_name = "default_0"
+    for key, value in keys.items():
+        observations = value["observations"]
+        if observations:
+            obs_data = api.observations_for_key(case_name, key)
+            assert not obs_data.empty
+        data = api.data_for_key(case_name, key)
+        assert not data.empty
 
 
-def get_key_name(val):
-    return f"key_def: {val['key']}"
+def test_all_data_type_keys(api):
+    keys = [e["key"] for e in api.all_data_type_keys()]
+    assert keys == [
+        "BPR:1,3,8",
+        "FOPR",
+        "SNAKE_OIL_WPR_DIFF@199",
+        "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+        "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
+        "WOPPER",
+        "I_AM_A_PARAM",
+    ]
 
 
-@pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
-@pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
-def test_no_storage(case_name, key_def, api):
-    shutil.rmtree("storage", ignore_errors=True)
-    obs = key_def["observations"]
-    obs_data = api.observations_for_obs_keys(case_name, obs)
-    data = api.data_for_key(case_name, key_def["key"])
-    assert isinstance(obs_data, DataFrame)
-    assert isinstance(data, DataFrame)
-    assert data.empty
+def test_load_history_data(api):
+    df = api.history_data(case="default_0", key="FOPR")
+    assert_frame_equal(
+        df, pd.DataFrame({1: [0.2, 0.2, 1.2], 3: [1.0, 1.1, 1.2], 4: [1.0, 1.1, 1.3]})
+    )
 
 
-@pytest.mark.parametrize("case_name", ["default_0", "default_1"], ids=get_id)
-@pytest.mark.parametrize("key_def", _KEY_DEFS, ids=get_key_name)
-def test_can_load_data_and_observations(case_name, key_def, api):
-    obs = key_def["observations"]
-    obs_data = api.observations_for_obs_keys(case_name, obs)
-    data = api.data_for_key(case_name, key_def["key"])
+def test_plot_api_request_errors(api, mocker):
+    # Mock the experiment name to be something unexpected
+    mocker.patch(
+        "ert_gui.tools.plot.plot_api.PlotApi._get_experiment",
+        return_value={"id": "mocked"},
+    )
+    with pytest.raises(httpx.RequestError):
+        api.all_data_type_keys()
 
-    assert isinstance(data, DataFrame)
-    assert not data.empty
+    case_name = "default_0"
+    with pytest.raises(httpx.RequestError):
+        api.observations_for_key(case_name, "should_not_be_there")
 
-    assert isinstance(obs_data, DataFrame)
-    if len(obs) > 0:
-        assert not obs_data.empty
+    with pytest.raises(httpx.RequestError):
+        api.data_for_key(case_name, "should_not_be_there")

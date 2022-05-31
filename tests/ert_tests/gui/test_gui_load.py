@@ -121,7 +121,7 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     reason="PyQt4 with PYTEST_QT_API env. variable != pyqt4v2",
 )
 @pytest.mark.usefixtures("patch_enkf_main")
-def test_gui_full(monkeypatch, tmpdir, qapp):
+def test_gui_full(monkeypatch, tmpdir, qapp, mock_start_server):
     with tmpdir.as_cwd():
         args_mock = Mock()
         type(args_mock).config = PropertyMock(return_value="config.ert")
@@ -131,6 +131,7 @@ def test_gui_full(monkeypatch, tmpdir, qapp):
         )  # exec_ starts the event loop, and will stall the test.
         monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
         run_gui(args_mock)
+        mock_start_server.assert_called_once_with(res_config="config.ert")
 
 
 def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):

@@ -94,13 +94,11 @@ class PlotStyleTest(ErtTest):
         plot_config.setDistributionLineEnabled(True)
         plot_config.setLegendEnabled(False)
         plot_config.setGridEnabled(False)
-        plot_config.setRefcaseEnabled(False)
         plot_config.setObservationsEnabled(False)
 
         style = PlotStyle("test_style", line_style=".", marker="g", width=2.5, size=7.5)
 
         plot_config.setDefaultStyle(style)
-        plot_config.setRefcaseStyle(style)
         plot_config.setStatisticsStyle("mean", style)
         plot_config.setStatisticsStyle("min-max", style)
         plot_config.setStatisticsStyle("p50", style)
@@ -126,7 +124,6 @@ class PlotStyleTest(ErtTest):
             copy_of_plot_config.isDistributionLineEnabled(),
         )
 
-        self.assertEqual(plot_config.refcaseStyle(), copy_of_plot_config.refcaseStyle())
         self.assertEqual(
             plot_config.observationsStyle(), copy_of_plot_config.observationsStyle()
         )
@@ -172,7 +169,6 @@ class PlotStyleTest(ErtTest):
         copy_of_plot_config = PlotConfig(title="Another Copy of Golden Sample")
         copy_of_plot_config.copyConfigFrom(plot_config)
 
-        self.assertEqual(plot_config.refcaseStyle(), copy_of_plot_config.refcaseStyle())
         self.assertEqual(
             plot_config.observationsStyle(), copy_of_plot_config.observationsStyle()
         )

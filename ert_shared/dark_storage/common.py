@@ -17,8 +17,11 @@ def ensemble_parameter_names(res: LibresFacade) -> List[str]:
     return res.gen_kw_keys()
 
 
-def ensemble_parameters(res: LibresFacade) -> List[dict]:
-    return [dict(name=key, labels=[]) for key in ensemble_parameter_names(res)]
+def ensemble_parameters(ensemble_name: str) -> List[dict]:
+    return [
+        dict(name=key, userdata=dict(data_origin="GEN_KW"), labels=[])
+        for key in ensemble_parameter_names(ensemble_name)
+    ]
 
 
 def get_response_names(res: LibresFacade) -> List[str]:
@@ -38,10 +41,13 @@ def get_responses(res: LibresFacade, ensemble_name: str):
     return responses
 
 
-def data_for_key(res: LibresFacade, case, key, realization_index=None):
+def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.DataFrame:
     """Returns a pandas DataFrame with the datapoints for a given key for a
     given case. The row index is the realization number, and the columns are an
     index over the indexes/dates"""
+
+    if key.split(":")[0][-1] == "H":
+        return res.history_data(key, case).T
 
     if key.startswith("LOG10_"):
         key = key[6:]

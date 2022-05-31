@@ -41,6 +41,8 @@ from ert_shared.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
 
+from ert_shared.services import Storage
+
 
 def run_gui(args):
     app = QApplication([])  # Early so that QT is initialized before other imports
@@ -62,10 +64,11 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True)
-    notifier = ErtNotifier(args.config)
-    # window reference must be kept until app.exec returns:
-    window = _start_window(ert, notifier, args)  # noqa
-    return app.exec_()
+    with Storage.connect_or_start_server(res_config=os.path.basename(args.config)):
+        notifier = ErtNotifier(args.config)
+        # window reference must be kept until app.exec returns:
+        window = _start_window(ert, notifier, args)  # noqa
+        return app.exec_()
 
 
 def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
@@ -132,7 +135,7 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addDock(
         "Configuration summary", SummaryPanel(ert), area=Qt.BottomDockWidgetArea
     )
-    window.addTool(PlotTool(ert, config_file))
+    window.addTool(PlotTool(config_file))
     window.addTool(ExportTool(ert))
     window.addTool(WorkflowsTool(ert, notifier))
     window.addTool(ManageCasesTool(ert, notifier))

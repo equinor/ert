@@ -1,106 +1,203 @@
-from ert_data import loader
+import logging
+import requests
+import io
+import httpx
 import pandas as pd
-from ert_data.measured import MeasuredData
+from typing import List
+from ert_shared.services import Storage
+from pandas.errors import ParserError
+from itertools import combinations as combi
+from json.decoder import JSONDecodeError
+
+logger = logging.getLogger(__name__)
 
 
-class PlotApi:
-    def __init__(self, facade):
-        self._facade = facade
+class PlotApi(object):
+    def __init__(self):
+        self._all_cases: List[dict] = None
+        self._timeout = 120
+        self._reset_storage_facade()
 
-    def all_data_type_keys(self):
-        """Returns a list of all the keys except observation keys. For each key
-        a dict is returned with info about the key"""
+    def _reset_storage_facade(self):
+        with Storage.session() as client:
+            client.post("/updates/facade", timeout=self._timeout)
 
-        all_keys = self._facade.all_data_type_keys()
-        log_keys = [k for k in all_keys if k.startswith("LOG10_")]
+    def _get_case(self, name: str) -> dict:
+        for e in self._get_all_cases():
+            if e["name"] == name:
+                return e
+        return None
 
-        return [
-            {
-                "key": key,
-                "index_type": self._key_index_type(key),
-                "observations": self._facade.observation_keys(key),
-                "has_refcase": self._facade.has_refcase(key),
-                "dimensionality": self._dimensionality_of_key(key),
-                "metadata": self._metadata(key),
-                "log_scale": key in log_keys,
-            }
-            for key in all_keys
-        ]
+    def _get_all_cases(self) -> List[dict]:
+        if self._all_cases is not None:
+            return self._all_cases
 
-    def _metadata(self, key):
-        meta = {}
-        if self._facade.is_summary_key(key):
-            meta["data_origin"] = "Summary"
-        elif self._facade.is_gen_data_key(key):
-            meta["data_origin"] = "GEN_DATA"
-        elif self._facade.is_gen_kw_key(key):
-            meta["data_origin"] = "GEN_KW"
-        return meta
+        self._all_cases = []
+        with Storage.session() as client:
+            try:
+                response = client.get("/experiments", timeout=self._timeout)
+                self._check_response(response)
+                experiments = response.json()
+                experiment = experiments[0]
+                for ensemble_id in experiment["ensemble_ids"]:
+                    response = client.get(
+                        f"/ensembles/{ensemble_id}", timeout=self._timeout
+                    )
+                    self._check_response(response)
+                    response_json = response.json()
+                    case_name = response_json["userdata"]["name"]
+                    self._all_cases.append(
+                        dict(
+                            name=case_name,
+                            id=ensemble_id,
+                            hidden=case_name.startswith("."),
+                        )
+                    )
+                return self._all_cases
+            except IndexError as exc:
+                logging.exception(exc)
+                raise exc
 
-    def get_all_cases_not_running(self):
-        """Returns a list of all cases that are not running. For each case a
-        dict with info about the case is returned"""
-        facade = self._facade
-        return [
-            {
-                "name": case,
-                "hidden": facade.is_case_hidden(case),
-                "has_data": facade.case_has_data(case),
-            }
-            for case in facade.cases()
-            if not facade.is_case_running(case)
-        ]
+    @staticmethod
+    def _check_response(response: requests.Response):
+        if response.status_code != httpx.codes.OK:
+            raise httpx.RequestError(
+                f" Please report this error and try restarting the application."
+                f"{response.text} from url: {response.url}."
+            )
 
-    def data_for_key(self, case, key):
-        """Returns a pandas DataFrame with the datapoints for a given key for a
-        given case. The row index is the realization number, and the columns are
-        an index over the indexes/dates"""
+    def _get_experiment(self) -> dict:
+        with Storage.session() as client:
+            response: requests.Response = client.get(
+                "/experiments", timeout=self._timeout
+            )
+            self._check_response(response)
+            response_json = response.json()
+            return response_json[0]
+
+    def _get_ensembles(self, experiement_id) -> List:
+        with Storage.session() as client:
+            response: requests.Response = client.get(
+                f"/experiments/{experiement_id}/ensembles", timeout=self._timeout
+            )
+            self._check_response(response)
+            response_json = response.json()
+            return response_json
+
+    def all_data_type_keys(self) -> List:
+        """Returns a list of all the keys except observation keys.
+
+        The keys are a unique set of all keys in the ensembles
+
+        For each key a dict is returned with info about
+        the key"""
+
+        all_keys = {}
+        experiment = self._get_experiment()
+
+        with Storage.session() as client:
+            for ensemble in self._get_ensembles(experiment["id"]):
+                response: requests.Response = client.get(
+                    f"/ensembles/{ensemble['id']}/responses", timeout=self._timeout
+                )
+                self._check_response(response)
+                for key, value in response.json().items():
+                    all_keys[key] = {
+                        "key": key,
+                        "index_type": "VALUE",
+                        "observations": value["has_observations"],
+                        "dimensionality": 2,
+                        "metadata": value["userdata"],
+                        "log_scale": key.startswith("LOG10_"),
+                    }
+
+                response: requests.Response = client.get(
+                    f"/ensembles/{ensemble['id']}/parameters", timeout=self._timeout
+                )
+                self._check_response(response)
+                for e in response.json():
+                    key = e["name"]
+                    all_keys[key] = {
+                        "key": key,
+                        "index_type": None,
+                        "observations": False,
+                        "dimensionality": 1,
+                        "metadata": e["userdata"],
+                        "log_scale": key.startswith("LOG10_"),
+                    }
+
+        return list(all_keys.values())
+
+    def get_all_cases_not_running(self) -> List:
+        """Returns a list of all cases that are not running. For each case a dict with
+        info about the case is returned"""
+        # Currently, the ensemble information from the storage API does not contain any
+        # hint if a case is running or not for now we return all the cases, running or
+        # not
+        return self._get_all_cases()
+
+    def data_for_key(self, case_name, key) -> pd.DataFrame:
+        """Returns a pandas DataFrame with the datapoints for a given key for a given
+        case. The row index is the realization number, and the columns are an index
+        over the indexes/dates"""
 
         if key.startswith("LOG10_"):
             key = key[6:]
 
-        if self._facade.is_summary_key(key):
-            data = self._facade.gather_summary_data(case, key).T
-        elif self._facade.is_gen_kw_key(key):
-            data = self._facade.gather_gen_kw_data(case, key)
-            data.columns = pd.Index([0])
-        elif self._facade.is_gen_data_key(key):
-            data = self._facade.gather_gen_data_data(case, key).T
-        else:
-            raise ValueError(f"no such key {key}")
+        case = self._get_case(case_name)
 
-        try:
-            return data.astype(float)
-        except ValueError:
-            return data
+        with Storage.session() as client:
+            response: requests.Response = client.get(
+                f"/ensembles/{case['id']}/records/{key}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_response(response)
 
-    def observations_for_obs_keys(self, case, obs_keys):
-        """Returns a pandas DataFrame with the datapoints for a given
-        observation key for a given case. The row index is the realization
-        number, and the column index is a multi-index with (obs_key, index/date,
-        obs_index), where index/date is used to relate the observation to the
-        data point it relates to, and obs_index is the index for the observation
-        itself"""
-        try:
-            measured_data = MeasuredData(
-                self._facade, obs_keys, case_name=case, load_data=False
+            stream = io.BytesIO(response.content)
+            df = pd.read_parquet(stream)
+
+            try:
+                df.columns = pd.to_datetime(df.columns)
+            except (ParserError, ValueError):
+                df.columns = [int(s) for s in df.columns]
+
+            try:
+                return df.astype(float)
+            except ValueError:
+                return df
+
+    def observations_for_key(self, case_name, key):
+        """Returns a pandas DataFrame with the datapoints for a given observation key
+        for a given case. The row index is the realization number, and the column index
+        is a multi-index with (obs_key, index/date, obs_index), where index/date is
+        used to relate the observation to the data point it relates to, and obs_index
+        is the index for the observation itself"""
+
+        case = self._get_case(case_name)
+
+        with Storage.session() as client:
+            response = client.get(
+                f"/ensembles/{case['id']}/records/{key}/observations",
+                timeout=self._timeout,
             )
-            data = measured_data.data
-        except loader.ObservationError:
-            data = pd.DataFrame()
-        expected_keys = ["OBS", "STD"]
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError(
-                f"Invalid type: {type(data)}, should be type: {pd.DataFrame}"
-            )
-        elif not data.empty and not set(expected_keys).issubset(data.index):
-            needed = ["OBS", "STD"]
-            missing = set(expected_keys) - set(data.index)
-            raise ValueError(
-                f"{needed} should be present in DataFrame index, missing: {missing}"
-            )
-        else:
-            return data
+            self._check_response(response)
+            try:
+                obs = response.json()[0]
+            except (KeyError, IndexError, JSONDecodeError):
+                raise httpx.RequestError("Observation schema might have changed")
+            try:
+                int(obs["x_axis"][0])
+                key_index = [int(v) for v in obs["x_axis"]]
+            except ValueError:
+                key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+
+            data_struct = {
+                "STD": obs["errors"],
+                "OBS": obs["values"],
+                "key_index": key_index,
+            }
+            return pd.DataFrame(data_struct).T
 
     def _add_index_range(self, data):
         """
@@ -114,28 +211,25 @@ class PlotApi:
         index = pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
         data.columns = index
 
-    def refcase_data(self, key):
-        """Returns a pandas DataFrame with the data points for the refcase for a
-        given data key, if any.  The row index is the index/date and the column
-        index is the key."""
-        return self._facade.refcase_data(key)
-
-    def history_data(self, key, case=None):
+    def history_data(self, key, case=None) -> pd.DataFrame:
         """Returns a pandas DataFrame with the data points for the history for a
         given data key, if any.  The row index is the index/date and the column
         index is the key."""
-        return self._facade.history_data(key, case)
 
-    def _dimensionality_of_key(self, key):
-        if self._facade.is_summary_key(key) or self._facade.is_gen_data_key(key):
-            return 2
+        if ":" in key:
+            head, tail = key.split(":", 2)
+            history_key = f"{head}H:{tail}"
         else:
-            return 1
+            history_key = f"{key}H"
 
-    def _key_index_type(self, key):
-        if self._facade.is_gen_data_key(key):
-            return "INDEX"
-        elif self._facade.is_summary_key(key):
-            return "VALUE"
-        else:
-            return None
+        df = self.data_for_key(case, history_key)
+
+        if not df.empty:
+            df = df.T
+            # Drop columns with equal data
+            duplicate_cols = [
+                cc[0] for cc in combi(df.columns, r=2) if (df[cc[0]] == df[cc[1]]).all()
+            ]
+            return df.drop(columns=duplicate_cols)
+
+        return pd.DataFrame()

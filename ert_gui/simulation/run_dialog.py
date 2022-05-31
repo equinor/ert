@@ -122,7 +122,7 @@ class RunDialog(QDialog):
 
         self.running_time = QLabel("")
 
-        self.plot_tool = PlotTool(ert, config_file)
+        self.plot_tool = PlotTool(config_file)
         self.plot_tool.setParent(self)
         self.plot_button = QPushButton(self.plot_tool.getName())
         self.plot_button.clicked.connect(self.plot_tool.trigger)
