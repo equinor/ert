@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.13.8
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %%
 # flake8: noqa
 # ---
 # jupyter:
@@ -128,8 +144,8 @@ def iterative_smoother():
         S = (S.T / observation_errors).T
 
         ies.init_update(module_data, ens_mask, obs_mask)
-        iteration_nr = module_data.inc_iteration_nr()
-        step_length = module_config.step_length(iteration_nr)
+        iteration_nr = module_data.iteration_nr
+        step_length = module_config.get_steplength(iteration_nr)
         ies.update_A(
             module_data,
             A_current,
@@ -139,6 +155,7 @@ def iterative_smoother():
             D,
             step_length=step_length,
         )
+        module_data.iteration_nr += 1
 
     plot_result(A_current, response_x_axis, uniform, priors, True)
 
