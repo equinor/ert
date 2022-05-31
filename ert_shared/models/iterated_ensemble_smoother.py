@@ -98,9 +98,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         phase_count = self.facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
-        analysis_module = self.setAnalysisModule(
-            self._simulation_arguments["analysis_module"]
-        )
         target_case_format = self._simulation_arguments["target_case"]
         run_context = self.create_context(0)
 
@@ -120,7 +117,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             current_iter < self.facade.get_number_of_iterations()
             and num_retries < num_retries_per_iteration
         ):
-            pre_analysis_iter_num = analysis_module.getInt("ITER")
+            pre_analysis_iter_num = self._w_container.iteration_nr - 1
             # We run the PRE_FIRST_UPDATE hook here because the current_iter is
             # explicitly available, versus in the run_context inside analyzeStep
             if current_iter == 0:
@@ -128,7 +125,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                     HookRuntime.PRE_FIRST_UPDATE, ert=self.ert()
                 )
             update_id = self.analyzeStep(run_context, ensemble_id)
-            current_iter = analysis_module.getInt("ITER")
+            current_iter = self._w_container.iteration_nr - 1
 
             analysis_success = current_iter > pre_analysis_iter_num
             if analysis_success:

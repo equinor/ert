@@ -7,7 +7,12 @@ from unittest.mock import Mock, call
 import pytest
 
 import ert_shared
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE, TEST_RUN_MODE
+from ert_shared.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    TEST_RUN_MODE,
+    ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+)
 from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
@@ -199,3 +204,31 @@ def test_cli_test_run(tmpdir, source_root, mock_cli_run):
     monitor_mock.assert_called_once()
     thread_join_mock.assert_called_once()
     thread_start_mock.assert_has_calls([[call(), call()]])
+
+
+@pytest.mark.integration_test
+def test_ies(tmpdir, source_root):
+    shutil.copytree(
+        os.path.join(source_root, "test-data", "local", "poly_example"),
+        os.path.join(str(tmpdir), "poly_example"),
+    )
+
+    with tmpdir.as_cwd():
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
+                "--target-case",
+                "iter-%d",
+                "--realizations",
+                "1,2,4,8,16",
+                "poly_example/poly.ert",
+                "--port-range",
+                "1024-65535",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        run_cli(parsed)
+        FeatureToggling.reset()
