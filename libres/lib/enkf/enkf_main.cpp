@@ -228,8 +228,8 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-static void enkf_main_write_run_path(enkf_main_type *enkf_main,
-                                     const ert_run_context_type *run_context) {
+void enkf_main_write_run_path(enkf_main_type *enkf_main,
+                              const ert_run_context_type *run_context) {
     runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);
     runpath_list_clear(runpath_list);
     for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
