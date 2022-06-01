@@ -810,49 +810,61 @@ void bind_write(driver_type dri, py::handle self, py::array_t<double> data,
     (*(enkf_fs->*dri)).save_vector(name.c_str(), iens, buffer);
     enkf_fs_decref(enkf_fs);
 };
+
+py::array_t<double> bind_read(driver_type dri, py::handle self,
+                              const std::string &name, int iens) {
+    using array_t = py::array_t<double>;
+
+    auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
+
+    auto buffer = buffer_alloc(100);
+    (*(enkf_fs->*dri)).load_vector(name.c_str(), iens, buffer);
+
+    auto ndim = buffer_fread_int(buffer);
+    array_t::ShapeContainer shape{};
+    array_t::StridesContainer stride{};
+    for (int i{}; i < ndim; ++i) {
+        shape->push_back(buffer_fread_int(buffer));
+        stride->push_back(buffer_fread_int(buffer));
+    }
+
+    auto data = reinterpret_cast<double *>(
+        buffer_iget_data(buffer, buffer_get_offset(buffer)));
+
+    py::array_t<double> array(shape, stride, data);
+    return array;
+};
 } // namespace
 
 RES_LIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
-    const auto read_fn = [](py::handle self, const std::string &name,
-                            int iens) -> py::array_t<double> {
-        using array_t = py::array_t<double>;
-        fmt::print("> {}\n", name);
-
-        auto enkf_fs = ert::from_cwrap<enkf_fs_type>(self);
-
-        auto buffer = buffer_alloc(100);
-        enkf_fs->parameter->load_vector(name.c_str(), iens, buffer);
-
-        auto ndim = buffer_fread_int(buffer);
-        array_t::ShapeContainer shape{};
-        array_t::StridesContainer stride{};
-        for (int i{}; i < ndim; ++i) {
-            shape->push_back(buffer_fread_int(buffer));
-            stride->push_back(buffer_fread_int(buffer));
-        }
-
-        auto data = reinterpret_cast<double *>(
-            buffer_iget_data(buffer, buffer_get_offset(buffer)));
-
-        py::array_t<double> array(shape, stride, data);
-        return array;
-    };
-
     m.def(
         "write_param_vector_raw",
-        [=](py::handle self, py::array_t<double> data, const std::string &name,
-            int iens) {
+        [](py::handle self, py::array_t<double> data, const std::string &name,
+           int iens) {
             bind_write(&enkf_fs_type::parameter, self, data, name, iens);
         },
         "self"_a, "data"_a, "name"_a, "iens"_a);
     m.def(
         "write_resp_vector_raw",
-        [=](py::handle self, py::array_t<double> data, const std::string &name,
-            int iens) {
+        [](py::handle self, py::array_t<double> data, const std::string &name,
+           int iens) {
             bind_write(&enkf_fs_type::dynamic_forecast, self, data, name, iens);
         },
         "self"_a, "data"_a, "name"_a, "iens"_a);
-    m.def("read_param_vector_raw", read_fn, "self"_a, "name"_a, "iens"_a);
+    m.def(
+        "load_param_vector_raw",
+        [=](py::handle self, const std::string &name,
+            int iens) -> py::array_t<double> {
+            return bind_read(&enkf_fs_type::parameter, self, name, iens);
+        },
+        "self"_a, "name"_a, "iens"_a);
+    m.def(
+        "load_resp_vector_raw",
+        [=](py::handle self, const std::string &name,
+            int iens) -> py::array_t<double> {
+            return bind_read(&enkf_fs_type::dynamic_forecast, self, name, iens);
+        },
+        "self"_a, "name"_a, "iens"_a);
 }

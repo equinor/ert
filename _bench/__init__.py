@@ -1,4 +1,4 @@
-from ._base import BaseStorage
+from ._base import BaseStorage, Namespace
 from ._enkf_fs import EnkfFs, EnkfFsMt
 from ._ert_storage import ErtStorage
 from ._pandas import PdHdf5, PdHdf5Open
@@ -21,4 +21,4 @@ MODULES: Mapping[str, Type[BaseStorage]] = {
 }
 TESTS: List[str] = list(BaseStorage.__abstractmethods__)
 
-__all__ = ["MODULES", "TESTS"]
+__all__ = ["MODULES", "TESTS", "Namespace"]

@@ -3,7 +3,7 @@ from concurrent.futures import Executor
 from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
-from typing import Generator, Generic, List, Tuple, TypeVar
+from typing import Generator, Generic, List, Optional, Tuple, TypeVar
 import argparse
 import numpy as np
 import numpy.typing as npt
@@ -23,14 +23,25 @@ def timer() -> Generator[None, None, None]:
     print(perf_counter() - start)
 
 
+class Namespace:
+    command: str
+    module: str
+
+    ensemble_size: int
+    keys: int
+    threads: int
+    use_async: bool
+
+
 class BaseStorage(ABC, Generic[RecordType]):
     __use_threads__ = False
 
-    def __init__(self, args: argparse.Namespace) -> None:
+    def __init__(self, args: Namespace, keep: bool = False) -> None:
         self.args = args
         self.path = Path.cwd() / f"_tmp_{self.__class__.__name__}"
-        shutil.rmtree(self.path, ignore_errors=True)
-        self.path.mkdir()
+        if not keep:
+            shutil.rmtree(self.path, ignore_errors=True)
+            self.path.mkdir()
         os.chdir(self.path)
 
     @staticmethod
@@ -61,6 +72,10 @@ class BaseStorage(ABC, Generic[RecordType]):
         self, name: str, array: RecordType, iens: int, executor: Executor
     ) -> None:
         self.skip()
+
+    @abstractmethod
+    def load_response(self, name: str, iens: Optional[List[int]]) -> RecordType:
+        ...
 
     @abstractmethod
     def from_numpy(self, array: npt.NDArray[np.float64]) -> RecordType:
@@ -126,3 +141,13 @@ class BaseStorage(ABC, Generic[RecordType]):
             for iens, name, data in responses:
                 self.save_response_mt(name, data, iens, executor)
             executor.shutdown()
+
+    def test_load_response(self) -> None:
+        with timer():
+            for name in self._response_names:
+                self.load_response(name, None)
+
+    @property
+    def _response_names(self) -> Generator[str, None, None]:
+        for i in range(self.args.keys):
+            yield f"RESP{i}"
