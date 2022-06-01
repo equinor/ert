@@ -69,12 +69,9 @@ foreach(
   enkf_ert_workflow_list
   enkf_main
   enkf_select_case_job
-  enkf_plot_gen_kw_fs
   enkf_workflow_job_test_directory
   enkf_ert_test_context
   gen_kw_logarithmic
-  enkf_forward_init_GEN_KW
-  enkf_forward_init_GEN_PARAM
   enkf_umask_config
   enkf_executable_path
   enkf_forward_load_context
@@ -98,23 +95,9 @@ add_config_test(enkf_umask_config enkf_umask_config
                 "${LOCAL_TEST_DATA_DIR}/simple_config/config_umask")
 
 add_config_test(
-  enkf_forward_init_GEN_PARAM_TRUE enkf_forward_init_GEN_PARAM
-  "${TEST_DATA_DIR}/enkf/config/forward/ert" config_GEN_PARAM_true TRUE)
-
-add_config_test(
-  enkf_forward_init_GEN_PARAM_FALSE enkf_forward_init_GEN_PARAM
-  "${TEST_DATA_DIR}/enkf/config/forward/ert" config_GEN_PARAM_false FALSE)
-
-add_config_test(
   enkf_select_case_job enkf_select_case_job
   "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/SELECT_CASE")
-add_config_test(
-  enkf_forward_init_GEN_KW_TRUE enkf_forward_init_GEN_KW
-  "${TEST_DATA_DIR}/enkf/config/forward/ert" config_GEN_KW_true TRUE)
-add_config_test(
-  enkf_forward_init_GEN_KW_FALSE enkf_forward_init_GEN_KW
-  "${TEST_DATA_DIR}/enkf/config/forward/ert" config_GEN_KW_false FALSE)
 add_config_test(enkf_queue_config enkf_queue_config)
 add_config_test(enkf_magic_string_in_workflows enkf_magic_string_in_workflows
                 "${LOCAL_TEST_DATA_DIR}/config/workflows/config")
@@ -132,8 +115,6 @@ add_config_test(
   "${TEST_DATA_DIR}/enkf/config/test_context/config"
   "${TEST_DATA_DIR}/enkf/config/test_context/wf_job"
   "${TEST_DATA_DIR}/enkf/config/test_context/wf_job_fail")
-add_config_test(enkf_plot_gen_kw_fs enkf_plot_gen_kw_fs
-                "${TEST_DATA_DIR}/enkf/config/gen_kw_plot/config")
 add_config_test(gen_kw gen_kw
                 "${TEST_DATA_DIR}/enkf/config/forward/ert/config_GEN_KW_true")
 add_config_test(
@@ -153,9 +134,6 @@ foreach(
   enkf_state_manual_load
   enkf_export_field
   enkf_workflow_job
-  enkf_forward_init_SURFACE
-  enkf_forward_init_FIELD
-  enkf_forward_init_transform
   enkf_state_skip_summary_load
   enkf_export_inactive_cells
   enkf_refcase_list
@@ -256,36 +234,6 @@ add_equinor_test(
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
   "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")
-
-add_equinor_test(
-  enkf_forward_init_SURFACE_TRUE enkf_forward_init_SURFACE
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/surface" config_surface_true
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/surface/Surface.irap" TRUE)
-
-add_equinor_test(
-  enkf_forward_init_SURFACE_FALSE enkf_forward_init_SURFACE
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/surface" config_surface_false
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/surface/Surface.irap" FALSE)
-
-add_equinor_test(
-  enkf_forward_init_FIELD_TRUE enkf_forward_init_FIELD
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/field" config_field_true
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/field/petro.grdecl" TRUE)
-
-add_equinor_test(
-  enkf_forward_init_FIELD_FALSE enkf_forward_init_FIELD
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/field" config_field_false
-  "${EQUINOR_TEST_DATA_DIR}/config/forward_init/field/petro.grdecl" FALSE)
-
-add_equinor_test(
-  enkf_forward_init_transform_TRUE enkf_forward_init_transform
-  "${EQUINOR_TEST_DATA_DIR}/config/transform" transform_forward_init_true
-  "${EQUINOR_TEST_DATA_DIR}/config/transform/petro.grdecl" TRUE)
-
-add_equinor_test(
-  enkf_forward_init_transform_FALSE enkf_forward_init_transform
-  "${EQUINOR_TEST_DATA_DIR}/config/transform" transform_forward_init_false
-  "${EQUINOR_TEST_DATA_DIR}/config/transform/petro.grdecl" FALSE)
 
 add_equinor_test(
   enkf_export_inactive_cells enkf_export_inactive_cells
