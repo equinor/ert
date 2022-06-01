@@ -688,14 +688,12 @@ RES_LIB_SUBMODULE("enkf_main", m) {
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
     m.def(
-        "init_run",
-        [](py::object self, py::object run_context_py) {
+        "init_internalization",
+        [](py::object self) {
             auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            auto run_context =
-                ert::from_cwrap<ert_run_context_type>(run_context_py);
-            return enkf_main_init_run(enkf_main, run_context);
+            return enkf_main_init_internalization(enkf_main);
         },
-        py::arg("self"), py::arg("run_context"));
+        py::arg("self"));
     m.def(
         "write_run_path",
         [](py::object self, py::object run_context_py) {
