@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import Executor
-from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
 from typing import Generator, Generic, List, Optional, Tuple, TypeVar
-import argparse
 import numpy as np
 import numpy.typing as npt
 import os
@@ -16,13 +14,6 @@ import asyncio
 RecordType = TypeVar("RecordType")
 
 
-@contextmanager
-def timer() -> Generator[None, None, None]:
-    start = perf_counter()
-    yield
-    print(perf_counter() - start)
-
-
 class Namespace:
     command: str
     module: str
@@ -31,6 +22,7 @@ class Namespace:
     keys: int
     threads: int
     use_async: bool
+    trials: int
 
 
 class BaseStorage(ABC, Generic[RecordType]):
@@ -43,6 +35,12 @@ class BaseStorage(ABC, Generic[RecordType]):
             shutil.rmtree(self.path, ignore_errors=True)
             self.path.mkdir()
         os.chdir(self.path)
+
+    def timer(self) -> Generator[None, None, None]:
+        for _ in range(self.args.trials):
+            start = perf_counter()
+            yield
+            print(perf_counter() - start)
 
     @staticmethod
     def skip() -> None:
@@ -98,13 +96,13 @@ class BaseStorage(ABC, Generic[RecordType]):
 
     def test_save_parameter(self) -> None:
         params = self.gen_params()
-        with timer():
+        for _ in self.timer():
             for name, mat in params:
                 self.save_parameter(name, mat)
 
     def test_save_parameter_async(self) -> None:
         params = self.gen_params()
-        with timer():
+        for _ in self.timer():
             asyncio.run(self._test_save_parameter_async(params))
 
     async def _test_save_parameter_async(self, params) -> None:
@@ -114,20 +112,20 @@ class BaseStorage(ABC, Generic[RecordType]):
 
     def test_save_parameter_mt(self, executor: Executor) -> None:
         params = self.gen_params()
-        with timer():
+        for _ in self.timer():
             for name, mat in params:
                 self.save_parameter_mt(name, mat, executor)
             executor.shutdown()
 
     def test_save_response(self) -> None:
         responses = self.gen_responses()
-        with timer():
+        for _ in self.timer():
             for iens, name, data in responses:
                 self.save_response(name, data, iens)
 
     def test_save_response_async(self) -> None:
         responses = self.gen_responses()
-        with timer():
+        for _ in self.timer():
             asyncio.run(self._test_save_response_async(responses))
 
     async def _test_save_response_async(self, responses) -> None:
@@ -137,13 +135,13 @@ class BaseStorage(ABC, Generic[RecordType]):
 
     def test_save_response_mt(self, executor: Executor) -> None:
         responses = self.gen_responses()
-        with timer():
+        for _ in self.timer():
             for iens, name, data in responses:
                 self.save_response_mt(name, data, iens, executor)
             executor.shutdown()
 
     def test_load_response(self) -> None:
-        with timer():
+        for _ in self.timer():
             for name in self._response_names:
                 self.load_response(name, None)
 

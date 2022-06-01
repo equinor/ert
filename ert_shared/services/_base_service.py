@@ -117,6 +117,8 @@ class _Proc(threading.Thread):
         self._childproc = Popen(
             self._exec_args,
             pass_fds=(fd_write,),
+            stdout=open("/dev/null", "wb"),
+            stderr=open("/dev/null", "wb"),
             env=env,
             close_fds=True,
         )

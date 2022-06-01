@@ -1,12 +1,11 @@
 import os
-import argparse
 import numpy as np
 import numpy.typing as npt
-from ._base import BaseStorage
+from ._base import BaseStorage, Namespace
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy.orm
 from contextlib import contextmanager
-from typing import Generator, Optional
+from typing import Generator, Optional, List
 
 os.environ["ERT_STORAGE_DATABASE_URL"] = "sqlite:///_tmp_Sqlite.db"
 
@@ -15,8 +14,8 @@ import ert_storage.database
 
 
 class Sqlite(BaseStorage[npt.NDArray[np.float64]]):
-    def __init__(self, args: argparse.Namespace) -> None:
-        super().__init__(args)
+    def __init__(self, args: Namespace, keep: bool) -> None:
+        super().__init__(args, keep)
 
         ert_storage.database.Base.metadata.create_all(bind=ert_storage.database.engine)
 
@@ -70,6 +69,8 @@ class Sqlite(BaseStorage[npt.NDArray[np.float64]]):
             record.f64_matrix = matrix_obj
             self._create_record(db, record)
 
+    def load_response(self, name: str, iens: Optional[List[int]]) -> npt.NDArray[np.float64]:
+        return super().load_response(name, iens)
 
     def from_numpy(self, array: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         return array

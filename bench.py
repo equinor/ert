@@ -14,6 +14,7 @@ def parse_args() -> Namespace:
     ap.add_argument("--use-async", default=False, action="store_true")
     ap.add_argument("--keys", type=int, default=10)
     ap.add_argument("--ensemble-size", type=int, default=100)
+    ap.add_argument("--trials", type=int, default=1)
 
     namespace = Namespace()
     ap.parse_args(namespace=namespace)
