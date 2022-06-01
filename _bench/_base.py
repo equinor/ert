@@ -17,6 +17,7 @@ RecordType = TypeVar("RecordType")
 class Namespace:
     command: str
     module: str
+    suffix: str
 
     ensemble_size: int
     keys: int
@@ -30,7 +31,7 @@ class BaseStorage(ABC, Generic[RecordType]):
 
     def __init__(self, args: Namespace, keep: bool = False) -> None:
         self.args = args
-        self.path = Path.cwd() / f"_tmp_{self.__class__.__name__}"
+        self.path = Path.cwd() / f"_tmp_{self.__class__.__name__}-{args.suffix}"
         if not keep:
             shutil.rmtree(self.path, ignore_errors=True)
             self.path.mkdir()
@@ -70,6 +71,10 @@ class BaseStorage(ABC, Generic[RecordType]):
         self, name: str, array: RecordType, iens: int, executor: Executor
     ) -> None:
         self.skip()
+
+    @abstractmethod
+    def load_parameter(self, name: str, iens: Optional[List[int]]) -> RecordType:
+        ...
 
     @abstractmethod
     def load_response(self, name: str, iens: Optional[List[int]]) -> RecordType:
@@ -149,3 +154,11 @@ class BaseStorage(ABC, Generic[RecordType]):
     def _response_names(self) -> Generator[str, None, None]:
         for i in range(self.args.keys):
             yield f"RESP{i}"
+
+    def test_validate_parameter(self):
+        params = self.gen_params()
+        for _ in self.timer():
+            for name, mat in params:
+                self.save_parameter(name, mat)
+            for name, mat in params:
+                assert (mat == self.load_parameter(name, None)).all()

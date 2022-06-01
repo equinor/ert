@@ -15,6 +15,7 @@ def parse_args() -> Namespace:
     ap.add_argument("--keys", type=int, default=10)
     ap.add_argument("--ensemble-size", type=int, default=100)
     ap.add_argument("--trials", type=int, default=1)
+    ap.add_argument("--suffix", type=str, default="")
 
     namespace = Namespace()
     ap.parse_args(namespace=namespace)
@@ -24,7 +25,7 @@ def parse_args() -> Namespace:
 def main() -> None:
     args = parse_args()
 
-    keep = not args.command.startswith("save")
+    keep = args.command.startswith("load")
     storage = MODULES[args.module](args, keep)
 
     kwargs: Dict[str, Any] = {}

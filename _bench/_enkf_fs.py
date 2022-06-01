@@ -7,6 +7,7 @@ from res.enkf.enkf_fs import EnkfFs as _EnkfFs
 from res._lib.enkf_fs import (
     write_param_vector_raw,
     write_resp_vector_raw,
+    load_param_vector_raw,
     load_resp_vector_raw,
 )
 from ._base import BaseStorage, Namespace
@@ -72,4 +73,29 @@ class EnkfFsMt(EnkfFs):
     def save_response(
         self, name: str, array: npt.NDArray[np.float64], iens: int
     ) -> None:
-        self.skip()
+        with ThreadPoolExecutor() as exec:
+            exec.submit(write_resp_vector_raw,self._fs, array, name, iens)
+
+    def load_parameter(
+        self, name: str, iens: Optional[List[int]]
+    ) -> npt.NDArray[np.float64]:
+        if iens is None:
+            return np.array(
+                [
+                    load_param_vector_raw(self._fs, name, i)
+                    for i in range(self.args.ensemble_size)
+                ]
+            )
+        return np.array([load_param_vector_raw(self._fs, name, i) for i in iens])
+
+    def load_response(
+        self, name: str, iens: Optional[List[int]]
+    ) -> npt.NDArray[np.float64]:
+        if iens is None:
+            return np.array(
+                [
+                    load_resp_vector_raw(self._fs, name, i)
+                    for i in range(self.args.ensemble_size)
+                ]
+            )
+        return np.array([load_resp_vector_raw(self._fs, name, i) for i in iens])
