@@ -62,10 +62,6 @@ void enkf_main_exit(enkf_main_type *enkf_main);
 extern "C" void enkf_main_init_run(enkf_main_type *enkf_main,
                                    const ert_run_context_type *run_context);
 
-extern "C" void
-enkf_main_create_run_path(enkf_main_type *enkf_main,
-                          const ert_run_context_type *run_context);
-
 extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *);
 
 extern "C" enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
