@@ -42,8 +42,6 @@ extern "C" void *enkf_main_export_field_to_RMS_JOB(void *self,
                                                    const stringlist_type *args);
 extern "C" void *enkf_main_export_field_to_ECL_JOB(void *self,
                                                    const stringlist_type *args);
-extern "C" void *enkf_main_init_misfit_table_JOB(void *self,
-                                                 const stringlist_type *args);
 extern "C" void *enkf_main_export_runpath_file_JOB(void *self,
                                                    const stringlist_type *args);
 extern "C" void *enkf_main_pre_simulation_copy_JOB(void *self,
@@ -78,7 +76,6 @@ std::unordered_map<std::string, workflow_job_ftype *>
          &enkf_main_export_field_to_RMS_JOB},
         {"enkf_main_export_field_to_ECL_JOB"s,
          &enkf_main_export_field_to_ECL_JOB},
-        {"enkf_main_init_misfit_table_JOB"s, &enkf_main_init_misfit_table_JOB},
         {"enkf_main_export_runpath_file_JOB"s,
          &enkf_main_export_runpath_file_JOB},
         {"enkf_main_pre_simulation_copy_JOB"s,
