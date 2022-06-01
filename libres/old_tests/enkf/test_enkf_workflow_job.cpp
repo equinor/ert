@@ -182,25 +182,6 @@ void test_init_case_job(ert_test_context_type *test_context,
     stringlist_free(args);
 }
 
-void test_init_misfit_table(ert_test_context_type *test_context,
-                            const char *job_name, const char *job_file) {
-    stringlist_type *args = stringlist_alloc_new();
-    ert_test_context_install_workflow_job(test_context, job_name, job_file);
-
-    enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
-    enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-
-    misfit_ensemble_type *misfit_ensemble = enkf_fs_get_misfit_ensemble(fs);
-    test_assert_false(misfit_ensemble_initialized(misfit_ensemble));
-
-    test_assert_true(
-        ert_test_context_run_worklow_job(test_context, job_name, args));
-
-    test_assert_true(misfit_ensemble_initialized(misfit_ensemble));
-
-    stringlist_free(args);
-}
-
 static void test_export_runpath_file(ert_test_context_type *test_context,
                                      const char *job_name, const char *job_file,
                                      stringlist_type *args,
@@ -449,7 +430,6 @@ int main(int argc, const char **argv) {
     const char *config_file_iterations = argv[2];
     const char *job_file_create_case = argv[3];
     const char *job_file_init_case_job = argv[4];
-    const char *job_file_init_misfit_table = argv[5];
     const char *job_file_export_runpath = argv[6];
     const char *job_file_pre_simulation_copy = argv[7];
 
@@ -458,8 +438,6 @@ int main(int argc, const char **argv) {
     {
         test_create_case_job(test_context, "JOB1", job_file_create_case);
         test_init_case_job(test_context, "JOB2", job_file_init_case_job);
-        test_init_misfit_table(test_context, "JOB5",
-                               job_file_init_misfit_table);
         test_pre_simulation_copy(test_context, "JOBB",
                                  job_file_pre_simulation_copy);
     }
