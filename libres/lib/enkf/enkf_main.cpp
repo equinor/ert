@@ -258,12 +258,10 @@ void enkf_main_write_run_path(enkf_main_type *enkf_main,
 void enkf_main_init_run(enkf_main_type *enkf_main,
                         const ert_run_context_type *run_context) {
     enkf_main_init_internalization(enkf_main);
-    {
-        std::vector<std::string> param_list =
-            ensemble_config_keylist_from_var_type(
-                enkf_main_get_ensemble_config(enkf_main), PARAMETER);
-        enkf_main_initialize_from_scratch(enkf_main, param_list, run_context);
-    }
+
+    std::vector<std::string> param_list = ensemble_config_keylist_from_var_type(
+        enkf_main_get_ensemble_config(enkf_main), PARAMETER);
+    enkf_main_initialize_from_scratch(enkf_main, param_list, run_context);
 }
 
 ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
