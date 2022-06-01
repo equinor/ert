@@ -245,12 +245,6 @@ static void enkf_main_write_run_path(enkf_main_type *enkf_main,
     runpath_list_fprintf(runpath_list);
 }
 
-void enkf_main_create_run_path(enkf_main_type *enkf_main,
-                               const ert_run_context_type *run_context) {
-    enkf_main_init_run(enkf_main, run_context);
-    enkf_main_write_run_path(enkf_main, run_context);
-}
-
 /**
    This function will initialize the necessary enkf_main structures
    before a run. Currently this means:
@@ -696,12 +690,21 @@ RES_LIB_SUBMODULE("enkf_main", m) {
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
     m.def(
-        "create_run_path",
+        "init_run",
         [](py::object self, py::object run_context_py) {
             auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
             auto run_context =
                 ert::from_cwrap<ert_run_context_type>(run_context_py);
-            return enkf_main_create_run_path(enkf_main, run_context);
+            return enkf_main_init_run(enkf_main, run_context);
+        },
+        py::arg("self"), py::arg("run_context"));
+    m.def(
+        "write_run_path",
+        [](py::object self, py::object run_context_py) {
+            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+            auto run_context =
+                ert::from_cwrap<ert_run_context_type>(run_context_py);
+            return enkf_main_write_run_path(enkf_main, run_context);
         },
         py::arg("self"), py::arg("run_context"));
     m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
