@@ -242,18 +242,3 @@ commas.**
 
 If this is run as a plugin from Ertshell or the GUI a convenient user
 interface can be shown.
-
-Jobs for ranking realizations
------------------------------
-
-**INIT_MISFIT_TABLE**
-
-Calculating the misfit for all observations and all timesteps can
-potentially be a bit time consuming, the results are therefore cached
-internally. If you need to force the recalculation of this cache you
-can use the :code:`INIT_MISFIT_TABLE` job to initialize the misfit table that
-is used in observation ranking.
-
-::
-
-	INIT_MISFIT_TABLE

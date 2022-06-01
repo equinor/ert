@@ -129,7 +129,6 @@ pybind11_add_module(
   enkf/meas_data.cpp
   enkf/misfit_ensemble.cpp
   enkf/misfit_member.cpp
-  enkf/misfit_ranking.cpp
   enkf/misfit_ts.cpp
   enkf/model_config.cpp
   enkf/obs_data.cpp

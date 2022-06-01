@@ -157,24 +157,6 @@ enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
 }
 
 // Internal workflow job
-extern "C" C_USED void *
-enkf_main_init_misfit_table_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    int history_length = enkf_main_get_history_length(enkf_main);
-    enkf_obs_type *enkf_obs = enkf_main_get_obs(enkf_main);
-    int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    enkf_fs_type *fs = enkf_main_job_get_fs(enkf_main);
-    bool force_update = true;
-    const ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
-
-    misfit_ensemble_type *misfit_ensemble = enkf_fs_get_misfit_ensemble(fs);
-    misfit_ensemble_initialize(misfit_ensemble, ensemble_config, enkf_obs, fs,
-                               ens_size, history_length, force_update);
-
-    return NULL;
-}
-
 static void enkf_main_export_runpath_file(enkf_main_type *enkf_main,
                                           const int_vector_type *realizations,
                                           const int_vector_type *iterations) {
