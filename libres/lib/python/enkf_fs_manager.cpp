@@ -3,17 +3,6 @@
 
 RES_LIB_SUBMODULE("enkf_fs_manager", m) {
     m.def(
-        "initialize_from_scratch",
-        [](py::object self, std::vector<std::string> param_list,
-           py::object run_context_py) {
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            auto run_context =
-                ert::from_cwrap<ert_run_context_type>(run_context_py);
-            return enkf_main_initialize_from_scratch(enkf_main, param_list,
-                                                     run_context);
-        },
-        py::arg("self"), py::arg("param_list"), py::arg("run_context"));
-    m.def(
         "init_current_case_from_existing_custom",
         [](py::object self, py::object source_case_py, int source_report_step,
            std::vector<std::string> &node_list, std::vector<bool> &iactive) {

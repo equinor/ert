@@ -48,9 +48,10 @@
 
 typedef struct enkf_state_struct enkf_state_type;
 
-extern "C" void enkf_state_initialize(
-    enkf_state_type *enkf_state, rng_type *rng, enkf_fs_type *fs,
-    const std::vector<std::string> &param_list, init_mode_type init_mode);
+void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
+                           enkf_fs_type *fs,
+                           const std::vector<std::string> &param_list,
+                           init_mode_type init_mode);
 
 fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
                                                   run_arg_type *run_arg);
