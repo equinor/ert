@@ -59,8 +59,8 @@ typedef struct enkf_main_struct enkf_main_type;
 
 extern "C" void enkf_main_free(enkf_main_type *);
 void enkf_main_exit(enkf_main_type *enkf_main);
-extern "C" void enkf_main_init_run(enkf_main_type *enkf_main,
-                                   const ert_run_context_type *run_context);
+void enkf_main_init_run(enkf_main_type *enkf_main,
+                        const ert_run_context_type *run_context);
 
 extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *);
 
