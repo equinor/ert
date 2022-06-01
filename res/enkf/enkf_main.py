@@ -262,7 +262,6 @@ class _RealEnKFMain(BaseCClass):
         "runpath_list_ref enkf_main_get_runpath_list(enkf_main)"
     )
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
-    _init_run = ResPrototype("void enkf_main_init_run(enkf_main, ert_run_context)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     def __init__(self, config, strict=True):
@@ -395,7 +394,7 @@ class _RealEnKFMain(BaseCClass):
         return self._load_from_run_context(run_context, fs)
 
     def initRun(self, run_context):
-        self._init_run(run_context)
+        enkf_main.init_run(self, run_context)
 
     def getRunContextENSEMPLE_EXPERIMENT(
         self, fs, iactive: List[bool], iteration: int = 0

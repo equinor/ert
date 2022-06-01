@@ -30,6 +30,9 @@
 
 namespace fs = std::filesystem;
 
+void enkf_main_write_run_path(enkf_main_type *enkf_main,
+                              const ert_run_context_type *run_context);
+
 void create_runpath(enkf_main_type *enkf_main, int iter) {
     const int ens_size = enkf_main_get_ensemble_size(enkf_main);
     bool_vector_type *iactive = bool_vector_alloc(ens_size, true);
@@ -41,7 +44,8 @@ void create_runpath(enkf_main_type *enkf_main, int iter) {
     ert_run_context_type *run_context = ert_run_context_alloc_INIT_ONLY(
         fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list, iter);
 
-    enkf_main_create_run_path(enkf_main, run_context);
+    enkf_main_init_run(enkf_main, run_context);
+    enkf_main_write_run_path(enkf_main, run_context);
     bool_vector_free(iactive);
     ert_run_context_free(run_context);
 }
