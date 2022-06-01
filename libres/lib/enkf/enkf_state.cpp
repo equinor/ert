@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <vector>
 
+#include <ert/python.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.h>
 #include <ert/util/rng.h>
@@ -679,3 +680,17 @@ void enkf_state_ecl_write(const ensemble_config_type *ens_config,
 }
 
 #include "enkf_state_nodes.cpp"
+
+RES_LIB_SUBMODULE("enkf_state", m) {
+    m.def("state_initialize", [](py::object enkf_main, py::object fs,
+                                 std::vector<std::string> &param_list,
+                                 int init_mode, int iens) {
+        auto enkf_main_ = ert::from_cwrap<enkf_main_type>(enkf_main);
+        auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
+        init_mode_type init_mode_ = static_cast<init_mode_type>(init_mode);
+        return enkf_state_initialize(
+            enkf_main_iget_state(enkf_main_, iens),
+            rng_manager_iget(enkf_main_get_rng_manager(enkf_main_), iens), fs_,
+            param_list, init_mode_);
+    });
+}

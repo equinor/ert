@@ -59,8 +59,6 @@ typedef struct enkf_main_struct enkf_main_type;
 
 extern "C" void enkf_main_free(enkf_main_type *);
 void enkf_main_exit(enkf_main_type *enkf_main);
-void enkf_main_init_run(enkf_main_type *enkf_main,
-                        const ert_run_context_type *run_context);
 
 extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *);
 
@@ -132,10 +130,6 @@ bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
 char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main);
 extern "C" stringlist_type *
 enkf_main_alloc_caselist(const enkf_main_type *enkf_main);
-
-void enkf_main_initialize_from_scratch(
-    enkf_main_type *enkf_main, const std::vector<std::string> &param_list,
-    const ert_run_context_type *run_context);
 
 extern "C" void
 enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,

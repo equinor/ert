@@ -23,6 +23,7 @@
 
 void enkf_main_write_run_path(enkf_main_type *enkf_main,
                               const ert_run_context_type *run_context);
+void enkf_main_init_internalization(enkf_main_type *);
 
 int main(int argc, char **argv) {
     enkf_main_install_SIGNALS();
@@ -42,7 +43,7 @@ int main(int argc, char **argv) {
         ert_run_context_type *run_context = ert_run_context_alloc_INIT_ONLY(
             fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list, 0);
 
-        enkf_main_init_run(enkf_main, run_context);
+        enkf_main_init_internalization(enkf_main);
         enkf_main_write_run_path(enkf_main, run_context);
         ert_run_context_free(run_context);
         bool_vector_free(iactive);

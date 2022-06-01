@@ -9,6 +9,7 @@ from ecl.util.util import StringList
 
 from res import ResPrototype
 from res import _lib
+from res._lib import enkf_state
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.ert_run_context import ErtRunContext
@@ -269,9 +270,15 @@ class EnkfFsManager(BaseCClass):
                 DeprecationWarning,
             )
             parameter_list = list(parameter_list)
-        _lib.enkf_fs_manager.initialize_from_scratch(
-            self, list(parameter_list), run_context
-        )
+        for realization_nr in range(self.parent().getEnsembleSize()):
+            if run_context.is_active(realization_nr):
+                enkf_state.state_initialize(
+                    self.parent(),
+                    run_context.get_sim_fs(),
+                    parameter_list,
+                    run_context.get_init_mode().value,
+                    realization_nr,
+                )
 
     def isCaseMounted(self, case_name, mount_root=None):
         """
