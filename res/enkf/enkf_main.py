@@ -20,7 +20,7 @@ from cwrap import BaseCClass
 from ecl.util.util import BoolVector, RandomNumberGenerator
 
 from res import ResPrototype
-from res._lib import enkf_main
+from res._lib import enkf_main, enkf_fs_manager
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
@@ -394,7 +394,8 @@ class _RealEnKFMain(BaseCClass):
         return self._load_from_run_context(run_context, fs)
 
     def initRun(self, run_context):
-        enkf_main.init_run(self, run_context)
+        enkf_main.init_internalization(self)
+        enkf_fs_manager.initialize_from_scatch(self, self._parameter_keys, run_context)
 
     def getRunContextENSEMPLE_EXPERIMENT(
         self, fs, iactive: List[bool], iteration: int = 0
