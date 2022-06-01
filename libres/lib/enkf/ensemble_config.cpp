@@ -43,10 +43,13 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/enkf/gen_kw_config.hpp>
+#include <ert/logging.hpp>
 
 namespace fs = std::filesystem;
 
 #define ENSEMBLE_CONFIG_TYPE_ID 8825306
+
+static auto logger = ert::get_logger("ensemble_config");
 
 namespace {
 
@@ -982,13 +985,13 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
                             run_arg_get_runpath(run_arg), iens);
 
                         if (init_file && !fs::exists(init_file))
-                            fprintf(stderr,
-                                    "File not found: %s - failed to initialize "
-                                    "node: %s\n",
-                                    init_file, enkf_node_get_key(node));
+                            logger->error(
+                                "File not found: {} - failed to initialize "
+                                "node: {}\n",
+                                init_file, enkf_node_get_key(node));
                         else
-                            fprintf(stderr, "Failed to initialize node: %s\n",
-                                    enkf_node_get_key(node));
+                            logger->error("Failed to initialize node: {}\n",
+                                          enkf_node_get_key(node));
 
                         free(init_file);
                         result = LOAD_FAILURE;

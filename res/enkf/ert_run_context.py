@@ -185,10 +185,7 @@ class ErtRunContext(BaseCClass):
         return cls._alloc_ensemble_smoother_update(sim_fs, target_fs)
 
     def is_active(self, index: int) -> bool:
-        if 0 <= index < len(self):
-            return self._iactive(index)
-        else:
-            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)})")
+        return self._iactive(index)
 
     def __len__(self):
         return self._get_size()

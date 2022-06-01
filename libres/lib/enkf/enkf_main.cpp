@@ -245,25 +245,6 @@ void enkf_main_write_run_path(enkf_main_type *enkf_main,
     runpath_list_fprintf(runpath_list);
 }
 
-/**
-   This function will initialize the necessary enkf_main structures
-   before a run. Currently this means:
-
-     1. Set the enkf_sched instance - either by loading from file or
-        by using the default.
-
-     2. Set up the configuration of what should be internalized.
-
-*/
-void enkf_main_init_run(enkf_main_type *enkf_main,
-                        const ert_run_context_type *run_context) {
-    enkf_main_init_internalization(enkf_main);
-
-    std::vector<std::string> param_list = ensemble_config_keylist_from_var_type(
-        enkf_main_get_ensemble_config(enkf_main), PARAMETER);
-    enkf_main_initialize_from_scratch(enkf_main, param_list, run_context);
-}
-
 ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
     const enkf_main_type *enkf_main, enkf_fs_type *fs,
     bool_vector_type *iactive, int iter) {

@@ -113,21 +113,6 @@ stringlist_type *enkf_main_alloc_caselist(const enkf_main_type *enkf_main) {
     return case_list;
 }
 
-void enkf_main_initialize_from_scratch(
-    enkf_main_type *enkf_main, const std::vector<std::string> &param_list,
-    const ert_run_context_type *run_context) {
-    int ens_size = enkf_main_get_ensemble_size(enkf_main);
-    for (int iens = 0; iens < ens_size; iens++) {
-        if (ert_run_context_iactive(run_context, iens)) {
-            enkf_state_type *state = enkf_main_iget_state(enkf_main, iens);
-            rng_type *rng = rng_manager_iget(enkf_main->rng_manager, iens);
-            enkf_state_initialize(
-                state, rng, ert_run_context_get_sim_fs(run_context), param_list,
-                ert_run_context_get_init_mode(run_context));
-        }
-    }
-}
-
 static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     enkf_fs_type *source_case_fs,
                                     int source_report_step,
