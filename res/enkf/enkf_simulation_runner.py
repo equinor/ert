@@ -62,7 +62,8 @@ class EnkfSimulationRunner(BaseCClass):
         return totalOk
 
     def createRunPath(self, run_context: ErtRunContext) -> None:
-        _lib.enkf_main.create_run_path(self, run_context)
+        _lib.enkf_main.init_run(self, run_context)
+        _lib.enkf_main.write_run_path(self, run_context)
 
     def runEnsembleExperiment(
         self, job_queue: JobQueue, run_context: ErtRunContext
