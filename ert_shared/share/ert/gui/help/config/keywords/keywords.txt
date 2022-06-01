@@ -70,9 +70,6 @@ run_smoother_with_iter	http://ert.nr.no/ert/index.php/Creating_a_configuration_f
 ensemble_run	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENSEMBLE_RUN
 load_results	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#LOAD_RESULTS
 load_results_iter	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#LOAD_RESULTS_ITER
-observation_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#OBSERVATION_RANKING
-data_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DATA_RANKING
-export_ranking	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_RANKING
 init_misfit_table	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#INIT_MISFIT_TABLE
 setenv	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SETENV
 update_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#UPDATE_PATH
