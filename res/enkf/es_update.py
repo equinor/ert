@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any, TYPE_CHECKING, Optional
@@ -74,25 +75,30 @@ def analysis_smoother_update(
         )
 
     update.copy_parameters(source_fs, target_fs, ensemble_config, ens_mask)
+    alpha = analysis_config.getEnkfAlpha()
+    std_cutoff = analysis_config.getStdCutoff()
+    global_scaling = analysis_config.getGlobalStdScaling()
 
     # Looping over local analysis update_step
     for update_step in updatestep:
-        update_data = update.make_update_data(
+
+        S, observation_handle = update.load_observations_and_responses(
             source_fs,
-            target_fs,
             obs,
-            ensemble_config,
-            analysis_config,
+            alpha,
+            std_cutoff,
+            global_scaling,
             ens_mask,
             update_step.observation_config(),
-            shared_rng,
         )
         # pylint: disable=unsupported-assignment-operation
         smoother_snapshot.update_step_snapshots[
             update_step.name
-        ] = update_data.update_snapshot
-
-        if not update_data.has_observations:
+        ] = observation_handle.update_snapshot
+        observation_values = observation_handle.observation_values
+        observation_errors = observation_handle.observation_errors
+        observation_mask = observation_handle.obs_mask
+        if len(observation_values) == 0:
             raise ErtAnalysisError(
                 f"No active observations for update step: {update_step.name}."
             )
@@ -106,7 +112,15 @@ def analysis_smoother_update(
             iens_active_index,
             update_step.row_scaling_parameters,
         )
-
+        noise = update.generate_noise(
+            len(observation_values), len(iens_active_index), shared_rng
+        )
+        E = ies.make_E(observation_errors, noise)
+        R = np.identity(len(observation_errors))
+        D = ies.make_D(observation_values, E, S)
+        D = (D.T / observation_errors).T
+        E = (E.T / observation_errors).T
+        S = (S.T / observation_errors).T
         module_config = analysis_module.get_module_config(module)
 
         if A is not None:
@@ -115,25 +129,25 @@ def analysis_smoother_update(
                     raise ErtAnalysisError(
                         "Trying to run IES without coffecient matrix container!"
                     )
-                ies.init_update(w_container, ens_mask, update_data.obs_mask)
+                ies.init_update(w_container, ens_mask, observation_mask)
 
                 ies.update_A(
                     w_container,
                     A,
-                    update_data.S,
-                    update_data.R,
-                    update_data.E,
-                    update_data.D,
+                    S,
+                    R,
+                    E,
+                    D,
                     ies_inversion=module_config.inversion,
                     truncation=module_config.get_truncation(),
                     step_length=module_config.get_steplength(w_container.iteration_nr),
                 )
             else:
                 X = ies.make_X(
-                    update_data.S,
-                    update_data.R,
-                    update_data.E,
-                    update_data.D,
+                    S,
+                    R,
+                    E,
+                    D,
                     A,
                     ies_inversion=module_config.inversion,
                     truncation=module_config.get_truncation(),
@@ -157,10 +171,10 @@ def analysis_smoother_update(
                 )
             for (A, row_scaling) in A_with_rowscaling:
                 X = ies.make_X(
-                    update_data.S,
-                    update_data.R,
-                    update_data.E,
-                    update_data.D,
+                    S,
+                    R,
+                    E,
+                    D,
                     A,
                     ies_inversion=module_config.inversion,
                     truncation=module_config.get_truncation(),
