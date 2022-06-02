@@ -18,27 +18,23 @@ namespace analysis {
  * are active. In addition a flag has_observations which is used to determine wheter
  * it is possible to do an update step.
 */
-class update_data_type : public std::enable_shared_from_this<update_data_type> {
+class ObservationHandler
+    : public std::enable_shared_from_this<ObservationHandler> {
 public:
-    update_data_type() = default;
-    update_data_type(Eigen::MatrixXd S_in, Eigen::MatrixXd E_in,
-                     Eigen::MatrixXd D_in, Eigen::MatrixXd R_in,
-                     const std::vector<bool> &obs_mask_in,
-                     const UpdateSnapshot &update_snapshot_in)
-        : S(std::move(S_in)), E(std::move(E_in)), D(std::move(D_in)),
-          R(std::move(R_in)), obs_mask(std::move(obs_mask_in)),
-          update_snapshot(std::move(update_snapshot_in)) {
-        has_observations = true;
-    }
+    ObservationHandler() = default;
+    ObservationHandler(Eigen::VectorXd observation_values_in,
+                       Eigen::VectorXd observation_errors_in,
+                       const std::vector<bool> &obs_mask_in,
+                       const UpdateSnapshot &update_snapshot_in)
+        : observation_values(observation_values_in),
+          observation_errors(observation_errors_in),
+          obs_mask(std::move(obs_mask_in)),
+          update_snapshot(std::move(update_snapshot_in)) {}
 
-    Eigen::MatrixXd S;
-    Eigen::MatrixXd E;
-    Eigen::MatrixXd D;
-    Eigen::MatrixXd R;
+    Eigen::VectorXd observation_values;
+    Eigen::VectorXd observation_errors;
     std::vector<bool> obs_mask;
     UpdateSnapshot update_snapshot;
-
-    bool has_observations = false;
 };
 
 class Parameter : public std::enable_shared_from_this<Parameter> {
