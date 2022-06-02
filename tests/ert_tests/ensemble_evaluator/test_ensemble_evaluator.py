@@ -6,6 +6,7 @@ from ert.ensemble_evaluator import identifiers, wait_for_evaluator, Snapshot
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
+    ENSEMBLE_STATE_FAILED,
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
@@ -176,6 +177,60 @@ def test_ensure_multi_level_events_in_order(evaluator):
                 if "reals" in event.data:
                     assert ensemble_state == ENSEMBLE_STATE_STARTED
                 ensemble_state = event.data.get("status", ensemble_state)
+
+
+def test_dying_batcher(evaluator):
+    def exploding_handler(events):
+        raise ValueError("Boom!")
+
+    evaluator._dispatcher.register_event_handler("EXPLODING", exploding_handler)
+
+    with evaluator.run() as monitor:
+        token = evaluator._config.token
+        cert = evaluator._config.cert
+        url = evaluator._config.url
+
+        with Client(url + "/dispatch", cert=cert, token=token) as dispatch:
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_ENSEMBLE_STARTED,
+                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                "event0",
+                {},
+            )
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                "event2",
+                {},
+            )
+            send_dispatch_event(
+                dispatch,
+                "EXPLODING",
+                f"/ert/ee/{evaluator._ee_id}/real/1/step/0",
+                "event3",
+                {},
+            )
+            send_dispatch_event(
+                dispatch,
+                identifiers.EVTYPE_FM_STEP_SUCCESS,
+                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                "event4",
+                {},
+            )
+
+        # drain the monitor
+        list(monitor.track())
+
+        assert ENSEMBLE_STATE_FAILED == evaluator.ensemble.snapshot.status
 
 
 @pytest.mark.consumer_driven_contract_verification

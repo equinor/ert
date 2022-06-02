@@ -20,7 +20,13 @@ from websockets.legacy.server import WebSocketServerProtocol
 import ert_shared.ensemble_evaluator.monitor as ee_monitor
 from ert.ensemble_evaluator import identifiers
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
-from ert_shared.ensemble_evaluator.dispatch import Batcher, Dispatcher
+from ert_shared.ensemble_evaluator.dispatch import BatchingDispatcher
+
+from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_CANCELLED,
+    ENSEMBLE_STATE_FAILED,
+    ENSEMBLE_STATE_STOPPED,
+)
 
 if sys.version_info < (3, 7):
     from async_generator import asynccontextmanager
@@ -49,16 +55,23 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: Optional[asyncio.Queue] = None
-        self._batcher = Batcher(timeout=2, max_batch=1000, loop=self._loop)
-        self._dispatcher = Dispatcher(
-            ensemble=self._ensemble,
-            evaluator_callback=self.dispatcher_callback,
-            batcher=self._batcher,
+        self._dispatchers_connected: asyncio.Queue = asyncio.Queue()
+        self._dispatcher = BatchingDispatcher(
+            self._loop,
+            timeout=2,
+            max_batch=1000,
         )
 
-        self._result = None
+        for e_type, f in (
+            (identifiers.EVGROUP_FM_ALL, self._fm_handler),
+            (identifiers.EVTYPE_ENSEMBLE_STARTED, self._started_handler),
+            (identifiers.EVTYPE_ENSEMBLE_STOPPED, self._stopped_handler),
+            (identifiers.EVTYPE_ENSEMBLE_CANCELLED, self._cancelled_handler),
+            (identifiers.EVTYPE_ENSEMBLE_FAILED, self._failed_handler),
+        ):
+            self._dispatcher.register_event_handler(e_type, f)
 
+        self._result = None
         self._ws_thread = threading.Thread(
             name="ert_ee_run_server", target=self._run_server, args=(self._loop,)
         )
@@ -71,30 +84,57 @@ class EnsembleEvaluator:
     def ensemble(self):
         return self._ensemble
 
-    async def dispatcher_callback(self, event_type, snapshot_update_event, result=None):
-        if event_type == identifiers.EVTYPE_ENSEMBLE_STOPPED:
-            self._result = result
-
+    async def _fm_handler(self, events):
+        snapshot_update_event = self.ensemble.update_snapshot(events)
         await self._send_snapshot_update(snapshot_update_event)
 
-        if event_type == identifiers.EVTYPE_ENSEMBLE_CANCELLED:
+    async def _started_handler(self, events):
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            snapshot_update_event = self.ensemble.update_snapshot(events)
+            await self._send_snapshot_update(snapshot_update_event)
+
+    async def _stopped_handler(self, events):
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            self._result = events[0].data  # normal termination
+            snapshot_update_event = self.ensemble.update_snapshot(events)
+            await self._send_snapshot_update(snapshot_update_event)
+
+    async def _cancelled_handler(self, events):
+        if self.ensemble.status != ENSEMBLE_STATE_FAILED:
+            snapshot_update_event = self.ensemble.update_snapshot(events)
+            await self._send_snapshot_update(snapshot_update_event)
             self._stop()
 
+    async def _failed_handler(self, events):
+        if self.ensemble.status not in (
+            ENSEMBLE_STATE_STOPPED,
+            ENSEMBLE_STATE_CANCELLED,
+        ):
+            # if list is empty this call is not triggered by an
+            # event, but as a consequence of some bad state
+            # create a fake event because that's currently the only
+            # api for setting state in the ensemble
+            if len(events) == 0:
+                events = [self._create_cloud_event(identifiers.EVTYPE_ENSEMBLE_FAILED)]
+            snapshot_update_event = self.ensemble.update_snapshot(events)
+            await self._send_snapshot_update(snapshot_update_event)
+            self._signal_cancel()  # let ensemble know it should stop
+
     async def _send_snapshot_update(self, snapshot_update_event):
-        event = self._create_cloud_event(
+        message = self._create_cloud_message(
             identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
         )
-        if event and self._clients:
-            await asyncio.gather(*[client.send(event) for client in self._clients])
+        if message and self._clients:
+            await asyncio.gather(*[client.send(message) for client in self._clients])
 
     def _create_cloud_event(
         self,
         event_type,
         data: Optional[dict] = None,
         extra_attrs: Optional[dict] = None,
-        data_marshaller=evaluator_marshaller,
     ):
+        """Returns a CloudEvent with the given properties"""
         if isinstance(data, dict):
             data["iter"] = self._iter
         if extra_attrs is None:
@@ -105,11 +145,23 @@ class EnsembleEvaluator:
             "source": f"/ert/ee/{self._ee_id}",
         }
         attrs.update(extra_attrs)
-        out_cloudevent = CloudEvent(
+        return CloudEvent(
             attrs,
             data,
         )
-        return to_json(out_cloudevent, data_marshaller=data_marshaller).decode()
+
+    def _create_cloud_message(
+        self,
+        event_type,
+        data: Optional[dict] = None,
+        extra_attrs: Optional[dict] = None,
+        data_marshaller=evaluator_marshaller,
+    ):
+        """Creates the CloudEvent and returns the serialized json-string"""
+        return to_json(
+            self._create_cloud_event(event_type, data, extra_attrs),
+            data_marshaller=data_marshaller,
+        ).decode()
 
     @contextmanager
     def store_client(self, websocket):
@@ -119,7 +171,7 @@ class EnsembleEvaluator:
 
     async def handle_client(self, websocket, path):
         with self.store_client(websocket):
-            event = self._create_cloud_event(
+            event = self._create_cloud_message(
                 identifiers.EVTYPE_EE_SNAPSHOT, self._ensemble.snapshot.to_dict()
             )
             await websocket.send(event)
@@ -139,8 +191,6 @@ class EnsembleEvaluator:
 
     @asynccontextmanager
     async def count_dispatcher(self):
-        if self._dispatchers_connected is None:
-            self._dispatchers_connected = asyncio.Queue()
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()
@@ -162,7 +212,15 @@ class EnsembleEvaluator:
                         f"ignoring since I am {self._ee_id}"
                     )
                     continue
-                await self._dispatcher.handle_event(event)
+                try:
+                    await self._dispatcher.handle_event(event)
+                except BaseException:
+                    logger.warning(
+                        "cannot handle event - closing connection to dispatcher"
+                    )
+                    websocket.close(code=1011, reason=f"failed handling {event}")
+                    return
+
                 if event["type"] in [
                     identifiers.EVTYPE_ENSEMBLE_STOPPED,
                     identifiers.EVTYPE_ENSEMBLE_FAILED,
@@ -184,7 +242,7 @@ class EnsembleEvaluator:
         if path == "/healthcheck":
             return HTTPStatus.OK, {}, b""
 
-    async def evaluator_server(self, done):
+    async def evaluator_server(self):
         # pylint: disable=no-member
         # (false positive)
         async with websockets.serve(
@@ -195,24 +253,29 @@ class EnsembleEvaluator:
             max_queue=None,
             max_size=2**26,
         ):
-            await done
-            logger.debug("Got done signal.")
-            # Wait for dispatchers to disconnect
-            try:
-                if self._dispatchers_connected is not None:
-                    await asyncio.wait_for(
-                        self._dispatchers_connected.join(), timeout=20
-                    )
+            await self._done
+            logger.debug(
+                f"Got done signal. {self._dispatchers_connected.qsize()} dispatchers to disconnect..."  # noqa: E501
+            )
+            try:  # Wait for dispatchers to disconnect
+                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=20)
             except asyncio.TimeoutError:
                 logger.debug("Timed out waiting for dispatchers to disconnect")
-            await self._batcher.join()
+
+            logger.debug("Joining batcher...")
+            try:
+                await asyncio.wait_for(self._dispatcher.join(), timeout=20)
+            except asyncio.TimeoutError:
+                logger.debug("Timed out waiting for batcher")
 
             terminated_attrs = {}
             terminated_data = None
             if self._result:
                 terminated_attrs["datacontenttype"] = "application/octet-stream"
                 terminated_data = cloudpickle.dumps(self._result)
-            message = self._create_cloud_event(
+
+            logger.debug("Sending termination-message to clients...")
+            message = self._create_cloud_message(
                 identifiers.EVTYPE_EE_TERMINATED,
                 data=terminated_data,
                 extra_attrs=terminated_attrs,
@@ -222,12 +285,11 @@ class EnsembleEvaluator:
                 await asyncio.gather(
                     *[client.send(message) for client in self._clients]
                 )
-            logger.debug("Sent terminated to clients.")
 
         logger.debug("Async server exiting.")
 
     def _run_server(self, loop):
-        loop.run_until_complete(self.evaluator_server(self._done))
+        loop.run_until_complete(self.evaluator_server())
         logger.debug("Server thread exiting.")
 
     def run(self) -> ee_monitor._Monitor:
