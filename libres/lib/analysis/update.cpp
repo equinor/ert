@@ -277,14 +277,12 @@ void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     }
 }
 
-std::shared_ptr<analysis::update_data_type>
-make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
-                 enkf_obs_type *obs, ensemble_config_type *ensemble_config,
-                 const analysis_config_type *analysis_config,
-                 const std::vector<bool> &ens_mask,
-                 const std::vector<std::pair<std::string, std::vector<int>>>
-                     &selected_observations,
-                 rng_type *shared_rng) {
+std::pair<Eigen::MatrixXd, ObservationHandler> load_observations_and_responses(
+    enkf_fs_type *source_fs, enkf_obs_type *obs, double alpha,
+    double std_cutoff, double global_std_scaling,
+    const std::vector<bool> &ens_mask,
+    const std::vector<std::pair<std::string, std::vector<int>>>
+        &selected_observations) {
     /*
     Observations and measurements are collected in these temporary
     structures. obs_data is a precursor for the 'd' vector, and
@@ -294,10 +292,6 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
     deactivating observations which should not be used in the update
     process.
     */
-    double alpha = analysis_config_get_alpha(analysis_config);
-    double std_cutoff = analysis_config_get_std_cutoff(analysis_config);
-    double global_std_scaling =
-        analysis_config_get_global_std_scaling(analysis_config);
 
     obs_data_type *obs_data = obs_data_alloc(global_std_scaling);
     meas_data_type *meas_data = meas_data_alloc(ens_mask);
@@ -323,34 +317,23 @@ make_update_data(enkf_fs_type *source_fs, enkf_fs_type *target_fs,
         obs_data_errors_as_vector(obs_data) * sqrt(global_std_scaling);
     std::vector<bool> obs_mask = obs_data_get_active_mask(obs_data);
 
-    if (S.rows() == 0) {
-        obs_data_free(obs_data);
-        return std::make_shared<update_data_type>();
-    }
-
-    Eigen::MatrixXd noise =
-        Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
-    for (int j = 0; j < active_ens_size; j++)
-        for (int i = 0; i < active_obs_size; i++)
-            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng);
-
-    Eigen::MatrixXd E = ies::makeE(observation_errors, noise);
-    Eigen::MatrixXd R = Eigen::MatrixXd::Identity(observation_errors.rows(),
-                                                  observation_errors.rows());
-    Eigen::MatrixXd D = ies::makeD(observation_values, E, S);
-
-    Eigen::VectorXd error_inverse = observation_errors.array().inverse();
-    S = S.array().colwise() * error_inverse.array();
-    E = E.array().colwise() * error_inverse.array();
-    D = D.array().colwise() * error_inverse.array();
-
-    return std::make_shared<update_data_type>(
-        std::move(S), std::move(E), std::move(D), std::move(R),
-        std::move(obs_mask), std::move(update_snapshot));
+    return std::pair<Eigen::MatrixXd, ObservationHandler>(
+        S, ObservationHandler(observation_values, observation_errors, obs_mask,
+                              update_snapshot));
 }
 } // namespace analysis
 
 namespace {
+static Eigen::MatrixXd generate_noise(int active_obs_size, int active_ens_size,
+                                      py::object shared_rng) {
+    auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
+    Eigen::MatrixXd noise =
+        Eigen::MatrixXd::Zero(active_obs_size, active_ens_size);
+    for (int j = 0; j < active_ens_size; j++)
+        for (int i = 0; i < active_obs_size; i++)
+            noise(i, j) = enkf_util_rand_normal(0, 1, shared_rng_);
+    return noise;
+}
 
 static void copy_parameters_pybind(py::object source_fs, py::object target_fs,
                                    py::object ensemble_config,
@@ -363,25 +346,19 @@ static void copy_parameters_pybind(py::object source_fs, py::object target_fs,
                                      ens_mask);
 }
 
-static std::shared_ptr<analysis::update_data_type> make_update_data_pybind(
-    py::object source_fs, py::object target_fs, py::object obs,
-    py::object ensemble_config, py::object analysis_config,
-    std::vector<bool> ens_mask,
+static std::pair<Eigen::MatrixXd, analysis::ObservationHandler>
+load_observations_and_responses_pybind(
+    py::object source_fs, py::object obs, double alpha, double std_cutoff,
+    double global_std_scaling, std::vector<bool> ens_mask,
     const std::vector<std::pair<std::string, std::vector<int>>>
-        &selected_observations,
-    py::object shared_rng) {
-    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
-    auto target_fs_ = ert::from_cwrap<enkf_fs_type>(target_fs);
-    auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
-    auto ensemble_config_ =
-        ert::from_cwrap<ensemble_config_type>(ensemble_config);
-    auto analysis_config_ =
-        ert::from_cwrap<analysis_config_type>(analysis_config);
-    auto shared_rng_ = ert::from_cwrap<rng_type>(shared_rng);
+        &selected_observations) {
 
-    return analysis::make_update_data(
-        source_fs_, target_fs_, obs_, ensemble_config_, analysis_config_,
-        ens_mask, selected_observations, shared_rng_);
+    auto source_fs_ = ert::from_cwrap<enkf_fs_type>(source_fs);
+    auto obs_ = ert::from_cwrap<enkf_obs_type>(obs);
+
+    return analysis::load_observations_and_responses(
+        source_fs_, obs_, alpha, std_cutoff, global_std_scaling, ens_mask,
+        selected_observations);
 }
 
 static std::vector<std::pair<Eigen::MatrixXd, std::shared_ptr<RowScaling>>>
@@ -468,26 +445,25 @@ RES_LIB_SUBMODULE("update", m) {
                       &analysis::Parameter::set_index_list)
         .def("__repr__", &::analysis::Parameter::to_string);
 
-    py::class_<analysis::update_data_type,
-               std::shared_ptr<analysis::update_data_type>>(m, "UpdateData")
+    py::class_<analysis::ObservationHandler,
+               std::shared_ptr<analysis::ObservationHandler>>(
+        m, "ObservationHandler")
         .def(py::init<>())
-        .def_readwrite("S", &analysis::update_data_type::S,
+        .def_readwrite("observation_values",
+                       &analysis::ObservationHandler::observation_values,
                        py::return_value_policy::reference_internal)
-        .def_readwrite("E", &analysis::update_data_type::E,
+        .def_readwrite("observation_errors",
+                       &analysis::ObservationHandler::observation_errors,
                        py::return_value_policy::reference_internal)
-        .def_readwrite("D", &analysis::update_data_type::D,
-                       py::return_value_policy::reference_internal)
-        .def_readwrite("R", &analysis::update_data_type::R,
-                       py::return_value_policy::reference_internal)
-        .def_readwrite("has_observations",
-                       &analysis::update_data_type::has_observations)
-        .def_readwrite("obs_mask", &analysis::update_data_type::obs_mask)
+        .def_readwrite("obs_mask", &analysis::ObservationHandler::obs_mask)
         .def_readwrite("update_snapshot",
-                       &analysis::update_data_type::update_snapshot);
+                       &analysis::ObservationHandler::update_snapshot);
     m.def("copy_parameters", copy_parameters_pybind);
-    m.def("make_update_data", make_update_data_pybind);
+    m.def("load_observations_and_responses",
+          load_observations_and_responses_pybind);
     m.def("save_parameters", save_parameters_pybind);
     m.def("save_row_scaling_parameters", save_row_scaling_parameters_pybind);
     m.def("load_parameters", load_parameters_pybind);
     m.def("load_row_scaling_parameters", load_row_scaling_parameters_pybind);
+    m.def("generate_noise", generate_noise);
 }
