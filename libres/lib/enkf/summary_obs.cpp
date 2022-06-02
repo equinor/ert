@@ -82,11 +82,6 @@ const char *summary_obs_get_summary_key(const summary_obs_type *summary_obs) {
     return summary_obs->summary_key;
 }
 
-/*
-   Hardcodes an assumption that the size of summary data|observations
-   is always one; i.e. PARTLY_ACTIVE and ALL_ACTIVE are treated in the
-   same manner.
-*/
 void summary_obs_get_observations(const summary_obs_type *summary_obs,
                                   obs_data_type *obs_data, enkf_fs_type *fs,
                                   int report_step) {
