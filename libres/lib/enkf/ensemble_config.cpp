@@ -342,27 +342,6 @@ void ensemble_config_add_config_items(config_parser_type *config) {
         item, GRID_KEY); /* if you are using a field - you must have a grid. */
 }
 
-/*
-  The var type parameter is determined by inspecting the
-  combination of input parameters. It is possible to specify an
-  invalid input combination; that should be identified with a call
-  to gen_data_config_is_valid() in the calling scope.
-
-
-  PARAMETER:      init_file_fmt    != NULL
-                  enkf_outfile_fmt != NULL
-                  enkf_infile_fmt  == NULL
-
-  DYNAMIC_STATE:  init_file_fmt    != NULL
-                  enkf_outfile_fmt != NULL
-                  enkf_infile_fmt  != NULL
-
-  DYNAMIC_RESULT: init_file_fmt    == NULL
-                  enkf_outfile_fmt == NULL
-                  enkf_infile_fmt  != NULL
-
-*/
-
 static void ensemble_config_init_GEN_DATA(ensemble_config_type *ensemble_config,
                                           const config_content_type *config) {
     if (config_content_has_item(config, GEN_DATA_KEY)) {
