@@ -40,6 +40,8 @@ class PlotWindow(QMainWindow):
     def __init__(self, config_file, parent):
         QMainWindow.__init__(self, parent)
 
+        logger.info("PlotWindow __init__")
+
         self.setMinimumWidth(850)
         self.setMinimumHeight(650)
 
