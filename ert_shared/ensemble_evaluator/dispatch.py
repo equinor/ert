@@ -3,28 +3,40 @@ import asyncio
 import time
 
 from collections import defaultdict, OrderedDict
-from typing import Optional
 
 from ert.ensemble_evaluator import identifiers
-
-from ert.ensemble_evaluator.state import (
-    ENSEMBLE_STATE_CANCELLED,
-    ENSEMBLE_STATE_FAILED,
-    ENSEMBLE_STATE_STOPPED,
-)
 
 logger = logging.getLogger(__name__)
 
 
-class Batcher:
-    def __init__(self, timeout, max_batch=1000, loop=None):
+class BatchingDispatcher:
+    def __init__(self, loop, timeout, max_batch=1000):
         self._timeout = timeout
         self._max_batch = max_batch
+
+        self._LOOKUP_MAP = defaultdict(list)
         self._running = True
         self._buffer = []
 
         # Schedule task
         self._task = asyncio.ensure_future(self._job(), loop=loop)
+        self._task.add_done_callback(self._done_callback)
+
+    def _done_callback(self, *args):
+        try:
+            failure = self._task.exception()
+            if failure is not None:
+                logger.warning(f"exception in batcher: {failure}")
+            else:
+                logger.debug("batcher finished normally")
+                return
+        except asyncio.CancelledError as ex:
+            logger.warning(f"batcher was cancelled: {ex}")
+
+        # call any registered handlers for FAILED. since we don't have
+        # an event, pass empty list and let handler decide how to proceed
+        funcs = self._LOOKUP_MAP[identifiers.EVTYPE_ENSEMBLE_FAILED]
+        asyncio.gather(*[f([]) for f, _ in funcs])
 
     async def _work(self):
         t0 = time.time()
@@ -43,9 +55,6 @@ class Batcher:
         for f, events in function_to_events_map.items():
             await f(events)
 
-    def put(self, f, event):
-        self._buffer.append((f, event))
-
     async def _job(self):
         while self._running:
             await asyncio.sleep(self._timeout)
@@ -56,96 +65,26 @@ class Batcher:
 
     async def join(self):
         self._running = False
-        await self._task
+        try:
+            await self._task
+        except BaseException:
+            # if result is exception it should have been handled by
+            # done-handler, but also avoid killing the caller here
+            pass
 
-
-class Dispatcher:
-    def __init__(self, ensemble, evaluator_callback, batcher=None):
-        self._LOOKUP_MAP = defaultdict(list)
-        self._batcher: Optional[Batcher] = batcher
-        self._ensemble = ensemble
-        self._evaluator_callback = evaluator_callback
-        self._register_event_handlers()
-
-    def register_event_handler(self, event_types, function, batching=False):
+    def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
             event_types = {event_types}
         for event_type in event_types:
             self._LOOKUP_MAP[event_type].append((function, batching))
 
-    def _register_event_handlers(self):
-        self.register_event_handler(
-            event_types=identifiers.EVGROUP_FM_ALL,
-            function=self._fm_handler,
-            batching=True,
-        )
-        self.register_event_handler(
-            event_types=identifiers.EVTYPE_ENSEMBLE_STOPPED,
-            function=self._ensemble_stopped_handler,
-            batching=True,
-        )
-        self.register_event_handler(
-            event_types=identifiers.EVTYPE_ENSEMBLE_STARTED,
-            function=self._ensemble_started_handler,
-            batching=True,
-        )
-        self.register_event_handler(
-            event_types=identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-            function=self._ensemble_cancelled_handler,
-            batching=True,
-        )
-        self.register_event_handler(
-            event_types=identifiers.EVTYPE_ENSEMBLE_FAILED,
-            function=self._ensemble_failed_handler,
-            batching=True,
-        )
-
-    async def _fm_handler(self, events):
-        snapshot_update_event = self._ensemble.update_snapshot(events)
-        await self._evaluator_callback(
-            identifiers.EVTYPE_EE_SNAPSHOT_UPDATE, snapshot_update_event
-        )
-
-    async def _ensemble_stopped_handler(self, events):
-        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
-            await self._evaluator_callback(
-                identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                self._ensemble.update_snapshot(events),
-                events[0].data,
-            )
-
-    async def _ensemble_started_handler(self, events):
-        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
-            await self._evaluator_callback(
-                identifiers.EVTYPE_ENSEMBLE_STARTED,
-                self._ensemble.update_snapshot(events),
-            )
-
-    async def _ensemble_cancelled_handler(self, events):
-        if self._ensemble.status != ENSEMBLE_STATE_FAILED:
-            await self._evaluator_callback(
-                identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-                self._ensemble.update_snapshot(events),
-            )
-
-    async def _ensemble_failed_handler(self, events):
-        if self._ensemble.status not in [
-            ENSEMBLE_STATE_STOPPED,
-            ENSEMBLE_STATE_CANCELLED,
-        ]:
-            await self._evaluator_callback(
-                identifiers.EVTYPE_ENSEMBLE_FAILED,
-                self._ensemble.update_snapshot(events),
-            )
-
     async def handle_event(self, event):
         for f, batching in self._LOOKUP_MAP[event["type"]]:
             if batching:
-                if self._batcher is None:
-                    raise RuntimeError(
-                        f"Requested batching of {event} with handler {f}, "
-                        "but no batcher was specified"
+                if self._task.done():
+                    raise asyncio.InvalidStateError(
+                        "trying to handle event after batcher is done"
                     )
-                self._batcher.put(f, event)
+                self._buffer.append((f, event))
             else:
                 await f(event)
