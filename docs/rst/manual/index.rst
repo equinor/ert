@@ -77,6 +77,13 @@ with model updates and uncertainty estimation. You can read more about the theor
 
 .. toctree::
    :hidden:
+   :maxdepth: 1
+   :caption: libres apidoc
+
+   libres_apidoc/index
+
+.. toctree::
+   :hidden:
    :caption: About
 
    about/index

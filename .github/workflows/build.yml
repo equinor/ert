@@ -238,6 +238,9 @@ jobs:
 
     - name: Test docs
       run: |
+        sudo apt-get install -y doxygen
+        doxygen docs/rst/manual/doxyfile
+        breathe-apidoc -g file docs/rst/manual/doxygen/xml -o docs/rst/manual/libres_apidoc/
         sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 
   tests-libres:

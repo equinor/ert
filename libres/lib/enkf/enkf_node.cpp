@@ -36,12 +36,11 @@
 
 #define ENKF_NODE_TYPE_ID 71043086
 
-/**
-   A small illustration (says more than thousand words ...) of how the
-   enkf_node, enkf_config_node, field[1] and field_config[1] objects
-   are linked.
+/** @page enkf_node_diagram Documentation of relationship between enkf_node, enkf_config_node, field[1] and field_config[1] objects
 
 
+   The following diagram summarizes the relationship between these objects:
+   @verbatim
    ================
    |              |   o-----------
    |  ================           |                =====================
@@ -50,17 +49,17 @@
    |  |  |              |        |                |  enkf_config_node |
    |  |  |              |        |                |                   |
    ===|  |  enkf_node   |  o------                |                   |
-   o |  |              |                         |                   |
-   | ===|              |                         =====================
-   |  o |              |                                   o
-   |  | ================                                   |
-   |  |        o                                           |
-   |  \        |                                           |
-   |   \       |                                           |
-   |    |      |                                           |
-   |    |      |                                           |
-   |    |      |                                           |
-   |    |      |                                           |
+    o |  |              |                         |                   |
+    | ===|              |                         =====================
+    |  o |              |                                   o
+    |  | ================                                   |
+    |  |        o                                           |
+    |  \        |                                           |
+    |   \       |                                           |
+    |    |      |                                           |
+    |    |      |                                           |
+    |    |      |                                           |
+    |    |      |                                           |
    \|/   |      |                                           |
    ======|======|==                                        \|/
    |    \|/     | |   o-----------
@@ -74,7 +73,7 @@
    ===   |              |                         =====================
          |              |
          ================
-
+   @endverbatim
 
    To summarize in words:
 
@@ -94,8 +93,7 @@
    [1]: field is just an example, and could be replaced with any of
    the enkf object types.
 
-   A note on memory
-   ================
+   A note on memory:
 
    The enkf_nodes can consume large amounts of memory, and for large
    models/ensembles we have a situation where not all the
@@ -114,7 +112,6 @@
 
 
    The following 'rules' apply to the memory treatment:
-   ----------------------------------------------------
 
    o Functions writing to memory can always be called, and it is their
    responsibility to allocate memory before actually writing on it. The
@@ -139,15 +136,13 @@
    o The only memory operation which is exported to 'user-space'
    (i.e. the enkf_state object) is enkf_node_free_data().
 
-   Keeeping track of node state.
-   =============================
+   Keeeping track of node state:
 
    To keep track of the state of the node's data (actually the data of
    the contained enkf_object, i.e. a field) we have three highly
    internal variables __state, __modified , __iens, and
    __report_step. These three variables are used/updated in the
    following manner:
-
 
 
    1. The nodes are created with (modified, report_step, state, iens) ==

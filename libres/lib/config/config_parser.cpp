@@ -41,14 +41,13 @@ namespace fs = std::filesystem;
 /**
 Structure to parse configuration files of this type:
 
-KEYWORD1  ARG2   ARG2  ARG3
-KEYWORD2  ARG1-2
-....
-KEYWORDN  ARG1  ARG2
+    KEYWORD1  ARG2   ARG2  ARG3
+    KEYWORD2  ARG1-2
+    ....
+    KEYWORDN  ARG1  ARG2
 
 A keyword can occure many times.
-
-
+@verbatim
                            =============================
                            | config_type object        |
                            |                           |
@@ -84,23 +83,25 @@ A keyword can occure many times.
 |--------------------------|  |--------------------------|   |--------------------------|
 | ARG1 ARG2 ARG3           |  | VERBOSE                  |   | DEBUG                    |
 ============================  ============================   ============================
+@endverbatim
+
 
 
 The example illustrated above would correspond to the following config
 file (invariant under line-permutations):
 
-KEY1   ARG1 ARG2 ARG3
-KEY1   VERBOSE
-KEY2   DEBUG
+    KEY1   ARG1 ARG2 ARG3
+    KEY1   VERBOSE
+    KEY2   DEBUG
 
 
 Example config file(2):
 
-OUTFILE   filename
-INPUT     filename
-OPTIONS   store
-OPTIONS   verbose
-OPTIONS   optimize cache=1
+    OUTFILE   filename
+    INPUT     filename
+    OPTIONS   store
+    OPTIONS   verbose
+    OPTIONS   optimize cache=1
 
 In this case the whole config object will contain three items,
 corresponding to the keywords OUTFILE, INPUT and OPTIONS. The two
@@ -113,6 +114,8 @@ struct config_parser_struct {
     /** Can print a (warning) message when a keyword is encountered. */
     hash_type *messages;
 };
+/** @memberof config_parser_struct
+ * \{*/
 
 int config_get_schema_size(const config_parser_type *config) {
     return hash_get_size(config->schema_items);
@@ -500,26 +503,23 @@ bool config_parser_add_key_values(
 
 
    Example:
-   --------
 
-   char * add_angular_brackets(const char * key) {
-       char * new_key = (char*)util_alloc_sprintf("<%s>" , key);
-   }
+       char * add_angular_brackets(const char * key) {
+           char * new_key = (char*)util_alloc_sprintf("<%s>" , key);
+       }
 
-
-
-   config_parse(... , "myDEF" , add_angular_brackets , ...)
+       config_parse(... , "myDEF" , add_angular_brackets , ...)
 
 
-   Config file:
-   -------------
-   myDEF   Name         BJARNE
-   myDEF   pet        Dog
-   ...
-   ...
-   PERSON  <Name> 28 <pet>
-   ...
-   ------------
+       Config file:
+       -------------
+       myDEF   Name         BJARNE
+       myDEF   pet        Dog
+       ...
+       ...
+       PERSON  <Name> 28 <pet>
+       ...
+       ------------
 
    After parsing we will have an entry: "NAME" , "Bjarne" , "28" , "Dog".
 
@@ -692,3 +692,4 @@ void config_parser_deprecate(config_parser_type *config, const char *kw,
     } else
         util_abort("%s: item:%s not recognized \n", __func__, kw);
 }
+/** \}*/

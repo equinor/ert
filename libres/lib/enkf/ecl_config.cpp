@@ -74,6 +74,8 @@ struct ecl_config_struct {
     /** Either metric, field or lab */
     ert_ecl_unit_enum unit_system;
 };
+/** \memberof ecl_config_struct
+ * \{*/
 
 /**
  With this function we try to determine whether ECLIPSE is active
@@ -93,15 +95,16 @@ bool ecl_config_active(const ecl_config_type *config) {
     return false;
 }
 
-/*
-   Could look up the sched_file instance directly - because the
-   ecl_config will never be the owner of a file with predictions.
-   */
-
+/**
+Getter for the last_history_restart field
+*/
 int ecl_config_get_last_history_restart(const ecl_config_type *ecl_config) {
     return ecl_config->last_history_restart;
 }
 
+/**
+* Returns whether an <INIT> section is supplied in the ECLIPSE data file.
+*/
 bool ecl_config_can_restart(const ecl_config_type *ecl_config) {
     return ecl_config->can_restart;
 }
@@ -259,6 +262,9 @@ static ecl_config_type *ecl_config_alloc_empty(void) {
     return ecl_config;
 }
 
+/**
+ * allocates an ecl_config and initializes it with the given config content.
+ */
 ecl_config_type *ecl_config_alloc(const config_content_type *config_content) {
     ecl_config_type *ecl_config = ecl_config_alloc_empty();
 
@@ -268,6 +274,9 @@ ecl_config_type *ecl_config_alloc(const config_content_type *config_content) {
     return ecl_config;
 }
 
+/**
+ * Allocates and initializes ecl_config from struct members.
+ */
 ecl_config_type *
 ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
                       char *refcase_default, stringlist_type *ref_case_list,
@@ -580,3 +589,4 @@ const char *ecl_config_get_pressure_unit(const ecl_config_type *ecl_config) {
         return NULL;
     }
 }
+/** \}*/

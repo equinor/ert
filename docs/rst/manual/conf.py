@@ -13,6 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import subprocess
 import sys
 
 sys.path.append(os.path.abspath("./_ext"))
@@ -22,6 +23,7 @@ from pkg_resources import get_distribution  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "ERT"
+breathe_default_project = "ERT"
 copyright = "Equinor"
 author = "Joakim Hove"
 
@@ -32,6 +34,12 @@ version = ".".join(dist_version.split(".")[:2])
 # The full version, including alpha/beta/rc tags
 release = dist_version
 
+# -- build doxygen for breathe first if on READTHEDOCS servers-------------
+read_the_docs_build = os.environ.get("READTHEDOCS", None) == "True"
+
+if read_the_docs_build:
+
+    subprocess.call("cd ../doxygen; doxygen", shell=True)
 
 # -- General configuration ---------------------------------------------------
 
@@ -49,14 +57,18 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.imgmath",
     "sphinxarg.ext",
     "sphinx.ext.todo",
     "sphinxcontrib.datatemplates",
+    "breathe",
     "ert_jobs",
     "ert_narratives",
     "ert3_plugin_configs",
     "ert3_plugin_references",
 ]
+
+breathe_projects = {"ERT": "doxygen/xml"}
 
 # Autodoc settings:
 autodoc_class_signature = "separated"
