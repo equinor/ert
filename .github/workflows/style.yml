@@ -60,7 +60,6 @@ jobs:
             consider-using-enumerate, \
             consider-using-f-string
             consider-using-from-import, \
-            consider-using-generator, \
             consider-using-min-builtin, \
             consider-using-set-comprehension, \
             empty-docstring, \
