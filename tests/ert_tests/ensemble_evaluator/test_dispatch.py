@@ -2,18 +2,16 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert_shared.ensemble_evaluator.dispatch import Batcher, Dispatcher
+from ert_shared.ensemble_evaluator.dispatch import BatchingDispatcher
 from ert.ensemble_evaluator import identifiers as ids
 
 
 class DummyEventHandler:
     def __init__(self, batching=False):
 
-        self.batcher = Batcher(timeout=1) if batching else None
-        self.dispatcher = Dispatcher(
-            ensemble=None,
-            evaluator_callback=lambda x: None,
-            batcher=self.batcher,
+        self.dispatcher = BatchingDispatcher(
+            loop=None,
+            timeout=1,
         )
         self.dispatcher._LOOKUP_MAP.clear()
         self.mock_all = Mock()
@@ -28,7 +26,7 @@ class DummyEventHandler:
         )
 
     async def join(self):
-        await self.batcher.join()
+        await self.dispatcher.join()
 
     async def all(self, event):
         self.mock_all(event)

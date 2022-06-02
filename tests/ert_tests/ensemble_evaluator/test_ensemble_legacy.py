@@ -7,6 +7,7 @@ from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator import state
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from websockets.exceptions import ConnectionClosed
 
 
 @pytest.mark.timeout(60)
@@ -51,10 +52,13 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
 
         with evaluator.run() as mon:
             cancel = True
-            for _ in mon.track():
-                if cancel:
-                    mon.signal_cancel()
-                    cancel = False
+            try:
+                for _ in mon.track():
+                    if cancel:
+                        mon.signal_cancel()
+                        cancel = False
+            except ConnectionClosed:
+                pass  # monitor throws some variant of CC if dispatcher dies
 
         assert evaluator._ensemble.status == state.ENSEMBLE_STATE_CANCELLED
 
