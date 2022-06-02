@@ -61,9 +61,9 @@ whether you have an instance available, you can verify by running
 `ert3 service check storage`.
 
 #### Layout
-Each experiment is a folder within within the `experiments` folder. The name of
-the folder is the name of the experiment and each folder is expected to contain
-two files, namely `experiment.yml` and `ensemble.yml`.
+Each experiment is a file within within the `experiments` folder. The name of
+the file represents the name of the experiment. Each file, yaml format, 
+represents the corresponding ensemble/experiment config.
 
 #### Initialising
 A workspace is only a collection of files until it is initialised as a
@@ -72,17 +72,19 @@ workspace running the command `ert3 init`.
 
 #### Evaluation
 The first experiment of the workspace is the evaluation experiment. It runs an
-evaluation of the model described in the respective `ensembles.yml`. The
-`experiment.yml` is the file indicating that the experiment is indeed an
-evaluation. The `ensemble.yml` describes the size of the ensemble, maps data
+evaluation of the model described in the respective `evaluation.yml`. The
+`experiment:` section indicates that the experiment is indeed of an evaluation
+type. The `evaluation.yml` further describes the size of the ensemble, maps data
 sources to input records and specifies the stage that is the forward model
 together with the queue system that is to be used. Notice in particular that by
 `stochastic.field_properties` one is pointing at the parameter named
 `field_properties` in `parameters.yml`.
 
 The experiment can be executed by `ert3 run evaluation`. And the data can
-afterwards be exported using `ert3 export evaluation`, that will put the data
-in the file `experiments/evaluation/data.json`.
+afterwards be exported using `ert3 export evaluation > eval_data.json` that 
+will put the data in the file `eval_data.json`. 
+Running only `ert3 export evaluation` will export the results into stdout 
+by default.
 
 #### Design of experiment
 The next experiment in the workspace carries out a design of experiment. The
@@ -102,7 +104,8 @@ The last experiment is a sensitivity study. Again it refers to distributions
 from the `parameters.yml` and uses the distributions to design the different
 realisations. An important difference is that the ensemble size is no longer
 configured by the user, but dictated by the algorithm. There are also some
-differences in the `experiment.yml`, but those are hopefully self-explaining.
+differences in the `experiment:` section in `sensitivity.yml`, 
+but those are hopefully self-explaining.
 
 #### Clean already ran experiments
 An experiment can only be run once. If you wish re-run your experiment, the
