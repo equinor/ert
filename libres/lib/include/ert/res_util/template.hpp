@@ -44,7 +44,4 @@ char *template_get_args_as_string(template_type *_template);
 void template_set_template_file(template_type *_template,
                                 const char *template_file);
 const char *template_get_template_file(const template_type *_template);
-
-//void template_eval_loops( const template_type * template_ , buffer_type * buffer );
-
 #endif
