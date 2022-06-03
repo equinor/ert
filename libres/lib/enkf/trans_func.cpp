@@ -27,14 +27,16 @@
 #include <ert/enkf/trans_func.hpp>
 
 struct trans_func_struct {
-    char *name; /* The name this function is registered as. */
-    double_vector_type
-        *params; /* The parameter values registered for this function. */
-    transform_ftype
-        *func; /* A pointer to the actual transformation function. */
-    validate_ftype *
-        validate; /* A pointer to a a function which can be used to validate the parameters - can be NULL. */
-    stringlist_type *param_names; /* A list of the parameter names. */
+    /** The name this function is registered as. */
+    char *name;
+    /** The parameter values registered for this function. */
+    double_vector_type *params;
+    /** A pointer to the actual transformation function. */
+    transform_ftype *func;
+    /** A pointer to a a function which can be used to validate the parameters can be NULL. */
+    validate_ftype *validate;
+    /* A list of the parameter names. */
+    stringlist_type *param_names;
     bool use_log;
 };
 
@@ -129,7 +131,7 @@ static double trans_lognormal(double x, const double_vector_type *arg) {
     return exp(x * std + mu);
 }
 
-/*
+/**
    Used to sample values between min and max - BUT it is the logarithm
    of y which is uniformly distributed. Relates to the uniform
    distribution in the same manner as the lognormal distribution

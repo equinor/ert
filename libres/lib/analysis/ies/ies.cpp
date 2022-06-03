@@ -228,7 +228,7 @@ void ies::updateA(Data &data,
     A = A0 * X;
 }
 
-/*  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
+/**  COMPUTING THE PROJECTION Y= Y * (Ai^+ * Ai) (only used when state_size < ens_size-1)    */
 void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
                                        Eigen::MatrixXd &Y) {
 
@@ -240,7 +240,7 @@ void ies::linalg_compute_AA_projection(const Eigen::MatrixXd &A,
     Y *= AAi;
 }
 
-/*
+/**
 * COMPUTE  Omega= I + W (I-11'/sqrt(ens_size))    from Eq. (36).                                   (Line 6)
 *  When solving the system S = Y inv(Omega) we write
 *     Omega^T S^T = Y^T
@@ -263,7 +263,7 @@ Eigen::MatrixXd ies::linalg_solve_S(const Eigen::MatrixXd &W0,
     return ST.transpose();
 }
 
-/*
+/**
 *  The standard inversion works on the equation
 *          S'*(S*S'+R)^{-1} H           (a)
 */
@@ -308,7 +308,7 @@ void ies::linalg_subspace_inversion(
     W0 = ies_steplength * S.transpose() * X3 + (1.0 - ies_steplength) * W0;
 }
 
-/*
+/**
 *  The standard inversion works on the equation
 *          S'*(S*S'+R)^{-1} H           (a)
 *  which in the case when R=I can be rewritten as
@@ -335,7 +335,7 @@ void ies::linalg_exact_inversion(Eigen::MatrixXd &W0, const int ies_inversion,
     W0 = ies_steplength * Z * ZtStH + (1.0 - ies_steplength) * W0;
 }
 
-/*
+/**
 * the updated W is stored for each iteration in data->W. If we have lost realizations we copy only the active rows and cols from
 * W0 to data->W which is then used in the algorithm.  (note the definition of the pointer dataW to data->W)
 */

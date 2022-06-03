@@ -66,13 +66,12 @@ void ActiveList::add_index(int new_index) {
     }
 }
 
-/*
+/**
    When mode == PARTLY_ACTIVE the active_list instance knows the size
    of the active set; if the mode is INACTIVE 0 will be returned and
    if the mode is ALL_ACTIVE the input parameter @total_size will be
    passed back to calling scope.
 */
-
 int ActiveList::active_size(int total_size) const {
     int active_size;
     switch (this->m_mode) {
@@ -87,13 +86,12 @@ int ActiveList::active_size(int total_size) const {
 
 active_mode_type ActiveList::getMode() const { return this->m_mode; }
 
-/*
+/**
    This will return a (const int *) pointer to the active indices. IFF
    (mode == INACTIVE || mode == ALL_ACTIVE) it will instead just
    return NULL. In that case it is the responsability of the calling
    scope to not dereference the NULL pointer.
 */
-
 const int *ActiveList::active_list_get_active() const {
     if (this->m_mode == PARTLY_ACTIVE)
         return this->m_index_list.data();

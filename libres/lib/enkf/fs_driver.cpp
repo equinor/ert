@@ -60,25 +60,26 @@ void fs_driver_init_fstab(FILE *stream, fs_driver_impl driver_id) {
     util_fwrite_int(driver_id, stream);
 }
 
-/*
-   Will open fstab stream and return it. The semantics with respect to
-   existing/not existnig fstab file depends on the value of the
-   @create parameter:
-
-   @create = True: If the fstab file exists the function will return
-   NULL, otherwise it will return a stream opened for writing to the
-   fstab file.
-
-   @create = False: If the fstab file exists the the function will
-   return a stream opened for reading of the fstab file, otherwise
-   it will return NULL.
-
-*/
-
 char *fs_driver_alloc_fstab_file(const char *path) {
     return util_alloc_filename(path, "ert_fstab", NULL);
 }
 
+/**
+   Will open fstab stream and return it. The semantics with respect to
+   existing/not existnig fstab file depends on the value of the
+   create parameter:
+
+   @param path The file path
+   @param create If create=true and the fstab file exists the function will
+       return NULL, otherwise it will return a stream opened for writing to the
+       fstab file.
+
+       if create = False and the fstab file exists the the function will return a
+       stream opened for reading of the fstab file, otherwise it will return
+       NULL.
+
+   @return A stream to the opened file.
+*/
 FILE *fs_driver_open_fstab(const char *path, bool create) {
     FILE *stream = NULL;
     char *fstab_file = fs_driver_alloc_fstab_file(path);

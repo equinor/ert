@@ -48,13 +48,12 @@ struct ert_run_context_struct {
     char *run_id;
 };
 
-/*
+/**
   Observe that since this function uses one shared subst_list instance
   for all realisations it is __NOT__ possible to get per realisation
   substititions in the runpath; i.e. a <IENS> element in the RUNPATH
   will *not* be replaced.
 */
-
 char *ert_run_context_alloc_runpath(int iens, const path_fmt_type *runpath_fmt,
                                     const subst_list_type *subst_list,
                                     int iter) {

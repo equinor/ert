@@ -33,11 +33,10 @@ void res_env_setenv(const char *variable, const char *value) {
     setenv(variable, value, overwrite);
 }
 
-/*
+/**
    Will return a NULL terminated list char ** of the paths in the PATH
    variable.
 */
-
 char **res_env_alloc_PATH_list() {
     char **path_list = NULL;
     char *path_env = getenv("PATH");
@@ -55,7 +54,7 @@ char **res_env_alloc_PATH_list() {
     return path_list;
 }
 
-/*
+/**
    This function searches through the content of the (currently set)
    PATH variable, and allocates a string containing the full path
    (first match) to the executable given as input.
@@ -68,7 +67,6 @@ char **res_env_alloc_PATH_list() {
 
    * If the executable is not found in the PATH list NULL is returned.
 */
-
 char *res_env_alloc_PATH_executable(const char *executable) {
     if (util_is_abs_path(executable)) {
         if (util_is_executable(executable))
@@ -114,7 +112,7 @@ char *res_env_alloc_PATH_executable(const char *executable) {
     }
 }
 
-/*
+/**
    This function updates an environment variable representing a path,
    before actually updating the environment variable the current value
    is checked, and the following rules apply:
@@ -127,7 +125,6 @@ char *res_env_alloc_PATH_executable(const char *executable) {
 
    A pointer to the updated(?) environment variable is returned.
 */
-
 const char *res_env_update_path_var(const char *variable, const char *value,
                                     bool append) {
     const char *current_value = getenv(variable);
@@ -169,7 +166,7 @@ const char *res_env_update_path_var(const char *variable, const char *value,
     return getenv(variable);
 }
 
-/*
+/**
    This is a thin wrapper around the setenv() call, with the twist
    that all $VAR expressions in the @value parameter are replaced with
    getenv() calls, so that the function call:
@@ -182,7 +179,6 @@ const char *res_env_update_path_var(const char *variable, const char *value,
 
    If @value == NULL a call to unsetenv( @variable ) will be issued.
 */
-
 const char *res_env_interp_setenv(const char *variable, const char *value) {
     char *interp_value = res_env_alloc_envvar(value);
     if (interp_value != NULL) {
@@ -194,7 +190,7 @@ const char *res_env_interp_setenv(const char *variable, const char *value) {
     return getenv(variable);
 }
 
-/*
+/**
    This function will take a string as input, and then replace all if
    $VAR expressions with the corresponding environment variable. If
    the environament variable VAR is not set, the string literal $VAR
@@ -266,7 +262,7 @@ char *res_env_alloc_envvar(const char *value) {
     }
 }
 
-/*
+/**
    This function will allocate a string copy of the env_index'th
    occurence of an embedded environment variable from the input
    string.
@@ -298,7 +294,6 @@ char *res_env_alloc_envvar(const char *value) {
 
 
 */
-
 char *res_env_isscanf_alloc_envvar(const char *string, int env_index) {
     int env_count = 0;
     const char *offset = string;

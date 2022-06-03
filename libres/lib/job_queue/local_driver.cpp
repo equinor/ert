@@ -71,12 +71,11 @@ void local_driver_kill_job(void *__driver, void *__job) {
         kill(job->child_process, SIGTERM);
 }
 
-/*
+/**
   This function needs to dereference the job pointer after the waitpid() call is
   complete, it is therefore essential that no other threads have called free(job)
   while the external process is running.
 */
-
 void submit_job_thread(const char *executable, int argc, char **argv,
                        local_job_type *job) {
     int wait_status;

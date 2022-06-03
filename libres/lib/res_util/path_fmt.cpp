@@ -26,8 +26,10 @@
 
 #include <ert/res_util/path_fmt.hpp>
 
-/*
-The basic idea of the path_fmt_type is that it should be possible for
+#define PATH_FMT_ID 7519200
+
+/**
+The basic idea of the path_fmt_struct is that it should be possible for
 a user to specify an arbirtrary path *WITH* embedded format
 strings. It is implemented with the the help av variable length
 argument lists. This has the following disadvantages:
@@ -51,9 +53,6 @@ char * path = path_fmt_alloc(path_fmt , "BaseCase" , 67);
 => path = /tmp/ECLIPSE/Basecase/Run-67
 
 */
-
-#define PATH_FMT_ID 7519200
-
 struct path_fmt_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *fmt;
@@ -80,8 +79,7 @@ static path_fmt_type *path_fmt_alloc__(const char *fmt, bool is_directory) {
     return path;
 }
 
-/*
-
+/**
   This function is used to allocate a path_fmt instance which is
   intended to hold a directory, if the second argument is true, the
   resulting directory will be automatically created when
@@ -108,16 +106,14 @@ static path_fmt_type *path_fmt_alloc__(const char *fmt, bool is_directory) {
   variable length argument lists, and **NO** checking of argument list
   versus format string is performed.
 */
-
 path_fmt_type *path_fmt_alloc_directory_fmt(const char *fmt) {
     return path_fmt_alloc__(fmt, true);
 }
 
-/*
+/**
    Most general. Can afterwards be used to allocate strings
    representing both directories and files.
 */
-
 path_fmt_type *path_fmt_alloc_path_fmt(const char *fmt) {
     return path_fmt_alloc__(fmt, false);
 }
@@ -140,7 +136,7 @@ char *path_fmt_alloc_path(const path_fmt_type *path, bool auto_mkdir, ...) {
     return new_path;
 }
 
-/*
+/**
   This function is used to allocate a filename (full path) from a
   path_fmt instance:
 
@@ -172,7 +168,6 @@ char *path_fmt_alloc_path(const path_fmt_type *path, bool auto_mkdir, ...) {
    * [Path]: The resulting string will be split on "/", and the path
      component will be created.
 */
-
 char *path_fmt_alloc_file(const path_fmt_type *path, bool auto_mkdir, ...) {
     if (path->is_directory) {
         char *filename;
@@ -228,8 +223,7 @@ void path_fmt_assert_fmt(const path_fmt_type * path , int num_input , const node
   }
 }
 */
-
-/*
+/**
   fmt == NULL
   -----------
   The function will return NULL, possibly freeing the incoming
@@ -241,7 +235,6 @@ void path_fmt_assert_fmt(const path_fmt_type * path , int num_input , const node
   The current path_fmt instance will be updated, or a new created. The
   new/updated path_fmt instance is returned.
 */
-
 path_fmt_type *path_fmt_realloc_path_fmt(path_fmt_type *path_fmt,
                                          const char *fmt) {
     if (fmt == NULL) {

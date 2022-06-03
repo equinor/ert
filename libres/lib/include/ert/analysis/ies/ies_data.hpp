@@ -38,14 +38,15 @@ public:
 
 private:
     bool m_converged = false;
-    Eigen::MatrixXd
-        W; // Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1)
+    /** Coefficient matrix used to compute Omega = I + W (I -11'/N)/sqrt(N-1) */
+    Eigen::MatrixXd W;
 
     std::vector<bool> m_ens_mask{};
     std::vector<bool> m_obs_mask0{};
     std::vector<bool> m_obs_mask{};
-    Eigen::MatrixXd A0{}; // Prior ensemble used in Ei=A0 Omega_i
-    // Prior ensemble of measurement perturations (should be the same for all iterations)
+    /** Prior ensemble used in Ei=A0 Omega_i */
+    Eigen::MatrixXd A0{};
+    /** Prior ensemble of measurement perturations (should be the same for all iterations) */
     Eigen::MatrixXd E;
 };
 

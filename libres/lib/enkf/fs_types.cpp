@@ -18,15 +18,16 @@
 
 #include <ert/enkf/fs_types.hpp>
 
-/*
+/**
+  @brief returns whether fs type is valid.
+
   The driver type DRIVER_STATIC has been removed completely as of
-  December 2015, but there will still be many mount map files with
+  December 2015 and therefore not valid. There will still be many mount map files with
   this enum value around on disk. This function is a minor convenience
   to handle that.
 
-  The driver type DRIVER_DYNAMIC_ANALYZED was removed ~april 2016.
+  The driver type DRIVER_DYNAMIC_ANALYZED was removed ~april 2016, and is not valid.
 */
-
 bool fs_types_valid(fs_driver_enum driver_type) {
     if ((driver_type == DRIVER_STATIC) ||
         (driver_type == DRIVER_DYNAMIC_ANALYZED))

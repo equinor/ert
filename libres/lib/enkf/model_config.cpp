@@ -44,7 +44,8 @@
 
 static auto logger = ert::get_logger("enkf");
 
-/*
+#define MODEL_CONFIG_TYPE_ID 661053
+/**
    This struct contains configuration which is specific to this
    particular model/run. Such of the information is actually accessed
    directly through the enkf_state object; but this struct is the
@@ -55,9 +56,6 @@ static auto logger = ert::get_logger("enkf");
    goes in ecl_config is not entirely clear; ECLIPSE is unfortunately
    not (yet ??) exactly 'any' reservoir simulator in this context.
 
-*/
-
-/*
   The runpath format is governed by a hash table where new runpaths
   are added with model_config_add_runpath() and then current runpath
   is selected with model_config_select_runpath(). However this
@@ -66,16 +64,17 @@ static auto logger = ert::get_logger("enkf");
   the RUNPATH config key (key DEFAULT_RUNPATH_KEY in the hash table)
   This semantically predefined runpath is the only option visible to the user.
  */
-
-#define MODEL_CONFIG_TYPE_ID 661053
 struct model_config_struct {
     UTIL_TYPE_ID_DECLARATION;
-    forward_model_type *
-        forward_model; /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */
+    /** The forward_model - as loaded from the config file. Each enkf_state
+     * object internalizes its private copy of the forward_model. */
+    forward_model_type *forward_model;
     time_map_type *external_time_map;
-    history_type *history; /* The history object. */
-    path_fmt_type *
-        current_runpath; /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/
+    /** The history object. */
+    history_type *history;
+    /** path_fmt instance for runpath - runtime the call gets arguments: (iens,
+     * report_step1 , report_step2) - i.e. at least one %d must be present.*/
+    path_fmt_type *current_runpath;
     char *current_path_key;
     hash_type *runpath_map;
     char *jobname_fmt;
@@ -84,19 +83,21 @@ struct model_config_struct {
     char *data_root;
     char *default_data_root;
 
-    int max_internal_submit; /* How many times to retry if the load fails. */
-    const ecl_sum_type *
-        refcase; /* A pointer to the refcase - can be NULL. Observe that this ONLY a pointer
-                                                        to the ecl_sum instance owned and held by the ecl_config object. */
+    /** How many times to retry if the load fails. */
+    int max_internal_submit;
+    /** A pointer to the refcase - can be NULL. Observe that this ONLY a
+     * pointer to the ecl_sum instance owned and held by the ecl_config object.
+     * */
+    const ecl_sum_type *refcase;
     char *gen_kw_export_name;
     int num_realizations;
     char *obs_config_file;
 
     /* The results are always loaded. */
-    bool_vector_type *
-        internalize_state; /* Should the (full) state be internalized (at this report_step). */
-    bool_vector_type *
-        __load_eclipse_restart; /* Internal variable: is it necessary to load the state? */
+    /** Should the (full) state be internalized (at this report_step). */
+    bool_vector_type *internalize_state;
+    /** Internal variable: is it necessary to load the state? */
+    bool_vector_type *__load_eclipse_restart;
 };
 
 char *model_config_alloc_jobname(const model_config_type *model_config,
@@ -145,11 +146,10 @@ void model_config_add_runpath(model_config_type *model_config,
                                path_fmt_free__);
 }
 
-/*
+/**
   If the path_key does not exists it will return false and stay
   silent.
 */
-
 bool model_config_select_runpath(model_config_type *model_config,
                                  const char *path_key) {
     if (hash_has_key(model_config->runpath_map, path_key)) {
@@ -593,11 +593,10 @@ int model_config_get_num_realizations(const model_config_type *model_config) {
     return model_config->num_realizations;
 }
 
-/*
+/**
    Will be NULL unless the user has explicitly loaded an external time
    map with the TIME_MAP config option.
 */
-
 time_map_type *
 model_config_get_external_time_map(const model_config_type *config) {
     return config->external_time_map;
@@ -625,12 +624,11 @@ void model_config_init_internalization(model_config_type *config) {
     bool_vector_reset(config->__load_eclipse_restart);
 }
 
-/*
+/**
    This function sets the internalize_state flag to true for
    report_step. Because of the coupling to the __load_eclipse_restart variable
    this function can __ONLY__ be used to set internalize to true.
 */
-
 void model_config_set_internalize_state(model_config_type *config,
                                         int report_step) {
     bool_vector_iset(config->internalize_state, report_step, true);

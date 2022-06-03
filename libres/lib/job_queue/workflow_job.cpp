@@ -104,8 +104,8 @@ struct workflow_job_struct {
     bool internal;
     int min_arg;
     int max_arg;
-    int_vector_type *
-        arg_types; // Should contain values from the config_item_types enum in config.h.
+    /** Should contain values from the config_item_types enum in config.h.*/
+    int_vector_type *arg_types;
     char *executable;
     char *internal_script_path;
     char *function;
@@ -409,13 +409,12 @@ void workflow_job_free__(void *arg) {
     workflow_job_free(workflow_job);
 }
 
-/*
+/**
   The workflow job can return an arbitrary (void *) pointer. It is the
   calling scopes responsability to interpret this object correctly. If
   the the workflow job allocates storage the calling scope must
   discard it.
 */
-
 static void *workflow_job_run_internal(const workflow_job_type *job, void *self,
                                        bool verbose,
                                        const stringlist_type *arg) {
@@ -439,7 +438,7 @@ static void *workflow_job_run_external(const workflow_job_type *job,
     return NULL;
 }
 
-/* This is the old C way and will only be used from the TUI */
+/** This is the old C way and will only be used from the TUI */
 void *workflow_job_run(const workflow_job_type *job, void *self, bool verbose,
                        const stringlist_type *arg) {
     if (job->internal) {

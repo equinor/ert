@@ -69,22 +69,29 @@ static const int NODE_WRITE_ACTIVE_START = WRITE_START__;
 static const int NODE_WRITE_ACTIVE_END = 776512;
 
 typedef enum {
-    NODE_IN_USE =
-        1431655765, /* NODE_IN_USE_BYTE * ( 1 + 256 + 256**2 + 256**3) => Binary 01010101010101010101010101010101 */
+    /** NODE_IN_USE_BYTE * ( 1 + 256 + 256**2 + 256**3) => Binary 01010101010101010101010101010101 */
+    NODE_IN_USE = 1431655765,
     NODE_WRITE_ACTIVE = WRITE_START__, /* This */
-    NODE_INVALID = 13 /* This should __never__ be written to disk */
+    /** This should __never__ be written to disk */
+    NODE_INVALID = 13
 } node_status_type;
 
 typedef struct file_node_struct file_node_type;
 
 struct file_node_struct {
-    long int
-        node_offset; /* The offset into the data_file of this node. NEVER Changed. */
-    int data_offset; /* The offset from the node start to the start of actual data - i.e. data starts at absolute position: node_offset + data_offset. */
-    int node_size; /* The size in bytes of this node - must be >= data_size. NEVER Changed. */
-    int data_size; /* The size of the data stored in this node - in addition the node might need to store header information. */
-    node_status_type
-        status; /* This should be: NODE_IN_USE; in addition the disk can have NODE_WRITE_ACTIVE for incomplete writes. */
+    /** The offset into the data_file of this node. NEVER Changed. */
+    long int node_offset;
+    /** The offset from the node start to the start of actual data - i.e. data
+     * starts at absolute position: node_offset + data_offset. */
+    int data_offset;
+    /** The size in bytes of this node - must be >= data_size. NEVER Changed. */
+    int node_size;
+    /** The size of the data stored in this node - in addition the node might
+     * need to store header information. */
+    int data_size;
+    /** This should be: NODE_IN_USE; in addition the disk can have
+     * NODE_WRITE_ACTIVE for incomplete writes. */
+    node_status_type status;
 };
 
 struct block_fs_struct {
@@ -93,20 +100,23 @@ struct block_fs_struct {
     int data_fd;
     FILE *data_stream;
 
-    long int data_file_size; /* The total number of bytes in the data_file. */
-    int block_size;          /* The size of blocks in bytes. */
+    /** The total number of bytes in the data_file. */
+    long int data_file_size;
+    /** The size of blocks in bytes. */
+    int block_size;
 
     std::mutex mutex;
 
-    hash_type *
-        index; /* THE HASH table of all the nodes/files which have been stored. */
-    vector_type
-        *file_nodes; /* This vector owns all the file_node instances - the index
-                       structure only contain pointers to the objects stored in
-                       this vector. */
-    int write_count; /* This just counts the number of writes since the file system was mounted. */
+    /** THE HASH table of all the nodes/files which have been stored. */
+    hash_type *index;
+    /** This vector owns all the file_node instances - the index structure only
+     * contain pointers to the objects stored in this vector. */
+    vector_type *file_nodes;
+    /** This just counts the number of writes since the file system was mounted. */
+    int write_count;
     bool data_owner;
-    int fsync_interval; /* 0: never  n: every nth iteration. */
+    /** 0: never  n: every nth iteration. */
+    int fsync_interval;
 };
 
 UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
@@ -123,12 +133,11 @@ static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
     fseek__(block_fs->data_stream, offset, SEEK_SET);
 }
 
-/*
+/**
    Observe that the two input arguments to this function should NEVER
    change. They represent offset and size in the underlying data file,
    and that is for ever fixed.
 */
-
 static file_node_type *file_node_alloc(node_status_type status, long int offset,
                                        int node_size) {
     file_node_type *file_node =
@@ -218,12 +227,11 @@ node_offset                                      offset
   implicitly read with ftell() calls.
 */
 
-/*
+/**
    This function will write the node information to file, this
    includes the NODE_END_TAG identifier which shoule be written to the
    end of the node.
 */
-
 static void file_node_fwrite(const file_node_type *file_node, const char *key,
                              FILE *stream) {
     if (file_node->node_size == 0)
@@ -243,7 +251,7 @@ static void file_node_fwrite(const file_node_type *file_node, const char *key,
     }
 }
 
-/*
+/**
    This marks the start and end of the node with the integer tags:
    NODE_WRITE_ACTIVE_START and NODE_WRITE_ACTIVE_END, signalling this
    section in the data file is 'work in progress', and should be
@@ -254,7 +262,6 @@ static void file_node_fwrite(const file_node_type *file_node, const char *key,
    NODE_WRITE_ACTIVE_END tags with NODE_IN_USE and NODE_END_TAG
    identifiers.
 */
-
 static void file_node_init_fwrite(const file_node_type *file_node,
                                   FILE *stream) {
     fseek__(stream, file_node->node_offset, SEEK_SET);
@@ -265,11 +272,10 @@ static void file_node_init_fwrite(const file_node_type *file_node,
     util_fwrite_int(NODE_WRITE_ACTIVE_END, stream);
 }
 
-/*
+/**
    Observe that header in this context include the size of the tail
    marker NODE_END_TAG.
 */
-
 static int file_node_header_size(const char *filename) {
     file_node_type *file_node;
     return sizeof(file_node->status) + sizeof(file_node->node_size) +
@@ -290,10 +296,9 @@ static void block_fs_insert_index_node(block_fs_type *block_fs,
     hash_insert_ref(block_fs->index, filename, file_node);
 }
 
-/*
+/**
    Installing the new node AND updating file tail.
 */
-
 static void block_fs_install_node(block_fs_type *block_fs,
                                   file_node_type *node) {
     block_fs->data_file_size = util_size_t_max(
@@ -349,7 +354,7 @@ static void block_fs_fwrite_mount_info__(const fs::path &mount_file) {
     fclose(stream);
 }
 
-/*
+/**
    Will seek the datafile to the end of the current file_node. So that the next read will be "guaranteed" to
    start at a new node.
 */
@@ -363,7 +368,7 @@ static void block_fs_fseek_node_data(block_fs_type *block_fs,
     block_fs_fseek(block_fs, file_node->node_offset + file_node->data_offset);
 }
 
-/*
+/**
    This function will read through the datafile seeking for the identifier:
    NODE_IN_USE. If the valid status identifiers is found the stream is
    repositioned at the beginning of the valid node, so the calling scope can
@@ -412,8 +417,7 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
     fseek__(block_fs->data_stream, 0, SEEK_END);
     return false;
 }
-
-/*
+/**
    The read-only open mode is only for the mount section, where the
    data file is read in to load/verify the index.
 
@@ -421,7 +425,6 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
    the open succeeds the calling scope should close the stream before
    calling this function again, with read_only == false.
 */
-
 static void block_fs_open_data(block_fs_type *block_fs,
                                const fs::path &data_file) {
     if (block_fs->data_owner) {
@@ -448,7 +451,7 @@ static void block_fs_open_data(block_fs_type *block_fs,
         block_fs->data_fd = fileno(block_fs->data_stream);
 }
 
-/*
+/**
    This function will 'fix' the nodes with offset in offset_list.  The
    fixing in this case means the following:
 
@@ -459,7 +462,6 @@ static void block_fs_open_data(block_fs_type *block_fs,
    If the instance is not data owner (i.e. read-only) the function
    will return immediately.
 */
-
 static void block_fs_fix_nodes(block_fs_type *block_fs,
                                const std::vector<long> &offset_list) {
     if (block_fs->data_owner) {
@@ -628,14 +630,13 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
     return block_fs_has_file__(block_fs, filename);
 }
 
-/*
+/**
    It seems it is not enough to call fsync(); must also issue this
    funny fseek + ftell combination to ensure that all data is on
    disk after an uncontrolled shutdown.
 
    Could possibly use fdatasync() to improve speed slightly?
 */
-
 void block_fs_fsync(block_fs_type *block_fs) {
     if (block_fs->data_owner) {
         //fdatasync( block_fs->data_fd );
@@ -645,7 +646,7 @@ void block_fs_fsync(block_fs_type *block_fs) {
     }
 }
 
-/*
+/**
    The single lowest-level write function:
 
    3. seek to correct position.
@@ -663,7 +664,6 @@ void block_fs_fsync(block_fs_type *block_fs) {
    Not necessary to lock - since all writes are protected by the
    'global' rwlock anyway.
 */
-
 static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
                               file_node_type *node, const void *ptr,
                               int data_size) {
@@ -712,10 +712,9 @@ void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
                          buffer_get_size(buffer));
 }
 
-/*
+/**
    Reads the full content of 'filename' into the buffer.
 */
-
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer) {
     std::lock_guard guard{block_fs->mutex};
@@ -730,14 +729,13 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
     buffer_rewind(buffer); /* Setting: pos = 0; */
 }
 
-/*
+/**
    Close/synchronize the open file descriptors and free all memory
    related to the block_fs instance.
 
    If the boolean unlink_empty is set to true all the files will be
    unlinked if the filesystem is empty.
 */
-
 void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
 

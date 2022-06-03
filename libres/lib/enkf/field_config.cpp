@@ -32,7 +32,9 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_config.hpp>
 
-/*
+#define FIELD_CONFIG_ID 78269
+
+/**
    About transformations and truncations
    -------------------------------------
 
@@ -102,53 +104,52 @@ _______________/                     \___________/       |  with EnKF.          
                                                                  \____________________/         _\|/_
 
 
-
-
-
-
-*/
-
-/*Observe the following convention:
+Observe the following convention:
 
     global_index:  [0 , nx*ny*nz)
     active_index:  [0 , nactive)
 */
-
-#define FIELD_CONFIG_ID 78269
-
 struct field_config_struct {
     UTIL_TYPE_ID_DECLARATION;
 
-    char *ecl_kw_name; /* Name/key ... */
-    int data_size, nx, ny,
-        nz; /* The number of elements in the three directions. */
-    bool
-        keep_inactive_cells; /* Whether the data contains only active cells or active and inactive cells */
-    ecl_grid_type
-        *grid; /* A shared reference to the grid this field is defined on. */
+    /** Name/key ... */
+    char *ecl_kw_name;
+    /** The number of elements in the three directions. */
+    int data_size, nx, ny, nz;
+    /** Whether the data contains only active cells or active and inactive
+     * cells */
+    bool keep_inactive_cells;
+    /** A shared reference to the grid this field is defined on. */
+    ecl_grid_type *grid;
     bool private_grid;
 
-    int truncation; /* How the field should be trunacted before exporting for simulation, and for the inital import. OR'd combination of truncation_type from enkf_types.h*/
-    double min_value; /* The min value used in truncation. */
-    double max_value; /* The maximum value used in truncation. */
+    /** How the field should be trunacted before exporting for simulation, and
+     * for the inital import. OR'd combination of truncation_type from enkf_types.h*/
+    int truncation;
+    /** The min value used in truncation. */
+    double min_value;
+    /** The maximum value used in truncation. */
+    double max_value;
 
     field_file_format_type export_format;
     field_file_format_type import_format;
     ecl_data_type internal_data_type;
-    bool
-        __enkf_mode; /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+    /** See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+    bool __enkf_mode;
     bool write_compressed;
 
     field_type_enum type;
     field_type *min_std;
-    field_trans_table_type *
-        trans_table; /* Internalize a (pointer to) a table of the available transformation functions. */
-    field_func_type *
-        output_transform; /* Function to apply to the data before they are exported - NULL: no transform. */
-    field_func_type *
-        init_transform; /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
-    field_func_type *
-        input_transform; /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
+    /** Internalize a (pointer to) a table of the available transformation functions. */
+    field_trans_table_type *trans_table;
+    /** Function to apply to the data before they are exported - NULL: no transform. */
+    field_func_type *output_transform;
+    /** Function to apply on the data when they are loaded the first time -
+     * i.e. initialized. NULL : no transform*/
+    field_func_type *init_transform;
+    /** Function to apply on the data when they are loaded from the forward
+     * model - i.e. for dynamic data. */
+    field_func_type *input_transform;
 
     char *output_transform_name;
     char *init_transform_name;
@@ -162,7 +163,7 @@ void field_config_set_ecl_data_type(field_config_type *config,
     memcpy(&config->internal_data_type, &data_type, sizeof data_type);
 }
 
-/*
+/**
    This function takes a field_file_format_type variable, and returns
    a string containing a default extension for files of this type. For
    ecl_kw_file it will return NULL, i.e. no default extension.
@@ -174,7 +175,6 @@ void field_config_set_ecl_data_type(field_config_type *config,
    It will return UPPERCASE or lowercase depending on the value of the
    second argument.
 */
-
 const char *field_config_default_extension(field_file_format_type file_type,
                                            bool upper_case) {
     if (file_type == RMS_ROFF_FILE) {
@@ -216,7 +216,7 @@ field_config_default_export_format(const char *filename) {
     return export_format;
 }
 
-/*
+/**
 This function takes in a filename and tries to guess the type of the
 file. It can determine the following three types of files:
 
@@ -262,11 +262,10 @@ field_config_get_export_format(const field_config_type *field_config) {
     return field_config->export_format;
 }
 
-/*
+/**
    Will return the name of the init_transform function, or NULL if no
    init_transform function has been registered.
 */
-
 const char *
 field_config_get_init_transform_name(const field_config_type *field_config) {
     return field_config->init_transform_name;
@@ -277,7 +276,7 @@ field_config_get_output_transform_name(const field_config_type *field_config) {
     return field_config->output_transform_name;
 }
 
-/*
+/**
    IFF the @private_grid parameter is true, the field_config instance
    will take ownership of grid, i.e. freeing it in
    field_config_free().
@@ -287,7 +286,6 @@ field_config_get_output_transform_name(const field_config_type *field_config) {
    during a run there are many other dependencies which must also be
    updated, which are not handled.
 */
-
 void field_config_set_grid(field_config_type *config, ecl_grid_type *grid,
                            bool private_grid) {
     if ((config->private_grid) && (config->grid != NULL))
@@ -454,7 +452,7 @@ void field_config_update_general_field(
     field_config_set_output_transform(config, output_transform);
 }
 
-/*
+/**
    Requirements:
 
    ECLIPSE_PARAMETER: export_format != UNDEFINED_FORMAT
@@ -463,7 +461,6 @@ void field_config_update_general_field(
 
    GENERAL          : export_format != UNDEFINED_FORMAT
 */
-
 bool field_config_is_valid(const field_config_type *field_config) {
     bool valid = true;
 
@@ -488,14 +485,13 @@ field_type_enum field_config_get_type(const field_config_type *config) {
     return config->type;
 }
 
-/*
+/**
   Observe that the indices are zero-based, in contrast to those used
   by eclipse which are based on one.
 
   This function will return an index in the interval: [0...nactive),
   and -1 if i,j,k correspond to an inactive cell.
 */
-
 int field_config_active_index(const field_config_type *config, int i, int j,
                               int k) {
     return ecl_grid_get_active_index3(config->grid, i, j, k);
@@ -506,25 +502,23 @@ int field_config_global_index(const field_config_type *config, int i, int j,
     return ecl_grid_get_global_index3(config->grid, i, j, k);
 }
 
-/*
+/**
     This function checks that i,j,k are in the intervals [0..nx),
     [0..ny) and [0..nz). It does *NOT* check if the corresponding
     index is active.
 */
-
 bool field_config_ijk_valid(const field_config_type *config, int i, int j,
                             int k) {
     return ecl_grid_ijk_valid(config->grid, i, j, k);
 }
 
-/*
+/**
     This function checks that i,j,k are in the intervals [0..nx),
     [0..ny) and [0..nz) AND that the corresponding cell is active. If
     the function returns false it is impossible to differentiate
     between (i,j,k) values which are out of bounds and an inactive
     cell.
 */
-
 bool field_config_ijk_active(const field_config_type *config, int i, int j,
                              int k) {
     if (ecl_grid_ijk_valid(config->grid, i, j, k)) {
@@ -589,7 +583,7 @@ int field_config_get_sizeof_ctype(const field_config_type *config) {
     return ecl_type_get_sizeof_ctype(config->internal_data_type);
 }
 
-/*
+/**
    Returns true / false whether a cell is active.
 */
 bool field_config_active_cell(const field_config_type *config, int i, int j,
@@ -614,7 +608,7 @@ int field_config_get_ny(const field_config_type *config) { return config->ny; }
 
 int field_config_get_nz(const field_config_type *config) { return config->nz; }
 
-/*
+/**
    The field_config and field objects are mainly written for use in
    the enkf application. In that setting a field instance is *NOT*
    allowed to write on it's field_config object.
@@ -634,7 +628,6 @@ int field_config_get_nz(const field_config_type *config) { return config->nz; }
    key. Also it is essential to observe that this will break **HARD**
    is the file contains several parameters
 */
-
 void field_config_set_key(field_config_type *config, const char *key) {
     if (config->__enkf_mode)
         util_abort("%s: internal error - must call field_config_enkf_OFF() "
@@ -677,7 +670,7 @@ field_config_get_init_transform(const field_config_type *config) {
     return config->init_transform;
 }
 
-/*
+/**
   This function asserts that a unary function can be applied
   to the field - i.e. that the underlying data_type is ecl_float or ecl_double.
 */
@@ -693,7 +686,7 @@ void field_config_assert_unary(const field_config_type *field_config,
                    __func__, caller);
 }
 
-/*
+/**
    Asserts that two fields can be combined in a binary operation.
 */
 void field_config_assert_binary(const field_config_type *config1,
@@ -711,20 +704,15 @@ void field_config_assert_binary(const field_config_type *config1,
 }
 
 /*
-   Parses a string of the type "1,5,6", and returns the indices i,j,k
-   by reference. The return value of the function as a whole is
-   whether the string constitutes a valid cell:
+   @brief Parses a string of the type "1,5,6", and returns the indices i,j,k
+   by reference.
 
-      0: All is OK.
-      1: The string could not pe parsed to three valid integers.
-      2: ijk are not in the grid.
-      3: ijk correspond to an inactive cell.
-
-   In cases 2 & 3 the i,j,k are valid (in the string-parsing sense).
-   The input string is assumed to have offset one, and the return
-   values (by reference) are offset zero.
+   @param[in] index_key The index key string, ie. "1,5,6"
+   @param[out] i The i index as an int, ie. 1.
+   @param[out] j The j index as an int, ie. 5.
+   @param[out] k The k index as an int, ie. 6.
+   @return True if parsing was successfull.
 */
-
 bool field_config_parse_user_key__(const char *index_key, int *i, int *j,
                                    int *k) {
     int length;
@@ -746,6 +734,27 @@ bool field_config_parse_user_key__(const char *index_key, int *i, int *j,
         return false;
 }
 
+/*
+   @brief Parses a string of the type "1,5,6", and returns the indices i,j,k
+   by reference.
+
+
+   @param[in] config The field_config which is the context for whether the
+       i,j,k values are valid.
+   @param[in] index_key The index key string, ie. "1,5,6"
+   @param[out] i The i index as an int, ie. 1.
+   @param[out] j The j index as an int, ie. 5.
+   @param[out] k The k index as an int, ie. 6.
+   @return The return value of the function is
+     whether the string constitutes a valid cell:
+      0: All is OK.
+      1: The string could not pe parsed to three valid integers.
+      2: ijk are not in the grid.
+      3: ijk correspond to an inactive cell.
+      In cases 2 & 3 the i,j,k are valid (in the string-parsing sense).
+      The input string is assumed to have offset one, and the return
+      values (by reference) are offset zero.
+*/
 int field_config_parse_user_key(const field_config_type *config,
                                 const char *index_key, int *i, int *j, int *k) {
     int return_value = 0;

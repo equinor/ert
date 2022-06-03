@@ -36,7 +36,7 @@ namespace fs = std::filesystem;
 
 typedef struct validate_struct validate_type;
 
-/*
+/**
    This is a 'support-struct' holding various pieces of information
    needed during the validation process. Observe the following about
    validation:
@@ -68,35 +68,43 @@ typedef struct validate_struct validate_type;
     2. If setting indexed_selection_set or type_map, you MUST set
        argc_max first.
 */
-
 struct validate_struct {
-    std::set<std::string>
-        common_selection_set; /* A selection set which will apply uniformly to all the arguments. */
+    std::set<std::string> common_selection_set; /** A selection set which will
+                                                  apply uniformly to all the
+                                                  arguments. */
     std::vector<std::set<std::string>> indexed_selection_set;
 
-    int argc_min; /* The minimum number of arguments: -1 means no lower limit. */
-    int argc_max; /* The maximum number of arguments: -1 means no upper limit. */
-    int_vector_type *
-        type_map; /* A list of types for the items. Set along with argc_minmax(); */
-    stringlist_type *
-        required_children; /* A list of item's which must also be set (if this item is set). (can be NULL) */
-    hash_type *
-        required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
+    /** The minimum number of arguments: -1 means no lower limit. */
+    int argc_min;
+    /** The maximum number of arguments: -1 means no upper limit. */
+    int argc_max;
+    /** A list of types for the items. Set along with argc_minmax(); */
+    int_vector_type *type_map;
+    /** A list of item's which must also be set (if this item is set). (can be
+     * NULL) */
+    stringlist_type *required_children;
+    /** A list of item's which must also be set - depending on the value of
+     * this item. (can be NULL) (This one is complex). */
+    hash_type *required_children_value;
 };
 
 #define CONFIG_SCHEMA_ITEM_ID 6751
 struct config_schema_item_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *kw; /* The kw which identifies this item */
+    /** The kw which identifies this item */
+    char *kw;
 
     bool required_set;
-    stringlist_type *
-        required_children; /* A list of item's which must also be set (if this item is set). (can be NULL) */
-    hash_type *
-        required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) */
-    validate_type *validate;     /* Information need during validation. */
-    bool
-        expand_envvar; /* Should environment variables like $HOME be expanded?*/
+    /** A list of item's which must also be set (if this item is set). (can be
+     * NULL) */
+    stringlist_type *required_children;
+    /** A list of item's which must also be set - depending on the value of
+     * this item. (can be NULL) */
+    hash_type *required_children_value;
+    /** Information need during validation. */
+    validate_type *validate;
+    /** Should environment variables like $HOME be expanded?*/
+    bool expand_envvar;
     bool deprecated;
     char *deprecate_msg;
 };
@@ -523,14 +531,13 @@ void config_schema_item_set_required_children_on_value(
                                stringlist_free__);
 }
 
-/*
+/**
    This function is used to set the minimum and maximum number of
    arguments for an item. In addition you can pass in a pointer to an
    array of config_schema_item_types values which will be used for validation
    of the input. This vector must be argc_max elements long; it can be
    NULL.
 */
-
 void config_schema_item_set_argc_minmax(config_schema_item_type *item,
                                         int argc_min, int argc_max) {
 

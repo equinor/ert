@@ -27,10 +27,11 @@
 
 #define MISFIT_TS_TYPE_ID 641066
 
+/** misfit for one ensemble member / observation key. */
 struct misfit_ts_struct {
     UTIL_TYPE_ID_DECLARATION;
-    double_vector_type *
-        data; /* A double vector of length 'history_length' with actual misfit values. */
+    /** A double vector of length 'history_length' with actual misfit values. */
+    double_vector_type *data;
 };
 
 static UTIL_SAFE_CAST_FUNCTION(misfit_ts, MISFIT_TS_TYPE_ID);

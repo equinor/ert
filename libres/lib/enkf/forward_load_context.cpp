@@ -37,11 +37,12 @@ struct forward_load_context_struct {
     ecl_sum_type *ecl_sum;
     ecl_file_type *restart_file;
     const run_arg_type *run_arg;
-    const ecl_config_type *ecl_config; // Can be NULL
+    /** Can be NULL */
+    const ecl_config_type *ecl_config;
 
     int step2;
-    stringlist_type
-        *messages; // This is managed by external scope - can be NULL
+    /** Messages is managed by external scope - can be NULL */
+    stringlist_type *messages;
 
     /* The variables below are updated during the load process. */
     int load_step;

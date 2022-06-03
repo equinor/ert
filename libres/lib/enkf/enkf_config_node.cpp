@@ -50,30 +50,35 @@ struct enkf_config_node_struct {
     ert_impl_type impl_type;
     enkf_var_type var_type;
     bool vector_storage;
-    bool
-        forward_init; /* Should the (parameter) node be initialized by loading results from the Forward model? */
+    /** Should the (parameter) node be initialized by loading results from the
+     * Forward model? */
+    bool forward_init;
 
-    bool_vector_type *
-        internalize; /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */
-    stringlist_type
-        *obs_keys; /* Keys of observations which observe this node. */
+    /** Should this node be internalized - observe that question of what to
+     * internalize is MOSTLY handled at a higher level - without consulting
+     * this variable. Can be NULL. */
+    bool_vector_type *internalize;
+    /** Keys of observations which observe this node. */
+    stringlist_type *obs_keys;
     char *key;
     char *init_file_abs_path;
-    path_fmt_type
-        *init_file_fmt; /* Format used to create files for initialization. */
-    path_fmt_type *
-        enkf_infile_fmt; /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
-    path_fmt_type *
-        enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
-    void *
-        data; /* This points to the config object of the actual implementation.        */
+    /** Format used to create files for initialization. */
+    path_fmt_type *init_file_fmt;
+    /** Format used to load in file from forward model - one %d (if present) is
+     * replaced with report_step. */
+    path_fmt_type *enkf_infile_fmt;
+    /** Name of file which is written by EnKF, and read by the forward model. */
+    path_fmt_type *enkf_outfile_fmt;
+    /** This points to the config object of the actual implementation. */
+    void *data;
     enkf_node_type *min_std;
     char *min_std_file;
 
+    /** Function pointers to methods working on the underlying config object. */
     vector_type *container_nodes;
-    /* Function pointers to methods working on the underlying config object. */
-    get_data_size_ftype *
-        get_data_size; /* Function pointer to ask the underlying config object of the size - i.e. number of elements. */
+    /** Function pointer to ask the underlying config object of the size - i.e.
+     * number of elements. */
+    get_data_size_ftype *get_data_size;
     config_free_ftype *freef;
 };
 
@@ -248,7 +253,7 @@ void enkf_config_node_update_gen_kw(
                             min_std_file);
 }
 
-/*
+/**
    This will create a new gen_kw_config instance which is NOT yet
    valid.
 */
@@ -374,7 +379,7 @@ enkf_config_node_iget_container_key(const enkf_config_node_type *config_node,
     return child_node->key;
 }
 
-/*
+/**
    This will create a new gen_kw_config instance which is NOT yet
    valid. Mainly support code for the GUI.
 */
@@ -444,10 +449,9 @@ int enkf_config_node_container_size(const enkf_config_node_type *node) {
     return vector_get_size(node->container_nodes);
 }
 
-/*
+/**
    Invokes the get_data_size() function of the underlying node object.
 */
-
 int enkf_config_node_get_data_size(const enkf_config_node_type *node,
                                    int report_step) {
     if (node->impl_type == GEN_DATA)
@@ -572,11 +576,10 @@ bool enkf_config_node_internalize(const enkf_config_node_type *node,
             report_step); /* Will return default value if report_step is beyond size. */
 }
 
-/*
+/**
    This is the filename used when loading from a completed forward
    model.
 */
-
 char *enkf_config_node_alloc_infile(const enkf_config_node_type *node,
                                     int report_step) {
     if (node->enkf_infile_fmt != NULL)
@@ -593,11 +596,10 @@ char *enkf_config_node_alloc_outfile(const enkf_config_node_type *node,
         return NULL;
 }
 
-/*
+/**
   The path argument is used when the function is during forward_model
   based initialisation.
 */
-
 char *enkf_config_node_alloc_initfile(const enkf_config_node_type *node,
                                       const char *path, int iens) {
     if (node->init_file_fmt == NULL)
@@ -657,10 +659,9 @@ int enkf_config_node_get_num_obs(const enkf_config_node_type *config_node) {
     return stringlist_get_size(config_node->obs_keys);
 }
 
-/*
+/**
    This checks the index_key - and sums up over all the time points of the observation.
 */
-
 int enkf_config_node_load_obs(const enkf_config_node_type *config_node,
                               enkf_obs_type *enkf_obs, const char *key_index,
                               int obs_count, time_t *_sim_time, double *_y,

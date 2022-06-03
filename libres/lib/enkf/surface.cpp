@@ -28,10 +28,12 @@
 #include <ert/enkf/surface.hpp>
 
 struct surface_struct {
-    int __type_id; /* Only used for run_time checking. */
-    surface_config_type
-        *config;  /* Can not be NULL - var_type is set on first load. */
-    double *data; /* Size should always be one */
+    /** Only used for run_time checking. */
+    int __type_id;
+    /** Can not be NULL - var_type is set on first load. */
+    surface_config_type *config;
+    /** Size should always be one */
+    double *data;
 };
 
 C_USED void surface_clear(surface_type *surface) {

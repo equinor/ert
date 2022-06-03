@@ -33,17 +33,22 @@
 
 struct rsh_job_struct {
     UTIL_TYPE_ID_DECLARATION;
-    bool active; /* Means that it allocated - not really in use */
+    /** Means that it allocated - not really in use */
+    bool active;
     job_status_type status;
     std::optional<std::thread> run_thread;
-    const char *host_name; /* Currently not set */
+    /** Currently not set */
+    const char *host_name;
     char *run_path;
 };
 
 typedef struct {
     char *host_name;
-    int max_running; /* How many can the host handle. */
-    int running; /* How many are currently running on the host (goverened by this driver instance that is). */
+    /** How many can the host handle. */
+    int max_running;
+    /** How many are currently running on the host (goverened by this driver
+     * instance that is). */
+    int running;
     std::mutex host_mutex;
 } rsh_host_type;
 
@@ -64,12 +69,11 @@ static UTIL_SAFE_CAST_FUNCTION_CONST(rsh_driver, RSH_DRIVER_TYPE_ID);
 static UTIL_SAFE_CAST_FUNCTION(rsh_driver, RSH_DRIVER_TYPE_ID);
 static UTIL_SAFE_CAST_FUNCTION(rsh_job, RSH_JOB_TYPE_ID);
 
-/*
+/**
    If the host is for some reason not available, NULL should be
    returned. Will also return NULL if some funny guy tries to allocate
    with max_running <= 0.
 */
-
 static rsh_host_type *rsh_host_alloc(const char *host_name, int max_running) {
     if (max_running > 0) {
         struct addrinfo *result;
@@ -309,11 +313,10 @@ void rsh_driver_add_host(rsh_driver_type *rsh_driver, const char *hostname,
     }
 }
 
-/*
+/**
    Hostname should be a string as host:max_running, the ":max_running"
    part is optional, and will default to 1.
 */
-
 void rsh_driver_add_host_from_string(rsh_driver_type *rsh_driver,
                                      const char *hostname) {
     int host_max_running;

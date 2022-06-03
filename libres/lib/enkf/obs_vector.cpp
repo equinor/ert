@@ -49,24 +49,27 @@
 
 struct obs_vector_struct {
     UTIL_TYPE_ID_DECLARATION;
-    obs_free_ftype *freef;  /* Function used to free an observation node. */
-    obs_get_ftype *get_obs; /* Function used to build the 'd' vector. */
-    obs_meas_ftype *
-        measure; /* Function used to measure on the state, and add to to the S matrix. */
-    obs_user_get_ftype *
-        user_get; /* Function to get an observation based on KEY:INDEX input from user.*/
-    obs_chi2_ftype
-        *chi2; /* Function to evaluate chi-squared for an observation. */
-    obs_update_std_scale_ftype *
-        update_std_scale; /* Function to scale the standard deviation with a given factor */
-
+    /** Function used to free an observation node. */
+    obs_free_ftype *freef;
+    /** Function used to build the 'd' vector. */
+    obs_get_ftype *get_obs;
+    /** Function used to measure on the state, and add to to the S matrix. */
+    obs_meas_ftype *measure;
+    /** Function to get an observation based on KEY:INDEX input from user.*/
+    obs_user_get_ftype *user_get;
+    /** Function to evaluate chi-squared for an observation. */
+    obs_chi2_ftype *chi2;
+    /** Function to scale the standard deviation with a given factor */
+    obs_update_std_scale_ftype *update_std_scale;
     vector_type *nodes;
-    char *
-        obs_key; /* The key this observation vector has in the enkf_obs layer. */
-    enkf_config_node_type *
-        config_node; /* The config_node of the node type we are observing - shared reference */
+    /** The key this observation vector has in the enkf_obs layer. */
+    char *obs_key;
+    /** The config_node of the node type we are observing - shared reference */
+    enkf_config_node_type *config_node;
     obs_impl_type obs_type;
-    int num_active; /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
+    /** The total number of timesteps where this observation is active (i.e.
+     * nodes[ ] != NULL) */
+    int num_active;
     std::vector<int> step_list;
 };
 
@@ -212,12 +215,11 @@ obs_impl_type obs_vector_get_impl_type(const obs_vector_type *obs_vector) {
     return obs_vector->obs_type;
 }
 
-/*
+/**
    This is the key for the enkf_node which this observation is
    'looking at'. I.e. if this observation is an RFT pressure
    measurement, this function will return "PRESSURE".
 */
-
 const char *obs_vector_get_state_kw(const obs_vector_type *obs_vector) {
     return enkf_config_node_get_key(obs_vector->config_node);
 }
@@ -276,12 +278,11 @@ void obs_vector_install_node(obs_vector_type *obs_vector, int index,
     }
 }
 
-/*
+/**
    Observe that @summary_key is the key used to look up the
    corresponding simulated value in the ensemble, and not the
    observation key - the two can be different.
 */
-
 static void obs_vector_add_summary_obs(obs_vector_type *obs_vector,
                                        int obs_index, const char *summary_key,
                                        const char *obs_key, double value,
@@ -314,7 +315,7 @@ bool obs_vector_iget_active(const obs_vector_type *vector, int index) {
     }
 }
 
-/*
+/**
    Will happily return NULL if index is not active.
 */
 void *obs_vector_iget_node(const obs_vector_type *vector, int index) {
@@ -328,12 +329,11 @@ void obs_vector_user_get(const obs_vector_type *obs_vector,
     obs_vector->user_get(obs_node, index_key, value, std, valid);
 }
 
-/*
+/**
   This function returns the next active (i.e. node != NULL) report
   step, starting with 'prev_step + 1'. If no more active steps are
   found, it will return -1.
 */
-
 int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
                                     int prev_step) {
     if (prev_step >= (vector_get_size(obs_vector->nodes) - 1))
@@ -352,12 +352,11 @@ int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
     }
 }
 
-/*
+/**
    All the obs_vector_load_from_XXXX() functions can safely return
    NULL, in which case no observation is added to enkf_obs observation
    hash table.
 */
-
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
     time_map_type *obs_time, ensemble_config_type *ensemble_config) {
@@ -910,7 +909,7 @@ obs_vector_has_data_at_report_step(const obs_vector_type *obs_vector,
     return true;
 }
 
-/*
+/**
   The has_vector_data() function will only check that we have a vector
   stored, and not the actual length of the vector. This means we can
   be fooled if the stored vector is shorter than what the observation
@@ -919,7 +918,6 @@ obs_vector_has_data_at_report_step(const obs_vector_type *obs_vector,
   Should ideally check that the vector is long enough, but that
   requires changes in the enkf_node api for vector storage.
 */
-
 static bool obs_vector_has_vector_data(const obs_vector_type *obs_vector,
                                        const bool_vector_type *active_mask,
                                        enkf_fs_type *fs) {
@@ -953,7 +951,7 @@ bool obs_vector_has_data(const obs_vector_type *obs_vector,
     return true;
 }
 
-/*
+/**
    This is the lowest level function:
 
    * It is checked that the obs_vector is active for the actual report
@@ -968,7 +966,6 @@ bool obs_vector_has_data(const obs_vector_type *obs_vector,
      fail hard if it is not correct.
 
 */
-
 static double obs_vector_chi2__(const obs_vector_type *obs_vector,
                                 int report_step, const enkf_node_type *node,
                                 node_id_type node_id) {
@@ -980,17 +977,16 @@ static double obs_vector_chi2__(const obs_vector_type *obs_vector,
         return 0.0; /* Observation not active for this report step. */
 }
 
-/*
+/**
    This function will evaluate the chi2 for the ensemble members
    [iens1,iens2) and report steps [step1,step2).
 
    Observe that the chi2 pointer is assumed to be allocated for the
    complete ensemble, altough this function only operates on part of
    it.
+
+   This will not work for container observations .....
 */
-
-//This will not work for container observations .....
-
 void obs_vector_ensemble_chi2(const obs_vector_type *obs_vector,
                               enkf_fs_type *fs, bool_vector_type *valid,
                               int step1, int step2, int iens1, int iens2,
@@ -1026,11 +1022,10 @@ void obs_vector_ensemble_chi2(const obs_vector_type *obs_vector,
     enkf_node_free(enkf_node);
 }
 
-/*
+/**
    This function will evaluate the total chi2 for one ensemble member
    (i.e. sum over report steps).
 */
-
 double obs_vector_total_chi2(const obs_vector_type *obs_vector,
                              enkf_fs_type *fs, int iens) {
     double sum_chi2 = 0;

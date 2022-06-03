@@ -25,12 +25,14 @@
 
 #define MISFIT_MEMBER_TYPE_ID 541066
 
+/** misfit_member_struct contains the misfit for one ensemble member */
 struct misfit_member_struct {
     UTIL_TYPE_ID_DECLARATION;
     int my_iens;
-    hash_type *
-        obs; /* hash table of misfit_ts_type instances - indexed by observation keys. The structure
-                                 of this hash table is duplicated for each ensemble member.*/
+    /** hash table of misfit_ts_type instances - indexed by observation keys.
+     * The structure of this hash table is duplicated for each ensemble
+     * member.*/
+    hash_type *obs;
 };
 
 static UTIL_SAFE_CAST_FUNCTION(misfit_member, MISFIT_MEMBER_TYPE_ID);

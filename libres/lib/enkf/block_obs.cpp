@@ -56,7 +56,8 @@ static UTIL_SAFE_CAST_FUNCTION(point_obs, POINT_OBS_TYPE_ID);
 
 struct block_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *obs_key; /* A user provided label for the observation.      */
+    /** A user provided label for the observation.*/
+    char *obs_key;
     vector_type *point_list;
     const ecl_grid_type *grid;
     const void *data_config;
@@ -204,7 +205,7 @@ block_obs_type *block_obs_alloc(const char *obs_key, const void *data_config,
     }
 }
 
-/*
+/**
    The input vectors i,j,k should contain offset zero values.
 */
 block_obs_type *

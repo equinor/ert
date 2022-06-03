@@ -97,7 +97,7 @@ struct ensemble_config_struct {
 UTIL_IS_INSTANCE_FUNCTION(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID)
 
-/*
+/**
    setting the format string used to 'mangle' the string in the gen_kw
    template files. consider the following example:
 
@@ -126,7 +126,6 @@ UTIL_SAFE_CAST_FUNCTION(ensemble_config, ENSEMBLE_CONFIG_TYPE_ID)
       tagged_string = util_alloc_sprintf( gen_kw_format_string , parameter_name );
 
 */
-
 void ensemble_config_set_gen_kw_format(ensemble_config_type *ensemble_config,
                                        const char *gen_kw_format_string) {
     if (!util_string_equal(gen_kw_format_string,
@@ -658,12 +657,11 @@ static void ensemble_config_init_PRED(ensemble_config_type *ensemble_config,
     free(target_file);
 }
 
-/*
+/**
    observe that if the user has not given a refcase with the refcase
    key the refcase pointer will be NULL. in that case it will be
    impossible to use wildcards when expanding summary variables.
 */
-
 static void ensemble_config_init(ensemble_config_type *ensemble_config,
                                  const config_content_type *config,
                                  ecl_grid_type *grid,
@@ -703,7 +701,9 @@ static void ensemble_config_init(ensemble_config_type *ensemble_config,
     }
 }
 
-/*
+/**
+   @brief Retrieve enkf_config_node by key string in an ensemble_config.
+
    this function takes a string like this: "pressure:1,4,7" - it
    splits the string on ":" and tries to lookup a config object with
    that key. for the general string a:b:c:d it will try consecutively
@@ -715,8 +715,14 @@ static void ensemble_config_init(ensemble_config_type *ensemble_config,
    the example "pressure:1,4,7", the index_key will contain
    "1,4,7". if the full full_key is used to find an object index_key
    will be NULL, that also applies if no object is found.
-*/
 
+   @param[in] config The ensemble_config to retrieve a config_node from.
+   @param[in] full_key a string on the form "pressure:1,4,7"
+   @param[out] index_key the index part of the key, ie. "1,4,7", NULL if no
+    node is found.
+   @return The enkf_config_node if found, NULL otherwise.
+
+*/
 const enkf_config_node_type *
 ensemble_config_user_get_node(const ensemble_config_type *config,
                               const char *full_key, char **index_key) {
@@ -808,12 +814,11 @@ bool ensemble_config_require_summary(const ensemble_config_type *ens_config) {
     return ensemble_config_has_impl_type(ens_config, SUMMARY);
 }
 
-/*
+/**
    this function will look up the user_key in the ensemble_config. if
    the corresponding config_node can not be found 0 will be returned,
    otherwise enkf_config_node functions will be invoked.
 */
-
 int ensemble_config_get_observations(const ensemble_config_type *config,
                                      enkf_obs_type *enkf_obs,
                                      const char *user_key, int obs_count,
@@ -859,7 +864,7 @@ enkf_config_node_type *ensemble_config_add_gen_kw(ensemble_config_type *config,
     return config_node;
 }
 
-/*
+/**
    this function ensures that object contains a node with 'key' and
    type == summary.
 
@@ -868,7 +873,6 @@ enkf_config_node_type *ensemble_config_add_gen_kw(ensemble_config_type *config,
    a warning will be printed on stderr and the function will return
    NULL.
 */
-
 enkf_config_node_type *
 ensemble_config_add_summary(ensemble_config_type *ensemble_config,
                             const char *key, load_fail_type load_fail) {
@@ -917,7 +921,7 @@ ensemble_config_add_surface(ensemble_config_type *ensemble_config,
     return config_node;
 }
 
-/*
+/**
   If key == NULL the function will create a random key.
 */
 enkf_config_node_type *

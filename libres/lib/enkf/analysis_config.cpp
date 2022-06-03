@@ -50,16 +50,18 @@ struct analysis_config_struct {
     UTIL_TYPE_ID_DECLARATION;
     std::unordered_map<std::string, analysis_module_type *> analysis_modules;
     analysis_module_type *analysis_module;
-    char *log_path; /* Points to directory with update logs. */
+    /** Points to directory with update logs. */
+    char *log_path;
 
-    bool
-        rerun; /* Should we rerun the simulator when the parameters have been updated? */
-    int rerun_start; /* When rerunning - from where should we start? */
+    /** Should we rerun the simulator when the parameters have been updated? */
+    bool rerun;
+    /** When rerunning - from where should we start? */
+    int rerun_start;
 
     config_settings_type *update_settings;
 
-    bool
-        single_node_update; /* When creating the default ALL_ACTIVE local configuration. */
+    /** When creating the default ALL_ACTIVE local configuration. */
+    bool single_node_update;
     analysis_iter_config_type *iter_config;
     int min_realisations;
     bool stop_long_running;
@@ -182,7 +184,7 @@ void analysis_config_set_log_path(analysis_config_type *config,
     config->log_path = util_realloc_string_copy(config->log_path, log_path);
 }
 
-/*
+/**
    Will in addition create the path.
 */
 const char *analysis_config_get_log_path(const analysis_config_type *config) {
@@ -305,11 +307,10 @@ void analysis_config_load_internal_modules(analysis_config_type *config) {
     analysis_config_select_module(config, DEFAULT_ANALYSIS_MODULE);
 }
 
-/*
+/**
    The analysis_config object is instantiated with the default values
    for enkf_defaults.h
 */
-
 void analysis_config_init(analysis_config_type *analysis,
                           const config_content_type *config) {
     config_settings_apply(analysis->update_settings, config);

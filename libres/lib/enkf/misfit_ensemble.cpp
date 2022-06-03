@@ -26,23 +26,16 @@
 #include <ert/enkf/enkf_obs.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
 
-/*
-   This file implements a type misfit_ensemble which is used to rank the
-   different realization according to various criteria.
-
-   The top level datastructure in this file is the misfit_ensemble, and
-   that is the only exported datatype, but in addition there are the
-   misfit_member which is the misfit for one ensemble member, and
-   misfit_ts which is the misfit for one ensemble member / one
-   observation key.
+/**
+   The misfit_ensemble_struct is used to rank the different realization
+   according to various criteria.
 */
-
 struct misfit_ensemble_struct {
     UTIL_TYPE_ID_DECLARATION;
     bool initialized;
     int history_length;
-    vector_type *
-        ensemble; /* Vector of misfit_member_type instances - one for each ensemble member. */
+    /** Vector of misfit_member_type instances - one for each ensemble member. */
+    vector_type *ensemble;
 };
 
 static double **__2d_malloc(int rows, int columns) {
@@ -124,7 +117,7 @@ void misfit_ensemble_fwrite(const misfit_ensemble_type *misfit_ensemble,
     }
 }
 
-/*
+/**
    This funcion is a feeble attempt at allowing the ensemble size to
    change runtime. If the new ensemble size is larger than the current
    ensemble size ALL the currently internalized misfit information is

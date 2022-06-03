@@ -23,7 +23,7 @@ void enkf_linalg_lowrankE(
     Eigen::MatrixXd
         &W, /* (nrobs x nrmin) Corresponding to X1 from Eqs. 14.54-14.55 */
     Eigen::VectorXd
-        &eig, /* (nrmin)         Corresponding to 1 / (1 + Lambda1^2) (14.54) */
+        &eig, /* (nrmin) Corresponding to 1 / (1 + Lambda1^2) (14.54) */
     const std::variant<double, int> &truncation);
 
 Eigen::MatrixXd enkf_linalg_genX3(const Eigen::MatrixXd &W,

@@ -41,7 +41,7 @@ namespace fs = std::filesystem;
 
 GET_DATA_SIZE_HEADER(field);
 
-/*
+/**
   The field data type contains for "something" which is distributed
   over the full grid, i.e. permeability or pressure. All configuration
   information is stored in the config object, which is of type
@@ -53,21 +53,22 @@ GET_DATA_SIZE_HEADER(field);
   * The data is stored in a char pointer; the real underlying data can
     be (at least) of the types int, float and double.
 */
-
 struct field_struct {
     int __type_id;
-    /* The field config object - containing information of active cells++ */
+    /** The field config object - containing information of active cells++ */
     const field_config_type *config;
-    /* The actual storage for the field - suitabley casted to int/float/double on use*/
+    /** The actual storage for the field - suitabley casted to int/float/double on use*/
     char *data;
 
-    /* If the data is shared - i.e. managed (xalloc & free) from another scope. */
+    /** If the data is shared - i.e. managed (xalloc & free) from another scope. */
     bool shared_data;
-    /* The size of the shared buffer (if it is shared). */
+    /** The size of the shared buffer (if it is shared). */
     int shared_byte_size;
-    /* IFF an output transform should be applied this pointer will hold the transformed data. */
+    /** IFF an output transform should be applied this pointer will hold the
+     * transformed data. */
     char *export_data;
-    /* IFF an output transform, this pointer will hold the original data during the transform and export. */
+    /** IFF an output transform, this pointer will hold the original data
+     * during the transform and export. */
     char *__data;
 };
 
@@ -229,7 +230,7 @@ void field_export3D(const field_type *field, void *_target_data,
         }                                                                      \
     }
 
-/*
+/**
    The main function of the field_import3D and field_export3D
    functions are to skip the inactive cells (field_import3D) and
    distribute inactive cells (field_export3D).
@@ -248,7 +249,6 @@ void field_export3D(const field_type *field, void *_target_data,
    buffers, the actual reading and writing of files is done in other
    functions (calling these).
 */
-
 static void field_import3D(field_type *field, const void *_src_data,
                            bool rms_index_order, bool keep_inactive_cells,
                            ecl_data_type src_type) {
@@ -466,12 +466,11 @@ static void *__field_alloc_3D_data(const field_type *field, int data_size,
    o Export in RMS ROFF format.
 */
 
-/*
+/**
     This function exports *one* field instance to the rms_file
     instance. It is the responsibility of the field_ROFF_export()
     function to initialize and close down the rms_file instance.
 */
-
 static void field_ROFF_export__(const field_type *field,
                                 rms_file_type *rms_file,
                                 const char *init_file) {
@@ -512,7 +511,7 @@ static void field_complete_ROFF_export(const field_type *field,
     rms_file_free(rms_file);
 }
 
-/*
+/**
     This function exports the data of a field as a parameter to an RMS
     roff file. The export process is divided in three parts:
 
@@ -526,7 +525,6 @@ static void field_complete_ROFF_export(const field_type *field,
     calls to 2 (i.e. field_ROFF_export__()) - that is currently not
     implemented.
 */
-
 void field_ROFF_export(const field_type *field, const char *export_filename,
                        const char *init_file) {
     rms_file_type *rms_file = field_init_ROFF_export(field, export_filename);
@@ -675,10 +673,9 @@ static void field_apply_truncation(field_type *field) {
     }
 }
 
-/*
+/**
     Does both the explicit output transform *AND* the truncation.
 */
-
 static void field_output_transform(field_type *field) {
     field_func_type *output_transform =
         field_config_get_output_transform(field->config);
@@ -705,7 +702,7 @@ static void field_revert_output_transform(field_type *field) {
     }
 }
 
-/*
+/**
   This is the generic "export field to eclipse" function. It will
   check up the config object to determine how to export the field,
   and then call the appropriate function. The alternatives are:
@@ -718,7 +715,6 @@ static void field_revert_output_transform(field_type *field) {
   that if you call e.g. the ROFF export function directly, the output
   transform will *NOT* be applied.
 */
-
 void field_export(const field_type *__field, const char *file,
                   fortio_type *restart_fortio, field_file_format_type file_type,
                   bool output_transform, const char *init_file) {
@@ -762,7 +758,7 @@ void field_export(const field_type *__field, const char *file,
         field_revert_output_transform(field);
 }
 
-/*
+/**
    Observe that the output transform is hooked in here, that means
    that if you call e.g. the ROFF export function directly, the output
    transform will *NOT* be applied.
@@ -771,7 +767,6 @@ void field_export(const field_type *__field, const char *file,
    not in place. When the export is complete the field->data will be
    unchanged.
 */
-
 void field_ecl_write(const field_type *field, const char *run_path,
                      const char *file, void *filestream) {
     field_file_format_type export_format =
@@ -865,7 +860,7 @@ double field_ijk_get_double(const field_type *field, int i, int j, int k) {
     return field_iget_double(field, index);
 }
 
-/*
+/**
    Takes an active or global index as input, and returns a double.
 */
 double field_iget_double(const field_type *field, int index) {
@@ -890,7 +885,7 @@ double field_iget_double(const field_type *field, int index) {
     }
 }
 
-/*
+/**
    Takes an active or global index as input, and returns a double.
 */
 float field_iget_float(const field_type *field, int index) {
@@ -926,10 +921,9 @@ float field_iget_float(const field_type *field, int index) {
                 (t)[index[i]] = (s)[i];                                        \
     }
 
-/*
+/**
    Copying data from a (PACKED) ecl_kw instance down to a fields data.
 */
-
 void field_copy_ecl_kw_data(field_type *field, const ecl_kw_type *ecl_kw) {
     const field_config_type *config = field->config;
     const int data_size = field_config_get_data_size(config);
@@ -1103,7 +1097,7 @@ bool field_fload_keep_inactive(field_type *field, const char *filename) {
     return field_fload_custom__(field, filename, keep_inactive);
 }
 
-/*
+/**
   Here, index_key is i a tree digit string with the i, j and k indicies of
   the requested block separated by comma. E.g., 1,1,1.
 

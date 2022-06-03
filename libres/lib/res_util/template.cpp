@@ -33,7 +33,7 @@
 
 namespace fs = std::filesystem;
 
-/*
+/**
    Iff the template is set up with internaliz_template == false the
    template content is loaded at instantiation time, and in that case
    the name of the template file can contain substitution characters -
@@ -43,7 +43,6 @@ namespace fs = std::filesystem;
    To avoid race issues this function does not set actually update the
    state of the template object.
 */
-
 static char *template_load(const template_type *_template,
                            const subst_list_type *ext_arg_list) {
     int buffer_size;
@@ -76,14 +75,13 @@ const char *template_get_template_file(const template_type *_template) {
     return _template->template_file;
 }
 
-/*
+/**
    This function allocates a template object based on the source file
    'template_file'. If @internalize_template is true the template
    content will be read and internalized at boot time, otherwise that
    is deferred to template instantiation time (in which case the
    template file can change dynamically).
 */
-
 template_type *template_alloc(const char *template_file,
                               bool internalize_template,
                               subst_list_type *parent_subst) {
@@ -116,7 +114,7 @@ void template_free(template_type *_template) {
     free(_template);
 }
 
-/*
+/**
    This function will create the file @__target_file based on the
    template instance. Before the target file is written all the
    internal substitutions and then subsequently the subsititutions in
@@ -140,7 +138,6 @@ void template_free(template_type *_template) {
          ensuring that a remote file is not updated.
 
 */
-
 void template_instantiate(const template_type *template_,
                           const char *__target_file,
                           const subst_list_type *arg_list,
@@ -196,7 +193,7 @@ void template_instantiate(const template_type *template_,
     free(target_file);
 }
 
-/*
+/**
    Add an internal key_value pair. This substitution will be performed
    before the internal substitutions.
 */

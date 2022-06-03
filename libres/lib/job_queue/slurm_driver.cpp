@@ -69,9 +69,9 @@ public:
         return false;
     }
 
-    /*
-   This function is used when the status of the jobs is updated with squeue. The
-   semantics is as follows:
+    /**
+    This function is used when the status of the jobs is updated with squeue. The
+    semantics is as follows:
 
      1. The squeue command is run and the squeue_jobs variable is filled up with
         a job_id -> status mapping.
@@ -85,8 +85,7 @@ public:
      3. The return value is a list of jobs which were previously registered as
         active, but are not fallen out. Calling scope must update their status
         with calls to scontrol.
-  */
-
+    */
     std::vector<int>
     squeue_update(const std::unordered_map<int, job_status_type> &squeue_jobs) {
         std::vector<int> active_jobs;
@@ -424,12 +423,11 @@ static std::string make_submit_script(const slurm_driver_type *driver,
     return submit_script;
 }
 
-/*
+/**
  The slurm jobs are submitted by first creating a submit script, which is a
  small shell which contains the command to run along with possible slurm
  options, and then this script is submitted with the 'sbatch' command.
 */
-
 void *slurm_driver_submit_job(void *__driver, const char *cmd, int num_cpu,
                               const char *run_path, const char *job_name,
                               int argc, const char **argv) {
@@ -583,7 +581,7 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
     }
 }
 
-/*
+/**
   Getting the status of jobs involves two different executables - 'squeue' and
   'scontrol'. While a job is pending in the queue and when it is actually
   running the squeue command will give the status, but as soon as the job has
@@ -597,7 +595,6 @@ static void slurm_driver_update_status_cache(const slurm_driver_type *driver) {
   of minutes, when this happens we have hopefully recorded the eventual status
   of the job.
 */
-
 job_status_type slurm_driver_get_job_status(void *__driver, void *__job) {
     slurm_driver_type *driver = slurm_driver_safe_cast(__driver);
     const auto *job = static_cast<const SlurmJob *>(__job);

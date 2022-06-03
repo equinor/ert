@@ -67,7 +67,7 @@ time_map_type *time_map_alloc() {
     return map;
 }
 
-/*
+/**
    The refcase will only be attached if it is consistent with the
    current time map; we will accept attaching a refcase which is
    shorter than the current case.
@@ -198,13 +198,12 @@ void time_map_free(time_map_type *map) {
 
 bool time_map_is_readonly(const time_map_type *tm) { return tm->read_only; }
 
-/*
+/**
    Must hold the write lock. When a refcase is supplied we gurantee
    that all values written into the map agree with the refcase
    values. However the time map is not preinitialized with the refcase
    values.
 */
-
 static bool time_map_update__(time_map_type *map, int step,
                               time_t update_time) {
     bool updateOK = true;
@@ -290,13 +289,12 @@ static void time_map_assert_writable(const time_map_type *map) {
         util_abort("%s: attempt to modify read-only time-map. \n", __func__);
 }
 
-/*
+/**
    Observe that the locking is opposite of the function name; i.e.
    the time_map_fwrite() function reads the time_map and takes the
    read lock, whereas the time_map_fread() function takes the write
    lock.
 */
-
 void time_map_fwrite(time_map_type *map, const char *filename) {
     pthread_rwlock_rdlock(&map->rw_lock);
     {
@@ -331,12 +329,11 @@ void time_map_fread(time_map_type *map, const char *filename) {
     map->modified = false;
 }
 
-/*
+/**
   Observe that the return value from this function is an inclusive
   value; i.e. it should be permissible to ask for results at this report
   step.
 */
-
 int time_map_get_last_step(time_map_type *map) {
     int last_step;
 
@@ -572,7 +569,7 @@ static void time_map_summary_log_mismatch(time_map_type *map,
         ecl_sum_get_path(ecl_sum), error_msg);
 }
 
-/*
+/**
   This function creates an integer index mapping from the time map
   into the summary case. In general the time <-> report step mapping
   of the summary data should coincide exactly with the one maintained
@@ -611,7 +608,6 @@ static void time_map_summary_log_mismatch(time_map_type *map,
      3: 01/04/2000   <-------      2: 01/04/2000
 
 */
-
 int_vector_type *time_map_alloc_index_map(time_map_type *map,
                                           const ecl_sum_type *ecl_sum) {
     int_vector_type *index_map = int_vector_alloc(0, -1);

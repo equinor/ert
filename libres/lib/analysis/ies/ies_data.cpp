@@ -41,7 +41,7 @@ int ies::Data::obs_mask_size() const { return this->m_obs_mask.size(); }
 
 int ies::Data::ens_mask_size() const { return (this->m_ens_mask.size()); }
 
-/* We store the initial observation perturbations in E, corresponding to active data->obs_mask0
+/** We store the initial observation perturbations in E, corresponding to active data->obs_mask0
    in data->E. The unused rows in data->E corresponds to false data->obs_mask0 */
 void ies::Data::store_initialE(const Eigen::MatrixXd &E0) {
     if (E.rows() != 0 || E.cols() != 0)
@@ -66,7 +66,7 @@ void ies::Data::store_initialE(const Eigen::MatrixXd &E0) {
     }
 }
 
-/* We augment the additional observation perturbations arriving in later iterations, that was not stored before,
+/** We augment the additional observation perturbations arriving in later iterations, that was not stored before,
    in data->E. */
 void ies::Data::augment_initialE(const Eigen::MatrixXd &E0) {
 
