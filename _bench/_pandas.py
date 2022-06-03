@@ -4,7 +4,7 @@ from concurrent.futures import Executor
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from typing import Dict, Optional, List
+from typing import Dict, Optional, Sequence
 
 
 class PdHdf5(BaseStorage[pd.DataFrame]):
@@ -21,17 +21,21 @@ class PdHdf5(BaseStorage[pd.DataFrame]):
     ) -> None:
         executor.submit(self.save_response, name, df, iens)
 
-    def load_response(self, name: str, iens: Optional[List[int]]) -> pd.DataFrame:
+    def load_parameter(self, name: str) -> pd.DataFrame:
+        return pd.read_hdf(self.path / "params.h5", key=name)
+
+    def load_response(self, name: str, iens: Optional[Sequence[int]]) -> pd.DataFrame:
         if iens is None:
-            return pd.concat(
-                (
-                    pd.read_hdf(self.path / f"real_{i}.h5", key=name)
-                    for i in range(self.args.ensemble_size)
-                )
-            )
+            iens = range(self.args.ensemble_size)
+        return pd.concat(
+            (pd.read_hdf(self.path / f"real_{i}.h5", key=name) for i in iens)
+        )
 
     def from_numpy(self, array: npt.NDArray[np.float64]) -> pd.DataFrame:
         return pd.DataFrame(array)
+
+    def to_numpy(self, df: pd.DataFrame) -> npt.NDArray[np.float64]:
+        return df.to_numpy()
 
 
 class PdHdf5Open(BaseStorage[pd.DataFrame]):
@@ -62,11 +66,15 @@ class PdHdf5Open(BaseStorage[pd.DataFrame]):
             self._stores[iens] = store
         store.put(name, df)
 
-    def load_response(self, name: str, iens: Optional[List[int]]) -> pd.DataFrame:
+    def load_parameter(self, name: str) -> pd.DataFrame:
+        return self._param_store.get(name)
+
+    def load_response(self, name: str, iens: Optional[Sequence[int]]) -> pd.DataFrame:
         if iens is None:
-            return pd.concat(
-                self._load_response(name, i) for i in range(self.args.ensemble_size)
-            )
+            iens = range(self.args.ensemble_size)
+        return pd.concat(
+            self._load_response(name, i) for i in iens
+        )
 
     def _load_response(self, name: str, iens: int) -> pd.DataFrame:
         if iens in self._stores:
@@ -78,3 +86,6 @@ class PdHdf5Open(BaseStorage[pd.DataFrame]):
 
     def from_numpy(self, array: npt.NDArray[np.float64]) -> pd.DataFrame:
         return pd.DataFrame(array)
+
+    def to_numpy(self, df: pd.DataFrame) -> npt.NDArray[np.float64]:
+        return df.to_numpy()

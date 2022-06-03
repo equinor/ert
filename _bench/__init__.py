@@ -19,6 +19,6 @@ MODULES: Mapping[str, Type[BaseStorage]] = {
         XArrayNetCDF,
     )
 }
-TESTS: List[str] = list(BaseStorage.__abstractmethods__) + ["validate_parameter"]
+TESTS: List[str] = list(BaseStorage.__abstractmethods__) + ["validate_parameter", "validate_response"]
 
 __all__ = ["MODULES", "TESTS", "Namespace"]

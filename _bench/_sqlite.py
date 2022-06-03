@@ -1,11 +1,11 @@
 import os
 import numpy as np
 import numpy.typing as npt
-from ._base import BaseStorage, Namespace
+from ._base import NumpyBaseStorage, Namespace
 from sqlalchemy.exc import IntegrityError
 import sqlalchemy.orm
 from contextlib import contextmanager
-from typing import Generator, Optional, List
+from typing import Generator, Optional, Sequence
 
 os.environ["ERT_STORAGE_DATABASE_URL"] = "sqlite:///_tmp_Sqlite.db"
 
@@ -13,7 +13,7 @@ import ert_storage.database_schema as ds
 import ert_storage.database
 
 
-class Sqlite(BaseStorage[npt.NDArray[np.float64]]):
+class Sqlite(NumpyBaseStorage):
     def __init__(self, args: Namespace, keep: bool) -> None:
         super().__init__(args, keep)
 
@@ -69,11 +69,24 @@ class Sqlite(BaseStorage[npt.NDArray[np.float64]]):
             record.f64_matrix = matrix_obj
             self._create_record(db, record)
 
-    def load_response(self, name: str, iens: Optional[List[int]]) -> npt.NDArray[np.float64]:
-        return super().load_response(name, iens)
+    def load_parameter(self, name: str) -> npt.NDArray[np.float64]:
+        with self._session() as db:
+            records = self._get_records_by_name(db, name, None)
 
-    def from_numpy(self, array: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        return array
+            return np.array([
+                self._get_record_data(record, None)
+                for record in records
+            ])
+
+    def load_response(self, name: str, iens: Optional[Sequence[int]]) -> npt.NDArray[np.float64]:
+        if iens is None:
+            iens = range(self.args.ensemble_size)
+        with self._session() as db:
+            data = []
+            for i in iens:
+                records = self._get_records_by_name(db, name, i)
+                data.append([self._get_record_data(record, i) for record in records])
+            return np.array(data)
 
     def _new_record(
         self, db: sqlalchemy.orm.Session, name: str, realization_index: Optional[int]
@@ -169,6 +182,57 @@ class Sqlite(BaseStorage[npt.NDArray[np.float64]]):
             )
             db.add(record)
             db.commit()
+
+    def _get_records_by_name(self, db: sqlalchemy.orm.Session, name: str, realization_index: Optional[int]) -> Sequence[ds.Record]:
+        records = (
+            db.query(ds.Record)
+            .filter_by(realization_index=realization_index)
+            .join(ds.RecordInfo)
+            .filter_by(name=name)
+            .join(ds.Ensemble)
+            .filter_by(id=self._ensemble_id)
+        ).all()
+
+        if not records:
+            records = (
+                db.query(ds.Record)
+                .join(ds.RecordInfo)
+                .filter_by(
+                    name=name,
+                    record_type=ds.RecordType.f64_matrix,
+                )
+                .join(ds.Ensemble)
+                .filter_by(id=self._ensemble_id)
+            ).all()
+
+        if not records:
+            records = (
+                db.query(ds.Record)
+                .filter_by(realization_index=None)
+                .join(ds.RecordInfo)
+                .filter_by(name=name)
+                .join(ds.Ensemble)
+                .filter_by(id=self._ensemble_id)
+            ).all()
+
+        if not records:
+            raise RuntimeError(f"Record not found")
+
+        return records
+
+    def _get_record_data(self, record: ds.Record, realization_index: Optional[int]) -> npt.NDArray[np.float64]:
+        type_ = record.record_info.record_type
+        if type_ != ds.RecordType.f64_matrix:
+            raise RuntimeError("Non matrix record not supported")
+
+        if realization_index is None or record.realization_index is not None:
+            matrix_content = record.f64_matrix.content
+        elif record.realization_index is None:
+            matrix_content = record.f64_matrix.content[realization_index]
+        if not isinstance(matrix_content[0], Sequence):
+            matrix_content = [matrix_content]
+
+        return np.array(matrix_content)
 
     @contextmanager
     def _session(self) -> Generator[sqlalchemy.orm.Session, None, None]:

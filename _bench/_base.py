@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Executor
 from pathlib import Path
 from time import perf_counter
-from typing import Generator, Generic, List, Optional, Tuple, TypeVar
+from typing import Generator, Generic, Sequence, Optional, Tuple, TypeVar
 import numpy as np
 import numpy.typing as npt
 import os
@@ -20,6 +20,7 @@ class Namespace:
     suffix: str
 
     ensemble_size: int
+    key_size: int
     keys: int
     threads: int
     use_async: bool
@@ -64,7 +65,9 @@ class BaseStorage(ABC, Generic[RecordType]):
     def save_response(self, name: str, array: RecordType, iens: int) -> None:
         ...
 
-    async def save_response_async(self, name: str, array: RecordType, iens: int) -> None:
+    async def save_response_async(
+        self, name: str, array: RecordType, iens: int
+    ) -> None:
         self.skip()
 
     def save_response_mt(
@@ -73,28 +76,42 @@ class BaseStorage(ABC, Generic[RecordType]):
         self.skip()
 
     @abstractmethod
-    def load_parameter(self, name: str, iens: Optional[List[int]]) -> RecordType:
+    def load_parameter(self, name: str) -> RecordType:
         ...
 
     @abstractmethod
-    def load_response(self, name: str, iens: Optional[List[int]]) -> RecordType:
+    def load_response(self, name: str, iens: Optional[Sequence[int]]) -> RecordType:
+        ...
+
+    async def load_response_async(
+        self, name: str, iens: Optional[Sequence[int]]
+    ) -> RecordType:
         ...
 
     @abstractmethod
     def from_numpy(self, array: npt.NDArray[np.float64]) -> RecordType:
         ...
 
-    def gen_params(self) -> List[Tuple[str, RecordType]]:
+    @abstractmethod
+    def to_numpy(self, array: RecordType) -> npt.NDArray[np.float64]:
+        ...
+
+    def gen_params(self) -> Sequence[Tuple[str, RecordType]]:
         # rng = np.random.default_rng(seed=0)
         return [
-            (f"TEST{i}", self.from_numpy(np.random.rand(self.args.ensemble_size, 10)))
+            (
+                f"TEST{i}",
+                self.from_numpy(
+                    np.random.rand(self.args.ensemble_size, self.args.key_size)
+                ),
+            )
             for i in range(self.args.keys)
         ]
 
-    def gen_responses(self) -> List[Tuple[int, str, RecordType]]:
+    def gen_responses(self) -> Sequence[Tuple[int, str, RecordType]]:
         keys = [f"RESP{i}" for i in range(self.args.keys)]
         return [
-            (iens, key, self.from_numpy(np.random.rand(10000)))
+            (iens, key, self.from_numpy(np.random.rand(self.args.key_size)))
             for iens in range(self.args.ensemble_size)
             for key in keys
         ]
@@ -135,7 +152,19 @@ class BaseStorage(ABC, Generic[RecordType]):
 
     async def _test_save_response_async(self, responses) -> None:
         await asyncio.gather(
-            *(self.save_response_async(name, mat, iens) for iens, name, mat in responses)
+            *(
+                self.save_response_async(name, mat, iens)
+                for iens, name, mat in responses
+            )
+        )
+
+    def test_load_response_async(self) -> None:
+        for _ in self.timer():
+            asyncio.run(self._test_load_response_async())
+
+    async def _test_load_response_async(self) -> None:
+        await asyncio.gather(
+            *(self.load_response_async(name, None) for name in self._response_names)
         )
 
     def test_save_response_mt(self, executor: Executor) -> None:
@@ -161,4 +190,71 @@ class BaseStorage(ABC, Generic[RecordType]):
             for name, mat in params:
                 self.save_parameter(name, mat)
             for name, mat in params:
-                assert (mat == self.load_parameter(name, None)).all()
+                lhs = self.to_numpy(mat)
+                rhs = self.to_numpy(self.load_parameter(name))
+                try:
+                    assert (lhs == rhs).all()
+                except:
+                    print("--- EXPECTED ---")
+                    print(repr(lhs))
+                    print("---- ACTUAL ----")
+                    print(repr(rhs))
+                    raise
+
+    def test_validate_response(self):
+        responses = self.gen_responses()
+        for _ in self.timer():
+            for iens, name, mat in responses:
+                self.save_response(name, mat, iens)
+            for iens, name, mat in responses:
+                lhs = self.to_numpy(mat)
+                rhs = self.to_numpy(self.load_response(name, [iens]))
+                try:
+                    assert (lhs == rhs).all()
+                except:
+                    print("--- EXPECTED ---")
+                    print(repr(lhs))
+                    print("---- ACTUAL ----")
+                    print(repr(rhs))
+                    raise
+
+    def test_validate_response_async(self) -> None:
+        for _ in self.timer():
+            asyncio.run(self._test_validate_response_async())
+
+    async def _test_validate_response_async(self) -> None:
+        responses = self.gen_responses()
+        await asyncio.gather(
+            *(
+                self.save_response_async(name, mat, iens)
+                for iens, name, mat in responses
+            )
+        )
+
+        await asyncio.gather(
+            *(
+                self._test_validate_response_assert_async(iens, name, mat)
+                for iens, name, mat in responses
+            )
+        )
+
+    async def _test_validate_response_assert_async(self, iens, name, mat):
+        lhs = self.to_numpy(mat)
+        rhs = self.to_numpy(await self.load_response_async(name, [iens]))
+        try:
+            assert (lhs == rhs).all()
+        except:
+            print("--- EXPECTED ---")
+            print(repr(lhs))
+            print("---- ACTUAL ----")
+            print(repr(rhs))
+            raise
+
+
+
+class NumpyBaseStorage(BaseStorage[npt.NDArray[np.float64]]):
+    def to_numpy(self, array: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        return array
+
+    def from_numpy(self, array: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        return array

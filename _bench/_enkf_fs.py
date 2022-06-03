@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from concurrent.futures import Executor, ThreadPoolExecutor
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, Sequence
 
 from res.enkf.enkf_fs import EnkfFs as _EnkfFs
 from res._lib.enkf_fs import (
@@ -10,18 +10,15 @@ from res._lib.enkf_fs import (
     load_param_vector_raw,
     load_resp_vector_raw,
 )
-from ._base import BaseStorage, Namespace
+from ._base import NumpyBaseStorage, Namespace
 
 
-class EnkfFs(BaseStorage[npt.NDArray[np.float64]]):
+class EnkfFs(NumpyBaseStorage):
     __use_threads__ = True
 
     def __init__(self, args: Namespace, keep: bool) -> None:
         super().__init__(args, keep)
         self._fs = _EnkfFs.createFileSystem(str(self.path), mount=True)
-
-    def from_numpy(self, array: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        return array
 
     def save_parameter(self, name: str, array: npt.NDArray[np.float64]) -> None:
         for iens, data in enumerate(array):
@@ -47,16 +44,19 @@ class EnkfFs(BaseStorage[npt.NDArray[np.float64]]):
     ) -> None:
         executor.submit(write_resp_vector_raw, self._fs, array, name, iens)
 
+    def load_parameter(self, name: str) -> npt.NDArray[np.float64]:
+        return np.array(
+            [
+                load_param_vector_raw(self._fs, name, i)
+                for i in range(self.args.ensemble_size)
+            ]
+        )
+
     def load_response(
-        self, name: str, iens: Optional[List[int]]
+        self, name: str, iens: Optional[Sequence[int]]
     ) -> npt.NDArray[np.float64]:
         if iens is None:
-            return np.array(
-                [
-                    load_resp_vector_raw(self._fs, name, i)
-                    for i in range(self.args.ensemble_size)
-                ]
-            )
+            iens = range(self.args.ensemble_size)
         return np.array([load_resp_vector_raw(self._fs, name, i) for i in iens])
 
 
@@ -74,22 +74,10 @@ class EnkfFsMt(EnkfFs):
         self, name: str, array: npt.NDArray[np.float64], iens: int
     ) -> None:
         with ThreadPoolExecutor() as exec:
-            exec.submit(write_resp_vector_raw,self._fs, array, name, iens)
-
-    def load_parameter(
-        self, name: str, iens: Optional[List[int]]
-    ) -> npt.NDArray[np.float64]:
-        if iens is None:
-            return np.array(
-                [
-                    load_param_vector_raw(self._fs, name, i)
-                    for i in range(self.args.ensemble_size)
-                ]
-            )
-        return np.array([load_param_vector_raw(self._fs, name, i) for i in iens])
+            exec.submit(write_resp_vector_raw, self._fs, array, name, iens)
 
     def load_response(
-        self, name: str, iens: Optional[List[int]]
+        self, name: str, iens: Optional[Sequence[int]]
     ) -> npt.NDArray[np.float64]:
         if iens is None:
             return np.array(
