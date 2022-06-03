@@ -34,7 +34,9 @@
 #include <ert/enkf/summary.hpp>
 #include <ert/enkf/surface.hpp>
 
-/*
+#define ENKF_NODE_TYPE_ID 71043086
+
+/**
    A small illustration (says more than thousand words ...) of how the
    enkf_node, enkf_config_node, field[1] and field_config[1] objects
    are linked.
@@ -91,11 +93,7 @@
 
    [1]: field is just an example, and could be replaced with any of
    the enkf object types.
-*/
 
-/*-----------------------------------------------------------------*/
-
-/*
    A note on memory
    ================
 
@@ -141,9 +139,6 @@
    o The only memory operation which is exported to 'user-space'
    (i.e. the enkf_state object) is enkf_node_free_data().
 
-*/
-
-/*
    Keeeping track of node state.
    =============================
 
@@ -178,9 +173,6 @@
    THE FILESYSTEM. This performance gain is the main point of the
    whole exercise.
 */
-
-#define ENKF_NODE_TYPE_ID 71043086
-
 struct enkf_node_struct {
     UTIL_TYPE_ID_DECLARATION;
     alloc_ftype *alloc;
@@ -204,13 +196,15 @@ struct enkf_node_struct {
 
     bool vector_storage;
 
-    /* The (hash)key this node is identified with. */
+    /** The (hash)key this node is identified with. */
     char *node_key;
-    /* A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or a field_type instance or ... */
-    void *data;
-    /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
-    const enkf_config_node_type *config;
 
+    /** A pointer to the underlying enkf_object, i.e. gen_kw_type instance, or
+     * a field_type instance or ... */
+    void *data;
+    /** A pointer to a enkf_config_node instance (which again cointans a
+     * pointer to the config object of data). */
+    const enkf_config_node_type *config;
     vector_type *container_nodes;
 };
 
@@ -268,12 +262,11 @@ void *enkf_node_value_ptr(const enkf_node_type *enkf_node) {
     return enkf_node->data;
 }
 
-/*
+/**
    This function calls the node spesific ecl_write function. IF the
    ecl_file of the (node == NULL) *ONLY* the path is sent to the node
    spesific file.
 */
-
 void enkf_node_ecl_write(const enkf_node_type *enkf_node, const char *path,
                          value_export_type *export_value, int report_step) {
     if (enkf_node->ecl_write != NULL) {
@@ -291,7 +284,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node, const char *path,
     }
 }
 
-/*
+/**
    This function takes a string - key - as input an calls a node
    specific function to look up one scalar based on that key. The key
    is always a string, but the the type of content will vary for the
@@ -302,7 +295,6 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node, const char *path,
    function SHOULD NOT FAIL; it should return false and set the *value
    to 0.
 */
-
 bool enkf_node_user_get(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         const char *key, node_id_type node_id, double *value) {
     return enkf_node_user_get_no_id(enkf_node, fs, key, node_id.report_step,
@@ -350,7 +342,7 @@ bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename) {
     return enkf_node->fload(enkf_node->data, filename);
 }
 
-/*
+/**
    This function loads (internalizes) ECLIPSE results, the ecl_file
    instance with restart data, and the ecl_sum instance with summary
    data must already be loaded by the calling function.
@@ -362,7 +354,6 @@ bool enkf_node_fload(enkf_node_type *enkf_node, const char *filename) {
    If the node does not have a forward_load function, the function just
    returns.
 */
-
 bool enkf_node_forward_load(enkf_node_type *enkf_node,
                             const forward_load_context_type *load_context) {
     bool loadOK;
@@ -454,7 +445,7 @@ bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
                                       node_id.iens);
 }
 
-/*
+/**
    This function will load a node from the filesystem if it is
    available; if not it will just return false.
 
@@ -463,7 +454,6 @@ bool enkf_node_store(enkf_node_type *enkf_node, enkf_fs_type *fs,
    and returning false. If the function returns true with state ==
    'both' it is no way to determine which version was actually loaded.
 */
-
 bool enkf_node_try_load(enkf_node_type *enkf_node, enkf_fs_type *fs,
                         node_id_type node_id) {
     if (enkf_node_has_data(enkf_node, fs, node_id)) {
@@ -534,11 +524,10 @@ bool enkf_node_try_load_vector(enkf_node_type *enkf_node, enkf_fs_type *fs,
         return false;
 }
 
-/*
+/**
   In the case of nodes with vector storage this function
   will load the entire vector.
 */
-
 enkf_node_type *enkf_node_load_alloc(const enkf_config_node_type *config_node,
                                      enkf_fs_type *fs, node_id_type node_id) {
     if (enkf_config_node_vector_storage(config_node)) {
@@ -633,12 +622,11 @@ void enkf_node_deserialize(enkf_node_type *enkf_node, enkf_fs_type *fs,
     enkf_node_store(enkf_node, fs, node_id);
 }
 
-/*
+/**
    The return value is whether any initialization has actually taken
    place. If the function returns false it is for instance not
    necessary to internalize anything.
 */
-
 bool enkf_node_initialize(enkf_node_type *enkf_node, int iens, rng_type *rng) {
     if (enkf_node_use_forward_init(enkf_node))
         return false; // This node will be initialized by loading results from the forward model.

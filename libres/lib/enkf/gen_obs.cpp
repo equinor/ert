@@ -33,7 +33,10 @@
 #include <ert/enkf/gen_obs.hpp>
 
 #include "ert/python.hpp"
-/*
+
+#define GEN_OBS_TYPE_ID 77619
+
+/**
    This file implemenets a structure for general observations. A
    general observation is just a vector of numbers - where EnKF has no
    understanding whatsover of the type of these data. The actual data
@@ -41,9 +44,7 @@
 
    Currently it can only observe gen_data instances - but that should
    be generalized.
-*/
 
-/*
   The std_scaling field of the xxx_obs structure can be used to scale
   the standard deviation used for the observations, either to support
   workflows with multiple data assimilation or to reduce the effect of
@@ -54,25 +55,30 @@
   be returned, whereas when the function gen_obs_measure() is used the
   std_scaling will be incorporated in the result.
 */
-
-#define GEN_OBS_TYPE_ID 77619
-
 struct gen_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    int obs_size; /* This is the total size of the observation vector. */
-    int *
-        data_index_list; /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
-    bool
-        observe_all_data; /* Flag which indiactes whether all data in the gen_data instance should be observed - in that case we must do a size comparizon-check at use time. */
+    /** This is the total size of the observation vector. */
+    int obs_size;
+    /** The indexes which are observed in the corresponding gen_data instance -
+     * of length obs_size. */
+    int *data_index_list;
+    /** Flag which indiactes whether all data in the gen_data instance should
+     * be observed - in that case we must do a size comparizon-check at use time.*/
+    bool observe_all_data;
 
-    double *obs_data;    /* The observed data. */
-    double *obs_std;     /* The observed standard deviation. */
-    double *std_scaling; /* Scaling factor for the standard deviation */
+    /** The observed data. */
+    double *obs_data;
+    /** The observed standard deviation. */
+    double *obs_std;
+    /** Scaling factor for the standard deviation */
+    double *std_scaling;
 
-    char *
-        obs_key; /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */
-    gen_data_file_format_type
-        obs_format; /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
+    /** The key this observation is held by - in the enkf_obs structur (only
+     * for debug messages). */
+    char *obs_key;
+    /** The format, i.e. ASCII, binary_double or binary_float, of the
+     * observation file. */
+    gen_data_file_format_type obs_format;
     gen_data_config_type *data_config;
 };
 
@@ -94,7 +100,7 @@ static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
     return gen_obs->obs_std[index] * gen_obs->std_scaling[index];
 }
 
-/*
+/**
    This function loads the actual observations from disk, and
    initializes the obs_data and obs_std pointers with the
    observations. It also sets the obs_size field of the gen_obs
@@ -108,7 +114,6 @@ static double IGET_SCALED_STD(const gen_obs_type *gen_obs, int index) {
    can be in formatted ASCII or binary_float / binary_double. Observe
    that there is *NO* header information in this file.
 */
-
 static void gen_obs_set_data(gen_obs_type *gen_obs, int buffer_size,
                              const double *buffer) {
     gen_obs->obs_size = buffer_size / 2;
@@ -200,14 +205,13 @@ gen_obs_type *gen_obs_alloc__(const gen_data_config_type *data_config,
     return obs;
 }
 
-/*
+/**
    data_index_file is the name of a file with indices which should be
    observed, data_inde_string is the same, in the form of a
    "1,2,3,4-10, 17,19,22-100" string. Only one of these items can be
    != NULL. If both are NULL it is assumed that all the indices of the
    gen_data instance should be observed.
 */
-
 gen_obs_type *gen_obs_alloc(const gen_data_config_type *data_config,
                             const char *obs_key, const char *obs_file,
                             double scalar_value, double scalar_error,

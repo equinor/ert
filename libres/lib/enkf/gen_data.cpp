@@ -40,8 +40,8 @@
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
 
-/*
-   The file implements a general data type which can be used to update
+/**
+   A general data type which can be used to update
    arbitrary data which the EnKF system has *ABSOLUTELY NO IDEA* of
    how is organised; how it should be used in the forward model and so
    on. Similarly to the field objects, the gen_data objects can be
@@ -51,15 +51,17 @@ static auto logger = ert::get_logger("enkf");
    data) is determined at the enkf_node level, and no busissiness of
    the gen_data implementation.
 */
-
 struct gen_data_struct {
     int __type_id;
-    gen_data_config_type *
-        config; /* Thin config object - mainly contains filename for remote load */
-    char *data; /* Actual storage - will be casted to double or float on use. */
-    int current_report_step; /* Need this to look up the correct size in the config object. */
-    bool_vector_type *
-        active_mask; /* Mask of active/not active - loaded from a "_active" file created by the forward model. Not used when used as parameter*/
+    /** Thin config object - mainly contains filename for remote load */
+    gen_data_config_type *config;
+    /** Actual storage - will be casted to double or float on use. */
+    char *data;
+    /** Need this to look up the correct size in the config object. */
+    int current_report_step;
+    /** Mask of active/not active - loaded from a "_active" file created by the
+     * forward model. Not used when used as parameter*/
+    bool_vector_type *active_mask;
 };
 
 void gen_data_assert_size(gen_data_type *gen_data, int size, int report_step) {
@@ -76,7 +78,7 @@ int gen_data_get_size(const gen_data_type *gen_data) {
                                          gen_data->current_report_step);
 }
 
-/*
+/**
    It is a bug to call this before some function has set the size.
 */
 void gen_data_realloc_data(gen_data_type *gen_data) {
@@ -115,7 +117,7 @@ void gen_data_free(gen_data_type *gen_data) {
     free(gen_data);
 }
 
-/*
+/**
    Observe that this function writes parameter size to disk, that is
    special. The reason is that the config object does not know the
    size (on allocation).
@@ -126,7 +128,6 @@ void gen_data_free(gen_data_type *gen_data) {
    is changed to false some semantics in the load code must be
    changed.
 */
-
 C_USED bool gen_data_write_to_buffer(const gen_data_type *gen_data,
                                      buffer_type *buffer, int report_step) {
     const bool write_zero_size =
@@ -206,11 +207,10 @@ void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
     }
 }
 
-/*
+/**
   This function sets the data field of the gen_data instance after the
   data has been loaded from file.
 */
-
 static void gen_data_set_data__(gen_data_type *gen_data, int size,
                                 const forward_load_context_type *load_context,
                                 ecl_data_type load_data_type,
@@ -294,7 +294,7 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
     return file_exists;
 }
 
-/*
+/**
    This functions loads data from file. Observe that there is *NO*
    header information in this file - the size is determined by seeing
    how much can be successfully loaded.
@@ -310,7 +310,6 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
    Return value is whether file was found or was empty
   - might have to check this in calling scope.
 */
-
 bool gen_data_fload_with_report_step(
     gen_data_type *gen_data, const char *filename,
     const forward_load_context_type *load_context) {
@@ -347,7 +346,7 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
     return gen_data_fload_with_report_step(gen_data, ecl_file, load_context);
 }
 
-/*
+/**
    This function initializes the parameter. This is based on loading a
    file. The name of the file is derived from a path_fmt instance
    owned by the config object. Observe that there is *NO* header
@@ -361,7 +360,6 @@ bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
    If gen_data_config_alloc_initfile() returns NULL that means that
    the gen_data instance does not have any init function - that is OK.
 */
-
 C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
                                 const char *init_file, rng_type *rng) {
     bool ret = false;
@@ -451,13 +449,12 @@ void gen_data_export(const gen_data_type *gen_data, const char *full_path,
     }
 }
 
-/*
+/**
     It is the enkf_node layer which knows whether the node actually
     has any data to export. If it is not supposed to write data to the
     forward model, i.e. it is of enkf_type 'dynamic_result' that is
     signaled down here with eclfile == NULL.
 */
-
 void gen_data_ecl_write(const gen_data_type *gen_data, const char *run_path,
                         const char *eclfile, value_export_type *export_value) {
     if (eclfile != NULL) {
@@ -509,13 +506,12 @@ void gen_data_export_data(const gen_data_type *gen_data,
     }
 }
 
-/*
+/**
    The filesystem will (currently) store gen_data instances which do
    not hold any data. Therefore it will be quite common to enter this
    function with an empty instance, we therefore just set valid =>
    false, and return silently in that case.
 */
-
 C_USED bool gen_data_user_get(const gen_data_type *gen_data,
                               const char *index_key, int report_step,
                               double *value) {

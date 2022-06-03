@@ -288,7 +288,7 @@ const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
     return gen_kw_config_iget_name(gen_kw->config, kw_nr);
 }
 
-/*
+/**
    This function will load values for gen_kw instance from file. The
    file should be formatted as either:
 
@@ -319,7 +319,6 @@ const char *gen_kw_get_name(const gen_kw_type *gen_kw, int kw_nr) {
     2. The values are in the N(0,1) domain, i.e. the untransformed variables.
 
 */
-
 static bool gen_kw_fload(gen_kw_type *gen_kw, const char *filename) {
     FILE *stream = util_fopen__(filename, "r");
     if (stream) {
@@ -389,7 +388,7 @@ static bool gen_kw_fload(gen_kw_type *gen_kw, const char *filename) {
         return false;
 }
 
-/*
+/**
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
 */

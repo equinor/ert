@@ -40,7 +40,7 @@
 
 namespace fs = std::filesystem;
 
-/*
+/**
    This struct contains information which is specific to the site
    where this enkf instance is running. Pointers to the fields in this
    structure are passed on to e.g. the enkf_state->shared_info object,
@@ -76,25 +76,25 @@ namespace fs = std::filesystem;
    updated. When saving only fields which are different from their
    xxx_site counterpart are stored.
  */
-
 struct site_config_struct {
 
     char *config_file;
 
-    ext_joblist_type
-        *joblist; /* The list of external jobs which have been installed.
-                                                     These jobs will be the parts of the forward model. */
+    /** The list of external jobs which have been installed. These jobs will be
+     * the parts of the forward model. */
+    ext_joblist_type *joblist;
 
-    env_varlist_type *
-        env_varlist; //Container for the environment variables set in the user config file.
+    /** Container for the environment variables set in the user config file. */
+    env_varlist_type *env_varlist;
 
     mode_t umask;
 
-    char *license_root_path; /* The license_root_path value set by the user. */
-    char *
-        license_root_path_site; /* The license_root_path value set by the site. */
-    char *
-        __license_root_path; /* The license_root_path value actually used - includes a user/pid subdirectory. */
+    /** The license_root_path value set by the user. */
+    char *license_root_path;
+    /** The license_root_path value set by the site. */
+    char *license_root_path_site;
+    /** The license_root_path value actually used - includes a user/pid subdirectory. */
+    char *__license_root_path;
 
     bool user_mode;
     bool search_path;
@@ -121,9 +121,9 @@ static void site_config_set_config_file(site_config_type *site_config,
         util_realloc_string_copy(site_config->config_file, config_file);
 }
 
-/*
+/**
    This site_config object is not really ready for prime time.
- */
+*/
 static site_config_type *site_config_alloc_empty() {
     site_config_type *site_config =
         (site_config_type *)util_malloc(sizeof *site_config);
@@ -156,7 +156,7 @@ static void site_config_load_config(site_config_type *site_config) {
     config_content_free(content);
 }
 
-/*
+/**
  * NOTE: The queue config is not loaded until the site_config_alloc_load_user.
  */
 static site_config_type *site_config_alloc_default() {
@@ -210,14 +210,13 @@ site_config_get_license_root_path(const site_config_type *site_config) {
     return site_config->license_root_path;
 }
 
-/*
+/**
    Observe that this variable can not "really" be set to different
    values during a simulation, when creating ext_job instances they
    will store a pointer to this variable on creation, if the variable
    is later changed they will be left with a dangling copy. That is
    not particularly elegant, however it should nonetheless work.
- */
-
+*/
 void site_config_set_license_root_path(site_config_type *site_config,
                                        const char *license_root_path) {
     util_make_path(license_root_path);
@@ -246,11 +245,10 @@ void site_config_set_license_root_path(site_config_type *site_config,
     }
 }
 
-/*
+/**
    Will return 0 if the job is added correctly, and a non-zero (not
    documented ...) error code if the job is not added.
- */
-
+*/
 int site_config_install_job(site_config_type *site_config, const char *job_name,
                             const char *install_file) {
     ext_job_type *new_job = ext_job_fscanf_alloc(
@@ -337,14 +335,13 @@ static void site_config_init_env(site_config_type *site_config,
     }
 }
 
-/*
+/**
    This function will be called twice, first when the config instance
    is an internalization of the site-wide configuration file, and
    secondly when config is an internalisation of the user's
    configuration file. The @user_config parameter will be true in the
    latter case.
  */
-
 static bool site_config_init(site_config_type *site_config,
                              const config_content_type *config) {
 

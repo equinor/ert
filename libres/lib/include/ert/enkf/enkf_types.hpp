@@ -21,7 +21,7 @@
 
 #include <ert/tooling.hpp>
 
-/*
+/**
   This enum signals the three different states a "cell" in
   observation/data node can be in:
 
@@ -35,15 +35,16 @@
     deactivating outliers.
 
 */
-
 typedef enum {
     ACTIVE = 1,
-    LOCAL_INACTIVE = 2, /* Not active in current local update scheme. */
-    DEACTIVATED = 3,    /* Deactivaed due to to small overlap, or... */
+    /** Not active in current local update scheme. */
+    LOCAL_INACTIVE = 2,
+    /** Deactivaed due to to small overlap, or... */
+    DEACTIVATED = 3,
     MISSING = 4
 } active_type; /* Set as missing by the forward model. */
 
-/*
+/**
   The enkf_var_type enum defines logical groups of variables. All
   variables in the same group, i.e. 'parameter' are typically treated
   in the same manner. So the reason for creating this type is to be
@@ -52,15 +53,14 @@ typedef enum {
   Observe that these are used as bitmask's, i.e. the numerical values
   must be a power of 2 series.
 */
-
 typedef enum {
     INVALID_VAR = 0,
-    PARAMETER =
-        1, /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-    DYNAMIC_RESULT =
-        4, /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-    INDEX_STATE =
-        16, /* Index data - enum value is used for storage classification */
+    /** A parameter which is updated with enkf: PORO, MULTFLT, ..*/
+    PARAMETER = 1,
+    /** Dynamic results which are NOT needed for a restart - i.e. well rates. */
+    DYNAMIC_RESULT = 4,
+    /** Index data - enum value is used for storage classification */
+    INDEX_STATE = 16,
     EXT_PARAMETER = 32
 } /* Parameter fully managed by external scope. */
 enkf_var_type;
@@ -141,8 +141,9 @@ typedef enum { //ENKF_ASSIMILATION       = 1,
 
 typedef enum {
     JOB_NOT_STARTED = 0,
-    JOB_SUBMITTED =
-        1, // This implies that it has been submitted to the internal queue system; we don't know if it is actually running or not.
+    /** This implies that it has been submitted to the internal queue system;
+     * we don't know if it is actually running or not. */
+    JOB_SUBMITTED = 1,
     JOB_RUN_FAILURE = 2,
     JOB_LOAD_FAILURE = 3,
     JOB_RUN_OK = 4

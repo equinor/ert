@@ -61,15 +61,16 @@
 
 typedef struct sum_pair_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *case_name; // This  should be (path)/basename - no extension
+    /** case_name should be (path)/basename - no extension */
+    char *case_name;
     ecl_sum_type *ecl_sum;
 } sum_pair_type;
 
 struct ecl_refcase_list_struct {
     sum_pair_type *default_case;
     hash_type *case_dict;
-    vector_type *
-        case_list; /* This is created, and sorted, on demand when we do indexed lookup of cases. */
+    /** The case_lost is created, and sorted, on demand when we do indexed lookup of cases.*/
+    vector_type *case_list;
     bool sorted;
 };
 
@@ -173,10 +174,9 @@ static void ecl_refcase_list_del_default(ecl_refcase_list_type *refcase_list) {
     }
 }
 
-/*
+/**
   If a valid refcase has been set already, and this fails, nothing happens.
 */
-
 bool ecl_refcase_list_set_default(ecl_refcase_list_type *refcase_list,
                                   const char *default_case) {
 
@@ -199,10 +199,9 @@ bool ecl_refcase_list_set_default(ecl_refcase_list_type *refcase_list,
     }
 }
 
-/*
+/**
    Will sort the list and remove all elements which can not be loaded.
 */
-
 static void ecl_refcase_list_assert_clean(ecl_refcase_list_type *refcase_list) {
     if (!refcase_list->sorted) {
         vector_free(refcase_list->case_list);
@@ -333,7 +332,7 @@ int ecl_refcase_list_add_case(ecl_refcase_list_type *refcase_list,
         return 0;
 }
 
-/*
+/**
   The glob_string pattern must (for all practical purposes) end in an
   explicit extension:
 
@@ -344,7 +343,6 @@ int ecl_refcase_list_add_case(ecl_refcase_list_type *refcase_list,
   If the input glob string does not have an explicit extension we add
   .*SMSPEC for the matching purpose.
 */
-
 int ecl_refcase_list_add_matching(ecl_refcase_list_type *refcase_list,
                                   const char *__glob_string) {
     int count = 0;

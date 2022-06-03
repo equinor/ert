@@ -34,12 +34,11 @@
    The same type is used both for variables (PRESSURE/PORO/MULTZ/...)
    and for observations.
 */
-
 typedef enum {
-    ALL_ACTIVE =
-        1, /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-    PARTLY_ACTIVE =
-        3 /* Partly active - must supply additonal type spesific information on what is active.*/
+    /** The variable/observation is fully active, i.e. all cells/all faults/all .. */
+    ALL_ACTIVE = 1,
+    /** Partly active - must supply additonal type spesific information on what is active.*/
+    PARTLY_ACTIVE = 3
 } active_mode_type;
 
 class ActiveList {

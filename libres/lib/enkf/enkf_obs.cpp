@@ -34,7 +34,8 @@
 #include <ert/enkf/obs_vector.hpp>
 #include <ert/enkf/summary_obs.hpp>
 
-/*
+#define ENKF_OBS_TYPE_ID 637297
+/**
 
 The observation system
 ----------------------
@@ -157,20 +158,19 @@ In the following example we have two observations
  instance.
 
  */
-
-#define ENKF_OBS_TYPE_ID 637297
 struct enkf_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    /* A hash of obs_vector_types indexed by user provided keys. */
+    /** A hash of obs_vector_types indexed by user provided keys. */
     vector_type *obs_vector;
     hash_type *obs_hash;
-    time_map_type *obs_time; /* For fast lookup of report_step -> obs_time */
+    /** For fast lookup of report_step -> obs_time */
+    time_map_type *obs_time;
 
     bool valid;
     /* Several shared resources - can generally be NULL*/
-    const history_type *
-        history; /* A shared (not owned by enkf_obs) reference to the history object - used when
-                                         adding HISTORY observations. */
+    /** A shared (not owned by enkf_obs) reference to the history object - used
+     * when adding HISTORY observations. */
+    const history_type *history;
     const ecl_sum_type *refcase;
     const ecl_grid_type *grid;
     time_map_type *external_time_map;
@@ -255,7 +255,7 @@ time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
     return time_map_iget(enkf_obs->obs_time, report_step);
 }
 
-/*
+/**
    Observe that the obs_vector can be NULL - in which it is of course not added.
 */
 void enkf_obs_add_obs_vector(enkf_obs_type *enkf_obs,
@@ -410,11 +410,10 @@ static void enkf_obs_get_obs_and_measure_node(
     }
 }
 
-/*
+/**
   This will append observations and simulated responses from
   report_step to obs_data and meas_data.
 */
-
 void enkf_obs_get_obs_and_measure_data(
     const enkf_obs_type *enkf_obs, enkf_fs_type *fs,
     const std::vector<std::pair<std::string, std::vector<int>>> &observations,
@@ -433,11 +432,10 @@ void enkf_obs_clear(enkf_obs_type *enkf_obs) {
     ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
 }
 
-/*
+/**
    Adding inverse observation keys to the enkf_nodes; can be called
    several times.
 */
-
 static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
     /* First clear all existing observation keys. */
     ensemble_config_clear_obs_keys(enkf_obs->ensemble_config);
@@ -469,7 +467,7 @@ static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
  *
  */
 
-/* Handle HISTORY_OBSERVATION instances. */
+/** Handle HISTORY_OBSERVATION instances. */
 static void handle_history_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
                                        int last_report, double std_cutoff) {
@@ -523,7 +521,7 @@ static void handle_history_observation(enkf_obs_type *enkf_obs,
     stringlist_free(hist_obs_keys);
 }
 
-/* Handle SUMMARY_OBSERVATION instances. */
+/** Handle SUMMARY_OBSERVATION instances. */
 static void handle_summary_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
                                        int last_report) {
@@ -567,7 +565,7 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
     stringlist_free(sum_obs_keys);
 }
 
-/* Handle BLOCK_OBSERVATION instances. */
+/** Handle BLOCK_OBSERVATION instances. */
 static void handle_block_observation(enkf_obs_type *enkf_obs,
                                      conf_instance_type *enkf_conf) {
     stringlist_type *block_obs_keys =
@@ -588,7 +586,7 @@ static void handle_block_observation(enkf_obs_type *enkf_obs,
     stringlist_free(block_obs_keys);
 }
 
-/* Handle GENERAL_OBSERVATION instances. */
+/** Handle GENERAL_OBSERVATION instances. */
 static void handle_general_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf) {
     stringlist_type *block_obs_keys =
@@ -620,7 +618,7 @@ static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
     // clang-format on
 }
 
-/*
+/**
  This function will load an observation configuration from the
    observation file @config_file.
 
@@ -1110,7 +1108,7 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
     return enkf_conf_class;
 }
 
-/*
+/**
    Allocates a stringlist of obs target keys which correspond to
    summary observations, these are then added to the state vector in
    enkf_main.
@@ -1167,7 +1165,7 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
     return matching_keys;
 }
 
-/*
+/**
    This function allocates a hash table which looks like this:
 
      {"OBS_KEY1": "STATE_KEY1", "OBS_KEY2": "STATE_KEY2", "OBS_KEY3": "STATE_KEY3", ....}
@@ -1192,7 +1190,6 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
    I.e. there are three different observations keys, all observing the
    same state_kw.
 */
-
 hash_type *enkf_obs_alloc_data_map(enkf_obs_type *enkf_obs) {
     hash_type *map = hash_alloc();
     hash_iter_type *iter = hash_iter_alloc(enkf_obs->obs_hash);

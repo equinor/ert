@@ -34,7 +34,7 @@ bool_vector_to_active_list(const std::vector<bool> &bool_vector) {
 }
 } // namespace
 
-/*
+/**
  This is very awkward; the problem is that for the GEN_DATA type the config
  object does not really own the size. Instead the size is pushed (on load time)
  from gen_data instances to the gen_data_config instance. Therefore we have to
@@ -123,7 +123,7 @@ void assert_matrix_size(const Eigen::MatrixXd &m, const char *name, int rows,
                                     "," + std::to_string(columns) + "]");
 }
 
-/*
+/**
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices.
 */
@@ -172,7 +172,7 @@ void save_parameters(enkf_fs_type *target_fs,
     }
 }
 
-/*
+/**
 Store a parameters into a enkf_fs_type storage
 */
 void save_row_scaling_parameters(
@@ -198,7 +198,7 @@ void save_row_scaling_parameters(
     }
 }
 
-/*
+/**
 load a set of parameters from a enkf_fs_type storage into a set of
 matrices with the corresponding row-scaling object.
 */
@@ -237,7 +237,7 @@ load_row_scaling_parameters(
     return parameters;
 }
 
-/*
+/**
 Copy all parameters from source_fs to target_fs
 */
 void copy_parameters(enkf_fs_type *source_fs, enkf_fs_type *target_fs,

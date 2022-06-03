@@ -32,7 +32,7 @@
 
 struct hook_manager_struct {
     vector_type
-        *hook_workflow_list; /* vector of hook_workflow_type instances */
+        *hook_workflow_list; /** vector of hook_workflow_type instances */
     runpath_list_type *runpath_list;
     ert_workflow_list_type *workflow_list;
     hash_type *input_context;

@@ -238,13 +238,12 @@ void es_testdata::save(const std::string &path) const {
     save_matrix_data("dObs", this->dObs);
 }
 
-/*
+/**
   This function will allocate a matrix based on data found on disk. The data on
   disk is only the actual content of the matrix, in row_major order. Before the
   matrix is constructed it is verified that the number of elements is a multiple
   of this->active_ens_size.
 */
-
 Eigen::MatrixXd es_testdata::make_state(const std::string &name) const {
 
     pushd tmp_path(this->path);

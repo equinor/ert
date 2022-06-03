@@ -89,7 +89,8 @@ struct obs_block_struct {
 };
 
 struct obs_data_struct {
-    vector_type *data; /* vector with obs_block instances. */
+    /** vector with obs_block instances. */
+    vector_type *data;
     bool_vector_type *mask;
     double global_std_scaling;
 };

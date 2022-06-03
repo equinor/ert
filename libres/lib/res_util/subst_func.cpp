@@ -36,12 +36,13 @@ struct subst_func_struct {
     UTIL_TYPE_ID_DECLARATION;
     subst_func_ftype *func;
     char *name;
-    char *doc_string; /* doc_string for this function - can be NULL. */
+    /** doc_string for this function - can be NULL. */
+    char *doc_string;
     bool vararg;
     int argc_min;
     int argc_max;
-    void *
-        arg; /* 100% unmanaged void argument passed in from the construction. */
+    /** 100% unmanaged void argument passed in from the construction. */
+    void *arg;
 };
 
 char *subst_func_eval(const subst_func_type *subst_func,

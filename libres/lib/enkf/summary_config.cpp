@@ -32,12 +32,12 @@
 struct summary_config_struct {
     int __type_id;
     load_fail_type load_fail;
-    ecl_smspec_var_type
-        var_type; /* The type of the variable - according to ecl_summary nomenclature. */
-    char *
-        var; /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
-    std::set<std::string>
-        obs_set; /* Set of keys (which fit in enkf_obs) which are observations of this node. */
+    /** The type of the variable - according to ecl_summary nomenclature. */
+    ecl_smspec_var_type var_type;
+    /** This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
+    char *var;
+    /** Set of keys (which fit in enkf_obs) which are observations of this node. */
+    std::set<std::string> obs_set;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(summary_config, SUMMARY_CONFIG_TYPE_ID)
@@ -51,14 +51,13 @@ summary_config_get_load_fail_mode(const summary_config_type *config) {
     return config->load_fail;
 }
 
-/*
+/**
    Unfortunately it is a bit problematic to set the required flag to
    TRUE for well and group variables because they do not exist in the
    summary results before the well has actually opened, i.e. for a
    partial summary case the results will not be there, and the loader
    will incorrectly(?) signal failure.
 */
-
 void summary_config_set_load_fail_mode(summary_config_type *config,
                                        load_fail_type load_fail) {
     if ((config->var_type == ECL_SMSPEC_WELL_VAR) ||
@@ -69,10 +68,9 @@ void summary_config_set_load_fail_mode(summary_config_type *config,
         config->load_fail = load_fail;
 }
 
-/*
+/**
    This can only be used to increase the load_fail strictness.
 */
-
 void summary_config_update_load_fail_mode(summary_config_type *config,
                                           load_fail_type load_fail) {
     if (load_fail > config->load_fail)

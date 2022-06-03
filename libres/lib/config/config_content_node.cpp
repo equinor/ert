@@ -34,7 +34,8 @@ namespace fs = std::filesystem;
 struct config_content_node_struct {
     UTIL_TYPE_ID_DECLARATION;
     const config_schema_item_type *schema;
-    stringlist_type *stringlist; /* The values which have been set. */
+    /** The values which have been set. */
+    stringlist_type *stringlist;
     const config_path_elm_type *cwd;
     stringlist_type *string_storage;
 };
@@ -246,7 +247,7 @@ void config_content_node_assert_key_value(
                    __func__, config_schema_item_get_kw(node->schema));
 }
 
-/*
+/**
    The node should contain elements of the type:
 
       KEY1:VALUE1    KEY2:Value2   XX Key3:Val3  Ignored
@@ -255,7 +256,6 @@ void config_content_node_assert_key_value(
    "VALUE1" , ... } Elements which do not conform to this syntax are
    ignored.
 */
-
 void config_content_node_init_opt_hash(const config_content_node_type *node,
                                        hash_type *opt_hash, int elm_offset) {
     int i;

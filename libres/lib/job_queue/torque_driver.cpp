@@ -504,7 +504,7 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     }
 }
 
-/*
+/**
    Will return NULL if "something" fails; that again will be
    translated to JOB_QUEUE_STATUS_FAILURE - which the queue layer will
    just interpret as "No change in status". Possible failures are:
@@ -513,7 +513,6 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     2. Can not extract the correct status string from the stdout file.
 
 */
-
 static job_status_type
 torque_driver_get_qstat_status(torque_driver_type *driver,
                                const char *jobnr_char) {

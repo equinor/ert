@@ -49,7 +49,7 @@ protected:
     virtual void log(Level level, fmt::string_view f,
                      fmt::format_args args) = 0;
 };
-/*
+/**
 * Creates a logger that logs only to Python's logger of the same
 * name, prefixed with libres' namespace. Can be created statically, although
 * it no-ops outside of the lifetime of this Python module.

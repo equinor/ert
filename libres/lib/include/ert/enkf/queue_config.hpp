@@ -64,13 +64,13 @@ bool queue_config_has_queue_driver(const queue_config_type *queue_config,
 void queue_config_create_queue_drivers(queue_config_type *queue_config);
 
 /**
-     * Queue system is typically one of LSF, LOCAL, TORQUE, RHS, ...  Given a
-     * queue system, you can obtain the _driver_ (e.g. lsf_driver).
-     *
-     * Should not be confused with queue_name, which is typically just a
-     * parameter we can send to the LSF cluster to get a certain queue,
-     * e.g. "mr".
-     */
+ * Queue system is typically one of LSF, LOCAL, TORQUE, RHS, ...  Given a
+ * queue system, you can obtain the _driver_ (e.g. lsf_driver).
+ *
+ * Should not be confused with queue_name, which is typically just a
+ * parameter we can send to the LSF cluster to get a certain queue,
+ * e.g. "mr".
+ */
 extern "C" const char *
 queue_config_get_queue_system(const queue_config_type *queue_config);
 
