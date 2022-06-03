@@ -213,11 +213,9 @@ void run_arg_set_run_status(run_arg_type *run_arg, run_status_type run_status) {
 }
 
 void run_arg_set_geo_id(run_arg_type *run_arg, int geo_id) {
-    /*
-   * Providing the geo_id upon initialization is the last step to achieve
-   * immutability for run_arg. Although we allow setting the geo_id for now, it
-   * should only be done once.
-   */
+    // Providing the geo_id upon initialization is the last step to achieve
+    // immutability for run_arg. Although we allow setting the geo_id for now,
+    // it should only be done once.
     if (run_arg->geo_id != -1)
         util_abort("%s: Tried to set run_arg's geo_id twice!\n", __func__);
 

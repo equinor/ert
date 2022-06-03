@@ -185,14 +185,13 @@ bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
         } else {
             load_value = 0;
             /*
-         The summary object does not have this variable - probably
-         meaning that it is a well/group which has not yet
-         opened. When required == false we do not signal load
-         failure in this situation.
+            The summary object does not have this variable - probably meaning
+            that it is a well/group which has not yet opened. When required ==
+            false we do not signal load failure in this situation.
 
-         If the user has misspelled the name, we will go through
-         the whole simulation without detecting that error.
-      */
+            If the user has misspelled the name, we will go through the whole
+            simulation without detecting that error.
+            */
             if (load_fail_action == LOAD_FAIL_EXIT)
                 loadOK = false;
             else {
@@ -215,7 +214,7 @@ bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
 
          Hmmm - there is a "if (report_step > 0)" check in the
          enkf_state_internalize_x() function as well.
-      */
+        */
         else {
             if (load_fail_action == LOAD_FAIL_EXIT)
                 loadOK = false;
@@ -253,10 +252,8 @@ bool summary_forward_load_vector(summary_type *summary,
     bool normal_load = false;
 
     if (load_fail_action != LOAD_FAIL_EXIT) {
-        /*
-      The load will always ~succeed - but if we do not have the data;
-      we will fill the vector with zeros.
-    */
+        // The load will always ~succeed - but if we do not have the data; we
+        // will fill the vector with zeros.
 
         if (!ecl_sum_has_general_var(ecl_sum, var_key)) {
             for (int step = 0; step < int_vector_size(time_index); step++) {
