@@ -27,8 +27,10 @@
 
 struct config_path_elm_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *abs_path; // This will always be absolute
-    char *rel_path; // This will always be relative to the root path.
+    /** This will always be absolute */
+    char *abs_path;
+    /** This will always be relative to the root path. */
+    char *rel_path;
     const config_root_path_type *root_path;
 };
 

@@ -29,18 +29,18 @@
 
 #include <ert/enkf/enkf_macros.hpp>
 
-/*
+/**
   How should the run system handle a load problem of a summary
   variable. Observe that the numerical enum values are actually used -
   they should be listed with the most strict mode having the
   numerically largest value.
 */
-
 typedef enum {
-    LOAD_FAIL_SILENT =
-        0, // We just try to load - and if it is not there we do not care at all.
-    LOAD_FAIL_WARN =
-        2, // If the key can not be found we will print a warning on stdout - but the run will still be flagged as successful.
+    /** We just try to load - and if it is not there we do not care at all. */
+    LOAD_FAIL_SILENT = 0,
+    /** If the key can not be found we will print a warning on stdout - but the
+     * run will still be flagged as successful. */
+    LOAD_FAIL_WARN = 2,
     LOAD_FAIL_EXIT = 4
 } // The data is deemed important - and we let the run fail if this data can not be found.
 load_fail_type;

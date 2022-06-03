@@ -15,7 +15,7 @@ static void enkf_state_del_node(enkf_state_type *enkf_state,
                 __func__, node_key);
 }
 
-/*
+/**
    The enkf_state inserts a reference to the node object. The
    enkf_state object takes ownership of the node object, i.e. it will
    free it when the game is over.
@@ -24,7 +24,6 @@ static void enkf_state_del_node(enkf_state_type *enkf_state,
    removed (freed and so on ... ) from the enkf_state object before
    adding the new; this was previously considered a run-time error.
 */
-
 void enkf_state_add_node(enkf_state_type *enkf_state, const char *node_key,
                          const enkf_config_node_type *config) {
     if (enkf_state_has_node(enkf_state, node_key))

@@ -72,7 +72,7 @@ double RowScaling::assign(size_t index, double value) {
     return m_data.at(index);
 }
 
-/*
+/**
   The final step in the Ensemble Smoother update is the matrix multiplication
 
      A' = A * X
@@ -96,7 +96,6 @@ double RowScaling::assign(size_t index, double value) {
   multiplications are grouped together where all rows with the same alpha valued
   are multiplied in one go.
  */
-
 void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
                           const Eigen::MatrixXd &X0) const {
     if (m_data.size() != A.rows())
@@ -114,7 +113,7 @@ void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
     /*
     The sort_index vector is an index permutation corresponding to sorted
     row_scaling data.
-  */
+    */
     std::vector<int> sort_index(this->size());
     std::iota(sort_index.begin(), sort_index.end(), 0);
     std::sort(sort_index.begin(), sort_index.end(),
@@ -127,8 +126,7 @@ void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
     the A matrix / row_scaling vector. In the inner loop we identify a list of
     rows which have the same row_scaling value, then we scale the X matrix
     according to this shared alpha value and calculate the update.
-  */
-
+    */
     std::size_t index_offset = 0;
     while (true) {
         if (index_offset == m_data.size())

@@ -34,33 +34,45 @@
 namespace fs = std::filesystem;
 
 struct conf_class_struct {
-    const conf_class_type *super_class; /* Can be NULL */
+    /** Can be NULL */
+    const conf_class_type *super_class;
     char *class_name;
-    char *help; /* Can be NULL if not given */
+    /** Can be NULL if not given */
+    char *help;
     bool require_instance;
     bool singleton;
 
-    hash_type *sub_classes;    /* conf_class_types */
-    hash_type *item_specs;     /* conf_item_spec_types */
-    vector_type *item_mutexes; /* item_mutex_types */
+    /** conf_class_types */
+    hash_type *sub_classes;
+    /** conf_item_spec_types */
+    hash_type *item_specs;
+    /** item_mutex_types */
+    vector_type *item_mutexes;
 };
 
 struct conf_instance_struct {
     const conf_class_type *conf_class;
     char *name;
 
-    hash_type *sub_instances; /* conf_instance_types */
-    hash_type *items;         /* conf_item_types */
+    /** conf_instance_types */
+    hash_type *sub_instances;
+    /** conf_item_types */
+    hash_type *items;
 };
 
 struct conf_item_spec_struct {
-    const conf_class_type *super_class; /* NULL if not inserted into a class */
+    /** NULL if not inserted into a class */
+    const conf_class_type *super_class;
     char *name;
-    bool required_set;   /* Require the item to take a valid value */
-    char *default_value; /* Can be NULL if not given */
-    dt_enum dt;          /* Data type. See conf_data */
+    /** Require the item to take a valid value */
+    bool required_set;
+    /** Can be NULL if not given */
+    char *default_value;
+    /** Data type. See conf_data */
+    dt_enum dt;
     std::set<std::string> *restriction;
-    char *help; /* Can be NULL if not given */
+    /** Can be NULL if not given */
+    char *help;
 };
 
 struct conf_item_struct {
@@ -71,8 +83,8 @@ struct conf_item_struct {
 struct conf_item_mutex_struct {
     const conf_class_type *super_class;
     bool require_one;
-    bool
-        inverse; /* if inverse == true the 'mutex' implements: if A then ALSO B, C and D */
+    /** if inverse == true the 'mutex' implements: if A then ALSO B, C and D */
+    bool inverse;
     hash_type *item_spec_refs;
 };
 
@@ -649,7 +661,7 @@ conf_instance_get_item_value_ref(const conf_instance_type *conf_instance,
     return conf_item->value;
 }
 
-/* If the dt supports it, this function shall return the item value as an int.
+/** If the dt supports it, this function shall return the item value as an int.
     If the dt does not support it, the function will abort.
 */
 int conf_instance_get_item_value_int(const conf_instance_type *conf_instance,
@@ -666,7 +678,7 @@ int conf_instance_get_item_value_int(const conf_instance_type *conf_instance,
     return conf_data_get_int_from_string(conf_item_spec->dt, conf_item->value);
 }
 
-/* If the dt supports it, this function shall return the item value as a double.
+/** If the dt supports it, this function shall return the item value as a double.
     If the dt does not support it, the function will abort.
 */
 double
@@ -686,7 +698,7 @@ conf_instance_get_item_value_double(const conf_instance_type *conf_instance,
                                             conf_item->value);
 }
 
-/* If the dt supports it, this function shall return the item value as a time_t.
+/** If the dt supports it, this function shall return the item value as a time_t.
     If the dt does not support it, the function will abort.
 */
 time_t

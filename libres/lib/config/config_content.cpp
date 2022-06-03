@@ -34,9 +34,9 @@
 
 struct config_content_struct {
     UTIL_TYPE_ID_DECLARATION;
-    std::set<std::string> *
-        parsed_files; /* A set of config files whcih have been parsed - to protect against circular includes. */
-
+    /** A set of config files which have been parsed - to protect against
+     * circular includes. */
+    std::set<std::string> *parsed_files;
     vector_type *nodes;
     hash_type *items;
     config_error_type *parse_errors;
@@ -217,11 +217,10 @@ double config_content_iget_as_double(const config_content_type *content,
     return config_content_item_iget_as_double(item, occurence, index);
 }
 
-/*
+/**
    This function will return NULL is the item has not been set,
    however it must be installed with config_add_schema_item().
 */
-
 const char *config_content_safe_iget(const config_content_type *content,
                                      const char *kw, int occurence, int index) {
     const char *value = NULL;
@@ -237,13 +236,12 @@ const char *config_content_safe_iget(const config_content_type *content,
     return value;
 }
 
-/*
+/**
    Return the number of times a keyword has been set - dies on unknown
    'kw'. If the append_arg attribute has been set to false the
    function will return 0 or 1 irrespective of how many times the item
    has been set in the config file.
 */
-
 int config_content_get_occurences(const config_content_type *content,
                                   const char *kw) {
     if (config_content_has_item(content, kw))

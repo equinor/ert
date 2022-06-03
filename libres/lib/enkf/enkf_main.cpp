@@ -58,7 +58,9 @@
 
 static auto logger = ert::get_logger("enkf");
 
-/*
+#define ENKF_MAIN_ID 8301
+
+/**
    This object should contain **everything** needed to run a enkf
    simulation. A way to wrap up all available information/state and
    pass it around. An attempt has been made to collect various pieces
@@ -85,12 +87,10 @@ static auto logger = ert::get_logger("enkf");
        and matched into other small holding objects defined in
        enkf_state.c.
 */
-
-#define ENKF_MAIN_ID 8301
-
 struct enkf_main_struct {
     UTIL_TYPE_ID_DECLARATION;
-    enkf_fs_type *dbase; /* The internalized information. */
+    /** The internalized information. */
+    enkf_fs_type *dbase;
 
     const res_config_type *res_config;
     rng_manager_type *rng_manager;
@@ -98,8 +98,10 @@ struct enkf_main_struct {
 
     enkf_obs_type *obs;
 
-    enkf_state_type **ensemble; /* The ensemble ... */
-    int ens_size;               /* The size of the ensemble */
+    /** The ensemble */
+    enkf_state_type **ensemble;
+    /** The size of the ensemble */
+    int ens_size;
 };
 
 void enkf_main_init_internalization(enkf_main_type *);
@@ -249,7 +251,7 @@ void enkf_main_create_run_path(enkf_main_type *enkf_main,
     enkf_main_write_run_path(enkf_main, run_context);
 }
 
-/*
+/**
    This function will initialize the necessary enkf_main structures
    before a run. Currently this means:
 
@@ -259,7 +261,6 @@ void enkf_main_create_run_path(enkf_main_type *enkf_main,
      2. Set up the configuration of what should be internalized.
 
 */
-
 void enkf_main_init_run(enkf_main_type *enkf_main,
                         const ert_run_context_type *run_context) {
     enkf_main_init_internalization(enkf_main);
@@ -282,7 +283,7 @@ ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
         enkf_main_get_data_kw(enkf_main), iter);
 }
 
-/*
+/**
    There is NO tagging anymore - if the user wants tags - the user
    supplies the key __WITH__ tags.
 */
@@ -343,7 +344,7 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
     enkf_main_increase_ensemble(enkf_main, num_realizations);
 }
 
-/*
+/**
    This function boots everything needed for running a EnKF
    application from the provided res_config.
 
@@ -358,14 +359,10 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
     SCHEDULE_FILE
     ECLBASE
 
-*/
-
-/*
    It is possible to pass NULL as the model_config argument, in that
    case only the site config file will be parsed. The purpose of this
    is mainly to be able to test that the site config file is valid.
 */
-
 enkf_main_type *enkf_main_alloc(const res_config_type *res_config) {
     enkf_main_type *enkf_main = enkf_main_alloc_empty();
     enkf_main->res_config = res_config;
@@ -382,7 +379,7 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
     return enkf_main->ens_size;
 }
 
-/*
+/**
    In this function we initialize the variables which control
    which nodes are internalized (i.e. loaded from the forward
    simulation and stored in the enkf_fs 'database'). The system is
@@ -433,7 +430,6 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
    instance the pressure (i.e. for an RFT) we must set the
    __load_state variable for the actual report step to true.
 */
-
 void enkf_main_init_internalization(enkf_main_type *enkf_main) {
     /* Clearing old internalize flags. */
     model_config_init_internalization(enkf_main_get_model_config(enkf_main));

@@ -28,8 +28,10 @@
 struct enkf_plot_gen_kw_struct {
     UTIL_TYPE_ID_DECLARATION;
     const enkf_config_node_type *config_node;
-    int size;                                /* Number of ensembles. */
-    enkf_plot_gen_kw_vector_type **ensemble; /* One vector for each ensemble. */
+    /** Number of ensembles. */
+    int size;
+    /** One vector for each ensemble. */
+    enkf_plot_gen_kw_vector_type **ensemble;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(enkf_plot_gen_kw, ENKF_PLOT_GEN_KW_TYPE_ID)

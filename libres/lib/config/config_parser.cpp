@@ -38,7 +38,7 @@ namespace fs = std::filesystem;
 
 #define CLEAR_STRING "__RESET__"
 
-/*
+/**
 Structure to parse configuration files of this type:
 
 KEYWORD1  ARG2   ARG2  ARG3
@@ -47,10 +47,6 @@ KEYWORD2  ARG1-2
 KEYWORDN  ARG1  ARG2
 
 A keyword can occure many times.
-
-*/
-
-/*
 
 
                            =============================
@@ -112,18 +108,17 @@ first will again only contain one node each, whereas the OPTIONS item
 will contain three nodes, corresponding to the three times the keyword
 "OPTIONS" appear in the config file.
 */
-
 struct config_parser_struct {
     hash_type *schema_items;
-    hash_type *
-        messages; /* Can print a (warning) message when a keyword is encountered. */
+    /** Can print a (warning) message when a keyword is encountered. */
+    hash_type *messages;
 };
 
 int config_get_schema_size(const config_parser_type *config) {
     return hash_get_size(config->schema_items);
 }
 
-/*
+/**
   The last argument (config_file) is only used for printing
   informative error messages, and can be NULL. The config_cwd is
   essential if we are looking up a filename, otherwise it can be NULL.
@@ -132,7 +127,6 @@ int config_get_schema_size(const config_parser_type *config) {
   arguments were OK. The string is allocated here, but is assumed that
   calling scope will free it.
 */
-
 static config_content_node_type *config_content_item_set_arg__(
     subst_list_type *define_list, config_error_type *parse_errors,
     config_content_item_type *item, stringlist_type *token_list,
@@ -230,14 +224,13 @@ static void config_insert_schema_item(config_parser_type *config,
                                    config_schema_item_free__);
 }
 
-/*
+/**
    This function allocates a simple item with all values
    defaulted. The item is added to the config object, and a pointer is
    returned to the calling scope. If you want to change the properties
    of the item you can do that with config_schema_item_set_xxxx() functions
    from the calling scope.
 */
-
 config_schema_item_type *config_add_schema_item(config_parser_type *config,
                                                 const char *kw, bool required) {
 
@@ -246,7 +239,7 @@ config_schema_item_type *config_add_schema_item(config_parser_type *config,
     return item;
 }
 
-/*
+/**
   This is a minor wrapper for adding an item with the properties.
 
     1. It has argc_minmax = {1,1}
@@ -254,7 +247,6 @@ config_schema_item_type *config_add_schema_item(config_parser_type *config,
    The value can than be extracted with config_get_value() and
    config_get_value_as_xxxx functions.
 */
-
 config_schema_item_type *config_add_key_value(config_parser_type *config,
                                               const char *key, bool required,
                                               config_item_types item_type) {
@@ -274,11 +266,10 @@ config_get_schema_item(const config_parser_type *config, const char *kw) {
     return (config_schema_item_type *)hash_get(config->schema_items, kw);
 }
 
-/*
+/**
   Due to the possibility of aliases we must go through the canonical
   keyword which is internalized in the schema_item.
 */
-
 static void config_validate_content_item(const config_parser_type *config,
                                          config_content_type *content,
                                          const config_content_item_type *item) {
@@ -465,7 +456,7 @@ bool config_parser_add_key_values(
     return new_node != NULL;
 }
 
-/*
+/**
    This function parses the config file 'filename', and updated the
    internal state of the config object as parsing proceeds. If
    comment_string != NULL everything following 'comment_string' on a
@@ -535,7 +526,6 @@ bool config_parser_add_key_values(
    The         key-value pairs internalized during the config parsing are NOT
    returned to the calling scope in any way.
 */
-
 static void
 config_parse__(config_parser_type *config, config_content_type *content,
                path_stack_type *path_stack, const char *config_filename,
@@ -675,7 +665,7 @@ config_parse(config_parser_type *config, const char *filename,
     return content;
 }
 
-/*
+/**
    This function adds an alias to an existing item; so that the
    value+++ of an item can be referred to by two different names.
 */

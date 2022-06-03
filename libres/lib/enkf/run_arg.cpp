@@ -29,19 +29,28 @@
 struct run_arg_struct {
     UTIL_TYPE_ID_DECLARATION;
     int iens;
-    int max_internal_submit; /* How many times the enkf_state object should try to resubmit when the queueu has said everything is OK - but the load fails. */
+    /** How many times the enkf_state object should try to resubmit when the
+     * queueu has said everything is OK - but the load fails. */
+    int max_internal_submit;
     int num_internal_submit;
-    int load_start; /* When loading back results - start at this step. */
-    int step1;      /* The forward model is integrated: step1 -> step2 */
+    /** When loading back results - start at this step. */
+    int load_start;
+    /** The forward model is integrated: step1 -> step2 */
+    int step1;
     int step2;
     int iter;
-    char *
-        run_path; /* The currently used  runpath - is realloced / freed for every step. */
-    char *
-        job_name; /* Name of the job - will correspond to ECLBASE for eclipse jobs. */
-    run_mode_type run_mode; /* What type of run this is */
-    int queue_index; /* The job will in general have a different index in the queue than the iens number. */
-    int geo_id; /* This will be used by WPRO - and mapped to context key <GEO_ID>; set during submit. */
+    /** The currently used  runpath - is realloced / freed for every step. */
+    char *run_path;
+    /** Name of the job - will correspond to ECLBASE for eclipse jobs. */
+    char *job_name;
+    /* What type of run this is */
+    run_mode_type run_mode;
+    /** The job will in general have a different index in the queue than the
+     * iens number. */
+    int queue_index;
+    /** This will be used by WPRO - and mapped to context key <GEO_ID>; set
+     * during submit. */
+    int geo_id;
     enkf_fs_type *sim_fs;
     enkf_fs_type *update_target_fs;
     subst_list_type *subst_list;

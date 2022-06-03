@@ -49,11 +49,12 @@ typedef struct {
 struct gen_kw_config_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *key;
-    vector_type *parameters; /* Vector of gen_kw_parameter_type instances. */
+    /** Vector of gen_kw_parameter_type instances. */
+    vector_type *parameters;
     char *template_file;
     char *parameter_file;
-    const char *
-        tag_fmt; /* Pointer to the tag_format owned by the ensemble config object. */
+    /** Pointer to the tag_format owned by the ensemble config object. */
+    const char *tag_fmt;
 };
 
 UTIL_SAFE_CAST_FUNCTION(gen_kw_parameter, GEN_KW_PARAMETER_TYPE_ID)
@@ -106,7 +107,7 @@ const char *gen_kw_config_get_template_file(const gen_kw_config_type *config) {
     return config->template_file;
 }
 
-/*
+/**
   The input template file must point to an existing file.
 */
 void gen_kw_config_set_template_file(gen_kw_config_type *config,
@@ -158,7 +159,7 @@ const char *gen_kw_config_get_parameter_file(const gen_kw_config_type *config) {
     return config->parameter_file;
 }
 
-/*
+/**
    Unfortunately the GUI makes it necessary(??) to be able to create
    halfways initialized gen_kw_config objects; and we then have to be
    able to query the gen_kw_config object if it is valid.
@@ -169,7 +170,6 @@ const char *gen_kw_config_get_parameter_file(const gen_kw_config_type *config) {
     * parameter_file != NULL  (this means that the special schedule_prediction_file keyword will be invalid).
 
 */
-
 bool gen_kw_config_is_valid(const gen_kw_config_type *config) {
     if (config->template_file != NULL && config->parameter_file != NULL)
         return true;
@@ -177,7 +177,7 @@ bool gen_kw_config_is_valid(const gen_kw_config_type *config) {
         return false;
 }
 
-/*
+/**
    A call to gen_kw_config_update_tag_format() must be called
    afterwards, otherwise all tagged strings will just be NULL.
 */
@@ -283,7 +283,7 @@ gen_kw_config_alloc_name_list(const gen_kw_config_type *config) {
     return name_list;
 }
 
-/*
+/**
    Will return -1 if the index is invalid.
 */
 int gen_kw_config_get_index(const gen_kw_config_type *config, const char *key) {

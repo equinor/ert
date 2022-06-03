@@ -120,8 +120,8 @@ struct lsf_job_struct {
     long int lsf_jobnr;
     int num_exec_host;
     char **exec_host;
-    char *
-        lsf_jobnr_char; /* Used to look up the job status in the bjobs_cache hash table */
+    /** Used to look up the job status in the bjobs_cache hash table */
+    char *lsf_jobnr_char;
     char *job_name;
 };
 
@@ -154,14 +154,14 @@ struct lsf_driver_struct {
     bool debug_output;
     int bjobs_refresh_interval;
     time_t last_bjobs_update;
-    hash_type
-        *my_jobs; /* A hash table of all jobs submitted by this ERT instance -
-                                             to ensure that we do not check status of old jobs in e.g. ZOMBIE status. */
+    /** A hash table of all jobs submitted by this ERT instance - to ensure
+     * that we do not check status of old jobs in e.g. ZOMBIE status. */
+    hash_type *my_jobs;
     hash_type *status_map;
-    hash_type
-        *bjobs_cache; /* The output of calling bjobs is cached in this table. */
-    pthread_mutex_t
-        bjobs_mutex; /* Only one thread should update the bjobs_chache table. */
+    /** The output of calling bjobs is cached in this table. */
+    hash_type *bjobs_cache;
+    /** Only one thread should update the bjobs_chache table. */
+    pthread_mutex_t bjobs_mutex;
     char *remote_lsf_server;
     char *rsh_cmd;
     char *bsub_cmd;
@@ -335,7 +335,7 @@ static void lsf_driver_assert_submit_method(const lsf_driver_type *driver) {
     }
 }
 
-/*
+/**
   A resource string can be "span[host=1] select[A && B] bla[xyz]".
   The blacklisting feature is to have select[hname!=bad1 && hname!=bad2].
 
@@ -379,7 +379,7 @@ alloc_composed_resource_request(const lsf_driver_type *driver,
     return req;
 }
 
-/*
+/**
   The resource request string contains spaces, and when passed
   through the shell it must be protected with \"..\"; this applies
   when submitting to a remote lsf server with ssh. However when
@@ -469,7 +469,7 @@ stringlist_type *lsf_driver_alloc_cmd(lsf_driver_type *driver,
     return argv;
 }
 
-/*
+/**
  * Submit internal job (LSF_SUBMIT_INTERNAL) using system calls instead of
  * invoking shell commands.  This method only works when actually called from
  * an LSF node.
@@ -741,7 +741,7 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
     return bhist_ok;
 }
 
-/*
+/**
   When a job has completed you can query the status using the bjobs
   command for a while, and then the job will be evicted from the LSF
   status table. If there have been connection problems with the LSF
@@ -765,7 +765,6 @@ static bool lsf_driver_run_bhist(lsf_driver_type *driver, lsf_job_type *job,
 
     4. Status unknown - have not got a clue?!
 */
-
 static int lsf_driver_get_bhist_status_shell(lsf_driver_type *driver,
                                              lsf_job_type *job) {
     int status = JOB_STAT_UNKWN;
@@ -914,7 +913,7 @@ void lsf_driver_free_job(void *__job) {
     lsf_job_free(job);
 }
 
-/*
+/**
  * Parses the given file containing colon separated hostnames, ie.
  * "hname1:hname2:hname3". This is the same format as
  * written by lsf_job_write_bjobs_to_file().
@@ -1320,12 +1319,11 @@ void lsf_driver_init_option_list(stringlist_type *option_list) {
     stringlist_append_copy(option_list, LSF_BJOBS_TIMEOUT);
 }
 
-/*
+/**
    Observe that this driver IS not properly initialized when returning
    from this function, the option interface must be used to set the
    keys:
 */
-
 void lsf_driver_set_bjobs_refresh_interval(lsf_driver_type *driver,
                                            int refresh_interval) {
     driver->bjobs_refresh_interval = refresh_interval;
@@ -1382,12 +1380,11 @@ static void lsf_driver_shell_init(lsf_driver_type *lsf_driver) {
     pthread_mutex_init(&lsf_driver->bjobs_mutex, NULL);
 }
 
-/*
+/**
   If the lsb library is compiled in and the runtime loading of the lsb libraries
   has succeeded we default to submitting through internal library calls,
   otherwise we will submit using shell commands on the local workstation.
 */
-
 static void lsf_driver_init_submit_method(lsf_driver_type *driver) {
 #ifdef HAVE_LSF_LIBRARY
     if (lsb_ready(driver->lsb)) {

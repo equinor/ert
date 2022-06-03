@@ -30,21 +30,21 @@
 #include <ert/enkf/misfit_ranking.hpp>
 #include <ert/enkf/ranking_common.hpp>
 
-/*
+#define MISFIT_RANKING_TYPE_ID 671108
+
+/**
    This struct contains the misfits & sort keys for one particular
    misfit_ranking. I.e. all the RFT measurements.
 */
-
-#define MISFIT_RANKING_TYPE_ID 671108
-
 struct misfit_ranking_struct {
     UTIL_TYPE_ID_DECLARATION;
-    vector_type *
-        ensemble; /* An ensemble of hash instances. Each hash instance is populated like this: hash_insert_double(hash , "WGOR" , 1.09); */
-    double_vector_type *
-        total; /* An enemble of total misfit values (for this misfit_ranking). */
-    perm_vector_type *
-        sort_permutation; /* This is how the ens members should be permuted to be sorted under this misfit_ranking.                                     */
+    /** An ensemble of hash instances. Each hash instance is populated like
+     * this: hash_insert_double(hash , "WGOR" , 1.09); */
+    vector_type *ensemble;
+    /** An enemble of total misfit values (for this misfit_ranking). */
+    double_vector_type *total;
+    /** This is how the ens members should be permuted to be sorted under this misfit_ranking. */
+    perm_vector_type *sort_permutation;
     int ens_size;
 };
 

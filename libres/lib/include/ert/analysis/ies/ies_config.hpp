@@ -58,18 +58,18 @@ public:
 
     double get_steplength(int iteration_nr) const;
 
-    // Controlled by config key: DEFAULT_IES_INVERSION
+    /** Controlled by config key: DEFAULT_IES_INVERSION */
     inversion_type inversion;
     bool iterable;
-    // Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY
+    /** Controlled by config key: DEFAULT_IES_MAX_STEPLENGTH_KEY */
     double max_steplength;
-    // Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY
+    /** Controlled by config key: DEFAULT_IES_MIN_STEPLENGTH_KEY */
     double min_steplength;
 
 private:
-    // Used for setting threshold of eigen values or number of eigen values
+    /** Used for setting threshold of eigen values or number of eigen values */
     std::variant<double, int> m_truncation;
-    // Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY
+    /** Controlled by config key: DEFAULT_IES_DEC_STEPLENGTH_KEY */
     double m_dec_steplength;
 };
 

@@ -42,7 +42,7 @@
 static auto logger = ert::get_logger("enkf");
 #define ENKF_STATE_TYPE_ID 78132
 
-/*
+/**
    This struct contains various objects which the enkf_state needs
    during operation, which the enkf_state_object *DOES NOT* own. The
    struct only contains pointers to objects owned by (typically) the
@@ -54,11 +54,11 @@ static auto logger = ert::get_logger("enkf");
    The elements in this struct should not change during the
    application lifetime?
 */
-
 typedef struct shared_info_struct {
-    model_config_type *model_config; /* .... */
-    ext_joblist_type *
-        joblist; /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
+    model_config_type *model_config;
+    /** The list of external jobs which are installed - and *how* they should
+     * be run (with Python code) */
+    ext_joblist_type *joblist;
     const site_config_type *site_config;
     ert_templates_type *templates;
     const ecl_config_type *ecl_config;
@@ -67,10 +67,10 @@ typedef struct shared_info_struct {
 struct enkf_state_struct {
     UTIL_TYPE_ID_DECLARATION;
     hash_type *node_hash;
-    ensemble_config_type *
-        ensemble_config; /* The config nodes for the enkf_node objects contained in node_hash. */
-    shared_info_type *
-        shared_info; /* Pointers to shared objects which is needed by the enkf_state object (read only). */
+    /** The config nodes for the enkf_node objects contained in node_hash. */
+    ensemble_config_type *ensemble_config;
+    /** Pointers to shared objects which is needed by the enkf_state object (read only). */
+    shared_info_type *shared_info;
     int __iens;
 };
 
@@ -96,7 +96,7 @@ static void shared_info_free(shared_info_type *shared_info) {
     free(shared_info);
 }
 
-/*
+/**
   This function does not acces the nodes of the enkf_state object.
 */
 void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
@@ -199,7 +199,7 @@ __enkf_state_get_time_index(enkf_fs_type *sim_fs, const ecl_sum_type *summary) {
     return time_map_alloc_index_map(time_map, summary);
 }
 
-/*
+/**
  * Check if there are summary keys in the ensemble config that is not found in Eclipse. If this is the case, AND we
  * have observations for this key, we have a problem. Otherwise, just print a message to the log.
  */
@@ -427,7 +427,7 @@ enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
     return load_context;
 }
 
-/*
+/**
    This function loads the results from a forward simulations from report_step1
    to report_step2. The details of what to load are in model_config and the
    spesific nodes for special cases.
@@ -567,14 +567,13 @@ void enkf_state_init_eclipse(const res_config_type *res_config,
         run_arg_get_subst_list(run_arg), umask, varlist);
 }
 
-/*
+/**
     Observe that if run_arg == false, this routine will return with
     job_completeOK == true, that might be a bit misleading.
 
     Observe that if an internal retry is performed, this function will
     be called several times - MUST BE REENTRANT.
 */
-
 bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                          run_arg_type *run_arg) {
 
@@ -627,15 +626,15 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
     return false;
 }
 
-/*
+/**
   This function writes out all the files needed by an ECLIPSE simulation, this
   includes the restart file, and the various INCLUDE files corresponding to
   parameters estimated by EnKF.
 
   The writing of restart file is delegated to enkf_state_write_restart_file().
-*/
 
-// TODO: enkf_fs_type could be fetched from run_arg
+  TODO: enkf_fs_type could be fetched from run_arg
+*/
 void enkf_state_ecl_write(const ensemble_config_type *ens_config,
                           const model_config_type *model_config,
                           const run_arg_type *run_arg, enkf_fs_type *fs) {

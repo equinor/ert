@@ -24,7 +24,7 @@
 
 #include <ert/rms/rms_util.hpp>
 
-/*
+/**
   This translates from the RMS data layout to "Fortan / ECLIPSE" data
   layout.
 
@@ -34,7 +34,6 @@
   This function should be *THE ONLY* place in the code where explicit mention
   is made to the RMS ordering sequence.
 */
-
 int rms_util_global_index_from_eclipse_ijk(int nx, int ny, int nz, int i, int j,
                                            int k) {
     return i * ny * nz + j * nz + (nz - k - 1);
@@ -69,7 +68,7 @@ int rms_util_fread_strlen(FILE *stream) {
     return len;
 }
 
-/*
+/**
   max_length *includes* the trailing \0.
 */
 bool rms_util_fread_string(char *string, int max_length, FILE *stream) {

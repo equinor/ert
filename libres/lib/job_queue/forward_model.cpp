@@ -35,9 +35,11 @@
 */
 
 struct forward_model_struct {
-    vector_type *jobs; /* The actual jobs in this forward model. */
-    const ext_joblist_type *
-        ext_joblist; /* This is the list of external jobs which have been installed - which we can choose from. */
+    /** The actual jobs in this forward model. */
+    vector_type *jobs;
+    /** This is the list of external jobs which have been installed - which we
+     * can choose from. */
+    const ext_joblist_type *ext_joblist;
 };
 
 #define DEFAULT_JOB_JSON "jobs.json"
@@ -55,7 +57,7 @@ forward_model_type *forward_model_alloc(const ext_joblist_type *ext_joblist) {
     return forward_model;
 }
 
-/*
+/**
    Allocates and returns a stringlist with all the names in the
    current forward_model.
 */
@@ -72,12 +74,11 @@ forward_model_alloc_joblist(const forward_model_type *forward_model) {
     return names;
 }
 
-/*
+/**
    This function adds the job named 'job_name' to the forward model. The return
    value is the newly created ext_job instance. This can be used to set private
    arguments for this job.
 */
-
 ext_job_type *forward_model_add_job(forward_model_type *forward_model,
                                     const char *job_name) {
     ext_job_type *new_job =
@@ -95,10 +96,9 @@ void forward_model_free(forward_model_type *forward_model) {
     free(forward_model);
 }
 
-/*
+/**
   Used with SIMULATION_JOB keyword
 */
-
 void forward_model_parse_job_args(forward_model_type *forward_model,
                                   const stringlist_type *list,
                                   const subst_list_type *define_args) {
@@ -112,7 +112,7 @@ void forward_model_parse_job_args(forward_model_type *forward_model,
     ext_job_set_define_args(current_job, define_args);
 }
 
-/*
+/**
    DEPRECATED, used with the old FORWARD_MODEL keyword
 
    this function takes an input string of the type:
@@ -125,7 +125,6 @@ void forward_model_parse_job_args(forward_model_type *forward_model,
       between the end of the function name and the opening parenthesis.
 
 */
-
 void forward_model_parse_job_deprecated_args(
     forward_model_type *forward_model, const char *input_string,
     const subst_list_type *define_args) {

@@ -85,38 +85,40 @@ typedef enum {
 
 struct subst_list_struct {
     UTIL_TYPE_ID_DECLARATION;
-    const subst_list_type *
-        parent; /* A parent subst_list instance - can be NULL - no destructor is called for the parent. */
-    vector_type *string_data; /* The string substitutions we should do. */
-    vector_type *func_data;   /* The functions we support. */
-    const subst_func_pool_type
-        *func_pool; /* NOT owned by the subst_list instance - can be NULL */
+    /** A parent subst_list instance - can be NULL - no destructor is called
+     * for the parent. */
+    const subst_list_type *parent;
+    /** The string substitutions we should do. */
+    vector_type *string_data;
+    /** The functions we support. */
+    vector_type *func_data;
+    /** NOT owned by the subst_list instance - can be NULL */
+    const subst_func_pool_type *func_pool;
     hash_type *map;
 };
 
 typedef struct {
-    subst_func_type *
-        func; /* Pointer to the real subst_func_type - implemented in subst_func.c */
-    char *
-        name; /* The name the function is recognized as - in this substitution context. */
+    /** Pointer to the real subst_func_type - implemented in subst_func.c */
+    subst_func_type *func;
+    /** The name the function is recognized as - in this substitution context. */
+    char *name;
 } subst_list_func_type;
 
-/*
+/**
    The subst_list type is implemented as a hash of subst_list_node
    instances. This node type is not exported out of this file scope at
    all.
 */
-
 typedef struct {
-    bool
-        value_owner; /* Wether the memory pointed to by value should bee freed.*/
+    /** Wether the memory pointed to by value should bee freed.*/
+    bool value_owner;
     char *value;
     char *key;
-    char *
-        doc_string; /* A doc_string of this substitution - only for documentation - can be NULL. */
+    /** A doc_string of this substitution - only for documentation - can be NULL. */
+    char *doc_string;
 } subst_list_string_type;
 
-/* Allocates an empty instance with no values. */
+/** Allocates an empty instance with no values. */
 static subst_list_string_type *subst_list_string_alloc(const char *key) {
     subst_list_string_type *node =
         (subst_list_string_type *)util_malloc(sizeof *node);
@@ -143,7 +145,7 @@ static void subst_list_string_free__(void *node) {
     subst_list_string_free((subst_list_string_type *)node);
 }
 
-/*
+/**
    input_value can be NULL.
 */
 static void subst_list_string_set_value(subst_list_string_type *node,
@@ -171,11 +173,10 @@ static void subst_list_string_set_value(subst_list_string_type *node,
             util_realloc_string_copy(node->doc_string, doc_string);
 }
 
-/*
+/**
    When arriving at this function the main subst scope should already have verified that
    the requested function is available in the function pool.
 */
-
 static subst_list_func_type *subst_list_func_alloc(const char *func_name,
                                                    subst_func_type *func) {
     subst_list_func_type *subst_func =
@@ -199,10 +200,9 @@ static char *subst_list_func_eval(const subst_list_func_type *subst_func,
     return subst_func_eval(subst_func->func, arglist);
 }
 
-/*
+/**
    Find the node corresponding to 'key' -  returning NULL if it is not found.
 */
-
 static subst_list_string_type *
 subst_list_get_string_node(const subst_list_type *subst_list, const char *key) {
     subst_list_string_type *node = NULL;
@@ -241,14 +241,13 @@ subst_list_insert_new_node(subst_list_type *subst_list, const char *key,
 
 UTIL_IS_INSTANCE_FUNCTION(subst_list, SUBST_LIST_TYPE_ID)
 
-/*
+/**
    Observe that this function sets both the subst parent, and the pool
    of available functions. If this is call is repeated it is possible
    to create a weird config with dangling function pointers - that is
    a somewhat contrived and pathological use case, and not checked
    for.
 */
-
 void subst_list_set_parent(subst_list_type *subst_list,
                            const subst_list_type *parent) {
     subst_list->parent = parent;
@@ -260,7 +259,7 @@ bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
     return hash_has_key(subst_list->map, key);
 }
 
-/*
+/**
    The input argument is currently only (void *), runtime it will be
    checked whether it is of type subst_list_type, in which case it is
    interpreted as a parent instance, if it is of type
@@ -271,7 +270,6 @@ bool subst_list_has_key(const subst_list_type *subst_list, const char *key) {
    the parent is used also for the newly allocated subst_list
    instance.
 */
-
 subst_list_type *subst_list_alloc(const void *input_arg) {
     subst_list_type *subst_list =
         (subst_list_type *)util_malloc(sizeof *subst_list);
@@ -297,7 +295,7 @@ subst_list_type *subst_list_alloc(const void *input_arg) {
     return subst_list;
 }
 
-/*
+/**
    The semantics of the doc_string string is as follows:
 
     1. If doc_string is different from NULL the doc_string is stored in the node.
@@ -309,7 +307,6 @@ subst_list_type *subst_list_alloc(const void *input_arg) {
    time a (key,value) pair is added. On subsequent updates of the
    value, the doc_string string can be NULL.
 */
-
 static void subst_list_insert__(subst_list_type *subst_list, const char *key,
                                 const char *value, const char *doc_string,
                                 bool append, subst_insert_type insert_mode) {
@@ -372,13 +369,12 @@ void subst_list_prepend_copy(subst_list_type *subst_list, const char *key,
                         SUBST_DEEP_COPY);
 }
 
-/*
+/**
    This function will install the function @func_name from the current
    subst_func_pool, it will be made available to this subst_list
    instance with the function name @local_func_name. If @func_name is
    not available, the function will fail hard.
 */
-
 void subst_list_insert_func(subst_list_type *subst_list, const char *func_name,
                             const char *local_func_name) {
 
@@ -421,7 +417,7 @@ void subst_list_free(subst_list_type *subst_list) {
   applies to the function replacements.
 */
 
-/*
+/**
    Updates the buffer inplace with all the string substitutions in the
    subst_list. This is the lowest level function, which does *NOT*
    consider the parent pointer.
@@ -447,7 +443,7 @@ static bool subst_list_replace_strings__(const subst_list_type *subst_list,
     return global_match;
 }
 
-/*
+/**
    Updates the buffer inplace by evaluationg all the string functions
    in the subst_list. Last performing all the replacements in the
    parent.
@@ -476,7 +472,6 @@ static bool subst_list_replace_strings__(const subst_list_type *subst_list,
        and exp().
 
 */
-
 static bool subst_list_eval_funcs____(const subst_list_type *subst_list,
                                       const basic_parser_type *parser,
                                       buffer_type *buffer) {
@@ -552,7 +547,7 @@ static bool subst_list_eval_funcs__(const subst_list_type *subst_list,
     return match;
 }
 
-/*
+/**
    Should we evaluate the parent first (i.e. top down), or this
    instance first and then subsequently the parent (i.e. bottom
    up). The problem is with inherited defintions:
@@ -604,7 +599,6 @@ static bool subst_list_eval_funcs__(const subst_list_type *subst_list,
    of recursion, the low level function doing the stuff is
    subst_list_replace_strings__() which is not recursive.
 */
-
 static bool subst_list_replace_strings(const subst_list_type *subst_list,
                                        buffer_type *buffer) {
     bool match = false;
@@ -616,7 +610,7 @@ static bool subst_list_replace_strings(const subst_list_type *subst_list,
     return match;
 }
 
-/*
+/**
   This function updates a buffer instance inplace with all the
   substitutions in the subst_list.
 
@@ -624,7 +618,6 @@ static bool subst_list_replace_strings(const subst_list_type *subst_list,
   subst_update_xxx() functions. Observe that it is a hard assumption
   that the buffer has a \0 terminated string.
 */
-
 bool subst_list_update_buffer(const subst_list_type *subst_list,
                               buffer_type *buffer) {
     bool match1 = subst_list_replace_strings(subst_list, buffer);
@@ -634,7 +627,7 @@ bool subst_list_update_buffer(const subst_list_type *subst_list,
         match2); // Funny construction to ensure to avoid fault short circuit.
 }
 
-/*
+/**
    This function reads the content of a file, and writes a new file
    where all substitutions in subst_list have been performed. Observe
    that target_file and src_file *CAN* point to the same file, in
@@ -691,7 +684,7 @@ bool subst_list_filter_file(const subst_list_type *subst_list,
     return match;
 }
 
-/*
+/**
    This function does search-replace on string instance inplace.
 */
 bool subst_list_update_string(const subst_list_type *subst_list,
@@ -705,11 +698,10 @@ bool subst_list_update_string(const subst_list_type *subst_list,
     return match;
 }
 
-/*
+/**
    This function allocates a new string where the search-replace
    operation has been performed.
 */
-
 char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
                                        const char *string) {
     char *filtered_string = util_alloc_string_copy(string);
@@ -718,13 +710,12 @@ char *subst_list_alloc_filtered_string(const subst_list_type *subst_list,
     return filtered_string;
 }
 
-/*
+/**
    This allocates a new subst_list instance, the copy process is deep,
    in the sense that all srings inserted in the new subst_list
    instance have their own storage, irrespective of the ownership in
    the original subst_list instance.
 */
-
 subst_list_type *subst_list_alloc_deep_copy(const subst_list_type *src) {
     subst_list_type *copy;
     if (src->parent != NULL)
@@ -808,18 +799,20 @@ void subst_list_fprintf(const subst_list_type *subst_list, FILE *stream) {
     }
 }
 
-// This function splits a string on the given character, taking into account
-// that it may contain strings delimited by ' or ". It returns the length of the
-// first part of the splitted string. For instance, splitting on a ','
-// character, if the input is:
-//
-// foo "blah, foo" x 'y', and more "stuff"
-//
-// it will find the comma after 'y', and hence return a value of 21.
-//
-// The function returns a negative value if it contains a string, started with '
-// or ", which is not terminated. It returns the length of the string if the
-// split character is not found.
+/**
+   This function splits a string on the given character, taking into account
+   that it may contain strings delimited by ' or ". It returns the length of the
+   first part of the splitted string. For instance, splitting on a ','
+   character, if the input is:
+
+   foo "blah, foo" x 'y', and more "stuff"
+
+   it will find the comma after 'y', and hence return a value of 21.
+
+   The function returns a negative value if it contains a string, started with '
+   or ", which is not terminated. It returns the length of the string if the
+   split character is not found.
+*/
 static int find_substring(const char *arg_string, const char *split_char) {
     char pattern[4] = {'"', '\'', '\0',
                        '\0'}; // we accept both ' and " to delimite strings.
@@ -863,8 +856,10 @@ static int find_substring(const char *arg_string, const char *split_char) {
     return len;
 }
 
-// Trim spaces left and right from a string. Do not reallocate the string, just
-// move the start pointer of the string, and terminate the string appropiately.
+/**
+   Trim spaces left and right from a string. Do not reallocate the string, just
+   move the start pointer of the string, and terminate the string appropiately.
+*/
 static char *trim_string(char *str) {
     // Move the start of the string to skip space.
     while (isspace(*str))

@@ -180,7 +180,9 @@ static auto logger = ert::get_logger("job_queue");
 
 */
 
-/*
+#define JOB_QUEUE_TYPE_ID 665210
+
+/**
    This struct holds the job_queue information about one job. Observe
    the following:
 
@@ -197,41 +199,47 @@ static auto logger = ert::get_logger("job_queue");
        back to to the job_queue layer.
 
 */
-
-#define JOB_QUEUE_TYPE_ID 665210
-
 struct job_queue_struct {
     UTIL_TYPE_ID_DECLARATION;
     job_list_type *job_list;
     job_queue_status_type *status;
-    char *
-        exit_file; /* The queue will look for the occurrence of this file to detect a failure. */
-    char *
-        ok_file; /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
-    char *
-        status_file; /* The queue will look for this file to verify that the job is running or has run.  If not, ok_file is ignored. */
-    queue_driver_type *
-        driver; /* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+    /** The queue will look for the occurrence of this file to detect a failure. */
+    char *exit_file;
+    /** The queue will look for this file to verify that the job was OK - can
+     * be NULL - in which case it is ignored. */
+    char *ok_file;
+    /** The queue will look for this file to verify that the job is running or
+     * has run.  If not, ok_file is ignored. */
+    char *status_file;
+    /** A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+    queue_driver_type *driver;
 
-    bool
-        open; /* True if the queue has been reset and is ready for use, false if the queue has been used and not reset */
-    bool
-        user_exit; /* If there comes an external signal to abandon the whole thing user_exit will be set to true, and things start to dwindle down. */
+    /** True if the queue has been reset and is ready for use, false if the
+     * queue has been used and not reset */
+    bool open;
+    /** If there comes an external signal to abandon the whole thing user_exit
+     * will be set to true, and things start to dwindle down. */
+    bool user_exit;
     bool running;
     bool pause_on;
     bool submit_complete;
 
-    int max_submit; /* The maximum number of submit attempts for one job. */
-    int max_ok_wait_time; /* Seconds to wait for an OK file - when the job itself has said all OK. */
-    int max_duration; /* Maximum allowed time for a job to run, 0 = unlimited */
-    time_t
-        stop_time; /* A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
-    time_t progress_timestamp; /* Global timestamp for last progress update. */
-    unsigned long usleep_time; /* The sleep time before checking for updates. */
-    std::mutex
-        run_mutex; /* This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
+    /** The maximum number of submit attempts for one job. */
+    int max_submit;
+    /** Seconds to wait for an OK file - when the job itself has said all OK. */
+    int max_ok_wait_time;
+    /** Maximum allowed time for a job to run, 0 = unlimited */
+    int max_duration;
+    /** A job is only allowed to run until this time. 0 = no time set, ignore stop_time */
+    time_t stop_time;
+    /** Global timestamp for last progress update. */
+    time_t progress_timestamp;
+    /** The sleep time before checking for updates. */
+    unsigned long usleep_time;
+    /** This mutex is used to ensure that ONLY one thread is executing the job_queue_run_jobs(). */
+    std::mutex run_mutex;
 
-    /* This holds future results of currently running callbacks */
+    /** This holds future results of currently running callbacks */
     std::vector<std::future<void>> active_callbacks;
 };
 
@@ -258,11 +266,10 @@ static bool job_queue_change_node_status(job_queue_type *queue,
    without consulting the driver functions.
 */
 
-/*
+/**
   Will return true if there is any status change. Must already hold
   on to joblist readlock
 */
-
 static bool job_queue_update_status(job_queue_type *queue) {
     bool update = false;
     int ijob;
@@ -298,7 +305,7 @@ static submit_status_type job_queue_submit_job(job_queue_type *queue,
     return submit_status;
 }
 
-/*
+/**
    Will return the number of jobs with status @status.
 
       #include <queue_driver.h>
@@ -313,7 +320,6 @@ static submit_status_type job_queue_submit_job(job_queue_type *queue,
    the function job_queue_export_status_summary(), which does proper locking, can be
    used.
 */
-
 int job_queue_iget_status_summary(const job_queue_type *queue,
                                   job_status_type status) {
     return job_queue_status_get_count(queue->status, status);
@@ -377,7 +383,7 @@ void job_queue_set_auto_job_stop_time(job_queue_type *queue) {
     }
 }
 
-/*
+/**
    Observe that jobs with status JOB_QUEUE_WAITING can also be killed; for those
    jobs the kill should be interpreted as "Forget about this job for now and set
    the status JOB_QUEUE_IS_KILLED", however it is important that we not call
@@ -397,7 +403,6 @@ void job_queue_set_auto_job_stop_time(job_queue_type *queue) {
 
    Must hold on to joblist:read lock.
 */
-
 static bool job_queue_kill_job_node(job_queue_type *queue,
                                     job_queue_node_type *node) {
     bool result = job_queue_node_kill(node, queue->status, queue->driver);
@@ -450,14 +455,13 @@ job_status_type job_queue_iget_job_status(job_queue_type *queue,
     return job_status;
 }
 
-/*
+/**
   This returns a pointer to a very internal datastructure; used by the
   Job class in Python which interacts directly with the driver
   implementation. This is too low level, and the whole Driver / Job
   implementation in Python should be changed to only expose the higher
   level queue class.
 */
-
 void *job_queue_iget_driver_data(job_queue_type *queue, int job_index) {
     void *driver_data;
     ASSIGN_LOCKED_ATTRIBUTE(driver_data, job_queue_node_get_driver_data, node);
@@ -613,12 +617,11 @@ static void job_queue_run_EXIT_callback(job_queue_type *job_queue,
     job_queue_node_free_driver_data(node, job_queue->driver);
 }
 
-/*
+/**
   In this case the assumption is that we do not have proper contact
   with the node running the job, and we just switch the job status to
   JOB_QUEUE_EXIT without calling the driver->kill_job( ) function.
 */
-
 static void job_queue_handle_DO_KILL_NODE_FAILURE(job_queue_type *queue,
                                                   job_queue_node_type *node) {
     queue_driver_blacklist_node(queue->driver,
@@ -685,7 +688,7 @@ bool job_queue_accept_jobs(const job_queue_type *queue) {
     return queue->open;
 }
 
-/* Submit new jobs and return whether we actually did.
+/** Submit new jobs and return whether we actually did.
  *
  * And we do if we have waiting jobs are allowed to submit jobs
  */
@@ -794,7 +797,7 @@ static void run_handlers(job_queue_type *queue) {
     }
 }
 
-/*
+/**
  * UI code: if verbose update spinner and print summary
  */
 static void loop_status_spinner(job_queue_type *queue, bool update_status,
@@ -890,7 +893,7 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
         printf("\n");
 }
 
-/* This is run from job_queue_run_jobs when we have got an exclusive lock to the
+/** This is run from job_queue_run_jobs when we have got an exclusive lock to the
  * run_jobs code.
  *
  * Its sole purpose is to set up the work_pool thread and initiate the main loop
@@ -909,7 +912,7 @@ static void handle_run_jobs(job_queue_type *queue, int num_total_run,
         f.get();
 }
 
-/*
+/**
    If the total number of jobs is not known in advance the job_queue_run_jobs
    function can be called with @num_total_run == 0. In that case it is paramount
    to call the function job_queue_submit_complete() whan all jobs have been submitted.
@@ -940,18 +943,16 @@ void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
         logger->info("queue->user_exit = true in job_queue, received external "
                      "signal to abandon the whole thing");
 
-    /*
-    Set the queue's "open" flag to false to signal that the queue is
-    not ready to be used in a new job_queue_run_jobs or
-    job_queue_add_job method call as it has not been reset yet. Not
-    resetting the queue here implies that the queue object is still
-    available for queries after this method has finished
-  */
+    // Set the queue's "open" flag to false to signal that the queue is not
+    // ready to be used in a new job_queue_run_jobs or job_queue_add_job method
+    // call as it has not been reset yet. Not resetting the queue here implies
+    // that the queue object is still available for queries after this method
+    // has finished
     queue->open = false;
     queue->running = false;
 }
 
-/*
+/**
    The most flexible use scenario is as follows:
 
      1. The job_queue_run_jobs() is run by one thread.
@@ -967,7 +968,6 @@ void job_queue_run_jobs(job_queue_type *queue, int num_total_run,
    No reference is retained to the thread actually running the
    job_queue_run_jobs() function.
 */
-
 void job_queue_run_jobs_threaded(job_queue_type *queue, int num_total_run,
                                  bool verbose) {
     queue->running = true;
@@ -976,7 +976,7 @@ void job_queue_run_jobs_threaded(job_queue_type *queue, int num_total_run,
     queue_thread.detach();
 }
 
-/*
+/**
    This initializes the non-driver-spesific fields of a job, i.e. the
    name, runpath and so on, and sets the job->status ==
    JOB_QUEUE_WAITING. This status means the job is ready to be
@@ -984,7 +984,6 @@ void job_queue_run_jobs_threaded(job_queue_type *queue, int num_total_run,
    When submitted the job will get (driver specific) job_data != NULL
    and status SUBMITTED.
 */
-
 int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
                       job_callback_ftype *done_callback,
                       job_callback_ftype *retry_callback,
@@ -1020,12 +1019,11 @@ int job_queue_add_job(job_queue_type *queue, const char *run_cmd,
 
 UTIL_SAFE_CAST_FUNCTION(job_queue, JOB_QUEUE_TYPE_ID)
 
-/*
+/**
    Observe that the job_queue returned by this function is NOT ready
    for use; a driver must be set explicitly with a call to
    job_queue_set_driver() first.
 */
-
 job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
                                 const char *status_file,
                                 const char *exit_file) {
@@ -1053,25 +1051,23 @@ job_queue_type *job_queue_alloc(int max_submit, const char *ok_file,
     return queue;
 }
 
-/*
+/**
    When the job_queue_run_jobs() has been called with @total_num_jobs
    == 0 that means that the total number of jobs to run is not known
    in advance. In that case it is essential to signal the queue when
    we will not submit any more jobs, so that it can finalize and
    return. That is done with the function job_queue_submit_complete()
 */
-
 void job_queue_submit_complete(job_queue_type *queue) {
     queue->submit_complete = true;
 }
 
-/*
+/**
    The calling scope must retain a handle to the current driver and
    free it.  Should (in principle) be possible to change driver on a
    running system whoaaa. Will read and update the max_running value
    from the driver.
 */
-
 void job_queue_set_driver(job_queue_type *queue, queue_driver_type *driver) {
     queue->driver = driver;
 }
@@ -1091,11 +1087,10 @@ int job_queue_get_max_submit(const job_queue_type *job_queue) {
     return job_queue->max_submit;
 }
 
-/*
+/**
    Returns true if the queue is currently paused, which means that no
    more jobs are submitted.
 */
-
 bool job_queue_get_pause(const job_queue_type *job_queue) {
     return job_queue->pause_on;
 }
@@ -1108,7 +1103,7 @@ void job_queue_set_pause_off(job_queue_type *job_queue) {
     job_queue->pause_on = false;
 }
 
-/*
+/**
   An external thread sets the user_exit flag to true, then
   subsequently the thread managing the queue will see this, and close
   down the queue. Will check that the queue is actually running before
@@ -1116,7 +1111,6 @@ void job_queue_set_pause_off(job_queue_type *job_queue) {
   state within a timeout limit the user_exit flag is not set, and the
   function return false.
 */
-
 bool job_queue_start_user_exit(job_queue_type *queue) {
     if (!queue->user_exit) {
         int timeout_limit = 10 * 1000000; // 10 seconds
@@ -1171,7 +1165,7 @@ void job_queue_set_max_running_option(queue_driver_type *driver,
     free(max_running_string);
 }
 
-/*
+/**
    Observe that if the max number of running jobs is decreased,
    nothing will be done to reduce the number of jobs currently
    running; but no more jobs will be submitted until the number of

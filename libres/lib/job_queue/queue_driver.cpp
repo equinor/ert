@@ -57,10 +57,8 @@
 
 struct queue_driver_struct {
     UTIL_TYPE_ID_DECLARATION;
-    /*
-     Function pointers - pointing to low level functions in the implementations of
-     e.g. lsf_driver.
-   */
+    /** Function pointers - pointing to low level functions in the
+     * implementations of e.g. lsf_driver. */
     submit_job_ftype *submit;
     free_job_ftype *free_job;
     kill_job_ftype *kill_job;
@@ -71,18 +69,19 @@ struct queue_driver_struct {
     get_option_ftype *get_option;
     init_option_list_ftype *init_options;
 
-    void *
-        data; /* Driver specific data - passed as first argument to the driver functions above. */
+    /** Driver specific data - passed as first argument to the driver functions above. */
+    void *data;
 
-    /*
-    Generic data - common to all driver types.
-   */
-    char *name;                  /* String name of driver. */
-    job_driver_type driver_type; /* Enum value for driver. */
+    /* Generic data - common to all driver types. */
+    /** String name of driver. */
+    char *name;
+    /** Enum value for driver. */
+    job_driver_type driver_type;
     char *max_running_string;
-    int max_running; /* Possible to maintain different max_running values for different
-                                        drivers; the value 0 is interpreted as no limit - i.e. the queue layer
-                                        will (try) to send an unlimited number of jobs to the driver. */
+    /** Possible to maintain different max_running values for different
+     * drivers; the value 0 is interpreted as no limit - i.e. the queue layer
+     * will (try) to send an unlimited number of jobs to the driver. */
+    int max_running;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
@@ -149,7 +148,7 @@ static bool queue_driver_has_generic_option__(queue_driver_type *driver,
         return false;
 }
 
-/*
+/**
    Set option - can also be used to perform actions - not only setting
    of parameters. There is no limit :-)
  */
@@ -169,7 +168,7 @@ bool queue_driver_set_option(queue_driver_type *driver, const char *option_key,
     return false;
 }
 
-/*
+/**
    Unset the given option. If the option cannot be unset, it is restored to its default value.
  */
 bool queue_driver_unset_option(queue_driver_type *driver,
@@ -188,7 +187,7 @@ bool queue_driver_unset_option(queue_driver_type *driver,
     return false;
 }
 
-/*
+/**
    Observe that after the driver instance has been allocated it does
    NOT support modification of the common fields, only the data owned
    by the specific low level driver, i.e. the LSF data, can be
@@ -197,7 +196,6 @@ bool queue_driver_unset_option(queue_driver_type *driver,
    The driver returned from the queue_driver_alloc_empty() function is
    NOT properly initialized and NOT ready for use.
  */
-
 static queue_driver_type *queue_driver_alloc_empty() {
     queue_driver_type *driver =
         (queue_driver_type *)util_malloc(sizeof *driver);

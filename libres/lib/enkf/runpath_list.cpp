@@ -34,8 +34,8 @@ typedef struct runpath_node_struct runpath_node_type;
 struct runpath_list_struct {
     pthread_rwlock_t lock;
     vector_type *list;
-    char *
-        line_fmt; // Format string : Values are in the order: (iens , runpath , basename)
+    /** Format string : Values are in the order: (iens , runpath , basename) */
+    char *line_fmt;
     char *export_file;
 };
 
@@ -76,10 +76,9 @@ static void runpath_node_free__(void *arg) {
     runpath_node_free(node);
 }
 
-/*
+/**
   The comparison is first based on iteration number and then on iens.
 */
-
 static int runpath_node_cmp(const void *arg1, const void *arg2) {
     const runpath_node_type *node1 = runpath_node_safe_cast_const(arg1);
     const runpath_node_type *node2 = runpath_node_safe_cast_const(arg2);

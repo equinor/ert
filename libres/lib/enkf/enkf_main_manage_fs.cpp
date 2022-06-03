@@ -27,12 +27,11 @@
 
 namespace fs = std::filesystem;
 
-/*
+/**
   This small function is here only to make sure that the main
   enkf_main.c file does not contain any explicit mention of the
   dbase member.
 */
-
 static void enkf_main_init_fs(enkf_main_type *enkf_main) {
     enkf_main->dbase = NULL;
 }
@@ -200,14 +199,13 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
     enkf_fs_fsync(target_case_fs);
 }
 
-/*
+/**
    This function will go through the filesystem and check that we have
    initial data for all parameters and all realizations. If the second
    argument mask is different from NULL, the function will only
    consider the realizations for which mask is true (if mask == NULL
    all realizations will be checked).
 */
-
 static bool
 enkf_main_case_is_initialized__(const ensemble_config_type *ensemble_config,
                                 enkf_fs_type *fs, const int ens_size) {
@@ -355,7 +353,7 @@ char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
     return mount_point;
 }
 
-/*
+/**
   Return a weak reference - i.e. the refcount is not increased.
 */
 enkf_fs_type *enkf_main_get_fs(const enkf_main_type *enkf_main) {
@@ -374,7 +372,7 @@ const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main) {
     return enkf_fs_get_case_name(enkf_main->dbase);
 }
 
-/*
+/**
   This function will return a valid enkf_fs instance; either just a
   pointer to the current enkf_main->dbase, or alternatively it will
   create a brand new fs instance. Because we do not really know whether
@@ -387,7 +385,6 @@ const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main) {
        close the filesystem and free all resources when the reference
        count has reached zero.
 */
-
 enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
                                      const char *case_path, bool create) {
     if (enkf_main_case_is_current(enkf_main, case_path)) {
@@ -444,7 +441,7 @@ static void enkf_main_update_summary_config_from_fs__(enkf_main_type *enkf_main,
     stringlist_free(keys);
 }
 
-/*
+/**
    The enkf_fs instances employ a simple reference counting
    scheme. The main point with this system is to avoid opening the
    full timesystem more than necessary (this is quite compute
@@ -474,7 +471,6 @@ static void enkf_main_update_summary_config_from_fs__(enkf_main_type *enkf_main,
    is not checked for in any way - but the crash will be horrible if
    this is not adhered to.
 */
-
 void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
                       const char *case_path /* Can be NULL */) {
     if (enkf_main->dbase != fs) {
