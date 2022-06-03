@@ -202,27 +202,6 @@ char *path_fmt_alloc_file(const path_fmt_type *path, bool auto_mkdir, ...) {
     }
 }
 
-/*
-   This function is used to assert that the format in a path_fmt
-   instance is according to specification. What is checked is that the
-   format string contains %d, %lfg and %s in as specified in the
-   input_types vector.
-
-   Observe that %s is mapped to void_pointer - as the node_ctype does not
-   have typed pointers.
-*/
-
-/*
-void path_fmt_assert_fmt(const path_fmt_type * path , int num_input , const node_ctype * input_types) {
-  int input_nr = 0;
-  int char_nr  = 0;
-  do {
-    if (path->fmt[char_nr] == '%') {
-
-    }
-  }
-}
-*/
 /**
   fmt == NULL
   -----------
