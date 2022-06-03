@@ -488,11 +488,10 @@ def log_config(config_path: str, logger: logging.Logger) -> None:
                 line = line.strip()
                 if not line or line.startswith("--"):
                     continue
-                if "--" in line:
+                if "--" in line and not any(x in line for x in ['"', "'"]):
                     # There might be a comment in this line, but it could
                     # also be an argument to a job, so we do a quick check
-                    if not any(x in line for x in ['"', "'"]):
-                        line = line.split("--")[0].rstrip()
+                    line = line.split("--")[0].rstrip()
                 config_context += line + "\n"
         logger.info(
             f"Content of the configuration file ({config_path}):\n" + config_context
@@ -567,13 +566,6 @@ def main():
             context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
             logger.info(f"Running ert with {args}")
             log_config(args.config, logger)
-
-            if FeatureToggling.is_enabled("experiment-server"):
-                if args.mode != ENSEMBLE_EXPERIMENT_MODE:
-                    raise NotImplementedError(
-                        f"experiment-server can only run '{ENSEMBLE_EXPERIMENT_MODE}'"
-                    )
-
             args.func(args)
     except ErtCliError as err:
         logger.exception(str(err))

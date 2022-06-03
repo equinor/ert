@@ -1,11 +1,18 @@
+import asyncio
+import concurrent
+import logging
+from functools import partial
 from typing import Any, Dict, Optional
 
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
+from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
+
+experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -24,6 +31,144 @@ class EnsembleSmoother(BaseRunModel):
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
+
+    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+        loop = asyncio.get_running_loop()
+        threadpool = concurrent.futures.ThreadPoolExecutor()
+
+        prior_context = await loop.run_in_executor(threadpool, self.create_context)
+
+        experiment_logger.debug("starting ensemble smoother experiment")
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_STARTED, iteration=prior_context.iteration
+        )
+
+        self._checkMinimumActiveRealizations(prior_context)
+
+        await loop.run_in_executor(
+            threadpool,
+            self.ert().createRunPath,
+            prior_context,
+        )
+
+        await self._run_hook(
+            HookRuntime.PRE_SIMULATION, prior_context.iteration, loop, threadpool
+        )
+
+        # Post ensemble, parameters, observations to new storage
+        # (nb: this calls self.setPhaseName())
+        ensemble_id = await loop.run_in_executor(threadpool, self._post_ensemble_data)
+
+        experiment_logger.debug("evaluating")
+        await self._evaluate(prior_context, evaluator_server_config)
+
+        # Push simulation results to storage
+        await loop.run_in_executor(threadpool, self._post_ensemble_results, ensemble_id)
+
+        num_successful_realizations = await self.successful_realizations(
+            prior_context.iteration
+        )
+
+        self.checkHaveSufficientRealizations(num_successful_realizations)
+
+        await self._run_hook(
+            HookRuntime.POST_SIMULATION, prior_context.iteration, loop, threadpool
+        )
+
+        await self._run_hook(
+            HookRuntime.PRE_FIRST_UPDATE, prior_context.iteration, loop, threadpool
+        )
+
+        await self._run_hook(
+            HookRuntime.PRE_UPDATE, prior_context.iteration, loop, threadpool
+        )
+
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_STARTED,
+            iteration=prior_context.iteration,
+        )
+
+        experiment_logger.debug("running update...")
+        try:
+            await loop.run_in_executor(
+                threadpool, self.facade.smoother_update, prior_context
+            )
+        except ErtAnalysisError as e:
+            experiment_logger.exception("analysis failed")
+            await self._dispatch_ee(
+                identifiers.EVTYPE_EXPERIMENT_FAILED,
+                data={
+                    "error": str(e),
+                },
+                iteration=prior_context.iteration,
+            )
+            raise ErtRunError(
+                f"Analysis of simulation failed with the following error: {e}"
+            ) from e
+
+        experiment_logger.debug("update complete")
+
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_ENDED,
+            iteration=prior_context.iteration,
+        )
+
+        await self._run_hook(
+            HookRuntime.POST_UPDATE, prior_context.iteration, loop, threadpool
+        )
+
+        # Create an update object in storage
+        update_id = await loop.run_in_executor(
+            threadpool,
+            self._post_update_data,
+            ensemble_id,
+            self.ert().analysisConfig().activeModuleName(),
+        )
+
+        self.ert().getEnkfFsManager().switchFileSystem(prior_context.target_fs)
+
+        experiment_logger.debug("creating context for iter 1")
+        rerun_context = await loop.run_in_executor(
+            threadpool, partial(self.create_context, prior_context=prior_context)
+        )
+
+        await loop.run_in_executor(
+            threadpool,
+            self.ert().createRunPath,
+            rerun_context,
+        )
+
+        await self._run_hook(
+            HookRuntime.PRE_SIMULATION, rerun_context.iteration, loop, threadpool
+        )
+
+        # Push ensemble, parameters, observations to new storage
+        ensemble_id = await loop.run_in_executor(
+            threadpool, self._post_ensemble_data, update_id
+        )
+
+        # Evaluate
+        experiment_logger.debug("evaluating for iter 1")
+        await self._evaluate(rerun_context, evaluator_server_config)
+
+        num_successful_realizations = await self.successful_realizations(
+            rerun_context.iteration,
+        )
+
+        self.checkHaveSufficientRealizations(num_successful_realizations)
+
+        await self._run_hook(
+            HookRuntime.POST_SIMULATION, rerun_context.iteration, loop, threadpool
+        )
+
+        # Push simulation results to storage
+        await loop.run_in_executor(threadpool, self._post_ensemble_results, ensemble_id)
+
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_SUCCEEDED,
+            iteration=rerun_context.iteration,
+        )
+        experiment_logger.debug("experiment done")
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
@@ -105,7 +250,6 @@ class EnsembleSmoother(BaseRunModel):
         return prior_context
 
     def create_context(self, prior_context: Optional[RunContext] = None) -> RunContext:
-
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:
             sim_fs = fs_manager.getCurrentFileSystem()

@@ -13,6 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+import asyncio
+import concurrent
 import logging
 from typing import Any, Dict, List, Tuple
 
@@ -20,10 +22,12 @@ from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
+from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
 logger = logging.getLogger(__file__)
+experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 class MultipleDataAssimilation(BaseRunModel):
@@ -49,11 +53,99 @@ class MultipleDataAssimilation(BaseRunModel):
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
 
+    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+        loop = asyncio.get_running_loop()
+        threadpool = concurrent.futures.ThreadPoolExecutor()
+
+        # Context created purely for the purpose of checking minimum active
+        # realizations:  (?)
+        prior_context = await loop.run_in_executor(
+            threadpool, self.create_context, 0, True
+        )
+
+        experiment_logger.debug("starting es-mda experiment")
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_STARTED,
+            iteration=prior_context.iteration,
+        )
+        self._checkMinimumActiveRealizations(prior_context)
+
+        weights = self.parseWeights(self._simulation_arguments["weights"])
+        iteration_count = len(weights)
+        logger.info(
+            f"Running MDA ES for {iteration_count}  "
+            f'iterations\t{", ".join(str(weight) for weight in weights)}'
+        )
+
+        self.setAnalysisModule(self._simulation_arguments["analysis_module"])
+
+        weights = self.normalizeWeights(weights)
+
+        run_context = None
+        update_id = None
+        enumerated_weights = list(enumerate(weights))
+        weights_to_run = enumerated_weights[
+            min(self._simulation_arguments["start_iteration"], len(weights)) :
+        ]
+        for iteration, weight in weights_to_run:
+            is_first_iteration = iteration == 0
+
+            run_context = await loop.run_in_executor(
+                threadpool, self.create_context, iteration, is_first_iteration
+            )
+
+            await loop.run_in_executor(
+                threadpool,
+                self.ert().createRunPath,
+                run_context,
+            )
+            await self._run_hook(
+                HookRuntime.PRE_SIMULATION, iteration, loop, threadpool
+            )
+            ensemble_id = await loop.run_in_executor(
+                threadpool, self._post_ensemble_data, update_id
+            )
+            await self._evaluate(run_context, evaluator_server_config)
+
+            num_successful_realizations = await self.successful_realizations(iteration)
+
+            # Push simulation results to storage
+            await loop.run_in_executor(
+                threadpool, self._post_ensemble_results, ensemble_id
+            )
+
+            num_successful_realizations += self._simulation_arguments.get(
+                "prev_successful_realizations", 0
+            )
+            self.checkHaveSufficientRealizations(num_successful_realizations)
+
+            await self._run_hook(
+                HookRuntime.POST_SIMULATION, iteration, loop, threadpool
+            )
+
+            if is_first_iteration:
+                await self._run_hook(
+                    HookRuntime.PRE_FIRST_UPDATE, iteration, loop, threadpool
+                )
+            await self._run_hook(HookRuntime.PRE_UPDATE, iteration, loop, threadpool)
+            update_id = self.update(
+                run_context=run_context, weight=weight, ensemble_id=ensemble_id
+            )
+            await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
+
+        assert run_context is not None  # mypy
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_ENDED,
+            iteration=run_context.iteration,
+        )
+
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
     ) -> RunContext:
-        context = self.create_context(0, initialize_mask_from_arguments=True)
-        self._checkMinimumActiveRealizations(context)
+        self._checkMinimumActiveRealizations(
+            self.create_context(0, initialize_mask_from_arguments=True)
+            # Runpaths are mkdir'ed here as a side-effect
+        )
         weights = self.parseWeights(self._simulation_arguments["weights"])
         iteration_count = len(weights)
 

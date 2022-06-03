@@ -156,7 +156,8 @@ class ExperimentServer:
 
         This is a helper method for use by the CLI, where only one experiment
         at a time makes sense. This method therefore runs the experiment, and
-        attempts to gracefully shut down the server when complete."""
+        attempts to gracefully shut down the server when complete.
+        """
         logger.debug("running experiment %s", experiment_id)
         experiment = self._registry.get_experiment(experiment_id)
 
@@ -184,8 +185,8 @@ class ExperimentServer:
 
         # experiment is pending, but the server died, so try cancelling the experiment
         # then raise the server's exception
-        for p in pending:
-            logger.debug("task %s was pending, cancelling...", p)
-            p.cancel()
-        for d in done:
-            d.result()
+        for pending_task in pending:
+            logger.debug("task %s was pending, cancelling...", pending_task)
+            pending_task.cancel()
+        for done_task in done:
+            done_task.result()
