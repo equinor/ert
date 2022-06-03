@@ -98,9 +98,10 @@ queue_driver_get_max_running(const queue_driver_type *driver);
 
 typedef enum {
     SUBMIT_OK = 0,
-    SUBMIT_JOB_FAIL = 1, /* Typically no more attempts. */
-    SUBMIT_DRIVER_FAIL =
-        2, /* The driver would not take the job - for whatever reason?? */
+    /** Typically no more attempts. */
+    SUBMIT_JOB_FAIL = 1,
+    /** The driver would not take the job - for whatever reason?? */
+    SUBMIT_DRIVER_FAIL = 2,
     SUBMIT_QUEUE_CLOSED = 3
 } /* The queue is currently not accepting more jobs - either (temporarilty)
                                              because of pause or it is going down. */

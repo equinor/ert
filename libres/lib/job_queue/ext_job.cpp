@@ -105,47 +105,56 @@ jobList = [
 
 #define EXT_JOB_STDOUT "stdout"
 #define EXT_JOB_STDERR "stderr"
-#define EXT_JOB_NO_STD_FILE                                                    \
-    "null" //Setting STDOUT null or STDERR null in forward model directs output to screen
+//Setting STDOUT null or STDERR null in forward model directs output to screen
+#define EXT_JOB_NO_STD_FILE "null"
 
 struct ext_job_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *name;
     char *executable;
     char *target_file;
-    char *error_file; /* Job has failed if this is present. */
-    char *start_file; /* Will not start if not this file is present */
+    /** Job has failed if this is present. */
+    char *error_file;
+    /** Will not start if not this file is present */
+    char *start_file;
     char *stdout_file;
     char *stdin_file;
     char *stderr_file;
-    char *license_path; /* If this is NULL - it will be unrestricted ... */
+    /** If this is NULL - it will be unrestricted ... */
+    char *license_path;
     char *license_root_path;
     char *config_file;
-    int max_running; /* 0 means unlimited. */
-    int max_running_minutes; /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
+    /** 0 means unlimited. */
+    int max_running;
+    /** The maximum number of minutes this job is allowed to run - 0:
+     * unlimited. */
+    int max_running_minutes;
 
     int min_arg;
     int max_arg;
     int_vector_type *arg_types;
-    stringlist_type
-        *argv; /* Currently not in use, but will replace deprected_argv */
-    subst_list_type *
-        private_args; /* A substitution list of input arguments which is performed before the external substitutions -
-                                              these are the arguments supplied as key=value pairs in the forward model call. */
+    /** Currently not in use, but will replace deprected_argv */
+    stringlist_type *argv;
+    /** A substitution list of input arguments which is performed before the
+     * external substitutions - these are the arguments supplied as key=value
+     * pairs in the forward model call. */
+    subst_list_type *private_args;
     const subst_list_type *define_args;
     char *private_args_string;
     char *argv_string;
-    stringlist_type
-        *deprecated_argv; /* This should *NOT* start with the executable */
+    /** This should *NOT* start with the executable */
+    stringlist_type *deprecated_argv;
     hash_type *environment;
     hash_type *default_mapping;
     hash_type *exec_env;
     char *help_text;
 
-    bool
-        private_job; /* Can the current user/delete this job? (private_job == true) means the user can edit it. */
-    bool
-        __valid; /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
+    /** Can the current user/delete this job? (private_job == true) means the
+     * user can edit it. */
+    bool private_job;
+    /** Temporary variable consulted during the bootstrap - when the ext_job is
+     * completely initialized this should NOT be consulted anymore. */
+    bool __valid;
 };
 
 static UTIL_SAFE_CAST_FUNCTION(ext_job, EXT_JOB_TYPE_ID)
@@ -357,43 +366,39 @@ void ext_job_set_max_time(ext_job_type *ext_job, int max_time) {
     ext_job->max_running_minutes = max_time;
 }
 
-/*
-  @executable parameter:
-  The raw executable is either
-    - an absolute path read directly from config
-    - an absolute path constructed from the relative path from config
-      with the assumption that the path was a relative path from the
-      location of the job description file to the executable.
-
-  @executable_raw parameter:
-  The raw executable as read from config, unprocessed.
-
+/**
   This method have the following logic:
 
-     @executable exists:
+     executable_abs exists:
          We store the full path as the executable field of the job; and
          try to update the mode of the full_path executable to make sure it
          is executable.
 
-     @executable does not exist, but @executable_raw exists:
+     executable_abs does not exist, but executable_input exists:
         We have found an executable relative to the current working
         directory. This is deprecated behaviour, support will later be
         removed. Suggest new path to executable to user, relative to job
         description file and do a recursive call to this method, using
         the absolute path as @executable parameter
 
-     @executable does not exist, @executable_raw does not exist and
+     executable_abs does not exist, executable_input does not exist and
      is an absolute path:
         Write error message
 
-     @executable does not exist, @executable_raw does not exist and
+     executable_abs does not exist, executable_input does not exist and
      is a relative path:
         Search trough the PATH variable to try to locate the executable.
         If found, do a recursive call to this method, using the absolute path
-        as @executable parameter
+        as executable_abs parameter
 
+  @param executable_abs is either
+    - an absolute path read directly from config
+    - an absolute path constructed from the relative path from config
+      with the assumption that the path was a relative path from the
+      location of the job description file to the executable.
+
+  @param executable_input is the raw executable as read from config, unprocessed.
 */
-
 void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
                             const char *executable_input, bool search_path) {
 
@@ -452,11 +457,10 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
     }
 }
 
-/*
+/**
    Observe that this does NOT reread the ext_job instance from the new
    config_file.
 */
-
 void ext_job_set_args(ext_job_type *ext_job, const stringlist_type *argv) {
     stringlist_deep_copy(ext_job->argv, argv);
 }
@@ -731,10 +735,9 @@ static void __fprintf_python_int(FILE *stream, const char *prefix,
     fprintf(stream, "%s", suffix);
 }
 
-/*
+/**
    This is special cased to support the default mapping.
 */
-
 static void __fprintf_python_argList(FILE *stream, const char *prefix,
                                      const ext_job_type *ext_job,
                                      const char *suffix,
@@ -897,12 +900,11 @@ void ext_job_json_fprintf(const ext_job_type *ext_job, int job_index,
         fprintf(stream, "%d\n", value);                                        \
     }
 
-/*
+/**
    Observe that the job will save itself to the internalized
    config_file; if you wish to save to some other place you must call
    ext_job_set_config_file() first.
 */
-
 void ext_job_save(const ext_job_type *ext_job) {
     auto stream = mkdir_fopen(fs::path(ext_job->config_file), "w");
 
@@ -1279,7 +1281,7 @@ const stringlist_type *ext_job_get_argvalues(const ext_job_type *ext_job) {
     return result;
 }
 
-/*
+/**
    Set the internal arguments of the job based on an input string
    @arg_string which is of the form:
 
@@ -1288,7 +1290,6 @@ const stringlist_type *ext_job_get_argvalues(const ext_job_type *ext_job) {
    The internal private argument list is cleared before adding these
    arguments.
 */
-
 void ext_job_set_private_args_from_string(ext_job_type *ext_job,
                                           const char *arg_string) {
     subst_list_clear(ext_job->private_args);

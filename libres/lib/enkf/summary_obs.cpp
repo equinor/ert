@@ -32,16 +32,18 @@
 
 struct summary_obs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *
-        summary_key; /* The observation, in summary.x syntax, e.g. GOPR:FIELD.    */
+    /** The observation, in summary.x syntax, e.g. GOPR:FIELD. */
+    char *summary_key;
     char *obs_key;
 
-    double value; /* Observation value. */
-    double std;   /* Standard deviation of observation. */
+    /** Observation value. */
+    double value;
+    /** Standard deviation of observation. */
+    double std;
     double std_scaling;
 };
 
-/*
+/**
   This function allocates a summary_obs instance. The summary_key
   string should be of the format used by the summary.x program.
   E.g., WOPR:P4 would condition on WOPR in well P4.

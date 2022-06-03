@@ -39,9 +39,9 @@ auto logger = ert::get_logger("analysis");
 
 struct analysis_module_struct {
     std::unique_ptr<ies::Config> module_config;
-    char *
-        user_name; /* String used to identify this module for the user; not used in
-                                                   the linking process. */
+    /** String used to identify this module for the user; not used in the
+     * linking process. */
+    char *user_name;
     analysis_mode_enum mode;
     std::unordered_set<std::string> keys;
 };

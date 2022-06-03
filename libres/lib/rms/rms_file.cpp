@@ -94,7 +94,7 @@ rms_tag_type *rms_file_get_tag_ref(const rms_file_type *rms_file,
     return return_tag;
 }
 
-/*
+/**
     This function allocates and rms_file_type * handle, but it does
     not load the file content.
 */

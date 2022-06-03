@@ -117,12 +117,11 @@ void *gen_common_fread_alloc(const char *file, ecl_data_type load_data_type,
     return buffer;
 }
 
-/*
+/**
   If the load_format is binary_float or binary_double, the ASCII_type
   is *NOT* consulted. The load_type is set to float/double depending
   on what was actually used when the data was loaded.
 */
-
 void *gen_common_fload_alloc(const char *file,
                              gen_data_file_format_type load_format,
                              ecl_data_type ASCII_data_type,

@@ -76,7 +76,7 @@ int enkf_linalg_svdS(const Eigen::MatrixXd &S,
     return num_significant;
 }
 
-/*
+/**
  Routine computes X1 and eig corresponding to Eqs 14.54-14.55
  Geir Evensen
 */
@@ -116,7 +116,7 @@ void enkf_linalg_lowrankE(
     W = U0 * Sigma_inv.transpose() * svd.matrixU();
 }
 
-/* B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
+/** B = Xo = (N-1) * Sigma0^(+) * U0'* Cee * U0 * Sigma0^(+')  (14.26)*/
 Eigen::MatrixXd enkf_linalg_Cee(int nrens, const Eigen::MatrixXd &R,
                                 const Eigen::MatrixXd &U0,
                                 const Eigen::VectorXd &inv_sig0) {

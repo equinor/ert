@@ -34,10 +34,10 @@ static auto logger = ert::get_logger("enkf");
 struct rng_manager_struct {
     UTIL_TYPE_ID_DECLARATION;
     rng_alg_type rng_alg;
-    rng_type *
-        internal_seed_rng; /* This is used to seed the RNG's which are managed. */
-    rng_type *
-        external_seed_rng; /* This is used to seed the RNG's which are managed by external scope. */
+    /** This is used to seed the RNG's which are managed. */
+    rng_type *internal_seed_rng;
+    /** This is used to seed the RNG's which are managed by external scope. */
+    rng_type *external_seed_rng;
     vector_type *rng_list;
 };
 
@@ -58,7 +58,7 @@ static rng_manager_type *rng_manager_alloc__(rng_init_mode init_mode) {
     return rng_manager;
 }
 
-/*
+/**
  * Allocates an rng_manager with the specified seed.
  *
  * NOTE: With random algorithm mzran the provided seed should contain 16

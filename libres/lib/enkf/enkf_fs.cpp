@@ -145,8 +145,8 @@ struct enkf_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *case_name;
     char *root_path;
-    char *
-        mount_point; // mount_point = root_path / case_name; the mount_point is the fundamental INPUT.
+    /** mount_point = root_path / case_name; the mount_point is the fundamental INPUT. */
+    char *mount_point;
 
     char *lock_file;
     int lock_fd;
@@ -155,24 +155,24 @@ struct enkf_fs_struct {
     std::unique_ptr<ert::block_fs_driver> parameter;
     std::unique_ptr<ert::block_fs_driver> index;
 
-    bool read_only; /* Whether this filesystem has been mounted read-only. */
+    /** Whether this filesystem has been mounted read-only. */
+    bool read_only;
     time_map_type *time_map;
     cases_config_type *cases_config;
     state_map_type *state_map;
     summary_key_set_type *summary_key_set;
+    /* The variables below here are for storing arbitrary files within the
+     * enkf_fs storage directory, but not as serialized enkf_nodes. */
     misfit_ensemble_type *misfit_ensemble;
-    /*
-     The variables below here are for storing arbitrary files within
-     the enkf_fs storage directory, but not as serialized enkf_nodes.
-  */
     path_fmt_type *case_fmt;
     path_fmt_type *case_member_fmt;
     path_fmt_type *case_tstep_fmt;
     path_fmt_type *case_tstep_member_fmt;
 
     int refcount;
-    int runcount; // Counts the number of simulations currently writing to this enkf_fs; the purpose is to
-        // be able to answer the question: Is this case currently 'running'?
+    /** Counts the number of simulations currently writing to this enkf_fs; the
+     * purpose is to be able to answer the question: Is this case currently 'running'? */
+    int runcount;
 };
 
 UTIL_SAFE_CAST_FUNCTION(enkf_fs, ENKF_FS_TYPE_ID)
@@ -265,12 +265,11 @@ static int enkf_fs_fread_fs_version__(FILE *stream) {
     return version;
 }
 
-/*
+/**
    -1 : No mount map found.
    0  : Old mount map without version info.
    x  : Actual version info.
 */
-
 static int enkf_fs_get_fs_version__(const char *config_file) {
     int version = -1;
     if (fs::exists(config_file)) {
@@ -281,10 +280,9 @@ static int enkf_fs_get_fs_version__(const char *config_file) {
     return version;
 }
 
-/*
+/**
    Function written to look for old (version <= 104) mount info maps.
 */
-
 int enkf_fs_get_version104(const char *path) {
     char *config_file = util_alloc_filename(path, ENKF_MOUNT_MAP, NULL);
     int version = enkf_fs_get_fs_version__(config_file);

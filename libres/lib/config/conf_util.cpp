@@ -25,7 +25,7 @@
 
 #include <ert/config/conf_util.hpp>
 
-/*
+/**
   This function creates a string buffer from a file. Furthermore, if the strings in pad_keys are found in the buffer,
   they are padded with a space before and after.
 
@@ -74,7 +74,7 @@ char *conf_util_fscanf_alloc_token_buffer(const char *file_name) {
     return buffer;
 }
 
-/*
+/**
   This function takes a pointer to a position in a string and returns a copy
   of the next token in the string. Furthermore, the position in the string is
   moved to the position after the token. Strings inside quotations " and ' are

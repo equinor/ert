@@ -13,16 +13,18 @@
 
 struct template_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *
-        template_file; /* The template file - if internalize_template == false this filename can contain keys which will be replaced at instantiation time. */
-    char *
-        template_buffer; /* The content of the template buffer; only has valid content if internalize_template == true. */
-    bool
-        internalize_template; /* Should the template be loadad and internalized at template_alloc(). */
-    subst_list_type
-        *arg_list; /* Key-value mapping established at alloc time. */
-    char *
-        arg_string; /* A string representation of the arguments - ONLY used for a _get_ function. */
+    /** The template file - if internalize_template == false this filename can
+     * contain keys which will be replaced at instantiation time. */
+    char *template_file;
+    /** The content of the template buffer; only has valid content if
+     * internalize_template == true. */
+    char *template_buffer;
+    /** Should the template be loadad and internalized at template_alloc(). */
+    bool internalize_template;
+    /* Key-value mapping established at alloc time. */
+    subst_list_type *arg_list;
+    /* A string representation of the arguments - ONLY used for a _get_ function. */
+    char *arg_string;
 #ifdef ERT_HAVE_REGEXP
     regex_t start_regexp;
     regex_t end_regexp;

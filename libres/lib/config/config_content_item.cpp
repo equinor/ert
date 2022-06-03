@@ -31,7 +31,7 @@ struct config_content_item_struct {
     const config_path_elm_type *path_elm;
 };
 
-/*
+/**
    This function counts the number of times a config item has been
    set. Referring again to the example at the top:
 
@@ -39,7 +39,6 @@ struct config_content_item_struct {
 
    will return 2.
 */
-
 int config_content_item_get_size(const config_content_item_type *item) {
     return vector_get_size(item->nodes);
 }
@@ -62,7 +61,7 @@ config_content_item_iget_stringlist_ref(const config_content_item_type *item,
     return config_content_node_get_stringlist(node);
 }
 
-/*
+/**
    If copy == false - the hash will break down when/if the
    config object is freed - your call.
 */
@@ -122,7 +121,7 @@ double config_content_item_iget_as_double(const config_content_item_type *item,
     return value;
 }
 
-/*
+/**
    Used to reset an item is the special string 'CLEAR_STRING'
    is found as the only argument:
 
@@ -136,7 +135,6 @@ double config_content_item_iget_as_double(const config_content_item_type *item,
    where several config files are parsed serially; and the user can
    not/will not update the first.
 */
-
 void config_content_item_clear(config_content_item_type *item) {
     vector_clear(item->nodes);
 }

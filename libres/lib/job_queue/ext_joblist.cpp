@@ -116,7 +116,7 @@ stringlist_type *ext_joblist_alloc_list(const ext_joblist_type *joblist) {
     return hash_alloc_stringlist(joblist->jobs);
 }
 
-/*
+/**
    Will attempt to remove the job @job_name from the joblist; if the
    job is marked as a shared_job (i.e. installed centrally) the user
    is not allowed to delete it. In this case the function will fail
@@ -124,7 +124,6 @@ stringlist_type *ext_joblist_alloc_list(const ext_joblist_type *joblist) {
 
    Returns true if the job is actually removed, and false otherwise.
 */
-
 bool ext_joblist_del_job(ext_joblist_type *joblist, const char *job_name) {
     ext_job_type *job = ext_joblist_get_job(joblist, job_name);
     if (!ext_job_is_shared(job)) {

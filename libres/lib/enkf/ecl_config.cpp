@@ -38,9 +38,8 @@
 
 namespace fs = std::filesystem;
 
-/*
- This file implements a struct which holds configuration information
- needed to run ECLIPSE.
+/**
+ The ecl_config_struct holds configuration information needed to run ECLIPSE.
 
  Pointers to the fields in this structure are passed on to e.g. the
  enkf_state->shared_info object, but this struct is the *OWNER* of
@@ -50,25 +49,33 @@ namespace fs = std::filesystem;
  Observe that the distinction of what goes in model_config, and what
  goes in ecl_config is not entirely clear.
  */
-
 struct ecl_config_struct {
-    ecl_io_config_type *
-        io_config; /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-    char *data_file; /* Eclipse data file. */
-    time_t
-        end_date; /* An optional date value which can be used to check if the ECLIPSE simulation has been 'long enough'. */
+    /** This struct contains information of whether the eclipse files should be
+     * formatted|unified|endian_fliped */
+    ecl_io_config_type *io_config;
+    /** Eclipse data file. */
+    char *data_file;
+    /** An optional date value which can be used to check if the ECLIPSE
+     * simulation has been 'long enough'. */
+    time_t end_date;
     ecl_refcase_list_type *refcase_list;
-    ecl_grid_type *grid; /* The grid which is active for this model. */
-    char *
-        schedule_prediction_file; /* Name of schedule prediction file - observe that this is internally handled as a gen_kw node. */
+    /** The grid which is active for this model. */
+    ecl_grid_type *grid;
+    /** Name of schedule prediction file - observe that this is internally
+     * handled as a gen_kw node. */
+    char *schedule_prediction_file;
     int last_history_restart;
-    bool can_restart; /* Have we found the <INIT> tag in the data file? */
+    /** Have we found the <INIT> tag in the data file? */
+    bool can_restart;
     bool have_eclbase;
-    int num_cpu; /* We should parse the ECLIPSE data file and determine how many cpus this eclipse file needs. */
-    ert_ecl_unit_enum unit_system; /* Either metric, field or lab */
+    /** We should parse the ECLIPSE data file and determine how many cpus this
+     * eclipse file needs. */
+    int num_cpu;
+    /** Either metric, field or lab */
+    ert_ecl_unit_enum unit_system;
 };
 
-/*
+/**
  With this function we try to determine whether ECLIPSE is active
  for this case, i.e. if ECLIPSE is part of the forward model. This
  should ideally be inferred from the FORWARD model, but what we do
@@ -76,7 +83,6 @@ struct ecl_config_struct {
  have been set. If they are both equal to NULL we assume that
  ECLIPSE is not active and return false, otherwise we return true.
  */
-
 bool ecl_config_active(const ecl_config_type *config) {
     if (config->have_eclbase)
         return true;
@@ -165,11 +171,10 @@ ecl_config_get_schedule_prediction_file(const ecl_config_type *ecl_config) {
     return ecl_config->schedule_prediction_file;
 }
 
-/*
+/**
    Observe: The real schedule prediction functionality is implemented
    as a special GEN_KW node in ensemble_config.
  */
-
 void ecl_config_set_schedule_prediction_file(
     ecl_config_type *ecl_config, const char *schedule_prediction_file) {
     ecl_config->schedule_prediction_file = util_realloc_string_copy(
@@ -201,7 +206,7 @@ ui_return_type *ecl_config_validate_eclbase(const ecl_config_type *ecl_config,
     }
 }
 
-/*
+/**
  Can be called with @refcase == NULL - which amounts to clearing the
  current refcase.
 */
@@ -223,9 +228,9 @@ ui_return_type *ecl_config_validate_refcase(const ecl_config_type *ecl_config,
     }
 }
 
-/*
+/**
  Will return NULL if no refcase is set.
- */
+*/
 const char *ecl_config_get_refcase_name(const ecl_config_type *ecl_config) {
     const ecl_sum_type *refcase =
         ecl_refcase_list_get_default(ecl_config->refcase_list);
@@ -477,7 +482,7 @@ const char *ecl_config_get_gridfile(const ecl_config_type *ecl_config) {
         return ecl_grid_get_name(ecl_config->grid);
 }
 
-/*
+/**
    The ecl_config object isolated supports run-time changing of the
    grid, however this does not (in general) apply to the system as a
    whole. Other objects which internalize pointers (i.e. field_config
@@ -485,7 +490,6 @@ const char *ecl_config_get_gridfile(const ecl_config_type *ecl_config) {
    pointers; and things will probably die an ugly death. So - changing
    grid runtime should be done with extreme care.
 */
-
 void ecl_config_set_grid(ecl_config_type *ecl_config, const char *grid_file) {
     if (ecl_config->grid != NULL)
         ecl_grid_free(ecl_config->grid);
@@ -569,7 +573,7 @@ void ecl_config_add_config_items(config_parser_type *config) {
     config_schema_item_set_argc_minmax(item, 1, 1);
 }
 
-/* Units as specified in the ECLIPSE technical manual */
+/** Units as specified in the ECLIPSE technical manual */
 const char *ecl_config_get_depth_unit(const ecl_config_type *ecl_config) {
     switch (ecl_config->unit_system) {
     case ECL_METRIC_UNITS:

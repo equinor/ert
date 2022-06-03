@@ -37,47 +37,62 @@ static auto logger = ert::get_logger("job_queue");
 
 struct job_queue_node_struct {
     UTIL_TYPE_ID_DECLARATION;
-    int num_cpu; /* How many cpu's will this job need - the driver is free to ignore if not relevant. */
-    char *run_cmd; /* The path to the actual executable. */
-    char *
-        exit_file; /* The queue will look for the occurence of this file to detect a failure. */
-    char *
-        ok_file; /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
-    char *
-        status_file; /* The queue will look for this file to verify that the job is running or has run. */
-    char *job_name;  /* The name of the job. */
-    char *run_path;  /* Where the job is run - absolute path. */
+    /** How many cpu's will this job need - the driver is free to ignore if not relevant. */
+    int num_cpu;
+    /** The path to the actual executable. */
+    char *run_cmd;
+    /** The queue will look for the occurence of this file to detect a failure. */
+    char *exit_file;
+    /** The queue will look for this file to verify that the job was OK - can
+     * be NULL - in which case it is ignored. */
+    char *ok_file;
+    /** The queue will look for this file to verify that the job is running or
+     * has run. */
+    char *status_file;
+    /** The name of the job. */
+    char *job_name;
+    /** Where the job is run - absolute path. */
+    char *run_path;
     job_callback_ftype *done_callback;
-    job_callback_ftype *retry_callback; /* To determine if job can be retried */
-    job_callback_ftype *exit_callback;  /* Callback to perform any cleanup */
+    /** To determine if job can be retried */
+    job_callback_ftype *retry_callback;
+    /** Callback to perform any cleanup */
+    job_callback_ftype *exit_callback;
     void *callback_arg;
-    int argc; /* The number of commandline arguments to pass when starting the job. */
-    char **argv; /* The commandline arguments. */
+    /** The number of commandline arguments to pass when starting the job. */
+    int argc;
+    /** The commandline arguments. */
+    char **argv;
     int queue_index;
 
-    /*-----------------------------------------------------------------*/
-    char *failed_job;   /* Name of the job (in the chain) which has failed. */
-    char *error_reason; /* The error message from the failed job. */
+    /** Name of the job (in the chain) which has failed. */
+    char *failed_job;
+    /** The error message from the failed job. */
+    char *error_reason;
     char *stderr_capture;
-    char *stderr_file; /* Name of the file containing stderr information. */
-    /*-----------------------------------------------------------------*/
+    /** Name of the file containing stderr information. */
+    char *stderr_file;
 
-    int submit_attempt;         /* Which attempt is this ... */
-    job_status_type job_status; /* The current status of the job. */
-    bool
-        confirmed_running; /* Set to true if file status_file has been detected written. */
-    pthread_mutex_t
-        data_mutex; /* Protecting the access to the job_data pointer. */
-    void *
-        job_data; /* Driver specific data about this job - fully handled by the driver. */
-    time_t
-        submit_time; /* When was the job added to job_queue - the FIRST TIME. */
-    time_t
-        sim_start; /* When did the job change status -> RUNNING - the LAST TIME. */
-    time_t sim_end; /* When did the job finish successfully */
-    time_t
-        max_confirm_wait; /* Max waiting between sim_start and confirmed_running is 2 minutes */
-    time_t progress_timestamp; /* Timestamp of the status update update file. */
+    /** Which attempt is this ... */
+    int submit_attempt;
+    /** The current status of the job. */
+    job_status_type job_status;
+    /** Set to true if file status_file has been detected written. */
+    bool confirmed_running;
+    /** Protecting the access to the job_data pointer. */
+    pthread_mutex_t data_mutex;
+    /** Driver specific data about this job - fully handled by the driver. */
+    void *job_data;
+    /** When was the job added to job_queue - the FIRST TIME. */
+    time_t submit_time;
+    /** When did the job change status -> RUNNING - the LAST TIME. */
+    time_t sim_start;
+    /** When did the job finish successfully */
+    time_t sim_end;
+    /** Max waiting between sim_start and confirmed_running is 2 minutes */
+    time_t max_confirm_wait;
+    /** Timestamp of the status update update file. */
+    time_t progress_timestamp;
 };
 
 void job_queue_node_free_error_info(job_queue_node_type *node) {
@@ -138,12 +153,11 @@ static char *__alloc_tag_content(const char *xml_buffer, const char *tag) {
     return tag_content;
 }
 
-/*
+/**
    This code is meant to capture which of the jobs has failed; why it
    has failed and the stderr stream of the failing job. Depending on
    the failure circumstances the EXIT file might not be around.
 */
-
 void job_queue_node_fscanf_EXIT(job_queue_node_type *node) {
     job_queue_node_free_error_info(node);
     if (node->exit_file) {
@@ -508,9 +522,11 @@ static void job_queue_node_update_timestamp(job_queue_node_type *node) {
         node->progress_timestamp = mtime;
 }
 
-// if status = running, and current_time > sim_start + max_confirm_wait
-// (usually 2 min), check if job is confirmed running (status_file exists).
-// If not confirmed, set job to JOB_QUEUE_FAILED.
+/**
+if status = running, and current_time > sim_start + max_confirm_wait
+(usually 2 min), check if job is confirmed running (status_file exists).
+If not confirmed, set job to JOB_QUEUE_FAILED.
+*/
 bool job_queue_node_update_status(job_queue_node_type *node,
                                   job_queue_status_type *status,
                                   queue_driver_type *driver) {
@@ -668,7 +684,7 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
     return result;
 }
 
-/*
+/**
    This frees the storage allocated by the driver - the storage
    allocated by the queue layer is retained.
 
@@ -677,7 +693,6 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
    DONE_callback this function will be called twice; i.e. we must
    protect against a double free.
 */
-
 void job_queue_node_free_driver_data(job_queue_node_type *node,
                                      queue_driver_type *driver) {
     pthread_mutex_lock(&node->data_mutex);
@@ -689,14 +704,13 @@ void job_queue_node_free_driver_data(job_queue_node_type *node,
     pthread_mutex_unlock(&node->data_mutex);
 }
 
-/*
+/**
   This returns a pointer to a very internal datastructure; used by the
   Job class in Python which interacts directly with the driver
   implementation. This is too low level, and the whole Driver / Job
   implementation in Python should be changed to only expose the higher
   level queue class.
 */
-
 void *job_queue_node_get_driver_data(job_queue_node_type *node) {
     return node->job_data;
 }

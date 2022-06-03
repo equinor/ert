@@ -50,33 +50,39 @@ static auto logger = ert::get_logger("enkf");
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *
-        key; /* The key this gen_data instance is known under - needed for debugging. */
-    ecl_data_type
-        internal_type; /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
+    /** The key this gen_data instance is known under - needed for debugging. */
+    char *key;
+    /** The underlying type (float | double) of the data in the corresponding
+     * gen_data instances. */
+    ecl_data_type internal_type;
     char *template_file;
-    char *
-        template_buffer; /* Buffer containing the content of the template - read and internalized at boot time. */
+    /** Buffer containing the content of the template - read and internalized
+     * at boot time. */
+    char *template_buffer;
     char *template_key;
-    int template_data_offset; /* The offset into the template buffer before the data should come. */
-    int template_data_skip; /* The length of data identifier in the template.*/
-    int template_buffer_size; /* The total size (bytes) of the template buffer .*/
-    gen_data_file_format_type
-        input_format; /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
-    gen_data_file_format_type
-        output_format; /* The format used when gen_data instances are written to disk for the forward model. */
-    int_vector_type *
-        data_size_vector; /* Data size, i.e. number of elements , indexed with report_step */
-    int_vector_type *
-        active_report_steps; /* The report steps where we expect to load data for this instance. */
+    /** The offset into the template buffer before the data should come. */
+    int template_data_offset;
+    /** The length of data identifier in the template.*/
+    int template_data_skip;
+    /** The total size (bytes) of the template buffer .*/
+    int template_buffer_size;
+    /** The format used for loading gen_data instances when the forward model
+     * has completed *AND* for loading the initial files.*/
+    gen_data_file_format_type input_format;
+    /** The format used when gen_data instances are written to disk for the
+     * forward model. */
+    gen_data_file_format_type output_format;
+    /** Data size, i.e. number of elements , indexed with report_step */
+    int_vector_type *data_size_vector;
+    /** The report steps where we expect to load data for this instance. */
+    int_vector_type *active_report_steps;
     pthread_mutex_t update_lock;
-    /* All the fields below this line are related to the capability of
-     the forward model to deactivate elements in a gen_data
-     instance. See documentation above.
-  */
+    /* All the fields below this line are related to the capability of the
+     * forward model to deactivate elements in a gen_data instance. See
+     * documentation above. */
     bool dynamic;
-    enkf_fs_type *
-        last_read_fs; /* NBNB This will be NULL in the case of instances which are used as parameters. */
+    /** NBNB This will be NULL in the case of instances which are used as parameters. */
+    enkf_fs_type *last_read_fs;
     int ens_size;
     bool mask_modified;
     bool_vector_type *active_mask;
@@ -320,15 +326,25 @@ gen_data_config_get_template_key(const gen_data_config_type *config) {
     return config->template_key;
 }
 
-/*
+/**
+ * @brief parses format string as a gen_data_file_format_type
+
    This function takes a string representation of one of the
    gen_data_file_format_type values, and returns the corresponding
-   integer value.
+   gen_data_file_format value. The recognized strings are
 
-   Will return gen_data_undefined if the string is not recognized,
-   calling scope must check on this return value.
+   * "ASCII"
+   * "ASCII_TEMPLATE"
+   * "BINARY_DOUBLE"
+   * "BINARY_FLOAT"
+
+   Its the inverse action of gen_data_config_format_name
+
+   @see gen_data_config_format_name
+   @param format_string The file format string, ie. "ASCII"
+   @return GEN_DATA_UNDEFINED if the string is not recognized or NULL, otherwise
+      the corresponding gen_data_file_format_type, ie. ASCII.
 */
-
 gen_data_file_format_type
 gen_data_config_check_format(const char *format_string) {
     gen_data_file_format_type type = GEN_DATA_UNDEFINED;
@@ -348,7 +364,7 @@ gen_data_config_check_format(const char *format_string) {
     return type;
 }
 
-/*
+/**
    The valid options are:
 
    INPUT_FORMAT:(ASCII|ASCII_TEMPLATE|BINARY_DOUBLE|BINARY_FLOAT)
@@ -359,7 +375,6 @@ gen_data_config_check_format(const char *format_string) {
    RESULT_FILE:<filename to read EnKF <== Forward model>
 
 */
-
 void gen_data_config_free(gen_data_config_type *config) {
     int_vector_free(config->data_size_vector);
     int_vector_free(config->active_report_steps);
@@ -373,21 +388,18 @@ void gen_data_config_free(gen_data_config_type *config) {
     free(config);
 }
 
-/*
+/**
    This function gets a size (from a gen_data) instance, and verifies
    that the size agrees with the currently stored size and
    report_step. If the report_step is new we just record the new info,
    otherwise it will break hard.
-*/
 
-/*
    Does not work properly with:
 
    1. keep_run_path - the load_file will be left hanging around - and loaded again and again.
    2. Doing forward several steps - how to (time)index the files?
 
 */
-
 void gen_data_config_assert_size(gen_data_config_type *config, int data_size,
                                  int report_step) {
     pthread_mutex_lock(&config->update_lock);
@@ -446,7 +458,7 @@ update_config_to_datamask(gen_data_config_type *config,
     config->mask_modified = false;
 }
 
-/*
+/**
    When the forward model is creating results for GEN_DATA instances,
    it can optionally signal that not all elements in the gen_data
    should be active (i.e. the forward model failed in some way); that
@@ -481,7 +493,7 @@ bool gen_data_config_has_active_mask(const gen_data_config_type *config,
     return has_mask;
 }
 
-/*
+/**
    This function will load an active map from the enkf_fs filesystem.
 */
 void gen_data_config_load_active(gen_data_config_type *config, enkf_fs_type *fs,
@@ -612,6 +624,18 @@ const char *gen_data_config_get_key(const gen_data_config_type *config) {
     return config->key;
 }
 
+/**
+ * @brief returns the format string correspondng to the gen_data_file_format_type.
+
+   This function takes a gen_data_file_format_type and returns its string representation.
+
+   Its the inverse action of gen_data_config_check_format
+
+   @see gen_data_config_check_format
+   @param format_string The file format string, ie. "ASCII"
+   @return GEN_DATA_UNDEFINED if the string is not recognized or NULL, otherwise
+      the corresponding gen_data_file_format_type, ie. ASCII.
+*/
 static const char *
 gen_data_config_format_name(gen_data_file_format_type format_type) {
     switch (format_type) {

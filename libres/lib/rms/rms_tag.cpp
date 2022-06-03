@@ -40,7 +40,8 @@ struct rms_tag_struct {
     UTIL_TYPE_ID_DECLARATION;
     char *name;
     vector_type *key_list;
-    hash_type *key_hash; /* Hash of tagkey instances */
+    /** Hash of tagkey instances */
+    hash_type *key_hash;
 };
 
 rms_tag_type *rms_tag_alloc(const char *name) {
@@ -91,7 +92,7 @@ void rms_tag_fread_header(rms_tag_type *tag, FILE *stream, bool *eof_tag) {
     free(buffer);
 }
 
-/*
+/**
    This function does a "two-level" comparison.
 
    1. tag->name is compared with tagname.

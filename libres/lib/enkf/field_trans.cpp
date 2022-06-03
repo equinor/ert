@@ -113,12 +113,11 @@ void field_trans_table_fprintf(const field_trans_table_type *table,
     hash_iter_free(iter);
 }
 
-/*
+/**
   This function takes a key input, and returns a pointer to the
   corresponding function. The function will fail if the key is not
   recognized.
 */
-
 field_func_type *field_trans_table_lookup(field_trans_table_type *table,
                                           const char *_key) {
     field_func_type *func;
@@ -146,7 +145,7 @@ field_func_type *field_trans_table_lookup(field_trans_table_type *table,
     return func;
 }
 
-/*
+/**
    Will return false if _key == NULL
 */
 bool field_trans_table_has_key(field_trans_table_type *table,

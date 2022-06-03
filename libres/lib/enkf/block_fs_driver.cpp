@@ -48,8 +48,8 @@ struct bfs_config_struct {
 struct bfs_struct {
     UTIL_TYPE_ID_DECLARATION;
     block_fs_type *block_fs;
-    char *
-        mountfile; // The full path to the file mounted by the block_fs layer - including extension.
+    /** The full path to the file mounted by the block_fs layer - including extension.*/
+    char *mountfile;
 
     const bfs_config_type *config;
 };
@@ -257,11 +257,10 @@ void block_fs_driver_create_fs(FILE *stream, const char *mount_point,
     }
 }
 
-/*
+/**
   @path should contain both elements called root_path and case_path in
   the block_fs_driver_create() function.
 */
-
 ert::block_fs_driver *ert::block_fs_driver::open(FILE *fstab_stream,
                                                  const char *mount_point,
                                                  bool read_only) {

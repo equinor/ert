@@ -32,9 +32,10 @@
 #define SUMMARY_UNDEF -9999
 
 struct summary_struct {
-    int __type_id; /* Only used for run_time checking. */
-    summary_config_type
-        *config; /* Can not be NULL - var_type is set on first load. */
+    /** Only used for run_time checking. */
+    int __type_id;
+    /** Can not be NULL - var_type is set on first load. */
+    summary_config_type *config;
     double_vector_type *data_vector;
 };
 
@@ -146,7 +147,7 @@ void summary_user_get_vector(const summary_type *summary, const char *index_key,
     double_vector_memcpy(value, summary->data_vector);
 }
 
-/*
+/**
    There are three typical reasons why the node data can not be loaded:
 
      1. The ecl_sum instance is equal to NULL.
@@ -159,7 +160,6 @@ void summary_user_get_vector(const summary_type *summary, const char *index_key,
    return true. This is done because this is a typical situation for
    e.g. a well which has not yet opened.
 */
-
 bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
                           const forward_load_context_type *load_context) {
     bool loadOK = false;
