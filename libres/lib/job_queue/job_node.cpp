@@ -213,10 +213,8 @@ void job_queue_node_free_data(job_queue_node_type *node) {
 }
 
 void job_queue_node_free(job_queue_node_type *node) {
-    /*
-    The callback_arg will not be freed; that will be the responsability of the
-    calling scope.
-  */
+    // The callback_arg will not be freed; that will be the responsability of
+    // the calling scope.
     job_queue_node_free_data(node);
     job_queue_node_free_error_info(node);
     free(node->run_path);
@@ -378,12 +376,9 @@ void job_queue_node_set_status(job_queue_node_type *node,
                   job_status_get_name(new_status));
     node->job_status = new_status;
 
-    /*
-    We record sim start when the node is in state JOB_QUEUE_WAITING
-    to be sure that we do not miss the start time completely for
-    very fast jobs which are registered in the state
-    JOB_QUEUE_RUNNING.
-  */
+    // We record sim start when the node is in state JOB_QUEUE_WAITING to be
+    // sure that we do not miss the start time completely for very fast jobs
+    // which are registered in the state JOB_QUEUE_RUNNING.
     if (new_status == JOB_QUEUE_WAITING)
         node->sim_start = time(NULL);
 
@@ -413,11 +408,9 @@ submit_status_type job_queue_node_submit(job_queue_node_type *node,
     job_status_type new_status;
 
     if (job_data == NULL) {
-        /*
-      In this case the status of the job itself will be
-      unmodified; i.e. it will still be WAITING, and a new attempt
-      to submit it will be performed in the next round.
-    */
+        // In this case the status of the job itself will be
+        // unmodified; i.e. it will still be WAITING, and a new attempt
+        // to submit it will be performed in the next round.
         submit_status = SUBMIT_DRIVER_FAIL;
         logger->warning("Failed to submit job {} (attempt {})", node->job_name,
                         node->submit_attempt);
@@ -432,14 +425,11 @@ submit_status_type job_queue_node_submit(job_queue_node_type *node,
 
     node->job_data = job_data;
     node->submit_attempt++;
-    /*
-    The status JOB_QUEUE_SUBMITTED is internal, and not
-    exported anywhere. The job_queue_update_status() will
-    update this to PENDING or RUNNING at the next call. The
-    important difference between SUBMITTED and WAITING is
-    that SUBMITTED have job_data != NULL and the
-    job_queue_node free function must be called on it.
-  */
+    // The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere.
+    // The job_queue_update_status() will update this to PENDING or RUNNING at
+    // the next call. The important difference between SUBMITTED and WAITING is
+    // that SUBMITTED have job_data != NULL and the job_queue_node free
+    // function must be called on it.
     submit_status = SUBMIT_OK;
     job_queue_node_set_status(node, new_status);
     job_queue_status_transition(status, old_status, new_status);
@@ -461,11 +451,9 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
     job_status_type new_status;
 
     if (job_data == NULL) {
-        /*
-      In this case the status of the job itself will be
-      unmodified; i.e. it will still be WAITING, and a new attempt
-      to submit it will be performed in the next round.
-    */
+        // In this case the status of the job itself will be
+        // unmodified; i.e. it will still be WAITING, and a new attempt
+        // to submit it will be performed in the next round.
         submit_status = SUBMIT_DRIVER_FAIL;
         logger->warning("Failed to submit job {} (attempt {})", node->job_name,
                         node->submit_attempt);
@@ -481,14 +469,11 @@ submit_status_type job_queue_node_submit_simple(job_queue_node_type *node,
 
     node->job_data = job_data;
     node->submit_attempt++;
-    /*
-    The status JOB_QUEUE_SUBMITTED is internal, and not
-    exported anywhere. The job_queue_update_status() will
-    update this to PENDING or RUNNING at the next call. The
-    important difference between SUBMITTED and WAITING is
-    that SUBMITTED have job_data != NULL and the
-    job_queue_node free function must be called on it.
-  */
+    // The status JOB_QUEUE_SUBMITTED is internal, and not exported anywhere.
+    // The job_queue_update_status() will update this to PENDING or RUNNING at
+    // the next call. The important difference between SUBMITTED and WAITING is
+    // that SUBMITTED have job_data != NULL and the job_queue_node free
+    // function must be called on it.
     submit_status = SUBMIT_OK;
     job_queue_node_set_status(node, new_status);
     pthread_mutex_unlock(&node->data_mutex);
@@ -635,11 +620,9 @@ bool job_queue_node_kill(job_queue_node_type *node,
 
     job_status_type current_status = job_queue_node_get_status(node);
     if (current_status & JOB_QUEUE_CAN_KILL) {
-        /*
-      If the job is killed before it is even started no driver
-      specific job data has been assigned; we therefore must check
-      the node->job_data pointer before entering.
-    */
+        // If the job is killed before it is even started no driver specific
+        // job data has been assigned; we therefore must check the
+        // node->job_data pointer before entering.
         if (node->job_data) {
             queue_driver_kill_job(driver, node->job_data);
             queue_driver_free_job(driver, node->job_data);
@@ -664,11 +647,9 @@ bool job_queue_node_kill_simple(job_queue_node_type *node,
     pthread_mutex_lock(&node->data_mutex);
     job_status_type current_status = job_queue_node_get_status(node);
     if (current_status & JOB_QUEUE_CAN_KILL) {
-        /*
-      If the job is killed before it is even started no driver
-      specific job data has been assigned; we therefore must check
-      the node->job_data pointer before entering.
-    */
+        // If the job is killed before it is even started no driver specific
+        // job data has been assigned; we therefore must check the
+        // node->job_data pointer before entering.
         if (node->job_data) {
             queue_driver_kill_job(driver, node->job_data);
             queue_driver_free_job(driver, node->job_data);

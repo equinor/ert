@@ -344,11 +344,9 @@ bool slurm_driver_set_option(void *__driver, const char *option_key,
             return false;
     }
 
-    /*
-    The --time option in slurm which is used to set the maximum runtime of a job
-    is in minutes, whereas the libres option system uses seconds. This is to
-    ensure overall consistency in libres for timeouts.
-  */
+    // The --time option in slurm which is used to set the maximum runtime of a
+    // job is in minutes, whereas the libres option system uses seconds. This
+    // is to ensure overall consistency in libres for timeouts.
     if (strcmp(option_key, SLURM_MAX_RUNTIME_OPTION) == 0) {
         const char *string_value = static_cast<const char *>(value);
         int max_runtime_seconds;
@@ -517,13 +515,11 @@ slurm_driver_get_job_status_scontrol(const slurm_driver_type *driver,
     auto values = load_scontrol(driver, string_id);
     const auto status_iter = values.find("JobState");
 
-    /*
-    When a job has finished running it quite quickly - the order of minutes -
-    falls out of the slurm database, and the scontrol command will not give any
-    output. In this situation we guess that the job has completed succesfully
-    and return status JOB_QUEUE_DONE. If the job has actually not succeded this
-    should be picked up the libres post run checking.
-  */
+    // When a job has finished running it quite quickly - the order of minutes
+    // - falls out of the slurm database, and the scontrol command will not
+    // give any output. In this situation we guess that the job has completed
+    // succesfully and return status JOB_QUEUE_DONE. If the job has actually
+    // not succeded this should be picked up the libres post run checking.
     if (status_iter == values.end()) {
         logger->warning("The command 'scontrol show jobid {}' gave no "
                         "output for job:{} - assuming it is COMPLETED",

@@ -120,10 +120,8 @@ static void rsh_host_submit_job(rsh_host_type *rsh_host, rsh_job_type *job,
                                 const char *rsh_cmd, const char *submit_cmd,
                                 int num_cpu, int job_argc,
                                 const char **job_argv) {
-    /*
-     Observe that this job has already been added to the running jobs
-     in the rsh_host_available function.
-  */
+    // Observe that this job has already been added to the running jobs
+    // in the rsh_host_available function.
     int argc = job_argc + 2;
     const char **argv = (const char **)util_malloc(argc * sizeof *argv);
 
@@ -196,9 +194,7 @@ void *rsh_driver_submit_job(void *__driver, const char *submit_cmd,
     rsh_driver_type *driver = rsh_driver_safe_cast(__driver);
     rsh_job_type *job = NULL;
     {
-        /*
-       command is freed in the start_routine() function
-    */
+        // command is freed in the start_routine() function
         std::lock_guard guard{driver->submit_lock};
         {
             rsh_host_type *host = NULL;
@@ -277,20 +273,14 @@ void rsh_driver_set_host_list(rsh_driver_type *rsh_driver,
     }
 }
 
-/*
-
-*/
-
 void *rsh_driver_alloc() {
     rsh_driver_type *rsh_driver =
         (rsh_driver_type *)util_malloc(sizeof *rsh_driver);
     UTIL_TYPE_ID_INIT(rsh_driver, RSH_DRIVER_TYPE_ID);
 
-    /*
-      To simplify the Python wrapper it is possible to pass in NULL as
-      rsh_host_list pointer, and then subsequently add hosts with
-      rsh_driver_add_host().
-  */
+    // To simplify the Python wrapper it is possible to pass in NULL as
+    // rsh_host_list pointer, and then subsequently add hosts with
+    // rsh_driver_add_host().
     rsh_driver->num_hosts = 0;
     rsh_driver->host_list = NULL;
     rsh_driver->last_host_index = 0;

@@ -220,12 +220,10 @@ static queue_driver_type *queue_driver_alloc_empty() {
 
 static UTIL_SAFE_CAST_FUNCTION(queue_driver, QUEUE_DRIVER_ID)
 
-    /*
-   The driver created in this function has all the function pointers
-   correctly initialized; but no options have been set. I.e. unless
-   the driver in question needs no options (e.g. the LOCAL driver) the
-   returned driver will NOT be ready for use.
- */
+    // The driver created in this function has all the function pointers
+    // correctly initialized; but no options have been set. I.e. unless
+    // the driver in question needs no options (e.g. the LOCAL driver) the
+    // returned driver will NOT be ready for use.
 
     queue_driver_type *queue_driver_alloc(job_driver_type type) {
     queue_driver_type *driver = queue_driver_alloc_empty();

@@ -70,8 +70,8 @@ ert_template_type *ert_template_alloc(const char *template_file,
     ert_template->tmpl = template_alloc(
         template_file, false,
         parent_subst); /* The templates are instantiated with internalize_template == false;
-                                                                                     this means that substitutions are performed on the filename of the
-                                                                                     template itself .*/
+                          this means that substitutions are performed on the filename of the
+                          template itself .*/
 
     ert_template->target_file = NULL;
     ert_template_set_target_file(ert_template, target_file);

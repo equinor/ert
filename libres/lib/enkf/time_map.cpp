@@ -518,11 +518,8 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
 
 static void time_map_summary_log_mismatch(time_map_type *map,
                                           const ecl_sum_type *ecl_sum) {
-    /*
-     If the normal summary update fails we just play through all
-     time steps to pinpoint exactly the step where the update fails.
-  */
-
+    // If the normal summary update fails we just play through all time steps
+    // to pinpoint exactly the step where the update fails.
     int first_step = ecl_sum_get_first_report_step(ecl_sum);
     int last_step = ecl_sum_get_last_report_step(ecl_sum);
     int step;

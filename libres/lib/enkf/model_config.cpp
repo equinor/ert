@@ -489,12 +489,9 @@ void model_config_init(model_config_type *model_config,
         }
     }
 
-    /*
-    The full treatment of the SCHEDULE_PREDICTION_FILE keyword is in
-    the ensemble_config file, because the functionality is implemented
-    as (quite) plain GEN_KW instance. Here we just check if it is
-    present or not.
-  */
+    // The full treatment of the SCHEDULE_PREDICTION_FILE keyword is in the
+    // ensemble_config file, because the functionality is implemented as
+    // (quite) plain GEN_KW instance. Here we just check if it is present or not.
 
     if (config_content_has_item(config, ENSPATH_KEY))
         model_config_set_enspath(
@@ -506,16 +503,14 @@ void model_config_init(model_config_type *model_config,
             model_config,
             config_content_get_value_as_path(config, DATA_ROOT_KEY));
 
-    /*
-    The keywords ECLBASE and JOBNAME can be used as synonyms. But
-    observe that:
+    // The keywords ECLBASE and JOBNAME can be used as synonyms. But observe
+    // that:
 
-      1. The ecl_config object will also pick up the ECLBASE keyword,
-         and set the have_eclbase flag of that object.
+    //   1. The ecl_config object will also pick up the ECLBASE keyword, and
+    //   set the have_eclbase flag of that object.
 
-      2. If both ECLBASE and JOBNAME are in the config file the
-         JOBNAME keyword will be preferred.
-  */
+    //   2. If both ECLBASE and JOBNAME are in the config file the JOBNAME
+    //   keyword will be preferred.
     if (config_content_has_item(config, ECLBASE_KEY))
         model_config_set_jobname_fmt(
             model_config, config_content_get_value(config, ECLBASE_KEY));

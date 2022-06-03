@@ -79,9 +79,8 @@ void misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
                                      misfit_ensemble->history_length, 0,
                                      ens_size, chi2_work);
 
-            /*
-          Internalizing the results from the chi2_work table into the misfit structure.
-      */
+            // Internalizing the results from the chi2_work table into the
+            // misfit structure.
             for (int iens = 0; iens < ens_size; iens++) {
                 misfit_member_type *node =
                     misfit_ensemble_iget_member(misfit_ensemble, iens);

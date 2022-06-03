@@ -495,10 +495,8 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
     if (job->torque_jobnr > 0)
         return job;
     else {
-        /*
-      The submit failed - the queue system shall handle
-      NULL return values.
-     */
+        // The submit failed - the queue system shall handle
+        // NULL return values.
         torque_job_free(job);
         return NULL;
     }

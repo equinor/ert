@@ -154,7 +154,7 @@ static void subst_config_init_default(subst_config_type *subst_config) {
       o Common to all ensemble members.
 
       o Constant in time.
-  */
+    */
 
     /* Installing the functions. */
     subst_list_insert_func(subst_config->subst_list, "EXP", "__EXP__");
@@ -163,10 +163,8 @@ static void subst_config_init_default(subst_config_type *subst_config) {
     subst_list_insert_func(subst_config->subst_list, "ADD", "__ADD__");
     subst_list_insert_func(subst_config->subst_list, "MUL", "__MUL__");
 
-    /*
-     Installing the based (key,value) pairs which are common to all
-     ensemble members, and independent of time.
-  */
+    // Installing the based (key,value) pairs which are common to all ensemble
+    // members, and independent of time.
 
     char *date_string = util_alloc_date_stamp_utc();
     subst_config_add_internal_subst_kw(subst_config, "DATE", date_string,
@@ -191,10 +189,8 @@ subst_config_install_config_directory(subst_config_type *subst_config,
 
 static void subst_config_install_data_kw(subst_config_type *subst_config,
                                          hash_type *config_data_kw) {
-    /*
-    Installing the DATA_KW keywords supplied by the user - these are
-    at the very top level, so they can reuse everything defined later.
-  */
+    // Installing the DATA_KW keywords supplied by the user - these are at the
+    // very top level, so they can reuse everything defined later.
     if (config_data_kw) {
         hash_iter_type *iter = hash_iter_alloc(config_data_kw);
         const char *key = hash_iter_get_next_key(iter);
