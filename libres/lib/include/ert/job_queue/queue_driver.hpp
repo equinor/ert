@@ -34,9 +34,7 @@ typedef enum {
 
 #define JOB_DRIVER_ENUM_SIZE 5
 
-/*
-    The options supported by the base queue_driver.
-   */
+// The options supported by the base queue_driver.
 #define MAX_RUNNING "MAX_RUNNING"
 
 typedef struct queue_driver_struct queue_driver_type;

@@ -171,11 +171,9 @@ void workflow_job_update_config_compiler(const workflow_job_type *workflow_job,
                                          config_parser_type *config_compiler) {
     config_schema_item_type *item =
         config_add_schema_item(config_compiler, workflow_job->name, false);
-    /*
-     Ensure that the arg_types mapping is at least as large as the
-     max_arg value. The arg_type vector will be left padded with
-     CONFIG_STRING values.
-  */
+    // Ensure that the arg_types mapping is at least as large as the
+    // max_arg value. The arg_type vector will be left padded with
+    // CONFIG_STRING values.
     {
         int iarg;
         config_schema_item_set_argc_minmax(item, workflow_job->min_arg,

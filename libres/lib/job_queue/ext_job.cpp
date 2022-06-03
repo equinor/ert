@@ -194,10 +194,8 @@ static UTIL_SAFE_CAST_FUNCTION(ext_job, EXT_JOB_TYPE_ID)
     ext_job->help_text = NULL;
     ext_job->private_args_string = NULL;
 
-    /*
-     ext_job->private_args is set explicitly in the ext_job_alloc()
-     and ext_job_alloc_copy() functions.
-  */
+    // ext_job->private_args is set explicitly in the ext_job_alloc()
+    // and ext_job_alloc_copy() functions.
     return ext_job;
 }
 
@@ -403,20 +401,17 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
                             const char *executable_input, bool search_path) {
 
     if (fs::exists(executable_abs)) {
-        /*
-       The @executable parameter points to an existing file; we store
-       the full path as the executable field of the job.
-    */
+        // The executable_abs parameter points to an existing file; we store
+        // the full path as the executable field of the job.
         char *full_path = (char *)util_alloc_realpath(executable_abs);
         ext_job->executable =
             util_realloc_string_copy(ext_job->executable, full_path);
         free(full_path);
     } else if (util_is_abs_path(executable_input)) {
-        /* If you have given an absolute path (i.e. starting with '/' to
-       a non existing job we mark it as invalid - no possibility to
-       provide context replacement afterwards. The job will be
-       discarded by the calling scope.
-    */
+        // If you have given an absolute path (i.e. starting with '/' to a non
+        // existing job we mark it as invalid - no possibility to provide
+        // context replacement afterwards. The job will be discarded by the
+        // calling scope.
         throw std::invalid_argument(fmt::format(
             "** The executable {} was not found", executable_input));
     } else {
@@ -439,10 +434,8 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
         }
     }
 
-    /*
-     If in the end we do not have execute rights to the executable :
-     discard the job.
-  */
+    // If in the end we do not have execute rights to the executable:
+    // discard the job.
     if (ext_job->executable != NULL) {
         if (fs::exists(executable_abs)) {
             if (!util_is_executable(ext_job->executable)) {
@@ -657,19 +650,16 @@ static hash_type *__alloc_filtered_hash(hash_type *input_hash,
     const char *key = hash_iter_get_next_key(iter);
     while (key != NULL) {
         const char *value = (const char *)hash_get(input_hash, key);
-        /*
-      If the value is NULL or alternatively the special string value "null" we
-      print the @null_value variable and continue.
-    */
+        // If the value is NULL or alternatively the special string value
+        // "null" we print the @null_value variable and continue.
         if (!value || strcmp(value, "null") == 0)
             hash_insert_ref(output_hash, key, NULL);
         else {
             char *fv =
                 __alloc_filtered_string(value, private_args, global_args);
-            /*
-        If the value string contains a <XXX> string which is not represented in
-        the substitutionlists we will not print out the <xxxx> literal.
-      */
+            // If the value string contains a <XXX> string which is not
+            // represented in the substitutionlists we will not print out the
+            // <xxxx> literal.
             if (include_angular_values)
                 hash_insert_hash_owned_ref(output_hash, key, fv, free);
             else {
@@ -1226,9 +1216,8 @@ ext_job_type *ext_job_fscanf_alloc(const char *name,
                 }
 
                 if (!ext_job->__valid) {
-                    /*
-            Something NOT OK (i.e. EXECUTABLE now); free the job instance and return NULL:
-          */
+                    // Something NOT OK (i.e. EXECUTABLE now); free the job
+                    // instance and return NULL
                     ext_job_free(ext_job);
                     ext_job = NULL;
                     fprintf(stderr,

@@ -456,17 +456,6 @@ static void enkf_obs_update_keys(enkf_obs_type *enkf_obs) {
     }
 }
 
-/*
- *
- * Here comes four helper functions for enkf_obs_load:
- *
- * * handle_history_observation(enkf_obs, enkf_conf, last_report, std_cutoff);
- * * handle_summary_observation(enkf_obs, enkf_conf, last_report);
- * * handle_block_observation(enkf_obs, enkf_conf);
- * * handle_general_observation(enkf_obs, enkf_conf);
- *
- */
-
 /** Handle HISTORY_OBSERVATION instances. */
 static void handle_history_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf,
