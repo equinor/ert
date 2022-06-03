@@ -427,30 +427,7 @@ void ecl_config_init(ecl_config_type *ecl_config,
             "            for this functionality has been removed. libres will "
             "not\n"
             "            be able to properly initialize the ECLIPSE MODEL.\n");
-    /*
-     This is a hard error - the datafile contains <INIT>, however
-     the config file does NOT contain INIT_SECTION, i.e. we have
-     no information to fill in for the <INIT> section. This case
-     will not be able to initialize an ECLIPSE model, and that is
-     broken behaviour.
-     */
 
-    /*
-   The user has not supplied a INIT_SECTION keyword whatsoever,
-   this essentially means that we can not restart - because:
-
-   1. The EQUIL section must be inlined in the DATAFILE without any
-   special markup.
-
-   2. ECLIPSE will fail hard if the datafile contains both an EQUIL
-   section and a restart statement, and when we have not marked
-   the EQUIL section specially with the INIT_SECTION keyword it
-   is impossible for ERT to dynamically change between a
-   datafile with initialisation and a datafile for restart.
-
-   IFF the user has no intentitions of any form of restart, this is
-   perfectly legitemate.
-   */
     if (config_content_has_item(config, END_DATE_KEY))
         handle_has_end_date_key(ecl_config, config);
 
