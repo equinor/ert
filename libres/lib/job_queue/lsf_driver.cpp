@@ -631,10 +631,9 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type *driver) {
 
                 if (sscanf(line, "%d %s %s", &job_id_int, user, status) == 3) {
                     char *job_id = (char *)util_alloc_sprintf("%d", job_id_int);
-
-                    if (hash_has_key(
-                            driver->my_jobs,
-                            job_id)) /* Consider only jobs submitted by this ERT instance - not old jobs lying around from the same user. */
+                    // Consider only jobs submitted by this ERT instance - not
+                    // old jobs lying around from the same user.
+                    if (hash_has_key(driver->my_jobs, job_id))
                         hash_insert_int(
                             driver->bjobs_cache, job_id,
                             lsf_driver_get_status__(driver, status, job_id));
@@ -660,16 +659,13 @@ static int lsf_driver_get_job_status_libary(void *__driver, void *__job) {
 #ifdef HAVE_LSF_LIBRARY
         lsf_job_type *job = lsf_job_safe_cast(__job);
         if (lsb_openjob(driver->lsb, job->lsf_jobnr) != 1) {
-            /*
-         Failed to get information about the job - we boldly assume
-         the following situation has occured:
+            // Failed to get information about the job - we boldly assume the
+            // following situation has occured:
 
-         1. The job is running happily along.
-         2. The lsf deamon is not responding for a long time.
-         3. The job finishes, and is eventually expired from the LSF job database.
-         4. The lsf deamon answers again - but can not find the job...
-
-      */
+            // 1. The job is running happily along.
+            // 2. The lsf deamon is not responding for a long time.
+            // 3. The job finishes, and is eventually expired from the LSF job database.
+            // 4. The lsf deamon answers again - but can not find the job...
             fprintf(stderr,
                     "Warning: failed to get status information for job:%ld - "
                     "assuming it is finished. \n",
@@ -802,12 +798,10 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
         lsf_driver_type *driver = lsf_driver_safe_cast(__driver);
 
         {
-            /*
-         Updating the bjobs_table of the driver involves a significant change in
-         the internal state of the driver; that is semantically a bit
-         unfortunate because this is clearly a get() function; to protect
-         against concurrent updates of this table we use a mutex.
-      */
+            // Updating the bjobs_table of the driver involves a significant
+            // change in the internal state of the driver; that is semantically
+            // a bit unfortunate because this is clearly a get() function; to
+            // protect against concurrent updates of this table we use a mutex.
             pthread_mutex_lock(&driver->bjobs_mutex);
             {
                 bool update_cache =
@@ -824,11 +818,10 @@ static int lsf_driver_get_job_status_shell(void *__driver, void *__job) {
             if (hash_has_key(driver->bjobs_cache, job->lsf_jobnr_char))
                 status = hash_get_int(driver->bjobs_cache, job->lsf_jobnr_char);
             else {
-                /*
-           The job was not in the status cache, this *might* mean that
-           it has completed/exited and fallen out of the bjobs status
-           table maintained by LSF. We try calling bhist to get the status.
-        */
+                // The job was not in the status cache, this *might* mean that
+                // it has completed/exited and fallen out of the bjobs status
+                // table maintained by LSF. We try calling bhist to get the
+                // status.
                 logger->warning(
                     "In lsf_driver we found that job was not in the "
                     "status cache, this *might* mean that it has "
@@ -1041,10 +1034,8 @@ void *lsf_driver_submit_job(void *__driver, const char *submit_cmd, int num_cpu,
             fclose(stream);
             return job;
         } else {
-            /*
-        The submit failed - the queue system shall handle
-        NULL return values.
-      */
+            // The submit failed - the queue system shall handle
+            // NULL return values.
             driver->error_count++;
 
             if (driver->error_count >= driver->max_error_count)

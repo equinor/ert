@@ -156,11 +156,9 @@ stringlist_type *lsb_get_error_list(const lsb_type *lsb) {
 }
 
 int lsb_initialize(const lsb_type *lsb) {
-    /*
-    The environment variable LSF_ENVDIR must be set to point the
-    directory containing LSF configuration information, the whole
-    thing will crash and burn if this is not properly set.
-  */
+    // The environment variable LSF_ENVDIR must be set to point the directory
+    // containing LSF configuration information, the whole thing will crash and
+    // burn if this is not properly set.
     if (lsb->lsb_init(NULL) != 0) {
 
         fprintf(stderr, "LSF_ENVDIR: ");

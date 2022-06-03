@@ -603,8 +603,8 @@ static void job_queue_run_EXIT_callback(job_queue_type *job_queue,
         bool retry = job_queue_node_run_RETRY_callback(node);
 
         if (retry) {
-            /* OK - we have invoked the retry_callback() - and that has returned true;
-	   giving this job a brand new start. */
+            // OK - we have invoked the retry_callback() - and that has
+            // returned true; giving this job a brand new start.
             job_queue_node_reset_submit_attempt(node);
             job_queue_change_node_status(job_queue, node, JOB_QUEUE_WAITING);
         } else {
@@ -694,9 +694,9 @@ bool job_queue_accept_jobs(const job_queue_type *queue) {
  */
 static bool submit_new_jobs(job_queue_type *queue) {
 
-    int max_submit =
-        5; /* This is the maximum number of jobs submitted in one while() { ... } below.
-                             Only to ensure that the waiting time before a status update is not too long. */
+    // max_submit is the maximum number of jobs submitted in one while() { ... } below.
+    // Only to ensure that the waiting time before a status update is not too long.
+    int max_submit = 5;
     int total_active =
         job_queue_status_get_count(queue->status, JOB_QUEUE_PENDING) +
         job_queue_status_get_count(queue->status, JOB_QUEUE_RUNNING);
@@ -828,10 +828,11 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
         {
             JobListReadLock rl(queue->job_list);
 
-            if (queue
-                    ->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we should kill
-                               all jobs, do some clearing up and go home. Observe that we will go through the
-                               queue handling codeblock below ONE LAST TIME before exiting. */
+            if (queue->user_exit) {
+                // An external thread has called the job_queue_user_exit()
+                // function, and we should kill all jobs, do some clearing up
+                // and go home. Observe that we will go through the queue
+                // handling codeblock below ONE LAST TIME before exiting.
                 logger->info("Received queue->user_exit in inner loop of "
                              "job_queue_run_jobs, exiting");
                 job_queue_user_exit__(queue);
@@ -851,21 +852,19 @@ static void job_queue_loop(job_queue_type *queue, int num_total_run,
                 job_queue_status_get_count(queue->status, JOB_QUEUE_IS_KILLED);
 
             if ((num_total_run > 0) && (num_total_run == num_complete))
-                /* The number of jobs completed is equal to the number
-			 of jobs we have said we want to run; so we are finished.
-		  */
+                // The number of jobs completed is equal to the number
+                // of jobs we have said we want to run; so we are finished.
                 complete = true;
             else if (num_total_run == 0) {
-                /* We have not informed about how many jobs we will
-			 run. To check if we are complete we perform the two
-			 tests:
+                // We have not informed about how many jobs we will
+                // run. To check if we are complete we perform the two
+                // tests:
 
-			 1. All the jobs which have been added with
-			 job_queue_add_job() have completed.
+                // 1. All the jobs which have been added with
+                // job_queue_add_job() have completed.
 
-			 2. The user has used job_queue_complete_submit()
-			 to signal that no more jobs will be forthcoming.
-		  */
+                // 2. The user has used job_queue_complete_submit()
+                // to signal that no more jobs will be forthcoming.
                 if ((num_complete == job_list_get_size(queue->job_list)) &&
                     queue->submit_complete)
                     complete = true;

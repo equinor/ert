@@ -223,12 +223,10 @@ void site_config_set_license_root_path(site_config_type *site_config,
     {
         char *full_license_root_path = util_alloc_realpath(license_root_path);
         {
-            /*
-         Appending /user/pid to the license root path. Everything
-         including the pid is removed when exiting (gracefully ...).
+            // Appending /user/pid to the license root path. Everything
+            // including the pid is removed when exiting (gracefully ...).
 
-         Dangling license directories after a crash can just be removed.
-       */
+            // Dangling license directories after a crash can just be removed.
             site_config->license_root_path = util_realloc_string_copy(
                 site_config->license_root_path, full_license_root_path);
             site_config->__license_root_path = util_realloc_sprintf(
@@ -406,32 +404,26 @@ void site_config_add_config_items(config_parser_type *config, bool site_mode) {
     config_schema_item_type *item;
     ert_workflow_list_add_config_items(config);
 
-    /*
-     You can set environment variables which will be applied to the
-     run-time environment. Can unfortunately not use constructions
-     like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
-   */
+    // You can set environment variables which will be applied to the run-time
+    // environment. Can unfortunately not use constructions like
+    // PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
     item = config_add_schema_item(config, SETENV_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_set_envvar_expansion(
-        item,
-        false); /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
+    // Do not expand $VAR expressions (that is done in util_interp_setenv()).
+    config_schema_item_set_envvar_expansion(item, false);
 
     item = config_add_schema_item(config, UMASK_KEY, false);
     config_schema_item_set_deprecated(
         item, "UMASK is deprecated and will be removed in the future.");
     config_schema_item_set_argc_minmax(item, 1, 1);
 
-    /*
-     UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
+    // UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
 
-     Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
-   */
+    // Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
     item = config_add_schema_item(config, UPDATE_PATH_KEY, false);
     config_schema_item_set_argc_minmax(item, 2, 2);
-    config_schema_item_set_envvar_expansion(
-        item,
-        false); /* Do not expand $VAR expressions (that is done in util_interp_setenv()). */
+    // Do not expand $VAR expressions (that is done in util_interp_setenv()).
+    config_schema_item_set_envvar_expansion(item, false);
 
     if (!site_mode) {
         item = config_add_schema_item(config, LICENSE_PATH_KEY, false);

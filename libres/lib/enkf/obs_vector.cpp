@@ -742,10 +742,8 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
             obs_value[obs_pt_nr] = value;
             obs_std[obs_pt_nr] = error;
 
-            /*
-         The input values i,j,k come from the user, and are offset 1. They
-         are immediately shifted with -1 to become C-based offset zero.
-      */
+            // The input values i,j,k come from the user, and are offset 1.
+            // They are immediately shifted with -1 to become C-based offset zero.
             obs_i[obs_pt_nr] =
                 conf_instance_get_item_value_int(obs_instance, "I") - 1;
             obs_j[obs_pt_nr] =
@@ -786,9 +784,6 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
                 for (int i = 0; i < stringlist_get_size(summary_keys); i++) {
                     const char *sum_key = stringlist_iget(summary_keys, i);
                     if (!ecl_sum_has_key(refcase, sum_key)) {
-                        /*
-              If the
-            */
                         fprintf(stderr,
                                 "** Warning missing summary %s for cell: "
                                 "(%d,%d,%d) in refcase - make sure that \"BPR  "

@@ -186,23 +186,18 @@ static file_node_type *file_node_fread_alloc(FILE *stream, char **key) {
             node_size = util_fread_int(stream);
             if (node_size <= 0)
                 status = NODE_INVALID;
-            /*
-        A case has occured with an invalid node with size 0. That
-        resulted in a deadlock, because the reader never got beyond
-        the broken node. We therefore explicitly check for this
-        condition.
-      */
-
+            // A case has occured with an invalid node with size 0. That
+            // resulted in a deadlock, because the reader never got beyond
+            // the broken node. We therefore explicitly check for this
+            // condition.
             file_node = file_node_alloc(status, node_offset, node_size);
             if (status == NODE_IN_USE) {
                 file_node->data_size = util_fread_int(stream);
                 file_node->data_offset = ftell(stream) - file_node->node_offset;
             }
         } else {
-            /*
-         We did not recognize the status identifier; the node will
-         eventually be marked as free.
-      */
+            // We did not recognize the status identifier; the node will
+            // eventually be marked as free.
             if (status != NODE_WRITE_ACTIVE)
                 status = NODE_INVALID;
             file_node = file_node_alloc(status, node_offset, 0);
@@ -387,26 +382,22 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
         if (fread(&byte, sizeof byte, 1, block_fs->data_stream) == 1) {
             if (byte == NODE_IN_USE_BYTE) {
                 long int pos = ftell(block_fs->data_stream);
-                /*
-           OK - we found one interesting byte; let us try to read the
-           whole integer and see if we have hit any of the valid status identifiers.
-        */
+                // OK - we found one interesting byte; let us try to read the
+                // whole integer and see if we have hit any of the valid status
+                // identifiers.
                 fseek__(block_fs->data_stream, -1, SEEK_CUR);
                 if (fread(&status, sizeof status, 1, block_fs->data_stream) ==
                     1) {
                     if (status == NODE_IN_USE) {
-                        /*
-               OK - we have found a valid identifier. We reposition to
-               the start of this valid status id and return true.
-            */
+                        // OK - we have found a valid identifier. We reposition
+                        // to the start of this valid status id and return
+                        // true.
                         fseek__(block_fs->data_stream, -sizeof status,
                                 SEEK_CUR);
                         return true;
                     } else
-                        /*
-               OK - this was not a valid id; we go back and continue
-               reading single bytes.
-            */
+                        // OK - this was not a valid id; we go back and
+                        // continue reading single bytes.
                         block_fs_fseek(block_fs, pos);
                 } else
                     break; /* EOF */
@@ -439,11 +430,9 @@ static void block_fs_open_data(block_fs_type *block_fs,
             block_fs->data_stream = util_fopen(data_file.c_str(), "r");
         else
             block_fs->data_stream = NULL;
-        /*
-       If we ever try to dereference this pointer it will break
-       hard; but it should be stopped in hash_get() calls before the
-       data_stream is dereferenced anyway?
-    */
+        // If we ever try to dereference this pointer it will break
+        // hard; but it should be stopped in hash_get() calls before the
+        // data_stream is dereferenced anyway?
     }
     if (block_fs->data_stream == NULL)
         block_fs->data_fd = -1;
@@ -541,12 +530,10 @@ static void block_fs_build_index(block_fs_type *block_fs,
                                    __func__, file_node->status);
                     }
                 } else {
-                    /*
-             Could not find a valid END_TAG - indicating that
-             the filesystem was shut down during the write of
-             this node.  This node will NOT be added to the
-             index.  The node will be updated to become a free node.
-          */
+                    // Could not find a valid END_TAG - indicating that the
+                    // filesystem was shut down during the write of this node.
+                    // This node will NOT be added to the index.  The node will
+                    // be updated to become a free node.
                     fprintf(stderr,
                             "** Warning found node:%s at offset:%ld which was "
                             "incomplete - discarded.\n",
@@ -672,7 +659,8 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
     node->data_size = data_size;
     file_node_set_data_offset(node, filename);
 
-    /* This marks the node section in the datafile as write in progress with: NODE_WRITE_ACTIVE_START ... NODE_WRITE_ACTIVE_END */
+    // This marks the node section in the datafile as write in progress with:
+    // NODE_WRITE_ACTIVE_START ... NODE_WRITE_ACTIVE_END
     file_node_init_fwrite(node, block_fs->data_stream);
 
     /* Writes the actual data content. */

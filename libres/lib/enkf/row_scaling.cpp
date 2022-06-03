@@ -110,10 +110,8 @@ void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
 
     Eigen::MatrixXd X = Eigen::MatrixXd::Zero(X0.rows(), X0.cols());
 
-    /*
-    The sort_index vector is an index permutation corresponding to sorted
-    row_scaling data.
-    */
+    // The sort_index vector is an index permutation corresponding to sorted
+    // row_scaling data.
     std::vector<int> sort_index(this->size());
     std::iota(sort_index.begin(), sort_index.end(), 0);
     std::sort(sort_index.begin(), sort_index.end(),
@@ -121,12 +119,10 @@ void RowScaling::multiply(Eigen::Ref<Eigen::MatrixXd> A,
                   return this->operator[](index1) > this->operator[](index2);
               });
 
-    /*
-    This is a double while loop where we eventually go through all the rows in
-    the A matrix / row_scaling vector. In the inner loop we identify a list of
-    rows which have the same row_scaling value, then we scale the X matrix
-    according to this shared alpha value and calculate the update.
-    */
+    // This is a double while loop where we eventually go through all the rows
+    // in the A matrix / row_scaling vector. In the inner loop we identify a
+    // list of rows which have the same row_scaling value, then we scale the X
+    // matrix according to this shared alpha value and calculate the update.
     std::size_t index_offset = 0;
     while (true) {
         if (index_offset == m_data.size())

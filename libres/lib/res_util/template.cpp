@@ -172,10 +172,8 @@ void template_instantiate(const template_type *template_,
         }
 #endif
 
-        /*
-       Check if target file already exists as a symlink,
-       and remove it if override_symlink is true.
-    */
+        // Check if target file already exists as a symlink,
+        // and remove it if override_symlink is true.
         if (override_symlink) {
             if (util_is_link(target_file))
                 remove(target_file);

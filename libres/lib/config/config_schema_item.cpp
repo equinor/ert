@@ -227,9 +227,11 @@ config_schema_item_type *config_schema_item_alloc(const char *kw,
     item->deprecate_msg = NULL;
     item->required_children = NULL;
     item->required_children_value = NULL;
-    item->expand_envvar =
-        true; /* Default is to expand $VAR expressions; can be turned off with
-                                            config_schema_item_set_envvar_expansion( item , false ); */
+    item->expand_envvar = true; // Default is to expand $VAR expressions;
+                                // can be turned off with
+                                // config_schema_item_set_envvar_expansion(
+                                //     item,
+                                //     false);
     item->validate = validate_alloc();
     return item;
 }

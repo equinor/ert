@@ -495,8 +495,9 @@ static bool subst_list_eval_funcs____(const subst_list_type *subst_list,
                 char *arg_start = (char *)buffer_get_data(buffer);
                 arg_start += buffer_get_offset(buffer) + strlen(func_name);
 
-                if (arg_start[0] ==
-                    '(') { /* We require that an opening paren follows immediately behind the function name. */
+                if (arg_start[0] == '(') {
+                    // We require that an opening paren follows immediately
+                    // behind the function name.
                     char *arg_end = strchr(arg_start, ')');
                     if (arg_end != NULL) {
                         /* OK - we found an enclosing () pair. */
@@ -622,9 +623,8 @@ bool subst_list_update_buffer(const subst_list_type *subst_list,
                               buffer_type *buffer) {
     bool match1 = subst_list_replace_strings(subst_list, buffer);
     bool match2 = subst_list_eval_funcs__(subst_list, buffer);
-    return (
-        match1 ||
-        match2); // Funny construction to ensure to avoid fault short circuit.
+    // Funny construction to ensure to avoid fault short circuit:
+    return (match1 || match2);
 }
 
 /**
@@ -638,15 +638,13 @@ bool subst_list_update_buffer(const subst_list_type *subst_list,
    Observe that @target_file can contain a path component, that
    component will be created if it does not exist.
 */
-
 bool subst_list_filter_file(const subst_list_type *subst_list,
                             const char *src_file, const char *target_file) {
     bool match;
     char *backup_file = NULL;
     buffer_type *buffer = buffer_fread_alloc(src_file);
-    buffer_fseek(
-        buffer, 0,
-        SEEK_END); /* Ensure that the buffer is a \0 terminated string. */
+    // Ensure that the buffer is a \0 terminated string:
+    buffer_fseek(buffer, 0, SEEK_END);
     buffer_fwrite_char(buffer, '\0');
 
     if (util_same_file(src_file, target_file)) {

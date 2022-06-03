@@ -147,11 +147,9 @@ static void loop_eval(const loop_type *loop, const char *body,
                 break;
             else {
 
-                /* Check that the match is either at the very start of the
-           string, or alternatively NOT preceeded by alphanumeric
-           character. If the variable starts with a '$' we ignore this
-           test.
-        */
+                // Check that the match is either at the very start of the
+                // string, or alternatively NOT preceeded by alphanumeric
+                // character. If the variable starts with a '$' we ignore this test.
                 if (!loop->replace_substring) {
                     if (match_ptr != &data[search_offset]) {
                         char pre_char = match_ptr[-1];
@@ -165,9 +163,8 @@ static void loop_eval(const loop_type *loop, const char *body,
                         }
                     }
 
-                    /*
-             Check that the match is at the very end of the string, or
-             alternatively followed by a NON alphanumeric character. */
+                    // Check that the match is at the very end of the string,
+                    // or alternatively followed by a NON alphanumeric character.
                     if (strlen(match_ptr) > loop->var_length) {
                         char end_char = match_ptr[loop->var_length];
                         if (isalnum(end_char))
@@ -224,9 +221,8 @@ int template_eval_loop(const template_type *_template, buffer_type *buffer,
             }
         }
 
-        /* We have completed the sub loops; the buffer has (possibly)
-       changed so we must search for the end again - to get the right
-       offset. */
+        // We have completed the sub loops; the buffer has (possibly) changed
+        // so we must search for the end again - to get the right offset.
         {
             char *search_data = (char *)buffer_get_data(buffer);
             search_offset = global_offset;

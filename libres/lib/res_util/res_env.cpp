@@ -142,13 +142,14 @@ const char *res_env_update_path_var(const char *variable, const char *value,
                 int i;
                 for (i = 0; i < num_path; i++) {
                     if (util_string_equal(path_list[i], value))
-                        update =
-                            false; /* The environment variable already contains @value - no point in appending it at the end. */
+                        // The environment variable already contains @value -
+                        // no point in appending it at the end.
+                        update = false;
                 }
             } else {
                 if (util_string_equal(path_list[0], value))
-                    update =
-                        false; /* The environment variable already starts with @value. */
+                    // The environment variable already starts with @value.
+                    update = false;
             }
             util_free_stringlist(path_list, num_path);
         }
@@ -198,32 +199,29 @@ const char *res_env_interp_setenv(const char *variable, const char *value) {
 
    If the input value is NULL - the function will just return NULL;
 */
-
 char *res_env_alloc_envvar(const char *value) {
     if (value == NULL)
         return NULL;
     else {
-        buffer_type *buffer =
-            buffer_alloc(1024); /* Start by filling up a buffer instance with
-                                                                  the current content of @value. */
+        // Start by filling up a buffer instance with the current content of @value.
+        buffer_type *buffer = buffer_alloc(1024);
         buffer_fwrite_char_ptr(buffer, value);
         buffer_rewind(buffer);
 
         while (true) {
             if (buffer_strchr(buffer, '$')) {
                 const char *data = (const char *)buffer_get_data(buffer);
-                int offset =
-                    buffer_get_offset(buffer) +
-                    1; /* Points at the first character following the '$' */
+                // offset points at the first character following the '$'
+                int offset = buffer_get_offset(buffer) + 1;
                 int var_length = 0;
 
                 /* Find the length of the variable name */
                 while (true) {
                     char c;
                     c = data[offset + var_length];
-                    if (!(isalnum(c) ||
-                          c ==
-                              '_')) /* Any character which is NOT in the set [a-Z,0-9_] marks the end of the variable. */
+                    if (!(isalnum(c) || c == '_'))
+                        // Any character which is NOT in the set [a-Z,0-9_]
+                        // marks the end of the variable.
                         break;
 
                     if (c == '\0') /* The end of the string. */
@@ -239,13 +237,11 @@ char *res_env_alloc_envvar(const char *value) {
                     const char *var_value = getenv(&var_name[1]);
 
                     if (var_value != NULL)
-                        buffer_search_replace(
-                            buffer, var_name,
-                            var_value); /* The actual string replacement. */
+                        // The actual string replacement:
+                        buffer_search_replace(buffer, var_name, var_value);
                     else
-                        buffer_fseek(
-                            buffer, var_length,
-                            SEEK_CUR); /* The variable is not defined, and we leave the $name. */
+                        // The variable is not defined, and we leave the $name.
+                        buffer_fseek(buffer, var_length, SEEK_CUR);
 
                     free(var_name);
                 }
@@ -305,10 +301,8 @@ char *res_env_isscanf_alloc_envvar(const char *string, int env_index) {
     } while ((env_count <= env_index) && (env_ptr != NULL));
 
     if (env_ptr != NULL) {
-        /*
-       We found an environment variable we are interested in. Find the
-       end of this variable and return a copy.
-    */
+        // We found an environment variable we are interested in. Find the
+        // end of this variable and return a copy.
         int length = 1;
         bool cont = true;
         do {
