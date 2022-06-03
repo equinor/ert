@@ -75,7 +75,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         es_update = self.ert().getESUpdate()
 
         try:
-            es_update.smootherUpdate(run_context, self._w_container)
+            es_update.iterative_smoother_update(run_context, self._w_container)
             self._w_container.iteration_nr += 1
         except ErtAnalysisError as e:
             raise ErtRunError(
