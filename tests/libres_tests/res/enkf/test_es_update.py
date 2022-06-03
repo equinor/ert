@@ -137,11 +137,12 @@ def test_update(setup_case, module, expected_gen_kw):
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
     run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
-    w_container = None
+
     if module == "IES_ENKF":
         w_container = ies.ModuleData(ert.getEnsembleSize())
-
-    es_update.smootherUpdate(run_context, w_container)
+        es_update.iterative_smoother_update(run_context, w_container)
+    else:
+        es_update.smootherUpdate(run_context)
 
     conf = ert.ensembleConfig()["SNAKE_OIL_PARAM"]
     sim_node = EnkfNode(conf)
@@ -330,7 +331,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     ert.analysisConfig().setEnkfAlpha(alpha)
     w_container = ies.ModuleData(ert.getEnsembleSize())
     w_container.iteration_nr += 1
-    es_update.smootherUpdate(run_context, w_container)
+    es_update.iterative_smoother_update(run_context, w_container)
     result_snapshot = ert.update_snapshots[run_context.get_id()]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected
