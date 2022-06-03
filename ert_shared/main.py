@@ -497,12 +497,6 @@ def main():
             logger.info(f"Running ert with {args}")
             log_config(args.config, logger)
 
-            if FeatureToggling.is_enabled("experiment-server"):
-                if args.mode != ENSEMBLE_EXPERIMENT_MODE:
-                    raise NotImplementedError(
-                        f"experiment-server can only run '{ENSEMBLE_EXPERIMENT_MODE}'"
-                    )
-
             args.func(args)
     except ErtCliError as err:
         logger.exception(str(err))

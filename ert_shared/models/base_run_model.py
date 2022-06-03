@@ -24,6 +24,7 @@ from res.enkf import EnKFMain, QueueConfig
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import ForwardModel, RunStatusType
+from res.enkf.enums.hook_runtime_enum import HookRuntime
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
