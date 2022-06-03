@@ -25,6 +25,9 @@ class SingleTestRun(EnsembleExperiment):
             "Running single realisation test ...", evaluator_server_config
         )
 
+    async def run(self, evaluator_server_config: "EvaluatorServerConfig") -> None:
+        await super().run(evaluator_server_config)
+
     @classmethod
     def name(cls) -> str:
         return "Single realization test-run"

@@ -394,19 +394,10 @@ class BaseRunModel:
         loop: asyncio.AbstractEventLoop,
         executor: concurrent.futures.Executor,
     ) -> None:
-        # Send HOOK_STARTED
-        await self.dispatch(
-            CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_STARTED,
-                    "source": f"/ert/experiment/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                },
-                {
-                    "name": str(hook),
-                },
-            ),
-            iter_,
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_HOOK_STARTED,
+            iteration=iter_,
+            data={"name": str(hook)},
         )
 
         # Run hook
@@ -417,19 +408,10 @@ class BaseRunModel:
             self.ert(),
         )
 
-        # Send HOOK_ENDED
-        await self.dispatch(
-            CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_ENDED,
-                    "source": f"/ert/experiment/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                },
-                {
-                    "name": str(hook),
-                },
-            ),
-            iter_,
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_HOOK_ENDED,
+            iteration=iter_,
+            data={"name": str(hook)},
         )
 
     @property
@@ -456,7 +438,23 @@ class BaseRunModel:
             ):
                 break
 
+    async def _dispatch_ee(
+        self, ee_event_type: str, iteration: int, data: Optional[dict] = None
+    ) -> None:
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": ee_event_type,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                },
+                data,
+            ),
+            iteration,
+        )
+
     async def dispatch(self, event: CloudEvent, iter_: int) -> None:
+
         event_logger.debug(
             "dispatch: %s (experiment: %s, iter: %d)", event, self.id_, iter_
         )

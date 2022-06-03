@@ -1,10 +1,7 @@
 import asyncio
 import concurrent
 import logging
-import uuid
 from typing import Any, Dict
-
-from cloudevents.http import CloudEvent
 
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
@@ -29,24 +26,16 @@ class EnsembleExperiment(BaseRunModel):
 
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
 
-        # Send EXPERIMENT_STARTED
         experiment_logger.debug("starting ensemble experiment")
-        await self.dispatch(
-            CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EXPERIMENT_STARTED,
-                    "source": f"/ert/experiment/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                }
-            ),
-            0,
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_STARTED,
+            iteration=0,
         )
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             run_context = await loop.run_in_executor(executor, self.create_context)
 
-            # Create runpaths
             experiment_logger.debug("creating runpaths")
             await loop.run_in_executor(
                 executor,
@@ -60,11 +49,10 @@ class EnsembleExperiment(BaseRunModel):
                 HookRuntime.PRE_SIMULATION, run_context.iteration, loop, executor
             )
 
-            # Evaluate
             experiment_logger.debug("evaluating")
             await self._evaluate(run_context, evaluator_server_config)
 
-            num_successful_realizations = self._state_machine.successful_realizations(
+            num_successful_realizations = await self.successful_realizations(
                 run_context.iteration
             )
 
@@ -75,19 +63,12 @@ class EnsembleExperiment(BaseRunModel):
                 self.checkHaveSufficientRealizations(num_successful_realizations)
             except ErtRunError as e:
 
-                # Send EXPERIMENT_FAILED
-                await self.dispatch(
-                    CloudEvent(
-                        {
-                            "type": identifiers.EVTYPE_EXPERIMENT_FAILED,
-                            "source": f"/ert/experiment/{self.id_}",
-                            "id": str(uuid.uuid1()),
-                        },
-                        {
-                            "error": str(e),
-                        },
-                    ),
-                    run_context.iteration,
+                await self._dispatch_ee(
+                    identifiers.EVTYPE_EXPERIMENT_FAILED,
+                    data={
+                        "error": str(e),
+                    },
+                    iteration=run_context.iteration,
                 )
                 return
 
@@ -102,16 +83,9 @@ class EnsembleExperiment(BaseRunModel):
                 ensemble_id,
             )
 
-        # Send EXPERIMENT_COMPLETED
-        await self.dispatch(
-            CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_EXPERIMENT_SUCCEEDED,
-                    "source": f"/ert/experiment/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                },
-            ),
-            run_context.iteration,
+        await self._dispatch_ee(
+            identifiers.EVTYPE_EXPERIMENT_SUCCEEDED,
+            iteration=run_context.iteration,
         )
 
     def runSimulations__(
