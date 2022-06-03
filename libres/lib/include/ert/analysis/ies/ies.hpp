@@ -28,10 +28,6 @@ namespace ies {
 
 void linalg_store_active_W(Data &data, const Eigen::MatrixXd &W0);
 
-Eigen::MatrixXd make_activeE(const Data *data);
-Eigen::MatrixXd make_activeW(const Data *data);
-Eigen::MatrixXd make_activeA(const Data *data);
-
 void init_update(Data &module_data, const std::vector<bool> &ens_mask,
                  const std::vector<bool> &obs_mask);
 
