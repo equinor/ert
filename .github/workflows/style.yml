@@ -51,42 +51,56 @@ jobs:
         pylint --disable=all \
           --enable="\
             access-member-before-definition, \
+            arguments-differ, \
             bad-thread-instantiation, \
             chained-comparison, \
+            comparison-with-callable, \
             consider-iterating-dictionary, \
             consider-using-dict-items, \
-            consider-using-dict-iterms, \
-            consider-using-enumerate, \
             consider-using-enumerate, \
             consider-using-f-string
             consider-using-from-import, \
+            consider-using-get, \
+            consider-using-in, \
+            consider-using-max-builtin, \
             consider-using-min-builtin, \
             consider-using-set-comprehension, \
+            duplicate-key, \
             empty-docstring, \
             expression-not-assigned, \
+            global-statement, \
             global-variable-not-assigned, \
+            implicit-str-concat, \
+            logging-not-lazy, \
             missing-final-newline, \
             no-else-break, \
+            no-else-continue, \
             no-method-argument, \
             not-async-context-manager, \
+            not-callable, \
             parse-error, \
             pointless-statement, \
+            redundant-unittest-assert, \
             simplifiable-if-statement, \
             subprocess-run-check, \
             super-with-arguments, \
+            too-many-lines, \
             undefined-all-variable, \
             undefined-loop-variable, \
+            undefined-variable, \
             unidiomatic-typecheck, \
+            unnecessary-lambda, \
             unneeded-not, \
             unsubscriptable-object, \
             unsupported-assignment-operation, \
             unused-import, \
             use-a-generator, \
             use-dict-literal, \
+            use-implicit-booleaness-not-comparison, \
             use-maxsplit-arg, \
             used-before-assignment, \
             useless-import-alias, \
-            useless-object-inheritance \
+            useless-object-inheritance, \
             useless-return, \
             useless-super-delegation, \
             " \

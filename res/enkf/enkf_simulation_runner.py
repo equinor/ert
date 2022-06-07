@@ -43,9 +43,9 @@ class EnkfSimulationRunner(BaseCClass):
         totalFailed = 0
         for index, run_arg in enumerate(run_context):
             if run_context.is_active(index):
-                if (
-                    run_arg.run_status == RunStatusType.JOB_LOAD_FAILURE
-                    or run_arg.run_status == RunStatusType.JOB_RUN_FAILURE
+                if run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
                 ):
                     run_context.deactivate_realization(index)
                     totalFailed += 1

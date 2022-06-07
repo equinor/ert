@@ -315,10 +315,10 @@ class JobQueue(BaseCClass):
 
     def is_active(self):
         for job in self.job_list:
-            if (
-                job.thread_status == ThreadStatus.READY
-                or job.thread_status == ThreadStatus.RUNNING
-                or job.thread_status == ThreadStatus.STOPPING
+            if job.thread_status in (
+                ThreadStatus.READY,
+                ThreadStatus.RUNNING,
+                ThreadStatus.STOPPING,
             ):
                 return True
         return False

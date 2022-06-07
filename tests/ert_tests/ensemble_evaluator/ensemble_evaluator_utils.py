@@ -207,6 +207,7 @@ class TestEnsemble(_Ensemble):
 
 
 class AutorunTestEnsemble(TestEnsemble):
+    # pylint: disable=arguments-differ
     def _evaluate(self, client_url, dispatch_url, ee_id):
         super()._evaluate(dispatch_url, ee_id)
         with Client(client_url) as client:

@@ -13,9 +13,12 @@ from webviz_ert.assets import WEBVIZ_CONFIG
 logger = logging.getLogger()
 
 
-def handle_exit(*args: Any) -> None:  # pylint: disable=unused-argument)
+def handle_exit(
+    *args: Any,
+) -> None:  # pylint: disable=unused-argument
+    # pylint: disable=logging-not-lazy
     logger.info("\n" + "=" * 32)
-    logger.info("Session terminated by the user.\n" "Thank you for using webviz-ert!")
+    logger.info("Session terminated by the user.\nThank you for using webviz-ert!")
     logger.info("=" * 32)
     sys.tracebacklimit = 0
     sys.stdout = open(os.devnull, "w")
