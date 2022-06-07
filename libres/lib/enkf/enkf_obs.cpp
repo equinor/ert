@@ -277,6 +277,12 @@ bool enkf_obs_has_key(const enkf_obs_type *obs, const char *key) {
     return hash_has_key(obs->obs_hash, key);
 }
 
+/** @brief get the observation vector for the given observation key.
+ *
+ * @param obs The enkf_obs_type object.
+ * @param key The observation key to get observation vector for.
+ * @return The observation vector.
+ */
 obs_vector_type *enkf_obs_get_vector(const enkf_obs_type *obs,
                                      const char *key) {
     return (obs_vector_type *)hash_get(obs->obs_hash, key);
@@ -1155,6 +1161,8 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
 }
 
 /**
+   @brief returns a map from the observation keys to the observed state keys.
+
    This function allocates a hash table which looks like this:
 
      {"OBS_KEY1": "STATE_KEY1", "OBS_KEY2": "STATE_KEY2", "OBS_KEY3": "STATE_KEY3", ....}
