@@ -83,7 +83,6 @@ def reset_enkf():
 
 
 def new_storage_client(monkeypatch, ert_storage_client):
-    import requests
     from ert_shared.storage import extraction
 
     class MockStorage:

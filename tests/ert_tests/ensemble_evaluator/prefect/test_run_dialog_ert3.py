@@ -19,9 +19,9 @@ def test_success_ert3(qtbot, poly_ensemble):
     future = widget.startSimulationErt3(evaluator)
     with qtbot.waitExposed(widget, timeout=30000):
         qtbot.waitForWindowShown(widget)
-        qtbot.waitUntil(lambda: run_model.isFinished(), timeout=10000)
+        qtbot.waitUntil(run_model.isFinished, timeout=10000)
         qtbot.waitUntil(lambda: widget._total_progress_bar.value() == 100)
-        qtbot.waitUntil(lambda: widget.done_button.isVisible(), timeout=10000)
+        qtbot.waitUntil(widget.done_button.isVisible, timeout=10000)
 
     results = future.result()
     assert 0 in results

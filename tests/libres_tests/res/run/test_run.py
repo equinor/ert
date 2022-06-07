@@ -62,4 +62,5 @@ class RunTest(ResTest):
             tr.add_check(25, "arg")
 
         with self.assertRaises(Exception):
+            # pylint: disable=undefined-variable
             tr.add_check(func_does_not_exist, "arg")  # noqa

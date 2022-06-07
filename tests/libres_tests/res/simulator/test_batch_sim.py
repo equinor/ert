@@ -559,7 +559,7 @@ class BatchSimulatorTest(ResTest):
             status = batch_ctx.job_status(idx)
             if not final_state_only and status in running_status:
                 continue
-            elif idx % 2 == 0:
+            if idx % 2 == 0:
                 self.assertEqual(JobStatusType.JOB_QUEUE_SUCCESS, status)
             else:
                 self.assertEqual(JobStatusType.JOB_QUEUE_FAILED, status)

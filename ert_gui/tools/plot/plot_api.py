@@ -12,7 +12,7 @@ from json.decoder import JSONDecodeError
 logger = logging.getLogger(__name__)
 
 
-class PlotApi(object):
+class PlotApi:
     def __init__(self):
         self._all_cases: List[dict] = None
         self._timeout = 120

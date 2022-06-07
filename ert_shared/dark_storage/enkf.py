@@ -16,6 +16,7 @@ ids = {}
 
 
 def init_facade() -> None:
+    # pylint: disable=global-statement
     global _libres_facade
     global _ert
     global _config
@@ -52,6 +53,7 @@ def get_res(*, _: None = Depends(security)) -> LibresFacade:
 
 
 def reset_res(*, _: None = Depends(security)) -> None:
+    # pylint: disable=global-statement
     global _libres_facade
     if _libres_facade is not None:
         _libres_facade = None

@@ -14,7 +14,7 @@ class WorkflowJoblist(BaseCClass):
         "void workflow_joblist_add_job(workflow_joblist, workflow_job)"
     )
     _add_job_from_file = ResPrototype(
-        "bool workflow_joblist_add_job_from_file" "(workflow_joblist, char*, char*)"
+        "bool workflow_joblist_add_job_from_file(workflow_joblist, char*, char*)"
     )
     _has_job = ResPrototype("bool workflow_joblist_has_job(workflow_joblist, char*)")
     _get_job = ResPrototype(
