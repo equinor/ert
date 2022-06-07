@@ -42,10 +42,7 @@ class Job(BaseCClass):
     def block(self):
         while True:
             status = self.status()
-            if (
-                status == JobStatusType.JOB_QUEUE_DONE
-                or status == JobStatusType.JOB_QUEUE_EXIT
-            ):
+            if status in (JobStatusType.JOB_QUEUE_DONE, JobStatusType.JOB_QUEUE_EXIT):
                 break
             time.sleep(1)
 
@@ -75,7 +72,4 @@ class Job(BaseCClass):
     @property
     def complete(self):
         status = self.driver.get_status(self)
-        return (
-            status == JobStatusType.JOB_QUEUE_DONE
-            or status == JobStatusType.JOB_QUEUE_EXIT
-        )
+        return status in (JobStatusType.JOB_QUEUE_DONE, JobStatusType.JOB_QUEUE_EXIT)

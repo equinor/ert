@@ -126,10 +126,7 @@ class HookManagerTest(ResTest):
             config.write("JOBNAME  Job%d\n")
             config.write("NUM_REALIZATIONS  1\n")
             for key, val in self.config_data.items():
-                if (
-                    key == ConfigKeys.CONFIG_FILE_KEY
-                    or key == ConfigKeys.CONFIG_DIRECTORY
-                ):
+                if key in (ConfigKeys.CONFIG_FILE_KEY, ConfigKeys.CONFIG_DIRECTORY):
                     continue
                 if isinstance(val, str):
                     config.write(f"{key} {val}\n")

@@ -41,7 +41,7 @@ class AnalysisConfig(BaseCClass):
     )
 
     _add_module_copy = ResPrototype(
-        "void analysis_config_add_module_copy( analysis_config, " "char* , char* )"
+        "void analysis_config_add_module_copy( analysis_config, char* , char* )"
     )
 
     _free = ResPrototype("void analysis_config_free( analysis_config )")

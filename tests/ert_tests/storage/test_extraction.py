@@ -94,7 +94,7 @@ class ErtConfigBuilder:
 
     def _build_job(self, path):
         f = (path / "test.ert").open("a")
-        f.write("INSTALL_JOB job JOB\n" "SIMULATION_JOB job\n")
+        f.write("INSTALL_JOB job JOB\nSIMULATION_JOB job\n")
 
         if self.job_script is None:
             # true is an executable which should exist on the path for all

@@ -8,6 +8,7 @@ from res.enkf.row_scaling import RowScaling
 
 def test_observation_default_init():
     observation = Observation(name="Obs_name")
+    # pylint: disable=use-implicit-booleaness-not-comparison
     assert observation.index_list == []
 
 

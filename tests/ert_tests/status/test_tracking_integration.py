@@ -155,7 +155,7 @@ def test_tracking(
     )
 
     config_lines = [
-        "INSTALL_JOB poly_eval2 POLY_EVAL\n" "SIMULATION_JOB poly_eval2\n",
+        "INSTALL_JOB poly_eval2 POLY_EVAL\nSIMULATION_JOB poly_eval2\n",
         extra_config,
     ]
 
