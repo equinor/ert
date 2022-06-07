@@ -125,14 +125,11 @@ class OilSimulator:
         self._fgip -= self._fgpr
         self._fwip -= self._fwpr
 
-        if self._foip < 0.0:
-            self._foip = 0.0  # This may lead to the total (FOPT) larger than OOIP
-
-        if self._fgip < 0.0:
-            self._fgip = 0.0
-
-        if self._fwip < 0.0:
-            self._fwip = 0.0
+        self._foip = max(
+            self._foip, 0.0
+        )  # This may lead to the total (FOPT) larger than OOIP
+        self._fgip = max(self._fgip, 0.0)
+        self._fwip = max(self._fwip, 0.0)
 
         self._fopt += self._fopr
         self._fgpt += self._fgpr

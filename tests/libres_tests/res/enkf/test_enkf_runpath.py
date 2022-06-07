@@ -16,7 +16,7 @@ def test_with_gen_kw(copy_case):
     run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, [True])
     main.getEnkfSimulationRunner().createRunPath(run_context)
     assert os.path.exists(
-        "storage/snake_oil/" "runpath/realization-0/iter-0/parameters.txt"
+        "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
     )
     assert len(os.listdir("storage/snake_oil/runpath")) == 1
     assert len(os.listdir("storage/snake_oil/runpath/realization-0")) == 1

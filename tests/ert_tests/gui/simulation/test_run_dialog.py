@@ -297,4 +297,4 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
         qtbot.waitUntil(
             lambda: widget._tab_widget.count() == tab_widget_count, timeout=5000
         )
-        qtbot.waitUntil(lambda: widget.done_button.isVisible(), timeout=5000)
+        qtbot.waitUntil(widget.done_button.isVisible, timeout=5000)

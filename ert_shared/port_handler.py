@@ -114,7 +114,7 @@ def _bind_socket(
             f"error msg is: {err_info.strerror}"
         )
     except OSError as err_info:
-        if err_info.errno == 48 or err_info.errno == 98:
+        if err_info.errno in (48, 98):
             raise PortAlreadyInUseException(f"Port {port} already in use.")
         raise Exception(
             f"Unknown `OSError` while binding port {port}. Actual "

@@ -23,6 +23,7 @@ def mocked_obs_node_get_index_nr(nr):
     ["GEN_OBS", "SUMMARY_OBS", "BLOCK_OBS"],
 )
 def test_data_loader_factory(obs_type):
+    # pylint: disable=comparison-with-callable
     assert loader.data_loader_factory(obs_type).func == loader._extract_data
 
 

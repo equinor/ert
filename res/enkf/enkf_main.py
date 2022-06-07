@@ -152,7 +152,6 @@ class EnKFMain(BaseCClass):
         # the call to the real method on the real_enkf_main object. That's done
         # via monkey patching, so we don't need to manually keep the classes
         # synchronized
-        from functools import partial
         from inspect import getmembers, ismethod
 
         methods = getmembers(self._real_enkf_main(), predicate=ismethod)

@@ -216,10 +216,7 @@ class LibresFacadeTest(TestCase):
 
         for key in facade.all_data_type_keys():
             obs_keys = facade.observation_keys(key)
-            expected = []
-            if key in expected_obs:
-                expected = expected_obs[key]
-            self.assertEqual(expected, obs_keys)
+            self.assertEqual(expected_obs.get(key, []), obs_keys)
 
     @tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
     def test_observation_keys_missing_key(self):
