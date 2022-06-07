@@ -92,12 +92,6 @@ struct model_config_struct {
     char *gen_kw_export_name;
     int num_realizations;
     char *obs_config_file;
-
-    /* The results are always loaded. */
-    /** Should the (full) state be internalized (at this report_step). */
-    bool_vector_type *internalize_state;
-    /** Internal variable: is it necessary to load the state? */
-    bool_vector_type *__load_eclipse_restart;
 };
 
 char *model_config_alloc_jobname(const model_config_type *model_config,
@@ -277,8 +271,6 @@ model_config_type *model_config_alloc_empty() {
     model_config->jobname_fmt = NULL;
     model_config->forward_model = NULL;
     model_config->external_time_map = NULL;
-    model_config->internalize_state = bool_vector_alloc(0, false);
-    model_config->__load_eclipse_restart = bool_vector_alloc(0, false);
     model_config->runpath_map = hash_alloc();
     model_config->gen_kw_export_name = NULL;
     model_config->refcase = NULL;
@@ -340,14 +332,6 @@ model_config_type *model_config_alloc_full(
     model_config->refcase = refcase;
 
     model_config_select_history(model_config, history_source, refcase);
-
-    if (model_config->history != NULL) {
-        int num_restart = model_config_get_last_history_restart(model_config);
-        bool_vector_iset(model_config->internalize_state, num_restart - 1,
-                         false);
-        bool_vector_iset(model_config->__load_eclipse_restart, num_restart - 1,
-                         false);
-    }
 
     return model_config;
 }
@@ -461,19 +445,10 @@ void model_config_init(model_config_type *model_config,
         if (!model_config_select_history(model_config, DEFAULT_HISTORY_SOURCE,
                                          refcase)) {
             model_config_select_any_history(model_config, refcase);
-            /* If even the last call return false, it means the configuration does not have any of
-       * these keys: HISTORY_SOURCE or REFCASE.
-       * History matching won't be supported for this configuration.
-       */
+            // If even the last call return false, it means the configuration
+            // does not have any of these keys: HISTORY_SOURCE or REFCASE.
+            // History matching won't be supported for this configuration.
         }
-
-    if (model_config->history != NULL) {
-        int num_restart = model_config_get_last_history_restart(model_config);
-        bool_vector_iset(model_config->internalize_state, num_restart - 1,
-                         false);
-        bool_vector_iset(model_config->__load_eclipse_restart, num_restart - 1,
-                         false);
-    }
 
     if (config_content_has_item(config, TIME_MAP_KEY)) {
         const char *filename =
@@ -567,8 +542,6 @@ void model_config_free(model_config_type *model_config) {
     if (model_config->external_time_map)
         time_map_free(model_config->external_time_map);
 
-    bool_vector_free(model_config->internalize_state);
-    bool_vector_free(model_config->__load_eclipse_restart);
     hash_free(model_config->runpath_map);
     free(model_config);
 }
@@ -611,23 +584,6 @@ int model_config_get_last_history_restart(const model_config_type *config) {
 forward_model_type *
 model_config_get_forward_model(const model_config_type *config) {
     return config->forward_model;
-}
-
-/* Setting everything back to the default value: false. */
-void model_config_init_internalization(model_config_type *config) {
-    bool_vector_reset(config->internalize_state);
-    bool_vector_reset(config->__load_eclipse_restart);
-}
-
-/**
-   This function sets the internalize_state flag to true for
-   report_step. Because of the coupling to the __load_eclipse_restart variable
-   this function can __ONLY__ be used to set internalize to true.
-*/
-void model_config_set_internalize_state(model_config_type *config,
-                                        int report_step) {
-    bool_vector_iset(config->internalize_state, report_step, true);
-    bool_vector_iset(config->__load_eclipse_restart, report_step, true);
 }
 
 static char *model_config_alloc_user_config_file(const char *user_config_file,

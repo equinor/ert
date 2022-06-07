@@ -351,85 +351,32 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
 /**
    In this function we initialize the variables which control
    which nodes are internalized (i.e. loaded from the forward
-   simulation and stored in the enkf_fs 'database'). The system is
-   based on two-levels:
+   simulation and stored in the enkf_fs 'database').
 
-   * Should we store the state? This is goverened by the variable
-     model_config->internalize_state. If this is true we will
-     internalize all nodes which have enkf_var_type = {dynamic_state ,
-     static_state}. In the same way the variable
-     model_config->internalize_results governs whether the dynamic
-     results (i.e. summary variables in ECLIPSE speak) should be
-     internalized.
-
-   * In addition we have fine-grained control in the enkf_config_node
-     objects where we can explicitly say that, altough we do not want
-     to internalize the full state, we want to internalize e.g. the
-     pressure field.
-
-   * All decisions on internalization are based on a per report step
-     basis.
-
-   The user-space API for manipulating this is (extremely)
-   limited. What is implemented here is the following:
-
-     1. We internalize the initial dynamic state.
-
-     2. For all the end-points in the current enkf_sched instance we
-        internalize the state.
-
-     3. store_results is set to true for all report steps irrespective
-        of run_mode.
-
-     4. We iterate over all the observations, and ensure that the
-        observed nodes (i.e. the pressure for an RFT) are internalized
-        (irrespective of whether they are of type dynamic_state or
-        dynamic_result).
-
-   Observe that this cascade can result in some nodes, i.e. a rate we
-   are observing, to be marked for internalization several times -
-   that is no problem.
-
-   -----
-
-   For performance reason model_config contains the bool vector
-   __load_eclipse_restart; if it is true the ECLIPSE restart state is
-   loaded from disk, otherwise no loading is performed. This implies
-   that if we do not want to internalize the full state but for
-   instance the pressure (i.e. for an RFT) we must set the
-   __load_state variable for the actual report step to true.
+   The function iterates over all the observations, and ensure that the
+   observed nodes (i.e. the pressure for an RFT) are internalized
 */
 void enkf_main_init_internalization(enkf_main_type *enkf_main) {
-    /* Clearing old internalize flags. */
-    model_config_init_internalization(enkf_main_get_model_config(enkf_main));
+    hash_type *map = enkf_obs_alloc_data_map(enkf_main->obs);
+    hash_iter_type *iter = hash_iter_alloc(map);
+    const char *obs_key = hash_iter_get_next_key(iter);
 
-    /* Internalizing the initial state. */
-    model_config_set_internalize_state(enkf_main_get_model_config(enkf_main),
-                                       0);
-
-    /* Make sure we internalize at all observation times.*/
-    {
-        hash_type *map = enkf_obs_alloc_data_map(enkf_main->obs);
-        hash_iter_type *iter = hash_iter_alloc(map);
-        const char *obs_key = hash_iter_get_next_key(iter);
-
-        while (obs_key != NULL) {
-            obs_vector_type *obs_vector =
-                enkf_obs_get_vector(enkf_main->obs, obs_key);
-            enkf_config_node_type *data_node =
-                obs_vector_get_config_node(obs_vector);
-            int active_step = -1;
-            do {
-                active_step =
-                    obs_vector_get_next_active_step(obs_vector, active_step);
-                if (active_step >= 0)
-                    enkf_config_node_set_internalize(data_node, active_step);
-            } while (active_step >= 0);
-            obs_key = hash_iter_get_next_key(iter);
-        }
-        hash_iter_free(iter);
-        hash_free(map);
+    while (obs_key != NULL) {
+        obs_vector_type *obs_vector =
+            enkf_obs_get_vector(enkf_main->obs, obs_key);
+        enkf_config_node_type *data_node =
+            obs_vector_get_config_node(obs_vector);
+        int active_step = -1;
+        do {
+            active_step =
+                obs_vector_get_next_active_step(obs_vector, active_step);
+            if (active_step >= 0)
+                enkf_config_node_set_internalize(data_node, active_step);
+        } while (active_step >= 0);
+        obs_key = hash_iter_get_next_key(iter);
     }
+    hash_iter_free(iter);
+    hash_free(map);
 }
 
 void enkf_main_get_observations(const enkf_main_type *enkf_main,
