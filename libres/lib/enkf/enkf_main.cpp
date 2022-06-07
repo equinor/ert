@@ -348,13 +348,13 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
     return enkf_main->ens_size;
 }
 
-/**
-   In this function we initialize the variables which control
-   which nodes are internalized (i.e. loaded from the forward
-   simulation and stored in the enkf_fs 'database').
+/** @brief initializes internalization.
 
    The function iterates over all the observations, and ensure that the
    observed nodes (i.e. the pressure for an RFT) are internalized
+
+   Internalize means loaded from the forward simulation and stored in the
+   enkf_fs 'database'.
 */
 void enkf_main_init_internalization(enkf_main_type *enkf_main) {
     hash_type *map = enkf_obs_alloc_data_map(enkf_main->obs);

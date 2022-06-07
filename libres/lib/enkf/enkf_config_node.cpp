@@ -547,6 +547,15 @@ enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node) {
     return path_fmt_get_fmt(config_node->init_file_fmt);
 }
 
+/**
+ * @brief Sets the given node to be internalized at the given report step
+ *
+ * Internalize means loaded from the forward simulation and stored in the
+ * enkf_fs 'database'.
+ *
+ * @param node The config node to be internalized
+ * @param report_step The report step for which the node should be internalized.
+ */
 void enkf_config_node_set_internalize(enkf_config_node_type *node,
                                       int report_step) {
     ert_impl_type impl_type = enkf_config_node_get_impl_type(node);
@@ -565,7 +574,9 @@ void enkf_config_node_set_internalize(enkf_config_node_type *node,
     }
 }
 
-/* Query function: */
+/** @return whether the given config node should be internalized at the given
+ * report step.
+ */
 bool enkf_config_node_internalize(const enkf_config_node_type *node,
                                   int report_step) {
     if (node->internalize == NULL)
