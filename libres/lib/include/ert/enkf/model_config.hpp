@@ -61,8 +61,6 @@ extern "C" const char *
 model_config_get_enspath(const model_config_type *model_config);
 const ecl_sum_type *
 model_config_get_refcase(const model_config_type *model_config);
-void model_config_init_internalization(model_config_type *);
-void model_config_set_internalize_state(model_config_type *, int);
 bool model_config_has_prediction(const model_config_type *);
 extern "C" PY_USED bool
 model_config_has_history(const model_config_type *config);
