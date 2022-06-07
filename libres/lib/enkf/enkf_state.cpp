@@ -461,10 +461,6 @@ static fw_load_status enkf_state_internalize_results(
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
 
-    /* Ensure that the last step is internalized? */
-    if (last_report > 0)
-        model_config_set_internalize_state(model_config, last_report);
-
     enkf_state_internalize_GEN_DATA(ens_config, load_context, model_config,
                                     last_report);
 
