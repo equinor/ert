@@ -24,7 +24,8 @@ from res.enkf import EnKFMain, QueueConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import ForwardModel, RunStatusType
 
-logger = logging.getLogger("ert.experiment_server")
+event_logger = logging.getLogger("ert.event_log")
+experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")
 
 
 class ErtRunError(Exception):
@@ -328,11 +329,11 @@ class BaseRunModel:
         self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
     ) -> None:
         """Start asynchronous evaluation of an ensemble."""
-        logger.debug("_evaluate")
+        experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
         if run_context.get_step():
             self.ert().eclConfig().assert_restart()
-        logger.debug("building...")
+        experiment_logger.debug("building...")
         ensemble = EnsembleBuilder.from_legacy(
             run_context,
             self.get_forward_model(),
@@ -340,7 +341,7 @@ class BaseRunModel:
             self.ert().analysisConfig(),
             self.ert().resConfig(),
         ).build()
-        logger.debug("built")
+        experiment_logger.debug("built")
 
         ensemble_listener = asyncio.create_task(
             self._ensemble_listener(ensemble, iter_=run_context.get_iter())
@@ -402,7 +403,9 @@ class BaseRunModel:
                 break
 
     async def dispatch(self, event: CloudEvent, iter_: int) -> None:
-        logger.debug("dispatch: %s (iter: %d)", event, iter_)
+        event_logger.debug(
+            "dispatch: %s (experiment: %s, iter: %d)", event, self.id_, iter_
+        )
         if event["type"] == identifiers.EVTYPE_FM_STEP_SUCCESS:
             real = int(get_real_id(event["source"]))
             self._state_machine.add_successful_realization(iter_, real)

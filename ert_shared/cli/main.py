@@ -72,7 +72,8 @@ def run_cli(args):
                 facade.get_current_case_name(),
                 args,
                 evaluator_server_config,
-            )
+            ),
+            debug=True,
         )
         return
 

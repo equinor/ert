@@ -32,6 +32,8 @@ if TYPE_CHECKING:
 CONCURRENT_INTERNALIZATION = 10
 
 logger = logging.getLogger(__name__)
+event_logger = logging.getLogger("ert.event_log")
+experiment_logger = logging.getLogger("ert.experiment_server")
 
 
 class _LegacyEnsemble(_Ensemble):

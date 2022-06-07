@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+event_logger = logging.getLogger("ert.event_log")
 
 
 class ExperimentServer:
@@ -80,7 +81,7 @@ class ExperimentServer:
                 except DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=pickle.loads)
 
-                logger.debug("saw event %s from remote worker", event)
+                event_logger.debug("handle_dispatch: %s", event)
 
                 await self._registry.all_experiments[0].dispatch(event, 0)
 

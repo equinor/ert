@@ -13,8 +13,7 @@ from ert.ensemble_evaluator import identifiers
 
 from cloudevents.http import CloudEvent
 
-
-logger = logging.getLogger("ert.experiment_server")
+experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 class EnsembleExperiment(BaseRunModel):
@@ -29,7 +28,7 @@ class EnsembleExperiment(BaseRunModel):
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
 
         # Send EXPERIMENT_STARTED
-        logger.debug("starting ensemble experiment")
+        experiment_logger.debug("starting ensemble experiment")
         await self.dispatch(
             CloudEvent(
                 {
@@ -47,7 +46,7 @@ class EnsembleExperiment(BaseRunModel):
             run_context = await loop.run_in_executor(pool, self.create_context)
 
             # Create runpaths
-            logger.debug("creating runpaths")
+            experiment_logger.debug("creating runpaths")
             await loop.run_in_executor(
                 pool,
                 self.ert().getEnkfSimulationRunner().createRunPath,
@@ -72,7 +71,7 @@ class EnsembleExperiment(BaseRunModel):
             )
 
             # Run PRE_SIMULATION
-            logger.debug("pre-sim hooks")
+            experiment_logger.debug("pre-sim hooks")
             await loop.run_in_executor(
                 pool,
                 EnkfSimulationRunner.runWorkflows,
@@ -96,7 +95,7 @@ class EnsembleExperiment(BaseRunModel):
             )
 
             # Evaluate
-            logger.debug("evaluating")
+            experiment_logger.debug("evaluating")
             await self._evaluate(run_context, evaluator_server_config)
 
             num_successful_realizations = self._state_machine.successful_realizations(
