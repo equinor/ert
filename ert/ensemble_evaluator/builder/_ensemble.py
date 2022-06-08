@@ -69,12 +69,10 @@ class _Ensemble:
         event: CloudEvent,
         token: Optional[str] = None,
         cert: Optional[Union[str, bytes]] = None,
-        retries: int = 1,
+        retries: int = 10,
     ) -> None:
-        client = Client(url, token, cert)
-        await client._send(to_json(event, data_marshaller=evaluator_marshaller))
-        assert client.websocket  # mypy
-        await client.websocket.close()
+        async with Client(url, token, cert, max_retries=retries) as client:
+            await client._send(to_json(event, data_marshaller=evaluator_marshaller))
 
     def get_successful_realizations(self) -> int:
         return self._snapshot.get_successful_realizations()
