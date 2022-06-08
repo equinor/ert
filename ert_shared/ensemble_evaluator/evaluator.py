@@ -55,7 +55,7 @@ class EnsembleEvaluator:
         self._done = self._loop.create_future()
 
         self._clients: Set[WebSocketServerProtocol] = set()
-        self._dispatchers_connected: asyncio.Queue = asyncio.Queue()
+        self._dispatchers_connected: asyncio.Queue = None
         self._dispatcher = BatchingDispatcher(
             self._loop,
             timeout=2,
@@ -191,6 +191,11 @@ class EnsembleEvaluator:
 
     @asynccontextmanager
     async def count_dispatcher(self):
+        # do this here (not in __init__) to ensure the queue
+        # is created on the right event-loop
+        if self._dispatchers_connected is None:
+            self._dispatchers_connected = asyncio.Queue()
+
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()
