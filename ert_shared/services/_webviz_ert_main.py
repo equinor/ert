@@ -71,7 +71,7 @@ def send_ready():
         f.write("{}")  # Empty, but valid JSON
 
 
-def run_webviz_ert(experimental_mode: bool = False):
+def run_webviz_ert(experimental_mode: bool = False, verbose: bool = False):
     signal.signal(signal.SIGINT, handle_exit)
     # The entry point of webviz is to call it from command line, and so do we.
 
@@ -93,7 +93,7 @@ def run_webviz_ert(experimental_mode: bool = False):
                 "--theme",
                 "equinor",
                 "--loglevel",
-                "DEBUG",
+                "DEBUG" if verbose else "WARNING",
             )
     else:
         logger.error("Failed to find webviz")
@@ -102,6 +102,9 @@ def run_webviz_ert(experimental_mode: bool = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--experimental-mode", action="store_true")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
     args = parser.parse_args()
 
-    run_webviz_ert(args.experimental_mode)
+    run_webviz_ert(args.experimental_mode, args.verbose)

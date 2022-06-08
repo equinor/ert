@@ -74,7 +74,7 @@ def test_api_database_default(monkeypatch):
     main.main()
     # We expect default value from Storage class, validate that no explicit
     # value is given for database_url
-    mocked_start_server.assert_called_once_with(res_config=None)
+    mocked_start_server.assert_called_once_with(res_config=None, verbose=True)
 
 
 def test_api_database_url_forwarded(monkeypatch):
@@ -95,7 +95,7 @@ def test_api_database_url_forwarded(monkeypatch):
 
     main.main()
     mocked_start_server.assert_called_once_with(
-        res_config=None, database_url="TEST_DATABASE_URL"
+        res_config=None, database_url="TEST_DATABASE_URL", verbose=True
     )
 
 
@@ -121,7 +121,7 @@ def test_vis_database_url_forwarded(monkeypatch):
 
     main.main()
     mocked_connect_or_start_server.assert_called_once_with(
-        res_config=None, database_url="TEST_DATABASE_URL"
+        res_config=None, database_url="TEST_DATABASE_URL", verbose=False
     )
 
 

@@ -38,6 +38,7 @@ import ert_shared
 
 def run_ert_storage(args):
     kwargs = {"res_config": args.config}
+    kwargs["verbose"] = True
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
@@ -48,6 +49,7 @@ def run_ert_storage(args):
 
 def run_webviz_ert(args):
     kwargs = {"res_config": args.config}
+    kwargs["verbose"] = args.verbose
 
     if args.database_url is not None:
         kwargs["database_url"] = args.database_url
@@ -64,6 +66,7 @@ Starting up Webviz-ERT. This might take more than a minute.
 """
         )
         kwargs = {"experimental_mode": args.experimental_mode}
+        kwargs["verbose"] = args.verbose
         with WebvizErt.start_server(**kwargs) as webviz_ert:
             webviz_ert.wait()
 

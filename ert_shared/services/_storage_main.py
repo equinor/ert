@@ -5,12 +5,18 @@ import socket
 import json
 import argparse
 from pathlib import Path
+
+import yaml
+
+from ert_logging import STORAGE_LOG_CONFIG
 from ert_shared import port_handler
 from ert_shared import __file__ as ert_shared_path
 from ert_shared.plugins import ErtPluginContext
 from ert_shared.storage.command import add_parser_options
 from uvicorn.supervisors import ChangeReload
 from typing import List
+import logging
+import logging.config
 
 
 class Server(uvicorn.Server):
@@ -131,17 +137,20 @@ def run_server(args=None, debug=False):
         config = uvicorn.Config("ert_shared.dark_storage.app:app", **config_args)
     server = Server(config, json.dumps(connection_info), lockfile)
 
-    print("Storage server is ready to accept requests. Listening on:")
+    logger = logging.getLogger("ert_shared.storage.info")
+    log_level = logging.INFO if args.verbose else logging.WARNING
+    logger.setLevel(log_level)
+    logger.info("Storage server is ready to accept requests. Listening on:")
     for url in connection_info["urls"]:
-        print(f"  {url}")
-        print(f"\nOpenAPI Docs: {url}/docs", file=sys.stderr)
+        logger.info(f"  {url}")
+        logger.info(f"\nOpenAPI Docs: {url}/docs")
 
     if args.debug or debug:
-        print("\tRunning in NON-SECURE debug mode.\n")
+        logger.info("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
     else:
-        print("\tUsername: __token__")
-        print(f"\tPassword: {connection_info['authtoken']}\n")
+        logger.info("\tUsername: __token__")
+        logger.info(f"\tPassword: {connection_info['authtoken']}\n")
 
     if config.should_reload:
         supervisor = ChangeReload(config, target=server.run, sockets=[sock])
@@ -179,8 +188,13 @@ def terminate_on_parent_death():
 
 if __name__ == "__main__":
     # pylint: disable=W0611
-    import ert_logging
 
+    with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
+        logging_conf = yaml.safe_load(conf_file)
+        logging.config.dictConfig(logging_conf)
+    uvicorn.config.LOGGING_CONFIG.clear()
+    uvicorn.config.LOGGING_CONFIG.update(logging_conf)
     terminate_on_parent_death()
     with ErtPluginContext() as context:
+        context.plugin_manager.add_logging_handle_to_root(logging.getLogger())
         run_server(debug=False)
