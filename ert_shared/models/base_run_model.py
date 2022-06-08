@@ -21,6 +21,7 @@ from ert_shared.storage.extraction import (
     post_update_data,
 )
 from res.enkf import EnKFMain, QueueConfig
+from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import ForwardModel, RunStatusType
 
@@ -377,6 +378,51 @@ class BaseRunModel:
 
     async def successful_realizations(self, iter_: int) -> int:
         return self._state_machine.successful_realizations(iter_)
+
+    async def _run_hook(
+        self,
+        hook: int,  # HookRuntime
+        iter_: int,
+        loop: asyncio.AbstractEventLoop,
+        executor: concurrent.futures.Executor,
+    ) -> None:
+        # Send HOOK_STARTED
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_STARTED,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                },
+                {
+                    "name": str(hook),
+                },
+            ),
+            iter_,
+        )
+
+        # Run hook
+        await loop.run_in_executor(
+            executor,
+            EnkfSimulationRunner.runWorkflows,
+            hook,
+            self.ert(),
+        )
+
+        # Send HOOK_ENDED
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EXPERIMENT_HOOK_ENDED,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                },
+                {
+                    "name": str(hook),
+                },
+            ),
+            iter_,
+        )
 
     @property
     def id_(self) -> str:
