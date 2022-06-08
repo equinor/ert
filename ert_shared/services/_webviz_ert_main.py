@@ -6,7 +6,8 @@ import logging
 import tempfile
 import yaml
 import pathlib
-from typing import Any, Optional
+import argparse
+from typing import Any, Optional, Dict
 from webviz_ert.assets import WEBVIZ_CONFIG
 
 
@@ -26,7 +27,10 @@ def handle_exit(
 
 
 def create_config(
-    project_identifier: Optional[str], config_file: pathlib.Path, temp_config: Any
+    project_identifier: Optional[str],
+    config_file: pathlib.Path,
+    temp_config: Any,
+    experimental_mode: bool,
 ) -> None:
     with open(config_file, "r") as f:
         config_dict = yaml.safe_load(f)
@@ -34,7 +38,24 @@ def create_config(
             for element in page["content"]:
                 for key in element:
                     element[key] = {"project_identifier": project_identifier}
-    output_str = yaml.dump(config_dict)
+
+    new_config_dict = config_dict
+
+    def filter_experimental_pages(
+        page: Dict[str, Any], experimental_mode: bool
+    ) -> bool:
+        if "experimental" in page:
+            if page["experimental"]:
+                return experimental_mode
+        return True
+
+    new_config_dict["pages"] = [
+        page
+        for page in new_config_dict["pages"]
+        if filter_experimental_pages(page, experimental_mode)
+    ]
+
+    output_str = yaml.dump(new_config_dict)
     temp_config.write(str.encode(output_str))
     temp_config.seek(0)
 
@@ -50,9 +71,10 @@ def send_ready():
         f.write("{}")  # Empty, but valid JSON
 
 
-def run_webviz_ert():
+def run_webviz_ert(experimental_mode: bool = False):
     signal.signal(signal.SIGINT, handle_exit)
     # The entry point of webviz is to call it from command line, and so do we.
+
     webviz = shutil.which("webviz")
     if webviz:
         send_ready()
@@ -60,7 +82,9 @@ def run_webviz_ert():
             project_identifier = os.getenv("ERT_PROJECT_IDENTIFIER", os.getcwd())
             if project_identifier is None:
                 logger.error("Unable to find ERT project!")
-            create_config(project_identifier, WEBVIZ_CONFIG, temp_config)
+            create_config(
+                project_identifier, WEBVIZ_CONFIG, temp_config, experimental_mode
+            )
             os.execl(
                 webviz,
                 webviz,
@@ -76,4 +100,8 @@ def run_webviz_ert():
 
 
 if __name__ == "__main__":
-    run_webviz_ert()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experimental-mode", action="store_true")
+    args = parser.parse_args()
+
+    run_webviz_ert(args.experimental_mode)
