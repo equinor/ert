@@ -282,7 +282,7 @@ class BaseService:
     @classmethod
     def start_server(cls: Type[T], *args, **kwargs) -> _Context[T]:
         if cls._instance is not None:
-            raise RuntimeError("Storage server already running")
+            raise RuntimeError("Server already running")
         cls._instance = obj = cls(*args, **kwargs)
         if obj._proc is not None:
             obj._proc.start()
