@@ -16,6 +16,15 @@ class Client:  # pylint: disable=too-many-instance-attributes
             self.loop.run_until_complete(self.websocket.close())
         self.loop.close()
 
+    async def __aenter__(self) -> "Client":
+        return self
+
+    async def __aexit__(
+        self, exc_type: Any, exc_value: Any, exc_traceback: Any
+    ) -> None:
+        if self.websocket is not None:
+            await self.websocket.close()
+
     def __init__(  # pylint: disable=too-many-arguments
         self,
         url: str,
