@@ -97,7 +97,7 @@ class BaseRunModel:
 
         # experiment-server
         self._id: Optional[str] = None
-        self._state_machine = StateMachine()
+        self._state_machine = StateMachine({})
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -342,6 +342,16 @@ class BaseRunModel:
             self.ert().resConfig(),
         ).build()
         logger.debug("built")
+        ee_id = str(uuid.uuid1()).split("-", maxsplit=1)[0]
+        structure = {
+            ee_id: {
+                real.iens: {
+                    step.id_: {job.id_ for job in step.jobs} for step in real.steps
+                }
+                for real in ensemble.reals
+            }
+        }
+        # self._state_machine.build_index(structure)
 
         ensemble_listener = asyncio.create_task(
             self._ensemble_listener(ensemble, iter_=run_context.get_iter())
@@ -403,7 +413,8 @@ class BaseRunModel:
                 break
 
     async def dispatch(self, event: CloudEvent, iter_: int) -> None:
-        logger.debug("dispatch: %s (iter: %d)", event, iter_)
+        logger.debug("BASERUNMODEL dispatch: %s (iter: %d)", event, iter_)
+        self._state_machine.add_event(event)
         if event["type"] == identifiers.EVTYPE_FM_STEP_SUCCESS:
             real = int(get_real_id(event["source"]))
             self._state_machine.add_successful_realization(iter_, real)
