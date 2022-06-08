@@ -63,7 +63,8 @@ Starting up Webviz-ERT. This might take more than a minute.
 -----------------------------------------------------------
 """
         )
-        with WebvizErt.start_server() as webviz_ert:
+        kwargs = {"experimental_mode": args.experimental_mode}
+        with WebvizErt.start_server(**kwargs) as webviz_ert:
             webviz_ert.wait()
 
 
@@ -221,6 +222,11 @@ def get_ert_parser(parser=None):
     )
     ert_vis_parser.set_defaults(func=run_webviz_ert)
     ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
+    ert_vis_parser.add_argument(
+        "--experimental-mode",
+        action="store_true",
+        help="Feature flag for enabling experimental plugins",
+    )
     ert_api_add_parser_options(ert_vis_parser)  # ert vis shares args with ert api
 
     # test_run_parser
