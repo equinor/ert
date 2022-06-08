@@ -50,7 +50,7 @@ setup(
     package_data={
         "ert_shared": package_files("ert_shared/share/"),
         "ert_gui": package_files("ert_gui/resources/"),
-        "ert_logging": ["logger.conf"],
+        "ert_logging": ["logger.conf", "storage_log.conf"],
         "ert3_examples": package_files("ert3_examples/"),
         "res": [
             "fm/rms/rms_config.yml",

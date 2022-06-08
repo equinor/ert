@@ -4,6 +4,7 @@ from logging import FileHandler
 from datetime import datetime
 
 LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
+STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
 
 
 class TimestampedFileHandler(FileHandler):

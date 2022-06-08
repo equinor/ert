@@ -1,3 +1,4 @@
+import logging
 from os import PathLike
 import httpx
 import requests
@@ -13,6 +14,7 @@ class Storage(BaseService):
         self,
         res_config: Optional[PathLike] = None,
         database_url: str = "sqlite:///ert.db",
+        verbose: bool = False,
         *args,
         **kwargs,
     ):
@@ -23,6 +25,8 @@ class Storage(BaseService):
             exec_args.append(str(res_config))
         else:
             exec_args.extend(("--database-url", database_url))
+        if verbose:
+            exec_args.append("--verbose")
 
         super().__init__(exec_args, *args, **kwargs)
 
@@ -46,8 +50,13 @@ class Storage(BaseService):
                 if resp.status_code == 200:
                     self._url = url
                     return url
-            except requests.ConnectionError:
-                pass
+                logging.getLogger(__name__).info(
+                    f"Connecting to {url} got status: "
+                    f"{resp.status_code}, {resp.headers}, {resp.reason}, {resp.text}"
+                )
+
+            except requests.ConnectionError as ce:
+                logging.getLogger(__name__).info(f"Could not connect to {url}: {ce}")
 
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
