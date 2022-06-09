@@ -878,7 +878,3 @@ enkf_node_type *enkf_node_deep_alloc(const enkf_config_node_type *config) {
     } else
         return enkf_node_alloc(config);
 }
-
-bool enkf_node_internalize(const enkf_node_type *node, int report_step) {
-    return enkf_config_node_internalize(node->config, report_step);
-}
