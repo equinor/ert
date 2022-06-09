@@ -90,10 +90,7 @@ static shared_info_type *shared_info_alloc(const site_config_type *site_config,
 }
 
 static void shared_info_free(shared_info_type *shared_info) {
-    /*
-      Adding something here is a BUG - this object does
-      not own anything.
-  */
+    // Adding something here is a BUG - this object does not own anything.
     free(shared_info);
 }
 
@@ -157,7 +154,6 @@ static void enkf_state_add_nodes(enkf_state_type *enkf_state,
     // 2: Add container nodes - must ensure that all other nodes have
     //    been added already (this implies that containers of containers
     //    will be victim of hash retrieval order problems ....
-
     for (int ik = 0; ik < stringlist_get_size(container_keys); ik++) {
         const char *key = stringlist_iget(container_keys, ik);
         const enkf_config_node_type *config_node =
@@ -201,8 +197,9 @@ __enkf_state_get_time_index(enkf_fs_type *sim_fs, const ecl_sum_type *summary) {
 }
 
 /**
- * Check if there are summary keys in the ensemble config that is not found in Eclipse. If this is the case, AND we
- * have observations for this key, we have a problem. Otherwise, just print a message to the log.
+ * Check if there are summary keys in the ensemble config that is not found in
+ * Eclipse. If this is the case, AND we have observations for this key, we have
+ * a problem. Otherwise, just print a message to the log.
  */
 static void enkf_state_check_for_missing_eclipse_summary_data(
     const ensemble_config_type *ens_config,
@@ -257,14 +254,15 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
     if (load_summary || matcher_size > 0 || summary) {
         int load_start = run_arg_get_load_start(run_arg);
 
-        if (load_start ==
-            0) { /* Do not attempt to load the "S0000" summary results. */
+        if (load_start == 0) {
+            // Do not attempt to load the "S0000" summary results.
             load_start++;
         }
 
         {
             enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
-            /* OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
+            // OK - now we have actually loaded the ecl_sum instance, or
+            // ecl_sum == NULL.
             if (summary) {
                 int_vector_type *time_index =
                     __enkf_state_get_time_index(sim_fs, summary);
@@ -279,10 +277,11 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                     throw std::invalid_argument("Inconsistent time map");
                 }
 
-                /* The actual loading internalizing - from ecl_sum -> enkf_node. */
+                // The actual loading internalizing - from ecl_sum -> enkf_node.
                 const int iens = run_arg_get_iens(run_arg);
-                const int step2 = ecl_sum_get_last_report_step(
-                    summary); /* Step2 is just taken from the number of steps found in the summary file. */
+                // step2 is just taken from the number of steps found in the
+                // summary file.
+                const int step2 = ecl_sum_get_last_report_step(summary);
 
                 int_vector_iset_block(time_index, 0, load_start, -1);
                 int_vector_resize(time_index, step2 + 1, -1);
@@ -304,9 +303,9 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                                 ens_config, key);
                         enkf_node_type *node = enkf_node_alloc(config_node);
 
-                        enkf_node_try_load_vector(
-                            node, sim_fs,
-                            iens); // Ensure that what is currently on file is loaded before we update.
+                        // Ensure that what is currently on file is loaded
+                        // before we update.
+                        enkf_node_try_load_vector(node, sim_fs, iens);
 
                         enkf_node_forward_load_vector(node, load_context,
                                                       time_index);
@@ -317,9 +316,8 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
 
                 int_vector_free(time_index);
 
-                /*
-                 * Check if some of the specified keys are missing from the Eclipse data, and if there are observations for them. That is a problem.
-                 */
+                // Check if some of the specified keys are missing from the Eclipse
+                // data, and if there are observations for them. That is a problem.
                 enkf_state_check_for_missing_eclipse_summary_data(
                     ens_config, matcher, smspec, load_context, iens);
 
@@ -395,11 +393,9 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
         const enkf_config_node_type *config_node = ensemble_config_get_node(
             ens_config, stringlist_iget(keylist_GEN_DATA, ikey));
 
-        /*
-         * This for loop should probably be changed to use the report
-         * steps configured in the gen_data_config object, instead of
-         * spinning through them all.
-         */
+        // This for loop should probably be changed to use the report
+        // steps configured in the gen_data_config object, instead of
+        // spinning through them all.
         int start = run_arg_get_load_start(run_arg);
         int stop = util_int_max(0, last_report); // inclusive
         enkf_state_load_gen_data_node(load_context, sim_fs, iens, config_node,
@@ -442,12 +438,10 @@ static fw_load_status enkf_state_internalize_results(
 
     forward_load_context_type *load_context =
         enkf_state_alloc_load_context(ens_config, ecl_config, run_arg);
-    /*
-     * The timing information - i.e. mainly what is the last report step
-     * in these results are inferred from the loading of summary results,
-     * hence we must load the summary results first.
-     */
 
+    // The timing information - i.e. mainly what is the last report step
+    // in these results are inferred from the loading of summary results,
+    // hence we must load the summary results first.
     try {
         enkf_state_internalize_dynamic_eclipse_results(ens_config, load_context,
                                                        model_config);
@@ -580,12 +574,10 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
     model_config_type *model_config = res_config_get_model_config(res_config);
     const int iens = run_arg_get_iens(run_arg);
 
-    /*
-     The queue system has reported that the run is OK, i.e. it has
-     completed and produced the targetfile it should. We then check
-     in this scope whether the results can be loaded back; if that
-     is OK the final status is updated, otherwise: restart.
-  */
+    // The queue system has reported that the run is OK, i.e. it has
+    // completed and produced the targetfile it should. We then check
+    // in this scope whether the results can be loaded back; if that
+    // is OK the final status is updated, otherwise: restart.
     logger->info("[{:03d}:{:04d}-{:04d}] Forward model complete - starting to "
                  "load results.",
                  iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
@@ -594,12 +586,10 @@ bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                                        ecl_config, run_arg);
 
     if (result == LOAD_SUCCESSFUL) {
-        /*
-      The loading succeded - so this is a howling success! We set
-      the main status to JOB_QUEUE_ALL_OK and inform the queue layer
-      about the success. In addition we set the simple status
-      (should be avoided) to JOB_RUN_OK.
-    */
+        // The loading succeded - so this is a howling success! We set
+        // the main status to JOB_QUEUE_ALL_OK and inform the queue layer
+        // about the success. In addition we set the simple status
+        // (should be avoided) to JOB_RUN_OK.
         run_arg_set_run_status(run_arg, JOB_RUN_OK);
         logger->info("[{:03d}:{:04d}-{:04d}] Results loaded successfully.",
                      iens, run_arg_get_step1(run_arg),
@@ -635,13 +625,11 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 void enkf_state_ecl_write(const ensemble_config_type *ens_config,
                           const model_config_type *model_config,
                           const run_arg_type *run_arg, enkf_fs_type *fs) {
-    /*
-     This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
+    // This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
 
-     -----------------------------------------------------------------------------------------
-     T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
-     -----------------------------------------------------------------------------------------
-  */
+    // -----------------------------------------------------------------------------------------
+    // T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
+    // -----------------------------------------------------------------------------------------
     int iens = run_arg_get_iens(run_arg);
     const char *base_name = model_config_get_gen_kw_export_name(model_config);
     value_export_type *export_value =
