@@ -584,7 +584,7 @@ bool enkf_config_node_internalize(const enkf_config_node_type *node,
     else
         return bool_vector_safe_iget(
             node->internalize,
-            report_step); /* Will return default value if report_step is beyond size. */
+            report_step); // Will return default value if report_step is beyond size.
 }
 
 /**
