@@ -2,7 +2,7 @@ import os.path
 import re
 import warnings
 
-from typing import List
+from typing import List, Dict, Union, TYPE_CHECKING
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -15,52 +15,52 @@ from res.enkf.enums import RealizationStateEnum
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.state_map import StateMap
 
+if TYPE_CHECKING:
+    from res.enkf import EnKFMain
 
-def naturalSortKey(s, _nsre=re.compile("([0-9]+)")):
+
+def naturalSortKey(s: str) -> List[Union[int, str]]:
+    _nsre = re.compile("([0-9]+)")
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
     ]
 
 
 class FileSystemRotator:
-    def __init__(self, capacity):
+    def __init__(self, capacity: int):
         super().__init__()
-        self._capacity = capacity
-        """:type: int"""
-        self._fs_list = []
-        """:type: list of str"""
-        self._fs_map = {}
-        """:type: dict[str, EnkfFs]"""
+        self._capacity: int = capacity
+        self._fs_list: List[str] = []
+        self._fs_map: Dict[str, EnkfFs] = {}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._fs_list)
 
-    def addFileSystem(self, file_system, full_name):
+    def addFileSystem(self, file_system: EnkfFs, full_name: str) -> None:
         if self.atCapacity():
             self.dropOldestFileSystem()
 
         self._fs_list.append(full_name)
         self._fs_map[full_name] = file_system
 
-    def dropOldestFileSystem(self):
+    def dropOldestFileSystem(self) -> None:
         if len(self._fs_list) > 0:
             case_name = self._fs_list[0]
             del self._fs_list[0]
             self._fs_map[case_name].sync()
             del self._fs_map[case_name]
 
-    def atCapacity(self):
+    def atCapacity(self) -> bool:
         return len(self._fs_list) == self._capacity
 
-    def __contains__(self, full_case_name):
+    def __contains__(self, full_case_name: str) -> bool:
         return full_case_name in self._fs_list
 
-    def __get_fs(self, name):
+    def __get_fs(self, name: str) -> EnkfFs:
         fs = self._fs_map[name]
         return fs.copy()
 
-    def __getitem__(self, case) -> EnkfFs:
-        """@rtype: EnkfFs"""
+    def __getitem__(self, case: Union[int, str]) -> EnkfFs:
         if isinstance(case, str):
             return self.__get_fs(case)
         elif isinstance(case, int) and 0 <= case < len(self):
@@ -69,7 +69,7 @@ class FileSystemRotator:
         else:
             raise IndexError(f"Value '{case}' is not a proper index or case name.")
 
-    def umountAll(self):
+    def umountAll(self) -> None:
         while len(self._fs_list) > 0:
             self.dropOldestFileSystem()
 
@@ -109,11 +109,7 @@ class EnkfFsManager(BaseCClass):
 
     DEFAULT_CAPACITY = 5
 
-    def __init__(self, enkf_main, capacity=DEFAULT_CAPACITY):
-        """
-        @type enkf_main: res.enkf.EnKFMain
-        @type capacity: int
-        """
+    def __init__(self, enkf_main: "EnKFMain", capacity: int = DEFAULT_CAPACITY):
         # enkf_main should be an EnKFMain, get the _RealEnKFMain object
         real_enkf_main = enkf_main.parent()
 
@@ -126,16 +122,13 @@ class EnkfFsManager(BaseCClass):
         self._fs_rotator = FileSystemRotator(capacity)
         self._mount_root = real_enkf_main.getMountPoint()
 
-    def _createFullCaseName(self, mount_root, case_name):
+    def _createFullCaseName(self, mount_root: str, case_name: str) -> str:
         return os.path.join(mount_root, case_name)
 
     # The return value from the getFileSystem will be a weak reference to the
     # underlying enkf_fs object. That implies that the fs manager must be in
     # scope for the return value to be valid.
-    def getFileSystem(self, case_name, mount_root=None) -> EnkfFs:
-        """
-        @rtype: EnkfFs
-        """
+    def getFileSystem(self, case_name: str, mount_root: str = None) -> EnkfFs:
         if mount_root is None:
             mount_root = self._mount_root
 
@@ -155,34 +148,23 @@ class EnkfFsManager(BaseCClass):
 
         return fs
 
-    def isCaseRunning(self, case_name, mount_root=None):
-        """Returns true if case is mounted and write_count > 0
-        @rtype: bool
-        """
+    def isCaseRunning(self, case_name: str, mount_root: str = None) -> bool:
+        """Returns true if case is mounted and write_count > 0"""
         if self.isCaseMounted(case_name, mount_root):
             case_fs = self.getFileSystem(case_name, mount_root)
             return case_fs.is_running()
         return False
 
-    def caseExists(self, case_name):
-        """@rtype: bool"""
+    def caseExists(self, case_name: str) -> bool:
         return case_name in self.getCaseList()
 
-    def caseHasData(self, case_name):
-        """@rtype: bool"""
-        case_has_data = False
+    def caseHasData(self, case_name: str) -> bool:
         state_map = self.getStateMapForCase(case_name)
 
-        for state in state_map:
-            if state == RealizationStateEnum.STATE_HAS_DATA:
-                case_has_data = True
-
-        return case_has_data
+        return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
 
     def getCurrentFileSystem(self) -> EnkfFs:
-        """Returns the currently selected file system
-        @rtype: EnkfFs
-        """
+        """Returns the currently selected file system"""
         current_fs = self._get_current_fs()
         case_name = current_fs.getCaseName()
         full_name = self._createFullCaseName(self._mount_root, case_name)
@@ -192,43 +174,32 @@ class EnkfFsManager(BaseCClass):
 
         return self.getFileSystem(case_name, self._mount_root)
 
-    def umount(self):
+    def umount(self) -> None:
         self._fs_rotator.umountAll()
 
-    def getFileSystemCount(self):
+    def getFileSystemCount(self) -> int:
         return len(self._fs_rotator)
 
-    def getEnsembleSize(self):
-        """@rtype: int"""
+    def getEnsembleSize(self) -> int:
         return self._ensemble_size()
 
-    def switchFileSystem(self, file_system: EnkfFs):
-        """
-        @type file_system: EnkfFs
-        """
+    def switchFileSystem(self, file_system: EnkfFs) -> None:
         self._switch_fs(file_system, None)
 
-    def isCaseInitialized(self, case):
+    def isCaseInitialized(self, case: str) -> bool:
         return self._is_case_initialized(case)
 
-    def getCaseList(self):
-        """@rtype: list[str]"""
+    def getCaseList(self) -> List[str]:
         caselist = [case for case in self._alloc_caselist()]
         return sorted(caselist, key=naturalSortKey)
 
     def customInitializeCurrentFromExistingCase(
         self,
-        source_case,
-        source_report_step,
+        source_case: str,
+        source_report_step: int,
         member_mask: List[bool],
         node_list: List[str],
-    ):
-        """
-        @type source_case: str
-        @type source_report_step: int
-        @type member_mask: list
-        @type node_list: ecl.util.StringList
-        """
+    ) -> None:
         if source_case not in self.getCaseList():
             raise KeyError(
                 f"No such source case: {source_case} in {self.getCaseList()}"
@@ -245,24 +216,19 @@ class EnkfFsManager(BaseCClass):
             self, source_case_fs, source_report_step, node_list, member_mask
         )
 
-    def initializeCurrentCaseFromExisting(self, source_fs, source_report_step):
-        """
-        @type source_fs: EnkfFs
-        @type source_report_step: int
-        """
+    def initializeCurrentCaseFromExisting(
+        self, source_fs: EnkfFs, source_report_step: int
+    ) -> None:
         self._initialize_current_case_from_existing(source_fs, source_report_step)
 
-    def initializeCaseFromExisting(self, source_fs, source_report_step, target_fs):
-        """
-        @type source_fs: EnkfFs
-        @type source_report_step: int
-        @type target_fs: EnkfFs
-        """
+    def initializeCaseFromExisting(
+        self, source_fs: EnkfFs, source_report_step: int, target_fs: EnkfFs
+    ) -> None:
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
     def initializeFromScratch(
         self, parameter_list: List[str], run_context: ErtRunContext
-    ):
+    ) -> None:
         if isinstance(parameter_list, StringList):
             warnings.warn(
                 "Using StringList for node_list is deprecated, "
@@ -280,12 +246,7 @@ class EnkfFsManager(BaseCClass):
                     realization_nr,
                 )
 
-    def isCaseMounted(self, case_name, mount_root=None):
-        """
-        @type case_name: str
-        @type mount_root: str
-        @rtype: bool
-        """
+    def isCaseMounted(self, case_name: str, mount_root: str = None) -> bool:
         if mount_root is None:
             mount_root = self._mount_root
 
@@ -293,19 +254,12 @@ class EnkfFsManager(BaseCClass):
 
         return full_case_name in self._fs_rotator
 
-    def getStateMapForCase(self, case) -> StateMap:
-        """
-        @type case: str
-        @rtype: StateMap
-        """
+    def getStateMapForCase(self, case: str) -> StateMap:
         if self.isCaseMounted(case):
             fs = self.getFileSystem(case)
             return fs.getStateMap()
         else:
             return self._alloc_readonly_state_map(case)
 
-    def isCaseHidden(self, case_name):
-        """
-        @rtype: bool
-        """
+    def isCaseHidden(self, case_name: str) -> bool:
         return case_name.startswith(".")
