@@ -163,7 +163,6 @@ enkf_node_alloc_private_container(const enkf_config_node_type *config);
 const enkf_config_node_type *enkf_node_get_config(const enkf_node_type *);
 extern "C" const char *enkf_node_get_key(const enkf_node_type *);
 bool enkf_node_has_func(const enkf_node_type *, node_function_type);
-bool enkf_node_internalize(const enkf_node_type *, int);
 
 UTIL_IS_INSTANCE_HEADER(enkf_node);
 
