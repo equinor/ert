@@ -342,7 +342,7 @@ class _RealEnKFMain(BaseCClass):
     def addDataKW(self, key, value):
         self._add_data_kw(key, value)
 
-    def getMountPoint(self):
+    def getMountPoint(self) -> str:
         return self._get_mount_point()
 
     def getObservations(self) -> EnkfObs:
