@@ -591,7 +591,6 @@ int load_from_forward_model_with_fs_pybind(py::object self, int iter,
 }
 
 namespace enkf_main {
-
 /** @brief Writes the eclipse data file
  *
  *  Substitutes the parameters of the templated ECL_DATA_FILE
@@ -602,18 +601,19 @@ namespace enkf_main {
  */
 void write_eclipse_data_file(const char *data_file_template,
                              const run_arg_type *run_arg) {
-    char *data_file = ecl_util_alloc_filename(run_arg_get_runpath(run_arg),
-                                              run_arg_get_job_name(run_arg),
-                                              ECL_DATA_FILE, true, -1);
+    char *data_file_destination = ecl_util_alloc_filename(
+        run_arg_get_runpath(run_arg), run_arg_get_job_name(run_arg),
+        ECL_DATA_FILE, true, -1);
     auto subst_list = run_arg_get_subst_list(run_arg);
 
     //Perform substitutions on the data file destination path
-    subst_list_update_string(subst_list, &data_file);
+    subst_list_update_string(subst_list, &data_file_destination);
 
     //Perform substitutions on the data file template contents
-    subst_list_filter_file(subst_list, data_file_template, data_file);
+    subst_list_filter_file(subst_list, data_file_template,
+                           data_file_destination);
 
-    free(data_file);
+    free(data_file_destination);
 }
 
 /**
@@ -626,35 +626,29 @@ void write_eclipse_data_file(const char *data_file_template,
 
   @param ens_config Where to find the nodes (e.g. `GEN_KW key template_file
     target_file` definition).
-  @param base_name The base name of the value_export file (e.g. if
+  @param export_base_name The base name of the value_export file (e.g. if
     "parameters", value export file will e.g. be "parameters.json")
   @param run_arg The run_arg containing the run_path to write the target file in.
   @param fs The enkf_fs to load sampled parameters from
 */
-void ecl_write(const ensemble_config_type *ens_config, const char *base_name,
-               const run_arg_type *run_arg, enkf_fs_type *fs) {
-    int iens = run_arg_get_iens(run_arg);
+void ecl_write(const ensemble_config_type *ens_config,
+               const char *export_base_name, const run_arg_type *run_arg,
+               enkf_fs_type *fs) {
     value_export_type *export_value =
-        value_export_alloc(run_arg_get_runpath(run_arg), base_name);
+        value_export_alloc(run_arg_get_runpath(run_arg), export_base_name);
 
-    std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
-        ens_config, PARAMETER + EXT_PARAMETER);
-    for (auto &key : key_list) {
-        enkf_config_node_type *config_node =
-            ensemble_config_get_node(ens_config, key.c_str());
-        enkf_node_type *enkf_node = enkf_node_alloc(config_node);
-        bool forward_init = enkf_node_use_forward_init(enkf_node);
+    for (auto &key : ensemble_config_keylist_from_var_type(
+             ens_config, PARAMETER + EXT_PARAMETER)) {
+        enkf_node_type *enkf_node =
+            enkf_node_alloc(ensemble_config_get_node(ens_config, key.c_str()));
         node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
-                                .iens = iens};
+                                .iens = run_arg_get_iens(run_arg)};
 
-        if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
-
-            if (enkf_node_has_data(enkf_node, fs, node_id))
-                enkf_node_load(enkf_node, fs, node_id);
-            else
-                continue;
-        } else
-            enkf_node_load(enkf_node, fs, node_id);
+        if (run_arg_get_step1(run_arg) == 0 &&
+            enkf_node_use_forward_init(enkf_node) &&
+            !enkf_node_has_data(enkf_node, fs, node_id))
+            continue;
+        enkf_node_load(enkf_node, fs, node_id);
 
         enkf_node_ecl_write(enkf_node, run_arg_get_runpath(run_arg),
                             export_value, run_arg_get_step1(run_arg));
@@ -707,17 +701,16 @@ void init_active_runs(const res_config_type *res_config,
                 write_eclipse_data_file(data_file_template, run_arg);
             }
 
-            mode_t umask =
-                site_config_get_umask(res_config_get_site_config(res_config));
-
             // Create the job script
-            const env_varlist_type *varlist = site_config_get_env_varlist(
-                res_config_get_site_config(res_config));
+            const site_config_type *site_config =
+                res_config_get_site_config(res_config);
             forward_model_formatted_fprintf(
                 model_config_get_forward_model(model_config),
                 run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
                 model_config_get_data_root(model_config),
-                run_arg_get_subst_list(run_arg), umask, varlist);
+                run_arg_get_subst_list(run_arg),
+                site_config_get_umask(site_config),
+                site_config_get_env_varlist(site_config));
         }
     }
 }
