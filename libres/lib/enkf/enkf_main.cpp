@@ -256,10 +256,6 @@ ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
         enkf_main_get_data_kw(enkf_main), iter);
 }
 
-/**
-   There is NO tagging anymore - if the user wants tags - the user
-   supplies the key __WITH__ tags.
-*/
 void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
                            const char *value) {
     subst_config_add_subst_kw(enkf_main_get_subst_config(enkf_main), key,
