@@ -228,23 +228,6 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-void enkf_main_write_run_path(enkf_main_type *enkf_main,
-                              const ert_run_context_type *run_context) {
-    runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);
-    runpath_list_clear(runpath_list);
-    for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
-        if (ert_run_context_iactive(run_context, iens)) {
-            run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
-            runpath_list_add(runpath_list, run_arg_get_iens(run_arg),
-                             run_arg_get_iter(run_arg),
-                             run_arg_get_runpath(run_arg),
-                             run_arg_get_job_name(run_arg));
-            enkf_state_init_eclipse(enkf_main->res_config, run_arg);
-        }
-    }
-    runpath_list_fprintf(runpath_list);
-}
-
 ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
     const enkf_main_type *enkf_main, enkf_fs_type *fs,
     bool_vector_type *iactive, int iter) {
@@ -605,6 +588,119 @@ int load_from_forward_model_with_fs_pybind(py::object self, int iter,
     auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
     return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive_,
                                                      fs_);
+}
+
+/**
+  This function writes out all the files needed by an ECLIPSE simulation, this
+  includes the restart file, and the various INCLUDE files corresponding to
+  parameters estimated by EnKF.
+
+  The writing of restart file is delegated to enkf_state_write_restart_file().
+
+  TODO: enkf_fs_type could be fetched from run_arg
+*/
+void enkf_state_ecl_write(const ensemble_config_type *ens_config,
+                          const model_config_type *model_config,
+                          const run_arg_type *run_arg, enkf_fs_type *fs) {
+    /*
+     This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
+
+     -----------------------------------------------------------------------------------------
+     T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
+     -----------------------------------------------------------------------------------------
+  */
+    int iens = run_arg_get_iens(run_arg);
+    const char *base_name = model_config_get_gen_kw_export_name(model_config);
+    value_export_type *export_value =
+        value_export_alloc(run_arg_get_runpath(run_arg), base_name);
+
+    std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
+        ens_config, PARAMETER + EXT_PARAMETER);
+    for (auto &key : key_list) {
+        enkf_config_node_type *config_node =
+            ensemble_config_get_node(ens_config, key.c_str());
+        enkf_node_type *enkf_node = enkf_node_alloc(config_node);
+        bool forward_init = enkf_node_use_forward_init(enkf_node);
+        node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
+                                .iens = iens};
+
+        if ((run_arg_get_step1(run_arg) == 0) && (forward_init)) {
+
+            if (enkf_node_has_data(enkf_node, fs, node_id))
+                enkf_node_load(enkf_node, fs, node_id);
+            else
+                continue;
+        } else
+            enkf_node_load(enkf_node, fs, node_id);
+
+        enkf_node_ecl_write(enkf_node, run_arg_get_runpath(run_arg),
+                            export_value, run_arg_get_step1(run_arg));
+        enkf_node_free(enkf_node);
+    }
+    value_export(export_value);
+
+    value_export_free(export_value);
+}
+
+void enkf_state_init_eclipse(const res_config_type *res_config,
+                             const run_arg_type *run_arg) {
+
+    ensemble_config_type *ens_config =
+        res_config_get_ensemble_config(res_config);
+    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
+    model_config_type *model_config = res_config_get_model_config(res_config);
+
+    util_make_path(run_arg_get_runpath(run_arg));
+
+    ert_templates_instansiate(res_config_get_templates(res_config),
+                              run_arg_get_runpath(run_arg),
+                              run_arg_get_subst_list(run_arg));
+
+    enkf_state_ecl_write(ens_config, model_config, run_arg,
+                         run_arg_get_sim_fs(run_arg));
+
+    /* Writing the ECLIPSE data file. */
+    if (ecl_config_have_eclbase(ecl_config) &&
+        ecl_config_get_data_file(ecl_config)) {
+        char *data_file = ecl_util_alloc_filename(run_arg_get_runpath(run_arg),
+                                                  run_arg_get_job_name(run_arg),
+                                                  ECL_DATA_FILE, true, -1);
+
+        subst_list_update_string(run_arg_get_subst_list(run_arg), &data_file);
+        subst_list_filter_file(run_arg_get_subst_list(run_arg),
+                               ecl_config_get_data_file(ecl_config), data_file);
+
+        free(data_file);
+    }
+
+    mode_t umask =
+        site_config_get_umask(res_config_get_site_config(res_config));
+
+    /* This is where the job script is created */
+    const env_varlist_type *varlist =
+        site_config_get_env_varlist(res_config_get_site_config(res_config));
+    forward_model_formatted_fprintf(
+        model_config_get_forward_model(model_config),
+        run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
+        model_config_get_data_root(model_config),
+        run_arg_get_subst_list(run_arg), umask, varlist);
+}
+
+void enkf_main_write_run_path(enkf_main_type *enkf_main,
+                              const ert_run_context_type *run_context) {
+    runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);
+    runpath_list_clear(runpath_list);
+    for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
+        if (ert_run_context_iactive(run_context, iens)) {
+            run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
+            runpath_list_add(runpath_list, run_arg_get_iens(run_arg),
+                             run_arg_get_iter(run_arg),
+                             run_arg_get_runpath(run_arg),
+                             run_arg_get_job_name(run_arg));
+            enkf_state_init_eclipse(enkf_main->res_config, run_arg);
+        }
+    }
+    runpath_list_fprintf(runpath_list);
 }
 
 RES_LIB_SUBMODULE("enkf_main", m) {
