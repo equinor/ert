@@ -46,8 +46,6 @@ extern "C" void gen_kw_data_set(gen_kw_type *, const char *, double);
 extern "C" PY_USED bool gen_kw_data_has_key(gen_kw_type *, const char *);
 extern "C" const char *gen_kw_get_name(const gen_kw_type *, int);
 void gen_kw_filter_file(const gen_kw_type *, const char *);
-extern "C" void gen_kw_ecl_write_template(const gen_kw_type *gen_kw,
-                                          const char *file_name);
 
 UTIL_SAFE_CAST_HEADER(gen_kw);
 UTIL_SAFE_CAST_HEADER_CONST(gen_kw);
