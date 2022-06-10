@@ -3,10 +3,8 @@ from enum import Enum
 from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.responses import Response, RedirectResponse
-from starlette.graphql import GraphQLApp
 
 from ert_storage.endpoints import router as endpoints_router
-from ert_storage.graphql import router as graphql_router
 from ert_storage.exceptions import ErtStorageError
 
 from sqlalchemy.orm.exc import NoResultFound
@@ -103,4 +101,3 @@ async def healthcheck() -> str:
 
 
 app.include_router(endpoints_router)
-app.include_router(graphql_router)

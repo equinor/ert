@@ -4,14 +4,12 @@ from typing import (
     Any,
     AsyncGenerator,
     Generator,
-    Mapping,
-    MutableMapping,
     Optional,
     TYPE_CHECKING,
     Tuple,
     Union,
 )
-from pprint import pformat
+
 from contextlib import contextmanager
 from fastapi import Depends
 from sqlalchemy.orm.session import Session
@@ -20,25 +18,10 @@ from starlette.testclient import (
     TestClient as StarletteTestClient,
     ASGI2App,
     ASGI3App,
-    Cookies,
-    Params,
-    DataType,
-    TimeOut,
-    FileType,
 )
 from sqlalchemy.orm import sessionmaker
-from graphene import Schema as GrapheneSchema
-from graphene.test import Client as GrapheneClient
 
 from ert_storage.security import security
-
-
-if TYPE_CHECKING:
-    from promise import Promise
-    from rx import Observable
-    from graphql.execution import ExecutionResult
-
-    GraphQLResult = Union[ExecutionResult, Observable, Promise[ExecutionResult]]
 
 
 class ClientError(RuntimeError):
@@ -52,7 +35,6 @@ class _TestClient:
         self,
         app: Union[ASGI2App, ASGI3App],
         session: sessionmaker,
-        gql_schema: GrapheneSchema,
         base_url: str = "http://testserver",
         raise_server_exceptions: bool = True,
         root_path: str = "",
@@ -61,7 +43,6 @@ class _TestClient:
         self.http_client = StarletteTestClient(
             app, base_url, raise_server_exceptions, root_path
         )
-        self.gql_client = GrapheneClient(gql_schema)
         self.session = session
 
     def get(
@@ -126,18 +107,6 @@ class _TestClient:
         self._check(check_status_code, resp)
         return resp
 
-    def gql_execute(
-        self,
-        request_string: str,
-        variable_values: Optional[Mapping[str, Any]] = None,
-        check: bool = True,
-    ) -> dict:
-        doc = self.gql_client.execute(request_string, variable_values=variable_values)
-        if self.raise_on_client_error and check and "errors" in doc:
-            raise ClientError(f"GraphQL query returned an error:\n{pformat(doc)}")
-
-        return doc
-
     def _check(
         self, check_status_code: Optional[int], response: requests.Response
     ) -> None:
@@ -176,14 +145,11 @@ def testclient_factory() -> Generator[_TestClient, None, None]:
         rollback = True
 
     from ert_storage.app import app
-    from ert_storage.graphql import schema
 
     session, transaction, connection = _begin_transaction()
-    schema.override_session = session
 
-    yield _TestClient(app, session=session, gql_schema=schema)
+    yield _TestClient(app, session=session)
 
-    schema.override_session = None
     _end_transaction(transaction, connection, rollback)
 
     if env_unset:

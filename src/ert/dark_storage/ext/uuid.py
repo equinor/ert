@@ -6,11 +6,6 @@ from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.engine import Dialect
 from sqlalchemy.types import TypeDecorator, CHAR
 
-import graphene
-from graphene import UUID as GrapheneUUID
-from graphene_sqlalchemy.converter import convert_sqlalchemy_type
-from graphene_sqlalchemy.registry import Registry
-
 
 class UUID(TypeDecorator):
     """Platform-independent UUID type.
@@ -47,10 +42,3 @@ class UUID(TypeDecorator):
             if not isinstance(value, SystemUUID):
                 value = SystemUUID(value)
             return value
-
-
-@convert_sqlalchemy_type.register(UUID)
-def convert_column_to_uuid(
-    type: UUID, column: sa.Column, registry: Optional[Registry] = None
-) -> graphene.types.structures.Structure:
-    return GrapheneUUID
