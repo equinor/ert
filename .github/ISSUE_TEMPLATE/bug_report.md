@@ -10,22 +10,22 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+**To reproduce**
+Steps to reproduce the behaviour:
 1. `pip install ert`
 2. `ert gui my_config.ert`
 3. Run experiment (IES/Smoother/ESMDA/Test)
 4. …
 
-**Expected behavior**
+**Expected behaviour**
 A clear and concise description of what you expected to happen.
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Enviromment**
+**Environment**
  - OS: [e.g. RHEL7]
- - ERT/Komodo Release: [e.g. 2.18 or 2020.12.00]
+ - ERT/Komodo release: [e.g. 2.18 or 2020.12.00]
  - Python version
  - Remote/HPC execution involved: [yes|no]
 
