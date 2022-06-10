@@ -1,3 +1,4 @@
+import logging
 import random
 import socket
 from typing import Optional, Tuple
@@ -13,6 +14,9 @@ class NoPortsInRangeException(Exception):
 
 class InvalidHostException(Exception):
     pass
+
+
+logger = logging.getLogger(__name__)
 
 
 def find_available_port(
@@ -134,7 +138,19 @@ def get_family(host: str) -> socket.AddressFamily:
         return socket.AF_INET
 
 
+# See https://stackoverflow.com/a/28950776
 def _get_ip_address() -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    return s.getsockname()[0]
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        # try pinging a reserved, internal address in order
+        # to determine IP representing the default route
+        s.connect(("10.255.255.255", 1))
+        retval = s.getsockname()[0]
+    except BaseException:  # pylint: disable=broad-except
+        logger.warning("Cannot determine ip-address. Fallback to localhost...")
+        retval = "127.0.0.1"
+    finally:
+        s.close()
+    logger.debug(f"ip-address: {retval}")
+    return retval
