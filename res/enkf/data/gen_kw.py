@@ -18,7 +18,6 @@ import os.path
 
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
-
 from res import ResPrototype
 from res.enkf.config import GenKwConfig
 
@@ -28,7 +27,6 @@ class GenKw(BaseCClass):
     _alloc = ResPrototype("void*  gen_kw_alloc(gen_kw_config)", bind=False)
     _free = ResPrototype("void   gen_kw_free(gen_kw_config)")
     _export_parameters = ResPrototype("void   gen_kw_write_export_file(gen_kw , char*)")
-    _export_template = ResPrototype("void   gen_kw_ecl_write_template(gen_kw , char* )")
     _data_iget = ResPrototype("double gen_kw_data_iget(gen_kw, int, bool)")
     _data_iset = ResPrototype("void   gen_kw_data_iset(gen_kw, int, double)")
     _set_values = ResPrototype("void   gen_kw_data_set_vector(gen_kw, double_vector)")
@@ -60,10 +58,6 @@ class GenKw(BaseCClass):
     def exportParameters(self, file_name):
         """@type: str"""
         self._export_parameters(file_name)
-
-    def exportTemplate(self, file_name):
-        """@type: str"""
-        self._export_template(file_name)
 
     def __getitem__(self, key):
         """

@@ -264,11 +264,6 @@ void gen_kw_write_export_file(const gen_kw_type *gen_kw, const char *filename) {
     value_export_free(export_value);
 }
 
-void gen_kw_ecl_write_template(const gen_kw_type *gen_kw,
-                               const char *file_name) {
-    gen_kw_filter_file(gen_kw, file_name);
-}
-
 void gen_kw_ecl_write(const gen_kw_type *gen_kw, const char *run_path,
                       const char *base_file, value_export_type *export_value) {
     char *target_file;
