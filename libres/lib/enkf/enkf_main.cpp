@@ -106,7 +106,6 @@ struct enkf_main_struct {
 
 void enkf_main_init_internalization(enkf_main_type *);
 static void enkf_main_close_fs(enkf_main_type *enkf_main);
-static void enkf_main_init_fs(enkf_main_type *enkf_main);
 static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main);
 static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 
@@ -265,14 +264,12 @@ void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
 static enkf_main_type *enkf_main_alloc_empty() {
     enkf_main_type *enkf_main = new enkf_main_type;
     UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
-    enkf_main->ensemble = NULL;
+    enkf_main->dbase = NULL, enkf_main->ensemble = NULL;
     enkf_main->rng_manager = NULL;
     enkf_main->shared_rng = NULL;
     enkf_main->ens_size = 0;
     enkf_main->res_config = NULL;
     enkf_main->obs = NULL;
-
-    enkf_main_init_fs(enkf_main);
 
     return enkf_main;
 }
