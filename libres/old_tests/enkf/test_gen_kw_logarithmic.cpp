@@ -27,6 +27,13 @@
 
 namespace fs = std::filesystem;
 
+namespace enkf_main {
+void ecl_write(const ensemble_config_type *ens_config,
+               const char *export_base_name, const run_arg_type *run_arg,
+               enkf_fs_type *fs);
+
+} // namespace enkf_main
+
 void verify_parameters_txt() {
     int buffer_size = 0;
     char *file_content = util_fread_alloc_file_content(
@@ -85,9 +92,10 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
             subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
         run_arg_type *run_arg = run_arg_alloc_INIT_ONLY(
             "run_id", init_fs, 0, 0, "simulations/run0", subst_list);
-        enkf_state_ecl_write(enkf_main_get_ensemble_config(enkf_main),
-                             enkf_main_get_model_config(enkf_main), run_arg,
-                             init_fs);
+        enkf_main::ecl_write(enkf_main_get_ensemble_config(enkf_main),
+                             model_config_get_gen_kw_export_name(
+                                 enkf_main_get_model_config(enkf_main)),
+                             run_arg, init_fs);
         test_assert_true(fs::exists("simulations/run0/parameters.txt"));
         run_arg_free(run_arg);
     }
