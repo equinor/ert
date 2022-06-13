@@ -27,15 +27,6 @@
 
 namespace fs = std::filesystem;
 
-/**
-  This small function is here only to make sure that the main
-  enkf_main.c file does not contain any explicit mention of the
-  dbase member.
-*/
-static void enkf_main_init_fs(enkf_main_type *enkf_main) {
-    enkf_main->dbase = NULL;
-}
-
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path) {
     char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
