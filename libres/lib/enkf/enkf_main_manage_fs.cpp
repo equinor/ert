@@ -317,7 +317,7 @@ static void enkf_main_create_fs(const enkf_main_type *enkf_main,
                                 const char *case_path) {
     char *new_mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
 
-    enkf_fs_create_fs(new_mount_point, BLOCK_FS_DRIVER_ID, NULL, false);
+    enkf_fs_create_fs(new_mount_point, BLOCK_FS_DRIVER_ID, false);
 
     free(new_mount_point);
 }

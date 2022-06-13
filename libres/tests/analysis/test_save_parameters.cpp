@@ -51,8 +51,8 @@ TEST_CASE("Write and read a matrix to enkf_fs instance",
         WITH_TMPDIR;
         // create file system
         auto file_path = std::filesystem::current_path();
-        auto fs = enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, NULL,
-                                    true);
+        auto fs =
+            enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, true);
 
         auto ensemble_config = ensemble_config_alloc_full("name-not-important");
         int ensemble_size = 10;
@@ -118,8 +118,8 @@ TEST_CASE("Reading and writing matrices with rowscaling attached",
         WITH_TMPDIR;
         // create file system
         auto file_path = std::filesystem::current_path();
-        auto fs = enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, NULL,
-                                    true);
+        auto fs =
+            enkf_fs_create_fs(file_path.c_str(), BLOCK_FS_DRIVER_ID, true);
 
         auto ensemble_config = ensemble_config_alloc_full("name-not-important");
         int ensemble_size = 10;

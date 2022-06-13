@@ -303,7 +303,7 @@ void enkf_fs_init_path_fmt(enkf_fs_type *fs) {
 }
 
 static void enkf_fs_create_block_fs(FILE *stream, int num_drivers,
-                                    const char *mount_point, void *arg) {
+                                    const char *mount_point) {
 
     block_fs_driver_create_fs(stream, mount_point, DRIVER_PARAMETER,
                               num_drivers, "Ensemble/mod_%d", "PARAMETER");
@@ -361,8 +361,7 @@ static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
 }
 
 enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
-                                fs_driver_impl driver_id, void *arg,
-                                bool mount) {
+                                fs_driver_impl driver_id, bool mount) {
     /*
 	 * NOTE: This value is the (maximum) number of concurrent files
 	 * used by ert::block_fs_driver -objects. These objects will
@@ -378,7 +377,7 @@ enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
         {
             switch (driver_id) {
             case (BLOCK_FS_DRIVER_ID):
-                enkf_fs_create_block_fs(stream, num_drivers, mount_point, arg);
+                enkf_fs_create_block_fs(stream, num_drivers, mount_point);
                 break;
             default:
                 util_abort("%s: Invalid driver_id value:%d \n", __func__,
