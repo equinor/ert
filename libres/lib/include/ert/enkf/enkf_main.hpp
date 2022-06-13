@@ -88,8 +88,6 @@ extern "C" void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                            const char *user_key, int obs_count,
                                            time_t *obs_time, double *y,
                                            double *std);
-extern "C" int enkf_main_get_observation_count(const enkf_main_type *enkf_main,
-                                               const char *user_key);
 
 void enkf_main_install_SIGNALS(void);
 

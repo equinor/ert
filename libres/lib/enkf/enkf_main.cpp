@@ -387,13 +387,6 @@ void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                      obs_time, y, std);
 }
 
-int enkf_main_get_observation_count(const enkf_main_type *enkf_main,
-                                    const char *user_key) {
-    return ensemble_config_get_observations(
-        enkf_main_get_ensemble_config(enkf_main), enkf_main->obs, user_key, 0,
-        NULL, NULL, NULL);
-}
-
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
 
 ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
