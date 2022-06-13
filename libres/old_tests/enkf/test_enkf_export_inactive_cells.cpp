@@ -25,9 +25,15 @@
 
 #include <ert/enkf/field.hpp>
 
-void enkf_main_write_run_path(enkf_main_type *enkf_main,
-                              const ert_run_context_type *run_context);
 void enkf_main_init_internalization(enkf_main_type *);
+
+namespace enkf_main {
+void init_active_runs(const res_config_type *res_config,
+                      const ert_run_context_type *run_context);
+
+void reset_run_path(runpath_list_type *runpath_list,
+                    const ert_run_context_type *run_context);
+} // namespace enkf_main
 
 void check_exported_data(const char *exported_file, const char *init_file,
                          field_file_format_type file_type,
@@ -130,7 +136,10 @@ void forward_initialize_node(enkf_main_type *enkf_main, const char *init_file,
 
         enkf_main_init_internalization(enkf_main);
 
-        enkf_main_write_run_path(enkf_main, run_context);
+        auto runpath_list = enkf_main_get_runpath_list(enkf_main);
+        enkf_main::reset_run_path(runpath_list, run_context);
+        enkf_main::init_active_runs(enkf_main_get_res_config(enkf_main),
+                                    run_context);
         bool_vector_free(iactive);
         ert_run_context_free(run_context);
     }

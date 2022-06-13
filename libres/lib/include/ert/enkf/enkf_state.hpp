@@ -56,9 +56,6 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
 fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
                                                   run_arg_type *run_arg);
 
-void enkf_state_init_eclipse(const res_config_type *res_config,
-                             const run_arg_type *run_arg);
-
 enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
                                   ensemble_config_type *,
                                   const site_config_type *,
@@ -67,9 +64,6 @@ enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
 
 void enkf_state_add_node(enkf_state_type *, const char *,
                          const enkf_config_node_type *);
-void enkf_state_ecl_write(const ensemble_config_type *ens_config,
-                          const model_config_type *model_config,
-                          const run_arg_type *run_arg, enkf_fs_type *fs);
 extern "C" void enkf_state_free(enkf_state_type *);
 
 extern "C" bool
