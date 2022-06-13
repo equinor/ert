@@ -587,27 +587,50 @@ int load_from_forward_model_with_fs_pybind(py::object self, int iter,
                                                      fs_);
 }
 
+namespace enkf_main {
+
+/** @brief Writes the eclipse data file
+ *
+ *  Substitutes the parameters of the templated ECL_DATA_FILE
+ *  and writes it to the runpath.
+ *
+ * @param data_file_template The template for the data file.
+ * @param run_arg Contains the information about the given run.
+ */
+void write_eclipse_data_file(const char *data_file_template,
+                             const run_arg_type *run_arg) {
+    char *data_file = ecl_util_alloc_filename(run_arg_get_runpath(run_arg),
+                                              run_arg_get_job_name(run_arg),
+                                              ECL_DATA_FILE, true, -1);
+    auto subst_list = run_arg_get_subst_list(run_arg);
+
+    //Perform substitutions on the data file destination path
+    subst_list_update_string(subst_list, &data_file);
+
+    //Perform substitutions on the data file template contents
+    subst_list_filter_file(subst_list, data_file_template, data_file);
+
+    free(data_file);
+}
+
 /**
-  This function writes out all the files needed by an ECLIPSE simulation, this
-  includes the restart file, and the various INCLUDE files corresponding to
-  parameters estimated by EnKF.
+  @brief Substitutes the sampled parameters into the runpath.
 
-  The writing of restart file is delegated to enkf_state_write_restart_file().
+  Handles the substitution of all sampled parameter values into parameter
+  templates. E.g. for configs including `GEN_KW key template_file target_file`,
+  sampled values are gotten from fs, replaced in the contents of template_file
+  and written to target_file in the runpath.
 
-  TODO: enkf_fs_type could be fetched from run_arg
+  @param ens_config Where to find the nodes (e.g. `GEN_KW key template_file
+    target_file` definition).
+  @param base_name The base name of the value_export file (e.g. if
+    "parameters", value export file will e.g. be "parameters.json")
+  @param run_arg The run_arg containing the run_path to write the target file in.
+  @param fs The enkf_fs to load sampled parameters from
 */
-void enkf_state_ecl_write(const ensemble_config_type *ens_config,
-                          const model_config_type *model_config,
-                          const run_arg_type *run_arg, enkf_fs_type *fs) {
-    /*
-     This iteration manipulates the hash (thorugh the enkf_state_del_node() call)
-
-     -----------------------------------------------------------------------------------------
-     T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
-     -----------------------------------------------------------------------------------------
-  */
+void ecl_write(const ensemble_config_type *ens_config, const char *base_name,
+               const run_arg_type *run_arg, enkf_fs_type *fs) {
     int iens = run_arg_get_iens(run_arg);
-    const char *base_name = model_config_get_gen_kw_export_name(model_config);
     value_export_type *export_value =
         value_export_alloc(run_arg_get_runpath(run_arg), base_name);
 
@@ -639,53 +662,68 @@ void enkf_state_ecl_write(const ensemble_config_type *ens_config,
     value_export_free(export_value);
 }
 
-void enkf_state_init_eclipse(const res_config_type *res_config,
-                             const run_arg_type *run_arg) {
+/**
+ * @brief Initializes all active runs.
+ *
+ * For each active run:
+ *  * Instantiate res_config_templates which substitutes arg_list from the template
+ *      and from run_arg into each template and writes it to runpath;
+ *  * substitutes sampled parameters into the parameter nodes and write to runpath;
+ *  * substitutes DATAKW into the eclipse data file template and write it to runpath;
+ *  * write the job script.
+ *
+ * @param res_config The config to use for initialization.
+ * @param run_context Contains all the runs.
+ */
+void init_active_runs(const res_config_type *res_config,
+                      const ert_run_context_type *run_context) {
+    for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
+        if (ert_run_context_iactive(run_context, iens)) {
+            run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
+            util_make_path(run_arg_get_runpath(run_arg));
 
-    ensemble_config_type *ens_config =
-        res_config_get_ensemble_config(res_config);
-    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
-    model_config_type *model_config = res_config_get_model_config(res_config);
+            model_config_type *model_config =
+                res_config_get_model_config(res_config);
+            ensemble_config_type *ens_config =
+                res_config_get_ensemble_config(res_config);
 
-    util_make_path(run_arg_get_runpath(run_arg));
+            ert_templates_instansiate(res_config_get_templates(res_config),
+                                      run_arg_get_runpath(run_arg),
+                                      run_arg_get_subst_list(run_arg));
 
-    ert_templates_instansiate(res_config_get_templates(res_config),
-                              run_arg_get_runpath(run_arg),
-                              run_arg_get_subst_list(run_arg));
+            ecl_write(ens_config,
+                      model_config_get_gen_kw_export_name(model_config),
+                      run_arg, run_arg_get_sim_fs(run_arg));
 
-    enkf_state_ecl_write(ens_config, model_config, run_arg,
-                         run_arg_get_sim_fs(run_arg));
+            // Create the eclipse data file (if eclbase and DATA_FILE)
+            const ecl_config_type *ecl_config =
+                res_config_get_ecl_config(res_config);
+            const char *data_file_template =
+                ecl_config_get_data_file(ecl_config);
+            if (ecl_config_have_eclbase(ecl_config) && data_file_template) {
+                write_eclipse_data_file(data_file_template, run_arg);
+            }
 
-    /* Writing the ECLIPSE data file. */
-    if (ecl_config_have_eclbase(ecl_config) &&
-        ecl_config_get_data_file(ecl_config)) {
-        char *data_file = ecl_util_alloc_filename(run_arg_get_runpath(run_arg),
-                                                  run_arg_get_job_name(run_arg),
-                                                  ECL_DATA_FILE, true, -1);
+            mode_t umask =
+                site_config_get_umask(res_config_get_site_config(res_config));
 
-        subst_list_update_string(run_arg_get_subst_list(run_arg), &data_file);
-        subst_list_filter_file(run_arg_get_subst_list(run_arg),
-                               ecl_config_get_data_file(ecl_config), data_file);
-
-        free(data_file);
+            // Create the job script
+            const env_varlist_type *varlist = site_config_get_env_varlist(
+                res_config_get_site_config(res_config));
+            forward_model_formatted_fprintf(
+                model_config_get_forward_model(model_config),
+                run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
+                model_config_get_data_root(model_config),
+                run_arg_get_subst_list(run_arg), umask, varlist);
+        }
     }
-
-    mode_t umask =
-        site_config_get_umask(res_config_get_site_config(res_config));
-
-    /* This is where the job script is created */
-    const env_varlist_type *varlist =
-        site_config_get_env_varlist(res_config_get_site_config(res_config));
-    forward_model_formatted_fprintf(
-        model_config_get_forward_model(model_config),
-        run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
-        model_config_get_data_root(model_config),
-        run_arg_get_subst_list(run_arg), umask, varlist);
 }
 
-void enkf_main_write_run_path(enkf_main_type *enkf_main,
-                              const ert_run_context_type *run_context) {
-    runpath_list_type *runpath_list = enkf_main_get_runpath_list(enkf_main);
+/**
+ * @brief clears runpath_list and adds all active runs to it.
+ */
+void reset_run_path(runpath_list_type *runpath_list,
+                    const ert_run_context_type *run_context) {
     runpath_list_clear(runpath_list);
     for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
         if (ert_run_context_iactive(run_context, iens)) {
@@ -694,11 +732,10 @@ void enkf_main_write_run_path(enkf_main_type *enkf_main,
                              run_arg_get_iter(run_arg),
                              run_arg_get_runpath(run_arg),
                              run_arg_get_job_name(run_arg));
-            enkf_state_init_eclipse(enkf_main->res_config, run_arg);
         }
     }
-    runpath_list_fprintf(runpath_list);
 }
+} // namespace enkf_main
 
 RES_LIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
@@ -717,7 +754,11 @@ RES_LIB_SUBMODULE("enkf_main", m) {
             auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
             auto run_context =
                 ert::from_cwrap<ert_run_context_type>(run_context_py);
-            return enkf_main_write_run_path(enkf_main, run_context);
+            auto runpath_list = enkf_main_get_runpath_list(enkf_main);
+            enkf_main::reset_run_path(runpath_list, run_context);
+
+            enkf_main::init_active_runs(enkf_main->res_config, run_context);
+            runpath_list_fprintf(runpath_list);
         },
         py::arg("self"), py::arg("run_context"));
     m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
