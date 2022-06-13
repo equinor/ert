@@ -255,41 +255,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     return fs;
 }
 
-static int enkf_fs_fread_fs_version__(FILE *stream) {
-    int version;
-    long fs_tag = util_fread_long(stream);
-    if (fs_tag == FS_MAGIC_ID)
-        version = util_fread_int(stream);
-    else
-        version = 0;
-    return version;
-}
-
-/**
-   -1 : No mount map found.
-   0  : Old mount map without version info.
-   x  : Actual version info.
-*/
-static int enkf_fs_get_fs_version__(const char *config_file) {
-    int version = -1;
-    if (fs::exists(config_file)) {
-        FILE *stream = util_fopen(config_file, "r");
-        version = enkf_fs_fread_fs_version__(stream);
-        fclose(stream);
-    }
-    return version;
-}
-
-/**
-   Function written to look for old (version <= 104) mount info maps.
-*/
-int enkf_fs_get_version104(const char *path) {
-    char *config_file = util_alloc_filename(path, ENKF_MOUNT_MAP, NULL);
-    int version = enkf_fs_get_fs_version__(config_file);
-    free(config_file);
-    return version;
-}
-
 void enkf_fs_init_path_fmt(enkf_fs_type *fs) {
     /*
     Installing the path_fmt instances for the storage of arbitrary files.
