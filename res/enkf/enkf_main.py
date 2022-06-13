@@ -238,9 +238,6 @@ class _RealEnKFMain(BaseCClass):
                                          double*, \
                                          double*)"
     )
-    _get_observation_count = ResPrototype(
-        "int enkf_main_get_observation_count(enkf_main, char*)"
-    )
     _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
     _get_workflow_list = ResPrototype(
         "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
@@ -363,9 +360,6 @@ class _RealEnKFMain(BaseCClass):
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)
-
-    def get_observation_count(self, user_key):
-        return self._get_observation_count(user_key)
 
     def getKeyManager(self):
         """:rtype: KeyManager"""
