@@ -21,9 +21,14 @@
 #include <ert/enkf/ert_test_context.hpp>
 #include <ert/util/test_util.h>
 
-void enkf_main_write_run_path(enkf_main_type *enkf_main,
-                              const ert_run_context_type *run_context);
 void enkf_main_init_internalization(enkf_main_type *);
+namespace enkf_main {
+void init_active_runs(const res_config_type *res_config,
+                      const ert_run_context_type *run_context);
+
+void reset_run_path(runpath_list_type *runpath_list,
+                    const ert_run_context_type *run_context);
+} // namespace enkf_main
 
 int main(int argc, char **argv) {
     enkf_main_install_SIGNALS();
@@ -44,7 +49,10 @@ int main(int argc, char **argv) {
             fs, INIT_CONDITIONAL, iactive, runpath_fmt, subst_list, 0);
 
         enkf_main_init_internalization(enkf_main);
-        enkf_main_write_run_path(enkf_main, run_context);
+        auto runpath_list = enkf_main_get_runpath_list(enkf_main);
+        enkf_main::reset_run_path(runpath_list, run_context);
+        enkf_main::init_active_runs(enkf_main_get_res_config(enkf_main),
+                                    run_context);
         ert_run_context_free(run_context);
         bool_vector_free(iactive);
     }
