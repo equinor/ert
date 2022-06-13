@@ -77,7 +77,7 @@ void test_mount() {
     ecl::util::TestArea ta("mount");
 
     test_assert_false(enkf_fs_exists("mnt"));
-    test_assert_NULL(enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false));
+    test_assert_NULL(enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false));
     test_assert_true(enkf_fs_exists("mnt"));
     {
         enkf_fs_type *fs = enkf_fs_mount("mnt");
@@ -87,8 +87,7 @@ void test_mount() {
         test_assert_false(fs::exists("mnt/mnt.lock"));
     }
     {
-        enkf_fs_type *fs =
-            enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, NULL, true);
+        enkf_fs_type *fs = enkf_fs_create_fs("mnt2", BLOCK_FS_DRIVER_ID, true);
         test_assert_true(enkf_fs_is_instance(fs));
         enkf_fs_decref(fs);
     }
@@ -96,7 +95,7 @@ void test_mount() {
 
 void test_refcount() {
     ecl::util::TestArea ta("ref_count");
-    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false);
+    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false);
     {
         enkf_fs_type *fs = enkf_fs_mount("mnt");
         test_assert_int_equal(1, enkf_fs_get_refcount(fs));
@@ -159,7 +158,7 @@ void test_read_only2() {
     initialise_shared();
     {
         ecl::util::TestArea ta("ro2");
-        enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, NULL, false);
+        enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false);
         pthread_mutex_lock(&data->mutex2);
         createFS();
         pthread_mutex_lock(&data->mutex1);

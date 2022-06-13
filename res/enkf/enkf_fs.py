@@ -40,7 +40,7 @@ class EnkfFs(BaseCClass):
     _is_running = ResPrototype("bool  enkf_fs_is_running(enkf_fs)")
     _fsync = ResPrototype("void  enkf_fs_fsync(enkf_fs)")
     _create = ResPrototype(
-        "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum , void* , bool)",
+        "enkf_fs_obj   enkf_fs_create_fs(char* , enkf_fs_type_enum , bool)",
         bind=False,
     )
     _get_time_map = ResPrototype("time_map_ref  enkf_fs_get_time_map(enkf_fs)")
@@ -108,8 +108,7 @@ class EnkfFs(BaseCClass):
     def createFileSystem(cls, path, mount=False):
         assert isinstance(path, str)
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        arg = None
-        fs = cls._create(path, fs_type, arg, mount)
+        fs = cls._create(path, fs_type, mount)
         return fs
 
     def sync(self):
