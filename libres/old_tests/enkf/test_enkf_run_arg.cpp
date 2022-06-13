@@ -36,8 +36,7 @@ void call_set_queue_index(void *arg) {
 void test_queue_index() {
     ecl::util::TestArea ta("queue_index");
     {
-        enkf_fs_type *fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, NULL, true);
+        enkf_fs_type *fs = enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
         subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
             "run_id", fs, 0, 6, "path", "base", subst_list);
@@ -75,9 +74,9 @@ void test_SMOOTHER_RUN() {
     ecl::util::TestArea ta("smoother");
     {
         enkf_fs_type *sim_fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, NULL, true);
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
         enkf_fs_type *target_fs =
-            enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, NULL, true);
+            enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, true);
         subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg = run_arg_alloc_SMOOTHER_RUN(
             "run_id", sim_fs, target_fs, 0, 6, "path", "BASE", subst_list);
@@ -95,8 +94,7 @@ void test_SMOOTHER_RUN() {
 void alloc_invalid_run_arg(void *arg) {
     ecl::util::TestArea ta("invalid_run");
     {
-        enkf_fs_type *fs =
-            enkf_fs_create_fs("fs", BLOCK_FS_DRIVER_ID, NULL, true);
+        enkf_fs_type *fs = enkf_fs_create_fs("fs", BLOCK_FS_DRIVER_ID, true);
         subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg =
             run_arg_alloc_SMOOTHER_RUN("run_id", fs, fs, 0, 6, "path", "BASE",
@@ -115,7 +113,7 @@ void test_INIT_ONLY() {
     ecl::util::TestArea ta("INIT");
     {
         enkf_fs_type *init_fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, NULL, true);
+            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
 
         subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg = run_arg_alloc_INIT_ONLY("run_id", init_fs, 0, 6,
@@ -135,8 +133,7 @@ void test_INIT_ONLY() {
 void test_ENSEMBLE_EXPERIMENT() {
     ecl::util::TestArea ta("ens");
     {
-        enkf_fs_type *fs =
-            enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, NULL, true);
+        enkf_fs_type *fs = enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
 
         subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(

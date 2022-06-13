@@ -75,7 +75,7 @@ bool enkf_fs_has_node(enkf_fs_type *enkf_fs, const char *node_key,
                       enkf_var_type var_type, int report_step, int iens);
 
 extern "C" enkf_fs_type *enkf_fs_create_fs(const char *mount_point,
-                                           fs_driver_impl driver_id, void *arg,
+                                           fs_driver_impl driver_id,
                                            bool mount);
 
 char *enkf_fs_alloc_case_filename(const enkf_fs_type *fs,
