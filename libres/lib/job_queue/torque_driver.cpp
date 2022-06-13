@@ -521,8 +521,21 @@ torque_driver_get_qstat_status(torque_driver_type *driver,
         const char **argv = (const char **)util_calloc(1, sizeof *argv);
         argv[0] = jobnr_char;
 
-        util_spawn_blocking(driver->qstat_cmd, 1, (const char **)argv, tmp_file,
-                            NULL);
+        /* The qstat command might fail intermittently for acceptable reasons,
+           retry a couple of times with exponential sleep. ERT pings qstat
+           every second for every realization, thus the initial sleep time
+           is 2 seconds. */
+        int return_value = -1;
+        int sleep_time = 2;                 /* seconds */
+        int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 retries */
+        while ((return_value != 0) & (sleep_time < max_sleep_time)) {
+            return_value = util_spawn_blocking(
+                driver->qstat_cmd, 1, (const char **)argv, tmp_file, NULL);
+            if (return_value != 0) {
+                sleep(sleep_time);
+                sleep_time *= 2;
+            }
+        }
         free(argv);
     }
 
