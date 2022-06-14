@@ -1,9 +1,9 @@
 import os
 import stat
+from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
-from typing import List
-from dataclasses import dataclass
+from typing import Callable, List, TypedDict
 
 import pytest
 
@@ -23,6 +23,15 @@ class RunArg:
     iens: int
 
 
+class Config(TypedDict):
+    job_script: str
+    num_cpu: int
+    job_name: str
+    run_path: str
+    ok_callback: Callable
+    exit_callback: Callable
+
+
 def dummy_ok_callback(args):
     print(f"success {args[1]}")
     (Path(args[1]) / "OK").write_text("success", encoding="utf-8")
@@ -34,7 +43,7 @@ def dummy_exit_callback(args):
     Path("ERROR").write_text("failure", encoding="utf-8")
 
 
-DUMMY_CONFIG = {
+DUMMY_CONFIG: Config = {
     "job_script": "job_script.py",
     "num_cpu": 1,
     "job_name": "dummy_job_{}",
@@ -43,11 +52,12 @@ DUMMY_CONFIG = {
     "exit_callback": dummy_exit_callback,
 }
 
-SIMPLE_SCRIPT = """#!/usr/bin/env python
-with open('STATUS', 'w') as f:
-   f.write('finished successfully')
+SIMPLE_SCRIPT = """#!/bin/sh
+echo "finished successfully" > STATUS
 """
 
+# This script is susceptible to race conditions. Python works
+# better than sh.
 FAILING_SCRIPT = """#!/usr/bin/env python
 import sys
 with open("one_byte_pr_invocation", "a") as f:
@@ -55,10 +65,8 @@ with open("one_byte_pr_invocation", "a") as f:
 sys.exit(1)
 """
 
-MOCK_BSUB = """#!/usr/bin/env python
-import sys
-with open("test.out", "w") as filehandle:
-    filehandle.write(" ".join(sys.argv))
+MOCK_BSUB = """#!/bin/sh
+echo "$@" > test.out
 """
 """A dummy bsub script that instead of submitting a job to an LSF cluster
 writes the arguments it got to a file called test.out, mimicking what
@@ -106,20 +114,21 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir):
 
     script = Path(DUMMY_CONFIG["job_script"])
     script.write_text(SIMPLE_SCRIPT, encoding="utf-8")
-    script.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    script.chmod(stat.S_IRWXU)
 
     bsub = Path("bsub")
     bsub.write_text(MOCK_BSUB, encoding="utf-8")
-    bsub.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    bsub.chmod(stat.S_IRWXU)
 
     job_id = 0
     num_cpus = 4
     os.mkdir(DUMMY_CONFIG["run_path"].format(job_id))
+
     job = JobQueueNode(
         job_script=DUMMY_CONFIG["job_script"],
         job_name=DUMMY_CONFIG["job_name"].format(job_id),
         run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
-        num_cpu=num_cpus,
+        num_cpu=4,
         status_file="STATUS",
         ok_file="OK",
         exit_file="ERROR",

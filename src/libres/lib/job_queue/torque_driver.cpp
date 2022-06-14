@@ -326,6 +326,7 @@ static void torque_debug(const torque_driver_type *driver, const char *fmt,
         }
         fprintf(driver->debug_stream, "\n");
         fsync(fileno(driver->debug_stream));
+        fflush(driver->debug_stream);
     }
 }
 
@@ -434,11 +435,27 @@ static int torque_driver_submit_shell_job(torque_driver_type *driver,
                 torque_debug(driver, "Submit arguments: %s",
                              stringlist_alloc_joined_string(remote_argv, " "));
                 char **argv = stringlist_alloc_char_ref(remote_argv);
-                int status = util_spawn_blocking(
-                    driver->qsub_cmd, stringlist_get_size(remote_argv),
-                    (const char **)argv, tmp_std_file, tmp_err_file);
-                if (status != 0) {
-                    torque_debug_spawn_status_info(driver, status);
+
+                /* The qsub command might fail intermittently for acceptable reasons,
+￼                  retry a couple of times with exponential sleep.  */
+                int return_value = -1;
+                int sleep_time = 2;
+                int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
+                while ((return_value != 0) & (sleep_time < max_sleep_time)) {
+                    return_value = util_spawn_blocking(
+                        driver->qsub_cmd, stringlist_get_size(remote_argv),
+                        (const char **)argv, tmp_std_file, tmp_err_file);
+                    if (return_value != 0) {
+                        torque_debug(
+                            driver,
+                            "qsub failed for job %s, retrying in %d seconds",
+                            job_name, sleep_time);
+                        sleep(sleep_time);
+                        sleep_time *= 2;
+                    }
+                }
+                if (return_value != 0) {
+                    torque_debug_spawn_status_info(driver, return_value);
                 }
                 free(argv);
                 stringlist_free(remote_argv);
@@ -514,26 +531,49 @@ void *torque_driver_submit_job(void *__driver, const char *submit_cmd,
 static job_status_type
 torque_driver_get_qstat_status(torque_driver_type *driver,
                                const char *jobnr_char) {
-    char *tmp_file = (char *)util_alloc_tmp_file("/tmp", "enkf-qstat", true);
+    char *tmp_std_file =
+        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-std", true);
+    char *tmp_err_file =
+        (char *)util_alloc_tmp_file("/tmp", "ert-qstat-err", true);
     job_status_type status = JOB_QUEUE_STATUS_FAILURE;
 
     {
         const char **argv = (const char **)util_calloc(1, sizeof *argv);
         argv[0] = jobnr_char;
 
-        util_spawn_blocking(driver->qstat_cmd, 1, (const char **)argv, tmp_file,
-                            NULL);
+        /* The qstat command might fail intermittently for acceptable reasons,
+           retry a couple of times with exponential sleep. ERT pings qstat
+           every second for every realization, thus the initial sleep time
+           is 2 seconds. */
+        int return_value = -1;
+        int sleep_time = 2;                 /* seconds */
+        int max_sleep_time = 2 * 2 * 2 * 2; /* max 4 attempts */
+        while ((return_value != 0) & (sleep_time < max_sleep_time)) {
+            return_value =
+                util_spawn_blocking(driver->qstat_cmd, 1, (const char **)argv,
+                                    tmp_std_file, tmp_err_file);
+            if (return_value != 0) {
+                torque_debug(driver,
+                             "qstat failed for job %s, retrying in %d seconds",
+                             jobnr_char, sleep_time);
+                sleep(sleep_time);
+                sleep_time *= 2;
+            }
+        }
         free(argv);
     }
 
-    if (fs::exists(tmp_file)) {
-        status = torque_driver_parse_status(tmp_file, jobnr_char);
-        unlink(tmp_file);
+    if (fs::exists(tmp_std_file)) {
+        status = torque_driver_parse_status(tmp_std_file, jobnr_char);
+        unlink(tmp_std_file);
+        unlink(tmp_err_file);
     } else
-        fprintf(stderr, "No such file: %s - reading qstat status failed \n",
-                tmp_file);
-
-    free(tmp_file);
+        fprintf(stderr,
+                "No such file: %s - reading qstat status failed\n"
+                "stderr: %s\n",
+                tmp_std_file, tmp_err_file);
+    free(tmp_std_file);
+    free(tmp_err_file);
 
     return status;
 }
