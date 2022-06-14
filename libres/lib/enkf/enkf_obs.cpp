@@ -21,6 +21,8 @@
 #include <ert/util/type_vector_functions.h>
 #include <ert/util/vector.h>
 
+#include <ert/res_util/string.hpp>
+
 #include <ert/config/conf.hpp>
 
 #include <ert/ecl/ecl_grid.h>
@@ -1140,23 +1142,20 @@ stringlist_type *enkf_obs_alloc_matching_keylist(const enkf_obs_type *enkf_obs,
         return obs_keys;
 
     stringlist_type *matching_keys = stringlist_alloc_new();
-    char **input_keys;
-    int num_keys;
     int obs_keys_count = stringlist_get_size(obs_keys);
 
-    util_split_string(input_string, " ", &num_keys, &input_keys);
-    for (int i = 0; i < num_keys; i++) {
-        const char *input_key = input_keys[i];
-        for (int j = 0; j < obs_keys_count; j++) {
-            const char *obs_key = stringlist_iget(obs_keys, j);
+    ert::split(input_string, ' ',
+               [&obs_keys, &matching_keys, &obs_keys_count](auto input_key) {
+                   for (int j = 0; j < obs_keys_count; j++) {
+                       const char *obs_key = stringlist_iget(obs_keys, j);
 
-            if (util_string_match(obs_key, input_key) &&
-                !stringlist_contains(matching_keys, obs_key))
-                stringlist_append_copy(matching_keys, obs_key);
-        }
-    }
-    util_free_stringlist(input_keys, num_keys);
-    stringlist_free(obs_keys);
+                       if (util_string_match(obs_key,
+                                             std::string(input_key).c_str()) &&
+                           !stringlist_contains(matching_keys, obs_key))
+                           stringlist_append_copy(matching_keys, obs_key);
+                   }
+               });
+
     return matching_keys;
 }
 

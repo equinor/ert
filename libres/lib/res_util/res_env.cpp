@@ -16,15 +16,17 @@
    for more details.
 */
 
+#include <string>
+#include <vector>
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <ert/res_util/res_env.hpp>
+#include <ert/res_util/string.hpp>
 #include <ert/util/buffer.hpp>
 #include <ert/util/util.hpp>
-
-#define PATHVAR_SPLIT ":"
 
 void res_env_unsetenv(const char *variable) { unsetenv(variable); }
 
@@ -37,19 +39,14 @@ void res_env_setenv(const char *variable, const char *value) {
    Will return a NULL terminated list char ** of the paths in the PATH
    variable.
 */
-char **res_env_alloc_PATH_list() {
-    char **path_list = NULL;
+std::vector<std::string> res_env_alloc_PATH_list() {
+    std::vector<std::string> path_list;
     char *path_env = getenv("PATH");
     if (path_env != NULL) {
         int path_size;
 
-        util_split_string(path_env, PATHVAR_SPLIT, &path_size, &path_list);
-        path_list = (char **)util_realloc(path_list,
-                                          (path_size + 1) * sizeof *path_list);
-        path_list[path_size] = NULL;
-    } else {
-        path_list = (char **)util_malloc(sizeof *path_list);
-        path_list[0] = NULL;
+        ert::split(path_env, ':',
+                   [&path_list](auto t) { path_list.emplace_back(t); });
     }
     return path_list;
 }
@@ -87,13 +84,13 @@ char *res_env_alloc_PATH_executable(const char *executable) {
         return path;
     } else {
         char *full_path = NULL;
-        char **path_list = res_env_alloc_PATH_list();
+        auto path_list = res_env_alloc_PATH_list();
         int ipath = 0;
 
         while (true) {
-            if (path_list[ipath] != NULL) {
-                char *current_attempt =
-                    util_alloc_filename(path_list[ipath], executable, NULL);
+            if (!path_list[ipath].empty()) {
+                char *current_attempt = util_alloc_filename(
+                    path_list[ipath].c_str(), executable, NULL);
 
                 if (util_is_file(current_attempt) &&
                     util_is_executable(current_attempt)) {
@@ -106,8 +103,6 @@ char *res_env_alloc_PATH_executable(const char *executable) {
             } else
                 break;
         }
-
-        util_free_NULL_terminated_stringlist(path_list);
         return full_path;
     }
 }
@@ -134,24 +129,23 @@ const char *res_env_update_path_var(const char *variable, const char *value,
     else {
         bool update = true;
 
-        {
-            char **path_list;
-            int num_path;
-            util_split_string(current_value, ":", &num_path, &path_list);
-            if (append) {
-                int i;
-                for (i = 0; i < num_path; i++) {
-                    if (util_string_equal(path_list[i], value))
-                        // The environment variable already contains @value -
-                        // no point in appending it at the end.
-                        update = false;
-                }
-            } else {
-                if (util_string_equal(path_list[0], value))
-                    // The environment variable already starts with @value.
+        std::vector<std::string> path_list;
+
+        ert::split(current_value, ':',
+                   [&path_list](auto t) { path_list.emplace_back(t); });
+
+        if (append) {
+            int i;
+            for (i = 0; i < path_list.size(); i++) {
+                if (path_list[i].compare(value))
+                    // The environment variable already contains @value -
+                    // no point in appending it at the end.
                     update = false;
             }
-            util_free_stringlist(path_list, num_path);
+        } else {
+            if (path_list[0].compare(value))
+                // The environment variable already starts with @value.
+                update = false;
         }
 
         if (update) {
