@@ -66,14 +66,6 @@ static auto logger = ert::get_logger("enkf");
     - report_step : the report_step number we are interested in
     - state       : whether we are considering an analyzed node or a forecast.
 
-  In addition to the functions enkf_fs_fread_node() and enkf_fs_fwrite_node() there
-  are higher level functions enkf_fs_fread_alloc_ensemble() to load an ensemble of
-  nodes and enkf_fs_fread_alloc_ts() to load a time series of nodes. The driver can
-  implement these functions (to get a performance gain when loading many nodes). It
-  is not necessary to implement these functions, the enkf_fs layer has simple
-  functions doing repeated calls to the enkf_fs_fread_node() function.
-
-
   The drivers
   -----------
 
@@ -94,10 +86,10 @@ static auto logger = ert::get_logger("enkf");
   Mounting the filesystem
   -----------------------
 
-  Mounting the filesystem - cool ehh?? Anyway, the important point is
-  that the moment ensemble information has hit the filesystem later
-  versions of the enkf program must support exactly that lay-out,
-  those drivers+++. To ensure this I see two possibilities:
+  The important point is that the moment ensemble information 
+  has hit the filesystem later versions of the enkf program must 
+  support exactly that lay-out, those drivers+++.
+  To ensure this I see two possibilities:
 
     1. We can freeze the filesystem drivers, and the layout on disk
        indefinitely.
