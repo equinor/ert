@@ -87,22 +87,20 @@ char *res_env_alloc_PATH_executable(const char *executable) {
         auto path_list = res_env_alloc_PATH_list();
         int ipath = 0;
 
-        while (true) {
-            if (!path_list[ipath].empty()) {
-                char *current_attempt = util_alloc_filename(
-                    path_list[ipath].c_str(), executable, NULL);
+        for (auto path : path_list) {
+            char *current_attempt =
+                util_alloc_filename(path.c_str(), executable, NULL);
 
-                if (util_is_file(current_attempt) &&
-                    util_is_executable(current_attempt)) {
-                    full_path = current_attempt;
-                    break;
-                } else {
-                    free(current_attempt);
-                    ipath++;
-                }
-            } else
+            if (util_is_file(current_attempt) &&
+                util_is_executable(current_attempt)) {
+                full_path = current_attempt;
                 break;
+            } else {
+                free(current_attempt);
+                ipath++;
+            }
         }
+
         return full_path;
     }
 }
