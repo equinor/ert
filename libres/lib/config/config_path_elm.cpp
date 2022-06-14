@@ -16,12 +16,17 @@
    for more details.
 */
 
+#include <string>
+#include <vector>
+
 #include <stdlib.h>
 
 #include <ert/util/type_macros.hpp>
 
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_root_path.hpp>
+
+#include <fmt/format.h>
 
 #define CONFIG_PATH_ELM_TYPE_ID 7100063
 
@@ -98,18 +103,19 @@ char *config_path_elm_alloc_path(const config_path_elm_type *path_elm,
        status of the root_path. */
         const char *input_root =
             config_root_path_get_input_path(path_elm->root_path);
-        char *tmp_path;
+        std::string tmp_path;
         char *return_path;
         if (input_root == NULL)
             tmp_path = util_alloc_filename(path_elm->rel_path, path, NULL);
         else {
-            const char *str_list[3] = {input_root, path_elm->rel_path, path};
+            const std::vector<std::string> str_list{input_root,
+                                                    path_elm->rel_path, path};
+
             tmp_path =
-                util_alloc_joined_string(str_list, 3, UTIL_PATH_SEP_STRING);
+                fmt::format("{}", fmt::join(str_list, UTIL_PATH_SEP_STRING));
         }
 
-        return_path = util_alloc_normal_path(tmp_path);
-        free(tmp_path);
+        return_path = util_alloc_normal_path(tmp_path.c_str());
 
         return return_path;
     }
