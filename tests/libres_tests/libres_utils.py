@@ -7,6 +7,7 @@ import tempfile
 import threading
 import time
 from functools import partial
+from typing import Any, Callable
 
 import decorator
 import pytest
@@ -94,6 +95,21 @@ def wait_until(func, interval=0.5, timeout=30):
                     f"(function {func.__name__}, timeout {timeout:g}) "
                     "when waiting for assertion."
                 )
+
+
+def wait_for(
+    func: Callable, target: Any = True, interval: float = 0.1, timeout: float = 30
+):
+    """Sleeps (with timeout) until the provided function returns the provided target"""
+    t = 0.0
+    while func() != target:
+        time.sleep(interval)
+        t += interval
+        if t >= timeout:
+            raise AssertionError(
+                "Timeout reached in wait_for "
+                f"(function {func.__name__}, timeout {timeout}) "
+            )
 
 
 def _mock_ws(host, port, messages, delay_startup=0):
