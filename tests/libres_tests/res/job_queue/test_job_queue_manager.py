@@ -1,10 +1,10 @@
 import os
 import stat
+from pathlib import Path
 from threading import BoundedSemaphore
+from typing import List
 
-from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
+import pytest
 from res.job_queue import (
     Driver,
     JobQueue,
@@ -17,17 +17,15 @@ from res.job_queue import (
 
 def dummy_ok_callback(args):
     print(f"success {args[1]}")
-    with open(os.path.join(args[1], "OK"), "w") as f:
-        f.write("success")
+    (Path(args[1]) / "OK").write_text("success", encoding="utf-8")
 
 
 def dummy_exit_callback(args):
     print(f"failure {args}")
-    with open("ERROR", "w") as f:
-        f.write("failure")
+    Path("ERROR").write_text("failure", encoding="utf-8")
 
 
-dummy_config = {
+DUMMY_CONFIG = {
     "job_script": "job_script.py",
     "num_cpu": 1,
     "job_name": "dummy_job_{}",
@@ -36,152 +34,158 @@ dummy_config = {
     "exit_callback": dummy_exit_callback,
 }
 
-simple_script = """#!/usr/bin/env python
+SIMPLE_SCRIPT = """#!/usr/bin/env python
 with open('STATUS', 'w') as f:
    f.write('finished successfully')
 """
 
-failing_script = """#!/usr/bin/env python
+FAILING_SCRIPT = """#!/usr/bin/env python
 import sys
+with open("one_byte_pr_invocation", "a") as f:
+    f.write(".")
 sys.exit(1)
 """
 
-never_ending_script = """#!/usr/bin/env python
-import time
-while True:
-    time.sleep(0.5)
-"""
-
-mock_bsub = """#!/usr/bin/env python
+MOCK_BSUB = """#!/usr/bin/env python
 import sys
-with open("test.out", "w") as f:
-    f.write(" ".join(sys.argv))
+with open("test.out", "w") as filehandle:
+    filehandle.write(" ".join(sys.argv))
 """
+"""A dummy bsub script that instead of submitting a job to an LSF cluster
+writes the arguments it got to a file called test.out, mimicking what
+an actual cluster node might have done."""
 
 
-def create_queue(script, max_submit=2):
+def create_local_queue(
+    executable_script: str, max_submit: int = 2, num_realizations: int = 10
+):
     driver = Driver(driver_type=QueueDriverEnum.LOCAL_DRIVER, max_running=5)
     job_queue = JobQueue(driver, max_submit=max_submit)
 
-    with open(dummy_config["job_script"], "w") as f:
-        f.write(script)
+    scriptpath = Path(DUMMY_CONFIG["job_script"])
+    scriptpath.write_text(executable_script, encoding="utf-8")
+    scriptpath.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    os.chmod(dummy_config["job_script"], stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    for i in range(10):
-        os.mkdir(dummy_config["run_path"].format(i))
+    for iens in range(num_realizations):
+        Path(DUMMY_CONFIG["run_path"].format(iens)).mkdir()
         job = JobQueueNode(
-            job_script=dummy_config["job_script"],
-            job_name=dummy_config["job_name"].format(i),
-            run_path=os.path.realpath(dummy_config["run_path"].format(i)),
-            num_cpu=dummy_config["num_cpu"],
+            job_script=DUMMY_CONFIG["job_script"],
+            job_name=DUMMY_CONFIG["job_name"].format(iens),
+            run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(iens)),
+            num_cpu=DUMMY_CONFIG["num_cpu"],
             status_file=job_queue.status_file,
             ok_file=job_queue.ok_file,
             exit_file=job_queue.exit_file,
-            done_callback_function=dummy_config["ok_callback"],
-            exit_callback_function=dummy_config["exit_callback"],
+            done_callback_function=DUMMY_CONFIG["ok_callback"],
+            exit_callback_function=DUMMY_CONFIG["exit_callback"],
             callback_arguments=[
-                {"job_number": i},
-                os.path.realpath(dummy_config["run_path"].format(i)),
+                {"job_number": iens},
+                Path(DUMMY_CONFIG["run_path"].format(iens)).resolve(),
             ],
         )
-        job_queue.add_job(job, i)
+        job_queue.add_job(job, iens)
     job_queue.submit_complete()
     return job_queue
 
 
-class JobQueueManagerTest(ResTest):
-    def test_num_cpu_submitted_correctly(self):
-        with TestAreaContext("job_node_test"):
-            os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
-            driver = Driver(driver_type=QueueDriverEnum.LSF_DRIVER, max_running=1)
+def test_num_cpu_submitted_correctly_lsf(tmpdir):
+    """Assert that num_cpu from the ERT configuration is passed on to the bsub
+    command used to submit jobs to LSF"""
+    os.chdir(tmpdir)
+    os.putenv("PATH", os.getcwd() + ":" + os.getenv("PATH"))
+    driver = Driver(driver_type=QueueDriverEnum.LSF_DRIVER, max_running=1)
 
-            with open(dummy_config["job_script"], "w") as f:
-                f.write(simple_script)
-            os.chmod(
-                dummy_config["job_script"], stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG
-            )
+    script = Path(DUMMY_CONFIG["job_script"])
+    script.write_text(SIMPLE_SCRIPT, encoding="utf-8")
+    script.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-            with open("bsub", "w") as f:
-                f.write(mock_bsub)
-            os.chmod("bsub", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    bsub = Path("bsub")
+    bsub.write_text(MOCK_BSUB, encoding="utf-8")
+    bsub.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-            job_id = 0
-            num_cpus = 4
-            os.mkdir(dummy_config["run_path"].format(job_id))
-            job = JobQueueNode(
-                job_script=dummy_config["job_script"],
-                job_name=dummy_config["job_name"].format(job_id),
-                run_path=os.path.realpath(dummy_config["run_path"].format(job_id)),
-                num_cpu=num_cpus,
-                status_file="STATUS",
-                ok_file="OK",
-                exit_file="ERROR",
-                done_callback_function=dummy_config["ok_callback"],
-                exit_callback_function=dummy_config["exit_callback"],
-                callback_arguments=[
-                    {"job_number": job_id},
-                    os.path.realpath(dummy_config["run_path"].format(job_id)),
-                ],
-            )
+    job_id = 0
+    num_cpus = 4
+    os.mkdir(DUMMY_CONFIG["run_path"].format(job_id))
+    job = JobQueueNode(
+        job_script=DUMMY_CONFIG["job_script"],
+        job_name=DUMMY_CONFIG["job_name"].format(job_id),
+        run_path=os.path.realpath(DUMMY_CONFIG["run_path"].format(job_id)),
+        num_cpu=num_cpus,
+        status_file="STATUS",
+        ok_file="OK",
+        exit_file="ERROR",
+        done_callback_function=DUMMY_CONFIG["ok_callback"],
+        exit_callback_function=DUMMY_CONFIG["exit_callback"],
+        callback_arguments=[
+            {"job_number": job_id},
+            Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
+        ],
+    )
 
-            pool_sema = BoundedSemaphore(value=2)
-            job.run(driver, pool_sema)
-            job.stop()
-            job.wait_for()
+    pool_sema = BoundedSemaphore(value=2)
+    job.run(driver, pool_sema)
+    job.stop()
+    job.wait_for()
 
-            with open("test.out") as f:
-                bsub_argv = f.read().split()
+    bsub_argv: List[str] = Path("test.out").read_text(encoding="utf-8").split()
 
-            found_cpu_arg = False
-            for arg_i, arg in enumerate(bsub_argv):
-                if arg == "-n":
-                    self.assertEqual(
-                        bsub_argv[arg_i + 1],
-                        str(num_cpus),
-                        "num_cpu argument does not match specified number of cpus",
-                    )
-                    found_cpu_arg = True
+    found_cpu_arg = False
+    for arg_i, arg in enumerate(bsub_argv):
+        if arg == "-n":
+            # Check that the driver submitted the correct number
+            # of cpus:
+            assert bsub_argv[arg_i + 1] == str(num_cpus)
+            found_cpu_arg = True
 
-            self.assertTrue(found_cpu_arg, "num_cpu argument not found")
+    assert found_cpu_arg is True
 
-    def test_execute_queue(self):
 
-        with TestAreaContext("job_queue_manager_test"):
-            job_queue = create_queue(simple_script)
-            manager = JobQueueManager(job_queue)
-            manager.execute_queue()
+def test_execute_queue(tmpdir):
+    os.chdir(tmpdir)
+    job_queue = create_local_queue(SIMPLE_SCRIPT)
+    manager = JobQueueManager(job_queue)
+    manager.execute_queue()
 
-            self.assertFalse(job_queue.isRunning)
+    assert job_queue.isRunning is False
 
-            for job in job_queue.job_list:
-                ok_file = os.path.realpath(os.path.join(job.run_path, "OK"))
-                assert os.path.isfile(ok_file)
-                with open(ok_file, "r") as f:
-                    assert f.read() == "success"
+    for job in job_queue.job_list:
+        assert (Path(job.run_path) / "OK").read_text(encoding="utf-8") == "success"
 
-    def test_max_submit_reached(self):
-        with TestAreaContext("job_queue_manager_test"):
-            max_submit_num = 5
-            job_queue = create_queue(failing_script, max_submit=max_submit_num)
-            manager = JobQueueManager(job_queue)
-            manager.execute_queue()
 
-            self.assertFalse(manager.isRunning())
+@pytest.mark.parametrize("max_submit_num", [1, 2, 3])
+def test_max_submit_reached(tmpdir, max_submit_num):
+    """Check that the JobQueueManager will submit exactly the maximum number of
+    resubmissions in the case of scripts that fail."""
+    os.chdir(tmpdir)
+    num_realizations = 2
+    job_queue = create_local_queue(
+        FAILING_SCRIPT, max_submit=max_submit_num, num_realizations=num_realizations
+    )
 
-            # check if it is really max_submit_num
-            assert job_queue.max_submit == max_submit_num
+    manager = JobQueueManager(job_queue)
+    manager.execute_queue()
 
-            for job in job_queue.job_list:
-                assert job.status == JobStatusType.JOB_QUEUE_FAILED
-                assert job.submit_attempt == job_queue.max_submit
+    assert (
+        Path("one_byte_pr_invocation").stat().st_size
+        == max_submit_num * num_realizations
+    )
 
-    def test_kill_queue(self):
-        with TestAreaContext("job_queue_manager_test"):
-            max_submit_num = 5
-            job_queue = create_queue(simple_script, max_submit=max_submit_num)
-            manager = JobQueueManager(job_queue)
-            job_queue.kill_all_jobs()
-            manager.execute_queue()
+    assert manager.isRunning() is False
 
-            for job in job_queue.job_list:
-                assert job.status == JobStatusType.JOB_QUEUE_FAILED
+    for job in job_queue.job_list:
+        # one for every realization
+        assert job.status == JobStatusType.JOB_QUEUE_FAILED
+        assert job.submit_attempt == job_queue.max_submit
+
+
+@pytest.mark.parametrize("max_submit_num", [1, 2, 3])
+def test_kill_queue(tmpdir, max_submit_num):
+    os.chdir(tmpdir)
+    job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=max_submit_num)
+    manager = JobQueueManager(job_queue)
+    job_queue.kill_all_jobs()
+    manager.execute_queue()
+
+    assert not Path("STATUS").exists()
+    for job in job_queue.job_list:
+        assert job.status == JobStatusType.JOB_QUEUE_FAILED
