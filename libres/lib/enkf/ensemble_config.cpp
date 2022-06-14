@@ -31,6 +31,8 @@
 #include <ert/util/hash.h>
 #include <ert/util/util.h>
 
+#include <ert/res_util/string.hpp>
+
 #include <ert/ecl/ecl_grid.h>
 
 #include <ert/job_queue/ext_joblist.hpp>
@@ -730,29 +732,32 @@ const enkf_config_node_type *
 ensemble_config_user_get_node(const ensemble_config_type *config,
                               const char *full_key, char **index_key) {
     const enkf_config_node_type *node = NULL;
-    char **key_list;
+    std::vector<std::string> key_list;
     int keys;
     int key_length = 1;
     int offset;
 
     *index_key = NULL;
-    util_split_string(full_key, USER_KEY_JOIN_STRING, &keys, &key_list);
-    while (node == NULL && key_length <= keys) {
-        char *current_key = util_alloc_joined_string(
-            (const char **)key_list, key_length, USER_KEY_JOIN_STRING);
-        if (ensemble_config_has_key(config, current_key))
-            node = ensemble_config_get_node(config, current_key);
+
+    ert::split(full_key, USER_KEY_JOIN_STRING[0],
+               [&key_list](auto t) { key_list.emplace_back(t); });
+
+    while (node == NULL && key_length <= key_list.size()) {
+        auto key_list_slice = std::vector<std::string>(
+            key_list.begin(), key_list.begin() + key_length);
+        auto current_key =
+            fmt::format("{}", fmt::join(key_list_slice, USER_KEY_JOIN_STRING));
+        if (ensemble_config_has_key(config, current_key.c_str()))
+            node = ensemble_config_get_node(config, current_key.c_str());
         else
             key_length++;
-        offset = strlen(current_key);
-        free(current_key);
+        offset = strlen(current_key.c_str());
     }
     if (node != NULL) {
         if (offset < strlen(full_key))
             *index_key = util_alloc_string_copy(&full_key[offset + 1]);
     }
 
-    util_free_stringlist(key_list, keys);
     return node;
 }
 

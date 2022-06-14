@@ -18,6 +18,8 @@
 
 #include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -32,11 +34,14 @@
 #include <ert/logging.hpp>
 #include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/path_fmt.hpp>
+#include <ert/res_util/string.hpp>
 
 #include <ert/enkf/block_fs_driver.hpp>
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>
+
+#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -143,8 +148,8 @@ static auto logger = ert::get_logger("enkf");
 
 struct enkf_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
-    char *case_name;
-    char *root_path;
+    std::string case_name;
+    std::string root_path;
     /** mount_point = root_path / case_name; the mount_point is the fundamental INPUT. */
     char *mount_point;
 
@@ -231,15 +236,18 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
         util_abort("%s: fatal internal error: mount_point == NULL \n",
                    __func__);
     {
-        char **path_tmp;
-        int path_len;
+        std::vector<std::string> path_tmp;
 
-        util_path_split(fs->mount_point, &path_len, &path_tmp);
-        fs->case_name = util_alloc_string_copy(path_tmp[path_len - 1]);
-        fs->root_path = util_alloc_joined_string(
-            (const char **)path_tmp, path_len, UTIL_PATH_SEP_STRING);
+        ert::split(fs->mount_point, UTIL_PATH_SEP_STRING[0],
+                   [&path_tmp](auto t) { path_tmp.emplace_back(t); });
+
+        fs->case_name = path_tmp.back();
+
+        fs->root_path =
+            fmt::format("{}", fmt::join(path_tmp, UTIL_PATH_SEP_STRING));
+
         fs->lock_file =
-            util_alloc_filename(fs->mount_point, fs->case_name, "lock");
+            util_alloc_filename(fs->mount_point, fs->case_name.c_str(), "lock");
 
         if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
             fs->read_only = false;
@@ -249,8 +257,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
                             "read-only. Cross your fingers ....\n");
             fs->read_only = true;
         }
-
-        util_free_stringlist(path_tmp, path_len);
     }
     return fs;
 }
@@ -532,8 +538,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
         util_unlink_existing(fs->lock_file);
     }
 
-    free(fs->case_name);
-    free(fs->root_path);
     free(fs->lock_file);
     free(fs->mount_point);
     path_fmt_free(fs->case_fmt);
@@ -653,7 +657,7 @@ const char *enkf_fs_get_mount_point(const enkf_fs_type *fs) {
 }
 
 const char *enkf_fs_get_case_name(const enkf_fs_type *fs) {
-    return fs->case_name;
+    return fs->case_name.data();
 }
 
 bool enkf_fs_is_read_only(const enkf_fs_type *fs) { return fs->read_only; }
