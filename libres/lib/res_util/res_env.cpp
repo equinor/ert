@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -28,27 +29,13 @@
 #include <ert/util/buffer.hpp>
 #include <ert/util/util.hpp>
 
+namespace fs = std::filesystem;
+
 void res_env_unsetenv(const char *variable) { unsetenv(variable); }
 
 void res_env_setenv(const char *variable, const char *value) {
     int overwrite = 1;
     setenv(variable, value, overwrite);
-}
-
-/**
-   Will return a NULL terminated list char ** of the paths in the PATH
-   variable.
-*/
-std::vector<std::string> res_env_alloc_PATH_list() {
-    std::vector<std::string> path_list;
-    char *path_env = getenv("PATH");
-    if (path_env != NULL) {
-        int path_size;
-
-        ert::split(path_env, ':',
-                   [&path_list](auto t) { path_list.emplace_back(t); });
-    }
-    return path_list;
 }
 
 /**
@@ -64,44 +51,32 @@ std::vector<std::string> res_env_alloc_PATH_list() {
 
    * If the executable is not found in the PATH list NULL is returned.
 */
-char *res_env_alloc_PATH_executable(const char *executable) {
-    if (util_is_abs_path(executable)) {
-        if (util_is_executable(executable))
-            return util_alloc_string_copy(executable);
-        else
-            return NULL;
-    } else if (strncmp(executable, "./", 2) == 0) {
-        char *cwd = util_alloc_cwd();
-        char *path = util_alloc_filename(cwd, &executable[2], NULL);
+std::optional<fs::path> res_env_alloc_PATH_executable(const fs::path &executable) {
+    if (executable.is_absolute() && executable.is_regular_file()) {
+        return (executable.permissions() & fs::perms::owner_exec)
+                   ? strdup(executable.c_str())
+                   : nullptr;
+    }
 
-        /* The program has been invoked as ./xxxx */
-        if (!(util_is_file(path) && util_is_executable(path))) {
-            free(path);
-            path = NULL;
-        }
-        free(cwd);
-
-        return path;
+    // In POSIX, a relative path is any path that doesn't start with '/' but
+    // contains a '/'. Eg. "foo/bar" is a relative path.
+    //
+    // ERT recognises paths that begin with './' as relative, however.
+    else if (path.string().substr(0, 2) == "./") {
+        return strdup(fs::canonical(executable).c_str());
     } else {
-        char *full_path = NULL;
-        auto path_list = res_env_alloc_PATH_list();
-        int ipath = 0;
+        auto path_entries = ert::split(getenv("PATH"), ':');
+        auto it = std::find_if(path_entries.begin(), path_entries.end(),
+                               [&executable](auto entry) {
+                                   auto test_executable = entry / path;
+                                   auto status = fs::status(test_executable);
+                                   return fs::is_regular(status) &&
+                                          (status.permission() &
+                                           fs::perms::owner_exec);
+                               });
 
-        for (auto path : path_list) {
-            char *current_attempt =
-                util_alloc_filename(path.c_str(), executable, NULL);
-
-            if (util_is_file(current_attempt) &&
-                util_is_executable(current_attempt)) {
-                full_path = current_attempt;
-                break;
-            } else {
-                free(current_attempt);
-                ipath++;
-            }
-        }
-
-        return full_path;
+        return it != path_entries.end() ? strdup((*it / executable).c_str())
+                                        : nullptr;
     }
 }
 

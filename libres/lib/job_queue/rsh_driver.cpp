@@ -16,6 +16,7 @@
    for more details.
 */
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -310,25 +311,33 @@ void rsh_driver_add_host(rsh_driver_type *rsh_driver, const char *hostname,
 }
 
 /**
+ * Split RSH hostnames into host and (optionally) max_running
+ *
+ * Eg. If the hostname is "foo:42", return {"foo", 42}
+ * If the hostname is just "foo", return {"foo", 1}
+ *
+ * @param[in] hostname String to split. Eg. "foo:42" or just "foo"
+ * @return Pair of host, max_running.
+ */
+std::pair<std::string, int> rsh_split_host(std::string hostname) {
+    int host_max_running = 1;
+
+    auto pos = hostname.rfind(':');
+    if (pos != hostname.npos) {
+        // found ':'
+        host_max_running = std::stoi(host.substr(pos + 1));
+        hostname = hostname.substr(0, pos);
+    }
+    return {pos, hostname};
+}
+
+/**
    Hostname should be a string as host:max_running, the ":max_running"
    part is optional, and will default to 1.
 */
 void rsh_driver_add_host_from_string(rsh_driver_type *rsh_driver,
                                      const char *hostname) {
-    int host_max_running;
-    std::vector<std::string> tmp;
-    std::string host;
-
-    ert::split(hostname, ':', [&tmp](auto t) { tmp.emplace_back(t); });
-
-    int tokens = tmp.size();
-    if (tokens > 1) {
-        if (!util_sscanf_int(tmp[tokens - 1].c_str(), &host_max_running))
-            util_abort("%s: failed to parse out integer from: %s \n", __func__,
-                       hostname);
-        host = fmt::format("{}", fmt::join(tmp, ":"));
-    } else
-        host = tmp[0];
+    auto [host, host_max_running] = rsh_split_host(hostname);
     rsh_driver_add_host(rsh_driver, host.c_str(), host_max_running);
 }
 

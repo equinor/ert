@@ -731,34 +731,24 @@ static void ensemble_config_init(ensemble_config_type *ensemble_config,
 const enkf_config_node_type *
 ensemble_config_user_get_node(const ensemble_config_type *config,
                               const char *full_key, char **index_key) {
-    const enkf_config_node_type *node = NULL;
-    std::vector<std::string> key_list;
-    int keys;
-    int key_length = 1;
-    int offset;
-
     *index_key = NULL;
+    auto key_list = ert::split(full_key, USER_KEY_JOIN_STRING[0]);
 
-    ert::split(full_key, USER_KEY_JOIN_STRING[0],
-               [&key_list](auto t) { key_list.emplace_back(t); });
+    std::string current_key;
+    auto it =
+        std::find_if(key_list.begin(), key_list.end(), [&](auto key) -> bool {
+            if (!current_key.empty()) {
+                current_key.push_back(USER_KEY_JOIN_STRING);
+            }
+            current_key += key;
+            return ensemble_config_has_key(config, current_key);
+        });
+    if (it == key_list.end())
+        return nullptr;
 
-    while (node == NULL && key_length <= key_list.size()) {
-        auto key_list_slice = std::vector<std::string>(
-            key_list.begin(), key_list.begin() + key_length);
-        auto current_key =
-            fmt::format("{}", fmt::join(key_list_slice, USER_KEY_JOIN_STRING));
-        if (ensemble_config_has_key(config, current_key.c_str()))
-            node = ensemble_config_get_node(config, current_key.c_str());
-        else
-            key_length++;
-        offset = strlen(current_key.c_str());
-    }
-    if (node != NULL) {
-        if (offset < strlen(full_key))
-            *index_key = util_alloc_string_copy(&full_key[offset + 1]);
-    }
-
-    return node;
+    if (current_key.size() < strlen(full_key))
+        *index_key = strdup(&full_key[current_key.size() + 1]);
+    return ensemble_config_get_node(config, current_key.c_str());
 }
 
 stringlist_type *
