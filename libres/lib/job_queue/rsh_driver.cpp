@@ -16,6 +16,9 @@
    for more details.
 */
 
+#include <string>
+#include <vector>
+
 #include <mutex>
 #include <netdb.h>
 #include <optional>
@@ -26,10 +29,13 @@
 #include <sys/socket.h>
 #include <thread>
 
+#include <ert/res_util/string.hpp>
 #include <ert/util/util.hpp>
 
 #include <ert/job_queue/queue_driver.hpp>
 #include <ert/job_queue/rsh_driver.hpp>
+
+#include <fmt/format.h>
 
 struct rsh_job_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -310,22 +316,20 @@ void rsh_driver_add_host(rsh_driver_type *rsh_driver, const char *hostname,
 void rsh_driver_add_host_from_string(rsh_driver_type *rsh_driver,
                                      const char *hostname) {
     int host_max_running;
-    char **tmp;
-    char *host;
-    int tokens;
+    std::vector<std::string> tmp;
+    std::string host;
 
-    util_split_string(hostname, ":", &tokens, &tmp);
+    ert::split(hostname, ':', [&tmp](auto t) { tmp.emplace_back(t); });
+
+    int tokens = tmp.size();
     if (tokens > 1) {
-        if (!util_sscanf_int(tmp[tokens - 1], &host_max_running))
+        if (!util_sscanf_int(tmp[tokens - 1].c_str(), &host_max_running))
             util_abort("%s: failed to parse out integer from: %s \n", __func__,
                        hostname);
-        host = util_alloc_joined_string((const char **)tmp, tokens - 1, ":");
+        host = fmt::format("{}", fmt::join(tmp, ":"));
     } else
-        host = util_alloc_string_copy(tmp[0]);
-    rsh_driver_add_host(rsh_driver, host, host_max_running);
-
-    util_free_stringlist(tmp, tokens);
-    free(host);
+        host = tmp[0];
+    rsh_driver_add_host(rsh_driver, host.c_str(), host_max_running);
 }
 
 bool rsh_driver_set_option(void *__driver, const char *option_key,
