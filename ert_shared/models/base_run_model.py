@@ -414,7 +414,7 @@ class BaseRunModel:
 
     async def dispatch(self, event: CloudEvent, iter_: int) -> None:
         logger.debug("BASERUNMODEL dispatch: %s (iter: %d)", event, iter_)
-        self._state_machine.add_event(event)
+        self._state_machine.queue_event(event)
         if event["type"] == identifiers.EVTYPE_FM_STEP_SUCCESS:
             real = int(get_real_id(event["source"]))
             self._state_machine.add_successful_realization(iter_, real)

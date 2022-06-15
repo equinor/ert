@@ -40,7 +40,7 @@ def test_single_update():
         },
         data={"meta": "irrelevant_data"},
     )
-    sm.add_event(event)
+    sm.queue_event(event)
     sm.apply_updates()
     assert sm.get_update() == _update_from_cloudevent(event)
 
@@ -71,8 +71,8 @@ def test_multiple_updates():
         },
         data=content,
     )
-    sm.add_event(first_event)
-    sm.add_event(second_event)
+    sm.queue_event(first_event)
+    sm.queue_event(second_event)
 
     expected_update = {}
     expected_update.update(_update_from_cloudevent(first_event))
@@ -106,10 +106,10 @@ def test_redundant_updates():
         },
         data={"meta": "irrelevant_data"},
     )
-    sm.add_event(event)
+    sm.queue_event(event)
 
     event.data = {"meta": "new_irrelevant_data"}
-    sm.add_event(event)
+    sm.queue_event(event)
 
     sm.apply_updates()
 
@@ -138,7 +138,7 @@ def test_partly_reduntant():
     expected_content.update(content)
     event.data = content
 
-    sm.add_event(event)
+    sm.queue_event(event)
 
     event = copy.copy(event)
     content = {"second_unique": 2}
@@ -146,7 +146,7 @@ def test_partly_reduntant():
     expected_content.update(content)
     event.data = content
 
-    sm.add_event(event)
+    sm.queue_event(event)
 
     sm.apply_updates()
     update_state = sm.get_update()
@@ -165,7 +165,7 @@ def test_retrieve_only_new_information():
     )
     event.data = {"some": "irrelevant_data"}
 
-    sm.add_event(event)
+    sm.queue_event(event)
     sm.apply_updates()
 
     # First update shall include the added event
@@ -173,7 +173,7 @@ def test_retrieve_only_new_information():
 
     event = copy.copy(event)
     event.data = {"another": "irrelevant_data"}
-    sm.add_event(event)
+    sm.queue_event(event)
     sm.apply_updates()
 
     # Second update should only include events since last update
@@ -204,7 +204,7 @@ def test_get_full_state_change_on_update():
     )
     event.data = {"some": "irrelevant_data"}
 
-    sm.add_event(event)
+    sm.queue_event(event)
 
     # Without a call to apply_updates we should receive empty state
     expected_state = _empty_state_from_structure(ensemble_structure)
@@ -224,7 +224,7 @@ def test_get_full_state_change_on_update():
 
     event = copy.copy(event)
     event.data = {"another": "irrelevant_data"}
-    sm.add_event(event)
+    sm.queue_event(event)
 
     # Full state not affected yet
     assert sm.get_full_state() == expected_state

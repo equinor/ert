@@ -52,21 +52,23 @@ class StateMachine:
         if real not in self._ensemble_to_successful_realizations[iter_]:
             self._ensemble_to_successful_realizations[iter_].append(real)
 
-    def add_event(self, event) -> None:
-        # Will add the contents of the event to the updated_entity_states.
-        # in the scenario that the contents of a new event overlaps with a previous
-        # the old content will be overwritten, hence this will also merge redundant information
+    def queue_event(self, event) -> None:
+        """Adds the event to the queue to be processed later. Once the queue is processed the
+        delta from previous processing of queue will be aggregated in updated_entity_states.
+        In the scenario that the contents of a new event overlaps with a previous
+        the old content will be overwritten
+        """
         if event["source"] not in self._entity_states.keys():
             # TODO:handle unspecified source
             pass
         self._event_queue.append(event)
 
     def get_update(self) -> Dict:
-        # returns the updated_entity_states, merge with entity_states and then empties the updated_entity_state
+        """Returns the result of the last processing of the event queue (hence the delta from the last process)"""
         return self._updated_entity_states
 
     def get_full_state(self) -> Dict:
-        # Returns the state as it is described in `entity_states` (not including the content in `updated_entity_state`)
+        """Returns the state as it is described in `entity_states` (not including events in the queue)"""
         return self._entity_states
 
     def apply_updates(self) -> None:
