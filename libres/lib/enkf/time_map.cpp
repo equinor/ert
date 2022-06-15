@@ -232,26 +232,6 @@ static bool time_map_update__(time_map_type *map, int step,
     return updateOK;
 }
 
-static bool time_map_summary_update__(time_map_type *map,
-                                      const ecl_sum_type *ecl_sum) {
-    bool updateOK = true;
-    int first_step = ecl_sum_get_first_report_step(ecl_sum);
-    int last_step = ecl_sum_get_last_report_step(ecl_sum);
-    int step;
-
-    for (step = first_step; step <= last_step; step++) {
-        if (ecl_sum_has_report_step(ecl_sum, step)) {
-            time_t sim_time = ecl_sum_get_report_time(ecl_sum, step);
-
-            updateOK = (updateOK && time_map_update__(map, step, sim_time));
-        }
-    }
-
-    updateOK = (updateOK &&
-                time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum)));
-    return updateOK;
-}
-
 static time_t time_map_iget__(const time_map_type *map, int step) {
     return time_t_vector_safe_iget(map->map, step);
 }
@@ -379,23 +359,31 @@ bool time_map_try_update(time_map_type *map, int step, time_t time) {
 }
 
 bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
-    bool updateOK = time_map_try_summary_update(map, ecl_sum);
+    time_map_assert_writable(map);
+    bool updateOK = true;
+    pthread_rwlock_wrlock(&map->rw_lock);
+    {
+
+        int first_step = ecl_sum_get_first_report_step(ecl_sum);
+        int last_step = ecl_sum_get_last_report_step(ecl_sum);
+
+        for (int step = first_step; step <= last_step; step++) {
+            if (ecl_sum_has_report_step(ecl_sum, step)) {
+                updateOK =
+                    (updateOK &&
+                     time_map_update__(map, step,
+                                       ecl_sum_get_report_time(ecl_sum, step)));
+            }
+        }
+
+        updateOK = (updateOK &&
+                    time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum)));
+    }
+    pthread_rwlock_unlock(&map->rw_lock);
 
     if (!updateOK) {
         time_map_summary_log_mismatch(map, ecl_sum);
     }
-
-    return updateOK;
-}
-
-bool time_map_try_summary_update(time_map_type *map,
-                                 const ecl_sum_type *ecl_sum) {
-    bool updateOK;
-
-    time_map_assert_writable(map);
-    pthread_rwlock_wrlock(&map->rw_lock);
-    { updateOK = time_map_summary_update__(map, ecl_sum); }
-    pthread_rwlock_unlock(&map->rw_lock);
 
     return updateOK;
 }
