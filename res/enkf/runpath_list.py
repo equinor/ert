@@ -19,7 +19,6 @@ class RunpathList(BaseCClass):
     _runpath = ResPrototype("char* runpath_list_iget_runpath(runpath_list, int)")
     _basename = ResPrototype("char* runpath_list_iget_basename(runpath_list, int)")
     _export = ResPrototype("void  runpath_list_fprintf(runpath_list)")
-    _load = ResPrototype("bool  runpath_list_load(runpath_list)")
 
     _get_export_file = ResPrototype("char* runpath_list_get_export_file(runpath_list)")
     _set_export_file = ResPrototype(
@@ -88,7 +87,3 @@ class RunpathList(BaseCClass):
 
     def export(self):
         self._export()
-
-    def load(self):
-        if not self._load():
-            raise IOError(f"Could not load from:{self._get_export_file()}")
