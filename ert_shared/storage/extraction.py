@@ -20,7 +20,7 @@ logger = logging.getLogger()
 
 
 def create_experiment(ert) -> dict:
-    return dict(name=str(datetime.datetime.now()), priors=_create_priors(ert))
+    return dict(name=str(datetime.datetime.now()), priors=create_priors(ert))
 
 
 def create_ensemble(
@@ -265,7 +265,7 @@ _PRIOR_NAME_MAP = {
 }
 
 
-def _create_priors(ert) -> Mapping[str, dict]:
+def create_priors(ert) -> Mapping[str, dict]:
     priors = {}
     for group, gen_kw_priors in ert.gen_kw_priors().items():
         for gen_kw_prior in gen_kw_priors:
