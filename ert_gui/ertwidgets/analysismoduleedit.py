@@ -1,6 +1,6 @@
 from typing_extensions import Literal
 from qtpy.QtCore import QMargins, Qt
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QLabel, QToolButton
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QToolButton
 
 from ert_gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
 from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
@@ -21,14 +21,12 @@ class AnalysisModuleEdit(QWidget):
 
         layout = QHBoxLayout()
         self._name = module_name
-        analysis_module_label = QLabel(self._name)
 
         variables_popup_button = QToolButton()
         variables_popup_button.setIcon(resourceIcon("edit.svg"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
         variables_popup_button.setMaximumSize(20, 20)
 
-        layout.addWidget(analysis_module_label, 0, Qt.AlignLeft)
         layout.addWidget(variables_popup_button, 0, Qt.AlignLeft)
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
         layout.addStretch()
