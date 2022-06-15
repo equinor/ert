@@ -56,7 +56,7 @@ class Exporter:
         export_job.run(
             ert=self.ert,
             arguments=[
-                self.ert.getRunpathList().getExportFile(),
+                self.ert.getHookManager().getRunpathListFile(),
                 parameters["output_file"],
                 parameters["time_index"],
                 parameters["column_keys"],

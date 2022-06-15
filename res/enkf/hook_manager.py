@@ -3,12 +3,10 @@ import os
 import sys
 
 from cwrap import BaseCClass
-
 from res import ResPrototype
 from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import HookRuntime
 from res.enkf.hook_workflow import HookWorkflow
-from res.enkf.runpath_list import RunpathList
 
 
 class HookManager(BaseCClass):
@@ -25,9 +23,6 @@ class HookManager(BaseCClass):
     _free = ResPrototype("void hook_manager_free(hook_manager)")
     _get_runpath_list_file = ResPrototype(
         "char* hook_manager_get_runpath_list_file(hook_manager)"
-    )
-    _get_runpath_list = ResPrototype(
-        "runpath_list_ref  hook_manager_get_runpath_list(hook_manager)"
     )
     _iget_hook_workflow = ResPrototype(
         "hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)"
@@ -117,10 +112,6 @@ class HookManager(BaseCClass):
                 " with a list of runpath directories was not found"
                 " - hook workflow will probably fail.\n"
             )
-
-    def getRunpathList(self) -> RunpathList:
-        """@rtype: RunpathList"""
-        return self._get_runpath_list()
 
     def runWorkflows(self, run_time, ert_self):
 

@@ -136,7 +136,6 @@ pybind11_add_module(
   enkf/queue_config.cpp
   enkf/rng_config.cpp
   enkf/run_arg.cpp
-  enkf/runpath_list.cpp
   enkf/site_config.cpp
   enkf/rng_manager.cpp
   enkf/res_config.cpp

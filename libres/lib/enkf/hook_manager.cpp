@@ -18,9 +18,11 @@
 
 #include <stdlib.h>
 
+#include <ert/res_util/file_utils.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/util.h>
 #include <ert/util/vector.h>
+#include <fmt/printf.h>
 
 #include <ert/config/config_parser.hpp>
 
@@ -30,10 +32,17 @@
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/site_config.hpp>
 
+#include <algorithm>
+#include <filesystem>
+#include <vector>
+
+namespace fs = std::filesystem;
+
 struct hook_manager_struct {
-    vector_type
-        *hook_workflow_list; /** vector of hook_workflow_type instances */
-    runpath_list_type *runpath_list;
+    /** vector of hook_workflow_type instances */
+    vector_type *hook_workflow_list;
+    /** Path to the runpath list file */
+    char *runpath_list_file;
     ert_workflow_list_type *workflow_list;
     hash_type *input_context;
 };
@@ -51,17 +60,10 @@ hook_manager_alloc(ert_workflow_list_type *workflow_list,
 }
 
 void hook_manager_free(hook_manager_type *hook_manager) {
-    if (hook_manager->runpath_list)
-        runpath_list_free(hook_manager->runpath_list);
-
     vector_free(hook_manager->hook_workflow_list);
     hash_free(hook_manager->input_context);
+    free(hook_manager->runpath_list_file);
     free(hook_manager);
-}
-
-runpath_list_type *
-hook_manager_get_runpath_list(const hook_manager_type *hook_manager) {
-    return hook_manager->runpath_list;
 }
 
 static void hook_manager_add_workflow(hook_manager_type *hook_manager,
@@ -109,7 +111,7 @@ hook_manager_alloc_default(ert_workflow_list_type *workflow_list) {
     config_free(config);
     config_content_free(site_config_content);
 
-    hook_manager->runpath_list = NULL;
+    hook_manager->runpath_list_file = strdup(RUNPATH_LIST_FILE);
 
     hook_manager->input_context = hash_alloc();
 
@@ -130,7 +132,7 @@ hook_manager_type *hook_manager_alloc_full(
         hook_manager_add_workflow(hook_manager, workflow_name, run_mode);
     }
 
-    hook_manager->runpath_list = runpath_list_alloc(runpath_list_file);
+    hook_manager->runpath_list_file = util_alloc_string_copy(runpath_list_file);
 
     return hook_manager;
 }
@@ -151,19 +153,14 @@ void hook_manager_init(hook_manager_type *hook_manager,
     }
 
     {
-        char *runpath_list_file;
-
         if (config_content_has_item(config_content, RUNPATH_FILE_KEY))
-            runpath_list_file =
+            hook_manager->runpath_list_file =
                 util_alloc_string_copy(config_content_get_value_as_abspath(
                     config_content, RUNPATH_FILE_KEY));
         else
-            runpath_list_file = util_alloc_filename(
+            hook_manager->runpath_list_file = util_alloc_filename(
                 config_content_get_config_path(config_content),
                 RUNPATH_LIST_FILE, NULL);
-
-        hook_manager->runpath_list = runpath_list_alloc(runpath_list_file);
-        free(runpath_list_file);
     }
 }
 
@@ -193,7 +190,7 @@ void hook_manager_add_config_items(config_parser_type *config) {
 
 const char *
 hook_manager_get_runpath_list_file(const hook_manager_type *hook_manager) {
-    return runpath_list_get_export_file(hook_manager->runpath_list);
+    return hook_manager->runpath_list_file;
 }
 
 void hook_manager_run_workflows(const hook_manager_type *hook_manager,
@@ -227,4 +224,22 @@ hook_manager_iget_hook_workflow(const hook_manager_type *hook_manager,
 
 int hook_manager_get_size(const hook_manager_type *hook_manager) {
     return vector_get_size(hook_manager->hook_workflow_list);
+}
+
+/** Writes the runpath_list_file
+ *
+ * The runpath list file is parsed by some workflows in order to find
+ * which path was used by each iteration and ensemble.
+ *
+ * @param runpath_list The list of Runpath to go into the file.
+ */
+void hook_manager_write_runpath_file(const hook_manager_type *hook_manager,
+                                     std::vector<Runpath> runpath_list) {
+    auto stream = mkdir_fopen(fs::path(hook_manager->runpath_list_file), "w");
+    std::sort(runpath_list.begin(), runpath_list.end());
+    for (const Runpath &rp : runpath_list) {
+        fmt::print(stream, "{:03d}  {}  {}  {:03d}\n", rp.iens, rp.runpath,
+                   rp.jobname, rp.iter);
+    }
+    fclose(stream);
 }

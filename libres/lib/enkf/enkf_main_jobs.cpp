@@ -17,6 +17,7 @@
 */
 
 #include <cassert>
+#include <vector>
 
 #include <ert/util/string_util.h>
 #include <ert/util/stringlist.h>
@@ -168,8 +169,7 @@ static void enkf_main_export_runpath_file(enkf_main_type *enkf_main,
     const hook_manager_type *hook_manager =
         enkf_main_get_hook_manager(enkf_main);
 
-    runpath_list_type *runpath_list =
-        runpath_list_alloc(hook_manager_get_runpath_list_file(hook_manager));
+    std::vector<Runpath> runpath_list;
 
     for (int iter = 0; iter < int_vector_size(iterations); ++iter) {
         for (int iens = 0; iens < int_vector_size(realizations); ++iens) {
@@ -189,15 +189,13 @@ static void enkf_main_export_runpath_file(enkf_main_type *enkf_main,
             else
                 runpath = util_alloc_sprintf(runpath_fmt, iens_value);
 
-            runpath_list_add(runpath_list, iens_value, iter_value, runpath,
-                             basename);
-
-            free(basename);
-            free(runpath);
+            runpath_list.emplace_back(iens_value, iter_value,
+                                      std::string(std::move(runpath)),
+                                      std::string(std::move(basename)));
         }
     }
-    runpath_list_fprintf(runpath_list);
-    runpath_list_free(runpath_list);
+
+    hook_manager_write_runpath_file(hook_manager, runpath_list);
 }
 
 // Internal workflow job
