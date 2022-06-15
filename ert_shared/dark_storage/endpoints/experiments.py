@@ -4,6 +4,7 @@ from typing import Any, Mapping, List
 from fastapi import APIRouter, Body, Depends
 from ert_storage import json_schema as js
 
+from ert_shared.storage.extraction import create_priors
 from ert_shared.dark_storage.enkf import LibresFacade, get_res, get_id, get_size
 
 router = APIRouter(tags=["experiment"])
@@ -11,12 +12,13 @@ router = APIRouter(tags=["experiment"])
 
 @router.get("/experiments", response_model=List[js.ExperimentOut])
 def get_experiments(*, res: LibresFacade = Depends(get_res)) -> List[js.ExperimentOut]:
+    priors = create_priors(res)
     return [
         js.ExperimentOut(
             name="default",
             id=get_id("experiment", "default"),
             ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
-            priors={},
+            priors=priors,
             userdata={},
         )
     ]
@@ -30,7 +32,7 @@ def get_experiment_by_id(
         name="default",
         id=get_id("experiment", "default"),
         ensemble_ids=[get_id("ensemble", case) for case in res.cases()],
-        priors={},
+        priors=create_priors(res),
         userdata={},
     )
 
