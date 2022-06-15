@@ -166,8 +166,6 @@ extern "C" state_map_type *
 enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path);
 
-extern "C" runpath_list_type *
-enkf_main_get_runpath_list(const enkf_main_type *enkf_main);
 extern "C" PY_USED ert_run_context_type *
 enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
     const enkf_main_type *enkf_main, enkf_fs_type *fs,

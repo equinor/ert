@@ -76,8 +76,7 @@ foreach(
   enkf_executable_path
   enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
-  gen_kw
-  enkf_runpath_list)
+  gen_kw)
 
   add_executable(${test} test_${test}.cpp)
   target_link_libraries(${test} res)
@@ -102,8 +101,6 @@ add_config_test(enkf_queue_config enkf_queue_config)
 add_config_test(enkf_magic_string_in_workflows enkf_magic_string_in_workflows
                 "${LOCAL_TEST_DATA_DIR}/config/workflows/config")
 add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
-add_config_test(enkf_runpath_list enkf_runpath_list
-                "${TEST_DATA_DIR}/enkf/config/runpath_list/config")
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
                 "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
 add_config_test(

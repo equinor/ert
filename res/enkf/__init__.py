@@ -74,7 +74,6 @@ from .res_config import ResConfig
 from .rng_config import RNGConfig
 from .row_scaling import RowScaling
 from .run_arg import RunArg
-from .runpath_list import RunpathList, RunpathNode
 from .site_config import SiteConfig
 from .state_map import StateMap
 from .subst_config import SubstConfig
@@ -137,8 +136,6 @@ __all__ = [
     "ErtTemplate",
     "ErtTemplates",
     "ModelConfig",
-    "RunpathList",
-    "RunpathNode",
     "HookWorkflow",
     "HookManager",
     "RNGConfig",

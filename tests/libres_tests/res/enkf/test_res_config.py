@@ -502,7 +502,7 @@ class ResConfigTest(ResTest):
     def assert_hook_manager(self, hook_manager, config_data, working_dir):
         self.assert_same_config_file(
             config_data["RUNPATH_FILE"],
-            hook_manager.getRunpathList().getExportFile(),
+            hook_manager.getRunpathListFile(),
             working_dir,
         )
 
