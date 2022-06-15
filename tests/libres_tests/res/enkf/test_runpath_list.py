@@ -1,8 +1,5 @@
-import os.path
-
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
-
 from res.enkf import RunpathList, RunpathNode
 
 
@@ -15,37 +12,6 @@ def base(idx: int):
 
 
 class RunpathListTest(ResTest):
-    def test_load(self):
-        with TestAreaContext("runpath_list"):
-            with self.assertRaises(IOError):
-                rp = RunpathList("")
-
-            node0 = RunpathNode(0, 0, "path0", "base0")
-            node1 = RunpathNode(1, 1, "path1", "base1")
-
-            runpath_list = RunpathList("filex.list")
-            with self.assertRaises(IOError):
-                runpath_list.load()
-
-            with open("invalid_file", "w") as f:
-                f.write("X X X X\n")
-
-            rp = RunpathList("invalid_file")
-            with self.assertRaises(IOError):
-                rp.load()
-
-            rp = RunpathList("list.txt")
-            rp.add(node0.realization, node0.iteration, node0.runpath, node0.basename)
-            rp.add(node1.realization, node1.iteration, node1.runpath, node1.basename)
-            rp.export()
-            self.assertTrue(os.path.isfile("list.txt"))
-
-            rp2 = RunpathList("list.txt")
-            rp2.load()
-            self.assertEqual(len(rp2), 2)
-            self.assertEqual(rp2[0], node0)
-            self.assertEqual(rp2[1], node1)
-
     def test_runpath_list(self):
         runpath_list = RunpathList("file")
 

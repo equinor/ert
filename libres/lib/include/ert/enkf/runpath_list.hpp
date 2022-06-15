@@ -43,6 +43,4 @@ extern "C" const char *
 runpath_list_get_export_file(const runpath_list_type *list);
 extern "C" void runpath_list_set_export_file(runpath_list_type *list,
                                              const char *export_file);
-extern "C" PY_USED bool runpath_list_load(runpath_list_type *list);
-
 #endif
