@@ -255,9 +255,6 @@ class _RealEnKFMain(BaseCClass):
                                                                                  bool_vector , \
                                                                                  int)"  # noqa
     )
-    _get_runpath_list = ResPrototype(
-        "runpath_list_ref enkf_main_get_runpath_list(enkf_main)"
-    )
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
@@ -407,9 +404,6 @@ class _RealEnKFMain(BaseCClass):
             size=len(iactive), source_list=true_indices
         )
         return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, bool_vector, iteration)
-
-    def getRunpathList(self):
-        return self._get_runpath_list()
 
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."

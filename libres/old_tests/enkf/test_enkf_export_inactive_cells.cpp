@@ -31,8 +31,8 @@ namespace enkf_main {
 void init_active_runs(const res_config_type *res_config,
                       const ert_run_context_type *run_context);
 
-void reset_run_path(runpath_list_type *runpath_list,
-                    const ert_run_context_type *run_context);
+std::vector<Runpath>
+run_context_get_runpaths(const ert_run_context_type *run_context);
 } // namespace enkf_main
 
 void check_exported_data(const char *exported_file, const char *init_file,
@@ -136,8 +136,9 @@ void forward_initialize_node(enkf_main_type *enkf_main, const char *init_file,
 
         enkf_main_init_internalization(enkf_main);
 
-        auto runpath_list = enkf_main_get_runpath_list(enkf_main);
-        enkf_main::reset_run_path(runpath_list, run_context);
+        hook_manager_write_runpath_file(
+            enkf_main_get_hook_manager(enkf_main),
+            enkf_main::run_context_get_runpaths(run_context));
         enkf_main::init_active_runs(enkf_main_get_res_config(enkf_main),
                                     run_context);
         bool_vector_free(iactive);
