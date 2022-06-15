@@ -9,8 +9,6 @@ from res.enkf import ErtRunContext, ResConfig, EnKFMain
 def test_assert_symlink_deleted(setup_case):
     res_config = setup_case("local/snake_oil_field", "snake_oil.ert")
     ert = EnKFMain(res_config)
-    runpath_list = ert.getRunpathList()
-
     runner = ert.getEnkfSimulationRunner()
 
     # create directory structure
@@ -26,8 +24,8 @@ def test_assert_symlink_deleted(setup_case):
     runner.createRunPath(run_context)
 
     # replace field file with symlink
-    linkpath = f"{runpath_list[0].runpath}/permx.grdcel"
-    targetpath = f"{runpath_list[0].runpath}/permx.grdcel.target"
+    linkpath = f"{run_context[0].runpath}/permx.grdcel"
+    targetpath = f"{run_context[0].runpath}/permx.grdcel.target"
     open(targetpath, "a").close()
     os.remove(linkpath)
     os.symlink(targetpath, linkpath)
@@ -53,8 +51,8 @@ def test_assert_export(use_tmpdir):
         )
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)
-    runpath_list = ert.getRunpathList()
-    assert not os.path.isfile(runpath_list.getExportFile())
+    runpath_list_file = ert.getHookManager().getRunpathListFile()
+    assert not os.path.isfile(runpath_list_file)
 
     fs_manager = ert.getEnkfFsManager()
     model_config = ert.getModelConfig()
@@ -69,9 +67,9 @@ def test_assert_export(use_tmpdir):
 
     ert.getEnkfSimulationRunner().createRunPath(run_context)
 
-    assert os.path.isfile(runpath_list.getExportFile())
-    assert "test_runpath_list.txt" == os.path.basename(runpath_list.getExportFile())
+    assert os.path.isfile(runpath_list_file)
+    assert "test_runpath_list.txt" == os.path.basename(runpath_list_file)
     assert (
-        Path(runpath_list.getExportFile()).read_text("utf-8")
+        Path(runpath_list_file).read_text("utf-8")
         == f"000  {os.getcwd()}/simulations/realization0  a_name_0  000\n"
     )

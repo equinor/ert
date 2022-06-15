@@ -257,10 +257,6 @@ static enkf_main_type *enkf_main_alloc_empty() {
     return enkf_main;
 }
 
-runpath_list_type *enkf_main_get_runpath_list(const enkf_main_type *enkf_main) {
-    return hook_manager_get_runpath_list(enkf_main_get_hook_manager(enkf_main));
-}
-
 rng_config_type *enkf_main_get_rng_config(const enkf_main_type *enkf_main) {
     return res_config_get_rng_config(enkf_main->res_config);
 }
@@ -706,20 +702,20 @@ void init_active_runs(const res_config_type *res_config,
 }
 
 /**
- * @brief clears runpath_list and adds all active runs to it.
+ * @return list of the runpaths in the runcontext.
  */
-void reset_run_path(runpath_list_type *runpath_list,
-                    const ert_run_context_type *run_context) {
-    runpath_list_clear(runpath_list);
+std::vector<Runpath>
+run_context_get_runpaths(const ert_run_context_type *run_context) {
+    std::vector<Runpath> runpath_list;
     for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
         if (ert_run_context_iactive(run_context, iens)) {
             run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
-            runpath_list_add(runpath_list, run_arg_get_iens(run_arg),
-                             run_arg_get_iter(run_arg),
-                             run_arg_get_runpath(run_arg),
-                             run_arg_get_job_name(run_arg));
+            runpath_list.emplace_back(
+                run_arg_get_iens(run_arg), run_arg_get_iter(run_arg),
+                run_arg_get_runpath(run_arg), run_arg_get_job_name(run_arg));
         }
     }
+    return runpath_list;
 }
 } // namespace enkf_main
 
@@ -740,11 +736,12 @@ RES_LIB_SUBMODULE("enkf_main", m) {
             auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
             auto run_context =
                 ert::from_cwrap<ert_run_context_type>(run_context_py);
-            auto runpath_list = enkf_main_get_runpath_list(enkf_main);
-            enkf_main::reset_run_path(runpath_list, run_context);
 
             enkf_main::init_active_runs(enkf_main->res_config, run_context);
-            runpath_list_fprintf(runpath_list);
+
+            hook_manager_write_runpath_file(
+                enkf_main_get_hook_manager(enkf_main),
+                enkf_main::run_context_get_runpaths(run_context));
         },
         py::arg("self"), py::arg("run_context"));
     m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
