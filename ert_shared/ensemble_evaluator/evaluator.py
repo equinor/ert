@@ -219,11 +219,11 @@ class EnsembleEvaluator:
                     continue
                 try:
                     await self._dispatcher.handle_event(event)
-                except BaseException:
+                except BaseException as ex:
                     logger.warning(
-                        "cannot handle event - closing connection to dispatcher"
+                        f"cannot handle event - closing connection to dispatcher: {ex}"
                     )
-                    websocket.close(code=1011, reason=f"failed handling {event}")
+                    await websocket.close(code=1011, reason=f"failed handling {event}")
                     return
 
                 if event["type"] in [
