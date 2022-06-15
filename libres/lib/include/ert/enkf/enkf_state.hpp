@@ -64,12 +64,10 @@ enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
 
 void enkf_state_add_node(enkf_state_type *, const char *,
                          const enkf_config_node_type *);
-extern "C" void enkf_state_free(enkf_state_type *);
+void enkf_state_free(enkf_state_type *);
 
-extern "C" bool
-enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                    run_arg_type *run_arg);
-extern "C" bool
-enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
+bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
+                                         run_arg_type *run_arg);
+bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
 #endif
