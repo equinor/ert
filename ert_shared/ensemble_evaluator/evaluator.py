@@ -126,7 +126,17 @@ class EnsembleEvaluator:
             snapshot_update_event.to_dict(),
         )
         if message and self._clients:
-            await asyncio.gather(*[client.send(message) for client in self._clients])
+            # Note return_exceptions=True in gather. This fire-and-forget
+            # approach is currently how we deal with failures when trying
+            # to send udates to clients. Rationale is that if sending to
+            # the client fails, the websocket is down and we have no way
+            # to re-establish it. Thus, it becomes the responsibility of
+            # the client to re-connect if necessary, in which case the first
+            # update it receives will be a full snapshot.
+            await asyncio.gather(
+                *[client.send(message) for client in self._clients],
+                return_exceptions=True,
+            )
 
     def _create_cloud_event(
         self,
@@ -287,8 +297,10 @@ class EnsembleEvaluator:
                 data_marshaller=cloudpickle.dumps,
             )
             if self._clients:
+                # See note about return_exceptions=True above
                 await asyncio.gather(
-                    *[client.send(message) for client in self._clients]
+                    *[client.send(message) for client in self._clients],
+                    return_exceptions=True,
                 )
 
         logger.debug("Async server exiting.")
