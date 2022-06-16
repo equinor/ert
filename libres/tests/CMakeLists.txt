@@ -20,6 +20,7 @@ add_executable(
   enkf/test_meas_data.cpp
   enkf/test_obs_data.cpp
   enkf/test_deprecated_umask.cpp
+  py/test_shutil.cpp
   res_util/test_memory.cpp
   res_util/test_string.cpp
   res_util/test_metric.cpp
@@ -28,6 +29,6 @@ add_executable(
   job_queue/test_rsh_driver.cpp
   job_queue/test_ext_job_executable.cpp)
 
-target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt)
+target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt pybind11::embed)
 
 catch_discover_tests(ert_test_suite)

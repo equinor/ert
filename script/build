@@ -163,6 +163,8 @@ def install_build_requires() -> None:
     import tomli
 
     # Install build requirements
+    import tomli
+
     with open(SOURCE_ROOT / "pyproject.toml", "rb") as f:
         pyproject = tomli.load(f)
 
@@ -234,6 +236,7 @@ def main() -> None:
     setup_args: List[str] = []
     cmake_args: List[str] = [
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DBUILD_TESTS=ON",
     ]
 
     if args.release:

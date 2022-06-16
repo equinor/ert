@@ -20,6 +20,7 @@
 
 #include <string.h>
 
+#include <ert/py/shutil.hpp>
 #include <ert/util/stringlist.hpp>
 #include <ert/util/type_macros.hpp>
 
@@ -211,10 +212,10 @@ config_content_node_iget_as_executable(config_content_node_type *node,
 
         if (!strstr(config_value, UTIL_PATH_SEP_STRING) &&
             !fs::exists(path_value)) {
-            char *tmp = res_env_alloc_PATH_executable(config_value);
-            if (tmp) {
+            auto tmp = ertpy::which(config_value);
+            if (tmp.has_value()) {
                 free(path_value);
-                path_value = tmp;
+                path_value = strdup(tmp->c_str());
             }
         }
 

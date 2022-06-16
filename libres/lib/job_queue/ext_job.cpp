@@ -23,6 +23,7 @@
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/util.hpp>
+#include <ert/py/shutil.hpp>
 #include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -417,13 +418,11 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
     } else {
         if (search_path) {
             /* Go through the PATH variable to try to locate the executable. */
-            char *path_executable =
-                res_env_alloc_PATH_executable(executable_input);
+            auto path_executable = ertpy::which(executable_input);
 
-            if (path_executable != NULL) {
-                ext_job_set_executable(ext_job, path_executable, NULL,
+            if (path_executable.has_value()) {
+                ext_job_set_executable(ext_job, path_executable->c_str(), NULL,
                                        search_path);
-                free(path_executable);
             } else {
                 throw std::invalid_argument(fmt::format(
                     "** The executable {} was not found", executable_input));

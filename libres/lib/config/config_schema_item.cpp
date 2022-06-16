@@ -28,6 +28,7 @@
 #include <ert/util/hash.hpp>
 #include <ert/util/parser.hpp>
 #include <ert/util/type_macros.hpp>
+#include <ert/py/shutil.hpp>
 
 #include <ert/config/config_error.hpp>
 #include <ert/config/config_schema_item.hpp>
@@ -455,20 +456,14 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                             break;
                         }
 
-                        /*
-                         * res_env_alloc_PATH_executable aborts if some parts of the path is
-                         * not an existing dir, so call it only when its an absolute path
-                         */
-                        char *path_exe = res_env_alloc_PATH_executable(value);
-                        if (path_exe != NULL)
-                            stringlist_iset_copy(token_list, iarg, path_exe);
+                        auto path_exe = ertpy::which(value);
+                        if (path_exe.has_value())
+                            stringlist_iset_copy(token_list, iarg, path_exe->c_str());
                         else
                             config_error_add(
                                 error_list,
                                 util_alloc_sprintf(
                                     "Could not locate executable:%s ", value));
-
-                        free(path_exe);
                     } else {
                         if (!util_is_executable(value))
                             config_error_add(

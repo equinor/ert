@@ -24,8 +24,6 @@
 
 #include <stdbool.h>
 
-std::vector<std::string> res_env_alloc_PATH_list();
-char *res_env_alloc_PATH_executable(const char *executable);
 void res_env_setenv(const char *variable, const char *value);
 const char *res_env_interp_setenv(const char *variable, const char *value);
 void res_env_unsetenv(const char *variable);
