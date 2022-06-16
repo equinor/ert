@@ -51,3 +51,7 @@ class Ensemble(Base, UserdataField):
     @property
     def child_ensemble_ids(self) -> List[PyUUID]:
         return [x.ensemble_result.id for x in self.children]
+
+    @property
+    def experiment_id(self) -> PyUUID:
+        return self.experiment.id
