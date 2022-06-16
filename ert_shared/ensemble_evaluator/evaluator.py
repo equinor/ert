@@ -259,13 +259,18 @@ class EnsembleEvaluator:
             max_size=2**26,
         ):
             await self._done
-            logger.debug(
-                f"Got done signal. {self._dispatchers_connected.qsize()} dispatchers to disconnect..."  # noqa: E501
-            )
-            try:  # Wait for dispatchers to disconnect
-                await asyncio.wait_for(self._dispatchers_connected.join(), timeout=20)
-            except asyncio.TimeoutError:
-                logger.debug("Timed out waiting for dispatchers to disconnect")
+            if self._dispatchers_connected is not None:
+                logger.debug(
+                    f"Got done signal. {self._dispatchers_connected.qsize()} dispatchers to disconnect..."  # noqa: E501
+                )
+                try:  # Wait for dispatchers to disconnect
+                    await asyncio.wait_for(
+                        self._dispatchers_connected.join(), timeout=20
+                    )
+                except asyncio.TimeoutError:
+                    logger.debug("Timed out waiting for dispatchers to disconnect")
+            else:
+                logger.debug("Got done signal. No dispatchers connected")
 
             logger.debug("Joining batcher...")
             try:
