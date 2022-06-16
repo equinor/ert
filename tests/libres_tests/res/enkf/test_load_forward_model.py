@@ -83,8 +83,8 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
         loaded = facade.load_from_forward_model("default_0", realizations, 0)
     assert (
         f"""Inconsistency in time_map - loading SUMMARY from: {run_path.absolute()} failed:
-Time mismatch for step: 1, new time: 2000-01-10, reference case: 2010-01-10
-"""
+Time mismatch for step: 1, response time: 2000-01-10, reference case: 2010-01-10
+Time mismatch for step: 0, response time: 2000-01-01, reference case: 2010-01-01"""
         in caplog.messages
     )
     assert (

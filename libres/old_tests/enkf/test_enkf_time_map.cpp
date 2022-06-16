@@ -94,9 +94,9 @@ void test_refcase(const char *refcase_name, const char *case1,
         time_map_attach_refcase(ecl_map, refcase);
 
         test_assert_false(time_map_summary_update(ecl_map, ecl_sum2));
-        test_assert_int_equal(25, time_map_get_size(ecl_map));
+        test_assert_int_equal(64, time_map_get_size(ecl_map));
         test_assert_true(time_map_summary_update(ecl_map, ecl_sum1));
-        test_assert_int_equal(63, time_map_get_size(ecl_map));
+        test_assert_int_equal(64, time_map_get_size(ecl_map));
     }
 
     {
@@ -173,7 +173,7 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
         int_vector_type *index_map =
             time_map_alloc_index_map(ecl_map, ecl_sum2);
         test_assert_int_equal(int_vector_size(index_map),
-                              ecl_sum_get_last_report_step(ecl_sum2));
+                              ecl_sum_get_last_report_step(ecl_sum2) + 1);
         test_assert_int_equal(int_vector_iget(index_map, 24), 24);
         test_assert_int_equal(int_vector_iget(index_map, 25), 26);
         int_vector_free(index_map);

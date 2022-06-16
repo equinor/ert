@@ -204,32 +204,41 @@ bool time_map_is_readonly(const time_map_type *tm) { return tm->read_only; }
    values. However the time map is not preinitialized with the refcase
    values.
 */
-static bool time_map_update__(time_map_type *map, int step,
-                              time_t update_time) {
-    bool updateOK = true;
+static std::string time_map_update__(time_map_type *map, int step,
+                                     time_t update_time) {
     time_t current_time = time_t_vector_safe_iget(map->map, step);
-
+    auto response_time = *std::localtime(&update_time);
+    std::string error;
+    // The map has not been initialized if current_time == DEFAULT_TIME
     if (current_time == DEFAULT_TIME) {
         if (map->refcase) {
             if (step <= ecl_sum_get_last_report_step(map->refcase)) {
                 time_t ref_time = ecl_sum_get_report_time(map->refcase, step);
 
                 if (ref_time != update_time) {
-                    updateOK = false;
-                    logger->error("Tried to load data where report step/data "
-                                  "is incompatible with refcase - ignored");
+                    auto ref_case_time = *std::localtime(&ref_time);
+                    error = fmt::format(
+                        "Time mismatch for step: {}, response time: "
+                        "{}, reference case: {}",
+                        step, std::put_time(&response_time, "%Y-%m-%d"),
+                        std::put_time(&ref_case_time, "%Y-%m-%d"));
                 }
             }
         }
-    } else if (current_time != update_time)
-        updateOK = false;
+    } else if (current_time != update_time) {
+        auto current_case_time = *std::localtime(&current_time);
+        error = fmt::format("Time mismatch for step: {}, response time: "
+                            "{}, reference case: {}",
+                            step, std::put_time(&response_time, "%Y-%m-%d"),
+                            std::put_time(&current_case_time, "%Y-%m-%d"));
+    }
 
-    if (updateOK) {
+    if (error.empty()) {
         map->modified = true;
         time_t_vector_iset(map->map, step, update_time);
     }
 
-    return updateOK;
+    return error;
 }
 
 static time_t time_map_iget__(const time_map_type *map, int step) {
@@ -350,18 +359,18 @@ bool time_map_update(time_map_type *map, int step, time_t time) {
 }
 
 bool time_map_try_update(time_map_type *map, int step, time_t time) {
-    bool updateOK;
     time_map_assert_writable(map);
     pthread_rwlock_wrlock(&map->rw_lock);
-    { updateOK = time_map_update__(map, step, time); }
+    std::string error = time_map_update__(map, step, time);
     pthread_rwlock_unlock(&map->rw_lock);
-    return updateOK;
+    return error.empty();
 }
 
 bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
     time_map_assert_writable(map);
     bool updateOK = true;
     pthread_rwlock_wrlock(&map->rw_lock);
+    std::vector<std::string> errors;
     {
 
         int first_step = ecl_sum_get_first_report_step(ecl_sum);
@@ -369,23 +378,27 @@ bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
 
         for (int step = first_step; step <= last_step; step++) {
             if (ecl_sum_has_report_step(ecl_sum, step)) {
-                updateOK =
-                    (updateOK &&
-                     time_map_update__(map, step,
-                                       ecl_sum_get_report_time(ecl_sum, step)));
+                auto error = time_map_update__(
+                    map, step, ecl_sum_get_report_time(ecl_sum, step));
+                if (!error.empty())
+                    errors.push_back(error);
             }
         }
 
-        updateOK = (updateOK &&
-                    time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum)));
+        auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
+        if (!error.empty())
+            errors.push_back(error);
     }
     pthread_rwlock_unlock(&map->rw_lock);
 
-    if (!updateOK) {
-        time_map_summary_log_mismatch(map, ecl_sum);
+    if (!errors.empty()) {
+        auto error_msg = fmt::format("{}", fmt::join(errors, "\n"));
+        logger->error("Inconsistency in time_map - loading SUMMARY from: "
+                      "{} failed:\n{}",
+                      ecl_sum_get_path(ecl_sum), error_msg);
     }
 
-    return updateOK;
+    return errors.empty();
 }
 
 int time_map_lookup_time(time_map_type *map, time_t time) {
@@ -502,56 +515,6 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
                "existing: %02d/%02d/%04d \n",
                __func__, step, new_time[0], new_time[1], new_time[2],
                current[0], current[1], current[2]);
-}
-
-static void time_map_summary_log_mismatch(time_map_type *map,
-                                          const ecl_sum_type *ecl_sum) {
-    // If the normal summary update fails we just play through all time steps
-    // to pinpoint exactly the step where the update fails.
-    int first_step = ecl_sum_get_first_report_step(ecl_sum);
-    int last_step = ecl_sum_get_last_report_step(ecl_sum);
-    int step;
-    std::string error_msg;
-    for (step = first_step; step <= last_step; step++) {
-        if (ecl_sum_has_report_step(ecl_sum, step)) {
-            time_t time = ecl_sum_get_report_time(ecl_sum, step);
-            auto fm_time = *std::localtime(&time);
-
-            if (map->refcase) {
-                if (ecl_sum_get_last_report_step(ecl_sum) >= step) {
-                    if (ecl_sum_has_report_step(map->refcase, step)) {
-                        time_t ref_time =
-                            ecl_sum_get_report_time(map->refcase, step);
-                        if (ref_time != time) {
-                            auto ref_case_time = *std::localtime(&ref_time);
-                            error_msg.append(fmt::format(
-                                "Time mismatch for step: {}, new time: "
-                                "{}, reference case: {}\n",
-                                step, std::put_time(&fm_time, "%Y-%m-%d"),
-                                std::put_time(&ref_case_time, "%Y-%m-%d")));
-                        }
-                    } else {
-                        error_msg.append(fmt::format(
-                            "Missing step: {} in refcase at time: {}", step,
-                            std::put_time(&fm_time, "%Y-%m-%d")));
-                    }
-                }
-            } else {
-                time_t current_time = time_map_iget__(map, step);
-                if (current_time != time) {
-                    auto current_time_tm = *std::localtime(&current_time);
-                    error_msg.append(fmt::format(
-                        "Time mismatch for step: {}, new time: "
-                        "{}, existing: {}\n",
-                        step, std::put_time(&current_time_tm, "%Y-%m-%d"),
-                        std::put_time(&fm_time, "%Y-%m-%d")));
-                }
-            }
-        }
-    }
-    logger->error(
-        "Inconsistency in time_map - loading SUMMARY from: {} failed:\n{}",
-        ecl_sum_get_path(ecl_sum), error_msg);
 }
 
 /**
