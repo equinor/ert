@@ -139,11 +139,9 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
 
 
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post(
-        "/gql", json={"query": "{experiments{ensembles{id}}}"}
-    )
+    resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
-    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+    ensemble_id = answer_json[0]["ensemble_ids"][0]
 
     resp: Response = dark_storage_client.get(f"/ensembles/{ensemble_id}/parameters")
     parameters_json = resp.json()
@@ -186,11 +184,9 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
 
 
 def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post(
-        "/gql", json={"query": "{experiments{ensembles{id}}}"}
-    )
+    resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
-    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+    ensemble_id = answer_json[0]["ensemble_ids"][0]
 
     resp: Response = dark_storage_client.get(
         f"/ensembles/{ensemble_id}/records/POLY_RES@0/observations"
@@ -220,11 +216,9 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
 
 
 def test_get_record_labels(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post(
-        "/gql", json={"query": "{experiments{ensembles{id}}}"}
-    )
+    resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
-    ensemble_id = answer_json["data"]["experiments"][0]["ensembles"][0]["id"]
+    ensemble_id = answer_json[0]["ensemble_ids"][0]
     resp: Response = dark_storage_client.get(
         f"/ensembles/{ensemble_id}/records/POLY_RES@0/labels"
     )

@@ -1,4 +1,3 @@
-from typing import List
 import pandas as pd
 import io
 
@@ -11,10 +10,6 @@ def test_openapi(ert_storage_app, dark_storage_app):
     """
     expect = ert_storage_app.openapi()
     actual = dark_storage_app.openapi()
-
-    # This endpoint is added explicitly only in dark_storage, to have a place to inject
-    # LibresFacade. Remove it here to make it the same as ert_storage.
-    del actual["paths"]["/gql"]
 
     # Remove textual data (descriptions and such) from ERT Storage's API.
     def _remove_text(data):
@@ -29,79 +24,19 @@ def test_openapi(ert_storage_app, dark_storage_app):
     assert _remove_text(expect) == _remove_text(actual)
 
 
-def test_graphql(env):
-    from ert_storage.graphql import schema as ert_schema
-    from ert_shared.dark_storage.graphql import schema as dark_schema
-    from graphql import print_schema
-
-    def _sort_schema(schema: str) -> str:
-        """
-        Assuming that each block is separated by an empty line, we sort the contents
-        so that the order is irrelevant
-        """
-        sorted_blocks: List[str] = []
-        for block in schema.split("\n\n"):
-            lines = block.splitlines()
-            if len(lines) == 1:  # likely a lone "Scalar SomeType"
-                sorted_blocks.append(block)
-                continue
-            body = sorted(
-                line for line in lines[1:-1] if "Pk:" not in line and " pk:" not in line
-            )
-            sorted_blocks.append("\n".join([lines[0], *body, lines[-1]]))
-        return "\n\n".join(sorted_blocks)
-
-    expect = _sort_schema(print_schema(ert_schema))
-    actual = _sort_schema(print_schema(dark_schema))
-
-    assert expect == actual
-
-
 def test_response_comparison(run_poly_example_new_storage):
     new_storage_client, dark_storage_client = run_poly_example_new_storage
 
-    # Compare ensembles
-    new_storage_resp: Response = new_storage_client.post(
-        "/gql",
-        json={"query": "{experiments{ensembles{size, userdata, activeRealizations}}}"},
+    # Compare priors
+    new_storage_experiments: Response = new_storage_client.get("/experiments")
+    dark_storage_experiments: Response = dark_storage_client.get("/experiments")
+    new_storage_experiments_json = new_storage_experiments.json()
+    dark_storage_experiments_json = dark_storage_experiments.json()
+    assert len(new_storage_experiments_json) == len(dark_storage_experiments_json)
+    assert (
+        new_storage_experiments_json[0]["priors"]
+        == dark_storage_experiments_json[0]["priors"]
     )
-    dark_storage_resp: Response = dark_storage_client.post(
-        "/gql",
-        json={"query": "{experiments{ensembles{size, userdata, activeRealizations}}}"},
-    )
-    assert new_storage_resp.json() == dark_storage_resp.json()
-
-    # Compare responses
-    new_storage_responses: Response = new_storage_client.post(
-        "/gql",
-        json={
-            "query": (
-                "{experiments{ensembles{responses"
-                "{name, realizationIndex, userdata}"
-                "}}}"
-            )
-        },
-    )
-
-    dark_storage_responses: Response = dark_storage_client.post(
-        "/gql",
-        json={
-            "query": (
-                "{experiments{ensembles"
-                "{responses{name, realizationIndex, userdata}"
-                "}}}"
-            )
-        },
-    )
-
-    # Drop @ form response name if it is there
-    # Dark storage gen data response names contain @0
-    ds_response_json = dark_storage_responses.json()
-    for ens in ds_response_json["data"]["experiments"][0]["ensembles"]:
-        for resp in ens["responses"]:
-            resp["name"] = resp["name"].split("@")[0]
-
-    assert new_storage_responses.json() == ds_response_json
 
     # Compare responses data
     def get_resp_dataframe(resp):
@@ -147,20 +82,10 @@ def test_response_comparison(run_poly_example_new_storage):
         assert ds_ensemble_json["size"] == ns_ensemble_json["size"]
 
         # Compare paramete names
-        ns_resp: Response = new_storage_client.post(
-            "/gql",
-            json={
-                "query": f'{{ensemble(id: "{ens_id_ns}") {{parameters {{name}} }} }}'
-            },
-        )
-        ds_resp: Response = dark_storage_client.post(
-            "/gql",
-            json={
-                "query": f'{{ensemble(id: "{ens_id_ds}") {{parameters {{name}} }} }}'
-            },
-        )
+        ns_resp: Response = new_storage_client.get(f"/ensembles/{ens_id_ns}")
+        ds_resp: Response = dark_storage_client.get(f"/ensembles/{ens_id_ds}")
 
-        assert ns_resp.json() == ds_resp.json()
+        assert ns_resp.json()["parameter_names"] == ds_resp.json()["parameter_names"]
 
         # Compare missfits parameters
         ns_resp: Response = new_storage_client.get(

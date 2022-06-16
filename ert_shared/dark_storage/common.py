@@ -1,5 +1,3 @@
-from graphql import ResolveInfo
-
 from ert_data import loader
 from ert_data.measured import MeasuredData
 from typing import List, Union
@@ -7,10 +5,6 @@ import pandas as pd
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnkfObservationImplementationType
-
-
-def get_res_from_info(info: ResolveInfo) -> LibresFacade:
-    return info.context["request"].state.res
 
 
 def ensemble_parameter_names(res: LibresFacade) -> List[str]:
