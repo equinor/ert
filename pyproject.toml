@@ -22,3 +22,4 @@ markers = [
     "consumer_driven_contract_verification",
     "integration_test"
 ]
+asyncio_mode = "auto"
