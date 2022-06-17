@@ -2,14 +2,19 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace ert {
 
 /**
  * Non memory allocating string splitting function
  *
- * \note The input string is a view. It is therefore Undefined Behaviour to
+ * @note The input string is a view. It is therefore Undefined Behaviour to
  * modify the original string from inside the `func` parameter.
+ *
+ * @param[in] str String to be split
+ * @param[in] delimiter Delimiter to split the string by
+ * @param func Callback which is called with the string parts
  */
 template <typename Func>
 void split(std::string_view str, char delimiter, Func &&func) {
@@ -23,6 +28,20 @@ void split(std::string_view str, char delimiter, Func &&func) {
         pos = next_pos + 1;
     }
     func(str.substr(pos));
+}
+
+/**
+ * Split string into a container of strings
+ *
+ * @param[in] str String to be split
+ * @param[in] delimiter Delimiter to split the string by
+ * @return List of the parts
+ */
+inline std::vector<std::string> split(std::string_view str, char delimiter) {
+    std::vector<std::string> vec;
+    split(str, delimiter,
+          [&vec](std::string_view substr) { vec.emplace_back(substr); });
+    return vec;
 }
 
 /**

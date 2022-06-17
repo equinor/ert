@@ -40,15 +40,11 @@ void res_env_setenv(const char *variable, const char *value) {
    variable.
 */
 std::vector<std::string> res_env_alloc_PATH_list() {
-    std::vector<std::string> path_list;
     char *path_env = getenv("PATH");
     if (path_env != NULL) {
-        int path_size;
-
-        ert::split(path_env, ':',
-                   [&path_list](auto t) { path_list.emplace_back(t); });
+        return ert::split(path_env, ':');
     }
-    return path_list;
+    return std::vector<std::string>();
 }
 
 /**
@@ -127,10 +123,7 @@ const char *res_env_update_path_var(const char *variable, const char *value,
     else {
         bool update = true;
 
-        std::vector<std::string> path_list;
-
-        ert::split(current_value, ':',
-                   [&path_list](auto t) { path_list.emplace_back(t); });
+        std::vector<std::string> path_list = ert::split(current_value, ':');
 
         if (append) {
             int i;
