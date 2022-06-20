@@ -111,6 +111,7 @@ args = dict(
             "job_dispatch.py = ert.job_runner.job_dispatch:main",
         ]
     },
+    scripts=["src/libres/lib/job_queue/qstat_proxy.sh"],
     cmake_args=[
         "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
