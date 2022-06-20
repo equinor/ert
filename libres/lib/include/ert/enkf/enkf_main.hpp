@@ -60,7 +60,8 @@ typedef struct enkf_main_struct enkf_main_type;
 extern "C" void enkf_main_free(enkf_main_type *);
 void enkf_main_exit(enkf_main_type *enkf_main);
 
-extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *);
+extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
+                                           bool read_only = false);
 
 extern "C" enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
 
@@ -146,10 +147,12 @@ enkf_fs_type *enkf_main_job_get_fs(const enkf_main_type *);
 extern "C" enkf_fs_type *enkf_main_get_fs_ref(const enkf_main_type *enkf_main);
 const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main);
 enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
-                                     const char *case_path, bool create);
+                                     const char *case_path, bool create,
+                                     bool read_only = false);
 extern "C" void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
                                  const char *case_path);
-void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path);
+void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
+                         bool read_only = false);
 bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
                          const char *input_case);
 extern "C" const char *

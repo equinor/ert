@@ -32,7 +32,7 @@ from res._lib import update
 class EnkfFs(BaseCClass):
     TYPE_NAME = "enkf_fs"
 
-    _mount = ResPrototype("void* enkf_fs_mount(char* )", bind=False)
+    _mount = ResPrototype("void* enkf_fs_mount(char*, bool)", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
     _decref = ResPrototype("int   enkf_fs_decref(enkf_fs)")
     _incref = ResPrototype("int   enkf_fs_incref(enkf_fs)")
@@ -51,8 +51,8 @@ class EnkfFs(BaseCClass):
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
 
-    def __init__(self, mount_point):
-        c_ptr = self._mount(mount_point)
+    def __init__(self, mount_point, read_only=False):
+        c_ptr = self._mount(mount_point, read_only)
         super().__init__(c_ptr)
 
     def copy(self):

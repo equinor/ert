@@ -1,14 +1,11 @@
 from res.enkf import EnKFMain
 from res.enkf.enums import EnkfObservationImplementationType
+from typing import List
 
 
 class GenDataObservationCollector:
     @staticmethod
-    def getAllObservationKeys(ert: EnKFMain):
-        """
-        @type ert: EnKFMain
-        @rtype: list of str
-        """
+    def getAllObservationKeys(ert: EnKFMain) -> List[str]:
         enkf_obs = ert.getObservations()
         observation_keys = enkf_obs.getTypedKeylist(
             EnkfObservationImplementationType.GEN_OBS
@@ -16,11 +13,7 @@ class GenDataObservationCollector:
         return [key for key in observation_keys]
 
     @staticmethod
-    def getObservationKeyForDataKey(ert: EnKFMain, data_key, data_report_step):
-        """
-        @type ert: EnKFMain
-        @rtype: str
-        """
+    def getObservationKeyForDataKey(ert: EnKFMain, data_key, data_report_step) -> str:
         observation_key = None
 
         enkf_obs = ert.getObservations()
