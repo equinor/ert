@@ -28,7 +28,7 @@ typedef struct block_fs_struct block_fs_type;
 typedef struct user_file_node_struct user_file_node_type;
 
 void block_fs_fsync(block_fs_type *block_fs);
-bool block_fs_is_readonly(const block_fs_type *block_fs);
+static bool block_fs_is_readonly(const block_fs_type *block_fs);
 block_fs_type *block_fs_mount(const std::filesystem::path &mount_file,
                               int block_size, int fsync_interval,
                               bool read_only);

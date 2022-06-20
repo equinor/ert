@@ -167,7 +167,7 @@ static bool file_node_verify_end_tag(const file_node_type *file_node,
             SEEK_SET);
     if (fread(&end_tag, sizeof end_tag, 1, stream) == 1) {
         if (end_tag == NODE_END_TAG)
-            return true; /* All hunkadory. */
+            return true;
         else
             return false;
     } else
@@ -268,7 +268,7 @@ static void file_node_init_fwrite(const file_node_type *file_node,
 }
 
 /**
-   Observe that header in this context include the size of the tail
+   Observe that header in this context includes the size of the tail
    marker NODE_END_TAG.
 */
 static int file_node_header_size(const char *filename) {
@@ -318,22 +318,21 @@ static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
 
     block_fs->fsync_interval = fsync_interval;
     block_fs->block_size = block_size;
-    {
-        FILE *stream = util_fopen(mount_file.c_str(), "r");
-        int id = util_fread_int(stream);
-        int version = util_fread_int(stream);
-        if (version != 0)
-            throw std::runtime_error(fmt::format(
-                "block_fs data version unexpected. Expected 0, got {}",
-                version));
 
-        fclose(stream);
+    FILE *stream = util_fopen(mount_file.c_str(), "r");
+    int id = util_fread_int(stream);
+    int version = util_fread_int(stream);
+    if (version != 0)
+        throw std::runtime_error(fmt::format(
+            "block_fs data version unexpected. Expected 0, got {}", version));
 
-        if (id != MOUNT_MAP_MAGIC_INT)
-            util_abort("%s: The file:%s does not seem to be a valid block_fs "
-                       "mount map \n",
-                       __func__, mount_file.c_str());
-    }
+    fclose(stream);
+
+    if (id != MOUNT_MAP_MAGIC_INT)
+        util_abort("%s: The file:%s does not seem to be a valid block_fs "
+                   "mount map \n",
+                   __func__, mount_file.c_str());
+
     block_fs_reinit(block_fs);
 
     block_fs->data_owner = !read_only;
@@ -342,7 +341,7 @@ static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
 
 UTIL_IS_INSTANCE_FUNCTION(block_fs, BLOCK_FS_TYPE_ID);
 
-static void block_fs_fwrite_mount_info__(const fs::path &mount_file) {
+static void block_fs_fwrite_mount_info(const fs::path &mount_file) {
     FILE *stream = util_fopen(mount_file.c_str(), "w");
     util_fwrite_int(MOUNT_MAP_MAGIC_INT, stream);
     util_fwrite_int(0 /* data version; unused */, stream);
@@ -365,13 +364,10 @@ static void block_fs_fseek_node_data(block_fs_type *block_fs,
 
 /**
    This function will read through the datafile seeking for the identifier:
-   NODE_IN_USE. If the valid status identifiers is found the stream is
-   repositioned at the beginning of the valid node, so the calling scope can
-   continue with a
-
-      file_node = file_node_date_fread_alloc()
-
-   call. If no valid status ID is found whatsover the data_stream
+   NODE_IN_USE. If the valid status identifier is found the stream is
+   repositioned at the beginning of the valid node.
+   
+   If no valid status ID is found whatsover the data_stream
    indicator is left at the end of the file; and the calling scope
    will finish from there.
 */
@@ -418,7 +414,7 @@ static bool block_fs_fseek_valid_node(block_fs_type *block_fs) {
 */
 static void block_fs_open_data(block_fs_type *block_fs,
                                const fs::path &data_file) {
-    if (block_fs->data_owner) {
+    if (!block_fs_is_readonly(block_fs)) {
         /* Normal read-write open.- */
         if (fs::exists(data_file))
             block_fs->data_stream = util_fopen(data_file.c_str(), "r+");
@@ -448,41 +444,41 @@ static void block_fs_open_data(block_fs_type *block_fs,
      2. The node is added to the block_fs instance as a free node, which can
         be recycled at a later stage.
 
-   If the instance is not data owner (i.e. read-only) the function
+   If the instance is read-only the function
    will return immediately.
 */
 static void block_fs_fix_nodes(block_fs_type *block_fs,
                                const std::vector<long> &offset_list) {
-    if (block_fs->data_owner) {
+    if (!block_fs_is_readonly(block_fs)) {
         fsync(block_fs->data_fd);
-        {
-            char *key = NULL;
-            for (const auto &node_offset : offset_list) {
-                bool new_node = false;
-                file_node_type *file_node;
-                block_fs_fseek(block_fs, node_offset);
-                file_node = file_node_fread_alloc(block_fs->data_stream, &key);
 
-                if ((file_node->status == NODE_INVALID) ||
-                    (file_node->status == NODE_WRITE_ACTIVE)) {
-                    /* This node is really quite broken. */
-                    long int node_end;
-                    block_fs_fseek_valid_node(block_fs);
-                    node_end = ftell(block_fs->data_stream);
-                    file_node->node_size = node_end - node_offset;
-                }
+        char *key = NULL;
+        for (const auto &node_offset : offset_list) {
+            bool new_node = false;
+            file_node_type *file_node;
+            block_fs_fseek(block_fs, node_offset);
+            file_node = file_node_fread_alloc(block_fs->data_stream, &key);
 
-                file_node->status = NODE_INVALID;
-                file_node->data_size = 0;
-                file_node->data_offset = 0;
-
-                block_fs_fseek(block_fs, node_offset);
-                file_node_fwrite(file_node, NULL, block_fs->data_stream);
-                if (!new_node)
-                    file_node_free(file_node);
+            if ((file_node->status == NODE_INVALID) ||
+                (file_node->status == NODE_WRITE_ACTIVE)) {
+                /* This node is really quite broken. */
+                long int node_end;
+                block_fs_fseek_valid_node(block_fs);
+                node_end = ftell(block_fs->data_stream);
+                file_node->node_size = node_end - node_offset;
             }
-            free(key);
+
+            file_node->status = NODE_INVALID;
+            file_node->data_size = 0;
+            file_node->data_offset = 0;
+
+            block_fs_fseek(block_fs, node_offset);
+            file_node_fwrite(file_node, NULL, block_fs->data_stream);
+            if (!new_node)
+                file_node_free(file_node);
         }
+        free(key);
+
         fsync(block_fs->data_fd);
     }
 }
@@ -548,7 +544,7 @@ static void block_fs_build_index(block_fs_type *block_fs,
     free(filename);
 }
 
-bool block_fs_is_readonly(const block_fs_type *bfs) {
+static bool block_fs_is_readonly(const block_fs_type *bfs) {
     if (bfs->data_owner)
         return false;
     else
@@ -562,25 +558,24 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
     auto data_file = path / (base_name + ".data_0");
     auto index_file = path / (base_name + ".index");
     block_fs_type *block_fs;
+
+    if (!fs::exists(mount_file))
+        /* This is a brand new filesystem - create the mount map first. */
+        block_fs_fwrite_mount_info(mount_file);
     {
+        std::vector<long> fix_nodes;
+        block_fs = block_fs_alloc_empty(mount_file, block_size, fsync_interval,
+                                        read_only);
 
-        if (!fs::exists(mount_file))
-            /* This is a brand new filesystem - create the mount map first. */
-            block_fs_fwrite_mount_info__(mount_file);
-        {
-            std::vector<long> fix_nodes;
-            block_fs = block_fs_alloc_empty(mount_file, block_size,
-                                            fsync_interval, read_only);
-
-            block_fs_open_data(block_fs, data_file);
-            if (block_fs->data_stream != nullptr) {
-                std::error_code ec;
-                fs::remove(index_file, ec /* error code is ignored */);
-                block_fs_build_index(block_fs, data_file, fix_nodes);
-            }
-            block_fs_fix_nodes(block_fs, fix_nodes);
+        block_fs_open_data(block_fs, data_file);
+        if (block_fs->data_stream != nullptr) {
+            std::error_code ec;
+            fs::remove(index_file, ec /* error code is ignored */);
+            block_fs_build_index(block_fs, data_file, fix_nodes);
         }
+        block_fs_fix_nodes(block_fs, fix_nodes);
     }
+
     return block_fs;
 }
 
@@ -592,12 +587,10 @@ static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
     int node_size;
     file_node_type *new_node;
 
-    {
-        div_t d = div(min_size, block_fs->block_size);
-        node_size = d.quot * block_fs->block_size;
-        if (d.rem)
-            node_size += block_fs->block_size;
-    }
+    div_t d = div(min_size, block_fs->block_size);
+    node_size = d.quot * block_fs->block_size;
+    if (d.rem)
+        node_size += block_fs->block_size;
 
     /* Must lock the total size here ... */
     offset = block_fs->data_file_size;
@@ -625,8 +618,7 @@ bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
    Could possibly use fdatasync() to improve speed slightly?
 */
 void block_fs_fsync(block_fs_type *block_fs) {
-    if (block_fs->data_owner) {
-        //fdatasync( block_fs->data_fd );
+    if (!block_fs_is_readonly(block_fs)) {
         fsync(block_fs->data_fd);
         block_fs_fseek(block_fs, block_fs->data_file_size);
         ftell(block_fs->data_stream);
@@ -678,7 +670,7 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t data_size) {
-    if (!block_fs->data_owner)
+    if (block_fs_is_readonly(block_fs))
         throw std::runtime_error("tried to write to read only filesystem");
     std::lock_guard guard{block_fs->mutex};
 
