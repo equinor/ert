@@ -106,7 +106,8 @@ struct enkf_main_struct {
 
 void enkf_main_init_internalization(enkf_main_type *);
 static void enkf_main_close_fs(enkf_main_type *enkf_main);
-static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main);
+static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
+                                             bool read_only);
 static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
@@ -297,12 +298,13 @@ static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
    case only the site config file will be parsed. The purpose of this
    is mainly to be able to test that the site config file is valid.
 */
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config) {
+enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
+                                bool read_only) {
     enkf_main_type *enkf_main = enkf_main_alloc_empty();
     enkf_main->res_config = res_config;
 
     enkf_main_rng_init(enkf_main);
-    enkf_main_user_select_initial_fs(enkf_main);
+    enkf_main_user_select_initial_fs(enkf_main, read_only);
     enkf_main_init_obs(enkf_main);
     enkf_main_add_ensemble_members(enkf_main);
 

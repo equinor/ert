@@ -41,8 +41,8 @@ class LibresFacade:
         )
 
     def get_active_realizations(self, case_name):
-        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
-        realizations = SummaryCollector.createActiveList(self._enkf_main, fs)
+        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name, read_only=True)
+        realizations = SummaryCollector.createActiveList(fs)
 
         return realizations
 
@@ -151,18 +151,29 @@ class LibresFacade:
         else:
             return []
 
-    def gather_gen_kw_data(self, case, key, realization_index=None):
-        """:rtype: pandas.DataFrame"""
+    def gather_gen_kw_data(
+        self,
+        case: str,
+        key: int,
+        realization_index: int = None,
+    ) -> DataFrame:
         data = GenKwCollector.loadAllGenKwData(
-            self._enkf_main, case, [key], realization_index=realization_index
+            self._enkf_main,
+            case,
+            [key],
+            realization_index=realization_index,
         )
         if key in data:
             return data[key].to_frame().dropna()
         else:
             return DataFrame()
 
-    def gather_summary_data(self, case, key, realization_index=None):
-        """:rtype: pandas.DataFrame"""
+    def gather_summary_data(
+        self,
+        case: str,
+        key: str,
+        realization_index: int = None,
+    ) -> DataFrame:
         data = SummaryCollector.loadAllSummaryData(
             self._enkf_main, case, [key], realization_index
         )
@@ -178,7 +189,7 @@ class LibresFacade:
             data = data.unstack(level="Realization").droplevel(0, axis=1)
         return data
 
-    def refcase_data(self, key):
+    def refcase_data(self, key) -> DataFrame:
         refcase = self._enkf_main.eclConfig().getRefcase()
 
         if refcase is None or key not in refcase:
@@ -192,7 +203,7 @@ class LibresFacade:
 
         return data.iloc[1:]
 
-    def history_data(self, key, case=None):
+    def history_data(self, key, case=None) -> DataFrame:
         if not self.is_summary_key(key):
             return DataFrame()
 
@@ -205,8 +216,7 @@ class LibresFacade:
 
         return data
 
-    def gather_gen_data_data(self, case, key, realization_index=None):
-        """:rtype: pandas.DataFrame"""
+    def gather_gen_data_data(self, case, key, realization_index=None) -> DataFrame:
         key_parts = key.split("@")
         key = key_parts[0]
         if len(key_parts) > 1:
@@ -216,35 +226,33 @@ class LibresFacade:
 
         try:
             data = GenDataCollector.loadGenData(
-                self._enkf_main, case, key, report_step, realization_index
+                self._enkf_main,
+                case,
+                key,
+                report_step,
+                realization_index,
             )
         except (ValueError, KeyError):
             data = DataFrame()
 
         return data.dropna()  # removes all rows that has a NaN
 
-    def is_summary_key(self, key):
-        """:rtype: bool"""
+    def is_summary_key(self, key) -> bool:
         return key in self._enkf_main.getKeyManager().summaryKeys()
 
-    def get_summary_keys(self):
-        """:rtype: list of str"""
+    def get_summary_keys(self) -> List[str]:
         return self._enkf_main.getKeyManager().summaryKeys()
 
-    def is_gen_kw_key(self, key):
-        """:rtype: bool"""
+    def is_gen_kw_key(self, key) -> bool:
         return key in self._enkf_main.getKeyManager().genKwKeys()
 
-    def gen_kw_keys(self):
-        """:rtype: list of str"""
+    def gen_kw_keys(self) -> List[str]:
         return self._enkf_main.getKeyManager().genKwKeys()
 
-    def is_gen_data_key(self, key):
-        """:rtype: bool"""
+    def is_gen_data_key(self, key) -> bool:
         return key in self._enkf_main.getKeyManager().genDataKeys()
 
-    def get_gen_data_keys(self):
-        """:rtype: list of str"""
+    def get_gen_data_keys(self) -> List[str]:
         return self._enkf_main.getKeyManager().genDataKeys()
 
     def gen_kw_priors(self):

@@ -1,16 +1,17 @@
 #include <filesystem>
 #include <fstream>
+#include <sys/wait.h>
 
 #include "catch2/catch.hpp"
-
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
+#include <ert/util/test_util.h>
 
 #include "../tmpdir.hpp"
 #include "ert/res_util/block_fs.hpp"
 
 void enkf_fs_fwrite_misfit(enkf_fs_type *fs);
-enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point);
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only);
 void enkf_fs_umount(enkf_fs_type *fs);
 void misfit_ensemble_initialize(misfit_ensemble_type *misfit_ensemble,
                                 const ensemble_config_type *ensemble_config,
@@ -24,7 +25,7 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
     GIVEN("An instance of enkf_fs") {
         WITH_TMPDIR;
         auto file_path = std::filesystem::current_path();
-        auto fs = enkf_fs_alloc_empty(file_path.c_str());
+        auto fs = enkf_fs_alloc_empty(file_path.c_str(), false);
         enkf_fs_init_path_fmt(fs);
 
         WHEN("Misfits ensemble is initialized with minimal config") {
@@ -149,5 +150,29 @@ TEST_CASE("block_fs", "[enkf_fs]") {
         }
 
         block_fs_close(bfs);
+    }
+}
+
+void mount(void *args) {
+    enkf_fs_type *fs2 = enkf_fs_mount("mnt");
+    enkf_fs_decref(fs2);
+}
+
+TEST_CASE("Mount filesystem read/write twice", "[enkf_fs]") {
+    WITH_TMPDIR;
+    enkf_fs_create_fs("mnt", BLOCK_FS_DRIVER_ID, false);
+    enkf_fs_type *fs = enkf_fs_mount("mnt");
+
+    REQUIRE(std::filesystem::exists("mnt/mnt.lock"));
+    REQUIRE(enkf_fs_is_instance(fs));
+    REQUIRE(!enkf_fs_is_read_only(fs));
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        test_assert_util_abort("enkf_fs_alloc_empty", mount, NULL);
+    } else {
+        int child_status;
+        waitpid(pid, &child_status, 0);
+        REQUIRE(child_status == 0);
     }
 }

@@ -65,13 +65,9 @@ class EnKFMain(BaseCClass):
         else:
             return None
 
-    def __init__(self, config, strict=True):
-        """Initializes an instance of EnkfMain.
-
-        Note: @config is a ResConfig instance holding the configuration.
-        """
+    def __init__(self, config, strict=True, read_only=False):
         self.update_snapshots = {}
-        real_enkf_main = _RealEnKFMain(config, strict)
+        real_enkf_main = _RealEnKFMain(config, strict, read_only)
         assert isinstance(real_enkf_main, BaseCClass)
         self._init_from_real_enkf_main(real_enkf_main)
         self._monkey_patch_methods(real_enkf_main)
@@ -266,7 +262,7 @@ class _RealEnKFMain(BaseCClass):
 
     """
 
-    _alloc = ResPrototype("void* enkf_main_alloc(res_config)", bind=False)
+    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
     _get_queue_config = ResPrototype(
@@ -318,7 +314,7 @@ class _RealEnKFMain(BaseCClass):
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
-    def __init__(self, config, strict=True):
+    def __init__(self, config, strict=True, read_only=False):
         """Please don't use this class directly. See EnKFMain instead"""
         self.config_file = config
         res_config = self._init_res_config(config)
@@ -327,7 +323,7 @@ class _RealEnKFMain(BaseCClass):
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
 
-        c_ptr = self._alloc(res_config)
+        c_ptr = self._alloc(res_config, read_only)
         if c_ptr:
             super().__init__(c_ptr)
         else:
