@@ -296,10 +296,10 @@ static void block_fs_insert_index_node(block_fs_type *block_fs,
 */
 static void block_fs_install_node(block_fs_type *block_fs,
                                   file_node_type *node) {
-    block_fs->data_file_size = util_size_t_max(
-        block_fs->data_file_size,
-        node->node_offset +
-            node->node_size); /* Updating the total size of the file - i.e the next available offset. */
+    block_fs->data_file_size =
+        (block_fs->data_file_size > (node->node_offset + node->node_size))
+            ? block_fs->data_file_size
+            : node->node_offset + node->node_size;
     vector_append_owned_ref(block_fs->file_nodes, node, file_node_free__);
 }
 
