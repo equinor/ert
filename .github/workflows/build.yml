@@ -32,9 +32,9 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y valgrind
 
-    - name: Install Conan
+    - name: Install dependencies from PyPI
       run: |
-        python3 -m pip install conan
+        python3 -m pip install conan pybind11
 
     - name: Build libecl
       run: |

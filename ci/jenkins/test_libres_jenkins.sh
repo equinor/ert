@@ -120,7 +120,7 @@ create_virtualenv () {
 	mkdir $ENV
 	python3 -m venv $ENV
 	source $ENV/bin/activate
-	pip install -U pip wheel setuptools cmake
+	pip install -U pip wheel setuptools cmake pybind11
 
 	# Conan is a C++ package manager and is required by ecl
 	pip install conan
