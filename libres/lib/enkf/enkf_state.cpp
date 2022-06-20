@@ -187,15 +187,6 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
     return enkf_state;
 }
 
-static int_vector_type *
-__enkf_state_get_time_index(enkf_fs_type *sim_fs, const ecl_sum_type *summary) {
-    time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
-    bool updateOK = time_map_summary_update(time_map, summary);
-    if (!updateOK)
-        return NULL;
-    return time_map_alloc_index_map(time_map, summary);
-}
-
 /**
  * Check if there are summary keys in the ensemble config that is not found in
  * Eclipse. If this is the case, AND we have observations for this key, we have
@@ -264,9 +255,9 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
             // OK - now we have actually loaded the ecl_sum instance, or
             // ecl_sum == NULL.
             if (summary) {
-                int_vector_type *time_index =
-                    __enkf_state_get_time_index(sim_fs, summary);
-                if (!time_index) {
+                time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
+                auto updateOK = time_map_summary_update(time_map, summary);
+                if (!updateOK) {
                     // Something has gone wrong in checking time map, fail
                     logger->error("Inconsistent time map for summary data "
                                   "from: {}/{}, realisation failed",
@@ -276,6 +267,8 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                                                        LOAD_FAILURE);
                     throw std::invalid_argument("Inconsistent time map");
                 }
+                int_vector_type *time_index =
+                    time_map_alloc_index_map(time_map, summary);
 
                 // The actual loading internalizing - from ecl_sum -> enkf_node.
                 const int iens = run_arg_get_iens(run_arg);
