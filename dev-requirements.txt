@@ -1,9 +1,11 @@
 click
 cmake-format
 decorator
+ecl_data_io
 flake8>=4.0.0
 jsonpath_ng
 jupytext
+oil_reservoir_synthesizer
 pylint
 pytest-asyncio
 pytest-benchmark
@@ -18,9 +20,8 @@ requests
 scikit-build
 setuptools_scm
 sphinx
-sphinx_rtd_theme
 sphinx-argparse
 sphinx-autoapi
+sphinx_rtd_theme
 sphinxcontrib.datatemplates
-ecl_data_io
-oil_reservoir_synthesizer
+testpath

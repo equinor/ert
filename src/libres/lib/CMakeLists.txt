@@ -165,6 +165,13 @@ target_include_directories(
 set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
 install(TARGETS _lib LIBRARY DESTINATION src/res)
 
+# This extra deploy is only for ctest to be able to locate the script, this file
+# is otherwise deployed through setup.py.
+file(
+  COPY "${CMAKE_CURRENT_SOURCE_DIR}/job_queue/qstat_proxy.sh"
+  DESTINATION "${CMAKE_BINARY_DIR}/old_tests/job_queue"
+  FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
+
 # -----------------------------------------------------------------
 # Target: 'libres.so' for use in tests
 # -----------------------------------------------------------------

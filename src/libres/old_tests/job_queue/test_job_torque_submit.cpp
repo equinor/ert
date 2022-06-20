@@ -40,8 +40,8 @@ void test_submit(torque_driver_type *driver, const char *cmd) {
     if (job != NULL) {
         assert_status(driver, job, JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING);
         torque_driver_kill_job(driver, job);
-        printf("Waiting 2 seconds");
-        for (int i = 0; i < 2; i++) {
+        printf("Waiting 3 seconds");
+        for (int i = 0; i < 3; i++) {
             printf(".");
             fflush(stdout);
             sleep(1);
@@ -77,9 +77,6 @@ void test_submit_failed_qstat(torque_driver_type *driver, const char *cmd) {
 
     {
         ecl::util::TestArea ta("torque");
-        ta.copy_file(
-            (const char *)torque_driver_get_option(driver, TORQUE_QSTAT_CMD));
-        assert_status(driver, job, JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING);
 
         {
             char *qstat_cmd = util_alloc_abs_path("qstat.local");
