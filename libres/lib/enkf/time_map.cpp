@@ -372,6 +372,9 @@ bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
     pthread_rwlock_wrlock(&map->rw_lock);
     std::vector<std::string> errors;
     {
+        auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
+        if (!error.empty())
+            errors.push_back(error);
 
         int first_step = ecl_sum_get_first_report_step(ecl_sum);
         int last_step = ecl_sum_get_last_report_step(ecl_sum);
@@ -384,10 +387,6 @@ bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
                     errors.push_back(error);
             }
         }
-
-        auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
-        if (!error.empty())
-            errors.push_back(error);
     }
     pthread_rwlock_unlock(&map->rw_lock);
 
