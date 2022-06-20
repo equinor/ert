@@ -1,7 +1,6 @@
 import numpy
 from ecl.util.util import IntVector
 from pandas import DataFrame
-
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.plot_data import EnsemblePlotGenData
@@ -9,18 +8,19 @@ from res.enkf.plot_data import EnsemblePlotGenData
 
 class GenDataCollector:
     @staticmethod
-    def loadGenData(ert: EnKFMain, case_name, key, report_step, realization_index=None):
-        """@type ert: EnKFMain
-        @type case_name: str
-        @type key: str
-        @type report_step: int
-        @rtype: DataFrame
-
+    def loadGenData(
+        ert: EnKFMain,
+        case_name: str,
+        key: str,
+        report_step: int,
+        realization_index: int = None,
+    ) -> DataFrame:
+        """
         In the returned dataframe the realisation index runs along the
         rows, and the gen_data element index runs vertically along the
         columns.
         """
-        fs = ert.getEnkfFsManager().getFileSystem(case_name)
+        fs = ert.getEnkfFsManager().getFileSystem(case_name, read_only=True)
         realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
         if realization_index:
             if realization_index not in realizations:

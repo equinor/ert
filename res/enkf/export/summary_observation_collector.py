@@ -1,24 +1,17 @@
 from pandas import DataFrame
 from res.enkf import EnKFMain
+from typing import List
 
 
 class SummaryObservationCollector:
     @staticmethod
-    def getAllObservationKeys(ert: EnKFMain):
-        """
-        @type ert: EnKFMain
-        @rtype: list of str
-        """
+    def getAllObservationKeys(ert: EnKFMain) -> List[str]:
         return ert.getKeyManager().summaryKeysWithObservations()
 
     @staticmethod
-    def loadObservationData(ert: EnKFMain, case_name, keys=None):
-        """
-        @type ert: EnKFMain
-        @type case_name: str
-        @type keys: list of str
-        @rtype: DataFrame
-        """
+    def loadObservationData(
+        ert: EnKFMain, case_name: str, keys: List[str] = None
+    ) -> DataFrame:
         observations = ert.getObservations()
         history_length = ert.getHistoryLength()
         dates = [
@@ -48,5 +41,5 @@ class SummaryObservationCollector:
         return df
 
     @classmethod
-    def summaryKeyHasObservations(cls, ert: EnKFMain, key):
+    def summaryKeyHasObservations(cls, ert: EnKFMain, key: str) -> bool:
         return len(ert.ensembleConfig().getNode(key).getObservationKeys()) > 0
