@@ -151,6 +151,9 @@ pybind11_add_module(
   enkf/surface_config.cpp
   enkf/trans_func.cpp
   enkf/subst_config.cpp)
+
+# -----------------------------------------------------------------
+# Target: Python C Extension 'res._lib'
 # -----------------------------------------------------------------
 
 target_link_libraries(_lib PUBLIC ${ECL} std::filesystem cJSON::cJSON fmt::fmt
@@ -164,6 +167,14 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
   PRIVATE "${ECL_INCLUDE_DIRS}")
 
-add_library(res ALIAS _lib)
 set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
 install(TARGETS _lib LIBRARY DESTINATION res)
+
+# -----------------------------------------------------------------
+# Target: 'libres.so' for use in tests
+# -----------------------------------------------------------------
+
+if(BUILD_TESTS)
+  add_library(res $<TARGET_OBJECTS:_lib>)
+  target_link_libraries(res _lib pybind11::embed)
+endif()

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.19)
 project(res C CXX)
 
 option(BUILD_TESTS "Should the tests be built" OFF)
@@ -19,20 +19,29 @@ if(NOT SKBUILD)
 endif()
 
 # -----------------------------------------------------------------
-# Set default CMAKE_BUILD_TYPE
+# Detect pybind11
 # -----------------------------------------------------------------
 
-if(SKBUILD)
-  # Scikit-Build does not add your site-packages to the search path
-  # automatically, so we need to add it _or_ the pybind11 specific directory
-  # here.
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" -c
-            "import pybind11; print(pybind11.get_cmake_dir())"
-    OUTPUT_VARIABLE _tmp_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-  list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+# Default to "python3" in user's local environment if PYTHON_EXECUTABLE is not
+# set. This is preferable to CMake's `set(PYTHON_EXECUTABLE ... CACHE ...)`
+# because we avoid messing with future `FindPython.cmake` invocations.
+if(DEFINED PYTHON_EXECUTABLE)
+  set(_python_executable "${PYTHON_EXECUTABLE}")
+else()
+  set(_python_executable "python3")
 endif()
+
+execute_process(
+  COMMAND "${_python_executable}" -c
+          "import pybind11; print(pybind11.get_cmake_dir())"
+  OUTPUT_VARIABLE _tmp_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL
+  LAST)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+# -----------------------------------------------------------------
+# Set default CMAKE_BUILD_TYPE
+# -----------------------------------------------------------------
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE
@@ -73,10 +82,6 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-if(NOT SKBUILD)
-  set(conan_opts REQUIRES pybind11/2.9.1)
-endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # set(conan_opts ...)
@@ -145,8 +150,10 @@ endif()
 # Subdirectories
 # -----------------------------------------------------------------
 
-enable_testing()
-
 add_subdirectory(lib)
-add_subdirectory(old_tests)
-add_subdirectory(tests)
+
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(old_tests)
+  add_subdirectory(tests)
+endif()
