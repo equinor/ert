@@ -13,7 +13,7 @@ namespace detail {
 std::vector<std::string> parse_hostnames(const char *);
 }
 
-TEST_CASE("parse hostnames", "[lsf]") {
+TEST_CASE("parse hostnames lsf", "[lsf]") {
     WITH_TMPDIR;
     fs::path file_path = fs::current_path() / "exclud_hosts";
 

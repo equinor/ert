@@ -6,7 +6,7 @@
 
 std::pair<std::string, int> rsh_split_host(std::string hostname);
 
-TEST_CASE("parse hostnames", "[rsh]") {
+TEST_CASE("parse hostnames rsh", "[rsh]") {
     SECTION("Only hostname") {
         auto [host, max_running] = rsh_split_host("foo");
         REQUIRE(host == "foo");
