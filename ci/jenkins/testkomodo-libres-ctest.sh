@@ -52,6 +52,8 @@ install_test_dependencies () {
 install_package () {
     ci_install_cmake
     ci_install_conan
+
+    python -m pip install pybind11
     install_libecl
     build_libres
 }
