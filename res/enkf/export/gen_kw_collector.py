@@ -1,14 +1,14 @@
 from typing import List
-
 from res import _lib
 from pandas import DataFrame
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
+from res.enkf.enkf_fs import EnkfFs
 
 
 class GenKwCollector:
     @staticmethod
-    def createActiveList(ert, fs) -> List[int]:
+    def createActiveList(ert: EnKFMain, fs: EnkfFs) -> List[int]:
         ens_mask = fs.getStateMap().selectMatching(
             RealizationStateEnum.STATE_INITIALIZED
             | RealizationStateEnum.STATE_HAS_DATA,
@@ -16,19 +16,18 @@ class GenKwCollector:
         return [index for index, active in enumerate(ens_mask) if active]
 
     @staticmethod
-    def getAllGenKwKeys(ert):
-        """@rtype: list of str"""
+    def getAllGenKwKeys(ert: EnKFMain) -> List[str]:
         return ert.getKeyManager().genKwKeys()
 
     @staticmethod
-    def loadAllGenKwData(ert: EnKFMain, case_name, keys=None, realization_index=None):
-        """
-        @type ert: EnKFMain
-        @type case_name: str
-        @type keys: list of str
-        @rtype: DataFrame
-        """
-        fs = ert.getEnkfFsManager().getFileSystem(case_name)
+    def loadAllGenKwData(
+        ert: EnKFMain,
+        case_name: str,
+        keys: List[str] = None,
+        realization_index: int = None,
+        read_only: bool = False,
+    ) -> DataFrame:
+        fs = ert.getEnkfFsManager().getFileSystem(case_name, read_only=read_only)
 
         realizations = GenKwCollector.createActiveList(ert, fs)
 

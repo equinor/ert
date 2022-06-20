@@ -3,32 +3,30 @@ from pandas import DataFrame, MultiIndex
 from res import _lib
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
+from res.enkf.enkf_fs import EnkfFs
+from typing import List
 
 
 class SummaryCollector:
     @staticmethod
-    def getAllSummaryKeys(ert):
-        """@rtype: list of str"""
+    def getAllSummaryKeys(ert: EnKFMain) -> List[str]:
         return ert.getKeyManager().summaryKeys()
 
     @staticmethod
-    def createActiveList(ert, fs):
+    def createActiveList(ert: EnKFMain, fs: EnkfFs) -> List[int]:
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod
     def loadAllSummaryData(
-        ert: EnKFMain, case_name, keys=None, realization_index=None
+        ert: EnKFMain,
+        case_name: str,
+        keys: List[str] = None,
+        realization_index: int = None,
+        read_only: bool = False,
     ) -> DataFrame:
-        """
-        @type ert: EnKFMain
-        @type case_name: str
-        @type keys: list of str
-        @rtype: DataFrame
-        """
-
-        fs = ert.getEnkfFsManager().getFileSystem(case_name)
+        fs = ert.getEnkfFsManager().getFileSystem(case_name, read_only=read_only)
 
         time_map = fs.getTimeMap()
         dates = [time_map[index].datetime() for index in range(1, len(time_map))]

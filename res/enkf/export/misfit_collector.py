@@ -3,27 +3,23 @@ from pandas import DataFrame
 
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
+from res.enkf.enkf_fs import EnkfFs
+from typing import List
 
 
 class MisfitCollector:
     @staticmethod
-    def createActiveList(ert, fs):
+    def createActiveList(ert: EnKFMain, fs: EnkfFs) -> List[int]:
         state_map = fs.getStateMap()
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
         return [index for index, element in enumerate(ens_mask) if element]
 
     @staticmethod
-    def getAllMisfitKeys(ert, sort_keys=True):
-        """@rtype: list of str"""
+    def getAllMisfitKeys(ert: EnKFMain, sort_keys: bool = True) -> List[str]:
         return ert.getKeyManager().misfitKeys(sort_keys=sort_keys)
 
     @staticmethod
-    def loadAllMisfitData(ert: EnKFMain, case_name) -> DataFrame:
-        """
-        @type ert: EnKFMain
-        @type case_name: str
-        @rtype: DataFrame
-        """
+    def loadAllMisfitData(ert: EnKFMain, case_name: str) -> DataFrame:
         fs = ert.getEnkfFsManager().getFileSystem(case_name)
 
         realizations = MisfitCollector.createActiveList(ert, fs)

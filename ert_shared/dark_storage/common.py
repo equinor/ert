@@ -41,18 +41,18 @@ def data_for_key(res: LibresFacade, case, key, realization_index=None) -> pd.Dat
     index over the indexes/dates"""
 
     if key.split(":")[0][-1] == "H":
-        return res.history_data(key, case).T
+        return res.history_data(key, case, read_only=True).T
 
     if key.startswith("LOG10_"):
         key = key[6:]
 
     if res.is_summary_key(key):
-        data = res.gather_summary_data(case, key, realization_index).T
+        data = res.gather_summary_data(case, key, realization_index, read_only=True).T
     elif res.is_gen_kw_key(key):
-        data = res.gather_gen_kw_data(case, key, realization_index)
+        data = res.gather_gen_kw_data(case, key, realization_index, read_only=True)
         data.columns = pd.Index([0])
     elif res.is_gen_data_key(key):
-        data = res.gather_gen_data_data(case, key, realization_index).T
+        data = res.gather_gen_data_data(case, key, realization_index, read_only=True).T
     else:
         raise ValueError(f"no such key {key}")
 

@@ -207,7 +207,7 @@ enkf_fs_type *enkf_fs_get_ref(enkf_fs_type *fs) {
     return fs;
 }
 
-enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
+enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point, bool read_only) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
@@ -226,10 +226,11 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     if (util_try_lockf(fs->lock_file, S_IWUSR + S_IWGRP, &fs->lock_fd)) {
         fs->read_only = false;
     } else {
-        fprintf(stderr, " Another program has already opened filesystem "
-                        "read-write - this instance will be UNSYNCRONIZED "
-                        "read-only. Cross your fingers ....\n");
-        fs->read_only = true;
+        if (!read_only) {
+            util_abort("%s: Another program has already opened filesystem "
+                       "read-write \n",
+                       __func__);
+        }
     }
     return fs;
 }
@@ -274,8 +275,9 @@ static void enkf_fs_assign_driver(enkf_fs_type *fs,
 }
 
 static enkf_fs_type *enkf_fs_mount_block_fs(FILE *fstab_stream,
-                                            const char *mount_point) {
-    enkf_fs_type *fs = enkf_fs_alloc_empty(mount_point);
+                                            const char *mount_point,
+                                            bool read_only) {
+    enkf_fs_type *fs = enkf_fs_alloc_empty(mount_point, read_only);
 
     {
         while (true) {
@@ -394,7 +396,7 @@ void enkf_fs_fwrite_misfit(enkf_fs_type *fs) {
     }
 }
 
-enkf_fs_type *enkf_fs_mount(const char *mount_point) {
+enkf_fs_type *enkf_fs_mount(const char *mount_point, bool read_only) {
     FILE *stream = fs_driver_open_fstab(mount_point, false);
 
     if (!stream)
@@ -408,7 +410,7 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point) {
 
     switch (driver_id) {
     case (BLOCK_FS_DRIVER_ID):
-        fs = enkf_fs_mount_block_fs(stream, mount_point);
+        fs = enkf_fs_mount_block_fs(stream, mount_point, read_only);
         logger->debug("Mounting (block_fs) point {}.", mount_point);
         break;
     default:
