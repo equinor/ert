@@ -26,7 +26,7 @@
 
 #define FS_MAGIC_ID 123998L
 #define CURRENT_FS_VERSION 107
-#define MIN_SUPPORTED_FS_VERSION 105
+#define MIN_SUPPORTED_FS_VERSION 107
 
 /**
    Version history:
