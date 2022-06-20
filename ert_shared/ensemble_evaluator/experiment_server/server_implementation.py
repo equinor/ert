@@ -2,14 +2,16 @@ import asyncio
 import queue
 import grpc
 import experimentserver_pb2_grpc
-from experimentserver_pb2 import JobId, JobState, JobMessage
+from experimentserver_pb2 import (RunState,
+                                  EnsembleId, EnsembleState, EnsembleMessage,
+                                  JobId, JobState, JobMessage)
 
 class JobModel:
     def __init__(self, id: JobId, context):
-        self._jobid = id
+        self._jobid: JobId = id
         self._context = context
 
-        self._state = JobState()
+        self._state:JobState = JobState()
 
     def reconnect(self, context):
         self._context = context
@@ -22,34 +24,31 @@ class JobModel:
     def id(self)  -> JobId:
         return self._jobid
 
-    #@property
-    #def outstream(self):
-    #    return stub.MyEventStream(iter(self._send_queue.get, None))
-
     def cancel(self):
-        self.update(JobState(state=JobState.State.CANCELLED))
+        self.update(JobState(runstate=RunState.CANCELLED))
 
     async def _raiseIllegalState(self, new_state):
             await self._context.abort(grpc.StatusCode.ABORTED,
-                                      f"Illegal state-transition from {self.state.state} to {new_state.state}")
+                                      f"Illegal state-transition from {self.state.runstate} to {new_state.runstate}")
 
     async def update(self, new_state: JobState):
-        cur_state = self.state.state
+        print(f"Updating {self.state} with {new_state}")
+        cur_state = self.state.runstate
         if cur_state in (
-            JobState.State.DONE, JobState.State.CANCELLED, JobState.State.FAILED
+            RunState.DONE, RunState.CANCELLED, RunState.FAILED
             ):
             await self._raiseIllegalState(new_state)
 
-        if new_state.state == JobState.State.UNKNOWN:
-            if cur_state not in (JobState.State.UNKNOWN,):
+        if new_state.runstate == RunState.UNKNOWN:
+            if cur_state not in (RunState.UNKNOWN,):
                 await self._raiseIllegalState(new_state)
 
-        elif new_state.state == JobState.State.STARTED:
-            if cur_state not in (JobState.State.UNKNOWN, JobState.State.STARTED,):
+        elif new_state.runstate == RunState.STARTED:
+            if cur_state not in (RunState.UNKNOWN, RunState.STARTED,):
                 await self._raiseIllegalState(new_state)
 
-        elif new_state.state == JobState.State.RUNNING:
-            if cur_state not in (JobState.State.STARTED, JobState.State.RUNNING,):
+        elif new_state.runstate == RunState.RUNNING:
+            if cur_state not in (RunState.STARTED, RunState.RUNNING,):
                 await self._raiseIllegalState(new_state)
 
         self.state.MergeFrom(new_state)
@@ -72,7 +71,6 @@ class ExperimentServer(experimentserver_pb2_grpc.ExperimentserverServicer):
                 raise RuntimeError(f"Unexpected event {client_update}")
 
     async def connect_job(self, request_iter, context):
-        print("DING")
         async for client_update in request_iter:
             break
         print(f"Event: {client_update}")

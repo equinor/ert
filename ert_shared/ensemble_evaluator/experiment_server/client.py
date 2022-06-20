@@ -2,16 +2,18 @@ import asyncio
 import grpc
 from queue import SimpleQueue
 import experimentserver_pb2_grpc
-from experimentserver_pb2 import JobId, JobState, JobMessage
+from experimentserver_pb2 import (RunState,
+                                  EnsembleId, EnsembleState, EnsembleMessage,
+                                  JobId, JobState, JobMessage)
 
 from google.protobuf.json_format import MessageToJson
 
 
 class Job(experimentserver_pb2_grpc.ExperimentserverStub):
-    def __init__(self, channel, jobid):
+    def __init__(self, channel, jobid: JobId):
         super().__init__(channel)
-        self._jobid = jobid
-        self._state = JobState()
+        self._jobid: JobId = jobid
+        self._state: JobState = JobState()
         self._current_state = self.state.SerializeToString(deterministic=True)
         self._response_stream = self.connect_job(self.updates())
 
@@ -25,18 +27,16 @@ class Job(experimentserver_pb2_grpc.ExperimentserverStub):
 
     @property
     def done(self):
-        return self.state.state not in (
-                JobState.State.UNKNOWN, JobState.State.STARTED, JobState.State.RUNNING
+        return self.state.runstate not in (
+                RunState.UNKNOWN, RunState.STARTED, RunState.RUNNING
             )
 
     async def receiver(self):
         await asyncio.sleep(0.1)
-        try:
-            for resp in self._response_stream:
-                print(f"Received {resp}")
-                await asyncio.sleep(0.1)
-        except Exception as ex:
-            print(f"Server says {ex}")
+        # wonder why thus response.stream do not have an __aiter__
+        for resp in self._response_stream:
+            print(f"Received {resp}")
+            await asyncio.sleep(0.1)
         print("Receiver done")
 
     def updates(self) -> JobMessage:
@@ -55,48 +55,60 @@ class Job(experimentserver_pb2_grpc.ExperimentserverStub):
                 self._current_state = new_state
 
 async def play(job: Job, delay):
-    print("a")
-    job.state.state = JobState.State.STARTED
-    print("b")
-    await asyncio.sleep(delay)
-    print("c")
-    job.state.state = JobState.State.RUNNING
-    print("d")
-    await asyncio.sleep(delay)
-    print("e")
-    for _ in range(5):
-        job.state.currentMemory += 1000
+    try:
+        print("a")
+        job.state.runstate = RunState.STARTED
+        print("b")
         await asyncio.sleep(delay)
-    job.state.state = JobState.State.DONE
-    await asyncio.sleep(delay)
+        print("c")
+        job.state.runstate = RunState.RUNNING
+        print("d")
+        await asyncio.sleep(delay)
+        print("e")
+        for _ in range(5):
+            job.state.currentMemory += 1000
+            await asyncio.sleep(delay)
+        job.state.runstate = RunState.DONE
+        await asyncio.sleep(delay)
+    except asyncio.CancelledError:
+        print("Exited prematurely")
 
 
-async def main(id="default-experiment"):
+async def main(realization="default-experiment"):
     with grpc.insecure_channel("localhost:50051") as channel:
         try:
             grpc.channel_ready_future(channel).result(timeout=5)
         except grpc.FutureTimeoutError:
             sys.exit('Error connecting to server')
         else:
-            job = Job(channel, JobId(experimentId=id))
+            job = Job(channel, JobId(ensemble=EnsembleId(experiment="test-exp",
+                                                         ensemble="ensemble-0"),
+                                     realization=realization))
             print("Connected to server...")
     
             recv_task = asyncio.create_task(job.receiver())
             play_task = asyncio.create_task(play(job, delay=1))
 
-            await play_task
-            await recv_task
-            
+            try:
+                results = await asyncio.gather(
+                    recv_task, play_task,
+                    return_exceptions=False
+                )
+            except grpc.RpcError as ex:
+                print(f"Server closed with '{ex.details()}'")
+            except Exception as ex:
+                print(f"Unexpected exception {ex}")
+
 
 if __name__=='__main__':
     import time
     import sys
-    jobid = sys.argv[1] if len(sys.argv) > 1 else "default-id"
+    realization = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(main(id=jobid))
+        loop.run_until_complete(main(realization=realization))
     finally:
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
