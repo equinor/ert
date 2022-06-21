@@ -524,11 +524,6 @@ enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                                        ecl_config, run_arg);
 
     if (result.first == LOAD_SUCCESSFUL) {
-        // The loading succeded - so this is a howling success! We set
-        // the main status to JOB_QUEUE_ALL_OK and inform the queue layer
-        // about the success. In addition we set the simple status
-        // (should be avoided) to JOB_RUN_OK.
-        run_arg_set_run_status(run_arg, JOB_RUN_OK);
         result.second = "Results loaded successfully.";
     }
 
