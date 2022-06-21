@@ -58,8 +58,7 @@ static const int NODE_WRITE_ACTIVE_END = 776512;
 typedef enum {
     /** NODE_IN_USE_BYTE * ( 1 + 256 + 256**2 + 256**3) => Binary 01010101010101010101010101010101 */
     NODE_IN_USE = 1431655765,
-    NODE_WRITE_ACTIVE = WRITE_START__, /* This */
-    /** This should __never__ be written to disk */
+    NODE_WRITE_ACTIVE = WRITE_START__,
     NODE_INVALID = 13
 } node_status_type;
 
@@ -86,10 +85,20 @@ node_offset                                      offset
 
   The node_offset and offset values are not stored on disk, but rather
   implicitly read with ftell() calls.
+
+
+   Observe that when 'designing' this file-system the priority has
+   been on read-spead, one consequence of this is that all write
+   operations are sandwiched between two fsync() calls; that
+   guarantees that the read access (which should be the fast path) can
+   be without any calls to fsync().
+
+   Not necessary to lock - since all writes are protected by the
+   'global' rwlock anyway.
 */
-struct Block {
+class Block {
+public:
     int64_t node_offset{};
-    int32_t data_offset{};
     int32_t node_size{};
     int32_t data_size{};
     node_status_type status = NODE_INVALID;
@@ -97,11 +106,6 @@ struct Block {
     Block() = default;
     Block(const Block &) = default;
     Block(Block &&) = default;
-
-    Block(node_status_type status, int64_t offset, int32_t node_size,
-          int32_t data_size)
-        : node_offset(offset), node_size(node_size), data_size(data_size),
-          status(status) {}
 
     Block(node_status_type status, int64_t offset, int32_t data_size,
           const char *filename)
@@ -116,67 +120,104 @@ struct Block {
 
     Block &operator=(const Block &) = default;
     Block &operator=(Block &&) = default;
-};
 
-static bool file_node_verify_end_tag(const Block &meta, FILE *stream) {
-    int end_tag;
-    fseek__(stream, meta.node_offset + meta.node_size - sizeof NODE_END_TAG,
-            SEEK_SET);
-    if (fread(&end_tag, sizeof end_tag, 1, stream) == 1) {
-        if (end_tag == NODE_END_TAG)
-            return true;
-        else
+    bool verify_end_tag(FILE *stream) {
+        int end_tag;
+        fseek__(stream, node_offset + node_size - sizeof NODE_END_TAG,
+                SEEK_SET);
+        if (fread(&end_tag, sizeof end_tag, 1, stream) == 1) {
+            if (end_tag == NODE_END_TAG)
+                return true;
+            else
+                return false;
+        } else
             return false;
-    } else
-        return false;
-}
-
-static std::optional<Block> file_node_fread_alloc(FILE *stream, char **key) {
-    node_status_type status;
-    long int node_offset = ftell(stream);
-    if (fread(&status, sizeof status, 1, stream) == 1) {
-        if (status == NODE_IN_USE) {
-            int node_size;
-            *key = util_fread_realloc_string(*key, stream);
-
-            node_size = util_fread_int(stream);
-            if (node_size <= 0)
-                status = NODE_INVALID;
-            int data_size = util_fread_int(stream);
-            Block block{status, node_offset, node_size, data_size};
-            block.data_offset = ftell(stream) - block.node_offset;
-            return block;
-        } else {
-            if (status != NODE_WRITE_ACTIVE)
-                status = NODE_INVALID;
-            return Block{status, node_offset, 0, 0};
-        }
     }
-    return std::nullopt;
-}
 
-/**
-   This function will write the node information to file, this
-   includes the NODE_END_TAG identifier which shoule be written to the
-   end of the node.
-*/
-static void file_node_fwrite(const Block &block, const char *key,
-                             FILE *stream) {
-    if (block.node_size == 0)
-        util_abort("%s: trying to write node with z<ero size \n", __func__);
-    {
-        fseek__(stream, block.node_offset, SEEK_SET);
-        util_fwrite_int(block.status, stream);
-        if (block.status == NODE_IN_USE)
+    void write(const char *filename, FILE *data_stream, const void *ptr) {
+        write_active_markers(data_stream);
+        write_header(filename, data_stream);
+        if (status == NODE_IN_USE)
+            write_data(data_stream, ptr);
+        write_end_tag(data_stream);
+    }
+
+    static std::optional<Block> read_header(FILE *stream, char **key) {
+        node_status_type status;
+        long int node_offset = ftell(stream);
+        if (fread(&status, sizeof status, 1, stream) == 1) {
+            if (status == NODE_IN_USE) {
+                int node_size;
+                *key = util_fread_realloc_string(*key, stream);
+
+                node_size = util_fread_int(stream);
+                if (node_size <= 0)
+                    status = NODE_INVALID;
+                int data_size = util_fread_int(stream);
+                return Block{status, node_offset, node_size, data_size};
+            } else {
+                if (status != NODE_WRITE_ACTIVE)
+                    status = NODE_INVALID;
+                return Block{status, node_offset, 0, 0};
+            }
+        }
+        return std::nullopt;
+    }
+
+    void read_data(FILE *stream, buffer_type *buffer) {
+        char *key = NULL;
+        fseek(stream, node_offset, SEEK_SET);
+        auto at_node = Block::read_header(stream, &key);
+        if (!at_node.has_value() || at_node.value().data_size != data_size ||
+            at_node.value().node_offset != node_offset)
+            throw std::runtime_error("Block in file does not match index.");
+        buffer_stream_fread(buffer, data_size, stream);
+    }
+
+private:
+    Block(node_status_type status, int64_t offset, int32_t node_size,
+          int32_t data_size)
+        : node_offset(offset), node_size(node_size), data_size(data_size),
+          status(status) {}
+    void write_header(const char *key, FILE *stream) {
+        if (node_size == 0)
+            util_abort("%s: trying to write node with zero size \n", __func__);
+        fseek__(stream, node_offset, SEEK_SET);
+        util_fwrite_int(status, stream);
+        if (status == NODE_IN_USE)
             util_fwrite_string(key, stream);
-        util_fwrite_int(block.node_size, stream);
-        util_fwrite_int(block.data_size, stream);
-        fseek__(stream,
-                block.node_offset + block.node_size - sizeof NODE_END_TAG,
+        util_fwrite_int(node_size, stream);
+        util_fwrite_int(data_size, stream);
+    }
+
+    void write_end_tag(FILE *stream) {
+        fseek__(stream, node_offset + node_size - sizeof NODE_END_TAG,
                 SEEK_SET);
         util_fwrite_int(NODE_END_TAG, stream);
     }
-}
+
+    void write_data(FILE *data_stream, const void *ptr) {
+        util_fwrite(ptr, 1, data_size, data_stream, __func__);
+    }
+
+
+    /**
+     * This marks the start and end of the node with the integer tags:
+     * NODE_WRITE_ACTIVE_START and NODE_WRITE_ACTIVE_END, signalling this
+     * section in the data file is 'work in progress', and should be
+     * discarded if the application aborts during the write. When the write
+     * is complete it will have replaced the NODE_WRITE_ACTIVE_START and
+     * NODE_WRITE_ACTIVE_END tags with NODE_IN_USE and NODE_END_TAG
+     * identifiers.
+     */
+    void write_active_markers(FILE *stream) {
+        fseek__(stream, node_offset, SEEK_SET);
+        util_fwrite_int(NODE_WRITE_ACTIVE_START, stream);
+        fseek__(stream, node_offset + node_size - sizeof NODE_END_TAG,
+                SEEK_SET);
+        util_fwrite_int(NODE_WRITE_ACTIVE_END, stream);
+    }
+};
 
 struct block_fs_struct {
     UTIL_TYPE_ID_DECLARATION;
@@ -198,25 +239,6 @@ UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
 
 static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
     fseek__(block_fs->data_stream, offset, SEEK_SET);
-}
-
-/**
-   This marks the start and end of the node with the integer tags:
-   NODE_WRITE_ACTIVE_START and NODE_WRITE_ACTIVE_END, signalling this
-   section in the data file is 'work in progress', and should be
-   discarded if the application aborts during the write.
-
-   When the write is complete file_node_fwrite() should be called,
-   which will replace the NODE_WRITE_ACTIVE_START and
-   NODE_WRITE_ACTIVE_END tags with NODE_IN_USE and NODE_END_TAG
-   identifiers.
-*/
-static void file_node_init_fwrite(const Block &block, FILE *stream) {
-    fseek__(stream, block.node_offset, SEEK_SET);
-    util_fwrite_int(NODE_WRITE_ACTIVE_START, stream);
-    fseek__(stream, block.node_offset + block.node_size - sizeof NODE_END_TAG,
-            SEEK_SET);
-    util_fwrite_int(NODE_WRITE_ACTIVE_END, stream);
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
@@ -260,11 +282,6 @@ static void block_fs_fwrite_mount_info(const fs::path &mount_file) {
 static void block_fs_fseek_node_end(block_fs_type *block_fs,
                                     const Block &block) {
     block_fs_fseek(block_fs, block.node_offset + block.node_size);
-}
-
-static void block_fs_fseek_node_data(block_fs_type *block_fs,
-                                     const Block &block) {
-    block_fs_fseek(block_fs, block.node_offset + block.data_offset);
 }
 
 /**
@@ -360,7 +377,7 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
         char *key = NULL;
         for (const auto &node_offset : offset_list) {
             block_fs_fseek(block_fs, node_offset);
-            auto block = file_node_fread_alloc(block_fs->data_stream, &key);
+            auto block = Block::read_header(block_fs->data_stream, &key);
 
             if ((block->status == NODE_INVALID) ||
                 (block->status == NODE_WRITE_ACTIVE)) {
@@ -373,10 +390,8 @@ static void block_fs_fix_nodes(block_fs_type *block_fs,
 
             block->status = NODE_INVALID;
             block->data_size = 0;
-            block->data_offset = 0;
 
-            block_fs_fseek(block_fs, node_offset);
-            file_node_fwrite(*block, NULL, block_fs->data_stream);
+            block->write(NULL, block_fs->data_stream, NULL);
         }
         free(key);
 
@@ -391,7 +406,7 @@ static void block_fs_build_index(block_fs_type *block_fs,
 
     block_fs_fseek(block_fs, 0);
     for (;;) {
-        auto block = file_node_fread_alloc(block_fs->data_stream, &filename);
+        auto block = Block::read_header(block_fs->data_stream, &filename);
         if (!block.has_value())
             break;
 
@@ -412,7 +427,7 @@ static void block_fs_build_index(block_fs_type *block_fs,
             error_offset.push_back(block->node_offset);
             block_fs_fseek_valid_node(block_fs);
         } else {
-            if (file_node_verify_end_tag(*block, block_fs->data_stream)) {
+            if (block->verify_end_tag(block_fs->data_stream)) {
                 block_fs_fseek_node_end(block_fs, *block);
                 if (block->status == NODE_IN_USE) {
                     block_fs->index[filename] = *block;
@@ -480,29 +495,12 @@ void block_fs_fsync(block_fs_type *block_fs) {
         fseek__(block_fs->data_stream, 0, SEEK_END);
     }
 }
+
 static int64_t block_fs_get_end(block_fs_type *block_fs) {
     fseek(block_fs->data_stream, 0, SEEK_END);
     return ftell(block_fs->data_stream);
 }
 
-/**
-   The single lowest-level write function:
-
-   3. seek to correct position.
-   4. Write the data with util_fwrite()
-
-   7. increase the write_count
-   8. set the data_size field of the node.
-
-   Observe that when 'designing' this file-system the priority has
-   been on read-spead, one consequence of this is that all write
-   operations are sandwiched between two fsync() calls; that
-   guarantees that the read access (which should be the fast path) can
-   be without any calls to fsync().
-
-   Not necessary to lock - since all writes are protected by the
-   'global' rwlock anyway.
-*/
 void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
                           const void *ptr, size_t data_size) {
     if (block_fs_is_readonly(block_fs))
@@ -511,20 +509,7 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
 
     Block block{NODE_IN_USE, block_fs_get_end(block_fs),
                 static_cast<int32_t>(data_size), filename};
-
-    /* The actual writing ... */
-    block_fs_fseek(block_fs, block.node_offset);
-
-    // This marks the node section in the datafile as write in progress with:
-    // NODE_WRITE_ACTIVE_START ... NODE_WRITE_ACTIVE_END
-    file_node_init_fwrite(block, block_fs->data_stream);
-
-    /* Writes the actual data content. */
-    block_fs_fseek_node_data(block_fs, block);
-    util_fwrite(ptr, 1, data_size, block_fs->data_stream, __func__);
-
-    /* Writes the file node header data, including the NODE_END_TAG. */
-    file_node_fwrite(block, filename, block_fs->data_stream);
+    block.write(filename, block_fs->data_stream, ptr);
 
     block_fs->write_count++;
     if (block_fs->fsync_interval &&
@@ -546,12 +531,11 @@ void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer) {
     std::lock_guard guard{block_fs->mutex};
-    const Block &block = block_fs->index.at(filename);
+    Block &block = block_fs->index.at(filename);
 
     buffer_clear(buffer); /* Setting: content_size = 0; pos = 0;  */
 
-    block_fs_fseek_node_data(block_fs, block);
-    buffer_stream_fread(buffer, block.data_size, block_fs->data_stream);
+    block.read_data(block_fs->data_stream, buffer);
 
     buffer_rewind(buffer); /* Setting: pos = 0; */
 }
