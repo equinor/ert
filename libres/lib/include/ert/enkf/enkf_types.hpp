@@ -150,7 +150,6 @@ typedef enum {
     JOB_SUBMITTED = 1,
     JOB_RUN_FAILURE = 2,
     JOB_LOAD_FAILURE = 3,
-    JOB_RUN_OK = 4
 } run_status_type;
 
 typedef struct {
