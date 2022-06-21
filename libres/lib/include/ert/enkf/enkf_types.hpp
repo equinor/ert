@@ -145,9 +145,6 @@ typedef enum { //ENKF_ASSIMILATION       = 1,
 
 typedef enum {
     JOB_NOT_STARTED = 0,
-    /** This implies that it has been submitted to the internal queue system;
-     * we don't know if it is actually running or not. */
-    JOB_SUBMITTED = 1,
     JOB_RUN_FAILURE = 2,
     JOB_LOAD_FAILURE = 3,
 } run_status_type;
