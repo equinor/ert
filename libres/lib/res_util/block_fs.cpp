@@ -601,13 +601,9 @@ static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
     return new_node;
 }
 
-bool block_fs_has_file__(const block_fs_type *block_fs, const char *filename) {
-    return hash_has_key(block_fs->index, filename);
-}
-
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
     std::lock_guard guard{block_fs->mutex};
-    return block_fs_has_file__(block_fs, filename);
+    return hash_has_key(block_fs->index, filename);
 }
 
 /**
