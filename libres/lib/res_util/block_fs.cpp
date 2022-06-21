@@ -713,8 +713,6 @@ void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
    Close/synchronize the open file descriptors and free all memory
    related to the block_fs instance.
 
-   If the boolean unlink_empty is set to true all the files will be
-   unlinked if the filesystem is empty.
 */
 void block_fs_close(block_fs_type *block_fs) {
     block_fs_fsync(block_fs);
