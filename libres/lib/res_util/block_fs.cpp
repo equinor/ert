@@ -580,7 +580,6 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int block_size,
 }
 
 static file_node_type *block_fs_get_new_node(block_fs_type *block_fs,
-                                             const char *filename,
                                              size_t min_size) {
 
     long int offset;
@@ -674,7 +673,7 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
     bool new_node = true;
     size_t min_size = data_size + file_node_header_size(filename);
 
-    file_node = block_fs_get_new_node(block_fs, filename, min_size);
+    file_node = block_fs_get_new_node(block_fs, min_size);
 
     /* The actual writing ... */
     block_fs_fwrite__(block_fs, filename, file_node, ptr, data_size);
