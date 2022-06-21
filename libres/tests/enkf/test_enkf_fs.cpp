@@ -58,7 +58,6 @@ TEST_CASE("enkf_fs_fwrite_misfit", "[enkf_fs]") {
 TEST_CASE("block_fs", "[enkf_fs]") {
     const int block_size = 64;
     const int fsync_interval = 10;
-    const bool unlink_empty = false;
 
     std::vector<char> random(1000);
     {
