@@ -64,9 +64,30 @@ typedef enum {
     NODE_INVALID = 13
 } node_status_type;
 
-/**
- * Meta-information about where to find the data for a block.
- */
+static inline void fseek__(FILE *stream, long int arg, int whence) {
+    if (fseek(stream, arg, whence) != 0) {
+        fprintf(stderr, "** Warning - seek:%ld failed %s(%d) \n", arg,
+                strerror(errno), errno);
+        util_abort("%S - aborting\n", __func__);
+    }
+}
+
+/** Meta-information about where to find the data for a block.
+
+   Internal index layout:
+
+   |<InUse: Bool><Key: String><node_size: Int><data_size: Int>|
+   |<InUse: Bool><node_size: Int><data_size: Int>|
+
+  /|\
+   |
+   |<-------------------------------------------------------->|
+                                                   |
+node_offset                                      offset
+
+  The node_offset and offset values are not stored on disk, but rather
+  implicitly read with ftell() calls.
+*/
 struct BlockMeta {
     int64_t node_offset{};
     int32_t data_offset{};
@@ -85,32 +106,6 @@ struct BlockMeta {
     BlockMeta &operator=(const BlockMeta &) = default;
     BlockMeta &operator=(BlockMeta &&) = default;
 };
-
-struct block_fs_struct {
-    UTIL_TYPE_ID_DECLARATION;
-
-    int data_fd;
-    FILE *data_stream;
-
-    std::mutex mutex;
-
-    std::unordered_map<std::string, BlockMeta> index;
-    bool data_owner;
-};
-
-UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
-
-static inline void fseek__(FILE *stream, long int arg, int whence) {
-    if (fseek(stream, arg, whence) != 0) {
-        fprintf(stderr, "** Warning - seek:%ld failed %s(%d) \n", arg,
-                strerror(errno), errno);
-        util_abort("%S - aborting\n", __func__);
-    }
-}
-
-static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
-    fseek__(block_fs->data_stream, offset, SEEK_SET);
-}
 
 static bool file_node_verify_end_tag(const BlockMeta &meta, FILE *stream) {
     int end_tag;
@@ -150,22 +145,6 @@ static std::optional<BlockMeta> file_node_fread_alloc(FILE *stream,
     return std::nullopt;
 }
 
-/*
-   Internal index layout:
-
-   |<InUse: Bool><Key: String><node_size: Int><data_size: Int>|
-   |<InUse: Bool><node_size: Int><data_size: Int>|
-
-  /|\
-   |
-   |<-------------------------------------------------------->|
-                                                   |
-node_offset                                      offset
-
-  The node_offset and offset values are not stored on disk, but rather
-  implicitly read with ftell() calls.
-*/
-
 /**
    This function will write the node information to file, this
    includes the NODE_END_TAG identifier which shoule be written to the
@@ -187,6 +166,24 @@ static void file_node_fwrite(const BlockMeta &block, const char *key,
                 SEEK_SET);
         util_fwrite_int(NODE_END_TAG, stream);
     }
+}
+
+struct block_fs_struct {
+    UTIL_TYPE_ID_DECLARATION;
+
+    int data_fd;
+    FILE *data_stream;
+
+    std::mutex mutex;
+
+    std::unordered_map<std::string, BlockMeta> index;
+    bool data_owner;
+};
+
+UTIL_SAFE_CAST_FUNCTION(block_fs, BLOCK_FS_TYPE_ID)
+
+static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
+    fseek__(block_fs->data_stream, offset, SEEK_SET);
 }
 
 /**
@@ -221,17 +218,6 @@ static int file_node_header_size(const char *filename) {
 
 static void file_node_set_data_offset(BlockMeta &block, const char *filename) {
     block.data_offset = file_node_header_size(filename) - sizeof(NODE_END_TAG);
-}
-
-static BlockMeta file_node_index_buffer_fread_alloc(buffer_type *buffer) {
-    node_status_type status = (node_status_type)buffer_fread_int(buffer);
-    long int node_offset = buffer_fread_long(buffer);
-    int node_size = buffer_fread_int(buffer);
-
-    BlockMeta block{status, node_offset, node_size};
-    block.data_offset = buffer_fread_int(buffer);
-    block.data_size = buffer_fread_int(buffer);
-    return block;
 }
 
 static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
