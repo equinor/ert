@@ -212,34 +212,35 @@ static std::string time_map_update__(time_map_type *map, int step,
     time_t current_time = time_t_vector_safe_iget(map->map, step);
     auto response_time = *std::localtime(&update_time);
     std::string error;
-    // The map has not been initialized if current_time == DEFAULT_TIME
-    if (current_time == DEFAULT_TIME) {
-        if (map->refcase) {
-            if (step <= ecl_sum_get_last_report_step(map->refcase)) {
-                time_t ref_time = ecl_sum_get_report_time(map->refcase, step);
+    // The map has not been initialized if current_time == DEFAULT_TIME,
+    // if it has been initialized it must be in sync with update_time
+    if ((current_time != DEFAULT_TIME) && (current_time != update_time)) {
+        auto current_case_time = *std::localtime(&current_time);
+        return fmt::format("Time mismatch for step: {}, response time: "
+                           "{}, reference case: {}",
+                           step, std::put_time(&response_time, "%Y-%m-%d"),
+                           std::put_time(&current_case_time, "%Y-%m-%d"));
+    }
 
-                if (ref_time != update_time) {
-                    auto ref_case_time = *std::localtime(&ref_time);
-                    error = fmt::format(
-                        "Time mismatch for step: {}, response time: "
-                        "{}, reference case: {}",
-                        step, std::put_time(&response_time, "%Y-%m-%d"),
-                        std::put_time(&ref_case_time, "%Y-%m-%d"));
-                }
+    // We could be in a state where map->map is not initialized, however there
+    // is a refcase, in that case, make sure the refcase is in sync.
+    if (map->refcase) {
+        if (step <= ecl_sum_get_last_report_step(map->refcase)) {
+            time_t ref_time = ecl_sum_get_report_time(map->refcase, step);
+
+            if (ref_time != update_time) {
+                auto ref_case_time = *std::localtime(&ref_time);
+                return fmt::format("Time mismatch for step: {}, response time: "
+                                   "{}, reference case: {}",
+                                   step,
+                                   std::put_time(&response_time, "%Y-%m-%d"),
+                                   std::put_time(&ref_case_time, "%Y-%m-%d"));
             }
         }
-    } else if (current_time != update_time) {
-        auto current_case_time = *std::localtime(&current_time);
-        error = fmt::format("Time mismatch for step: {}, response time: "
-                            "{}, reference case: {}",
-                            step, std::put_time(&response_time, "%Y-%m-%d"),
-                            std::put_time(&current_case_time, "%Y-%m-%d"));
     }
-
-    if (error.empty()) {
-        map->modified = true;
-        time_t_vector_iset(map->map, step, update_time);
-    }
+    // No mismatch found, ok to update time map
+    map->modified = true;
+    time_t_vector_iset(map->map, step, update_time);
 
     return error;
 }
