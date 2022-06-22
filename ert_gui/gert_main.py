@@ -37,7 +37,9 @@ from ert_gui.tools.plot import PlotTool
 from ert_gui.tools.plugins import PluginHandler, PluginsTool
 from ert_gui.tools.run_analysis import RunAnalysisTool
 from ert_gui.tools.workflows import WorkflowsTool
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.libres_facade import LibresFacade
+from ert.experiment_server import Experiment
 
 from res.enkf import EnKFMain, ResConfig
 
@@ -144,3 +146,14 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()
     return window
+
+
+async def _run_async(
+    experiment: Experiment,
+    ee_config: EvaluatorServerConfig,
+):
+    from ert.experiment_server import start_experiment_server
+
+    async with start_experiment_server(ee_config) as experiment_server:
+        experiment_id = experiment_server.add_experiment(experiment)
+        await experiment_server.run_experiment(experiment_id=experiment_id)

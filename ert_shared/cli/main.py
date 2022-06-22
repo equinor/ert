@@ -21,18 +21,6 @@ from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
-if sys.version_info < (3, 7):
-    from async_generator import asynccontextmanager
-else:
-    from contextlib import asynccontextmanager
-
-
-@asynccontextmanager
-async def start_experiment_server(ee_config: EvaluatorServerConfig):
-    from ert.experiment_server import ExperimentServer
-
-    yield ExperimentServer(ee_config)
-
 
 class ErtCliError(Exception):
     pass
@@ -133,6 +121,8 @@ async def _run_cli_async(
     args: Any,
     ee_config: EvaluatorServerConfig,
 ):
+    from ert.experiment_server import start_experiment_server
+
     async with start_experiment_server(ee_config) as experiment_server:
         experiment_id = experiment_server.add_legacy_experiment(
             ert, ensemble_size, current_case_name, args, create_model

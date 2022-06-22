@@ -14,6 +14,7 @@ from ert_gui.tools.file import FileDialog
 from ert_gui.tools.plot.plot_tool import PlotTool
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel
+from ert_shared.feature_toggling import FeatureToggling
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorTracker,
@@ -287,6 +288,18 @@ class RunDialog(QDialog):
         self._tab_widget.clear()
 
         evaluator_server_config = EvaluatorServerConfig()
+
+        if FeatureToggling.is_enabled("experiment-server"):
+            import asyncio
+            from ert_gui.gert_main import _run_async
+
+            asyncio.run(
+                _run_async(
+                    self._run_model,
+                    evaluator_server_config,
+                )
+            )
+            return
 
         def run():
             asyncio.set_event_loop(asyncio.new_event_loop())

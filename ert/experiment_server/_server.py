@@ -28,6 +28,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+if sys.version_info < (3, 7):
+    from async_generator import asynccontextmanager
+else:
+    from contextlib import asynccontextmanager
+
 
 class ExperimentServer:
     def __init__(self, ee_config: EvaluatorServerConfig) -> None:
@@ -181,3 +186,8 @@ class ExperimentServer:
             p.cancel()
         for d in done:
             d.result()
+
+
+@asynccontextmanager
+async def start_experiment_server(ee_config: EvaluatorServerConfig):
+    yield ExperimentServer(ee_config)
