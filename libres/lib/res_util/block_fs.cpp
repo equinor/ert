@@ -477,6 +477,10 @@ void block_fs_fsync(block_fs_type *block_fs) {
         fseek__(block_fs->data_stream, 0, SEEK_END);
     }
 }
+static int64_t block_fs_get_end(block_fs_type *block_fs) {
+    fseek(block_fs->data_stream, 0, SEEK_END);
+    return ftell(block_fs->data_stream);
+}
 
 /**
    The single lowest-level write function:
@@ -503,9 +507,8 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
 
     size_t min_size = data_size + file_node_header_size(filename);
 
-    fseek(block_fs->data_stream, 0, SEEK_END);
-    int64_t offset = ftell(block_fs->data_stream);
-    Block block{NODE_IN_USE, offset, static_cast<int32_t>(min_size)};
+    Block block{NODE_IN_USE, block_fs_get_end(block_fs),
+                static_cast<int32_t>(min_size)};
 
     /* The actual writing ... */
     block_fs_fseek(block_fs, block.node_offset);
