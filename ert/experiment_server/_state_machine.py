@@ -1,7 +1,6 @@
 import asyncio
 from collections import defaultdict, Mapping
-from email.policy import default
-from typing import Dict, List
+from typing import Dict, List, Union
 import logging
 from collections import deque
 import collections
@@ -38,7 +37,7 @@ class StateMachine:
             dict, {k: {} for k in nested_dict_keys(experiment_structure)}
         )
         self._updated_entity_states: Dict[int, Dict] = defaultdict(dict)
-        self._event_queue: deque = deque()
+        self._event_queue: asyncio.Queue = asyncio.Queue()
         self._experiment_structure = experiment_structure
 
     def successful_realizations(self, iter_: int) -> int:
@@ -61,7 +60,7 @@ class StateMachine:
         if event["source"] not in self._entity_states.keys():
             # TODO:handle unspecified source
             pass
-        self._event_queue.append(event)
+        self._event_queue.put_nowait(event)
 
     def get_update(self) -> Dict:
         """Returns the result of the last processing of the event queue (hence the delta from the last process)"""
@@ -80,3 +79,22 @@ class StateMachine:
                 {**event.data, "type": event["type"]},
             )
         merge_dict(self._entity_states, self._updated_entity_states)
+
+    async def apply_updates(self) -> None:
+        self._updated_entity_states = defaultdict(dict)
+
+        max_events = 1000
+        i = 0
+        while not self._event_queue.empty() and i < max_events:
+            event = await self._event_queue.get()
+            self._event_queue.task_done()
+            merge_dict(
+                self._updated_entity_states[event["source"]],
+                {**event.data, "type": event["type"]},
+            )
+            i += 1
+        merge_dict(self._entity_states, self._updated_entity_states)
+        await self._generate_transitions()
+
+    async def _generate_transitions(self) -> None:
+        pass

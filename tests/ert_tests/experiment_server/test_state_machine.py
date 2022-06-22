@@ -1,6 +1,7 @@
 from cloudevents.http import CloudEvent
 from collections import defaultdict
 import copy
+import itertools
 
 from ert.experiment_server import StateMachine
 from ert.experiment_server._state_machine import nested_dict_keys
@@ -12,6 +13,19 @@ def _generate_structure():
         "ee_1": {
             "ee_1/real_1": {"ee_1/real_1/step_1": ["ee_1/real_1/step_1/job_1"]},
             "ee_1/real_2": {"ee_1/real_2/step_1": ["ee_1/real_2/step_1/job_1"]},
+        }
+    }
+
+
+def _generate_large_structure(n_reals, n_jobs):
+    return {
+        "ee_1": {
+            f"ee_1/real_{i}": {
+                f"ee_1/real_{i}/step_1": [
+                    f"ee_1/real_{i}/step_1/job_{j}" for j in range(n_jobs)
+                ]
+            }
+            for i in range(n_reals)
         }
     }
 
@@ -251,8 +265,45 @@ def test_disallowed_state_change():
 
 
 def test_large_case():
-    # 500 realisations, 50 jobs
-    pass
+    n_reals = 500
+    n_jobs = 100
+    ensemble_structure = _generate_large_structure(n_reals, n_jobs)
+    sm = StateMachine(ensemble_structure)
+    for i, j in itertools.product(range(n_reals), range(n_jobs)):
+        sm.queue_event(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_START,
+                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+        sm.queue_event(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_RUNNING,
+                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+        sm.queue_event(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+
+    import time
+
+    start = time.time()
+    sm.apply_updates()
+    duration = time.time() - start
+    a = 2
 
 
 def test_propagate_state_change():

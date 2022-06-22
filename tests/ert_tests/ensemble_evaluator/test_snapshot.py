@@ -185,3 +185,60 @@ def test_multiple_cloud_events_trigger_non_communicated_change():
         )
     )
     assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
+
+
+SnapshotBuilder()
+
+
+def test_large_snapshot_update():
+    n_reals = 500
+    n_jobs = 100
+    builder = SnapshotBuilder().add_step(step_id="0", status="Unknown")
+    for i in range(n_jobs):
+        builder.add_job(
+            step_id="0",
+            job_id=str(i),
+            index=str(i),
+            name=f"job{i}",
+            data={},
+            status="Unknown",
+        )
+    snapshot = builder.build([str(i) for i in range(n_reals)], status="Unknown")
+
+    partial = PartialSnapshot(snapshot)
+    import itertools
+
+    import time
+
+    start = time.time()
+    for i, j in itertools.product(range(n_reals), range(n_jobs)):
+        partial.from_cloudevent(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_START,
+                    "source": f"/real/{i}/step/0/job/{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+        partial.from_cloudevent(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_RUNNING,
+                    "source": f"/real/{i}/step/0/job/{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+        partial.from_cloudevent(
+            CloudEvent(
+                {
+                    "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                    "source": f"/real/{i}/step/0/job/{j}",
+                },
+                data={"some": "irrelevant_data"},
+            )
+        )
+
+    duration = time.time() - start
+    a = 2

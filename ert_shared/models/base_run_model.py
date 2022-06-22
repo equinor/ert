@@ -419,6 +419,10 @@ class BaseRunModel:
             real = int(get_real_id(event["source"]))
             self._state_machine.add_successful_realization(iter_, real)
 
+    async def get_update(self) -> None:
+        await self._state_machine.apply_updates()
+        return self._state_machine.get_update()
+
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()
 
