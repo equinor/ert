@@ -63,9 +63,9 @@ typedef enum {
     NODE_INVALID = 13
 } node_status_type;
 
-static inline void fseek__(FILE *stream, long int arg, int whence) {
-    if (fseek(stream, arg, whence) != 0) {
-        fprintf(stderr, "** Warning - seek:%ld failed %s(%d) \n", arg,
+static inline void fseek__(FILE *stream, long int offset, int whence) {
+    if (fseek(stream, offset, whence) != 0) {
+        fprintf(stderr, "** Warning - seek:%ld failed %s(%d) \n", offset,
                 strerror(errno), errno);
         util_abort("%S - aborting\n", __func__);
     }
