@@ -1,27 +1,19 @@
-syntax = "proto3";
+syntax = "proto2";  // using proto2 to specify default-values
+       // could do proto3 but then our code gets more responsibility
+       // consider stronger support for json in proto3
 
 package experimentserver;
 //import "google/protobuf/timestamp.proto";
 
 
 service Experimentserver {
-	rpc connect_ensemble(stream EnsembleMessage) returns(stream EnsembleState);
-	rpc connect_job(stream JobMessage) returns(stream JobState);
+	rpc connect_experiment(stream Experiment) returns(stream Experiment);
+	rpc connect_ensemble(stream Ensemble) returns(stream Ensemble);
+	rpc connect_realization(stream Realization) returns(stream Realization);
+	rpc connect_job(stream Job) returns(stream Job);
 }
 
-message EnsembleId {
-  string experiment = 1;
-  string ensemble   = 2;
-}
-
-message JobId {
-  EnsembleId ensemble = 1;
-  uint64 realization = 2;
-  uint64 step = 3;
-  uint64 job = 4;
-}
-
-enum RunState {
+enum Status {
     UNKNOWN   = 0;
     STARTED   = 1;
     RUNNING   = 2;
@@ -30,32 +22,60 @@ enum RunState {
     CANCELLED = 5;
 }
 
-message EnsembleState {
-  RunState runstate = 1;
-  uint64 startTime = 2;
-  uint64 endTime = 3;
+
+message ExperimentId {
+  required string id = 1 [default = "experiment"];
+}
+message EnsembleId {
+  required ExperimentId experiment = 1;
+  optional string id         = 2 [default = "ensemble"];  // an ensemble is identified by a string, not index
+}
+message RealizationId {
+  required EnsembleId ensemble = 1;
+  optional uint64 realization  = 2 [default = 0];
+}
+message StepId {
+  required RealizationId realization = 1;
+  optional uint64 step               = 2 [default = 0]; // replace with string?
+}
+message JobId {
+  required StepId step  = 1;
+  optional uint64 index = 2 [default = 0];
 }
 
-message JobState {
-  RunState runstate = 1;
-  uint64 currentMemory = 2;
-  uint64 maxMemory = 3;
+message Experiment {
+  optional ExperimentId id   = 1; // NOTE: in the message the id is optional since it often will be streamed
+  optional Status status   = 2 [default = UNKNOWN];
+}
+message Ensemble {
+  optional EnsembleId id   = 1;
+  optional Status status   = 2 [default = UNKNOWN];
+}
+message Realization {
+  optional RealizationId id= 1;
+  optional Status status   = 2 [default = UNKNOWN];
+  optional bool active     = 3 [default = true];  // not derived - active/inactive by user or algorithm
+  optional double start_time      = 4;  // can be derived from step-list
+  optional double end_time        = 5;  // can be derived from step-list
+}
+message Step {
+  optional StepId id         = 1;
+  optional Status status   = 2 [default = UNKNOWN];
+  optional double start_time = 3;  // can be derived from job-list
+  optional double end_time   = 4;  // can be derived from job-list
+}
+message Job {
+  optional JobId id        = 1;
+  optional Status status   = 2 [default = UNKNOWN];
+  optional double start_time = 3;
+  optional double end_time   = 4;
+  //required string index      = 5; derive from id
+  optional string name       = 6;
+  optional string error      = 7;
+  optional string stdout     = 8;
+  optional string stderr     = 9;
 
-//  google.protobuf.Timestamp startTime = 1;
-  uint64 startTime = 4;
-  uint64 endTime = 5;
+  optional uint64 current_memory = 10;
+  optional uint64 max_memory     = 11;
 }
 
-message EnsembleMessage {
-  oneof event {
-  	EnsembleId id  = 1;
-  	RunState state = 2;
-  }
-}
-
-message JobMessage {
-  oneof event {
-  	JobId id       = 1;
-  	JobState state = 2;
-  }
-}

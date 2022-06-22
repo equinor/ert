@@ -1,96 +1,134 @@
 import asyncio
 import queue
 import grpc
+from functools import singledispatchmethod
 import experimentserver_pb2_grpc
-from experimentserver_pb2 import (RunState,
-                                  EnsembleId, EnsembleState, EnsembleMessage,
-                                  JobId, JobState, JobMessage)
+from experimentserver_pb2 import Status, Experiment, ExperimentId, Job, JobId
 
-class JobModel:
-    def __init__(self, id: JobId, context):
-        self._jobid: JobId = id
-        self._context = context
-
-        self._state:JobState = JobState()
-
+class BaseModel:
+    async def _raiseIllegalState(self, old_state, new_state):
+            await self._context.abort(grpc.StatusCode.ABORTED,
+                                      f"Illegal state-transition from {old_state} to {new_state}")
     def reconnect(self, context):
         self._context = context
 
-    @property
-    def state(self) -> JobState:
-        return self._state
+    @singledispatchmethod
+    async def update(self, upd):
+        pass
 
-    @property
-    def id(self)  -> JobId:
-        return self._jobid
+class JobModel(BaseModel):
+    def __init__(self, id: JobId, context):
+        self._context = context
+        self._job: Job = Job(id=id)
 
     def cancel(self):
-        self.update(JobState(runstate=RunState.CANCELLED))
+        self.update(JobState(runstate=Status.CANCELLED))
 
-    async def _raiseIllegalState(self, new_state):
-            await self._context.abort(grpc.StatusCode.ABORTED,
-                                      f"Illegal state-transition from {self.state.runstate} to {new_state.runstate}")
 
-    async def update(self, new_state: JobState):
-        print(f"Updating {self.state} with {new_state}")
-        cur_state = self.state.runstate
-        if cur_state in (
-            RunState.DONE, RunState.CANCELLED, RunState.FAILED
+    @BaseModel.update.register
+    async def _(self, new_job: Job):
+        print(f"Updating {self._job} with {new_job}")
+        cur_status = self._job.status
+        if cur_status in (
+            Status.DONE, Status.CANCELLED, Status.FAILED
             ):
-            await self._raiseIllegalState(new_state)
+            await self._raiseIllegalState(cur_status, new_job.status)
 
-        if new_state.runstate == RunState.UNKNOWN:
-            if cur_state not in (RunState.UNKNOWN,):
-                await self._raiseIllegalState(new_state)
+        if new_job.status == Status.UNKNOWN:
+            if cur_status not in (Status.UNKNOWN,):
+                await self._raiseIllegalState(cur_status, new_job.status)
 
-        elif new_state.runstate == RunState.STARTED:
-            if cur_state not in (RunState.UNKNOWN, RunState.STARTED,):
-                await self._raiseIllegalState(new_state)
+        elif new_job.status == Status.STARTED:
+            if cur_status not in (Status.UNKNOWN, Status.STARTED,):
+                await self._raiseIllegalState(cur_status, new_job.status)
 
-        elif new_state.runstate == RunState.RUNNING:
-            if cur_state not in (RunState.STARTED, RunState.RUNNING,):
-                await self._raiseIllegalState(new_state)
+        elif new_job.status == Status.RUNNING:
+            if cur_status not in (Status.STARTED, Status.RUNNING,):
+                await self._raiseIllegalState(cur_status, new_job.status)
 
-        self.state.MergeFrom(new_state)
-        print(f"Response: {self.state}")
-        await self._context.write(self.state)
+        self._job.MergeFrom(new_job)
+        print(f"Response: {self._job}")
+        await self._context.write(self._job)
 
+class ExperimentModel(BaseModel):
+    def __init__(self, message: Experiment, context):
+        self._experiment: Experiment = message
+        self._context = context
+
+    @BaseModel.update.register
+    async def _(self, new_experiment: Experiment):
+        print(f"Updating {self} with EXP {new_experiment}")
+        cur_status = self._experiment.status
+        if cur_status in (
+            Status.DONE, Status.CANCELLED, Status.FAILED
+            ):
+            await self._raiseIllegalState(new_experiment)
+
+        if new_experiment.status == Status.UNKNOWN:
+            if cur_state not in (Status.UNKNOWN,):
+                await self._raiseIllegalState(new_experiment)
+
+        elif new_experiment.status == Status.STARTED:
+            if cur_state not in (Status.UNKNOWN, Status.STARTED,):
+                await self._raiseIllegalState(new_experiment)
+
+        elif new_experiment.status == Status.RUNNING:
+            if cur_state not in (Status.STARTED, Status.RUNNING,):
+                await self._raiseIllegalState(new_experiment)
+
+        self._experiment.MergeFrom(new_experiment)
+        print(f"Response: {self._experiment}")
+        await self._context.write(self._experiment)
+
+    @BaseModel.update.register
+    async def _(self, new_job: Job):
+        print(f"Updating {self} with JOB {new_job}")
 
 class ExperimentServer(experimentserver_pb2_grpc.ExperimentserverServicer):
     def __init__(self):
-        self._jobs = dict()
+        self._experiments = dict()
 
-    # TODO: merge into connect_job. No value in separate method
-    async def _read(self, request_iter, job: JobModel):
-        async for client_update in request_iter:
-            print(f"READ: {client_update}")
-            if "state" == client_update.WhichOneof("event"):
-                print(f"Received state: {client_update.state}")
-                await job.update(client_update.state)
-            else:
-                raise RuntimeError(f"Unexpected event {client_update}")
+    async def connect_experiment(self, request_iter, context):
+        print(f"Connect exp...")
+        async for experiment in request_iter:
+            break
+        print(f"Event exp: {experiment}")
+        key = experiment.id.SerializeToString(deterministic=True)
+        if key in self._experiments:
+            print(f"Reconnect exp {experiment}")
+            self._experiments[key].reconnect(context)
+        else:
+            print(f"New experiment: {experiment}")
+            self._experiments[key] = ExperimentModel(experiment, context)
+
+        model = self._experiments[key]
+        await context.write(model._experiment)
+
+        async for experiment in request_iter:
+            print(f"READ exp: {experiment }")
+            await model.update(experiment)
+
+        print(f"Disconnect exp {experiment}")
+
+
 
     async def connect_job(self, request_iter, context):
-        async for client_update in request_iter:
+        async for job in request_iter:
             break
-        print(f"Event: {client_update}")
-        if "id" == client_update.WhichOneof("event"):
-            key = client_update.SerializeToString(deterministic=True)
-            if key in self._jobs:
-                print(f"Reconnect {client_update}")
-                self._jobs[key].reconnect(context)
-            else:
-                print(f"New Job: {client_update}")
-                self._jobs[key] = JobModel(client_update.id, context)
-                
-            await context.write(self._jobs[key].state)
-        else:
-            raise RuntimeError(f"Must connect first with ID")
+        print(f"Event job: {job}")
 
-        # Pass iterator on to read-method
-        # TODO: merge...
-        await self._read(request_iter, self._jobs[key])
-        print(f"Disconnect {client_update}")
+        exp_key = job.id.step.realization.ensemble.experiment.SerializeToString(deterministic=True)
+        if exp_key not in self._experiments:
+            raise RuntimeError(f"No corresponding Experiment")
+
+        experiment = self._experiments[exp_key]
+        await experiment.update(job)
+
+        async for job in request_iter:
+            print(f"READ job: {job}")
+            await experiment.update(job)
+
+        print(f"Disconnect job {job}")
 
 
 async def serve():
