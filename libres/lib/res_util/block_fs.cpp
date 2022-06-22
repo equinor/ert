@@ -466,17 +466,6 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, bool read_only) {
     return block_fs;
 }
 
-static Block block_fs_get_new_node(block_fs_type *block_fs,
-                                   const char *filename, size_t size) {
-    /* Must lock the total size here ... */
-    fseek(block_fs->data_stream, 0, SEEK_END);
-    int64_t offset = ftell(block_fs->data_stream);
-    Block block{NODE_IN_USE, offset, static_cast<int32_t>(size)};
-    block_fs->index[filename] = block;
-
-    return block;
-}
-
 bool block_fs_has_file(block_fs_type *block_fs, const char *filename) {
     std::lock_guard guard{block_fs->mutex};
     return block_fs->index.count(filename) > 0;
@@ -506,8 +495,19 @@ void block_fs_fsync(block_fs_type *block_fs) {
    Not necessary to lock - since all writes are protected by the
    'global' rwlock anyway.
 */
-static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
-                              Block &block, const void *ptr, int data_size) {
+void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
+                          const void *ptr, size_t data_size) {
+    if (block_fs_is_readonly(block_fs))
+        throw std::runtime_error("tried to write to read only filesystem");
+    std::lock_guard guard{block_fs->mutex};
+
+    size_t min_size = data_size + file_node_header_size(filename);
+
+    fseek(block_fs->data_stream, 0, SEEK_END);
+    int64_t offset = ftell(block_fs->data_stream);
+    Block block{NODE_IN_USE, offset, static_cast<int32_t>(min_size)};
+
+    /* The actual writing ... */
     block_fs_fseek(block_fs, block.node_offset);
     block.status = NODE_IN_USE;
     block.data_size = data_size;
@@ -523,20 +523,7 @@ static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
 
     /* Writes the file node header data, including the NODE_END_TAG. */
     file_node_fwrite(block, filename, block_fs->data_stream);
-}
 
-void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
-                          const void *ptr, size_t data_size) {
-    if (block_fs_is_readonly(block_fs))
-        throw std::runtime_error("tried to write to read only filesystem");
-    std::lock_guard guard{block_fs->mutex};
-
-    size_t min_size = data_size + file_node_header_size(filename);
-
-    Block block = block_fs_get_new_node(block_fs, filename, min_size);
-
-    /* The actual writing ... */
-    block_fs_fwrite__(block_fs, filename, block, ptr, data_size);
     block_fs->index[filename] = block;
 }
 
