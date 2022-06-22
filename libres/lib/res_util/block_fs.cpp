@@ -88,26 +88,26 @@ node_offset                                      offset
   The node_offset and offset values are not stored on disk, but rather
   implicitly read with ftell() calls.
 */
-struct BlockMeta {
+struct Block {
     int64_t node_offset{};
     int32_t data_offset{};
     int32_t node_size{};
     int32_t data_size{};
     node_status_type status = NODE_INVALID;
 
-    BlockMeta() = default;
-    BlockMeta(const BlockMeta &) = default;
-    BlockMeta(BlockMeta &&) = default;
+    Block() = default;
+    Block(const Block &) = default;
+    Block(Block &&) = default;
 
-    BlockMeta(node_status_type status, int64_t offset, int32_t size)
+    Block(node_status_type status, int64_t offset, int32_t size)
         : node_offset(offset), node_size(size), data_size(size),
           status(status) {}
 
-    BlockMeta &operator=(const BlockMeta &) = default;
-    BlockMeta &operator=(BlockMeta &&) = default;
+    Block &operator=(const Block &) = default;
+    Block &operator=(Block &&) = default;
 };
 
-static bool file_node_verify_end_tag(const BlockMeta &meta, FILE *stream) {
+static bool file_node_verify_end_tag(const Block &meta, FILE *stream) {
     int end_tag;
     fseek__(stream, meta.node_offset + meta.node_size - sizeof NODE_END_TAG,
             SEEK_SET);
@@ -120,8 +120,7 @@ static bool file_node_verify_end_tag(const BlockMeta &meta, FILE *stream) {
         return false;
 }
 
-static std::optional<BlockMeta> file_node_fread_alloc(FILE *stream,
-                                                      char **key) {
+static std::optional<Block> file_node_fread_alloc(FILE *stream, char **key) {
     node_status_type status;
     long int node_offset = ftell(stream);
     if (fread(&status, sizeof status, 1, stream) == 1) {
@@ -132,14 +131,14 @@ static std::optional<BlockMeta> file_node_fread_alloc(FILE *stream,
             node_size = util_fread_int(stream);
             if (node_size <= 0)
                 status = NODE_INVALID;
-            BlockMeta block{status, node_offset, node_size};
+            Block block{status, node_offset, node_size};
             block.data_size = util_fread_int(stream);
             block.data_offset = ftell(stream) - block.node_offset;
             return block;
         } else {
             if (status != NODE_WRITE_ACTIVE)
                 status = NODE_INVALID;
-            return BlockMeta{status, node_offset, 0};
+            return Block{status, node_offset, 0};
         }
     }
     return std::nullopt;
@@ -150,7 +149,7 @@ static std::optional<BlockMeta> file_node_fread_alloc(FILE *stream,
    includes the NODE_END_TAG identifier which shoule be written to the
    end of the node.
 */
-static void file_node_fwrite(const BlockMeta &block, const char *key,
+static void file_node_fwrite(const Block &block, const char *key,
                              FILE *stream) {
     if (block.node_size == 0)
         util_abort("%s: trying to write node with z<ero size \n", __func__);
@@ -176,7 +175,7 @@ struct block_fs_struct {
 
     std::mutex mutex;
 
-    std::unordered_map<std::string, BlockMeta> index;
+    std::unordered_map<std::string, Block> index;
     bool data_owner;
 };
 
@@ -197,7 +196,7 @@ static inline void block_fs_fseek(block_fs_type *block_fs, long offset) {
    NODE_WRITE_ACTIVE_END tags with NODE_IN_USE and NODE_END_TAG
    identifiers.
 */
-static void file_node_init_fwrite(const BlockMeta &block, FILE *stream) {
+static void file_node_init_fwrite(const Block &block, FILE *stream) {
     fseek__(stream, block.node_offset, SEEK_SET);
     util_fwrite_int(NODE_WRITE_ACTIVE_START, stream);
     fseek__(stream, block.node_offset + block.node_size - sizeof NODE_END_TAG,
@@ -210,13 +209,13 @@ static void file_node_init_fwrite(const BlockMeta &block, FILE *stream) {
    marker NODE_END_TAG.
 */
 static int file_node_header_size(const char *filename) {
-    return sizeof(BlockMeta::status) + sizeof(BlockMeta::node_size) +
-           sizeof(BlockMeta::data_size) + sizeof(NODE_END_TAG) +
+    return sizeof(Block::status) + sizeof(Block::node_size) +
+           sizeof(Block::data_size) + sizeof(NODE_END_TAG) +
            sizeof(int) /* embedded by the util_fwrite_string routine */ +
            strlen(filename) + 1 /* \0 */;
 }
 
-static void file_node_set_data_offset(BlockMeta &block, const char *filename) {
+static void file_node_set_data_offset(Block &block, const char *filename) {
     block.data_offset = file_node_header_size(filename) - sizeof(NODE_END_TAG);
 }
 
@@ -257,12 +256,12 @@ static void block_fs_fwrite_mount_info(const fs::path &mount_file) {
    start at a new node.
 */
 static void block_fs_fseek_node_end(block_fs_type *block_fs,
-                                    const BlockMeta &block) {
+                                    const Block &block) {
     block_fs_fseek(block_fs, block.node_offset + block.node_size);
 }
 
 static void block_fs_fseek_node_data(block_fs_type *block_fs,
-                                     const BlockMeta &block) {
+                                     const Block &block) {
     block_fs_fseek(block_fs, block.node_offset + block.data_offset);
 }
 
@@ -467,12 +466,12 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, bool read_only) {
     return block_fs;
 }
 
-static BlockMeta block_fs_get_new_node(block_fs_type *block_fs,
-                                       const char *filename, size_t size) {
+static Block block_fs_get_new_node(block_fs_type *block_fs,
+                                   const char *filename, size_t size) {
     /* Must lock the total size here ... */
     fseek(block_fs->data_stream, 0, SEEK_END);
     int64_t offset = ftell(block_fs->data_stream);
-    BlockMeta block{NODE_IN_USE, offset, static_cast<int32_t>(size)};
+    Block block{NODE_IN_USE, offset, static_cast<int32_t>(size)};
     block_fs->index[filename] = block;
 
     return block;
@@ -508,8 +507,7 @@ void block_fs_fsync(block_fs_type *block_fs) {
    'global' rwlock anyway.
 */
 static void block_fs_fwrite__(block_fs_type *block_fs, const char *filename,
-                              BlockMeta &block, const void *ptr,
-                              int data_size) {
+                              Block &block, const void *ptr, int data_size) {
     block_fs_fseek(block_fs, block.node_offset);
     block.status = NODE_IN_USE;
     block.data_size = data_size;
@@ -535,7 +533,7 @@ void block_fs_fwrite_file(block_fs_type *block_fs, const char *filename,
 
     size_t min_size = data_size + file_node_header_size(filename);
 
-    BlockMeta block = block_fs_get_new_node(block_fs, filename, min_size);
+    Block block = block_fs_get_new_node(block_fs, filename, min_size);
 
     /* The actual writing ... */
     block_fs_fwrite__(block_fs, filename, block, ptr, data_size);
@@ -554,7 +552,7 @@ void block_fs_fwrite_buffer(block_fs_type *block_fs, const char *filename,
 void block_fs_fread_realloc_buffer(block_fs_type *block_fs,
                                    const char *filename, buffer_type *buffer) {
     std::lock_guard guard{block_fs->mutex};
-    const BlockMeta &block = block_fs->index.at(filename);
+    const Block &block = block_fs->index.at(filename);
 
     buffer_clear(buffer); /* Setting: content_size = 0; pos = 0;  */
 
