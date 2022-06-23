@@ -134,14 +134,6 @@ public:
             return false;
     }
 
-    void write(const char *filename, FILE *data_stream, const void *ptr) {
-        write_active_markers(data_stream);
-        write_header(filename, data_stream);
-        if (status == NODE_IN_USE)
-            write_data(data_stream, ptr);
-        write_end_tag(data_stream);
-    }
-
     static std::optional<Block> read_header(FILE *stream, char **key) {
         node_status_type status;
         long int node_offset = ftell(stream);
@@ -174,33 +166,15 @@ public:
         buffer_stream_fread(buffer, data_size, stream);
     }
 
-private:
-    Block(node_status_type status, int64_t offset, int32_t node_size,
-          int32_t data_size)
-        : node_offset(offset), node_size(node_size), data_size(data_size),
-          status(status) {}
-    void write_header(const char *key, FILE *stream) {
-        if (node_size == 0)
-            util_abort("%s: trying to write node with zero size \n", __func__);
-        fseek__(stream, node_offset, SEEK_SET);
-        util_fwrite_int(status, stream);
+    void write(const char *filename, FILE *data_stream, const void *ptr) {
+        write_active_markers(data_stream);
+        write_header(filename, data_stream);
         if (status == NODE_IN_USE)
-            util_fwrite_string(key, stream);
-        util_fwrite_int(node_size, stream);
-        util_fwrite_int(data_size, stream);
+            write_data(data_stream, ptr);
+        write_end_tag(data_stream);
     }
 
-    void write_end_tag(FILE *stream) {
-        fseek__(stream, node_offset + node_size - sizeof NODE_END_TAG,
-                SEEK_SET);
-        util_fwrite_int(NODE_END_TAG, stream);
-    }
-
-    void write_data(FILE *data_stream, const void *ptr) {
-        util_fwrite(ptr, 1, data_size, data_stream, __func__);
-    }
-
-
+private:
     /**
      * This marks the start and end of the node with the integer tags:
      * NODE_WRITE_ACTIVE_START and NODE_WRITE_ACTIVE_END, signalling this
@@ -217,6 +191,32 @@ private:
                 SEEK_SET);
         util_fwrite_int(NODE_WRITE_ACTIVE_END, stream);
     }
+
+    void write_header(const char *key, FILE *stream) {
+        if (node_size == 0)
+            util_abort("%s: trying to write node with zero size \n", __func__);
+        fseek__(stream, node_offset, SEEK_SET);
+        util_fwrite_int(status, stream);
+        if (status == NODE_IN_USE)
+            util_fwrite_string(key, stream);
+        util_fwrite_int(node_size, stream);
+        util_fwrite_int(data_size, stream);
+    }
+
+    void write_data(FILE *data_stream, const void *ptr) {
+        util_fwrite(ptr, 1, data_size, data_stream, __func__);
+    }
+
+    void write_end_tag(FILE *stream) {
+        fseek__(stream, node_offset + node_size - sizeof NODE_END_TAG,
+                SEEK_SET);
+        util_fwrite_int(NODE_END_TAG, stream);
+    }
+
+    Block(node_status_type status, int64_t offset, int32_t node_size,
+          int32_t data_size)
+        : node_offset(offset), node_size(node_size), data_size(data_size),
+          status(status) {}
 };
 
 struct block_fs_struct {
