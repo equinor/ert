@@ -89,7 +89,6 @@ class EnkfFsManager(BaseCClass):
 
     _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_fs_manager)")
     _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
-    _ensemble_size = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
     _is_case_initialized = ResPrototype(
         "bool enkf_main_case_is_initialized(enkf_fs_manager, char*)"
@@ -179,7 +178,7 @@ class EnkfFsManager(BaseCClass):
         return len(self._fs_rotator)
 
     def getEnsembleSize(self) -> int:
-        return self._ensemble_size()
+        return self.parent().getEnsembleSize()
 
     def switchFileSystem(self, file_system: EnkfFs) -> None:
         self._switch_fs(file_system, None)
