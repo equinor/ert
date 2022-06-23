@@ -34,12 +34,6 @@ class EnKFFSTest(ResTest):
             self.assertTrue(os.path.exists("newFS"))
             self.assertTrue(fs is None)
 
-            with self.assertRaises(IOError):
-                version = EnkfFs.diskVersion("does/not/exist")
-
-            version = EnkfFs.diskVersion("newFS")
-            self.assertTrue(version >= 106)
-
     @tmpdir()
     def test_create2(self):
         with TestAreaContext("create_fs2") as work_area:

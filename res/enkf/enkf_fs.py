@@ -34,10 +34,6 @@ class EnkfFs(BaseCClass):
 
     _mount = ResPrototype("void* enkf_fs_mount(char* )", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _disk_version = ResPrototype("int   enkf_fs_disk_version(char*)", bind=False)
-    _update_disk_version = ResPrototype(
-        "bool  enkf_fs_update_disk_version(char*, int, int)", bind=False
-    )
     _decref = ResPrototype("int   enkf_fs_decref(enkf_fs)")
     _incref = ResPrototype("int   enkf_fs_incref(enkf_fs)")
     _get_refcount = ResPrototype("int   enkf_fs_get_refcount(enkf_fs)")
@@ -94,17 +90,6 @@ class EnkfFs(BaseCClass):
 
     def is_running(self):
         return self._is_running()
-
-    @classmethod
-    def diskVersion(cls, path):
-        disk_version = cls._disk_version(path)
-        if disk_version < 0:
-            raise IOError(f"No such filesystem: {path}")
-        return disk_version
-
-    @classmethod
-    def updateVersion(cls, path, src_version, target_version):
-        return cls._update_disk_version(path, src_version, target_version)
 
     @classmethod
     def createFileSystem(cls, path, mount=False):
