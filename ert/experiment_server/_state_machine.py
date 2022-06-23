@@ -1,9 +1,12 @@
 import asyncio
 from collections import defaultdict, Mapping
-from typing import Dict, List, Union
+from typing import Dict, List
 import logging
-from collections import deque
-import collections
+from cloudevents.http import CloudEvent
+from ert.ensemble_evaluator import identifiers as ids
+from itertools import chain
+
+flatten = chain.from_iterable
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ def nested_dict_keys(tree_structure: Dict) -> set:
 
 def merge_dict(left: Dict, right: Dict) -> None:
     for key, value in right.items():
-        if isinstance(value, collections.abc.Mapping):
+        if isinstance(value, Mapping):
             merge_dict(left[key], right[key])
         else:
             left[key] = value
@@ -51,34 +54,27 @@ class StateMachine:
         if real not in self._ensemble_to_successful_realizations[iter_]:
             self._ensemble_to_successful_realizations[iter_].append(real)
 
-    def queue_event(self, event) -> None:
+    async def queue_event(self, event) -> None:
         """Adds the event to the queue to be processed later. Once the queue is processed the
         delta from previous processing of queue will be aggregated in updated_entity_states.
         In the scenario that the contents of a new event overlaps with a previous
-        the old content will be overwritten
+        the old content will be overwritten.
         """
         if event["source"] not in self._entity_states.keys():
-            # TODO:handle unspecified source
-            pass
+            raise KeyError(
+                f"Provided source <{event['source']}> was not found in the experiment_structure"
+            )
         self._event_queue.put_nowait(event)
 
-    def get_update(self) -> Dict:
-        """Returns the result of the last processing of the event queue (hence the delta from the last process)"""
+    async def get_update(self) -> Dict:
+        """Returns the result of the last processing of the event queue (hence the delta from the last process).
+        Does not include events currently in the queue. The content in get_update will be a subset of get_full_state
+        and does not provide more information."""
         return self._updated_entity_states
 
-    def get_full_state(self) -> Dict:
+    async def get_full_state(self) -> Dict:
         """Returns the state as it is described in `entity_states` (not including events in the queue)"""
         return self._entity_states
-
-    def apply_updates(self) -> None:
-        self._updated_entity_states = defaultdict(dict)
-        while self._event_queue:
-            event = self._event_queue.pop()
-            merge_dict(
-                self._updated_entity_states[event["source"]],
-                {**event.data, "type": event["type"]},
-            )
-        merge_dict(self._entity_states, self._updated_entity_states)
 
     async def apply_updates(self) -> None:
         self._updated_entity_states = defaultdict(dict)

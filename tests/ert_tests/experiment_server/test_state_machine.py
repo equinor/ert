@@ -2,28 +2,21 @@ from cloudevents.http import CloudEvent
 from collections import defaultdict
 import copy
 import itertools
+import pytest
 
 from ert.experiment_server import StateMachine
-from ert.experiment_server._state_machine import nested_dict_keys
+from ert.experiment_server._state_machine import nested_dict_keys, neighbour_values
 from ert.ensemble_evaluator import identifiers as ids
 
 
-def _generate_structure():
+def _generate_structure(n_reals=2, n_steps=2, n_jobs=2):
     return {
-        "ee_1": {
-            "ee_1/real_1": {"ee_1/real_1/step_1": ["ee_1/real_1/step_1/job_1"]},
-            "ee_1/real_2": {"ee_1/real_2/step_1": ["ee_1/real_2/step_1/job_1"]},
-        }
-    }
-
-
-def _generate_large_structure(n_reals, n_jobs):
-    return {
-        "ee_1": {
-            f"ee_1/real_{i}": {
-                f"ee_1/real_{i}/step_1": [
-                    f"ee_1/real_{i}/step_1/job_{j}" for j in range(n_jobs)
+        "ee/0": {
+            f"ee/0/real/{i}": {
+                f"ee/0/real/{i}/step/{j}": [
+                    f"ee/0/real/{i}/step/{j}/job/{k}" for k in range(n_jobs)
                 ]
+                for j in range(n_steps)
             }
             for i in range(n_reals)
         }
@@ -38,35 +31,43 @@ def _update_from_cloudevent(event):
     return {event["source"]: {"type": event["type"], **event.data}}
 
 
-def test_no_update():
+def test_neighbour_values():
+    ensemble_structure = _generate_structure()
+    neighbour_values(ensemble_structure)
+
+
+@pytest.mark.asyncio
+async def test_no_update():
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
-    assert sm.get_full_state() == _empty_state_from_structure(ensemble_structure)
+    assert await sm.get_full_state() == _empty_state_from_structure(ensemble_structure)
 
 
-def test_single_update():
+@pytest.mark.asyncio
+async def test_single_update():
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
     event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
         data={"meta": "irrelevant_data"},
     )
-    sm.queue_event(event)
-    sm.apply_updates()
-    assert sm.get_update() == _update_from_cloudevent(event)
+    await sm.queue_event(event)
+    await sm.apply_updates()
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
     state = _empty_state_from_structure(ensemble_structure)
-    state["ee_1/real_1/step_1/job_1"] = {
+    state["ee/0/real/0/step/0/job/0"] = {
         "type": ids.EVTYPE_FM_JOB_RUNNING,
         "meta": "irrelevant_data",
     }
-    assert sm.get_full_state() == state
+    assert await sm.get_full_state() == state
 
 
-def test_multiple_updates():
+@pytest.mark.asyncio
+async def test_multiple_updates():
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
 
@@ -74,63 +75,65 @@ def test_multiple_updates():
     first_event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
         data=content,
     )
     second_event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_2/step_1/job_1",
+            "source": "ee/0/real/1/step/0/job/0",
         },
         data=content,
     )
-    sm.queue_event(first_event)
-    sm.queue_event(second_event)
+    await sm.queue_event(first_event)
+    await sm.queue_event(second_event)
 
     expected_update = {}
     expected_update.update(_update_from_cloudevent(first_event))
     expected_update.update(_update_from_cloudevent(second_event))
 
-    sm.apply_updates()
-    assert sm.get_update() == expected_update
+    await sm.apply_updates()
+    assert await sm.get_update() == expected_update
 
     expected_state = _empty_state_from_structure(ensemble_structure)
 
-    expected_state["ee_1/real_1/step_1/job_1"] = {
+    expected_state["ee/0/real/0/step/0/job/0"] = {
         "type": ids.EVTYPE_FM_JOB_RUNNING,
         **content,
     }
-    expected_state["ee_1/real_2/step_1/job_1"] = {
+    expected_state["ee/0/real/1/step/0/job/0"] = {
         "type": ids.EVTYPE_FM_JOB_RUNNING,
         **content,
     }
 
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
 
 
-def test_redundant_updates():
+@pytest.mark.asyncio
+async def test_redundant_updates():
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
 
     event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
         data={"meta": "irrelevant_data"},
     )
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
     event.data = {"meta": "new_irrelevant_data"}
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
-    sm.apply_updates()
+    await sm.apply_updates()
 
-    assert sm.get_update() == _update_from_cloudevent(event)
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
 
-def test_partly_reduntant():
+@pytest.mark.asyncio
+async def test_partly_reduntant():
     # Test that multiple events with duplicate content will be aggregated as expected
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
@@ -138,7 +141,7 @@ def test_partly_reduntant():
     event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
     )
     expected_content = {"type": ids.EVTYPE_FM_JOB_RUNNING}
@@ -152,7 +155,7 @@ def test_partly_reduntant():
     expected_content.update(content)
     event.data = content
 
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
     event = copy.copy(event)
     content = {"second_unique": 2}
@@ -160,51 +163,53 @@ def test_partly_reduntant():
     expected_content.update(content)
     event.data = content
 
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
-    sm.apply_updates()
-    update_state = sm.get_update()
-    assert update_state["ee_1/real_1/step_1/job_1"] == expected_content
+    await sm.apply_updates()
+    update_state = await sm.get_update()
+    assert update_state["ee/0/real/0/step/0/job/0"] == expected_content
 
 
-def test_retrieve_only_new_information():
+@pytest.mark.asyncio
+async def test_retrieve_only_new_information():
     ensemble_structure = _generate_structure()
     sm = StateMachine(ensemble_structure)
 
     event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
     )
     event.data = {"some": "irrelevant_data"}
 
-    sm.queue_event(event)
-    sm.apply_updates()
+    await sm.queue_event(event)
+    await sm.apply_updates()
 
     # First update shall include the added event
-    assert sm.get_update() == _update_from_cloudevent(event)
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
     event = copy.copy(event)
     event.data = {"another": "irrelevant_data"}
-    sm.queue_event(event)
-    sm.apply_updates()
+    await sm.queue_event(event)
+    await sm.apply_updates()
 
     # Second update should only include events since last update
-    assert sm.get_update() == _update_from_cloudevent(event)
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
     # A full state should include both contents
     expected_state = _empty_state_from_structure(ensemble_structure)
-    expected_state["ee_1/real_1/step_1/job_1"] = {
+    expected_state["ee/0/real/0/step/0/job/0"] = {
         "type": ids.EVTYPE_FM_JOB_RUNNING,
         "some": "irrelevant_data",
         "another": "irrelevant_data",
     }
 
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
 
 
-def test_get_full_state_change_on_update():
+@pytest.mark.asyncio
+async def test_get_full_state_change_on_update():
     """The result of full state should only include events up to the last update.
     If events are added after that, the full state should not include those until apply_updates is called"""
     ensemble_structure = _generate_structure()
@@ -213,45 +218,66 @@ def test_get_full_state_change_on_update():
     event = CloudEvent(
         {
             "type": ids.EVTYPE_FM_JOB_RUNNING,
-            "source": "ee_1/real_1/step_1/job_1",
+            "source": "ee/0/real/0/step/0/job/0",
         },
     )
     event.data = {"some": "irrelevant_data"}
 
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
     # Without a call to apply_updates we should receive empty state
     expected_state = _empty_state_from_structure(ensemble_structure)
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
 
-    sm.apply_updates()
+    await sm.apply_updates()
 
     # First update shall include the added event
-    assert sm.get_update() == _update_from_cloudevent(event)
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
     # And will now also be reflected in full_state
-    expected_state["ee_1/real_1/step_1/job_1"] = {
+    expected_state["ee/0/real/0/step/0/job/0"] = {
         "type": ids.EVTYPE_FM_JOB_RUNNING,
         "some": "irrelevant_data",
     }
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
 
     event = copy.copy(event)
     event.data = {"another": "irrelevant_data"}
-    sm.queue_event(event)
+    await sm.queue_event(event)
 
     # Full state not affected yet
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
 
-    sm.apply_updates()
+    await sm.apply_updates()
 
     # Second update should only include events since last update
-    assert sm.get_update() == _update_from_cloudevent(event)
+    assert await sm.get_update() == _update_from_cloudevent(event)
 
     # A full state should now reflect both contents
-    expected_state["ee_1/real_1/step_1/job_1"]["another"] = "irrelevant_data"
+    expected_state["ee/0/real/0/step/0/job/0"]["another"] = "irrelevant_data"
 
-    assert sm.get_full_state() == expected_state
+    assert await sm.get_full_state() == expected_state
+
+
+async def test_propagate_state_change():
+    """Test that derived transitions are handled correctly. I.e. given that events
+    determining all steps in a realisation finished, the realisation itself should be
+    set to finished
+    """
+    ensemble_structure = _generate_structure(n_reals=1, n_steps=1, n_jobs=1)
+    sm = StateMachine(ensemble_structure)
+
+    event = CloudEvent(
+        {
+            "type": ids.EVTYPE_FM_JOB_SUCCESS,
+            "source": "ee/0/real/0/step/0/job/0",
+        },
+    )
+
+    await sm.queue_event(event)
+    await sm.apply_updates()
+    # all jobs succeed -> step succeed
+    pass
 
 
 def test_correct_presedence_misaligned_events():
@@ -264,35 +290,36 @@ def test_disallowed_state_change():
     pass
 
 
-def test_large_case():
+@pytest.mark.asyncio
+async def test_large_case():
     n_reals = 500
     n_jobs = 100
-    ensemble_structure = _generate_large_structure(n_reals, n_jobs)
+    ensemble_structure = _generate_structure(n_reals=n_reals, n_jobs=n_jobs)
     sm = StateMachine(ensemble_structure)
     for i, j in itertools.product(range(n_reals), range(n_jobs)):
-        sm.queue_event(
+        await sm.queue_event(
             CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_START,
-                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                    "source": f"ee/0/real/{i}/step/0/job/{j}",
                 },
                 data={"some": "irrelevant_data"},
             )
         )
-        sm.queue_event(
+        await sm.queue_event(
             CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_RUNNING,
-                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                    "source": f"ee/0/real/{i}/step/0/job/{j}",
                 },
                 data={"some": "irrelevant_data"},
             )
         )
-        sm.queue_event(
+        await sm.queue_event(
             CloudEvent(
                 {
                     "type": ids.EVTYPE_FM_JOB_SUCCESS,
-                    "source": f"ee_1/real_{i}/step_1/job_{j}",
+                    "source": f"ee/0/real/{i}/step/0/job/{j}",
                 },
                 data={"some": "irrelevant_data"},
             )
@@ -301,11 +328,6 @@ def test_large_case():
     import time
 
     start = time.time()
-    sm.apply_updates()
+    await sm.apply_updates()
     duration = time.time() - start
     a = 2
-
-
-def test_propagate_state_change():
-    # all jobs succeed -> step succeed
-    pass
