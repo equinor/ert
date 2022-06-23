@@ -37,8 +37,8 @@ void ecl_test(const char *ecl_case) {
     time_t end_time = ecl_sum_get_end_time(ecl_sum);
     time_map_type *ecl_map = time_map_alloc();
 
-    test_assert_true(time_map_summary_update(ecl_map, ecl_sum));
-    test_assert_true(time_map_summary_update(ecl_map, ecl_sum));
+    test_assert_true(time_map_summary_update(ecl_map, ecl_sum).empty());
+    test_assert_true(time_map_summary_update(ecl_map, ecl_sum).empty());
 
     test_assert_time_t_equal(time_map_get_start_time(ecl_map), start_time);
     test_assert_time_t_equal(time_map_get_end_time(ecl_map), end_time);
@@ -47,7 +47,7 @@ void ecl_test(const char *ecl_case) {
 
     time_map_clear(ecl_map);
     time_map_update(ecl_map, 1, 256);
-    test_assert_false(time_map_summary_update(ecl_map, ecl_sum));
+    test_assert_false(time_map_summary_update(ecl_map, ecl_sum).empty());
 
     time_map_free(ecl_map);
     ecl_sum_free(ecl_sum);
@@ -59,7 +59,7 @@ void test_inconsistent_summary(const char *case1, const char *case2) {
 
     time_map_type *ecl_map = time_map_alloc();
 
-    test_assert_true(time_map_summary_update(ecl_map, ecl_sum1));
+    test_assert_true(time_map_summary_update(ecl_map, ecl_sum1).empty());
 
     time_map_free(ecl_map);
     ecl_sum_free(ecl_sum1);
@@ -85,7 +85,7 @@ void test_refcase(const char *refcase_name, const char *case1,
     {
         time_map_type *ecl_map = time_map_alloc();
         time_map_attach_refcase(ecl_map, refcase);
-        test_assert_true(time_map_summary_update(ecl_map, ecl_sum1));
+        test_assert_true(time_map_summary_update(ecl_map, ecl_sum1).empty());
     }
 
     {
@@ -93,15 +93,15 @@ void test_refcase(const char *refcase_name, const char *case1,
 
         time_map_attach_refcase(ecl_map, refcase);
 
-        test_assert_false(time_map_summary_update(ecl_map, ecl_sum2));
+        test_assert_false(time_map_summary_update(ecl_map, ecl_sum2).empty());
         test_assert_int_equal(64, time_map_get_size(ecl_map));
-        test_assert_true(time_map_summary_update(ecl_map, ecl_sum1));
+        test_assert_true(time_map_summary_update(ecl_map, ecl_sum1).empty());
         test_assert_int_equal(64, time_map_get_size(ecl_map));
     }
 
     {
         time_map_type *ecl_map = time_map_alloc();
-        test_assert_true(time_map_summary_update(ecl_map, ecl_sum2));
+        test_assert_true(time_map_summary_update(ecl_map, ecl_sum2).empty());
         test_assert_false(time_map_attach_refcase(ecl_map, refcase));
     }
 
@@ -109,7 +109,7 @@ void test_refcase(const char *refcase_name, const char *case1,
         ecl::util::TestArea ta("x");
         {
             time_map_type *ecl_map = time_map_alloc();
-            test_assert_true(time_map_summary_update(ecl_map, refcase));
+            test_assert_true(time_map_summary_update(ecl_map, refcase).empty());
             test_assert_true(time_map_update(
                 ecl_map, ecl_sum_get_last_report_step(refcase) + 1,
                 ecl_sum_get_end_time(refcase) + 100));
@@ -153,7 +153,7 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
         int_vector_free(index_map);
     }
 
-    test_assert_true(time_map_summary_update(ecl_map, ecl_sum1));
+    test_assert_true(time_map_summary_update(ecl_map, ecl_sum1).empty());
     {
         int_vector_type *index_map =
             time_map_alloc_index_map(ecl_map, ecl_sum1);
@@ -168,7 +168,7 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
     }
 
     /* case2 has an extra tstep in the middle of the case. */
-    test_assert_false(time_map_summary_update(ecl_map, ecl_sum2));
+    test_assert_false(time_map_summary_update(ecl_map, ecl_sum2).empty());
     {
         int_vector_type *index_map =
             time_map_alloc_index_map(ecl_map, ecl_sum2);
@@ -180,7 +180,7 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
     }
 
     /* case3 has an extra tstep in the middle, and ends prematurely */
-    test_assert_false(time_map_summary_update(ecl_map, ecl_sum3));
+    test_assert_false(time_map_summary_update(ecl_map, ecl_sum3).empty());
     {
         int_vector_type *index_map =
             time_map_alloc_index_map(ecl_map, ecl_sum3);
@@ -190,7 +190,7 @@ void test_index_map(const char *case1, const char *case2, const char *case3,
     }
 
     /* case4 has a missing tstep in the middle - that is not handled; and we abort */
-    test_assert_false(time_map_summary_update(ecl_map, ecl_sum4));
+    test_assert_false(time_map_summary_update(ecl_map, ecl_sum4).empty());
     {
         struct data_t {
             time_map_type *map;

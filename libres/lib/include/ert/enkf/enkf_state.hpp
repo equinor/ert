@@ -53,8 +53,9 @@ void enkf_state_initialize(enkf_state_type *enkf_state, rng_type *rng,
                            const std::vector<std::string> &param_list,
                            init_mode_type init_mode);
 
-fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                                  run_arg_type *run_arg);
+std::pair<fw_load_status, std::string>
+enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                   run_arg_type *run_arg);
 
 enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
                                   ensemble_config_type *,
@@ -66,8 +67,9 @@ void enkf_state_add_node(enkf_state_type *, const char *,
                          const enkf_config_node_type *);
 void enkf_state_free(enkf_state_type *);
 
-bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                         run_arg_type *run_arg);
+std::pair<fw_load_status, std::string>
+enkf_state_complete_forward_modelOK(const res_config_type *res_config,
+                                    run_arg_type *run_arg);
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg);
 
 #endif

@@ -199,10 +199,13 @@ void time_map_free(time_map_type *map) {
 bool time_map_is_readonly(const time_map_type *tm) { return tm->read_only; }
 
 /**
+   @brief Checks if time map can be updated and sets value if valid.
    Must hold the write lock. When a refcase is supplied we gurantee
    that all values written into the map agree with the refcase
    values. However the time map is not preinitialized with the refcase
    values.
+
+   @returns status, empty string if success, error message otherwise
 */
 static std::string time_map_update__(time_map_type *map, int step,
                                      time_t update_time) {
@@ -366,7 +369,15 @@ bool time_map_try_update(time_map_type *map, int step, time_t time) {
     return error.empty();
 }
 
-bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
+/**
+   @brief Checks if summary data and time map are in sync, returns
+   an error string, empty string means the time map is in sync with
+   the summary data.
+
+   @returns status, empty string if success, error message otherwise
+*/
+std::string time_map_summary_update(time_map_type *map,
+                                    const ecl_sum_type *ecl_sum) {
     time_map_assert_writable(map);
     bool updateOK = true;
     pthread_rwlock_wrlock(&map->rw_lock);
@@ -389,15 +400,14 @@ bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum) {
         }
     }
     pthread_rwlock_unlock(&map->rw_lock);
-
+    std::string error_msg;
     if (!errors.empty()) {
-        auto error_msg = fmt::format("{}", fmt::join(errors, "\n"));
-        logger->error("Inconsistency in time_map - loading SUMMARY from: "
-                      "{} failed:\n{}",
-                      ecl_sum_get_path(ecl_sum), error_msg);
+        error_msg =
+            fmt::format("{} inconsistencies in time_map, first: {}, last: {}",
+                        errors.size(), errors.front(), errors.back());
     }
 
-    return errors.empty();
+    return error_msg;
 }
 
 int time_map_lookup_time(time_map_type *map, time_t time) {

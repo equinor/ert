@@ -40,7 +40,7 @@ bool check_ecl_sum_compatible(const enkf_main_type *enkf_main) {
     auto error = enkf_state_load_from_forward_model(state, run_arg);
 
     free(job_name);
-    return (LOAD_FAILURE == error) ? false : true;
+    return (LOAD_FAILURE == error.first) ? false : true;
 }
 
 int main(int argc, char **argv) {

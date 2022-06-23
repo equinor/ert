@@ -950,11 +950,12 @@ int ensemble_config_get_size(const ensemble_config_type *ensemble_config) {
     return ensemble_config->config_nodes.size();
 }
 
-fw_load_status
+std::pair<fw_load_status, std::string>
 ensemble_config_forward_init(const ensemble_config_type *ens_config,
                              const run_arg_type *run_arg) {
 
     auto result = LOAD_SUCCESSFUL;
+    std::string error_msg;
     if (run_arg_get_step1(run_arg) == 0) {
         int iens = run_arg_get_iens(run_arg);
         for (auto &config_pair : ens_config->config_nodes) {
@@ -980,13 +981,14 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
                             run_arg_get_runpath(run_arg), iens);
 
                         if (init_file && !fs::exists(init_file))
-                            logger->error(
+                            error_msg = fmt::format(
                                 "File not found: {} - failed to initialize "
                                 "node: {}\n",
                                 init_file, enkf_node_get_key(node));
                         else
-                            logger->error("Failed to initialize node: {}\n",
-                                          enkf_node_get_key(node));
+                            error_msg =
+                                fmt::format("Failed to initialize node: {}\n",
+                                            enkf_node_get_key(node));
 
                         free(init_file);
                         result = LOAD_FAILURE;
@@ -996,5 +998,5 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
             }
         }
     }
-    return result;
+    return {result, error_msg};
 }

@@ -3,8 +3,11 @@ import stat
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import List
+from dataclasses import dataclass
 
 import pytest
+
+from res._lib.model_callbacks import LoadStatus
 from res.job_queue import (
     Driver,
     JobQueue,
@@ -15,9 +18,15 @@ from res.job_queue import (
 )
 
 
+@dataclass
+class RunArg:
+    iens: int
+
+
 def dummy_ok_callback(args):
     print(f"success {args[1]}")
     (Path(args[1]) / "OK").write_text("success", encoding="utf-8")
+    return (LoadStatus.LOAD_SUCCESSFUL, "")
 
 
 def dummy_exit_callback(args):
@@ -79,7 +88,7 @@ def create_local_queue(
             done_callback_function=DUMMY_CONFIG["ok_callback"],
             exit_callback_function=DUMMY_CONFIG["exit_callback"],
             callback_arguments=[
-                {"job_number": iens},
+                RunArg(iens),
                 Path(DUMMY_CONFIG["run_path"].format(iens)).resolve(),
             ],
         )

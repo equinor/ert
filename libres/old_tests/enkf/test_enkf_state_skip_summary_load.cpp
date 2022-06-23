@@ -44,7 +44,7 @@ bool check_ecl_sum_loaded(const enkf_main_type *enkf_main) {
     error = enkf_state_load_from_forward_model(state2, run_arg2);
 
     free(job_name);
-    return (error == LOAD_SUCCESSFUL);
+    return (error.first == LOAD_SUCCESSFUL);
 }
 
 int main(int argc, char **argv) {

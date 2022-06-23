@@ -10,6 +10,8 @@ from res.job_queue.job_status_type_enum import JobStatusType
 from res.job_queue.job_submit_status_type_enum import JobSubmitStatusType
 from res.job_queue.thread_status_type_enum import ThreadStatus
 
+from res._lib.model_callbacks import LoadStatus
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,6 +84,7 @@ class JobQueueNode(BaseCClass):
         self._start_time = None
         self._end_time = None
         self._timed_out = False
+        self._status_msg = ""
         c_ptr = self._alloc(
             job_name,
             run_path,
@@ -130,16 +133,16 @@ class JobQueueNode(BaseCClass):
         return self._submit(driver)
 
     def run_done_callback(self):
-        try:
-            callback_status = self.done_callback_function(self.callback_arguments)
-            if callback_status:
-                self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
-            else:
-                self._set_status(JobStatusType.JOB_QUEUE_EXIT)
-        except ValueError:
-            callback_status = False
+        callback_status, status_msg = self.done_callback_function(
+            self.callback_arguments
+        )
+        if callback_status == LoadStatus.LOAD_SUCCESSFUL:
+            self._set_status(JobStatusType.JOB_QUEUE_SUCCESS)
+        elif callback_status == LoadStatus.TIME_MAP_FAILURE:
             self._set_status(JobStatusType.JOB_QUEUE_FAILED)
-
+        else:
+            self._set_status(JobStatusType.JOB_QUEUE_EXIT)
+        self._status_msg = status_msg
         return callback_status
 
     def run_exit_callback(self):
@@ -209,6 +212,10 @@ class JobQueueNode(BaseCClass):
         with self._mutex:
             if current_status == JobStatusType.JOB_QUEUE_DONE:
                 with pool_sema:
+                    logger.info(
+                        f"Realization: {self.callback_arguments[0].iens} complete, "
+                        "starting to load results"
+                    )
                     self.run_done_callback()
 
             # refresh cached status after running the callback
@@ -217,19 +224,32 @@ class JobQueueNode(BaseCClass):
                 pass
             elif current_status == JobStatusType.JOB_QUEUE_EXIT:
                 if self.submit_attempt < max_submit:
+                    logger.warning(
+                        f"Realization: {self.callback_arguments[0].iens} "
+                        f"failed with: {self._status_msg}, resubmitting"
+                    )
                     self._set_thread_status(ThreadStatus.READY)
                     return
                 else:
+                    logger.error(
+                        f"Realization: {self.callback_arguments[0].iens} "
+                        f"failed after reaching max submit with: {self._status_msg}"
+                    )
                     self._set_status(JobStatusType.JOB_QUEUE_FAILED)
                     self.run_exit_callback()
             elif current_status == JobStatusType.JOB_QUEUE_IS_KILLED:
                 pass
             elif current_status == JobStatusType.JOB_QUEUE_FAILED:
+                logger.error(
+                    f"Realization: {self.callback_arguments[0].iens} "
+                    f"failed with: {self._status_msg}"
+                )
                 self.run_exit_callback()
             else:
                 self._set_thread_status(ThreadStatus.FAILED)
                 raise AssertionError(
-                    f"Unexpected job status type after running job: {current_status}"
+                    f"Unexpected job status type after "
+                    f"running job: {current_status}"
                 )
 
             self._set_thread_status(ThreadStatus.DONE)
