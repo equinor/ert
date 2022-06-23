@@ -14,7 +14,7 @@ service Experimentserver {
 
 enum Status {
     UNKNOWN   = 0;
-    STARTED   = 1;
+    STARTING  = 1;
     RUNNING   = 2;
     DONE      = 3;
     FAILED    = 4;

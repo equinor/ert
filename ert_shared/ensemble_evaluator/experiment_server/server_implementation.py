@@ -13,141 +13,6 @@ from experimentserver_pb2 import (Status,
                                   ContinueOrAbortReply, DispatcherMessage
                                   )
 
-class BaseModel:
-    async def _raiseIllegalState(self, old_state, new_state):
-            await self._context.abort(grpc.StatusCode.ABORTED,
-                                      f"Illegal state-transition from {old_state} to {new_state}")
-    # def reconnect(self, context):
-    #     self._context = context
-
-    @singledispatchmethod
-    async def update(self, upd):
-        pass
-
-class JobModel(BaseModel):
-    def __init__(self, id: JobId):
-        self._job: Job = Job(id=id)
-
-    def cancel(self):
-        self.update(JobState(runstate=Status.CANCELLED))
-
-
-    @BaseModel.update.register
-    async def _(self, new_job: Job):
-        print(f"Updating {self._job} with {new_job}")
-        cur_status = self._job.status
-        if cur_status in (
-            Status.DONE, Status.CANCELLED, Status.FAILED
-            ):
-            await self._raiseIllegalState(cur_status, new_job.status)
-
-        if new_job.status == Status.UNKNOWN:
-            if cur_status not in (Status.UNKNOWN,):
-                await self._raiseIllegalState(cur_status, new_job.status)
-
-        elif new_job.status == Status.STARTED:
-            if cur_status not in (Status.UNKNOWN, Status.STARTED,):
-                await self._raiseIllegalState(cur_status, new_job.status)
-
-        elif new_job.status == Status.RUNNING:
-            if cur_status not in (Status.STARTED, Status.RUNNING,):
-                await self._raiseIllegalState(cur_status, new_job.status)
-
-        self._job.MergeFrom(new_job)
-        print(f"Response: {self._job}")
-        await self._context.write(self._job)
-
-class StateMachine(BaseModel):
-    def __init__(self, id: ExperimentId):
-        self._experiment: Experiment = Experiment(id=id)
-
-    @BaseModel.update.register
-    async def _(self, new_experiment: Experiment):
-        print(f"Updating {self} with EXP {new_experiment}")
-        cur_status = self._experiment.status
-        if cur_status in (
-            Status.DONE, Status.CANCELLED, Status.FAILED
-            ):
-            await self._raiseIllegalState(new_experiment)
-
-        if new_experiment.status == Status.UNKNOWN:
-            if cur_state not in (Status.UNKNOWN,):
-                await self._raiseIllegalState(new_experiment)
-
-        elif new_experiment.status == Status.STARTED:
-            if cur_state not in (Status.UNKNOWN, Status.STARTED,):
-                await self._raiseIllegalState(new_experiment)
-
-        elif new_experiment.status == Status.RUNNING:
-            if cur_state not in (Status.STARTED, Status.RUNNING,):
-                await self._raiseIllegalState(new_experiment)
-
-        self._experiment.MergeFrom(new_experiment)
-        return True
-
-    @BaseModel.update.register
-    async def _(self, new_job: Job):
-        print(f"Updating {self} with JOB {new_job}")
-        old_job = self.find_node_by_id(new_job.id)
-        print(f"   updating {old_job} with {new_job}")
-
-
-class ExperimentServer(experimentserver_pb2_grpc.ExperimentserverServicer):
-#    continue_msg = ContinueOrAbortReply(reply=ContinueOrAbortReply.Reply.CONTINUE)
-#    abort_msg    = ContinueOrAbortReply(reply=ContinueOrAbortReply.Reply.ABORT)
-    def __init__(self):
-        self._repo: ExperimentRepository = ExperimentRepository()
-
-    async def dispatch(self, request_iter, context):
-        async for msg in request_iter:
-            print(f"Dispatch: {msg}")
-            print(f"type={msg.WhichOneof('object')}")
-            id = getattr(msg, msg.WhichOneof('object')).id
-#            if id is None:
-#                context.abort(f"Unknown object: {msg}")
-            node = self._repo.find_node_by_id(id)
-            print(f"Found {MessageToJson(node)}")
-
-    async def client(self, msg, context):
-        print(f"Client connect, delay is {msg.delay}s")
-        id = getattr(msg, msg.WhichOneof('objectid'))
-#        if id is None:
-#            context.abort(f"Unknown object type: {msg}")
-        node = self._repo.find_node_by_id(id)
-        print(f"Found {MessageToJson(node)}")
-        while True:
-            await asyncio.sleep(msg.delay)
-            await context.write(DispatcherMessage(experiment=node))
-
-        print(f"Client disconnected") # why doesnt this print??
-
-    # async def _handle_experiment_dispatcher(self, experiment: Experiment, context):
-    #     exp_key = experiment.id.SerializeToString(deterministic=True)
-    #     if exp_key not in self._experiments:
-    #         print(f"New experiment: {experiment}")
-    #         self._experiments[exp_key] = ExperimentModel(experiment.id)
-    #
-    #     print(f"Updating with {experiment}")
-    #     model = self._experiments[exp_key]
-    #     if await model.update(experiment):
-    #         await context.write(self.continue_msg)
-    #     else:
-    #         await context.write(self.abort_msg)
-    #
-    # async def _handle_job_dispatcher(self, job: Job, context):
-    #     exp_key = job.id.step.realization.ensemble.experiment.SerializeToString(deterministic=True)
-    #     if exp_key not in self._experiments:
-    #         print(f"New experiment: {experiment}")
-    #         self._experiments[exp_key] = ExperimentModel(job.id.step.realization.ensemble.experiment)
-    #
-    #     print(f"Updating with {job}")
-    #     model = self._experiments[exp_key]
-    #     if await model.update(job):
-    #         await context.write(self.continue_msg)
-    #     else:
-    #         await context.write(self.abort_msg)
-
-
 class ExperimentRepository:
     """
     About maps and CopyFrom():
@@ -174,7 +39,7 @@ class ExperimentRepository:
 
     @find_node_by_id.register
     def _(self, id: ExperimentId) -> Experiment:
-        print(f"experimentid: {id}")
+        #print(f"experimentid: {id}")
         exp_key = id.SerializeToString(deterministic=True)
         if exp_key not in self._experiments:
             print(f"New experiment: {id}")
@@ -183,7 +48,7 @@ class ExperimentRepository:
 
     @find_node_by_id.register
     def _(self, id: EnsembleId) -> Ensemble:
-        print(f"emsembleid: {id}")
+        #print(f"emsembleid: {id}")
         experiment: Experiment = self.find_node_by_id(id.experiment)
         if id.id not in experiment.ensembles:
             experiment.ensembles[id.id].CopyFrom(Ensemble(id=id))
@@ -191,7 +56,7 @@ class ExperimentRepository:
 
     @find_node_by_id.register
     def _(self, id: RealizationId) -> Realization:
-        print(f"realizationid: {id}")
+        #print(f"realizationid: {id}")
         ensemble: Ensemble = self.find_node_by_id(id.ensemble)
         if id.realization not in ensemble.realizations:
             ensemble.realizations[id.realization].CopyFrom(Realization(id=id))
@@ -199,7 +64,7 @@ class ExperimentRepository:
 
     @find_node_by_id.register
     def _(self, id: StepId) -> Step:
-        print(f"stepid: {id}")
+        #print(f"stepid: {id}")
         real: Realization = self.find_node_by_id(id.realization)
         if id.step not in real.steps:
             real.steps[id.step].CopyFrom(Step(id=id))
@@ -207,21 +72,150 @@ class ExperimentRepository:
 
     @find_node_by_id.register
     def _(self, id: JobId) -> Job:
-        print(f"jobid: {id}")
+        #print(f"jobid: {id}")
         step: Step = self.find_node_by_id(id.step)
         if id.index not in step.jobs:
             step.jobs[id.index].CopyFrom(Job(id=id))
         return step.jobs[id.index]
 
 
-async def serve():
-    server = grpc.aio.server()
-    experimentserver_pb2_grpc.add_ExperimentserverServicer_to_server(ExperimentServer(),
-                                                             server)
-    server.add_insecure_port("localhost:50051")
-    await server.start()
-    await server.wait_for_termination()
+class StateMachine:
+    def __init__(self, repo: ExperimentRepository):
+        self._repo: ExperimentRepository = repo
+
+
+    class IllegalStateTransition(Exception):
+        """ Just a marker - replace with anything more suitable if desired """
+        def __init__(self, reason: str):
+            super().__init__(reason)
+            self.reason:str = reason
+
+    class AbortExecution(Exception):
+        """ Just a marker - replace with anything more suitable if desired """
+        def __init__(self, reason: str):
+            super().__init__(reason)
+            self.reason:str = reason
+
+    def _ensure_sane_status_update(self, cur_status: Status, new_status: Status):
+        if cur_status in (
+            Status.DONE, Status.CANCELLED, Status.FAILED
+            ):
+            raise StateMachine.IllegalStateTransition(
+                  f"Illegal state-transition from {cur_status} to {new_status}")
+
+        if new_status == Status.UNKNOWN:
+            if cur_status not in (Status.UNKNOWN,):
+                raise StateMachine.IllegalStateTransition(
+                      f"Illegal state-transition from {cur_status} to {new_status}")
+
+        elif new_status == Status.STARTING:
+            if cur_status not in (Status.UNKNOWN, Status.STARTING,):
+                raise StateMachine.IllegalStateTransition(
+                      f"Illegal state-transition from {cur_status} to {new_status}")
+
+        elif new_status == Status.RUNNING:
+            if cur_status not in (Status.STARTING, Status.RUNNING,):
+                raise StateMachine.IllegalStateTransition(
+                      f"Illegal state-transition from {cur_status} to {new_status}")
+        
+    @singledispatchmethod
+    def update(self, upd, set_value=False):
+        pass
+
+    @update.register
+    def _(self, new_job: Job, set_value=False):
+        if set_value:
+            # if a dispatcher re-connects or connects after running for some time
+            # this flag will be set and we just stuff the job into the repo without
+            # verifying state-transitions or such
+            print(f"SET JOB {new_job}")
+            step: Step = self._repo.find_node_by_id(new_job.id.step)
+            step.jobs[new_job.id.index].CopyFrom(new_job)
+        else:
+            old_job = self._repo.find_node_by_id(new_job.id)
+            print(f"Updating JOB {old_job} with {new_job}")
+            self._ensure_sane_status_update(old_job.status, new_job.status)
+            old_job.MergeFrom(new_job)
+
+        # Proper signal back if status is set to cancel of fail
+        if new_job.status in (Status.CANCELLED, Status.FAILED):
+            raise StateMachine.AbortExecution(f"Status set to {new_job.status}")
+
+        # TODO: propagate upwards
+
+
+    @update.register
+    def _(self, new_real: Realization, set_value=False):
+        old_real = self._repo.find_node_by_id(new_real.id)
+        print(f"Updating REAL {old_real} with {new_real}")
+#        self._ensure_sane_status_update(old_real.status, new_real.status)
+        old_real.MergeFrom(new_real)
+        
+        # TODO: propagate down to jobs if cancel
+
+    @update.register
+    def _(self, new_exp: Experiment, set_value=False):
+        # the set_value flag is not useful here I believe...
+        old_exp = self._repo.find_node_by_id(new_exp.id)
+        print(f"Updating EXP {old_exp} with {new_exp}")
+#        self._ensure_sane_status_update(old_exp.status, new_exp.status)
+        old_exp.MergeFrom(new_exp)
+
+
+class ExperimentServer(experimentserver_pb2_grpc.ExperimentserverServicer):
+    continue_msg = ContinueOrAbortReply(reply=ContinueOrAbortReply.Reply.CONTINUE)
+    abort_msg    = ContinueOrAbortReply(reply=ContinueOrAbortReply.Reply.ABORT)
+    def __init__(self):
+        self._repo: ExperimentRepository = ExperimentRepository()
+        self._states: StateMachine = StateMachine(self._repo)
+
+    async def dispatch(self, request_iter, context):
+        context.add_done_callback(lambda _: print("Dispatcher disconnected"))
+        initial_update = True
+        async for msg in request_iter:
+            #print(f"Dispatch: {msg}")
+            #print(f"type={msg.WhichOneof('object')}")
+            try:
+                obj = getattr(msg, msg.WhichOneof('object'))
+                self._states.update(obj, set_value=initial_update)
+                await context.write(self.continue_msg)
+                
+                initial_update = False
+
+            except StateMachine.AbortExecution as ex:
+                await context.write(self.abort_msg)
+
+            except StateMachine.IllegalStateTransition as ex:
+                # TODO: Should we be more forgiving here and perhaps leave the
+                # channel open (i.e. write an abort_msg like above) ?
+                await context.abort(grpc.StatusCode.ABORTED, details=ex.reason)
+
+    async def client(self, msg, context):
+        print(f"Client connect, delay is {msg.delay}s")
+        context.add_done_callback(lambda _: print("Client disconnected"))
+
+        id = getattr(msg, msg.WhichOneof('objectid'))
+        node = self._repo.find_node_by_id(id)
+        print(f"Found {MessageToJson(node)}")
+        while True:
+            await asyncio.sleep(msg.delay)
+            await context.write(DispatcherMessage(experiment=node))
 
 
 if __name__ == "__main__":
-    asyncio.run(serve())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        server = grpc.aio.server()
+        experimentserver_pb2_grpc.add_ExperimentserverServicer_to_server(
+                    ExperimentServer(),
+                    server)
+
+        server.add_insecure_port("localhost:50051")
+        loop.run_until_complete(server.start())
+        loop.run_until_complete(server.wait_for_termination())
+    except Exception as ex:
+        print(ex)
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
