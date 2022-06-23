@@ -153,7 +153,6 @@ struct enkf_fs_struct {
     /** Whether this filesystem has been mounted read-only. */
     bool read_only;
     time_map_type *time_map;
-    cases_config_type *cases_config;
     state_map_type *state_map;
     summary_key_set_type *summary_key_set;
     /* The variables below here are for storing arbitrary files within the
@@ -212,7 +211,6 @@ enkf_fs_type *enkf_fs_alloc_empty(const char *mount_point) {
     enkf_fs_type *fs = new enkf_fs_type;
     UTIL_TYPE_ID_INIT(fs, ENKF_FS_TYPE_ID);
     fs->time_map = time_map_alloc();
-    fs->cases_config = cases_config_alloc();
     fs->state_map = state_map_alloc();
     fs->summary_key_set = summary_key_set_alloc();
     fs->misfit_ensemble = misfit_ensemble_alloc();
@@ -351,12 +349,6 @@ static void enkf_fs_fread_time_map(enkf_fs_type *fs) {
     free(filename);
 }
 
-static void enkf_fs_fsync_cases_config(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, CASE_CONFIG_FILE);
-    cases_config_fwrite(fs->cases_config, filename);
-    free(filename);
-}
-
 static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, STATE_MAP_FILE);
     state_map_fwrite(fs->state_map, filename);
@@ -366,12 +358,6 @@ static void enkf_fs_fsync_state_map(enkf_fs_type *fs) {
 static void enkf_fs_fsync_summary_key_set(enkf_fs_type *fs) {
     char *filename = enkf_fs_alloc_case_filename(fs, SUMMARY_KEY_SET_FILE);
     summary_key_set_fwrite(fs->summary_key_set, filename);
-    free(filename);
-}
-
-static void enkf_fs_fread_cases_config(enkf_fs_type *fs) {
-    char *filename = enkf_fs_alloc_case_filename(fs, CASE_CONFIG_FILE);
-    cases_config_fread(fs->cases_config, filename);
     free(filename);
 }
 
@@ -469,7 +455,6 @@ enkf_fs_type *enkf_fs_mount(const char *mount_point) {
     fclose(stream);
     enkf_fs_init_path_fmt(fs);
     enkf_fs_fread_time_map(fs);
-    enkf_fs_fread_cases_config(fs);
     enkf_fs_fread_state_map(fs);
     enkf_fs_fread_summary_key_set(fs);
     enkf_fs_fread_misfit(fs);
@@ -523,7 +508,6 @@ void enkf_fs_umount(enkf_fs_type *fs) {
     state_map_free(fs->state_map);
     summary_key_set_free(fs->summary_key_set);
     time_map_free(fs->time_map);
-    cases_config_free(fs->cases_config);
     misfit_ensemble_free(fs->misfit_ensemble);
     delete fs;
 }
@@ -552,7 +536,6 @@ void enkf_fs_fsync(enkf_fs_type *fs) {
     fs->index->fsync();
 
     enkf_fs_fsync_time_map(fs);
-    enkf_fs_fsync_cases_config(fs);
     enkf_fs_fsync_state_map(fs);
     enkf_fs_fsync_summary_key_set(fs);
 }
@@ -697,10 +680,6 @@ FILE *enkf_fs_open_excase_tstep_file(const enkf_fs_type *fs,
 
 time_map_type *enkf_fs_get_time_map(const enkf_fs_type *fs) {
     return fs->time_map;
-}
-
-cases_config_type *enkf_fs_get_cases_config(const enkf_fs_type *fs) {
-    return fs->cases_config;
 }
 
 state_map_type *enkf_fs_get_state_map(const enkf_fs_type *fs) {
