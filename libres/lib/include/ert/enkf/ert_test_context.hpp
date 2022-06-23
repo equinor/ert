@@ -32,9 +32,6 @@ typedef struct ert_test_context_struct ert_test_context_type;
 
 ert_test_context_type *ert_test_context_alloc(const char *test_name,
                                               const char *model_config);
-ert_test_context_type *ert_test_context_alloc__(const char *test_name,
-                                                const char *model_config,
-                                                bool store_area);
 void ert_test_context_free(ert_test_context_type *test_context);
 enkf_main_type *ert_test_context_get_main(ert_test_context_type *test_context);
 bool ert_test_context_install_workflow_job(ert_test_context_type *test_context,

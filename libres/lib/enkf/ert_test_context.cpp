@@ -62,14 +62,12 @@ ert_test_context_alloc_internal(test_work_area_type *work_area,
     return test_context;
 }
 
-ert_test_context_type *ert_test_context_alloc__(const char *test_name,
-                                                const char *model_config,
-                                                bool store_area) {
+ert_test_context_type *ert_test_context_alloc(const char *test_name,
+                                              const char *model_config) {
     if (!fs::exists(model_config))
         return NULL;
 
-    test_work_area_type *work_area =
-        test_work_area_alloc__(test_name, store_area);
+    test_work_area_type *work_area = test_work_area_alloc__(test_name, true);
     test_work_area_copy_parent_content(work_area, model_config);
 
     char *config_file = util_split_alloc_filename(model_config);
@@ -77,11 +75,6 @@ ert_test_context_type *ert_test_context_alloc__(const char *test_name,
     free(config_file);
 
     return ert_test_context_alloc_internal(work_area, res_config, "tui");
-}
-
-ert_test_context_type *ert_test_context_alloc(const char *test_name,
-                                              const char *model_config) {
-    return ert_test_context_alloc__(test_name, model_config, false);
 }
 
 enkf_main_type *ert_test_context_get_main(ert_test_context_type *test_context) {
