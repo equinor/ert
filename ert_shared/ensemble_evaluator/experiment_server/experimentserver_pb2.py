@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x65xperimentserver.proto\x12\x10\x65xperimentserver\"&\n\x0c\x45xperimentId\x12\x16\n\x02id\x18\x01 \x02(\t:\nexperiment\"V\n\nEnsembleId\x12\x32\n\nexperiment\x18\x01 \x02(\x0b\x32\x1e.experimentserver.ExperimentId\x12\x14\n\x02id\x18\x02 \x01(\t:\x08\x65nsemble\"W\n\rRealizationId\x12.\n\x08\x65nsemble\x18\x01 \x02(\x0b\x32\x1c.experimentserver.EnsembleId\x12\x16\n\x0brealization\x18\x02 \x01(\x04:\x01\x30\"O\n\x06StepId\x12\x34\n\x0brealization\x18\x01 \x02(\x0b\x32\x1f.experimentserver.RealizationId\x12\x0f\n\x04step\x18\x02 \x01(\x04:\x01\x30\"A\n\x05JobId\x12&\n\x04step\x18\x01 \x02(\x0b\x32\x18.experimentserver.StepId\x12\x10\n\x05index\x18\x02 \x01(\x04:\x01\x30\"k\n\nExperiment\x12*\n\x02id\x18\x01 \x01(\x0b\x32\x1e.experimentserver.ExperimentId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\"g\n\x08\x45nsemble\x12(\n\x02id\x18\x01 \x01(\x0b\x32\x1c.experimentserver.EnsembleId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\"\xa9\x01\n\x0bRealization\x12+\n\x02id\x18\x01 \x01(\x0b\x32\x1f.experimentserver.RealizationId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x14\n\x06\x61\x63tive\x18\x03 \x01(\x08:\x04true\x12\x12\n\nstart_time\x18\x04 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x05 \x01(\x01\"\x85\x01\n\x04Step\x12$\n\x02id\x18\x01 \x01(\x0b\x32\x18.experimentserver.StepId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x12\n\nstart_time\x18\x03 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x04 \x01(\x01\"\xec\x01\n\x03Job\x12#\n\x02id\x18\x01 \x01(\x0b\x32\x17.experimentserver.JobId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x12\n\nstart_time\x18\x03 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x04 \x01(\x01\x12\x0c\n\x04name\x18\x06 \x01(\t\x12\r\n\x05\x65rror\x18\x07 \x01(\t\x12\x0e\n\x06stdout\x18\x08 \x01(\t\x12\x0e\n\x06stderr\x18\t \x01(\t\x12\x16\n\x0e\x63urrent_memory\x18\n \x01(\x04\x12\x12\n\nmax_memory\x18\x0b \x01(\x04*T\n\x06Status\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07STARTED\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\x08\n\x04\x44ONE\x10\x03\x12\n\n\x06\x46\x41ILED\x10\x04\x12\r\n\tCANCELLED\x10\x05\x32\xd2\x02\n\x10\x45xperimentserver\x12T\n\x12\x63onnect_experiment\x12\x1c.experimentserver.Experiment\x1a\x1c.experimentserver.Experiment(\x01\x30\x01\x12N\n\x10\x63onnect_ensemble\x12\x1a.experimentserver.Ensemble\x1a\x1a.experimentserver.Ensemble(\x01\x30\x01\x12W\n\x13\x63onnect_realization\x12\x1d.experimentserver.Realization\x1a\x1d.experimentserver.Realization(\x01\x30\x01\x12?\n\x0b\x63onnect_job\x12\x15.experimentserver.Job\x1a\x15.experimentserver.Job(\x01\x30\x01')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x65xperimentserver.proto\x12\x10\x65xperimentserver\"u\n\x14\x43ontinueOrAbortReply\x12;\n\x05reply\x18\x01 \x02(\x0e\x32,.experimentserver.ContinueOrAbortReply.Reply\" \n\x05Reply\x12\x0c\n\x08\x43ONTINUE\x10\x00\x12\t\n\x05\x41\x42ORT\x10\x01\"\x85\x02\n\x11\x44ispatcherMessage\x12\x32\n\nexperiment\x18\x01 \x01(\x0b\x32\x1c.experimentserver.ExperimentH\x00\x12.\n\x08\x65nsemble\x18\x02 \x01(\x0b\x32\x1a.experimentserver.EnsembleH\x00\x12\x34\n\x0brealization\x18\x03 \x01(\x0b\x32\x1d.experimentserver.RealizationH\x00\x12&\n\x04step\x18\x04 \x01(\x0b\x32\x16.experimentserver.StepH\x00\x12$\n\x03job\x18\x05 \x01(\x0b\x32\x15.experimentserver.JobH\x00\x42\x08\n\x06object\"\x9f\x02\n\rClientMessage\x12\x34\n\nexperiment\x18\x01 \x01(\x0b\x32\x1e.experimentserver.ExperimentIdH\x00\x12\x30\n\x08\x65nsemble\x18\x02 \x01(\x0b\x32\x1c.experimentserver.EnsembleIdH\x00\x12\x36\n\x0brealization\x18\x03 \x01(\x0b\x32\x1f.experimentserver.RealizationIdH\x00\x12(\n\x04step\x18\x04 \x01(\x0b\x32\x18.experimentserver.StepIdH\x00\x12&\n\x03job\x18\x05 \x01(\x0b\x32\x17.experimentserver.JobIdH\x00\x12\x10\n\x05\x64\x65lay\x18\x06 \x01(\r:\x01\x31\x42\n\n\x08objectid\"&\n\x0c\x45xperimentId\x12\x16\n\x02id\x18\x01 \x02(\t:\nexperiment\"V\n\nEnsembleId\x12\x32\n\nexperiment\x18\x01 \x02(\x0b\x32\x1e.experimentserver.ExperimentId\x12\x14\n\x02id\x18\x02 \x02(\t:\x08\x65nsemble\"W\n\rRealizationId\x12.\n\x08\x65nsemble\x18\x01 \x02(\x0b\x32\x1c.experimentserver.EnsembleId\x12\x16\n\x0brealization\x18\x02 \x02(\x04:\x01\x30\"O\n\x06StepId\x12\x34\n\x0brealization\x18\x01 \x02(\x0b\x32\x1f.experimentserver.RealizationId\x12\x0f\n\x04step\x18\x02 \x02(\x04:\x01\x30\"A\n\x05JobId\x12&\n\x04step\x18\x01 \x02(\x0b\x32\x18.experimentserver.StepId\x12\x10\n\x05index\x18\x02 \x02(\x04:\x01\x30\"\xf9\x01\n\nExperiment\x12*\n\x02id\x18\x01 \x02(\x0b\x32\x1e.experimentserver.ExperimentId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12>\n\tensembles\x18\x65 \x03(\x0b\x32+.experimentserver.Experiment.EnsemblesEntry\x1aL\n\x0e\x45nsemblesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.experimentserver.Ensemble:\x02\x38\x01\"\xff\x01\n\x08\x45nsemble\x12(\n\x02id\x18\x01 \x02(\x0b\x32\x1c.experimentserver.EnsembleId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x42\n\x0crealizations\x18\x65 \x03(\x0b\x32,.experimentserver.Ensemble.RealizationsEntry\x1aR\n\x11RealizationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x04\x12,\n\x05value\x18\x02 \x01(\x0b\x32\x1d.experimentserver.Realization:\x02\x38\x01\"\xa8\x02\n\x0bRealization\x12+\n\x02id\x18\x01 \x02(\x0b\x32\x1f.experimentserver.RealizationId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x14\n\x06\x61\x63tive\x18\x03 \x01(\x08:\x04true\x12\x12\n\nstart_time\x18\x04 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x05 \x01(\x01\x12\x37\n\x05steps\x18\x65 \x03(\x0b\x32(.experimentserver.Realization.StepsEntry\x1a\x44\n\nStepsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x04\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.experimentserver.Step:\x02\x38\x01\"\xf9\x01\n\x04Step\x12$\n\x02id\x18\x01 \x02(\x0b\x32\x18.experimentserver.StepId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x12\n\nstart_time\x18\x03 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x04 \x01(\x01\x12.\n\x04jobs\x18\x65 \x03(\x0b\x32 .experimentserver.Step.JobsEntry\x1a\x42\n\tJobsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x04\x12$\n\x05value\x18\x02 \x01(\x0b\x32\x15.experimentserver.Job:\x02\x38\x01\"\xec\x01\n\x03Job\x12#\n\x02id\x18\x01 \x02(\x0b\x32\x17.experimentserver.JobId\x12\x31\n\x06status\x18\x02 \x01(\x0e\x32\x18.experimentserver.Status:\x07UNKNOWN\x12\x12\n\nstart_time\x18\x03 \x01(\x01\x12\x10\n\x08\x65nd_time\x18\x04 \x01(\x01\x12\x0c\n\x04name\x18\x06 \x01(\t\x12\r\n\x05\x65rror\x18\x07 \x01(\t\x12\x0e\n\x06stdout\x18\x08 \x01(\t\x12\x0e\n\x06stderr\x18\t \x01(\t\x12\x16\n\x0e\x63urrent_memory\x18\n \x01(\x04\x12\x12\n\nmax_memory\x18\x0b \x01(\x04*T\n\x06Status\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07STARTED\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\x08\n\x04\x44ONE\x10\x03\x12\n\n\x06\x46\x41ILED\x10\x04\x12\r\n\tCANCELLED\x10\x05\x32\xc1\x01\n\x10\x45xperimentserver\x12[\n\x08\x64ispatch\x12#.experimentserver.DispatcherMessage\x1a&.experimentserver.ContinueOrAbortReply(\x01\x30\x01\x12P\n\x06\x63lient\x12\x1f.experimentserver.ClientMessage\x1a#.experimentserver.DispatcherMessage0\x01')
 
 _STATUS = DESCRIPTOR.enum_types_by_name['Status']
 Status = enum_type_wrapper.EnumTypeWrapper(_STATUS)
@@ -27,16 +27,45 @@ FAILED = 4
 CANCELLED = 5
 
 
+_CONTINUEORABORTREPLY = DESCRIPTOR.message_types_by_name['ContinueOrAbortReply']
+_DISPATCHERMESSAGE = DESCRIPTOR.message_types_by_name['DispatcherMessage']
+_CLIENTMESSAGE = DESCRIPTOR.message_types_by_name['ClientMessage']
 _EXPERIMENTID = DESCRIPTOR.message_types_by_name['ExperimentId']
 _ENSEMBLEID = DESCRIPTOR.message_types_by_name['EnsembleId']
 _REALIZATIONID = DESCRIPTOR.message_types_by_name['RealizationId']
 _STEPID = DESCRIPTOR.message_types_by_name['StepId']
 _JOBID = DESCRIPTOR.message_types_by_name['JobId']
 _EXPERIMENT = DESCRIPTOR.message_types_by_name['Experiment']
+_EXPERIMENT_ENSEMBLESENTRY = _EXPERIMENT.nested_types_by_name['EnsemblesEntry']
 _ENSEMBLE = DESCRIPTOR.message_types_by_name['Ensemble']
+_ENSEMBLE_REALIZATIONSENTRY = _ENSEMBLE.nested_types_by_name['RealizationsEntry']
 _REALIZATION = DESCRIPTOR.message_types_by_name['Realization']
+_REALIZATION_STEPSENTRY = _REALIZATION.nested_types_by_name['StepsEntry']
 _STEP = DESCRIPTOR.message_types_by_name['Step']
+_STEP_JOBSENTRY = _STEP.nested_types_by_name['JobsEntry']
 _JOB = DESCRIPTOR.message_types_by_name['Job']
+_CONTINUEORABORTREPLY_REPLY = _CONTINUEORABORTREPLY.enum_types_by_name['Reply']
+ContinueOrAbortReply = _reflection.GeneratedProtocolMessageType('ContinueOrAbortReply', (_message.Message,), {
+  'DESCRIPTOR' : _CONTINUEORABORTREPLY,
+  '__module__' : 'experimentserver_pb2'
+  # @@protoc_insertion_point(class_scope:experimentserver.ContinueOrAbortReply)
+  })
+_sym_db.RegisterMessage(ContinueOrAbortReply)
+
+DispatcherMessage = _reflection.GeneratedProtocolMessageType('DispatcherMessage', (_message.Message,), {
+  'DESCRIPTOR' : _DISPATCHERMESSAGE,
+  '__module__' : 'experimentserver_pb2'
+  # @@protoc_insertion_point(class_scope:experimentserver.DispatcherMessage)
+  })
+_sym_db.RegisterMessage(DispatcherMessage)
+
+ClientMessage = _reflection.GeneratedProtocolMessageType('ClientMessage', (_message.Message,), {
+  'DESCRIPTOR' : _CLIENTMESSAGE,
+  '__module__' : 'experimentserver_pb2'
+  # @@protoc_insertion_point(class_scope:experimentserver.ClientMessage)
+  })
+_sym_db.RegisterMessage(ClientMessage)
+
 ExperimentId = _reflection.GeneratedProtocolMessageType('ExperimentId', (_message.Message,), {
   'DESCRIPTOR' : _EXPERIMENTID,
   '__module__' : 'experimentserver_pb2'
@@ -73,32 +102,64 @@ JobId = _reflection.GeneratedProtocolMessageType('JobId', (_message.Message,), {
 _sym_db.RegisterMessage(JobId)
 
 Experiment = _reflection.GeneratedProtocolMessageType('Experiment', (_message.Message,), {
+
+  'EnsemblesEntry' : _reflection.GeneratedProtocolMessageType('EnsemblesEntry', (_message.Message,), {
+    'DESCRIPTOR' : _EXPERIMENT_ENSEMBLESENTRY,
+    '__module__' : 'experimentserver_pb2'
+    # @@protoc_insertion_point(class_scope:experimentserver.Experiment.EnsemblesEntry)
+    })
+  ,
   'DESCRIPTOR' : _EXPERIMENT,
   '__module__' : 'experimentserver_pb2'
   # @@protoc_insertion_point(class_scope:experimentserver.Experiment)
   })
 _sym_db.RegisterMessage(Experiment)
+_sym_db.RegisterMessage(Experiment.EnsemblesEntry)
 
 Ensemble = _reflection.GeneratedProtocolMessageType('Ensemble', (_message.Message,), {
+
+  'RealizationsEntry' : _reflection.GeneratedProtocolMessageType('RealizationsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _ENSEMBLE_REALIZATIONSENTRY,
+    '__module__' : 'experimentserver_pb2'
+    # @@protoc_insertion_point(class_scope:experimentserver.Ensemble.RealizationsEntry)
+    })
+  ,
   'DESCRIPTOR' : _ENSEMBLE,
   '__module__' : 'experimentserver_pb2'
   # @@protoc_insertion_point(class_scope:experimentserver.Ensemble)
   })
 _sym_db.RegisterMessage(Ensemble)
+_sym_db.RegisterMessage(Ensemble.RealizationsEntry)
 
 Realization = _reflection.GeneratedProtocolMessageType('Realization', (_message.Message,), {
+
+  'StepsEntry' : _reflection.GeneratedProtocolMessageType('StepsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _REALIZATION_STEPSENTRY,
+    '__module__' : 'experimentserver_pb2'
+    # @@protoc_insertion_point(class_scope:experimentserver.Realization.StepsEntry)
+    })
+  ,
   'DESCRIPTOR' : _REALIZATION,
   '__module__' : 'experimentserver_pb2'
   # @@protoc_insertion_point(class_scope:experimentserver.Realization)
   })
 _sym_db.RegisterMessage(Realization)
+_sym_db.RegisterMessage(Realization.StepsEntry)
 
 Step = _reflection.GeneratedProtocolMessageType('Step', (_message.Message,), {
+
+  'JobsEntry' : _reflection.GeneratedProtocolMessageType('JobsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _STEP_JOBSENTRY,
+    '__module__' : 'experimentserver_pb2'
+    # @@protoc_insertion_point(class_scope:experimentserver.Step.JobsEntry)
+    })
+  ,
   'DESCRIPTOR' : _STEP,
   '__module__' : 'experimentserver_pb2'
   # @@protoc_insertion_point(class_scope:experimentserver.Step)
   })
 _sym_db.RegisterMessage(Step)
+_sym_db.RegisterMessage(Step.JobsEntry)
 
 Job = _reflection.GeneratedProtocolMessageType('Job', (_message.Message,), {
   'DESCRIPTOR' : _JOB,
@@ -111,28 +172,52 @@ _EXPERIMENTSERVER = DESCRIPTOR.services_by_name['Experimentserver']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _STATUS._serialized_start=1170
-  _STATUS._serialized_end=1254
-  _EXPERIMENTID._serialized_start=44
-  _EXPERIMENTID._serialized_end=82
-  _ENSEMBLEID._serialized_start=84
-  _ENSEMBLEID._serialized_end=170
-  _REALIZATIONID._serialized_start=172
-  _REALIZATIONID._serialized_end=259
-  _STEPID._serialized_start=261
-  _STEPID._serialized_end=340
-  _JOBID._serialized_start=342
-  _JOBID._serialized_end=407
-  _EXPERIMENT._serialized_start=409
-  _EXPERIMENT._serialized_end=516
-  _ENSEMBLE._serialized_start=518
-  _ENSEMBLE._serialized_end=621
-  _REALIZATION._serialized_start=624
-  _REALIZATION._serialized_end=793
-  _STEP._serialized_start=796
-  _STEP._serialized_end=929
-  _JOB._serialized_start=932
-  _JOB._serialized_end=1168
-  _EXPERIMENTSERVER._serialized_start=1257
-  _EXPERIMENTSERVER._serialized_end=1595
+  _EXPERIMENT_ENSEMBLESENTRY._options = None
+  _EXPERIMENT_ENSEMBLESENTRY._serialized_options = b'8\001'
+  _ENSEMBLE_REALIZATIONSENTRY._options = None
+  _ENSEMBLE_REALIZATIONSENTRY._serialized_options = b'8\001'
+  _REALIZATION_STEPSENTRY._options = None
+  _REALIZATION_STEPSENTRY._serialized_options = b'8\001'
+  _STEP_JOBSENTRY._options = None
+  _STEP_JOBSENTRY._serialized_options = b'8\001'
+  _STATUS._serialized_start=2382
+  _STATUS._serialized_end=2466
+  _CONTINUEORABORTREPLY._serialized_start=44
+  _CONTINUEORABORTREPLY._serialized_end=161
+  _CONTINUEORABORTREPLY_REPLY._serialized_start=129
+  _CONTINUEORABORTREPLY_REPLY._serialized_end=161
+  _DISPATCHERMESSAGE._serialized_start=164
+  _DISPATCHERMESSAGE._serialized_end=425
+  _CLIENTMESSAGE._serialized_start=428
+  _CLIENTMESSAGE._serialized_end=715
+  _EXPERIMENTID._serialized_start=717
+  _EXPERIMENTID._serialized_end=755
+  _ENSEMBLEID._serialized_start=757
+  _ENSEMBLEID._serialized_end=843
+  _REALIZATIONID._serialized_start=845
+  _REALIZATIONID._serialized_end=932
+  _STEPID._serialized_start=934
+  _STEPID._serialized_end=1013
+  _JOBID._serialized_start=1015
+  _JOBID._serialized_end=1080
+  _EXPERIMENT._serialized_start=1083
+  _EXPERIMENT._serialized_end=1332
+  _EXPERIMENT_ENSEMBLESENTRY._serialized_start=1256
+  _EXPERIMENT_ENSEMBLESENTRY._serialized_end=1332
+  _ENSEMBLE._serialized_start=1335
+  _ENSEMBLE._serialized_end=1590
+  _ENSEMBLE_REALIZATIONSENTRY._serialized_start=1508
+  _ENSEMBLE_REALIZATIONSENTRY._serialized_end=1590
+  _REALIZATION._serialized_start=1593
+  _REALIZATION._serialized_end=1889
+  _REALIZATION_STEPSENTRY._serialized_start=1821
+  _REALIZATION_STEPSENTRY._serialized_end=1889
+  _STEP._serialized_start=1892
+  _STEP._serialized_end=2141
+  _STEP_JOBSENTRY._serialized_start=2075
+  _STEP_JOBSENTRY._serialized_end=2141
+  _JOB._serialized_start=2144
+  _JOB._serialized_end=2380
+  _EXPERIMENTSERVER._serialized_start=2469
+  _EXPERIMENTSERVER._serialized_end=2662
 # @@protoc_insertion_point(module_scope)

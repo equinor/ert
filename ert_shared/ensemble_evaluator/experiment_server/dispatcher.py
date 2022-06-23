@@ -9,6 +9,7 @@ from experimentserver_pb2 import (Status,
                                   Realization, RealizationId,
                                   Ensemble, EnsembleId,
                                   Experiment, ExperimentId,
+                                  DispatcherMessage
                                 )
                         
 from google.protobuf.json_format import MessageToJson
@@ -16,11 +17,9 @@ from google.protobuf.json_format import MessageToJson
 class JobProxy(experimentserver_pb2_grpc.ExperimentserverStub):
     def __init__(self, channel, id: JobId):
         super().__init__(channel)
-        #self._channel: channel
-
         self._job: Job = Job(id=id)
         self._current_state = self._job.SerializeToString(deterministic=True)
-        self._response_stream = self.connect_job(self.updates())
+        self._response_stream = self.dispatch(self.updates())
 
     @property
     def done(self):
@@ -46,18 +45,17 @@ class JobProxy(experimentserver_pb2_grpc.ExperimentserverStub):
             yield resp
 
     async def updates(self) -> Job:
-        yield self._job
+        yield DispatcherMessage(job=self._job)
         while not self.done:
-            print(f"PRE  STATE: {MessageToJson(self._job)}")
-            #time.sleep(1)
+            print(f"PRE : {MessageToJson(self._job)}")
             await asyncio.sleep(1)
             new_state = self._job.SerializeToString(deterministic=True)
             if new_state == self._current_state:
-                print("JOB State not changed")
+                print("JOB not changed")
             else:
-                print(f"POST STATE: {MessageToJson(self._job)}")
+                print(f"POST: {MessageToJson(self._job)}")
                 self._current_state = new_state
-                yield self._job
+                yield DispatcherMessage(job=self._job)
 
 
 async def play(job: Job, delay):
@@ -83,7 +81,7 @@ async def play(job: Job, delay):
         print("Exited prematurely")
 
 
-async def main():
+async def main(job_idx):
     async with grpc.aio.insecure_channel("localhost:50051") as channel:
         try:
             await channel.channel_ready()
@@ -96,16 +94,18 @@ async def main():
                                         realization=RealizationId(
                                           ensemble=EnsembleId(
                                               experiment=ExperimentId(
-                                                  id="test-experiment"))))))
+                                                  id="test-experiment"),
+                                               id="first ensemble"),
+                                          realization=0),
+                                        step=0),
+                                      index=job_idx))
 
-#            job_task = asyncio.create_task(job.receiver())
             play_task = asyncio.create_task(play(job, delay=1))
             try:
                 async for response in job.responses():
                     print(f"Response: {response}")
 
                 results = await asyncio.gather(
-#                        job_task,
                         play_task,
                     return_exceptions=False
                 )
@@ -119,12 +119,12 @@ async def main():
 if __name__=='__main__':
     import time
     import sys
-    realization = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    job_idx = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(main())
+        loop.run_until_complete(main(job_idx))
     except Exception as ex:
         print(ex)
     finally:

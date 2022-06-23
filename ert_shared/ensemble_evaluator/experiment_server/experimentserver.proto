@@ -5,12 +5,11 @@ syntax = "proto2";  // using proto2 to specify default-values
 package experimentserver;
 //import "google/protobuf/timestamp.proto";
 
-
 service Experimentserver {
-	rpc connect_experiment(stream Experiment) returns(stream Experiment);
-	rpc connect_ensemble(stream Ensemble) returns(stream Ensemble);
-	rpc connect_realization(stream Realization) returns(stream Realization);
-	rpc connect_job(stream Job) returns(stream Job);
+	rpc dispatch(stream DispatcherMessage) returns (stream ContinueOrAbortReply);
+
+	// TODO: should rename this to something less generic than "client", like "observe"
+	rpc client(ClientMessage) returns (stream DispatcherMessage);
 }
 
 enum Status {
@@ -22,50 +21,88 @@ enum Status {
     CANCELLED = 5;
 }
 
+// Would like to use an "official" return-code at the protocol-level
+// here, but didn't find a suitable one. See
+//  https://grpc.github.io/grpc/core/md_doc_statuscodes.html
+// Perhaps we could just define our own return-code?
+message ContinueOrAbortReply {
+	enum Reply {
+		CONTINUE = 0;  // carry on with whatever you are doing
+		ABORT    = 1;  // abort what you're doing and close connection
+	}
+	required Reply reply = 1;
+}
+message DispatcherMessage {
+	oneof object {
+		Experiment experiment   = 1;
+		Ensemble ensemble       = 2;
+		Realization realization = 3;
+		Step step               = 4;
+		Job job                 = 5;
+	}
+}
+message ClientMessage {
+	oneof objectid {
+		ExperimentId experiment   = 1;
+		EnsembleId ensemble       = 2;
+		RealizationId realization = 3;
+		StepId step               = 4;
+		JobId job                 = 5;
+	}
+	optional uint32 delay = 6 [default = 1]; // desired seconds between updates
+}
 
 message ExperimentId {
   required string id = 1 [default = "experiment"];
 }
 message EnsembleId {
   required ExperimentId experiment = 1;
-  optional string id         = 2 [default = "ensemble"];  // an ensemble is identified by a string, not index
+  required string id         = 2 [default = "ensemble"];  // an ensemble is identified by a string, not index
 }
 message RealizationId {
   required EnsembleId ensemble = 1;
-  optional uint64 realization  = 2 [default = 0];
+  required uint64 realization  = 2 [default = 0];
 }
 message StepId {
   required RealizationId realization = 1;
-  optional uint64 step               = 2 [default = 0]; // replace with string?
+  required uint64 step               = 2 [default = 0]; // replace with string?
 }
 message JobId {
   required StepId step  = 1;
-  optional uint64 index = 2 [default = 0];
+  required uint64 index = 2 [default = 0];
 }
 
 message Experiment {
-  optional ExperimentId id   = 1; // NOTE: in the message the id is optional since it often will be streamed
+  required ExperimentId id   = 1; // NOTE: in the message the id is optional since it often will be streamed
   optional Status status   = 2 [default = UNKNOWN];
+
+  map<string, Ensemble> ensembles= 101;
 }
 message Ensemble {
-  optional EnsembleId id   = 1;
+  required EnsembleId id   = 1;
   optional Status status   = 2 [default = UNKNOWN];
+
+  map<uint64, Realization> realizations= 101;
 }
 message Realization {
-  optional RealizationId id= 1;
+  required RealizationId id= 1;
   optional Status status   = 2 [default = UNKNOWN];
   optional bool active     = 3 [default = true];  // not derived - active/inactive by user or algorithm
   optional double start_time      = 4;  // can be derived from step-list
   optional double end_time        = 5;  // can be derived from step-list
+
+  map<uint64, Step> steps= 101;
 }
 message Step {
-  optional StepId id         = 1;
+  required StepId id         = 1;
   optional Status status   = 2 [default = UNKNOWN];
   optional double start_time = 3;  // can be derived from job-list
   optional double end_time   = 4;  // can be derived from job-list
+
+  map<uint64, Job> jobs = 101;
 }
 message Job {
-  optional JobId id        = 1;
+  required JobId id        = 1;
   optional Status status   = 2 [default = UNKNOWN];
   optional double start_time = 3;
   optional double end_time   = 4;
