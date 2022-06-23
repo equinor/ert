@@ -1,3 +1,4 @@
+import asyncio
 from cloudevents.http import CloudEvent
 from collections import defaultdict
 import copy
@@ -5,7 +6,7 @@ import itertools
 import pytest
 
 from ert.experiment_server import StateMachine
-from ert.experiment_server._state_machine import nested_dict_keys, neighbour_values
+from ert.experiment_server._state_machine import nested_dict_keys
 from ert.ensemble_evaluator import identifiers as ids
 
 
@@ -29,11 +30,6 @@ def _empty_state_from_structure(structure):
 
 def _update_from_cloudevent(event):
     return {event["source"]: {"type": event["type"], **event.data}}
-
-
-def test_neighbour_values():
-    ensemble_structure = _generate_structure()
-    neighbour_values(ensemble_structure)
 
 
 @pytest.mark.asyncio
@@ -259,6 +255,26 @@ async def test_get_full_state_change_on_update():
     assert await sm.get_full_state() == expected_state
 
 
+@pytest.mark.asyncio
+async def test_event_consumed_and_produced():
+    ensemble_structure = _generate_structure(n_reals=1, n_steps=1, n_jobs=100)
+    sm = StateMachine(ensemble_structure)
+
+    for i in range(20):
+        event = CloudEvent(
+            {
+                "type": ids.EVTYPE_FM_JOB_SUCCESS,
+                "source": f"ee/0/real/0/step/0/job/{i}",
+            },
+            data={"meta": "irrelevant_data"},
+        )
+        await sm.queue_event(event)
+        await asyncio.sleep(0.1)
+
+    await sm.stop()
+
+
+@pytest.mark.asyncio
 async def test_propagate_state_change():
     """Test that derived transitions are handled correctly. I.e. given that events
     determining all steps in a realisation finished, the realisation itself should be
