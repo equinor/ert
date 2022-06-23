@@ -59,6 +59,8 @@ typedef enum {
     /** NODE_IN_USE_BYTE * ( 1 + 256 + 256**2 + 256**3) => Binary 01010101010101010101010101010101 */
     NODE_IN_USE = 1431655765,
     NODE_WRITE_ACTIVE = WRITE_START__,
+    /** NODE_INVALID is no longer written to the file, but its kept for
+     * backwards compatability */
     NODE_INVALID = 13
 } node_status_type;
 
@@ -358,50 +360,8 @@ static void block_fs_open_data(block_fs_type *block_fs,
         block_fs->data_fd = fileno(block_fs->data_stream);
 }
 
-/**
-   This function will 'fix' the nodes with offset in offset_list.  The
-   fixing in this case means the following:
-
-     1. The node is updated in place on the file to become a free node.
-     2. The node is added to the block_fs instance as a free node, which can
-        be recycled at a later stage.
-
-   If the instance is read-only the function
-   will return immediately.
-*/
-static void block_fs_fix_nodes(block_fs_type *block_fs,
-                               const std::vector<long> &offset_list) {
-    if (!block_fs_is_readonly(block_fs)) {
-        fsync(block_fs->data_fd);
-
-        char *key = NULL;
-        for (const auto &node_offset : offset_list) {
-            block_fs_fseek(block_fs, node_offset);
-            auto block = Block::read_header(block_fs->data_stream, &key);
-
-            if ((block->status == NODE_INVALID) ||
-                (block->status == NODE_WRITE_ACTIVE)) {
-                /* This node is really quite broken. */
-                long int node_end;
-                block_fs_fseek_valid_node(block_fs);
-                node_end = ftell(block_fs->data_stream);
-                block->node_size = node_end - node_offset;
-            }
-
-            block->status = NODE_INVALID;
-            block->data_size = 0;
-
-            block->write(NULL, block_fs->data_stream, NULL);
-        }
-        free(key);
-
-        fsync(block_fs->data_fd);
-    }
-}
-
 static void block_fs_build_index(block_fs_type *block_fs,
-                                 const fs::path &data_file,
-                                 std::vector<long> &error_offset) {
+                                 const fs::path &data_file) {
     char *filename = NULL;
 
     block_fs_fseek(block_fs, 0);
@@ -424,7 +384,6 @@ static void block_fs_build_index(block_fs_type *block_fs,
                         "while writing node in %s/%ld - will be discarded.\n",
                         data_file.c_str(), block->node_offset);
 
-            error_offset.push_back(block->node_offset);
             block_fs_fseek_valid_node(block_fs);
         } else {
             if (block->verify_end_tag(block_fs->data_stream)) {
@@ -445,7 +404,6 @@ static void block_fs_build_index(block_fs_type *block_fs,
                         "** Warning found node:%s at offset:%ld which was "
                         "incomplete - discarded.\n",
                         filename, block->node_offset);
-                error_offset.push_back(block->node_offset);
                 block_fs_fseek_valid_node(block_fs);
             }
         }
@@ -471,16 +429,15 @@ block_fs_type *block_fs_mount(const fs::path &mount_file, int fsync_interval,
     if (!fs::exists(mount_file))
         /* This is a brand new filesystem - create the mount map first. */
         block_fs_fwrite_mount_info(mount_file);
-    std::vector<long> fix_nodes;
+
     block_fs = block_fs_alloc_empty(mount_file, fsync_interval, read_only);
 
     block_fs_open_data(block_fs, data_file);
     if (block_fs->data_stream != nullptr) {
         std::error_code ec;
         fs::remove(index_file, ec /* error code is ignored */);
-        block_fs_build_index(block_fs, data_file, fix_nodes);
+        block_fs_build_index(block_fs, data_file);
     }
-    block_fs_fix_nodes(block_fs, fix_nodes);
     return block_fs;
 }
 
