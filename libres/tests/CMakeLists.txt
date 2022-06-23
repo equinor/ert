@@ -13,7 +13,6 @@ add_executable(
   analysis/test_save_parameters.cpp
   analysis/test_copy_parameters.cpp
   enkf/enkf_obs_paths_detailed.cpp
-  enkf/test_cases_config.cpp
   enkf/test_enkf_fs.cpp
   enkf/test_analysis_config.cpp
   enkf/test_meas_data.cpp
