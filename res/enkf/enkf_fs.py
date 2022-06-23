@@ -34,7 +34,6 @@ class EnkfFs(BaseCClass):
 
     _mount = ResPrototype("void* enkf_fs_mount(char* )", bind=False)
     _sync = ResPrototype("void enkf_fs_sync(enkf_fs)")
-    _exists = ResPrototype("bool  enkf_fs_exists(char*)", bind=False)
     _disk_version = ResPrototype("int   enkf_fs_disk_version(char*)", bind=False)
     _update_disk_version = ResPrototype(
         "bool  enkf_fs_update_disk_version(char*, int, int)", bind=False
