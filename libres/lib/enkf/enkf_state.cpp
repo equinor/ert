@@ -229,7 +229,8 @@ static void enkf_state_check_for_missing_eclipse_summary_data(
     stringlist_free(keys);
 }
 
-static bool enkf_state_internalize_dynamic_eclipse_results(
+static std::pair<fw_load_status, std::string>
+enkf_state_internalize_dynamic_eclipse_results(
     ensemble_config_type *ens_config, forward_load_context_type *load_context,
     const model_config_type *model_config) {
 
@@ -256,16 +257,10 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
             // ecl_sum == NULL.
             if (summary) {
                 time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
-                auto updateOK = time_map_summary_update(time_map, summary);
-                if (!updateOK) {
+                auto status = time_map_summary_update(time_map, summary);
+                if (!status.empty()) {
                     // Something has gone wrong in checking time map, fail
-                    logger->error("Inconsistent time map for summary data "
-                                  "from: {}/{}, realisation failed",
-                                  run_arg_get_runpath(run_arg),
-                                  run_arg_get_job_name(run_arg));
-                    forward_load_context_update_result(load_context,
-                                                       LOAD_FAILURE);
-                    throw std::invalid_argument("Inconsistent time map");
+                    return {TIME_MAP_FAILURE, status};
                 }
                 int_vector_type *time_index =
                     time_map_alloc_index_map(time_map, summary);
@@ -314,17 +309,17 @@ static bool enkf_state_internalize_dynamic_eclipse_results(
                 enkf_state_check_for_missing_eclipse_summary_data(
                     ens_config, matcher, smspec, load_context, iens);
 
-                return true;
+                return {LOAD_SUCCESSFUL, ""};
             } else {
-                logger->error(
-                    "Could not load ECLIPSE summary data from: {}/{}.UNSMRY",
-                    run_arg_get_runpath(run_arg),
-                    run_arg_get_job_name(run_arg));
-                return false;
+                return {LOAD_FAILURE,
+                        fmt::format("Could not load ECLIPSE summary data from: "
+                                    "{}/{}.UNSMRY",
+                                    run_arg_get_runpath(run_arg),
+                                    run_arg_get_job_name(run_arg))};
             }
         }
     } else {
-        return true;
+        return {LOAD_SUCCESSFUL, ""};
     }
 }
 
@@ -425,7 +420,7 @@ enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
    Will mainly be called at the end of the forward model, but can also
    be called manually from external scope.
 */
-static fw_load_status enkf_state_internalize_results(
+static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
 
@@ -435,12 +430,12 @@ static fw_load_status enkf_state_internalize_results(
     // The timing information - i.e. mainly what is the last report step
     // in these results are inferred from the loading of summary results,
     // hence we must load the summary results first.
-    try {
-        enkf_state_internalize_dynamic_eclipse_results(ens_config, load_context,
-                                                       model_config);
-    } catch (const std::invalid_argument) {
+    auto status = enkf_state_internalize_dynamic_eclipse_results(
+        ens_config, load_context, model_config);
+
+    if (status.first != LOAD_SUCCESSFUL) {
         forward_load_context_free(load_context);
-        throw;
+        return status;
     }
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
@@ -453,23 +448,25 @@ static fw_load_status enkf_state_internalize_results(
 
     auto result = forward_load_context_get_result(load_context);
     forward_load_context_free(load_context);
-    return result;
+    return {result, ""};
 }
 
-static fw_load_status enkf_state_load_from_forward_model__(
-    ensemble_config_type *ens_config, model_config_type *model_config,
-    const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
-    auto result = LOAD_SUCCESSFUL;
+static std::pair<fw_load_status, std::string>
+enkf_state_load_from_forward_model__(ensemble_config_type *ens_config,
+                                     model_config_type *model_config,
+                                     const ecl_config_type *ecl_config,
+                                     const run_arg_type *run_arg) {
+    std::pair<fw_load_status, std::string> result;
     if (ensemble_config_have_forward_init(ens_config))
         result = ensemble_config_forward_init(ens_config, run_arg);
-    if (result == LOAD_SUCCESSFUL) {
+    if (result.first == LOAD_SUCCESSFUL) {
         result = enkf_state_internalize_results(ens_config, model_config,
                                                 ecl_config, run_arg);
     }
     state_map_type *state_map =
         enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
     int iens = run_arg_get_iens(run_arg);
-    if (result == LOAD_FAILURE)
+    if (result.first != LOAD_SUCCESSFUL)
         state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
     else
         state_map_iset(state_map, iens, STATE_HAS_DATA);
@@ -477,8 +474,9 @@ static fw_load_status enkf_state_load_from_forward_model__(
     return result;
 }
 
-fw_load_status enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
-                                                  run_arg_type *run_arg) {
+std::pair<fw_load_status, std::string>
+enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
+                                   run_arg_type *run_arg) {
 
     ensemble_config_type *ens_config = enkf_state->ensemble_config;
     model_config_type *model_config = enkf_state->shared_info->model_config;
@@ -514,51 +512,36 @@ void enkf_state_free(enkf_state_type *enkf_state) {
     Observe that if an internal retry is performed, this function will
     be called several times - MUST BE REENTRANT.
 */
-bool enkf_state_complete_forward_modelOK(const res_config_type *res_config,
-                                         run_arg_type *run_arg) {
+std::pair<fw_load_status, std::string>
+enkf_state_complete_forward_modelOK(const res_config_type *res_config,
+                                    run_arg_type *run_arg) {
 
     ensemble_config_type *ens_config =
         res_config_get_ensemble_config(res_config);
     const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
     model_config_type *model_config = res_config_get_model_config(res_config);
-    const int iens = run_arg_get_iens(run_arg);
-
-    // The queue system has reported that the run is OK, i.e. it has
-    // completed and produced the targetfile it should. We then check
-    // in this scope whether the results can be loaded back; if that
-    // is OK the final status is updated, otherwise: restart.
-    logger->info("[{:03d}:{:04d}-{:04d}] Forward model complete - starting to "
-                 "load results.",
-                 iens, run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
-
     auto result = enkf_state_load_from_forward_model__(ens_config, model_config,
                                                        ecl_config, run_arg);
 
-    if (result == LOAD_SUCCESSFUL) {
+    if (result.first == LOAD_SUCCESSFUL) {
         // The loading succeded - so this is a howling success! We set
         // the main status to JOB_QUEUE_ALL_OK and inform the queue layer
         // about the success. In addition we set the simple status
         // (should be avoided) to JOB_RUN_OK.
         run_arg_set_run_status(run_arg, JOB_RUN_OK);
-        logger->info("[{:03d}:{:04d}-{:04d}] Results loaded successfully.",
-                     iens, run_arg_get_step1(run_arg),
-                     run_arg_get_step2(run_arg));
+        result.second = "Results loaded successfully.";
     }
 
-    return (result == LOAD_SUCCESSFUL);
+    return result;
 }
 
 bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
-    const int iens = run_arg_get_iens(run_arg);
-    logger->error("[{:03d}:{:04d}-{:04d}] FAILED COMPLETELY.", iens,
-                  run_arg_get_step1(run_arg), run_arg_get_step2(run_arg));
-
     if (run_arg_get_run_status(run_arg) != JOB_LOAD_FAILURE)
         run_arg_set_run_status(run_arg, JOB_RUN_FAILURE);
 
     state_map_type *state_map =
         enkf_fs_get_state_map(run_arg_get_sim_fs(run_arg));
-    state_map_iset(state_map, iens, STATE_LOAD_FAILURE);
+    state_map_iset(state_map, run_arg_get_iens(run_arg), STATE_LOAD_FAILURE);
     return false;
 }
 

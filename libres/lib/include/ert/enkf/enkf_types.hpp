@@ -96,7 +96,11 @@ typedef enum {
    In addition to enkf_config_add_type().
 */
 
-typedef enum { LOAD_SUCCESSFUL = 0, LOAD_FAILURE = 2 } fw_load_status;
+typedef enum {
+    LOAD_SUCCESSFUL = 0,
+    LOAD_FAILURE = 2,
+    TIME_MAP_FAILURE = 3
+} fw_load_status;
 
 /**
       These are 2^n bitmasks.

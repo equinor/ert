@@ -3,9 +3,12 @@ import json
 import os
 import stat
 from pathlib import Path
+from dataclasses import dataclass
 from threading import BoundedSemaphore
 from typing import Any, Dict, Optional
 from unittest.mock import patch
+
+from res._lib.model_callbacks import LoadStatus
 
 try:
     from unittest.mock import AsyncMock
@@ -20,10 +23,6 @@ from websockets.exceptions import ConnectionClosedError
 from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
 
 
-def dummy_ok_callback(args):
-    print(args)
-
-
 def dummy_exit_callback(args):
     print(args)
 
@@ -33,7 +32,7 @@ DUMMY_CONFIG: Dict[str, Any] = {
     "num_cpu": 1,
     "job_name": "dummy_job_{}",
     "run_path": "dummy_path_{}",
-    "ok_callback": dummy_ok_callback,
+    "ok_callback": lambda _: (LoadStatus.LOAD_SUCCESSFUL, ""),
     "exit_callback": dummy_exit_callback,
 }
 
@@ -51,6 +50,11 @@ FAILING_SCRIPT = """#!/usr/bin/env python
 import sys
 sys.exit(1)
 """
+
+
+@dataclass
+class RunArg:
+    iens: int
 
 
 def create_local_queue(
@@ -78,7 +82,7 @@ def create_local_queue(
             exit_file=job_queue.exit_file,
             done_callback_function=DUMMY_CONFIG["ok_callback"],
             exit_callback_function=DUMMY_CONFIG["exit_callback"],
-            callback_arguments=[{"job_number": iens}],
+            callback_arguments=[RunArg(iens)],
             max_runtime=max_runtime,
             callback_timeout=callback_timeout,
         )
@@ -189,7 +193,7 @@ def test_timeout_jobs(tmpdir):
 
     def callback(arg):
         nonlocal job_numbers
-        job_numbers.add(arg[0]["job_number"])
+        job_numbers.add(arg[0].iens)
 
     job_queue = create_local_queue(
         NEVER_ENDING_SCRIPT,

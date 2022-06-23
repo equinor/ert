@@ -341,7 +341,91 @@ def test_tracking_time_map(
         # Just also check that it failed for the expected reason
         assert len(failures) == 1
         assert (
-            "Inconsistency in time_map - loading SUMMARY from" in failures[0].failed_msg
+            "Realization: 0 failed with: 2 inconsistencies in time_map"
+            in failures[0].failed_msg
         )
+        thread.join()
+    FeatureToggling.reset()
+
+
+@pytest.mark.integration_test
+def test_tracking_missing_ecl(
+    tmpdir,
+    source_root,
+    caplog,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 2
+
+        ECLBASE ECLIPSE_CASE
+        SUMMARY *
+        MAX_SUBMIT 1 -- will fail first and every time
+        REFCASE ECLIPSE_CASE
+
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        # We create a reference case, but there will be no response
+        run_sim(datetime(2014, 9, 10))
+        parser = ArgumentParser(prog="test_main")
+        parsed = ert_parser(
+            parser,
+            [
+                TEST_RUN_MODE,
+                "config.ert",
+            ],
+        )
+        FeatureToggling.update_from_args(parsed)
+
+        res_config = ResConfig(parsed.config)
+        os.chdir(res_config.config_path)
+        ert = EnKFMain(res_config, strict=True)
+        facade = LibresFacade(ert)
+
+        model = create_model(
+            ert,
+            facade.get_ensemble_size(),
+            facade.get_current_case_name(),
+            parsed,
+        )
+
+        evaluator_server_config = EvaluatorServerConfig(
+            custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+        )
+
+        thread = threading.Thread(
+            name="ert_cli_simulation_thread",
+            target=model.start_simulations_thread,
+            args=(evaluator_server_config,),
+        )
+        with caplog.at_level(logging.ERROR):
+            thread.start()
+
+            tracker = EvaluatorTracker(
+                model,
+                ee_con_info=evaluator_server_config.get_connection_info(),
+            )
+
+            failures = []
+
+            for event in tracker.track():
+                if isinstance(event, EndEvent):
+                    failures.append(event)
+        assert (
+            f"Realization: 0 failed after reaching max submit with: Could not load "
+            f"ECLIPSE summary data from: {Path().absolute()}/simulations/"
+            f"realization0/ECLIPSE_CASE.UNSMRY"
+        ) in caplog.messages
+
+        # Just also check that it failed for the expected reason
+        assert len(failures) == 1
+        assert (
+            f"Could not find SUMMARY file at: {Path().absolute()}/simulations/"
+            f"realization0/ECLIPSE_CASE or using non unified SUMMARY file"
+        ) in failures[0].failed_msg
+
         thread.join()
     FeatureToggling.reset()

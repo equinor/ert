@@ -40,7 +40,8 @@ bool time_map_equal(const time_map_type *map1, const time_map_type *map2);
 extern "C" time_map_type *time_map_alloc();
 extern "C" void time_map_free(time_map_type *map);
 bool time_map_update(time_map_type *map, int step, time_t time);
-bool time_map_summary_update(time_map_type *map, const ecl_sum_type *ecl_sum);
+std::string time_map_summary_update(time_map_type *map,
+                                    const ecl_sum_type *ecl_sum);
 extern "C" time_t time_map_iget(time_map_type *map, int step);
 extern "C" void time_map_fwrite(time_map_type *map, const char *filename);
 extern "C" void time_map_fread(time_map_type *map, const char *filename);
