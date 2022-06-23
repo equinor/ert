@@ -90,10 +90,6 @@ class EnkfFs(BaseCClass):
         return self._is_running()
 
     @classmethod
-    def exists(cls, path):
-        return cls._exists(path)
-
-    @classmethod
     def diskVersion(cls, path):
         disk_version = cls._disk_version(path)
         if disk_version < 0:
