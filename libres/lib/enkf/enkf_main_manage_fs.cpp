@@ -70,40 +70,6 @@ char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main) {
     return current_case;
 }
 
-stringlist_type *enkf_main_alloc_caselist(const enkf_main_type *enkf_main) {
-    stringlist_type *case_list = stringlist_alloc_new();
-    {
-        const char *ens_path =
-            model_config_get_enspath(enkf_main_get_model_config(enkf_main));
-        DIR *ens_dir = opendir(ens_path);
-        if (ens_dir != NULL) {
-            int ens_fd = dirfd(ens_dir);
-            if (ens_fd != -1) {
-                struct dirent *dp;
-                do {
-                    dp = readdir(ens_dir);
-                    if (dp != NULL) {
-                        if (!(util_string_equal(dp->d_name, ".") ||
-                              util_string_equal(dp->d_name, ".."))) {
-                            if (!util_string_equal(dp->d_name,
-                                                   CURRENT_CASE_FILE)) {
-                                char *full_path = util_alloc_filename(
-                                    ens_path, dp->d_name, NULL);
-                                if (util_is_directory(full_path))
-                                    stringlist_append_copy(case_list,
-                                                           dp->d_name);
-                                free(full_path);
-                            }
-                        }
-                    }
-                } while (dp != NULL);
-            }
-        }
-        closedir(ens_dir);
-    }
-    return case_list;
-}
-
 static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     enkf_fs_type *source_case_fs,
                                     int source_report_step,

@@ -126,8 +126,6 @@ enkf_main_load_from_run_context(enkf_main_type *enkf_main,
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path);
 char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main);
-extern "C" stringlist_type *
-enkf_main_alloc_caselist(const enkf_main_type *enkf_main);
 
 extern "C" void
 enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,

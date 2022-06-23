@@ -1,6 +1,7 @@
 import os.path
 import re
 import warnings
+from pathlib import Path
 
 from typing import List, Dict, Union, TYPE_CHECKING
 
@@ -88,9 +89,6 @@ class EnkfFsManager(BaseCClass):
 
     _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_fs_manager)")
     _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_fs_manager, enkf_fs, char*)")
-    _alloc_caselist = ResPrototype(
-        "stringlist_obj enkf_main_alloc_caselist(enkf_fs_manager)"
-    )
     _ensemble_size = ResPrototype("int enkf_main_get_ensemble_size(enkf_fs_manager)")
 
     _is_case_initialized = ResPrototype(
@@ -190,7 +188,7 @@ class EnkfFsManager(BaseCClass):
         return self._is_case_initialized(case)
 
     def getCaseList(self) -> List[str]:
-        caselist = [case for case in self._alloc_caselist()]
+        caselist = [str(x.stem) for x in Path(self._mount_root).iterdir() if x.is_dir()]
         return sorted(caselist, key=naturalSortKey)
 
     def customInitializeCurrentFromExistingCase(
