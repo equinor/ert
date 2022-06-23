@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from res.job_queue import JobStatusType
 
 ENSEMBLE_STATE_STARTED = "Starting"
 ENSEMBLE_STATE_STOPPED = "Stopped"
@@ -61,44 +60,3 @@ JOB_STATE_TO_COLOR = {
     JOB_STATE_FINISHED: COLOR_FINISHED,
     JOB_STATE_FAILURE: COLOR_FAILED,
 }
-
-QUEUE_WAITING_FLAG = (
-    JobStatusType.JOB_QUEUE_NOT_ACTIVE  # type: ignore
-    | JobStatusType.JOB_QUEUE_WAITING
-    | JobStatusType.JOB_QUEUE_SUBMITTED
-)
-QUEUE_PENDING_FLAG = JobStatusType.JOB_QUEUE_PENDING
-QUEUE_RUNNING_FLAG = (
-    JobStatusType.JOB_QUEUE_RUNNING  # type: ignore
-    | JobStatusType.JOB_QUEUE_EXIT
-    | JobStatusType.JOB_QUEUE_RUNNING_DONE_CALLBACK
-    | JobStatusType.JOB_QUEUE_RUNNING_EXIT_CALLBACK
-)
-# Failed also includes simulations which have been killed by the MAX_RUNTIME system.
-QUEUE_FAILED_FLAG = (
-    JobStatusType.JOB_QUEUE_IS_KILLED | JobStatusType.JOB_QUEUE_DO_KILL  # type: ignore
-)
-QUEUE_FAILED_FLAG |= (
-    JobStatusType.JOB_QUEUE_FAILED  # type: ignore
-    | JobStatusType.JOB_QUEUE_DO_KILL_NODE_FAILURE
-)
-QUEUE_DONE_FLAG = (
-    JobStatusType.JOB_QUEUE_DONE | JobStatusType.JOB_QUEUE_SUCCESS  # type: ignore
-)
-QUEUE_UNKNOWN_FLAG = JobStatusType.JOB_QUEUE_UNKNOWN
-
-QUEUE_FLAG_TO_REAL_STATE = {
-    QUEUE_WAITING_FLAG: REALIZATION_STATE_WAITING,
-    QUEUE_PENDING_FLAG: REALIZATION_STATE_PENDING,
-    QUEUE_RUNNING_FLAG: REALIZATION_STATE_RUNNING,
-    QUEUE_FAILED_FLAG: REALIZATION_STATE_FAILED,
-    QUEUE_DONE_FLAG: REALIZATION_STATE_FINISHED,
-    QUEUE_UNKNOWN_FLAG: REALIZATION_STATE_UNKNOWN,
-}
-
-
-def queue_status_to_real_state(queue_status: JobStatusType) -> str:
-    for flag, state in QUEUE_FLAG_TO_REAL_STATE.items():
-        if queue_status in flag:
-            return state
-    raise ValueError(f"could not map queue status {queue_status} to state")
