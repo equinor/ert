@@ -174,14 +174,14 @@ class BaseRunModel:
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
-            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
+            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
             self._simulationEnded()
         except UserWarning as e:
-            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
+            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
             self._simulationEnded()
         except Exception as e:
             self._failed = True
-            self._fail_message = str(e) + "\n" + "\n".join(logs.messages)
+            self._fail_message = str(e) + "\n" + "\n".join(sorted(logs.messages))
             self._simulationEnded()
             raise
 
