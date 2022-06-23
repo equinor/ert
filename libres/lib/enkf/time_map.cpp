@@ -383,23 +383,23 @@ std::string time_map_summary_update(time_map_type *map,
     bool updateOK = true;
     pthread_rwlock_wrlock(&map->rw_lock);
     std::vector<std::string> errors;
-    {
-        auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
-        if (!error.empty())
-            errors.push_back(error);
 
-        int first_step = ecl_sum_get_first_report_step(ecl_sum);
-        int last_step = ecl_sum_get_last_report_step(ecl_sum);
+    auto error = time_map_update__(map, 0, ecl_sum_get_start_time(ecl_sum));
+    if (!error.empty())
+        errors.push_back(error);
 
-        for (int step = first_step; step <= last_step; step++) {
-            if (ecl_sum_has_report_step(ecl_sum, step)) {
-                auto error = time_map_update__(
-                    map, step, ecl_sum_get_report_time(ecl_sum, step));
-                if (!error.empty())
-                    errors.push_back(error);
-            }
+    int first_step = ecl_sum_get_first_report_step(ecl_sum);
+    int last_step = ecl_sum_get_last_report_step(ecl_sum);
+
+    for (int step = first_step; step <= last_step; step++) {
+        if (ecl_sum_has_report_step(ecl_sum, step)) {
+            error = time_map_update__(map, step,
+                                      ecl_sum_get_report_time(ecl_sum, step));
+            if (!error.empty())
+                errors.push_back(error);
         }
     }
+
     pthread_rwlock_unlock(&map->rw_lock);
     std::string error_msg;
     if (!errors.empty()) {
