@@ -133,7 +133,7 @@ class EnkfFsManager(BaseCClass):
         full_case_name = self._createFullCaseName(mount_root, case_name)
 
         if full_case_name not in self._fs_rotator:
-            if not EnkfFs.exists(full_case_name):
+            if not os.path.exists(full_case_name):
                 if self._fs_rotator.atCapacity():
                     self._fs_rotator.dropOldestFileSystem()
 

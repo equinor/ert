@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from ecl.util.test import TestAreaContext
@@ -22,14 +24,14 @@ class EnKFFSTest(ResTest):
         with TestAreaContext("create_fs") as work_area:
             work_area.copy_parent_content(self.config_file)
 
-            self.assertTrue(EnkfFs.exists(self.mount_point))
+            self.assertTrue(os.path.exists(self.mount_point))
             fs = EnkfFs(self.mount_point)
             self.assertEqual(1, fs.refCount())
             fs.umount()
 
-            self.assertFalse(EnkfFs.exists("newFS"))
+            self.assertFalse(os.path.exists("newFS"))
             fs = EnkfFs.createFileSystem("newFS")
-            self.assertTrue(EnkfFs.exists("newFS"))
+            self.assertTrue(os.path.exists("newFS"))
             self.assertTrue(fs is None)
 
             with self.assertRaises(IOError):
