@@ -170,9 +170,10 @@ public:
 
     void write(const char *filename, FILE *data_stream, const void *ptr) {
         write_active_markers(data_stream);
-        write_header(filename, data_stream);
-        if (status == NODE_IN_USE)
-            write_data(data_stream, ptr);
+        long data_offset = write_header(filename, data_stream);
+        if (status == NODE_IN_USE) {
+            write_data(data_stream, ptr, data_offset);
+        }
         write_end_tag(data_stream);
     }
 
@@ -194,7 +195,10 @@ private:
         util_fwrite_int(NODE_WRITE_ACTIVE_END, stream);
     }
 
-    void write_header(const char *key, FILE *stream) {
+    /**
+     * @return The byte position directly following the header
+     */
+    long write_header(const char *key, FILE *stream) {
         if (node_size == 0)
             util_abort("%s: trying to write node with zero size \n", __func__);
         fseek__(stream, node_offset, SEEK_SET);
@@ -203,9 +207,11 @@ private:
             util_fwrite_string(key, stream);
         util_fwrite_int(node_size, stream);
         util_fwrite_int(data_size, stream);
+        return ftell(stream);
     }
 
-    void write_data(FILE *data_stream, const void *ptr) {
+    void write_data(FILE *data_stream, const void *ptr, long where) {
+        fseek__(data_stream, where, SEEK_SET);
         util_fwrite(ptr, 1, data_size, data_stream, __func__);
     }
 
