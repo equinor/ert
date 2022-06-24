@@ -65,10 +65,9 @@ class EnsemblePlot:
                 y=data.to_numpy(),
                 color=style.color,
                 alpha=style.alpha,
-                marker=style.marker,
-                linestyle=style.line_style,
                 linewidth=style.width,
                 markersize=style.size,
+                fmt=f"{style.marker}{style.line_style}",
             )
         else:
             lines = axes.plot(
