@@ -25,15 +25,17 @@ class LocalConfigTest(ResTest):
         self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
 
     def test_all_active(self):
+        """ERT by default updates all parameters and observations
+        as defined in the config file.
+        """
         with ErtTestContext(self.config) as test_context:
             main = test_context.getErt()
 
-            updatestep = main.update_configuration
-            update_step = updatestep[0]
-            self.assertEqual(3, len(update_step.parameters))
-            self.assertEqual(
-                ["PERMX", "PORO", "SNAKE_OIL_PARAM"],
-                [param.name for param in update_step.parameters],
-            )
+            update_step = main.update_configuration[0]
+            assert [param.name for param in update_step.parameters] == [
+                "PERMX",
+                "PORO",
+                "SNAKE_OIL_PARAM",
+            ]
 
-            self.assertEqual(len(update_step.observations), 8)
+            assert len(update_step.observations) == 8
