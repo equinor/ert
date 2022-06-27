@@ -13,13 +13,20 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import List
+
 from cwrap import BaseCClass
+import numpy as np
+import numpy.typing as npt
 
 from res import ResPrototype
+from res.enkf.res_config import EnsembleConfig
 from res.enkf.enums import EnKFFSType
 from res.enkf.state_map import StateMap
 from res.enkf.summary_key_set import SummaryKeySet
 from res.enkf.util import TimeMap
+
+from res._lib import update
 
 
 class EnkfFs(BaseCClass):
@@ -149,3 +156,24 @@ class EnkfFs(BaseCClass):
         """
         state_map = self.getStateMap()
         return state_map.realizationList(state)
+
+    def save_parameters(
+        self,
+        ensemble_config: EnsembleConfig,
+        iens_active_index: List[int],
+        parameters: List[update.Parameter],
+        values: npt.ArrayLike,
+    ):
+        update.save_parameters(
+            self, ensemble_config, iens_active_index, parameters, values
+        )
+
+    def load_parameters(
+        self,
+        ensemble_config: EnsembleConfig,
+        iens_active_index: List[int],
+        parameters: List[update.Parameter],
+    ) -> np.ndarray:
+        return update.load_parameters(
+            self, ensemble_config, iens_active_index, parameters
+        )
