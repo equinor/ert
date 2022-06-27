@@ -108,8 +108,7 @@ def analysis_ES(
             )
             A = A @ X
 
-            update.save_parameters(
-                target_fs,
+            target_fs.save_parameters(
                 ensemble_config,
                 iens_active_index,
                 update_step.parameters,
@@ -182,8 +181,8 @@ def analysis_IES(
                 f"No active observations for update step: {update_step.name}."
             )
 
-        A = update.load_parameters(
-            target_fs, ensemble_config, iens_active_index, update_step.parameters
+        A = target_fs.load_parameters(
+            ensemble_config, iens_active_index, update_step.parameters
         )
 
         noise = update.generate_noise(len(observation_values), S.shape[1], shared_rng)
@@ -209,8 +208,7 @@ def analysis_IES(
             truncation=module_config.get_truncation(),
             step_length=module_config.get_steplength(w_container.iteration_nr),
         )
-        update.save_parameters(
-            target_fs,
+        target_fs.save_parameters(
             ensemble_config,
             iens_active_index,
             update_step.parameters,
