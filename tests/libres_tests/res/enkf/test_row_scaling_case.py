@@ -38,7 +38,7 @@ from res.test import ErtTestContext
 # This function will initialize the data in the case before the actual row
 # scaling test can be performed. The function will initialize the PORO field
 # which is the parameter to be updated, and it will assign one value for the
-# summary value WBHP which will served as simulated response in the update
+# summary value WBHP which will serve as simulated response in the update
 # process.
 #
 # The parameter field PORO is initialized by first creating input files
@@ -137,18 +137,15 @@ class SelectLayer:
         self.grid = grid
 
     def __call__(self, data_index):
-        ijk = self.grid.get_ijk(active_index=data_index)
-        if ijk[2] == self.layer:
-            return 1
-        else:
-            return 0
+        _, _, k = self.grid.get_ijk(active_index=data_index)
+        return 1 if k == self.layer else 0
 
 
 # This is a quite contrived row scaling callable which is mainly designed to
 # test that the correct parts of the field are updated. The behavior of the
 # ScalingTest function is as follows:
 #
-# k = 0: In the upper layer the scaling fcuntion behaves as a step function,
+# k = 0: In the upper layer the scaling function behaves as a step function,
 #        for i <= 5 the scaling function returns one, and the updated field
 #        should be identical to the field updated without row scaling applied.
 #
@@ -156,7 +153,7 @@ class SelectLayer:
 #        zero update. In this case the field returned from the updated process
 #        should be identical to the input field.
 #
-# k = 1: In the lower layer he scaling function is constantly equal to 0.50,
+# k = 1: In the lower layer the scaling function is constantly equal to 0.50,
 #        that implies the updated values should be between the initial values
 #        and the normal full update value.
 #
@@ -169,12 +166,9 @@ class ScalingTest:
         self.grid = grid
 
     def __call__(self, data_index):
-        i, j, k = self.grid.get_ijk(active_index=data_index)
+        i, _, k = self.grid.get_ijk(active_index=data_index)
         if k == 0:
-            if i <= 5:
-                return 1
-            else:
-                return 0
+            return 1 if i <= 5 else 0
         else:
             return 0.5
 
@@ -205,13 +199,14 @@ class RowScalingTest(ResTest):
     def setUp(self):
         self.config_file = self.createTestPath("local/row_scaling/config")
 
-    # The test_update_workflow() applies the row scaling through a workflow,
-    # that is probably the way it will be done by users. The test does not
-    # really verify the results in any way, but serves to demonstrate how
-    # things are connected. The job in workflows/row_scaling_job1.py uses
-    # functools.partial() as an alternative to Class::__call__() as callable
-    # when the row scaling is applied.
     def test_update_workflow(self):
+        """Applies the row scaling through a workflow,
+        which is probably the way it will be done by users. The test does not
+        really verify the results in any way, but serves to demonstrate how
+        things are connected. The job in workflows/row_scaling_job1.py uses
+        functools.partial() as an alternative to Class::__call__() as callable
+        when the row scaling is applied.
+        """
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             workflow_list = main.getWorkflowList()
@@ -225,10 +220,11 @@ class RowScalingTest(ResTest):
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, target_fs)
             es_update.smootherUpdate(run_context)
 
-    # The test_update_code() applies the row scaling through code inlined in
-    # the test, and also uses the GaussianDecay callable class instead of
-    # functools.partial() to create a callable for the scaling operation.
     def test_update_code1(self):
+        """Applies the row scaling through code inlined in
+        the test, and also uses the GaussianDecay callable class instead of
+        functools.partial() to create a callable for the scaling operation.
+        """
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
 
@@ -245,14 +241,12 @@ class RowScalingTest(ResTest):
             poro_config = ens_config["PORO"]
             field_config = poro_config.getFieldModelConfig()
 
-            # -------------------------------------------------------------------------------------
             grid = main.eclConfig().getGrid()
             obs_pos = grid.get_xyz(ijk=(5, 5, 1))
             length_scale = (2, 1, 0.50)
             row_scaling.assign(
                 field_config.get_data_size(), GaussianDecay(obs_pos, length_scale, grid)
             )
-            # -------------------------------------------------------------------------------------
 
             init_fs = init_data(main)
             target_fs = main.getEnkfFsManager().getFileSystem("target")
@@ -260,10 +254,11 @@ class RowScalingTest(ResTest):
             run_context = ErtRunContext.ensemble_smoother_update(init_fs, target_fs)
             es_update.smootherUpdate(run_context)
 
-    # This test does two smoother updates, first without row scaling in update1
-    # and then afterwards with row scaling in update2. The row scaling function
-    # is designed so that it is possible to test the updates results.
     def test_update_code2(self):
+        """This test does two smoother updates, first without row scaling in update1
+        and then afterwards with row scaling in update2. The row scaling function
+        is designed so that it is possible to test the updated results.
+        """
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
@@ -321,10 +316,11 @@ class RowScalingTest(ResTest):
                     update_node2.asField(),
                 )
 
-    # This test is identical to test_update_code2(), but the row scaling is
-    # applied with the function row_scaling.assign_vector() instead of
-    # using a callable.
     def test_row_scaling_using_assign_vector(self):
+        """This test is identical to test_update_code2(), but the row scaling is
+        applied with the function row_scaling.assign_vector() instead of
+        using a callable.
+        """
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
@@ -389,12 +385,13 @@ class RowScalingTest(ResTest):
                     update_node2.asField(),
                 )
 
-    # This test has a configuration where the update consists of two update_steps,
-    # where the same field is updated in both steps. Because the
-    # obs_data_makeE() function uses random state it is difficult to get
-    # identical results from one update_step updating everything and two update_steps
-    # updating different parts of the field.
     def test_2update_step(self):
+        """Has a configuration where the update consists of two update_steps,
+        where the same field is updated in both steps. Because the
+        obs_data_makeE() function uses random state it is difficult to get
+        identical results from one update_step updating everything and two update_steps
+        updating different parts of the field.
+        """
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
@@ -454,13 +451,14 @@ class RowScalingTest(ResTest):
                 for iv, v1, v2 in zip(init_field, field1, field2):
                     assert iv != v1
 
-    # In the enkf_main_update() routine the A matrix is allocated with a
-    # default size; and should grow when exposed to a larger node. At a stage
-    # there was a bug in code for combination of row_scaling and
-    # matrix_resize(). The purpose of this test is to ensure that we create a
-    # sufficiently large node to invoke the rescaling.
     @tmpdir()
     def test_large_case(self):
+        """In ERT's updating routine, the A matrix is allocated with a
+        default size; and should grow when exposed to a larger node. At a stage
+        there was a bug in code when combining of row_scaling and
+        matrix_resize(). The purpose of this test is to ensure that we create a
+        sufficiently large node to invoke the rescaling.
+        """
         with open("config", "w") as fp:
             fp.write(
                 """NUM_REALIZATIONS 10
@@ -475,8 +473,8 @@ TIME_MAP timemap.txt
         for f in ["timemap.txt", "observations.txt"]:
             src_file = self.createTestPath(os.path.join("local/row_scaling", f))
             shutil.copy(src_file, "./")
-        # The grid size must be greater than 250000 (the default matrix size in
-        # enkf_main_update())
+        # The grid size must be greater than 250000, which is
+        # the default matrix size in ERT's updating routine.
         grid = EclGridGenerator.create_rectangular((70, 70, 70), (1, 1, 1))
         grid.save_EGRID("CASE.EGRID")
         res_config = ResConfig(user_config_file="config")
@@ -505,15 +503,16 @@ TIME_MAP timemap.txt
         run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs)
         es_update.smootherUpdate(run_context)
 
-    # This test updates three times, all updates should produce the same result:
-    #
-    # 1. A normal update with the default configuration and no explicit local
-    #    config.
-    #
-    # 2. The update consists of two update_steps. The first is created by deleting
-    #    an entry from the ALL_OBS set, and then that same entry is added to
-    #    the next.
     def test_reuse_ALL_ACTIVE(self):
+        """Updates three times, all updates should produce the same result:
+
+        1. A normal update with the default configuration and no explicit local
+           config.
+
+        2. The update consists of two update_steps. The first is created by deleting
+           an entry from the ALL_OBS set, and then that same entry is added to
+           the next.
+        """
         random_seed = "ABCDEFGHIJK0123456"
         with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
