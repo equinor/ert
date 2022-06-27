@@ -10,9 +10,7 @@ class GenKwCollectorTest(ResTest):
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_gen_kw_collector(self):
-        with ErtTestContext(
-            "python/enkf/export/gen_kw_collector", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
             ert = context.getErt()
 
             data = GenKwCollector.loadAllGenKwData(ert, "default_0")

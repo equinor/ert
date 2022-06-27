@@ -16,7 +16,7 @@ class FieldExportTest(ResTest):
         self.config_file = self.createTestPath("Equinor/config/obs_testing/config")
 
     def test_field_type_enum(self):
-        with ErtTestContext("export_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             ens_config = ert.ensembleConfig()
             fc = ens_config["PERMX"].getFieldModelConfig()
@@ -24,7 +24,7 @@ class FieldExportTest(ResTest):
 
     @pytest.mark.skip(reason="Aborts")
     def test_field_basics(self):
-        with ErtTestContext("export_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             ens_config = ert.ensembleConfig()
             fc = ens_config["PERMX"].getFieldModelConfig()
@@ -51,7 +51,7 @@ class FieldExportTest(ResTest):
             field_node[0]
 
     def test_field_export(self):
-        with ErtTestContext("export_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             fs_manager = ert.getEnkfFsManager()
             ens_config = ert.ensembleConfig()
@@ -65,7 +65,7 @@ class FieldExportTest(ResTest):
             self.assertTrue(os.path.isfile("export/with/path/PERMX.grdecl"))
 
     def test_field_export_many(self):
-        with ErtTestContext("export_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             fs_manager = ert.getEnkfFsManager()
             ens_config = ert.ensembleConfig()

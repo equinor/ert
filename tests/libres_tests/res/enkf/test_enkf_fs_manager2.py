@@ -17,9 +17,7 @@ class TestEnKFFSManager2(ResTest):
         # already in the enkf_main object. In principle we could
         # create a separate manager instance from the ground up, but
         # then the reference count will be weird.
-        with ErtTestContext(
-            "enkf_fs_manager_rotate_test", self.config_file
-        ) as testContext:
+        with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
             self.assertEqual(0, fsm.getFileSystemCount())

@@ -56,7 +56,7 @@ class ExportJoinTest(ResTest):
 
     def test_join(self):
 
-        with ErtTestContext("python/enkf/export/export_join", self.config) as context:
+        with ErtTestContext(self.config) as context:
             dumpDesignMatrix("DesignMatrix.txt")
             ert = context.getErt()
 

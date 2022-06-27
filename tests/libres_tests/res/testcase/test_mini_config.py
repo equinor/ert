@@ -22,7 +22,7 @@ class MiniConfigTest(ResTest):
         # 9 OK
 
         config = self.createTestPath("local/mini_ert/mini_fail_config")
-        with ErtTestContext("python/enkf/data/mini_ert_simulated", config) as context:
+        with ErtTestContext(config) as context:
             ert = context.getErt()
 
             fs = ert.getEnkfFsManager().getCurrentFileSystem()

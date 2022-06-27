@@ -18,9 +18,7 @@ class SummaryCollectorTest(ResTest):
         self.monkeypatch.undo()
 
     def test_summary_collector(self):
-        with ErtTestContext(
-            "python/enkf/export/summary_collector", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
             ert = context.getErt()
 
             data = SummaryCollector.loadAllSummaryData(ert, "default_0")

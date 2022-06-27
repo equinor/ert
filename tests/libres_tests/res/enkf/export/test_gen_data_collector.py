@@ -8,7 +8,7 @@ from res.test import ErtTestContext
 class GenDataCollectorTest(ResTest):
     def test_gen_data_collector(self):
         config = self.createTestPath("local/snake_oil/snake_oil.ert")
-        with ErtTestContext("python/enkf/export/gen_data_collector", config) as context:
+        with ErtTestContext(config) as context:
             ert = context.getErt()
 
             with self.assertRaises(KeyError):

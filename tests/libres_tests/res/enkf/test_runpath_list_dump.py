@@ -25,9 +25,7 @@ class RunpathListDumpTest(ResTest):
         self.config_path = self.createTestPath(self.config_rel_path)
 
     def _verify_runpath_rendering(self, itr):
-        with ErtTestContext(
-            "add_all_runpath_dump", model_config=self.config_path
-        ) as ctx:
+        with ErtTestContext(model_config=self.config_path) as ctx:
             res = ctx.getErt()
             fs_manager = res.getEnkfFsManager()
             sim_fs = fs_manager.getFileSystem("sim_fs")

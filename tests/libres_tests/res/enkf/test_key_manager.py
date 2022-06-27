@@ -9,7 +9,7 @@ class KeyManagerTest(ResTest):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_summary_keys(self):
-        with ErtTestContext("enkf_key_manager_test", self.config_file) as testContext:
+        with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             key_man = KeyManager(ert)
 
@@ -21,7 +21,7 @@ class KeyManagerTest(ResTest):
             self.assertTrue(key_man.isKeyWithObservations("FOPR"))
 
     def test_gen_data_keys(self):
-        with ErtTestContext("enkf_key_manager_test", self.config_file) as testContext:
+        with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             key_man = KeyManager(ert)
 
@@ -35,7 +35,7 @@ class KeyManagerTest(ResTest):
             self.assertTrue(key_man.isKeyWithObservations("SNAKE_OIL_WPR_DIFF@199"))
 
     def test_gen_kw_keys(self):
-        with ErtTestContext("enkf_key_manager_test", self.config_file) as testContext:
+        with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             key_man = KeyManager(ert)
 
@@ -45,7 +45,7 @@ class KeyManagerTest(ResTest):
             )
 
     def test_gen_kw_priors(self):
-        with ErtTestContext("enkf_key_manager_test", self.config_file) as testContext:
+        with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             key_man = KeyManager(ert)
             priors = key_man.gen_kw_priors()

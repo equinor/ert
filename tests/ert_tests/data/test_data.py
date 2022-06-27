@@ -9,5 +9,5 @@ from res.test import ErtTestContext
 class TestData(ErtTest):
     def test_poly(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("poly", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             work_area.getErt()

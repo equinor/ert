@@ -10,7 +10,7 @@ class GenDataTest(ResTest):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_create(self):
-        with ErtTestContext("gen_data_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             fs1 = ert.getEnkfFsManager().getCurrentFileSystem()
             config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")

@@ -23,7 +23,7 @@ from res.enkf import EnKFMain, ResConfig
 
 
 class ErtTestContext:
-    def __init__(self, test_name, model_config):
+    def __init__(self, model_config):
         self._tmp_dir = tempfile.mkdtemp()
         self._model_config = model_config
         self._res_config = None

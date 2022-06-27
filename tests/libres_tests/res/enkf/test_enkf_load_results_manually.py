@@ -13,7 +13,7 @@ class LoadResultsManuallyTest(ResTest):
 
     @tmpdir()
     def test_load_results_manually(self):
-        with ErtTestContext("manual_load_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             load_into_case = "A1"
             load_from_case = "default"
@@ -42,7 +42,7 @@ class LoadResultsManuallyTest(ResTest):
 
     @tmpdir()
     def test_load_results_from_run_context(self):
-        with ErtTestContext("manual_load_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             load_into_case = "A1"
             load_from_case = "default"

@@ -212,7 +212,7 @@ class RowScalingTest(ResTest):
     # functools.partial() as an alternative to Class::__call__() as callable
     # when the row scaling is applied.
     def test_update_workflow(self):
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             workflow_list = main.getWorkflowList()
             workflow = workflow_list["ROW_SCALING_WORKFLOW1"]
@@ -229,7 +229,7 @@ class RowScalingTest(ResTest):
     # the test, and also uses the GaussianDecay callable class instead of
     # functools.partial() to create a callable for the scaling operation.
     def test_update_code1(self):
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
 
             row_scaling = RowScaling()
@@ -265,7 +265,7 @@ class RowScalingTest(ResTest):
     # is designed so that it is possible to test the updates results.
     def test_update_code2(self):
         random_seed = "ABCDEFGHIJK0123456"
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
             update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
@@ -326,7 +326,7 @@ class RowScalingTest(ResTest):
     # using a callable.
     def test_row_scaling_using_assign_vector(self):
         random_seed = "ABCDEFGHIJK0123456"
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
             update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
@@ -395,7 +395,7 @@ class RowScalingTest(ResTest):
     # identical results from one update_step updating everything and two update_steps
     # updating different parts of the field.
     def test_2update_step(self):
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             init_fs = init_data(main)
             update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
@@ -515,7 +515,7 @@ TIME_MAP timemap.txt
     #    the next.
     def test_reuse_ALL_ACTIVE(self):
         random_seed = "ABCDEFGHIJK0123456"
-        with ErtTestContext("row_scaling", self.config_file) as tc:
+        with ErtTestContext(self.config_file) as tc:
             main = tc.getErt()
             grid = main.eclConfig().getGrid()
             init_fs = init_data(main)

@@ -88,7 +88,7 @@ class PlotDataTest(ResTest):
         self.assertAlmostEqualList(rft_values, plot_block_data[9])
 
     def test_plot_block_data_fs(self):
-        with ErtTestContext("plot_block_data_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
 
             self.checkBlockData(ert, "RFT2", 50)
