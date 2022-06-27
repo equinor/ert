@@ -12,7 +12,7 @@ class GenKwConfigTest(ResTest):
 
     def test_gen_kw_config(self):
 
-        with ErtTestContext("python/enkf/data/gen_kw_config", self.config) as context:
+        with ErtTestContext(self.config) as context:
 
             ert = context.getErt()
 

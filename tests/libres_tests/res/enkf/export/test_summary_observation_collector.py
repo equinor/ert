@@ -18,9 +18,7 @@ class SummaryObservationCollectorTest(ResTest):
 
     def test_summary_observation_collector(self):
 
-        with ErtTestContext(
-            "python/enkf/export/summary_observation_collector", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
 
             ert = context.getErt()
 

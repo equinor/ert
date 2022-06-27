@@ -16,7 +16,7 @@ from res.test import ErtTestContext
 class ModelFactoryTest(ErtTest):
     def test_custom_target_case_name(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_custom_target_case_name", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
             custom_name = "test"
@@ -28,7 +28,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_default_target_case_name(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_default_target_case_name", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
 
@@ -40,9 +40,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_default_target_case_name_format_mode(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(
-            "test_default_target_case_name_format_mode", config_file
-        ) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
 
@@ -54,7 +52,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_default_realizations(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_default_realizations", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
             args = Namespace(realizations=None)
@@ -64,7 +62,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_init_iteration_number(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_init_iteration_number", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             args = Namespace(iter_num=10, realizations=None)
             model = model_factory._setup_ensemble_experiment(
@@ -76,7 +74,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_custom_realizations(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_custom_realizations", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
             args = Namespace(realizations="0-4,7,8")
@@ -88,7 +86,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_setup_single_test_run(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_single_test_run", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
             model = model_factory._setup_single_test_run(ert)
@@ -99,7 +97,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_setup_ensemble_experiment(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_single_test_run", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
 
             model = model_factory._setup_single_test_run(ert)
@@ -110,7 +108,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_setup_ensemble_smoother(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_single_test_run", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
             args = Namespace(realizations="0-4,7,8", target_case="test_case")
@@ -130,7 +128,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_setup_multiple_data_assimilation(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext("test_single_test_run", config_file) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
             args = Namespace(
@@ -157,9 +155,7 @@ class ModelFactoryTest(ErtTest):
 
     def test_setup_iterative_ensemble_smoother(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")
-        with ErtTestContext(
-            "_setup_iterative_ensemble_smoother", config_file
-        ) as work_area:
+        with ErtTestContext(config_file) as work_area:
             ert = work_area.getErt()
             facade = LibresFacade(ert)
             args = Namespace(

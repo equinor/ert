@@ -23,10 +23,9 @@ from res.test import ErtTestContext
 class LocalConfigTest(ResTest):
     def setUp(self):
         self.config = self.createTestPath("local/snake_oil_field/snake_oil.ert")
-        self.local_conf_path = "python/enkf/data/update_configuration"
 
     def test_all_active(self):
-        with ErtTestContext(self.local_conf_path, self.config) as test_context:
+        with ErtTestContext(self.config) as test_context:
             main = test_context.getErt()
 
             updatestep = main.update_configuration

@@ -9,7 +9,7 @@ class SimulationContextTest(ResTest):
     @tmpdir()
     def test_simulation_context(self):
         config_file = self.createTestPath("local/batch_sim/sleepy_time.ert")
-        with ErtTestContext("res/sim/simulation_context", config_file) as test_context:
+        with ErtTestContext(config_file) as test_context:
             ert = test_context.getErt()
 
             size = 4

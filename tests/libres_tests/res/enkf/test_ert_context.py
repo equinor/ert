@@ -12,7 +12,7 @@ class ErtTestContextTest(ResTest):
 
     def test_raises(self):
         with self.assertRaises(DistutilsFileError):
-            with ErtTestContext("ExistTest", "Does/not/exist"):
+            with ErtTestContext("Does/not/exist"):
                 pass
 
     def initFromCaseTest(self, context, root_path):
@@ -67,18 +67,14 @@ class ErtTestContextTest(ResTest):
 
     def test_workflow_function_jobs(self):
 
-        with ErtTestContext(
-            "python/enkf/ert_test_context_workflow_function_job", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
             internal_config = "share/ert/workflows/jobs/internal-tui/config"
             self.createCaseTest(context, root_path=internal_config)
             self.selectCaseTest(context, root_path=internal_config)
 
     def test_workflow_ert_script_jobs(self):
 
-        with ErtTestContext(
-            "python/enkf/ert_test_context_workflow_ert_script_job", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
             with self.assertRaises(IOError):
                 context.installWorkflowJob("JOB_NAME", "DOES/NOT/EXIST")
 

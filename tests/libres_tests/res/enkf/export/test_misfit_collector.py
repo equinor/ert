@@ -9,9 +9,7 @@ class MisfitCollectorTest(ResTest):
         self.config = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def test_misfit_collector(self):
-        with ErtTestContext(
-            "python/enkf/export/misfit_collector", self.config
-        ) as context:
+        with ErtTestContext(self.config) as context:
             ert = context.getErt()
             data = MisfitCollector.loadAllMisfitData(ert, "default_0")
 

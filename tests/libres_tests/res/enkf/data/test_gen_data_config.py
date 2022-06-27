@@ -25,7 +25,7 @@ class GenDataConfigTest(ResTest):
         self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")
 
     def load_active_masks(self, case1, case2):
-        with ErtTestContext("gen_data_config_test", self.config_file) as test_context:
+        with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
             subst_list = ert.resConfig().subst_config.subst_list
 
