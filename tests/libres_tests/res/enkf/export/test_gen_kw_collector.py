@@ -1,3 +1,5 @@
+import pytest
+
 from libres_utils import ResTest
 
 from res.enkf.export import GenKwCollector
