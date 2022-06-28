@@ -94,7 +94,7 @@ void serialize_parameter(const ensemble_config_type *ens_config,
     A.conservativeResize(current_row, ens_size);
 }
 
-void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
+void deserialize_node(enkf_fs_type *fs,
                       const enkf_config_node_type *config_node, int iens,
                       int row_offset, int column, const ActiveList *active_list,
                       const Eigen::MatrixXd &A) {
@@ -102,13 +102,13 @@ void deserialize_node(enkf_fs_type *target_fs, enkf_fs_type *src_fs,
     node_id_type node_id = {.report_step = 0, .iens = iens};
     enkf_node_type *node = enkf_node_alloc(config_node);
 
-    // If partly active, init node from source fs (deserialize will fill it only in part)
-    enkf_node_load(node, src_fs, node_id);
+    // If partly active (deserialize will fill it only in part)
+    enkf_node_load(node, fs, node_id);
 
-    // deserialize the matrix into the node (and writes it to the target fs)
-    enkf_node_deserialize(node, target_fs, node_id, active_list, A, row_offset,
+    // deserialize the matrix into the node (and writes it to the fs)
+    enkf_node_deserialize(node, fs, node_id, active_list, A, row_offset,
                           column);
-    state_map_update_undefined(enkf_fs_get_state_map(target_fs), iens,
+    state_map_update_undefined(enkf_fs_get_state_map(fs), iens,
                                STATE_INITIALIZED);
     enkf_node_free(node);
 }
@@ -163,9 +163,8 @@ void save_parameters(enkf_fs_type *target_fs,
         if (active_size > 0) {
             for (int column = 0; column < ens_size; column++) {
                 int iens = iens_active_index[column];
-                deserialize_node(target_fs, target_fs, config_node, iens,
-                                 current_row, column, &parameter.active_list,
-                                 A);
+                deserialize_node(target_fs, config_node, iens, current_row,
+                                 column, &parameter.active_list, A);
             }
             current_row += active_size;
         }
@@ -188,7 +187,7 @@ void save_row_scaling_parameters(
             for (int column = 0; column < iens_active_index.size(); column++) {
                 int iens = iens_active_index[column];
                 deserialize_node(
-                    target_fs, target_fs,
+                    target_fs,
                     ensemble_config_get_node(ensemble_config,
                                              scaled_parameter.name.c_str()),
                     iens, 0, column, &scaled_parameter.active_list, A);
