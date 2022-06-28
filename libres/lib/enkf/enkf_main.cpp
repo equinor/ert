@@ -199,13 +199,6 @@ bool enkf_main_load_obs(enkf_main_type *enkf_main, const char *obs_config_file,
     return true;
 }
 
-static void enkf_main_add_internal_subst_kw(enkf_main_type *enkf_main,
-                                            const char *key, const char *value,
-                                            const char *help_text) {
-    subst_config_add_internal_subst_kw(enkf_main_get_subst_config(enkf_main),
-                                       key, value, help_text);
-}
-
 void enkf_main_free(enkf_main_type *enkf_main) {
     if (enkf_main->rng_manager)
         rng_manager_free(enkf_main->rng_manager);
@@ -225,12 +218,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
 void enkf_main_exit(enkf_main_type *enkf_main) {
     enkf_main_free(enkf_main);
     exit(0);
-}
-
-void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
-                           const char *value) {
-    subst_config_add_subst_kw(enkf_main_get_subst_config(enkf_main), key,
-                              value);
 }
 
 static enkf_main_type *enkf_main_alloc_empty() {
@@ -551,11 +538,11 @@ namespace enkf_main {
  * @param run_arg Contains the information about the given run.
  */
 void write_eclipse_data_file(const char *data_file_template,
-                             const run_arg_type *run_arg) {
+                             const run_arg_type *run_arg,
+                             const subst_list_type *subst_list) {
     char *data_file_destination = ecl_util_alloc_filename(
         run_arg_get_runpath(run_arg), run_arg_get_job_name(run_arg),
         ECL_DATA_FILE, true, -1);
-    auto subst_list = run_arg_get_subst_list(run_arg);
 
     //Perform substitutions on the data file destination path
     subst_list_update_string(subst_list, &data_file_destination);
@@ -609,10 +596,10 @@ void ecl_write(const ensemble_config_type *ens_config,
 
     value_export_free(export_value);
 }
+
 /**
- * @brief Initializes all active runs.
+ * @brief Initializes an active run.
  *
- * For each active run:
  *  * Instantiate res_config_templates which substitutes arg_list from the template
  *      and from run_arg into each template and writes it to runpath;
  *  * substitutes sampled parameters into the parameter nodes and write to runpath;
@@ -620,66 +607,40 @@ void ecl_write(const ensemble_config_type *ens_config,
  *  * write the job script.
  *
  * @param res_config The config to use for initialization.
- * @param run_context Contains all the runs.
+ * @param run_arg The run to initialize
+ * @param subst_list The substitutions to perform for that run.
  */
-void init_active_runs(const res_config_type *res_config,
-                      const ert_run_context_type *run_context) {
-    for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
-        if (ert_run_context_iactive(run_context, iens)) {
-            run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
-            util_make_path(run_arg_get_runpath(run_arg));
+void init_active_run(const res_config_type *res_config,
+                     const run_arg_type *run_arg,
+                     const subst_list_type *subst_list) {
+    util_make_path(run_arg_get_runpath(run_arg));
 
-            model_config_type *model_config =
-                res_config_get_model_config(res_config);
-            ensemble_config_type *ens_config =
-                res_config_get_ensemble_config(res_config);
+    model_config_type *model_config = res_config_get_model_config(res_config);
+    ensemble_config_type *ens_config =
+        res_config_get_ensemble_config(res_config);
 
-            ert_templates_instansiate(res_config_get_templates(res_config),
-                                      run_arg_get_runpath(run_arg),
-                                      run_arg_get_subst_list(run_arg));
+    ert_templates_instansiate(res_config_get_templates(res_config),
+                              run_arg_get_runpath(run_arg), subst_list);
 
-            ecl_write(ens_config,
-                      model_config_get_gen_kw_export_name(model_config),
-                      run_arg, run_arg_get_sim_fs(run_arg));
+    ecl_write(ens_config, model_config_get_gen_kw_export_name(model_config),
+              run_arg, run_arg_get_sim_fs(run_arg));
 
-            // Create the eclipse data file (if eclbase and DATA_FILE)
-            const ecl_config_type *ecl_config =
-                res_config_get_ecl_config(res_config);
-            const char *data_file_template =
-                ecl_config_get_data_file(ecl_config);
-            if (ecl_config_have_eclbase(ecl_config) && data_file_template) {
-                write_eclipse_data_file(data_file_template, run_arg);
-            }
-
-            // Create the job script
-            const site_config_type *site_config =
-                res_config_get_site_config(res_config);
-            forward_model_formatted_fprintf(
-                model_config_get_forward_model(model_config),
-                run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
-                model_config_get_data_root(model_config),
-                run_arg_get_subst_list(run_arg),
-                site_config_get_umask(site_config),
-                site_config_get_env_varlist(site_config));
-        }
+    // Create the eclipse data file (if eclbase and DATA_FILE)
+    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
+    const char *data_file_template = ecl_config_get_data_file(ecl_config);
+    if (ecl_config_have_eclbase(ecl_config) && data_file_template) {
+        write_eclipse_data_file(data_file_template, run_arg, subst_list);
     }
-}
 
-/**
- * @return list of the runpaths in the runcontext.
- */
-std::vector<Runpath>
-run_context_get_runpaths(const ert_run_context_type *run_context) {
-    std::vector<Runpath> runpath_list;
-    for (int iens = 0; iens < ert_run_context_get_size(run_context); iens++) {
-        if (ert_run_context_iactive(run_context, iens)) {
-            run_arg_type *run_arg = ert_run_context_iget_arg(run_context, iens);
-            runpath_list.emplace_back(
-                run_arg_get_iens(run_arg), run_arg_get_iter(run_arg),
-                run_arg_get_runpath(run_arg), run_arg_get_job_name(run_arg));
-        }
-    }
-    return runpath_list;
+    // Create the job script
+    const site_config_type *site_config =
+        res_config_get_site_config(res_config);
+    forward_model_formatted_fprintf(
+        model_config_get_forward_model(model_config),
+        run_arg_get_run_id(run_arg), run_arg_get_runpath(run_arg),
+        model_config_get_data_root(model_config), subst_list,
+        site_config_get_umask(site_config),
+        site_config_get_env_varlist(site_config));
 }
 } // namespace enkf_main
 
@@ -695,19 +656,14 @@ RES_LIB_SUBMODULE("enkf_main", m) {
         },
         py::arg("self"));
     m.def(
-        "write_run_path",
-        [](py::object self, py::object run_context_py) {
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            auto run_context =
-                ert::from_cwrap<ert_run_context_type>(run_context_py);
-
-            enkf_main::init_active_runs(enkf_main->res_config, run_context);
-
-            hook_manager_write_runpath_file(
-                enkf_main_get_hook_manager(enkf_main),
-                enkf_main::run_context_get_runpaths(run_context));
+        "init_active_run",
+        [](py::object res_config, py::object run_arg, py::object subst_list) {
+            enkf_main::init_active_run(
+                ert::from_cwrap<res_config_type>(res_config),
+                ert::from_cwrap<run_arg_type>(run_arg),
+                ert::from_cwrap<subst_list_type>(subst_list));
         },
-        py::arg("self"), py::arg("run_context"));
+        py::arg("res_config"), py::arg("run_arg"), py::arg("subst_list"));
 }
 
 #include "enkf_main_ensemble.cpp"

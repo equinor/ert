@@ -1,8 +1,7 @@
 import ctypes
-import os
-import sys
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import HookRuntime
@@ -18,12 +17,9 @@ class HookManager(BaseCClass):
     # hook_manager_alloc_full() has char** which cwrap is missing an implementation for
     # so we let ctypes implicitly handle the two char** arguments and final int argument
     _alloc_full = ResPrototype(
-        "void* hook_manager_alloc_full(ert_workflow_list, char*)", bind=False
+        "void* hook_manager_alloc_full(ert_workflow_list)", bind=False
     )
     _free = ResPrototype("void hook_manager_free(hook_manager)")
-    _get_runpath_list_file = ResPrototype(
-        "char* hook_manager_get_runpath_list_file(hook_manager)"
-    )
     _iget_hook_workflow = ResPrototype(
         "hook_workflow_ref hook_manager_iget_hook_workflow(hook_manager, int)"
     )
@@ -39,14 +35,6 @@ class HookManager(BaseCClass):
                 raise ValueError(
                     f"HookManager needs {ConfigKeys.CONFIG_DIRECTORY} to be configured"
                 )
-
-            # RUNPATH_FILE
-            runpath_file_name = config_dict.get(
-                ConfigKeys.RUNPATH_FILE, ConfigKeys.RUNPATH_LIST_FILE
-            )
-            runpath_file_path = os.path.normpath(
-                os.path.join(config_dir, runpath_file_name)
-            )
 
             # HOOK_WORKFLOW
             hook_workflow_names = []
@@ -64,7 +52,6 @@ class HookManager(BaseCClass):
 
             c_ptr = self._alloc_full(
                 workflow_list,
-                runpath_file_path,
                 self._to_c_string_arr(hook_workflow_names),
                 self._to_c_string_arr(hook_workflow_run_modes),
                 len(hook_workflow_names),
@@ -99,20 +86,6 @@ class HookManager(BaseCClass):
         else:
             raise IndexError(f"Invalid index.  Valid range: [0, {len(self)}).")
 
-    def getRunpathListFile(self):
-        return self._get_runpath_list_file()
-
-    def checkRunpathListFile(self):
-        """@rtype: bool"""
-        runpath_list_file = self._get_runpath_list_file()
-
-        if not os.path.exists(runpath_list_file):
-            sys.stderr.write(
-                f"** Warning: the file: {runpath_list_file}"
-                " with a list of runpath directories was not found"
-                " - hook workflow will probably fail.\n"
-            )
-
     def runWorkflows(self, run_time, ert_self):
 
         workflow_list = ert_self.getWorkflowList()
@@ -125,8 +98,6 @@ class HookManager(BaseCClass):
             workflow.run(ert_self, context=workflow_list.getContext())
 
     def __eq__(self, other):
-        if self.getRunpathListFile() != other.getRunpathListFile():
-            return False
         if len(self) != len(other):
             return False
         for val in self:

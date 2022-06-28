@@ -698,6 +698,10 @@ static void model_config_init_user_config(config_parser_type *config) {
 
     stringlist_free(refcase_dep);
 
+    item = config_add_schema_item(config, RUNPATH_FILE_KEY, false);
+    config_schema_item_set_argc_minmax(item, 1, 1);
+    config_schema_item_iset_type(item, 0, CONFIG_PATH);
+
     hook_manager_add_config_items(config);
 }
 

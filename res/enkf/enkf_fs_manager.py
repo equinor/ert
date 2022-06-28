@@ -165,6 +165,8 @@ class EnkfFsManager(BaseCClass):
         current_fs = self._get_current_fs()
         case_name = current_fs.getCaseName()
         full_name = self._createFullCaseName(self._mount_root, case_name)
+        self.parent().addDataKW("<ERT-CASE>", current_fs.getCaseName())
+        self.parent().addDataKW("<ERTCASE>", current_fs.getCaseName())
 
         if full_name not in self._fs_rotator:
             self._fs_rotator.addFileSystem(current_fs, full_name)
@@ -181,6 +183,8 @@ class EnkfFsManager(BaseCClass):
         return self.parent().getEnsembleSize()
 
     def switchFileSystem(self, file_system: EnkfFs) -> None:
+        self.parent().addDataKW("<ERT-CASE>", file_system.getCaseName())
+        self.parent().addDataKW("<ERTCASE>", file_system.getCaseName())
         self._switch_fs(file_system, None)
 
     def isCaseInitialized(self, case: str) -> bool:

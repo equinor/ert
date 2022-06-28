@@ -54,19 +54,6 @@ class HookManagerTest(ResTest):
     def tearDown(self):
         del self.work_area
 
-    def test_different_runpath_gives_not_equal_hook_managers(self):
-        res_config2 = ResConfig(user_config_file=self.filename)
-        hook_manager1 = HookManager(
-            workflow_list=self.res_config.ert_workflow_list,
-            config_dict=self.config_data,
-        )
-        hook_manager2 = HookManager(
-            workflow_list=res_config2.ert_workflow_list,
-            config_dict=self.set_key(ConfigKeys.RUNPATH_FILE, "runpath2"),
-        )
-
-        self.assertNotEqual(hook_manager1, hook_manager2)
-
     def test_different_hook_workflow_gives_not_equal_hook_managers(self):
         res_config2 = ResConfig(user_config_file=self.filename)
         hook_manager1 = HookManager(
@@ -95,15 +82,11 @@ class HookManagerTest(ResTest):
             workflow_list=self.res_config.ert_workflow_list,
             config_dict=self.config_data,
         )
-        list_file = hook_manager.getRunpathListFile()
-        conf_dir = self.config_data[ConfigKeys.CONFIG_DIRECTORY]
-        self.assertEqual(
-            list_file, os.path.join(conf_dir, self.config_data[ConfigKeys.RUNPATH_FILE])
-        )
 
         self.assertEqual(len(hook_manager), 1)
 
         magic_workflow = hook_manager[0]
+        conf_dir = self.config_data[ConfigKeys.CONFIG_DIRECTORY]
         self.assertEqual(
             magic_workflow.getWorkflow().src_file,
             os.path.join(conf_dir, self.config_data[ConfigKeys.LOAD_WORKFLOW]),

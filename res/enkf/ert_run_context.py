@@ -13,69 +13,21 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import List
+from typing import List, Optional
 
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector, StringList
-
-from res import ResPrototype
+from res import ResPrototype, _lib
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import EnkfInitModeEnum
+from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
 from res.enkf.run_arg import RunArg
-from res.util import PathFormat, SubstitutionList
-
-
-def boolvector_from_boollist(bool_list: List[bool]) -> BoolVector:
-    true_indices = [idx for idx, value in enumerate(bool_list) if value]
-    return BoolVector.createFromList(size=len(bool_list), source_list=true_indices)
 
 
 class ErtRunContext(BaseCClass):
     TYPE_NAME = "ert_run_context"
     _alloc = ResPrototype(
-        "void* ert_run_context_alloc(enkf_run_mode_enum , \
+        "void* ert_run_context_alloc_empty(enkf_run_mode_enum , \
                                      enkf_init_mode_enum, \
-                                     enkf_fs, \
-                                     enkf_fs, \
-                                     bool_vector, \
-                                     path_fmt, \
-                                     char*, \
-                                     subst_list, \
                                      int)",
-        bind=False,
-    )
-    _alloc_ensemble_experiment = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_ENSEMBLE_EXPERIMENT(enkf_fs, \
-                                                                       bool_vector, \
-                                                                       path_fmt, \
-                                                                       char*, \
-                                                                       subst_list, \
-                                                                       int)",
-        bind=False,
-    )
-    _alloc_ensemble_smoother = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_SMOOTHER_RUN(enkf_fs, \
-                                                                enkf_fs, \
-                                                                bool_vector, \
-                                                                path_fmt, \
-                                                                char*, \
-                                                                subst_list, \
-                                                                int)",
-        bind=False,
-    )
-    _alloc_ensemble_smoother_update = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs , enkf_fs )",
-        bind=False,
-    )
-    _alloc_case_init = ResPrototype(
-        "ert_run_context_obj ert_run_context_alloc_CASE_INIT(enkf_fs, bool_vector)",
-        bind=False,
-    )
-    _alloc_runpath_list = ResPrototype(
-        "stringlist_obj ert_run_context_alloc_runpath_list(bool_vector, \
-                                                           path_fmt, \
-                                                           subst_list, \
-                                                           int)",
         bind=False,
     )
     _get_size = ResPrototype("int ert_run_context_get_size( ert_run_context )")
@@ -83,9 +35,6 @@ class ErtRunContext(BaseCClass):
     _iactive = ResPrototype("bool ert_run_context_iactive( ert_run_context , int)")
     _iget = ResPrototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
     _get_id = ResPrototype("char* ert_run_context_get_id( ert_run_context )")
-    _get_mask = ResPrototype(
-        "bool_vector_obj ert_run_context_alloc_iactive( ert_run_context )"
-    )
     _get_iter = ResPrototype("int ert_run_context_get_iter( ert_run_context )")
     _get_target_fs = ResPrototype(
         "enkf_fs_ref ert_run_context_get_update_target_fs( ert_run_context )"
@@ -104,85 +53,101 @@ class ErtRunContext(BaseCClass):
 
     def __init__(
         self,
-        run_type,
-        sim_fs: EnkfFs,
-        target_fs: EnkfFs,
+        run_type: EnkfRunType,
+        sim_fs: Optional[EnkfFs],
+        target_fs: Optional[EnkfFs],
         mask: List[bool],
-        path_fmt: PathFormat,
-        jobname_fmt,
-        subst_list: SubstitutionList,
-        itr,
+        paths: List[str],
+        jobnames: List[str],
+        itr: int = 0,
         init_mode=EnkfInitModeEnum.INIT_CONDITIONAL,
     ):
         c_ptr = self._alloc(
             run_type,
             init_mode,
-            sim_fs,
-            target_fs,
-            boolvector_from_boollist(mask),
-            path_fmt,
-            jobname_fmt,
-            subst_list,
             itr,
         )
         super().__init__(c_ptr)
 
-        # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibit Python GC of these objects.
-        self._path_fmt = path_fmt
-        self._subst_list = subst_list
+        _lib.ert_run_context.set_active(self, mask)
+        if sim_fs is not None:
+            _lib.ert_run_context.set_sim_fs(self, sim_fs)
+        if target_fs is not None:
+            _lib.ert_run_context.set_target_fs(self, target_fs)
 
-    @classmethod
-    def case_init(cls, sim_fs, mask):
-        return cls._alloc_case_init(sim_fs, boolvector_from_boollist(mask))
+        if run_type == EnkfRunType.ENSEMBLE_EXPERIMENT:
+            _lib.ert_run_context.add_ensemble_experiment_args(self, paths, jobnames)
+        elif run_type == EnkfRunType.SMOOTHER_RUN:
+            _lib.ert_run_context.add_smoother_run_args(
+                self,
+                paths,
+                jobnames,
+            )
+        elif run_type == EnkfRunType.INIT_ONLY:
+            _lib.ert_run_context.add_init_only_args(self, paths)
+        elif run_type == EnkfRunType.SMOOTHER_UPDATE:
+            pass
+        elif run_type == EnkfRunType.CASE_INIT_ONLY:
+            pass
+        else:
+            raise ValueError(f"Unsupported run type {run_type}")
 
     @classmethod
     def ensemble_experiment(
-        cls, sim_fs, mask: List[bool], path_fmt, jobname_fmt, subst_list, itr
+        cls, sim_fs, mask: List[bool], paths, jobnames, itr
     ) -> "ErtRunContext":
-        run_context = cls._alloc_ensemble_experiment(
-            sim_fs,
-            boolvector_from_boollist(mask),
-            path_fmt,
-            jobname_fmt,
-            subst_list,
-            itr,
+        return cls(
+            run_type=EnkfRunType.ENSEMBLE_EXPERIMENT,
+            sim_fs=sim_fs,
+            target_fs=None,
+            mask=mask,
+            paths=paths,
+            jobnames=jobnames,
+            itr=itr,
         )
-
-        # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibit Python GC of these objects.
-        run_context._path_fmt = path_fmt
-        run_context._subst_list = subst_list
-
-        return run_context
 
     @classmethod
     def ensemble_smoother(
-        cls, sim_fs, target_fs, mask: List[bool], path_fmt, jobname_fmt, subst_list, itr
+        cls, sim_fs, target_fs, mask: List[bool], paths, jobnames, itr
     ) -> "ErtRunContext":
-        run_context = cls._alloc_ensemble_smoother(
+        return cls(
+            EnkfRunType.SMOOTHER_RUN,
             sim_fs,
             target_fs,
-            boolvector_from_boollist(mask),
-            path_fmt,
-            jobname_fmt,
-            subst_list,
+            mask,
+            paths,
+            jobnames,
             itr,
         )
 
-        # The C object ert_run_context uses a shared object for the
-        # path_fmt and subst_list objects. We therefore hold on
-        # to a reference here - to inhibit Python GC of these objects.
-        run_context._path_fmt = path_fmt
-        run_context._subst_list = subst_list
-
-        return run_context
+    @classmethod
+    def ensemble_smoother_update(
+        cls,
+        sim_fs,
+        target_fs,
+    ):
+        return cls(
+            run_type=EnkfRunType.SMOOTHER_UPDATE,
+            mask=[],
+            sim_fs=sim_fs,
+            target_fs=target_fs,
+            paths=[],
+            jobnames=[],
+        )
 
     @classmethod
-    def ensemble_smoother_update(cls, sim_fs, target_fs):
-        return cls._alloc_ensemble_smoother_update(sim_fs, target_fs)
+    def case_init(cls, sim_fs, mask=None):
+        if mask == None:
+            mask = []
+        return cls(
+            run_type=EnkfRunType.CASE_INIT_ONLY,
+            init_mode=EnkfInitModeEnum.INIT_FORCE,
+            mask=mask,
+            sim_fs=sim_fs,
+            target_fs=None,
+            paths=[],
+            jobnames=[],
+        )
 
     def is_active(self, index: int) -> bool:
         return self._iactive(index)
@@ -198,7 +163,7 @@ class ErtRunContext(BaseCClass):
             run_arg = self._iget(index)
             return run_arg
         else:
-            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)}")
+            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)})")
 
     def free(self):
         self._free()
@@ -206,24 +171,11 @@ class ErtRunContext(BaseCClass):
     def __repr__(self):
         return f"ErtRunContext(size = {len(self)}) {self._ad_str()}"
 
-    @classmethod
-    def createRunpathList(
-        cls,
-        mask: List[bool],
-        runpath_fmt: PathFormat,
-        subst_list: SubstitutionList,
-        iter=0,
-    ) -> StringList:
-        """@rtype: ecl.util.stringlist.StringList"""
-        return cls._alloc_runpath_list(
-            boolvector_from_boollist(mask), runpath_fmt, subst_list, iter
-        )
-
     def get_id(self):
         return self._get_id()
 
     def get_mask(self) -> List[bool]:
-        return list(self._get_mask())
+        return [self.is_active(i) for i in range(len(self))]
 
     def get_iter(self) -> int:
         return self._get_iter()
@@ -239,6 +191,3 @@ class ErtRunContext(BaseCClass):
 
     def get_step(self):
         return self._get_step()
-
-    def deactivate_realization(self, realization_nr):
-        self._deactivate_realization(realization_nr)

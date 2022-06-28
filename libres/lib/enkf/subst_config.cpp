@@ -232,7 +232,7 @@ static void subst_config_init_load(subst_config_type *subst_config,
         config_content_has_item(content, RUNPATH_FILE_KEY)
             ? config_content_get_value_as_abspath(content, RUNPATH_FILE_KEY)
             : util_alloc_filename(config_content_get_config_path(content),
-                                  RUNPATH_LIST_FILE, NULL);
+                                  ".ert_runpath_list", NULL);
     subst_config_add_internal_subst_kw(
         subst_config, "RUNPATH_FILE", runpath_file,
         "The name of a file with a list of run directories.");

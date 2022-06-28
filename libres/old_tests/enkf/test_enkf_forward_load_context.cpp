@@ -46,9 +46,8 @@ void test_create() {
 }
 
 void test_load_restart1() {
-    subst_list_type *subst_list = subst_list_alloc(NULL);
-    run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
-        "run_id", NULL, 0, 0, "run", "BASE", subst_list);
+    run_arg_type *run_arg =
+        run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", NULL, 0, 0, "run", "BASE");
     ecl_config_type *ecl_config = ecl_config_alloc(NULL);
 
     forward_load_context_type *load_context =
@@ -59,7 +58,6 @@ void test_load_restart1() {
     forward_load_context_free(load_context);
     ecl_config_free(ecl_config);
     run_arg_free(run_arg);
-    subst_list_free(subst_list);
 }
 
 void make_restart_mock(const char *path, const char *eclbase, int report_step) {
@@ -76,9 +74,8 @@ void make_restart_mock(const char *path, const char *eclbase, int report_step) {
 void test_load_restart2() {
     ecl::util::TestArea ta("load_restart");
     {
-        subst_list_type *subst_list = subst_list_alloc(NULL);
         run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
-            "run_id", NULL, 0, 0, "run", "BASE", subst_list);
+            "run_id", NULL, 0, 0, "run", "BASE");
         ecl_config_type *ecl_config = ecl_config_alloc(NULL);
         forward_load_context_type *load_context =
             forward_load_context_alloc(run_arg, false, ecl_config);
@@ -98,7 +95,6 @@ void test_load_restart2() {
         forward_load_context_free(load_context);
         ecl_config_free(ecl_config);
         run_arg_free(run_arg);
-        subst_list_free(subst_list);
     }
 }
 

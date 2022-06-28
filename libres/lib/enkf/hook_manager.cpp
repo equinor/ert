@@ -41,8 +41,6 @@ namespace fs = std::filesystem;
 struct hook_manager_struct {
     /** vector of hook_workflow_type instances */
     vector_type *hook_workflow_list;
-    /** Path to the runpath list file */
-    char *runpath_list_file;
     ert_workflow_list_type *workflow_list;
     hash_type *input_context;
 };
@@ -62,7 +60,6 @@ hook_manager_alloc(ert_workflow_list_type *workflow_list,
 void hook_manager_free(hook_manager_type *hook_manager) {
     vector_free(hook_manager->hook_workflow_list);
     hash_free(hook_manager->input_context);
-    free(hook_manager->runpath_list_file);
     free(hook_manager);
 }
 
@@ -111,17 +108,14 @@ hook_manager_alloc_default(ert_workflow_list_type *workflow_list) {
     config_free(config);
     config_content_free(site_config_content);
 
-    hook_manager->runpath_list_file = strdup(RUNPATH_LIST_FILE);
-
     hook_manager->input_context = hash_alloc();
 
     return hook_manager;
 }
 
 hook_manager_type *hook_manager_alloc_full(
-    ert_workflow_list_type *workflow_list, const char *runpath_list_file,
-    const char **hook_workflow_names, const char **hook_workflow_run_modes,
-    int hook_workflow_count) {
+    ert_workflow_list_type *workflow_list, const char **hook_workflow_names,
+    const char **hook_workflow_run_modes, int hook_workflow_count) {
 
     hook_manager_type *hook_manager = hook_manager_alloc_default(workflow_list);
 
@@ -131,8 +125,6 @@ hook_manager_type *hook_manager_alloc_full(
             hook_workflow_run_mode_from_name(hook_workflow_run_modes[i]);
         hook_manager_add_workflow(hook_manager, workflow_name, run_mode);
     }
-
-    hook_manager->runpath_list_file = util_alloc_string_copy(runpath_list_file);
 
     return hook_manager;
 }
@@ -150,17 +142,6 @@ void hook_manager_init(hook_manager_type *hook_manager,
                     config_content, HOOK_WORKFLOW_KEY, ihook, 1));
             hook_manager_add_workflow(hook_manager, workflow_name, run_mode);
         }
-    }
-
-    {
-        if (config_content_has_item(config_content, RUNPATH_FILE_KEY))
-            hook_manager->runpath_list_file =
-                util_alloc_string_copy(config_content_get_value_as_abspath(
-                    config_content, RUNPATH_FILE_KEY));
-        else
-            hook_manager->runpath_list_file = util_alloc_filename(
-                config_content_get_config_path(config_content),
-                RUNPATH_LIST_FILE, NULL);
     }
 }
 
@@ -182,15 +163,6 @@ void hook_manager_add_config_items(config_parser_type *config) {
 
         stringlist_free(argv);
     }
-
-    item = config_add_schema_item(config, RUNPATH_FILE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
-    config_schema_item_iset_type(item, 0, CONFIG_PATH);
-}
-
-const char *
-hook_manager_get_runpath_list_file(const hook_manager_type *hook_manager) {
-    return hook_manager->runpath_list_file;
 }
 
 void hook_manager_run_workflows(const hook_manager_type *hook_manager,
@@ -224,22 +196,4 @@ hook_manager_iget_hook_workflow(const hook_manager_type *hook_manager,
 
 int hook_manager_get_size(const hook_manager_type *hook_manager) {
     return vector_get_size(hook_manager->hook_workflow_list);
-}
-
-/** Writes the runpath_list_file
- *
- * The runpath list file is parsed by some workflows in order to find
- * which path was used by each iteration and ensemble.
- *
- * @param runpath_list The list of Runpath to go into the file.
- */
-void hook_manager_write_runpath_file(const hook_manager_type *hook_manager,
-                                     std::vector<Runpath> runpath_list) {
-    auto stream = mkdir_fopen(fs::path(hook_manager->runpath_list_file), "w");
-    std::sort(runpath_list.begin(), runpath_list.end());
-    for (const Runpath &rp : runpath_list) {
-        fmt::print(stream, "{:03d}  {}  {}  {:03d}\n", rp.iens, rp.runpath,
-                   rp.jobname, rp.iter);
-    }
-    fclose(stream);
 }

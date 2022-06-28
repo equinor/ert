@@ -499,13 +499,6 @@ class ResConfigTest(ResTest):
             working_dir,
         )
 
-    def assert_hook_manager(self, hook_manager, config_data, working_dir):
-        self.assert_same_config_file(
-            config_data["RUNPATH_FILE"],
-            hook_manager.getRunpathListFile(),
-            working_dir,
-        )
-
     def assert_ert_workflow_list(self, ert_workflow_list, config_data, working_dir):
         self.assertEqual(
             len(config_data["LOAD_WORKFLOW"]), len(ert_workflow_list.getWorkflowNames())
@@ -577,7 +570,6 @@ class ResConfigTest(ResTest):
             self.assert_ensemble_config(
                 res_config.ensemble_config, config_data, work_dir
             )
-            self.assert_hook_manager(res_config.hook_manager, config_data, work_dir)
             self.assert_ert_workflow_list(
                 res_config.ert_workflow_list, config_data, work_dir
             )

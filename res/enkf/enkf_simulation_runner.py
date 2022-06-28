@@ -5,6 +5,7 @@ from cwrap import BaseCClass
 from res import _lib
 from res.enkf.ert_run_context import ErtRunContext
 from res.job_queue import JobQueue, JobQueueManager, RunStatusType
+from res.util import SubstitutionList
 
 from typing import TYPE_CHECKING
 
@@ -63,7 +64,27 @@ class EnkfSimulationRunner(BaseCClass):
 
     def createRunPath(self, run_context: ErtRunContext) -> None:
         self._enkf_main().initRun(run_context)
-        _lib.enkf_main.write_run_path(self, run_context)
+        for iens, run_arg in enumerate(run_context):
+            if run_context.is_active(iens):
+                substitutions = self._enkf_main().substituter.get_substitutions(
+                    iens, run_arg.iter_id
+                )
+                subst_list = SubstitutionList()
+                for subst in substitutions.items():
+                    subst_list.addItem(*subst)
+                _lib.enkf_main.init_active_run(
+                    self._enkf_main().resConfig(),
+                    run_arg,
+                    subst_list,
+                )
+
+        active_list = [
+            run_context[i] for i in range(len(run_context)) if run_context.is_active(i)
+        ]
+        iterations = sorted({runarg.iter_id for runarg in active_list})
+        realizations = sorted({runarg.iens for runarg in active_list})
+
+        self._enkf_main().runpaths.write_runpath_list(iterations, realizations)
 
     def runEnsembleExperiment(
         self, job_queue: JobQueue, run_context: ErtRunContext

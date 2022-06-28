@@ -17,10 +17,9 @@
 
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
-from res.enkf import EnkfFs, ErtRunContext
-from res.enkf.enums import EnkfRunType
-from res.util import PathFormat
-from res.util.substitution_list import SubstitutionList
+
+from res.enkf import ErtRunContext
+from res.enkf.runpaths import Runpaths
 
 
 class ErtRunContextTest(ResTest):
@@ -31,23 +30,20 @@ class ErtRunContextTest(ResTest):
     @tmpdir()
     def test_create(self):
         with TestAreaContext("run_context"):
-            sim_fs = EnkfFs.createFileSystem("sim_fs")
-            target_fs = None
 
             mask = [True] * 100
             mask[50] = False
-            runpath_fmt = PathFormat("path/to/sim%d")
-            subst_list = SubstitutionList()
+            runpaths = Runpaths(
+                runpath_format="path/to/sim%d",
+                job_name_format="job%d",
+            )
             itr = 0
-            jobname_fmt = "job%d"
-            run_context1 = ErtRunContext(
-                EnkfRunType.ENSEMBLE_EXPERIMENT,
-                sim_fs,
-                target_fs,
+            realizations = list(range(len(mask)))
+            run_context1 = ErtRunContext.ensemble_experiment(
+                None,
                 mask,
-                runpath_fmt,
-                jobname_fmt,
-                subst_list,
+                runpaths.get_paths(realizations, itr),
+                runpaths.get_jobnames(realizations, itr),
                 itr,
             )
             run_id1 = run_context1.get_id()
@@ -59,14 +55,11 @@ class ErtRunContextTest(ResTest):
             self.assertEqual(run_arg0.iter_id, itr)
             self.assertEqual(run_id1, run_arg0.get_run_id())
 
-            run_context2 = ErtRunContext(
-                EnkfRunType.ENSEMBLE_EXPERIMENT,
-                sim_fs,
-                target_fs,
+            run_context2 = ErtRunContext.ensemble_experiment(
+                None,
                 mask,
-                runpath_fmt,
-                jobname_fmt,
-                subst_list,
+                runpaths.get_paths(realizations, itr),
+                runpaths.get_jobnames(realizations, itr),
                 itr,
             )
             run_id2 = run_context2.get_id()

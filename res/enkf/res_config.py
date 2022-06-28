@@ -178,6 +178,11 @@ class ResConfig(BaseCClass):
             subst_list=subst_config.subst_list, config_content=config_content
         )
 
+        if config_content.hasKey(ConfigKeys.RUNPATH_FILE):
+            self.runpath_file = config_content.getValue(ConfigKeys.RUNPATH_FILE)
+        else:
+            self.runpath_file = ".ert_runpath_list"
+
         hook_manager = HookManager(
             workflow_list=ert_workflow_list, config_content=config_content
         )
@@ -233,6 +238,9 @@ class ResConfig(BaseCClass):
             subst_list=subst_config.subst_list, config_dict=config_dict
         )
 
+        self.runpath_file = config_dict.get(
+            ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"
+        )
         hook_manager = HookManager(
             workflow_list=ert_workflow_list, config_dict=config_dict
         )

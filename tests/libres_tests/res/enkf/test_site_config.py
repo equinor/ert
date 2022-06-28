@@ -14,13 +14,23 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import json
 import os
+from pathlib import Path
 
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
+from res.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
 
-from res.enkf import ConfigKeys, ResConfig, SiteConfig
+
+def test_umask_is_written_to_json(setup_case):
+    res_config = setup_case("local/simple_config", "config_umask")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
+    ert.getEnkfSimulationRunner().createRunPath(run_context)
+
+    assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
 
 
 class SiteConfigTest(ResTest):
