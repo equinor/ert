@@ -44,89 +44,14 @@ parameters. Sample internally or load externally.
 Scalar parameters with a template: GEN_KW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The GEN_KW datatype is used in situations where you have a handful of related
-[#]_ parameters. The intention behind the GEN_KW implementation is that ERT will
-*sample* parameters randomly according to a distribution specified by the user,
-then ERT will use the sampled values and a template file provided by the user to
-generate a file which can be used by the simulator.
+For detailed description and examples see :ref:`here <gen_kw>`.
 
-.. [#] ERT itself can not impose correlations among the parameters, if you need
-       that you must implement it yourself in the forward model.
-
-In the main config file a GEN_KW instance is defined as follows:
-::
-
-  GEN_KW  ID  templates/template.txt  include.txt  priors.txt
-
-Here ID is an (arbitrary) unique string, :code:`templates/template.txt` is the
-name of a template file, :code:`include.txt` is the name of the file which is
-made for each realization based on the template file
-:code:`templates/template.txt` and the prior distribution :code:`priors.txt` is
-a file containing a list of parametrized keywords and a prior distribution for
-each. Note that you must manually edit the input files of the simulator to
-ensure that the generated file :code:`include.txt` is included.
-
-
-Example: configuring GEN_KW to estimate MULTPV values
-.....................................................
-
-Let us consider an example where the GEN_KW parameter type is used to estimate
-pore volume multipliers in an Eclipse model. We could then declare a GEN_KW
-instance in the main ERT configuration file:
-::
-
-  GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
-
-In the GRID or EDIT section of the ECLIPSE data file, we would insert the
-following include statement:
-::
-
- INCLUDE
-   'multpv.txt' /
-
-The template file multpv_template.txt would contain some parametrized ECLIPSE
-statements:
-::
-
- BOX
-	1 10 1 30 13 13 /
-
- MULTPV
-  300*<MULTPV_BOX1> /
-
- ENDBOX
-
- BOX
-	1 10 1 30 14 14 /
-
- MULTPV
-	300*<MULTPV_BOX2> /
-
- ENDBOX
-
-Here, <MULTPV_BOX1> and <MULTPV_BOX2> will act as magic strings. Note that the
-'<' '>' must be present around the magic strings. In this case, the parameter
-configuration file multpv_priors.txt could look like this: ::
-
-		MULTPV_BOX2 UNIFORM 0.98 1.03
-		MULTPV_BOX1 UNIFORM 0.85 1.00
-
-In general, the first keyword on each line in the parameter configuration file
-defines a key, which when found in the template file enclosed in '<' and '>', is
-replaced with a value. The rest of the line defines a prior distribution for the
-key. See Prior distributions available in ERT for a list of available prior
-distributions. The various prior distributions available for the ``GEN_KW``
-keyword are here :ref:`prior distributions available in ERT
-<prior_distributions>`
-
-
-The prior - it is really a *transformation*
-...........................................
+Prior distributions available for use with GEN_KW
+.........................................................
 .. _prior_distributions:
 
-The Ensemble Smoother method, which ERT uses for updating of parameters, works
-with normally distributed variables. So internally in ERT the interplay between
-``GEN_KW`` variables and updates is as follows:
+The algorithms used for updating parameters expect normally distributed variables. 
+ERT supports other types of distributions by transforming normal variables as outlined next.
 
   1. ERT samples a random variable ``x ~ N(0,1)`` - before outputing to the
      forward model this is *transformed* to ``y ~ F(Y)`` where the
@@ -178,7 +103,7 @@ This *TRUNCATED_NORMAL* distribution works as follows:
    1. Draw random variable :math:`X \sim N(\mu,\sigma)`
    2. Clamp X to the interval [min, max]
 
-This is **not** a proper truncated normal distribution; hence the
+This is **not** a proper normal distribution; hence the
 clamping to `[min,max]` should be an exceptional event. To configure
 this distribution for a situation with mean 1, standard deviation 0.25
 and hard limits 0 and 10:

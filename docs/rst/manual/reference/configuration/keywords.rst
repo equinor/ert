@@ -853,31 +853,30 @@ and/or history matching project.
 .. _gen_kw:
 .. topic:: GEN_KW
 
-        The GEN_KW (abbreviation of general keyword) parameter is based on a template
-        file and substitution. In the main config file a GEN_KW instance is defined as
-        follows:
+        The General Keyword, or :code:`GEN_KW` is meant used for specifying a limited number of parameters.
+        An example of a full specification is as follows;
 
         ::
 
-                GEN_KW  ID  my_template.txt  my_eclipse_include.txt  my_priors.txt
+                GEN_KW  ID  templates/template.txt  include.txt  priors.txt
 
-        Here ID is an (arbitrary) unique string, my_template.txt is the name of a
-        template file, my_eclipse_include.txt is the name of the file which is made
-        for each member based on my_template.txt and my_priors.txt is a file
-        containing a list of parametrized keywords and a prior distribution for each.
-        Note that you must manually edit the ECLIPSE data file so that
-        my_eclipse_include.txt is included.
+        where :code:`ID` is an arbitrary unique identifier,
+        :code:`templates/template.txt` is the name of a template file,
+        :code:`include.txt` is the name of the file created for each realization 
+        based on the template file,
+        and :code:`priors.txt` is a file contatining a list of parametrized keywords
+        and a prior distribution for each.
 
-        Let us consider an example where the GEN_KW parameter type is used to estimate
-        pore volume multipliers. We would then declare a GEN_KW instance in the main
-        ERT configuration file:
-
-        Naming a `GEN_KW` parameter `PRED` will prevent the parameter from being
-        added to a update_step dataset.
+        As a more concrete example, let's configure :code:`GEN_KW` to estimate pore volume multipliers,
+        or :code:`MULTPV`, by for example adding the following line to an ERT config-file:
 
         ::
 
                 GEN_KW PAR_MULTPV multpv_template.txt multpv.txt multpv_priors.txt
+
+        
+        Note that naming a :code:`GEN_KW` parameter :code:`PRED` will prevent the parameter from being
+        being updated.
 
         In the GRID or EDIT section of the ECLIPSE data file, we would insert the
         following include statement:
@@ -887,7 +886,7 @@ and/or history matching project.
                 INCLUDE
                  'multpv.txt' /
 
-        The template file multpv_template.txt would contain some parametrized ECLIPSE
+        The template file :code:`multpv_template.txt` would contain some parametrized ECLIPSE
         statements:
 
         ::
@@ -906,7 +905,7 @@ and/or history matching project.
 
         Here, <MULTPV_BOX1> and <MULTPV_BOX2> will act as magic strings. Note that the
         '<' '>' must be present around the magic strings. In this case, the parameter
-        configuration file multpv_priors.txt could look like this:
+        configuration file :code:`multpv_priors.txt` could look like this:
 
         ::
 
@@ -916,8 +915,8 @@ and/or history matching project.
         In general, the first keyword on each line in the parameter configuration file
         defines a key, which when found in the template file enclosed in '<' and '>',
         is replaced with a value. The rest of the line defines a prior distribution
-        for the key. See Prior distributions available in ERT for a list of available
-        prior distributions.
+        for the key. The various prior distributions available for the ``GEN_KW``
+        keyword are described :ref:`here <prior_distributions>`.
 
         **Example: Using GEN_KW to estimate fault transmissibility multipliers**
 

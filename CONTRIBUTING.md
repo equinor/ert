@@ -35,3 +35,9 @@ pip install -r dev-requirements.txt
 sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
 ```
 and then open the generated `./tmp/ert_docs/index.html` in a browser.
+
+To automatically reload on changes you may use
+
+```bash
+sphinx-autobuild docs/rst/manual docs/_build/html
+```
