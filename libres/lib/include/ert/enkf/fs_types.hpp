@@ -39,15 +39,8 @@ typedef enum {
 */
 typedef enum {
     DRIVER_PARAMETER = 1,
-    /** Driver static is no longer in use since December 2015 - but it must be
-     * retained here for old mount files on disk.*/
-    DRIVER_STATIC = 2,
-    // DRIVER_DYNAMIC = 3; removed at svn ~ 3720.
     DRIVER_INDEX = 4,
     DRIVER_DYNAMIC_FORECAST = 5,
-    /** Driver DYNAMIC_ANALYZED is no longer in use since April 2016 - but it
-     * must be retained here for old mount files on disk. */
-    DRIVER_DYNAMIC_ANALYZED = 6
 } fs_driver_enum;
 
 bool fs_types_valid(fs_driver_enum driver_type);
