@@ -131,7 +131,7 @@ class ResConfig(BaseCClass):
 
     def _assert_input(self, user_config_file, config, config_dict):
         configs = sum(
-            [1 for x in [user_config_file, config, config_dict] if x is not None]
+            1 for x in [user_config_file, config, config_dict] if x is not None
         )
 
         if configs > 1:

@@ -60,6 +60,7 @@ jobs:
             consider-using-enumerate, \
             consider-using-f-string
             consider-using-from-import, \
+            consider-using-generator, \
             consider-using-get, \
             consider-using-in, \
             consider-using-max-builtin, \

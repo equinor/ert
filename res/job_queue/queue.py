@@ -535,8 +535,8 @@ class JobQueue(BaseCClass):
         completed_jobs = [
             job for job in self.job_list if job.status == JobStatusType.JOB_QUEUE_DONE
         ]
-        average_runtime = sum([job.runtime for job in completed_jobs]) / float(
-            len(completed_jobs)
+        average_runtime = sum(job.runtime for job in completed_jobs) / len(
+            completed_jobs
         )
 
         for job in self.job_list:
