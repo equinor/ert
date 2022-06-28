@@ -1,10 +1,7 @@
 import os
 
 from libres_utils import ResTest, tmpdir
-
-from res.enkf import ErtRunContext
 from res.test import ErtTestContext
-from res.util import PathFormat
 
 
 def render_dynamic_values(s, itr, iens, geo_id):
@@ -33,23 +30,25 @@ class RunpathListDumpTest(ResTest):
             num_realizations = 25
             mask = [True] * num_realizations
             mask[13] = False
-
             runpath_fmt = (
                 "simulations/<GEO_ID>/realization-%d/iter-%d/"
                 "magic-real-<IENS>/magic-iter-<ITER>"
             )
             jobname_fmt = "SNAKE_OIL_%d"
+            res.runpaths._runpath_format = runpath_fmt
+            res.runpaths._job_name_format = jobname_fmt
 
-            subst_list = res.resConfig().subst_config.subst_list
-            run_context = ErtRunContext.ensemble_experiment(
-                sim_fs, mask, PathFormat(runpath_fmt), jobname_fmt, subst_list, itr
+            run_context = res.create_ensemble_experiment_run_context(
+                source_filesystem=sim_fs,
+                active_mask=mask,
+                iteration=itr,
             )
 
             res.initRun(run_context)
 
             for i, run_arg in enumerate(run_context):
                 if mask[i]:
-                    run_arg.geo_id = 10 * i
+                    res.set_geo_id(str(10 * i), i, itr)
 
             res.getEnkfSimulationRunner().createRunPath(run_context)
 
@@ -57,13 +56,13 @@ class RunpathListDumpTest(ResTest):
                 if not mask[i]:
                     continue
 
-                self.assertTrue(os.path.isdir(f"simulations/{run_arg.geo_id}"))
+                self.assertTrue(os.path.isdir(f"simulations/{10*i}"))
 
             runpath_list_path = ".ert_runpath_list"
             self.assertTrue(os.path.isfile(runpath_list_path))
 
             exp_runpaths = [
-                render_dynamic_values(runpath_fmt, itr, iens, run_arg.geo_id)
+                render_dynamic_values(runpath_fmt, itr, iens, str(10 * iens))
                 % (iens, itr)
                 for iens, run_arg in enumerate(run_context)
                 if mask[iens]

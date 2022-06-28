@@ -24,11 +24,12 @@
 #include <ert/util/vector.h>
 
 #include <ert/res_util/path_fmt.hpp>
-#include <ert/res_util/subst_list.hpp>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/ert_run_context.hpp>
 #include <ert/enkf/run_arg.hpp>
+
+#include <ert/python.hpp>
 
 #define ERT_RUN_CONTEXT_TYPE_ID 55534132
 
@@ -41,92 +42,11 @@ struct ert_run_context_struct {
     int step1;
     int step2;
     int load_start;
-    int_vector_type *iens_map;
-    bool_vector_type *iactive;
+    std::vector<bool> active;
     enkf_fs_type *sim_fs;
     enkf_fs_type *update_target_fs;
     char *run_id;
 };
-
-/**
-  Observe that since this function uses one shared subst_list instance
-  for all realisations it is __NOT__ possible to get per realisation
-  substititions in the runpath; i.e. a <IENS> element in the RUNPATH
-  will *not* be replaced.
-*/
-char *ert_run_context_alloc_runpath(int iens, const path_fmt_type *runpath_fmt,
-                                    const subst_list_type *subst_list,
-                                    int iter) {
-    char *runpath;
-    {
-        char *first_pass = path_fmt_alloc_path(
-            runpath_fmt, false, iens,
-            iter); /* 1: Replace first %d with iens, if a second %d replace with iter */
-
-        if (subst_list)
-            runpath = subst_list_alloc_filtered_string(
-                subst_list,
-                first_pass); /* 2: Filter out various magic strings like <CASE> and <CWD>. */
-        else
-            runpath = util_alloc_string_copy(first_pass);
-
-        free(first_pass);
-    }
-    return runpath;
-}
-
-static char *ert_run_context_alloc_jobname(int iens, const char *jobname_fmt,
-                                           const subst_list_type *subst_list) {
-    char *jobname;
-    {
-        char *first_pass = util_alloc_sprintf(jobname_fmt, iens);
-
-        if (subst_list)
-            jobname = subst_list_alloc_filtered_string(
-                subst_list,
-                first_pass); /* 2: Filter out various magic strings like <CASE> and <CWD>. */
-        else
-            jobname = util_alloc_string_copy(first_pass);
-
-        free(first_pass);
-    }
-    return jobname;
-}
-
-stringlist_type *ert_run_context_alloc_runpath_list(
-    const bool_vector_type *iactive, const path_fmt_type *runpath_fmt,
-    const subst_list_type *subst_list, int iter) {
-    stringlist_type *runpath_list = stringlist_alloc_new();
-    for (int iens = 0; iens < bool_vector_size(iactive); iens++) {
-
-        if (bool_vector_iget(iactive, iens)) {
-            char *tmp_runpath = ert_run_context_alloc_runpath(iens, runpath_fmt,
-                                                              subst_list, iter);
-            stringlist_append_copy(runpath_list, tmp_runpath);
-            free(tmp_runpath);
-        } else
-            stringlist_append_copy(runpath_list, NULL);
-    }
-    return runpath_list;
-}
-
-static stringlist_type *
-ert_run_context_alloc_jobname_list(const bool_vector_type *iactive,
-                                   const char *jobname_fmt,
-                                   const subst_list_type *subst_list) {
-    stringlist_type *jobname_list = stringlist_alloc_new();
-    for (int iens = 0; iens < bool_vector_size(iactive); iens++) {
-
-        if (bool_vector_iget(iactive, iens)) {
-            char *tmp_jobname =
-                ert_run_context_alloc_jobname(iens, jobname_fmt, subst_list);
-            stringlist_append_copy(jobname_list, tmp_jobname);
-            free(tmp_jobname);
-        } else
-            stringlist_append_copy(jobname_list, NULL);
-    }
-    return jobname_list;
-}
 
 char *ert_run_context_alloc_run_id() {
     int year, month, day, hour, min, sec;
@@ -138,27 +58,19 @@ char *ert_run_context_alloc_run_id() {
                               random);
 }
 
-static ert_run_context_type *
-ert_run_context_alloc__(const bool_vector_type *iactive, run_mode_type run_mode,
-                        init_mode_type init_mode, enkf_fs_type *sim_fs,
-                        enkf_fs_type *update_target_fs, int iter) {
-    ert_run_context_type *context =
-        (ert_run_context_type *)util_malloc(sizeof *context);
+extern "C" ert_run_context_type *
+ert_run_context_alloc_empty(run_mode_type run_mode, init_mode_type init_mode,
+                            int iter) {
+    auto context = new ert_run_context_type;
     UTIL_TYPE_ID_INIT(context, ERT_RUN_CONTEXT_TYPE_ID);
 
-    if (iactive != NULL) {
-        context->iactive = bool_vector_alloc_copy(iactive);
-        context->iens_map = bool_vector_alloc_active_index_list(iactive, -1);
-    } else {
-        context->iactive = NULL;
-        context->iens_map = NULL;
-    }
     context->run_args = vector_alloc_new();
     context->run_mode = run_mode;
     context->init_mode = init_mode;
     context->iter = iter;
-    ert_run_context_set_sim_fs(context, sim_fs);
-    ert_run_context_set_update_target_fs(context, update_target_fs);
+
+    context->sim_fs = nullptr;
+    context->update_target_fs = nullptr;
 
     context->step1 = 0;
     context->step2 = 0;
@@ -166,132 +78,110 @@ ert_run_context_alloc__(const bool_vector_type *iactive, run_mode_type run_mode,
     return context;
 }
 
-ert_run_context_type *ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
-    enkf_fs_type *sim_fs, bool_vector_type *iactive,
-    const path_fmt_type *runpath_fmt, const char *jobname_fmt,
-    const subst_list_type *subst_list, int iter) {
+void ert_run_context_set_sim_fs(ert_run_context_type *context,
+                                enkf_fs_type *sim_fs) {
+    if (sim_fs) {
+        context->sim_fs = sim_fs;
+        enkf_fs_increase_run_count(sim_fs);
+        enkf_fs_incref(sim_fs);
+    } else
+        context->sim_fs = NULL;
+}
 
-    ert_run_context_type *context = ert_run_context_alloc__(
-        iactive, ENSEMBLE_EXPERIMENT, INIT_CONDITIONAL, sim_fs, NULL, iter);
-    {
-        stringlist_type *runpath_list = ert_run_context_alloc_runpath_list(
-            iactive, runpath_fmt, subst_list, iter);
-        stringlist_type *jobname_list = ert_run_context_alloc_jobname_list(
-            iactive, jobname_fmt, subst_list);
-        for (int iens = 0; iens < bool_vector_size(iactive); iens++) {
-            if (bool_vector_iget(iactive, iens)) {
-                run_arg_type *arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
-                    context->run_id, sim_fs, iens, iter,
-                    stringlist_iget(runpath_list, iens),
-                    stringlist_iget(jobname_list, iens), subst_list);
-                vector_append_owned_ref(context->run_args, arg, run_arg_free__);
-            } else
-                vector_append_ref(context->run_args, NULL);
-        }
-        stringlist_free(jobname_list);
-        stringlist_free(runpath_list);
+void ert_run_context_add_ENSEMBLE_EXPERIMENT_args(
+    ert_run_context_type *context, std::vector<std::string> runpaths,
+    std::vector<std::string> jobnames) {
+    for (int iens = 0; iens < context->active.size(); iens++) {
+        if (context->active[iens]) {
+            run_arg_type *arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+                context->run_id, context->sim_fs, iens, context->iter,
+                runpaths[iens].c_str(), jobnames[iens].c_str());
+            vector_append_owned_ref(context->run_args, arg, run_arg_free__);
+        } else
+            vector_append_ref(context->run_args, NULL);
     }
+}
+
+ert_run_context_type *ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
+    enkf_fs_type *sim_fs, std::vector<bool> active,
+    std::vector<std::string> runpaths, std::vector<std::string> jobnames,
+    int iter) {
+
+    ert_run_context_type *context = ert_run_context_alloc_empty(
+        ENSEMBLE_EXPERIMENT, INIT_CONDITIONAL, iter);
+    context->active = active;
+    ert_run_context_set_sim_fs(context, sim_fs);
+    ert_run_context_add_ENSEMBLE_EXPERIMENT_args(context, runpaths, jobnames);
     return context;
+}
+
+static void
+ert_run_context_add_INIT_ONLY_args(ert_run_context_type *context,
+                                   std::vector<std::string> runpaths) {
+    for (int iens = 0; iens < context->active.size(); iens++) {
+        if (context->active[iens]) {
+            run_arg_type *arg =
+                run_arg_alloc_INIT_ONLY(context->run_id, context->sim_fs, iens,
+                                        context->iter, runpaths[iens].c_str());
+            vector_append_owned_ref(context->run_args, arg, run_arg_free__);
+        } else
+            vector_append_ref(context->run_args, NULL);
+    }
 }
 
 ert_run_context_type *
 ert_run_context_alloc_INIT_ONLY(enkf_fs_type *sim_fs, init_mode_type init_mode,
-                                bool_vector_type *iactive,
-                                const path_fmt_type *runpath_fmt,
-                                const subst_list_type *subst_list, int iter) {
-    ert_run_context_type *context = ert_run_context_alloc__(
-        iactive, INIT_ONLY, init_mode, sim_fs, NULL, iter);
-    {
-        stringlist_type *runpath_list = ert_run_context_alloc_runpath_list(
-            iactive, runpath_fmt, subst_list, iter);
-        for (int iens = 0; iens < bool_vector_size(iactive); iens++) {
-            if (bool_vector_iget(iactive, iens)) {
-                run_arg_type *arg = run_arg_alloc_INIT_ONLY(
-                    context->run_id, sim_fs, iens, iter,
-                    stringlist_iget(runpath_list, iens), subst_list);
-                vector_append_owned_ref(context->run_args, arg, run_arg_free__);
-            } else
-                vector_append_ref(context->run_args, NULL);
-        }
-        stringlist_free(runpath_list);
-    }
+                                std::vector<bool> active,
+                                std::vector<std::string> runpaths, int iter) {
+    ert_run_context_type *context =
+        ert_run_context_alloc_empty(INIT_ONLY, init_mode, iter);
+    context->active = active;
+    ert_run_context_set_sim_fs(context, sim_fs);
+
+    ert_run_context_add_INIT_ONLY_args(context, runpaths);
     return context;
 }
 
-ert_run_context_type *
-ert_run_context_alloc_CASE_INIT(enkf_fs_type *sim_fs,
-                                const bool_vector_type *iactive) {
-    ert_run_context_type *run_context = ert_run_context_alloc__(
-        iactive, CASE_INIT_ONLY, INIT_FORCE, sim_fs, NULL, 0);
-    return run_context;
+static void
+ert_run_context_set_update_target_fs(ert_run_context_type *context,
+                                     enkf_fs_type *update_target_fs) {
+    if (update_target_fs) {
+        context->update_target_fs = update_target_fs;
+        enkf_fs_increase_run_count(update_target_fs);
+        enkf_fs_incref(update_target_fs);
+    } else
+        context->update_target_fs = NULL;
+}
+
+static void
+ert_run_context_add_SMOOTHER_RUN_args(ert_run_context_type *context,
+                                      std::vector<std::string> runpaths,
+                                      std::vector<std::string> jobnames) {
+
+    for (int iens = 0; iens < context->active.size(); iens++) {
+        if (context->active[iens]) {
+            run_arg_type *arg = run_arg_alloc_SMOOTHER_RUN(
+                context->run_id, context->sim_fs, context->update_target_fs,
+                iens, context->iter, runpaths[iens].c_str(),
+                jobnames[iens].c_str());
+            vector_append_owned_ref(context->run_args, arg, run_arg_free__);
+        } else
+            vector_append_ref(context->run_args, NULL);
+    }
 }
 
 ert_run_context_type *ert_run_context_alloc_SMOOTHER_RUN(
-    enkf_fs_type *sim_fs, enkf_fs_type *target_update_fs,
-    bool_vector_type *iactive, const path_fmt_type *runpath_fmt,
-    const char *jobname_fmt, const subst_list_type *subst_list, int iter) {
+    enkf_fs_type *sim_fs, enkf_fs_type *target_fs, std::vector<bool> active,
+    std::vector<std::string> runpaths, std::vector<std::string> jobnames,
+    int iter) {
 
     ert_run_context_type *context =
-        ert_run_context_alloc__(iactive, SMOOTHER_RUN, INIT_CONDITIONAL, sim_fs,
-                                target_update_fs, iter);
-    {
-        stringlist_type *runpath_list = ert_run_context_alloc_runpath_list(
-            iactive, runpath_fmt, subst_list, iter);
-        stringlist_type *jobname_list = ert_run_context_alloc_jobname_list(
-            iactive, jobname_fmt, subst_list);
-        for (int iens = 0; iens < bool_vector_size(iactive); iens++) {
-            if (bool_vector_iget(iactive, iens)) {
-                run_arg_type *arg = run_arg_alloc_SMOOTHER_RUN(
-                    context->run_id, sim_fs, target_update_fs, iens, iter,
-                    stringlist_iget(runpath_list, iens),
-                    stringlist_iget(jobname_list, iens), subst_list);
-                vector_append_owned_ref(context->run_args, arg, run_arg_free__);
-            } else
-                vector_append_ref(context->run_args, NULL);
-        }
-        stringlist_free(jobname_list);
-        stringlist_free(runpath_list);
-    }
+        ert_run_context_alloc_empty(SMOOTHER_RUN, INIT_CONDITIONAL, iter);
+    context->active = active;
+    ert_run_context_set_sim_fs(context, sim_fs);
+    ert_run_context_set_update_target_fs(context, target_fs);
+    ert_run_context_add_SMOOTHER_RUN_args(context, runpaths, jobnames);
     return context;
-}
-
-ert_run_context_type *
-ert_run_context_alloc_SMOOTHER_UPDATE(enkf_fs_type *sim_fs,
-                                      enkf_fs_type *target_update_fs) {
-    return ert_run_context_alloc__(NULL, SMOOTHER_UPDATE, INIT_CONDITIONAL,
-                                   sim_fs, target_update_fs, 0);
-}
-
-ert_run_context_type *
-ert_run_context_alloc(run_mode_type run_mode, init_mode_type init_mode,
-                      enkf_fs_type *sim_fs, enkf_fs_type *target_update_fs,
-                      bool_vector_type *iactive, path_fmt_type *runpath_fmt,
-                      const char *jobname_fmt, subst_list_type *subst_list,
-                      int iter) {
-    switch (run_mode) {
-
-    case (SMOOTHER_RUN):
-        return ert_run_context_alloc_SMOOTHER_RUN(
-            sim_fs, target_update_fs, iactive, runpath_fmt, jobname_fmt,
-            subst_list, iter);
-
-    case (ENSEMBLE_EXPERIMENT):
-        return ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
-            sim_fs, iactive, runpath_fmt, jobname_fmt, subst_list, iter);
-
-    case (INIT_ONLY):
-        return ert_run_context_alloc_INIT_ONLY(sim_fs, init_mode, iactive,
-                                               runpath_fmt, subst_list, iter);
-
-    case (SMOOTHER_UPDATE):
-        break;
-
-    case (CASE_INIT_ONLY):
-        break;
-    }
-
-    util_abort("%s: internal error - should never be here \n", __func__);
-    return NULL;
 }
 
 UTIL_IS_INSTANCE_FUNCTION(ert_run_context, ERT_RUN_CONTEXT_TYPE_ID);
@@ -312,12 +202,8 @@ void ert_run_context_free(ert_run_context_type *context) {
     }
 
     vector_free(context->run_args);
-    if (context->iactive != NULL) {
-        int_vector_free(context->iens_map);
-        bool_vector_free(context->iactive);
-    }
     free(context->run_id);
-    free(context);
+    delete context;
 }
 
 int ert_run_context_get_size(const ert_run_context_type *context) {
@@ -340,15 +226,6 @@ int ert_run_context_get_step1(const ert_run_context_type *context) {
 run_arg_type *ert_run_context_iget_arg(const ert_run_context_type *context,
                                        int index) {
     return (run_arg_type *)vector_iget(context->run_args, index);
-}
-
-run_arg_type *ert_run_context_iens_get_arg(const ert_run_context_type *context,
-                                           int iens) {
-    int index = int_vector_iget(context->iens_map, iens);
-    if (index >= 0)
-        return (run_arg_type *)vector_iget(context->run_args, index);
-    else
-        return NULL;
 }
 
 enkf_fs_type *
@@ -376,45 +253,45 @@ ert_run_context_get_update_target_fs(const ert_run_context_type *run_context) {
     }
 }
 
-void ert_run_context_set_sim_fs(ert_run_context_type *context,
-                                enkf_fs_type *sim_fs) {
-    if (sim_fs) {
-        context->sim_fs = sim_fs;
-        enkf_fs_increase_run_count(sim_fs);
-        enkf_fs_incref(sim_fs);
-    } else
-        context->sim_fs = NULL;
-}
-
-void ert_run_context_set_update_target_fs(ert_run_context_type *context,
-                                          enkf_fs_type *update_target_fs) {
-    if (update_target_fs) {
-        context->update_target_fs = update_target_fs;
-        enkf_fs_increase_run_count(update_target_fs);
-        enkf_fs_incref(update_target_fs);
-    } else
-        context->update_target_fs = NULL;
-}
-
 void ert_run_context_deactivate_realization(ert_run_context_type *context,
                                             int iens) {
-    bool_vector_iset(context->iactive, iens, false);
+    context->active[iens] = false;
 }
 
 bool ert_run_context_iactive(const ert_run_context_type *context, int iens) {
-    return bool_vector_safe_iget(context->iactive, iens);
+    return context->active[iens];
 }
 
-int ert_run_context_get_active_size(const ert_run_context_type *context) {
-    return bool_vector_count_equal(context->iactive, true);
-}
-
-bool_vector_type *
-ert_run_context_alloc_iactive(const ert_run_context_type *context) {
-    return bool_vector_alloc_copy(context->iactive);
-}
-
-bool_vector_type const *
-ert_run_context_get_iactive(const ert_run_context_type *context) {
-    return context->iactive;
+RES_LIB_SUBMODULE("ert_run_context", m) {
+    using namespace py::literals;
+    m.def("set_sim_fs", [](py::object self, py::object sim_fs) {
+        ert_run_context_set_sim_fs(ert::from_cwrap<ert_run_context_type>(self),
+                                   ert::from_cwrap<enkf_fs_type>(sim_fs));
+    });
+    m.def("set_target_fs", [](py::object self, py::object target_fs) {
+        ert_run_context_set_update_target_fs(
+            ert::from_cwrap<ert_run_context_type>(self),
+            ert::from_cwrap<enkf_fs_type>(target_fs));
+    });
+    m.def("set_active", [](py::object self, std::vector<bool> active) {
+        ert::from_cwrap<ert_run_context_type>(self)->active = active;
+    });
+    m.def("add_ensemble_experiment_args",
+          [](py::object self, std::vector<std::string> runpaths,
+             std::vector<std::string> jobnames) {
+              ert_run_context_add_ENSEMBLE_EXPERIMENT_args(
+                  ert::from_cwrap<ert_run_context_type>(self), runpaths,
+                  jobnames);
+          });
+    m.def("add_init_only_args",
+          [](py::object self, std::vector<std::string> runpaths) {
+              ert_run_context_add_INIT_ONLY_args(
+                  ert::from_cwrap<ert_run_context_type>(self), runpaths);
+          });
+    m.def("add_smoother_run_args", [](py::object self,
+                                      std::vector<std::string> runpaths,
+                                      std::vector<std::string> jobnames) {
+        ert_run_context_add_SMOOTHER_RUN_args(
+            ert::from_cwrap<ert_run_context_type>(self), runpaths, jobnames);
+    });
 }

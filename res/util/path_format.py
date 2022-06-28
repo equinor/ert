@@ -36,8 +36,12 @@ class PathFormat(BaseCClass):
         else:
             raise ValueError(f'Unable to construct path format "{path_fmt}"')
 
+    @property
+    def format_string(self):
+        return self._str()
+
     def __repr__(self):
-        return self._create_repr(f"fmt={self._str()}")
+        return self._create_repr(f"fmt={self.format_string}")
 
     def free(self):
         self._free()

@@ -27,7 +27,6 @@ foreach(
   enkf_enkf_config_node_gen_data
   enkf_ensemble
   enkf_ensemble_config
-  enkf_ert_run_context
   enkf_fs
   enkf_gen_data_config_parse
   enkf_iter_config
@@ -64,7 +63,6 @@ add_test(NAME rng_config COMMAND rng_config)
 
 foreach(
   test
-  enkf_magic_string_in_workflows
   enkf_queue_config
   enkf_gen_obs_load
   enkf_ert_workflow_list
@@ -73,7 +71,6 @@ foreach(
   enkf_workflow_job_test_directory
   enkf_ert_test_context
   gen_kw_logarithmic
-  enkf_umask_config
   enkf_executable_path
   enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
@@ -91,16 +88,11 @@ add_config_test(enkf_forward_load_context enkf_forward_load_context
 add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
                 "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")
 
-add_config_test(enkf_umask_config enkf_umask_config
-                "${LOCAL_TEST_DATA_DIR}/simple_config/config_umask")
-
 add_config_test(
   enkf_select_case_job enkf_select_case_job
   "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/SELECT_CASE")
 add_config_test(enkf_queue_config enkf_queue_config)
-add_config_test(enkf_magic_string_in_workflows enkf_magic_string_in_workflows
-                "${LOCAL_TEST_DATA_DIR}/config/workflows/config")
 add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
                 "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
@@ -133,7 +125,6 @@ foreach(
   enkf_export_field
   enkf_workflow_job
   enkf_state_skip_summary_load
-  enkf_export_inactive_cells
   enkf_refcase_list
   enkf_ecl_config
   enkf_ecl_config_config
@@ -232,11 +223,6 @@ add_equinor_test(
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
   "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")
-
-add_equinor_test(
-  enkf_export_inactive_cells enkf_export_inactive_cells
-  "${EQUINOR_TEST_DATA_DIR}/config/export_inactive_cells/config"
-  "${EQUINOR_TEST_DATA_DIR}/config/export_inactive_cells/petro.grdecl")
 
 add_equinor_test(
   enkf_refcase_list enkf_refcase_list

@@ -18,8 +18,6 @@
 
 #include <ert/util/type_macros.h>
 
-#include <ert/res_util/subst_list.hpp>
-
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/run_arg.hpp>
 
@@ -50,10 +48,8 @@ struct run_arg_struct {
     int queue_index;
     /** This will be used by WPRO - and mapped to context key <GEO_ID>; set
      * during submit. */
-    int geo_id;
     enkf_fs_type *sim_fs;
     enkf_fs_type *update_target_fs;
-    subst_list_type *subst_list;
 
     run_status_type run_status;
     char *run_id;
@@ -62,14 +58,11 @@ struct run_arg_struct {
 UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
-static void run_arg_update_subst(run_arg_type *run_arg);
-
 static run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                    enkf_fs_type *update_target_fs, int iens,
                                    run_mode_type run_mode, int step1, int step2,
                                    int iter, const char *runpath,
-                                   const char *job_name,
-                                   const subst_list_type *subst_list) {
+                                   const char *job_name) {
     if ((sim_fs != NULL) && (sim_fs == update_target_fs))
         util_abort(
             "%s: internal error - can  not have sim_fs == update_target_fs \n",
@@ -91,47 +84,38 @@ static run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
         run_arg->num_internal_submit = 0;
         run_arg->queue_index = INVALID_QUEUE_INDEX;
         run_arg->run_status = JOB_NOT_STARTED;
-        run_arg->geo_id = -1; // -1 corresponds to not set
         run_arg->load_start = step1;
-
-        run_arg->subst_list = subst_list_alloc(subst_list);
-        run_arg_update_subst(run_arg);
 
         return run_arg;
     }
 }
 
-run_arg_type *
-run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id, enkf_fs_type *sim_fs,
-                                  int iens, int iter, const char *runpath,
-                                  const char *job_name,
-                                  const subst_list_type *subst_list) {
+run_arg_type *run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id,
+                                                enkf_fs_type *sim_fs, int iens,
+                                                int iter, const char *runpath,
+                                                const char *job_name) {
     return run_arg_alloc(run_id, sim_fs, NULL, iens, ENSEMBLE_EXPERIMENT, 0, 0,
-                         iter, runpath, job_name, subst_list);
+                         iter, runpath, job_name);
 }
 
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
-                                      int iens, int iter, const char *runpath,
-                                      const subst_list_type *subst_list) {
+                                      int iens, int iter, const char *runpath) {
     return run_arg_alloc(run_id, sim_fs, NULL, iens, INIT_ONLY, 0, 0, iter,
-                         runpath, NULL, subst_list);
+                         runpath, NULL);
 }
 
 run_arg_type *
 run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs,
                            enkf_fs_type *update_target_fs, int iens, int iter,
-                           const char *runpath, const char *job_name,
-                           const subst_list_type *subst_list) {
+                           const char *runpath, const char *job_name) {
     return run_arg_alloc(run_id, sim_fs, update_target_fs, iens,
-                         ENSEMBLE_EXPERIMENT, 0, 0, iter, runpath, job_name,
-                         subst_list);
+                         ENSEMBLE_EXPERIMENT, 0, 0, iter, runpath, job_name);
 }
 
 void run_arg_free(run_arg_type *run_arg) {
     free(run_arg->job_name);
     free(run_arg->run_path);
     free(run_arg->run_id);
-    subst_list_free(run_arg->subst_list);
     free(run_arg);
 }
 
@@ -212,19 +196,6 @@ void run_arg_set_run_status(run_arg_type *run_arg, run_status_type run_status) {
     run_arg->run_status = run_status;
 }
 
-void run_arg_set_geo_id(run_arg_type *run_arg, int geo_id) {
-    // Providing the geo_id upon initialization is the last step to achieve
-    // immutability for run_arg. Although we allow setting the geo_id for now,
-    // it should only be done once.
-    if (run_arg->geo_id != -1)
-        util_abort("%s: Tried to set run_arg's geo_id twice!\n", __func__);
-
-    run_arg->geo_id = geo_id;
-    run_arg_update_subst(run_arg);
-}
-
-int run_arg_get_geo_id(const run_arg_type *run_arg) { return run_arg->geo_id; }
-
 enkf_fs_type *run_arg_get_sim_fs(const run_arg_type *run_arg) {
     if (run_arg->sim_fs)
         return run_arg->sim_fs;
@@ -245,35 +216,4 @@ enkf_fs_type *run_arg_get_update_target_fs(const run_arg_type *run_arg) {
                    __func__);
         return NULL;
     }
-}
-
-const subst_list_type *run_arg_get_subst_list(const run_arg_type *run_arg) {
-    return run_arg->subst_list;
-}
-
-static void run_arg_update_subst(run_arg_type *run_arg) {
-    char *iens_str = util_alloc_sprintf("%d", run_arg->iens);
-    subst_list_prepend_owned_ref(run_arg->subst_list, "<IENS>", iens_str, NULL);
-
-    char *iter_str = util_alloc_sprintf("%d", run_arg->iter);
-    subst_list_prepend_owned_ref(run_arg->subst_list, "<ITER>", iter_str, NULL);
-
-    if (run_arg->geo_id != -1) {
-        char *geo_id_str = util_alloc_sprintf("%d", run_arg->geo_id);
-        subst_list_prepend_owned_ref(run_arg->subst_list, "<GEO_ID>",
-                                     geo_id_str, NULL);
-    }
-
-    if (run_arg->job_name) {
-        subst_list_update_string(run_arg->subst_list, &run_arg->job_name);
-        subst_list_prepend_ref(run_arg->subst_list, "<ECL_BASE>",
-                               run_arg->job_name, NULL);
-        subst_list_prepend_ref(run_arg->subst_list, "<ECLBASE>",
-                               run_arg->job_name, NULL);
-    }
-
-    subst_list_update_string(run_arg->subst_list, &run_arg->run_path);
-
-    subst_list_prepend_ref(run_arg->subst_list, "<RUNPATH>", run_arg->run_path,
-                           NULL);
 }

@@ -36,8 +36,6 @@ class RunArg(BaseCClass):
     _set_queue_index = ResPrototype("void run_arg_set_queue_index(run_arg, int)")
     _is_submitted = ResPrototype("bool run_arg_is_submitted(run_arg)")
     _get_run_id = ResPrototype("char* run_arg_get_run_id(run_arg)")
-    _get_geo_id = ResPrototype("int run_arg_get_geo_id(run_arg)")
-    _set_geo_id = ResPrototype("void run_arg_set_geo_id(run_arg, int)")
     _get_runpath = ResPrototype("char* run_arg_get_runpath(run_arg)")
     _get_iter = ResPrototype("int run_arg_get_iter(run_arg)")
     _get_iens = ResPrototype("int run_arg_get_iens(run_arg)")
@@ -82,14 +80,6 @@ class RunArg(BaseCClass):
 
     def get_run_id(self):
         return self._get_run_id()
-
-    @property
-    def geo_id(self):
-        return self._get_geo_id()
-
-    @geo_id.setter
-    def geo_id(self, value):
-        self._set_geo_id(value)
 
     @property
     def runpath(self):

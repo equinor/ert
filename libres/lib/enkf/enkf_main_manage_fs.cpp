@@ -262,12 +262,6 @@ enkf_main_update_current_case(enkf_main_type *enkf_main,
     update_case_log(enkf_main, case_path);
 
     enkf_main_gen_data_special(enkf_main, enkf_main_get_fs(enkf_main));
-    enkf_main_add_internal_subst_kw(enkf_main, "ERT-CASE",
-                                    enkf_main_get_current_fs(enkf_main),
-                                    "Current case");
-    enkf_main_add_internal_subst_kw(enkf_main, "ERTCASE",
-                                    enkf_main_get_current_fs(enkf_main),
-                                    "Current case");
 }
 
 static void enkf_main_create_fs(const enkf_main_type *enkf_main,

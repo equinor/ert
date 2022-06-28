@@ -33,10 +33,8 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
     enkf_main_select_fs(enkf_main, casename);
 
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    const subst_list_type *subst_list =
-        subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
     run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
-        "run_id", fs, iens, iter, "simulations/run0", job_name, subst_list);
+        "run_id", fs, iens, iter, "simulations/run0", job_name);
     {
 
         state_map_type *state_map = enkf_fs_get_state_map(fs);

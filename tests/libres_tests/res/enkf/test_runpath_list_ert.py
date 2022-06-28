@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -44,8 +43,8 @@ def test_assert_export():
         )
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)
-    runpath_list_file = ert.getHookManager().getRunpathListFile()
-    assert not os.path.isfile(runpath_list_file)
+    runpath_list_file = ert.runpath_list_filename
+    assert not runpath_list_file.exists()
 
     run_context = ert.create_ensemble_experiment_run_context(
         iteration=0,
@@ -53,9 +52,9 @@ def test_assert_export():
 
     ert.getEnkfSimulationRunner().createRunPath(run_context)
 
-    assert os.path.isfile(runpath_list_file)
-    assert "test_runpath_list.txt" == os.path.basename(runpath_list_file)
+    assert runpath_list_file.exists()
+    assert "test_runpath_list.txt" == runpath_list_file.name
     assert (
-        Path(runpath_list_file).read_text("utf-8")
+        runpath_list_file.read_text("utf-8")
         == f"000  {os.getcwd()}/simulations/realization0  a_name_0  000\n"
     )

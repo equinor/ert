@@ -14,12 +14,15 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from typing import List
+from pathlib import Path
+from typing import Callable, List
 
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
+
 from res import ResPrototype
 from res._lib import enkf_main, enkf_state
+from res.analysis.configuration import UpdateConfiguration
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
 from res.enkf.enkf_fs_manager import EnkfFsManager
@@ -31,11 +34,12 @@ from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.es_update import ESUpdate
 from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
-from res.analysis.configuration import UpdateConfiguration
 from res.enkf.model_config import ModelConfig
 from res.enkf.queue_config import QueueConfig
 from res.enkf.res_config import ResConfig
+from res.enkf.runpaths import Runpaths
 from res.enkf.site_config import SiteConfig
+from res.enkf.substituter import Substituter
 from res.util.substitution_list import SubstitutionList
 
 
@@ -118,6 +122,18 @@ class EnKFMain(BaseCClass):
     def _parameter_keys(self):
         return enkf_main.get_parameter_keys(self)
 
+    @property
+    def substituter(self):
+        return self._real_enkf_main().substituter
+
+    @property
+    def runpaths(self):
+        return self._real_enkf_main().runpaths
+
+    @property
+    def runpath_list_filename(self):
+        return self._real_enkf_main().runpaths.runpath_list_filename
+
     def _real_enkf_main(self):
         return self.parent()
 
@@ -160,22 +176,11 @@ class EnKFMain(BaseCClass):
         :param active_mask: Whether a realization is active or not,
             defaults to all active.
         """
-        if active_mask is None:
-            active_mask = [True] * self.getEnsembleSize()
-        if source_filesystem is None:
-            source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
-
-        model_config = self.getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.getDataKW()
-        return ErtRunContext.ensemble_experiment(
-            source_filesystem,
-            active_mask,
-            runpath_fmt,
-            jobname_fmt,
-            subst_list,
-            iteration,
+        return self._create_run_context(
+            ErtRunContext.ensemble_experiment,
+            iteration=iteration,
+            active_mask=active_mask,
+            source_filesystem=source_filesystem,
         )
 
     def create_ensemble_smoother_run_context(
@@ -189,24 +194,52 @@ class EnKFMain(BaseCClass):
         :param fs: The source filesystem, defaults to
             getEnkfFsManager().getCurrentFileSystem().
         """
+        return self._create_run_context(
+            ErtRunContext.ensemble_smoother,
+            iteration=iteration,
+            active_mask=active_mask,
+            source_filesystem=source_filesystem,
+            target_fs=target_filesystem,
+        )
+
+    def _create_run_context(
+        self,
+        constructor: Callable,
+        iteration: int,
+        active_mask: List[bool] = None,
+        source_filesystem=None,
+        **kwargs,
+    ) -> ErtRunContext:
         if active_mask is None:
             active_mask = [True] * self.getEnsembleSize()
         if source_filesystem is None:
             source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
-
-        model_config = self.getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.getDataKW()
-        return ErtRunContext.ensemble_smoother(
-            source_filesystem,
-            target_filesystem,
-            active_mask,
-            runpath_fmt,
-            jobname_fmt,
-            subst_list,
-            iteration,
+        realizations = list(range(len(active_mask)))
+        paths = self.runpaths.get_paths(realizations, iteration)
+        jobnames = self.runpaths.get_jobnames(realizations, iteration)
+        for realization, path in enumerate(paths):
+            self.substituter.add_substitution("<RUNPATH>", path, realization, iteration)
+        for realization, jobname in enumerate(jobnames):
+            self.substituter.add_substitution(
+                "<ECL_BASE>", jobname, realization, iteration
+            )
+            self.substituter.add_substitution(
+                "<ECLBASE>", jobname, realization, iteration
+            )
+        return constructor(
+            sim_fs=source_filesystem,
+            mask=active_mask,
+            itr=iteration,
+            paths=paths,
+            jobnames=jobnames,
+            **kwargs,
         )
+
+    def set_geo_id(self, geo_id: str, realization: int, iteration: int):
+        self.substituter.add_substitution("<GEO_ID>", geo_id, realization, iteration)
+
+    def write_runpath_list(self, iterations: List[int], realizations: List[int]):
+        self.runpaths.write_runpath_list(iterations, realizations)
 
     # --- Overridden methods --------------------
 
@@ -289,7 +322,6 @@ class _RealEnKFMain(BaseCClass):
         "ecl_config_ref enkf_main_get_ecl_config( enkf_main)"
     )
     _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
-    _add_data_kw = ResPrototype("void enkf_main_add_data_kw(enkf_main, char*, char*)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = ResPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
     _get_site_config_file = ResPrototype(
@@ -336,6 +368,15 @@ class _RealEnKFMain(BaseCClass):
             )
 
         self.__key_manager = KeyManager(self)
+        self.substituter = Substituter(
+            {key: value for (key, value, _) in self.getDataKW()}
+        )
+        self.runpaths = Runpaths(
+            self.getModelConfig().getJobnameFormat(),
+            self.getModelConfig().getRunpathFormat().format_string,
+            Path(res_config.config_path).resolve() / res_config.runpath_file,
+            self.substituter.substitute,
+        )
 
     def _init_res_config(self, config):
         if isinstance(config, ResConfig):
@@ -394,7 +435,13 @@ class _RealEnKFMain(BaseCClass):
         return self._get_data_kw()
 
     def addDataKW(self, key, value):
-        self._add_data_kw(key, value)
+        # Substitution should be the responsibility of
+        # self.substituter. However,
+        # self.resConfig().subst_config.subst_list is still
+        # used by workflows to do substitution. For now, we
+        # need to update this here.
+        self.resConfig().subst_config.subst_list.addItem(key, value)
+        self.substituter.add_global_substitution(key, value)
 
     def getMountPoint(self) -> str:
         return self._get_mount_point()

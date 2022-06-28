@@ -26,8 +26,7 @@ class SimulationContext:
         # fill in the missing geo_id data
         for sim_id, (geo_id, _) in enumerate(case_data):
             if mask[sim_id]:
-                run_arg = self._run_context[sim_id]
-                run_arg.geo_id = geo_id
+                ert.set_geo_id(geo_id, sim_id, itr)
 
         self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
