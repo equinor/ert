@@ -1,4 +1,5 @@
 import pytest
+
 from libres_utils import ResTest
 
 from res.enkf.export import ArgLoader
@@ -21,4 +22,4 @@ class ArgLoaderTest(ResTest):
             )
 
         arg = ArgLoader.load(arg_file, column_names=["utm_x", "utm_y", "md", "tvd"])
-        self.assertFloatEqual(arg["utm_x"][0], 461317.620646)
+        assert pytest.approx(arg["utm_x"][0]) == 461317.620646

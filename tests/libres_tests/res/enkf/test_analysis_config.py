@@ -15,6 +15,8 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
+import pytest
+
 from ecl.util.test import TestAreaContext
 from libres_utils import ResTest
 
@@ -58,9 +60,9 @@ class AnalysisConfigTest(ResTest):
         with TestAreaContext("analysis_config_init_test") as work_area:
             work_area.copy_directory(self.case_directory)
             ac = AnalysisConfig(self.case_file)
-            self.assertFloatEqual(ac.getGlobalStdScaling(), 1.0)
+            assert pytest.approx(ac.getGlobalStdScaling()) == 1.0
             ac.setGlobalStdScaling(0.77)
-            self.assertFloatEqual(ac.getGlobalStdScaling(), 0.77)
+            assert pytest.approx(ac.getGlobalStdScaling()) == 0.77
 
     def test_init(self):
         with TestAreaContext("analysis_config_init_test") as work_area:
