@@ -559,13 +559,12 @@ std::vector<std::string> get_parameter_keys(py::object self) {
     std::vector<std::string> parameters;
     std::vector<std::string> keylist = ensemble_config_keylist_from_var_type(
         enkf_main_get_ensemble_config(enkf_main), PARAMETER);
-    for (auto &key : keylist)
-        /*
-          Make sure the funny GEN_KW instance masquerading as
-          SCHEDULE_PREDICTION_FILE is not added to the soup.
-                */
-        if (key != "PRED")
-            parameters.push_back(key);
+
+    // Add all GEN_KW keywords to parameters that is not
+    // the SCHEDULE_PREDICTION_FILE
+    std::copy_if(keylist.begin(), keylist.end(), std::back_inserter(parameters),
+                 [](auto key) { return key != "PRED"; });
+
     return parameters;
 }
 
