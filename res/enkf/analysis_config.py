@@ -109,11 +109,7 @@ class AnalysisConfig(BaseCClass):
         config_dict=None,
     ):
         configs = sum(
-            [
-                1
-                for x in [user_config_file, config_content, config_dict]
-                if x is not None
-            ]
+            1 for x in [user_config_file, config_content, config_dict] if x is not None
         )
 
         if configs > 1:

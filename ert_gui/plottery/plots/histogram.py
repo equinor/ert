@@ -109,7 +109,7 @@ def plotHistogram(figure, plot_context, case_to_data_map, _observation_data):
             PlotTools.showGrid(axes[case], plot_context)
 
     min_count = 0
-    max_count = max([subplot.get_ylim()[1] for subplot in axes.values()])
+    max_count = max(subplot.get_ylim()[1] for subplot in axes.values())
 
     custom_limits = plot_context.plotConfig().limits
 
