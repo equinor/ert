@@ -48,8 +48,8 @@ class JobStatusType(BaseCEnum):
     JOB_QUEUE_UNKNOWN = None
 
     @classmethod
-    def from_string(cls, string):
-        return super().from_string(string)
+    def from_string(cls, name):
+        return super().from_string(name)
 
 
 JobStatusType.addEnum("JOB_QUEUE_NOT_ACTIVE", 1)

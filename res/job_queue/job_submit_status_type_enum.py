@@ -9,8 +9,8 @@ class JobSubmitStatusType(BaseCEnum):
     SUBMIT_QUEUE_CLOSED = None
 
     @classmethod
-    def from_string(cls, string):
-        return super().from_string(string)
+    def from_string(cls, name):
+        return super().from_string(name)
 
 
 JobSubmitStatusType.addEnum("SUBMIT_OK", 0)

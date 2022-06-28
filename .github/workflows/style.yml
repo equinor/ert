@@ -52,6 +52,7 @@ jobs:
           --enable="\
             access-member-before-definition, \
             arguments-differ, \
+            arguments-renamed, \
             bad-thread-instantiation, \
             chained-comparison, \
             comparison-with-callable, \
