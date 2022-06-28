@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,8 +18,10 @@ from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator import EvaluatorTracker
 
 
-def build_snapshot(real_list: List[str] = ["0"]):
-    # passing ["0"] is required
+def build_snapshot(real_list: Optional[List[str]] = None):
+    if real_list is None:
+        # passing ["0"] is required
+        real_list = ["0"]
     return (
         SnapshotBuilder()
         .add_step(step_id="0", status=state.STEP_STATE_UNKNOWN)
@@ -27,7 +29,9 @@ def build_snapshot(real_list: List[str] = ["0"]):
     )
 
 
-def build_partial(real_list: List[str] = ["0"]):
+def build_partial(real_list: Optional[List[str]] = None):
+    if real_list is None:
+        real_list = ["0"]
     return PartialSnapshot(build_snapshot(real_list))
 
 

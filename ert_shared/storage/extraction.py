@@ -285,7 +285,9 @@ def create_priors(ert) -> Mapping[str, dict]:
     return priors
 
 
-def _get_from_server(url, headers={}, status_code=200) -> requests.Response:
+def _get_from_server(url, headers=None, status_code=200) -> requests.Response:
+    if headers is None:
+        headers = {}
     session = Storage.session()
     resp = session.get(
         url,
@@ -298,8 +300,10 @@ def _get_from_server(url, headers={}, status_code=200) -> requests.Response:
 
 
 def _post_to_server(
-    url, data=None, params=None, json=None, headers={}, status_code=200
+    url, data=None, params=None, json=None, headers=None, status_code=200
 ) -> requests.Response:
+    if headers is None:
+        headers = {}
     session = Storage.session()
     resp = session.post(
         url,
