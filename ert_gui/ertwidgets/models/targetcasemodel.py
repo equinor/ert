@@ -13,17 +13,14 @@ class TargetCaseModel(ValueModel):
         ValueModel.__init__(self, self.getDefaultValue())
         notifier.ertChanged.connect(self._caseChanged)
 
-    def setValue(self, target_case):
-        if (
-            target_case is None
-            or target_case.strip() == ""
-            or target_case == self.getDefaultValue()
-        ):
+    def setValue(self, value: str):
+        """Set a new target case"""
+        if value is None or value.strip() == "" or value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
             self._custom = True
-            ValueModel.setValue(self, target_case)
+            ValueModel.setValue(self, value)
 
     def getDefaultValue(self):
         """@rtype: str"""

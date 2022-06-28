@@ -11,17 +11,13 @@ class ActiveRealizationsModel(ValueModel):
         ValueModel.__init__(self, self.getDefaultValue())
         self._custom = False
 
-    def setValue(self, active_realizations):
-        if (
-            active_realizations is None
-            or active_realizations.strip() == ""
-            or active_realizations == self.getDefaultValue()
-        ):
+    def setValue(self, value: str):
+        if value is None or value.strip() == "" or value == self.getDefaultValue():
             self._custom = False
             ValueModel.setValue(self, self.getDefaultValue())
         else:
             self._custom = True
-            ValueModel.setValue(self, active_realizations)
+            ValueModel.setValue(self, value)
 
     def setValueFromMask(self, mask):
         self.setValue(mask_to_rangestring(mask))

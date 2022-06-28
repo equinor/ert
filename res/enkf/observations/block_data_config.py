@@ -27,11 +27,11 @@ class BlockDataConfig(BaseCClass):
         raise NotImplementedError("Cannot instantiate BlockDataConfig!")
 
     @classmethod
-    def from_param(cls, instance):
-        if instance is None:
+    def from_param(cls, c_class_object):
+        if c_class_object is None:
             return ctypes.c_void_p()
-        elif isinstance(instance, FieldConfig):
-            return FieldConfig.from_param(instance)
+        elif isinstance(c_class_object, FieldConfig):
+            return FieldConfig.from_param(c_class_object)
 
         # The Container class which is used to support summary based
         # source in the BLOCK_OBS configuration is not yet supported

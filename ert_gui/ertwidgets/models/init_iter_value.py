@@ -7,8 +7,8 @@ class IterValueModel(ValueModel):
         ValueModel.__init__(self, self.getDefaultValue())
         notifier.ertChanged.connect(self._caseChanged)
 
-    def setValue(self, iter_value):
-        ValueModel.setValue(self, iter_value)
+    def setValue(self, value):
+        ValueModel.setValue(self, value)
 
     def getDefaultValue(self):
         return "0"

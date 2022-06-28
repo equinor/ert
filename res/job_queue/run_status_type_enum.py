@@ -23,7 +23,7 @@ class RunStatusType(BaseCEnum):
     JOB_RUN_FAILURE = None
 
     @classmethod
-    def from_string(cls, string):
+    def from_string(cls, name):
         pass
 
 
