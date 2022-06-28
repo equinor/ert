@@ -1,4 +1,5 @@
 import pytest
+
 from libres_utils import ResTest
 
 from res.enkf.export import GenDataCollector
@@ -23,9 +24,9 @@ class GenDataCollectorTest(ResTest):
                 ert, "default_0", "SNAKE_OIL_OPR_DIFF", 199
             )
 
-            self.assertFloatEqual(data1[0][0], -0.008206)
-            self.assertFloatEqual(data1[24][1], -0.119255)
-            self.assertFloatEqual(data1[24][1000], -0.258516)
+            assert pytest.approx(data1[0][0]) == -0.008206
+            assert pytest.approx(data1[24][1]) == -0.119255
+            assert pytest.approx(data1[24][1000]) == -0.258516
 
             realization_index = 10
             data1 = GenDataCollector.loadGenData(

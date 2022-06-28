@@ -16,6 +16,7 @@
 #  for more details.
 
 import pytest
+
 from libres_utils import ResTest
 
 from res.enkf import ObsVector
@@ -38,22 +39,22 @@ class LabScaleTest(ResTest):
             v1 = obs["WWCT_1"]
             self.assertEqual(v1.activeStep(), 5)
             node = v1.getNode(5)
-            self.assertFloatEqual(node.getValue(), 0.00)
+            assert pytest.approx(node.getValue()) == 0.00
 
             v2 = obs["WWCT_2"]
             self.assertEqual(v2.activeStep(), 31)
             node = v2.getNode(31)
-            self.assertFloatEqual(node.getValue(), 0.575828)
+            assert pytest.approx(node.getValue()) == 0.575828
 
             v3 = obs["WWCT_3"]
             self.assertEqual(v3.activeStep(), 73)
             node = v3.getNode(73)
-            self.assertFloatEqual(node.getValue(), 1.00)
+            assert pytest.approx(node.getValue()) == 1.00
 
             bpr = obs["BPR"]
             self.assertEqual(bpr.activeStep(), 31)
             node = bpr.getNode(31)
-            self.assertFloatEqual(node.getValue(0), 10.284)
+            assert pytest.approx(node.getValue(0)) == 10.284
 
     def testObs_beijing(self):
         config_file = self.createTestPath("Equinor/config/lab-beijing/labunits/config")

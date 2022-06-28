@@ -1,3 +1,5 @@
+import pytest
+
 from libres_utils import ResTest
 
 from res.enkf.export import MisfitCollector
@@ -13,11 +15,11 @@ class MisfitCollectorTest(ResTest):
             ert = context.getErt()
             data = MisfitCollector.loadAllMisfitData(ert, "default_0")
 
-            self.assertFloatEqual(data["MISFIT:FOPR"][0], 738.735586)
-            self.assertFloatEqual(data["MISFIT:FOPR"][24], 1260.086789)
+            assert pytest.approx(data["MISFIT:FOPR"][0]) == 738.735586
+            assert pytest.approx(data["MISFIT:FOPR"][24]) == 1260.086789
 
-            self.assertFloatEqual(data["MISFIT:TOTAL"][0], 767.008457)
-            self.assertFloatEqual(data["MISFIT:TOTAL"][24], 1359.172803)
+            assert pytest.approx(data["MISFIT:TOTAL"][0]) == 767.008457
+            assert pytest.approx(data["MISFIT:TOTAL"][24]) == 1359.172803
 
             # pylint: disable=pointless-statement
             # realization 20:

@@ -4,7 +4,6 @@ from libres_utils import ResTest
 
 from res.enkf.export import GenKwCollector
 from res.test import ErtTestContext
-import pytest
 
 
 class GenKwCollectorTest(ResTest):
@@ -17,11 +16,23 @@ class GenKwCollectorTest(ResTest):
 
             data = GenKwCollector.loadAllGenKwData(ert, "default_0")
 
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], 0.047517)
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][24], 0.160907)
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5)
+                == 0.047517
+            )
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][24], rel=1e-5)
+                == 0.160907
+            )
 
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], 0.054539)
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][12], 0.057807)
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5)
+                == 0.054539
+            )
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][12], rel=1e-5)
+                == 0.057807
+            )
 
             # pylint: disable=pointless-statement
             # realization 20:
@@ -37,8 +48,14 @@ class GenKwCollectorTest(ResTest):
                 ["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"],
             )
 
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], 0.047517)
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], 0.054539)
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][0], rel=1e-5)
+                == 0.047517
+            )
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_OFFSET"][0], rel=1e-5)
+                == 0.054539
+            )
 
             with self.assertRaises(KeyError):
                 data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
@@ -54,7 +71,10 @@ class GenKwCollectorTest(ResTest):
             assert data.index == [realization_index]
             assert len(data.index) == 1
             assert list(data.columns) == ["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-            self.assertFloatEqual(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][10], 0.282923)
+            assert (
+                pytest.approx(data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"][10], rel=1e-5)
+                == 0.282923
+            )
 
             non_existing_realization_index = 150
             with pytest.raises(IndexError):

@@ -1,6 +1,7 @@
-import numpy
+import numpy as np
+import pytest
+
 from libres_utils import ResTest
-from pytest import MonkeyPatch
 
 from res.enkf.export import (
     DesignMatrixReader,
@@ -45,7 +46,7 @@ def dumpDesignMatrix(path):
 
 class ExportJoinTest(ResTest):
     def setUp(self):
-        self.monkeypatch = MonkeyPatch()
+        self.monkeypatch = pytest.MonkeyPatch()
         self.monkeypatch.setenv(
             "TZ", "CET"
         )  # The ert_statoil case was generated in CET
@@ -72,34 +73,39 @@ class ExportJoinTest(ResTest):
             first_date = "2010-01-10"
             last_date = "2015-06-23"
 
-            self.assertFloatEqual(
-                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date], 3.947766
+            assert (
+                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][0][first_date])
+                == 3.947766
             )
-            self.assertFloatEqual(
-                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date], 4.206698
+            assert (
+                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][first_date])
+                == 4.206698
             )
-            self.assertFloatEqual(
-                result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date], 4.206698
+            assert (
+                pytest.approx(result["SNAKE_OIL_PARAM:OP1_OCTAVES"][24][last_date])
+                == 4.206698
             )
+            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][first_date]) == 0.08
 
-            self.assertFloatEqual(result["EXTRA_FLOAT_COLUMN"][0][first_date], 0.08)
             self.assertEqual(result["EXTRA_INT_COLUMN"][0][first_date], 125)
             self.assertEqual(result["EXTRA_STRING_COLUMN"][0][first_date], "ON")
 
-            self.assertFloatEqual(result["EXTRA_FLOAT_COLUMN"][0][last_date], 0.08)
+            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][0][last_date]) == 0.08
+
             self.assertEqual(result["EXTRA_INT_COLUMN"][0][last_date], 125)
             self.assertEqual(result["EXTRA_STRING_COLUMN"][0][last_date], "ON")
 
-            self.assertFloatEqual(result["EXTRA_FLOAT_COLUMN"][1][last_date], 0.07)
+            assert pytest.approx(result["EXTRA_FLOAT_COLUMN"][1][last_date]) == 0.07
+
             self.assertEqual(result["EXTRA_INT_COLUMN"][1][last_date], 225)
             self.assertEqual(result["EXTRA_STRING_COLUMN"][1][last_date], "OFF")
 
-            self.assertFloatEqual(result["MISFIT:FOPR"][0][last_date], 457.500978)
-            self.assertFloatEqual(result["MISFIT:FOPR"][24][last_date], 1630.813862)
+            assert pytest.approx(result["MISFIT:FOPR"][0][last_date]) == 457.500978
+            assert pytest.approx(result["MISFIT:FOPR"][24][last_date]) == 1630.813862
 
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0][first_date], 468.479944)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][0][last_date], 468.479944)
-            self.assertFloatEqual(result["MISFIT:TOTAL"][24][last_date], 1714.700855)
+            assert pytest.approx(result["MISFIT:TOTAL"][0][first_date]) == 468.479944
+            assert pytest.approx(result["MISFIT:TOTAL"][0][last_date]) == 468.479944
+            assert pytest.approx(result["MISFIT:TOTAL"][24][last_date]) == 1714.700855
 
             # pylint: disable=pointless-statement
             with self.assertRaises(KeyError):
@@ -107,6 +113,6 @@ class ExportJoinTest(ResTest):
                 result.loc[60]
 
             column_count = len(result.columns)
-            self.assertEqual(result.dtypes[0], numpy.float64)
-            self.assertEqual(result.dtypes[column_count - 1], numpy.object)
-            self.assertEqual(result.dtypes[column_count - 2], numpy.int64)
+            self.assertEqual(result.dtypes[0], np.float64)
+            self.assertEqual(result.dtypes[column_count - 1], np.object)
+            self.assertEqual(result.dtypes[column_count - 2], np.int64)
