@@ -65,6 +65,7 @@ jobs:
             consider-using-max-builtin, \
             consider-using-min-builtin, \
             consider-using-set-comprehension, \
+            dangerous-default-value, \
             duplicate-key, \
             empty-docstring, \
             expression-not-assigned, \

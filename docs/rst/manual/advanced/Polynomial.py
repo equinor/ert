@@ -39,8 +39,10 @@ from matplotlib import pyplot as plt
 
 
 def plot_result(
-    A, response_x_axis, trans_func=lambda x: x, priors=[], show_params=False
+    A, response_x_axis, trans_func=lambda x: x, priors=None, show_params=False
 ):
+    if priors is None:
+        priors = []
     responses = forward_model(A, priors, response_x_axis)
     plt.rcParams["figure.figsize"] = [15, 4]
     figures = 1 + len(A) if show_params else 1
