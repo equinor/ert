@@ -103,6 +103,7 @@ setup(
         "uvicorn >= 0.17.0",
         "websockets >= 9.0.1",
         "httpx",
+        "tables",
     ],
     entry_points={
         "console_scripts": [
