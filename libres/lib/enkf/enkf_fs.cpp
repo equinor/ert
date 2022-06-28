@@ -270,15 +270,6 @@ static void enkf_fs_assign_driver(enkf_fs_type *fs,
     case (DRIVER_INDEX):
         fs->index.reset(driver);
         break;
-    case (DRIVER_STATIC):
-        util_abort("%s: internal error - should not assign a STATIC driver \n",
-                   __func__);
-        break;
-    case (DRIVER_DYNAMIC_ANALYZED):
-        util_abort("%s: internal error - should not assign a DYNAMIC_ANALYZED "
-                   "driver \n",
-                   __func__);
-        break;
     }
 }
 
