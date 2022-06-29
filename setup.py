@@ -104,6 +104,7 @@ setup(
         "websockets >= 9.0.1",
         "httpx",
         "tables",
+        "webviz-ert",
     ],
     entry_points={
         "console_scripts": [
