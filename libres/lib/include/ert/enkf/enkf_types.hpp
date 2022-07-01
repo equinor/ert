@@ -162,11 +162,7 @@ typedef enum {
     STATE_PARENT_FAILURE = 16
 } realisation_state_enum;
 
-typedef enum {
-    INIT_NONE = 0,
-    INIT_CONDITIONAL = 1,
-    INIT_FORCE = 2
-} init_mode_type;
+typedef enum { INIT_CONDITIONAL = 1, INIT_FORCE = 2 } init_mode_type;
 
 typedef struct enkf_obs_struct enkf_obs_type;
 

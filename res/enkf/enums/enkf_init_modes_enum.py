@@ -23,6 +23,5 @@ class EnkfInitModeEnum(BaseCEnum):
     INIT_FORCE = None
 
 
-EnkfInitModeEnum.addEnum("INIT_NONE", 0)
 EnkfInitModeEnum.addEnum("INIT_CONDITIONAL", 1)
 EnkfInitModeEnum.addEnum("INIT_FORCE", 2)
