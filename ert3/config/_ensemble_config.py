@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError, create_model, root_validator, v
 
 import ert
 import ert.ensemble_evaluator
+from res.config.active_range import ActiveRange
 
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 from ._experiment_config import ExperimentConfig
@@ -146,7 +147,7 @@ class EnsembleConfig(_EnsembleConfig):
     def is_active_range_valid(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
-        ert.ensemble_evaluator.ActiveRange.validate_rangestring(value)
+        ActiveRange.validate_rangestring(value)
         return value
 
     @root_validator
@@ -155,7 +156,7 @@ class EnsembleConfig(_EnsembleConfig):
             if values.get("size") is None:
                 return values
             # If size is not provided, we accept any active_range
-            ert.ensemble_evaluator.ActiveRange.validate_rangestring_vs_length(
+            ActiveRange.validate_rangestring_vs_length(
                 values["active_range"], values["size"]
             )
         return values

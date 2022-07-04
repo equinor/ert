@@ -1,32 +1,6 @@
 import pytest
 
-from ert.ensemble_evaluator.activerange import (
-    ActiveRange,
-    mask_to_rangestring,
-    rangestring_to_mask,
-)
-
-
-@pytest.mark.parametrize(
-    "mask, expected_string",
-    [
-        ([], ""),
-        ([True], "0"),
-        ([1], "0"),
-        ([2], "0"),  # Any non-null means True
-        ([-1], "0"),
-        ([-0], ""),
-        ([0], ""),
-        ([0, 0], ""),
-        ([1, 1], "0-1"),
-        ([0, 1], "1"),
-        ([1, 0], "0"),
-        ([1, 1, 0, 0, 1, 1], "0-1, 4-5"),
-    ],
-)
-def test_mask_to_rangestring(mask, expected_string):
-    assert mask_to_rangestring(mask) == expected_string
-    assert mask_to_rangestring([bool(value) for value in mask]) == expected_string
+from res.config.active_range import ActiveRange
 
 
 @pytest.mark.parametrize(
@@ -52,7 +26,6 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
         rangestring,
         length,
     )
-    assert rangestring_to_mask(rangestring, length) == expected_mask
 
 
 @pytest.mark.parametrize(
@@ -75,9 +48,6 @@ def test_rangestring_to_mask_errors(rangestring, length):
         # At least one of these two must fail for the test dataset:
         ActiveRange.validate_rangestring(rangestring)
         ActiveRange.validate_rangestring_vs_length(rangestring, length)
-
-    with pytest.raises(ValueError):
-        rangestring_to_mask(rangestring, length)
 
 
 @pytest.mark.parametrize(
