@@ -14,7 +14,7 @@ import ert.ensemble_evaluator
 import ert3
 from ert3.config import SourceNS
 from ert_shared.async_utils import get_event_loop
-
+from res.config.active_range import ActiveRange
 
 from ._entity import TransmitterCoroutine
 from ._sensitivity import (
@@ -244,7 +244,7 @@ def run(
     if active_range is None:
         active_mask = None
     else:
-        active_mask = ert.ensemble_evaluator.ActiveRange(
+        active_mask = ActiveRange(
             rangestring=experiment_run_config.ensemble_config.active_range,
             length=ensemble_size,
         ).mask

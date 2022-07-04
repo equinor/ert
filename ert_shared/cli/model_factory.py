@@ -1,11 +1,11 @@
 from typing import List
 
-from ert.ensemble_evaluator.activerange import ActiveRange
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
 from ert_shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert_shared.models.single_test_run import SingleTestRun
+from res.config.active_range import ActiveRange
 
 
 def create_model(ert, ensemble_size, current_case_name, args):

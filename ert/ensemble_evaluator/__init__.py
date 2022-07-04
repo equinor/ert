@@ -1,4 +1,3 @@
-from .activerange import ActiveRange
 from .builder._ensemble import _Ensemble
 from .builder._ensemble_builder import _EnsembleBuilder
 from .builder._io_ import _IO, _InputBuilder, _OutputBuilder
@@ -23,7 +22,6 @@ OutputBuilder = _OutputBuilder
 RealizationBuilder = _RealizationBuilder
 
 __all__ = (
-    "ActiveRange",
     "EndEvent",
     "Ensemble",
     "EnsembleBuilder",

@@ -1,8 +1,9 @@
 from typing import List
 
-from ert.ensemble_evaluator.activerange import ActiveRange, mask_to_rangestring
 from ert_gui.ertwidgets.models.valuemodel import ValueModel
 from ert_shared.libres_facade import LibresFacade
+from res.config.active_range import ActiveRange
+from res.config.rangestring import mask_to_rangestring
 
 
 class ActiveRealizationsModel(ValueModel):
