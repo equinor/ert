@@ -49,7 +49,7 @@ async def test_happy_path(
         queue.add_ee_stage(real.steps[0], None)
     queue.submit_complete()
 
-    await queue.execute_queue_async(
+    await queue.execute_queue_via_websockets(
         url, "ee_0", threading.BoundedSemaphore(value=10), None
     )
     done.set_result(None)

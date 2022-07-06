@@ -220,15 +220,23 @@ class _LegacyEnsemble(_Ensemble):
             )
 
             # Finally, run the queue-loop until it finishes or raises
-            await self._job_queue.execute_queue_async(
-                self._config.dispatch_uri,
-                self._ee_id,
-                threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION),
-                queue_evaluators,  # type: ignore
-                cert=self._config.cert,
-                token=self._config.token,
-                output_bus=output_bus,
-            )
+            sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
+            if output_bus:
+                await self._job_queue.execute_queue_comms_via_bus(
+                    ee_id=self._ee_id,
+                    pool_sema=sema,
+                    evaluators=queue_evaluators,  # type: ignore
+                    output_bus=output_bus,
+                )
+            else:
+                await self._job_queue.execute_queue_via_websockets(
+                    self._config.dispatch_uri,
+                    self._ee_id,
+                    sema,
+                    queue_evaluators,  # type: ignore
+                    cert=self._config.cert,
+                    token=self._config.token,
+                )
 
         except asyncio.CancelledError:
             logger.debug("ensemble was cancelled")
