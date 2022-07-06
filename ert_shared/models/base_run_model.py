@@ -31,14 +31,14 @@ class ErtRunError(Exception):
 
 
 class _LogAggregration(logging.Handler):
-    """Logging handler which aggregates the log messages"""
-
     def __init__(self) -> None:
         self.messages: List[str] = []
+        self.exclude_logs = ["opencensus.ext.azure.common.transport"]
         super().__init__()
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.messages.append(record.getMessage())
+        if record.name not in self.exclude_logs:
+            self.messages.append(record.getMessage())
 
 
 @contextmanager
