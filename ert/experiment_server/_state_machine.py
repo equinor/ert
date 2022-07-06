@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class StateMachine:
+class ExperimentStateMachine:
     def __init__(self) -> None:
         self._ensemble_to_successful_realizations: Dict[int, List[int]] = defaultdict(
             list

@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, List, Optional, Union
 from cloudevents.http import CloudEvent
 from ert.ensemble_evaluator import Ensemble, EnsembleBuilder, identifiers
 from ert.ensemble_evaluator.util._tool import get_real_id
-from ert.experiment_server import StateMachine
+from ert.experiment_server import ExperimentStateMachine
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.feature_toggling import feature_enabled
@@ -98,7 +98,7 @@ class BaseRunModel:
 
         # experiment-server
         self._id: Optional[str] = None
-        self._state_machine = StateMachine()
+        self._state_machine = ExperimentStateMachine()
 
     def ert(self) -> EnKFMain:
         return self._ert
