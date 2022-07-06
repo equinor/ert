@@ -34,7 +34,6 @@ async def test_receiving_event_from_cluster(
 
         async with dispatcher_factory as make_dispatcher:
             dispatcher = await make_dispatcher(experiment_server)
-            assert experiment_server._dispatchers_connected.qsize() == 1
 
             event = CloudEvent(
                 {

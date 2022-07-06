@@ -49,7 +49,6 @@ async def dispatcher_factory() -> AsyncGenerator[
             raise RuntimeError
 
         connection = await asyncio.wait_for(_wait_for_connection(), timeout=60)
-        assert connection
         return connection
 
     yield _make_dispatcher

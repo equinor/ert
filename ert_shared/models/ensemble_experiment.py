@@ -41,65 +41,64 @@ class EnsembleExperiment(BaseRunModel):
         )
 
         loop = asyncio.get_running_loop()
-        executor = concurrent.futures.ThreadPoolExecutor()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            run_context = await loop.run_in_executor(executor, self.create_context)
 
-        run_context = await loop.run_in_executor(executor, self.create_context)
-
-        # Create runpaths
-        experiment_logger.debug("creating runpaths")
-        await loop.run_in_executor(
-            executor,
-            self.ert().getEnkfSimulationRunner().createRunPath,
-            run_context,
-        )
-
-        ensemble_id = await loop.run_in_executor(executor, self._post_ensemble_data)
-
-        await self._run_hook(
-            HookRuntime.PRE_SIMULATION, run_context.get_iter(), loop, executor
-        )
-
-        # Evaluate
-        experiment_logger.debug("evaluating")
-        await self._evaluate(run_context, evaluator_server_config)
-
-        num_successful_realizations = self._state_machine.successful_realizations(
-            run_context.get_iter()
-        )
-
-        num_successful_realizations += self._simulation_arguments.get(
-            "prev_successful_realizations", 0
-        )
-        try:
-            self.checkHaveSufficientRealizations(num_successful_realizations)
-        except ErtRunError as e:
-
-            # Send EXPERIMENT_FAILED
-            await self.dispatch(
-                CloudEvent(
-                    {
-                        "type": identifiers.EVTYPE_EXPERIMENT_FAILED,
-                        "source": f"/ert/experiment/{self.id_}",
-                        "id": str(uuid.uuid1()),
-                    },
-                    {
-                        "error": str(e),
-                    },
-                ),
-                run_context.get_iter(),
+            # Create runpaths
+            experiment_logger.debug("creating runpaths")
+            await loop.run_in_executor(
+                executor,
+                self.ert().getEnkfSimulationRunner().createRunPath,
+                run_context,
             )
-            return
 
-        await self._run_hook(
-            HookRuntime.POST_SIMULATION, run_context.get_iter(), loop, executor
-        )
+            ensemble_id = await loop.run_in_executor(executor, self._post_ensemble_data)
 
-        # Push simulation results to storage
-        await loop.run_in_executor(
-            executor,
-            self._post_ensemble_results,
-            ensemble_id,
-        )
+            await self._run_hook(
+                HookRuntime.PRE_SIMULATION, run_context.get_iter(), loop, executor
+            )
+
+            # Evaluate
+            experiment_logger.debug("evaluating")
+            await self._evaluate(run_context, evaluator_server_config)
+
+            num_successful_realizations = self._state_machine.successful_realizations(
+                run_context.get_iter()
+            )
+
+            num_successful_realizations += self._simulation_arguments.get(
+                "prev_successful_realizations", 0
+            )
+            try:
+                self.checkHaveSufficientRealizations(num_successful_realizations)
+            except ErtRunError as e:
+
+                # Send EXPERIMENT_FAILED
+                await self.dispatch(
+                    CloudEvent(
+                        {
+                            "type": identifiers.EVTYPE_EXPERIMENT_FAILED,
+                            "source": f"/ert/experiment/{self.id_}",
+                            "id": str(uuid.uuid1()),
+                        },
+                        {
+                            "error": str(e),
+                        },
+                    ),
+                    run_context.get_iter(),
+                )
+                return
+
+            await self._run_hook(
+                HookRuntime.POST_SIMULATION, run_context.get_iter(), loop, executor
+            )
+
+            # Push simulation results to storage
+            await loop.run_in_executor(
+                executor,
+                self._post_ensemble_results,
+                ensemble_id,
+            )
 
         # Send EXPERIMENT_COMPLETED
         await self.dispatch(

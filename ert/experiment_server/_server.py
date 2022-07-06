@@ -17,11 +17,6 @@ from res.enkf.enkf_main import EnKFMain
 from ._experiment_protocol import Experiment
 from ._registry import _Registry
 
-if sys.version_info < (3, 7):
-    from async_generator import asynccontextmanager
-else:
-    from contextlib import asynccontextmanager
-
 if TYPE_CHECKING:
     from typing import Optional
 
@@ -35,11 +30,6 @@ class ExperimentServer:
         self._config = ee_config
         self._registry = _Registry()
         self._clients: Set[WebSocketServerProtocol] = set()
-
-        self._dispatchers_connected: "asyncio.Queue[Optional[WebSocketServerProtocol]]" = (  # noqa
-            asyncio.Queue()
-        )
-
         self._server_done = asyncio.get_running_loop().create_future()
         self._server_task = asyncio.create_task(self._server())
 
@@ -62,28 +52,18 @@ class ExperimentServer:
             pass
         await self._server_task
 
-    @asynccontextmanager
-    async def count_dispatcher(self) -> AsyncIterator[None]:
-        await self._dispatchers_connected.put(None)
-        yield
-        await self._dispatchers_connected.get()
-        self._dispatchers_connected.task_done()
-
     async def handle_dispatch(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
-        # pylint: disable=not-async-context-manager
-        # (false positive)
-        async with self.count_dispatcher():
-            async for msg in websocket:
-                try:
-                    event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
-                except DataUnmarshallerError:
-                    event = from_json(msg, data_unmarshaller=pickle.loads)
+        async for msg in websocket:
+            try:
+                event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
+            except DataUnmarshallerError:
+                event = from_json(msg, data_unmarshaller=pickle.loads)
 
-                event_logger.debug("handle_dispatch: %s", event)
+            event_logger.debug("handle_dispatch: %s", event)
 
-                await self._registry.all_experiments[0].dispatch(event, 0)
+            await self._registry.all_experiments[0].dispatch(event, 0)
 
     @contextmanager
     def store_client(
@@ -103,12 +83,6 @@ class ExperimentServer:
                     message, data_unmarshaller=evaluator_unmarshaller
                 )
                 logger.debug(f"got message from client: {client_event}")
-
-    async def _broadcast_to_clients(self, event: CloudEvent) -> None:
-        logger.debug("broadcasting %s to %s", event, self._clients)
-        if event and self._clients:
-            await asyncio.gather(*[client.send(event) for client in self._clients])
-        logger.debug("done broadcasting")
 
     async def _server(self) -> None:
         try:
