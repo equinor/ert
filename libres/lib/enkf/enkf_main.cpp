@@ -358,26 +358,10 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
     return res_config_get_workflow_list(enkf_main->res_config);
 }
 
-int enkf_main_load_from_forward_model_with_fs(enkf_main_type *enkf_main,
-                                              int iter,
-                                              bool_vector_type *iactive,
-                                              enkf_fs_type *fs) {
-    model_config_type *model_config = enkf_main_get_model_config(enkf_main);
-    ert_run_context_type *run_context =
-        ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
-            fs, iactive, model_config_get_runpath_fmt(model_config),
-            model_config_get_jobname_fmt(model_config),
-            enkf_main_get_data_kw(enkf_main), iter);
-    int loaded = enkf_main_load_from_run_context(enkf_main, run_context, fs);
-    ert_run_context_free(run_context);
-    return loaded;
-}
-
 int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     ert_run_context_type *run_context,
                                     enkf_fs_type *fs) {
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
-    auto const *iactive = ert_run_context_get_iactive(run_context);
 
     // Loading state from a fwd-model is mainly io-bound so we can
     // allow a lot more than #cores threads to execute in parallel.
@@ -399,7 +383,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
         state = PyEval_SaveThread();
 
     for (int iens = 0; iens < ens_size; ++iens) {
-        if (bool_vector_iget(iactive, iens)) {
+        if (ert_run_context_iactive(run_context, iens)) {
 
             futures.push_back(std::make_tuple(
                 iens, // for logging later
@@ -557,15 +541,6 @@ std::vector<std::string> get_parameter_keys(py::object self) {
     return parameters;
 }
 
-int load_from_forward_model_with_fs_pybind(py::object self, int iter,
-                                           py::object iactive, py::object fs) {
-    auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-    auto iactive_ = ert::from_cwrap<bool_vector_type>(iactive);
-    auto fs_ = ert::from_cwrap<enkf_fs_type>(fs);
-    return enkf_main_load_from_forward_model_with_fs(enkf_main, iter, iactive_,
-                                                     fs_);
-}
-
 namespace enkf_main {
 /** @brief Writes the eclipse data file
  *
@@ -634,7 +609,6 @@ void ecl_write(const ensemble_config_type *ens_config,
 
     value_export_free(export_value);
 }
-
 /**
  * @brief Initializes all active runs.
  *
@@ -734,8 +708,6 @@ RES_LIB_SUBMODULE("enkf_main", m) {
                 enkf_main::run_context_get_runpaths(run_context));
         },
         py::arg("self"), py::arg("run_context"));
-    m.def("load_from_forward_model", load_from_forward_model_with_fs_pybind,
-          py::arg("self"), py::arg("iter"), py::arg("iactive"), py::arg("fs"));
 }
 
 #include "enkf_main_ensemble.cpp"
