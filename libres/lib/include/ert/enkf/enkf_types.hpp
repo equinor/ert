@@ -135,7 +135,7 @@ typedef enum {
 
 */
 
-typedef enum { //ENKF_ASSIMILATION       = 1,
+typedef enum {
     ENSEMBLE_EXPERIMENT = 2,
     SMOOTHER_RUN = 4,
     INIT_ONLY = 8,
