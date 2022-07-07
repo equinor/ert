@@ -238,14 +238,8 @@ def test_localization(setup_case, expected_target_gen_kw):
 
     ert.update_configuration = update_step
 
-    # Run ensemble smoother
-    mask = [True] * ert.getEnsembleSize()
-    model_config = ert.getModelConfig()
-    path_fmt = model_config.getRunpathFormat()
-    jobname_fmt = model_config.getJobnameFormat()
-    subst_list = None
-    run_context = ErtRunContext.ensemble_smoother(
-        sim_fs, target_fs, mask, path_fmt, jobname_fmt, subst_list, 0
+    run_context = ert.create_ensemble_smoother_run_context(
+        source_filesystem=sim_fs, target_filesystem=target_fs, iteration=0
     )
     es_update.smootherUpdate(run_context)
 

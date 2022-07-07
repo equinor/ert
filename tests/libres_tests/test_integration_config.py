@@ -8,23 +8,7 @@ def _create_runpath(enkf_main: EnKFMain) -> ErtRunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
-    result_fs = enkf_main.getEnkfFsManager().getCurrentFileSystem()
-
-    model_config = enkf_main.getModelConfig()
-    runpath_fmt = model_config.getRunpathFormat()
-    jobname_fmt = model_config.getJobnameFormat()
-    subst_list = enkf_main.getDataKW()
-
-    run_context = ErtRunContext.ensemble_smoother(
-        result_fs,
-        None,
-        [True],
-        runpath_fmt,
-        jobname_fmt,
-        subst_list,
-        0,
-    )
-
+    run_context = enkf_main.create_ensemble_experiment_run_context(iteration=0)
     enkf_main.getEnkfSimulationRunner().createRunPath(run_context)
     return run_context
 

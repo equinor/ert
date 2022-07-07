@@ -27,6 +27,7 @@ from res.enkf.enkf_fs_manager import EnkfFsManager
 from res.enkf.enkf_obs import EnkfObs
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ensemble_config import EnsembleConfig
+from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.es_update import ESUpdate
 from res.enkf.hook_manager import HookManager
@@ -142,6 +143,63 @@ class EnKFMain(BaseCClass):
         """@rtype: UpdateConfiguration"""
         return self.update_configuration
 
+    def create_ensemble_experiment_run_context(
+        self, iteration: int, active_mask: List[bool] = None, source_filesystem=None
+    ) -> ErtRunContext:
+        """Creates an ensemble experiment run context
+        :param fs: The source filesystem, defaults to
+            getEnkfFsManager().getCurrentFileSystem().
+        :param active_mask: Whether a realization is active or not,
+            defaults to all active.
+        """
+        if active_mask is None:
+            active_mask = [True] * self.getEnsembleSize()
+        if source_filesystem is None:
+            source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
+
+        model_config = self.getModelConfig()
+        runpath_fmt = model_config.getRunpathFormat()
+        jobname_fmt = model_config.getJobnameFormat()
+        subst_list = self.getDataKW()
+        return ErtRunContext.ensemble_experiment(
+            source_filesystem,
+            active_mask,
+            runpath_fmt,
+            jobname_fmt,
+            subst_list,
+            iteration,
+        )
+
+    def create_ensemble_smoother_run_context(
+        self,
+        iteration: int,
+        target_filesystem,
+        active_mask: List[bool] = None,
+        source_filesystem=None,
+    ) -> ErtRunContext:
+        """Creates an ensemble smoother run context
+        :param fs: The source filesystem, defaults to
+            getEnkfFsManager().getCurrentFileSystem().
+        """
+        if active_mask is None:
+            active_mask = [True] * self.getEnsembleSize()
+        if source_filesystem is None:
+            source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
+
+        model_config = self.getModelConfig()
+        runpath_fmt = model_config.getRunpathFormat()
+        jobname_fmt = model_config.getJobnameFormat()
+        subst_list = self.getDataKW()
+        return ErtRunContext.ensemble_smoother(
+            source_filesystem,
+            target_filesystem,
+            active_mask,
+            runpath_fmt,
+            jobname_fmt,
+            subst_list,
+            iteration,
+        )
+
     # --- Overridden methods --------------------
 
     def _monkey_patch_methods(self, real_enkf_main):
@@ -248,12 +306,6 @@ class _RealEnKFMain(BaseCClass):
     _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
     _load_from_run_context = ResPrototype(
         "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
-    )
-    _alloc_run_context_ENSEMBLE_EXPERIMENT = ResPrototype(
-        "ert_run_context_obj enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(enkf_main , \
-                                                                                 enkf_fs , \
-                                                                                 bool_vector , \
-                                                                                 int)"  # noqa
     )
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
@@ -395,15 +447,6 @@ class _RealEnKFMain(BaseCClass):
                     run_context.get_init_mode().value,
                     realization_nr,
                 )
-
-    def getRunContextENSEMPLE_EXPERIMENT(
-        self, fs, iactive: List[bool], iteration: int = 0
-    ):
-        true_indices = [idx for idx, value in enumerate(iactive) if value]
-        bool_vector = BoolVector.createFromList(
-            size=len(iactive), source_list=true_indices
-        )
-        return self._alloc_run_context_ENSEMBLE_EXPERIMENT(fs, bool_vector, iteration)
 
     def rng(self) -> RandomNumberGenerator:
         "Will return the random number generator used for updates."
