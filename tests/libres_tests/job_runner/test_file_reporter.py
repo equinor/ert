@@ -7,6 +7,7 @@ from libres_utils import tmpdir
 from job_runner.job import Job
 from job_runner.reporting import File
 from job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
 
 
 class FileReporterTests(TestCase):
@@ -20,11 +21,11 @@ class FileReporterTests(TestCase):
 
         r.report(Init([job1], 1, 19))
 
-        with open(self.reporter.STATUS_file, "r") as f:
+        with open(STATUS_file, "r") as f:
             self.assertIn(
                 "Current host", f.readline(), "STATUS file missing expected value"
             )
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"name": "job1"', contents, "status.json missing job1")
             self.assertIn(
@@ -51,16 +52,16 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_file, "r") as f:
+        with open(STATUS_file, "r") as f:
             self.assertIn("job1", f.readline(), "STATUS file missing job1")
-        with open(self.reporter.LOG_file, "r") as f:
+        with open(LOG_file, "r") as f:
             self.assertIn(
                 "Calling: /bin/bash --foo 1 --bar 2",
                 f.readline(),
                 """JOB_LOG file missing executable and arguments""",
             )
 
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn(
                 '"status": "Running"', contents, "status.json missing Running status"
@@ -76,13 +77,13 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_file, "r") as f:
+        with open(STATUS_file, "r") as f:
             self.assertIn(
                 "EXIT: -10/massive_failure",
                 f.readline(),
                 "STATUS file missing EXIT message",
             )
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn(
                 '"status": "Failure"', contents, "status.json missing Failure status"
@@ -106,7 +107,7 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn(
                 '"status": "Success"', contents, "status.json missing Success status"
@@ -121,9 +122,9 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_file, "r") as f:
+        with open(STATUS_file, "r") as f:
             self.assertIn("EXIT: 1/massive_failure", f.readline())
-        with open(self.reporter.ERROR_file, "r") as f:
+        with open(ERROR_file, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn("<job>job1</job>", contents, "ERROR file missing job")
             self.assertIn(
@@ -136,7 +137,7 @@ class FileReporterTests(TestCase):
                 contents,
                 "ERROR had invalid stderr information",
             )
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn(
                 '"status": "Failure"', contents, "status.json missing Failure status"
@@ -157,7 +158,7 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.STATUS_json, "r") as f:
+        with open(STATUS_json, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn('"status": "Running"', contents, "status.json missing status")
             self.assertIn(
@@ -180,7 +181,7 @@ class FileReporterTests(TestCase):
 
         self.reporter.report(msg)
 
-        with open(self.reporter.OK_file, "r") as f:
+        with open(OK_file, "r") as f:
             self.assertIn(
                 "All jobs complete", f.readline(), "OK file missing expected value"
             )
@@ -200,7 +201,7 @@ class FileReporterTests(TestCase):
             Job({"name": "job1", "stderr": "stderr.out.0"}, 0), "massive_failure"
         )
 
-        with open(self.reporter.ERROR_file, "r") as f:
+        with open(ERROR_file, "r") as f:
             contents = "".join(f.readlines())
             self.assertIn(
                 "E_MASSIVE_FAILURE", contents, "ERROR file missing stderr content"
@@ -211,12 +212,12 @@ class FileReporterTests(TestCase):
     def test_old_file_deletion(self):
         r = self.reporter
         # touch all files that are to be removed
-        for f in [r.ERROR_file, r.STATUS_file, r.OK_file]:
+        for f in [ERROR_file, STATUS_file, OK_file]:
             open(f, "a").close()
 
         r._delete_old_status_files()
 
-        for f in [r.ERROR_file, r.STATUS_file, r.OK_file]:
+        for f in [ERROR_file, STATUS_file, OK_file]:
             self.assertFalse(os.path.isfile(f), f"{r} was not deleted")
 
     @tmpdir(None)
@@ -248,7 +249,7 @@ class FileReporterTests(TestCase):
             f"EXIT: {exited_j_2.exit_code}/{exited_j_2.error_message}\n"
         )
 
-        with open(self.reporter.STATUS_file, "r") as f:
+        with open(STATUS_file, "r") as f:
             for expected in [
                 "Current host",
                 expected_j1_line,
