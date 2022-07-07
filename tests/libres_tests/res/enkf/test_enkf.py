@@ -257,7 +257,9 @@ class EnKFTest(ResTest):
             iactive = [True] * 10
             iactive[0] = False
             iactive[1] = False
-            run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, iactive)
+            run_context = main.create_ensemble_experiment_run_context(
+                source_filesystem=fs, active_mask=iactive, iteration=0
+            )
 
             self.assertEqual(len(run_context), 10)
 
@@ -290,7 +292,9 @@ class EnKFTest(ResTest):
 
             mask = [False] * 10
             mask[0] = True
-            run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, mask)
+            run_context = main.create_ensemble_experiment_run_context(
+                source_filesystem=fs, active_mask=mask, iteration=0
+            )
 
             self.assertEqual(len(run_context), 10)
 

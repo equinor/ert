@@ -13,7 +13,9 @@ def test_with_gen_kw(copy_case):
     res_config = ResConfig("snake_oil.ert")
     main = EnKFMain(res_config)
     fs = main.getEnkfFsManager().getCurrentFileSystem()
-    run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, [True])
+    run_context = main.create_ensemble_experiment_run_context(
+        source_filesystem=fs, active_mask=[True], iteration=0
+    )
     main.getEnkfSimulationRunner().createRunPath(run_context)
     assert os.path.exists(
         "storage/snake_oil/runpath/realization-0/iter-0/parameters.txt"
@@ -35,7 +37,9 @@ def test_without_gen_kw(copy_case):
     res_config = ResConfig("snake_oil.ert")
     main = EnKFMain(res_config)
     fs = main.getEnkfFsManager().getCurrentFileSystem()
-    run_context = main.getRunContextENSEMPLE_EXPERIMENT(fs, [True])
+    run_context = main.create_ensemble_experiment_run_context(
+        source_filesystem=fs, active_mask=[True], iteration=0
+    )
     main.getEnkfSimulationRunner().createRunPath(run_context)
     assert os.path.exists("storage/snake_oil/runpath/realization-0/iter-0")
     assert not os.path.exists(

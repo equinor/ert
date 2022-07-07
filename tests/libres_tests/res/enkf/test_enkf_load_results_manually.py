@@ -54,7 +54,9 @@ class LoadResultsManuallyTest(ResTest):
             realisations = [True] * 25
             realisations[7] = False
 
-            run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)
+            run_context = ert.create_ensemble_experiment_run_context(
+                source_filesystem=load_into, active_mask=realisations, iteration=0
+            )
 
             loaded = ert.loadFromRunContext(run_context, load_into)
 

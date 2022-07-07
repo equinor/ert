@@ -9,7 +9,9 @@ def test_load_from_context(benchmark, template_config):
         ert.getEnkfFsManager().getFileSystem("default")
         expected_reals = template_config["reals"]
         realisations = [True] * expected_reals
-        run_context = ert.getRunContextENSEMPLE_EXPERIMENT(load_into, realisations)
+        run_context = ert.create_ensemble_experiment_run_context(
+            source_filesystem=load_into, active_mask=realisations, iteration=0
+        )
         loaded_reals = benchmark(ert.loadFromRunContext, run_context, load_into)
         assert loaded_reals == expected_reals
 

@@ -1,6 +1,5 @@
 from libres_utils import ResTest, tmpdir
-
-from res.enkf import EnkfConfigNode, EnkfNode, ErtRunContext, NodeId
+from res.enkf import EnkfConfigNode, EnkfNode, NodeId
 from res.enkf.enums import RealizationStateEnum
 from res.test import ErtTestContext
 
@@ -62,13 +61,8 @@ class SimulationBatchTest(ResTest):
                 state_map[iens] = RealizationStateEnum.STATE_INITIALIZED
 
             mask = [True] * batch_size
-            model_config = ert.getModelConfig()
-            runpath_fmt = model_config.getRunpathFormat()
-            jobname_fmt = model_config.getJobnameFormat()
-            subst_list = ert.getDataKW()
-            itr = 0
-            run_context = ErtRunContext.ensemble_experiment(
-                sim_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+            run_context = ert.create_ensemble_experiment_run_context(
+                source_filesystem=sim_fs, active_mask=mask, iteration=0
             )
             ert.getEnkfSimulationRunner().createRunPath(run_context)
             job_queue = ert.get_queue_config().create_job_queue()

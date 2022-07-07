@@ -227,17 +227,6 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-ert_run_context_type *enkf_main_alloc_ert_run_context_ENSEMBLE_EXPERIMENT(
-    const enkf_main_type *enkf_main, enkf_fs_type *fs,
-    bool_vector_type *iactive, int iter) {
-    const model_config_type *model_config =
-        enkf_main_get_model_config(enkf_main);
-    return ert_run_context_alloc_ENSEMBLE_EXPERIMENT(
-        fs, iactive, model_config_get_runpath_fmt(model_config),
-        model_config_get_jobname_fmt(model_config),
-        enkf_main_get_data_kw(enkf_main), iter);
-}
-
 void enkf_main_add_data_kw(enkf_main_type *enkf_main, const char *key,
                            const char *value) {
     subst_config_add_subst_kw(enkf_main_get_subst_config(enkf_main), key,

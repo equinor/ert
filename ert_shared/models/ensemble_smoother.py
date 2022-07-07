@@ -109,10 +109,6 @@ class EnsembleSmoother(BaseRunModel):
         self, prior_context: Optional[ErtRunContext] = None
     ) -> ErtRunContext:
 
-        model_config = self.ert().getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.ert().getDataKW()
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:
             sim_fs = fs_manager.getCurrentFileSystem()
@@ -130,8 +126,11 @@ class EnsembleSmoother(BaseRunModel):
                 | RealizationStateEnum.STATE_INITIALIZED
             )
 
-        run_context = ErtRunContext.ensemble_smoother(
-            sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+        run_context = self.ert().create_ensemble_smoother_run_context(
+            active_mask=mask,
+            iteration=itr,
+            target_filesystem=target_fs,
+            source_filesystem=sim_fs,
         )
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()
