@@ -10,9 +10,8 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
-
 from ert_shared.libres_facade import LibresFacade
-from res.enkf import ResConfig, EnKFMain, ErtRunContext
+from res.enkf import EnKFMain, ResConfig
 
 
 def write_file(fname, contents):
@@ -26,13 +25,9 @@ def create_runpath():
         res_config = ResConfig(config)
         ert = EnKFMain(res_config)
 
-        run_context = ErtRunContext.ensemble_experiment(
-            ert.getEnkfFsManager().getCurrentFileSystem(),
-            [True],
-            ert.getModelConfig().getRunpathFormat(),
-            ert.getModelConfig().getJobnameFormat(),
-            ert.getDataKW(),
-            0,
+        run_context = ert.create_ensemble_experiment_run_context(
+            active_mask=[True],
+            iteration=0,
         )
         ert.getEnkfSimulationRunner().createRunPath(run_context)
         return ert

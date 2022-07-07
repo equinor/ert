@@ -27,6 +27,7 @@ from res.enkf.enkf_fs_manager import EnkfFsManager
 from res.enkf.enkf_obs import EnkfObs
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ensemble_config import EnsembleConfig
+from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.es_update import ESUpdate
 from res.enkf.hook_manager import HookManager
@@ -141,6 +142,64 @@ class EnKFMain(BaseCClass):
     def getLocalConfig(self) -> UpdateConfiguration:
         """@rtype: UpdateConfiguration"""
         return self.update_configuration
+
+    def create_ensemble_experiment_run_context(
+        self, iteration: int, active_mask: List[bool] = None, source_filesystem=None
+    ) -> ErtRunContext:
+        """Creates an ensemble experiment run context
+        :param fs: The source filesystem, defaults to
+            getEnkfFsManager().getCurrentFileSystem().
+        :param active_mask: Whether a realization is active or not,
+            defaults to all active.
+        """
+        if active_mask is None:
+            active_mask = [True] * self.getEnsembleSize()
+        fs_manager = self.getEnkfFsManager()
+        if source_filesystem is None:
+            source_filesystem = self.get_EnkfFsManager().getCurrentFileSystem()
+
+        model_config = self.getModelConfig()
+        runpath_fmt = model_config.getRunpathFormat()
+        jobname_fmt = model_config.getJobnameFormat()
+        subst_list = self.getDataKW()
+        return ErtRunContext.ensemble_experiment(
+            source_filesystem,
+            active_mask,
+            runpath_fmt,
+            jobname_fmt,
+            subst_list,
+            iteration,
+        )
+
+    def create_ensemble_smoother_run_context(
+        self,
+        iteration: int,
+        target_filesystem,
+        active_mask: List[bool] = None,
+        source_filesystem=None,
+    ) -> ErtRunContext:
+        """Creates an ensemble smoother run context
+        :param fs: The source filesystem, defaults to
+            getEnkfFsManager().getCurrentFileSystem().
+        """
+        if active_mask is None:
+            active_mask = [True] * self.getEnsembleSize()
+        if source_filesystem is None:
+            source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
+
+        model_config = self.getModelConfig()
+        runpath_fmt = model_config.getRunpathFormat()
+        jobname_fmt = model_config.getJobnameFormat()
+        subst_list = self.getDataKW()
+        return ErtRunContext.ensemble_smoother(
+            source_filesystem,
+            target_filesystem,
+            active_mask,
+            runpath_fmt,
+            jobname_fmt,
+            subst_list,
+            iteration,
+        )
 
     # --- Overridden methods --------------------
 
