@@ -223,10 +223,6 @@ class MultipleDataAssimilation(BaseRunModel):
         update: bool = True,
     ) -> ErtRunContext:
         target_case_format = self._simulation_arguments["target_case"]
-        model_config = self.ert().getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.ert().getDataKW()
         fs_manager = self.ert().getEnkfFsManager()
 
         source_case_name = target_case_format % itr
@@ -257,8 +253,11 @@ class MultipleDataAssimilation(BaseRunModel):
             ):
                 mask[idx] = valid_state and run_realization
 
-        run_context = ErtRunContext.ensemble_smoother(
-            sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+        run_context = self.ert().create_ensemble_smoother_run_context(
+            source_filesystem=sim_fs,
+            target_filesystem=target_fs,
+            active_mask=mask,
+            iteration=itr,
         )
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()

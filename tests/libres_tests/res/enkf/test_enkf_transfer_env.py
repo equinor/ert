@@ -2,11 +2,12 @@ import json
 import os
 from textwrap import dedent
 
-from res.enkf import ResConfig, EnKFMain
-from res.enkf.ert_run_context import ErtRunContext
+import pytest
+from res.enkf import EnKFMain, ResConfig
 
 
-def test_transfer_var(use_tmpdir):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_transfer_var():
     # Write a minimal config file with env
     with open("config_file.ert", "w") as fout:
         fout.write(
@@ -23,17 +24,8 @@ def test_transfer_var(use_tmpdir):
         )
     res_config = ResConfig("config_file.ert")
     ert = EnKFMain(res_config)
-    fs_manager = ert.getEnkfFsManager()
 
-    model_config = ert.getModelConfig()
-    run_context = ErtRunContext.ensemble_experiment(
-        fs_manager.getCurrentFileSystem(),
-        [True],
-        model_config.getRunpathFormat(),
-        model_config.getJobnameFormat(),
-        ert.getDataKW(),
-        0,
-    )
+    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
     ert.getEnkfSimulationRunner().createRunPath(run_context)
     os.chdir("simulations/realization0")
     with open("jobs.json", "r") as f:

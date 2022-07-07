@@ -1,10 +1,10 @@
-from typing import List
-
-from res.job_queue import JobQueueManager, ForwardModelStatus
-from res.enkf import ErtRunContext, EnkfSimulationRunner
-from res.enkf.enums import EnkfRunType, HookRuntime
 from threading import Thread
 from time import sleep
+from typing import List
+
+from res.enkf import EnkfSimulationRunner
+from res.enkf.enums import HookRuntime
+from res.job_queue import ForwardModelStatus, JobQueueManager
 
 
 class SimulationContext:
@@ -18,19 +18,10 @@ class SimulationContext:
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
 
-        subst_list = self._ert.getDataKW()
-        path_fmt = self._ert.getModelConfig().getRunpathFormat()
-        jobname_fmt = self._ert.getModelConfig().getJobnameFormat()
-
-        self._run_context = ErtRunContext(
-            EnkfRunType.ENSEMBLE_EXPERIMENT,
-            sim_fs,
-            None,
-            mask,
-            path_fmt,
-            jobname_fmt,
-            subst_list,
-            itr,
+        self._run_context = ert.create_ensemble_experiment_run_context(
+            source_filesystem=sim_fs,
+            active_mask=mask,
+            iteration=itr,
         )
         # fill in the missing geo_id data
         for sim_id, (geo_id, _) in enumerate(case_data):

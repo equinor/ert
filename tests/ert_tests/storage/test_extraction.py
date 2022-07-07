@@ -558,22 +558,10 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
     enkf_main = ert._enkf_main
-    result_fs = ert.get_current_fs()
-    target_fs = ert._enkf_main.getEnkfFsManager().getFileSystem("iter")
 
-    model_config = enkf_main.getModelConfig()
-    runpath_fmt = model_config.getRunpathFormat()
-    jobname_fmt = model_config.getJobnameFormat()
-    subst_list = enkf_main.getDataKW()
-
-    run_context = ErtRunContext.ensemble_smoother(
-        result_fs,
-        target_fs,
-        [True] * ert.get_ensemble_size(),
-        runpath_fmt,
-        jobname_fmt,
-        subst_list,
-        iteration,
+    run_context = enkf_main.create_ensemble_smoother_run_context(
+        iteration=iteration,
+        target_filesystem=enkf_main.getEnkfFsManager().getFileSystem("iter"),
     )
 
     enkf_main.getEnkfSimulationRunner().createRunPath(run_context)

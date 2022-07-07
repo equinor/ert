@@ -63,18 +63,12 @@ class EnsembleExperiment(BaseRunModel):
         )
 
     def create_context(self) -> ErtRunContext:
-        fs_manager = self.ert().getEnkfFsManager()
-        result_fs = fs_manager.getCurrentFileSystem()
-
-        model_config = self.ert().getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.ert().getDataKW()
         itr = self._simulation_arguments.get("iter_num", 0)
         mask = self._simulation_arguments["active_realizations"]
 
-        run_context = ErtRunContext.ensemble_experiment(
-            result_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+        run_context = self.ert().create_ensemble_experiment_run_context(
+            active_mask=mask,
+            iteration=itr,
         )
 
         self._run_context = run_context

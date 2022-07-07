@@ -165,10 +165,6 @@ class IteratedEnsembleSmoother(BaseRunModel):
         prior_context: Optional[ErtRunContext] = None,
         rerun: bool = False,
     ) -> ErtRunContext:
-        model_config = self.ert().getModelConfig()
-        runpath_fmt = model_config.getRunpathFormat()
-        jobname_fmt = model_config.getJobnameFormat()
-        subst_list = self.ert().getDataKW()
         target_case_format = self._simulation_arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)
@@ -187,8 +183,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
         else:
             target_fs = self.createTargetCaseFileSystem(itr + 1, target_case_format)
 
-        run_context = ErtRunContext.ensemble_smoother(
-            sim_fs, target_fs, mask, runpath_fmt, jobname_fmt, subst_list, itr
+        run_context = self.ert().create_ensemble_smoother_run_context(
+            source_filesystem=sim_fs,
+            target_filesystem=target_fs,
+            active_mask=mask,
+            iteration=itr,
         )
         self._run_context = run_context
         self._last_run_iteration = run_context.get_iter()

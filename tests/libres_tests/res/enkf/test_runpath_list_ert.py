@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 from textwrap import dedent
 
-
-from res.enkf import ErtRunContext, ResConfig, EnKFMain
+import pytest
+from res.enkf import EnKFMain, ResConfig
 
 
 def test_assert_symlink_deleted(setup_case):
@@ -12,15 +12,7 @@ def test_assert_symlink_deleted(setup_case):
     runner = ert.getEnkfSimulationRunner()
 
     # create directory structure
-    model_config = ert.getModelConfig()
-    run_context = ErtRunContext.ensemble_experiment(
-        ert.getEnkfFsManager().getCurrentFileSystem(),
-        [True],
-        model_config.getRunpathFormat(),
-        model_config.getJobnameFormat(),
-        ert.getDataKW(),
-        0,
-    )
+    run_context = ert.create_ensemble_experiment_run_context(iteration=0)
     runner.createRunPath(run_context)
 
     # replace field file with symlink
@@ -37,7 +29,8 @@ def test_assert_symlink_deleted(setup_case):
     assert not os.path.islink(linkpath)
 
 
-def test_assert_export(use_tmpdir):
+@pytest.mark.usefixtures("use_tmpdir")
+def test_assert_export():
     # Write a minimal config file with env
     with open("config_file.ert", "w") as fout:
         fout.write(
@@ -54,15 +47,8 @@ def test_assert_export(use_tmpdir):
     runpath_list_file = ert.getHookManager().getRunpathListFile()
     assert not os.path.isfile(runpath_list_file)
 
-    fs_manager = ert.getEnkfFsManager()
-    model_config = ert.getModelConfig()
-    run_context = ErtRunContext.ensemble_experiment(
-        fs_manager.getCurrentFileSystem(),
-        [True],
-        model_config.getRunpathFormat(),
-        model_config.getJobnameFormat(),
-        ert.getDataKW(),
-        0,
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0,
     )
 
     ert.getEnkfSimulationRunner().createRunPath(run_context)
