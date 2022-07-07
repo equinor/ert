@@ -22,6 +22,12 @@ def get_ecl_include():
     return get_include()
 
 
+def get_ecl_library():
+    from ecl import EclPrototype
+
+    return EclPrototype.lib._name
+
+
 def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
@@ -114,12 +120,12 @@ setup(
         ]
     },
     cmake_args=[
-        "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
+        f"-DECL_INCLUDE_DIRS={get_ecl_include()}",
+        f"-DECL_LIBRARIES={get_ecl_library()}",
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
         # everything not OS X. We depend on C++17, which makes our minimum
         # supported OS X release 10.15
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
-        f"-DPYTHON_EXECUTABLE={sys.executable}",
     ],
     cmake_source_dir="libres/",
     classifiers=[

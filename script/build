@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 import re
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 from pathlib import Path
 
 SOURCE_ROOT = Path(__file__).parent.parent
@@ -44,14 +44,16 @@ def check_cxx_version() -> None:
     cxx = shutil.which(os.environ.get("CXX", "c++"))
     print_info(f"Using C++ compiler: {cxx}")
 
-    version_line = subprocess.check_output([cxx, "--version"]).splitlines()[0].decode()
+    version_line = (
+        subprocess.check_output([cxx, "--version"]).splitlines()[0].decode().lower()
+    )
     version_match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_line)
     if version_match is None:
         print_error("Could not extract version information from C++ compiler")
         sys.exit(1)
     version = tuple(int(version_match[x + 1]) for x in range(3))
 
-    if "GCC" in version_line:
+    if "gcc" in version_line:
         min_version = MIN_GCC_VERSION
     elif "clang" in version_line:
         min_version = MIN_CLANG_VERSION
@@ -119,7 +121,11 @@ def make_compile_commands_symlink():
         )
 
 
-def run(*args: Union[str, os.PathLike], verbose: Optional[bool] = None) -> None:
+def run(
+    *args: Union[str, os.PathLike],
+    verbose: Optional[bool] = None,
+    env: Optional[Dict[str, str]] = None,
+) -> None:
     """
     Run a command and optionally ignore its output
     """
@@ -127,7 +133,7 @@ def run(*args: Union[str, os.PathLike], verbose: Optional[bool] = None) -> None:
         verbose = VERBOSE
 
     print_info(f"Running: {' '.join(map(str, args))}")
-    kwargs = {}
+    kwargs = {"env": env}
     if not verbose:
         kwargs["stdout"] = subprocess.DEVNULL
         kwargs["stderr"] = subprocess.DEVNULL
@@ -217,6 +223,14 @@ def parse() -> argparse.Namespace:
         default=False,
         help="Run script outside of virtualenv",
     )
+
+    parser.add_argument(
+        "-t",
+        "--tests",
+        action="store_true",
+        default=False,
+        help="Run CMake with -DBUILD_TESTS=ON",
+    )
     return parser.parse_args()
 
 
@@ -234,6 +248,7 @@ def main() -> None:
     setup_args: List[str] = []
     cmake_args: List[str] = [
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DBUILD_TESTS=" + ("ON" if args.tests else "OFF"),
     ]
 
     if args.release:
@@ -241,8 +256,20 @@ def main() -> None:
     else:
         setup_args += ["--build-type=Debug"]
 
+    # libecl is compiled for CentOS 7 which forces the C++ ABI to be old
+    # (pre-C++11). Since we are linking with libecl, make sure that we are using
+    # its ABI.
+    #
+    # https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
+    #
+    # NOTE: If we start using manylinux_2_28 or greater, this will have to be
+    # removed.
+    cxxflags = "-D_GLIBCXX_USE_CXX11_ABI=0 " + os.environ.get("CXXFLAGS", "")
+    env = {"CXXFLAGS": cxxflags, **os.environ}
+
     if should_setup:
-        check_cxx_version()
+        if not args.force:
+            check_cxx_version()
         check_pip_version()
         install_build_requires()
 
@@ -255,6 +282,7 @@ def main() -> None:
             "--",
             *cmake_args,
             verbose=True,
+            env=env,
         )
     else:
         try:
@@ -267,6 +295,7 @@ def main() -> None:
                 "--",
                 *cmake_args,
                 verbose=True,
+                env=env,
             )
         except subprocess.CalledProcessError as exc:
             print_error("Build failed. If the output makes no sense, try these steps:")
