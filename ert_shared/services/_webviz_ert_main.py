@@ -37,7 +37,10 @@ def create_config(
         for page in config_dict["pages"]:
             for element in page["content"]:
                 for key in element:
-                    element[key] = {"project_identifier": project_identifier}
+                    if element[key] is None:
+                        element[key] = {"project_identifier": project_identifier}
+                    else:
+                        element[key]["project_identifier"] = project_identifier
 
     new_config_dict = config_dict
 
