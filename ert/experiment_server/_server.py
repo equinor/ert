@@ -1,13 +1,11 @@
 import asyncio
 import logging
 import pickle
-import sys
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Generator, Set
+from typing import Any, Callable, Generator, Set
 
 from cloudevents.exceptions import DataUnmarshallerError
 from cloudevents.http import from_json
-from cloudevents.http.event import CloudEvent
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
 from ert.serialization import evaluator_unmarshaller
@@ -16,9 +14,6 @@ from res.enkf.enkf_main import EnKFMain
 
 from ._experiment_protocol import Experiment
 from ._registry import _Registry
-
-if TYPE_CHECKING:
-    from typing import Optional
 
 
 logger = logging.getLogger(__name__)
