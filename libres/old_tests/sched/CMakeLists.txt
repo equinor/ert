@@ -1,4 +1,5 @@
-add_executable(sched_history_summary test_sched_history_summary.cpp)
+add_executable(sched_history_summary ${TESTS_EXCLUDE_FROM_ALL}
+                                     test_sched_history_summary.cpp)
 target_link_libraries(sched_history_summary res)
 
 if(NOT EXISTS "${EQUINOR_TEST_DATA_DIR}")

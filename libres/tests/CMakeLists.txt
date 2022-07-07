@@ -7,6 +7,7 @@ include(Catch)
 
 add_executable(
   ert_test_suite
+  ${TESTS_EXCLUDE_FROM_ALL}
   tmpdir.cpp
   analysis/ies/test_ies_enkf_main.cpp
   analysis/test_enkf_linalg.cpp
