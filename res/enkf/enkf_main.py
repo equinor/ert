@@ -17,8 +17,7 @@
 from typing import List
 
 from cwrap import BaseCClass
-from ecl.util.util import BoolVector, RandomNumberGenerator
-
+from ecl.util.util import RandomNumberGenerator
 from res import ResPrototype
 from res._lib import enkf_main, enkf_state
 from res.enkf.analysis_config import AnalysisConfig
@@ -142,6 +141,15 @@ class EnKFMain(BaseCClass):
     def getLocalConfig(self) -> UpdateConfiguration:
         """@rtype: UpdateConfiguration"""
         return self.update_configuration
+
+    def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
+        """Returns the number of loaded realizations"""
+        run_context = self.create_ensemble_experiment_run_context(
+            active_mask=realization, iteration=iteration, source_filesystem=fs
+        )
+        nr_loaded = self.loadFromRunContext(run_context, fs)
+        fs.sync()
+        return nr_loaded
 
     def create_ensemble_experiment_run_context(
         self, iteration: int, active_mask: List[bool] = None, source_filesystem=None
@@ -421,16 +429,6 @@ class _RealEnKFMain(BaseCClass):
     def getHookManager(self) -> HookManager:
         """@rtype: HookManager"""
         return self._get_hook_manager()
-
-    def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
-        """Returns the number of loaded realizations"""
-        true_indices = [idx for idx, value in enumerate(realization) if value]
-        bool_vector = BoolVector.createFromList(
-            size=len(realization), source_list=true_indices
-        )
-        nr_loaded = enkf_main.load_from_forward_model(self, iteration, bool_vector, fs)
-        fs.sync()
-        return nr_loaded
 
     def loadFromRunContext(self, run_context, fs):
         """Returns the number of loaded realizations"""
