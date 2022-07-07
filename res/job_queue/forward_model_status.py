@@ -18,8 +18,7 @@ import json
 import os.path
 import time
 
-from job_runner import JOBS_FILE
-from job_runner.reporting.file import File
+from job_runner import JOBS_FILE, STATUS_json
 
 
 def _serialize_date(dt):
@@ -114,7 +113,7 @@ class ForwardModelStatus:
 
     @classmethod
     def try_load(cls, path):
-        status_file = os.path.join(path, File.STATUS_json)
+        status_file = os.path.join(path, STATUS_json)
         jobs_file = os.path.join(path, JOBS_FILE)
 
         with open(status_file) as status_fp:

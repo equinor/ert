@@ -5,6 +5,7 @@ import time
 import logging
 import functools
 
+from job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
 from job_runner.io import cond_unlink
 from job_runner.reporting.message import (
     _JOB_STATUS_FAILURE,
@@ -27,12 +28,6 @@ append = functools.partial(open, mode="a")
 
 
 class File(Reporter):
-    LOG_file = "JOB_LOG"
-    ERROR_file = "ERROR"
-    STATUS_file = "STATUS"
-    OK_file = "OK"
-    STATUS_json = "status.json"
-
     def __init__(self, sync_disc_timeout=10):
         self.status_dict = {}
         self.node = socket.gethostname()
@@ -114,12 +109,12 @@ class File(Reporter):
 
     def _delete_old_status_files(self):
         logger.debug("Deleting old status files")
-        cond_unlink(self.ERROR_file)
-        cond_unlink(self.STATUS_file)
-        cond_unlink(self.OK_file)
+        cond_unlink(ERROR_file)
+        cond_unlink(STATUS_file)
+        cond_unlink(OK_file)
 
     def _write_status_file(self, msg: str) -> None:
-        with append(file=self.STATUS_file) as status_file:
+        with append(file=STATUS_file) as status_file:
             status_file.write(msg)
 
     def _init_status_file(self):
@@ -154,7 +149,7 @@ class File(Reporter):
         self._write_status_file(f"{timestamp}  {status}\n")
 
     def _add_log_line(self, job):
-        with append(file=self.LOG_file) as f:
+        with append(file=LOG_file) as f:
             args = " ".join(job.job_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
             f.write(f"{time_str}  Calling: {job.job_data['executable']} {args}\n")
@@ -162,7 +157,7 @@ class File(Reporter):
     # This file will be read by the job_queue_node_fscanf_EXIT() function
     # in job_queue.c. Be very careful with changes in output format.
     def _dump_error_file(self, job, error_msg):
-        with append(self.ERROR_file) as file:
+        with append(ERROR_file) as file:
             file.write("<error>\n")
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"
@@ -190,12 +185,12 @@ class File(Reporter):
             file.write("</error>\n")
 
     def _dump_ok_file(self):
-        with open(self.OK_file, "w") as f:
+        with open(OK_file, "w") as f:
             f.write(
                 f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
             )
         time.sleep(self._sync_disc_timeout)  # Let the disks sync up
 
     def _dump_status_json(self):
-        with open(self.STATUS_json, "w") as fp:
+        with open(STATUS_json, "w") as fp:
             json.dump(self.status_dict, fp, indent=4)
