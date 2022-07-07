@@ -5,7 +5,7 @@ endmacro()
 foreach(name config_content_node config_path_elm config_error config_content
              config_config config_schema_item)
 
-  add_executable(${name} test_${name}.cpp)
+  add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} res)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
@@ -22,7 +22,7 @@ foreach(
   config_define
   config_argc)
 
-  add_executable(${name} test_${name}.cpp)
+  add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
   target_link_libraries(${name} res)
 endforeach()
 

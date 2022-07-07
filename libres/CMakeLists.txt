@@ -4,6 +4,10 @@ project(res C CXX)
 option(BUILD_TESTS "Should the tests be built" OFF)
 option(COVERAGE "Should binaries record coverage information" OFF)
 
+if(NOT BUILD_TESTS)
+  set(TESTS_EXCLUDE_FROM_ALL "EXCLUDE_FROM_ALL")
+endif()
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
@@ -154,6 +158,7 @@ add_subdirectory(lib)
 
 if(BUILD_TESTS)
   enable_testing()
-  add_subdirectory(old_tests)
-  add_subdirectory(tests)
 endif()
+
+add_subdirectory(old_tests)
+add_subdirectory(tests)

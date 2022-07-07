@@ -51,13 +51,14 @@ foreach(
   rng_manager
   trans_func
   value_export)
-  add_executable(${test} test_${test}.cpp)
+  add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} res)
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
 # rng_config test is unique in that it requires mocking of logs
-add_executable(rng_config test_rng_config.cpp ../../tests/logging.cpp)
+add_executable(rng_config ${TESTS_EXCLUDE_FROM_ALL} test_rng_config.cpp
+                          ../../tests/logging.cpp)
 target_link_libraries(rng_config res)
 add_test(NAME rng_config COMMAND rng_config)
 
@@ -78,7 +79,7 @@ foreach(
   enkf_ensemble_GEN_PARAM
   gen_kw)
 
-  add_executable(${test} test_${test}.cpp)
+  add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} res)
 endforeach()
 
@@ -144,7 +145,7 @@ foreach(
   enkf_time_map
   enkf_main_fs)
 
-  add_executable(${test} test_${test}.cpp)
+  add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} res)
 endforeach()
 
