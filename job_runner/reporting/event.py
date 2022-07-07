@@ -16,7 +16,7 @@ from job_runner.reporting.message import (
     _JOB_EXIT_FAILED_STRING,
 )
 from job_runner.reporting.base import Reporter
-from job_runner.util.client import Client
+from ert_shared.ensemble_evaluator.client import Client
 
 _FM_JOB_START = "com.equinor.ert.forward_model_job.start"
 _FM_JOB_RUNNING = "com.equinor.ert.forward_model_job.running"
