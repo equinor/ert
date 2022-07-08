@@ -73,7 +73,12 @@ class Client:  # pylint: disable=too-many-instance-attributes
             except ConnectionClosedOK:
                 # Connection was closed no point in trying to send more messages
                 raise
-            except (ConnectionClosed, ConnectionRefusedError, OSError):
+            except (
+                ConnectionClosed,
+                ConnectionRefusedError,
+                OSError,
+                asyncio.TimeoutError,
+            ):
                 if retry == self._max_retries:
                     raise
                 await asyncio.sleep(0.2 + self._timeout_multiplier * retry)
