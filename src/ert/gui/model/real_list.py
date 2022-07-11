@@ -1,14 +1,15 @@
-from ert.gui.model.snapshot import NodeRole
-from ert.gui.model.node import NodeType
 import typing
+
 from qtpy.QtCore import (
-    QObject,
-    Signal,
-    Slot,
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
+    QObject,
+    Signal,
+    Slot,
 )
+
+from ert.gui.model.snapshot import IsEnsembleRole, IsRealizationRole, NodeRole
 
 
 class RealListModel(QAbstractProxyModel):
@@ -113,7 +114,7 @@ class RealListModel(QAbstractProxyModel):
         source_node = sourceIndex.internalPointer()
         if source_node is None:
             return QModelIndex()
-        if not self._index_is_on_our_branch(sourceIndex):
+        if not self._accept_index(sourceIndex):
             return QModelIndex()
         return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
 
@@ -122,7 +123,7 @@ class RealListModel(QAbstractProxyModel):
     ):
         if top_left.internalPointer() is None:
             return
-        if top_left.internalPointer().type != NodeType.REAL:
+        if not top_left.data(IsRealizationRole):
             return
         proxy_top_left = self.mapFromSource(top_left)
         proxy_bottom_right = self.mapFromSource(bottom_right)
@@ -135,26 +136,29 @@ class RealListModel(QAbstractProxyModel):
     ):
         if not parent.isValid():
             return
-        if not self._index_is_on_our_branch(parent):
+        if not self._accept_index(parent):
             return
         self.beginInsertRows(self.mapFromSource(parent), start, end)
 
     def _source_rows_inserted(self, parent: QModelIndex, start: int, end: int):
         if not parent.isValid():
             return
-        if not self._index_is_on_our_branch(parent):
+        if not self._accept_index(parent):
             return
         self.endInsertRows()
 
-    def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
+    def _accept_index(self, index: QModelIndex) -> bool:
         if index.internalPointer() is None:
             return False
-        # the tree is only traversed towards the root
-        if index.internalPointer().type != NodeType.REAL:
+        # If the index under test isn't a realization, it is of no interest as
+        # this model should only consist of realization indices.
+        if not index.data(IsRealizationRole):
             return False
+
+        # traverse upwards the tree, checking whether this index is accepted or
+        # not.
         while index.isValid() and index.internalPointer() is not None:
-            node = index.internalPointer()
-            if node.type == NodeType.ITER and node.row() != self._iter:
+            if index.data(IsEnsembleRole) and index.row() != self._iter:
                 return False
             index = index.parent()
         return True

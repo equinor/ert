@@ -1,16 +1,25 @@
 import typing
+
 from qtpy.QtCore import (
-    QObject,
-    Qt,
-    Signal,
-    Slot,
     QAbstractItemModel,
     QAbstractProxyModel,
     QModelIndex,
+    QObject,
+    Qt,
     QVariant,
+    Signal,
+    Slot,
 )
-from ert.gui.model.snapshot import COLUMNS, NodeRole
+
 from ert.gui.model.node import NodeType
+from ert.gui.model.snapshot import (
+    COLUMNS,
+    IsEnsembleRole,
+    IsJobRole,
+    IsRealizationRole,
+    IsStepRole,
+    NodeRole,
+)
 
 
 class JobListProxyModel(QAbstractProxyModel):
@@ -132,15 +141,14 @@ class JobListProxyModel(QAbstractProxyModel):
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         if not sourceIndex.isValid():
             return QModelIndex()
-        if not self._index_is_on_our_branch(sourceIndex):
+        if not self._accept_index(sourceIndex):
             return QModelIndex()
-        source_node = sourceIndex.internalPointer()
-        return self.index(source_node.row(), sourceIndex.column(), QModelIndex())
+        return self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())
 
     def _source_data_changed(
         self, top_left: QModelIndex, bottom_right: QModelIndex, roles: typing.List[int]
     ):
-        if not self._index_is_on_our_branch(top_left):
+        if not self._accept_index(top_left):
             return
         proxy_top_left = self.mapFromSource(top_left)
         proxy_bottom_right = self.mapFromSource(bottom_right)
@@ -148,19 +156,22 @@ class JobListProxyModel(QAbstractProxyModel):
             return
         self.dataChanged.emit(proxy_top_left, proxy_bottom_right, roles)
 
-    def _index_is_on_our_branch(self, index: QModelIndex) -> bool:
+    def _accept_index(self, index: QModelIndex) -> bool:
         if index.internalPointer() is None:
             return False
-        # the tree is only traversed towards the root
-        if index.internalPointer().type != NodeType.JOB:
+        # This model should only consist of job indices, so anything else mean
+        # the index is not on "our branch" of the state graph.
+        if not index.data(IsJobRole):
             return False
+
+        # traverse upwards and check step, real and iter against parents of
+        # this index.
         while index.isValid() and index.internalPointer() is not None:
-            node = index.internalPointer()
-            if node.type == NodeType.STEP and node.row() != self._step:
+            if index.data(IsStepRole) and index.row() != self._step:
                 return False
-            elif node.type == NodeType.REAL and node.row() != self._real:
+            elif index.data(IsRealizationRole) and index.row() != self._real:
                 return False
-            elif node.type == NodeType.ITER and node.row() != self._iter:
+            elif index.data(IsEnsembleRole) and index.row() != self._iter:
                 return False
             index = index.parent()
         return True

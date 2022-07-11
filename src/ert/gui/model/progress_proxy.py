@@ -1,10 +1,10 @@
-from ert.gui.model.node import NodeType
 import typing
 from collections import defaultdict
 
-from ert.gui.model.snapshot import ProgressRole
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
+
+from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
 
 
 class ProgressProxyModel(QAbstractItemModel):
@@ -47,6 +47,7 @@ class ProgressProxyModel(QAbstractItemModel):
     def hasChildren(self, parent: QModelIndex) -> bool:
         return not parent.isValid()
 
+    # pylint: disable=too-many-return-statements
     def data(self, index: QModelIndex, role=Qt.DisplayRole) -> QVariant:
         if not index.isValid():
             return QVariant()
@@ -77,15 +78,14 @@ class ProgressProxyModel(QAbstractItemModel):
     def _recalculate_progress(self, iter_):
         d = defaultdict(lambda: 0)
         nr_reals = 0
-        current_iter_node = self._source_model.index(
-            iter_, 0, QModelIndex()
-        ).internalPointer()
-        if current_iter_node is None:
+        current_iter_index = self._source_model.index(iter_, 0, QModelIndex())
+        if current_iter_index.internalPointer() is None:
             self._progress = None
             return
-        for v in current_iter_node.children.values():
+        for row in range(0, self._source_model.rowCount(current_iter_index)):
+            real_index = self._source_model.index(row, 0, current_iter_index)
             # realizations
-            status = v.data["status"]
+            status = real_index.data(StatusRole)
             nr_reals += 1
             d[status] += 1
         self._progress = {"status": d, "nr_reals": nr_reals}
@@ -98,7 +98,7 @@ class ProgressProxyModel(QAbstractItemModel):
     ):
         if top_left.internalPointer() is None:
             return
-        if top_left.internalPointer().type != NodeType.ITER:
+        if not top_left.data(IsEnsembleRole):
             return
         self._recalculate_progress(top_left.row())
         index = self.index(0, 0, QModelIndex())
