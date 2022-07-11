@@ -3,8 +3,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from utils import SOURCE_DIR
-from ert_utils import tmpdir
 
 import ert_shared.libres_facade
 from ert_shared.exporter import Exporter
@@ -12,7 +10,14 @@ from ert_shared.plugins.plugin_manager import ErtPluginContext
 from res.enkf import EnKFMain, ResConfig
 
 
-@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
+@pytest.fixture(autouse=True)
+def snake_oil_data(source_root, tmp_path, monkeypatch):
+    shutil.copytree(
+        source_root / "test-data/local/snake_oil", tmp_path, dirs_exist_ok=True
+    )
+    monkeypatch.chdir(tmp_path)
+
+
 def test_exporter_is_valid():
     with ErtPluginContext():
         config_file = "snake_oil.ert"
@@ -23,7 +28,6 @@ def test_exporter_is_valid():
         assert ex.is_valid(), "Missing CSV_EXPORT2 or EXPORT_RUNPATH jobs"
 
 
-@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_exporter_is_not_valid():
     config_file = "snake_oil.ert"
     rc = ResConfig(user_config_file=config_file)
@@ -33,7 +37,6 @@ def test_exporter_is_not_valid():
     assert not ex.is_valid()
 
 
-@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_run_export():
     with ErtPluginContext():
         config_file = "snake_oil.ert"
@@ -54,7 +57,6 @@ def test_run_export():
         assert ex._export_job in str(warn)
 
 
-@tmpdir(SOURCE_DIR / "test-data/local/snake_oil")
 def test_run_export_pathfile(monkeypatch):
     with ErtPluginContext():
         run_path_file = Path("output/run_path_file/.some_new_name")
