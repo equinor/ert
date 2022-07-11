@@ -24,6 +24,13 @@ ProgressRole = Qt.UserRole + 5
 FileRole = Qt.UserRole + 6
 RealIens = Qt.UserRole + 7
 
+# Indicates what type the underlying data is
+IsEnsembleRole = Qt.UserRole + 8
+IsRealizationRole = Qt.UserRole + 9
+IsStepRole = Qt.UserRole + 10
+IsJobRole = Qt.UserRole + 11
+StatusRole = Qt.UserRole + 12
+
 STEP_COLUMN_NAME = "Name"
 STEP_COLUMN_ERROR = "Error"
 STEP_COLUMN_STATUS = "Status"
@@ -357,6 +364,15 @@ class SnapshotModel(QAbstractItemModel):
         if role == NodeRole:
             return node
 
+        if role == IsEnsembleRole:
+            return node.type == NodeType.ITER
+        if role == IsRealizationRole:
+            return node.type == NodeType.REAL
+        if role == IsStepRole:
+            return node.type == NodeType.STEP
+        if role == IsJobRole:
+            return node.type == NodeType.JOB
+
         if node.type == NodeType.JOB:
             return self._job_data(index, node, role)
         elif node.type == NodeType.REAL:
@@ -396,6 +412,8 @@ class SnapshotModel(QAbstractItemModel):
             return node.id
         elif role == RealStatusColorHint:
             return node.data[REAL_STATUS_COLOR]
+        elif role == StatusRole:
+            return node.data[ids.STATUS]
         else:
             return QVariant()
 
