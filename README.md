@@ -203,6 +203,12 @@ directory must be removed in order for compilation to succeed.
 The C library files get installed into `res/.libs`, which is where the
 `res` module will look for them.
 
+### Compiling protocol buffers
+
+Use the following command to (re)compile protocol buffers manually:
+```shell
+python setup.py compile_protocol_buffers
+```
 
 ## Example usage
 

@@ -66,6 +66,10 @@ class ExperimentServer:
         websocket is a https://websockets.readthedocs.io/en/stable/reference/server.html#websockets.server.WebSocketServerProtocol  # pylint: disable=line-too-long
         """
         async for msg in websocket:
+            if isinstance(msg, bytes):
+                # TODO handle protobuf messages; update statemachine
+                event_logger.debug("handle_dispatch pbuf: %s", msg)
+                continue
             try:
                 event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
             except DataUnmarshallerError:

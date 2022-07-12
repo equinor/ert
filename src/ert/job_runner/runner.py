@@ -13,6 +13,7 @@ class JobRunner:
             os.environ["DATA_ROOT"] = self._data_root
 
         self.simulation_id = jobs_data.get("run_id")
+        self.experiment_id = jobs_data.get("experiment_id")
         self.ee_id = jobs_data.get("ee_id")
         self.real_id = jobs_data.get("real_id")
         self.step_id = jobs_data.get("step_id")
@@ -46,6 +47,7 @@ class JobRunner:
             self.ee_id,
             self.real_id,
             self.step_id,
+            self.experiment_id,
         )
 
         unused = set(names_of_jobs_to_run) - {j.name() for j in job_queue}
