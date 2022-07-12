@@ -3,7 +3,7 @@ QUEUE_OPTION LOCAL MAX_RUNNING 10
 
 NUM_REALIZATIONS 10
 
-RUNPATH runpath/realization-%d/iter-%d
+RUNPATH runpath/realization-%d-<GEO_ID>/iter-%d
 JOBNAME OLE_LUKKOYE
 
 INSTALL_JOB SLEEP jobs/SLEEP
