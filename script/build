@@ -136,17 +136,8 @@ def run(*args: Union[str, os.PathLike], verbose: Optional[bool] = None) -> None:
 
 def install_build_requires() -> None:
     """
-    Install the `build-system.requires` section from `pyproject.toml` using
-    pip-vendored `tomli` package
+    Install the `build-system.requires` section from `pyproject.toml`
     """
-    try:
-        from pip._vendor import tomli
-    except ImportError:
-        sys.exit(
-            "Could not import 'tomli' from 'pip._vendor'. "
-            "pip has likely changed their vendored packages."
-        )
-
     extra_req: List[str] = []
     try:
         import importlib.metadata
@@ -165,8 +156,11 @@ def install_build_requires() -> None:
         "pip",
         "setuptools",
         "wheel",
+        "tomli",
         *extra_req,
     )
+
+    import tomli
 
     # Install build requirements
     with open(SOURCE_ROOT / "pyproject.toml", "rb") as f:
