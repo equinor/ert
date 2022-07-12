@@ -18,15 +18,16 @@ class SimulationContext:
         job_queue.set_max_job_duration(max_runtime)
         self._queue_manager = JobQueueManager(job_queue)
 
+        # fill in the missing geo_id data
+        for sim_id, (geo_id, _) in enumerate(case_data):
+            if mask[sim_id]:
+                ert.set_geo_id(geo_id, sim_id, itr)
+
         self._run_context = ert.create_ensemble_experiment_run_context(
             source_filesystem=sim_fs,
             active_mask=mask,
             iteration=itr,
         )
-        # fill in the missing geo_id data
-        for sim_id, (geo_id, _) in enumerate(case_data):
-            if mask[sim_id]:
-                ert.set_geo_id(geo_id, sim_id, itr)
 
         self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
