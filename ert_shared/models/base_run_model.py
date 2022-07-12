@@ -315,6 +315,13 @@ class BaseRunModel:
             ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
         ).run_and_get_successful_realizations()
 
+        self.deactivate_failed_jobs(run_context)
+
+        run_context.get_sim_fs().fsync()
+        return totalOk
+
+    @staticmethod
+    def deactivate_failed_jobs(run_context: ErtRunContext) -> None:
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 if run_arg.run_status in (
@@ -322,9 +329,6 @@ class BaseRunModel:
                     RunStatusType.JOB_RUN_FAILURE,
                 ):
                     run_context.deactivate_realization(iens)
-
-        run_context.get_sim_fs().fsync()
-        return totalOk
 
     async def _evaluate(
         self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
