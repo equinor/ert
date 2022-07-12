@@ -191,3 +191,6 @@ class ErtRunContext(BaseCClass):
 
     def get_step(self):
         return self._get_step()
+
+    def deactivate_realization(self, realization_nr):
+        self._deactivate_realization(realization_nr)
