@@ -1,7 +1,11 @@
+from unittest.mock import MagicMock
+
 import pytest
 from ert_utils import ErtTest
 
 from ert_shared.models import BaseRunModel
+from res.enkf import ErtRunContext
+from res.job_queue import RunStatusType
 from res.test import ErtTestContext
 
 
@@ -82,3 +86,19 @@ def test_failed_realizations(initials, completed, any_failed, failures):
     assert brm._count_successful_realizations() == sum(completed)
 
     assert brm.has_failed_realizations() == any_failed
+
+
+def test_run_ensemble_evaluator():
+    run_arg = MagicMock()
+    run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
+
+    run_context = ErtRunContext.ensemble_experiment(
+        None, [True], ["some%d/path%d"], ["some_job%d"], 0
+    )
+    run_context._iget = MagicMock()
+    run_context._iget.return_value = run_arg
+    run_context._deactivate_realization = MagicMock()
+
+    BaseRunModel.deactivate_failed_jobs(run_context)
+
+    run_context._deactivate_realization.assert_called_with(0)
