@@ -32,3 +32,4 @@ src/ert/shared/version.py
 /_skbuild
 .libs
 /compile_commands.json
+*_pb2.py

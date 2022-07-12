@@ -1,12 +1,67 @@
 import os
+from pathlib import Path
 import sys
 
-from setuptools import find_packages
+from setuptools import find_packages, Command
 from setuptools_scm import get_version
+
 from skbuild import setup
+from setuptools.command.egg_info import egg_info
+
+import subprocess
+
+# list of pair of .proto file and out directory
+PROTOBUF_FILES = [
+    ("src/ert/experiment_server/_schema.proto", "src/ert/experiment_server")
+]
+
+
+def compile_protocol_buffers():
+    for proto, out_dir in PROTOBUF_FILES:
+        proto_path = Path(proto).parent
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "grpc_tools.protoc",
+                "-I",
+                proto_path,
+                f"--python_out={out_dir}",
+                proto,
+            ],
+            check=True,
+        )
+
+
+class EggInfo(egg_info):
+    """scikit-build uses the metadata of ert to determine what to include when building
+    the project. This determination results in files being copied to a special build
+    folder. If ert wants to compile e.g. protobuf files and have those included in the
+    distribution, those files needs to be a part of the distribution metadata, i.e. it
+    needs to happen in egg_info so that the compiled files are copied to the build
+    folder."""
+
+    def run(self):
+        compile_protocol_buffers()
+        egg_info.run(self)  # old style class, no super()
+
+
+class CompileProtocolBuffers(Command):
+    user_options = []
+
+    def initialize_options(self) -> None:
+        pass
+
+    def finalize_options(self) -> None:
+        pass
+
+    def run(self):
+        compile_protocol_buffers()
+
 
 # Corporate networks tend to be behind a proxy server with their own non-public
-# SSL certificates. Conan keeps its own certificates, whose path we can override
+# SSL certificates. Conan keeps its own certificates,
+# whose path we can override
 if "CONAN_CACERT_PATH" not in os.environ:
     # Look for a RHEL-compatible system-wide file
     for file_ in ("/etc/pki/tls/cert.pem",):
@@ -87,6 +142,7 @@ args = dict(
         "pandas",
         "pluggy",
         "prefect<2",
+        "protobuf",
         "psutil",
         "pydantic >= 1.9",
         "PyQt5",
@@ -133,6 +189,10 @@ args = dict(
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Physics",
     ],
+    cmdclass={
+        "egg_info": EggInfo,
+        "compile_protocol_buffers": CompileProtocolBuffers,
+    },
 )
 
 setup(**args)

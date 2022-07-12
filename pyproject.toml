@@ -9,8 +9,10 @@ requires = [
     "ninja",
     "ecl",
     "conan",
-    "pybind11>=2.8.1"  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
+    "pybind11>=2.8.1",  # If this comes out of sync with the version installed by Conan please update the version in CMakeLists
+    "grpcio-tools",
 ]
+
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"

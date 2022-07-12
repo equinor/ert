@@ -3,6 +3,7 @@ cmake-format
 decorator
 ecl_data_io
 flake8>=4.0.0
+grpcio-tools
 jsonpath_ng
 jupytext
 oil_reservoir_synthesizer

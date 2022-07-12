@@ -224,22 +224,23 @@ def test_timeout_jobs(tmpdir):
         job.wait_for()
 
 
-def test_add_ensemble_evaluator_info(tmpdir):
+def test_add_dispatch_info(tmpdir):
     os.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
     ee_id = "some_id"
-    dispatch_url = "wss://some_url.com"
     cert = "My very nice cert"
     token = "my_super_secret_token"
+    dispatch_url = "wss://example.org"
     cert_file = ".ee.pem"
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.add_ensemble_evaluator_information_to_jobs_file(
+    job_queue.add_dispatch_information_to_jobs_file(
         ee_id=ee_id,
         dispatch_url=dispatch_url,
         cert=cert,
         token=token,
+        experiment_id="experiment_id",
     )
 
     for runpath in runpaths:
@@ -248,23 +249,24 @@ def test_add_ensemble_evaluator_info(tmpdir):
         assert content["step_id"] == 0
         assert content["dispatch_url"] == dispatch_url
         assert content["ee_token"] == token
+        assert content["experiment_id"] == "experiment_id"
 
         assert content["ee_cert_path"] == str(runpath / cert_file)
         assert (runpath / cert_file).read_text(encoding="utf-8") == cert
 
 
-def test_add_ensemble_evaluator_info_cert_none(tmpdir):
+def test_add_dispatch_info_cert_none(tmpdir):
     os.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
     ee_id = "some_id"
-    dispatch_url = "wss://some_url.com"
+    dispatch_url = "wss://example.org"
     cert = None
     token = None
     cert_file = ".ee.pem"
     runpaths = [Path(DUMMY_CONFIG["run_path"].format(iens)) for iens in range(10)]
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
-    job_queue.add_ensemble_evaluator_information_to_jobs_file(
+    job_queue.add_dispatch_information_to_jobs_file(
         ee_id=ee_id,
         dispatch_url=dispatch_url,
         cert=cert,
@@ -277,6 +279,7 @@ def test_add_ensemble_evaluator_info_cert_none(tmpdir):
         assert content["step_id"] == 0
         assert content["dispatch_url"] == dispatch_url
         assert content["ee_token"] == token
+        assert content["experiment_id"] is None
 
         assert content["ee_cert_path"] is None
         assert not (runpath / cert_file).exists()

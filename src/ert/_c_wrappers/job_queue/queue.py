@@ -617,12 +617,13 @@ class JobQueue(BaseCClass):
         old_state, new_state = self._differ.transition(self.job_list)
         return self._differ.diff_states(old_state, new_state)
 
-    def add_ensemble_evaluator_information_to_jobs_file(
+    def add_dispatch_information_to_jobs_file(
         self,
         ee_id: str,
         dispatch_url: str,
         cert: Optional[Union[str, bytes]],
         token: Optional[str],
+        experiment_id: Optional[str] = None,
     ) -> None:
         for q_index, q_node in enumerate(self.job_list):
             if cert is not None:
@@ -638,6 +639,7 @@ class JobQueue(BaseCClass):
                 data["dispatch_url"] = dispatch_url
                 data["ee_token"] = token
                 data["ee_cert_path"] = cert_path if cert is not None else None
+                data["experiment_id"] = experiment_id
 
                 jobs_file.seek(0)
                 jobs_file.truncate()

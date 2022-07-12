@@ -213,16 +213,16 @@ class _LegacyEnsemble(_Ensemble):
 
             # Tell queue to pass info to the jobs-file
             # NOTE: This touches files on disk...
-            self._job_queue.add_ensemble_evaluator_information_to_jobs_file(
-                self._ee_id,
-                self._config.dispatch_uri,
-                self._config.cert,
-                self._config.token,
-            )
-
-            # Finally, run the queue-loop until it finishes or raises
             sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
-            if output_bus:
+            if output_bus:  # when running experiment server
+                self._job_queue.add_dispatch_information_to_jobs_file(
+                    ee_id=self._ee_id,
+                    dispatch_url=self._config.dispatch_uri,
+                    cert=self._config.cert,
+                    token=self._config.token,
+                    experiment_id=self._ee_id,
+                )
+                # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_comms_via_bus(
                     ee_id=self._ee_id,
                     pool_sema=sema,
@@ -230,6 +230,13 @@ class _LegacyEnsemble(_Ensemble):
                     output_bus=output_bus,
                 )
             else:
+                self._job_queue.add_dispatch_information_to_jobs_file(
+                    ee_id=self._ee_id,
+                    dispatch_url=self._config.dispatch_uri,
+                    cert=self._config.cert,
+                    token=self._config.token,
+                )
+                # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_via_websockets(
                     self._config.dispatch_uri,
                     self._ee_id,
