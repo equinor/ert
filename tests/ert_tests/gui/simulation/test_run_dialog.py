@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from ert.ensemble_evaluator import identifiers as ids
 import pytest
-from ert_gui.simulation.run_dialog import RunDialog
+from src.gui.simulation.run_dialog import RunDialog
 from ert.ensemble_evaluator.snapshot import (
     PartialSnapshot,
     SnapshotBuilder,
@@ -21,7 +21,7 @@ def test_success(runmodel, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+    with patch("src.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
         tracker.return_value = mock_tracker([EndEvent(failed=False, failed_msg="")])
         widget.startSimulation()
 
@@ -36,7 +36,7 @@ def test_large_snapshot(runmodel, large_snapshot, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+    with patch("src.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
         iter_0 = FullSnapshotEvent(
             snapshot=large_snapshot,
             phase_name="Foo",
@@ -288,7 +288,7 @@ def test_run_dialog(events, tab_widget_count, runmodel, qtbot, mock_tracker):
     widget.show()
     qtbot.addWidget(widget)
 
-    with patch("ert_gui.simulation.run_dialog.EvaluatorTracker") as tracker:
+    with patch("src.gui.simulation.run_dialog.EvaluatorTracker") as tracker:
         tracker.return_value = mock_tracker(events)
         widget.startSimulation()
 

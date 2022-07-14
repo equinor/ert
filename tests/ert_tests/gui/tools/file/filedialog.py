@@ -3,7 +3,7 @@ import math
 import pytest
 from qtpy.QtWidgets import QApplication
 
-from ert_gui.tools.file.file_dialog import FileDialog
+from src.gui.tools.file.file_dialog import FileDialog
 
 testCaseTextFiles = [
     "stdout-short",

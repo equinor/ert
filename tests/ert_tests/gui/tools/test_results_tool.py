@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert_gui.tools.load_results import LoadResultsTool
+from src.gui.tools.load_results import LoadResultsTool
 
 
 @pytest.mark.parametrize(

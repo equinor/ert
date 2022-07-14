@@ -17,10 +17,10 @@ from res.enkf.export import (
     MisfitCollector,
     DesignMatrixReader,
 )
-from ert_gui.ertwidgets.customdialog import CustomDialog
-from ert_gui.ertwidgets.listeditbox import ListEditBox
-from ert_gui.ertwidgets.models.path_model import PathModel
-from ert_gui.ertwidgets.pathchooser import PathChooser
+from src.gui.widgets.customdialog import CustomDialog
+from src.gui.widgets.listeditbox import ListEditBox
+from src.gui.widgets.models.path_model import PathModel
+from src.gui.widgets.pathchooser import PathChooser
 
 
 class CSVExportJob(ErtPlugin):

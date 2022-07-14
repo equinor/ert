@@ -1,6 +1,6 @@
 from ert_utils import ErtTest
 
-from ert_gui.plottery import PlotConfig, PlotConfigHistory
+from src.gui.plottery import PlotConfig, PlotConfigHistory
 
 
 class PlotConfigHistoryTest(ErtTest):

@@ -20,4 +20,4 @@ import unittest
 
 class ImportTest(unittest.TestCase):
     def test_import_gui(self):
-        assert importlib.import_module("ert_gui")
+        assert importlib.import_module("gui")

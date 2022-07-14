@@ -1,8 +1,8 @@
 from PyQt5.QtCore import QModelIndex
 
-from ert_gui.model.progress_proxy import ProgressProxyModel
-from ert_gui.model.snapshot import SnapshotModel
-from ert_gui.simulation.view.legend import LegendView
+from src.gui.model.progress_proxy import ProgressProxyModel
+from src.gui.model.snapshot import SnapshotModel
+from src.gui.simulation.view.legend import LegendView
 
 
 def test_delegate_instantiated(qtbot, large_snapshot):

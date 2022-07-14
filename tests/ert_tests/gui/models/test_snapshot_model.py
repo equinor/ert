@@ -3,7 +3,7 @@ from pytestqt.qt_compat import qt_api
 from qtpy.QtCore import QModelIndex
 from qtpy.QtGui import QColor
 
-from ert_gui.model.snapshot import RealJobColorHint, SnapshotModel
+from src.gui.model.snapshot import RealJobColorHint, SnapshotModel
 from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
 from ert.ensemble_evaluator.state import (
     COLOR_PENDING,

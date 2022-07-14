@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ecl.util.util import StringList
-from ert_gui.ertwidgets.models.ertsummary import ErtSummary
+from src.gui.widgets.models.ertsummary import ErtSummary
 
 
 @pytest.fixture

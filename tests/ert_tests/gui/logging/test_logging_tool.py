@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from ert_gui.tools.event_viewer import GUILogHandler, EventViewerPanel
+from src.gui.tools.event_viewer import GUILogHandler, EventViewerPanel
 
 logger = logging.getLogger(__name__)
 

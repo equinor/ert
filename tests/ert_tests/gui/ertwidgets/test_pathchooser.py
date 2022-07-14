@@ -1,6 +1,6 @@
 from qtpy.QtWidgets import QFileDialog
-from ert_gui.ertwidgets.pathchooser import PathChooser
-from ert_gui.ertwidgets.models.path_model import PathModel
+from src.gui.widgets.pathchooser import PathChooser
+from src.gui.widgets.models.path_model import PathModel
 
 
 def test_selectfile(qtbot, tmpdir, monkeypatch):

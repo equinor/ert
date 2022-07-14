@@ -129,7 +129,7 @@ def evaluate(
     ee = EnsembleEvaluator(ensemble=ensemble, config=config, iter_=0)
     if use_gui:
         # pylint: disable=import-outside-toplevel
-        from ert_gui.simulation.run_dialog import run_monitoring_ert3
+        from src.gui.simulation.run_dialog import run_monitoring_ert3
 
         return run_monitoring_ert3(ee, ERT3RunModel())
 
