@@ -23,7 +23,6 @@ class ConfigPathElm(BaseCClass):
     TYPE_NAME = "config_path_elm"
 
     _free = ResPrototype("void config_path_elm_free(config_path_elm)")
-    _rel_path = ResPrototype("char* config_path_elm_get_relpath(config_path_elm)")
     _abs_path = ResPrototype("char* config_path_elm_get_abspath(config_path_elm)")
 
     def __init__(self):
@@ -31,10 +30,6 @@ class ConfigPathElm(BaseCClass):
 
     def free(self):
         self._free()
-
-    @property
-    def rel_path(self):
-        return self._rel_path()
 
     @property
     def abs_path(self):

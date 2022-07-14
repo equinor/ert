@@ -54,33 +54,11 @@ void parse_test(
                          CONFIG_UNRECOGNIZED_IGNORE, true);
         if (config_content_is_valid(content)) {
 
-            char *relpath0 = util_alloc_filename(config_rel_path, path0, NULL);
-            char *relpath1 = util_alloc_filename(config_rel_path, path1, NULL);
-            char *relpath2 = util_alloc_filename(config_rel_path, path2, NULL);
-            char *relpath3 = util_alloc_filename(config_rel_path, path3, NULL);
-            char *relpath4 = util_alloc_filename(config_rel_path, path4, NULL);
-
             char *abspath0 = util_alloc_filename(config_abs_path, path0, NULL);
             char *abspath1 = util_alloc_filename(config_abs_path, path1, NULL);
             char *abspath2 = util_alloc_filename(config_abs_path, path2, NULL);
             char *abspath3 = util_alloc_filename(config_abs_path, path3, NULL);
             char *abspath4 = util_alloc_filename(config_abs_path, path4, NULL);
-
-            test_assert_string_equal(
-                config_content_get_value_as_relpath(content, "PATH0"),
-                relpath0);
-            test_assert_string_equal(
-                config_content_get_value_as_relpath(content, "PATH1"),
-                relpath1);
-            test_assert_string_equal(
-                config_content_get_value_as_relpath(content, "PATH2"),
-                relpath2);
-            test_assert_string_equal(
-                config_content_get_value_as_relpath(content, "PATH3"),
-                relpath3);
-            test_assert_string_equal(
-                config_content_get_value_as_relpath(content, "PATH4"),
-                relpath4);
 
             test_assert_string_equal(
                 config_content_get_value_as_abspath(content, "PATH0"),

@@ -17,6 +17,7 @@
 */
 #include <stdlib.h>
 
+#include <filesystem>
 #include <set>
 #include <string>
 
@@ -28,7 +29,8 @@
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_path_elm.hpp>
 #include <ert/config/config_path_stack.hpp>
-#include <ert/config/config_root_path.hpp>
+
+namespace fs = std::filesystem;
 
 #define CONFIG_CONTENT_TYPE_ID 6612520
 
@@ -36,7 +38,7 @@ struct config_content_struct {
     UTIL_TYPE_ID_DECLARATION;
     /** A set of config files which have been parsed - to protect against
      * circular includes. */
-    std::set<std::string> *parsed_files;
+    std::set<std::string> parsed_files;
     vector_type *nodes;
     hash_type *items;
     config_error_type *parse_errors;
@@ -47,17 +49,16 @@ struct config_content_struct {
     char *config_path;
 
     config_path_stack_type *path_stack;
-    config_root_path_type *invoke_path;
+    /** Absolute path to directory that contains current config */
+    fs::path invoke_path;
     bool valid;
 };
 
 UTIL_IS_INSTANCE_FUNCTION(config_content, CONFIG_CONTENT_TYPE_ID)
 
 config_content_type *config_content_alloc(const char *filename) {
-    config_content_type *content =
-        (config_content_type *)util_malloc(sizeof *content);
+    auto content = new config_content_type;
     UTIL_TYPE_ID_INIT(content, CONFIG_CONTENT_TYPE_ID);
-    content->parsed_files = new std::set<std::string>();
 
     content->valid = false;
     content->items = hash_alloc();
@@ -70,7 +71,7 @@ config_content_type *config_content_alloc(const char *filename) {
     content->config_file = util_alloc_string_copy(filename);
     content->abs_path = util_alloc_abs_path(filename);
     content->config_path = util_split_alloc_dirname(content->abs_path);
-    content->invoke_path = config_root_path_alloc(NULL);
+    content->invoke_path = fs::current_path();
 
     return content;
 }
@@ -128,8 +129,6 @@ void config_content_free(config_content_type *content) {
     if (!content)
         return;
 
-    delete content->parsed_files;
-
     stringlist_free(content->warnings);
     vector_free(content->nodes);
     hash_free(content->items);
@@ -138,26 +137,19 @@ void config_content_free(config_content_type *content) {
     free(content->config_file);
     free(content->abs_path);
     free(content->config_path);
-    if (content->invoke_path != NULL)
-        config_root_path_free(content->invoke_path);
 
     config_path_stack_free(content->path_stack);
-    free(content);
+    delete content;
 }
 
 bool config_content_add_file(config_content_type *content,
                              const char *config_file) {
-    const auto iter = content->parsed_files->find(config_file);
-    if (iter == content->parsed_files->end()) {
-        content->parsed_files->insert(config_file);
+    const auto iter = content->parsed_files.find(config_file);
+    if (iter == content->parsed_files.end()) {
+        content->parsed_files.insert(config_file);
         return true;
     }
     return false;
-}
-
-config_root_path_type *
-config_content_get_invoke_path(config_content_type *content) {
-    return content->invoke_path;
 }
 
 /*
@@ -332,14 +324,6 @@ config_content_get_value_as_abspath(const config_content_type *config,
 }
 
 const char *
-config_content_get_value_as_relpath(const config_content_type *config,
-                                    const char *kw) {
-    config_content_node_type *node =
-        config_content_get_value_node__(config, kw);
-    return config_content_node_iget_as_relpath(node, 0);
-}
-
-const char *
 config_content_get_value_as_executable(const config_content_type *config,
                                        const char *kw) {
     config_content_node_type *node =
@@ -389,34 +373,25 @@ const char *config_content_get_config_file(const config_content_type *content,
 
 config_path_elm_type *config_content_add_path_elm(config_content_type *content,
                                                   const char *path) {
-    const config_path_elm_type *current_path_elm;
+    const config_path_elm_type *current_path_elm{};
 
     if (config_path_stack_size(content->path_stack) == 0)
         current_path_elm = NULL;
     else
         current_path_elm = config_path_stack_get_last(content->path_stack);
 
-    {
-        config_path_elm_type *new_path_elm;
-
-        {
-            char *rel_path = NULL;
-            config_root_path_type *invoke_path =
-                config_content_get_invoke_path(content);
-            if (path != NULL) {
-                if (current_path_elm == NULL)
-                    rel_path = util_alloc_rel_path(
-                        config_root_path_get_abs_path(invoke_path), path);
-                else
-                    rel_path =
-                        config_path_elm_alloc_relpath(current_path_elm, path);
-            }
-            new_path_elm = config_path_elm_alloc(invoke_path, rel_path);
-            free(rel_path);
-        }
-        config_path_stack_append(content->path_stack, new_path_elm);
-        return new_path_elm;
+    config_path_elm_type *new_path_elm;
+    const auto &invoke_path = current_path_elm == nullptr
+                                  ? content->invoke_path
+                                  : current_path_elm->path;
+    if (path != NULL) {
+        auto new_path = fs::absolute(invoke_path / path);
+        new_path_elm = config_path_elm_alloc(invoke_path, new_path.c_str());
+    } else {
+        new_path_elm = config_path_elm_alloc(invoke_path, nullptr);
     }
+    config_path_stack_append(content->path_stack, new_path_elm);
+    return new_path_elm;
 }
 
 const char *config_content_get_config_path(const config_content_type *content) {

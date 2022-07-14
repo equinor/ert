@@ -38,7 +38,6 @@ pybind11_add_module(
   config/config_content_node.cpp
   config/config_error.cpp
   config/config_path_elm.cpp
-  config/config_root_path.cpp
   config/config_schema_item.cpp
   config/config_settings.cpp
   rms/rms_file.cpp

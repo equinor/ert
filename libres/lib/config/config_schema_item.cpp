@@ -422,7 +422,7 @@ bool config_schema_item_validate_set(const config_schema_item_type *item,
                             error_list,
                             util_alloc_sprintf(
                                 "Can not find entry %s in %s ", value,
-                                config_path_elm_get_relpath(path_elm)));
+                                config_path_elm_get_abspath(path_elm)));
                         OK = false;
                     }
                     free(path);

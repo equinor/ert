@@ -105,7 +105,7 @@ class ConfigTest(ResTest):
             self.assertEqual(type_item.igetString(3), "String")
 
             path_value = type_item[4]
-            self.assertEqual(path_value, "file")
+            self.assertEqual(path_value, os.path.abspath("file"))
             self.assertEqual(type_item.igetString(4), "file")
 
             # test __getitem__
@@ -249,7 +249,7 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
             self.assertEqual(line[2], 100)
             self.assertEqual(line[3], True)
             self.assertEqual(line[4], 3.14)
-            self.assertEqual(line[5], "../path/file.txt")
+            self.assertEqual(line[5], os.path.abspath("../path/file.txt"))
 
             self.assertFalse("NOT_IN_CONTENT" in content)
             item = content["NOT_IN_CONTENT"]
@@ -269,15 +269,10 @@ FIELD    RV            DYNAMIC   MIN:0.0034"""
             with self.assertRaises(TypeError):
                 line.getPath()
 
-            rel_path = line.getPath(index=5, absolute=False)
-            self.assertEqual(rel_path, "../path/file.txt")
             get = line[5]
-            self.assertEqual(get, "../path/file.txt")
+            self.assertEqual(get, os.path.abspath("../path/file.txt"))
             abs_path = line.getPath(index=5)
             self.assertEqual(abs_path, os.path.join(cwd0, "path/file.txt"))
-
-            rel_path = line.getPath(index=5, absolute=False, relative_start="../")
-            self.assertEqual(rel_path, "path/file.txt")
 
             with self.assertRaises(IndexError):
                 item[10]

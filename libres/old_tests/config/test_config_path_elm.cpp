@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
 #include <stdlib.h>
 
 #include <ert/util/test_util.hpp>
@@ -35,18 +36,14 @@ int main(int argc, char **argv) {
     char *path_true2 = util_alloc_filename(root, "rel/path/XXX", NULL);
 
     util_chdir(ta.original_cwd().c_str());
-    config_root_path_type *root_path = config_root_path_alloc(root);
+    std::filesystem::path root_path = root;
     {
         config_path_elm_type *path_elm =
             config_path_elm_alloc(root_path, rel_path);
 
-        test_assert_string_equal(config_path_elm_get_relpath(path_elm),
-                                 rel_path);
         test_assert_string_equal(config_path_elm_get_abspath(path_elm),
                                  abs_path);
 
-        test_assert_string_equal(config_path_elm_alloc_relpath(path_elm, "XXX"),
-                                 rel_true);
         test_assert_string_equal(config_path_elm_alloc_abspath(path_elm, "XXX"),
                                  abs_true);
         test_assert_string_equal(config_path_elm_alloc_path(path_elm, "XXX"),
@@ -58,13 +55,9 @@ int main(int argc, char **argv) {
         config_path_elm_type *path_elm =
             config_path_elm_alloc(root_path, abs_path);
 
-        test_assert_string_equal(config_path_elm_get_relpath(path_elm),
-                                 rel_path);
         test_assert_string_equal(config_path_elm_get_abspath(path_elm),
                                  abs_path);
 
-        test_assert_string_equal(config_path_elm_alloc_relpath(path_elm, "XXX"),
-                                 rel_true);
         test_assert_string_equal(config_path_elm_alloc_abspath(path_elm, "XXX"),
                                  abs_true);
         test_assert_string_equal(config_path_elm_alloc_path(path_elm, "XXX"),
@@ -72,25 +65,18 @@ int main(int argc, char **argv) {
 
         config_path_elm_free(path_elm);
     }
-    config_root_path_free(root_path);
 
     util_chdir(root);
-    root_path = config_root_path_alloc(NULL);
+    root_path = std::filesystem::current_path();
     {
         config_path_elm_type *path_elm =
             config_path_elm_alloc(root_path, rel_path);
 
-        test_assert_string_equal(config_path_elm_get_relpath(path_elm),
-                                 rel_path);
         test_assert_string_equal(config_path_elm_get_abspath(path_elm),
                                  abs_path);
 
-        test_assert_string_equal(config_path_elm_alloc_relpath(path_elm, "XXX"),
-                                 rel_true);
         test_assert_string_equal(config_path_elm_alloc_abspath(path_elm, "XXX"),
                                  abs_true);
-        test_assert_string_equal(config_path_elm_alloc_path(path_elm, "XXX"),
-                                 path_true1);
 
         config_path_elm_free(path_elm);
     }

@@ -84,10 +84,12 @@ class GenKwConfig(BaseCClass):
         self.__str__ = self.__repr__
 
     def getTemplateFile(self):
-        return self._get_template_file()
+        path = self._get_template_file()
+        return None if path is None else os.path.abspath(path)
 
     def getParameterFile(self):
-        return self._get_parameter_file()
+        path = self._get_parameter_file()
+        return None if path is None else os.path.abspath(path)
 
     def getKeyWords(self) -> StringList:
         """@rtype: StringList"""
