@@ -14,8 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os.path
-
 from cwrap import BaseCClass
 
 from res import ResPrototype
@@ -38,9 +36,6 @@ class ContentNode(BaseCClass):
     )
     _iget_as_abspath = ResPrototype(
         "char* config_content_node_iget_as_abspath( content_node , int)"
-    )
-    _iget_as_relpath = ResPrototype(
-        "char* config_content_node_iget_as_relpath( content_node , int)"
     )
     _iget_as_string = ResPrototype(
         "char* config_content_node_iget( content_node , int)"
@@ -95,21 +90,14 @@ class ContentNode(BaseCClass):
         typed_get = self.typed_get[content_type]
         return typed_get(self, index)
 
-    def getPath(self, index=0, absolute=True, relative_start=None):
+    def getPath(self, index=0):
         index = self.__assertIndex(index)
         content_type = self._iget_type(index)
         if content_type in [
             ContentTypeEnum.CONFIG_EXISTING_PATH,
             ContentTypeEnum.CONFIG_PATH,
         ]:
-            if absolute:
-                return self._iget_as_abspath(index)
-            else:
-                if relative_start is None:
-                    return self._iget_as_relpath(index)
-                else:
-                    abs_path = self._iget_as_abspath(index)
-                    return os.path.relpath(abs_path, relative_start)
+            return self._iget_as_abspath(index)
         else:
             raise TypeError("The getPath() method can only be called on PATH items")
 

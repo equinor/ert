@@ -15,6 +15,7 @@
    See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
    for more details.
 */
+#include <filesystem>
 #include <stdlib.h>
 
 #include <ert/util/hash.hpp>
@@ -24,8 +25,8 @@
 
 int main(int argc, char **argv) {
     config_schema_item_type *schema = config_schema_item_alloc("TEST", true);
-    config_root_path_type *root_path = config_root_path_alloc(NULL);
-    config_path_elm_type *cwd = config_path_elm_alloc(root_path, NULL);
+    config_path_elm_type *cwd =
+        config_path_elm_alloc(std::filesystem::current_path(), NULL);
     {
         config_content_node_type *node = config_content_node_alloc(schema, cwd);
         config_content_node_add_value(node, "KEY1:VALUE1");
@@ -70,7 +71,6 @@ int main(int argc, char **argv) {
         config_content_node_free(node);
     }
     config_path_elm_free(cwd);
-    config_root_path_free(root_path);
     config_schema_item_free(schema);
     exit(0);
 }

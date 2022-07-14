@@ -370,7 +370,7 @@ class _RealEnKFMain(BaseCClass):
         self.runpaths = Runpaths(
             self.getModelConfig().getJobnameFormat(),
             self.getModelConfig().getRunpathFormat().format_string,
-            Path(res_config.config_path).resolve() / res_config.runpath_file,
+            Path(res_config.runpath_file),
             self.substituter.substitute,
         )
 

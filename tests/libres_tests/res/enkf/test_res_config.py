@@ -696,3 +696,33 @@ class ResConfigTest(ResTest):
             res_config_dict = ResConfig(config_dict=config_data_new)
 
             self.assertEqual(res_config_file, res_config_dict)
+
+
+def test_runpath_file(monkeypatch, tmp_path):
+    """
+    There was an issue relating to `ResConfig.runpath_file` returning a
+    relative path rather than an absolute path. This test simulates the
+    conditions that caused the original bug. That is, the user starts
+    somewhere else and points to the ERT config file using a relative
+    path.
+    """
+    config_path = tmp_path / "model/ert/config.ert"
+    workdir_path = tmp_path / "start/from/here"
+    runpath_path = tmp_path / "model/output/my_custom_runpath_path.foo"
+
+    config_path.parent.mkdir(parents=True)
+    workdir_path.mkdir(parents=True)
+    monkeypatch.chdir(workdir_path)
+
+    with config_path.open("w") as f:
+        f.writelines(
+            [
+                "DEFINE <FOO> foo\n",
+                "RUNPATH_FILE ../output/my_custom_runpath_path.<FOO>\n",
+                # Required for this to be a valid ResConfig
+                "NUM_REALIZATIONS 1\n",
+            ]
+        )
+
+    config = ResConfig(os.path.relpath(config_path, workdir_path))
+    assert config.runpath_file == str(runpath_path)

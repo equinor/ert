@@ -16,7 +16,6 @@ foreach(
   config_node
   config_typeOK
   config_typeFail
-  config_root_path
   config_include
   config_content_item
   config_define
@@ -32,9 +31,6 @@ config_test(config_typeOK type_testOK)
 config_test(config_typeFail type_testFail)
 config_test(config_content_item content_item_test)
 config_test(config_define define_test)
-
-add_test(NAME config_root_path COMMAND config_root_path
-                                       "${TEST_DATA_DIR}/config")
 
 add_test(NAME config_include COMMAND config_include "${TEST_DATA_DIR}/config"
                                      include_test)

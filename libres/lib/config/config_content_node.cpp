@@ -184,20 +184,6 @@ const char *config_content_node_iget_as_abspath(config_content_node_type *node,
     }
 }
 
-const char *config_content_node_iget_as_relpath(config_content_node_type *node,
-                                                int index) {
-    config_schema_item_assure_type(node->schema, index,
-                                   CONFIG_PATH + CONFIG_EXISTING_PATH);
-    {
-        const char *config_value = config_content_node_iget(node, index);
-        char *path_value =
-            config_path_elm_alloc_relpath(node->cwd, config_value);
-        config_content_node_push_string(node, path_value);
-
-        return path_value;
-    }
-}
-
 const char *
 config_content_node_iget_as_executable(config_content_node_type *node,
                                        int index) {

@@ -25,7 +25,6 @@
 
 #include <ert/config/config_content_item.hpp>
 #include <ert/config/config_error.hpp>
-#include <ert/config/config_root_path.hpp>
 #include <ert/config/config_schema_item.hpp>
 
 typedef struct config_content_struct config_content_type;
@@ -76,9 +75,6 @@ extern "C" const char *
 config_content_get_value_as_abspath(const config_content_type *config,
                                     const char *kw);
 const char *
-config_content_get_value_as_relpath(const config_content_type *config,
-                                    const char *kw);
-const char *
 config_content_get_value_as_executable(const config_content_type *config,
                                        const char *kw);
 const char *config_content_get_value(const config_content_type *config,
@@ -101,8 +97,6 @@ const config_content_node_type *
 config_content_iget_node(const config_content_type *content, int index);
 bool config_content_add_file(config_content_type *content,
                              const char *config_file);
-config_root_path_type *
-config_content_get_invoke_path(config_content_type *content);
 extern "C" config_path_elm_type *
 config_content_add_path_elm(config_content_type *content, const char *path);
 extern "C" const stringlist_type *
