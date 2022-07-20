@@ -6,10 +6,10 @@ import pytest
 import qtpy
 from qtpy.QtCore import Qt
 
-import ert_gui
-from ert_gui.ertnotifier import ErtNotifier
-from ert_gui.ertwidgets.message_box import ErtMessageBox
-from ert_gui.gert_main import _start_window, run_gui
+import ert.gui
+from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets.message_box import ErtMessageBox
+from ert.gui.gert_main import _start_window, run_gui
 
 
 @pytest.fixture()
@@ -31,24 +31,24 @@ def patch_enkf_main(monkeypatch, tmpdir):
     facade_mock.get_ensemble_size.return_value = 1
     facade_mock.get_number_of_iterations.return_value = 1
     monkeypatch.setattr(
-        ert_gui.simulation.simulation_panel,
+        ert.gui.simulation.simulation_panel,
         "LibresFacade",
         Mock(return_value=facade_mock),
     )
 
     monkeypatch.setattr(
-        ert_gui.simulation.ensemble_smoother_panel,
+        ert.gui.simulation.ensemble_smoother_panel,
         "LibresFacade",
         Mock(return_value=facade_mock),
     )
     monkeypatch.setattr(
-        ert_gui.gert_main, "EnKFMain", Mock(return_value=mocked_enkf_main)
+        ert.gui.gert_main, "EnKFMain", Mock(return_value=mocked_enkf_main)
     )
     monkeypatch.setattr(
-        ert_gui.gert_main, "ResConfig", Mock(return_value=res_config_mock)
+        ert.gui.gert_main, "ResConfig", Mock(return_value=res_config_mock)
     )
     monkeypatch.setattr(
-        ert_gui.ertwidgets.caseselector.CaseSelector,
+        ert.gui.ertwidgets.caseselector.CaseSelector,
         "_getAllCases",
         Mock(return_value=["test"]),
     )
@@ -62,17 +62,17 @@ def patch_enkf_main(monkeypatch, tmpdir):
     )
 
     monkeypatch.setattr(
-        ert_gui.ertwidgets.summarypanel.ErtSummary,
+        ert.gui.ertwidgets.summarypanel.ErtSummary,
         "getForwardModels",
         Mock(return_value=[]),
     )
     monkeypatch.setattr(
-        ert_gui.ertwidgets.summarypanel.ErtSummary,
+        ert.gui.ertwidgets.summarypanel.ErtSummary,
         "getParameters",
         Mock(return_value=[]),
     )
     monkeypatch.setattr(
-        ert_gui.ertwidgets.summarypanel.ErtSummary,
+        ert.gui.ertwidgets.summarypanel.ErtSummary,
         "getObservations",
         Mock(return_value=[]),
     )
@@ -129,7 +129,7 @@ def test_gui_full(monkeypatch, tmpdir, qapp, mock_start_server):
         qapp.exec_ = (
             lambda: None
         )  # exec_ starts the event loop, and will stall the test.
-        monkeypatch.setattr(ert_gui.gert_main, "QApplication", Mock(return_value=qapp))
+        monkeypatch.setattr(ert.gui.gert_main, "QApplication", Mock(return_value=qapp))
         run_gui(args_mock)
         mock_start_server.assert_called_once_with(res_config="config.ert")
 
@@ -143,7 +143,7 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     type(args_mock).config = PropertyMock(return_value="config.ert")
 
     monkeypatch.setattr(
-        ert_gui.simulation.simulation_panel.SimulationPanel,
+        ert.gui.simulation.simulation_panel.SimulationPanel,
         "runSimulation",
         _assert_iter_in_args,
     )

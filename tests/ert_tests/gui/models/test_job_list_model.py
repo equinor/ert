@@ -8,9 +8,9 @@ from PyQt5.QtCore import QModelIndex
 from pytestqt.qt_compat import qt_api
 
 from ert.ensemble_evaluator import identifiers as ids
-from ert_gui.model.job_list import JobListProxyModel
-from ert_gui.model.node import NodeType
-from ert_gui.model.snapshot import COLUMNS, SnapshotModel, DURATION
+from ert.gui.model.job_list import JobListProxyModel
+from ert.gui.model.node import NodeType
+from ert.gui.model.snapshot import COLUMNS, SnapshotModel, DURATION
 from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
 from ert.ensemble_evaluator.state import (
     JOB_STATE_FAILURE,
@@ -87,7 +87,7 @@ def test_changes(full_snapshot):
 
 
 @pytest.mark.parametrize("timezone", [(None), (tz.gettz("UTC"))])
-@patch("ert_gui.model.snapshot.datetime", wraps=datetime)
+@patch("ert.gui.model.snapshot.datetime", wraps=datetime)
 def test_duration(mock_datetime, timezone, full_snapshot):
     source_model = SnapshotModel()
 

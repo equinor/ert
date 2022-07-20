@@ -1,5 +1,5 @@
 import pytest
-from ert_gui.ertwidgets.summarypanel import _runlength_encode_list
+from ert.gui.ertwidgets.summarypanel import _runlength_encode_list
 
 
 @pytest.mark.parametrize(

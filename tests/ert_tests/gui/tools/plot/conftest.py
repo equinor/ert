@@ -5,7 +5,7 @@ import io
 import pytest
 from unittest.mock import MagicMock
 from ert_shared.services import Storage
-from ert_gui.tools.plot.plot_api import PlotApi
+from ert.gui.tools.plot.plot_api import PlotApi
 
 
 class MockResponse:

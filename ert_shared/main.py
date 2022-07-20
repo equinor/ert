@@ -169,7 +169,7 @@ def range_limited_int(user_input):
 
 
 def run_gui_wrapper(args):
-    from ert_gui.gert_main import run_gui
+    from ert.gui.gert_main import run_gui
 
     run_gui(args)
 
