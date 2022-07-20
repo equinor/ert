@@ -1,5 +1,5 @@
-from ert_gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert_gui.ertwidgets.models.analysismodulevariablesmodel import (
+from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
 from unittest.mock import patch

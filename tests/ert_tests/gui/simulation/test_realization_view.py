@@ -3,9 +3,9 @@ from qtpy import QtCore
 from qtpy.QtCore import QModelIndex, QSize
 from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 
-from ert_gui.model.node import Node
-from ert_gui.model.snapshot import SnapshotModel
-from ert_gui.simulation.view.realization import RealizationWidget
+from ert.gui.model.node import Node
+from ert.gui.model.snapshot import SnapshotModel
+from ert.gui.simulation.view.realization import RealizationWidget
 
 
 class MockDelegate(QStyledItemDelegate):

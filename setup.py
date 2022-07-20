@@ -49,7 +49,7 @@ setup(
     packages=packages,
     package_data={
         "ert_shared": package_files("ert_shared/share/"),
-        "ert_gui": package_files("ert_gui/resources/"),
+        "ert": package_files("ert/gui/resources/"),
         "ert_logging": ["logger.conf", "storage_log.conf"],
         "ert3_examples": package_files("ert3_examples/"),
         "res": [

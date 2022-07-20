@@ -1,7 +1,7 @@
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert3.evaluator._evaluator import ERT3RunModel
-from ert_gui.simulation.run_dialog import RunDialog
+from ert.gui.simulation.run_dialog import RunDialog
 
 
 def test_success_ert3(qtbot, poly_ensemble):

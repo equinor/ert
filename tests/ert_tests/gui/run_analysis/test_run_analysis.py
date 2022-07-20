@@ -3,8 +3,8 @@ from unittest.mock import Mock, patch
 from ert_utils import ErtTest
 from qtpy.QtGui import QIcon
 
-from ert_gui.ertwidgets.closabledialog import ClosableDialog
-from ert_gui.tools import run_analysis
+from ert.gui.ertwidgets.closabledialog import ClosableDialog
+from ert.gui.tools import run_analysis
 
 from res.enkf import ErtAnalysisError
 
@@ -21,7 +21,7 @@ class RunAnalysisTests(ErtTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        with patch("ert_gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
+        with patch("ert.gui.tools.run_analysis.run_analysis_tool.resourceIcon") as rs:
             rs.return_value = MockedQIcon()
             self.tool = run_analysis.RunAnalysisTool(Mock(), Mock())
         self.tool._run_widget = Mock(spec=run_analysis.RunAnalysisPanel)
@@ -33,8 +33,8 @@ class RunAnalysisTests(ErtTest):
         self.tool._run_widget.reset_mock()
         self.tool._dialog.reset_mock()
 
-    @patch("ert_gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
-    @patch("ert_gui.tools.run_analysis.run_analysis_tool.QMessageBox")
+    @patch("ert.gui.tools.run_analysis.run_analysis_tool.analyse", return_value=None)
+    @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
     def test_show_dialogue_at_success(self, mock_messagebox, mock_analyse):
         self.tool._run_widget.source_case.return_value = "source"
         self.tool._run_widget.target_case.return_value = "target"
@@ -50,10 +50,10 @@ class RunAnalysisTests(ErtTest):
         self.tool._dialog.accept.assert_called_once_with()
 
     @patch(
-        "ert_gui.tools.run_analysis.run_analysis_tool.analyse",
+        "ert.gui.tools.run_analysis.run_analysis_tool.analyse",
         side_effect=ErtAnalysisError("some error"),
     )
-    @patch("ert_gui.tools.run_analysis.run_analysis_tool.QMessageBox")
+    @patch("ert.gui.tools.run_analysis.run_analysis_tool.QMessageBox")
     def test_show_dialogue_at_failure(self, mock_messagebox, mock_analyse):
         self.tool._run_widget.source_case.return_value = "source"
         self.tool._run_widget.target_case.return_value = "target"
