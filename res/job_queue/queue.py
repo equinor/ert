@@ -25,7 +25,7 @@ import ssl
 import threading
 import time
 from collections import deque
-from typing import Any, Callable, Dict, Mapping, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Union
 
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
@@ -429,7 +429,7 @@ class JobQueue(BaseCClass):
         ws_uri: str,
         ee_id: str,
         pool_sema: threading.BoundedSemaphore,
-        evaluators: Callable[..., Any],
+        evaluators: List[Callable[..., Any]],
         cert: Optional[Union[str, bytes]] = None,
         token: Optional[str] = None,
     ) -> None:
