@@ -1,0 +1,46 @@
+name: Annotate Cpp
+
+on: [pull_request]
+
+jobs:
+  annotate-cpp:
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: -1
+
+    - name: Install Ubuntu dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y clang-tidy
+
+    - name: Install dependencies from PyPI
+      run: |
+        python3 -m pip install conan pybind11
+
+    - name: Build libecl
+      run: |
+        git clone https://github.com/equinor/libecl
+        mkdir libecl/build
+        cmake -S libecl -B libecl/build
+        sudo cmake --build libecl/build --target install
+        sudo rm -rf libecl
+
+    - name: Create compile commands for libres
+      run: |
+        mkdir cmake-build
+        cmake -S libres -B cmake-build -DBUILD_TESTS=OFF -DCOVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: find changed files
+      id: find_changed_files
+      run: echo ::set-output name=changed_files::$(git diff --name-only ${{github.sha}} ${{github.event.pull_request.base.sha}} | tr ' ' '\n' | grep -E '\.(hpp|cpp)$' | tr '\n' ' ')
+    - run: echo ::add-matcher::.github/clang-tidy-matcher.json
+    - name: run clang-tidy
+      run: clang-tidy -p cmake-build/ ${{steps.find_changed_files.outputs.changed_files}}
+      if: steps.find_changed_files.outputs.changed_files != ''
