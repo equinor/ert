@@ -213,8 +213,6 @@ void ies::updateA(Data &data,
     /* Add old measurement perturbations */
     D += E;
 
-    double costf;
-
     auto W0 = data.make_activeW();
     Eigen::MatrixXd X;
 
