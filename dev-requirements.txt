@@ -18,7 +18,7 @@ requests
 scikit-build
 semeio>=1.4.1
 setuptools_scm
-sphinx
+sphinx<5.1.0
 sphinx_rtd_theme
 sphinx-argparse
 sphinx-autoapi
