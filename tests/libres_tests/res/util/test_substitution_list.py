@@ -1,6 +1,6 @@
-from libres_utils import ResTest
-
 from res.util.substitution_list import SubstitutionList
+
+from ...libres_utils import ResTest
 
 
 class SubstitutionListTest(ResTest):

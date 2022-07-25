@@ -14,10 +14,10 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, ModelConfig, ResConfig
 from res.sched import HistorySourceEnum
+
+from ...libres_utils import ResTest
 
 
 class ModelConfigTest(ResTest):

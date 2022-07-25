@@ -17,9 +17,9 @@ file(
 
 set(SITE_CONFIG_PATH "${CMAKE_SOURCE_DIR}/../ert_shared/share/ert/site-config")
 
-set(EQUINOR_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/../test-data/Equinor")
+set(EQUINOR_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/../../test-data/Equinor")
 set(TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/old_tests/data")
-set(LOCAL_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/../test-data/local")
+set(LOCAL_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/../../test-data/local")
 set(SHARE_DIR "${CMAKE_SOURCE_DIR}/../ert_shared/share/ert")
 
 # -----------------------------------------------------------------

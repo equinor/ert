@@ -4,13 +4,13 @@ import pathlib
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
-import yaml
-from ert_utils import chdir
-
 import ert
 import ert3
+import pytest
+import yaml
 from ert_shared.services import Storage
+
+from ....ert_utils import chdir
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 

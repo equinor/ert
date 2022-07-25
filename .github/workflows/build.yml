@@ -47,7 +47,7 @@ jobs:
     - name: Build libres
       run: |
         mkdir cmake-build
-        cmake -S libres -B cmake-build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -DCOVERAGE=ON
+        cmake -S src/libres -B cmake-build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTS=ON -DCOVERAGE=ON
         cmake --build cmake-build -j2
 
     - name: Run tests
@@ -62,7 +62,7 @@ jobs:
 
     - name: generate coverage report
       run: |
-        gcovr -r libres/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
+        gcovr -r src/libres/ --exclude-directories ".*tests" cmake-build/ --xml -o cov.xml
 
     - name: Upload c coverage to Codecov
       uses: codecov/codecov-action@v2

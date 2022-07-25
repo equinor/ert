@@ -1,7 +1,7 @@
 import pkg_resources
 from distutils.errors import DistutilsFileError
 
-from libres_utils import ResTest
+from ...libres_utils import ResTest
 
 from res.test import ErtTestContext
 

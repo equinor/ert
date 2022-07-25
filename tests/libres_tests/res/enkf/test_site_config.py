@@ -19,9 +19,10 @@ import os
 from pathlib import Path
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 from res.enkf import ConfigKeys, EnKFMain, ResConfig, SiteConfig
+
+from ...libres_utils import ResTest, tmpdir
 
 
 def test_umask_is_written_to_json(setup_case):

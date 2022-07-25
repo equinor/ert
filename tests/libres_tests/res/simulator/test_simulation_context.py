@@ -1,4 +1,4 @@
-from libres_utils import wait_until
+from ...libres_utils import wait_until
 
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum

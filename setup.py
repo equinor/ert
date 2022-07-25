@@ -26,32 +26,29 @@ def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join("..", path, filename))
+            paths.append(os.path.join("..", "..", path, filename))
     return paths
 
 
 with open("README.md") as f:
     long_description = f.read()
 
-packages = find_packages(
-    exclude=["*.tests", "*.tests.*", "tests.*", "tests", "tests*", "libres"],
-)
-
 setup(
     name="ert",
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
     description="Ensemble based Reservoir Tool (ERT)",
-    use_scm_version={"root": ".", "write_to": "ert_shared/version.py"},
+    use_scm_version={"root": ".", "write_to": "src/ert_shared/version.py"},
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/equinor/ert",
-    packages=packages,
+    packages=find_packages(where="src", exclude=["libres"]),
+    package_dir={"": "src"},
     package_data={
-        "ert_shared": package_files("ert_shared/share/"),
-        "ert": package_files("ert/gui/resources/"),
+        "ert_shared": package_files("src/ert_shared/share/"),
+        "ert": package_files("src/ert/gui/resources/"),
         "ert_logging": ["logger.conf", "storage_log.conf"],
-        "ert3_examples": package_files("ert3_examples/"),
+        "ert3_examples": package_files("src/ert3_examples/"),
         "res": [
             "fm/rms/rms_config.yml",
             "fm/ecl/ecl300_config.yml",
@@ -121,7 +118,7 @@ setup(
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
         f"-DPYTHON_EXECUTABLE={sys.executable}",
     ],
-    cmake_source_dir="libres/",
+    cmake_source_dir="src/libres/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Other Environment",

@@ -1,14 +1,14 @@
 import os
 import resource
-import pkg_resources
 import shutil
-
-import pytest
 from unittest.mock import MagicMock
 
-from utils import SOURCE_DIR
+import pkg_resources
+import pytest
 from ert_shared.services import Storage
 from res.enkf import ResConfig
+
+from .utils import SOURCE_DIR
 
 
 @pytest.fixture(scope="session")

@@ -1,5 +1,6 @@
-from ert_utils import ErtTest
 from res.config.rangestring import mask_to_rangestring
+
+from ...ert_utils import ErtTest
 
 
 class ActiveRealizationsModelTest(ErtTest):

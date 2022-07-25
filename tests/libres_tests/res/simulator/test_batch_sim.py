@@ -5,11 +5,11 @@ import time
 import unittest
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
-
 from res.enkf import ResConfig
 from res.job_queue import JobStatusType
 from res.simulator import BatchContext, BatchSimulator
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class MockMonitor:

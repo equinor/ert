@@ -166,7 +166,7 @@ target_include_directories(
   PRIVATE "${ECL_INCLUDE_DIRS}")
 
 set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
-install(TARGETS _lib LIBRARY DESTINATION res)
+install(TARGETS _lib LIBRARY DESTINATION src/res)
 
 # -----------------------------------------------------------------
 # Target: 'libres.so' for use in tests

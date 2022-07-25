@@ -2,7 +2,8 @@ import os.path
 import random
 
 from ecl.util.test import TestRun, path_exists
-from libres_utils import ResTest
+
+from ...libres_utils import ResTest
 
 
 class RunTest(ResTest):

@@ -1,6 +1,6 @@
-from libres_utils import ResTest
-
 from res.enkf import ForwardLoadContext
+
+from ...libres_utils import ResTest
 
 
 class ForwardLoadContextTest(ResTest):

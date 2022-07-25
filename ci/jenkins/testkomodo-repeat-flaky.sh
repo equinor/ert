@@ -9,12 +9,8 @@ copy_test_files () {
     mkdir ${CI_TEST_ROOT}/.git
 
     # libres
-    mkdir -p ${CI_TEST_ROOT}/libres/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/libres/res/fm/rms/rms_config.yml
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/lib
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/bin
-
-    ln -s ${CI_SOURCE_ROOT}/share ${CI_TEST_ROOT}/share
+    mkdir -p ${CI_TEST_ROOT}/src/libres/res/fm/rms
+    ln -s ${CI_SOURCE_ROOT}/src/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/libres/res/fm/rms/rms_config.yml
 }
 
 install_test_dependencies () {

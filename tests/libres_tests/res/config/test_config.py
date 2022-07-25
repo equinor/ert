@@ -16,7 +16,7 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 
 from res import ResPrototype
 from res.config import (

@@ -14,13 +14,13 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
-from textwrap import dedent
 import tempfile
+from textwrap import dedent
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import ResConfig
+
+from ...libres_utils import ResTest
 
 
 class ProgrammaticResConfigTest(ResTest):

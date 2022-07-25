@@ -4,7 +4,6 @@ import os.path
 import unittest
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
 from pytest import MonkeyPatch
 from res.fm.shell import (
     careful_copy_file,
@@ -16,6 +15,8 @@ from res.fm.shell import (
     move_file,
     symlink,
 )
+
+from ...libres_utils import ResTest
 
 
 @contextlib.contextmanager

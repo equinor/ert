@@ -22,8 +22,6 @@ import pytest
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
-
 from res.enkf import (
     AnalysisConfig,
     ConfigKeys,
@@ -34,6 +32,8 @@ from res.enkf import (
 )
 from res.job_queue import QueueDriverEnum
 from res.sched import HistorySourceEnum
+
+from ...libres_utils import ResTest, tmpdir
 
 # The res_config object should set the environment variable
 # 'DATA_ROOT' to the root directory with the config

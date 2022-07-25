@@ -25,7 +25,7 @@ import pkg_resources
 
 import pytest
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 
 import res.fm.rms

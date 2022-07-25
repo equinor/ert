@@ -1,14 +1,13 @@
+import logging
 import os
 import sys
-import logging
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-
 from ert_shared import main
 from ert_shared.main import log_config
 
-from utils import SOURCE_DIR
+from ...utils import SOURCE_DIR
 
 
 def test_main_logging(monkeypatch, caplog):

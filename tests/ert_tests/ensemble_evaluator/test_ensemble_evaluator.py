@@ -1,12 +1,12 @@
 from unittest.mock import MagicMock, patch
-from aiohttp import ServerTimeoutError
 
 import pytest
-from ert.ensemble_evaluator import identifiers, wait_for_evaluator, Snapshot
+from aiohttp import ServerTimeoutError
+from ert.ensemble_evaluator import Snapshot, identifiers, wait_for_evaluator
 from ert.ensemble_evaluator.state import (
+    ENSEMBLE_STATE_FAILED,
     ENSEMBLE_STATE_STARTED,
     ENSEMBLE_STATE_UNKNOWN,
-    ENSEMBLE_STATE_FAILED,
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
@@ -23,7 +23,7 @@ from ert_shared.ensemble_evaluator.narratives import (
 from websockets.exceptions import ConnectionClosedError
 from websockets.version import version as websockets_version
 
-from ensemble_evaluator_utils import (
+from .ensemble_evaluator_utils import (
     AutorunTestEnsemble,
     TestEnsemble,
     send_dispatch_event,

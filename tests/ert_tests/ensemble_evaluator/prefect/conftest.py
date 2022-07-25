@@ -1,22 +1,21 @@
 import contextlib
-from functools import partial
 import importlib
 import pathlib
 import tempfile
 import threading
+from functools import partial
 from pathlib import Path
 from typing import Callable, ContextManager, Type
 
 import cloudpickle
-import pytest
-
 import ert
 import ert.ensemble_evaluator as ee
-from ensemble_evaluator_utils import _mock_ws
-
+import pytest
 from ert_shared.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+
+from ..ensemble_evaluator_utils import _mock_ws
 
 
 @contextlib.contextmanager

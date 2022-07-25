@@ -21,7 +21,7 @@ import shutil
 
 import numpy as np
 from ecl.grid import EclGridGenerator
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 from res._lib.local.row_scaling import RowScaling
 
 from res.enkf import (

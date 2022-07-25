@@ -18,9 +18,9 @@ import os
 import unittest
 
 from ecl.util.test import TestArea
-from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, ErtTemplates, ResConfig
+
+from ...libres_utils import ResTest
 
 
 class ErtTemplatesTest(ResTest):

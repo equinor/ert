@@ -1,7 +1,6 @@
 import pytest
-from ensemble_evaluator_utils import TestEnsemble
-
 from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
 from ert_shared.ensemble_evaluator.narratives import (
     monitor_failing_ensemble,
@@ -9,7 +8,8 @@ from ert_shared.ensemble_evaluator.narratives import (
     monitor_successful_ensemble,
 )
 from ert_shared.ensemble_evaluator.narratives.proxy import NarrativeProxy
-from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, ENSEMBLE_STATE_STOPPED
+
+from .ensemble_evaluator_utils import TestEnsemble
 
 
 @pytest.mark.consumer_driven_contract_test

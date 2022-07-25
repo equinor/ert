@@ -2,10 +2,10 @@ import os
 
 import pytest
 from ecl.util.test.test_area import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import EnKFMain, ResConfig, SummaryKeySet
 from res.enkf.enkf_fs import EnkfFs
+
+from ...libres_utils import ResTest
 
 
 @pytest.mark.equinor_test

@@ -20,7 +20,7 @@ import os.path
 import pytest
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
+from ...libres_utils import ResTest
 
 from res.enkf import ConfigKeys, EclConfig, ResConfig
 from res.util import UIReturn

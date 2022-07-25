@@ -1,7 +1,7 @@
 import os
 import sys
 
-from libres_utils import ResTest
+from ..libres_utils import ResTest
 
 try:
     from res.test.synthesizer import OilSimulator

@@ -1,7 +1,7 @@
 import json
 import os
 
-from libres_utils import _mock_ws_thread
+from ..libres_utils import _mock_ws_thread
 
 from job_runner.job import Job
 from job_runner.reporting import Event

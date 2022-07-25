@@ -3,9 +3,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
-import dummy_plugins
-
 import ert_shared.hook_implementations
+import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert_shared.plugins import ErtPluginManager
 
 

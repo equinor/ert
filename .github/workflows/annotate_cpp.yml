@@ -35,7 +35,7 @@ jobs:
     - name: Create compile commands for libres
       run: |
         mkdir cmake-build
-        cmake -S libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake -S src/libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         cmake --build cmake-build
 
     - name: find changed files

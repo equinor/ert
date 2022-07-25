@@ -24,10 +24,11 @@ from subprocess import PIPE, Popen
 import pytest
 import yaml
 from ecl.summary import EclSum
-from libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 from res.fm.ecl import Ecl100Config, EclRun, FlowConfig, ecl_run, run
 from res.fm.ecl.ecl_run import make_SLURM_machine_list
+
+from ...libres_utils import ResTest, tmpdir
 
 
 def flow_install():

@@ -14,9 +14,9 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from libres_utils import ResTest
-
 from res.enkf import ActiveList, SummaryObservation
+
+from ...libres_utils import ResTest
 
 
 class SummaryObsTest(ResTest):

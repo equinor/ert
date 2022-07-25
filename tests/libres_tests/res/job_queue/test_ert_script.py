@@ -1,8 +1,8 @@
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-from workflow_common import WorkflowCommon
-
 from res.job_queue import ErtScript
+
+from ...libres_utils import ResTest
+from .workflow_common import WorkflowCommon
 
 
 class ReturnErtScript(ErtScript):

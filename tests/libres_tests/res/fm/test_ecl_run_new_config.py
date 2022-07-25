@@ -24,7 +24,7 @@ from unittest import mock
 import pytest
 import yaml
 from ecl.summary import EclSum
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 
 from res.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run

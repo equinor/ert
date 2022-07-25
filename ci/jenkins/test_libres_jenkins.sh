@@ -53,7 +53,7 @@ build_libres () {
 	run enable_environment
 
 	pushd $LIBRES_BUILD
-	cmake ${ERT_SOURCE_ROOT}/libres \
+	cmake ${ERT_SOURCE_ROOT}/src/libres \
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
 		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -130,7 +130,7 @@ create_virtualenv () {
 run_ctest () {
 	run enable_environment
 	pushd $LIBRES_BUILD
-	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/ert_shared/share/ert/site-config
+	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert_shared/share/ert/site-config
 	ctest -j $CTEST_JARG -E Lint --output-on-failure
 	popd
 }

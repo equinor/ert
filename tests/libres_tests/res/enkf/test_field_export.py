@@ -2,12 +2,12 @@ import os
 
 import pytest
 from ecl.util.util import IntVector
-from libres_utils import ResTest
-
 from res.enkf import NodeId
 from res.enkf.config import FieldTypeEnum
 from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest
 
 
 @pytest.mark.equinor_test
