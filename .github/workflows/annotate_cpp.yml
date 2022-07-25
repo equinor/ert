@@ -28,14 +28,15 @@ jobs:
       run: |
         git clone https://github.com/equinor/libecl
         mkdir libecl/build
-        cmake -S libecl -B libecl/build
+        cmake -S libecl -B libecl/build -DCMAKE_BUILD_TYPE=DEBUG
         sudo cmake --build libecl/build --target install
         sudo rm -rf libecl
 
     - name: Create compile commands for libres
       run: |
         mkdir cmake-build
-        cmake -S libres -B cmake-build -DBUILD_TESTS=OFF -DCOVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake -S libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake --build cmake-build
 
     - name: find changed files
       id: find_changed_files
