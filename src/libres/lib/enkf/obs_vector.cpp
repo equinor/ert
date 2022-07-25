@@ -76,25 +76,9 @@ struct obs_vector_struct {
 UTIL_IS_INSTANCE_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
 UTIL_SAFE_CAST_FUNCTION(obs_vector, OBS_VECTOR_TYPE_ID)
 
-static void obs_vector_prefer_RESTART_warning() {
-    // clang-format off
-    fprintf(stderr, " -------------------------------------------------------------------------------\n");
-    fprintf(stderr, " Warning: For GEN_OBS observations it is highly recommended to use the RESTART  \n");
-    fprintf(stderr, "          keyword to denote the time of the observation. The RESTART value      \n");
-    fprintf(stderr, "          should be matched with the report step embedded as part of the        \n");
-    fprintf(stderr, "          GEN_DATA result file created by the forward model.                    \n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "          In the future use OF DATE and DAYS will not be possible for GEN_OBS   \n");
-    fprintf(stderr, " -------------------------------------------------------------------------------\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "\n");
-    // clang-format on
-}
-
 static int
 __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
-                               const char *obs_key, time_map_type *time_map,
-                               bool prefer_restart) {
+                               const char *obs_key, time_map_type *time_map) {
     int obs_restart_nr = -1; /* To shut up compiler warning. */
 
     if (conf_instance_has_item(conf_instance, "RESTART")) {
@@ -111,20 +95,14 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
         if (conf_instance_has_item(conf_instance, "DATE")) {
             obs_time =
                 conf_instance_get_item_value_time_t(conf_instance, "DATE");
-            if (prefer_restart)
-                obs_vector_prefer_RESTART_warning();
         } else if (conf_instance_has_item(conf_instance, "DAYS")) {
             double days =
                 conf_instance_get_item_value_double(conf_instance, "DAYS");
             util_inplace_forward_days_utc(&obs_time, days);
-            if (prefer_restart)
-                obs_vector_prefer_RESTART_warning();
         } else if (conf_instance_has_item(conf_instance, "HOURS")) {
             double hours =
                 conf_instance_get_item_value_double(conf_instance, "HOURS");
             util_inplace_forward_seconds_utc(&obs_time, hours * 3600);
-            if (prefer_restart)
-                obs_vector_prefer_RESTART_warning();
         } else
             util_abort("%s: Internal error. Invalid conf_instance?\n",
                        __func__);
@@ -377,8 +355,8 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
         const char *sum_key =
             conf_instance_get_item_value_ref(conf_instance, "KEY");
         const char *obs_key = conf_instance_get_name_ref(conf_instance);
-        int obs_restart_nr = __conf_instance_get_restart_nr(
-            conf_instance, obs_key, obs_time, false);
+        int obs_restart_nr =
+            __conf_instance_get_restart_nr(conf_instance, obs_key, obs_time);
 
         if (obs_restart_nr == 0) {
             int day, month, year;
@@ -417,8 +395,8 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
         conf_instance_get_item_value_ref(conf_instance, "DATA");
     if (ensemble_config_has_key(ensemble_config, state_kw)) {
         const char *obs_key = conf_instance_get_name_ref(conf_instance);
-        int obs_restart_nr = __conf_instance_get_restart_nr(
-            conf_instance, obs_key, obs_time, true);
+        int obs_restart_nr =
+            __conf_instance_get_restart_nr(conf_instance, obs_key, obs_time);
         const char *index_file = NULL;
         const char *index_list = NULL;
         const char *obs_file = NULL;
@@ -717,8 +695,8 @@ obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
         int *obs_j = (int *)util_calloc(num_obs_pts, sizeof *obs_j);
         int *obs_k = (int *)util_calloc(num_obs_pts, sizeof *obs_k);
 
-        obs_restart_nr = __conf_instance_get_restart_nr(
-            conf_instance, obs_label, obs_time, false);
+        obs_restart_nr =
+            __conf_instance_get_restart_nr(conf_instance, obs_label, obs_time);
 
         /* Build the observation. */
         for (int obs_pt_nr = 0; obs_pt_nr < num_obs_pts; obs_pt_nr++) {
