@@ -28,5 +28,5 @@ jobs:
         if: steps.find_changed_files.outputs.changed_files != ''
       - run: echo ::add-matcher::.github/mypy-matcher.json
       - name: run mypy
-        run: mypy ${{steps.find_changed_files.outputs.changed_files}}
+        run: mypy ${{steps.find_changed_files.outputs.changed_files}} --config-file .mypy-annotate.ini
         if: steps.find_changed_files.outputs.changed_files != ''
