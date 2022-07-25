@@ -17,10 +17,10 @@ from os.path import abspath
 
 from ecl.grid import EclGridGenerator
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf.config import FieldConfig, FieldTypeEnum
 from res.enkf.enums import EnkfFieldFileFormatEnum
+
+from ...libres_utils import ResTest
 
 
 class FieldConfigTest(ResTest):

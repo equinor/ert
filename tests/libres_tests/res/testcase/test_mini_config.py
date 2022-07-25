@@ -1,7 +1,7 @@
-from libres_utils import ResTest, tmpdir
-
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class MiniConfigTest(ResTest):

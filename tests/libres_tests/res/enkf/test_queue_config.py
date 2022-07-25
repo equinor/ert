@@ -17,11 +17,11 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.config import ConfigContent
 from res.enkf import ConfigKeys, QueueConfig
 from res.job_queue import QueueDriverEnum
+
+from ...libres_utils import ResTest
 
 
 class QueueConfigTest(ResTest):

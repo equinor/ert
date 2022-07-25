@@ -10,26 +10,26 @@ from typing import Callable, ContextManager, List, Type
 import numpy as np
 import pytest
 from ecl.summary import EclSum
-from ert_utils import tmp
-
 from ert.data import (
-    Record,
     BlobRecord,
     CopyTransformation,
     EclSumTransformation,
     ExecutableTransformation,
     FileTransformation,
-    SerializationTransformation,
     NumericalRecord,
     NumericalRecordTree,
+    Record,
     RecordTransformation,
-    TransformationDirection,
     RecordTransmitter,
-    TreeSerializationTransformation,
+    SerializationTransformation,
     TarTransformation,
+    TransformationDirection,
+    TreeSerializationTransformation,
 )
-from ert.exceptions import FileExistsException
 from ert.data.record._transformation import _BIN_FOLDER
+from ert.exceptions import FileExistsException
+
+from ...ert_utils import tmp
 
 
 @contextlib.contextmanager

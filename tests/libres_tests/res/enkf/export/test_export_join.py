@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from libres_utils import ResTest
+from ....libres_utils import ResTest
 
 from res.enkf.export import (
     DesignMatrixReader,

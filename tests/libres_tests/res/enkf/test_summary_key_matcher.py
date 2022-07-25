@@ -1,6 +1,6 @@
-from libres_utils import ResTest
-
 from res.enkf import SummaryKeyMatcher
+
+from ...libres_utils import ResTest
 
 
 class SummaryKeyMatcherTest(ResTest):

@@ -18,9 +18,9 @@ import os.path
 import unittest
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, ResConfig, SubstConfig
+
+from ...libres_utils import ResTest
 
 
 class SubstConfigTest(ResTest):

@@ -1,7 +1,8 @@
-from libres_utils import ResTest, tmpdir
 from res.enkf import EnkfConfigNode, EnkfNode, NodeId
 from res.enkf.enums import RealizationStateEnum
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class SimulationBatchTest(ResTest):

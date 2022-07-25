@@ -1,25 +1,20 @@
+import contextlib
 import json
 import os
 import pathlib
 import stat
 import sys
 import tempfile
-import contextlib
-
-import ert.storage
-
-import pytest
 import typing
 
-from ert.data import (
-    InMemoryRecordTransmitter,
-    SharedDiskRecordTransmitter,
-)
+import ert.storage
+import pytest
+from ert.data import InMemoryRecordTransmitter, SharedDiskRecordTransmitter
 from ert.storage import StorageRecordTransmitter
 
 import ert3
 
-from ert_utils import chdir
+from ..ert_utils import chdir
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 
@@ -426,6 +421,7 @@ def function_stages_config(plugin_registry):
 def ert_storage(ert_storage_client, monkeypatch):
     # ert_storage_client fixture is defined in ert-storage repo.
     from contextlib import contextmanager
+
     from ert.storage import _storage
     from httpx import AsyncClient
 

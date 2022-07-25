@@ -2,8 +2,8 @@ import asyncio
 import json
 import os
 import stat
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Any, Dict, Optional
 from unittest.mock import patch
@@ -17,10 +17,10 @@ except ImportError:
     from mock import AsyncMock
 
 import pytest
-from libres_utils import wait_for
+from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
 from websockets.exceptions import ConnectionClosedError
 
-from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
+from ...libres_utils import wait_for
 
 
 def dummy_exit_callback(args):

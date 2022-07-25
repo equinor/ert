@@ -15,9 +15,9 @@
 #  for more details.
 
 
-from libres_utils import ResTest
-
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest
 
 
 class LocalConfigTest(ResTest):

@@ -1,7 +1,8 @@
 import os
 
-from libres_utils import ResTest, tmpdir
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest, tmpdir
 
 
 def render_dynamic_values(s, itr, iens, geo_id):

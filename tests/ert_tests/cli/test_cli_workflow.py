@@ -3,9 +3,10 @@ from argparse import Namespace
 
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.plugins.plugin_manager import ErtPluginContext
-from ert_utils import ErtTest, tmpdir
 from res.enkf import EnKFMain, ResConfig
-from utils import SOURCE_DIR
+
+from ...utils import SOURCE_DIR
+from ..ert_utils import ErtTest, tmpdir
 
 
 class WorkflowTest(ErtTest):

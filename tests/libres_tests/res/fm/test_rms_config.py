@@ -18,10 +18,10 @@ import stat
 import unittest
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
 from pytest import MonkeyPatch
-
 from res.fm.rms import RMSConfig
+
+from ...libres_utils import ResTest
 
 
 class RMSConfigTest(ResTest):

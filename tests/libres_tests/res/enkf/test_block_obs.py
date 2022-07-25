@@ -15,7 +15,7 @@
 #  for more details.
 
 from ecl.grid import EclGridGenerator
-from libres_utils import ResTest
+from ...libres_utils import ResTest
 
 from res.enkf import ActiveList, BlockObservation, FieldConfig
 

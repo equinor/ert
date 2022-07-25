@@ -1,12 +1,12 @@
 import json
 import subprocess
-import pkg_resources
 
 import jinja2
+import pkg_resources
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
-
 from res.fm.templating import load_parameters, render_template
+
+from ...libres_utils import ResTest, tmpdir
 
 
 class TemplatingTest(ResTest):

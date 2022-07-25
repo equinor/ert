@@ -2,19 +2,18 @@
 import json
 import pathlib
 from contextlib import contextmanager
+from unittest.mock import patch
 
+import ert
+import ert3
 import pytest
-
 from ert_shared.async_utils import get_event_loop
-from integration_utils import (
+
+from .integration_utils import (
     assert_distribution,
     assert_export,
     assert_sensitivity_export,
 )
-
-import ert
-import ert3
-from unittest.mock import patch
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 _RESOURCES_BASE = ert3.workspace._workspace._RESOURCES_BASE

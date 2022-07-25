@@ -1,6 +1,6 @@
-from ert_utils import ErtTest
-
 from res.test import ErtTestContext
+
+from ..ert_utils import ErtTest
 
 # The data loaded in this test is not part of an automatic test, we
 # just verify that the example cases can indeed be loaded.

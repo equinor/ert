@@ -16,7 +16,8 @@ from ert.data import (
     SerializationTransformation,
 )
 from ert.data.record import _transmitter
-from ert_utils import tmp
+
+from ...ert_utils import tmp
 
 record123 = NumericalRecord(data=[1, 2, 3])
 

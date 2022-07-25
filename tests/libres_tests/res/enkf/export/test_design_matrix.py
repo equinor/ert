@@ -1,5 +1,5 @@
 from ecl.util.test.test_area import TestAreaContext
-from libres_utils import ResTest
+from ....libres_utils import ResTest
 
 from res.enkf.export import DesignMatrixReader
 

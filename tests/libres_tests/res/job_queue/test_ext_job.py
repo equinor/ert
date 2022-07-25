@@ -1,12 +1,12 @@
 import os
-import stat
 import os.path
+import stat
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.config import ContentTypeEnum
 from res.job_queue.ext_job import ExtJob
+
+from ...libres_utils import ResTest
 
 
 def create_valid_config(config_file):

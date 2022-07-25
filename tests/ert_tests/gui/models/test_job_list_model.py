@@ -1,22 +1,22 @@
 import datetime
-import pytest
-from dateutil import tz
 from unittest.mock import patch
 
-from gui_models_utils import partial_snapshot
-from PyQt5.QtCore import QModelIndex
-from pytestqt.qt_compat import qt_api
-
+import pytest
+from dateutil import tz
 from ert.ensemble_evaluator import identifiers as ids
-from ert.gui.model.job_list import JobListProxyModel
-from ert.gui.model.node import NodeType
-from ert.gui.model.snapshot import COLUMNS, SnapshotModel, DURATION
 from ert.ensemble_evaluator.snapshot import Job, PartialSnapshot
 from ert.ensemble_evaluator.state import (
     JOB_STATE_FAILURE,
-    JOB_STATE_START,
     JOB_STATE_RUNNING,
+    JOB_STATE_START,
 )
+from ert.gui.model.job_list import JobListProxyModel
+from ert.gui.model.node import NodeType
+from ert.gui.model.snapshot import COLUMNS, DURATION, SnapshotModel
+from PyQt5.QtCore import QModelIndex
+from pytestqt.qt_compat import qt_api
+
+from .gui_models_utils import partial_snapshot
 
 
 def _id_to_col(identifier):

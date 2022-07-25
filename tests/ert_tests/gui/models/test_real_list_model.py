@@ -1,14 +1,14 @@
-from gui_models_utils import partial_snapshot
-from PyQt5.QtCore import QModelIndex
-from pytestqt.qt_compat import qt_api
-
-from ert.gui.model.real_list import RealListModel
-from ert.gui.model.snapshot import NodeRole, SnapshotModel
 from ert.ensemble_evaluator.snapshot import Realization
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
     REALIZATION_STATE_UNKNOWN,
 )
+from ert.gui.model.real_list import RealListModel
+from ert.gui.model.snapshot import NodeRole, SnapshotModel
+from PyQt5.QtCore import QModelIndex
+from pytestqt.qt_compat import qt_api
+
+from .gui_models_utils import partial_snapshot
 
 
 def test_using_qt_model_tester(qtmodeltester, full_snapshot):

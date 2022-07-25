@@ -1,4 +1,4 @@
-from libres_utils import ResTest
+from ....libres_utils import ResTest
 
 from res.enkf.data.enkf_node import EnkfNode
 from res.enkf.node_id import NodeId

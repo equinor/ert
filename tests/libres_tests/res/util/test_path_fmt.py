@@ -1,6 +1,6 @@
-from libres_utils import ResTest
-
 from res.util import PathFormat
+
+from ...libres_utils import ResTest
 
 
 class PathFmtTest(ResTest):

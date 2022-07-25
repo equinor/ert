@@ -1,5 +1,5 @@
 import pytest
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
 from res.test import ErtTestContext

@@ -13,7 +13,7 @@ install_libecl () {
 
 build_libres () {
     INSTALL=$WORKSPACE/install
-    LIBRES_BUILD=$CI_SOURCE_ROOT/libres/build
+    LIBRES_BUILD=$CI_SOURCE_ROOT/src/libres/build
     mkdir -p $LIBRES_BUILD
     pushd $LIBRES_BUILD
     KOMODO_PATH=/prog/res/komodo/${CI_KOMODO_RELEASE}
@@ -28,7 +28,7 @@ build_libres () {
 
 run_libres_ctest() {
     pushd $LIBRES_BUILD
-    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/ert_shared/share/ert/site-config
+    export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/src/ert_shared/share/ert/site-config
 
     ctest -j 6 -E Lint --output-on-failure
     popd
@@ -36,12 +36,8 @@ run_libres_ctest() {
 
 copy_test_files () {
      # libres
-    mkdir -p ${CI_TEST_ROOT}/libres/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/libres/res/fm/rms/rms_config.yml
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/lib
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/bin
-
-    ln -s ${CI_SOURCE_ROOT}/share ${CI_TEST_ROOT}/share
+    mkdir -p ${CI_TEST_ROOT}/src/libres/res/fm/rms
+    ln -s ${CI_SOURCE_ROOT}/src/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/libres/res/fm/rms/rms_config.yml
 }
 
 install_test_dependencies () {

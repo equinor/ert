@@ -1,22 +1,22 @@
 import functools
 import pickle
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 from typing import Dict
 
 import cloudpickle
-import prefect
-import pytest
-from prefect import Flow
-from functools import partial
 import ert
-from ert_utils import tmp
 import ert.ensemble_evaluator as ee
-from ert_shared.async_utils import get_event_loop
+import pytest
 from ert.ensemble_evaluator import identifiers as ids
-from ert.ensemble_evaluator.builder._prefect import (
-    _on_task_failure,
-)
+from ert.ensemble_evaluator.builder._prefect import _on_task_failure
+from ert_shared.async_utils import get_event_loop
+
+import prefect
+from prefect import Flow
+
+from ...ert_utils import tmp
 
 
 def get_step(step_name, inputs, outputs, jobs, type_="unix"):

@@ -1,6 +1,6 @@
 import sys
 
-from libres_utils import ResTest, tmpdir
+from ...libres_utils import ResTest, tmpdir
 
 from res.enkf import EnkfFsManager
 from res.test import ErtTestContext

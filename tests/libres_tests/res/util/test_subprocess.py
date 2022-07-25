@@ -15,13 +15,13 @@
 #  for more details.
 
 
-import unittest
 import os
+import unittest
 from subprocess import PIPE, Popen, TimeoutExpired
 
-from libres_utils import tmpdir
-
 from res.util.subprocess import await_process_tee
+
+from ...libres_utils import tmpdir
 
 
 def _find_system_pipe_max_size():

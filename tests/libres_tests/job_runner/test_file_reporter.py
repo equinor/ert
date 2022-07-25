@@ -2,7 +2,7 @@ import os
 import os.path
 from unittest import TestCase
 
-from libres_utils import tmpdir
+from ..libres_utils import tmpdir
 
 from job_runner.job import Job
 from job_runner.reporting import File

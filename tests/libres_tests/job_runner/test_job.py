@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 from unittest.mock import PropertyMock, patch
 
-from libres_utils import tmpdir
+from ..libres_utils import tmpdir
 
 from job_runner.job import Job
 from job_runner.reporting.message import Exited, Running, Start

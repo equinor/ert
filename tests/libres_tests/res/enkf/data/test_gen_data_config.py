@@ -1,5 +1,5 @@
 import pytest
-from libres_utils import ResTest
+from ....libres_utils import ResTest
 
 from res import ResPrototype
 from res.enkf import ForwardLoadContext, NodeId, RunArg

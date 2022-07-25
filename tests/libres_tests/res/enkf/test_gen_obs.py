@@ -1,7 +1,7 @@
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import ActiveList, GenDataConfig, GenObservation
+
+from ...libres_utils import ResTest
 
 
 class GenObsTest(ResTest):

@@ -1,6 +1,6 @@
-from libres_utils import ResTest
-
 from res.enkf import CancelPluginException, ErtPlugin
+
+from ...libres_utils import ResTest
 
 
 class SimplePlugin(ErtPlugin):

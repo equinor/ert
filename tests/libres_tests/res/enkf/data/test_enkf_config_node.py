@@ -1,4 +1,4 @@
-from libres_utils import ResTest
+from ....libres_utils import ResTest
 
 from res.enkf.config import EnkfConfigNode
 

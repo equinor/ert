@@ -1,7 +1,7 @@
-from libres_utils import ResTest
-
 from res.util import UIReturn
 from res.util.enums import UIReturnStatusEnum
+
+from ...libres_utils import ResTest
 
 
 class UIReturnTest(ResTest):

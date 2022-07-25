@@ -1,11 +1,11 @@
 from unittest.mock import patch
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, wait_until
-from workflow_common import WorkflowCommon
-
 from res.job_queue import Workflow, WorkflowJoblist, WorkflowRunner
 from res.util.substitution_list import SubstitutionList
+
+from ...libres_utils import ResTest, wait_until
+from .workflow_common import WorkflowCommon
 
 
 class WorkflowRunnerTest(ResTest):

@@ -1,14 +1,15 @@
 import hashlib
 import json
-
-import pytest
-from performance_utils import make_poly_template
 from argparse import ArgumentParser
+
+import py
+import pytest
 from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE
 from ert_shared.cli.main import run_cli
 from ert_shared.main import ert_parser
 from pytest import fixture
-import py
+
+from .performance_utils import make_poly_template
 
 template_config_path = None
 

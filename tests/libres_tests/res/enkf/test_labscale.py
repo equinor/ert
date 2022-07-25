@@ -16,11 +16,10 @@
 #  for more details.
 
 import pytest
-
-from libres_utils import ResTest
-
 from res.enkf import ObsVector
 from res.test import ErtTestContext
+
+from ...libres_utils import ResTest
 
 
 @pytest.mark.skip("Currently failing because a config object is missing a key")

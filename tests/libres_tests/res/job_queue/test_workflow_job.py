@@ -1,9 +1,9 @@
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-from workflow_common import WorkflowCommon
-
 from res import ResPrototype
 from res.job_queue import WorkflowJob
+
+from ...libres_utils import ResTest
+from .workflow_common import WorkflowCommon
 
 
 class _TestWorkflowJobPrototype(ResPrototype):

@@ -17,9 +17,9 @@
 import os
 
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, ErtWorkflowList, ResConfig, SiteConfig
+
+from ...libres_utils import ResTest
 
 
 class ErtWorkflowListTest(ResTest):

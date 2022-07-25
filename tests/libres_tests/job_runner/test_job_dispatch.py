@@ -11,7 +11,7 @@ from unittest.mock import mock_open, patch
 
 import psutil
 import pytest
-from libres_utils import _mock_ws_thread, tmpdir, wait_until
+from ..libres_utils import _mock_ws_thread, tmpdir, wait_until
 
 from job_runner.cli import _setup_reporters, main
 from job_runner.reporting import Event, Interactive

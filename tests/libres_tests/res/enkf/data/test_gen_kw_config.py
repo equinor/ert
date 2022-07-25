@@ -1,5 +1,5 @@
 from ecl.util.test import TestAreaContext
-from libres_utils import ResTest, tmpdir
+from ....libres_utils import ResTest, tmpdir
 
 from res.enkf import GenKwConfig
 

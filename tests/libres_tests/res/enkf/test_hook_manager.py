@@ -18,9 +18,9 @@ import os.path
 import unittest
 
 from ecl.util.test import TestArea
-from libres_utils import ResTest
-
 from res.enkf import ConfigKeys, HookManager, HookRuntime, ResConfig
+
+from ...libres_utils import ResTest
 
 
 class HookManagerTest(ResTest):

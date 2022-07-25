@@ -1,6 +1,6 @@
-from ert_utils import ErtTest
-
 from ert_shared.ide.keywords.definitions import ProperNameFormatArgument
+
+from ...ert_utils import ErtTest
 
 
 class ProperNameFormatArgumentTest(ErtTest):
