@@ -26,7 +26,6 @@ from res.config import ConfigContent
 from res.enkf.config import EnkfConfigNode
 from res.enkf.config_keys import ConfigKeys
 from res.enkf.enums import EnkfVarType, ErtImplType
-from res.enkf.summary_key_matcher import SummaryKeyMatcher
 from res import _lib
 
 
@@ -72,9 +71,6 @@ class EnsembleConfig(BaseCClass):
     )
     _add_node = ResPrototype(
         "void ensemble_config_add_node( ens_config , enkf_config_node )"
-    )
-    _summary_key_matcher = ResPrototype(
-        "summary_key_matcher_ref ensemble_config_get_summary_key_matcher(ens_config)"
     )
     _get_trans_table = ResPrototype("void* ensemble_config_get_trans_table(ens_config)")
     _add_summary_full = ResPrototype(
@@ -267,10 +263,6 @@ class EnsembleConfig(BaseCClass):
 
     def __contains__(self, key):
         return self._has_key(key)
-
-    def getSummaryKeyMatcher(self) -> SummaryKeyMatcher:
-        """@rtype: SummaryKeyMatcher"""
-        return self._summary_key_matcher()
 
     def free(self):
         self._free()
