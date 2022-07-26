@@ -14,49 +14,49 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from ...libres_utils import ResTest
-
 from res.enkf import ActiveList, ActiveMode
 
 
-class ActiveListTest(ResTest):
-    def test_active_mode_enum(self):
-        self.assertEqual(ActiveMode.ALL_ACTIVE, 1)
-        self.assertEqual(ActiveMode.PARTLY_ACTIVE, 3)
-        self.assertEqual(ActiveMode(1).name, "ALL_ACTIVE")
-        self.assertEqual(ActiveMode(3).name, "PARTLY_ACTIVE")
+def test_active_mode_enum():
+    assert ActiveMode.ALL_ACTIVE == 1
+    assert ActiveMode.PARTLY_ACTIVE == 3
+    assert ActiveMode(1).name == "ALL_ACTIVE"
+    assert ActiveMode(3).name == "PARTLY_ACTIVE"
 
-    def test_active_size(self):
-        al = ActiveList()
-        self.assertEqual(7, al.getActiveSize(7))
-        self.assertEqual(-1, al.getActiveSize(-1))
 
-        al.addActiveIndex(10)
-        self.assertEqual(1, al.getActiveSize(7))
-        al.addActiveIndex(10)
-        self.assertEqual(1, al.getActiveSize(7))
-        al.addActiveIndex(100)
-        self.assertEqual(2, al.getActiveSize(7))
+def test_active_size():
+    al = ActiveList()
+    assert al.getActiveSize(7) == 7
+    assert al.getActiveSize(-1) == -1
 
-    def test_create(self):
-        active_list = ActiveList()
-        self.assertEqual(active_list.getMode(), ActiveMode.ALL_ACTIVE)
-        active_list.addActiveIndex(10)
-        self.assertEqual(active_list.getMode(), ActiveMode.PARTLY_ACTIVE)
+    al.addActiveIndex(10)
+    assert al.getActiveSize(7) == 1
+    al.addActiveIndex(10)
+    assert al.getActiveSize(7) == 1
+    al.addActiveIndex(100)
+    assert al.getActiveSize(7) == 2
 
-    def test_repr(self):
-        al = ActiveList()
-        rep = repr(al)
-        self.assertFalse("PARTLY_ACTIVE" in rep)
-        self.assertTrue("ALL_ACTIVE" in rep)
-        pfx = "ActiveList("
-        self.assertEqual(pfx, rep[: len(pfx)])
-        for i in range(150):
-            al.addActiveIndex(3 * i)
-        rep = repr(al)
-        self.assertTrue("150" in rep)
-        self.assertTrue("PARTLY_ACTIVE" in rep)
-        self.assertFalse("ALL_ACTIVE" in rep)
+
+def test_create():
+    active_list = ActiveList()
+    assert active_list.getMode() == ActiveMode.ALL_ACTIVE
+    active_list.addActiveIndex(10)
+    assert active_list.getMode() == ActiveMode.PARTLY_ACTIVE
+
+
+def test_repr():
+    al = ActiveList()
+    rep = repr(al)
+    assert "PARTLY_ACTIVE" not in rep
+    assert "ALL_ACTIVE" in rep
+    pfx = "ActiveList("
+    assert pfx == rep[: len(pfx)]
+    for i in range(150):
+        al.addActiveIndex(3 * i)
+    rep = repr(al)
+    assert "150" in rep
+    assert "PARTLY_ACTIVE" in rep
+    assert "ALL_ACTIVE" not in rep
 
 
 def test_active_index_list_empty():

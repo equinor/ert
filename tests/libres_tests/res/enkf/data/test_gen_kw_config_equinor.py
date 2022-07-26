@@ -22,7 +22,7 @@ class GenKwConfigTest(ResTest):
 
             expected_keys = ["GRID_PARAMS", "FLUID_PARAMS", "MULTFLT"]
 
-            self.assertItemsEqual(result_gen_kw_keys, expected_keys)
+            assert list(result_gen_kw_keys) == expected_keys
             self.assertEqual(len(expected_keys), len(result_gen_kw_keys))
 
             for key in expected_keys:

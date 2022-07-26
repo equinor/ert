@@ -78,10 +78,9 @@ class PlotLimitsTest(ErtTest):
                 getattr(plot_limits, f"{attribute_name}_limits"), (None, None)
             )
 
-            with self.assertNotRaises():
-                setattr(plot_limits, f"{attribute_name}_minimum", None)
-                setattr(plot_limits, f"{attribute_name}_maximum", None)
-                setattr(plot_limits, f"{attribute_name}_limits", (None, None))
+            setattr(plot_limits, f"{attribute_name}_minimum", None)
+            setattr(plot_limits, f"{attribute_name}_maximum", None)
+            setattr(plot_limits, f"{attribute_name}_limits", (None, None))
 
             with self.assertRaises(TypeError):
                 setattr(plot_limits, f"{attribute_name}_limits", None)
@@ -98,9 +97,8 @@ class PlotLimitsTest(ErtTest):
                 )
 
             for value in setter_should_succeed_values[attribute_name]:
-                with self.assertNotRaises():
-                    setattr(plot_limits, f"{attribute_name}_minimum", value)
-                    setattr(plot_limits, f"{attribute_name}_maximum", value)
+                setattr(plot_limits, f"{attribute_name}_minimum", value)
+                setattr(plot_limits, f"{attribute_name}_maximum", value)
 
                 minimum = getattr(plot_limits, f"{attribute_name}_minimum")
                 maximum = getattr(plot_limits, f"{attribute_name}_maximum")

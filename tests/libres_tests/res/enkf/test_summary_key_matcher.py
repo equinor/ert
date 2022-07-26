@@ -3,27 +3,26 @@ from res.enkf import SummaryKeyMatcher
 from ...libres_utils import ResTest
 
 
-class SummaryKeyMatcherTest(ResTest):
-    def test_creation(self):
-        matcher = SummaryKeyMatcher()
+def test_creation():
+    matcher = SummaryKeyMatcher()
 
-        self.assertTrue(len(matcher) == 0)
+    assert len(matcher) == 0
 
-        matcher.addSummaryKey("F*")
-        self.assertTrue(len(matcher) == 1)
+    matcher.addSummaryKey("F*")
+    assert len(matcher) == 1
 
-        matcher.addSummaryKey("F*")
-        self.assertTrue(len(matcher) == 1)
+    matcher.addSummaryKey("F*")
+    assert len(matcher) == 1
 
-        matcher.addSummaryKey("FOPT")
-        self.assertTrue(len(matcher) == 2)
+    matcher.addSummaryKey("FOPT")
+    assert len(matcher) == 2
 
-        self.assertItemsEqual(["F*", "FOPT"], matcher.keys())
+    assert list(matcher.keys()) == ["FOPT", "F*"]
 
-        self.assertTrue("FGIR" in matcher)
-        self.assertTrue("FOPT" in matcher)
-        self.assertFalse("TCPU" in matcher)
+    assert "FGIR" in matcher
+    assert "FOPT" in matcher
+    assert "TCPU" not in matcher
 
-        self.assertTrue(matcher.isRequired("FOPT"))
-        self.assertFalse(matcher.isRequired("FGIR"))
-        self.assertFalse(matcher.isRequired("TCPU"))
+    assert matcher.isRequired("FOPT")
+    assert not matcher.isRequired("FGIR")
+    assert not matcher.isRequired("TCPU")

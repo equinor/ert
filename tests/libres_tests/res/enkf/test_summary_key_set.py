@@ -8,7 +8,6 @@ from res.enkf.enkf_fs import EnkfFs
 from ...libres_utils import ResTest
 
 
-@pytest.mark.equinor_test
 class SummaryKeySetTest(ResTest):
     def test_creation(self):
 
@@ -22,7 +21,7 @@ class SummaryKeySetTest(ResTest):
 
         self.assertTrue("FOPT" in keys)
 
-        self.assertItemsEqual(["FOPT"], keys.keys())
+        assert ["FOPT"] == keys.keys()
 
         self.assertTrue(keys.addSummaryKey("WWCT"))
 
@@ -30,7 +29,7 @@ class SummaryKeySetTest(ResTest):
 
         self.assertTrue("WWCT" in keys)
 
-        self.assertItemsEqual(["WWCT", "FOPT"], keys.keys())
+        assert list(keys.keys()) == ["FOPT", "WWCT"]
 
     def test_read_only_creation(self):
         with TestAreaContext("enkf/summary_key_set/read_only_write_test"):
@@ -43,7 +42,7 @@ class SummaryKeySetTest(ResTest):
             keys.writeToFile(filename)
 
             keys_from_file = SummaryKeySet(filename, read_only=True)
-            self.assertItemsEqual(keys.keys(), keys_from_file.keys())
+            assert keys.keys() == keys_from_file.keys()
 
             self.assertTrue(keys_from_file.isReadOnly())
             self.assertFalse(keys_from_file.addSummaryKey("WOPR"))
@@ -64,8 +63,9 @@ class SummaryKeySetTest(ResTest):
             self.assertTrue(os.path.exists(filename))
 
             keys_from_file = SummaryKeySet(filename)
-            self.assertItemsEqual(keys.keys(), keys_from_file.keys())
+            assert keys.keys() == keys_from_file.keys()
 
+    @pytest.mark.equinor_test
     def test_with_enkf_fs(self):
         config_file = self.createTestPath("Equinor/config/with_data/config")
 

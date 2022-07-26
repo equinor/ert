@@ -153,19 +153,4 @@ def _mock_ws_thread(host, port, messages):
 
 @pytest.mark.usefixtures("class_source_root")
 class ResTest(ExtendedTestCase):
-    def assertItemsEqual(self, data1, data2):
-        if len(data1) != len(data2):
-            raise AssertionError("Element count not equal.")
-
-        for value in data1:
-            if value not in data2:
-                raise AssertionError(value, "not in", data2)
-
-    @classmethod
-    def createSharePath(cls, path):
-        if cls.SHARE_ROOT is None:
-            raise Exception(
-                "Trying to create directory rooted in 'SHARE_ROOT' "
-                "- variable 'SHARE_ROOT' is not set."
-            )
-        return os.path.realpath(os.path.join(cls.SHARE_ROOT, path))
+    pass
