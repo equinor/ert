@@ -76,7 +76,6 @@ from .run_arg import RunArg
 from .site_config import SiteConfig
 from .state_map import StateMap
 from .subst_config import SubstConfig
-from .summary_key_matcher import SummaryKeyMatcher
 from .summary_key_set import SummaryKeySet
 from .util import TimeMap
 
@@ -105,7 +104,6 @@ __all__ = [
     "TimeMap",
     "StateMap",
     "SummaryKeySet",
-    "SummaryKeyMatcher",
     "EnkfFs",
     "RowScaling",
     "ActiveList",
