@@ -6,7 +6,6 @@ from ecl.util.test import TestAreaContext
 from libres_utils import ResTest, tmpdir
 
 from res.enkf import EnkfFs
-from res.enkf.enums import EnKFFSType
 
 
 @pytest.mark.equinor_test
@@ -14,11 +13,6 @@ class EnKFFSTest(ResTest):
     def setUp(self):
         self.mount_point = "storage/default"
         self.config_file = self.createTestPath("Equinor/config/with_data/config")
-
-    def test_id_enum(self):
-        self.assertEnumIsFullyDefined(
-            EnKFFSType, "fs_driver_impl", "libres/lib/include/ert/enkf/fs_types.hpp"
-        )
 
     def test_create(self):
         with TestAreaContext("create_fs") as work_area:

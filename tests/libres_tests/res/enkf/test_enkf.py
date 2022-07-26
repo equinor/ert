@@ -25,7 +25,6 @@ from res.enkf import (
     EclConfig,
     EnkfFs,
     EnkfObs,
-    EnkfVarType,
     EnsembleConfig,
     ModelConfig,
     ObsVector,
@@ -36,14 +35,8 @@ from res.enkf import (
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.enums import (
-    EnkfFieldFileFormatEnum,
-    EnkfInitModeEnum,
     EnkfObservationImplementationType,
-    EnkfRunType,
-    EnkfTruncationType,
-    ErtImplType,
     LoadFailTypeEnum,
-    RealizationStateEnum,
 )
 from res.enkf.observations.summary_observation import SummaryObservation
 
@@ -124,49 +117,6 @@ class EnKFTest(ResTest):
             with self.assertRaises(ValueError):
                 work_area.copy_directory(self.case_directory)
                 ResConfig(user_config_file="a", config="b", config_dict="c")
-
-    @tmpdir()
-    def test_enum(self):
-        self.assertEnumIsFullyDefined(
-            EnkfVarType, "enkf_var_type", "libres/lib/include/ert/enkf/enkf_types.hpp"
-        )
-        self.assertEnumIsFullyDefined(
-            ErtImplType, "ert_impl_type", "libres/lib/include/ert/enkf/enkf_types.hpp"
-        )
-        self.assertEnumIsFullyDefined(
-            EnkfInitModeEnum,
-            "init_mode_type",
-            "libres/lib/include/ert/enkf/enkf_types.hpp",
-        )
-        self.assertEnumIsFullyDefined(
-            RealizationStateEnum,
-            "realisation_state_enum",
-            "libres/lib/include/ert/enkf/enkf_types.hpp",
-        )
-        self.assertEnumIsFullyDefined(
-            EnkfTruncationType,
-            "truncation_type",
-            "libres/lib/include/ert/enkf/enkf_types.hpp",
-        )
-        self.assertEnumIsFullyDefined(
-            EnkfRunType, "run_mode_type", "libres/lib/include/ert/enkf/enkf_types.hpp"
-        )
-
-        self.assertEnumIsFullyDefined(
-            EnkfObservationImplementationType,
-            "obs_impl_type",
-            "libres/lib/include/ert/enkf/obs_vector.hpp",
-        )
-        self.assertEnumIsFullyDefined(
-            LoadFailTypeEnum,
-            "load_fail_type",
-            "libres/lib/include/ert/enkf/summary_config.hpp",
-        )
-        self.assertEnumIsFullyDefined(
-            EnkfFieldFileFormatEnum,
-            "field_file_format_type",
-            "libres/lib/include/ert/enkf/field_config.hpp",
-        )
 
     @tmpdir()
     def test_observations(self):

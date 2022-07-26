@@ -1,5 +1,3 @@
-import os
-
 from libres_utils import ResTest
 
 from res.util import UIReturn
@@ -66,11 +64,3 @@ class UIReturnTest(ResTest):
         for index in range(len(ui_return)):
             errorList.append(ui_return.iget_error(index))
         self.assertEqual(errorList, [])
-
-    def test_status_enum(self):
-        source_file_path = os.path.join(
-            "libres", "lib", "include", "ert", "res_util", "ui_return.hpp"
-        )
-        self.assertEnumIsFullyDefined(
-            UIReturnStatusEnum, "ui_return_status_enum", source_file_path
-        )
