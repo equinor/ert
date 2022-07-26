@@ -1,19 +1,10 @@
-#  Copyright (C) 2016 Equinor ASA, Norway.
-#
-#  This file is part of ERT - Ensemble based Reservoir Tool.
-#
-#  ERT is free software: you can redistribute it and/or modify it under the
-#  terms of the GNU General Public License as published by the Free Software
-#  Foundation, either version 3 of the License, or (at your option) any later
-#  version.
-#
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-#  A PARTICULAR PURPOSE.
-#
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-#  for more details.
+import asyncio
+import concurrent
 from typing import List, Tuple, Dict, Any
+from cloudevents.http import CloudEvent
+import logging
+import uuid
+
 from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
 from res.enkf.enums import HookRuntime
 from res.enkf.enums import RealizationStateEnum
@@ -21,10 +12,10 @@ from res.enkf.enkf_main import EnKFMain, QueueConfig
 
 from ert_shared.models import BaseRunModel, ErtRunError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-import logging
+from ert.ensemble_evaluator import identifiers
 
 logger = logging.getLogger(__file__)
+experiment_logger = logging.getLogger("ert.experiment_server.ensemble_experiment")
 
 
 class MultipleDataAssimilation(BaseRunModel):
@@ -48,6 +39,42 @@ class MultipleDataAssimilation(BaseRunModel):
 
         if not module_load_success:
             raise ErtRunError(f"Unable to load analysis module '{module_name}'!")
+
+    async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
+        loop = asyncio.get_running_loop()
+        threadpool = concurrent.futures.ThreadPoolExecutor()
+
+        prior_context = await loop.run_in_executor(threadpool, self.create_context)
+
+        # Send EXPERIMENT_STARTED
+        experiment_logger.debug("starting ensemble experiment")
+        await self.dispatch(
+            CloudEvent(
+                {
+                    "type": identifiers.EVTYPE_EXPERIMENT_STARTED,
+                    "source": f"/ert/experiment/{self.id_}",
+                    "id": str(uuid.uuid1()),
+                }
+            ),
+            prior_context.get_iter(),
+        )
+
+        self._checkMinimumActiveRealizations(prior_context)
+        weights = self.parseWeights(self._simulation_arguments["weights"])
+        iteration_count = len(weights)
+
+        await loop.run_in_executor(
+            threadpool,
+            self.ert().getEnkfSimulationRunner().createRunPath,
+            prior_context,
+        )
+
+        await self._run_hook(
+            HookRuntime.PRE_SIMULATION, prior_context.get_iter(), loop, threadpool
+        )
+
+        # Push ensemble, parameters, observations to new storage
+        ensemble_id = await loop.run_in_executor(threadpool, self._post_ensemble_data)
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
