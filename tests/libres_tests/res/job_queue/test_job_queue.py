@@ -17,7 +17,7 @@ except ImportError:
     from mock import AsyncMock
 
 import pytest
-from libres_utils import ResTest, wait_for
+from libres_utils import wait_for
 from websockets.exceptions import ConnectionClosedError
 
 from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
@@ -97,17 +97,6 @@ def start_all(job_queue, sema_pool):
     while job is not None:
         job.run(job_queue.driver, sema_pool, job_queue.max_submit)
         job = job_queue.fetch_next_waiting()
-
-
-class TestStatusEnum(ResTest):
-    """Assert that the c++ source code definition of job_status matches the
-    Python definition of the same enum values in
-    res/job_queue/job_status_type_enum.py"""
-
-    # pylint: disable=too-few-public-methods
-    def test_status_enum(self):
-        source_path = "libres/lib/include/ert/job_queue/job_status.hpp"
-        self.assertEnumIsFullyDefined(JobStatusType, "job_status_type", source_path)
 
 
 def test_kill_jobs(tmpdir):

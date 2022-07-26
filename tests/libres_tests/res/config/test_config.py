@@ -60,15 +60,6 @@ class ConfigTest(ResTest):
     def setUp(self):
         self.file_list = []
 
-    def test_enums(self):
-        source_file_path = "libres/lib/include/ert/config/config_schema_item.hpp"
-        self.assertEnumIsFullyDefined(
-            ContentTypeEnum, "config_item_types", source_file_path
-        )
-        self.assertEnumIsFullyDefined(
-            UnrecognizedEnum, "config_schema_unrecognized_enum", source_file_path
-        )
-
     def test_item_types(self):
         with TestAreaContext("config/types"):
             with open("config", "w") as f:
