@@ -1,17 +1,6 @@
-import os
-import sys
+import pytest
 
-from ..libres_utils import ResTest
-
-try:
-    from res.test.synthesizer import OilSimulator
-except ImportError:
-    share_lib_path = os.path.join(ResTest.createSharePath("lib"))
-
-    sys.path.insert(0, share_lib_path)
-    synthesizer_module = __import__("synthesizer")
-    OilSimulator = synthesizer_module.OilSimulator
-    sys.path.pop(0)
+from res.test.synthesizer import OilSimulator
 
 EXPECTED_VALUES = [
     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
@@ -162,38 +151,37 @@ EXPECTED_VALUES = [
 ]
 
 
-class SynthesizerTest(ResTest):
-    def test_oil_simulator(self):
-        sim = OilSimulator()
-        sim.addWell("OP1", seed=1)
-        sim.addBlock("6,6,6", seed=2)
+def test_oil_simulator():
+    sim = OilSimulator()
+    sim.addWell("OP1", seed=1)
+    sim.addBlock("6,6,6", seed=2)
 
-        for report_step in range(10):
-            sim.step(scale=1.0 / 10.0)
+    for report_step in range(10):
+        sim.step(scale=1.0 / 10.0)
 
-            values = [
-                sim.fopr(),
-                sim.fopt(),
-                sim.fgpr(),
-                sim.fgpt(),
-                sim.fwpr(),
-                sim.fwpt(),
-                sim.fwct(),
-                sim.fgor(),
-                sim.opr("OP1"),
-                sim.gpr("OP1"),
-                sim.wpr("OP1"),
-                sim.gor("OP1"),
-                sim.wct("OP1"),
-                sim.bpr("6,6,6"),
-            ]
+        values = [
+            sim.fopr(),
+            sim.fopt(),
+            sim.fgpr(),
+            sim.fgpt(),
+            sim.fwpr(),
+            sim.fwpt(),
+            sim.fwct(),
+            sim.fgor(),
+            sim.opr("OP1"),
+            sim.gpr("OP1"),
+            sim.wpr("OP1"),
+            sim.gor("OP1"),
+            sim.wct("OP1"),
+            sim.bpr("6,6,6"),
+        ]
 
-            self.assertAlmostEqual(values[0], values[8])  # fopr = opr:op1
-            self.assertAlmostEqual(values[2], values[9])  # fgpr = gpr:op1
-            self.assertAlmostEqual(values[4], values[10])  # fwpr = wpr:op1
+        assert values[0] == pytest.approx(values[8])  # fopr = opr:op1
+        assert values[2] == pytest.approx(values[9])  # fgpr = gpr:op1
+        assert values[4] == pytest.approx(values[10])  # fwpr = wpr:op1
 
-            self.assertAlmostEqual(sim.foip(), sim.ooip - sim.fopt())
-            self.assertAlmostEqual(sim.fgip(), sim.goip - sim.fgpt())
-            self.assertAlmostEqual(sim.fwip(), sim.woip - sim.fwpt())
+        assert sim.foip() == pytest.approx(sim.ooip - sim.fopt())
+        assert sim.fgip() == pytest.approx(sim.goip - sim.fgpt())
+        assert sim.fwip() == pytest.approx(sim.woip - sim.fwpt())
 
-            self.assertAlmostEqualList(values, EXPECTED_VALUES[report_step])
+        assert values == pytest.approx(EXPECTED_VALUES[report_step])
