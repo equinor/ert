@@ -113,7 +113,7 @@ jobs:
   tests-ert:
     name: Run ert tests
     needs: [build-wheels]
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
