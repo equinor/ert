@@ -13,13 +13,8 @@
 .vscode
 .pytest_cache
 __pycache__
-python/lib64
-/libenkf/src/.faultlist
-/develbranch/libenkf/src/.faultlist
 /build
-/libert_util/tests/data/latex_OK.pdf
 /test-data/Equinor
-/python/python/ert/ecl/ecl_local.py
 /GPATH
 /GRTAGS
 /GTAGS
@@ -28,8 +23,6 @@ python/lib64
 scratch.sparsebundle
 *.iml
 *.DS_Store
-__res_lib_path.py
-__res_lib_info.py
 /.project
 *.egg*
 /dist
