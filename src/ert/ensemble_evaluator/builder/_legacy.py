@@ -122,13 +122,14 @@ class _LegacyEnsemble(_Ensemble):
             token=self._config.token,
             cert=self._config.cert,
         )
-
-        get_event_loop().run_until_complete(
-            self._evaluate_inner(
-                cloudevent_unary_send=self._ce_unary_send  # type: ignore
+        try:
+            get_event_loop().run_until_complete(
+                self._evaluate_inner(
+                    cloudevent_unary_send=self._ce_unary_send  # type: ignore
+                )
             )
-        )
-        get_event_loop().close()
+        finally:
+            get_event_loop().close()
 
     async def evaluate_async(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
         self._config = config
