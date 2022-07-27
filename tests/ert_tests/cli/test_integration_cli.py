@@ -238,6 +238,9 @@ def test_ies(tmpdir, source_root):
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 @pytest.mark.integration_test
 @pytest.mark.timeout(20)
+@pytest.mark.skip(
+    "Experiment server seemingly causes failures with other tests, possiby bad cleanup"
+)
 def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
