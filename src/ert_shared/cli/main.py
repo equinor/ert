@@ -61,7 +61,7 @@ def run_cli(args):
                 args,
                 evaluator_server_config,
             ),
-            debug=True,
+            debug=False,
         )
         return
 

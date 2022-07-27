@@ -130,7 +130,7 @@ def workspace_integration(tmpdir):
     with chdir(workspace_dir):
 
         # timeout=None means non-blocking: on ci, timing is unreliable
-        with Storage.start_server(timeout=None):
+        with Storage.start_server(timeout=30):
             workspace_obj = ert3.workspace.initialize(workspace_dir)
             ert.storage.init(workspace_name=workspace_obj.name)
             yield workspace_obj
