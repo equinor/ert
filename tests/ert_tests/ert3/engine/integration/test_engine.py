@@ -232,6 +232,7 @@ def assert_clean_workspace(workspace, allowed_files=None):
 
 @pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
+@pytest.mark.timeout(200)
 def test_run_once_polynomial_evaluation(
     workspace_integration,
     ensemble,
