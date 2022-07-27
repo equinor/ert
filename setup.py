@@ -33,7 +33,8 @@ def package_files(directory):
 with open("README.md") as f:
     long_description = f.read()
 
-setup(
+
+args = dict(
     name="ert",
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
@@ -133,3 +134,16 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
     ],
 )
+
+setup(**args)
+
+# workaround for https://github.com/scikit-build/scikit-build/issues/546 :
+# This increases time taken to run `pip install -e .` somewhat until we
+# have only one top level package at which point we can use the workaround
+# in the issue
+if sys.argv[1] == "develop":
+    from setuptools import setup as setuptools_setup
+
+    del args["cmake_args"]
+    del args["cmake_source_dir"]
+    setuptools_setup(**args)
