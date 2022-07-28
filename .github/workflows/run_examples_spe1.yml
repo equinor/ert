@@ -27,7 +27,7 @@ jobs:
       matrix:
         python-version: ['3.8']
         data-base: [local, postgres]
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
 
     runs-on: ${{ matrix.os }}
 
