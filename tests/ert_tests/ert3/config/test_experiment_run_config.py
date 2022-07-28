@@ -2,8 +2,8 @@ import copy
 
 import pytest
 
-import ert3
 import ert
+from ert import ert3
 
 
 def test_experiment_run_config_validate(workspace, ensemble, stages_config):

@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-import ert3
 import ert
+from ert import ert3
 
 
 def create_mock_script(path, data=""):
@@ -100,7 +100,7 @@ def test_check_loaded_mime_types_new_default(base_unix_stage_config, plugin_regi
     """
 
     ert3.config.create_stages_config(plugin_registry=plugin_registry)
-    from ert3.config._config_plugin_registry import (
+    from ert.ert3.config._config_plugin_registry import (
         FullSerializationTransformationConfig,
     )
 
@@ -620,7 +620,7 @@ def test_optional_plugged_in_configuration():
                     },
                 ],
                 "output": [],
-                "function": "ert3.config:create_stages_config",
+                "function": "ert.ert3.config:create_stages_config",
             }
         ],
         plugin_registry=plugin_registry,

@@ -5,7 +5,7 @@ import pytest
 import scipy
 
 import ert
-import ert3
+from ert import ert3
 
 
 def test_gaussian_scalar():

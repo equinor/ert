@@ -1,8 +1,9 @@
 import asyncio
 
-import ert
-import ert3
 import pytest
+
+import ert
+from ert import ert3
 from ert_shared.async_utils import get_event_loop
 
 

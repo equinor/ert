@@ -84,13 +84,13 @@ def _validate_transformation(
 
 class EnsembleInput(_EnsembleConfig):
     """:class:`EnsembleInput` defines inputs over the ensemble. Use it in conjunction
-    with :class:`ert3.config.SourceNS` to load resources or sample parameters.
+    with :class:`ert.ert3.config.SourceNS` to load resources or sample parameters.
 
-    :class:`EnsembleInput` is the basis for :class:`ert3.config.EnsembleInput` which
+    :class:`EnsembleInput` is the basis for :class:`ert.ert3.config.EnsembleInput` which
     is the plugged-in version of it. Using this model directly will raise a
     :class:`RuntimeError`. Instantiate instead this model using either
-    :py:func:`ert3.config.load_ensemble_config` or
-    :py:func:`ert3.config.create_ensemble_config`.
+    :py:func:`ert.ert3.config.load_ensemble_config` or
+    :py:func:`ert.ert3.config.create_ensemble_config`.
     """
 
     _namespace: SourceNS

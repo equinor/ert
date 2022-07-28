@@ -1,6 +1,6 @@
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert3.evaluator._evaluator import ERT3RunModel
+from ert.ert3.evaluator._evaluator import ERT3RunModel
 from ert.gui.simulation.run_dialog import RunDialog
 
 

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Set
 import ert.storage
 
 if TYPE_CHECKING:
-    from ert3.workspace import Workspace
+    from ert.ert3.workspace import Workspace
 
 
 def clean(workspace: "Workspace", experiment_names: Set[str], clean_all: bool) -> None:

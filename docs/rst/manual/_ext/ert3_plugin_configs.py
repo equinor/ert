@@ -7,7 +7,7 @@ from os.path import basename
 from sphinx.application import Sphinx
 
 
-import ert3
+from ert import ert3
 
 HEADER_TMPL = """{name_capitalized}s
 {title_line}-

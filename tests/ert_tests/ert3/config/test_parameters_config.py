@@ -1,7 +1,7 @@
 import pytest
 
-import ert3
 import ert
+from ert import ert3
 
 
 @pytest.mark.parametrize(

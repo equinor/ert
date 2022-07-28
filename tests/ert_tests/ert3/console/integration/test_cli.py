@@ -4,10 +4,11 @@ import pathlib
 import sys
 from unittest.mock import MagicMock, patch
 
-import ert
-import ert3
 import pytest
 import yaml
+
+import ert
+from ert import ert3
 from ert_shared.services import Storage
 
 from ....ert_utils import chdir

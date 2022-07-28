@@ -1,5 +1,5 @@
 import ert.storage
-import ert3
+from ert import ert3
 
 
 def status(workspace: ert3.workspace.Workspace) -> None:

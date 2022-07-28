@@ -36,4 +36,4 @@ jobs:
         mypy --disallow-untyped-defs --ignore-missing-imports src/ert_shared/models src/res/enkf/enkf_simulation_runner.py src/res/enkf/es_update.py src/ert_data/measured.py
     - name: Run strict mypy
       run: |
-        mypy src/ert src/ert3 --config-file .mypy-strict.ini
+        mypy src/ert --config-file .mypy-strict.ini

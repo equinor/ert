@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 import ert
-import ert3
+from ert import ert3
 
 _EXPERIMENTS_BASE = ert3.workspace._workspace._EXPERIMENTS_BASE
 _RESOURCES_BASE = ert3.workspace._workspace._RESOURCES_BASE

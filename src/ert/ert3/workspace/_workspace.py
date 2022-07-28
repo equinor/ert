@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 import yaml
 
 import ert
-import ert3
+from ert import ert3
 
 _WORKSPACE_DATA_ROOT = ".ert"
 _EXPERIMENTS_BASE = "experiments"
@@ -37,7 +37,7 @@ class Workspace:
         """Create a workspace object from a workspace directory path.
 
         The workspace directory must have been initialized using the
-        :py:func:`ert3.workspace.initialize` function.
+        :py:func:`ert.ert3.workspace.initialize` function.
 
         Args:
             path (Union[str, pathlib.Path]): The path to the workspace.

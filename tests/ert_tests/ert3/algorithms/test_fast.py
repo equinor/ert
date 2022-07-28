@@ -5,12 +5,12 @@ import numpy as np
 import pytest
 
 import ert
-import ert3
+from ert import ert3
+from ert_shared.async_utils import get_event_loop
 
 # Expected values for S1 and ST for ishigami function
 # sample_size = 15000, harmonics = 4, bounds = [-pi, pi]
 # uniform distribution
-from ert_shared.async_utils import get_event_loop
 
 ISHIGAMI_S1 = [0.3076, 0.4424, 6.351e-27]
 ISHIGAMI_ST = [0.5507, 0.4695, 0.2392]

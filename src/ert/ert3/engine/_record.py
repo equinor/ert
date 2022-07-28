@@ -4,8 +4,8 @@ import ert.data
 import ert.storage
 
 if TYPE_CHECKING:
-    from ert3.config import ParametersConfig
-    from ert3.workspace import Workspace
+    from ert.ert3.config import ParametersConfig
+    from ert.ert3.workspace import Workspace
 
 
 async def load_record(

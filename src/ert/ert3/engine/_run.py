@@ -11,8 +11,8 @@ import ert.exceptions
 import ert.data
 import ert.ensemble_evaluator
 
-import ert3
-from ert3.config import SourceNS
+from ert import ert3
+from ert.ert3.config import SourceNS
 from ert_shared.async_utils import get_event_loop
 from res.config.active_range import ActiveRange
 

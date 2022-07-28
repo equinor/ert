@@ -1,18 +1,18 @@
 Configuration reference
 =======================
 
-.. automodule:: ert3.config
+.. automodule:: ert.ert3.config
     :members:
     :undoc-members:
 
-.. autoclass:: ert3.config._ensemble_config::ForwardModel
+.. autoclass:: ert.ert3.config._ensemble_config::ForwardModel
     :members:
     :undoc-members:
 
-.. autoclass:: ert3.config._ensemble_config::EnsembleInput
+.. autoclass:: ert.ert3.config._ensemble_config::EnsembleInput
     :members:
     :undoc-members:
 
-.. autoclass:: ert3.config._ensemble_config::EnsembleOutput
+.. autoclass:: ert.ert3.config._ensemble_config::EnsembleOutput
     :members:
     :undoc-members:

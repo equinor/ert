@@ -1,9 +1,9 @@
 from collections import defaultdict
-from typing import Any, Dict, List, Union
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import ert
-import ert3
+from ert import ert3
 from ert_shared.async_utils import get_event_loop
 
 

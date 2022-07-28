@@ -7,7 +7,7 @@ import cloudpickle
 import ert.data
 import ert.ensemble_evaluator
 import ert.storage
-import ert3
+from ert import ert3
 from ert_shared.async_utils import get_event_loop
 
 

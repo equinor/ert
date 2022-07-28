@@ -1,9 +1,10 @@
 import re
 from copy import deepcopy
 
-import ert
-import ert3
 import pytest
+
+import ert
+from ert import ert3
 
 
 @pytest.fixture()

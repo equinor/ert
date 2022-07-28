@@ -7,12 +7,12 @@ import sys
 import tempfile
 import typing
 
-import ert.storage
 import pytest
+
+from ert import ert3
+import ert.storage
 from ert.data import InMemoryRecordTransmitter, SharedDiskRecordTransmitter
 from ert.storage import StorageRecordTransmitter
-
-import ert3
 
 from ..ert_utils import chdir
 

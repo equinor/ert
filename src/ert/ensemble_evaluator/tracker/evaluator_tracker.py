@@ -34,7 +34,7 @@ from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
-    from ert3.evaluator._evaluator import ERT3RunModel
+    from ert.ert3.evaluator._evaluator import ERT3RunModel
     from ert_shared.models.base_run_model import BaseRunModel
 
 

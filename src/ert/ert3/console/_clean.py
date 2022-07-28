@@ -1,7 +1,7 @@
 from typing import Set
 
 import ert.storage
-import ert3
+from ert import ert3
 
 
 def clean(
