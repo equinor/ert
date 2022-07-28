@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 import ert.data
 import ert.storage
-import ert3
+
+if TYPE_CHECKING:
+    from ert3.config import ParametersConfig
+    from ert3.workspace import Workspace
 
 
 async def load_record(
-    workspace: ert3.workspace.Workspace,
+    workspace: "Workspace",
     record_name: str,
     transformation: ert.data.RecordTransformation,
 ) -> None:
@@ -17,7 +22,7 @@ async def load_record(
 
 
 def sample_record(
-    parameters_config: ert3.config.ParametersConfig,
+    parameters_config: "ParametersConfig",
     parameter_name: str,
     ensemble_size: int,
 ) -> ert.data.RecordCollection:

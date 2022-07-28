@@ -1,12 +1,12 @@
-from typing import Set
+from typing import TYPE_CHECKING, Set
 
 import ert.storage
-import ert3
+
+if TYPE_CHECKING:
+    from ert3.workspace import Workspace
 
 
-def clean(
-    workspace: ert3.workspace.Workspace, experiment_names: Set[str], clean_all: bool
-) -> None:
+def clean(workspace: "Workspace", experiment_names: Set[str], clean_all: bool) -> None:
     assert not (experiment_names and clean_all)
 
     stored_experiments = ert.storage.get_experiment_names(workspace_name=workspace.name)
