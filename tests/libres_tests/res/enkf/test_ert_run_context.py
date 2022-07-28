@@ -64,7 +64,7 @@ class ErtRunContextTest(ResTest):
             )
             run_id2 = run_context2.get_id()
 
-            self.assertFalse(run_id1 == run_id2)
+            assert run_id1 != run_id2
 
             self.assertTrue(run_context1.is_active(49))
             self.assertFalse(run_context1.is_active(50))
