@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 from collections import defaultdict
 
 
@@ -23,7 +23,9 @@ class Substituter:
             self._global_substitutions = {}
         else:
             self._global_substitutions = global_substitutions
-        self._local_substitutions = defaultdict(dict)
+        self._local_substitutions: Dict[Tuple[int, int], Dict[str, str]] = defaultdict(
+            dict
+        )
 
     def add_substitution(self, key: str, value: str, realization: int, iteration: int):
         """Adds a keyword to be substituted an the given realization/iteration.
