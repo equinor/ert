@@ -47,7 +47,6 @@ int run_arg_get_step2(const run_arg_type *run_arg);
 int run_arg_get_load_start(const run_arg_type *run_arg);
 extern "C" int run_arg_get_iens(const run_arg_type *run_arg);
 extern "C" int run_arg_get_iter(const run_arg_type *run_arg);
-void run_arg_increase_submit_count(run_arg_type *run_arg);
 extern "C" void run_arg_set_queue_index(run_arg_type *run_arg, int queue_index);
 
 extern "C" void run_arg_free(run_arg_type *run_arg);
