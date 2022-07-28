@@ -580,17 +580,16 @@ void ecl_write(const ensemble_config_type *ens_config,
              ens_config, PARAMETER + EXT_PARAMETER)) {
         enkf_node_type *enkf_node =
             enkf_node_alloc(ensemble_config_get_node(ens_config, key.c_str()));
-        node_id_type node_id = {.report_step = run_arg_get_step1(run_arg),
+        node_id_type node_id = {.report_step = 0,
                                 .iens = run_arg_get_iens(run_arg)};
 
-        if (run_arg_get_step1(run_arg) == 0 &&
-            enkf_node_use_forward_init(enkf_node) &&
+        if (enkf_node_use_forward_init(enkf_node) &&
             !enkf_node_has_data(enkf_node, fs, node_id))
             continue;
         enkf_node_load(enkf_node, fs, node_id);
 
         enkf_node_ecl_write(enkf_node, run_arg_get_runpath(run_arg),
-                            export_value, run_arg_get_step1(run_arg));
+                            export_value, 0);
         enkf_node_free(enkf_node);
     }
     value_export(export_value);

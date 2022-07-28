@@ -31,7 +31,7 @@ UTIL_IS_INSTANCE_HEADER(run_arg);
 
 extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                    enkf_fs_type *update_target_fs, int iens,
-                                   run_mode_type run_mode, int step1, int step2,
+                                   run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name);
 
@@ -48,9 +48,6 @@ run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs,
                            enkf_fs_type *update_target_fs, int iens, int iter,
                            const char *runpath, const char *job_name);
 
-int run_arg_get_step1(const run_arg_type *run_arg);
-int run_arg_get_step2(const run_arg_type *run_arg);
-int run_arg_get_load_start(const run_arg_type *run_arg);
 extern "C" int run_arg_get_iens(const run_arg_type *run_arg);
 extern "C" int run_arg_get_iter(const run_arg_type *run_arg);
 extern "C" void run_arg_set_queue_index(run_arg_type *run_arg, int queue_index);

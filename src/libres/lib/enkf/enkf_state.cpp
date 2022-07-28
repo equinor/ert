@@ -241,7 +241,7 @@ enkf_state_internalize_dynamic_eclipse_results(
     int matcher_size = summary_key_matcher_get_size(matcher);
 
     if (load_summary || matcher_size > 0 || summary) {
-        int load_start = run_arg_get_load_start(run_arg);
+        int load_start = 0;
 
         if (load_start == 0) {
             // Do not attempt to load the "S0000" summary results.
@@ -381,7 +381,7 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
         // This for loop should probably be changed to use the report
         // steps configured in the gen_data_config object, instead of
         // spinning through them all.
-        int start = run_arg_get_load_start(run_arg);
+        int start = 0;
         int stop = util_int_max(0, last_report); // inclusive
         enkf_state_load_gen_data_node(load_context, sim_fs, iens, config_node,
                                       start, stop);

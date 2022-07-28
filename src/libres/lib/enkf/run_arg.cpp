@@ -33,9 +33,6 @@ struct run_arg_struct {
     int num_internal_submit;
     /** When loading back results - start at this step. */
     int load_start;
-    /** The forward model is integrated: step1 -> step2 */
-    int step1;
-    int step2;
     int iter;
     /** The currently used  runpath - is realloced / freed for every step. */
     char *run_path;
@@ -60,7 +57,7 @@ UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
 run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                    enkf_fs_type *update_target_fs, int iens,
-                                   run_mode_type run_mode, int step1, int step2,
+                                   run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name) {
     if ((sim_fs != NULL) && (sim_fs == update_target_fs))
@@ -76,15 +73,12 @@ run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
 
         run_arg->iens = iens;
         run_arg->run_mode = run_mode;
-        run_arg->step1 = step1;
-        run_arg->step2 = step2;
         run_arg->iter = iter;
         run_arg->run_path = util_alloc_abs_path(runpath);
         run_arg->job_name = util_alloc_string_copy(job_name);
         run_arg->num_internal_submit = 0;
         run_arg->queue_index = INVALID_QUEUE_INDEX;
         run_arg->run_status = JOB_NOT_STARTED;
-        run_arg->load_start = step1;
 
         return run_arg;
     }
@@ -94,13 +88,13 @@ run_arg_type *run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id,
                                                 enkf_fs_type *sim_fs, int iens,
                                                 int iter, const char *runpath,
                                                 const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, NULL, iens, ENSEMBLE_EXPERIMENT, 0, 0,
+    return run_arg_alloc(run_id, sim_fs, NULL, iens, ENSEMBLE_EXPERIMENT,
                          iter, runpath, job_name);
 }
 
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath) {
-    return run_arg_alloc(run_id, sim_fs, NULL, iens, INIT_ONLY, 0, 0, iter,
+    return run_arg_alloc(run_id, sim_fs, NULL, iens, INIT_ONLY, iter,
                          runpath, NULL);
 }
 
@@ -109,7 +103,7 @@ run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs,
                            enkf_fs_type *update_target_fs, int iens, int iter,
                            const char *runpath, const char *job_name) {
     return run_arg_alloc(run_id, sim_fs, update_target_fs, iens,
-                         ENSEMBLE_EXPERIMENT, 0, 0, iter, runpath, job_name);
+                         ENSEMBLE_EXPERIMENT, iter, runpath, job_name);
 }
 
 void run_arg_free(run_arg_type *run_arg) {
@@ -149,20 +143,12 @@ int run_arg_get_iter(const run_arg_type *run_arg) { return run_arg->iter; }
 
 int run_arg_get_iens(const run_arg_type *run_arg) { return run_arg->iens; }
 
-int run_arg_get_load_start(const run_arg_type *run_arg) {
-    return run_arg->load_start;
-}
-
-int run_arg_get_step2(const run_arg_type *run_arg) { return run_arg->step2; }
-
 bool run_arg_can_retry(const run_arg_type *run_arg) {
     if (run_arg->num_internal_submit < run_arg->max_internal_submit)
         return true;
     else
         return false;
 }
-
-int run_arg_get_step1(const run_arg_type *run_arg) { return run_arg->step1; }
 
 int run_arg_get_queue_index_safe(const run_arg_type *run_arg) {
     if (run_arg->queue_index == INVALID_QUEUE_INDEX)

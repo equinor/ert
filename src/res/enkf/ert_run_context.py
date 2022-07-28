@@ -16,8 +16,6 @@ class ErtRunContext:
     mask: List[bool]
     paths: List[str]
     jobnames: Optional[List[str]]
-    step1: int = 0
-    step2: int = 0
     itr: int = 0
     init_mode: EnkfInitModeEnum.INIT_CONDITIONAL = EnkfInitModeEnum.INIT_CONDITIONAL
 
@@ -33,8 +31,6 @@ class ErtRunContext:
                         self.target_fs,
                         iens,
                         self.run_type,
-                        0,
-                        0,
                         self.itr,
                         path,
                         job_name,
@@ -133,9 +129,6 @@ class ErtRunContext:
 
     def get_init_mode(self):
         return self.init_mode
-
-    def get_step(self):
-        return self.step1
 
     def deactivate_realization(self, realization_nr):
         self.mask[realization_nr] = False

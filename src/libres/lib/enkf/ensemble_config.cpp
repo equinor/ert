@@ -956,7 +956,7 @@ ensemble_config_forward_init(const ensemble_config_type *ens_config,
 
     auto result = LOAD_SUCCESSFUL;
     std::string error_msg;
-    if (run_arg_get_step1(run_arg) == 0) {
+    {
         int iens = run_arg_get_iens(run_arg);
         for (auto &config_pair : ens_config->config_nodes) {
             enkf_config_node_type *config_node = config_pair.second;
