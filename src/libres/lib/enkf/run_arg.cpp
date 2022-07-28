@@ -124,10 +124,6 @@ void run_arg_free__(void *arg) {
     run_arg_free(run_arg);
 }
 
-void run_arg_increase_submit_count(run_arg_type *run_arg) {
-    run_arg->num_internal_submit++;
-}
-
 void run_arg_set_queue_index(run_arg_type *run_arg, int queue_index) {
     if (run_arg->queue_index == INVALID_QUEUE_INDEX)
         run_arg->queue_index = queue_index;
