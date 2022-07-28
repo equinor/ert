@@ -1,8 +1,8 @@
 from typing import Dict, List, Tuple
 
 import ert.data
+from ert import ert3
 import ert.storage
-import ert3
 
 from ._entity import TransmitterCoroutine
 

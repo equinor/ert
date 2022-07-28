@@ -49,7 +49,7 @@ from typing import Dict, TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from ert.data import RecordTransmitter
-    from ert3.evaluator._evaluator import ERT3RunModel
+    from ert.ert3.evaluator._evaluator import ERT3RunModel
     from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 

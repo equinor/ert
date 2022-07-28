@@ -47,7 +47,7 @@ jobs:
     - name: Run pylint
       run: |
         pip install .  # We need the dependencies of ERT to avoid import-error
-        pylint src/ert src/ert3 --ignore-paths=src/ert/gui
+        pylint src/ert --ignore-paths=src/ert/gui
         pylint --disable=all \
           --enable="\
             access-member-before-definition, \

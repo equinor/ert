@@ -4,9 +4,10 @@ import pathlib
 from contextlib import contextmanager
 from unittest.mock import patch
 
-import ert
-import ert3
 import pytest
+
+import ert
+from ert import ert3
 from ert_shared.async_utils import get_event_loop
 
 from .integration_utils import (
@@ -394,7 +395,7 @@ def test_gaussian_distribution(
         return retval
 
     with patch(
-        "ert3.stats.Gaussian.sample", side_effect=wrapper, autospec=True
+        "ert.ert3.stats.Gaussian.sample", side_effect=wrapper, autospec=True
     ) as sample_calls:
         coefficients = ert3.engine.sample_record(
             gaussian_parameters_config, "coefficients", 1000
@@ -429,7 +430,7 @@ def test_uniform_distribution(
         return retval
 
     with patch(
-        "ert3.stats.Uniform.sample", side_effect=wrapper, autospec=True
+        "ert.ert3.stats.Uniform.sample", side_effect=wrapper, autospec=True
     ) as sample_calls:
         coefficients = ert3.engine.sample_record(
             uniform_parameters_config,
@@ -466,7 +467,7 @@ def test_loguniform_distribution(
         return retval
 
     with patch(
-        "ert3.stats.LogUniform.sample", side_effect=wrapper, autospec=True
+        "ert.ert3.stats.LogUniform.sample", side_effect=wrapper, autospec=True
     ) as sample_calls:
         coefficients = ert3.engine.sample_record(
             loguniform_parameters_config,

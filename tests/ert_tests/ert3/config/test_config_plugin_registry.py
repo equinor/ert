@@ -7,10 +7,10 @@ def test_no_plugins(plugin_registry):
     assert plugin_registry.get_descriminator("transformation") == "type"
 
     generated_configs = [
-        "ert3.config._config_plugin_registry.FullCopyTransformationConfig",
-        "ert3.config._config_plugin_registry.FullSerializationTransformationConfig",
-        "ert3.config._config_plugin_registry.FullSummaryTransformationConfig",
-        "ert3.config._config_plugin_registry.FullDirectoryTransformationConfig",
+        "ert.ert3.config._config_plugin_registry.FullCopyTransformationConfig",
+        "ert.ert3.config._config_plugin_registry.FullSerializationTransformationConfig",
+        "ert.ert3.config._config_plugin_registry.FullSummaryTransformationConfig",
+        "ert.ert3.config._config_plugin_registry.FullDirectoryTransformationConfig",
     ]
     assert (
         str(plugin_registry.get_type("transformation"))

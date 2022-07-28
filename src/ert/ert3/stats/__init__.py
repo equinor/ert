@@ -1,4 +1,4 @@
-from ert3.stats._stats import (
+from ert.ert3.stats._stats import (
     Constant,
     Discrete,
     Distribution,

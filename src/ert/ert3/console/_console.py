@@ -9,10 +9,10 @@ from typing import Any, List, Union
 
 import pkg_resources as pkg
 
+from ert import ert3
 import ert.storage
-import ert3
-from ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
-from ert3.workspace import Workspace
+from ert.ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
+from ert.ert3.workspace import Workspace
 from ert_shared.async_utils import get_event_loop
 from ert_shared.services import Storage
 
@@ -301,7 +301,9 @@ def _build_local_test_run_config(
 
 
 def _run(
-    workspace: Workspace, args: Any, plugin_registry: ert3.config.ConfigPluginRegistry
+    workspace: Workspace,
+    args: Any,
+    plugin_registry: ert3.config.ConfigPluginRegistry,
 ) -> None:
     assert args.sub_cmd == "run"
     workspace.assert_experiment_exists(args.experiment_name)
@@ -345,7 +347,9 @@ def _run(
 
 
 def _export(
-    workspace: Workspace, args: Any, plugin_registry: ert3.config.ConfigPluginRegistry
+    workspace: Workspace,
+    args: Any,
+    plugin_registry: ert3.config.ConfigPluginRegistry,
 ) -> None:
     assert args.sub_cmd == "export"
     experiment_run_config = workspace.load_experiment_run_config(

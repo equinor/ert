@@ -1,25 +1,27 @@
-from typing import List, Any, Optional
-import pluggy
+from typing import Any, List, Optional
 
-from ert3.config import ConfigPluginRegistry
+import pluggy
+from ert.ert3.config import ConfigPluginRegistry
 
 _PLUGIN_NAMESPACE = "ert3"
 
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
+
 # Imports below hook_implementation and hook_specification to avoid circular imports
-import ert3.plugins.hook_specifications  # pylint: disable=C0413  # noqa: E402
-import ert3.config.plugins.implementations  # pylint: disable=C0413  # noqa: E402
+# pylint: disable=C0413
+from ert.ert3.config.plugins import implementations  # noqa: E402
+from ert.ert3.plugins import hook_specifications  # noqa: E402
 
 
 # type ignored due to pluggy lacking type information
 class ErtPluginManager(pluggy.PluginManager):  # type: ignore
     def __init__(self, plugins: Optional[List[Any]] = None) -> None:
         super().__init__(_PLUGIN_NAMESPACE)
-        self.add_hookspecs(ert3.plugins.hook_specifications)
+        self.add_hookspecs(hook_specifications)
         if plugins is None:
-            self.register(ert3.config.plugins.implementations)
+            self.register(implementations)
             self.load_setuptools_entrypoints(_PLUGIN_NAMESPACE)
         else:
             for plugin in plugins:

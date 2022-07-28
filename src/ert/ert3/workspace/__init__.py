@@ -1,5 +1,5 @@
 """
-The :py:mod:`ert3.workspace` module is reponsible for persisting and handling
+The :py:mod:`ert.ert3.workspace` module is reponsible for persisting and handling
 configuration and input data, and making those accessible to the remainder of
 ERT via a high-level API. The actual representation of the workspace data should
 not leak out of this module, allowing the underlying implementation to be
@@ -14,14 +14,14 @@ directory should be immutable, apart from output files generated after running
 experiments.
 
 The high-level API that exposes the configuration and input data is implemented
-as a class (:py:class:`ert3.workspace.Workspace`). The persisted configuration
+as a class (:py:class:`ert.ert3.workspace.Workspace`). The persisted configuration
 and input data is initialized via a separate initialization function
-(:py:func:`ert3.workspace.initialize`), and can be accessed repeatedly by
+(:py:func:`ert.ert3.workspace.initialize`), and can be accessed repeatedly by
 creating workspace objects.
 """
 
-from ert3.workspace._workspace import Workspace
-from ert3.workspace._workspace import initialize
+from ert.ert3.workspace._workspace import Workspace
+from ert.ert3.workspace._workspace import initialize
 
 __all__ = [
     "Workspace",

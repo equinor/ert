@@ -1,4 +1,4 @@
-import ert3
+from ert import ert3
 
 
 _modified_classes = {

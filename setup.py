@@ -106,7 +106,7 @@ args = dict(
     ],
     entry_points={
         "console_scripts": [
-            "ert3=ert3.console:main",
+            "ert3=ert.ert3.console:main",
             "ert=ert_shared.main:main",
             "job_dispatch.py = job_runner.job_dispatch:main",
         ]

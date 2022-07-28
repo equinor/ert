@@ -1,13 +1,9 @@
-from typing import Any, Dict, Iterator, List, Literal, Union, Optional
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    root_validator,
-    validator,
-)
+from typing import Any, Dict, Iterator, List, Literal, Optional, Union
+
+from pydantic import BaseModel, ValidationError, root_validator, validator
 
 import ert
-import ert3
+from ert import ert3
 
 
 class _ParametersConfig(BaseModel):

@@ -3,11 +3,11 @@ from typing import List, Optional, Type
 
 from pydantic import BaseModel, validator
 
-from ert3.config import ConfigPluginRegistry
-from ert3.config.plugins import TransformationConfigBase
-from ert3.config._validator import ensure_mime
+from ert.ert3.config import ConfigPluginRegistry
+from ert.ert3.config.plugins import TransformationConfigBase
+from ert.ert3.config._validator import ensure_mime
 
-from ert3.plugins.plugin_manager import hook_implementation
+from ert.ert3.plugins.plugin_manager import hook_implementation
 
 from ert.data import CopyTransformation
 from ert.data import SerializationTransformation
