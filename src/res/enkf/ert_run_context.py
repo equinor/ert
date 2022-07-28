@@ -28,7 +28,6 @@ class ErtRunContext:
                     RunArg(
                         str(self.run_id),
                         self.sim_fs,
-                        self.target_fs,
                         iens,
                         self.run_type,
                         self.itr,
