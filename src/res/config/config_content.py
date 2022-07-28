@@ -13,14 +13,17 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from cwrap import BaseCClass
-
 from res import ResPrototype
 from res.config.config_error import ConfigError
 from res.config.config_path_elm import ConfigPathElm
 from res.config.content_type_enum import ContentTypeEnum
 from res.config.schema_item import SchemaItem
+
+if TYPE_CHECKING:
+    from res.config.config_parser import ConfigParser
 
 
 class ContentNode(BaseCClass):
@@ -198,19 +201,19 @@ class ConfigContent(BaseCClass):
     def __len__(self):
         return self._size()
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return self._has_key(key)
 
-    def setParser(self, parser):
+    def setParser(self, parser: "ConfigParser"):
         self._parser = parser
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> ContentItem:
         if key in self:
             item = self._get_item(key)
             item.setParent(self)
             return item
         else:
-            if key in self._parser:
+            if self._parser is not None and key in self._parser:
                 schema_item = SchemaItem(key)
                 return ContentItem(schema_item)
             else:
@@ -230,29 +233,27 @@ class ConfigContent(BaseCClass):
         self._free()
 
     def getErrors(self) -> ConfigError:
-        """@rtype: ConfigError"""
         return self._get_errors()
 
-    def getWarnings(self):
-        """@rtype: ConfigError"""
-        return self._get_warnings()
+    def getWarnings(self) -> List[str]:
+        return list(self._get_warnings())
 
-    def get_config_path(self):
+    def get_config_path(self) -> str:
         return self._get_config_path()
 
     def create_path_elm(self, path) -> ConfigPathElm:
         return self._create_path_elm(path)
 
-    def add_define(self, key, value):
+    def add_define(self, key: str, value: str):
         self._add_define(key, value)
 
-    def keys(self):
-        return self._keys()
+    def keys(self) -> List[str]:
+        return list(self._keys())
 
-    def as_dict(self) -> dict:
+    def as_dict(self) -> Dict[str, List[Any]]:
         # pylint: disable=consider-using-dict-items
         # (false positive)
-        d = {}
+        d: Dict[str, List[Any]] = {}
         for key in self.keys():
             d[key] = []
             item = self[key]
