@@ -30,16 +30,6 @@ class RunArg(BaseCClass):
                                                        char*)",
         bind=False,
     )
-    _alloc_ENSEMBLE_EXPERIMENT = ResPrototype(
-        "run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, \
-                                                       enkf_fs, \
-                                                       int, \
-                                                       int, \
-                                                       char*, \
-                                                       char*, \
-                                                       subst_list)",
-        bind=False,
-    )
     _free = ResPrototype("void run_arg_free(run_arg)")
     _get_queue_index_safe = ResPrototype("int  run_arg_get_queue_index_safe(run_arg)")
     _set_queue_index = ResPrototype("void run_arg_set_queue_index(run_arg, int)")
@@ -74,14 +64,6 @@ class RunArg(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError("Not constructed properly")
-
-    @classmethod
-    def createEnsembleExperimentRunArg(
-        cls, run_id, fs, iens, runpath, jobname, subst_list, iter=0
-    ):
-        return cls._alloc_ENSEMBLE_EXPERIMENT(
-            run_id, fs, iens, iter, runpath, jobname, subst_list
-        )
 
     def free(self):
         self._free()
