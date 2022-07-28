@@ -491,7 +491,7 @@ class JobQueue(BaseCClass):
         self,
         ee_id: str,
         pool_sema: threading.BoundedSemaphore,
-        evaluators: Callable[..., Any],
+        evaluators: List[Callable[..., Any]],
         output_bus: "asyncio.Queue[CloudEvent]",
     ) -> None:
         if evaluators is None:
