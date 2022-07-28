@@ -95,10 +95,9 @@ def test_run_ensemble_evaluator():
     run_context = ErtRunContext.ensemble_experiment(
         None, [True], ["some%d/path%d"], ["some_job%d"], 0
     )
-    run_context._iget = MagicMock()
-    run_context._iget.return_value = run_arg
-    run_context._deactivate_realization = MagicMock()
+    run_context.run_args = [run_arg]
+    run_context.deactivate_realization = MagicMock()
 
     BaseRunModel.deactivate_failed_jobs(run_context)
 
-    run_context._deactivate_realization.assert_called_with(0)
+    run_context.deactivate_realization.assert_called_with(0)

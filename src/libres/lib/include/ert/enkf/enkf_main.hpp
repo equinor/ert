@@ -44,7 +44,6 @@
 #include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/ert_run_context.hpp>
 #include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
@@ -114,10 +113,11 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                     field_file_format_type file_type,
                                     int report_step, enkf_fs_type *fs);
 
-extern "C" int
+int
 enkf_main_load_from_run_context(enkf_main_type *enkf_main,
-                                ert_run_context_type *run_context,
-                                enkf_fs_type *fs);
+                                    std::vector<bool> active_mask,
+                                    enkf_fs_type *sim_fs,
+                                    std::vector<run_arg_type*> run_args);
 
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path);

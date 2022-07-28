@@ -17,11 +17,10 @@
 */
 #include <stdlib.h>
 
+#include <ert/enkf/run_arg.hpp>
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/test_util.h>
 #include <ert/util/test_work_area.h>
-
-#include <ert/enkf/ert_run_context.hpp>
 
 void call_get_queue_index(void *arg) {
     run_arg_type *run_arg = run_arg_safe_cast(arg);

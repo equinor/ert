@@ -219,7 +219,7 @@ class EnKFTest(ResTest):
             with self.assertRaises(TypeError):
                 run_context["String"]
 
-            self.assertIsNone(run_context[0])
+            assert not run_context.is_active(0)
             run_arg = run_context[2]
             self.assertTrue(isinstance(run_arg, RunArg))
 
@@ -231,31 +231,23 @@ class EnKFTest(ResTest):
             d2 = rng2.getDouble()
             self.assertEqual(d1, d2)
 
-    @tmpdir()
-    def test_run_context_from_external_folder(self):
-        with TestAreaContext("enkf_test") as work_area:
-            work_area.copy_directory(self.case_directory_snake_oil)
-            res_config = ResConfig("snake_oil/snake_oil.ert")
-            main = EnKFMain(res_config)
-            fs_manager = main.getEnkfFsManager()
-            fs = fs_manager.getCurrentFileSystem()
 
-            mask = [False] * 10
-            mask[0] = True
-            run_context = main.create_ensemble_experiment_run_context(
-                source_filesystem=fs, active_mask=mask, iteration=0
-            )
+def test_run_context_from_external_folder(setup_case):
+    res_config = setup_case("local/snake_oil", "snake_oil.ert")
+    main = EnKFMain(res_config)
+    fs_manager = main.getEnkfFsManager()
+    fs = fs_manager.getCurrentFileSystem()
 
-            self.assertEqual(len(run_context), 10)
+    mask = [False] * 10
+    mask[0] = True
+    run_context = main.create_ensemble_experiment_run_context(
+        source_filesystem=fs, active_mask=mask, iteration=0
+    )
 
-            job_queue = main.get_queue_config().create_job_queue()
-            main.getEnkfSimulationRunner().createRunPath(run_context)
-            num = main.getEnkfSimulationRunner().runEnsembleExperiment(
-                job_queue, run_context
-            )
-            self.assertTrue(
-                os.path.isdir(
-                    "snake_oil/storage/snake_oil/runpath/realization-0/iter-0"
-                )
-            )
-            self.assertEqual(num, 1)
+    assert len(run_context) == 10
+
+    job_queue = main.get_queue_config().create_job_queue()
+    main.getEnkfSimulationRunner().createRunPath(run_context)
+    num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
+    assert os.path.isdir("storage/snake_oil/runpath/realization-0/iter-0")
+    assert num == 1

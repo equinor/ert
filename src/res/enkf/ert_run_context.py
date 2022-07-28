@@ -1,96 +1,45 @@
-#  Copyright (C) 2014  Equinor ASA, Norway.
-#
-#  The file 'enkf_fs.py' is part of ERT - Ensemble based Reservoir Tool.
-#
-#  ERT is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  ERT is distributed in the hope that it will be useful, but WITHOUT ANY
-#  WARRANTY; without even the implied warranty of MERCHANTABILITY or
-#  FITNESS FOR A PARTICULAR PURPOSE.
-#
-#  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
-#  for more details.
+import uuid
+from datetime import datetime
+from dataclasses import dataclass
 from typing import List, Optional
 
-from cwrap import BaseCClass
-from res import ResPrototype, _lib
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
 from res.enkf.run_arg import RunArg
 
 
-class ErtRunContext(BaseCClass):
-    TYPE_NAME = "ert_run_context"
-    _alloc = ResPrototype(
-        "void* ert_run_context_alloc_empty(enkf_run_mode_enum , \
-                                     enkf_init_mode_enum, \
-                                     int)",
-        bind=False,
-    )
-    _get_size = ResPrototype("int ert_run_context_get_size( ert_run_context )")
-    _free = ResPrototype("void ert_run_context_free( ert_run_context )")
-    _iactive = ResPrototype("bool ert_run_context_iactive( ert_run_context , int)")
-    _iget = ResPrototype("run_arg_ref ert_run_context_iget_arg( ert_run_context , int)")
-    _get_id = ResPrototype("char* ert_run_context_get_id( ert_run_context )")
-    _get_iter = ResPrototype("int ert_run_context_get_iter( ert_run_context )")
-    _get_target_fs = ResPrototype(
-        "enkf_fs_ref ert_run_context_get_update_target_fs( ert_run_context )"
-    )
-    _get_sim_fs = ResPrototype(
-        "enkf_fs_ref ert_run_context_get_sim_fs( ert_run_context )"
-    )
-    _get_init_mode = ResPrototype(
-        "enkf_init_mode_enum ert_run_context_get_init_mode( ert_run_context )"
-    )
+@dataclass
+class ErtRunContext:
+    run_type: EnkfRunType
+    sim_fs: Optional[EnkfFs]
+    target_fs: Optional[EnkfFs]
+    mask: List[bool]
+    paths: List[str]
+    jobnames: Optional[List[str]]
+    step1: int = 0
+    step2: int = 0
+    itr: int = 0
+    init_mode: EnkfInitModeEnum.INIT_CONDITIONAL = EnkfInitModeEnum.INIT_CONDITIONAL
 
-    _get_step = ResPrototype("int ert_run_context_get_step1(ert_run_context)")
-    _deactivate_realization = ResPrototype(
-        "void ert_run_context_deactivate_realization( ert_run_context, int)"
-    )
-
-    def __init__(
-        self,
-        run_type: EnkfRunType,
-        sim_fs: Optional[EnkfFs],
-        target_fs: Optional[EnkfFs],
-        mask: List[bool],
-        paths: List[str],
-        jobnames: List[str],
-        itr: int = 0,
-        init_mode=EnkfInitModeEnum.INIT_CONDITIONAL,
-    ):
-        c_ptr = self._alloc(
-            run_type,
-            init_mode,
-            itr,
-        )
-        super().__init__(c_ptr)
-
-        _lib.ert_run_context.set_active(self, mask)
-        if sim_fs is not None:
-            _lib.ert_run_context.set_sim_fs(self, sim_fs)
-        if target_fs is not None:
-            _lib.ert_run_context.set_target_fs(self, target_fs)
-
-        if run_type == EnkfRunType.ENSEMBLE_EXPERIMENT:
-            _lib.ert_run_context.add_ensemble_experiment_args(self, paths, jobnames)
-        elif run_type == EnkfRunType.SMOOTHER_RUN:
-            _lib.ert_run_context.add_smoother_run_args(
-                self,
-                paths,
-                jobnames,
-            )
-        elif run_type == EnkfRunType.INIT_ONLY:
-            _lib.ert_run_context.add_init_only_args(self, paths)
-        elif run_type == EnkfRunType.SMOOTHER_UPDATE:
-            pass
-        elif run_type == EnkfRunType.CASE_INIT_ONLY:
-            pass
-        else:
-            raise ValueError(f"Unsupported run type {run_type}")
+    def __post_init__(self):
+        self.run_id = f"{uuid.uuid4()}:{datetime.now().strftime('%Y-%m-%dT%H%M')}"
+        self.run_args = []
+        if self.jobnames and self.paths:
+            for iens, (job_name, path) in enumerate(zip(self.jobnames, self.paths)):
+                self.run_args.append(
+                    RunArg(
+                        str(self.run_id),
+                        self.sim_fs,
+                        self.target_fs,
+                        iens,
+                        self.run_type,
+                        0,
+                        0,
+                        self.itr,
+                        path,
+                        job_name,
+                    )
+                )
 
     @classmethod
     def ensemble_experiment(
@@ -125,7 +74,7 @@ class ErtRunContext(BaseCClass):
         cls,
         sim_fs,
         target_fs,
-    ):
+    ) -> "ErtRunContext":
         return cls(
             run_type=EnkfRunType.SMOOTHER_UPDATE,
             mask=[],
@@ -136,7 +85,7 @@ class ErtRunContext(BaseCClass):
         )
 
     @classmethod
-    def case_init(cls, sim_fs, mask=None):
+    def case_init(cls, sim_fs, mask=None) -> "ErtRunContext":
         if mask == None:
             mask = []
         return cls(
@@ -150,47 +99,43 @@ class ErtRunContext(BaseCClass):
         )
 
     def is_active(self, index: int) -> bool:
-        return self._iactive(index)
+        try:
+            return self.mask[index]
+        except IndexError:
+            return False
 
     def __len__(self):
-        return self._get_size()
+        return len(self.mask)
 
-    def __getitem__(self, index) -> RunArg:
-        if not isinstance(index, int):
-            raise TypeError("Invalid type - expected integer")
+    def __getitem__(self, item) -> RunArg:
+        return self.run_args[item]
 
-        if 0 <= index < len(self):
-            run_arg = self._iget(index)
-            return run_arg
-        else:
-            raise IndexError(f"Index:{index} invalid. Legal range: [0,{len(self)})")
-
-    def free(self):
-        self._free()
+    def __iter__(self) -> RunArg:
+        yield from self.run_args
 
     def __repr__(self):
-        return f"ErtRunContext(size = {len(self)}) {self._ad_str()}"
+        return f"ErtRunContext(size = {len(self)})"
 
     def get_id(self):
-        return self._get_id()
+        return self.run_id
 
     def get_mask(self) -> List[bool]:
-        return [self.is_active(i) for i in range(len(self))]
+        return self.mask
 
     def get_iter(self) -> int:
-        return self._get_iter()
+        return self.itr
 
     def get_target_fs(self) -> EnkfFs:
-        return self._get_target_fs()
+        return self.target_fs
 
     def get_sim_fs(self) -> EnkfFs:
-        return self._get_sim_fs()
+        return self.sim_fs
 
     def get_init_mode(self):
-        return self._get_init_mode()
+        return self.init_mode
 
     def get_step(self):
-        return self._get_step()
+        return self.step1
 
     def deactivate_realization(self, realization_nr):
-        self._deactivate_realization(realization_nr)
+        self.mask[realization_nr] = False
