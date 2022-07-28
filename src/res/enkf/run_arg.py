@@ -23,7 +23,6 @@ class RunArg(BaseCClass):
     _alloc = ResPrototype(
         "void* run_arg_alloc(char*, \
                                                        enkf_fs, \
-                                                       enkf_fs, \
                                                        int, \
                                                        enkf_run_mode_enum, \
                                                        int, \
@@ -56,7 +55,6 @@ class RunArg(BaseCClass):
         self,
         run_id,
         sim_fs,
-        target_fs,
         iens,
         run_mode,
         itr,
@@ -66,7 +64,6 @@ class RunArg(BaseCClass):
         c_ptr = self._alloc(
             run_id,
             sim_fs,
-            target_fs,
             iens,
             run_mode,
             itr,

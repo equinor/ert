@@ -46,8 +46,6 @@ struct run_arg_struct {
     /** This will be used by WPRO - and mapped to context key <GEO_ID>; set
      * during submit. */
     enkf_fs_type *sim_fs;
-    enkf_fs_type *update_target_fs;
-
     run_status_type run_status;
     char *run_id;
 };
@@ -55,21 +53,14 @@ struct run_arg_struct {
 UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
-run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
-                                   enkf_fs_type *update_target_fs, int iens,
+run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
                                    run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name) {
-    if ((sim_fs != NULL) && (sim_fs == update_target_fs))
-        util_abort(
-            "%s: internal error - can  not have sim_fs == update_target_fs \n",
-            __func__);
-    {
         run_arg_type *run_arg = (run_arg_type *)util_malloc(sizeof *run_arg);
         UTIL_TYPE_ID_INIT(run_arg, RUN_ARG_TYPE_ID);
         run_arg->run_id = util_alloc_string_copy(run_id);
         run_arg->sim_fs = sim_fs;
-        run_arg->update_target_fs = update_target_fs;
 
         run_arg->iens = iens;
         run_arg->run_mode = run_mode;
@@ -81,28 +72,26 @@ run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
         run_arg->run_status = JOB_NOT_STARTED;
 
         return run_arg;
-    }
 }
 
 run_arg_type *run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id,
                                                 enkf_fs_type *sim_fs, int iens,
                                                 int iter, const char *runpath,
                                                 const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, NULL, iens, ENSEMBLE_EXPERIMENT,
+    return run_arg_alloc(run_id, sim_fs, iens, ENSEMBLE_EXPERIMENT,
                          iter, runpath, job_name);
 }
 
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath) {
-    return run_arg_alloc(run_id, sim_fs, NULL, iens, INIT_ONLY, iter,
+    return run_arg_alloc(run_id, sim_fs, iens, INIT_ONLY, iter,
                          runpath, NULL);
 }
 
 run_arg_type *
-run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs,
-                           enkf_fs_type *update_target_fs, int iens, int iter,
+run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs, int iens, int iter,
                            const char *runpath, const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, update_target_fs, iens,
+    return run_arg_alloc(run_id, sim_fs, iens,
                          ENSEMBLE_EXPERIMENT, iter, runpath, job_name);
 }
 
@@ -184,17 +173,6 @@ enkf_fs_type *run_arg_get_sim_fs(const run_arg_type *run_arg) {
     else {
         util_abort("%s: internal error - tried to access run_arg->sim_fs when "
                    "sim_fs == NULL\n",
-                   __func__);
-        return NULL;
-    }
-}
-
-enkf_fs_type *run_arg_get_update_target_fs(const run_arg_type *run_arg) {
-    if (run_arg->update_target_fs)
-        return run_arg->update_target_fs;
-    else {
-        util_abort("%s: internal error - tried to access "
-                   "run_arg->update_target_fs when update_target_fs == NULL\n",
                    __func__);
         return NULL;
     }

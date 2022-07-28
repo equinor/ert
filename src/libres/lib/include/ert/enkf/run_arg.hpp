@@ -29,8 +29,7 @@
 UTIL_SAFE_CAST_HEADER(run_arg);
 UTIL_IS_INSTANCE_HEADER(run_arg);
 
-extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
-                                   enkf_fs_type *update_target_fs, int iens,
+extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
                                    run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name);
@@ -44,8 +43,7 @@ run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath);
 
 run_arg_type *
-run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs,
-                           enkf_fs_type *update_target_fs, int iens, int iter,
+run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs, int iens, int iter,
                            const char *runpath, const char *job_name);
 
 extern "C" int run_arg_get_iens(const run_arg_type *run_arg);
@@ -68,6 +66,5 @@ bool run_arg_can_retry(const run_arg_type *run_arg);
 run_status_type run_arg_get_run_status(const run_arg_type *run_arg);
 void run_arg_set_run_status(run_arg_type *run_arg, run_status_type run_status);
 
-enkf_fs_type *run_arg_get_update_target_fs(const run_arg_type *run_arg);
 enkf_fs_type *run_arg_get_sim_fs(const run_arg_type *run_arg);
 #endif

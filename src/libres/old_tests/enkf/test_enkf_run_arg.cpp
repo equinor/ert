@@ -64,7 +64,6 @@ void call_get_sim_fs(void *arg) {
 
 void call_get_update_target_fs(void *arg) {
     run_arg_type *run_arg = run_arg_safe_cast(arg);
-    run_arg_get_update_target_fs(run_arg);
 }
 
 void test_SMOOTHER_RUN() {
@@ -75,30 +74,14 @@ void test_SMOOTHER_RUN() {
         enkf_fs_type *target_fs =
             enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, true);
         run_arg_type *run_arg = run_arg_alloc_SMOOTHER_RUN(
-            "run_id", sim_fs, target_fs, 0, 6, "path", "BASE");
+            "run_id", sim_fs, 0, 6, "path", "BASE");
         test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), sim_fs);
-        test_assert_ptr_equal(run_arg_get_update_target_fs(run_arg), target_fs);
         run_arg_free(run_arg);
 
         enkf_fs_decref(sim_fs);
         enkf_fs_decref(target_fs);
     }
-}
-
-void alloc_invalid_run_arg(void *arg) {
-    ecl::util::TestArea ta("invalid_run");
-    {
-        enkf_fs_type *fs = enkf_fs_create_fs("fs", BLOCK_FS_DRIVER_ID, true);
-        run_arg_type *run_arg = run_arg_alloc_SMOOTHER_RUN(
-            "run_id", fs, fs, 0, 6, "path", "BASE"); // This should explode ...
-        run_arg_free(run_arg);
-        enkf_fs_decref(fs);
-    }
-}
-
-void test_invalid_update_on_self() {
-    test_assert_util_abort("run_arg_alloc", alloc_invalid_run_arg, NULL);
 }
 
 void test_INIT_ONLY() {
@@ -112,8 +95,6 @@ void test_INIT_ONLY() {
         test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), init_fs);
 
-        test_assert_util_abort("run_arg_get_update_target_fs",
-                               call_get_update_target_fs, run_arg);
         run_arg_free(run_arg);
 
         enkf_fs_decref(init_fs);
@@ -130,8 +111,6 @@ void test_ENSEMBLE_EXPERIMENT() {
         test_assert_true(run_arg_is_instance(run_arg));
 
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), fs);
-        test_assert_util_abort("run_arg_get_update_target_fs",
-                               call_get_update_target_fs, run_arg);
 
         test_assert_string_equal(run_arg_get_run_id(run_arg), "run_id");
         run_arg_free(run_arg);
@@ -144,6 +123,5 @@ int main(int argc, char **argv) {
     test_SMOOTHER_RUN();
     test_INIT_ONLY();
     test_ENSEMBLE_EXPERIMENT();
-    test_invalid_update_on_self();
     exit(0);
 }
