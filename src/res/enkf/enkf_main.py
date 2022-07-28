@@ -340,9 +340,6 @@ class _RealEnKFMain(BaseCClass):
         "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
     )
     _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
-    _load_from_run_context = ResPrototype(
-        "int enkf_main_load_from_run_context(enkf_main, ert_run_context, enkf_fs)"
-    )
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
@@ -473,12 +470,15 @@ class _RealEnKFMain(BaseCClass):
         """@rtype: HookManager"""
         return self._get_hook_manager()
 
-    def loadFromRunContext(self, run_context, fs):
+    def loadFromRunContext(self, run_context: ErtRunContext, fs):
         """Returns the number of loaded realizations"""
-        return self._load_from_run_context(run_context, fs)
+        return enkf_main.load_from_run_context(
+            self, run_context.run_args, run_context.mask, fs
+        )
 
     def initRun(self, run_context):
         enkf_main.init_internalization(self)
+
         for realization_nr in range(self.getEnsembleSize()):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(

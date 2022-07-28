@@ -20,7 +20,19 @@ from res import ResPrototype
 
 class RunArg(BaseCClass):
     TYPE_NAME = "run_arg"
-
+    _alloc = ResPrototype(
+        "void* run_arg_alloc(char*, \
+                                                       enkf_fs, \
+                                                       enkf_fs, \
+                                                       int, \
+                                                       enkf_run_mode_enum, \
+                                                       int, \
+                                                       int, \
+                                                       int, \
+                                                       char*, \
+                                                       char*)",
+        bind=False,
+    )
     _alloc_ENSEMBLE_EXPERIMENT = ResPrototype(
         "run_arg_obj run_arg_alloc_ENSEMBLE_EXPERIMENT(char*, \
                                                        enkf_fs, \
@@ -42,8 +54,35 @@ class RunArg(BaseCClass):
     _get_status = ResPrototype("int run_arg_get_run_status(run_arg)")
     _get_job_name = ResPrototype("char* run_arg_get_job_name(run_arg)")
 
-    def __init__(self):
-        raise NotImplementedError("Cannot instantiat RunArg directly!")
+    def __init__(
+        self,
+        run_id,
+        sim_fs,
+        target_fs,
+        iens,
+        run_mode,
+        step1,
+        step2,
+        itr,
+        run_path,
+        job_name,
+    ):
+        c_ptr = self._alloc(
+            run_id,
+            sim_fs,
+            target_fs,
+            iens,
+            run_mode,
+            step1,
+            step2,
+            itr,
+            run_path,
+            job_name,
+        )
+        if c_ptr:
+            super().__init__(c_ptr)
+        else:
+            raise ValueError("Not constructed properly")
 
     @classmethod
     def createEnsembleExperimentRunArg(

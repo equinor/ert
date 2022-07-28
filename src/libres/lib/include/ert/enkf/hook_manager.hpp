@@ -21,7 +21,6 @@
 #include <ert/config/config_content.hpp>
 #include <ert/config/config_parser.hpp>
 
-#include <ert/enkf/ert_run_context.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/hook_workflow.hpp>
 #include <vector>

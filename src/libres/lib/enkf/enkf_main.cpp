@@ -348,8 +348,9 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
 }
 
 int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
-                                    ert_run_context_type *run_context,
-                                    enkf_fs_type *fs) {
+                                    std::vector<bool> active_mask,
+                                    enkf_fs_type *sim_fs,
+                                    std::vector<run_arg_type*> run_args) {
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
 
     // Loading state from a fwd-model is mainly io-bound so we can
@@ -372,7 +373,7 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
         state = PyEval_SaveThread();
 
     for (int iens = 0; iens < ens_size; ++iens) {
-        if (ert_run_context_iactive(run_context, iens)) {
+        if (active_mask[iens]) {
 
             futures.push_back(std::make_tuple(
                 iens, // for logging later
@@ -384,15 +385,13 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                         // permit is released when exiting scope.
                         std::scoped_lock lock(execution_limiter);
 
-                        auto *state_map = enkf_fs_get_state_map(
-                            run_arg_get_sim_fs(ert_run_context_iget_arg(
-                                run_context, realisation)));
+                        auto *state_map = enkf_fs_get_state_map(sim_fs);
 
                         state_map_update_undefined(state_map, realisation,
                                                    STATE_INITIALIZED);
                         auto status = enkf_state_load_from_forward_model(
                             enkf_main_iget_state(enkf_main, realisation),
-                            ert_run_context_iget_arg(run_context, realisation));
+                            run_args[iens]);
                         if (status.first == LOAD_SUCCESSFUL) {
                             state_map_iset(state_map, realisation,
                                            STATE_HAS_DATA);
@@ -657,6 +656,20 @@ RES_LIB_SUBMODULE("enkf_main", m) {
             return enkf_main_init_internalization(enkf_main);
         },
         py::arg("self"));
+    m.def(
+    "load_from_run_context",
+        [](py::object self, std::vector<py::object> run_args_, std::vector<bool> active_mask, py::object sim_fs_) {
+        auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+        auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
+        std::vector<run_arg_type *> run_args;
+        for (auto & run_arg : run_args_) {
+            run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
+        }
+            return enkf_main_load_from_run_context(enkf_main,
+                                    active_mask,
+                                    sim_fs,
+                                    run_args);
+                                    });
     m.def(
         "init_active_run",
         [](py::object res_config, py::object run_arg, py::object subst_list) {

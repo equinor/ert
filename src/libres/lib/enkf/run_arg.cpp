@@ -58,7 +58,7 @@ struct run_arg_struct {
 UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
-static run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
+run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                    enkf_fs_type *update_target_fs, int iens,
                                    run_mode_type run_mode, int step1, int step2,
                                    int iter, const char *runpath,

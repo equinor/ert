@@ -103,7 +103,6 @@ pybind11_add_module(
   enkf/enkf_types.cpp
   enkf/enkf_util.cpp
   enkf/ensemble_config.cpp
-  enkf/ert_run_context.cpp
   enkf/ert_template.cpp
   enkf/ert_test_context.cpp
   enkf/ert_workflow_list.cpp
