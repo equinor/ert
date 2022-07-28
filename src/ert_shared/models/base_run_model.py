@@ -295,9 +295,6 @@ class BaseRunModel:
     def run_ensemble_evaluator(
         self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
     ) -> int:
-        if run_context.get_step():
-            self.ert().eclConfig().assert_restart()
-
         ensemble = EnsembleBuilder.from_legacy(
             run_context,
             self.get_forward_model(),
@@ -336,8 +333,6 @@ class BaseRunModel:
         """Start asynchronous evaluation of an ensemble."""
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
-        if run_context.get_step():
-            self.ert().eclConfig().assert_restart()
         experiment_logger.debug("building...")
         ensemble = EnsembleBuilder.from_legacy(
             run_context,

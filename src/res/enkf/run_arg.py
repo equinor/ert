@@ -27,8 +27,6 @@ class RunArg(BaseCClass):
                                                        int, \
                                                        enkf_run_mode_enum, \
                                                        int, \
-                                                       int, \
-                                                       int, \
                                                        char*, \
                                                        char*)",
         bind=False,
@@ -61,8 +59,6 @@ class RunArg(BaseCClass):
         target_fs,
         iens,
         run_mode,
-        step1,
-        step2,
         itr,
         run_path,
         job_name,
@@ -73,8 +69,6 @@ class RunArg(BaseCClass):
             target_fs,
             iens,
             run_mode,
-            step1,
-            step2,
             itr,
             run_path,
             job_name,

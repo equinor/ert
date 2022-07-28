@@ -33,9 +33,6 @@ class EnkfSimulationRunner(BaseCClass):
         # run simplestep
         self._enkf_main().initRun(run_context)
 
-        if run_context.get_step():
-            self._enkf_main().ecl_config.assert_restart()
-
         # start queue
         self.start_queue(run_context, job_queue)
 
