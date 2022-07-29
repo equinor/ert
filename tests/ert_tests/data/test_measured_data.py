@@ -3,8 +3,7 @@ from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 import pytest
-from ert_data import loader
-from ert_data.measured import MeasuredData
+from ert.data import loader, MeasuredData
 
 
 @pytest.fixture()

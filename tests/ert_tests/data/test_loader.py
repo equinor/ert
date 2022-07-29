@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock
 import deprecation
 import pandas as pd
 import pytest
-from ert_data import loader
+from ert.data import loader
 
 from .mocked_block_observation import MockedBlockObservation
 

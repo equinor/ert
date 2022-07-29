@@ -7,8 +7,7 @@ from distutils.dir_util import copy_tree
 import numpy as np
 import pytest
 from ecl.summary import EclSum
-from ert_data import loader
-from ert_data.measured import MeasuredData
+from ert.data import loader, MeasuredData
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 from res.enkf.export import SummaryObservationCollector

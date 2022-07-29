@@ -65,6 +65,8 @@ nitpick_ignore = [
     ("py:class", "pydantic.main.BaseModel"),
     ("py:class", "pydantic.types.FilePath"),
     ("py:class", "pydantic.types.PositiveInt"),
+    ("py:class", "LibresFacade"),
+    ("py:class", "pandas.core.frame.DataFrame"),
 ]
 
 # Add any paths that contain templates here, relative to this directory.

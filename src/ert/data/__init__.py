@@ -13,6 +13,8 @@ from ert.data.record._record import (
     record_data,
 )
 
+from . import loader
+from .measured import MeasuredData
 from .record._transformation import (
     CopyTransformation,
     EclSumTransformation,
@@ -41,7 +43,9 @@ __all__ = (
     "ExecutableTransformation",
     "FileTransformation",
     "InMemoryRecordTransmitter",
+    "loader",
     "load_collection_from_file",
+    "MeasuredData",
     "NumericalRecord",
     "NumericalRecordTree",
     "record_data",

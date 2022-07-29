@@ -7,15 +7,16 @@ The API is typically meant used as part of workflows.
 """
 
 from collections import defaultdict
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from ert_data import loader
+from ert.data import loader
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+
     from ert_shared.libres_facade import LibresFacade
 
 
