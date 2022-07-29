@@ -47,9 +47,9 @@ args = dict(
     package_dir={"": "src"},
     package_data={
         "ert_shared": package_files("src/ert_shared/share/"),
-        "ert": package_files("src/ert/gui/resources/"),
+        "ert": package_files("src/ert/gui/resources/")
+        + package_files("src/ert/ert3/examples/"),
         "ert_logging": ["logger.conf", "storage_log.conf"],
-        "ert3_examples": package_files("src/ert3_examples/"),
         "res": [
             "fm/rms/rms_config.yml",
             "fm/ecl/ecl300_config.yml",

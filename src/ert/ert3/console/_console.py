@@ -202,7 +202,7 @@ def _build_argparser() -> Any:
 
 
 def _get_ert3_examples_path() -> Path:
-    pkg_examples_path = pathlib.Path(pkg.resource_filename("ert3_examples", ""))
+    pkg_examples_path = pathlib.Path(pkg.resource_filename("ert.ert3.examples", ""))
     # check that examples folder exist
     if not pkg_examples_path.exists():
         raise ModuleNotFoundError(f"Examples folder {pkg_examples_path} was not found.")
