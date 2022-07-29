@@ -32,7 +32,7 @@ def analyse(ert, target, source):
 
     target_fs = fs_manager.getFileSystem(target)
     source_fs = fs_manager.getFileSystem(source)
-    run_context = ErtRunContext.ensemble_smoother_update(
+    run_context = ErtRunContext(
         source_fs,
         target_fs,
     )

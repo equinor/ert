@@ -51,7 +51,7 @@ def initializeCurrentCaseFromScratch(
         mask[member] = True
 
     sim_fs = ert.getEnkfFsManager().getCurrentFileSystem()
-    run_context = ErtRunContext.case_init(sim_fs, mask)
+    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
     ert.getEnkfFsManager().initializeFromScratch(selected_parameters, run_context)
 
 

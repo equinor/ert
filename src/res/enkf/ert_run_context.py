@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from res.enkf.enkf_fs import EnkfFs
@@ -10,11 +10,11 @@ from res.enkf.run_arg import RunArg
 
 @dataclass
 class ErtRunContext:
-    sim_fs: Optional[EnkfFs]
-    target_fs: Optional[EnkfFs]
-    mask: List[bool]
-    paths: List[str]
-    jobnames: Optional[List[str]]
+    sim_fs: Optional[EnkfFs] = None
+    target_fs: Optional[EnkfFs] = None
+    mask: List[bool] = field(default_factory=list)
+    paths: List[str] = field(default_factory=list)
+    jobnames: List[str] = field(default_factory=list)
     itr: int = 0
     init_mode: EnkfInitModeEnum.INIT_CONDITIONAL = EnkfInitModeEnum.INIT_CONDITIONAL
 
@@ -33,59 +33,6 @@ class ErtRunContext:
                         job_name,
                     )
                 )
-
-    @classmethod
-    def ensemble_experiment(
-        cls, sim_fs, mask: List[bool], paths, jobnames, itr
-    ) -> "ErtRunContext":
-        return cls(
-            sim_fs=sim_fs,
-            target_fs=None,
-            mask=mask,
-            paths=paths,
-            jobnames=jobnames,
-            itr=itr,
-        )
-
-    @classmethod
-    def ensemble_smoother(
-        cls, sim_fs, target_fs, mask: List[bool], paths, jobnames, itr
-    ) -> "ErtRunContext":
-        return cls(
-            sim_fs,
-            target_fs,
-            mask,
-            paths,
-            jobnames,
-            itr,
-        )
-
-    @classmethod
-    def ensemble_smoother_update(
-        cls,
-        sim_fs,
-        target_fs,
-    ) -> "ErtRunContext":
-        return cls(
-            mask=[],
-            sim_fs=sim_fs,
-            target_fs=target_fs,
-            paths=[],
-            jobnames=[],
-        )
-
-    @classmethod
-    def case_init(cls, sim_fs, mask=None) -> "ErtRunContext":
-        if mask == None:
-            mask = []
-        return cls(
-            init_mode=EnkfInitModeEnum.INIT_FORCE,
-            mask=mask,
-            sim_fs=sim_fs,
-            target_fs=None,
-            paths=[],
-            jobnames=[],
-        )
 
     def is_active(self, index: int) -> bool:
         try:
