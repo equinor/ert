@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from ert_logging import STORAGE_LOG_CONFIG
+from ert.logging import STORAGE_LOG_CONFIG
 from ert_shared import port_handler
 from ert_shared import __file__ as ert_shared_path
 from ert_shared.plugins import ErtPluginContext

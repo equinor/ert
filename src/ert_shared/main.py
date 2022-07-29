@@ -7,11 +7,11 @@ import yaml
 from argparse import ArgumentParser, ArgumentTypeError
 from contextlib import contextmanager
 
-from ert_logging._log_util_abort import _log_util_abort
+from ert.logging._log_util_abort import _log_util_abort
 
 from ecl import set_abort_handler
 
-from ert_logging import LOGGING_CONFIG
+from ert.logging import LOGGING_CONFIG
 from ert_shared.cli.main import run_cli, ErtCliError
 from ert_shared.cli import (
     ENSEMBLE_SMOOTHER_MODE,
