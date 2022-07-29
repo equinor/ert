@@ -33,7 +33,7 @@ jobs:
         python -m pip install -r types-requirements.txt
     - name: Run mypy
       run: |
-        mypy --disallow-untyped-defs --ignore-missing-imports src/ert_shared/models src/res/enkf/enkf_simulation_runner.py src/ert_data/measured.py
+        mypy --disallow-untyped-defs --ignore-missing-imports src/ert_shared/models src/res/enkf/enkf_simulation_runner.py
     - name: Run strict mypy
       run: |
         mypy src/ert --exclude src/ert/logging --exclude src/ert/ert3/examples --config-file .mypy-strict.ini
