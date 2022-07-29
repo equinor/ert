@@ -13,16 +13,16 @@ import pandas as pd
 import numpy as np
 
 from ert_data import loader
-from ert_shared.libres_facade import LibresFacade
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from ert_shared.libres_facade import LibresFacade
 
 
 class MeasuredData:
     def __init__(
         self,
-        facade: LibresFacade,
+        facade: "LibresFacade",
         keys: List[str],
         index_lists: Optional[List[List[int]]] = None,
         load_data: bool = True,
