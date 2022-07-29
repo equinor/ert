@@ -173,13 +173,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test and not ert3"
+        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test and not ert3"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test and not ert3"
+        pytest ert_tests performance_tests -sv --durations=5 -m "integration_test and not ert3"
 
     - name: Test for a clean repository
       run: |
