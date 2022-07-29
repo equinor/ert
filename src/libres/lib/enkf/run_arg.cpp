@@ -38,8 +38,6 @@ struct run_arg_struct {
     char *run_path;
     /** Name of the job - will correspond to ECLBASE for eclipse jobs. */
     char *job_name;
-    /* What type of run this is */
-    run_mode_type run_mode;
     /** The job will in general have a different index in the queue than the
      * iens number. */
     int queue_index;
@@ -54,7 +52,6 @@ UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
 run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
-                                   run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name) {
         run_arg_type *run_arg = (run_arg_type *)util_malloc(sizeof *run_arg);
@@ -63,7 +60,6 @@ run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
         run_arg->sim_fs = sim_fs;
 
         run_arg->iens = iens;
-        run_arg->run_mode = run_mode;
         run_arg->iter = iter;
         run_arg->run_path = util_alloc_abs_path(runpath);
         run_arg->job_name = util_alloc_string_copy(job_name);
@@ -78,21 +74,14 @@ run_arg_type *run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id,
                                                 enkf_fs_type *sim_fs, int iens,
                                                 int iter, const char *runpath,
                                                 const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, iens, ENSEMBLE_EXPERIMENT,
+    return run_arg_alloc(run_id, sim_fs, iens,
                          iter, runpath, job_name);
 }
 
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath) {
-    return run_arg_alloc(run_id, sim_fs, iens, INIT_ONLY, iter,
+    return run_arg_alloc(run_id, sim_fs, iens, iter,
                          runpath, NULL);
-}
-
-run_arg_type *
-run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs, int iens, int iter,
-                           const char *runpath, const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, iens,
-                         ENSEMBLE_EXPERIMENT, iter, runpath, job_name);
 }
 
 void run_arg_free(run_arg_type *run_arg) {

@@ -2,7 +2,7 @@ import pytest
 from ....libres_utils import ResTest
 
 from res import ResPrototype
-from res.enkf import ForwardLoadContext, NodeId, RunArg, EnkfRunType
+from res.enkf import ForwardLoadContext, NodeId, RunArg
 from res.enkf.config import GenDataConfig
 from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
@@ -83,8 +83,6 @@ class GenDataConfigTest(ResTest):
         GenDataConfig("KEY")
 
     def updateMask(self, gen_data_config, report_step, fs, active_mask, subst_list):
-        run_arg = RunArg(
-            "run_id", fs, 0, EnkfRunType.ENSEMBLE_EXPERIMENT, 0, "Path", "jobname"
-        )
+        run_arg = RunArg("run_id", fs, 0, 0, "Path", "jobname")
         load_context = ForwardLoadContext(run_arg=run_arg, report_step=report_step)
         self._update_active_mask(gen_data_config, load_context, active_mask)

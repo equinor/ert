@@ -24,7 +24,6 @@ class RunArg(BaseCClass):
         "void* run_arg_alloc(char*, \
                                                        enkf_fs, \
                                                        int, \
-                                                       enkf_run_mode_enum, \
                                                        int, \
                                                        char*, \
                                                        char*)",
@@ -46,7 +45,6 @@ class RunArg(BaseCClass):
         run_id,
         sim_fs,
         iens,
-        run_mode,
         itr,
         run_path,
         job_name,
@@ -55,7 +53,6 @@ class RunArg(BaseCClass):
             run_id,
             sim_fs,
             iens,
-            run_mode,
             itr,
             run_path,
             job_name,

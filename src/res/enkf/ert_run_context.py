@@ -4,13 +4,12 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import EnkfInitModeEnum, EnkfRunType
+from res.enkf.enums import EnkfInitModeEnum
 from res.enkf.run_arg import RunArg
 
 
 @dataclass
 class ErtRunContext:
-    run_type: EnkfRunType
     sim_fs: Optional[EnkfFs]
     target_fs: Optional[EnkfFs]
     mask: List[bool]
@@ -29,7 +28,6 @@ class ErtRunContext:
                         str(self.run_id),
                         self.sim_fs,
                         iens,
-                        self.run_type,
                         self.itr,
                         path,
                         job_name,
@@ -41,7 +39,6 @@ class ErtRunContext:
         cls, sim_fs, mask: List[bool], paths, jobnames, itr
     ) -> "ErtRunContext":
         return cls(
-            run_type=EnkfRunType.ENSEMBLE_EXPERIMENT,
             sim_fs=sim_fs,
             target_fs=None,
             mask=mask,
@@ -55,7 +52,6 @@ class ErtRunContext:
         cls, sim_fs, target_fs, mask: List[bool], paths, jobnames, itr
     ) -> "ErtRunContext":
         return cls(
-            EnkfRunType.SMOOTHER_RUN,
             sim_fs,
             target_fs,
             mask,
@@ -71,7 +67,6 @@ class ErtRunContext:
         target_fs,
     ) -> "ErtRunContext":
         return cls(
-            run_type=EnkfRunType.SMOOTHER_UPDATE,
             mask=[],
             sim_fs=sim_fs,
             target_fs=target_fs,
@@ -84,7 +79,6 @@ class ErtRunContext:
         if mask == None:
             mask = []
         return cls(
-            run_type=EnkfRunType.CASE_INIT_ONLY,
             init_mode=EnkfInitModeEnum.INIT_FORCE,
             mask=mask,
             sim_fs=sim_fs,
