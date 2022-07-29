@@ -157,13 +157,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest -o log_cli=true --log-level=DEBUG ert_tests -sv --durations=5 -m "not integration_test"
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest -o log_cli=true --log-level=DEBUG ert_tests -sv --durations=5 -m "not integration_test"
 
     - name: Integration Test Ubuntu
       if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
@@ -173,13 +173,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest -o log_cli=true --log-level=DEBUG ert_tests performance_tests -sv --durations=5 -m "integration_test"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest -o log_cli=true --log-level=DEBUG ert_tests performance_tests -sv --durations=5 -m "integration_test"
 
     - name: Test for a clean repository
       run: |
@@ -278,7 +278,7 @@ jobs:
       run: |
         # Run tests
         pushd tests
-        pytest libres_tests --durations=0
+        pytest -o log_cli=true --log-level=DEBUG libres_tests --durations=5
         git status --porcelain | sed '/ert.*.whl$/d'
         test -z "$(git status --porcelain | sed '/ert.*.whl$/d')"
 
