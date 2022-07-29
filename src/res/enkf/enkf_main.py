@@ -15,7 +15,7 @@
 #  for more details.
 
 from pathlib import Path
-from typing import Callable, List
+from typing import List
 
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
@@ -167,10 +167,10 @@ class EnKFMain(BaseCClass):
             defaults to all active.
         """
         return self._create_run_context(
-            ErtRunContext.ensemble_experiment,
             iteration=iteration,
             active_mask=active_mask,
             source_filesystem=source_filesystem,
+            target_fs=None,
         )
 
     def create_ensemble_smoother_run_context(
@@ -185,7 +185,6 @@ class EnKFMain(BaseCClass):
             getEnkfFsManager().getCurrentFileSystem().
         """
         return self._create_run_context(
-            ErtRunContext.ensemble_smoother,
             iteration=iteration,
             active_mask=active_mask,
             source_filesystem=source_filesystem,
@@ -194,11 +193,10 @@ class EnKFMain(BaseCClass):
 
     def _create_run_context(
         self,
-        constructor: Callable,
-        iteration: int,
+        iteration: int = 0,
         active_mask: List[bool] = None,
         source_filesystem=None,
-        **kwargs,
+        target_fs=None,
     ) -> ErtRunContext:
         if active_mask is None:
             active_mask = [True] * self.getEnsembleSize()
@@ -216,13 +214,13 @@ class EnKFMain(BaseCClass):
             self.substituter.add_substitution(
                 "<ECLBASE>", jobname, realization, iteration
             )
-        return constructor(
+        return ErtRunContext(
             sim_fs=source_filesystem,
+            target_fs=target_fs,
             mask=active_mask,
             itr=iteration,
             paths=paths,
             jobnames=jobnames,
-            **kwargs,
         )
 
     def set_geo_id(self, geo_id: str, realization: int, iteration: int):

@@ -35,7 +35,7 @@ def test_update_report(setup_case, snapshot):
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
-    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    run_context = ErtRunContext(sim_fs, target_fs)
     es_update.smootherUpdate(run_context)
     log_file = Path(ert.analysisConfig().get_log_path()) / "deprecated"
     snapshot.assert_match(log_file.read_text("utf-8"), "update_log")
@@ -135,7 +135,7 @@ def test_update(setup_case, module, expected_gen_kw):
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
-    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    run_context = ErtRunContext(sim_fs, target_fs)
 
     if module == "IES_ENKF":
         w_container = ies.ModuleData(ert.getEnsembleSize())
@@ -320,7 +320,7 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     fsm = ert.getEnkfFsManager()
     sim_fs = fsm.getFileSystem("default_0")
     target_fs = fsm.getFileSystem("target")
-    run_context = ErtRunContext.ensemble_smoother_update(sim_fs, target_fs)
+    run_context = ErtRunContext(sim_fs, target_fs)
     ert.analysisConfig().setEnkfAlpha(alpha)
     w_container = ies.ModuleData(ert.getEnsembleSize())
     w_container.iteration_nr += 1

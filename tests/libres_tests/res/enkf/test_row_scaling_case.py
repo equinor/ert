@@ -88,7 +88,7 @@ def init_data(main):
         wct.append(poro * 4 + random.gauss(0, wct_std))
 
     mask = [True] * main.getEnsembleSize()
-    init_context = ErtRunContext.case_init(init_fs, mask)
+    init_context = ErtRunContext(sim_fs=init_fs, mask=mask)
     main.initRun(init_context)
 
     ens_config = main.ensembleConfig()
@@ -217,7 +217,7 @@ class RowScalingTest(ResTest):
             target_fs = main.getEnkfFsManager().getFileSystem("target")
 
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, target_fs)
+            run_context = ErtRunContext(init_fs, target_fs)
             es_update.smootherUpdate(run_context)
 
     def test_update_code1(self):
@@ -251,7 +251,7 @@ class RowScalingTest(ResTest):
             init_fs = init_data(main)
             target_fs = main.getEnkfFsManager().getFileSystem("target")
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, target_fs)
+            run_context = ErtRunContext(init_fs, target_fs)
             es_update.smootherUpdate(run_context)
 
     def test_update_code2(self):
@@ -267,7 +267,7 @@ class RowScalingTest(ResTest):
 
             # The first smoother update without row scaling
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            run_context = ErtRunContext(init_fs, update_fs1)
             rng = main.rng()
             rng.setState(random_seed)
             es_update.smootherUpdate(run_context)
@@ -292,7 +292,7 @@ class RowScalingTest(ResTest):
             # Second update with row scaling
             update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            run_context = ErtRunContext(init_fs, update_fs2)
             rng.setState(random_seed)
             es_update.smootherUpdate(run_context)
 
@@ -329,7 +329,7 @@ class RowScalingTest(ResTest):
 
             # The first smoother update without row scaling
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            run_context = ErtRunContext(init_fs, update_fs1)
             rng = main.rng()
             rng.setState(random_seed)
             es_update.smootherUpdate(run_context)
@@ -361,7 +361,7 @@ class RowScalingTest(ResTest):
             # Second update with row scaling
             update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            run_context = ErtRunContext(init_fs, update_fs2)
             rng.setState(random_seed)
             es_update.smootherUpdate(run_context)
 
@@ -399,7 +399,7 @@ class RowScalingTest(ResTest):
 
             # The first smoother update without row scaling
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            run_context = ErtRunContext(init_fs, update_fs1)
             main.rng()
             es_update.smootherUpdate(run_context)
 
@@ -432,7 +432,7 @@ class RowScalingTest(ResTest):
 
             update_fs2 = main.getEnkfFsManager().getFileSystem("target2")
             es_update = ESUpdate(main)
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            run_context = ErtRunContext(init_fs, update_fs2)
             es_update.smootherUpdate(run_context)
 
             init_node = EnkfNode(poro_config)
@@ -500,7 +500,7 @@ TIME_MAP timemap.txt
         row_scaling.assign(field_config.get_data_size(), ScalingTest(grid))
         es_update = ESUpdate(main)
         update_fs = main.getEnkfFsManager().getFileSystem("target2")
-        run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs)
+        run_context = ErtRunContext(init_fs, update_fs)
         es_update.smootherUpdate(run_context)
 
     def test_reuse_ALL_ACTIVE(self):
@@ -520,7 +520,7 @@ TIME_MAP timemap.txt
             init_fs = init_data(main)
             es_update = ESUpdate(main)
             update_fs1 = main.getEnkfFsManager().getFileSystem("target1")
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs1)
+            run_context = ErtRunContext(init_fs, update_fs1)
             rng = main.rng()
             rng.setState(random_seed)
             # Normal update without any local configuration
@@ -535,7 +535,7 @@ TIME_MAP timemap.txt
             main.update_configuration = update_step
 
             update_fs2 = main.getEnkfFsManager().getFileSystem("target3")
-            run_context = ErtRunContext.ensemble_smoother_update(init_fs, update_fs2)
+            run_context = ErtRunContext(init_fs, update_fs2)
             # Local update with two update_steps - where one observation has been
             # removed from the first
             es_update.smootherUpdate(run_context)

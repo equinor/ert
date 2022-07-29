@@ -92,8 +92,8 @@ def test_run_ensemble_evaluator():
     run_arg = MagicMock()
     run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
 
-    run_context = ErtRunContext.ensemble_experiment(
-        None, [True], ["some%d/path%d"], ["some_job%d"], 0
+    run_context = ErtRunContext(
+        mask=[True], paths=["some%d/path%d"], jobnames=["some_job%d"], itr=0
     )
     run_context.run_args = [run_arg]
     run_context.deactivate_realization = MagicMock()

@@ -25,7 +25,7 @@ from res.enkf.runpaths import Runpaths
 class ErtRunContextTest(ResTest):
     def test_case_init(self):
         mask = [True] * 100
-        ErtRunContext.case_init(None, mask)
+        ErtRunContext(mask=mask)
 
     @tmpdir()
     def test_create(self):
@@ -39,7 +39,8 @@ class ErtRunContextTest(ResTest):
             )
             itr = 0
             realizations = list(range(len(mask)))
-            run_context1 = ErtRunContext.ensemble_experiment(
+            run_context1 = ErtRunContext(
+                None,
                 None,
                 mask,
                 runpaths.get_paths(realizations, itr),
@@ -55,7 +56,8 @@ class ErtRunContextTest(ResTest):
             self.assertEqual(run_arg0.iter_id, itr)
             self.assertEqual(run_id1, run_arg0.get_run_id())
 
-            run_context2 = ErtRunContext.ensemble_experiment(
+            run_context2 = ErtRunContext(
+                None,
                 None,
                 mask,
                 runpaths.get_paths(realizations, itr),

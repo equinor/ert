@@ -49,7 +49,7 @@ def test_fs_init_from_scratch():
     ert = EnKFMain(res_config)
     sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
-    run_context = ErtRunContext.case_init(sim_fs, mask)
+    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
 
     ert.getEnkfFsManager().initializeFromScratch(
         StringList(["SNAKE_OIL_PARAM"]), run_context
@@ -80,7 +80,7 @@ def test_fs_init_from_scratch_deprecated():
     ert = EnKFMain(res_config)
     sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
-    run_context = ErtRunContext.case_init(sim_fs, mask)
+    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
     with pytest.warns(DeprecationWarning):
         ert.getEnkfFsManager().initializeFromScratch(
             StringList(["SNAKE_OIL_PARAM"]), run_context

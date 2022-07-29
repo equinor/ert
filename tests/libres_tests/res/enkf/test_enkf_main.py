@@ -1,5 +1,5 @@
+import res.enkf
 from res.enkf.enkf_main import EnKFMain
-from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.substituter import Substituter
 from res.enkf.runpaths import Runpaths
 from unittest.mock import MagicMock
@@ -43,10 +43,10 @@ def test_create_ensemble_experiment_run_context():
     )
 
     enkf_main._create_run_context.assert_called_with(
-        ErtRunContext.ensemble_experiment,
         iteration=iteration,
         active_mask=realizations,
         source_filesystem=fs,
+        target_fs=None,
     )
 
 
@@ -68,7 +68,6 @@ def test_create_ensemble_smoother_run_context():
     )
 
     enkf_main._create_run_context.assert_called_with(
-        ErtRunContext.ensemble_smoother,
         iteration=iteration,
         active_mask=realizations,
         source_filesystem=fs,
@@ -76,23 +75,23 @@ def test_create_ensemble_smoother_run_context():
     )
 
 
-def test_create_run_context():
+def test_create_run_context(monkeypatch):
     enkf_main = MockEnKFMain()
 
     iteration = 0
     ensemble_size = 10
-
-    constructor = MagicMock()
+    run_context = MagicMock()
+    monkeypatch.setattr(res.enkf.enkf_main, "ErtRunContext", run_context)
     enkf_main.getEnsembleSize = MagicMock()
     enkf_main.getEnsembleSize.return_value = ensemble_size
     enkf_main.getEnkfFsManager = MagicMock()
 
     enkf_main._create_run_context(
-        constructor,
         iteration=iteration,
     )
-    constructor.assert_called_with(
+    run_context.assert_called_with(
         sim_fs=enkf_main.getEnkfFsManager().getCurrentFileSystem.return_value,
+        target_fs=None,
         mask=[True] * ensemble_size,
         itr=iteration,
         paths=enkf_main.runpaths.get_paths(list(range(ensemble_size)), iteration),

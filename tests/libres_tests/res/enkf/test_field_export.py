@@ -75,7 +75,7 @@ class FieldExportTest(ResTest):
             iens_list.append(4)
 
             fs = fs_manager.getCurrentFileSystem()
-            run_context = ErtRunContext.case_init(
+            run_context = ErtRunContext(
                 fs, mask=[True] * ert.getEnsembleSize()
             )
             ert.initRun(run_context)
