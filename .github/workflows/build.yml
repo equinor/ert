@@ -157,13 +157,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv --durations=0 -m "not integration_test and not ert3"
 
     - name: Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
       run: |
         pushd tests
-        pytest ert_tests -sv --durations=0 -m "not integration_test"
+        pytest ert_tests -sv --durations=0 -m "not integration_test and not ert3"
 
     - name: Integration Test Ubuntu
       if: matrix.os == 'ubuntu-latest' && matrix.test-type == 'integration-tests'
@@ -173,13 +173,13 @@ jobs:
         ci/github/start_herbstluftwm.sh &
         sleep 5
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test and not ert3"
 
     - name: Integration Test MacOS
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test"
+        pytest ert_tests performance_tests -sv --durations=0 -m "integration_test and not ert3"
 
     - name: Test for a clean repository
       run: |
@@ -191,6 +191,48 @@ jobs:
       run: |
         ert --help
 
+  tests-ert3:
+    name: Run ert3 tests
+    needs: [build-wheels]
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10']
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: './.github/actions/install_dependencies'
+      with:
+        os: ${{ matrix.os }}
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Get wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.os }} Python ${{ matrix.python-version }} wheel
+
+    - name: Install wheel and test dependencies
+      run: |
+        find . -name "*.whl" -exec pip install {} \;
+        pip install -r dev-requirements.txt
+
+    - name: Run tests
+      env:
+        DISPLAY: ':99.0'
+      run: |
+        ci/github/start_herbstluftwm.sh &
+        sleep 5
+        pushd tests
+        pytest ert_tests -sv --durations=0 -m "ert3"
 
   docs-ert:
     name: Test ert docs
