@@ -148,9 +148,6 @@ def run_server(args=None, debug=False):
     if args.debug or debug:
         logger.info("\tRunning in NON-SECURE debug mode.\n")
         os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
-    else:
-        logger.info("\tUsername: __token__")
-        logger.info(f"\tPassword: {connection_info['authtoken']}\n")
 
     if config.should_reload:
         supervisor = ChangeReload(config, target=server.run, sockets=[sock])
