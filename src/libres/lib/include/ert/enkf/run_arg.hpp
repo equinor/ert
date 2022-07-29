@@ -30,7 +30,6 @@ UTIL_SAFE_CAST_HEADER(run_arg);
 UTIL_IS_INSTANCE_HEADER(run_arg);
 
 extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
-                                   run_mode_type run_mode,
                                    int iter, const char *runpath,
                                    const char *job_name);
 

@@ -73,7 +73,7 @@ void test_SMOOTHER_RUN() {
             enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
         enkf_fs_type *target_fs =
             enkf_fs_create_fs("target", BLOCK_FS_DRIVER_ID, true);
-        run_arg_type *run_arg = run_arg_alloc_SMOOTHER_RUN(
+        run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
             "run_id", sim_fs, 0, 6, "path", "BASE");
         test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), sim_fs);

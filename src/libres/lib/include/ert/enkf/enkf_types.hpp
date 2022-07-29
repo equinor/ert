@@ -136,14 +136,6 @@ typedef enum {
 */
 
 typedef enum {
-    ENSEMBLE_EXPERIMENT = 2,
-    SMOOTHER_RUN = 4,
-    INIT_ONLY = 8,
-    SMOOTHER_UPDATE = 16,
-    CASE_INIT_ONLY = 32
-} run_mode_type;
-
-typedef enum {
     JOB_NOT_STARTED = 0,
     JOB_RUN_FAILURE = 2,
     JOB_LOAD_FAILURE = 3,
