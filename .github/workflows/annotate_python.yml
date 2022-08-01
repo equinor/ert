@@ -30,3 +30,4 @@ jobs:
       - name: run mypy
         run: mypy ${{steps.find_changed_files.outputs.changed_files}} --config-file .mypy-annotate.ini
         if: steps.find_changed_files.outputs.changed_files != ''
+        continue-on-error: true
