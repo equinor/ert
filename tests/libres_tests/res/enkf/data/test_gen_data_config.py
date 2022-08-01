@@ -1,4 +1,3 @@
-import pytest
 from ....libres_utils import ResTest
 
 from res import ResPrototype
@@ -8,11 +7,7 @@ from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
 
 
-@pytest.mark.equinor_test
 class GenDataConfigTest(ResTest):
-    _get_active_mask = ResPrototype(
-        "bool_vector_ref gen_data_config_get_active_mask( gen_data_config )", bind=False
-    )
     _update_active_mask = ResPrototype(
         (
             "void gen_data_config_update_active( gen_data_config, "
@@ -22,7 +17,7 @@ class GenDataConfigTest(ResTest):
     )
 
     def setUp(self):
-        self.config_file = self.createTestPath("Equinor/config/with_GEN_DATA/config")
+        self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def load_active_masks(self, case1, case2):
         with ErtTestContext(self.config_file) as test_context:
@@ -30,21 +25,21 @@ class GenDataConfigTest(ResTest):
             subst_list = ert.resConfig().subst_config.subst_list
 
             fs1 = ert.getEnkfFsManager().getFileSystem(case1)
-            config_node = ert.ensembleConfig().getNode("TIMESHIFT")
+            config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs1, NodeId(60, 0))
+            data_node.tryLoad(fs1, NodeId(199, 0))
 
-            active_mask = self._get_active_mask(config_node.getDataModelConfig())
+            active_mask = config_node.getDataModelConfig().getActiveMask()
             first_active_mask_length = len(active_mask)
-            self.assertEqual(first_active_mask_length, 2560)
+            self.assertEqual(first_active_mask_length, 2000)
 
             fs2 = ert.getEnkfFsManager().getFileSystem(case2)
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs2, NodeId(60, 0))
+            data_node.tryLoad(fs2, NodeId(199, 0))
 
-            active_mask = self._get_active_mask(config_node.getDataModelConfig())
+            active_mask = config_node.getDataModelConfig().getActiveMask()
             second_active_mask_len = len(active_mask)
-            self.assertEqual(second_active_mask_len, 2560)
+            self.assertEqual(second_active_mask_len, 2000)
             self.assertEqual(first_active_mask_length, second_active_mask_len)
 
             # Setting one element to False, load different case, check, reload,
@@ -55,29 +50,29 @@ class GenDataConfigTest(ResTest):
 
             self.updateMask(
                 config_node.getDataModelConfig(),
-                60,
+                199,
                 fs2,
                 active_mask_modified,
                 subst_list,
             )
-            active_mask = self._get_active_mask(config_node.getDataModelConfig())
+            active_mask = config_node.getDataModelConfig().getActiveMask()
             self.assertFalse(active_mask[10])
 
             # Load first - check element is true
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs1, NodeId(60, 0))
-            active_mask = self._get_active_mask(config_node.getDataModelConfig())
+            data_node.tryLoad(fs1, NodeId(199, 0))
+            active_mask = config_node.getDataModelConfig().getActiveMask()
             self.assertTrue(active_mask[10])
 
             # Reload second again, should now be false at 10, due to the update
             # further up
             data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs2, NodeId(60, 0))
-            active_mask = self._get_active_mask(config_node.getDataModelConfig())
+            data_node.tryLoad(fs2, NodeId(199, 0))
+            active_mask = config_node.getDataModelConfig().getActiveMask()
             self.assertFalse(active_mask[10])
 
     def test_loading_two_cases_with_and_without_active_file(self):
-        self.load_active_masks("missing-active", "default")
+        self.load_active_masks("default_0", "default_1")
 
     def test_create(self):
         GenDataConfig("KEY")
