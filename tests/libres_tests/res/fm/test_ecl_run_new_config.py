@@ -104,7 +104,7 @@ with open("env.json", "w") as f:
                 assert v == run_env[k]
 
     @tmpdir()
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     def test_run(self):
         self.init_eclrun_config()
         shutil.copy(
@@ -127,7 +127,7 @@ with open("env.json", "w") as f:
         self.assertEqual(0, len(errors))
 
     @tmpdir()
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     def test_run_new_log_file(self):
         self.init_eclrun_config()
         shutil.copy(
@@ -149,7 +149,7 @@ with open("env.json", "w") as f:
         errors = ecl_run.parseErrors()
         self.assertEqual(0, len(errors))
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_run_api(self):
         self.init_eclrun_config()
@@ -162,7 +162,7 @@ with open("env.json", "w") as f:
 
         self.assertTrue(os.path.isfile("SPE1.DATA"))
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_failed_run(self):
         self.init_eclrun_config()
@@ -177,7 +177,7 @@ with open("env.json", "w") as f:
             ecl_run.runEclipse(eclrun_config=eclrun_config)
         self.assertIn("ERROR", str(error_context.exception))
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_failed_run_OK(self):
         self.init_eclrun_config()
@@ -188,7 +188,7 @@ with open("env.json", "w") as f:
         ecl_config = Ecl100Config()
         run(ecl_config, ["SPE1_ERROR", "--version=2019.3", "--ignore-errors"])
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_no_hdf5_output_by_default_with_ecl100(self):
         self.init_eclrun_config()
@@ -201,7 +201,7 @@ with open("env.json", "w") as f:
         run(ecl_config, ["SPE1.DATA", "--version=2019.3"])
         self.assertFalse(os.path.exists("SPE1.h5"))
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_flag_to_produce_hdf5_output_with_ecl100(self):
         self.init_eclrun_config()
@@ -214,7 +214,7 @@ with open("env.json", "w") as f:
         run(ecl_config, ["SPE1.DATA", "--version=2019.3", "--summary-conversion"])
         self.assertTrue(os.path.exists("SPE1.h5"))
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_mpi_run(self):
         self.init_eclrun_config()
@@ -227,7 +227,7 @@ with open("env.json", "w") as f:
         self.assertTrue(os.path.isfile("SPE1_PARALLELL.OUT"))
         self.assertTrue(os.path.getsize("SPE1_PARALLELL.OUT") > 0)
 
-    @pytest.mark.equinor_test
+    @pytest.mark.requires_eclipse
     @tmpdir()
     def test_summary_block(self):
         self.init_eclrun_config()
@@ -244,6 +244,7 @@ with open("env.json", "w") as f:
         ecl_sum = ecl_run.summary_block()
         self.assertTrue(isinstance(ecl_sum, EclSum))
 
+    @pytest.mark.requires_eclipse
     @pytest.mark.equinor_test
     @tmpdir()
     def test_check(self):

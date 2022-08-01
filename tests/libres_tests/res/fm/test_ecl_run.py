@@ -367,7 +367,7 @@ def test_running_flow_given_env_variables_with_same_name_as_parent_env_variables
     assert lines == ["OVERWRITTEN1\n", "OVERWRITTEN2\n"]
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_run(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
@@ -397,7 +397,7 @@ def test_run(init_ecl100_config, source_root):
         ecl_run.runEclipse()
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_run_new_log_file(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
@@ -426,7 +426,7 @@ def test_run_new_log_file(init_ecl100_config, source_root):
         ecl_run.runEclipse()
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_run_api(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
@@ -438,7 +438,7 @@ def test_run_api(init_ecl100_config, source_root):
     assert os.path.isfile("SPE1.DATA")
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_failed_run(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1_ERROR.DATA",
@@ -451,7 +451,7 @@ def test_failed_run(init_ecl100_config, source_root):
         ecl_run.runEclipse()
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_failed_run_OK(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1_ERROR.DATA",
@@ -468,7 +468,7 @@ def test_failed_run_OK(init_ecl100_config, source_root):
     ecl_run.runEclipse()
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_mpi_run(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1_PARALLELL.DATA",
@@ -480,7 +480,7 @@ def test_mpi_run(init_ecl100_config, source_root):
     assert os.path.getsize("SPE1_PARALLELL.LOG") > 0
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_summary_block(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
@@ -496,6 +496,7 @@ def test_summary_block(init_ecl100_config, source_root):
     assert isinstance(ecl_run.summary_block(), EclSum)
 
 
+@pytest.mark.requires_eclipse
 @pytest.mark.equinor_test
 @tmpdir()
 def test_check(source_root):
@@ -528,7 +529,7 @@ def test_check(source_root):
     assert os.path.isfile("CHECK_ECLIPSE_RUN.OK")
 
 
-@pytest.mark.equinor_test
+@pytest.mark.requires_eclipse
 def test_error_parse(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
