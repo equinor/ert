@@ -243,38 +243,3 @@ with open("env.json", "w") as f:
         ecl_run.runEclipse(eclrun_config=EclrunConfig(ecl_config, "2019.3"))
         ecl_sum = ecl_run.summary_block()
         self.assertTrue(isinstance(ecl_sum, EclSum))
-
-    @pytest.mark.requires_eclipse
-    @pytest.mark.equinor_test
-    @tmpdir()
-    def test_check(self):
-        full_case = os.path.join(self.TESTDATA_ROOT, "Equinor/ECLIPSE/Gurbat/ECLIPSE")
-        short_case = os.path.join(
-            self.TESTDATA_ROOT, "Equinor/ECLIPSE/ShortSummary/ECLIPSE"
-        )
-        failed_case = os.path.join(
-            self.SOURCE_ROOT,
-            "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0",
-        )
-
-        with self.assertRaises(IOError):
-            self.assertTrue(EclRun.checkCase(full_case, failed_case))
-
-        with self.assertRaises(IOError):
-            self.assertTrue(EclRun.checkCase(full_case, "DOES-NOT-EXIST"))
-
-        with self.assertRaises(IOError):
-            self.assertTrue(EclRun.checkCase("DOES-NOT-EXIST", full_case))
-
-        with self.assertRaises(ValueError):
-            EclRun.checkCase(full_case, short_case)
-
-        self.assertTrue(not os.path.isfile("CHECK_ECLIPSE_RUN.OK"))
-        self.assertTrue(EclRun.checkCase(full_case, full_case))
-        self.assertTrue(os.path.isfile("CHECK_ECLIPSE_RUN.OK"))
-
-        os.remove("CHECK_ECLIPSE_RUN.OK")
-        self.assertTrue(
-            EclRun.checkCase(short_case, full_case)
-        )  # Simulation is longer than refcase - OK
-        self.assertTrue(os.path.isfile("CHECK_ECLIPSE_RUN.OK"))

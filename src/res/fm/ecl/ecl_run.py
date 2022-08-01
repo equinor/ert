@@ -418,21 +418,3 @@ class EclRun:
                 break
 
         return error_list
-
-    @classmethod
-    def checkCase(cls, refcase, simcase):
-        ref = EclSum(refcase)
-        sim = EclSum(simcase)
-
-        if sim.getEndTime() >= ref.getEndTime():
-            with open("CHECK_ECLIPSE_RUN.OK", "w") as f:
-                f.write(f"OK - the simulation {simcase} was >= {refcase}")
-
-            return True
-        else:
-            msg = f"""
-CHECK_ECLIPSE_RUN: Failed
-Refcase    {refcase} : {ref.getEndTime()}
-Simulation {simcase} : {sim.getEndTime()}
-"""
-            raise ValueError(msg)
