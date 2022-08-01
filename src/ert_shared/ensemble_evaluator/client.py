@@ -46,12 +46,12 @@ class Client:  # pylint: disable=too-many-instance-attributes
         # if True it will enforce TLS, and if you want to use self signed
         # certificates you need to pass an ssl_context with the certificate
         # loaded.
+        self._ssl_context: Optional[Union[bool, ssl.SSLContext]] = None
         if cert is not None:
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ssl_context.load_verify_locations(cadata=cert)
-        else:
-            ssl_context = True if url.startswith("wss") else None
-        self._ssl_context = ssl_context
+            self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            self._ssl_context.load_verify_locations(cadata=cert)
+        elif url.startswith("wss"):
+            self._ssl_context = True
 
         self._max_retries = max_retries
         self._timeout_multiplier = timeout_multiplier
