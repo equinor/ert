@@ -33,11 +33,6 @@ extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
                                    int iter, const char *runpath,
                                    const char *job_name);
 
-extern "C" run_arg_type *
-run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id, enkf_fs_type *sim_fs,
-                                  int iens, int iter, const char *runpath,
-                                  const char *job_name);
-
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath);
 

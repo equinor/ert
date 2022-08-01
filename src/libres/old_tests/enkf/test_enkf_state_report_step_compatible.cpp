@@ -28,7 +28,7 @@ bool check_ecl_sum_compatible(const enkf_main_type *enkf_main) {
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
     char *job_name =
         model_config_alloc_jobname(enkf_main_get_model_config(enkf_main), 0);
-    run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+    run_arg_type *run_arg = run_arg_alloc(
         "run_id", fs, 0, 0, "simulations/run0", job_name);
 
     state_map_type *state_map = enkf_fs_get_state_map(fs);

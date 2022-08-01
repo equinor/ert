@@ -47,7 +47,7 @@ void test_create() {
 
 void test_load_restart1() {
     run_arg_type *run_arg =
-        run_arg_alloc_ENSEMBLE_EXPERIMENT("run_id", NULL, 0, 0, "run", "BASE");
+        run_arg_alloc("run_id", NULL, 0, 0, "run", "BASE");
     ecl_config_type *ecl_config = ecl_config_alloc(NULL);
 
     forward_load_context_type *load_context =
@@ -74,7 +74,7 @@ void make_restart_mock(const char *path, const char *eclbase, int report_step) {
 void test_load_restart2() {
     ecl::util::TestArea ta("load_restart");
     {
-        run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+        run_arg_type *run_arg = run_arg_alloc(
             "run_id", NULL, 0, 0, "run", "BASE");
         ecl_config_type *ecl_config = ecl_config_alloc(NULL);
         forward_load_context_type *load_context =
