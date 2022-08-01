@@ -1,12 +1,11 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from res.enkf.enums import HookRuntime, RealizationStateEnum
-from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
-from res.enkf.enkf_main import EnKFMain, QueueConfig
-
-from ert_shared.models import BaseRunModel, ErtRunError
+from ert.analysis import ErtAnalysisError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from typing import Dict, Any
+from ert_shared.models import BaseRunModel, ErtRunError
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enkf_main import EnKFMain, QueueConfig
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 
 
 class EnsembleSmoother(BaseRunModel):
@@ -60,9 +59,8 @@ class EnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...")
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
-        es_update = self.ert().getESUpdate()
         try:
-            es_update.smootherUpdate(prior_context)
+            self.facade.smoother_update(prior_context)
         except ErtAnalysisError as e:
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"

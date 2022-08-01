@@ -1,23 +1,25 @@
 import logging
-import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Any, TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from ecl.util.util import RandomNumberGenerator
+import numpy as np
+
+from ert.analysis import _ies as ies
+from res._lib import analysis_module, update
 from res.enkf.enums import RealizationStateEnum
-from res.enkf.analysis_config import AnalysisConfig
-from res.enkf.ensemble_config import EnsembleConfig
-from res._lib.enkf_analysis import UpdateSnapshot
-from res._lib import update, analysis_module
-from res.analysis.configuration import UpdateConfiguration
-from res.enkf.enkf_obs import EnkfObs
-from res.enkf.enkf_fs import EnkfFs
-from ert.analysis import ies
 
 if TYPE_CHECKING:
-    from res.enkf import EnKFMain, ErtRunContext
     import numpy.typing as npt
+    from ecl.util.util import RandomNumberGenerator
+
+    from res._lib.enkf_analysis import UpdateSnapshot
+    from res.analysis.configuration import UpdateConfiguration
+    from res.enkf import EnKFMain, ErtRunContext
+    from res.enkf.analysis_config import AnalysisConfig
+    from res.enkf.enkf_fs import EnkfFs
+    from res.enkf.enkf_obs import EnkfObs
+    from res.enkf.ensemble_config import EnsembleConfig
 
 logger = logging.getLogger(__name__)
 
@@ -34,22 +36,22 @@ class SmootherSnapshot:
     analysis_configuration: Dict[str, Any]
     alpha: float
     std_cutoff: float
-    update_step_snapshots: Dict[str, UpdateSnapshot] = field(default_factory=dict)
+    update_step_snapshots: Dict[str, "UpdateSnapshot"] = field(default_factory=dict)
 
 
 def analysis_ES(
-    updatestep: UpdateConfiguration,
-    obs: EnkfObs,
-    shared_rng: RandomNumberGenerator,
+    updatestep: "UpdateConfiguration",
+    obs: "EnkfObs",
+    shared_rng: "RandomNumberGenerator",
     module_config: ies.Config,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
-    ensemble_config: EnsembleConfig,
-    source_fs: EnkfFs,
-    target_fs: EnkfFs,
+    ensemble_config: "EnsembleConfig",
+    source_fs: "EnkfFs",
+    target_fs: "EnkfFs",
 ) -> None:
 
     iens_active_index = [i for i in range(len(ens_mask)) if ens_mask[i]]
@@ -138,18 +140,18 @@ def analysis_ES(
 
 
 def analysis_IES(
-    updatestep: UpdateConfiguration,
-    obs: EnkfObs,
-    shared_rng: RandomNumberGenerator,
+    updatestep: "UpdateConfiguration",
+    obs: "EnkfObs",
+    shared_rng: "RandomNumberGenerator",
     module_config: ies.Config,
     alpha: float,
     std_cutoff: float,
     global_scaling: float,
     smoother_snapshot: SmootherSnapshot,
     ens_mask: List[bool],
-    ensemble_config: EnsembleConfig,
-    source_fs: EnkfFs,
-    target_fs: EnkfFs,
+    ensemble_config: "EnsembleConfig",
+    source_fs: "EnkfFs",
+    target_fs: "EnkfFs",
     w_container: ies.ModuleData,
 ) -> None:
 
@@ -251,7 +253,7 @@ def _write_update_report(fname: Path, snapshot: SmootherSnapshot) -> None:
 
 
 def _assert_has_enough_realizations(
-    ens_mask: List[bool], analysis_config: AnalysisConfig
+    ens_mask: List[bool], analysis_config: "AnalysisConfig"
 ) -> None:
     active_realizations = sum(ens_mask)
     if not analysis_config.haveEnoughRealisations(active_realizations):
@@ -262,7 +264,7 @@ def _assert_has_enough_realizations(
 
 
 def _create_smoother_snapshot(
-    source_fs: EnkfFs, target_fs: EnkfFs, analysis_config: AnalysisConfig
+    source_fs: "EnkfFs", target_fs: "EnkfFs", analysis_config: "AnalysisConfig"
 ) -> SmootherSnapshot:
     return SmootherSnapshot(
         source_fs.getCaseName(),
@@ -280,9 +282,7 @@ def _create_smoother_snapshot(
 class ESUpdate:
     def __init__(self, enkf_main: "EnKFMain"):
         self.ert = enkf_main
-
-    def setGlobalStdScaling(self, weight: float) -> None:
-        self.ert.analysisConfig().setGlobalStdScaling(weight)
+        self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smootherUpdate(self, run_context: "ErtRunContext") -> None:
         source_fs = run_context.get_sim_fs()
@@ -326,7 +326,7 @@ class ESUpdate:
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.ert.update_snapshots[run_context.get_id()] = smoother_snapshot
+        self.update_snapshots[run_context.get_id()] = smoother_snapshot
 
     def iterative_smoother_update(
         self, run_context: "ErtRunContext", w_container: ies.ModuleData
@@ -378,4 +378,4 @@ class ESUpdate:
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.ert.update_snapshots[run_context.get_id()] = smoother_snapshot
+        self.update_snapshots[run_context.get_id()] = smoother_snapshot

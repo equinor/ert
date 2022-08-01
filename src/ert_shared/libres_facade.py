@@ -1,21 +1,19 @@
-from typing import List
-
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from pandas import DataFrame
 
+from ert.analysis import ESUpdate, SmootherSnapshot
 from res.analysis.analysis_module import AnalysisModule
-from res.enkf.es_update import SmootherSnapshot
+from res.enkf import EnKFMain
 from res.enkf.export import (
     GenDataCollector,
-    SummaryCollector,
-    SummaryObservationCollector,
     GenDataObservationCollector,
     GenKwCollector,
+    SummaryCollector,
+    SummaryObservationCollector,
 )
 from res.enkf.plot_data import PlotBlockDataLoader
-from res.enkf import EnKFMain
 
 _logger = logging.getLogger(__name__)
 
@@ -25,6 +23,16 @@ class LibresFacade:
 
     def __init__(self, enkf_main: EnKFMain):
         self._enkf_main = enkf_main
+        self._es_update = ESUpdate(enkf_main)
+
+    def smoother_update(self, prior_context):
+        self._es_update.smootherUpdate(prior_context)
+
+    def iterative_smoother_update(self, run_context, module_data):
+        self._es_update.iterative_smoother_update(run_context, module_data)
+
+    def set_global_std_scaling(self, weight: float) -> None:
+        self._enkf_main.analysisConfig().setGlobalStdScaling(weight)
 
     def get_analysis_config(self):
         return self._enkf_main.analysisConfig()
@@ -260,7 +268,7 @@ class LibresFacade:
 
     @property
     def update_snapshots(self) -> Dict[str, SmootherSnapshot]:
-        return self._enkf_main.update_snapshots
+        return self._es_update.update_snapshots
 
     def get_alpha(self):
         return self._enkf_main.analysisConfig().getEnkfAlpha()

@@ -16,13 +16,12 @@
 
 from qtpy.QtWidgets import QMessageBox
 
-from res.enkf import ErtRunContext
-from res.enkf import ESUpdate, ErtAnalysisError
-
+from ert.analysis import ErtAnalysisError, ESUpdate
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
+from res.enkf import ErtRunContext
 
 
 def analyse(ert, target, source):

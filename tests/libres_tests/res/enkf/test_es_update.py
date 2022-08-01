@@ -4,14 +4,13 @@ import sys
 
 import pytest
 
+from ert.analysis import ESUpdate, ErtAnalysisError
 from res.enkf import (
     EnkfNode,
     ErtRunContext,
-    ESUpdate,
     NodeId,
     EnKFMain,
     ResConfig,
-    ErtAnalysisError,
 )
 from res._lib import ies
 
@@ -326,6 +325,6 @@ SUMMARY_OBSERVATION EXTREMELY_HIGH_STD
     w_container = ies.ModuleData(ert.getEnsembleSize())
     w_container.iteration_nr += 1
     es_update.iterative_smoother_update(run_context, w_container)
-    result_snapshot = ert.update_snapshots[run_context.get_id()]
+    result_snapshot = es_update.update_snapshots[run_context.get_id()]
     assert result_snapshot.alpha == alpha
     assert result_snapshot.update_step_snapshots["ALL_ACTIVE"].obs_status == expected

@@ -1,14 +1,13 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import HookRuntime, RealizationStateEnum
-from res.enkf.enkf_main import EnKFMain, QueueConfig
-from res.analysis.analysis_module import AnalysisModule
-
-from ert_shared.models import BaseRunModel, ErtRunError
+from ert.analysis import ErtAnalysisError, ModuleData
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.analysis import ies
+from ert_shared.models import BaseRunModel, ErtRunError
+from res.analysis.analysis_module import AnalysisModule
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enkf_fs import EnkfFs
+from res.enkf.enkf_main import EnKFMain, QueueConfig
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 
 
 class IteratedEnsembleSmoother(BaseRunModel):
@@ -20,9 +19,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
     ):
         super().__init__(simulation_arguments, ert, queue_config, phase_count=2)
         self.support_restart = False
-        self._w_container = ies.ModuleData(
-            len(simulation_arguments["active_realizations"])
-        )
+        self._w_container = ModuleData(len(simulation_arguments["active_realizations"]))
 
     def setAnalysisModule(self, module_name: str) -> AnalysisModule:
         module_load_success = self.ert().analysisConfig().selectModule(module_name)
@@ -72,10 +69,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
         EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
-        es_update = self.ert().getESUpdate()
 
         try:
-            es_update.iterative_smoother_update(run_context, self._w_container)
+            self.facade.iterative_smoother_update(run_context, self._w_container)
             self._w_container.iteration_nr += 1
         except ErtAnalysisError as e:
             raise ErtRunError(

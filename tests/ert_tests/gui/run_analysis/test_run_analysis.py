@@ -1,9 +1,10 @@
 from unittest.mock import Mock, patch
 
+from qtpy.QtGui import QIcon
+
+from ert.analysis import ErtAnalysisError
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import run_analysis
-from qtpy.QtGui import QIcon
-from res.enkf import ErtAnalysisError
 
 from ...ert_utils import ErtTest
 

@@ -13,16 +13,15 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import List, Tuple, Dict, Any
-from res.enkf import ErtRunContext, EnkfSimulationRunner, ErtAnalysisError
-from res.enkf.enums import HookRuntime
-from res.enkf.enums import RealizationStateEnum
-from res.enkf.enkf_main import EnKFMain, QueueConfig
-
-from ert_shared.models import BaseRunModel, ErtRunError
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
 import logging
+from typing import Any, Dict, List, Tuple
+
+from ert.analysis import ErtAnalysisError
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert_shared.models import BaseRunModel, ErtRunError
+from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf.enkf_main import EnKFMain, QueueConfig
+from res.enkf.enums import HookRuntime, RealizationStateEnum
 
 logger = logging.getLogger(__file__)
 
@@ -122,10 +121,9 @@ class MultipleDataAssimilation(BaseRunModel):
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
 
-        es_update = self.ert().getESUpdate()
-        es_update.setGlobalStdScaling(weight)
+        self.facade.set_global_std_scaling(weight)
         try:
-            es_update.smootherUpdate(run_context)
+            self.facade.smoother_update(run_context)
         except ErtAnalysisError as e:
             raise ErtRunError(
                 "Analysis of simulation failed for iteration:"
