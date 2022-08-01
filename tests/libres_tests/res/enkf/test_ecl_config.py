@@ -19,73 +19,72 @@ import os.path
 
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest
 
 from res.enkf import ConfigKeys, EclConfig, ResConfig
 from res.util import UIReturn
 
 
-class EclConfigTest(ResTest):
-    def test_grid(self):
-        grid_file = self.createTestPath("local/snake_oil_field/grid/CASE.EGRID")
-        smspec_file = self.createTestPath(
-            "local/snake_oil_field/refcase/SNAKE_OIL_FIELD.SMSPEC"
-        )
-        ec = EclConfig()
-        ui = ec.validateGridFile(grid_file)
-        self.assertTrue(ui)
-        self.assertTrue(isinstance(ui, UIReturn))
+def test_grid(source_root):
+    grid_file = source_root / "test-data/local/snake_oil_field/grid/CASE.EGRID"
+    smspec_file = (
+        source_root / "test-data/local/snake_oil_field/refcase/SNAKE_OIL_FIELD.SMSPEC"
+    )
+    ec = EclConfig()
+    ui = ec.validateGridFile(str(grid_file))
+    assert ui
+    assert isinstance(ui, UIReturn)
 
-        ui = ec.validateGridFile("Does/Not/Exist")
-        self.assertFalse(ui)
+    ui = ec.validateGridFile("Does/Not/Exist")
+    assert not ui
 
-        self.assertTrue(os.path.exists(smspec_file))
-        ui = ec.validateGridFile(smspec_file)
-        self.assertFalse(ui)
+    assert os.path.exists(smspec_file)
+    ui = ec.validateGridFile(str(smspec_file))
+    assert not ui
 
-    def test_datafile(self):
-        ec = EclConfig()
-        ui = ec.validateDataFile("DoesNotExist")
-        self.assertFalse(ui)
 
-        dfile = self.createTestPath("local/eclipse/SPE1.DATA")
-        ui = ec.validateDataFile(dfile)
-        self.assertTrue(ui)
-        ec.setDataFile(dfile)
-        self.assertEqual(dfile, ec.getDataFile())
+def test_datafile(source_root):
+    ec = EclConfig()
+    ui = ec.validateDataFile("DoesNotExist")
+    assert not ui
 
-    def test_refcase(self):
-        ec = EclConfig()
-        dfile = self.createTestPath("local/snake_oil/refcase/SNAKE_OIL_FIELD")
+    dfile = str(source_root / "test-data/local/eclipse/SPE1.DATA")
+    ui = ec.validateDataFile(dfile)
+    assert ui
+    ec.setDataFile(dfile)
+    assert dfile == ec.getDataFile()
 
-        ui = ec.validateRefcase("Does/not/exist")
-        self.assertFalse(ui)
 
-        ui = ec.validateRefcase(dfile)
-        self.assertTrue(ui)
-        ec.loadRefcase(dfile)
-        refcase = ec.getRefcase()
-        self.assertTrue(isinstance(refcase, EclSum))
-        refcaseName = ec.getRefcaseName()
-        self.assertEqual(dfile, refcaseName)
+def test_refcase(source_root):
+    ec = EclConfig()
+    dfile = str(source_root / "test-data/local/snake_oil/refcase/SNAKE_OIL_FIELD")
 
-    def test_ecl_config_constructor(self):
-        config_dict = {
-            ConfigKeys.DATA_FILE: "configuration_tests/input/SPE1.DATA",
-            ConfigKeys.ECLBASE: "configuration_tests/input/<ECLIPSE_NAME>-%d",
-            ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
-            ConfigKeys.REFCASE: "configuration_tests/input/SNAKE_OIL_FIELD",
-            ConfigKeys.END_DATE: "2010-10-10",
-            ConfigKeys.SCHEDULE_PREDICTION_FILE: (
-                "configuration_tests/input/schedule.sch"
-            ),
-        }
+    ui = ec.validateRefcase("Does/not/exist")
+    assert not ui
 
-        self.case_directory = self.createTestPath("local/configuration_tests/")
-        with TestAreaContext("ecl_config_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-            res_config = ResConfig("configuration_tests/ecl_config.ert")
-            ecl_config_file = res_config.ecl_config
-            ecl_config_dict = EclConfig(config_dict=config_dict)
+    ui = ec.validateRefcase(dfile)
+    assert ui
+    ec.loadRefcase(dfile)
+    refcase = ec.getRefcase()
+    assert isinstance(refcase, EclSum)
+    refcaseName = ec.getRefcaseName()
+    assert dfile == refcaseName
 
-            self.assertEqual(ecl_config_dict, ecl_config_file)
+
+def test_ecl_config_constructor(source_root):
+    config_dict = {
+        ConfigKeys.DATA_FILE: "configuration_tests/input/SPE1.DATA",
+        ConfigKeys.ECLBASE: "configuration_tests/input/<ECLIPSE_NAME>-%d",
+        ConfigKeys.GRID: "configuration_tests/input/CASE.EGRID",
+        ConfigKeys.REFCASE: "configuration_tests/input/SNAKE_OIL_FIELD",
+        ConfigKeys.END_DATE: "2010-10-10",
+        ConfigKeys.SCHEDULE_PREDICTION_FILE: ("configuration_tests/input/schedule.sch"),
+    }
+
+    case_directory = str(source_root / "test-data/local/configuration_tests/")
+    with TestAreaContext("ecl_config_test") as work_area:
+        work_area.copy_directory(case_directory)
+        res_config = ResConfig("configuration_tests/ecl_config.ert")
+        ecl_config_file = res_config.ecl_config
+        ecl_config_dict = EclConfig(config_dict=config_dict)
+
+        assert ecl_config_dict == ecl_config_file
