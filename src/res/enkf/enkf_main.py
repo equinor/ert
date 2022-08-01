@@ -31,7 +31,6 @@ from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ensemble_config import EnsembleConfig
 from res.enkf.ert_run_context import ErtRunContext
 from res.enkf.ert_workflow_list import ErtWorkflowList
-from res.enkf.es_update import ESUpdate
 from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
 from res.enkf.model_config import ModelConfig
@@ -87,7 +86,6 @@ class EnKFMain(BaseCClass):
 
         self.__simulation_runner = EnkfSimulationRunner(self)
         self.__fs_manager = EnkfFsManager(self)
-        self.__es_update = ESUpdate(self)
 
     @property
     def update_configuration(self):
@@ -132,10 +130,6 @@ class EnKFMain(BaseCClass):
 
     def _real_enkf_main(self):
         return self.parent()
-
-    def getESUpdate(self):
-        """@rtype: ESUpdate"""
-        return self.__es_update
 
     def getEnkfSimulationRunner(self):
         """@rtype: EnkfSimulationRunner"""
@@ -267,7 +261,7 @@ class _RealEnKFMain(BaseCClass):
 
     The python interface of EnKFMain is split between 4 classes, ie
     - EnKFMain: main entry point, defined further down
-    - EnkfSimulationRunner, EnkfFsManager and ESUpdate: access specific
+    - EnkfSimulationRunner, EnkfFsManager: access specific
       functionalities
     EnKFMain owns an instance of each of the last 3 classes. Also, all
     of these classes need to access the same underlying C object.
@@ -276,7 +270,7 @@ class _RealEnKFMain(BaseCClass):
     access it set _RealEnKFMain as parent.
 
     The situation can be summarized as follows (show only EnkfFSManager,
-    classes EnkfSimulationRunner and ESUpdate are treated analogously)
+    EnkfSimulationRunner are treated analogously)
      ------------------------------------
     |   real EnKFMain object in memory   |
      ------------------------------------

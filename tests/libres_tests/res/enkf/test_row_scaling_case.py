@@ -24,11 +24,11 @@ from ecl.grid import EclGridGenerator
 from ...libres_utils import ResTest, tmpdir
 from res._lib.local.row_scaling import RowScaling
 
+from ert.analysis import ESUpdate
 from res.enkf import (
     EnKFMain,
     EnkfNode,
     ErtRunContext,
-    ESUpdate,
     NodeId,
     ResConfig,
 )

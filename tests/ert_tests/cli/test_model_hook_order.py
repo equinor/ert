@@ -33,6 +33,7 @@ def test_hook_call_order_ensemble_smoother(monkeypatch):
     mock_parent = MagicMock()
     mock_sim_runner = MagicMock()
     mock_parent.runWorkflows = mock_sim_runner
+    test_class.facade._es_update = MagicMock()
     evaluator_server_config_mock = MagicMock()
     test_module = inspect.getmodule(test_class)
     monkeypatch.setattr(test_module, "EnkfSimulationRunner", mock_parent)
@@ -71,6 +72,7 @@ def test_hook_call_order_es_mda(monkeypatch):
     test_class.parseWeights = MagicMock(return_value=[1])
     test_class.setAnalysisModule = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=-1)
+    test_class.facade._es_update = MagicMock()
 
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
 
@@ -112,6 +114,7 @@ def test_hook_call_order_iterative_ensemble_smoother(monkeypatch):
 
     test_class.setPhase = MagicMock()
     test_class.facade.get_number_of_iterations = MagicMock(return_value=1)
+    test_class.facade._es_update = MagicMock()
     test_class.runSimulations(MagicMock())
 
     expected_calls = [

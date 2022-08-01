@@ -334,7 +334,7 @@ def test_observation_transformation(client):
     # Create runpath and run ERT
     run_context = _create_runpath(ert)
     _evaluate_ensemble(ert, run_context)
-    _run_update(ert, run_context)
+    ert.smoother_update(run_context)
 
     # Post second ensemble
     update_id = extraction.post_update_data(ert, parent_ensemble_id, "boruvka")
@@ -576,11 +576,6 @@ def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
     _job_queue = queue_config.create_job_queue()
 
     ert._enkf_main.getEnkfSimulationRunner().runSimpleStep(_job_queue, run_context)
-
-
-def _run_update(ert: LibresFacade, run_context: ErtRunContext):
-    es_update = ert._enkf_main.getESUpdate()
-    es_update.smootherUpdate(run_context)
 
 
 def _get_parameters() -> pd.DataFrame:
