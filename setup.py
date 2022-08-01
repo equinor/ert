@@ -50,7 +50,6 @@ args = dict(
         "ert": package_files("src/ert/gui/resources/")
         + package_files("src/ert/ert3/examples/")
         + ["logging/logger.conf", "logging/storage_log.conf"],
-        "ert3_examples": package_files("src/ert3_examples/"),
         "res": [
             "fm/rms/rms_config.yml",
             "fm/ecl/ecl300_config.yml",
