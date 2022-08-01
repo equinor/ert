@@ -14,6 +14,10 @@ copy_test_files () {
     ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/bin
 
     ln -s ${CI_SOURCE_ROOT}/share ${CI_TEST_ROOT}/share
+
+    # Keep pytest configuration:
+    ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
+
 }
 
 install_test_dependencies () {

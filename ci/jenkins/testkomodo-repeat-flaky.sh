@@ -10,6 +10,9 @@ copy_test_files () {
     # libres
     mkdir -p ${CI_TEST_ROOT}/src/libres/res/fm/rms
     ln -s ${CI_SOURCE_ROOT}/src/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/libres/res/fm/rms/rms_config.yml
+
+    # Keep pytest configuration:
+    ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
 }
 
 install_test_dependencies () {
