@@ -91,7 +91,7 @@ void test_INIT_ONLY() {
             enkf_fs_create_fs("sim", BLOCK_FS_DRIVER_ID, true);
 
         run_arg_type *run_arg =
-            run_arg_alloc_INIT_ONLY("run_id", init_fs, 0, 6, "path");
+            run_arg_alloc("run_id", init_fs, 0, 6, "path", NULL);
         test_assert_true(run_arg_is_instance(run_arg));
         test_assert_ptr_equal(run_arg_get_sim_fs(run_arg), init_fs);
 
