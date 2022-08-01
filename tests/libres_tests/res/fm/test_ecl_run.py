@@ -497,39 +497,6 @@ def test_summary_block(init_ecl100_config, source_root):
 
 
 @pytest.mark.requires_eclipse
-@pytest.mark.equinor_test
-@tmpdir()
-def test_check(source_root):
-    full_case = str(source_root / "test-data/Equinor/ECLIPSE/Gurbat/ECLIPSE")
-    short_case = str(source_root / "test-data/Equinor/ECLIPSE/ShortSummary/ECLIPSE")
-    failed_case = str(
-        source_root / "test-data/Equinor/ECLIPSE/SummaryFail/NOR-2013A_R002_1208-0"
-    )
-
-    with pytest.raises(IOError):
-        EclRun.checkCase(full_case, failed_case)
-
-    with pytest.raises(IOError):
-        EclRun.checkCase(full_case, "DOES-NOT-EXIST")
-
-    with pytest.raises(IOError):
-        assert EclRun.checkCase("DOES-NOT-EXIST", full_case)
-
-    with pytest.raises(ValueError):
-        EclRun.checkCase(full_case, short_case)
-
-    assert not os.path.isfile("CHECK_ECLIPSE_RUN.OK")
-    assert EclRun.checkCase(full_case, full_case)
-    assert os.path.isfile("CHECK_ECLIPSE_RUN.OK")
-
-    os.remove("CHECK_ECLIPSE_RUN.OK")
-    assert EclRun.checkCase(
-        short_case, full_case
-    )  # Simulation is longer than refcase - OK
-    assert os.path.isfile("CHECK_ECLIPSE_RUN.OK")
-
-
-@pytest.mark.requires_eclipse
 def test_error_parse(init_ecl100_config, source_root):
     shutil.copy(
         source_root / "test-data/local/eclipse/SPE1.DATA",
