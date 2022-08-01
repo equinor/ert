@@ -2,40 +2,30 @@ import os
 
 import pytest
 
-from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
-
 from res.enkf import EnkfFs
 
 
-@pytest.mark.equinor_test
-class EnKFFSTest(ResTest):
-    def setUp(self):
-        self.mount_point = "storage/default"
-        self.config_file = self.createTestPath("Equinor/config/with_data/config")
+def test_create(copy_case):
+    copy_case("local/mini_ert")
+    mount_point = "fail_storage/ertensemble/default"
 
-    def test_create(self):
-        with TestAreaContext("create_fs") as work_area:
-            work_area.copy_parent_content(self.config_file)
+    assert os.path.exists(mount_point)
+    fs = EnkfFs(mount_point)
+    assert fs.refCount() == 1
+    fs.umount()
 
-            self.assertTrue(os.path.exists(self.mount_point))
-            fs = EnkfFs(self.mount_point)
-            self.assertEqual(1, fs.refCount())
-            fs.umount()
+    assert not os.path.exists("newFS")
+    fs = EnkfFs.createFileSystem("newFS")
+    assert os.path.exists("newFS")
+    assert fs is None
 
-            self.assertFalse(os.path.exists("newFS"))
-            fs = EnkfFs.createFileSystem("newFS")
-            self.assertTrue(os.path.exists("newFS"))
-            self.assertTrue(fs is None)
 
-    @tmpdir()
-    def test_create2(self):
-        with TestAreaContext("create_fs2") as work_area:
-            work_area.copy_parent_content(self.config_file)
+def test_create2(tmpdir):
+    with tmpdir.as_cwd():
+        new_fs = EnkfFs.createFileSystem("newFS", mount=True)
+        assert isinstance(new_fs, EnkfFs)
 
-            new_fs = EnkfFs.createFileSystem("newFS", mount=True)
-            self.assertTrue(isinstance(new_fs, EnkfFs))
 
-    def test_throws(self):
-        with self.assertRaises(Exception):
-            EnkfFs("/does/not/exist")
+def test_throws():
+    with pytest.raises(ValueError):
+        EnkfFs("/does/not/exist")
