@@ -6,6 +6,9 @@ copy_test_files () {
 
     # Trick ERT to find a fake source root
     mkdir ${CI_TEST_ROOT}/.git
+
+    # Keep pytest configuration:
+    ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
 }
 
 install_test_dependencies () {
