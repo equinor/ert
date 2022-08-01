@@ -70,14 +70,6 @@ run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
         return run_arg;
 }
 
-run_arg_type *run_arg_alloc_ENSEMBLE_EXPERIMENT(const char *run_id,
-                                                enkf_fs_type *sim_fs, int iens,
-                                                int iter, const char *runpath,
-                                                const char *job_name) {
-    return run_arg_alloc(run_id, sim_fs, iens,
-                         iter, runpath, job_name);
-}
-
 run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
                                       int iens, int iter, const char *runpath) {
     return run_arg_alloc(run_id, sim_fs, iens, iter,

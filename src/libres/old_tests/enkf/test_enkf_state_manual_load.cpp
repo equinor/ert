@@ -33,7 +33,7 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
     enkf_main_select_fs(enkf_main, casename);
 
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    run_arg_type *run_arg = run_arg_alloc_ENSEMBLE_EXPERIMENT(
+    run_arg_type *run_arg = run_arg_alloc(
         "run_id", fs, iens, iter, "simulations/run0", job_name);
     {
 
