@@ -88,8 +88,8 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     }
 
     {
-        run_arg_type *run_arg = run_arg_alloc_INIT_ONLY("run_id", init_fs, 0, 0,
-                                                        "simulations/run0");
+        run_arg_type *run_arg = run_arg_alloc("run_id", init_fs, 0, 0,
+                                                        "simulations/run0", NULL);
         enkf_main::ecl_write(enkf_main_get_ensemble_config(enkf_main),
                              model_config_get_gen_kw_export_name(
                                  enkf_main_get_model_config(enkf_main)),

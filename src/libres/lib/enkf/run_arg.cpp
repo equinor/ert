@@ -70,12 +70,6 @@ run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
         return run_arg;
 }
 
-run_arg_type *run_arg_alloc_INIT_ONLY(const char *run_id, enkf_fs_type *sim_fs,
-                                      int iens, int iter, const char *runpath) {
-    return run_arg_alloc(run_id, sim_fs, iens, iter,
-                         runpath, NULL);
-}
-
 void run_arg_free(run_arg_type *run_arg) {
     free(run_arg->job_name);
     free(run_arg->run_path);
