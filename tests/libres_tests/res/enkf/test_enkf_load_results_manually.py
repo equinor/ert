@@ -1,72 +1,78 @@
-import pytest
-from ...libres_utils import ResTest, tmpdir
-
+from res.enkf import EnKFMain
 from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.test import ErtTestContext
 
 
-@pytest.mark.unstable
-@pytest.mark.equinor_test
-class LoadResultsManuallyTest(ResTest):
-    def setUp(self):
-        self.config_file = self.createTestPath("Equinor/config/with_data/config")
+def test_load_results_manually(setup_case):
+    res_config = setup_case("local/mini_ert", "mini_fail_config")
+    ert = EnKFMain(res_config)
+    load_into_case = "A1"
+    load_from_case = "default_1"
 
-    @tmpdir()
-    def test_load_results_manually(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            load_into_case = "A1"
-            load_from_case = "default"
+    load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
+    load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
 
-            load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
-            load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
+    ert.getEnkfFsManager().switchFileSystem(load_from)
+    realisations = [True] * 10
+    realisations[7] = False
+    iteration = 0
 
-            ert.getEnkfFsManager().switchFileSystem(load_from)
-            realisations = [True] * 25
-            realisations[7] = False
-            iteration = 0
+    loaded = ert.loadFromForwardModel(realisations, iteration, load_into)
 
-            loaded = ert.loadFromForwardModel(realisations, iteration, load_into)
+    load_into_case_state_map = load_into.getStateMap()
 
-            load_into_case_state_map = load_into.getStateMap()
+    load_into_states = [state for state in load_into_case_state_map]
 
-            load_into_states = [state for state in load_into_case_state_map]
+    expected = [
+        RealizationStateEnum.STATE_HAS_DATA,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_UNDEFINED,
+        RealizationStateEnum.STATE_HAS_DATA,
+        RealizationStateEnum.STATE_HAS_DATA,
+    ]
 
-            expected = [RealizationStateEnum.STATE_HAS_DATA] * 25
-            expected[7] = RealizationStateEnum.STATE_UNDEFINED
+    assert load_into_states == expected
+    assert loaded == 3
 
-            self.assertListEqual(load_into_states, expected)
-            self.assertEqual(24, loaded)
-            self.assertEqual(25, len(expected))
-            self.assertEqual(25, len(realisations))
 
-    @tmpdir()
-    def test_load_results_from_run_context(self):
-        with ErtTestContext(self.config_file) as test_context:
-            ert = test_context.getErt()
-            load_into_case = "A1"
-            load_from_case = "default"
+def test_load_results_from_run_context(setup_case):
+    res_config = setup_case("local/mini_ert", "mini_fail_config")
+    ert = EnKFMain(res_config)
+    load_into_case = "A1"
+    load_from_case = "default_0"
 
-            load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
-            load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
+    load_into = ert.getEnkfFsManager().getFileSystem(load_into_case)
+    load_from = ert.getEnkfFsManager().getFileSystem(load_from_case)
 
-            ert.getEnkfFsManager().switchFileSystem(load_from)
-            realisations = [True] * 25
-            realisations[7] = False
+    ert.getEnkfFsManager().switchFileSystem(load_from)
+    realisations = [True] * 10
+    realisations[7] = False
 
-            run_context = ert.create_ensemble_experiment_run_context(
-                source_filesystem=load_into, active_mask=realisations, iteration=0
-            )
+    run_context = ert.create_ensemble_experiment_run_context(
+        source_filesystem=load_into, active_mask=realisations, iteration=0
+    )
 
-            loaded = ert.loadFromRunContext(run_context, load_into)
+    loaded = ert.loadFromRunContext(run_context, load_into)
 
-            load_into_case_state_map = load_into.getStateMap()
-            load_into_states = [state for state in load_into_case_state_map]
+    load_into_case_state_map = load_into.getStateMap()
+    load_into_states = [state for state in load_into_case_state_map]
 
-            expected = [RealizationStateEnum.STATE_HAS_DATA] * 25
-            expected[7] = RealizationStateEnum.STATE_UNDEFINED
+    expected = [
+        RealizationStateEnum.STATE_HAS_DATA,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_LOAD_FAILURE,
+        RealizationStateEnum.STATE_UNDEFINED,
+        RealizationStateEnum.STATE_HAS_DATA,
+        RealizationStateEnum.STATE_HAS_DATA,
+    ]
 
-            self.assertListEqual(load_into_states, expected)
-            self.assertEqual(24, loaded)
-            self.assertEqual(25, len(expected))
-            self.assertEqual(25, len(realisations))
+    assert load_into_states == expected
+    assert loaded == 3

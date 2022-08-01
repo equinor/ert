@@ -1,97 +1,89 @@
 import os
 
-import pytest
 from ecl.util.test.test_area import TestAreaContext
 from res.enkf import EnKFMain, ResConfig, SummaryKeySet
 from res.enkf.enkf_fs import EnkfFs
 
-from ...libres_utils import ResTest
+
+def test_creation():
+
+    keys = SummaryKeySet()
+
+    assert len(keys) == 0
+
+    assert keys.addSummaryKey("FOPT")
+
+    assert len(keys) == 1
+
+    assert "FOPT" in keys
+
+    assert ["FOPT"] == list(keys.keys())
+
+    assert keys.addSummaryKey("WWCT")
+
+    assert len(keys), 2
+
+    assert "WWCT" in keys
+
+    assert list(keys.keys()) == ["FOPT", "WWCT"]
 
 
-class SummaryKeySetTest(ResTest):
-    def test_creation(self):
-
+def test_read_only_creation():
+    with TestAreaContext("enkf/summary_key_set/read_only_write_test"):
         keys = SummaryKeySet()
 
-        self.assertEqual(len(keys), 0)
+        keys.addSummaryKey("FOPT")
+        keys.addSummaryKey("WWCT")
 
-        self.assertTrue(keys.addSummaryKey("FOPT"))
+        filename = "test.txt"
+        keys.writeToFile(filename)
 
-        self.assertEqual(len(keys), 1)
+        keys_from_file = SummaryKeySet(filename, read_only=True)
+        assert keys.keys() == keys_from_file.keys()
 
-        self.assertTrue("FOPT" in keys)
+        assert keys_from_file.isReadOnly()
+        assert not keys_from_file.addSummaryKey("WOPR")
 
-        assert ["FOPT"] == keys.keys()
 
-        self.assertTrue(keys.addSummaryKey("WWCT"))
+def test_write_to_and_read_from_file(tmp_path):
+    keys = SummaryKeySet()
 
-        self.assertEqual(len(keys), 2)
+    keys.addSummaryKey("FOPT")
+    keys.addSummaryKey("WWCT")
 
-        self.assertTrue("WWCT" in keys)
+    filename = tmp_path / "test.txt"
 
-        assert list(keys.keys()) == ["FOPT", "WWCT"]
+    assert not os.path.exists(filename)
 
-    def test_read_only_creation(self):
-        with TestAreaContext("enkf/summary_key_set/read_only_write_test"):
-            keys = SummaryKeySet()
+    keys.writeToFile(str(filename))
 
-            keys.addSummaryKey("FOPT")
-            keys.addSummaryKey("WWCT")
+    assert os.path.exists(filename)
 
-            filename = "test.txt"
-            keys.writeToFile(filename)
+    keys_from_file = SummaryKeySet(str(filename))
+    assert keys.keys() == keys_from_file.keys()
 
-            keys_from_file = SummaryKeySet(filename, read_only=True)
-            assert keys.keys() == keys_from_file.keys()
 
-            self.assertTrue(keys_from_file.isReadOnly())
-            self.assertFalse(keys_from_file.addSummaryKey("WOPR"))
+def test_with_enkf_fs(copy_case):
+    copy_case("local/snake_oil")
 
-    def test_write_to_and_read_from_file(self):
-        with TestAreaContext("enkf/summary_key_set/write_test"):
-            keys = SummaryKeySet()
+    fs = EnkfFs("storage/snake_oil/ensemble/default_0")
+    summary_key_set = fs.getSummaryKeySet()
+    summary_key_set.addSummaryKey("FOPT")
+    summary_key_set.addSummaryKey("WWCT")
+    summary_key_set.addSummaryKey("WOPR")
+    fs.sync()
 
-            keys.addSummaryKey("FOPT")
-            keys.addSummaryKey("WWCT")
+    res_config = ResConfig("snake_oil.ert")
+    ert = EnKFMain(res_config)
+    fs = ert.getEnkfFsManager().getCurrentFileSystem()
+    summary_key_set = fs.getSummaryKeySet()
+    assert "FOPT" in summary_key_set
+    assert "WWCT" in summary_key_set
+    assert "WOPR" in summary_key_set
 
-            filename = "test.txt"
+    ensemble_config = ert.ensembleConfig()
 
-            self.assertFalse(os.path.exists(filename))
-
-            keys.writeToFile(filename)
-
-            self.assertTrue(os.path.exists(filename))
-
-            keys_from_file = SummaryKeySet(filename)
-            assert keys.keys() == keys_from_file.keys()
-
-    @pytest.mark.equinor_test
-    def test_with_enkf_fs(self):
-        config_file = self.createTestPath("Equinor/config/with_data/config")
-
-        with TestAreaContext(
-            "enkf/summary_key_set/enkf_fs", store_area=True
-        ) as context:
-            context.copy_parent_content(config_file)
-
-            fs = EnkfFs("storage/default")
-            summary_key_set = fs.getSummaryKeySet()
-            summary_key_set.addSummaryKey("FOPT")
-            summary_key_set.addSummaryKey("WWCT")
-            summary_key_set.addSummaryKey("WOPR")
-            fs.sync()
-
-            res_config = ResConfig("config")
-            ert = EnKFMain(res_config)
-            fs = ert.getEnkfFsManager().getCurrentFileSystem()
-            summary_key_set = fs.getSummaryKeySet()
-            self.assertTrue("FOPT" in summary_key_set)
-            self.assertTrue("WWCT" in summary_key_set)
-            self.assertTrue("WOPR" in summary_key_set)
-
-            ensemble_config = ert.ensembleConfig()
-
-            self.assertTrue("FOPT" in ensemble_config)
-            self.assertTrue("WWCT" in ensemble_config)
-            self.assertTrue("WOPR" in ensemble_config)
-            self.assertFalse("TCPU" in ensemble_config)
+    assert "FOPT" in ensemble_config
+    assert "WWCT" in ensemble_config
+    assert "WOPR" in ensemble_config
+    assert "TCPU" not in ensemble_config

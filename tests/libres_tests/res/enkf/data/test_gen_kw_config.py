@@ -1,7 +1,11 @@
+from textwrap import dedent
+
+import pytest
+
 from ecl.util.test import TestAreaContext
 from ....libres_utils import ResTest, tmpdir
 
-from res.enkf import GenKwConfig
+from res.enkf import GenKwConfig, ResConfig, EnKFMain
 
 
 class GenKwConfigTest(ResTest):
@@ -116,3 +120,43 @@ class GenKwConfigTest(ResTest):
             "function": "CONST",
             "parameters": {"VALUE": 10},
         } in priors
+
+
+@pytest.mark.parametrize(
+    "distribution, expect_log",
+    [
+        ("NORMAL 0 1", False),
+        ("LOGNORMAL 0 1", True),
+        ("UNIFORM 0 1", False),
+        ("TRUNCATED_NORMAL 1 0.25 0 10", False),
+        ("LOGUNIF 0.0001 1", True),
+        ("CONST 1.0", False),
+        ("DUNIF 5 1 5", False),
+        ("ERRF 1 2 0.1 0.1", False),
+        ("DERRF 10 1 2 0.1 0.1", False),
+        ("TRIANGULAR 0 0.5 1", False),
+    ],
+)
+def test_gen_kw_is_log_or_not(tmpdir, distribution, expect_log):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        with open("config.ert", "w") as fh:
+            fh.writelines(config)
+        with open("template.txt", "w") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", "w") as fh:
+            fh.writelines(f"MY_KEYWORD {distribution}")
+
+        res_config = ResConfig("config.ert")
+        ert = EnKFMain(res_config)
+
+        node = ert.ensembleConfig().getNode("KW_NAME")
+        gen_kw_config = node.getModelConfig()
+        assert isinstance(gen_kw_config, GenKwConfig)
+        assert gen_kw_config.shouldUseLogScale(0) is expect_log

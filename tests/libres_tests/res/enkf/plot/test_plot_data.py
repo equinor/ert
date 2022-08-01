@@ -6,11 +6,7 @@ from res.test import ErtTestContext
 from ....libres_utils import ResTest
 
 
-@pytest.mark.equinor_test
 class PlotDataTest(ResTest):
-    def setUp(self):
-        self.config_file = self.createTestPath("Equinor/config/with_RFT/config")
-
     def test_plot_block_vector(self):
         vector = DoubleVector()
         vector.append(1.5)
@@ -87,7 +83,9 @@ class PlotDataTest(ResTest):
 
         self.assertAlmostEqualList(rft_values, plot_block_data[9])
 
+    @pytest.mark.equinor_test
     def test_plot_block_data_fs(self):
+        self.config_file = self.createTestPath("Equinor/config/with_RFT/config")
         with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
 

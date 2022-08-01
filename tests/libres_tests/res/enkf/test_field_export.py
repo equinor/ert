@@ -2,7 +2,7 @@ import os
 
 import pytest
 from ecl.util.util import IntVector
-from res.enkf import NodeId
+from res.enkf import NodeId, ErtRunContext
 from res.enkf.config import FieldTypeEnum
 from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
@@ -10,10 +10,9 @@ from res.test import ErtTestContext
 from ...libres_utils import ResTest
 
 
-@pytest.mark.equinor_test
 class FieldExportTest(ResTest):
     def setUp(self):
-        self.config_file = self.createTestPath("Equinor/config/obs_testing/config")
+        self.config_file = self.createTestPath("local/snake_oil_field/snake_oil.ert")
 
     def test_field_type_enum(self):
         with ErtTestContext(self.config_file) as test_context:
@@ -76,7 +75,10 @@ class FieldExportTest(ResTest):
             iens_list.append(4)
 
             fs = fs_manager.getCurrentFileSystem()
-
+            run_context = ErtRunContext.case_init(
+                fs, mask=[True] * ert.getEnsembleSize()
+            )
+            ert.initRun(run_context)
             # Filename without embedded %d - TypeError
             with self.assertRaises(TypeError):
                 EnkfNode.exportMany(

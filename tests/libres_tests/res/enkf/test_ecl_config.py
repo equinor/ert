@@ -17,7 +17,6 @@
 
 import os.path
 
-import pytest
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest
@@ -25,18 +24,13 @@ from ...libres_utils import ResTest
 from res.enkf import ConfigKeys, EclConfig, ResConfig
 from res.util import UIReturn
 
-EGRID_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.EGRID"
-SMSPEC_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.SMSPEC"
-DATA_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE.DATA"
-INIT_file = "Equinor/ECLIPSE/Gurbat/EQUIL.INC"
-DATA_INIT_file = "Equinor/ECLIPSE/Gurbat/ECLIPSE_INIT.DATA"
-
 
 class EclConfigTest(ResTest):
-    @pytest.mark.equinor_test
     def test_grid(self):
-        grid_file = self.createTestPath(EGRID_file)
-        smspec_file = self.createTestPath(SMSPEC_file)
+        grid_file = self.createTestPath("local/snake_oil_field/grid/CASE.EGRID")
+        smspec_file = self.createTestPath(
+            "local/snake_oil_field/refcase/SNAKE_OIL_FIELD.SMSPEC"
+        )
         ec = EclConfig()
         ui = ec.validateGridFile(grid_file)
         self.assertTrue(ui)
@@ -49,22 +43,20 @@ class EclConfigTest(ResTest):
         ui = ec.validateGridFile(smspec_file)
         self.assertFalse(ui)
 
-    @pytest.mark.equinor_test
     def test_datafile(self):
         ec = EclConfig()
         ui = ec.validateDataFile("DoesNotExist")
         self.assertFalse(ui)
 
-        dfile = self.createTestPath(DATA_file)
+        dfile = self.createTestPath("local/eclipse/SPE1.DATA")
         ui = ec.validateDataFile(dfile)
         self.assertTrue(ui)
         ec.setDataFile(dfile)
         self.assertEqual(dfile, ec.getDataFile())
 
-    @pytest.mark.equinor_test
     def test_refcase(self):
         ec = EclConfig()
-        dfile = self.createTestPath(DATA_file)
+        dfile = self.createTestPath("local/snake_oil/refcase/SNAKE_OIL_FIELD")
 
         ui = ec.validateRefcase("Does/not/exist")
         self.assertFalse(ui)
@@ -74,7 +66,7 @@ class EclConfigTest(ResTest):
         ec.loadRefcase(dfile)
         refcase = ec.getRefcase()
         self.assertTrue(isinstance(refcase, EclSum))
-        refcaseName = ec.getRefcaseName() + ".DATA"
+        refcaseName = ec.getRefcaseName()
         self.assertEqual(dfile, refcaseName)
 
     def test_ecl_config_constructor(self):
