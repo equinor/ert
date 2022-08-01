@@ -489,26 +489,6 @@ void enkf_state_free(enkf_state_type *enkf_state) {
     free(enkf_state);
 }
 
-/*
-   init_step    : The parameters are loaded from this EnKF/report step.
-   report_step1 : The simulation should start from this report step;
-                  dynamic data are loaded from this step.
-   report_step2 : The simulation should stop at this report step. (unless run_mode == ENSEMBLE_PREDICTION - where it just runs til end.)
-
-   For a normal EnKF run we well have init_step == report_step1, but
-   in the case where we want rerun from the beginning with updated
-   parameters, they will be different. If init_step != report_step1,
-   it is required that report_step1 == 0; otherwise the dynamic data
-   will become completely inconsistent. We just don't allow that!
-*/
-
-/**
-    Observe that if run_arg == false, this routine will return with
-    job_completeOK == true, that might be a bit misleading.
-
-    Observe that if an internal retry is performed, this function will
-    be called several times - MUST BE REENTRANT.
-*/
 std::pair<fw_load_status, std::string>
 enkf_state_complete_forward_modelOK(const res_config_type *res_config,
                                     run_arg_type *run_arg) {
