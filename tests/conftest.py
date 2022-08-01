@@ -105,6 +105,12 @@ def pytest_addoption(parser):
     parser.addoption(
         "--runslow", action="store_true", default=False, help="run slow tests"
     )
+    parser.addoption(
+        "--eclipse-simulator",
+        action="store_true",
+        default=False,
+        help="Defaults to not running tests that require eclipse.",
+    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -118,6 +124,10 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_quick)
             if "ert3" in str(item.fspath):
                 item.add_marker(pytest.mark.ert3)
+            if item.get_closest_marker("requires_eclipse") and not config.getoption(
+                "--eclipse_simulator"
+            ):
+                item.add_marker(pytest.mark.skip("Requires eclipse"))
 
     else:
         skip_slow = pytest.mark.skip(reason="need --runslow option to run")
@@ -126,3 +136,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_slow)
             if "ert3" in str(item.fspath):
                 item.add_marker(pytest.mark.ert3)
+            if item.get_closest_marker("requires_eclipse") and not config.getoption(
+                "--eclipse-simulator"
+            ):
+                item.add_marker(pytest.mark.skip("Requires eclipse"))

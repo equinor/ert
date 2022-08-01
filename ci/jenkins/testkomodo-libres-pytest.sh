@@ -30,7 +30,8 @@ start_tests () {
         --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
         --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
         --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
-        --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"
+        --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"       \
+        --eclipse-simulator
 
     popd
 }
