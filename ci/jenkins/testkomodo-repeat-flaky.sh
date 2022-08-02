@@ -28,7 +28,7 @@ run_libres_ert_tests(){
     # on main - hence there will be no consequences for said jobs.
     # A test on the internal CI is activated by writing a comment with "test flaky please"
     # Requires that the user is allowed to run the tests.
-    pytest tests/ert_tests/cli/test_integration_cli.py::test_experiment_server_ensemble_experiment
+    pytest tests/ert_tests/cli/test_integration_cli.py
 }
 
 start_tests () {
