@@ -15,7 +15,7 @@ class ErtRunContext:
     mask: List[bool] = field(default_factory=list)
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
-    itr: int = 0
+    iteration: int = 0
     init_mode: EnkfInitModeEnum.INIT_CONDITIONAL = EnkfInitModeEnum.INIT_CONDITIONAL
 
     def __post_init__(self):
@@ -28,7 +28,7 @@ class ErtRunContext:
                         str(self.run_id),
                         self.sim_fs,
                         iens,
-                        self.itr,
+                        self.iteration,
                         path,
                         job_name,
                     )
@@ -61,7 +61,7 @@ class ErtRunContext:
         return self.mask
 
     def get_iter(self) -> int:
-        return self.itr
+        return self.iteration
 
     def get_target_fs(self) -> EnkfFs:
         return self.target_fs

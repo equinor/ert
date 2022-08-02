@@ -93,7 +93,7 @@ def test_create_run_context(monkeypatch):
         sim_fs=enkf_main.getEnkfFsManager().getCurrentFileSystem.return_value,
         target_fs=None,
         mask=[True] * ensemble_size,
-        itr=iteration,
+        iteration=iteration,
         paths=enkf_main.runpaths.get_paths(list(range(ensemble_size)), iteration),
         jobnames=enkf_main.runpaths.get_jobnames(list(range(ensemble_size)), iteration),
     )
