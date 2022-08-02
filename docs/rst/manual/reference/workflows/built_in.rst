@@ -32,28 +32,6 @@ it. The :code:`CREATE_CASE` job should be used as:
 
 	CREATE_CASE  newCase
 
-**INIT_CASE_FROM_EXISTING**
-
-The job :code:`INIT_CASE_FROM_EXISTING` can be used to initialize a case from
-an existing case. The argument to the workflow should be the name of
-the workflow you are initializing from; so to initialize the current
-case from the existing case `oldCase`:
-
-::
-
-	INIT_CASE_FROM_EXISTING oldCase
-
-By default the job will initialize the 'current case', but optionally
-you can give the name of a second case which should be initialized. In
-this example we will initialize `newCase` from `oldCase`:
-
-::
-
-	INIT_CASE_FROM_EXISTING oldCase newCase
-
-When giving the name of a second case as target for the initialization
-job, the 'current' case will not be affected.
-
 Jobs related to export
 ----------------------
 

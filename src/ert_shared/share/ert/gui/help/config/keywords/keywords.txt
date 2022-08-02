@@ -59,7 +59,6 @@ plot_width	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#
 rftpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RFTPATH
 select_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SELECT_CASE
 create_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#CREATE_CASE
-init_case_from_existing	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#INIT_CASE_FROM_EXISTING
 export_field	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD
 export_field_rms_roff	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD_RMS_ROFF
 export_field_ecl_grdecl	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD_ECL_GRDECL

@@ -75,39 +75,6 @@ extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
     return NULL;
 }
 
-// Internal workflow job
-extern "C" C_USED void *
-enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-
-    const char *source_case = stringlist_iget(args, 0);
-    enkf_fs_type *source_fs =
-        enkf_main_mount_alt_fs(enkf_main, source_case, true);
-    {
-        enkf_fs_type *target_fs;
-
-        if (stringlist_get_size(args) > 1) {
-            const char *current_case = enkf_main_get_current_fs(enkf_main);
-            const char *target_case = stringlist_iget(args, 1);
-            if (0 != strcmp(current_case, target_case)) {
-                target_fs =
-                    enkf_main_mount_alt_fs(enkf_main, target_case, true);
-            } else
-                target_fs = enkf_fs_get_ref(enkf_main_job_get_fs(
-                    enkf_main)); // Using get_ref so that we can unconditionally call decref() further down.
-        } else
-            target_fs = enkf_fs_get_ref(enkf_main_job_get_fs(
-                enkf_main)); // Using get_ref so that we can unconditionally call decref() further down.
-
-        enkf_main_init_case_from_existing(
-            enkf_main, source_fs, 0, target_fs); // Removed ANALYZED argument
-        enkf_fs_decref(target_fs);
-    }
-    enkf_fs_decref(source_fs);
-
-    return NULL;
-}
-
 static void enkf_main_jobs_export_field(const enkf_main_type *enkf_main,
                                         const stringlist_type *args,
                                         field_file_format_type file_type) {
