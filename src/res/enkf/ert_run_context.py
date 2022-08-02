@@ -51,8 +51,5 @@ class ErtRunContext:
     def __iter__(self) -> RunArg:
         yield from self.run_args
 
-    def __repr__(self):
-        return f"ErtRunContext(size = {len(self)})"
-
     def deactivate_realization(self, realization_nr):
         self.mask[realization_nr] = False
