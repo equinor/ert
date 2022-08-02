@@ -34,7 +34,6 @@
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 
-#include <ert/enkf/callback_arg.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
