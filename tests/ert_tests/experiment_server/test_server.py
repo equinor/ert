@@ -1,4 +1,3 @@
-import sys
 import ert.experiment_server
 import pytest
 
@@ -14,12 +13,8 @@ from websockets.client import WebSocketClientProtocol
 
 # All test coroutines will be treated as marked.
 pytestmark = pytest.mark.asyncio
-minversion = pytest.mark.skipif(
-    sys.version_info < (3, 7), reason="requires python3.7 or higher"
-)
 
 
-@minversion
 async def test_receiving_event_from_cluster(
     experiment_server_ctx: AsyncContextManager[ert.experiment_server.ExperimentServer],
     dispatcher_factory: AsyncContextManager[
@@ -46,7 +41,6 @@ async def test_receiving_event_from_cluster(
     experiment.dispatch.assert_awaited_once_with(event, 0)
 
 
-@minversion
 async def test_successful_run(
     experiment_server_ctx: AsyncContextManager[ert.experiment_server.ExperimentServer],
     capsys,
@@ -61,7 +55,6 @@ async def test_successful_run(
     assert captured.out == "Successful realizations: 5\n"
 
 
-@minversion
 async def test_failed_run(
     experiment_server_ctx: AsyncContextManager[ert.experiment_server.ExperimentServer],
     capsys,

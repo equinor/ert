@@ -1,6 +1,5 @@
 import os
 import shutil
-import sys
 import threading
 import asyncio
 from argparse import ArgumentParser
@@ -236,7 +235,6 @@ def test_ies(tmpdir, source_root):
         FeatureToggling.reset()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7 or higher")
 @pytest.mark.integration_test
 @pytest.mark.timeout(20)
 def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):

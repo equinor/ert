@@ -1,15 +1,10 @@
 import asyncio
-import sys
 from typing import AsyncGenerator, Awaitable, Callable, Optional
 import pytest
 from websockets.client import WebSocketClientProtocol, connect
 import ert.experiment_server
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-
-if sys.version_info < (3, 7):
-    from async_generator import asynccontextmanager
-else:
-    from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 
 
 @pytest.fixture
