@@ -52,7 +52,7 @@ void verify_parameters_txt() {
 
 void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
-    ensemble_config_type *ens_config = enkf_main_get_ensemble_config(enkf_main);
+    ensemble_config_type *ens_config = res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main));
     enkf_node_type *enkf_node =
         enkf_node_alloc(ensemble_config_get_node(ens_config, "MULTFLT"));
     enkf_node_type *enkf_node2 =
@@ -90,9 +90,9 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     {
         run_arg_type *run_arg = run_arg_alloc("run_id", init_fs, 0, 0,
                                                         "simulations/run0", NULL);
-        enkf_main::ecl_write(enkf_main_get_ensemble_config(enkf_main),
+        enkf_main::ecl_write(res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
                              model_config_get_gen_kw_export_name(
-                                 enkf_main_get_model_config(enkf_main)),
+                                 res_config_get_model_config(enkf_main_get_res_config(enkf_main))),
                              run_arg, init_fs);
         test_assert_true(fs::exists("simulations/run0/parameters.txt"));
         run_arg_free(run_arg);

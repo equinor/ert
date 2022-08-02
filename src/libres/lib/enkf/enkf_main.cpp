@@ -113,50 +113,13 @@ static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
 
-const analysis_config_type *
-enkf_main_get_analysis_config(const enkf_main_type *enkf_main) {
-    return res_config_get_analysis_config(enkf_main->res_config);
-}
-
-const char *enkf_main_get_site_config_file(const enkf_main_type *enkf_main) {
-    return site_config_get_config_file(enkf_main_get_site_config(enkf_main));
-}
-
-ensemble_config_type *
-enkf_main_get_ensemble_config(const enkf_main_type *enkf_main) {
-    return res_config_get_ensemble_config(enkf_main->res_config);
-}
-
-const site_config_type *
-enkf_main_get_site_config(const enkf_main_type *enkf_main) {
-    return res_config_get_site_config(enkf_main->res_config);
-}
-
 const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main) {
     return enkf_main->res_config;
 }
 
-subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main) {
-    return res_config_get_subst_config(enkf_main->res_config);
-}
-
 subst_list_type *enkf_main_get_data_kw(const enkf_main_type *enkf_main) {
-    return subst_config_get_subst_list(enkf_main_get_subst_config(enkf_main));
-}
-
-model_config_type *enkf_main_get_model_config(const enkf_main_type *enkf_main) {
-    return res_config_get_model_config(enkf_main->res_config);
-}
-
-const ecl_config_type *
-enkf_main_get_ecl_config(const enkf_main_type *enkf_main) {
-    return res_config_get_ecl_config(enkf_main->res_config);
-}
-
-int enkf_main_get_history_length(const enkf_main_type *enkf_main) {
-    return model_config_get_last_history_restart(
-        enkf_main_get_model_config(enkf_main));
+    return subst_config_get_subst_list(res_config_get_subst_config(enkf_main_get_res_config(enkf_main)));
 }
 
 enkf_obs_type *enkf_main_get_obs(const enkf_main_type *enkf_main) {
@@ -173,13 +136,13 @@ enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
 }
 
 void enkf_main_alloc_obs(enkf_main_type *enkf_main) {
-    const ecl_config_type *ecl_config = enkf_main_get_ecl_config(enkf_main);
-    model_config_type *model_config = enkf_main_get_model_config(enkf_main);
+    const ecl_config_type *ecl_config = res_config_get_ecl_config(enkf_main->res_config);
+    model_config_type *model_config = res_config_get_model_config(enkf_main->res_config);
     enkf_main->obs = enkf_obs_alloc(
         model_config_get_history(model_config),
         model_config_get_external_time_map(model_config),
         ecl_config_get_grid(ecl_config), ecl_config_get_refcase(ecl_config),
-        enkf_main_get_ensemble_config(enkf_main));
+        res_config_get_ensemble_config(enkf_main->res_config));
 }
 
 bool enkf_main_load_obs(enkf_main_type *enkf_main, const char *obs_config_file,
@@ -196,7 +159,7 @@ bool enkf_main_load_obs(enkf_main_type *enkf_main, const char *obs_config_file,
 
     enkf_obs_load(enkf_main->obs, obs_config_file,
                   analysis_config_get_std_cutoff(
-                      enkf_main_get_analysis_config(enkf_main)));
+                      res_config_get_analysis_config(enkf_main->res_config)));
     return true;
 }
 
@@ -234,17 +197,13 @@ static enkf_main_type *enkf_main_alloc_empty() {
     return enkf_main;
 }
 
-rng_config_type *enkf_main_get_rng_config(const enkf_main_type *enkf_main) {
-    return res_config_get_rng_config(enkf_main->res_config);
-}
-
 rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
     return enkf_main->shared_rng;
 }
 
 void enkf_main_rng_init(enkf_main_type *enkf_main) {
     enkf_main->rng_manager =
-        rng_config_alloc_rng_manager(enkf_main_get_rng_config(enkf_main));
+        rng_config_alloc_rng_manager(res_config_get_rng_config(enkf_main->res_config));
     enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
 }
 
@@ -252,7 +211,7 @@ static void enkf_main_init_obs(enkf_main_type *enkf_main) {
     enkf_main_alloc_obs(enkf_main);
 
     const model_config_type *model_config =
-        enkf_main_get_model_config(enkf_main);
+        res_config_get_model_config(enkf_main->res_config);
     const char *obs_config_file =
         model_config_get_obs_config_file(model_config);
     if (obs_config_file)
@@ -261,7 +220,7 @@ static void enkf_main_init_obs(enkf_main_type *enkf_main) {
 
 static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
     const model_config_type *model_config =
-        enkf_main_get_model_config(enkf_main);
+        res_config_get_model_config(enkf_main->res_config);
     int num_realizations = model_config_get_num_realizations(model_config);
     enkf_main_increase_ensemble(enkf_main, num_realizations);
 }
@@ -336,7 +295,7 @@ void enkf_main_init_internalization(enkf_main_type *enkf_main) {
 void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                 const char *user_key, int obs_count,
                                 time_t *obs_time, double *y, double *std) {
-    ensemble_config_get_observations(enkf_main_get_ensemble_config(enkf_main),
+    ensemble_config_get_observations(res_config_get_ensemble_config(enkf_main->res_config),
                                      enkf_main->obs, user_key, obs_count,
                                      obs_time, y, std);
 }
@@ -437,7 +396,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                     int report_step, enkf_fs_type *fs) {
 
     const ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+        res_config_get_ensemble_config(enkf_main->res_config);
     if (!ensemble_config_has_key(ensemble_config, kw))
         return false;
 
@@ -450,7 +409,7 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
         return false;
 
     enkf_node_type *node = enkf_node_alloc(config_node);
-    model_config_type *mc = enkf_main_get_model_config(enkf_main);
+    model_config_type *mc = res_config_get_model_config(enkf_main->res_config);
     path_fmt_type *runpath_fmt = model_config_get_runpath_fmt(mc);
     const char *init_file =
         enkf_config_node_get_FIELD_fill_file(config_node, runpath_fmt);
@@ -493,10 +452,6 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
     return true;
 }
 
-queue_config_type *enkf_main_get_queue_config(enkf_main_type *enkf_main) {
-    return res_config_get_queue_config(enkf_main_get_res_config(enkf_main));
-}
-
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main) {
     return enkf_main->rng_manager;
 }
@@ -519,7 +474,7 @@ std::vector<std::string> get_parameter_keys(py::object self) {
 
     std::vector<std::string> parameters;
     std::vector<std::string> keylist = ensemble_config_keylist_from_var_type(
-        enkf_main_get_ensemble_config(enkf_main), PARAMETER);
+        res_config_get_ensemble_config(enkf_main->res_config), PARAMETER);
 
     // Add all GEN_KW keywords to parameters that is not
     // the SCHEDULE_PREDICTION_FILE

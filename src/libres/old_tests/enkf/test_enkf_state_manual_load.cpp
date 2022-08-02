@@ -29,7 +29,7 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
     int iter = 0;
     const char *casename = "new_case";
     char *job_name =
-        model_config_alloc_jobname(enkf_main_get_model_config(enkf_main), 0);
+        model_config_alloc_jobname(res_config_get_model_config(enkf_main_get_res_config(enkf_main)), 0);
     enkf_main_select_fs(enkf_main, casename);
 
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);

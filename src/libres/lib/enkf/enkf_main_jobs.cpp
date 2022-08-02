@@ -170,7 +170,7 @@ enkf_main_pre_simulation_copy_JOB(void *self, const stringlist_type *args) {
     }
 
     enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    model_config_type *model_config = enkf_main_get_model_config(enkf_main);
+    model_config_type *model_config = res_config_get_model_config(enkf_main_get_res_config(enkf_main));
     if (!model_config_data_root_is_set(model_config)) {
         logger->error(
             "Error in workflow job PRE_SIMULATION_COPY DATA_ROOT not set");
