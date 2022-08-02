@@ -133,16 +133,12 @@ extern "C" void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
                                  const char *case_path);
 void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
                          bool read_only = false);
-bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
-                         const char *input_case);
 
 extern "C" state_map_type *
 enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path);
 
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
-void enkf_main_isubmit_job(enkf_main_type *enkf_main, run_arg_type *run_arg,
-                           job_queue_type *job_queue);
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);
 

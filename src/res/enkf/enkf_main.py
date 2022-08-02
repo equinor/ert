@@ -295,7 +295,6 @@ class _RealEnKFMain(BaseCClass):
     _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
     _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _load_obs = ResPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
     _get_observations = ResPrototype(
         "void enkf_main_get_observations(enkf_main, \
                                          char*, \
@@ -416,12 +415,6 @@ class _RealEnKFMain(BaseCClass):
 
     def have_observations(self):
         return self._have_observations()
-
-    def loadObservations(self, obs_config_file, clear=True):
-        return self._load_obs(obs_config_file, clear)
-
-    def get_site_config_file(self):
-        return self.resConfig().site_config.config_file
 
     def getHistoryLength(self):
         return self.resConfig().model_config.get_last_history_restart()
