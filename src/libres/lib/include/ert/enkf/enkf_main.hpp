@@ -64,25 +64,13 @@ extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
 
 extern "C" enkf_state_type *enkf_main_iget_state(const enkf_main_type *, int);
 
-extern "C" const ecl_config_type *
-enkf_main_get_ecl_config(const enkf_main_type *enkf_main);
-extern "C" ensemble_config_type *
-enkf_main_get_ensemble_config(const enkf_main_type *enkf_main);
 extern "C" int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main);
-extern "C" int enkf_main_get_history_length(const enkf_main_type *);
-extern "C" model_config_type *
-enkf_main_get_model_config(const enkf_main_type *);
 extern "C" bool enkf_main_load_obs(enkf_main_type *, const char *, bool);
 extern "C" enkf_obs_type *enkf_main_get_obs(const enkf_main_type *);
 extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
-extern "C" const analysis_config_type *
-enkf_main_get_analysis_config(const enkf_main_type *);
 
-subst_config_type *enkf_main_get_subst_config(const enkf_main_type *enkf_main);
 extern "C" subst_list_type *
 enkf_main_get_data_kw(const enkf_main_type *enkf_main);
-extern "C" const site_config_type *
-enkf_main_get_site_config(const enkf_main_type *enkf_main);
 void enkf_main_increase_ensemble(enkf_main_type *enkf_main, int new_ens_size);
 extern "C" void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                            const char *user_key, int obs_count,
@@ -94,12 +82,9 @@ void enkf_main_install_SIGNALS(void);
 extern "C" const hook_manager_type *
 enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
 
-void enkf_main_set_verbose(enkf_main_type *enkf_main, bool verbose);
-
 extern "C" ert_workflow_list_type *
 enkf_main_get_workflow_list(enkf_main_type *enkf_main);
 
-rng_config_type *enkf_main_get_rng_config(const enkf_main_type *enkf_main);
 void enkf_main_rng_init(enkf_main_type *enkf_main);
 extern "C" rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main);
 
@@ -155,21 +140,14 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
                          bool read_only = false);
 bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
                          const char *input_case);
-extern "C" const char *
-enkf_main_get_mount_root(const enkf_main_type *enkf_main);
 
 extern "C" state_map_type *
 enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path);
 
-extern "C" queue_config_type *
-enkf_main_get_queue_config(enkf_main_type *enkf_main);
-
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
 void enkf_main_isubmit_job(enkf_main_type *enkf_main, run_arg_type *run_arg,
                            job_queue_type *job_queue);
-extern "C" const char *
-enkf_main_get_site_config_file(const enkf_main_type *enkf_main);
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);
 

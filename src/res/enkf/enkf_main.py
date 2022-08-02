@@ -292,32 +292,10 @@ class _RealEnKFMain(BaseCClass):
     _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
     _free = ResPrototype("void enkf_main_free(enkf_main)")
-    _get_queue_config = ResPrototype(
-        "queue_config_ref enkf_main_get_queue_config(enkf_main)"
-    )
     _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
-    _get_ens_config = ResPrototype(
-        "ens_config_ref enkf_main_get_ensemble_config( enkf_main )"
-    )
-    _get_model_config = ResPrototype(
-        "model_config_ref enkf_main_get_model_config( enkf_main )"
-    )
-    _get_analysis_config = ResPrototype(
-        "analysis_config_ref enkf_main_get_analysis_config( enkf_main)"
-    )
-    _get_site_config = ResPrototype(
-        "site_config_ref enkf_main_get_site_config( enkf_main)"
-    )
-    _get_ecl_config = ResPrototype(
-        "ecl_config_ref enkf_main_get_ecl_config( enkf_main)"
-    )
     _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
     _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
     _load_obs = ResPrototype("bool enkf_main_load_obs(enkf_main, char* , bool)")
-    _get_site_config_file = ResPrototype(
-        "char* enkf_main_get_site_config_file(enkf_main)"
-    )
-    _get_history_length = ResPrototype("int enkf_main_get_history_length(enkf_main)")
     _get_observations = ResPrototype(
         "void enkf_main_get_observations(enkf_main, \
                                          char*, \
@@ -333,7 +311,6 @@ class _RealEnKFMain(BaseCClass):
     _get_hook_manager = ResPrototype(
         "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
     )
-    _get_mount_point = ResPrototype("char* enkf_main_get_mount_root( enkf_main )")
     _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
@@ -380,7 +357,7 @@ class _RealEnKFMain(BaseCClass):
         raise TypeError(f"Expected ResConfig, received: {repr(config)}")
 
     def get_queue_config(self) -> QueueConfig:
-        return self._get_queue_config()
+        return self.resConfig().queue_config
 
     def free(self):
         self._free()
@@ -396,26 +373,26 @@ class _RealEnKFMain(BaseCClass):
 
     def ensembleConfig(self) -> EnsembleConfig:
         """@rtype: EnsembleConfig"""
-        return self._get_ens_config().setParent(self)
+        return self.resConfig().ensemble_config.setParent(self)
 
     def analysisConfig(self) -> AnalysisConfig:
         """@rtype: AnalysisConfig"""
-        return self._get_analysis_config().setParent(self)
+        return self.resConfig().analysis_config.setParent(self)
 
     def getModelConfig(self) -> ModelConfig:
         """@rtype: ModelConfig"""
-        return self._get_model_config().setParent(self)
+        return self.resConfig().model_config.setParent(self)
 
     def siteConfig(self) -> SiteConfig:
         """@rtype: SiteConfig"""
-        return self._get_site_config().setParent(self)
+        return self.resConfig().site_config.setParent(self)
 
-    def resConfig(self):
+    def resConfig(self) -> "ResConfig":
         return self._get_res_config().setParent(self)
 
     def eclConfig(self) -> EclConfig:
         """@rtype: EclConfig"""
-        return self._get_ecl_config().setParent(self)
+        return self.resConfig().ecl_config
 
     def getDataKW(self) -> SubstitutionList:
         """@rtype: SubstitutionList"""
@@ -431,7 +408,7 @@ class _RealEnKFMain(BaseCClass):
         self.substituter.add_global_substitution(key, value)
 
     def getMountPoint(self) -> str:
-        return self._get_mount_point()
+        return self.resConfig().model_config.getEnspath()
 
     def getObservations(self) -> EnkfObs:
         """@rtype: EnkfObs"""
@@ -444,10 +421,10 @@ class _RealEnKFMain(BaseCClass):
         return self._load_obs(obs_config_file, clear)
 
     def get_site_config_file(self):
-        return self._get_site_config_file()
+        return self.resConfig().site_config.config_file
 
     def getHistoryLength(self):
-        return self._get_history_length()
+        return self.resConfig().model_config.get_last_history_restart()
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)

@@ -44,7 +44,7 @@ bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
 static bool
 enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
     const char *ens_path =
-        model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
     char *current_case_file =
         util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
     bool exists = fs::exists(current_case_file);
@@ -55,7 +55,7 @@ enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
 char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main) {
     char *current_case = NULL;
     const char *ens_path =
-        model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
     char *current_case_file =
         util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
     if (enkf_main_current_case_file_exists(enkf_main)) {
@@ -119,7 +119,7 @@ void enkf_main_init_current_case_from_existing_custom(
 
     enkf_fs_type *current_fs = enkf_main_get_fs(enkf_main);
 
-    enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
+    enkf_main_copy_ensemble(res_config_get_ensemble_config(enkf_main->res_config),
                             source_case_fs, source_report_step, current_fs,
                             iactive, node_list);
     enkf_fs_fsync(current_fs);
@@ -131,10 +131,10 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
                                        enkf_fs_type *target_case_fs) {
 
     std::vector<std::string> param_list = ensemble_config_keylist_from_var_type(
-        enkf_main_get_ensemble_config(enkf_main),
+        res_config_get_ensemble_config(enkf_main->res_config),
         PARAMETER); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
     std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
-    enkf_main_copy_ensemble(enkf_main_get_ensemble_config(enkf_main),
+    enkf_main_copy_ensemble(res_config_get_ensemble_config(enkf_main->res_config),
                             source_case_fs, source_report_step, target_case_fs,
                             iactive, param_list);
 
@@ -173,7 +173,7 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
     enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, case_name, false);
     if (fs) {
         bool initialized = enkf_main_case_is_initialized__(
-            enkf_main_get_ensemble_config(enkf_main), fs, enkf_main->ens_size);
+            res_config_get_ensemble_config(enkf_main->res_config), fs, enkf_main->ens_size);
         enkf_fs_decref(fs);
         return initialized;
     } else
@@ -192,7 +192,7 @@ static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
   */
 
     const char *ens_path =
-        model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
 
     {
         int buffer_size = 256;
@@ -225,7 +225,7 @@ static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
 static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
                                               const char *case_path) {
     const char *ens_path =
-        model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
     const char *base = CURRENT_CASE_FILE;
     char *current_case_file = util_alloc_filename(ens_path, base, NULL);
     FILE *stream = util_fopen(current_case_file, "w");
@@ -237,7 +237,7 @@ static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
 static void enkf_main_gen_data_special(enkf_main_type *enkf_main,
                                        enkf_fs_type *fs) {
     ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+        res_config_get_ensemble_config(enkf_main->res_config);
     stringlist_type *gen_data_keys =
         ensemble_config_alloc_keylist_from_impl_type(ensemble_config, GEN_DATA);
     for (int i = 0; i < stringlist_get_size(gen_data_keys); i++) {
@@ -273,10 +273,6 @@ static void enkf_main_create_fs(const enkf_main_type *enkf_main,
     free(new_mount_point);
 }
 
-const char *enkf_main_get_mount_root(const enkf_main_type *enkf_main) {
-    return model_config_get_enspath(enkf_main_get_model_config(enkf_main));
-}
-
 char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                                   const char *case_path) {
     char *mount_point;
@@ -284,7 +280,7 @@ char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
         mount_point = util_alloc_string_copy(case_path);
     else
         mount_point = util_alloc_filename(
-            model_config_get_enspath(enkf_main_get_model_config(enkf_main)),
+            model_config_get_enspath(res_config_get_model_config(enkf_main->res_config)),
             case_path, NULL);
     return mount_point;
 }
@@ -344,7 +340,7 @@ enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
             new_fs = enkf_fs_mount(new_mount_point, read_only);
             if (new_fs) {
                 const model_config_type *model_config =
-                    enkf_main_get_model_config(enkf_main);
+                    res_config_get_model_config(enkf_main->res_config);
                 const ecl_sum_type *refcase =
                     model_config_get_refcase(model_config);
 
@@ -367,7 +363,7 @@ enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
 static void enkf_main_update_summary_config_from_fs__(enkf_main_type *enkf_main,
                                                       enkf_fs_type *fs) {
     ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+        res_config_get_ensemble_config(enkf_main->res_config);
     summary_key_set_type *summary_key_set = enkf_fs_get_summary_key_set(fs);
     stringlist_type *keys = summary_key_set_alloc_keys(summary_key_set);
 
@@ -439,7 +435,7 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
             enkf_main_set_fs(enkf_main, new_fs, case_path);
         else {
             const char *ens_path =
-                model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+                model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
             util_exit("%s: select filesystem %s:%s failed \n", __func__,
                       ens_path, case_path);
         }
@@ -450,7 +446,7 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
 static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
                                              bool read_only) {
     const char *ens_path =
-        model_config_get_enspath(enkf_main_get_model_config(enkf_main));
+        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
     char *current_mount_point =
         util_alloc_filename(ens_path, CURRENT_CASE, NULL);
 

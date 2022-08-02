@@ -39,7 +39,7 @@ void ecl_write(const ensemble_config_type *ens_config,
 
 void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     std::vector<std::string> key_list = ensemble_config_keylist_from_var_type(
-        enkf_main_get_ensemble_config(enkf_main), PARAMETER);
+        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)), PARAMETER);
     enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
     enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
     run_arg_type *run_arg =
@@ -47,9 +47,9 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     rng_manager_type *rng_manager = enkf_main_get_rng_manager(enkf_main);
     rng_type *rng = rng_manager_iget(rng_manager, run_arg_get_iens(run_arg));
     enkf_state_initialize(state, rng, init_fs, key_list, INIT_FORCE);
-    enkf_main::ecl_write(enkf_main_get_ensemble_config(enkf_main),
+    enkf_main::ecl_write(res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
                          model_config_get_gen_kw_export_name(
-                             enkf_main_get_model_config(enkf_main)),
+                             res_config_get_model_config(enkf_main_get_res_config(enkf_main))),
                          run_arg, init_fs);
     test_assert_true(fs::exists("simulations/run0/parameters.txt"));
     test_assert_true(fs::exists("simulations/run0/parameters.json"));

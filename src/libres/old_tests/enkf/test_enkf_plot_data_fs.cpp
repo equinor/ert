@@ -27,7 +27,7 @@
 void test_load_GEN_KW(enkf_main_type *enkf_main, const char *key,
                       const char *index_key) {
     ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main));
     const enkf_config_node_type *config_node =
         ensemble_config_get_node(ensemble_config, key);
     enkf_plot_data_type *plot_data = enkf_plot_data_alloc(config_node);
@@ -60,7 +60,7 @@ void test_load_GEN_KW(enkf_main_type *enkf_main, const char *key,
 
 void test_load_summary(enkf_main_type *enkf_main, const char *summary_key) {
     ensemble_config_type *ensemble_config =
-        enkf_main_get_ensemble_config(enkf_main);
+        res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main));
     const enkf_config_node_type *config_node =
         ensemble_config_get_node(ensemble_config, summary_key);
     enkf_plot_data_type *plot_data = enkf_plot_data_alloc(config_node);

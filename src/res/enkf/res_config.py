@@ -601,7 +601,7 @@ class ResConfig(BaseCClass):
         return self.site_config.config_file
 
     @property
-    def site_config(self):
+    def site_config(self) -> "SiteConfig":
         return self._site_config()
 
     @property
@@ -617,7 +617,7 @@ class ResConfig(BaseCClass):
         return self._subst_config().setParent(self)
 
     @property
-    def model_config(self):
+    def model_config(self) -> "ModelConfig":
         return self._model_config()
 
     @property
