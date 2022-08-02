@@ -285,8 +285,8 @@ class ESUpdate:
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
     def smootherUpdate(self, run_context: "ErtRunContext") -> None:
-        source_fs = run_context.get_sim_fs()
-        target_fs = run_context.get_target_fs()
+        source_fs = run_context.sim_fs
+        target_fs = run_context.target_fs
 
         updatestep = self.ert.getLocalConfig()
 
@@ -326,13 +326,13 @@ class ESUpdate:
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.update_snapshots[run_context.get_id()] = smoother_snapshot
+        self.update_snapshots[run_context.run_id] = smoother_snapshot
 
     def iterative_smoother_update(
         self, run_context: "ErtRunContext", w_container: ies.ModuleData
     ) -> None:
-        source_fs = run_context.get_sim_fs()
-        target_fs = run_context.get_target_fs()
+        source_fs = run_context.sim_fs
+        target_fs = run_context.target_fs
 
         updatestep = self.ert.getLocalConfig()
         if len(updatestep) > 1:
@@ -378,4 +378,4 @@ class ESUpdate:
             Path(analysis_config.get_log_path()) / "deprecated", smoother_snapshot
         )
 
-        self.update_snapshots[run_context.get_id()] = smoother_snapshot
+        self.update_snapshots[run_context.run_id] = smoother_snapshot

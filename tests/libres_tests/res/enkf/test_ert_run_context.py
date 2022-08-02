@@ -47,7 +47,7 @@ class ErtRunContextTest(ResTest):
                 runpaths.get_jobnames(realizations, itr),
                 itr,
             )
-            run_id1 = run_context1.get_id()
+            run_id1 = run_context1.run_id
 
             run_arg0 = run_context1[0]
             with self.assertRaises(ValueError):
@@ -64,7 +64,7 @@ class ErtRunContextTest(ResTest):
                 runpaths.get_jobnames(realizations, itr),
                 itr,
             )
-            run_id2 = run_context2.get_id()
+            run_id2 = run_context2.run_id
 
             assert run_id1 != run_id2
 

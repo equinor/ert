@@ -116,7 +116,7 @@ class SimulationContext:
         )
 
     def get_sim_fs(self):
-        return self._run_context.get_sim_fs()
+        return self._run_context.sim_fs
 
     def get_run_context(self):
         return self._run_context

@@ -70,7 +70,7 @@ class ModelFactoryTest(ErtTest):
             )
             run_context = model.create_context()
             self.assertEqual(model._simulation_arguments["iter_num"], 10)
-            self.assertEqual(run_context.get_iter(), 10)
+            self.assertEqual(run_context.iteration, 10)
 
     def test_custom_realizations(self):
         config_file = self.createTestPath("local/poly_example/poly.ert")

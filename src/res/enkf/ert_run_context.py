@@ -54,23 +54,5 @@ class ErtRunContext:
     def __repr__(self):
         return f"ErtRunContext(size = {len(self)})"
 
-    def get_id(self) -> str:
-        return self.run_id
-
-    def get_mask(self) -> List[bool]:
-        return self.mask
-
-    def get_iter(self) -> int:
-        return self.iteration
-
-    def get_target_fs(self) -> EnkfFs:
-        return self.target_fs
-
-    def get_sim_fs(self) -> EnkfFs:
-        return self.sim_fs
-
-    def get_init_mode(self):
-        return self.init_mode
-
     def deactivate_realization(self, realization_nr):
         self.mask[realization_nr] = False

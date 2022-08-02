@@ -55,7 +55,7 @@ class EnsembleExperiment(BaseRunModel):
             ensemble_id = await loop.run_in_executor(executor, self._post_ensemble_data)
 
             await self._run_hook(
-                HookRuntime.PRE_SIMULATION, run_context.get_iter(), loop, executor
+                HookRuntime.PRE_SIMULATION, run_context.iteration, loop, executor
             )
 
             # Evaluate
@@ -63,7 +63,7 @@ class EnsembleExperiment(BaseRunModel):
             await self._evaluate(run_context, evaluator_server_config)
 
             num_successful_realizations = self._state_machine.successful_realizations(
-                run_context.get_iter()
+                run_context.iteration
             )
 
             num_successful_realizations += self._simulation_arguments.get(
@@ -85,12 +85,12 @@ class EnsembleExperiment(BaseRunModel):
                             "error": str(e),
                         },
                     ),
-                    run_context.get_iter(),
+                    run_context.iteration,
                 )
                 return
 
             await self._run_hook(
-                HookRuntime.POST_SIMULATION, run_context.get_iter(), loop, executor
+                HookRuntime.POST_SIMULATION, run_context.iteration, loop, executor
             )
 
             # Push simulation results to storage
@@ -109,7 +109,7 @@ class EnsembleExperiment(BaseRunModel):
                     "id": str(uuid.uuid1()),
                 },
             ),
-            run_context.get_iter(),
+            run_context.iteration,
         )
 
     def runSimulations__(
@@ -168,7 +168,7 @@ class EnsembleExperiment(BaseRunModel):
         )
 
         self._run_context = run_context
-        self._last_run_iteration = run_context.get_iter()
+        self._last_run_iteration = run_context.iteration
         return run_context
 
     @classmethod

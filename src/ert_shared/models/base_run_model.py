@@ -170,7 +170,7 @@ class BaseRunModel:
                 run_context = self.runSimulations(
                     evaluator_server_config=evaluator_server_config,
                 )
-                self._completed_realizations_mask = run_context.get_mask()
+                self._completed_realizations_mask = run_context.mask
         except ErtRunError as e:
             self._completed_realizations_mask = []
             self._failed = True
@@ -290,7 +290,7 @@ class BaseRunModel:
             )
 
     def _count_active_realizations(self, run_context: ErtRunContext) -> int:
-        return sum(run_context.get_mask())
+        return sum(run_context.mask)
 
     def run_ensemble_evaluator(
         self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
@@ -308,13 +308,13 @@ class BaseRunModel:
         totalOk = EnsembleEvaluator(
             ensemble,
             ee_config,
-            run_context.get_iter(),
+            run_context.iteration,
             ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
         ).run_and_get_successful_realizations()
 
         self.deactivate_failed_jobs(run_context)
 
-        run_context.get_sim_fs().fsync()
+        run_context.sim_fs.fsync()
         return totalOk
 
     @staticmethod
@@ -344,7 +344,7 @@ class BaseRunModel:
         experiment_logger.debug("built")
 
         ensemble_listener = asyncio.create_task(
-            self._ensemble_listener(ensemble, iter_=run_context.get_iter())
+            self._ensemble_listener(ensemble, iter_=run_context.iteration)
         )
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -368,7 +368,7 @@ class BaseRunModel:
 
             await loop.run_in_executor(
                 pool,
-                run_context.get_sim_fs().fsync,
+                run_context.sim_fs.fsync,
             )
 
     @abstractmethod
