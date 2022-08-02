@@ -18,10 +18,13 @@ Module implementing a queue for managing external jobs.
 
 """
 from threading import BoundedSemaphore
-
+import logging
 from res.job_queue.job_status_type_enum import JobStatusType
 
 CONCURRENT_INTERNALIZATION = 1
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: there's no need for this class, all the behavior belongs in the queue
@@ -37,6 +40,7 @@ class JobQueueManager:
         return self._queue
 
     def stop_queue(self):
+        logger.debug("Stopping queue in jobqueuemanager")
         self.queue.kill_all_jobs()
 
     def getNumRunning(self):

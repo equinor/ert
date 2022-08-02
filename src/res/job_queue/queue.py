@@ -510,6 +510,7 @@ class JobQueue(BaseCClass):
                 await JobQueue._queue_changes(ee_id, changes, output_bus)
 
                 if self.stopped:
+                    logger.debug("someone stopped me!!")
                     raise asyncio.CancelledError
 
                 if not self.is_active():

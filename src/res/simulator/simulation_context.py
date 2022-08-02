@@ -6,6 +6,11 @@ from res.enkf import EnkfSimulationRunner
 from res.enkf.enums import HookRuntime
 from res.job_queue import ForwardModelStatus, JobQueueManager
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class SimulationContext:
     def __init__(self, ert, sim_fs, mask: List[bool], itr, case_data):
@@ -122,6 +127,7 @@ class SimulationContext:
         return self._run_context
 
     def stop(self):
+        logger.debug("simulation context stopping queue")
         self._queue_manager.stop_queue()
         self._sim_thread.join()
 
