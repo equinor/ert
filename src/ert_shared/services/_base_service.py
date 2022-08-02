@@ -1,17 +1,17 @@
 import io
+import json
 import os
+import select
+import signal
 import sys
 import threading
-import json
 import time
-import signal
-
-from select import select, PIPE_BUF
-from subprocess import Popen, TimeoutExpired
-from pathlib import Path
-from time import sleep
 from logging import getLogger
+from pathlib import Path
+from subprocess import Popen, TimeoutExpired
+from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -19,11 +19,10 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Type,
     TypeVar,
     Union,
-    TYPE_CHECKING,
-    Set,
 )
 
 if TYPE_CHECKING:
@@ -101,7 +100,7 @@ class _Proc(threading.Thread):
 
         self._service_name = service_name
         self._exec_args = exec_args
-        self._timeout = timeout
+        self._timeout = timeout  # in seconds
         self._set_conn_info = set_conn_info
 
         self._assert_server_not_running()
@@ -183,15 +182,18 @@ class _Proc(threading.Thread):
         first_iter = True
         while first_iter or proc.poll() is None:
             first_iter = False
-            ready = select([self._comm_pipe], [], [], self._timeout)
+
+            poller = select.poll()
+            poller.register(self._comm_pipe, select.POLLIN)
+            ready: List[tuple] = poller.poll(self._timeout * 1000)  # ms argument
 
             # Timeout reached, exit with a failure
-            if ready == ([], [], []):
+            if ready == ([]):
                 self._do_shutdown()
                 self._ensure_delete_conn_info()
                 return None
 
-            x = self._comm_pipe.read(PIPE_BUF)
+            x = self._comm_pipe.read(select.PIPE_BUF)
             if x == "":  # EOF
                 break
             comm_buf.write(x)
