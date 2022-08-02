@@ -93,7 +93,7 @@ jobs:
         pip install -r dev-requirements.txt
 
     - name: Test MacOS
-      if: matrix.os == 'macos-latest' && matrix.test-type == 'unit-tests'
+      if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
         pytest ert_tests/cli/test_integration_cli.py::test_experiment_server_ensemble_experiment
