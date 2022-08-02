@@ -471,17 +471,6 @@ static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
     free(current_mount_point);
 }
 
-bool enkf_main_fs_exists(const enkf_main_type *enkf_main,
-                         const char *input_case) {
-    bool exists = false;
-    char *new_mount_point = enkf_main_alloc_mount_point(enkf_main, input_case);
-    if (enkf_fs_exists(new_mount_point))
-        exists = true;
-
-    free(new_mount_point);
-    return exists;
-}
-
 state_map_type *
 enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
                                    const char *case_path) {
