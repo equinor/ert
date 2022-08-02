@@ -211,6 +211,10 @@ jobs:
       with:
         os: ${{ matrix.os }}
 
+    - name: Install PlantUML
+      run: |
+        sudo apt-get install plantuml
+
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
