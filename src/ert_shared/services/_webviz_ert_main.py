@@ -8,6 +8,7 @@ import yaml
 import pathlib
 import argparse
 from typing import Any, Optional, Dict
+
 from webviz_ert.assets import WEBVIZ_CONFIG
 
 
@@ -63,7 +64,7 @@ def create_config(
     temp_config.seek(0)
 
 
-def send_ready():
+def send_ready() -> None:
     """
     Tell ERT's BaseService that we're ready, even though we're not actually
     ready to accept requests. At the moment, ERT doesn't interface with
@@ -74,7 +75,7 @@ def send_ready():
         f.write("{}")  # Empty, but valid JSON
 
 
-def run_webviz_ert(experimental_mode: bool = False, verbose: bool = False):
+def run_webviz_ert(experimental_mode: bool = False, verbose: bool = False) -> None:
     signal.signal(signal.SIGINT, handle_exit)
     # The entry point of webviz is to call it from command line, and so do we.
 
