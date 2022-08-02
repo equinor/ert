@@ -346,6 +346,7 @@ class BaseRunModel:
         ensemble_listener = asyncio.create_task(
             self._ensemble_listener(ensemble, iter_=run_context.iteration)
         )
+        experiment_logger.debug("listener created")
 
         with concurrent.futures.ThreadPoolExecutor() as pool:
             await loop.run_in_executor(
@@ -353,10 +354,13 @@ class BaseRunModel:
                 self.ert().initRun,
                 run_context,
             )
+            experiment_logger.debug("initRun completed")
 
             await ensemble.evaluate_async(ee_config, self.id_)
+            experiment_logger.debug("ensemble evaluation task complete")
 
             await ensemble_listener
+            experiment_logger.debug("ensembler listener informed on completion")
 
             for iens, run_arg in enumerate(run_context):
                 if run_context.is_active(iens):
@@ -370,6 +374,7 @@ class BaseRunModel:
                 pool,
                 run_context.sim_fs.fsync,
             )
+            experiment_logger.debug("fsync completed")
 
     @abstractmethod
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:

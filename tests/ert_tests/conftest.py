@@ -3,7 +3,7 @@ import logging
 import pytest
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)
 def log_check():
     logger = logging.getLogger()
     logger.setLevel(logging.WARNING)
