@@ -219,7 +219,6 @@ add_equinor_test(
   "${EQUINOR_TEST_DATA_DIR}/config/with_data/config"
   "${EQUINOR_TEST_DATA_DIR}/config/enkf_state_runpath/config_runpath_multiple_iterations"
   "${SHARE_DIR}/workflows/jobs/internal-tui/config/CREATE_CASE"
-  "${SHARE_DIR}/workflows/jobs/internal-tui/config/INIT_CASE_FROM_EXISTING"
   "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
   "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
   "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")

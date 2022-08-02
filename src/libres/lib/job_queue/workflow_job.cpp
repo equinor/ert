@@ -34,8 +34,6 @@ extern "C" void *enkf_main_select_case_JOB(void *self,
                                            const stringlist_type *args);
 extern "C" void *enkf_main_create_case_JOB(void *self,
                                            const stringlist_type *args);
-extern "C" void *
-enkf_main_init_case_from_existing_JOB(void *self, const stringlist_type *args);
 extern "C" void *enkf_main_export_field_JOB(void *self,
                                             const stringlist_type *args);
 extern "C" void *enkf_main_export_field_to_RMS_JOB(void *self,
@@ -67,8 +65,6 @@ std::unordered_map<std::string, workflow_job_ftype *>
         {"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
         {"enkf_main_select_case_JOB"s, &enkf_main_select_case_JOB},
         {"enkf_main_create_case_JOB"s, &enkf_main_create_case_JOB},
-        {"enkf_main_init_case_from_existing_JOB"s,
-         &enkf_main_init_case_from_existing_JOB},
         {"enkf_main_export_field_JOB"s, &enkf_main_export_field_JOB},
         {"enkf_main_export_field_to_RMS_JOB"s,
          &enkf_main_export_field_to_RMS_JOB},
