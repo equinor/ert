@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from typing import List
+from typing import List, Type, Union
 
 from cwrap import BaseCClass
 
@@ -89,8 +89,7 @@ class AnalysisModule(BaseCClass):
                 items.append(name)
         return items
 
-    def getVariableValue(self, name):
-        """@rtype: int or float or bool or str"""
+    def getVariableValue(self, name: str) -> Union[int, float, bool]:
         self.__assertVar(name)
         variable_type = self.getVariableType(name)
         if variable_type == float:
@@ -102,8 +101,7 @@ class AnalysisModule(BaseCClass):
         else:
             raise ValueError(f"Variable of type {variable_type} is not supported")
 
-    def getVariableType(self, name):
-        """:rtype: type"""
+    def getVariableType(self, name: str) -> Union[Type[int], Type[float], Type[bool]]:
         return AnalysisModule.VARIABLE_NAMES[name]["type"]
 
     def free(self):
@@ -114,51 +112,37 @@ class AnalysisModule(BaseCClass):
             return repr(None)
         return f"AnalysisModule(name = {self.name()}, ad = {self._ad_str()})"
 
-    def __assertVar(self, var_name):
+    def __assertVar(self, var_name: str):
         if not self.hasVar(var_name):
             raise KeyError(f"Module does not support key:{var_name}")
 
-    def setVar(self, var_name, value):
+    def setVar(self, var_name: str, value):
         self.__assertVar(var_name)
         string_value = str(value)
         return self._set_var(var_name, string_value)
 
-    def name(self):
+    def name(self) -> str:
         return self._get_name()
 
     def hasVar(self, var: str) -> bool:
         return self._has_var(var)
 
-    def getDouble(self, var):
-        """:rtype: float"""
+    def getDouble(self, var: str) -> float:
         self.__assertVar(var)
         return self._get_double(var)
 
-    def getInt(self, var):
-        """:rtype: int"""
+    def getInt(self, var: str) -> int:
         self.__assertVar(var)
         return self._get_int(var)
 
-    def getBool(self, var):
-        """:rtype: bool"""
+    def getBool(self, var: str) -> bool:
         self.__assertVar(var)
         return self._get_bool(var)
 
     def __ne__(self, other):
-        """
-        not equal operator between two modules
-        :param other: other module to compare with
-        :return: True if different
-        """
         return not self == other
 
     def __eq__(self, other):
-        """
-        equality operator between two modules
-        :param other: other module to compare with
-        :return: True if the same
-        """
-
         if self.name() != other.name():
             return False
 
