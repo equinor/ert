@@ -22,7 +22,7 @@ from ert_shared.storage.extraction import (
 )
 from res.enkf import EnKFMain, QueueConfig
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.job_queue import ForwardModel, RunStatusType
 
 event_logger = logging.getLogger("ert.event_log")
@@ -89,7 +89,7 @@ class BaseRunModel:
         self._initial_realizations_mask: List[bool] = []
         self._completed_realizations_mask: List[bool] = []
         self.support_restart: bool = True
-        self._run_context: Optional[ErtRunContext] = None
+        self._run_context: Optional[RunContext] = None
         self._last_run_iteration: int = -1
         self._ert = ert
         self.facade = LibresFacade(ert)
@@ -187,7 +187,7 @@ class BaseRunModel:
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         raise NotImplementedError("Method must be implemented by inheritors!")
 
     def teardown_context(self) -> None:
@@ -281,7 +281,7 @@ class BaseRunModel:
                 + "to allow failures in your simulations."
             )
 
-    def _checkMinimumActiveRealizations(self, run_context: ErtRunContext) -> None:
+    def _checkMinimumActiveRealizations(self, run_context: RunContext) -> None:
         active_realizations = self._count_active_realizations(run_context)
         if not self.ert().analysisConfig().haveEnoughRealisations(active_realizations):
             raise ErtRunError(
@@ -289,11 +289,11 @@ class BaseRunModel:
                 + "MIN_REALIZATIONS in the config file"
             )
 
-    def _count_active_realizations(self, run_context: ErtRunContext) -> int:
+    def _count_active_realizations(self, run_context: RunContext) -> int:
         return sum(run_context.mask)
 
     def run_ensemble_evaluator(
-        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
+        self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> int:
         ensemble = EnsembleBuilder.from_legacy(
             run_context,
@@ -318,7 +318,7 @@ class BaseRunModel:
         return totalOk
 
     @staticmethod
-    def deactivate_failed_jobs(run_context: ErtRunContext) -> None:
+    def deactivate_failed_jobs(run_context: RunContext) -> None:
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
                 if run_arg.run_status in (
@@ -328,7 +328,7 @@ class BaseRunModel:
                     run_context.deactivate_realization(iens)
 
     async def _evaluate(
-        self, run_context: ErtRunContext, ee_config: EvaluatorServerConfig
+        self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> None:
         """Start asynchronous evaluation of an ensemble."""
         experiment_logger.debug("_evaluate")
@@ -458,7 +458,7 @@ class BaseRunModel:
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()
 
-    def get_run_context(self) -> Optional[ErtRunContext]:
+    def get_run_context(self) -> Optional[RunContext]:
         return self._run_context
 
     @feature_enabled("new-storage")

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from res import _lib
 from res.enkf import QueueConfig
 from res.enkf.analysis_config import AnalysisConfig
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.enkf.res_config import ResConfig
 from res.job_queue.forward_model import ForwardModel
 
@@ -103,7 +103,7 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
 
     @staticmethod
     def from_legacy(
-        run_context: ErtRunContext,
+        run_context: RunContext,
         forward_model: ForwardModel,
         queue_config: QueueConfig,
         analysis_config: AnalysisConfig,

@@ -13,7 +13,7 @@ from res import _lib
 from res._lib import enkf_state
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import RealizationStateEnum
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.enkf.state_map import StateMap
 
 if TYPE_CHECKING:
@@ -230,7 +230,7 @@ class EnkfFsManager(BaseCClass):
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 
     def initializeFromScratch(
-        self, parameter_list: List[str], run_context: ErtRunContext
+        self, parameter_list: List[str], run_context: RunContext
     ) -> None:
         if isinstance(parameter_list, StringList):
             warnings.warn(

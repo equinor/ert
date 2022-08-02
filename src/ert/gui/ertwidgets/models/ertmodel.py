@@ -2,7 +2,7 @@ from typing import List
 
 from ert_shared.libres_facade import LibresFacade
 from res.enkf import EnKFMain, RealizationStateEnum
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 from ecl.util.util import StringList
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 
@@ -51,7 +51,7 @@ def initializeCurrentCaseFromScratch(
         mask[member] = True
 
     sim_fs = ert.getEnkfFsManager().getCurrentFileSystem()
-    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
+    run_context = RunContext(sim_fs=sim_fs, mask=mask)
     ert.getEnkfFsManager().initializeFromScratch(selected_parameters, run_context)
 
 

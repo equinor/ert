@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from ert.analysis import ErtAnalysisError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel, ErtRunError
-from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf import EnkfSimulationRunner, RunContext
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime, RealizationStateEnum
 
@@ -26,7 +26,7 @@ class EnsembleSmoother(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         prior_context = self.create_context()
 
         self._checkMinimumActiveRealizations(prior_context)
@@ -103,9 +103,7 @@ class EnsembleSmoother(BaseRunModel):
 
         return prior_context
 
-    def create_context(
-        self, prior_context: Optional[ErtRunContext] = None
-    ) -> ErtRunContext:
+    def create_context(self, prior_context: Optional[RunContext] = None) -> RunContext:
 
         fs_manager = self.ert().getEnkfFsManager()
         if prior_context is None:

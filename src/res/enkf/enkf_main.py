@@ -29,7 +29,7 @@ from res.enkf.enkf_fs_manager import EnkfFsManager
 from res.enkf.enkf_obs import EnkfObs
 from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ensemble_config import EnsembleConfig
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.enkf.ert_workflow_list import ErtWorkflowList
 from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
@@ -159,7 +159,7 @@ class EnKFMain(BaseCClass):
 
     def create_ensemble_experiment_run_context(
         self, iteration: int, active_mask: List[bool] = None, source_filesystem=None
-    ) -> ErtRunContext:
+    ) -> RunContext:
         """Creates an ensemble experiment run context
         :param fs: The source filesystem, defaults to
             getEnkfFsManager().getCurrentFileSystem().
@@ -179,7 +179,7 @@ class EnKFMain(BaseCClass):
         target_filesystem,
         active_mask: List[bool] = None,
         source_filesystem=None,
-    ) -> ErtRunContext:
+    ) -> RunContext:
         """Creates an ensemble smoother run context
         :param fs: The source filesystem, defaults to
             getEnkfFsManager().getCurrentFileSystem().
@@ -197,7 +197,7 @@ class EnKFMain(BaseCClass):
         active_mask: List[bool] = None,
         source_filesystem=None,
         target_fs=None,
-    ) -> ErtRunContext:
+    ) -> RunContext:
         if active_mask is None:
             active_mask = [True] * self.getEnsembleSize()
         if source_filesystem is None:
@@ -214,7 +214,7 @@ class EnKFMain(BaseCClass):
             self.substituter.add_substitution(
                 "<ECLBASE>", jobname, realization, iteration
             )
-        return ErtRunContext(
+        return RunContext(
             sim_fs=source_filesystem,
             target_fs=target_fs,
             mask=active_mask,
@@ -422,7 +422,7 @@ class _RealEnKFMain(BaseCClass):
     def getHookManager(self) -> HookManager:
         return self._get_hook_manager()
 
-    def loadFromRunContext(self, run_context: ErtRunContext, fs) -> int:
+    def loadFromRunContext(self, run_context: RunContext, fs) -> int:
         """Returns the number of loaded realizations"""
         return enkf_main.load_from_run_context(
             self, run_context.run_args, run_context.mask, fs

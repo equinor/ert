@@ -14,7 +14,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert_shared.libres_facade import LibresFacade
 from ert_shared.storage import extraction
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 
@@ -553,7 +553,7 @@ def _rand_name():
     return "".join(random.choice(string.ascii_lowercase) for _ in range(8))
 
 
-def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
+def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
@@ -568,7 +568,7 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> ErtRunContext:
     return run_context
 
 
-def _evaluate_ensemble(ert: LibresFacade, run_context: ErtRunContext):
+def _evaluate_ensemble(ert: LibresFacade, run_context: RunContext):
     """
     Launch ensemble experiment with the created config
     """

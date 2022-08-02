@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from ert_shared.models import BaseRunModel
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 from res.job_queue import RunStatusType
 from res.test import ErtTestContext
 
@@ -92,7 +92,7 @@ def test_run_ensemble_evaluator():
     run_arg = MagicMock()
     run_arg.run_status = RunStatusType.JOB_LOAD_FAILURE
 
-    run_context = ErtRunContext(
+    run_context = RunContext(
         None, mask=[True], paths=["some%d/path%d"], jobnames=["some_job%d"], iteration=0
     )
     run_context.run_args = [run_arg]
