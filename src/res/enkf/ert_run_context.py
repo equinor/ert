@@ -105,7 +105,7 @@ class ErtRunContext:
     def __repr__(self):
         return f"ErtRunContext(size = {len(self)})"
 
-    def get_id(self):
+    def get_id(self) -> str:
         return self.run_id
 
     def get_mask(self) -> List[bool]:
