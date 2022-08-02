@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import threading
@@ -235,6 +236,7 @@ def test_ies(tmpdir, source_root):
         FeatureToggling.reset()
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="flaky on MacOS")
 @pytest.mark.integration_test
 @pytest.mark.timeout(20)
 def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
