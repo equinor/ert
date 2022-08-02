@@ -10,7 +10,8 @@ from select import select, PIPE_BUF
 from subprocess import Popen, TimeoutExpired
 from pathlib import Path
 from time import sleep
-from logging import getLogger
+from logging import Logger, getLogger
+from types import FrameType
 from typing import (
     Any,
     Callable,
@@ -36,7 +37,7 @@ ConnInfo = Union[Mapping[str, Any], Exception, None]
 SERVICE_NAMES: Set[str] = set()
 
 
-def cleanup_service_files(signum, frame):
+def cleanup_service_files(signum: int, frame: Optional[FrameType]) -> None:
     for service_name in SERVICE_NAMES:
         file = Path(f"{service_name}_server.json")
         if file.exists():
@@ -220,6 +221,10 @@ class _Proc(threading.Thread):
         if file.exists():
             file.unlink()
 
+    @property
+    def logger(self) -> Logger:
+        return getLogger(f"ert_shared.{self._service_name}")
+
 
 class ServerBootFail(RuntimeError):
     pass
@@ -280,7 +285,7 @@ class BaseService:
             )
 
     @classmethod
-    def start_server(cls: Type[T], *args, **kwargs) -> _Context[T]:
+    def start_server(cls: Type[T], *args: Any, **kwargs: Any) -> _Context[T]:
         if cls._instance is not None:
             raise RuntimeError("Server already running")
         cls._instance = obj = cls(*args, **kwargs)
@@ -321,7 +326,7 @@ class BaseService:
         raise TimeoutError("Server not started")
 
     @classmethod
-    def connect_or_start_server(cls: Type[T], *args, **kwargs) -> _Context[T]:
+    def connect_or_start_server(cls: Type[T], *args: Any, **kwargs: Any) -> _Context[T]:
         try:
             # Note that timeout==0 will bypass the loop in connect() and force
             # TimeoutError if there is no known existing instance
@@ -387,8 +392,8 @@ class BaseService:
         raise NotImplementedError
 
     @property
-    def logger(self):
-        return getLogger("ert_shared." + self.service_name)
+    def logger(self) -> Logger:
+        return getLogger(f"ert_shared.{self.service_name}")
 
     @property
     def _service_file(self) -> str:

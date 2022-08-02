@@ -1,8 +1,10 @@
 import logging
 from os import PathLike
-import httpx
 import requests
 from typing import Any, Optional, Tuple
+
+import httpx
+
 from ert_shared.services._base_service import BaseService, local_exec_args
 from ert_storage.client import Client, ConnInfo
 
@@ -15,8 +17,8 @@ class Storage(BaseService):
         res_config: Optional[PathLike] = None,
         database_url: str = "sqlite:///ert.db",
         verbose: bool = False,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ):
         self._url: Optional[str] = None
 
@@ -63,7 +65,7 @@ class Storage(BaseService):
         )
 
     @classmethod
-    def session(cls, timeout=None) -> Client:
+    def session(cls, timeout: Optional[int] = None) -> Client:
         """
         Start a HTTP transaction with the server
         """
@@ -75,7 +77,7 @@ class Storage(BaseService):
         )
 
     @classmethod
-    async def async_session(cls, timeout=None) -> httpx.AsyncClient:
+    async def async_session(cls, timeout: Optional[int] = None) -> httpx.AsyncClient:
         """
         Start a HTTP transaction with the server
         """

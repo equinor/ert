@@ -1,31 +1,36 @@
+from typing import Any, List, Dict, Optional, Union
+import logging
+import logging.config
 import os
 import sys
-import uvicorn
 import socket
 import json
 import argparse
 from pathlib import Path
 
+import uvicorn
 import yaml
+from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
 from ert_shared import port_handler
 from ert_shared import __file__ as ert_shared_path
 from ert_shared.plugins import ErtPluginContext
 from ert_shared.storage.command import add_parser_options
-from uvicorn.supervisors import ChangeReload
-from typing import List
-import logging
-import logging.config
 
 
 class Server(uvicorn.Server):
-    def __init__(self, config, connection_info, info_file):
+    def __init__(
+        self,
+        config: uvicorn.Config,
+        connection_info: Union[str, Dict[str, Any]],
+        info_file: Path,
+    ):
         super().__init__(config)
         self.connection_info = connection_info
         self.info_file = info_file
 
-    async def startup(self, sockets=None):
+    async def startup(self, sockets: list = None) -> None:
         """Overridden startup that also sends connection information"""
         await super().startup(sockets)
         if not self.started:
@@ -33,7 +38,7 @@ class Server(uvicorn.Server):
         write_to_pipe(self.connection_info)
 
 
-def generate_authtoken():
+def generate_authtoken() -> str:
     import random
     import string
 
@@ -41,7 +46,7 @@ def generate_authtoken():
     return "".join([random.choice(chars) for _ in range(16)])
 
 
-def write_to_pipe(connection_info: dict):
+def write_to_pipe(connection_info: Union[str, Dict[str, Any]]) -> None:
     """Write connection information directly to the calling program (ERT) via a
     communication pipe."""
     fd = os.environ.get("ERT_COMM_FD")
@@ -78,7 +83,7 @@ def find_ert_config() -> str:
     )
 
 
-def _create_connection_info(sock, authtoken):
+def _create_connection_info(sock: socket.socket, authtoken: str) -> Dict[str, Any]:
     connection_info = {
         "urls": [
             f"http://{host}:{sock.getsockname()[1]}"
@@ -98,7 +103,7 @@ def _create_connection_info(sock, authtoken):
     return connection_info
 
 
-def run_server(args=None, debug=False):
+def run_server(args: Optional[argparse.Namespace] = None, debug: bool = False) -> None:
     if args is None:
         args = parse_args()
 
@@ -112,7 +117,7 @@ def run_server(args=None, debug=False):
     if lockfile.exists():
         sys.exit("'storage_server.json' already exists")
 
-    config_args = {}
+    config_args: Dict[str, Any] = {}
     if args.debug or debug:
         config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
@@ -156,7 +161,7 @@ def run_server(args=None, debug=False):
         server.run(sockets=[sock])
 
 
-def terminate_on_parent_death():
+def terminate_on_parent_death() -> None:
     """Quit the server when the parent does a SIGABRT or is otherwise destroyed.
     This functionality has existed on Linux for a good while, but it isn't
     exposed in the Python standard library. Use ctypes to hook into the
