@@ -28,17 +28,7 @@ run_libres_ert_tests(){
     # on main - hence there will be no consequences for said jobs.
     # A test on the internal CI is activated by writing a comment with "test flaky please"
     # Requires that the user is allowed to run the tests.
-    xvfb-run -s "-screen 0 640x480x24" --auto-servernum python -m \
-    pytest tests/ert_tests -k "not test_gui_load and not test_formatting" \
-    -m "not requires_window_manager"
-
-    pytest tests/libres_tests                                         \
-    --ignore="tests/libres_tests/res/enkf/test_analysis_config.py"    \
-    --ignore="tests/libres_tests/res/enkf/test_res_config.py"         \
-    --ignore="tests/libres_tests/res/enkf/test_site_config.py"        \
-    --ignore="tests/libres_tests/res/enkf/test_workflow_list.py"      \
-    --ignore="tests/libres_tests/res/enkf/test_hook_manager.py"
-
+    pytest tests/ert_tests/cli/test_integration_cli.py::test_experiment_server_ensemble_experiment
 }
 
 start_tests () {
@@ -52,7 +42,7 @@ start_tests () {
     let failures=0
 
     if [[ -z "${N_RUNS}" ]]; then
-        n_runs=10
+        n_runs=200
     else
         n_runs=${N_RUNS}
     fi
@@ -64,6 +54,7 @@ start_tests () {
         fi
     done
     export N_FAILED_RUNS=$failures
+    echo "Failed runs: $N_FAILED_RUNS"
     set -e
     popd
 }
