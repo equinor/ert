@@ -27,6 +27,77 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.36
+------------
+
+Breaking changes:
+  - Refactor analysis config min_required_realizations (`#3426 <https://github.com/equinor/ert/pull/3426>`_)
+  - Raise exception if analysis can not be performed (`#3302 <https://github.com/equinor/ert/pull/3302>`_)
+  - Change verbose flag behaviour to output info-level an greater logs (`#3332 <https://github.com/equinor/ert/pull/3332>`_)
+  - Change update configuration (`#3322 <https://github.com/equinor/ert/pull/3322>`_)
+  - Remove unused functions on EnKFMain (`#3400 <https://github.com/equinor/ert/pull/3400>`_)
+  -
+
+Bugfixes:
+  - Fix edit analysis varables for run_analysis_panel (`#3330 <https://github.com/equinor/ert/pull/3330>`_)
+  - Fix iteration nr bug in IES and add ies cli integration test (`#3457 <https://github.com/equinor/ert/pull/3457>`_)
+
+New features:
+  - ert3: Add GUI monitoring ()`#3167 <https://github.com/equinor/ert/pull/3167>`_)
+
+Improvements:
+  - Remove module name from GUI (`#3529 <https://github.com/equinor/ert/pull/3529>`_)
+  - Shorten list of forward models in main GUI (`#3382 <https://github.com/equinor/ert/pull/3382>`_)
+  - Remove File menu from main window (`#3395 <https://github.com/equinor/ert/pull/3395>`_)
+  - Add timestamp to log file name (`#3334 <https://github.com/equinor/ert/pull/3334>`_)
+  - Catch exception and exit with meaningful error in shellscripts (`#3362 <https://github.com/equinor/ert/pull/3362>`_)
+  - Allow resize of simulations failed message box (`#3409 <https://github.com/equinor/ert/pull/3409>`_)
+  - Dont retry forward model if inconsistent time map (`#3427 <https://github.com/equinor/ert/pull/3427>`_)
+  - Make sure newlines are preserved in message box (`#3431 <https://github.com/equinor/ert/pull/3431>`_)
+  - Various improvements to analysis (
+    `#3439 <https://github.com/equinor/ert/pull/3439>`_,
+    `#3473 <https://github.com/equinor/ert/pull/3473>`_,
+    `#3476 <https://github.com/equinor/ert/pull/3476>`_
+    )
+  - Various improvements to runpath initialization (
+    `#3475 <https://github.com/equinor/ert/pull/3475>`_,
+    `#3492 <https://github.com/equinor/ert/pull/3492>`_,
+    `#3480 <https://github.com/equinor/ert/pull/3480>`_,
+    `#3504 <https://github.com/equinor/ert/pull/3504>`_,
+    `#3512 <https://github.com/equinor/ert/pull/3512>`_,
+    `#3494 <https://github.com/equinor/ert/pull/3494>`_,
+    `#3477 <https://github.com/equinor/ert/pull/3477>`_,
+    `#3520 <https://github.com/equinor/ert/pull/3520>`_,
+    `#3526 <https://github.com/equinor/ert/pull/3526>`_,
+    `#3467 <https://github.com/equinor/ert/pull/3467>`_
+    )
+  - Various improvments to stability of status tracking (
+    `#3481 <https://github.com/equinor/ert/pull/3481>`_,
+    `#3466 <https://github.com/equinor/ert/pull/3466>`_,
+    `#3483 <https://github.com/equinor/ert/pull/3483>`_,
+    `#3519 <https://github.com/equinor/ert/pull/3519>`_,
+    `#3531 <https://github.com/equinor/ert/pull/3531>`_,
+    `#3315 <https://github.com/equinor/ert/pull/3315>`_,
+    `#3324 <https://github.com/equinor/ert/pull/3324>`_,
+    `#3408 <https://github.com/equinor/ert/pull/3408>`_,
+    `#3360 <https://github.com/equinor/ert/pull/3360>`_
+    )
+  - Various improvments reading/writing to storage (
+    `#3429 <https://github.com/equinor/ert/pull/3429>`_,
+    `#3513 <https://github.com/equinor/ert/pull/3513>`_,
+    `#3530 <https://github.com/equinor/ert/pull/3530>`_,
+    `#3539 <https://github.com/equinor/ert/pull/3539>`_,
+    `#3434 <https://github.com/equinor/ert/pull/3434>`_,
+    `#3384 <https://github.com/equinor/ert/pull/3384>`_,
+    `#3390 <https://github.com/equinor/ert/pull/3390>`_,
+    `#3194 <https://github.com/equinor/ert/pull/3194>`_,
+    `#3510 <https://github.com/equinor/ert/pull/3510>`_,
+    `#3491 <https://github.com/equinor/ert/pull/3491>`_,
+    `#3552 <https://github.com/equinor/ert/pull/3552>`_
+    )
+  - ert3: Merge the ensemble and experiment config (`#3385 <https://github.com/equinor/ert/pull/3385>`_)
+  - ert3: Change "record" to "name" in the ensemble config (`#3364 <https://github.com/equinor/ert/pull/3364>`_)
+
 Version 2.35
 ------------
 
