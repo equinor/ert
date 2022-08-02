@@ -1,0 +1,90 @@
+@startuml
+hide circle
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity Experiment #lightgreen {
+  //str// name **<<to be deprecated>>**
+}
+
+entity Observation #lightgreen {
+  //str// name
+  //str[]// x_axis
+  //f64[]// values
+  //f64[]// errors
+  //int// experiment_id
+}
+
+entity ObservationTransformation {
+  //python-object// active_list
+  //python-object// scale_list
+}
+
+entity Ensemble #lightgreen {
+  //int// size
+  //int[]// active_realizations
+  //str[]// parameter_names
+  //str[]// response_names
+}
+
+entity Update {
+  //int// previous_ensemble_id
+  //int// next_ensemble_id
+  //str// algorithm
+}
+
+entity Record #lightgreen {
+  //str// name
+  //int// realization_index
+}
+
+entity RecordInfo {
+  //RecordType// record_type
+  //RecordClass// record_class
+}
+
+entity F64Matrix {
+  //f64[]// content
+  //python-object// labels
+}
+
+entity File {
+  //str// filename
+  //str// mimetype
+  //blob// content
+  //str// az_container **<<Azure Blob Storage>>**
+  //str// az_blob **<<Azure Blob Storage>>**
+}
+
+entity FileBlock <<Azure Blob Storage>> {
+  //str// block_id
+  //int// block_index
+  //str// record_name
+  //int// realization_index
+  //blob// content
+}
+
+entity Prior #lightgreen {
+  //str// name
+  //str// function
+  //str[]// argument_names
+  //f64[]// argument_values
+}
+
+Experiment ||-o{ Ensemble
+Experiment ||--o{ Prior
+Experiment ||--o{ Observation
+
+Observation ||-o{ ObservationTransformation
+ObservationTransformation }o--|| Update
+
+Ensemble --> Update
+Ensemble <-- Update
+RecordInfo }o--|| Ensemble
+RecordInfo ||--o{ Record
+Record ||--o| File
+Record ||--o| F64Matrix
+Ensemble ||--o{ FileBlock
+
+@enduml

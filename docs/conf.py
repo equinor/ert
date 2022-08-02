@@ -52,6 +52,7 @@ extensions = [
     "sphinxarg.ext",
     "sphinx.ext.todo",
     "sphinxcontrib.datatemplates",
+    "sphinxcontrib.plantuml",
     "ert_jobs",
     "ert_narratives",
 ]
