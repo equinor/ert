@@ -50,7 +50,7 @@ class EnkfSimulationRunner(BaseCClass):
                 else:
                     totalOk += 1
 
-        run_context.get_sim_fs().fsync()
+        run_context.sim_fs.fsync()
 
         if totalFailed == 0:
             print(f"All {totalOk} active jobs complete and data loaded.")

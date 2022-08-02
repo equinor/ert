@@ -36,10 +36,10 @@ class IteratedEnsembleSmoother(BaseRunModel):
         update_id: Optional[str] = None,
     ) -> str:
         phase_msg = (
-            f"Running iteration {run_context.get_iter()} of "
+            f"Running iteration {run_context.iteration} of "
             f"{self.phaseCount() - 1} simulation iterations..."
         )
-        self.setPhase(run_context.get_iter(), phase_msg, indeterminate=False)
+        self.setPhase(run_context.iteration, phase_msg, indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
         self.ert().getEnkfSimulationRunner().createRunPath(run_context)
@@ -186,7 +186,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             iteration=itr,
         )
         self._run_context = run_context
-        self._last_run_iteration = run_context.get_iter()
+        self._last_run_iteration = run_context.iteration
         self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
         return run_context
 

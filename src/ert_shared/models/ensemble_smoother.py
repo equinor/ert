@@ -73,7 +73,7 @@ class EnsembleSmoother(BaseRunModel):
         update_id = self._post_update_data(ensemble_id, analysis_module_name)
 
         self.setPhase(1, "Running simulations...")
-        self.ert().getEnkfFsManager().switchFileSystem(prior_context.get_target_fs())
+        self.ert().getEnkfFsManager().switchFileSystem(prior_context.target_fs)
 
         self.setPhaseName("Pre processing...")
 
@@ -117,7 +117,7 @@ class EnsembleSmoother(BaseRunModel):
             mask = self._simulation_arguments["active_realizations"]
         else:
             itr = 1
-            sim_fs = prior_context.get_target_fs()
+            sim_fs = prior_context.target_fs
             target_fs = None
             mask = sim_fs.getStateMap().createMask(
                 RealizationStateEnum.STATE_HAS_DATA
@@ -131,7 +131,7 @@ class EnsembleSmoother(BaseRunModel):
             source_filesystem=sim_fs,
         )
         self._run_context = run_context
-        self._last_run_iteration = run_context.get_iter()
+        self._last_run_iteration = run_context.iteration
         return run_context
 
     @classmethod

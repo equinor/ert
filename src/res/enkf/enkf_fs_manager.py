@@ -243,9 +243,9 @@ class EnkfFsManager(BaseCClass):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(
                     self.parent(),
-                    run_context.get_sim_fs(),
+                    run_context.sim_fs,
                     parameter_list,
-                    run_context.get_init_mode().value,
+                    run_context.init_mode.value,
                     realization_nr,
                 )
 

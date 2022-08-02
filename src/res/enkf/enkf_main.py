@@ -435,9 +435,9 @@ class _RealEnKFMain(BaseCClass):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(
                     self,
-                    run_context.get_sim_fs(),
+                    run_context.sim_fs,
                     self._parameter_keys,
-                    run_context.get_init_mode().value,
+                    run_context.init_mode.value,
                     realization_nr,
                 )
 

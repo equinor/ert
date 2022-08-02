@@ -111,12 +111,12 @@ class MultipleDataAssimilation(BaseRunModel):
         return run_context
 
     def _count_active_realizations(self, run_context: ErtRunContext) -> int:
-        return sum(run_context.get_mask())
+        return sum(run_context.mask)
 
     def update(
         self, run_context: ErtRunContext, weight: float, ensemble_id: str
     ) -> str:
-        next_iteration = run_context.get_iter() + 1
+        next_iteration = run_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
         self.setPhase(self.currentPhase() + 1, phase_string, indeterminate=True)
@@ -143,7 +143,7 @@ class MultipleDataAssimilation(BaseRunModel):
         evaluator_server_config: EvaluatorServerConfig,
         update_id: str = None,
     ) -> Tuple[int, str]:
-        iteration = run_context.get_iter()
+        iteration = run_context.iteration
 
         phase_string = f"Running simulation for iteration: {iteration}"
         self.setPhaseName(phase_string, indeterminate=True)
@@ -258,7 +258,7 @@ class MultipleDataAssimilation(BaseRunModel):
             iteration=itr,
         )
         self._run_context = run_context
-        self._last_run_iteration = run_context.get_iter()
+        self._last_run_iteration = run_context.iteration
         self.ert().getEnkfFsManager().switchFileSystem(sim_fs)
         return run_context
 
