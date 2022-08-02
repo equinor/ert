@@ -599,41 +599,5 @@ void init_active_run(const res_config_type *res_config,
 }
 } // namespace enkf_main
 
-RES_LIB_SUBMODULE("enkf_main", m) {
-    using namespace py::literals;
-    m.def("get_observation_keys", get_observation_keys);
-    m.def("get_parameter_keys", get_parameter_keys);
-    m.def(
-        "init_internalization",
-        [](py::object self) {
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            return enkf_main_init_internalization(enkf_main);
-        },
-        py::arg("self"));
-    m.def(
-    "load_from_run_context",
-        [](py::object self, std::vector<py::object> run_args_, std::vector<bool> active_mask, py::object sim_fs_) {
-        auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-        auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
-        std::vector<run_arg_type *> run_args;
-        for (auto & run_arg : run_args_) {
-            run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
-        }
-            return enkf_main_load_from_run_context(enkf_main,
-                                    active_mask,
-                                    sim_fs,
-                                    run_args);
-                                    });
-    m.def(
-        "init_active_run",
-        [](py::object res_config, py::object run_arg, py::object subst_list) {
-            enkf_main::init_active_run(
-                ert::from_cwrap<res_config_type>(res_config),
-                ert::from_cwrap<run_arg_type>(run_arg),
-                ert::from_cwrap<subst_list_type>(subst_list));
-        },
-        py::arg("res_config"), py::arg("run_arg"), py::arg("subst_list"));
-}
-
 #include "enkf_main_ensemble.cpp"
 #include "enkf_main_manage_fs.cpp"

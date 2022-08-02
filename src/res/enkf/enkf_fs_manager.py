@@ -215,7 +215,7 @@ class EnkfFsManager(BaseCClass):
             )
             node_list = list(node_list)
         source_case_fs = self.getFileSystem(source_case)
-        _lib.enkf_fs_manager.init_current_case_from_existing_custom(
+        _lib.enkf_main.init_current_case_from_existing_custom(
             self, source_case_fs, source_report_step, node_list, member_mask
         )
 
