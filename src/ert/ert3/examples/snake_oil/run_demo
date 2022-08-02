@@ -15,7 +15,10 @@ grep FOPR evaluation_data.json >/dev/null
 
 
 # DOE (design of experiment)
-design2params 0 resources/designmatrix.xlsx designsheet defaults  # [semeio]
+# design2params from semeio  genereates designmatrix.txt, designparameters.txt
+# and parameters.txt from the following command
+#design2params 0 resources/designmatrix.xlsx designsheet defaults
+
 python designmatrixtxt2json.py  # [hack]
 ert3 record load BPR_138_PERSISTENCE resources/designed_bpr_138_persistence.json
 ert3 record load BPR_555_PERSISTENCE resources/designed_bpr_555_persistence.json
