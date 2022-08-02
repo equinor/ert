@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfInitModeEnum
@@ -10,8 +10,8 @@ from res.enkf.run_arg import RunArg
 
 @dataclass
 class ErtRunContext:
-    sim_fs: Optional[EnkfFs] = None
-    target_fs: Optional[EnkfFs] = None
+    sim_fs: [EnkfFs]
+    target_fs: [EnkfFs] = None
     mask: List[bool] = field(default_factory=list)
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
@@ -33,6 +33,8 @@ class ErtRunContext:
                         job_name,
                     )
                 )
+        if not self.target_fs:
+            self.target_fs = self.sim_fs
 
     def is_active(self, index: int) -> bool:
         try:

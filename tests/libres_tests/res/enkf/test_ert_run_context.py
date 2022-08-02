@@ -25,7 +25,7 @@ from res.enkf.runpaths import Runpaths
 class ErtRunContextTest(ResTest):
     def test_case_init(self):
         mask = [True] * 100
-        ErtRunContext(mask=mask)
+        ErtRunContext(None, mask=mask)
 
     @tmpdir()
     def test_create(self):
