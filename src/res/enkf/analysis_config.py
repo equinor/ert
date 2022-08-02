@@ -201,75 +201,65 @@ class AnalysisConfig(BaseCClass):
     def set_log_path(self, path):
         self._set_log_path(path)
 
-    def getEnkfAlpha(self):
-        """:rtype: float"""
+    def getEnkfAlpha(self) -> float:
         return self._get_alpha()
 
     def setEnkfAlpha(self, alpha):
         self._set_alpha(alpha)
 
-    def getStdCutoff(self):
-        """:rtype: float"""
+    def getStdCutoff(self) -> float:
         return self._get_std_cutoff()
 
-    def setStdCutoff(self, std_cutoff):
+    def setStdCutoff(self, std_cutoff: float):
         self._set_std_cutoff(std_cutoff)
 
     def getAnalysisIterConfig(self) -> AnalysisIterConfig:
-        """@rtype: AnalysisIterConfig"""
         return self._get_iter_config().setParent(self)
 
     def get_stop_long_running(self) -> bool:
-        """@rtype: bool"""
         return self._get_stop_long_running()
 
     def set_stop_long_running(self, stop_long_running):
         self._set_stop_long_running(stop_long_running)
 
     def get_max_runtime(self) -> int:
-        """@rtype: int"""
         return self._get_max_runtime()
 
-    def set_max_runtime(self, max_runtime):
+    def set_max_runtime(self, max_runtime: int):
         self._set_max_runtime(max_runtime)
 
     def free(self):
         self._free()
 
-    def activeModuleName(self):
-        """:rtype: str"""
+    def activeModuleName(self) -> str:
         return self._get_active_module_name()
 
     def getModuleList(self) -> List[str]:
         return _lib.analysis_config_module_names(self)
 
-    def getModule(self, module_name) -> AnalysisModule:
-        """@rtype: AnalysisModule"""
+    def getModule(self, module_name: str) -> AnalysisModule:
         return self._get_module(module_name)
 
-    def hasModule(self, module_name):
-        """@rtype: bool"""
+    def hasModule(self, module_name: str) -> bool:
         return self._has_module(module_name)
 
-    def selectModule(self, module_name):
-        """@rtype: bool"""
+    def selectModule(self, module_name: str) -> bool:
         return self._select_module(module_name)
 
-    def getActiveModule(self):
-        """:rtype: AnalysisModule"""
+    def getActiveModule(self) -> AnalysisModule:
         return self.getModule(self.activeModuleName())
 
-    def setGlobalStdScaling(self, std_scaling):
+    def setGlobalStdScaling(self, std_scaling: float):
         self._set_global_std_scaling(std_scaling)
 
-    def getGlobalStdScaling(self):
+    def getGlobalStdScaling(self) -> float:
         return self._get_global_std_scaling()
 
     @property
     def minimum_required_realizations(self) -> int:
         return self._get_min_realizations()
 
-    def haveEnoughRealisations(self, realizations):
+    def haveEnoughRealisations(self, realizations) -> bool:
         return realizations >= self.minimum_required_realizations
 
     def __ne__(self, other):
