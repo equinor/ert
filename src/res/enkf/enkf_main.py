@@ -218,7 +218,7 @@ class EnKFMain(BaseCClass):
             sim_fs=source_filesystem,
             target_fs=target_fs,
             mask=active_mask,
-            itr=iteration,
+            iteration=iteration,
             paths=paths,
             jobnames=jobnames,
         )
