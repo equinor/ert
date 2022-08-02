@@ -16,7 +16,7 @@ pytest-timeout
 pytest>=6.2.0
 requests
 scikit-build
-semeio>=1.4.1
+semeio>=1.4.1,<1.4.5
 setuptools_scm
 sphinx
 sphinx_rtd_theme
