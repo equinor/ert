@@ -6,7 +6,6 @@ from ert_shared.services import Storage, _storage_main
 from ert_shared import port_handler
 
 
-@pytest.mark.skip
 @pytest.mark.integration_test
 @pytest.mark.requires_ert_storage
 def test_integration(tmp_path, monkeypatch):

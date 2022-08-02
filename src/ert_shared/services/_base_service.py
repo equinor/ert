@@ -220,6 +220,7 @@ class _Proc(threading.Thread):
         file = Path(f"{self._service_name}_server.json")
         if file.exists():
             file.unlink()
+        os.close(self._comm_pipe.fileno())
 
     @property
     def logger(self) -> Logger:
