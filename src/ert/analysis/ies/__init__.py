@@ -3,13 +3,13 @@ import numpy as np
 import res
 
 # pylint: disable=import-error
-from res._lib.ies import (  # type: ignore
-    make_E,
-    make_D,
-    init_update,
-    ModuleData,
+from res._lib.ies import (
     Config,
+    ModuleData,
+    init_update,
     inversion_type,
+    make_D,
+    make_E,
 )
 
 if TYPE_CHECKING:
@@ -61,3 +61,14 @@ def update_A(  # pylint: disable=too-many-arguments
     res._lib.ies.update_A(  # pylint: disable=no-member, c-extension-no-member
         data, A, Y, R, E, D, ies_inversion, truncation, step_length
     )
+
+
+__all__ = [
+    "make_E",
+    "make_D",
+    "init_update",
+    "ModuleData",
+    "Config",
+    "make_X",
+    "update_A",
+]
