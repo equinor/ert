@@ -51,7 +51,7 @@ class EnkfFs(BaseCClass):
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
 
-    def __init__(self, mount_point, read_only=False):
+    def __init__(self, mount_point: str, read_only: bool = False):
         c_ptr = self._mount(mount_point, read_only)
         super().__init__(c_ptr)
 
@@ -70,29 +70,25 @@ class EnkfFs(BaseCClass):
         return fs
 
     def getTimeMap(self) -> TimeMap:
-        """@rtype: TimeMap"""
         return self._get_time_map().setParent(self)
 
     def getStateMap(self) -> StateMap:
-        """@rtype: StateMap"""
         return self._get_state_map().setParent(self)
 
-    def getCaseName(self):
-        """@rtype: str"""
+    def getCaseName(self) -> str:
         return self._get_case_name()
 
-    def isReadOnly(self):
-        """@rtype: bool"""
+    def isReadOnly(self) -> bool:
         return self._is_read_only()
 
-    def refCount(self):
+    def refCount(self) -> int:
         return self._get_refcount()
 
-    def is_running(self):
+    def is_running(self) -> bool:
         return self._is_running()
 
     @classmethod
-    def createFileSystem(cls, path, mount=False):
+    def createFileSystem(cls, path: str, mount: bool = False) -> "EnkfFs":
         assert isinstance(path, str)
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
         fs = cls._create(path, fs_type, mount)
@@ -129,7 +125,6 @@ class EnkfFs(BaseCClass):
         self._fsync()
 
     def getSummaryKeySet(self) -> SummaryKeySet:
-        """@rtype: SummaryKeySet"""
         return self._summary_key_set().setParent(self)
 
     def realizationList(self, state):
