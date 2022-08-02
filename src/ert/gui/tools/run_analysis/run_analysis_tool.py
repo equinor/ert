@@ -21,7 +21,7 @@ from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 
 
 def analyse(ert, target, source):
@@ -32,7 +32,7 @@ def analyse(ert, target, source):
 
     target_fs = fs_manager.getFileSystem(target)
     source_fs = fs_manager.getFileSystem(source)
-    run_context = ErtRunContext(
+    run_context = RunContext(
         source_fs,
         target_fs,
     )

@@ -51,7 +51,7 @@ from .enums import (
     LoadFailTypeEnum,
     RealizationStateEnum,
 )
-from .ert_run_context import ErtRunContext
+from .ert_run_context import RunContext
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .ert_workflow_list import ErtWorkflowList
@@ -136,7 +136,7 @@ __all__ = [
     "RNGConfig",
     "ResConfig",
     "RunArg",
-    "ErtRunContext",
+    "RunContext",
     "EnkfSimulationRunner",
     "EnkfFsManager",
     "EnKFMain",

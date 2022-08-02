@@ -9,7 +9,7 @@ from res.enkf.run_arg import RunArg
 
 
 @dataclass
-class ErtRunContext:
+class RunContext:
     sim_fs: [EnkfFs]
     target_fs: [EnkfFs] = None
     mask: List[bool] = field(default_factory=list)

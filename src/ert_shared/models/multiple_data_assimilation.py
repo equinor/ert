@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Tuple
 from ert.analysis import ErtAnalysisError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel, ErtRunError
-from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf import EnkfSimulationRunner, RunContext
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime, RealizationStateEnum
 
@@ -50,7 +50,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         context = self.create_context(0, initialize_mask_from_arguments=True)
         self._checkMinimumActiveRealizations(context)
         weights = self.parseWeights(self._simulation_arguments["weights"])
@@ -110,12 +110,10 @@ class MultipleDataAssimilation(BaseRunModel):
 
         return run_context
 
-    def _count_active_realizations(self, run_context: ErtRunContext) -> int:
+    def _count_active_realizations(self, run_context: RunContext) -> int:
         return sum(run_context.mask)
 
-    def update(
-        self, run_context: ErtRunContext, weight: float, ensemble_id: str
-    ) -> str:
+    def update(self, run_context: RunContext, weight: float, ensemble_id: str) -> str:
         next_iteration = run_context.iteration + 1
 
         phase_string = f"Analyzing iteration: {next_iteration} with weight {weight}"
@@ -139,7 +137,7 @@ class MultipleDataAssimilation(BaseRunModel):
 
     def _simulateAndPostProcess(
         self,
-        run_context: ErtRunContext,
+        run_context: RunContext,
         evaluator_server_config: EvaluatorServerConfig,
         update_id: str = None,
     ) -> Tuple[int, str]:
@@ -219,7 +217,7 @@ class MultipleDataAssimilation(BaseRunModel):
         itr: int,
         initialize_mask_from_arguments: bool = True,
         update: bool = True,
-    ) -> ErtRunContext:
+    ) -> RunContext:
         target_case_format = self._simulation_arguments["target_case"]
         fs_manager = self.ert().getEnkfFsManager()
 

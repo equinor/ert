@@ -1,10 +1,10 @@
 import pytest
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 
 
-def _create_runpath(enkf_main: EnKFMain) -> ErtRunContext:
+def _create_runpath(enkf_main: EnKFMain) -> RunContext:
     """
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
@@ -13,7 +13,7 @@ def _create_runpath(enkf_main: EnKFMain) -> ErtRunContext:
     return run_context
 
 
-def _evaluate_ensemble(enkf_main: EnKFMain, run_context: ErtRunContext):
+def _evaluate_ensemble(enkf_main: EnKFMain, run_context: RunContext):
     """
     Launch ensemble experiment with the created config
     """

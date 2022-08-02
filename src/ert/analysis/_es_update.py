@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from res._lib.enkf_analysis import UpdateSnapshot
     from res.analysis.configuration import UpdateConfiguration
-    from res.enkf import EnKFMain, ErtRunContext
+    from res.enkf import EnKFMain, RunContext
     from res.enkf.analysis_config import AnalysisConfig
     from res.enkf.enkf_fs import EnkfFs
     from res.enkf.enkf_obs import EnkfObs
@@ -284,7 +284,7 @@ class ESUpdate:
         self.ert = enkf_main
         self.update_snapshots: Dict[str, SmootherSnapshot] = {}
 
-    def smootherUpdate(self, run_context: "ErtRunContext") -> None:
+    def smootherUpdate(self, run_context: "RunContext") -> None:
         source_fs = run_context.sim_fs
         target_fs = run_context.target_fs
 
@@ -329,7 +329,7 @@ class ESUpdate:
         self.update_snapshots[run_context.run_id] = smoother_snapshot
 
     def iterative_smoother_update(
-        self, run_context: "ErtRunContext", w_container: ies.ModuleData
+        self, run_context: "RunContext", w_container: ies.ModuleData
     ) -> None:
         source_fs = run_context.sim_fs
         target_fs = run_context.target_fs

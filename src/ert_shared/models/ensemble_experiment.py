@@ -4,7 +4,7 @@ import asyncio
 from ert_shared.models.base_run_model import ErtRunError
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime
-from res.enkf import ErtRunContext, EnkfSimulationRunner
+from res.enkf import RunContext, EnkfSimulationRunner
 import uuid
 from ert_shared.models import BaseRunModel
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -116,7 +116,7 @@ class EnsembleExperiment(BaseRunModel):
         self,
         run_msg: str,
         evaluator_server_config: EvaluatorServerConfig,
-    ) -> ErtRunContext:
+    ) -> RunContext:
 
         run_context = self.create_context()
 
@@ -153,12 +153,12 @@ class EnsembleExperiment(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         return self.runSimulations__(
             "Running ensemble experiment...", evaluator_server_config
         )
 
-    def create_context(self) -> ErtRunContext:
+    def create_context(self) -> RunContext:
         itr = self._simulation_arguments.get("iter_num", 0)
         mask = self._simulation_arguments["active_realizations"]
 

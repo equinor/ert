@@ -3,7 +3,7 @@ from typing import Any, Dict
 from ert_shared.models import ErtRunError, EnsembleExperiment
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.enkf.enkf_main import EnKFMain
 
 
@@ -23,7 +23,7 @@ class SingleTestRun(EnsembleExperiment):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         return self.runSimulations__(
             "Running single realisation test ...", evaluator_server_config
         )

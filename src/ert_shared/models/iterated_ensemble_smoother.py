@@ -4,7 +4,7 @@ from ert.analysis import ErtAnalysisError, ModuleData
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel, ErtRunError
 from res.analysis.analysis_module import AnalysisModule
-from res.enkf import EnkfSimulationRunner, ErtRunContext
+from res.enkf import EnkfSimulationRunner, RunContext
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime, RealizationStateEnum
@@ -31,7 +31,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def _runAndPostProcess(
         self,
-        run_context: ErtRunContext,
+        run_context: RunContext,
         evaluator_server_config: EvaluatorServerConfig,
         update_id: Optional[str] = None,
     ) -> str:
@@ -64,7 +64,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
         return target_fs
 
-    def analyzeStep(self, run_context: ErtRunContext, ensemble_id: str) -> str:
+    def analyzeStep(self, run_context: RunContext, ensemble_id: str) -> str:
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
@@ -90,7 +90,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig
-    ) -> ErtRunContext:
+    ) -> RunContext:
         phase_count = self.facade.get_number_of_iterations() + 1
         self.setPhaseCount(phase_count)
 
@@ -158,9 +158,9 @@ class IteratedEnsembleSmoother(BaseRunModel):
     def create_context(
         self,
         itr: int,
-        prior_context: Optional[ErtRunContext] = None,
+        prior_context: Optional[RunContext] = None,
         rerun: bool = False,
-    ) -> ErtRunContext:
+    ) -> RunContext:
         target_case_format = self._simulation_arguments["target_case"]
 
         sim_fs = self.createTargetCaseFileSystem(itr, target_case_format)

@@ -2,7 +2,7 @@ import os
 
 import pytest
 from ecl.util.util import IntVector
-from res.enkf import NodeId, ErtRunContext
+from res.enkf import NodeId, RunContext
 from res.enkf.config import FieldTypeEnum
 from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
@@ -75,9 +75,7 @@ class FieldExportTest(ResTest):
             iens_list.append(4)
 
             fs = fs_manager.getCurrentFileSystem()
-            run_context = ErtRunContext(
-                fs, mask=[True] * ert.getEnsembleSize()
-            )
+            run_context = RunContext(fs, mask=[True] * ert.getEnsembleSize())
             ert.initRun(run_context)
             # Filename without embedded %d - TypeError
             with self.assertRaises(TypeError):

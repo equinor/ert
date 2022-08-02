@@ -1,7 +1,7 @@
 import shutil
 import os
 import pytest
-from res.enkf import ResConfig, EnKFMain, ErtRunContext
+from res.enkf import ResConfig, EnKFMain, RunContext
 from ecl.util.util import StringList
 from ert_shared import __version__
 from packaging import version
@@ -49,7 +49,7 @@ def test_fs_init_from_scratch():
     ert = EnKFMain(res_config)
     sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
-    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
+    run_context = RunContext(sim_fs=sim_fs, mask=mask)
 
     ert.getEnkfFsManager().initializeFromScratch(
         StringList(["SNAKE_OIL_PARAM"]), run_context
@@ -80,7 +80,7 @@ def test_fs_init_from_scratch_deprecated():
     ert = EnKFMain(res_config)
     sim_fs = ert.getEnkfFsManager().getFileSystem("new_case")
     mask = [True] * 6 + [False] * 19
-    run_context = ErtRunContext(sim_fs=sim_fs, mask=mask)
+    run_context = RunContext(sim_fs=sim_fs, mask=mask)
     with pytest.warns(DeprecationWarning):
         ert.getEnkfFsManager().initializeFromScratch(
             StringList(["SNAKE_OIL_PARAM"]), run_context

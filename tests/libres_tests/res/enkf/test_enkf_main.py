@@ -81,7 +81,7 @@ def test_create_run_context(monkeypatch):
     iteration = 0
     ensemble_size = 10
     run_context = MagicMock()
-    monkeypatch.setattr(res.enkf.enkf_main, "ErtRunContext", run_context)
+    monkeypatch.setattr(res.enkf.enkf_main, "RunContext", run_context)
     enkf_main.getEnsembleSize = MagicMock()
     enkf_main.getEnsembleSize.return_value = ensemble_size
     enkf_main.getEnkfFsManager = MagicMock()

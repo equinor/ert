@@ -3,7 +3,7 @@ from functools import partial
 from cwrap import BaseCClass
 
 from res import _lib
-from res.enkf.ert_run_context import ErtRunContext
+from res.enkf.ert_run_context import RunContext
 from res.job_queue import JobQueue, JobQueueManager, RunStatusType
 from res.util import SubstitutionList
 
@@ -29,7 +29,7 @@ class EnkfSimulationRunner(BaseCClass):
     def _enkf_main(self) -> "EnKFMain":
         return self.parent()
 
-    def runSimpleStep(self, job_queue: JobQueue, run_context: ErtRunContext) -> int:
+    def runSimpleStep(self, job_queue: JobQueue, run_context: RunContext) -> int:
         # run simplestep
         self._enkf_main().initRun(run_context)
 
@@ -59,7 +59,7 @@ class EnkfSimulationRunner(BaseCClass):
 
         return totalOk
 
-    def createRunPath(self, run_context: ErtRunContext) -> None:
+    def createRunPath(self, run_context: RunContext) -> None:
         self._enkf_main().initRun(run_context)
         for iens, run_arg in enumerate(run_context):
             if run_context.is_active(iens):
@@ -84,7 +84,7 @@ class EnkfSimulationRunner(BaseCClass):
         self._enkf_main().runpaths.write_runpath_list(iterations, realizations)
 
     def runEnsembleExperiment(
-        self, job_queue: JobQueue, run_context: ErtRunContext
+        self, job_queue: JobQueue, run_context: RunContext
     ) -> int:
         return self.runSimpleStep(job_queue, run_context)
 
@@ -93,7 +93,7 @@ class EnkfSimulationRunner(BaseCClass):
         hook_manager = ert.getHookManager()
         hook_manager.runWorkflows(runtime, ert)
 
-    def start_queue(self, run_context: ErtRunContext, job_queue: JobQueue) -> None:
+    def start_queue(self, run_context: RunContext, job_queue: JobQueue) -> None:
         max_runtime = self._enkf_main().analysisConfig().get_max_runtime()
         if max_runtime == 0:
             max_runtime = None

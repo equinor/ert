@@ -18,14 +18,14 @@
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest, tmpdir
 
-from res.enkf import ErtRunContext
+from res.enkf import RunContext
 from res.enkf.runpaths import Runpaths
 
 
 class ErtRunContextTest(ResTest):
     def test_case_init(self):
         mask = [True] * 100
-        ErtRunContext(None, mask=mask)
+        RunContext(None, mask=mask)
 
     @tmpdir()
     def test_create(self):
@@ -39,7 +39,7 @@ class ErtRunContextTest(ResTest):
             )
             itr = 0
             realizations = list(range(len(mask)))
-            run_context1 = ErtRunContext(
+            run_context1 = RunContext(
                 None,
                 None,
                 mask,
@@ -56,7 +56,7 @@ class ErtRunContextTest(ResTest):
             self.assertEqual(run_arg0.iter_id, itr)
             self.assertEqual(run_id1, run_arg0.get_run_id())
 
-            run_context2 = ErtRunContext(
+            run_context2 = RunContext(
                 None,
                 None,
                 mask,
