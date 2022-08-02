@@ -27,6 +27,108 @@ Release Notes
  Miscellaneous:
    -
 
+Version 2.37
+------------
+
+Breaking changes:
+  - Refactor ies_data.cpp (`#3439 <https://github.com/equinor/ert/pull/3439>`_)
+  - Make Qt plotter utilizing the ert-api (`#3458 <https://github.com/equinor/ert/pull/3458>`_)
+  - Refactor creating data for running analysis (`#3473 <https://github.com/equinor/ert/pull/3473>`_)
+  - Refactor code paths for IES and ES (`#3476 <https://github.com/equinor/ert/pull/3476>`_)
+  - Remove UPDATE_RUNPATH_LIST workflow (`#3554 <https://github.com/equinor/ert/pull/3554>`_)
+  - Drop support for Python 3.6 and Python 3.7 (`#3490 <https://github.com/equinor/ert/pull/3490>`_)
+  - Change EXPORT_MISFIT_DATA workflow to only export to single file (`#3573 <https://github.com/equinor/ert/pull/3573>`_)
+
+Bugfixes:
+  - Use higher resolution when checking modification-time for target-file (`#3428 <https://github.com/equinor/ert/pull/3428>`_)
+  - Fix iteration nr bug in IES and add ies cli integration test (`#3457 <https://github.com/equinor/ert/pull/3457>`_)
+  - Release GIL before waiting for (async) futures in C++ (`#3450 <https://github.com/equinor/ert/pull/3450>`_)
+  - Add a filter to the log messages in base_run_model (`#3598 <https://github.com/equinor/ert/pull/3598>`_)
+  - Make ensemble client handle TimeoutError (`#3612 <https://github.com/equinor/ert/pull/3612>`_)
+
+New features:
+  - Expose priors in dark-storage endpoint (`#3522 <https://github.com/equinor/ert/pull/3522>`_)
+
+Improvements:
+  - Dont retry forward model if inconsistent time map (`#3427 <https://github.com/equinor/ert/pull/3427>`_)
+  - Remember plot type when switching between types (`#3447 <https://github.com/equinor/ert/pull/3447>`_)
+  - Fix storing initial A matrix in updatA (`#3453 <https://github.com/equinor/ert/pull/3453>`_)
+  - Avoid crashing if not connected to network, fallback to localhost (`#3481 <https://github.com/equinor/ert/pull/3481>`_)
+  - Remove module name from GUI (`#3529 <https://github.com/equinor/ert/pull/3529>`_)
+  - Improve feedback to users when callbacks fail (`#3534 <https://github.com/equinor/ert/pull/3534>`_)
+  - Allow more parameters in the webviz config (`#3609 <https://github.com/equinor/ert/pull/3609>`_)
+
+Dependencies:
+  - Add webviz-ert as dependency in setup.py (`#3587 <https://github.com/equinor/ert/pull/3587>`_)
+
+Miscellaneous:
+  - Update poly config guide (`#3444 <https://github.com/equinor/ert/pull/3444>`_)
+  - Use pd.concat instead of append (`#3449 <https://github.com/equinor/ert/pull/3449>`_)
+  - Explicitly load no-self-use pylint extension (`#3468 <https://github.com/equinor/ert/pull/3468>`_)
+  - Solve some infrequent pylint issues (`#3479 <https://github.com/equinor/ert/pull/3479>`_)
+  - Move create runpath and sample parameter logic from C to Python (`#3467 <https://github.com/equinor/ert/pull/3467>`_)
+  - Fix global-statement pylint error (`#3497 <https://github.com/equinor/ert/pull/3497>`_)
+  - Type and clean enkf_fs_manager (`#3491 <https://github.com/equinor/ert/pull/3491>`_)
+  - Update github issue template for bugs (`#3503 <https://github.com/equinor/ert/pull/3503>`_)
+  - Remove unused param arg (`#3507 <https://github.com/equinor/ert/pull/3507>`_)
+  - Remove unecessary fs version checks (`#3510 <https://github.com/equinor/ert/pull/3510>`_)
+  - Use async context manager for ens_evaluator client (`#3484 <https://github.com/equinor/ert/pull/3484>`_)
+  - Remove unused function get_observation_count (`#3513 <https://github.com/equinor/ert/pull/3513>`_)
+  - Replace util_split_string and util_alloc_joined_string with C++ (`#3500 <https://github.com/equinor/ert/pull/3500>`_)
+  - Remove unneeded extern C (`#3525 <https://github.com/equinor/ert/pull/3525>`_)
+  - Inline `time_map_summary_update__` (`#3530 <https://github.com/equinor/ert/pull/3530>`_)
+  - Push runpath_list into hook_manager (`#3526 <https://github.com/equinor/ert/pull/3526>`_)
+  - Use standard library for string split and file handling (`#3538 <https://github.com/equinor/ert/pull/3538>`_)
+  - Type and simplify measured.py (`#3539 <https://github.com/equinor/ert/pull/3539>`_)
+  - Select pytest asyncio_mode=auto (`#3540 <https://github.com/equinor/ert/pull/3540>`_)
+  - Cleaning and refactoring block fs for readability (`#3552 <https://github.com/equinor/ert/pull/3552>`_)
+  - Rewrite test framework for and upgrade test_job_queue_manager (`#3518 <https://github.com/equinor/ert/pull/3518>`_)
+  - Replace enkf_main_alloc_caselist with iterdir (`#3563 <https://github.com/equinor/ert/pull/3563>`_)
+  - Update MIN_SUPPORTED_FS_VERSION (`#3545 <https://github.com/equinor/ert/pull/3545>`_)
+  - Remove unused cases config (`#3565 <https://github.com/equinor/ert/pull/3565>`_)
+  - Use copy_if in enkf_main.cpp::get_parameter_keys (`#3577 <https://github.com/equinor/ert/pull/3577>`_)
+  - Improve documentation of GEN_KW (`#3576 <https://github.com/equinor/ert/pull/3576>`_)
+  - Solve pylint warnings on dangerous-default-value (`#3584 <https://github.com/equinor/ert/pull/3584>`_)
+  - Move save/load parameters to EnkfFs (`#3574 <https://github.com/equinor/ert/pull/3574>`_)
+  - Delete unused block fs drivers (`#3566 <https://github.com/equinor/ert/pull/3566>`_)
+  - Fix test that failed due to new pandas (`#3441 <https://github.com/equinor/ert/pull/3441>`_)
+  - Update about-section of readme (`#3442 <https://github.com/equinor/ert/pull/3442>`_)
+  - Set docs language to english (`#3446 <https://github.com/equinor/ert/pull/3446>`_)
+  - Simplify return type to reflect function behaviour (`#3339 <https://github.com/equinor/ert/pull/3339>`_)
+  - Update readme after first setup (`#3166 <https://github.com/equinor/ert/pull/3166>`_)
+  - Update jupyter notebook hm examples to new API (`#3460 <https://github.com/equinor/ert/pull/3460>`_)
+  - Log plot views (`#3470 <https://github.com/equinor/ert/pull/3470>`_)
+  - Handle dying batcher (`#3466 <https://github.com/equinor/ert/pull/3466>`_)
+  - Update spe1 readme according to new config layout (`#3472 <https://github.com/equinor/ert/pull/3472>`_)
+  - Hoverinfo formatting (`#3475 <https://github.com/equinor/ert/pull/3475>`_)
+  - Remove unused queue code (`#3454 <https://github.com/equinor/ert/pull/3454>`_)
+  - Reverting an earlier attempt to optimize creation (`#3483 <https://github.com/equinor/ert/pull/3483>`_)
+  - Separate benchmarks into different runs (`#3419 <https://github.com/equinor/ert/pull/3419>`_)
+  - Remove doc referring to tagged keywords (`#3492 <https://github.com/equinor/ert/pull/3492>`_)
+  - Remove unused model_config internalization (`#3480 <https://github.com/equinor/ert/pull/3480>`_)
+  - Add experimental feature flag to webviz ert (`#3482 <https://github.com/equinor/ert/pull/3482>`_)
+  - Remove unused function gen_kw_ecl_write_template (`#3504 <https://github.com/equinor/ert/pull/3504>`_)
+  - Remove unnecessary enkf_main_init_fs (`#3512 <https://github.com/equinor/ert/pull/3512>`_)
+  - Refactor enkf_main_write_run_path (`#3494 <https://github.com/equinor/ert/pull/3494>`_)
+  - Removal of INIT_MISFIT_TABLE workflow. (`#3477 <https://github.com/equinor/ert/pull/3477>`_)
+  - Add missing await in a rare branch of the code, extend logging (`#3519 <https://github.com/equinor/ert/pull/3519>`_)
+  - Remove unused function run_path_list_load (`#3520 <https://github.com/equinor/ert/pull/3520>`_)
+  - Apply the fire-and-forget strategy when sending updates to clients (`#3531 <https://github.com/equinor/ert/pull/3531>`_)
+  - Add safety-check after #3483 because self._dispatchers_connected can be None (`#3533 <https://github.com/equinor/ert/pull/3533>`_)
+  - Install pybind11 from PyPI in CMake CI (`#3547 <https://github.com/equinor/ert/pull/3547>`_)
+  - Set file dialog to reasonable width and height - simplified approach (`#3461 <https://github.com/equinor/ert/pull/3461>`_)
+  - Remove graphql related code (`#3532 <https://github.com/equinor/ert/pull/3532>`_)
+  - Refactor `block_fs` `file_node` (`#3555 <https://github.com/equinor/ert/pull/3555>`_)
+  - Remove fixing of nodes (`#3562 <https://github.com/equinor/ert/pull/3562>`_)
+  - Make dependency on file location in Block explicit (`#3570 <https://github.com/equinor/ert/pull/3570>`_)
+  - Hide log statements from console and put storage statements in log file (`#3489 <https://github.com/equinor/ert/pull/3489>`_)
+  - Remove unneeded source fs from save_parameters (`#3580 <https://github.com/equinor/ert/pull/3580>`_)
+  - Remove unused enum (`#3592 <https://github.com/equinor/ert/pull/3592>`_)
+  - Clean up for moving runpath list writing (`#3604 <https://github.com/equinor/ert/pull/3604>`_)
+  - Add C tests with EXCLUDE_FROM_ALL (`#3607 <https://github.com/equinor/ert/pull/3607>`_)
+  - Use ert_shared Client in job_runner (`#3606 <https://github.com/equinor/ert/pull/3606>`_)
+  - Remove logging of conn_info (`#3670 <https://github.com/equinor/ert/pull/3670>`_)
+
 Version 2.36
 ------------
 
