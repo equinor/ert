@@ -14,6 +14,7 @@ pytest-raises
 pytest-snapshot
 pytest-timeout
 pytest>=6.2.0
+pytest-repeat
 requests
 scikit-build
 setuptools_scm
