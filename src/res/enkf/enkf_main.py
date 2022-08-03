@@ -367,34 +367,27 @@ class _RealEnKFMain(BaseCClass):
         return self._create_repr(cnt)
 
     def getEnsembleSize(self) -> int:
-        """@rtype: int"""
         return self._get_ensemble_size()
 
     def ensembleConfig(self) -> EnsembleConfig:
-        """@rtype: EnsembleConfig"""
         return self.resConfig().ensemble_config.setParent(self)
 
     def analysisConfig(self) -> AnalysisConfig:
-        """@rtype: AnalysisConfig"""
         return self.resConfig().analysis_config.setParent(self)
 
     def getModelConfig(self) -> ModelConfig:
-        """@rtype: ModelConfig"""
         return self.resConfig().model_config.setParent(self)
 
     def siteConfig(self) -> SiteConfig:
-        """@rtype: SiteConfig"""
         return self.resConfig().site_config.setParent(self)
 
     def resConfig(self) -> "ResConfig":
         return self._get_res_config().setParent(self)
 
     def eclConfig(self) -> EclConfig:
-        """@rtype: EclConfig"""
         return self.resConfig().ecl_config
 
     def getDataKW(self) -> SubstitutionList:
-        """@rtype: SubstitutionList"""
         return self._get_data_kw()
 
     def addDataKW(self, key, value):
@@ -416,25 +409,22 @@ class _RealEnKFMain(BaseCClass):
     def have_observations(self):
         return self._have_observations()
 
-    def getHistoryLength(self):
+    def getHistoryLength(self) -> int:
         return self.resConfig().model_config.get_last_history_restart()
 
     def get_observations(self, user_key, obs_count, obs_x, obs_y, obs_std):
         return self._get_observations(user_key, obs_count, obs_x, obs_y, obs_std)
 
-    def getKeyManager(self):
-        """:rtype: KeyManager"""
+    def getKeyManager(self) -> "KeyManager":
         return self.__key_manager
 
     def getWorkflowList(self) -> ErtWorkflowList:
-        """@rtype: ErtWorkflowList"""
         return self._get_workflow_list().setParent(self)
 
     def getHookManager(self) -> HookManager:
-        """@rtype: HookManager"""
         return self._get_hook_manager()
 
-    def loadFromRunContext(self, run_context: ErtRunContext, fs):
+    def loadFromRunContext(self, run_context: ErtRunContext, fs) -> int:
         """Returns the number of loaded realizations"""
         return enkf_main.load_from_run_context(
             self, run_context.run_args, run_context.mask, fs
