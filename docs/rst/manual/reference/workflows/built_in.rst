@@ -9,20 +9,6 @@ Built in workflow jobs
 ERT comes with a list of default workflow jobs which invoke internal
 ERT functionality. The internal workflow jobs include:
 
-Jobs related to case management
--------------------------------
-
-**SELECT_CASE**
-
-The job :code:`SELECT_CASE` can be used to change the currently selected
-case. The :code:`SELECT_CASE` job should be used as:
-
-::
-
-	SELECT_CASE  newCase
-
-if the case `newCase` does not exist it will be created.
-
 Jobs related to export
 ----------------------
 

@@ -1,5 +1,4 @@
 INTERNAL    True
-FUNCTION    enkf_main_select_case_JOB
-MIN_ARG     1
-MAX_ARG     1
-ARG_TYPE    0  STRING
+FUNCTION    enkf_main_exit_JOB
+MIN_ARG     0
+MAX_ARG     0

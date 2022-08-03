@@ -42,13 +42,6 @@ class WorkflowCommon:
 
     @staticmethod
     def createInternalFunctionJob():
-        with open("select_case_job", "w") as f:
-            f.write("INTERNAL True\n")
-            f.write("FUNCTION enkf_main_select_case_JOB\n")
-            f.write("MIN_ARG 1\n")
-            f.write("MAX_ARG 1\n")
-            f.write("ARG_TYPE 0 STRING\n")
-
         with open("printf_job", "w") as f:
             f.write("INTERNAL True\n")
             f.write("FUNCTION printf\n")

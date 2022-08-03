@@ -1,4 +1,3 @@
-import pkg_resources
 from distutils.errors import DistutilsFileError
 
 from ...libres_utils import ResTest
@@ -15,34 +14,8 @@ class ErtTestContextTest(ResTest):
             with ErtTestContext("Does/not/exist"):
                 pass
 
-    def selectCaseTest(self, context, root_path):
-        ert = context.getErt()
-        resource_file = pkg_resources.resource_filename(
-            "ert_shared", root_path + "/SELECT_CASE"
-        )
-
-        default_fs = ert.getEnkfFsManager().getCurrentFileSystem()
-
-        custom_fs = ert.getEnkfFsManager().getFileSystem("CustomCase")
-
-        self.assertEqual(ert.getEnkfFsManager().getCurrentFileSystem(), default_fs)
-
-        context.installWorkflowJob("SELECT_CASE_JOB", resource_file)
-        self.assertTrue(context.runWorkflowJob("SELECT_CASE_JOB", "CustomCase"))
-
-        self.assertEqual(ert.getEnkfFsManager().getCurrentFileSystem(), custom_fs)
-
-    def test_workflow_function_jobs(self):
-
-        with ErtTestContext(self.config) as context:
-            internal_config = "share/ert/workflows/jobs/internal-tui/config"
-            self.selectCaseTest(context, root_path=internal_config)
-
     def test_workflow_ert_script_jobs(self):
 
         with ErtTestContext(self.config) as context:
             with self.assertRaises(IOError):
                 context.installWorkflowJob("JOB_NAME", "DOES/NOT/EXIST")
-
-            ert_scripts_config = "share/ert/workflows/jobs/internal-gui/config"
-            self.selectCaseTest(context, root_path=ert_scripts_config)
