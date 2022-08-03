@@ -55,7 +55,6 @@ from .ert_run_context import RunContext
 from .ert_template import ErtTemplate
 from .ert_templates import ErtTemplates
 from .ert_workflow_list import ErtWorkflowList
-from .forward_load_context import ForwardLoadContext
 from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
 from .model_config import ModelConfig
@@ -140,5 +139,4 @@ __all__ = [
     "EnkfSimulationRunner",
     "EnkfFsManager",
     "EnKFMain",
-    "ForwardLoadContext",
 ]

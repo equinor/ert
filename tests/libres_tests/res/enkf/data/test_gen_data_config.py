@@ -1,28 +1,18 @@
 from ....libres_utils import ResTest
 
-from res import ResPrototype
-from res.enkf import ForwardLoadContext, NodeId, RunArg
+from res.enkf import NodeId
 from res.enkf.config import GenDataConfig
 from res.enkf.data import EnkfNode
 from res.test import ErtTestContext
 
 
 class GenDataConfigTest(ResTest):
-    _update_active_mask = ResPrototype(
-        (
-            "void gen_data_config_update_active( gen_data_config, "
-            "forward_load_context , bool_vector)"
-        ),
-        bind=False,
-    )
-
     def setUp(self):
         self.config_file = self.createTestPath("local/snake_oil/snake_oil.ert")
 
     def load_active_masks(self, case1, case2):
         with ErtTestContext(self.config_file) as test_context:
             ert = test_context.getErt()
-            subst_list = ert.resConfig().subst_config.subst_list
 
             fs1 = ert.getEnkfFsManager().getFileSystem(case1)
             config_node = ert.ensembleConfig().getNode("SNAKE_OIL_OPR_DIFF")
@@ -48,36 +38,14 @@ class GenDataConfigTest(ResTest):
             active_mask_modified = active_mask.copy()
             active_mask_modified[10] = False
 
-            self.updateMask(
-                config_node.getDataModelConfig(),
-                199,
-                fs2,
-                active_mask_modified,
-                subst_list,
-            )
-            active_mask = config_node.getDataModelConfig().getActiveMask()
-            self.assertFalse(active_mask[10])
-
             # Load first - check element is true
             data_node = EnkfNode(config_node)
             data_node.tryLoad(fs1, NodeId(199, 0))
             active_mask = config_node.getDataModelConfig().getActiveMask()
             self.assertTrue(active_mask[10])
 
-            # Reload second again, should now be false at 10, due to the update
-            # further up
-            data_node = EnkfNode(config_node)
-            data_node.tryLoad(fs2, NodeId(199, 0))
-            active_mask = config_node.getDataModelConfig().getActiveMask()
-            self.assertFalse(active_mask[10])
-
     def test_loading_two_cases_with_and_without_active_file(self):
         self.load_active_masks("default_0", "default_1")
 
     def test_create(self):
         GenDataConfig("KEY")
-
-    def updateMask(self, gen_data_config, report_step, fs, active_mask, subst_list):
-        run_arg = RunArg("run_id", fs, 0, 0, "Path", "jobname")
-        load_context = ForwardLoadContext(run_arg=run_arg, report_step=report_step)
-        self._update_active_mask(gen_data_config, load_context, active_mask)
