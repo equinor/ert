@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 from datetime import datetime
-import os
-import sys
 
-from ecl.summary import EclSum, EclSumTStep
-from ecl.test import ExtendedTestCase
+from ecl.summary import EclSum
 
-from res.test.synthesizer import OilSimulator
+from snake_oil_simulator import OilSimulator
 
 
 def globalIndex(i, j, k, nx=10, ny=10, nz=10):
