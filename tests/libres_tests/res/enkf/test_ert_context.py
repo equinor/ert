@@ -15,19 +15,6 @@ class ErtTestContextTest(ResTest):
             with ErtTestContext("Does/not/exist"):
                 pass
 
-    def createCaseTest(self, context, root_path):
-        resource_file = pkg_resources.resource_filename(
-            "ert_shared", root_path + "/CREATE_CASE"
-        )
-        context.installWorkflowJob("CREATE_CASE_JOB", resource_file)
-        self.assertFalse(
-            context.getErt().getEnkfFsManager().caseExists("newly_created_case")
-        )
-        self.assertTrue(context.runWorkflowJob("CREATE_CASE_JOB", "newly_created_case"))
-        self.assertTrue(
-            context.getErt().getEnkfFsManager().caseExists("newly_created_case")
-        )
-
     def selectCaseTest(self, context, root_path):
         ert = context.getErt()
         resource_file = pkg_resources.resource_filename(
@@ -49,7 +36,6 @@ class ErtTestContextTest(ResTest):
 
         with ErtTestContext(self.config) as context:
             internal_config = "share/ert/workflows/jobs/internal-tui/config"
-            self.createCaseTest(context, root_path=internal_config)
             self.selectCaseTest(context, root_path=internal_config)
 
     def test_workflow_ert_script_jobs(self):
@@ -59,5 +45,4 @@ class ErtTestContextTest(ResTest):
                 context.installWorkflowJob("JOB_NAME", "DOES/NOT/EXIST")
 
             ert_scripts_config = "share/ert/workflows/jobs/internal-gui/config"
-            self.createCaseTest(context, root_path=ert_scripts_config)
             self.selectCaseTest(context, root_path=ert_scripts_config)
