@@ -87,7 +87,7 @@ void test_install_workflow(const char *config_file, const char *job_file) {
     {
         FILE *stream = util_fopen(wf_file, "w");
         stringlist_type *args = stringlist_alloc_new();
-        stringlist_append_copy(args, "NewCase");
+        stringlist_append_copy(args, "");
         ert_test_context_fwrite_workflow_job(stream, "JOB", args);
         stringlist_free(args);
         fclose(stream);
@@ -106,23 +106,15 @@ void test_run_workflow(const char *config_file, const char *job_file) {
     ert_test_context_install_workflow_job(test_context, "JOB", job_file);
     {
         FILE *stream1 = util_fopen("WFLOW1", "w");
-        FILE *stream2 = util_fopen("WFLOW2", "w");
         stringlist_type *args = stringlist_alloc_new();
         ert_test_context_fwrite_workflow_job(stream1, "JOB", args);
-        stringlist_append_copy(args, "NewCase");
-        ert_test_context_fwrite_workflow_job(stream2, "JOB", args);
-
         stringlist_free(args);
         fclose(stream1);
-        fclose(stream2);
     }
     test_assert_true(
         ert_test_context_install_workflow(test_context, "WFLOW1", "WFLOW1"));
-    test_assert_true(
-        ert_test_context_install_workflow(test_context, "WFLOW2", "WFLOW2"));
 
-    test_assert_true(ert_test_context_run_worklow(test_context, "WFLOW2"));
-    test_assert_false(ert_test_context_run_worklow(test_context, "WFLOW1"));
+    test_assert_true(ert_test_context_run_worklow(test_context, "WFLOW1"));
 
     ert_test_context_free(test_context);
 }

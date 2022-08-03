@@ -7,7 +7,6 @@ data_kw	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DAT
 delete_runpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#DELETE_RUNPATH
 end_date	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#END_DATE
 enspath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#ENSPATH
-select_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SELECT_CASE
 history_source	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#HISTORY_SOURCE
 refcase	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#REFCASE
 install_job	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#INSTALL_JOB
@@ -57,7 +56,6 @@ refcase_list	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ER
 plot_path	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#PLOT_PATH
 plot_width	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#PLOT_WIDTH
 rftpath	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#RFTPATH
-select_case	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#SELECT_CASE
 export_field	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD
 export_field_rms_roff	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD_RMS_ROFF
 export_field_ecl_grdecl	http://ert.nr.no/ert/index.php/Creating_a_configuration_file_for_ERT#EXPORT_FIELD_ECL_GRDECL

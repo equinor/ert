@@ -30,8 +30,6 @@
 using namespace std::string_literals;
 
 extern "C" void *enkf_main_exit_JOB(void *self, const stringlist_type *args);
-extern "C" void *enkf_main_select_case_JOB(void *self,
-                                           const stringlist_type *args);
 extern "C" void *enkf_main_export_field_JOB(void *self,
                                             const stringlist_type *args);
 extern "C" void *enkf_main_export_field_to_RMS_JOB(void *self,
@@ -61,7 +59,6 @@ void *test_job(void *self, const stringlist_type *args) {
 std::unordered_map<std::string, workflow_job_ftype *>
     workflow_internal_functions{
         {"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
-        {"enkf_main_select_case_JOB"s, &enkf_main_select_case_JOB},
         {"enkf_main_export_field_JOB"s, &enkf_main_export_field_JOB},
         {"enkf_main_export_field_to_RMS_JOB"s,
          &enkf_main_export_field_to_RMS_JOB},

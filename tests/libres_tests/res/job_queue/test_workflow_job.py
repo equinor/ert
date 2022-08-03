@@ -32,16 +32,6 @@ class WorkflowJobTest(ResTest):
             WorkflowCommon.createErtScriptsJob()
 
             config = self._alloc_config()
-            workflow_job = self._alloc_from_file(
-                "SELECT_CASE", config, "select_case_job"
-            )
-
-            self.assertEqual(workflow_job.name(), "SELECT_CASE")
-            self.assertTrue(workflow_job.isInternal())
-            self.assertEqual(workflow_job.functionName(), "enkf_main_select_case_JOB")
-
-            self.assertFalse(workflow_job.isInternalScript())
-            self.assertIsNone(workflow_job.getInternalScriptPath())
 
             workflow_job = self._alloc_from_file(
                 "SUBTRACT", config, "subtract_script_job"
