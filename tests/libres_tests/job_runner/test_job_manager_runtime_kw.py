@@ -4,8 +4,8 @@ from unittest import TestCase
 
 from ..libres_utils import tmpdir
 
-from job_runner.reporting.message import Exited, Finish, Start
-from job_runner.runner import JobRunner
+from ert.job_runner.reporting.message import Exited, Finish, Start
+from ert.job_runner.runner import JobRunner
 
 
 class JobManagerTestRuntimeKW(TestCase):

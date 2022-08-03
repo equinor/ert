@@ -5,9 +5,9 @@ import time
 import logging
 import functools
 
-from job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
-from job_runner.io import cond_unlink
-from job_runner.reporting.message import (
+from ert.job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
+from ert.job_runner.io import cond_unlink
+from ert.job_runner.reporting.message import (
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
     _JOB_STATUS_SUCCESS,
@@ -19,8 +19,8 @@ from job_runner.reporting.message import (
     Running,
     Start,
 )
-from job_runner.reporting.base import Reporter
-from job_runner.util import data as data_util
+from ert.job_runner.reporting.base import Reporter
+from ert.job_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"
 logger = logging.getLogger(__name__)

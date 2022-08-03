@@ -10,11 +10,9 @@ from typing import (
 import prefect
 
 from ert.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.client import Client
+from ert.data import BlobRecord, NumericalRecord, Record, record_data
 from ert.ensemble_evaluator import identifiers as ids
-
-from ert.data import NumericalRecord, BlobRecord, Record, record_data
-
+from ert_shared.ensemble_evaluator.client import Client
 
 from ._io_ import _IO
 from ._io_map import _stage_transmitter_mapping

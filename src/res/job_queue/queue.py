@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, 
 
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
-from job_runner import CERT_FILE, JOBS_FILE
+from ert.job_runner import CERT_FILE, JOBS_FILE
 from res import ResPrototype
 from res.job_queue.job_queue_node import JobQueueNode
 from res.job_queue.job_status_type_enum import JobStatusType

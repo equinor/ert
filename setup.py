@@ -108,7 +108,7 @@ args = dict(
         "console_scripts": [
             "ert3=ert.ert3.console:main",
             "ert=ert_shared.main:main",
-            "job_dispatch.py = job_runner.job_dispatch:main",
+            "job_dispatch.py = ert.job_runner.job_dispatch:main",
         ]
     },
     cmake_args=[

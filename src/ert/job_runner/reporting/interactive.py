@@ -1,7 +1,12 @@
 from typing import Optional
 
-from job_runner.reporting.message import Message, Finish, Start, _JOB_EXIT_FAILED_STRING
-from job_runner.reporting.base import Reporter
+from ert.job_runner.reporting.base import Reporter
+from ert.job_runner.reporting.message import (
+    _JOB_EXIT_FAILED_STRING,
+    Finish,
+    Message,
+    Start,
+)
 
 
 class Interactive(Reporter):

@@ -7,8 +7,8 @@ from subprocess import Popen
 
 from psutil import Process, TimeoutExpired, NoSuchProcess, AccessDenied, ZombieProcess
 
-from job_runner.io import assert_file_executable
-from job_runner.reporting.message import Exited, Running, Start
+from ert.job_runner.io import assert_file_executable
+from ert.job_runner.reporting.message import Exited, Running, Start
 
 
 class Job:

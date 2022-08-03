@@ -6,9 +6,9 @@ import signal
 import sys
 import typing
 
-from job_runner import JOBS_FILE, reporting
-from job_runner.reporting.message import Finish
-from job_runner.runner import JobRunner
+from ert.job_runner import JOBS_FILE, reporting
+from ert.job_runner.reporting.message import Finish
+from ert.job_runner.runner import JobRunner
 
 logger = logging.getLogger(__name__)
 

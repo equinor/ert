@@ -13,9 +13,9 @@ import psutil
 import pytest
 from ..libres_utils import _mock_ws_thread, tmpdir, wait_until
 
-from job_runner.cli import _setup_reporters, main
-from job_runner.reporting import Event, Interactive
-from job_runner.reporting.message import Finish, Init
+from ert.job_runner.cli import _setup_reporters, main
+from ert.job_runner.reporting import Event, Interactive
+from ert.job_runner.reporting.message import Finish, Init
 
 
 class JobDispatchTest(unittest.TestCase):
@@ -86,7 +86,9 @@ else:
             )
         os.chmod("setsid", 0o755)
 
-        job_dispatch_script = importlib.util.find_spec("job_runner.job_dispatch").origin
+        job_dispatch_script = importlib.util.find_spec(
+            "ert.job_runner.job_dispatch"
+        ).origin
         job_dispatch_process = Popen(
             [
                 os.getcwd() + "/setsid",
@@ -207,7 +209,9 @@ else:
             )
         os.chmod("setsid", 0o755)
 
-        job_dispatch_script = importlib.util.find_spec("job_runner.job_dispatch").origin
+        job_dispatch_script = importlib.util.find_spec(
+            "ert.job_runner.job_dispatch"
+        ).origin
         job_dispatch_process = Popen(
             [
                 os.getcwd() + "/setsid",
@@ -267,9 +271,9 @@ def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     port = unused_tcp_port
     jobs_json = json.dumps({"ee_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
-    with patch("job_runner.cli.os") as mock_os, patch(
-        "job_runner.cli.open", new=mock_open(read_data=jobs_json)
-    ), patch("job_runner.cli.JobRunner") as mock_runner:
+    with patch("ert.job_runner.cli.os") as mock_os, patch(
+        "ert.job_runner.cli.open", new=mock_open(read_data=jobs_json)
+    ), patch("ert.job_runner.cli.JobRunner") as mock_runner:
         mock_runner.return_value.run.return_value = [
             Init([], 0, 0),
             Finish().with_error("overall bad run"),
