@@ -278,7 +278,7 @@ jobs:
 
     - name: Test docs
       run: |
-        sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+        sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
 
   tests-libres:
     name: Run libres tests
