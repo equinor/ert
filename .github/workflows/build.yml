@@ -96,4 +96,4 @@ jobs:
       if: matrix.os == 'macos-latest' && matrix.test-type == 'integration-tests'
       run: |
         pushd tests
-        for i in {1..50}; do pytest --log-level=DEBUG ert_tests/cli/test_integration_cli.py::test_experiment_server_ensemble_experiment; done
+        for i in {1..30}; do python -m cProfile -o profile -m pytest ert_tests/cli/test_integration_cli.py::test_experiment_server_ensemble_experiment; python -c "import pstats; pstats.Stats('profile').strip_dirs().sort_stats('cumtime').print_stats(100)"; done
