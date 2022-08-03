@@ -61,6 +61,7 @@ class RunArg(BaseCClass):
             super().__init__(c_ptr)
         else:
             raise ValueError("Not constructed properly")
+        self._sim_fs = sim_fs
 
     def free(self):
         self._free()
@@ -109,3 +110,7 @@ class RunArg(BaseCClass):
     @property
     def job_name(self):
         return self._get_job_name()
+
+    @property
+    def sim_fs(self):
+        return self._sim_fs
