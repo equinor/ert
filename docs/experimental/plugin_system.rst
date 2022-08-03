@@ -112,7 +112,7 @@ This hook spesification relies on creating a config file, and has no utility fun
 The second hook registers individual jobs, with the option of adding documentation in the form
 of a description, examples, parser, etc. It passes in a config object where the job is added.
 
-.. literalinclude:: ../../../../src/ert_shared/plugins/hook_specifications/jobs.py
+.. literalinclude:: ../../src/ert_shared/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
 
 Minimal example:
