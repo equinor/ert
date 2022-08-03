@@ -113,11 +113,6 @@ enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
                                           enkf_fs_type *source_case_fs,
                                           int source_report_step);
 
-PY_USED void enkf_main_init_current_case_from_existing_custom(
-    enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, std::vector<std::string> &node_list,
-    std::vector<bool> &iactive);
-
 extern "C" void enkf_main_init_case_from_existing(
     const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
     int source_report_step, enkf_fs_type *target_case);
