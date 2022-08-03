@@ -6,7 +6,7 @@ from SALib.sample import fast_sampler
 
 from ert.ert3.stats import Distribution, Gaussian, Uniform
 from ert.data import NumericalRecord, Record, RecordTransmitter, RecordType
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 SALIB_DISTS = {"uniform": "unif", "gaussian": "norm", "loguniform": None}
 """Map from ERT3 distribution names to SALib distribution names. If mapped to

@@ -29,7 +29,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.ensemble_evaluator.util._network import wait_for_evaluator
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:

@@ -9,7 +9,7 @@ from typing import (
 )
 import prefect
 
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert.ensemble_evaluator import identifiers as ids
 

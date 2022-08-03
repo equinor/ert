@@ -17,7 +17,7 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_FM_STEP_RUNNING,
     EVTYPE_FM_STEP_SUCCESS,
 )
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 
 from ._job import _UnixJob

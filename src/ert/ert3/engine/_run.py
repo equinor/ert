@@ -13,7 +13,7 @@ import ert.ensemble_evaluator
 
 from ert import ert3
 from ert.ert3.config import SourceNS
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from res.config.active_range import ActiveRange
 
 from ._entity import TransmitterCoroutine

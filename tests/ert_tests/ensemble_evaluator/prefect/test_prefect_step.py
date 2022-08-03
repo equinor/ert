@@ -11,7 +11,7 @@ import ert.ensemble_evaluator as ee
 import pytest
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.builder._prefect import _on_task_failure
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 import prefect
 from prefect import Flow

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 
 import ert
 from ert import ert3
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 
 def _prepare_export_parameters(

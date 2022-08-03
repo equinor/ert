@@ -18,7 +18,7 @@ import httpx
 import pandas as pd
 import ert.data
 import ert.exceptions
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.services import Storage
 
 logger = logging.getLogger(__name__)

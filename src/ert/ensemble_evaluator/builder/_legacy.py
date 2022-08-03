@@ -18,7 +18,7 @@ from typing import (
 from cloudevents.http.event import CloudEvent
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.util._network import wait_for_evaluator
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from res.enkf import RunArg
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.queue_config import QueueConfig
