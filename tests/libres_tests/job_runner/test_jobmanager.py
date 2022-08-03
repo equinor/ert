@@ -6,8 +6,8 @@ from unittest import TestCase
 
 from ..libres_utils import tmpdir
 
-from job_runner.reporting.message import Exited, Start
-from job_runner.runner import JobRunner
+from ert.job_runner.reporting.message import Exited, Start
+from ert.job_runner.runner import JobRunner
 from res.job_queue import EnvironmentVarlist, ExtJob, ExtJoblist, ForwardModel
 from res.util import SubstitutionList
 

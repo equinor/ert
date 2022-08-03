@@ -4,14 +4,14 @@ from unittest.mock import PropertyMock, patch
 
 from ..libres_utils import tmpdir
 
-from job_runner.job import Job
-from job_runner.reporting.message import Exited, Running, Start
+from ert.job_runner.job import Job
+from ert.job_runner.reporting.message import Exited, Running, Start
 
 
 class JobTests(TestCase):
-    @patch("job_runner.job.assert_file_executable")
-    @patch("job_runner.job.Popen")
-    @patch("job_runner.job.Process")
+    @patch("ert.job_runner.job.assert_file_executable")
+    @patch("ert.job_runner.job.Popen")
+    @patch("ert.job_runner.job.Process")
     @tmpdir(None)
     def test_run_with_process_failing(
         self, mock_process, mock_popen, mock_assert_file_executable

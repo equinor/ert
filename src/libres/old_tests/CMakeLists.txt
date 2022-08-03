@@ -7,7 +7,7 @@ endif()
 # -----------------------------------------------------------------
 
 file(
-  COPY "${CMAKE_SOURCE_DIR}/../job_runner/job_dispatch.py"
+  COPY "${CMAKE_SOURCE_DIR}/../ert/job_runner/job_dispatch.py"
   DESTINATION "${CMAKE_BINARY_DIR}/bin"
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 

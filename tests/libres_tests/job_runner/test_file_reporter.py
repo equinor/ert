@@ -4,10 +4,10 @@ from unittest import TestCase
 
 from ..libres_utils import tmpdir
 
-from job_runner.job import Job
-from job_runner.reporting import File
-from job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
+from ert.job_runner.job import Job
+from ert.job_runner.reporting import File
+from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from ert.job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
 
 
 class FileReporterTests(TestCase):

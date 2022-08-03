@@ -3,15 +3,15 @@ import os
 
 from ..libres_utils import _mock_ws_thread
 
-from job_runner.job import Job
-from job_runner.reporting import Event
-from job_runner.reporting.event import (
+from ert.job_runner.job import Job
+from ert.job_runner.reporting import Event
+from ert.job_runner.reporting.event import (
     _FM_JOB_FAILURE,
     _FM_JOB_RUNNING,
     _FM_JOB_START,
     _FM_JOB_SUCCESS,
 )
-from job_runner.reporting.message import Exited, Finish, Init, Running, Start
+from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
 
 
 def test_report_with_successful_start_message_argument(unused_tcp_port):
