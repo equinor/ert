@@ -65,16 +65,6 @@ extern "C" C_USED void *enkf_main_select_case_JOB(void *self,
     return NULL;
 }
 
-// Internal workflow job
-extern "C" C_USED void *enkf_main_create_case_JOB(void *self,
-                                                  const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    const char *new_case = stringlist_iget(args, 0);
-    enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, new_case, true);
-    enkf_fs_decref(fs);
-    return NULL;
-}
-
 static void enkf_main_jobs_export_field(const enkf_main_type *enkf_main,
                                         const stringlist_type *args,
                                         field_file_format_type file_type) {

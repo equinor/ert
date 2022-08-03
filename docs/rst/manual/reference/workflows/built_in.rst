@@ -23,15 +23,6 @@ case. The :code:`SELECT_CASE` job should be used as:
 
 if the case `newCase` does not exist it will be created.
 
-**CREATE_CASE**
-
-The job :code:`CREATE_CASE` can be used to create a new case without selecting
-it. The :code:`CREATE_CASE` job should be used as:
-
-::
-
-	CREATE_CASE  newCase
-
 Jobs related to export
 ----------------------
 
