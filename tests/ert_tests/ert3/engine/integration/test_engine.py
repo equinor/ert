@@ -8,7 +8,7 @@ import pytest
 
 import ert
 from ert import ert3
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 from .integration_utils import (
     assert_distribution,

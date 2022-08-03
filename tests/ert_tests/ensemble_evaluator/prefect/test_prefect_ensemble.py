@@ -10,7 +10,7 @@ import prefect
 import pytest
 
 import ert.ensemble_evaluator as ee
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.builder._unix_task import UnixTask

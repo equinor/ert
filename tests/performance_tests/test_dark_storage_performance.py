@@ -1,5 +1,5 @@
 import pytest
-from ert_shared.async_utils import run_in_loop
+from ert.async_utils import run_in_loop
 import pandas as pd
 import io
 

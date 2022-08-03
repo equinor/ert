@@ -18,7 +18,7 @@ from ert.data import (
 )
 from ert.serialization import get_serializer, has_serializer
 from ert.exceptions import FileExistsException
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 _BIN_FOLDER = "bin"
 

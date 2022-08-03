@@ -11,7 +11,7 @@ import cloudpickle
 import ert
 import ert.ensemble_evaluator as ee
 import pytest
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 

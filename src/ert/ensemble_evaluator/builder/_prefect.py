@@ -38,7 +38,7 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_ENSEMBLE_STOPPED,
     EVTYPE_FM_STEP_FAILURE,
 )
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 from ert_shared.ensemble_evaluator.client import Client
 from ert_shared.port_handler import find_available_port
 

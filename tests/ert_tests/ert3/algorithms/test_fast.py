@@ -6,7 +6,7 @@ import pytest
 
 import ert
 from ert import ert3
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 # Expected values for S1 and ST for ishigami function
 # sample_size = 15000, harmonics = 4, bounds = [-pi, pi]

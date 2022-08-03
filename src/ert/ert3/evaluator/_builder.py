@@ -8,7 +8,7 @@ import ert.data
 import ert.ensemble_evaluator
 import ert.storage
 from ert import ert3
-from ert_shared.async_utils import get_event_loop
+from ert.async_utils import get_event_loop
 
 
 def add_step_inputs(
