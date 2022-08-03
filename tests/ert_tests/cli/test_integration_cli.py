@@ -17,6 +17,7 @@ from ert_shared.cli import (
 from ert_shared.cli.main import ErtCliError, run_cli
 from ert_shared.feature_toggling import FeatureToggling
 from ert_shared.main import ert_parser
+from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 @pytest.fixture()
@@ -237,7 +238,18 @@ def test_ies(tmpdir, source_root):
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(40)
-def test_experiment_server_ensemble_experiment(tmpdir, source_root, capsys):
+def test_experiment_server_ensemble_experiment(
+    tmpdir, source_root, capsys, monkeypatch
+):
+    class MockESConfig(EvaluatorServerConfig):
+        def __init__(self, *args, **kwargs):
+            if "generate_cert" not in kwargs:
+                kwargs["generate_cert"] = False
+            super().__init__(*args, **kwargs)
+
+    # Do not generate certificates during test. Part of cert generation is quite time consuming
+    monkeypatch.setattr("ert_shared.cli.main.EvaluatorServerConfig", MockESConfig)
+
     shutil.copytree(
         os.path.join(source_root, "test-data", "local", "poly_example"),
         os.path.join(str(tmpdir), "poly_example"),
