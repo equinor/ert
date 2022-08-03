@@ -16,7 +16,7 @@ class RunContext:
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
     iteration: int = 0
-    init_mode: EnkfInitModeEnum.INIT_CONDITIONAL = EnkfInitModeEnum.INIT_CONDITIONAL
+    init_mode: EnkfInitModeEnum = EnkfInitModeEnum.INIT_CONDITIONAL
 
     def __post_init__(self):
         self.run_id = f"{uuid.uuid4()}:{datetime.now().strftime('%Y-%m-%dT%H%M')}"
