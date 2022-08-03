@@ -228,11 +228,10 @@ static void enkf_state_check_for_missing_eclipse_summary_data(
 static std::pair<fw_load_status, std::string>
 enkf_state_internalize_dynamic_eclipse_results(
     ensemble_config_type *ens_config, forward_load_context_type *load_context,
-    const model_config_type *model_config) {
+    const model_config_type *model_config, enkf_fs_type *sim_fs,
+    const int iens) {
 
     bool load_summary = ensemble_config_has_impl_type(ens_config, SUMMARY);
-    const run_arg_type *run_arg =
-        forward_load_context_get_run_arg(load_context);
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
     const ecl_sum_type *summary =
@@ -248,7 +247,6 @@ enkf_state_internalize_dynamic_eclipse_results(
         }
 
         {
-            enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
             // OK - now we have actually loaded the ecl_sum instance, or
             // ecl_sum == NULL.
             if (summary) {
@@ -262,7 +260,6 @@ enkf_state_internalize_dynamic_eclipse_results(
                     time_map_alloc_index_map(time_map, summary);
 
                 // The actual loading internalizing - from ecl_sum -> enkf_node.
-                const int iens = run_arg_get_iens(run_arg);
                 // step2 is just taken from the number of steps found in the
                 // summary file.
                 const int step2 = ecl_sum_get_last_report_step(summary);
@@ -307,11 +304,7 @@ enkf_state_internalize_dynamic_eclipse_results(
 
                 return {LOAD_SUCCESSFUL, ""};
             } else {
-                return {LOAD_FAILURE,
-                        fmt::format("Could not load ECLIPSE summary data from: "
-                                    "{}/{}.UNSMRY",
-                                    run_arg_get_runpath(run_arg),
-                                    run_arg_get_job_name(run_arg))};
+                return {LOAD_FAILURE, "Missing keys in summary file"};
             }
         }
     } else {
@@ -427,11 +420,16 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     // in these results are inferred from the loading of summary results,
     // hence we must load the summary results first.
     auto status = enkf_state_internalize_dynamic_eclipse_results(
-        ens_config, load_context, model_config);
+        ens_config, load_context, model_config, run_arg_get_sim_fs(run_arg),
+        run_arg_get_iens(run_arg));
 
     if (status.first != LOAD_SUCCESSFUL) {
         forward_load_context_free(load_context);
-        return status;
+        return {status.first,
+                status.second + fmt::format(", in summary file: "
+                                            "{}/{}.UNSMRY",
+                                            run_arg_get_runpath(run_arg),
+                                            run_arg_get_job_name(run_arg))};
     }
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);

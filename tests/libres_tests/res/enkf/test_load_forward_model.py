@@ -85,7 +85,8 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
         "Realization: 0, load failure: 2 inconsistencies in time_map, first: "
         "Time mismatch for step: 0, response time: 2000-01-01, reference case: "
         "2010-01-01, last: Time mismatch for step: 1, response time: 2000-01-10, "
-        "reference case: 2010-01-10"
+        f"reference case: 2010-01-10, in summary file: {run_path.absolute()}"
+        "/SNAKE_OIL_FIELD.UNSMRY"
     ) in caplog.messages
     assert loaded == 0
     assert (
