@@ -33,7 +33,7 @@ namespace fs = std::filesystem;
 
 namespace enkf_main {
 void ecl_write(const ensemble_config_type *ens_config,
-               const char *export_base_name, const run_arg_type *run_arg,
+               const char *export_base_name, const char *run_path, int iens,
                enkf_fs_type *fs);
 } // namespace enkf_main
 
@@ -43,19 +43,16 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
         PARAMETER);
     enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
     enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
-    run_arg_type *run_arg =
-        run_arg_alloc("run_id", init_fs, 0, 0, "simulations/run0", NULL);
     rng_manager_type *rng_manager = enkf_main_get_rng_manager(enkf_main);
-    rng_type *rng = rng_manager_iget(rng_manager, run_arg_get_iens(run_arg));
+    rng_type *rng = rng_manager_iget(rng_manager, 0);
     enkf_state_initialize(state, rng, init_fs, key_list, INIT_FORCE);
     enkf_main::ecl_write(
         res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
         model_config_get_gen_kw_export_name(
             res_config_get_model_config(enkf_main_get_res_config(enkf_main))),
-        run_arg, init_fs);
+        "simulations/run0", 0, init_fs);
     test_assert_true(fs::exists("simulations/run0/parameters.txt"));
     test_assert_true(fs::exists("simulations/run0/parameters.json"));
-    run_arg_free(run_arg);
 }
 
 static void read_erroneous_gen_kw_file(void *arg) {

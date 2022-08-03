@@ -558,9 +558,13 @@ class EnKFMain(BaseCClass):
                 for subst in substitutions.items():
                     subst_list.addItem(*subst)
                 enkf_main.init_active_run(
-                    self.resConfig(),
-                    run_arg,
-                    subst_list,
+                    res_config=self.resConfig(),
+                    run_path=run_arg.runpath,
+                    iens=run_arg.iens,
+                    sim_fs=run_arg.sim_fs,
+                    run_id=run_arg.get_run_id(),
+                    job_name=run_arg.job_name,
+                    subst_list=subst_list,
                 )
 
         active_list = [
