@@ -32,10 +32,8 @@ from .config_keys import ConfigKeys
 from .data import EnkfNode, ExtParam, Field, GenData, GenKw
 from .ecl_config import EclConfig
 from .enkf_fs import EnkfFs
-from .enkf_fs_manager import EnkfFsManager
 from .enkf_main import EnKFMain
 from .enkf_obs import EnkfObs
-from .enkf_simulation_runner import EnkfSimulationRunner
 from .ensemble_config import EnsembleConfig
 from .enums import (
     ActiveMode,
@@ -136,7 +134,5 @@ __all__ = [
     "ResConfig",
     "RunArg",
     "RunContext",
-    "EnkfSimulationRunner",
-    "EnkfFsManager",
     "EnKFMain",
 ]

@@ -4,7 +4,7 @@ import asyncio
 from ert_shared.models.base_run_model import ErtRunError
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime
-from res.enkf import RunContext, EnkfSimulationRunner
+from res.enkf import RunContext
 import uuid
 from ert_shared.models import BaseRunModel
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -48,7 +48,7 @@ class EnsembleExperiment(BaseRunModel):
             experiment_logger.debug("creating runpaths")
             await loop.run_in_executor(
                 executor,
-                self.ert().getEnkfSimulationRunner().createRunPath,
+                self.ert().createRunPath,
                 run_context,
             )
 
@@ -123,12 +123,12 @@ class EnsembleExperiment(BaseRunModel):
         self.setPhase(0, "Running simulations...", indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(run_context)
+        self.ert().createRunPath(run_context)
 
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data()
 
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, self.ert())
 
         self.setPhaseName(run_msg, indeterminate=False)
 
@@ -142,7 +142,7 @@ class EnsembleExperiment(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, self.ert())
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)

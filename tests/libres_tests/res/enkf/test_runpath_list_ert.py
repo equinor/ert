@@ -8,7 +8,7 @@ from res.enkf import EnKFMain, ResConfig
 def test_assert_symlink_deleted(setup_case):
     res_config = setup_case("local/snake_oil_field", "snake_oil.ert")
     ert = EnKFMain(res_config)
-    runner = ert.getEnkfSimulationRunner()
+    runner = ert
 
     # create directory structure
     run_context = ert.create_ensemble_experiment_run_context(iteration=0)
@@ -50,7 +50,7 @@ def test_assert_export():
         iteration=0,
     )
 
-    ert.getEnkfSimulationRunner().createRunPath(run_context)
+    ert.createRunPath(run_context)
 
     assert runpath_list_file.exists()
     assert "test_runpath_list.txt" == runpath_list_file.name

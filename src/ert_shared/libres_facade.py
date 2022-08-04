@@ -44,18 +44,16 @@ class LibresFacade:
         return self._enkf_main.getEnsembleSize()
 
     def get_current_case_name(self):
-        return str(
-            self._enkf_main.getEnkfFsManager().getCurrentFileSystem().getCaseName()
-        )
+        return str(self._enkf_main.getCurrentFileSystem().getCaseName())
 
     def get_active_realizations(self, case_name):
-        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name, read_only=True)
+        fs = self._enkf_main.getFileSystem(case_name, read_only=True)
         realizations = SummaryCollector.createActiveList(fs)
 
         return realizations
 
     def case_initialized(self, case):
-        return self._enkf_main.getEnkfFsManager().isCaseInitialized(case)
+        return self._enkf_main.isCaseInitialized(case)
 
     def get_queue_config(self):
         return self._enkf_main.get_queue_config()
@@ -76,7 +74,7 @@ class LibresFacade:
     def load_from_forward_model(
         self, case: str, realisations: List[bool], iteration: int
     ) -> int:
-        fs = self._enkf_main.getEnkfFsManager().getFileSystem(case)
+        fs = self._enkf_main.getFileSystem(case)
         return self._enkf_main.loadFromForwardModel(realisations, iteration, fs)
 
     def get_observations(self):
@@ -86,7 +84,7 @@ class LibresFacade:
         return self._enkf_main.getObservations()[key].getImplementationType().name
 
     def get_current_fs(self):
-        return self._enkf_main.getEnkfFsManager().getCurrentFileSystem()
+        return self._enkf_main.getCurrentFileSystem()
 
     def get_data_key_for_obs_key(self, observation_key):
         return self._enkf_main.getObservations()[observation_key].getDataKey()
@@ -115,20 +113,20 @@ class LibresFacade:
 
     def select_or_create_new_case(self, case_name):
         if self.get_current_case_name() != case_name:
-            fs = self._enkf_main.getEnkfFsManager().getFileSystem(case_name)
-            self._enkf_main.getEnkfFsManager().switchFileSystem(fs)
+            fs = self._enkf_main.getFileSystem(case_name)
+            self._enkf_main.switchFileSystem(fs)
 
     def cases(self):
-        return self._enkf_main.getEnkfFsManager().getCaseList()
+        return self._enkf_main.getCaseList()
 
     def is_case_hidden(self, case):
-        return self._enkf_main.getEnkfFsManager().isCaseHidden(case)
+        return self._enkf_main.isCaseHidden(case)
 
     def case_has_data(self, case):
-        return self._enkf_main.getEnkfFsManager().caseHasData(case)
+        return self._enkf_main.caseHasData(case)
 
     def is_case_running(self, case):
-        return self._enkf_main.getEnkfFsManager().isCaseRunning(case)
+        return self._enkf_main.isCaseRunning(case)
 
     def all_data_type_keys(self):
         return self._enkf_main.getKeyManager().allDataTypeKeys()

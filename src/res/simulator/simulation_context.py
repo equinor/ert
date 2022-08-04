@@ -2,7 +2,6 @@ from threading import Thread
 from time import sleep
 from typing import List
 
-from res.enkf import EnkfSimulationRunner
 from res.enkf.enums import HookRuntime
 from res.job_queue import ForwardModelStatus, JobQueueManager
 
@@ -29,8 +28,8 @@ class SimulationContext:
             iteration=itr,
         )
 
-        self._ert.getEnkfSimulationRunner().createRunPath(self._run_context)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
+        self._ert.createRunPath(self._run_context)
+        self._ert.runWorkflows(HookRuntime.PRE_SIMULATION, self._ert)
         self._sim_thread = self._run_simulations_simple_step()
 
         # Wait until the queue is active before we finish the creation
@@ -52,7 +51,7 @@ class SimulationContext:
 
     def _run_simulations_simple_step(self):
         sim_thread = Thread(
-            target=lambda: self._ert.getEnkfSimulationRunner().runSimpleStep(
+            target=lambda: self._ert.runSimpleStep(
                 self._queue_manager.queue, self._run_context
             )
         )

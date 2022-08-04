@@ -1,20 +1,21 @@
-import res.enkf
+import os
+from pathlib import Path
+
+from res.enkf import ResConfig
 from res.enkf.enkf_main import EnKFMain
-from res.enkf.substituter import Substituter
-from res.enkf.runpaths import Runpaths
+import pytest
 from unittest.mock import MagicMock
 
 
-class MockEnKFMain(EnKFMain):
-    def __init__(self):
-        self._real_enkf_main = MagicMock()
-        self._real_enkf_main.return_value = MagicMock()
-        self._real_enkf_main.return_value.substituter = Substituter()
-        self._real_enkf_main.return_value.runpaths = Runpaths("job%d", "/run%d/path%d")
+@pytest.fixture
+def enkf_main(tmp_path):
+    (tmp_path / "test.ert").write_text("NUM_REALIZATIONS 1\nJOBNAME name%d")
+    os.chdir(tmp_path)
+    yield EnKFMain(ResConfig("test.ert"))
 
 
-def test_load_from_forward_model():
-    enkf_main = MockEnKFMain()
+def test_load_from_forward_model(enkf_main):
+
     fs = MagicMock()
     realizations = [True] * 10
     iteration = 0
@@ -29,8 +30,7 @@ def test_load_from_forward_model():
     enkf_main.loadFromRunContext.assert_called()
 
 
-def test_create_ensemble_experiment_run_context():
-    enkf_main = MockEnKFMain()
+def test_create_ensemble_experiment_run_context(enkf_main):
     fs = MagicMock()
 
     enkf_main._create_run_context = MagicMock()
@@ -50,8 +50,7 @@ def test_create_ensemble_experiment_run_context():
     )
 
 
-def test_create_ensemble_smoother_run_context():
-    enkf_main = MockEnKFMain()
+def test_create_ensemble_smoother_run_context(enkf_main):
     fs = MagicMock()
     fs2 = MagicMock()
 
@@ -75,40 +74,31 @@ def test_create_ensemble_smoother_run_context():
     )
 
 
-def test_create_run_context(monkeypatch):
-    enkf_main = MockEnKFMain()
+def test_create_run_context(monkeypatch, enkf_main):
 
     iteration = 0
     ensemble_size = 10
-    run_context = MagicMock()
-    monkeypatch.setattr(res.enkf.enkf_main, "RunContext", run_context)
-    enkf_main.getEnsembleSize = MagicMock()
-    enkf_main.getEnsembleSize.return_value = ensemble_size
-    enkf_main.getEnkfFsManager = MagicMock()
 
-    enkf_main._create_run_context(
-        iteration=iteration,
+    run_context = enkf_main._create_run_context(
+        iteration=iteration, active_mask=[True] * ensemble_size
     )
-    run_context.assert_called_with(
-        sim_fs=enkf_main.getEnkfFsManager().getCurrentFileSystem.return_value,
-        target_fs=None,
-        mask=[True] * ensemble_size,
-        iteration=iteration,
-        paths=enkf_main.runpaths.get_paths(list(range(ensemble_size)), iteration),
-        jobnames=enkf_main.runpaths.get_jobnames(list(range(ensemble_size)), iteration),
-    )
+    assert run_context.sim_fs == enkf_main.getCurrentFileSystem()
+    assert run_context.target_fs == enkf_main.getCurrentFileSystem()
+    assert run_context.mask == [True] * ensemble_size
+    assert run_context.paths == [
+        f"{Path().absolute()}/simulations/realization{i}" for i in range(ensemble_size)
+    ]
+    assert run_context.jobnames == [f"name{i}" for i in range(ensemble_size)]
 
-    assert enkf_main.substituter.get_substitutions(1, iteration) == {
-        "<RUNPATH>": f"/run1/path{iteration}",
-        "<ECL_BASE>": "job1",
-        "<ECLBASE>": "job1",
-        "<ITER>": str(iteration),
-        "<IENS>": "1",
-    }
+    substitutions = enkf_main.substituter.get_substitutions(1, iteration)
+    assert "<RUNPATH>" in substitutions
+    assert substitutions["<ECL_BASE>"] == "name1"
+    assert substitutions["<ECLBASE>"] == "name1"
+    assert substitutions["<ITER>"] == str(iteration)
+    assert substitutions["<IENS>"] == "1"
 
 
-def test_create_set_geo_id():
-    enkf_main = MockEnKFMain()
+def test_create_set_geo_id(enkf_main):
 
     iteration = 1
     realization = 2
