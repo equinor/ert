@@ -57,7 +57,7 @@ def test_hook_call_order_es_mda(monkeypatch):
         "analysis_module": "some_module",
     }
     evaluator_server_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535)
+        custom_port_range=range(1024, 65535), use_token=False, generate_cert=False
     )
     ert_mock = MagicMock()
     test_class = test_class(minimum_args, ert_mock, MagicMock())

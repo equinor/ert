@@ -385,7 +385,10 @@ def test_tracking_progress(
     else:
         brm = run_model(None, None, None)
     ee_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
     )
     with patch(
         "ert.ensemble_evaluator.tracker.evaluator_tracker.create_ee_monitor"

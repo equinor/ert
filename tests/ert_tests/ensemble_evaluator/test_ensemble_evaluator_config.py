@@ -4,7 +4,8 @@ from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 def test_load_config(unused_tcp_port):
     fixed_port = range(unused_tcp_port, unused_tcp_port)
     serv_config = EvaluatorServerConfig(
-        custom_port_range=fixed_port, custom_host="127.0.0.1"
+        custom_port_range=fixed_port,
+        custom_host="127.0.0.1",
     )
     expected_host = "127.0.0.1"
     expected_port = unused_tcp_port
@@ -25,7 +26,10 @@ def test_load_config(unused_tcp_port):
     sock.close()
 
     ee_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
     )
     sock = ee_config.get_socket()
     assert sock is not None
