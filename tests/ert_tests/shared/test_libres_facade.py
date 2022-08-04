@@ -1,12 +1,11 @@
 import logging
-import pytest
 import shutil
 
 import pandas as pd
+import pytest
 from pandas.core.base import PandasObject
 
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
 from res.enkf.export import SummaryCollector
 
 
@@ -21,12 +20,7 @@ def snake_oil_data(source_root, tmp_path, monkeypatch):
 @pytest.fixture
 def facade(snake_oil_data):
     config_file = "snake_oil.ert"
-
-    rc = ResConfig(user_config_file=config_file)
-    rc.convertToCReference(None)
-    ert = EnKFMain(rc)
-    facade = LibresFacade(ert)
-    return facade
+    return LibresFacade.from_config_file(config_file)
 
 
 def test_keyword_type_checks(facade):

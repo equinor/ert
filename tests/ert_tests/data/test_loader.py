@@ -144,9 +144,7 @@ def test_load_block_response(facade, monkeypatch):
     plot_block_data_loader.getBlockObservation.return_value = mocked_block_obs
 
     result = loader._load_block_response(facade, "some_key", "a_random_name")
-    mocked_get_block_measured.assert_called_once_with(
-        facade.get_ensemble_size(), block_data
-    )
+    mocked_get_block_measured.assert_called_once_with(facade.ensemble_size, block_data)
     assert result.equals(
         pd.DataFrame(
             [[10.0, 10.0, 10.0, 10.0]],

@@ -28,7 +28,7 @@ def patch_enkf_main(monkeypatch, tmpdir):
     res_config_mock = Mock()
     type(res_config_mock).config_path = PropertyMock(return_value=tmpdir.strpath)
     facade_mock = Mock()
-    facade_mock.get_ensemble_size.return_value = 1
+    facade_mock.ensemble_size = 1
     facade_mock.get_number_of_iterations.return_value = 1
     monkeypatch.setattr(
         ert.gui.simulation.simulation_panel,

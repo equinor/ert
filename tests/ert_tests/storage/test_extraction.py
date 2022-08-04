@@ -15,8 +15,6 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from ert.libres_facade import LibresFacade
 from ert_shared.storage import extraction
 from res.enkf import RunContext
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
 
 
 @pytest.mark.parametrize(
@@ -71,15 +69,7 @@ class ErtConfigBuilder:
         self._build_observations(path)
         self._build_priors(path)
 
-        config = ResConfig(str(path / "test.ert"))
-        enkfmain = EnKFMain(config)
-
-        # The C code doesn't do resource counting correctly, so we need to hook
-        # ResConfig to EnKFMain because otherwise ResConfig will be deleted and
-        # EnKFMain will use a dangling pointer.
-        enkfmain.__config = config
-
-        return LibresFacade(enkfmain)
+        return LibresFacade.from_config_file(str(path / "test.ert"))
 
     def _build_ert(self, path):
         f = (path / "test.ert").open("w")

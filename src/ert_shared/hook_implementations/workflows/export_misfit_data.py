@@ -19,8 +19,7 @@ class ExportMisfitDataJob(ErtScript):
     """
 
     def run(self, target_file=None):
-        ert = self.ert()
-        fs = ert.getEnkfFsManager().getCurrentFileSystem()
+        fs = self.facade.get_current_filesystem()
 
         if target_file is None:
             target_file = "misfit.hdf"
@@ -35,7 +34,7 @@ class ExportMisfitDataJob(ErtScript):
             raise StorageError("No responses loaded")
         misfits = defaultdict(list)
         for realization in realizations:
-            for obs_vector in ert.getObservations():
+            for obs_vector in self.facade.get_observations():
                 misfits[obs_vector.getObservationKey()].append(
                     obs_vector.getTotalChi2(fs, realization)
                 )

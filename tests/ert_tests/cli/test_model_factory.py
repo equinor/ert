@@ -1,7 +1,7 @@
 from argparse import Namespace
 
-from ert_shared.cli import model_factory
 from ert.libres_facade import LibresFacade
+from ert_shared.cli import model_factory
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
@@ -116,7 +116,7 @@ class ModelFactoryTest(ErtTest):
             model = model_factory._setup_ensemble_smoother(
                 ert,
                 args,
-                facade.get_ensemble_size(),
+                facade.ensemble_size,
                 facade.get_current_case_name(),
             )
             self.assertTrue(isinstance(model, EnsembleSmoother))
@@ -141,7 +141,7 @@ class ModelFactoryTest(ErtTest):
             model = model_factory._setup_multiple_data_assimilation(
                 ert,
                 args,
-                facade.get_ensemble_size(),
+                facade.ensemble_size,
                 facade.get_current_case_name(),
             )
             self.assertTrue(isinstance(model, MultipleDataAssimilation))
@@ -167,7 +167,7 @@ class ModelFactoryTest(ErtTest):
             model = model_factory._setup_iterative_ensemble_smoother(
                 ert,
                 args,
-                facade.get_ensemble_size(),
+                facade.ensemble_size,
                 facade.get_current_case_name(),
             )
             self.assertTrue(isinstance(model, IteratedEnsembleSmoother))

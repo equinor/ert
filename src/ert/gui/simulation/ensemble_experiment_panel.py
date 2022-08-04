@@ -41,9 +41,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel(
-            f"<b>{self.facade.get_ensemble_size()}</b>"
-        )
+        number_of_realizations_label = QLabel(f"<b>{self.facade.ensemble_size}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -54,7 +52,7 @@ class EnsembleExperimentPanel(SimulationConfigPanel):
             "config/simulation/active_realizations",
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(self.facade.get_ensemble_size()),
+            RangeStringArgument(self.facade.ensemble_size),
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 

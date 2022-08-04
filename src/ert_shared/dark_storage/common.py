@@ -1,7 +1,8 @@
 from typing import List, Union
+
 import pandas as pd
 
-from ert.data import loader, MeasuredData
+from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 from res.enkf import EnkfObservationImplementationType
 

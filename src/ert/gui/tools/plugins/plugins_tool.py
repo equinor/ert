@@ -1,15 +1,16 @@
 from qtpy.QtWidgets import QMenu
+from typing import TYPE_CHECKING
 
 from ert.gui.ertwidgets import resourceIcon
 from ert.gui.tools import Tool
 from ert.gui.tools.plugins import PluginRunner
 
+if TYPE_CHECKING:
+    from .plugin_handler import PluginHandler
+
 
 class PluginsTool(Tool):
-    def __init__(self, plugin_handler, notifier):
-        """
-        @type plugin_handler: PluginHandler
-        """
+    def __init__(self, plugin_handler: "PluginHandler", notifier):
         enabled = len(plugin_handler) > 0
         self.notifier = notifier
         super().__init__(

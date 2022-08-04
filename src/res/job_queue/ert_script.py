@@ -9,21 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 class ErtScript:
-    def __init__(self, ert):
-        """
-        @type ert: EnKFMain
-        """
+    def __init__(self, facade):
         if not hasattr(self, "run"):
             raise UserWarning(
                 "ErtScript implementations must provide a method run(self, ert, ...)"
             )
         self.__verbose = False
-        self.__ert = ert
 
         self.__is_cancelled = False
         self.__failed = False
         self._stdoutdata = ""
         self._stderrdata = ""
+        self.facade = facade
 
     @property
     def stdoutdata(self):
@@ -41,11 +38,6 @@ class ErtScript:
 
     def isVerbose(self):
         return self.__verbose
-
-    def ert(self):
-        """@rtype: res.enkf.EnKFMain"""
-        logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
-        return self.__ert
 
     def isCancelled(self):
         """@rtype: bool"""

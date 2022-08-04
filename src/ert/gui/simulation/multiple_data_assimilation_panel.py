@@ -13,32 +13,32 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from dataclasses import dataclass
+from typing import List
+
 from qtpy.QtWidgets import QFormLayout, QLabel
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
-    addHelpToWidget,
-    CaseSelector,
     ActiveLabel,
     AnalysisModuleEdit,
+    CaseSelector,
+    addHelpToWidget,
 )
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
-    NumberListStringArgument,
-    RangeStringArgument,
-    ProperNameFormatArgument,
-    IntegerArgument,
-)
 from ert.gui.simulation import SimulationConfigPanel
-from ert_shared.models import MultipleDataAssimilation
 from ert.libres_facade import LibresFacade
-
-from dataclasses import dataclass
-from typing import List
+from ert_shared.ide.keywords.definitions import (
+    IntegerArgument,
+    NumberListStringArgument,
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
+from ert_shared.models import MultipleDataAssimilation
 
 
 @dataclass
@@ -65,7 +65,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel(f"<b>{facade.get_ensemble_size()}</b>")
+        number_of_realizations_label = QLabel(f"<b>{facade.ensemble_size}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -104,7 +104,7 @@ class MultipleDataAssimilationPanel(SimulationConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(facade.get_ensemble_size())
+            RangeStringArgument(facade.ensemble_size)
         )
         layout.addRow("Active realizations:", self._active_realizations_field)
 

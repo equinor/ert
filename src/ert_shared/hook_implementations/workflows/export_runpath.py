@@ -29,16 +29,16 @@ class ExportRunpathJob(ErtScript):
 
     def run(self, *args):
         args = " ".join(args).split()  # Make sure args is a list of words
-        self.ert().write_runpath_list(*self.get_ranges(args))
+        self.facade.write_runpath_list(*self.get_ranges(args))
 
     def get_ranges(self, args):
         realizations_rangestring, iterations_rangestring = self._get_rangestrings(args)
         return (
             self._list_from_rangestring(
-                iterations_rangestring, self.number_of_iterations
+                iterations_rangestring, self.facade.number_of_iterations
             ),
             self._list_from_rangestring(
-                realizations_rangestring, self.number_of_realizations
+                realizations_rangestring, self.facade.ensemble_size
             ),
         )
 
@@ -52,18 +52,10 @@ class ExportRunpathJob(ErtScript):
     def _get_rangestrings(self, args: List[str]):
         if not args:
             return (
-                f"0-{self.number_of_realizations-1}",
+                f"0-{self.facade.ensemble_size-1}",
                 "0-0",  # weird default behavior, kept for backwards compatability
             )
         if "|" not in args:
             raise ValueError("Expected | in EXPORT_RUNPATH arguments")
         delimiter = args.index("|")
         return " ".join(args[:delimiter]), " ".join(args[delimiter + 1 :])
-
-    @property
-    def number_of_realizations(self):
-        return self.ert().getEnsembleSize()
-
-    @property
-    def number_of_iterations(self):
-        return len(self.ert().analysisConfig().getAnalysisIterConfig())

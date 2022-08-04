@@ -2,9 +2,7 @@ from qtpy.QtWidgets import QComboBox
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
-from ert.gui.ertwidgets.models.ertmodel import (
-    getAllCases,
-)
+from ert.gui.ertwidgets.models.ertmodel import getAllCases
 from ert.libres_facade import LibresFacade
 
 

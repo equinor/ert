@@ -24,10 +24,10 @@ class ActiveRealizationsModel(ValueModel):
         self.setValue(mask_to_rangestring(mask))
 
     def getDefaultValue(self):
-        size = self.facade.get_ensemble_size()
+        size = self.facade.ensemble_size
         return f"0-{size-1:d}"
 
     def getActiveRealizationsMask(self) -> List[bool]:
         return ActiveRange(
-            rangestring=self.getValue(), length=self.facade.get_ensemble_size()
+            rangestring=self.getValue(), length=self.facade.ensemble_size
         ).mask

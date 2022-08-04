@@ -1,19 +1,19 @@
+from dataclasses import dataclass
+
 from qtpy.QtWidgets import QFormLayout, QLabel, QSpinBox
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit, CaseSelector
+from ert.gui.ertwidgets import AnalysisModuleEdit, CaseSelector, addHelpToWidget
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
-    RangeStringArgument,
-    ProperNameFormatArgument,
-)
 from ert.gui.simulation import SimulationConfigPanel
-from ert_shared.models import IteratedEnsembleSmoother
 from ert.libres_facade import LibresFacade
-
-from dataclasses import dataclass
+from ert_shared.ide.keywords.definitions import (
+    ProperNameFormatArgument,
+    RangeStringArgument,
+)
+from ert_shared.models import IteratedEnsembleSmoother
 
 
 @dataclass
@@ -41,9 +41,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
         addHelpToWidget(run_path_label, "config/simulation/runpath")
         layout.addRow("Runpath:", run_path_label)
 
-        number_of_realizations_label = QLabel(
-            f"<b>{self.facade.get_ensemble_size()}</b>"
-        )
+        number_of_realizations_label = QLabel(f"<b>{self.facade.ensemble_size}</b>")
         addHelpToWidget(
             number_of_realizations_label, "config/ensemble/num_realizations"
         )
@@ -84,7 +82,7 @@ class IteratedEnsembleSmootherPanel(SimulationConfigPanel):
             self._active_realizations_model, "config/simulation/active_realizations"
         )
         self._active_realizations_field.setValidator(
-            RangeStringArgument(self.facade.get_ensemble_size())
+            RangeStringArgument(self.facade.ensemble_size)
         )
         layout.addRow("Active realizations", self._active_realizations_field)
 

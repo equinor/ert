@@ -7,7 +7,8 @@ from distutils.dir_util import copy_tree
 import numpy as np
 import pytest
 from ecl.summary import EclSum
-from ert.data import loader, MeasuredData
+
+from ert.data import MeasuredData, loader
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 from res.enkf.export import SummaryObservationCollector
@@ -27,9 +28,7 @@ def copy_snake_oil(tmpdir):
 
 @pytest.fixture()
 def facade_snake_oil(copy_snake_oil):
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-    yield LibresFacade(ert)
+    yield LibresFacade.from_config_file("snake_oil.ert")
 
 
 def test_history_obs(monkeypatch, facade_snake_oil):
@@ -67,10 +66,7 @@ def test_summary_obs_runtime(monkeypatch, copy_snake_oil):
     with obs_file.open(mode="a") as fin:
         fin.write(create_summary_observation())
 
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
 
     start_time = time.time()
     foprh = MeasuredData(facade, [f"FOPR_{restart}" for restart in range(1, 201)])
@@ -106,10 +102,7 @@ def test_summary_obs_last_entry(monkeypatch, copy_snake_oil, formatted_date):
             "};\n"
         )
 
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
 
     foprh = MeasuredData(facade, ["LAST_DATE"])
     assert foprh.data.loc[["OBS", "STD"]].values.flatten().tolist() == [10.0, 0.1]
@@ -124,10 +117,7 @@ def test_gen_obs_runtime(monkeypatch, copy_snake_oil, snapshot):
     with obs_file.open(mode="a") as fin:
         fin.write(create_general_observation())
 
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
 
     df = MeasuredData(facade, [f"CUSTOM_DIFF_{restart}" for restart in range(500)])
 
@@ -178,9 +168,7 @@ def test_block_obs(monkeypatch, tmpdir, formatted_date):
             with obs_file.open(mode="a") as fin:
                 fin.write(block_obs)
 
-            res_config = ResConfig("snake_oil.ert")
-            ert = EnKFMain(res_config)
-            facade = LibresFacade(ert)
+            facade = LibresFacade.from_config_file("snake_oil.ert")
 
             df = MeasuredData(facade, ["RFT_2006"])
             df.remove_inactive_observations()
@@ -234,10 +222,7 @@ def test_gen_obs_and_summary_index_range(monkeypatch, facade_snake_oil):
 @pytest.mark.usefixtures("copy_snake_oil")
 def test_no_storage(monkeypatch, obs_key, expected_msg):
     shutil.rmtree("storage")
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     with pytest.raises(
         loader.ResponseError,
         match=expected_msg,
@@ -249,10 +234,7 @@ def test_no_storage(monkeypatch, obs_key, expected_msg):
 @pytest.mark.usefixtures("copy_snake_oil")
 def test_no_storage_obs_only(monkeypatch, obs_key):
     shutil.rmtree("storage")
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     md = MeasuredData(facade, [obs_key], load_data=False)
     assert set(md.data.columns.get_level_values(0)) == {obs_key}
 

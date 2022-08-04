@@ -1,7 +1,7 @@
 import sys
+from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
-from contextlib import ExitStack as does_not_raise
 
 import cwrap
 import pytest
@@ -10,6 +10,7 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
+
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
@@ -39,9 +40,7 @@ def create_runpath():
 def load_from_forward_model():
     def func(ert):
         facade = LibresFacade(ert)
-        realizations = BoolVector(
-            default_value=True, initial_size=facade.get_ensemble_size()
-        )
+        realizations = BoolVector(default_value=True, initial_size=facade.ensemble_size)
         return facade.load_from_forward_model("default_0", realizations, 0)
 
     yield func

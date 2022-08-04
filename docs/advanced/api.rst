@@ -18,8 +18,8 @@ config commands by writing a Python script, and invoking it from a workflow.
 
 ::
 
- from res.enkf import ErtScript
- from ert.ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
+ from ert import ErtScript
+ from ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
 
  class LocalConfigJob(ErtScript):
 
@@ -27,8 +27,8 @@ config commands by writing a Python script, and invoking it from a workflow.
 
          # This example can be used with the REEK data set from the ERT tutorial
 
-         # Get the ert object
-         ert = self.ert()
+         # Get the ert facade object
+         ert = self.facade
 
          # An update_step
          update_step = {
@@ -41,7 +41,7 @@ config commands by writing a Python script, and invoking it from a workflow.
 =========================================================================  ===================================================================================
 ERT script function                                                        Purpose
 =========================================================================  ===================================================================================
-:ref:`getObservations                  <all_obs>`                          Get the observations currently imported, use to filter the observations to localize
+:ref:`get_observations                 <all_obs>`                          Get the observations currently imported, use to filter the observations to localize
 :ref:`getGrid                          <ert_grid>`                         Get the underlying grid use to define active cells in a field
 :ref:`EclGrid, EclInitFile             <load_file>`                        Loads eclipse file in restart format
 :ref:`EclRegion                        <create_eclregion>`                 Creates a new region for use when defining active regions for fields
@@ -63,7 +63,7 @@ ERT script function                                                        Purpo
 
 .. #####################################################################
 .. _all_obs:
-.. topic:: getObservations
+.. topic:: get_observations
 
    This function will retrieve ERT's observations
 
@@ -71,7 +71,7 @@ ERT script function                                                        Purpo
 
    ::
 
-      all_obs = ert.getObservations()
+      all_obs = ert.get_observations()
 
 
 .. #####################################################################

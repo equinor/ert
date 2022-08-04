@@ -1,11 +1,11 @@
-import pytest
-from ert.async_utils import run_in_loop
-import pandas as pd
 import io
 
+import pandas as pd
+import pytest
+
+from ert.async_utils import run_in_loop
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
-from ert_shared.dark_storage.endpoints import experiments, ensembles, records, responses
+from ert_shared.dark_storage.endpoints import ensembles, experiments, records, responses
 
 
 def get_single_record_csv(ert, ensemble_id1, keyword, poly_ran):
@@ -142,9 +142,7 @@ def test_direct_dark_performance(
     }[keyword]
 
     with template_config["folder"].as_cwd():
-        config = ResConfig("poly.ert")
-        ert = EnKFMain(config, strict=True)
-        enkf_facade = LibresFacade(ert)
+        enkf_facade = LibresFacade.from_config_file("poly.ert", strict=True)
         experiment_json = experiments.get_experiments(res=enkf_facade)
         ensemble_json_default = None
         ensemble_id_default = None

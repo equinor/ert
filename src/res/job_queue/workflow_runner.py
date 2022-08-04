@@ -1,16 +1,20 @@
 from concurrent import futures
+from typing import Optional, TYPE_CHECKING
 
 from res.job_queue import Workflow
 from res.util.substitution_list import SubstitutionList
 
+if TYPE_CHECKING:
+    from ert.libres_facade import LibresFacade
+
 
 class WorkflowRunner:
-    def __init__(self, workflow: Workflow, ert=None, context: SubstitutionList = None):
-        """
-        @type workflow: Workflow
-        @type ert: res.enkf.EnKFMain
-        @type context: SubstitutionList
-        """
+    def __init__(
+        self,
+        workflow: Workflow,
+        ert: Optional["LibresFacade"] = None,
+        context: Optional[SubstitutionList] = None,
+    ):
         super().__init__()
 
         self.__workflow = workflow

@@ -10,7 +10,6 @@ from ecl.summary import EclSum
 from ecl.util.util import BoolVector
 
 from ert.libres_facade import LibresFacade
-from res.enkf import ResConfig, EnKFMain
 
 
 @pytest.fixture
@@ -59,9 +58,7 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
                 continue
             print(line, end="")
 
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
     assert (
         facade.get_current_fs().getStateMap()[realisation_number].name
@@ -75,9 +72,7 @@ def test_load_inconsistent_time_map_summary(copy_data, caplog):
     ecl_sum.fwrite()
     os.chdir(cwd)
 
-    realizations = BoolVector(
-        default_value=False, initial_size=facade.get_ensemble_size()
-    )
+    realizations = BoolVector(default_value=False, initial_size=facade.ensemble_size)
     realizations[realisation_number] = True
     with caplog.at_level(logging.ERROR):
         loaded = facade.load_from_forward_model("default_0", realizations, 0)
@@ -105,14 +100,10 @@ def test_load_forward_model(copy_data):
                 continue
             print(line, end="")
 
-    res_config = ResConfig("snake_oil.ert")
-    ert = EnKFMain(res_config)
-    facade = LibresFacade(ert)
+    facade = LibresFacade.from_config_file("snake_oil.ert")
     realisation_number = 0
 
-    realizations = BoolVector(
-        default_value=False, initial_size=facade.get_ensemble_size()
-    )
+    realizations = BoolVector(default_value=False, initial_size=facade.ensemble_size)
     realizations[realisation_number] = True
     loaded = facade.load_from_forward_model("default_0", realizations, 0)
     assert loaded == 1

@@ -1,4 +1,6 @@
-from qtpy.QtCore import Qt, QSize
+from collections import OrderedDict
+
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QComboBox,
     QFrame,
@@ -13,19 +15,18 @@ from qtpy.QtWidgets import (
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
-from ert.gui.simulation import EnsembleExperimentPanel, EnsembleSmootherPanel
-from ert.gui.simulation import SingleTestRunPanel
 from ert.gui.simulation import (
+    EnsembleExperimentPanel,
+    EnsembleSmootherPanel,
     IteratedEnsembleSmootherPanel,
     MultipleDataAssimilationPanel,
+    RunDialog,
     SimulationConfigPanel,
+    SingleTestRunPanel,
 )
-from ert.gui.simulation import RunDialog
-from collections import OrderedDict
-
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain
 from ert_shared.cli.model_factory import create_model
+from res.enkf import EnKFMain
 
 
 class SimulationPanel(QWidget):

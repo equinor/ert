@@ -1,9 +1,13 @@
 import os
+from typing import List, TYPE_CHECKING
 
 from cwrap import BaseCClass
 from res import ResPrototype
 from res.job_queue import ErtScript, FunctionErtScript, ErtPlugin, ExternalErtScript
 from res.config import ContentTypeEnum
+
+if TYPE_CHECKING:
+    from ert.libres_facade import LibresFacade
 
 
 class WorkflowJob(BaseCClass):
@@ -126,13 +130,7 @@ class WorkflowJob(BaseCClass):
             return "internal C"
         return "external"
 
-    def run(self, ert, arguments, verbose=False):
-        """
-        @type ert: res.enkf.enkf_main.EnKFMain
-        @type arguments: list of str
-        @type verbose: bool
-        @rtype: ctypes.c_void_p
-        """
+    def run(self, ert: "LibresFacade", arguments: List[str], verbose: bool = False):
         self.__running = True
 
         min_arg = self.minimumArgumentCount()

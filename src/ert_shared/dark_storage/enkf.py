@@ -1,8 +1,10 @@
-import uuid
 import os
+import uuid
 from typing import Optional
-from fastapi import Depends
+
 from ert_storage.security import security
+from fastapi import Depends
+
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
@@ -61,7 +63,7 @@ def reset_res(*, _: None = Depends(security)) -> None:
 
 
 def get_size(res: LibresFacade):
-    return res.get_ensemble_size()
+    return res.ensemble_size
 
 
 def get_active_realizations(res: LibresFacade, ensemble_name):

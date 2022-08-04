@@ -1,9 +1,9 @@
+import fileinput
 import logging
 import os
 import re
 import shutil
 import threading
-import fileinput
 from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
@@ -13,13 +13,19 @@ import pytest
 from ecl.summary import EclSum
 from jsonpath_ng import parse
 
+from ert.ensemble_evaluator import EvaluatorTracker
+from ert.ensemble_evaluator.event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+)
 from ert.ensemble_evaluator.state import (
     JOB_STATE_FAILURE,
     JOB_STATE_FINISHED,
     JOB_STATE_START,
     REALIZATION_STATE_FINISHED,
 )
-from ert.ensemble_evaluator import EvaluatorTracker
+from ert.libres_facade import LibresFacade
 from ert_shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -28,13 +34,7 @@ from ert_shared.cli import (
 from ert_shared.cli.model_factory import create_model
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
-from ert.libres_facade import LibresFacade
 from ert_shared.main import ert_parser
-from ert.ensemble_evaluator.event import (
-    EndEvent,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig
 
@@ -183,7 +183,7 @@ def test_tracking(
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
+            facade.ensemble_size,
             facade.get_current_case_name(),
             parsed,
         )
@@ -307,7 +307,7 @@ def test_tracking_time_map(
 
         model = create_model(
             ert,
-            facade.get_ensemble_size(),
+            facade.ensemble_size,
             facade.get_current_case_name(),
             parsed,
         )

@@ -6,6 +6,7 @@ import sys
 import threading
 from typing import Any
 from ert.ensemble_evaluator import EvaluatorTracker
+from ert.libres_facade import LibresFacade
 from ert_shared.feature_toggling import FeatureToggling
 
 from ert_shared.cli import (
@@ -18,7 +19,6 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
 
@@ -56,7 +56,7 @@ def run_cli(args):
         asyncio.run(
             _run_cli_async(
                 ert,
-                facade.get_ensemble_size(),
+                facade.ensemble_size,
                 facade.get_current_case_name(),
                 args,
                 evaluator_server_config,
@@ -67,7 +67,7 @@ def run_cli(args):
 
     model = create_model(
         ert,
-        facade.get_ensemble_size(),
+        facade.ensemble_size,
         facade.get_current_case_name(),
         args,
     )

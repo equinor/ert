@@ -1,12 +1,13 @@
 from res.job_queue import ErtScript
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ert.libres_facade import LibresFacade
+    from res.job_queue import WorkflowJob
 
 
 class Plugin:
-    def __init__(self, ert, workflow_job):
-        """
-        @type ert: res.enkf.EnKFMain
-        @type workflow_job: WorkflowJob
-        """
+    def __init__(self, ert: "LibresFacade", workflow_job: "WorkflowJob"):
         self.__ert = ert
         self.__workflow_job = workflow_job
         self.__parent_window = None

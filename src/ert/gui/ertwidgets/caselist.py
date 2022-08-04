@@ -1,20 +1,19 @@
 from qtpy.QtCore import QSize
 from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QLabel,
     QListWidget,
     QMessageBox,
-    QAbstractItemView,
-    QWidget,
-    QVBoxLayout,
-    QLabel,
     QToolButton,
-    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import addHelpToWidget
+from ert.gui.ertwidgets import addHelpToWidget, resourceIcon
 from ert.gui.ertwidgets.models.ertmodel import getAllCases
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
-from ert.gui.ertwidgets import resourceIcon
 from ert.libres_facade import LibresFacade
 
 

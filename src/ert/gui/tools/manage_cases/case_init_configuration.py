@@ -1,14 +1,14 @@
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QToolButton,
-    QTextEdit,
-    QTabWidget,
-    QWidget,
-    QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QSpinBox,
+    QTabWidget,
+    QTextEdit,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ert.gui.ertwidgets import addHelpToWidget, showWaitCursorWhileWaiting
@@ -16,8 +16,8 @@ from ert.gui.ertwidgets.caselist import CaseList
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.checklist import CheckList
 from ert.gui.ertwidgets.models.ertmodel import (
-    initializeCurrentCaseFromScratch,
     initializeCurrentCaseFromExisting,
+    initializeCurrentCaseFromScratch,
 )
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
 from ert.libres_facade import LibresFacade
