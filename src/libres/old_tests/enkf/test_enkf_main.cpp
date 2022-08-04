@@ -29,7 +29,8 @@ void test_case_initialized(const char *config_path, const char *config_file) {
     {
         res_config_type *res_config = res_config_alloc_load(config_file);
         enkf_main_type *enkf_main = enkf_main_alloc(res_config);
-        model_config_type *model_config = res_config_get_model_config(enkf_main_get_res_config(enkf_main));
+        model_config_type *model_config =
+            res_config_get_model_config(enkf_main_get_res_config(enkf_main));
         const char *new_case = "fs/case";
         char *mount_point = util_alloc_sprintf(
             "%s/%s", model_config_get_enspath(model_config), new_case);

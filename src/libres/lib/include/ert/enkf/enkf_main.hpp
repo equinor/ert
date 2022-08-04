@@ -98,11 +98,10 @@ bool enkf_main_export_field_with_fs(const enkf_main_type *enkf_main,
                                     field_file_format_type file_type,
                                     int report_step, enkf_fs_type *fs);
 
-int
-enkf_main_load_from_run_context(enkf_main_type *enkf_main,
+int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     std::vector<bool> active_mask,
                                     enkf_fs_type *sim_fs,
-                                    std::vector<run_arg_type*> run_args);
+                                    std::vector<run_arg_type *> run_args);
 
 bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
                                const char *case_path);

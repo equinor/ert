@@ -26,10 +26,10 @@
 bool check_ecl_sum_compatible(const enkf_main_type *enkf_main) {
     enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    char *job_name =
-        model_config_alloc_jobname(res_config_get_model_config(enkf_main_get_res_config(enkf_main)), 0);
-        run_arg_type *run_arg = run_arg_alloc(
-        "run_id", fs, 0, 0, "simulations/run0", job_name);
+    char *job_name = model_config_alloc_jobname(
+        res_config_get_model_config(enkf_main_get_res_config(enkf_main)), 0);
+    run_arg_type *run_arg =
+        run_arg_alloc("run_id", fs, 0, 0, "simulations/run0", job_name);
 
     state_map_type *state_map = enkf_fs_get_state_map(fs);
     state_map_iset(state_map, 0, STATE_INITIALIZED);
