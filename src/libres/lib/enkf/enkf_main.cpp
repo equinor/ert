@@ -119,7 +119,8 @@ enkf_main_get_res_config(const enkf_main_type *enkf_main) {
 }
 
 subst_list_type *enkf_main_get_data_kw(const enkf_main_type *enkf_main) {
-    return subst_config_get_subst_list(res_config_get_subst_config(enkf_main_get_res_config(enkf_main)));
+    return subst_config_get_subst_list(
+        res_config_get_subst_config(enkf_main_get_res_config(enkf_main)));
 }
 
 enkf_obs_type *enkf_main_get_obs(const enkf_main_type *enkf_main) {
@@ -136,8 +137,10 @@ enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
 }
 
 void enkf_main_alloc_obs(enkf_main_type *enkf_main) {
-    const ecl_config_type *ecl_config = res_config_get_ecl_config(enkf_main->res_config);
-    model_config_type *model_config = res_config_get_model_config(enkf_main->res_config);
+    const ecl_config_type *ecl_config =
+        res_config_get_ecl_config(enkf_main->res_config);
+    model_config_type *model_config =
+        res_config_get_model_config(enkf_main->res_config);
     enkf_main->obs = enkf_obs_alloc(
         model_config_get_history(model_config),
         model_config_get_external_time_map(model_config),
@@ -202,8 +205,8 @@ rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
 }
 
 void enkf_main_rng_init(enkf_main_type *enkf_main) {
-    enkf_main->rng_manager =
-        rng_config_alloc_rng_manager(res_config_get_rng_config(enkf_main->res_config));
+    enkf_main->rng_manager = rng_config_alloc_rng_manager(
+        res_config_get_rng_config(enkf_main->res_config));
     enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
 }
 
@@ -295,9 +298,9 @@ void enkf_main_init_internalization(enkf_main_type *enkf_main) {
 void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                 const char *user_key, int obs_count,
                                 time_t *obs_time, double *y, double *std) {
-    ensemble_config_get_observations(res_config_get_ensemble_config(enkf_main->res_config),
-                                     enkf_main->obs, user_key, obs_count,
-                                     obs_time, y, std);
+    ensemble_config_get_observations(
+        res_config_get_ensemble_config(enkf_main->res_config), enkf_main->obs,
+        user_key, obs_count, obs_time, y, std);
 }
 
 void enkf_main_install_SIGNALS(void) { util_install_signals(); }
@@ -309,7 +312,7 @@ ert_workflow_list_type *enkf_main_get_workflow_list(enkf_main_type *enkf_main) {
 int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     std::vector<bool> active_mask,
                                     enkf_fs_type *sim_fs,
-                                    std::vector<run_arg_type*> run_args) {
+                                    std::vector<run_arg_type *> run_args) {
     auto const ens_size = enkf_main_get_ensemble_size(enkf_main);
 
     // Loading state from a fwd-model is mainly io-bound so we can

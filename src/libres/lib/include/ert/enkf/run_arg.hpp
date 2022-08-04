@@ -29,13 +29,14 @@
 UTIL_SAFE_CAST_HEADER(run_arg);
 UTIL_IS_INSTANCE_HEADER(run_arg);
 
-extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
-                                   int iter, const char *runpath,
-                                   const char *job_name);
+extern "C" run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs,
+                                       int iens, int iter, const char *runpath,
+                                       const char *job_name);
 
-run_arg_type *
-run_arg_alloc_SMOOTHER_RUN(const char *run_id, enkf_fs_type *sim_fs, int iens, int iter,
-                           const char *runpath, const char *job_name);
+run_arg_type *run_arg_alloc_SMOOTHER_RUN(const char *run_id,
+                                         enkf_fs_type *sim_fs, int iens,
+                                         int iter, const char *runpath,
+                                         const char *job_name);
 
 extern "C" int run_arg_get_iens(const run_arg_type *run_arg);
 extern "C" int run_arg_get_iter(const run_arg_type *run_arg);

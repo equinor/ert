@@ -50,7 +50,8 @@ void test_pre_simulation_copy__(ert_test_context_type *test_context,
 void test_pre_simulation_copy(ert_test_context_type *test_context,
                               const char *job_name, const char *job_file) {
     enkf_main_type *enkf_main = ert_test_context_get_main(test_context);
-    model_config_type *model_config = res_config_get_model_config(enkf_main_get_res_config(enkf_main));
+    model_config_type *model_config =
+        res_config_get_model_config(enkf_main_get_res_config(enkf_main));
     test_assert_false(model_config_data_root_is_set(model_config));
 
     test_assert_true(ert_test_context_install_workflow_job(test_context,

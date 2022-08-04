@@ -52,22 +52,22 @@ UTIL_SAFE_CAST_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 UTIL_IS_INSTANCE_FUNCTION(run_arg, RUN_ARG_TYPE_ID)
 
 run_arg_type *run_arg_alloc(const char *run_id, enkf_fs_type *sim_fs, int iens,
-                                   int iter, const char *runpath,
-                                   const char *job_name) {
-        run_arg_type *run_arg = (run_arg_type *)util_malloc(sizeof *run_arg);
-        UTIL_TYPE_ID_INIT(run_arg, RUN_ARG_TYPE_ID);
-        run_arg->run_id = util_alloc_string_copy(run_id);
-        run_arg->sim_fs = sim_fs;
+                            int iter, const char *runpath,
+                            const char *job_name) {
+    run_arg_type *run_arg = (run_arg_type *)util_malloc(sizeof *run_arg);
+    UTIL_TYPE_ID_INIT(run_arg, RUN_ARG_TYPE_ID);
+    run_arg->run_id = util_alloc_string_copy(run_id);
+    run_arg->sim_fs = sim_fs;
 
-        run_arg->iens = iens;
-        run_arg->iter = iter;
-        run_arg->run_path = util_alloc_abs_path(runpath);
-        run_arg->job_name = util_alloc_string_copy(job_name);
-        run_arg->num_internal_submit = 0;
-        run_arg->queue_index = INVALID_QUEUE_INDEX;
-        run_arg->run_status = JOB_NOT_STARTED;
+    run_arg->iens = iens;
+    run_arg->iter = iter;
+    run_arg->run_path = util_alloc_abs_path(runpath);
+    run_arg->job_name = util_alloc_string_copy(job_name);
+    run_arg->num_internal_submit = 0;
+    run_arg->queue_index = INVALID_QUEUE_INDEX;
+    run_arg->run_status = JOB_NOT_STARTED;
 
-        return run_arg;
+    return run_arg;
 }
 
 void run_arg_free(run_arg_type *run_arg) {

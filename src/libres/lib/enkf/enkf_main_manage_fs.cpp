@@ -43,8 +43,8 @@ bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
 
 static bool
 enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
-    const char *ens_path =
-        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+    const char *ens_path = model_config_get_enspath(
+        res_config_get_model_config(enkf_main->res_config));
     char *current_case_file =
         util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
     bool exists = fs::exists(current_case_file);
@@ -54,8 +54,8 @@ enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
 
 char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main) {
     char *current_case = NULL;
-    const char *ens_path =
-        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+    const char *ens_path = model_config_get_enspath(
+        res_config_get_model_config(enkf_main->res_config));
     char *current_case_file =
         util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
     if (enkf_main_current_case_file_exists(enkf_main)) {
@@ -119,9 +119,9 @@ static void enkf_main_init_current_case_from_existing_custom(
 
     enkf_fs_type *current_fs = enkf_main_get_fs(enkf_main);
 
-    enkf_main_copy_ensemble(res_config_get_ensemble_config(enkf_main->res_config),
-                            source_case_fs, source_report_step, current_fs,
-                            iactive, node_list);
+    enkf_main_copy_ensemble(
+        res_config_get_ensemble_config(enkf_main->res_config), source_case_fs,
+        source_report_step, current_fs, iactive, node_list);
     enkf_fs_fsync(current_fs);
 }
 
@@ -134,9 +134,9 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
         res_config_get_ensemble_config(enkf_main->res_config),
         PARAMETER); /* Select only paramters - will fail for GEN_DATA of type DYNAMIC_STATE. */
     std::vector<bool> iactive(enkf_main_get_ensemble_size(enkf_main), true);
-    enkf_main_copy_ensemble(res_config_get_ensemble_config(enkf_main->res_config),
-                            source_case_fs, source_report_step, target_case_fs,
-                            iactive, param_list);
+    enkf_main_copy_ensemble(
+        res_config_get_ensemble_config(enkf_main->res_config), source_case_fs,
+        source_report_step, target_case_fs, iactive, param_list);
 
     enkf_fs_fsync(target_case_fs);
 }
@@ -173,7 +173,8 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
     enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, case_name, false);
     if (fs) {
         bool initialized = enkf_main_case_is_initialized__(
-            res_config_get_ensemble_config(enkf_main->res_config), fs, enkf_main->ens_size);
+            res_config_get_ensemble_config(enkf_main->res_config), fs,
+            enkf_main->ens_size);
         enkf_fs_decref(fs);
         return initialized;
     } else
@@ -191,8 +192,8 @@ static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
         of 'w'.
   */
 
-    const char *ens_path =
-        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+    const char *ens_path = model_config_get_enspath(
+        res_config_get_model_config(enkf_main->res_config));
 
     {
         int buffer_size = 256;
@@ -224,8 +225,8 @@ static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
 
 static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
                                               const char *case_path) {
-    const char *ens_path =
-        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+    const char *ens_path = model_config_get_enspath(
+        res_config_get_model_config(enkf_main->res_config));
     const char *base = CURRENT_CASE_FILE;
     char *current_case_file = util_alloc_filename(ens_path, base, NULL);
     FILE *stream = util_fopen(current_case_file, "w");
@@ -280,7 +281,8 @@ char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
         mount_point = util_alloc_string_copy(case_path);
     else
         mount_point = util_alloc_filename(
-            model_config_get_enspath(res_config_get_model_config(enkf_main->res_config)),
+            model_config_get_enspath(
+                res_config_get_model_config(enkf_main->res_config)),
             case_path, NULL);
     return mount_point;
 }
@@ -434,8 +436,8 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
         if (new_fs != NULL)
             enkf_main_set_fs(enkf_main, new_fs, case_path);
         else {
-            const char *ens_path =
-                model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+            const char *ens_path = model_config_get_enspath(
+                res_config_get_model_config(enkf_main->res_config));
             util_exit("%s: select filesystem %s:%s failed \n", __func__,
                       ens_path, case_path);
         }
@@ -445,8 +447,8 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
 
 static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
                                              bool read_only) {
-    const char *ens_path =
-        model_config_get_enspath(res_config_get_model_config(enkf_main->res_config));
+    const char *ens_path = model_config_get_enspath(
+        res_config_get_model_config(enkf_main->res_config));
     char *current_mount_point =
         util_alloc_filename(ens_path, CURRENT_CASE, NULL);
 
@@ -499,7 +501,7 @@ RES_LIB_SUBMODULE("enkf_main", m) {
         },
         py::arg("self"), py::arg("source_case"), py::arg("source_report_step"),
         py::arg("node_list"), py::arg("iactive"));
-        m.def("get_observation_keys", get_observation_keys);
+    m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
     m.def(
         "init_internalization",
@@ -508,20 +510,18 @@ RES_LIB_SUBMODULE("enkf_main", m) {
             return enkf_main_init_internalization(enkf_main);
         },
         py::arg("self"));
-    m.def(
-    "load_from_run_context",
-        [](py::object self, std::vector<py::object> run_args_, std::vector<bool> active_mask, py::object sim_fs_) {
-        auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-        auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
-        std::vector<run_arg_type *> run_args;
-        for (auto & run_arg : run_args_) {
-            run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
-        }
-            return enkf_main_load_from_run_context(enkf_main,
-                                    active_mask,
-                                    sim_fs,
-                                    run_args);
-                                    });
+    m.def("load_from_run_context",
+          [](py::object self, std::vector<py::object> run_args_,
+             std::vector<bool> active_mask, py::object sim_fs_) {
+              auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
+              auto sim_fs = ert::from_cwrap<enkf_fs_type>(sim_fs_);
+              std::vector<run_arg_type *> run_args;
+              for (auto &run_arg : run_args_) {
+                  run_args.push_back(ert::from_cwrap<run_arg_type>(run_arg));
+              }
+              return enkf_main_load_from_run_context(enkf_main, active_mask,
+                                                     sim_fs, run_args);
+          });
     m.def(
         "init_active_run",
         [](py::object res_config, py::object run_arg, py::object subst_list) {

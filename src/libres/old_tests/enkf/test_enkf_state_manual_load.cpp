@@ -28,13 +28,13 @@ int test_load_manually_to_new_case(enkf_main_type *enkf_main) {
     int iens = 0;
     int iter = 0;
     const char *casename = "new_case";
-    char *job_name =
-        model_config_alloc_jobname(res_config_get_model_config(enkf_main_get_res_config(enkf_main)), 0);
+    char *job_name = model_config_alloc_jobname(
+        res_config_get_model_config(enkf_main_get_res_config(enkf_main)), 0);
     enkf_main_select_fs(enkf_main, casename);
 
     enkf_fs_type *fs = enkf_main_get_fs(enkf_main);
-    run_arg_type *run_arg = run_arg_alloc(
-        "run_id", fs, iens, iter, "simulations/run0", job_name);
+    run_arg_type *run_arg =
+        run_arg_alloc("run_id", fs, iens, iter, "simulations/run0", job_name);
     {
 
         state_map_type *state_map = enkf_fs_get_state_map(fs);
