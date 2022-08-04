@@ -6,7 +6,10 @@ from ert.gui.simulation.run_dialog import RunDialog
 
 def test_success_ert3(qtbot, poly_ensemble):
     ee_config = EvaluatorServerConfig(
-        custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+        custom_port_range=range(1024, 65535),
+        custom_host="127.0.0.1",
+        use_token=False,
+        generate_cert=False,
     )
 
     evaluator = EnsembleEvaluator(poly_ensemble, ee_config, 0, ee_id="1")

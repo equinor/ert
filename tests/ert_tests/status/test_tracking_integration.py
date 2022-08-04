@@ -189,7 +189,10 @@ def test_tracking(
         )
 
         evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+            custom_port_range=range(1024, 65535),
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
 
         thread = threading.Thread(
@@ -310,7 +313,10 @@ def test_tracking_time_map(
         )
 
         evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+            custom_port_range=range(1024, 65535),
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
 
         thread = threading.Thread(
@@ -393,7 +399,10 @@ def test_tracking_missing_ecl(
         )
 
         evaluator_server_config = EvaluatorServerConfig(
-            custom_port_range=range(1024, 65535), custom_host="127.0.0.1"
+            custom_port_range=range(1024, 65535),
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
 
         thread = threading.Thread(

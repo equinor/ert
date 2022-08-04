@@ -17,7 +17,10 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+            custom_port_range=custom_port_range,
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
         with evaluator.run() as monitor:
@@ -45,7 +48,10 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2, job_sleep=30).build()
         config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+            custom_port_range=custom_port_range,
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
 
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
@@ -74,7 +80,10 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
     with tmpdir.as_cwd():
         ensemble = make_ensemble_builder(tmpdir, num_reals, 2).build()
         config = EvaluatorServerConfig(
-            custom_port_range=custom_port_range, custom_host="127.0.0.1"
+            custom_port_range=custom_port_range,
+            custom_host="127.0.0.1",
+            use_token=False,
+            generate_cert=False,
         )
         evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
 
