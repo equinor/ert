@@ -23,6 +23,8 @@
 #include <ert/enkf/config_keys.hpp>
 #include <ert/enkf/ert_template.hpp>
 
+#include <ert/res_util/string.hpp>
+
 #define ERT_TEMPLATE_TYPE_ID 7731963
 #define ERT_TEMPLATES_TYPE_ID 6677330
 
@@ -228,22 +230,19 @@ void ert_templates_init(ert_templates_type *templates,
 
             for (int iarg = 2;
                  iarg < config_content_node_get_size(template_node); iarg++) {
-                char *key, *value;
                 const char *key_value =
                     config_content_node_iget(template_node, iarg);
-                util_binary_split_string(key_value, "=:", true, &key, &value);
 
-                if (value != NULL)
-                    ert_template_add_arg(tmpl, key, value);
+                auto [key, value] = ert::split_in_two(key_value, ":");
+
+                if (!value.empty())
+                    ert_template_add_arg(tmpl, key.c_str(), value.c_str());
                 else
                     fprintf(
                         stderr,
                         "** Warning - failed to parse argument:%s as key:value "
                         "- ignored \n",
                         config_content_iget(config, "RUN_TEMPLATE", i, iarg));
-
-                free(key);
-                free(value);
             }
         }
     }

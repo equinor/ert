@@ -84,7 +84,7 @@ class ErtTemplatesTest(ResTest):
         templates = ErtTemplates(
             self.res_config.subst_config.subst_list, config_dict=self.config_data
         )
-        self.assertEqual(templates, self.res_config.ert_templates)
+        assert templates == self.res_config.ert_templates
 
     def test_unequal_objects_are_unequal(self):
         templates = ErtTemplates(

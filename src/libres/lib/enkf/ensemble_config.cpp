@@ -60,15 +60,11 @@ create_opt_map(const config_content_node_type *node, int offset) {
     std::unordered_map<std::string, std::string> options;
     for (int i = offset; i < config_content_node_get_size(node); i++) {
         const char *key_value = config_content_node_iget(node, i);
-        char *value = NULL;
-        char *key = NULL;
 
-        util_binary_split_string(key_value, ":", true, &key, &value);
-        if (value)
+        auto [key, value] = ert::split_in_two(key_value, ":");
+
+        if (!value.empty())
             options[key] = value;
-
-        free(key);
-        free(value);
     }
 
     return options;
