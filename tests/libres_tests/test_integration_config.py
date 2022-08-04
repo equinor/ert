@@ -9,7 +9,7 @@ def _create_runpath(enkf_main: EnKFMain) -> RunContext:
     Instantiate an ERT runpath. This will create the parameter coefficients.
     """
     run_context = enkf_main.create_ensemble_experiment_run_context(iteration=0)
-    enkf_main.getEnkfSimulationRunner().createRunPath(run_context)
+    enkf_main.createRunPath(run_context)
     return run_context
 
 
@@ -20,7 +20,7 @@ def _evaluate_ensemble(enkf_main: EnKFMain, run_context: RunContext):
     queue_config = enkf_main.get_queue_config()
     job_queue = queue_config.create_job_queue()
 
-    enkf_main.getEnkfSimulationRunner().runSimpleStep(job_queue, run_context)
+    enkf_main.runSimpleStep(job_queue, run_context)
 
 
 @pytest.mark.parametrize(

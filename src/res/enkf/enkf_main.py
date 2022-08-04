@@ -13,21 +13,24 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
+import os
+import re
+from functools import partial
 from pathlib import Path
-from typing import List
+from typing import List, Union, TYPE_CHECKING
 
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
 
 from res import ResPrototype
-from res._lib import enkf_main, enkf_state
+from res._lib import enkf_main, enkf_state, model_callbacks
 from res.analysis.configuration import UpdateConfiguration
+from res.enkf.enums import RealizationStateEnum
+from res.enkf.enkf_fs import EnkfFs
 from res.enkf.analysis_config import AnalysisConfig
 from res.enkf.ecl_config import EclConfig
-from res.enkf.enkf_fs_manager import EnkfFsManager
+from res.enkf.enkf_fs_manager import FileSystemRotator
 from res.enkf.enkf_obs import EnkfObs
-from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ensemble_config import EnsembleConfig
 from res.enkf.ert_run_context import RunContext
 from res.enkf.ert_workflow_list import ErtWorkflowList
@@ -35,57 +38,98 @@ from res.enkf.hook_manager import HookManager
 from res.enkf.key_manager import KeyManager
 from res.enkf.model_config import ModelConfig
 from res.enkf.queue_config import QueueConfig
-from res.enkf.res_config import ResConfig
 from res.enkf.runpaths import Runpaths
 from res.enkf.site_config import SiteConfig
 from res.enkf.substituter import Substituter
+from res.job_queue import JobQueueManager, RunStatusType
 from res.util.substitution_list import SubstitutionList
+
+if TYPE_CHECKING:
+    from res.enkf.state_map import StateMap
+    from res.job_queue.queue import JobQueue
+    from res.enkf.hook_manager import HookRuntime
+    from res.enkf.res_config import ResConfig
+
+
+def naturalSortKey(s: str) -> List[Union[int, str]]:
+    _nsre = re.compile("([0-9]+)")
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
+    ]
 
 
 class EnKFMain(BaseCClass):
+    """Access to the C EnKFMain interface."""
 
     TYPE_NAME = "enkf_main"
 
-    @classmethod
-    def createPythonObject(cls, c_pointer):
-        if c_pointer is not None:
-            real_enkf_main = _RealEnKFMain.createPythonObject(c_pointer)
-            new_obj = cls.__new__(cls)
-            EnKFMain._init_from_real_enkf_main(new_obj, real_enkf_main)
-            EnKFMain._monkey_patch_methods(new_obj, real_enkf_main)
-            return new_obj
-        else:
-            return None
+    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
 
-    @classmethod
-    def createCReference(cls, c_pointer, parent=None):
-        if c_pointer is not None:
-            real_enkf_main = _RealEnKFMain.createCReference(c_pointer, parent)
-            new_obj = cls.__new__(cls)
-            EnKFMain._init_from_real_enkf_main(new_obj, real_enkf_main)
-            EnKFMain._monkey_patch_methods(new_obj, real_enkf_main)
-            return new_obj
-        else:
-            return None
+    _free = ResPrototype("void enkf_main_free(enkf_main)")
+    _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
+    _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
+    _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
+    _get_observations = ResPrototype(
+        "void enkf_main_get_observations(enkf_main, \
+                                         char*, \
+                                         int, \
+                                         long*, \
+                                         double*, \
+                                         double*)"
+    )
+    _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
+    _get_workflow_list = ResPrototype(
+        "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
+    )
+    _get_hook_manager = ResPrototype(
+        "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
+    )
+    _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
+    _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
+
+    # FS operations
+    _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_main)")
+    _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_main, enkf_fs, char*)")
+    _is_case_initialized = ResPrototype(
+        "bool enkf_main_case_is_initialized(enkf_main, char*)"
+    )
+    _initialize_case_from_existing = ResPrototype(
+        "void enkf_main_init_case_from_existing(enkf_main, enkf_fs, int, enkf_fs)"
+    )
+    _initialize_current_case_from_existing = ResPrototype(
+        "void enkf_main_init_current_case_from_existing(enkf_main, enkf_fs, int)"
+    )
+    _alloc_readonly_state_map = ResPrototype(
+        "state_map_obj enkf_main_alloc_readonly_state_map(enkf_main, char*)"
+    )
 
     def __init__(self, config, strict=True, read_only=False):
+        self.config_file = config
         self.update_snapshots = {}
-        real_enkf_main = _RealEnKFMain(config, strict, read_only)
-        assert isinstance(real_enkf_main, BaseCClass)
-        self._init_from_real_enkf_main(real_enkf_main)
-        self._monkey_patch_methods(real_enkf_main)
-
         self._update_configuration = None
+        if config is None:
+            raise TypeError(
+                "Failed to construct EnKFMain instance due to invalid res_config."
+            )
 
-    def _init_from_real_enkf_main(self, real_enkf_main):
-        super().__init__(
-            real_enkf_main.from_param(real_enkf_main).value,
-            parent=real_enkf_main,
-            is_reference=True,
+        c_ptr = self._alloc(config, read_only)
+        if c_ptr:
+            super().__init__(c_ptr)
+        else:
+            raise ValueError(
+                f"Failed to construct EnKFMain instance from config {config}."
+            )
+        self._fs_rotator = FileSystemRotator(5)
+        self.__key_manager = KeyManager(self)
+        self._substituter = Substituter(
+            {key: value for (key, value, _) in self.getDataKW()}
         )
-
-        self.__simulation_runner = EnkfSimulationRunner(self)
-        self.__fs_manager = EnkfFsManager(self)
+        self._runpaths = Runpaths(
+            self.getModelConfig().getJobnameFormat(),
+            self.getModelConfig().getRunpathFormat().format_string,
+            Path(config.runpath_file),
+            self.substituter.substitute,
+        )
 
     @property
     def update_configuration(self):
@@ -118,34 +162,20 @@ class EnKFMain(BaseCClass):
 
     @property
     def substituter(self):
-        return self._real_enkf_main().substituter
+        return self._substituter
 
     @property
     def runpaths(self):
-        return self._real_enkf_main().runpaths
+        return self._runpaths
 
     @property
     def runpath_list_filename(self):
-        return self._real_enkf_main().runpaths.runpath_list_filename
-
-    def _real_enkf_main(self):
-        return self.parent()
-
-    def getEnkfSimulationRunner(self):
-        """@rtype: EnkfSimulationRunner"""
-        return self.__simulation_runner
+        return self._runpaths.runpath_list_filename
 
     def getEnkfFsManager(self):
-        """@rtype: EnkfFsManager"""
-        return self.__fs_manager
+        return self
 
-    def umount(self):
-        if self.__fs_manager is not None:
-            self.__fs_manager.umount()
-            self.__fs_manager = None
-
-    def getLocalConfig(self) -> UpdateConfiguration:
-        """@rtype: UpdateConfiguration"""
+    def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
     def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
@@ -201,7 +231,7 @@ class EnKFMain(BaseCClass):
         if active_mask is None:
             active_mask = [True] * self.getEnsembleSize()
         if source_filesystem is None:
-            source_filesystem = self.getEnkfFsManager().getCurrentFileSystem()
+            source_filesystem = self.getCurrentFileSystem()
         realizations = list(range(len(active_mask)))
         paths = self.runpaths.get_paths(realizations, iteration)
         jobnames = self.runpaths.get_jobnames(realizations, iteration)
@@ -228,130 +258,6 @@ class EnKFMain(BaseCClass):
 
     def write_runpath_list(self, iterations: List[int], realizations: List[int]):
         self.runpaths.write_runpath_list(iterations, realizations)
-
-    # --- Overridden methods --------------------
-
-    def _monkey_patch_methods(self, real_enkf_main):
-        # As a general rule, EnKFMain methods should be implemented on
-        # _RealEnKFMain because the other references (such as __es_update)
-        # may need to use them.
-        # The public methods should be also exposed in this class, forwarding
-        # the call to the real method on the real_enkf_main object. That's done
-        # via monkey patching, so we don't need to manually keep the classes
-        # synchronized
-        from inspect import getmembers, ismethod
-
-        methods = getmembers(self._real_enkf_main(), predicate=ismethod)
-        dont_patch = [name for name, _ in getmembers(BaseCClass)]
-        for name, method in methods:
-            if name.startswith("_") or name in dont_patch:
-                continue  # skip private methods
-            setattr(self, name, method)
-
-    def __repr__(self):
-        repr = self._real_enkf_main().__repr__()
-        assert repr.startswith("_RealEnKFMain")
-        return repr[5:]
-
-
-class _RealEnKFMain(BaseCClass):
-    """Access to the C EnKFMain interface.
-
-    The python interface of EnKFMain is split between 4 classes, ie
-    - EnKFMain: main entry point, defined further down
-    - EnkfSimulationRunner, EnkfFsManager: access specific
-      functionalities
-    EnKFMain owns an instance of each of the last 3 classes. Also, all
-    of these classes need to access the same underlying C object.
-    So, in order to avoid circular dependencies, we make _RealEnKF main
-    the only "owner" of the C object, and all the classes that need to
-    access it set _RealEnKFMain as parent.
-
-    The situation can be summarized as follows (show only EnkfFSManager,
-    EnkfSimulationRunner are treated analogously)
-     ------------------------------------
-    |   real EnKFMain object in memory   |
-     ------------------------------------
-          ^                 ^          ^
-          |                 |          |
-       (c_ptr)           (c_ptr)       |
-          |                 |          |
-    _RealEnKFMain           |          |
-       ^   ^                |          |
-       |   ^--(parent)-- EnKFMain      |
-       |                    |          |
-       |                  (owns)       |
-    (parent)                |       (c_ptr)
-       |                    v          |
-        ------------ EnkfFSManager ----
-
-    """
-
-    _alloc = ResPrototype("void* enkf_main_alloc(res_config, bool)", bind=False)
-
-    _free = ResPrototype("void enkf_main_free(enkf_main)")
-    _get_ensemble_size = ResPrototype("int enkf_main_get_ensemble_size( enkf_main )")
-    _get_data_kw = ResPrototype("subst_list_ref enkf_main_get_data_kw(enkf_main)")
-    _get_obs = ResPrototype("enkf_obs_ref enkf_main_get_obs(enkf_main)")
-    _get_observations = ResPrototype(
-        "void enkf_main_get_observations(enkf_main, \
-                                         char*, \
-                                         int, \
-                                         long*, \
-                                         double*, \
-                                         double*)"
-    )
-    _have_observations = ResPrototype("bool enkf_main_have_obs(enkf_main)")
-    _get_workflow_list = ResPrototype(
-        "ert_workflow_list_ref enkf_main_get_workflow_list(enkf_main)"
-    )
-    _get_hook_manager = ResPrototype(
-        "hook_manager_ref enkf_main_get_hook_manager(enkf_main)"
-    )
-    _get_res_config = ResPrototype("res_config_ref enkf_main_get_res_config(enkf_main)")
-    _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
-
-    def __init__(self, config, strict=True, read_only=False):
-        """Please don't use this class directly. See EnKFMain instead"""
-        self.config_file = config
-        res_config = self._init_res_config(config)
-        if res_config is None:
-            raise TypeError(
-                "Failed to construct EnKFMain instance due to invalid res_config."
-            )
-
-        c_ptr = self._alloc(res_config, read_only)
-        if c_ptr:
-            super().__init__(c_ptr)
-        else:
-            raise ValueError(
-                f"Failed to construct EnKFMain instance from config {res_config}."
-            )
-
-        self.__key_manager = KeyManager(self)
-        self.substituter = Substituter(
-            {key: value for (key, value, _) in self.getDataKW()}
-        )
-        self.runpaths = Runpaths(
-            self.getModelConfig().getJobnameFormat(),
-            self.getModelConfig().getRunpathFormat().format_string,
-            Path(res_config.runpath_file),
-            self.substituter.substitute,
-        )
-
-    def _init_res_config(self, config):
-        if isinstance(config, ResConfig):
-            return config
-
-        # The res_config argument can be None; the only reason to
-        # allow that possibility is to be able to test that the
-        # site-config loads correctly.
-        if config is None:
-            config = ResConfig(None)
-            config.convertToCReference(self)
-            return config
-
-        raise TypeError(f"Expected ResConfig, received: {repr(config)}")
 
     def get_queue_config(self) -> QueueConfig:
         return self.resConfig().queue_config
@@ -445,6 +351,227 @@ class _RealEnKFMain(BaseCClass):
         "Will return the random number generator used for updates."
         return self._get_shared_rng()
 
-    @property
-    def _parameter_keys(self):
-        return enkf_main.get_parameter_keys(self)
+    def _createFullCaseName(self, mount_root: str, case_name: str) -> str:
+        return os.path.join(mount_root, case_name)
+
+    # The return value from the getFileSystem will be a weak reference to the
+    # underlying enkf_fs object. That implies that the fs manager must be in
+    # scope for the return value to be valid.
+    def getFileSystem(
+        self, case_name: str, mount_root: str = None, read_only: bool = False
+    ) -> "EnkfFs":
+        if mount_root is None:
+            mount_root = self.getMountPoint()
+
+        full_case_name = self._createFullCaseName(mount_root, case_name)
+
+        if full_case_name not in self._fs_rotator:
+            if not os.path.exists(full_case_name):
+                if self._fs_rotator.atCapacity():
+                    self._fs_rotator.dropOldestFileSystem()
+
+                EnkfFs.createFileSystem(full_case_name)
+
+            new_fs = EnkfFs(full_case_name, read_only)
+            self._fs_rotator.addFileSystem(new_fs, full_case_name)
+
+        fs = self._fs_rotator[full_case_name]
+
+        return fs
+
+    def isCaseRunning(self, case_name: str, mount_root: str = None) -> bool:
+        """Returns true if case is mounted and write_count > 0"""
+        if self.isCaseMounted(case_name, mount_root):
+            case_fs = self.getFileSystem(case_name, mount_root)
+            return case_fs.is_running()
+        return False
+
+    def caseExists(self, case_name: str) -> bool:
+        return case_name in self.getCaseList()
+
+    def caseHasData(self, case_name: str) -> bool:
+        state_map = self.getStateMapForCase(case_name)
+
+        return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
+
+    def getCurrentFileSystem(self) -> "EnkfFs":
+        """Returns the currently selected file system"""
+        current_fs = self._get_current_fs()
+        case_name = current_fs.getCaseName()
+        full_name = self._createFullCaseName(self.getMountPoint(), case_name)
+        self.addDataKW("<ERT-CASE>", current_fs.getCaseName())
+        self.addDataKW("<ERTCASE>", current_fs.getCaseName())
+
+        if full_name not in self._fs_rotator:
+            self._fs_rotator.addFileSystem(current_fs, full_name)
+
+        return self.getFileSystem(case_name, self.getMountPoint())
+
+    def umount(self) -> None:
+        self._fs_rotator.umountAll()
+
+    def getFileSystemCount(self) -> int:
+        return len(self._fs_rotator)
+
+    def switchFileSystem(self, file_system: "EnkfFs") -> None:
+        self.addDataKW("<ERT-CASE>", file_system.getCaseName())
+        self.addDataKW("<ERTCASE>", file_system.getCaseName())
+        self._switch_fs(file_system, None)
+
+    def isCaseInitialized(self, case: str) -> bool:
+        return self._is_case_initialized(case)
+
+    def getCaseList(self) -> List[str]:
+        caselist = [
+            str(x.stem) for x in Path(self.getMountPoint()).iterdir() if x.is_dir()
+        ]
+        return sorted(caselist, key=naturalSortKey)
+
+    def customInitializeCurrentFromExistingCase(
+        self,
+        source_case: str,
+        source_report_step: int,
+        member_mask: List[bool],
+        node_list: List[str],
+    ) -> None:
+        if source_case not in self.getCaseList():
+            raise KeyError(
+                f"No such source case: {source_case} in {self.getCaseList()}"
+            )
+        source_case_fs = self.getFileSystem(source_case)
+        enkf_main.init_current_case_from_existing_custom(
+            self, source_case_fs, source_report_step, node_list, member_mask
+        )
+
+    def initializeCurrentCaseFromExisting(
+        self, source_fs: "EnkfFs", source_report_step: int
+    ) -> None:
+        self._initialize_current_case_from_existing(source_fs, source_report_step)
+
+    def initializeCaseFromExisting(
+        self, source_fs: "EnkfFs", source_report_step: int, target_fs: "EnkfFs"
+    ) -> None:
+        self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
+
+    def initializeFromScratch(
+        self, parameter_list: List[str], run_context: RunContext
+    ) -> None:
+        for realization_nr in range(self.getEnsembleSize()):
+            if run_context.is_active(realization_nr):
+                enkf_state.state_initialize(
+                    self,
+                    run_context.sim_fs,
+                    parameter_list,
+                    run_context.init_mode.value,
+                    realization_nr,
+                )
+
+    def isCaseMounted(self, case_name: str, mount_root: str = None) -> bool:
+        if mount_root is None:
+            mount_root = self.getMountPoint()
+
+        full_case_name = self._createFullCaseName(mount_root, case_name)
+
+        return full_case_name in self._fs_rotator
+
+    def getStateMapForCase(self, case: str) -> "StateMap":
+        if self.isCaseMounted(case):
+            fs = self.getFileSystem(case)
+            return fs.getStateMap()
+        else:
+            return self._alloc_readonly_state_map(case)
+
+    def isCaseHidden(self, case_name: str) -> bool:
+        return case_name.startswith(".")
+
+    def runSimpleStep(self, job_queue: "JobQueue", run_context: RunContext) -> int:
+        # run simplestep
+        self.initRun(run_context)
+
+        # start queue
+        max_runtime = self.analysisConfig().get_max_runtime()
+        if max_runtime == 0:
+            max_runtime = None
+
+        done_callback_function = model_callbacks.forward_model_ok
+        exit_callback_function = model_callbacks.forward_model_exit
+
+        # submit jobs
+        for index, run_arg in enumerate(run_context):
+            if not run_context.is_active(index):
+                continue
+            job_queue.add_job_from_run_arg(
+                run_arg,
+                self.resConfig(),
+                max_runtime,
+                done_callback_function,
+                exit_callback_function,
+            )
+
+        job_queue.submit_complete()
+        queue_evaluators = None
+        if (
+            self.analysisConfig().get_stop_long_running()
+            and self.analysisConfig().minimum_required_realizations > 0
+        ):
+            queue_evaluators = [
+                partial(
+                    job_queue.stop_long_running_jobs,
+                    self.analysisConfig().minimum_required_realizations,
+                )
+            ]
+
+        jqm = JobQueueManager(job_queue, queue_evaluators)
+        jqm.execute_queue()
+
+        # deactivate failed realizations
+        totalOk = 0
+        totalFailed = 0
+        for index, run_arg in enumerate(run_context):
+            if run_context.is_active(index):
+                if run_arg.run_status in (
+                    RunStatusType.JOB_LOAD_FAILURE,
+                    RunStatusType.JOB_RUN_FAILURE,
+                ):
+                    run_context.deactivate_realization(index)
+                    totalFailed += 1
+                else:
+                    totalOk += 1
+
+        run_context.sim_fs.fsync()
+
+        if totalFailed == 0:
+            print(f"All {totalOk} active jobs complete and data loaded.")
+        else:
+            print(f"{totalFailed} active job(s) failed.")
+
+        return totalOk
+
+    def createRunPath(self, run_context: RunContext) -> None:
+        self.initRun(run_context)
+        for iens, run_arg in enumerate(run_context):
+            if run_context.is_active(iens):
+                substitutions = self.substituter.get_substitutions(
+                    iens, run_arg.iter_id
+                )
+                subst_list = SubstitutionList()
+                for subst in substitutions.items():
+                    subst_list.addItem(*subst)
+                enkf_main.init_active_run(
+                    self.resConfig(),
+                    run_arg,
+                    subst_list,
+                )
+
+        active_list = [
+            run_context[i] for i in range(len(run_context)) if run_context.is_active(i)
+        ]
+        iterations = sorted({runarg.iter_id for runarg in active_list})
+        realizations = sorted({runarg.iens for runarg in active_list})
+
+        self.runpaths.write_runpath_list(iterations, realizations)
+
+    @staticmethod
+    def runWorkflows(runtime: int, ert: "EnKFMain") -> None:
+        hook_manager = ert.getHookManager()
+        hook_manager.runWorkflows(runtime, ert)

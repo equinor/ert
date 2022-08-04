@@ -564,7 +564,7 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
         target_filesystem=enkf_main.getEnkfFsManager().getFileSystem("iter"),
     )
 
-    enkf_main.getEnkfSimulationRunner().createRunPath(run_context)
+    enkf_main.createRunPath(run_context)
     return run_context
 
 
@@ -575,7 +575,7 @@ def _evaluate_ensemble(ert: LibresFacade, run_context: RunContext):
     queue_config = ert.get_queue_config()
     _job_queue = queue_config.create_job_queue()
 
-    ert._enkf_main.getEnkfSimulationRunner().runSimpleStep(_job_queue, run_context)
+    ert._enkf_main.runSimpleStep(_job_queue, run_context)
 
 
 def _get_parameters() -> pd.DataFrame:

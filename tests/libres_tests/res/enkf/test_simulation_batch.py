@@ -65,13 +65,11 @@ class SimulationBatchTest(ResTest):
             run_context = ert.create_ensemble_experiment_run_context(
                 source_filesystem=sim_fs, active_mask=mask, iteration=0
             )
-            ert.getEnkfSimulationRunner().createRunPath(run_context)
+            ert.createRunPath(run_context)
             job_queue = ert.get_queue_config().create_job_queue()
 
-            ert.getEnkfSimulationRunner().createRunPath(run_context)
-            num = ert.getEnkfSimulationRunner().runEnsembleExperiment(
-                job_queue, run_context
-            )
+            ert.createRunPath(run_context)
+            num = ert.runSimpleStep(job_queue, run_context)
             self.assertEqual(num, batch_size)
 
             order_result = EnkfNode(ens_config["ORDER"])

@@ -83,7 +83,7 @@ class EnKFTest(ResTest):
     @tmpdir()
     def test_site_bootstrap(self):
         with TestAreaContext("enkf_test", store_area=True):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(TypeError):
                 EnKFMain(None)
 
     @tmpdir()
@@ -235,19 +235,17 @@ class EnKFTest(ResTest):
 def test_run_context_from_external_folder(setup_case):
     res_config = setup_case("local/snake_oil", "snake_oil.ert")
     main = EnKFMain(res_config)
-    fs_manager = main.getEnkfFsManager()
-    fs = fs_manager.getCurrentFileSystem()
 
     mask = [False] * 10
     mask[0] = True
     run_context = main.create_ensemble_experiment_run_context(
-        source_filesystem=fs, active_mask=mask, iteration=0
+        source_filesystem=main.getCurrentFileSystem(), active_mask=mask, iteration=0
     )
 
     assert len(run_context) == 10
 
     job_queue = main.get_queue_config().create_job_queue()
-    main.getEnkfSimulationRunner().createRunPath(run_context)
-    num = main.getEnkfSimulationRunner().runEnsembleExperiment(job_queue, run_context)
+    main.createRunPath(run_context)
+    num = main.runSimpleStep(job_queue, run_context)
     assert os.path.isdir("storage/snake_oil/runpath/realization-0/iter-0")
     assert num == 1

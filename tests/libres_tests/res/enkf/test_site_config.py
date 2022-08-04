@@ -29,7 +29,7 @@ def test_umask_is_written_to_json(setup_case):
     res_config = setup_case("local/simple_config", "config_umask")
     ert = EnKFMain(res_config)
     run_context = ert.create_ensemble_experiment_run_context(iteration=0)
-    ert.getEnkfSimulationRunner().createRunPath(run_context)
+    ert.createRunPath(run_context)
 
     assert json.load(Path("simulations/run0/jobs.json").open())["umask"] == "0022"
 

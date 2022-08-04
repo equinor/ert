@@ -2,7 +2,6 @@ import sys
 
 from ...libres_utils import ResTest, tmpdir
 
-from res.enkf import EnkfFsManager
 from res.test import ErtTestContext
 
 
@@ -23,7 +22,7 @@ class TestEnKFFSManager2(ResTest):
             self.assertEqual(0, fsm.getFileSystemCount())
 
             fs_list = []
-            for index in range(EnkfFsManager.DEFAULT_CAPACITY):
+            for index in range(5):
                 fs_list.append(fsm.getFileSystem(f"fs_fill_{index}"))
 
             for fs in fs_list:
@@ -35,12 +34,10 @@ class TestEnKFFSManager2(ResTest):
                 del fs_copy
                 self.assertEqual(2, fs.refCount())
 
-            self.assertEqual(EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount())
+            self.assertEqual(5, fsm.getFileSystemCount())
 
-            for index in range(3 * EnkfFsManager.DEFAULT_CAPACITY):
+            for index in range(3 * 5):
                 fs_name = f"fs_test_{index}"
                 sys.stderr.write(f"Mounting: {fs_name}\n")
                 fs = fsm.getFileSystem(fs_name)
-                self.assertEqual(
-                    EnkfFsManager.DEFAULT_CAPACITY, fsm.getFileSystemCount()
-                )
+                self.assertEqual(5, fsm.getFileSystemCount())

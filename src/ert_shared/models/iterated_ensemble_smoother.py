@@ -4,7 +4,7 @@ from ert.analysis import ErtAnalysisError, ModuleData
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel, ErtRunError
 from res.analysis.analysis_module import AnalysisModule
-from res.enkf import EnkfSimulationRunner, RunContext
+from res.enkf import RunContext
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime, RealizationStateEnum
@@ -42,8 +42,8 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhase(run_context.iteration, phase_msg, indeterminate=False)
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(run_context)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().createRunPath(run_context)
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
         # create ensemble
         ensemble_id = self._post_ensemble_data(update_id=update_id)
         self.setPhaseName("Running forecast...", indeterminate=False)
@@ -54,7 +54,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
         self._post_ensemble_results(ensemble_id)
         return ensemble_id
 
@@ -68,7 +68,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         self.setPhaseName("Analyzing...", indeterminate=True)
 
         self.setPhaseName("Pre processing update...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
 
         try:
             self.facade.iterative_smoother_update(run_context, self._w_container)
@@ -85,7 +85,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         )
 
         self.setPhaseName("Post processing update...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
         return update_id
 
     def runSimulations(
@@ -117,9 +117,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
             # We run the PRE_FIRST_UPDATE hook here because the current_iter is
             # explicitly available, versus in the run_context inside analyzeStep
             if current_iter == 0:
-                EnkfSimulationRunner.runWorkflows(
-                    HookRuntime.PRE_FIRST_UPDATE, ert=self.ert()
-                )
+                self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
             update_id = self.analyzeStep(run_context, ensemble_id)
             current_iter = self._w_container.iteration_nr - 1
 

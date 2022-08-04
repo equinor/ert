@@ -195,7 +195,7 @@ class AnalysisConfig(BaseCClass):
     def set_rerun_start(self, index):
         self._set_rerun_start(index)
 
-    def get_log_path(self):
+    def get_log_path(self) -> str:
         return self._get_log_path()
 
     def set_log_path(self, path):

@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from ert.analysis import ErtAnalysisError
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.models import BaseRunModel, ErtRunError
-from res.enkf import EnkfSimulationRunner, RunContext
+from res.enkf import RunContext
 from res.enkf.enkf_main import EnKFMain, QueueConfig
 from res.enkf.enums import HookRuntime, RealizationStateEnum
 
@@ -35,9 +35,9 @@ class EnsembleSmoother(BaseRunModel):
         # self.setAnalysisModule(arguments["analysis_module"])
 
         self.setPhaseName("Pre processing...", indeterminate=True)
-        self.ert().getEnkfSimulationRunner().createRunPath(prior_context)
+        self.ert().createRunPath(prior_context)
 
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
 
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data()
@@ -54,11 +54,11 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
 
         self.setPhaseName("Analyzing...")
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_FIRST_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_UPDATE, ert=self.ert())
         try:
             self.facade.smoother_update(prior_context)
         except ErtAnalysisError as e:
@@ -66,7 +66,7 @@ class EnsembleSmoother(BaseRunModel):
                 f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_UPDATE, ert=self.ert())
 
         # Create an update object in storage
         analysis_module_name = self.ert().analysisConfig().activeModuleName()
@@ -79,9 +79,9 @@ class EnsembleSmoother(BaseRunModel):
 
         rerun_context = self.create_context(prior_context=prior_context)
 
-        self.ert().getEnkfSimulationRunner().createRunPath(rerun_context)
+        self.ert().createRunPath(rerun_context)
 
-        EnkfSimulationRunner.runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.PRE_SIMULATION, ert=self.ert())
         # Push ensemble, parameters, observations to new storage
         ensemble_id = self._post_ensemble_data(update_id=update_id)
 
@@ -94,7 +94,7 @@ class EnsembleSmoother(BaseRunModel):
         self.checkHaveSufficientRealizations(num_successful_realizations)
 
         self.setPhaseName("Post processing...", indeterminate=True)
-        EnkfSimulationRunner.runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
+        self.ert().runWorkflows(HookRuntime.POST_SIMULATION, ert=self.ert())
 
         # Push simulation results to storage
         self._post_ensemble_results(ensemble_id)

@@ -26,7 +26,7 @@ def test_transfer_var():
     ert = EnKFMain(res_config)
 
     run_context = ert.create_ensemble_experiment_run_context(iteration=0)
-    ert.getEnkfSimulationRunner().createRunPath(run_context)
+    ert.createRunPath(run_context)
     os.chdir("simulations/realization0")
     with open("jobs.json", "r") as f:
         data = json.load(f)

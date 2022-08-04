@@ -29,7 +29,7 @@ def create_runpath():
             active_mask=[True],
             iteration=0,
         )
-        ert.getEnkfSimulationRunner().createRunPath(run_context)
+        ert.createRunPath(run_context)
         return ert
 
     yield func

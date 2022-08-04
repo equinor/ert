@@ -21,7 +21,6 @@ from ert_shared.storage.extraction import (
     post_update_data,
 )
 from res.enkf import EnKFMain, QueueConfig
-from res.enkf.enkf_simulation_runner import EnkfSimulationRunner
 from res.enkf.ert_run_context import RunContext
 from res.job_queue import ForwardModel, RunStatusType
 
@@ -403,7 +402,7 @@ class BaseRunModel:
         # Run hook
         await loop.run_in_executor(
             executor,
-            EnkfSimulationRunner.runWorkflows,
+            self.ert().runWorkflows,
             hook,
             self.ert(),
         )
