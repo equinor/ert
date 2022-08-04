@@ -19,7 +19,7 @@ def source_root() -> Path:
 def enumerate_sources() -> Generator[Path, None, None]:
     root = source_root()
     for filename in "CMakeLists.txt", "*.cmake":
-        pattern = f"libres/**/{filename}"
+        pattern = f"src/**/{filename}"
         for path in root.glob(pattern):
             yield path
 
