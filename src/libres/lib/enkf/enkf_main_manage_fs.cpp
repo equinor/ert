@@ -445,8 +445,37 @@ void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
     }
 }
 
-static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
-                                             bool read_only) {
+state_map_type *
+enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
+                                   const char *case_path) {
+    char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
+    state_map_type *state_map = enkf_fs_alloc_readonly_state_map(mount_point);
+    free(mount_point);
+    return state_map;
+}
+
+/**
+   This function boots everything needed for running a EnKF
+   application from the provided res_config.
+*/
+enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
+                                bool read_only) {
+    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
+    const model_config_type *model_config =
+        res_config_get_model_config(res_config);
+
+    enkf_main_type *enkf_main = new enkf_main_type;
+    UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
+
+    enkf_main->res_config = res_config;
+
+    // Init rng
+    enkf_main->rng_manager = rng_config_alloc_rng_manager(
+        res_config_get_rng_config(enkf_main->res_config));
+    enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
+
+    // Init storage
+    enkf_main->dbase = NULL;
     const char *ens_path = model_config_get_enspath(
         res_config_get_model_config(enkf_main->res_config));
     char *current_mount_point =
@@ -471,20 +500,39 @@ static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
         enkf_main_select_fs(enkf_main, DEFAULT_CASE, read_only);
 
     free(current_mount_point);
-}
 
-state_map_type *
-enkf_main_alloc_readonly_state_map(const enkf_main_type *enkf_main,
-                                   const char *case_path) {
-    char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-    state_map_type *state_map = enkf_fs_alloc_readonly_state_map(mount_point);
-    free(mount_point);
-    return state_map;
-}
+    // Init observations
+    auto obs = enkf_obs_alloc(model_config_get_history(model_config),
+                              model_config_get_external_time_map(model_config),
+                              ecl_config_get_grid(ecl_config),
+                              ecl_config_get_refcase(ecl_config),
+                              res_config_get_ensemble_config(res_config));
+    const char *obs_config_file =
+        model_config_get_obs_config_file(model_config);
+    if (obs_config_file)
+        enkf_obs_load(obs, obs_config_file,
+                      analysis_config_get_std_cutoff(
+                          res_config_get_analysis_config(res_config)));
+    enkf_main->obs = obs;
 
-void enkf_main_close_fs(enkf_main_type *enkf_main) {
-    if (enkf_main->dbase != NULL)
-        enkf_fs_decref(enkf_main->dbase);
+    // Add ensemble
+    int num_realizations = model_config_get_num_realizations(model_config);
+    std::vector<enkf_state> ensemble;
+    for (int iens = 0; iens < num_realizations; iens++)
+        // Observe that due to the initialization of the rng - this function is currently NOT thread safe.
+        ensemble.emplace_back(
+            enkf_state_alloc(iens,
+                             rng_manager_iget(enkf_main->rng_manager, iens),
+                             res_config_get_model_config(res_config),
+                             res_config_get_ensemble_config(res_config),
+                             res_config_get_site_config(res_config),
+                             res_config_get_ecl_config(res_config),
+                             res_config_get_templates(res_config)),
+            enkf_state_deleter());
+    enkf_main->ensemble = ensemble;
+    enkf_main->ens_size = num_realizations;
+
+    return enkf_main;
 }
 
 RES_LIB_SUBMODULE("enkf_main", m) {

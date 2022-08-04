@@ -71,7 +71,6 @@ extern "C" bool enkf_main_have_obs(const enkf_main_type *enkf_main);
 
 extern "C" subst_list_type *
 enkf_main_get_data_kw(const enkf_main_type *enkf_main);
-void enkf_main_increase_ensemble(enkf_main_type *enkf_main, int new_ens_size);
 extern "C" void enkf_main_get_observations(const enkf_main_type *enkf_main,
                                            const char *user_key, int obs_count,
                                            time_t *obs_time, double *y,
@@ -85,7 +84,6 @@ enkf_main_get_hook_manager(const enkf_main_type *enkf_main);
 extern "C" ert_workflow_list_type *
 enkf_main_get_workflow_list(enkf_main_type *enkf_main);
 
-void enkf_main_rng_init(enkf_main_type *enkf_main);
 extern "C" rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main);
 
 bool enkf_main_export_field(const enkf_main_type *enkf_main, const char *kw,
