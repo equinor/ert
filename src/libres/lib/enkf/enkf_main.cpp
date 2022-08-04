@@ -60,6 +60,11 @@ static auto logger = ert::get_logger("enkf");
 
 #define ENKF_MAIN_ID 8301
 
+struct enkf_state_deleter {
+    void operator()(enkf_state_type *p) const { enkf_state_free(p); };
+};
+using enkf_state = std::shared_ptr<enkf_state_type>;
+
 /**
    This object should contain **everything** needed to run a enkf
    simulation. A way to wrap up all available information/state and
@@ -99,16 +104,12 @@ struct enkf_main_struct {
     enkf_obs_type *obs;
 
     /** The ensemble */
-    enkf_state_type **ensemble;
+    std::vector<enkf_state> ensemble;
     /** The size of the ensemble */
     int ens_size;
 };
 
 void enkf_main_init_internalization(enkf_main_type *);
-static void enkf_main_close_fs(enkf_main_type *enkf_main);
-static void enkf_main_user_select_initial_fs(enkf_main_type *enkf_main,
-                                             bool read_only);
-static void enkf_main_free_ensemble(enkf_main_type *enkf_main);
 
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
@@ -134,18 +135,6 @@ bool enkf_main_have_obs(const enkf_main_type *enkf_main) {
 const hook_manager_type *
 enkf_main_get_hook_manager(const enkf_main_type *enkf_main) {
     return res_config_get_hook_manager(enkf_main->res_config);
-}
-
-void enkf_main_alloc_obs(enkf_main_type *enkf_main) {
-    const ecl_config_type *ecl_config =
-        res_config_get_ecl_config(enkf_main->res_config);
-    model_config_type *model_config =
-        res_config_get_model_config(enkf_main->res_config);
-    enkf_main->obs = enkf_obs_alloc(
-        model_config_get_history(model_config),
-        model_config_get_external_time_map(model_config),
-        ecl_config_get_grid(ecl_config), ecl_config_get_refcase(ecl_config),
-        res_config_get_ensemble_config(enkf_main->res_config));
 }
 
 bool enkf_main_load_obs(enkf_main_type *enkf_main, const char *obs_config_file,
@@ -176,8 +165,8 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     if (enkf_main->obs)
         enkf_obs_free(enkf_main->obs);
 
-    enkf_main_free_ensemble(enkf_main);
-    enkf_main_close_fs(enkf_main);
+    if (enkf_main->dbase != NULL)
+        enkf_fs_decref(enkf_main->dbase);
 
     delete enkf_main;
 }
@@ -187,77 +176,8 @@ void enkf_main_exit(enkf_main_type *enkf_main) {
     exit(0);
 }
 
-static enkf_main_type *enkf_main_alloc_empty() {
-    enkf_main_type *enkf_main = new enkf_main_type;
-    UTIL_TYPE_ID_INIT(enkf_main, ENKF_MAIN_ID);
-    enkf_main->dbase = NULL, enkf_main->ensemble = NULL;
-    enkf_main->rng_manager = NULL;
-    enkf_main->shared_rng = NULL;
-    enkf_main->ens_size = 0;
-    enkf_main->res_config = NULL;
-    enkf_main->obs = NULL;
-
-    return enkf_main;
-}
-
 rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
     return enkf_main->shared_rng;
-}
-
-void enkf_main_rng_init(enkf_main_type *enkf_main) {
-    enkf_main->rng_manager = rng_config_alloc_rng_manager(
-        res_config_get_rng_config(enkf_main->res_config));
-    enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
-}
-
-static void enkf_main_init_obs(enkf_main_type *enkf_main) {
-    enkf_main_alloc_obs(enkf_main);
-
-    const model_config_type *model_config =
-        res_config_get_model_config(enkf_main->res_config);
-    const char *obs_config_file =
-        model_config_get_obs_config_file(model_config);
-    if (obs_config_file)
-        enkf_main_load_obs(enkf_main, obs_config_file, true);
-}
-
-static void enkf_main_add_ensemble_members(enkf_main_type *enkf_main) {
-    const model_config_type *model_config =
-        res_config_get_model_config(enkf_main->res_config);
-    int num_realizations = model_config_get_num_realizations(model_config);
-    enkf_main_increase_ensemble(enkf_main, num_realizations);
-}
-
-/**
-   This function boots everything needed for running a EnKF
-   application from the provided res_config.
-
-  Observe that the function will start with chdir() to the working directory
-  specified by res_config, so that all subsequent file
-  references are relative to the location of the configuration
-  file. This also applies if the command_line argument given is a
-  symlink.
-
-    FORWARD_MODEL
-    DATA_FILE
-    SCHEDULE_FILE
-    ECLBASE
-
-   It is possible to pass NULL as the model_config argument, in that
-   case only the site config file will be parsed. The purpose of this
-   is mainly to be able to test that the site config file is valid.
-*/
-enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
-                                bool read_only) {
-    enkf_main_type *enkf_main = enkf_main_alloc_empty();
-    enkf_main->res_config = res_config;
-
-    enkf_main_rng_init(enkf_main);
-    enkf_main_user_select_initial_fs(enkf_main, read_only);
-    enkf_main_init_obs(enkf_main);
-    enkf_main_add_ensemble_members(enkf_main);
-
-    return enkf_main;
 }
 
 int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
