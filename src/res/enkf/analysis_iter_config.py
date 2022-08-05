@@ -70,12 +70,10 @@ class AnalysisIterConfig(BaseCClass):
                     "Failed to construct AnalysisIterConfig instance for dictionary."
                 )
 
-    def getNumIterations(self):
-        """@rtype: int"""
+    def getNumIterations(self) -> int:
         return self._get_num_iterations()
 
-    def __len__(self):
-        """Returns number of iterations."""
+    def __len__(self) -> int:
         return self.getNumIterations()
 
     def setNumIterations(self, num_iterations):
@@ -84,12 +82,10 @@ class AnalysisIterConfig(BaseCClass):
     def numIterationsSet(self):
         return self._num_iterations_set()
 
-    def getNumRetries(self):
-        """@rtype: int"""
+    def getNumRetries(self) -> int:
         return self._get_num_retries()
 
-    def getCaseFormat(self):
-        """@rtype: str"""
+    def getCaseFormat(self) -> str:
         return self._get_case_fmt()
 
     def setCaseFormat(self, case_fmt):

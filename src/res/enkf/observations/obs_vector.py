@@ -13,7 +13,10 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import Union
+
 from cwrap import BaseCClass
+
 from res import ResPrototype, _lib
 from res.enkf.config import EnkfConfigNode
 from res.enkf.enums import EnkfObservationImplementationType
@@ -55,13 +58,14 @@ class ObsVector(BaseCClass):
     )
     _get_obs_key = ResPrototype("char*  obs_vector_get_obs_key(obs_vector)")
 
-    def __init__(self, observation_type, observation_key, config_node, num_reports):
-        """
-        @type observation_type: EnkfObservationImplementationType
-        @type observation_key: str
-        @type config_node: EnkfConfigNode
-        @type num_reports: int
-        """
+    def __init__(
+        self,
+        observation_type: EnkfObservationImplementationType,
+        observation_key: str,
+        config_node: EnkfConfigNode,
+        num_reports: int,
+    ):
+
         assert isinstance(observation_type, EnkfObservationImplementationType)
         assert isinstance(observation_key, str)
         assert isinstance(config_node, EnkfConfigNode)
@@ -69,12 +73,10 @@ class ObsVector(BaseCClass):
         c_ptr = self._alloc(observation_type, observation_key, config_node, num_reports)
         super().__init__(c_ptr)
 
-    def getDataKey(self):
-        """@rtype: str"""
+    def getDataKey(self) -> str:
         return self._get_state_kw()
 
-    def getObservationKey(self):
-        """@rtype: str"""
+    def getObservationKey(self) -> str:
         return self.getKey()
 
     def getKey(self):
@@ -83,8 +85,9 @@ class ObsVector(BaseCClass):
     def getObsKey(self):
         return self._get_obs_key()
 
-    def getNode(self, index):
-        """@rtype: SummaryObservation or BlockObservation or GenObservation"""
+    def getNode(
+        self, index: int
+    ) -> Union[SummaryObservation, BlockObservation, GenObservation]:
 
         pointer = self._iget_node(index)
 
@@ -123,8 +126,7 @@ class ObsVector(BaseCClass):
                 "for obervations with one active step"
             )
 
-    def firstActiveStep(self):
-        """@rtype: int"""
+    def firstActiveStep(self) -> int:
         step_list = self.getStepList()
         if len(step_list) > 0:
             return step_list[0]
@@ -133,23 +135,19 @@ class ObsVector(BaseCClass):
                 "the firstActiveStep() method cannot be called with no active steps."
             )
 
-    def getActiveCount(self):
-        """@rtype: int"""
+    def getActiveCount(self) -> int:
         return len(self)
 
     def __len__(self):
         return self._get_num_active()
 
-    def isActive(self, index):
-        """@rtype: bool"""
+    def isActive(self, index: int) -> bool:
         return self._iget_active(index)
 
-    def getNextActiveStep(self, previous_step=-1):
-        """@rtype: int"""
+    def getNextActiveStep(self, previous_step: int = -1) -> int:
         return self._get_next_active_step(previous_step)
 
-    def getImplementationType(self):
-        """@rtype: EnkfObservationImplementationType"""
+    def getImplementationType(self) -> EnkfObservationImplementationType:
         return self._get_impl_type()
 
     def installNode(self, index, node):
@@ -157,12 +155,10 @@ class ObsVector(BaseCClass):
         node.convertToCReference(self)
         self._install_node(index, node.from_param(node))
 
-    def getConfigNode(self):
-        """@rtype: EnkfConfigNode"""
+    def getConfigNode(self) -> EnkfConfigNode:
         return self._get_config_node().setParent(self)
 
-    def hasData(self, active_mask, fs):
-        """@rtype: bool"""
+    def hasData(self, active_mask, fs) -> bool:
         return self._has_data(active_mask, fs)
 
     def free(self):
@@ -175,6 +171,5 @@ class ObsVector(BaseCClass):
             f"num_active = {len(self)}) {self._ad_str()}"
         )
 
-    def getTotalChi2(self, fs, realization_number):
-        """@rtype: float"""
+    def getTotalChi2(self, fs, realization_number) -> float:
         return self._get_total_chi2(fs, realization_number)

@@ -13,6 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import Generator, Union
+
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
@@ -47,16 +49,14 @@ class EnkfObs(BaseCClass):
     def __contains__(self, key):
         return self._has_key(key)
 
-    def __iter__(self):
-        """@rtype: ObsVector"""
+    def __iter__(self) -> Generator[ObsVector, None, None]:
         iobs = 0
         while iobs < len(self):
             vector = self[iobs]
             yield vector
             iobs += 1
 
-    def __getitem__(self, key_or_index):
-        """@rtype: ObsVector"""
+    def __getitem__(self, key_or_index: Union[str, int]) -> ObsVector:
         if isinstance(key_or_index, str):
             if self.hasKey(key_or_index):
                 return self._get_vector(key_or_index).setParent(self)
@@ -80,10 +80,6 @@ class EnkfObs(BaseCClass):
     def getTypedKeylist(
         self, observation_implementation_type: EnkfObservationImplementationType
     ) -> StringList:
-        """
-        @type observation_implementation_type: EnkfObservationImplementationType
-        @rtype: StringList
-        """
         return self._alloc_typed_keylist(observation_implementation_type)
 
     def obsType(self, key):
@@ -107,8 +103,7 @@ class EnkfObs(BaseCClass):
         else:
             return key_list
 
-    def hasKey(self, key):
-        """@rtype: bool"""
+    def hasKey(self, key) -> bool:
         return key in self
 
     def getObservationTime(self, index):

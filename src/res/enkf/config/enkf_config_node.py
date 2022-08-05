@@ -18,6 +18,7 @@ import os
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
+
 from res import ResPrototype
 from res.enkf.config import (
     ExtParamConfig,
@@ -192,8 +193,7 @@ class EnkfConfigNode(BaseCClass):
     def get_container_key(self, index):
         return self._iget_container_key(index)
 
-    def getImplementationType(self):
-        """@rtype: ErtImplType"""
+    def getImplementationType(self) -> ErtImplType:
         return self._get_impl_type()
 
     def getVariableType(self):
@@ -214,20 +214,16 @@ class EnkfConfigNode(BaseCClass):
     def get_enkf_outfile(self):
         return self._get_enkf_outfile()
 
-    def getFieldModelConfig(self):
-        """@rtype: FieldConfig"""
+    def getFieldModelConfig(self) -> FieldConfig:
         return FieldConfig.createCReference(self._get_ref(), parent=self)
 
-    def getDataModelConfig(self):
-        """@rtype: GenDataConfig"""
+    def getDataModelConfig(self) -> GenDataConfig:
         return GenDataConfig.createCReference(self._get_ref(), parent=self)
 
-    def getKeywordModelConfig(self):
-        """@rtype: GenKWConfig"""
+    def getKeywordModelConfig(self) -> GenKwConfig:
         return GenKwConfig.createCReference(self._get_ref(), parent=self)
 
-    def getSummaryModelConfig(self):
-        """@rtype: SummaryConfig"""
+    def getSummaryModelConfig(self) -> SummaryConfig:
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
 
     def get_enkf_infile(self):
@@ -241,24 +237,16 @@ class EnkfConfigNode(BaseCClass):
         return self._get_obs_keys().setParent(self)
 
     @classmethod
-    def createSummaryConfigNode(cls, key, load_fail_type):
-        """
-         @type key: str
-         @type load_fail_type: LoadFailTypeEnum
-        @rtype: EnkfConfigNode
-        """
-
+    def createSummaryConfigNode(
+        cls, key: str, load_fail_type: LoadFaiLTypeEnum
+    ) -> "EnkfConfigNode":
         assert isinstance(load_fail_type, LoadFailTypeEnum)
         return cls._alloc_summary_node(key, load_fail_type)
 
     @classmethod
     def createFieldConfigNode(
         cls, key, grid: EclGrid, trans_table=None, forward_init=False
-    ):
-        """
-        @type grid: EclGrid
-        @rtype: EnkfConfigNode
-        """
+    ) -> "EnkfConfigNode":
         return cls._alloc_field_node(key, grid, trans_table, forward_init)
 
     @classmethod
@@ -524,8 +512,7 @@ class EnkfConfigNode(BaseCClass):
     def __ne__(self, other):
         return not self == other
 
-    def __eq__(self, other):
-        """@rtype: bool"""
+    def __eq__(self, other) -> bool:
         if self.getImplementationType() != other.getImplementationType():
             return False
 

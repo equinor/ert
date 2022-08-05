@@ -40,8 +40,7 @@ class WorkflowRunner:
     def __runWorkflow(self):
         self.__workflow_result = self.__workflow.run(self.__ert, context=self.__context)
 
-    def isRunning(self):
-        """@rtype: bool"""
+    def isRunning(self) -> bool:
         if self.__workflow.isRunning():
             return True
 

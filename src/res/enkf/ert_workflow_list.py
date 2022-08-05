@@ -2,7 +2,6 @@ import os
 from typing import List
 
 from cwrap import BaseCClass
-from ecl.util.util import StringList
 
 from res import ResPrototype
 from res.enkf.config_keys import ConfigKeys
@@ -115,54 +114,41 @@ class ErtWorkflowList(BaseCClass):
             for job in config_dict.get(ConfigKeys.LOAD_WORKFLOW, []):
                 self.addWorkflow(job[ConfigKeys.PATH], job[ConfigKeys.NAME])
 
-    def getWorkflowNames(self) -> StringList:
-        """@rtype: StringList"""
+    def getWorkflowNames(self) -> List[str]:
         return [name for name in self._alloc_namelist()]
 
-    def __contains__(self, workflow_name):
+    def __contains__(self, workflow_name: str) -> bool:
         assert isinstance(workflow_name, str)
         return self._has_workflow(workflow_name)
 
     def __getitem__(self, item) -> Workflow:
-        """@rtype: Workflow"""
         if item not in self:
             raise KeyError(f"Item '{item}' is not in the list of available workflows.")
 
         return self._get_workflow(item).setParent(self)
 
     def getContext(self) -> SubstitutionList:
-        """@rtype: SubstitutionList"""
         return self._get_context()
 
     def __str__(self):
         return f"ErtWorkflowList with jobs: {self.getJobNames()}"
 
-    def addWorkflow(self, wf_name, wf_path):
+    def addWorkflow(self, wf_name: str, wf_path: str):
         self._add_workflow(wf_name, wf_path).setParent(self)
 
-    def addJob(self, job_name, job_path):
-        """
-        @type job_name: str
-        @type job_path: str
-        """
+    def addJob(self, job_name: str, job_path: str):
         self._add_job(job_name, job_path)
 
-    def hasJob(self, job_name):
-        """
-        @type job_name: str
-        @rtype: bool
-        """
+    def hasJob(self, job_name: str) -> bool:
         return self._has_job(job_name)
 
-    def getJob(self, job_name) -> WorkflowJob:
-        """@rtype: WorkflowJob"""
+    def getJob(self, job_name: str) -> WorkflowJob:
         return self._get_job(job_name)
 
     def getJobNames(self) -> List[str]:
         return [name for name in self._get_job_names()]
 
     def getPluginJobs(self) -> List[WorkflowJob]:
-        """@rtype: list of WorkflowJob"""
         plugins = []
         for job_name in self.getJobNames():
             job = self.getJob(job_name)

@@ -307,7 +307,6 @@ class EnKFMain(BaseCClass):
         return self.resConfig().model_config.getEnspath()
 
     def getObservations(self) -> EnkfObs:
-        """@rtype: EnkfObs"""
         return self._get_obs().setParent(self)
 
     def have_observations(self):
