@@ -39,50 +39,49 @@ class JobQueueManager:
     def stop_queue(self):
         self.queue.kill_all_jobs()
 
-    def getNumRunning(self):
+    def getNumRunning(self) -> int:
         return self.queue.count_status(JobStatusType.JOB_QUEUE_RUNNING)
 
-    def getNumWaiting(self):
+    def getNumWaiting(self) -> int:
         return self.queue.count_status(JobStatusType.JOB_QUEUE_WAITING)
 
-    def getNumPending(self):
+    def getNumPending(self) -> int:
         return self.queue.count_status(JobStatusType.JOB_QUEUE_PENDING)
 
-    def getNumSuccess(self):
+    def getNumSuccess(self) -> int:
         return self.queue.count_status(JobStatusType.JOB_QUEUE_SUCCESS)
 
-    def getNumFailed(self):
+    def getNumFailed(self) -> int:
         return self.queue.count_status(JobStatusType.JOB_QUEUE_FAILED)
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         return self.queue.is_active()
 
-    def isJobComplete(self, job_index):
+    def isJobComplete(self, job_index: int) -> bool:
         return not (
             self.queue.job_list[job_index].is_running()
             or self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
         )
 
-    def isJobRunning(self, job_index):
+    def isJobRunning(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_RUNNING
 
-    def isJobWaiting(self, job_index):
+    def isJobWaiting(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_WAITING
 
-    def didJobFail(self, job_index):
+    def didJobFail(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_FAILED
 
-    def didJobSucceed(self, job_index):
+    def didJobSucceed(self, job_index: int) -> bool:
         return self.queue.job_list[job_index].status == JobStatusType.JOB_QUEUE_SUCCESS
 
-    def getJobStatus(self, job_index):
+    def getJobStatus(self, job_index: int) -> JobStatusType:
         # See comment about return type in the prototype section at
         # the top of class.
-        """@rtype: res.job_queue.job_status_type_enum.JobStatusType"""
         int_status = self.queue.job_list[job_index].status
         return JobStatusType(int_status)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             "JobQueueManager("
             f"waiting={self.getNumWaiting()}, running={self.getNumRunning()}, "

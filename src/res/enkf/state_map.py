@@ -44,8 +44,7 @@ class StateMap(BaseCClass):
         if filename:
             self.load(filename)
 
-    def __len__(self):
-        """@rtype: int"""
+    def __len__(self) -> int:
         return self._size()
 
     def __iter__(self):
@@ -59,8 +58,7 @@ class StateMap(BaseCClass):
     def __eq__(self, other):
         return self._equal(other)
 
-    def __getitem__(self, index):
-        """@rtype: RealizationStateEnum"""
+    def __getitem__(self, index) -> RealizationStateEnum:
         if not isinstance(index, int):
             raise TypeError("Expected an integer")
 

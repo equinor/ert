@@ -219,22 +219,17 @@ class ModelConfig(BaseCClass):
     def hasHistory(self):
         return self._has_history()
 
-    def get_history_source(self):
-        """@rtype: HistorySourceEnum"""
+    def get_history_source(self) -> HistorySourceEnum:
         return self._get_history_source()
 
-    def set_history_source(self, history_source, refcase):
-        """
-        @type history_source: HistorySourceEnum
-        @type refcase: EclSum
-        @rtype: bool
-        """
+    def set_history_source(
+        self, history_source: HistorySourceEnum, refcase: EclSum
+    ) -> bool:
         assert isinstance(history_source, HistorySourceEnum)
         assert isinstance(refcase, EclSum)
         return self._select_history(history_source, refcase)
 
-    def get_max_internal_submit(self):
-        """@rtype: int"""
+    def get_max_internal_submit(self) -> int:
         return self._get_max_internal_submit()
 
     def set_max_internal_submit(self, max_value):
@@ -243,12 +238,10 @@ class ModelConfig(BaseCClass):
     def getForwardModel(self) -> ForwardModel:
         return self._get_forward_model().setParent(self)
 
-    def getRunpathAsString(self):
-        """@rtype: str"""
+    def getRunpathAsString(self) -> str:
         return self._get_runpath_as_char()
 
-    def selectRunpath(self, path_key):
-        """@rtype: bool"""
+    def selectRunpath(self, path_key) -> bool:
         return self._select_runpath(path_key)
 
     def setRunpath(self, path_format):
@@ -257,28 +250,23 @@ class ModelConfig(BaseCClass):
     def free(self):
         self._free()
 
-    def getGenKWExportName(self):
-        """@rtype: str"""
+    def getGenKWExportName(self) -> str:
         return self._gen_kw_export_name()
 
-    def runpathRequiresIterations(self):
-        """@rtype: bool"""
+    def runpathRequiresIterations(self) -> bool:
         return self._runpath_requires_iterations()
 
-    def getJobnameFormat(self):
-        """@rtype: str"""
+    def getJobnameFormat(self) -> str:
         return self._get_jobname_fmt()
 
     @property
     def obs_config_file(self):
         return self._get_obs_config_file()
 
-    def getEnspath(self):
-        """@rtype: str"""
+    def getEnspath(self) -> str:
         return self._get_enspath()
 
     def getRunpathFormat(self) -> PathFormat:
-        """@rtype: PathFormat"""
         return self._get_runpath_fmt()
 
     @property

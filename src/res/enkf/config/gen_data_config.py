@@ -13,7 +13,10 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
+from typing import List
+
 from cwrap import BaseCClass
+
 from res import ResPrototype
 from res.enkf.enums import GenDataFileType
 
@@ -89,7 +92,7 @@ class GenDataConfig(BaseCClass):
     def name(self):
         return self._get_key()
 
-    def get_initial_size(self):
+    def get_initial_size(self) -> int:
         return self._get_initial_size()
 
     def getOutputFormat(self):
@@ -108,27 +111,22 @@ class GenDataConfig(BaseCClass):
             f"initial_size = {self.get_initial_size()}) {self._ad_str()}"
         )
 
-    def hasReportStep(self, report_step):
-        """@rtype: bool"""
+    def hasReportStep(self, report_step) -> bool:
         return self._has_report_step(report_step)
 
-    def getNumReportStep(self):
-        """@rtype: int"""
+    def getNumReportStep(self) -> int:
         return self._get_num_report_step()
 
-    def getReportStep(self, index):
-        """@rtype: int"""
+    def getReportStep(self, index) -> int:
         return self._iget_report_step(index)
 
-    def getReportSteps(self):
-        """@rtype: list of int"""
+    def getReportSteps(self) -> List[int]:
         return [self.getReportStep(index) for index in range(self.getNumReportStep())]
 
     def __ne__(self, other):
         return not self == other
 
-    def __eq__(self, other):
-        """@rtype: bool"""
+    def __eq__(self, other) -> bool:
         if self.getName() != other.getName():
             return False
 

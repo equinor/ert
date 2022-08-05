@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from ecl.util.util import DoubleVector, ThreadPool
 
 from res.enkf import NodeId
@@ -6,12 +8,12 @@ from res.enkf.enums import ErtImplType, RealizationStateEnum
 from res.enkf.plot_data.plot_block_data import PlotBlockData
 from res.enkf.plot_data.plot_block_vector import PlotBlockVector
 
+if TYPE_CHECKING:
+    from res.enkf import BlockObservation, EnkfFs, ObsVector
+
 
 class PlotBlockDataLoader:
-    def __init__(self, obs_vector):
-        """
-        @type obs_vector: ObsVector
-        """
+    def __init__(self, obs_vector: "ObsVector"):
         if obs_vector is None:
             raise ValueError(
                 "Cannot construct PlotBlockDataLoader without obs_vector, was None."
@@ -20,12 +22,10 @@ class PlotBlockDataLoader:
         self.__obs_vector = obs_vector
         self.__permutation_vector = None
 
-    def getBlockObservation(self, report_step):
-        """@rtype: BlockObservation"""
+    def getBlockObservation(self, report_step: int) -> "BlockObservation":
         return self.__obs_vector.getNode(report_step)
 
-    def getDepthValues(self, report_step):
-        """@rtype: DoubleVector"""
+    def getDepthValues(self, report_step) -> DoubleVector:
         block_obs = self.getBlockObservation(report_step)
 
         depth = DoubleVector()
@@ -35,13 +35,7 @@ class PlotBlockDataLoader:
 
         return depth
 
-    def load(self, fs, report_step):
-        """
-        @type fs: EnkfFs
-        @type report_step: int
-        @rtype: PlotBlockData
-        """
-
+    def load(self, fs: "EnkfFs", report_step: int) -> PlotBlockData:
         state_map = fs.getStateMap()
 
         ens_mask = state_map.selectMatching(RealizationStateEnum.STATE_HAS_DATA)
@@ -65,14 +59,13 @@ class PlotBlockDataLoader:
 
         return plot_block_data
 
-    def loadVector(self, plot_block_data, fs, report_step, realization_number):
-        """
-        @type plot_block_data: PlotBlockData
-        @type fs: EnkfFs
-        @type report_step: int
-        @type realization_number: int
-        @rtype PlotBlockVector
-        """
+    def loadVector(
+        self,
+        plot_block_data: PlotBlockData,
+        fs: "EnkfFs",
+        report_step: int,
+        realization_number: int,
+    ) -> None:
         config_node = self.__obs_vector.getConfigNode()
 
         is_private_container = (

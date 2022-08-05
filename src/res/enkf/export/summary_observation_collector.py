@@ -1,6 +1,8 @@
+from typing import List, Optional
+
 from pandas import DataFrame
+
 from res.enkf import EnKFMain
-from typing import List
 
 
 class SummaryObservationCollector:
@@ -10,7 +12,7 @@ class SummaryObservationCollector:
 
     @staticmethod
     def loadObservationData(
-        ert: EnKFMain, case_name: str, keys: List[str] = None
+        ert: EnKFMain, case_name: str, keys: Optional[List[str]] = None
     ) -> DataFrame:
         observations = ert.getObservations()
         history_length = ert.getHistoryLength()

@@ -198,7 +198,7 @@ class AnalysisConfig(BaseCClass):
     def get_log_path(self) -> str:
         return self._get_log_path()
 
-    def set_log_path(self, path):
+    def set_log_path(self, path: str):
         self._set_log_path(path)
 
     def getEnkfAlpha(self) -> float:

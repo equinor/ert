@@ -142,7 +142,7 @@ class ExtParam(BaseCClass):
             )
 
     @property
-    def config(self):
+    def config(self) -> ExtParamConfig:
         return ExtParamConfig.createCReference(self._get_config(), self)
 
     # This could in the future be specialized to take a numpy vector,

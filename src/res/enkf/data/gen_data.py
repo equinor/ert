@@ -1,5 +1,6 @@
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
+
 from res import ResPrototype
 
 
@@ -21,8 +22,7 @@ class GenData(BaseCClass):
         else:
             raise ValueError("Unable to construct GenData object.")
 
-    def __len__(self):
-        """@rtype: int"""
+    def __len__(self) -> int:
         return self._size()
 
     def free(self):

@@ -118,8 +118,7 @@ class ErtScript:
         self.__failed = True
 
     @staticmethod
-    def loadScriptFromFile(path):
-        """@rtype: type ErtScript"""
+    def loadScriptFromFile(path) -> "ErtScript":
         try:
             module_name = f"ErtScriptModule_{ErtScript.__module_count}"
             ErtScript.__module_count += 1
@@ -134,14 +133,13 @@ class ErtScript:
             return None
 
     @staticmethod
-    def __findErtScriptImplementations(module):
-        """@rtype: ErtScript"""
+    def __findErtScriptImplementations(module) -> "ErtScript":
         result = []
         predicate = (
             lambda member: inspect.isclass(member)
             and member.__module__ == module.__name__
         )
-        for name, member in inspect.getmembers(module, predicate):
+        for _, member in inspect.getmembers(module, predicate):
             if ErtScript in inspect.getmro(member):
                 result.append(member)
 

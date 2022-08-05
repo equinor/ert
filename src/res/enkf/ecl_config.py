@@ -166,8 +166,7 @@ class EclConfig(BaseCClass):
 
     # -----------------------------------------------------------------
 
-    def get_gridfile(self):
-        """@rtype: str"""
+    def get_gridfile(self) -> str:
         return self._get_gridfile()
 
     def set_gridfile(self, gridfile):
@@ -186,7 +185,6 @@ class EclConfig(BaseCClass):
         self._load_refcase(refcase)
 
     def getRefcase(self) -> EclSum:
-        """@rtype: EclSum"""
         refcase = self._get_refcase()
         if refcase is not None:
             refcase.setParent(self)
