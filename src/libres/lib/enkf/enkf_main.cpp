@@ -522,5 +522,9 @@ void init_active_run(const res_config_type *res_config,
 }
 } // namespace enkf_main
 
-#include "enkf_main_ensemble.cpp"
+enkf_state_type *enkf_main_iget_state(const enkf_main_type *enkf_main,
+                                      int iens) {
+    return enkf_main->ensemble.at(iens).get();
+}
+
 #include "enkf_main_manage_fs.cpp"
