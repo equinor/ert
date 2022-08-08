@@ -725,16 +725,8 @@ enkf_fs_type *enkf_main_get_fs(const enkf_main_type *enkf_main) {
     return enkf_main->dbase;
 }
 
-enkf_fs_type *enkf_main_job_get_fs(const enkf_main_type *enkf_main) {
-    return enkf_main->dbase;
-}
-
 enkf_fs_type *enkf_main_get_fs_ref(const enkf_main_type *enkf_main) {
     return enkf_fs_get_ref(enkf_main->dbase);
-}
-
-const char *enkf_main_get_current_fs(const enkf_main_type *enkf_main) {
-    return enkf_fs_get_case_name(enkf_main->dbase);
 }
 
 /**
