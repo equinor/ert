@@ -335,8 +335,6 @@ class EnKFMain(BaseCClass):
         )
 
     def initRun(self, run_context):
-        enkf_main.init_internalization(self)
-
         for realization_nr in range(self.getEnsembleSize()):
             if run_context.is_active(realization_nr):
                 enkf_state.state_initialize(

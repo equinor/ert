@@ -112,8 +112,6 @@ struct enkf_main_struct {
     int ens_size;
 };
 
-void enkf_main_init_internalization(enkf_main_type *);
-
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
 
@@ -180,37 +178,6 @@ rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
 
 int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
     return enkf_main->ens_size;
-}
-
-/** @brief initializes internalization.
-
-   The function iterates over all the observations, and ensure that the
-   observed nodes (i.e. the pressure for an RFT) are internalized
-
-   Internalize means loaded from the forward simulation and stored in the
-   enkf_fs 'database'.
-*/
-void enkf_main_init_internalization(enkf_main_type *enkf_main) {
-    hash_type *map = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type *iter = hash_iter_alloc(map);
-    const char *obs_key = hash_iter_get_next_key(iter);
-
-    while (obs_key != NULL) {
-        obs_vector_type *obs_vector =
-            enkf_obs_get_vector(enkf_main->obs, obs_key);
-        enkf_config_node_type *data_node =
-            obs_vector_get_config_node(obs_vector);
-        int active_step = -1;
-        do {
-            active_step =
-                obs_vector_get_next_active_step(obs_vector, active_step);
-            if (active_step >= 0)
-                enkf_config_node_set_internalize(data_node, active_step);
-        } while (active_step >= 0);
-        obs_key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-    hash_free(map);
 }
 
 void enkf_main_get_observations(const enkf_main_type *enkf_main,
@@ -966,13 +933,6 @@ RES_LIB_SUBMODULE("enkf_main", m) {
         py::arg("node_list"), py::arg("iactive"));
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
-    m.def(
-        "init_internalization",
-        [](py::object self) {
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            return enkf_main_init_internalization(enkf_main);
-        },
-        py::arg("self"));
     m.def("load_from_run_context",
           [](py::object self, std::vector<py::object> run_args_,
              std::vector<bool> active_mask, py::object sim_fs_) {
