@@ -117,7 +117,6 @@ foreach(
   enkf_plot_gendata_fs
   enkf_state_report_step_compatible
   enkf_state_manual_load
-  enkf_export_field
   enkf_workflow_job
   enkf_state_skip_summary_load
   enkf_refcase_list
@@ -199,14 +198,6 @@ add_equinor_test(
   enkf_state_no_summary_vars_present enkf_state_skip_summary_load
   "${EQUINOR_TEST_DATA_DIR}/config/ecl_no_summary_vars_config"
   config_no_summary_vars)
-
-add_equinor_test(
-  enkf_export_field
-  enkf_export_field
-  "${EQUINOR_TEST_DATA_DIR}/config/export_fields/config"
-  "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD"
-  "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_ECL_GRDECL"
-  "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_FIELD_RMS_ROFF")
 
 add_equinor_test(
   enkf_workflow_job
