@@ -48,19 +48,19 @@ class WorkflowJobTest(ResTest):
     def test_arguments(self):
         with TestAreaContext("python/job_queue/workflow_job"):
             WorkflowCommon.createInternalFunctionJob()
+            WorkflowCommon.createErtScriptsJob()
 
             config = self._alloc_config()
-            job = self._alloc_from_file("PRINTF", config, "printf_job")
+            job = self._alloc_from_file("SUBTRACT", config, "subtract_script_job")
 
-            self.assertEqual(job.minimumArgumentCount(), 4)
-            self.assertEqual(job.maximumArgumentCount(), 5)
-            self.assertEqual(job.argumentTypes(), [str, int, float, bool, str])
+            self.assertEqual(job.minimumArgumentCount(), 2)
+            self.assertEqual(job.maximumArgumentCount(), 2)
+            self.assertEqual(job.argumentTypes(), [float, float])
 
-            self.assertTrue(job.run(None, ["x %d %f %d", 1, 2.5, True]))
-            self.assertTrue(job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y"]))
+            self.assertTrue(job.run(None, [1, 2.5]))
 
             with self.assertRaises(UserWarning):  # Too few arguments
-                job.run(None, ["x %d %f", 1, 2.5])
+                job.run(None, [1])
 
             with self.assertRaises(UserWarning):  # Too many arguments
                 job.run(None, ["x %d %f %d %s", 1, 2.5, True, "y", "nada"])

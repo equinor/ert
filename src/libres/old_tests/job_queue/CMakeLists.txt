@@ -44,7 +44,6 @@ foreach(
   job_queue_stress_task
   job_program_output
   job_lsf_exclude_hosts
-  job_workflow
   create_file
   job_loadFail)
 
@@ -59,13 +58,8 @@ if(NOT APPLE)
   add_test(NAME job_list COMMAND $<TARGET_FILE:job_list>)
 endif()
 
-add_test(NAME job_loadOK1 COMMAND job_loadOK
-                                  "${TEST_DATA_DIR}/job_queue/internalOK")
 add_test(NAME job_loadOK2 COMMAND job_loadOK
                                   "${TEST_DATA_DIR}/job_queue/externalOK")
-add_test(NAME job_loadOK3
-         COMMAND job_loadOK "${TEST_DATA_DIR}/job_queue/internalOK"
-                 "${TEST_DATA_DIR}/job_queue/externalOK")
 
 add_test(NAME job_loadFail1 COMMAND job_loadFail
                                     "${TEST_DATA_DIR}/job_queue/internalFail")
@@ -74,10 +68,6 @@ add_test(NAME job_loadFail2 COMMAND job_loadFail
 add_test(NAME job_loadFail3
          COMMAND job_loadFail "${TEST_DATA_DIR}/job_queue/internalFail"
                  "${TEST_DATA_DIR}/job_queue/externalFail")
-
-set_target_properties(job_workflow PROPERTIES ENABLE_EXPORTS ON)
-add_test(NAME job_workflow COMMAND job_workflow "${CMAKE_CURRENT_BINARY_DIR}"
-                                   "${TEST_DATA_DIR}/job_queue/internal_job")
 
 add_test(NAME job_lsf_exclude_hosts COMMAND job_lsf_exclude_hosts job_program
                                             NULL LOCAL)

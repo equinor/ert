@@ -57,7 +57,6 @@
 typedef struct enkf_main_struct enkf_main_type;
 
 extern "C" void enkf_main_free(enkf_main_type *);
-void enkf_main_exit(enkf_main_type *enkf_main);
 
 extern "C" enkf_main_type *enkf_main_alloc(const res_config_type *,
                                            bool read_only = false);

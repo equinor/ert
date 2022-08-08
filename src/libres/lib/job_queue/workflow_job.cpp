@@ -29,36 +29,6 @@
 
 using namespace std::string_literals;
 
-extern "C" void *enkf_main_exit_JOB(void *self, const stringlist_type *args);
-extern "C" void *enkf_main_pre_simulation_copy_JOB(void *self,
-                                                   const stringlist_type *args);
-
-namespace {
-void *dummy_job(void *, const stringlist_type *) { return nullptr; }
-
-void *test_job(void *self, const stringlist_type *args) {
-    int *value = reinterpret_cast<int *>(self);
-    FILE *stream = fopen(stringlist_iget(args, 0), "r");
-    int read_count = fscanf(stream, "%d", value);
-    fclose(stream);
-
-    if (read_count == 1) {
-        int *return_value = reinterpret_cast<int *>(malloc(sizeof(int)));
-        return_value[0] = value[0];
-        return return_value;
-    }
-    return nullptr;
-}
-
-std::unordered_map<std::string, workflow_job_ftype *>
-    workflow_internal_functions{{"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
-                                {"enkf_main_pre_simulation_copy_JOB"s,
-                                 &enkf_main_pre_simulation_copy_JOB},
-                                {"printf"s, &dummy_job},
-                                {"strcmp"s, &dummy_job},
-                                {"read_file"s, &test_job}};
-} // namespace
-
 /* The default values are interepreted as no limit. */
 #define DEFAULT_INTERNAL false
 
@@ -263,18 +233,6 @@ static void workflow_job_validate_internal(workflow_job_type *workflow_job) {
 
     if (workflow_job->internal_script_path && !workflow_job->function) {
         workflow_job->valid = true;
-        return;
-    }
-
-    if (!workflow_job->internal_script_path && workflow_job->function) {
-        auto it = workflow_internal_functions.find(workflow_job->function);
-        if (it != workflow_internal_functions.cend()) {
-            workflow_job->dl_func = it->second;
-        }
-
-        if (workflow_job->dl_func)
-            workflow_job->valid = true;
-
         return;
     }
 
