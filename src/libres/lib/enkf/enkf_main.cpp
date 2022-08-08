@@ -174,11 +174,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
     delete enkf_main;
 }
 
-void enkf_main_exit(enkf_main_type *enkf_main) {
-    enkf_main_free(enkf_main);
-    exit(0);
-}
-
 rng_type *enkf_main_get_shared_rng(enkf_main_type *enkf_main) {
     return enkf_main->shared_rng;
 }

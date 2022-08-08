@@ -87,7 +87,6 @@ pybind11_add_module(
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp
   enkf/enkf_main.cpp
-  enkf/enkf_main_jobs.cpp
   enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
   enkf/enkf_plot_data.cpp

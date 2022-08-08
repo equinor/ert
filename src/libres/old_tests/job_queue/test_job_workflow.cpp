@@ -74,7 +74,6 @@ void test_has_job(const char *job) {
 int main(int argc, char **argv) {
     const char *exjob_file = "job";
     const char *bin_path = argv[1];
-    const char *internal_workflow = argv[2];
     ecl::util::TestArea ta("workflo_test");
 
     signal(SIGSEGV, util_abort_signal);
@@ -94,8 +93,7 @@ int main(int argc, char **argv) {
         } else
             remove(exjob_file);
 
-        if (!workflow_joblist_add_job_from_file(joblist, "READ_FILE",
-                                                internal_workflow))
+        if (!workflow_joblist_add_job_from_file(joblist, "READ_FILE", NULL))
             test_error_exit("Loading job READ_FILE failed\n");
 
         {

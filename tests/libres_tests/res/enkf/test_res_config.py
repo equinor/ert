@@ -677,7 +677,6 @@ class ResConfigTest(ResTest):
             ]
             config_data_new[ConfigKeys.WORKFLOW_JOB_DIRECTORY] = [
                 ERT_SHARE_PATH + "/workflows/jobs/shell",
-                ERT_SHARE_PATH + "/workflows/jobs/internal/config",
                 ERT_SHARE_PATH + "/workflows/jobs/internal-gui/config",
             ]
             for ip in config_data_new[ConfigKeys.INSTALL_JOB]:

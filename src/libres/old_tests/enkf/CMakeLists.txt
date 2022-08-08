@@ -67,8 +67,6 @@ foreach(
   enkf_gen_obs_load
   enkf_ert_workflow_list
   enkf_main
-  enkf_workflow_job_test_directory
-  enkf_ert_test_context
   gen_kw_logarithmic
   enkf_executable_path
   enkf_forward_load_context
@@ -91,24 +89,11 @@ add_config_test(enkf_queue_config enkf_queue_config)
 add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
                 "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
-add_config_test(
-  enkf_ert_workflow_list enkf_ert_workflow_list
-  ${CMAKE_SOURCE_DIR}/${SHARE_DIR}/workflows/jobs/internal/config/SCALE_STD)
-add_config_test(
-  enkf_ert_test_context
-  enkf_ert_test_context
-  "${TEST_DATA_DIR}/enkf/config/test_context/config"
-  "${TEST_DATA_DIR}/enkf/config/test_context/wf_job"
-  "${TEST_DATA_DIR}/enkf/config/test_context/wf_job_fail")
 add_config_test(gen_kw gen_kw
                 "${TEST_DATA_DIR}/enkf/config/forward/ert/config_GEN_KW_true")
 add_config_test(
   gen_kw_logarithmic gen_kw_logarithmic
   "${TEST_DATA_DIR}/enkf/config/gen_kw_logarithmic/config_GEN_KW_logarithmic")
-
-add_config_test(
-  enkf_workflow_job_test_directory enkf_workflow_job_test_directory
-  "${TEST_DATA_DIR}/enkf/workflow_jobs")
 
 foreach(
   test
@@ -117,7 +102,6 @@ foreach(
   enkf_plot_gendata_fs
   enkf_state_report_step_compatible
   enkf_state_manual_load
-  enkf_workflow_job
   enkf_state_skip_summary_load
   enkf_refcase_list
   enkf_ecl_config
@@ -198,15 +182,6 @@ add_equinor_test(
   enkf_state_no_summary_vars_present enkf_state_skip_summary_load
   "${EQUINOR_TEST_DATA_DIR}/config/ecl_no_summary_vars_config"
   config_no_summary_vars)
-
-add_equinor_test(
-  enkf_workflow_job
-  enkf_workflow_job
-  "${EQUINOR_TEST_DATA_DIR}/config/with_data/config"
-  "${EQUINOR_TEST_DATA_DIR}/config/enkf_state_runpath/config_runpath_multiple_iterations"
-  "${SHARE_DIR}/workflows/jobs/internal/config/INIT_MISFIT_TABLE"
-  "${SHARE_DIR}/workflows/jobs/internal/config/EXPORT_RUNPATH"
-  "${SHARE_DIR}/workflows/jobs/internal/config/PRE_SIMULATION_COPY")
 
 add_equinor_test(
   enkf_refcase_list enkf_refcase_list

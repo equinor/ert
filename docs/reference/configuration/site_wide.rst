@@ -25,7 +25,6 @@ properties of the cluster. This could be an example site config file: ::
    -- distributed with the libres source code. The part
    -- below here is just copied in from the libres source:
 
-   WORKFLOW_JOB_DIRECTORY workflows/jobs/internal/config
    WORKFLOW_JOB_DIRECTORY workflows/jobs/internal-gui/config
 
    JOB_SCRIPT ../../bin/job_dispatch.py
