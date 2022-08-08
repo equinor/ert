@@ -243,7 +243,6 @@ def test_gen_param(tmpdir, config_str, expected, extra_files, expectation):
 
 
 @pytest.mark.integration_test
-@pytest.mark.parametrize("load_forward_init", [True, False])
 def test_gen_param_forward_init(tmpdir, load_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
