@@ -30,12 +30,6 @@
 using namespace std::string_literals;
 
 extern "C" void *enkf_main_exit_JOB(void *self, const stringlist_type *args);
-extern "C" void *enkf_main_export_field_JOB(void *self,
-                                            const stringlist_type *args);
-extern "C" void *enkf_main_export_field_to_RMS_JOB(void *self,
-                                                   const stringlist_type *args);
-extern "C" void *enkf_main_export_field_to_ECL_JOB(void *self,
-                                                   const stringlist_type *args);
 extern "C" void *enkf_main_pre_simulation_copy_JOB(void *self,
                                                    const stringlist_type *args);
 
@@ -57,18 +51,12 @@ void *test_job(void *self, const stringlist_type *args) {
 }
 
 std::unordered_map<std::string, workflow_job_ftype *>
-    workflow_internal_functions{
-        {"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
-        {"enkf_main_export_field_JOB"s, &enkf_main_export_field_JOB},
-        {"enkf_main_export_field_to_RMS_JOB"s,
-         &enkf_main_export_field_to_RMS_JOB},
-        {"enkf_main_export_field_to_ECL_JOB"s,
-         &enkf_main_export_field_to_ECL_JOB},
-        {"enkf_main_pre_simulation_copy_JOB"s,
-         &enkf_main_pre_simulation_copy_JOB},
-        {"printf"s, &dummy_job},
-        {"strcmp"s, &dummy_job},
-        {"read_file"s, &test_job}};
+    workflow_internal_functions{{"enkf_main_exit_JOB"s, &enkf_main_exit_JOB},
+                                {"enkf_main_pre_simulation_copy_JOB"s,
+                                 &enkf_main_pre_simulation_copy_JOB},
+                                {"printf"s, &dummy_job},
+                                {"strcmp"s, &dummy_job},
+                                {"read_file"s, &test_job}};
 } // namespace
 
 /* The default values are interepreted as no limit. */

@@ -53,55 +53,6 @@ extern "C" C_USED void *enkf_main_exit_JOB(void *self,
     return NULL;
 }
 
-static void enkf_main_jobs_export_field(const enkf_main_type *enkf_main,
-                                        const stringlist_type *args,
-                                        field_file_format_type file_type) {
-    const char *field = stringlist_iget(args, 0);
-    const char *file_name = stringlist_iget(args, 1);
-    int report_step = 0;
-    util_sscanf_int(stringlist_iget(args, 2), &report_step);
-
-    bool_vector_type *iactive =
-        alloc_iactive_vector_from_range(args, 4, stringlist_get_size(args),
-                                        enkf_main_get_ensemble_size(enkf_main));
-    enkf_main_export_field(enkf_main, field, file_name, iactive, file_type,
-                           report_step);
-    bool_vector_free(iactive);
-}
-
-// Internal workflow job
-extern "C" C_USED void *
-enkf_main_export_field_JOB(void *self, const stringlist_type *args) {
-    const char *file_name = stringlist_iget(args, 1);
-    field_file_format_type file_type =
-        field_config_default_export_format(file_name);
-
-    if ((RMS_ROFF_FILE == file_type) || (ECL_GRDECL_FILE == file_type)) {
-        enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-        enkf_main_jobs_export_field(enkf_main, args, file_type);
-    } else
-        printf("EXPORT_FIELD filename argument: File extension must be either "
-               ".roff or .grdecl\n");
-
-    return NULL;
-}
-
-// Internal workflow job
-extern "C" C_USED void *
-enkf_main_export_field_to_RMS_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    enkf_main_jobs_export_field(enkf_main, args, RMS_ROFF_FILE);
-    return NULL;
-}
-
-// Internal workflow job
-extern "C" C_USED void *
-enkf_main_export_field_to_ECL_JOB(void *self, const stringlist_type *args) {
-    enkf_main_type *enkf_main = enkf_main_safe_cast(self);
-    enkf_main_jobs_export_field(enkf_main, args, ECL_GRDECL_FILE);
-    return NULL;
-}
-
 // Internal workflow job
 extern "C" C_USED void *
 enkf_main_pre_simulation_copy_JOB(void *self, const stringlist_type *args) {
