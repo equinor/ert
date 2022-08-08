@@ -130,9 +130,6 @@ extern "C" enkf_var_type
 enkf_config_node_get_var_type(const enkf_config_node_type *);
 extern "C" void *enkf_config_node_get_ref(const enkf_config_node_type *);
 extern "C" const char *enkf_config_node_get_key(const enkf_config_node_type *);
-const char *
-enkf_config_node_get_FIELD_fill_file(enkf_config_node_type *config_node,
-                                     const path_fmt_type *runpath_fmt);
 extern "C" const char *
 enkf_config_node_get_min_std_file(const enkf_config_node_type *config_node);
 extern "C" const char *

@@ -510,39 +510,6 @@ enkf_config_node_get_enkf_infile(const enkf_config_node_type *config_node) {
 }
 
 const char *
-enkf_config_node_get_FIELD_fill_file(enkf_config_node_type *config_node,
-                                     const path_fmt_type *runpath_fmt) {
-    if (config_node->init_file_abs_path)
-        return config_node->init_file_abs_path;
-
-    char *runpath = NULL;
-    bool forward_init = enkf_config_node_use_forward_init(config_node);
-
-    if (forward_init && runpath_fmt) {
-        runpath = path_fmt_alloc_path(
-            runpath_fmt, false, 0,
-            0); /* Replace first %d with iens, if a second %d replace with iter */
-        config_node->init_file_abs_path =
-            enkf_config_node_alloc_initfile(config_node, runpath, 0);
-    } else
-        config_node->init_file_abs_path =
-            enkf_config_node_alloc_initfile(config_node, NULL, 0);
-
-    if (config_node->init_file_abs_path) {
-        config_node->init_file_abs_path =
-            util_alloc_abs_path(config_node->init_file_abs_path);
-        if (!fs::exists(config_node->init_file_abs_path)) {
-            free(config_node->init_file_abs_path);
-            config_node->init_file_abs_path = NULL;
-        }
-    }
-
-    free(runpath);
-
-    return config_node->init_file_abs_path;
-}
-
-const char *
 enkf_config_node_get_init_file_fmt(const enkf_config_node_type *config_node) {
     return path_fmt_get_fmt(config_node->init_file_fmt);
 }
