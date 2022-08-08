@@ -112,8 +112,6 @@ struct enkf_main_struct {
     int ens_size;
 };
 
-void enkf_main_init_internalization(enkf_main_type *);
-
 UTIL_SAFE_CAST_FUNCTION(enkf_main, ENKF_MAIN_ID)
 UTIL_IS_INSTANCE_FUNCTION(enkf_main, ENKF_MAIN_ID)
 
@@ -195,7 +193,7 @@ int enkf_main_get_ensemble_size(const enkf_main_type *enkf_main) {
    Internalize means loaded from the forward simulation and stored in the
    enkf_fs 'database'.
 */
-void enkf_main_init_internalization(enkf_main_type *enkf_main) {
+static void enkf_main_init_internalization(enkf_main_type *enkf_main) {
     hash_type *map = enkf_obs_alloc_data_map(enkf_main->obs);
     hash_iter_type *iter = hash_iter_alloc(map);
     const char *obs_key = hash_iter_get_next_key(iter);
