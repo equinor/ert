@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from qtpy.QtWidgets import QVBoxLayout, QPlainTextEdit
 
 from qtpy import QtCore
@@ -48,3 +49,19 @@ class EventViewerPanel(QPlainTextEdit):
     @QtCore.Slot(str)
     def val_changed(self, value):
         self.text_box.appendPlainText(value)
+
+
+@contextmanager
+def add_gui_log_handler() -> GUILogHandler:
+    """
+    Context manager for the GUILogHandler class. Will make sure that the handler
+    is removed prior to program exit.
+    """
+    logger = logging.getLogger()
+
+    handler = GUILogHandler()
+    logger.addHandler(handler)
+
+    yield handler
+
+    logger.removeHandler(handler)
