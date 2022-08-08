@@ -17,12 +17,10 @@ import argparse
 import os
 import logging
 import sys
-import time
 
 from qtpy.QtCore import Qt, QLocale
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-import ert.gui as ert_gui
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
 from ert.gui.main_window import GertMainWindow
@@ -30,7 +28,7 @@ from ert.gui.simulation.simulation_panel import SimulationPanel
 from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.event_viewer import EventViewerTool
-from ert.gui.tools.event_viewer import GUILogHandler
+from ert.gui.tools.event_viewer import GUILogHandler, add_gui_log_handler
 from ert.gui.tools.manage_cases import ManageCasesTool
 from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
@@ -63,18 +61,25 @@ def run_gui(args):
     # be the base name of the original config
     args.config = os.path.basename(args.config)
     ert = EnKFMain(res_config, strict=True)
-    with Storage.connect_or_start_server(res_config=os.path.basename(args.config)):
+    with Storage.connect_or_start_server(
+        res_config=os.path.basename(args.config)
+    ), add_gui_log_handler() as log_handler:
         notifier = ErtNotifier(args.config)
         # window reference must be kept until app.exec returns:
-        window = _start_window(ert, notifier, args)  # noqa
+        window = _start_window(ert, notifier, args, log_handler)  # noqa
         return app.exec_()
 
 
-def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
+def _start_window(
+    ert: EnKFMain,
+    notifier: ErtNotifier,
+    args: argparse.Namespace,
+    log_handler: GUILogHandler,
+):
 
     _check_locale()
 
-    window = _setup_main_window(ert, notifier, args)
+    window = _setup_main_window(ert, notifier, args, log_handler)
     window.show()
     window.activateWindow()
     window.raise_()
@@ -108,13 +113,16 @@ def _check_locale():
         sys.stderr.write(msg)
 
 
-def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace):
+def _setup_main_window(
+    ert: EnKFMain,
+    notifier: ErtNotifier,
+    args: argparse.Namespace,
+    log_handler: GUILogHandler,
+):
     facade = LibresFacade(ert)
     config_file = args.config
     window = GertMainWindow(config_file)
     window.setWidget(SimulationPanel(ert, notifier, config_file))
-    gui_log_handler = GUILogHandler()
-    logging.getLogger().addHandler(gui_log_handler)
     plugin_handler = PluginHandler(ert, ert.getWorkflowList().getPluginJobs(), window)
 
     window.addDock(
@@ -127,7 +135,7 @@ def _setup_main_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Name
     window.addTool(PluginsTool(plugin_handler, notifier))
     window.addTool(RunAnalysisTool(ert, notifier))
     window.addTool(LoadResultsTool(facade))
-    event_viewer = EventViewerTool(gui_log_handler)
+    event_viewer = EventViewerTool(log_handler)
     window.addTool(event_viewer)
     window.close_signal.connect(event_viewer.close_wnd)
     window.adjustSize()

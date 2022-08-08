@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt
 import ert.gui
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.message_box import ErtMessageBox
-from ert.gui.gert_main import _start_window, run_gui
+from ert.gui.gert_main import _start_window, run_gui, GUILogHandler
 
 
 @pytest.fixture()
@@ -92,7 +92,7 @@ def test_gui_load(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     args_mock = Mock()
     type(args_mock).config = PropertyMock(return_value="config.ert")
     notifier = ErtNotifier(args_mock.config)
-    gui = _start_window(patch_enkf_main, notifier, args_mock)
+    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_panel = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_panel")
@@ -149,7 +149,7 @@ def test_gui_iter_num(monkeypatch, tmpdir, qtbot, patch_enkf_main):
     )
 
     notifier = ErtNotifier(args_mock.config)
-    gui = _start_window(patch_enkf_main, notifier, args_mock)
+    gui = _start_window(patch_enkf_main, notifier, args_mock, GUILogHandler())
     qtbot.addWidget(gui)
 
     sim_mode = gui.findChild(qtpy.QtWidgets.QWidget, name="Simulation_mode")
