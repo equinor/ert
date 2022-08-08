@@ -24,7 +24,6 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 
 import ert.gui as ert_gui
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ert_splash import ErtSplash
 from ert.gui.ertwidgets import SummaryPanel, resourceIcon
 from ert.gui.main_window import GertMainWindow
 from ert.gui.simulation.simulation_panel import SimulationPanel
@@ -75,22 +74,8 @@ def _start_window(ert: EnKFMain, notifier: ErtNotifier, args: argparse.Namespace
 
     _check_locale()
 
-    splash = ErtSplash(version_string=f"Version {ert_gui.__version__}")
-    splash.show()
-    splash.repaint()
-    splash_screen_start_time = time.time()
-
     window = _setup_main_window(ert, notifier, args)
-
-    minimum_splash_screen_time = 2
-    sleep_time_left = minimum_splash_screen_time - (
-        time.time() - splash_screen_start_time
-    )
-    if sleep_time_left > 0:
-        time.sleep(sleep_time_left)
-
     window.show()
-    splash.finish(window)
     window.activateWindow()
     window.raise_()
 
