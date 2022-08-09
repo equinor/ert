@@ -231,7 +231,7 @@ class JobQueue(BaseCClass):
     def set_max_running(self, max_running):
         self.driver.set_max_running(max_running)
 
-    def set_max_job_duration(self, max_duration):
+    def set_max_job_duration(self, max_duration: int) -> None:
         self._set_max_job_duration(max_duration)
 
     @property
@@ -576,7 +576,7 @@ class JobQueue(BaseCClass):
         job = JobQueueNode(
             job_script=stage.job_script,
             job_name=stage.job_name,
-            run_path=stage.run_path,
+            run_path=str(stage.run_path),
             num_cpu=stage.num_cpu,
             status_file=self.status_file,
             ok_file=self.ok_file,

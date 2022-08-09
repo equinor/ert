@@ -18,8 +18,13 @@ Module implementing a queue for managing external jobs.
 
 """
 from threading import BoundedSemaphore
+from typing import TYPE_CHECKING, Any
 
 from res.job_queue.job_status_type_enum import JobStatusType
+
+if TYPE_CHECKING:
+    from res.job_queue import JobQueue
+
 
 CONCURRENT_INTERNALIZATION = 1
 
@@ -27,16 +32,16 @@ CONCURRENT_INTERNALIZATION = 1
 # TODO: there's no need for this class, all the behavior belongs in the queue
 # class proper.
 class JobQueueManager:
-    def __init__(self, queue, queue_evaluators=None):
+    def __init__(self, queue: "JobQueue", queue_evaluators: Any = None):
         self._queue = queue
         self._queue_evaluators = queue_evaluators
         self._pool_sema = BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
 
     @property
-    def queue(self):
+    def queue(self) -> "JobQueue":
         return self._queue
 
-    def stop_queue(self):
+    def stop_queue(self) -> None:
         self.queue.kill_all_jobs()
 
     def getNumRunning(self) -> int:

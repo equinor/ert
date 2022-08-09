@@ -1,15 +1,25 @@
 from threading import Thread
 from time import sleep
-from typing import List
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from res.enkf.enums import HookRuntime
 from res.job_queue import ForwardModelStatus, JobQueueManager
 
+if TYPE_CHECKING:
+    from res.enkf import EnkfFs, EnKFMain, RunArg, RunContext
+    from res.job_queue import JobStatusType
+
 
 class SimulationContext:
-    def __init__(self, ert, sim_fs, mask: List[bool], itr, case_data):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        ert: "EnKFMain",
+        sim_fs: "EnkfFs",
+        mask: List[bool],
+        itr: int,
+        case_data: List[Tuple[Any, Any]],
+    ):
         self._ert = ert
-        """ :type: res.enkf.EnKFMain """
         max_runtime = ert.analysisConfig().get_max_runtime()
         self._mask = mask
 
@@ -37,19 +47,19 @@ class SimulationContext:
         while self.isRunning() and not self._queue_manager.isRunning():
             sleep(0.1)
 
-    def get_run_args(self, iens):
+    def get_run_args(self, iens: int) -> "RunArg":
         """
         raises an exception if no iens simulation found
 
         :param iens: realization number
         :return: run_args for the realization
         """
-        for run_arg in self._run_context:
+        for run_arg in iter(self._run_context):
             if run_arg is not None and run_arg.iens == iens:
                 return run_arg
         raise KeyError(f"No such realization: {iens}")
 
-    def _run_simulations_simple_step(self):
+    def _run_simulations_simple_step(self) -> Thread:
         sim_thread = Thread(
             target=lambda: self._ert.runSimpleStep(
                 self._queue_manager.queue, self._run_context
@@ -61,40 +71,40 @@ class SimulationContext:
     def __len__(self) -> int:
         return len(self._mask)
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         # TODO: Should separate between running jobs and having loaded all data
         return self._sim_thread.is_alive() or self._queue_manager.isRunning()
 
-    def getNumPending(self):
+    def getNumPending(self) -> int:
         return self._queue_manager.getNumPending()
 
-    def getNumRunning(self):
+    def getNumRunning(self) -> int:
         return self._queue_manager.getNumRunning()
 
-    def getNumSuccess(self):
+    def getNumSuccess(self) -> int:
         return self._queue_manager.getNumSuccess()
 
-    def getNumFailed(self):
+    def getNumFailed(self) -> int:
         return self._queue_manager.getNumFailed()
 
-    def getNumWaiting(self):
+    def getNumWaiting(self) -> int:
         return self._queue_manager.getNumWaiting()
 
-    def didRealizationSucceed(self, iens):
+    def didRealizationSucceed(self, iens: int) -> bool:
         queue_index = self.get_run_args(iens).getQueueIndex()
         return self._queue_manager.didJobSucceed(queue_index)
 
-    def didRealizationFail(self, iens):
+    def didRealizationFail(self, iens: int) -> bool:
         # For the purposes of this class, a failure should be anything (killed
         # job, etc) that is not an explicit success.
         return not self.didRealizationSucceed(iens)
 
-    def isRealizationQueued(self, iens):
+    def isRealizationQueued(self, iens: int) -> bool:
         # an exception will be raised if it's not queued
         self.get_run_args(iens)
         return True
 
-    def isRealizationFinished(self, iens):
+    def isRealizationFinished(self, iens: int) -> bool:
         run_arg = self.get_run_args(iens)
 
         if run_arg.isSubmitted():
@@ -103,7 +113,7 @@ class SimulationContext:
         else:
             return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         running = "running" if self.isRunning() else "not running"
         numRunn = self.getNumRunning()
         numSucc = self.getNumSuccess()
@@ -114,17 +124,17 @@ class SimulationContext:
             f"#success = {numSucc}, #failed = {numFail}, #waiting = {numWait})"
         )
 
-    def get_sim_fs(self):
+    def get_sim_fs(self) -> "EnkfFs":
         return self._run_context.sim_fs
 
-    def get_run_context(self):
+    def get_run_context(self) -> "RunContext":
         return self._run_context
 
-    def stop(self):
+    def stop(self) -> None:
         self._queue_manager.stop_queue()
         self._sim_thread.join()
 
-    def job_progress(self, iens):
+    def job_progress(self, iens: int) -> Optional[ForwardModelStatus]:
         """Will return a detailed progress of the job.
 
         The progress report is obtained by reading a file from the filesystem,
@@ -158,13 +168,13 @@ class SimulationContext:
 
         return ForwardModelStatus.load(run_arg.runpath)
 
-    def run_path(self, iens):
+    def run_path(self, iens: int) -> str:
         """
         Will return the path to the simulation.
         """
         return self.get_run_args(iens).runpath
 
-    def job_status(self, iens):
+    def job_status(self, iens: int) -> Optional["JobStatusType"]:
         """Will query the queue system for the status of the job."""
         run_arg = self.get_run_args(iens)
         try:

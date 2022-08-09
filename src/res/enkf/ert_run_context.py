@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
 from dataclasses import dataclass, field
-from typing import List
+from datetime import datetime
+from typing import Generator, List
 
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import EnkfInitModeEnum
@@ -10,8 +10,8 @@ from res.enkf.run_arg import RunArg
 
 @dataclass
 class RunContext:
-    sim_fs: [EnkfFs]
-    target_fs: [EnkfFs] = None
+    sim_fs: EnkfFs
+    target_fs: EnkfFs = None
     mask: List[bool] = field(default_factory=list)
     paths: List[str] = field(default_factory=list)
     jobnames: List[str] = field(default_factory=list)
@@ -48,7 +48,7 @@ class RunContext:
     def __getitem__(self, item) -> RunArg:
         return self.run_args[item]
 
-    def __iter__(self) -> RunArg:
+    def __iter__(self) -> Generator[RunArg, None, None]:
         yield from self.run_args
 
     def deactivate_realization(self, realization_nr):
