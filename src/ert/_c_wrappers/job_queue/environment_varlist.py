@@ -39,9 +39,9 @@ class EnvironmentVarlist(BaseCClass):
         paths: Optional[Dict[str, str]] = None,
     ):
         if vars is None:
-            vars = dict()
+            vars = {}
         if paths is None:
-            paths = dict()
+            paths = {}
         c_ptr = self._alloc()
         super().__init__(c_ptr)
 

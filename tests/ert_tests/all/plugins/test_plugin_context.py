@@ -4,8 +4,8 @@ from unittest.mock import Mock
 
 import pytest
 
-import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert.shared.plugins import ErtPluginContext
+from tests.ert_tests.all.plugins import dummy_plugins
 
 env_vars = [
     "ECL100_SITE_CONFIG",

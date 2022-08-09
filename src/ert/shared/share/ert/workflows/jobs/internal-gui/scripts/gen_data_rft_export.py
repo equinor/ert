@@ -1,10 +1,9 @@
+import contextlib
 import os
 import re
-import sys
 
 import numpy
 import pandas
-from ecl.rft import WellTrajectory
 
 from ert._c_wrappers.enkf import RealizationStateEnum
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
@@ -115,10 +114,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             case_frame = pandas.DataFrame()
 
             if not self.ert().getEnkfFsManager().caseExists(case):
-                raise UserWarning("The case '%s' does not exist!" % case)
+                raise UserWarning(f"The case '{case}' does not exist!")
 
             if not self.ert().getEnkfFsManager().caseHasData(case):
-                raise UserWarning("The case '%s' does not have any data!" % case)
+                raise UserWarning(f"The case '{case}' does not have any data!")
 
             if infer_iteration:
                 iteration_number = self.inferIterationNumber(case)
@@ -140,9 +139,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 realizations = fs.realizationList(RealizationStateEnum.STATE_HAS_DATA)
 
                 # Trajectory
-                trajectory_file = os.path.join(trajectory_path, "%s.txt" % well)
+                trajectory_file = os.path.join(trajectory_path, f"{well}.txt" % well)
                 if not os.path.isfile(trajectory_file):
-                    trajectory_file = os.path.join(trajectory_path, "%s_R.txt" % well)
+                    trajectory_file = os.path.join(trajectory_path, f"{well}_R.txt")
 
                 arg = ArgLoader.load(
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
@@ -185,9 +184,9 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             data_frame = data_frame.loc[:, (data_frame != data_frame.iloc[0]).any()]
 
         data_frame.to_csv(output_file)
-        export_info = "Exported RFT information for wells: %s to: %s " % (
-            ", ".join(list(wells)),
-            output_file,
+        well_list_str = ", ".join(list(wells))
+        export_info = (
+            f"Exported RFT information for wells: {well_list_str} to: {output_file}"
         )
         return export_info
 
@@ -232,7 +231,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
 
         if success:
             case_list = ",".join(list_edit.getItems())
-            try:
+            with contextlib.suppress(ValueError):
                 return [
                     output_path_model.getPath(),
                     trajectory_model.getPath(),
@@ -240,7 +239,5 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                     infer_iteration_check.isChecked(),
                     drop_const_columns_check.isChecked(),
                 ]
-            except ValueError:
-                pass
 
         raise CancelPluginException("User cancelled!")

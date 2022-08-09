@@ -7,15 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import BoundedSemaphore
 from typing import Any, Callable, Dict, Optional
-from unittest.mock import MagicMock, patch
-
-from ert._clib.model_callbacks import LoadStatus
-
-try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    # Python 3.6:
-    from mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from websockets.exceptions import ConnectionClosedError
@@ -27,6 +19,7 @@ from ert._c_wrappers.job_queue import (
     JobStatusType,
     QueueDriverEnum,
 )
+from ert._clib.model_callbacks import LoadStatus
 
 
 def wait_for(

@@ -1,18 +1,12 @@
-import pytest
-
-import ert.experiment_server
-
-try:
-    from unittest.mock import AsyncMock
-except ImportError:
-    from mock import AsyncMock
-
 from typing import AsyncContextManager, Awaitable, Callable
+from unittest.mock import AsyncMock
 
+import pytest
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 from websockets.client import WebSocketClientProtocol
 
+import ert.experiment_server
 from ert.experiment_server._experiment_protocol import Experiment
 
 # All test coroutines will be treated as marked.

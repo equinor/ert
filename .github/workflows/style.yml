@@ -87,6 +87,7 @@ jobs:
             parse-error, \
             pointless-statement, \
             redundant-unittest-assert, \
+            reimported, \
             simplifiable-if-statement, \
             subprocess-run-check, \
             super-with-arguments, \
@@ -94,11 +95,15 @@ jobs:
             undefined-all-variable, \
             undefined-loop-variable, \
             undefined-variable, \
+            ungrouped-imports, \
             unidiomatic-typecheck, \
+            unnecessary-dunder-call, \
             unnecessary-lambda, \
+            unnecessary-lambda-assignment, \
             unneeded-not, \
             unsubscriptable-object, \
             unsupported-assignment-operation, \
+            unsupported-binary-operation, \
             unused-import, \
             use-a-generator, \
             use-dict-literal, \
@@ -110,4 +115,4 @@ jobs:
             useless-return, \
             useless-super-delegation, \
             " \
-          docs src/ert/data src/ert/gui src/ert/logging src/ert/shared src/ert/job_runner src/_c_wrappers tests/* test-data
+          docs src tests test-data

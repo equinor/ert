@@ -3,8 +3,8 @@ import tempfile
 from unittest.mock import Mock
 
 import ert.shared.hook_implementations
-import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
 from ert.shared.plugins import ErtPluginManager
+from tests.ert_tests.all.plugins import dummy_plugins
 
 
 def test_no_plugins():

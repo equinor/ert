@@ -50,6 +50,7 @@ def run_ert_storage(args):
 
 def run_webviz_ert(args):
     try:
+        # pylint: disable=unused-import
         import webviz_ert  # noqa
     except ImportError as err:
         raise ValueError(
