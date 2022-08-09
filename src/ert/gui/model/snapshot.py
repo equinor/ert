@@ -317,13 +317,19 @@ class SnapshotModel(QAbstractItemModel):
         self.root.add_child(snapshot_tree, node_id=iter_)
         self.rowsInserted.emit(parent, snapshot_tree.row(), snapshot_tree.row())
 
-    def columnCount(self, parent=QModelIndex()):
+    # pylint: disable=invalid-name, no-self-use
+    def columnCount(self, parent: QModelIndex = None):
+        if parent is None:
+            parent = QModelIndex()
         parent_node = parent.internalPointer()
         if parent_node is None:
             return len(COLUMNS[NodeType.ROOT])
         return len(COLUMNS[parent_node.type])
 
-    def rowCount(self, parent=QModelIndex()):
+    # pylint: disable=invalid-name
+    def rowCount(self, parent: QModelIndex = None):
+        if parent is None:
+            parent = QModelIndex()
         if not parent.isValid():
             parentItem = self.root
         else:
@@ -375,7 +381,7 @@ class SnapshotModel(QAbstractItemModel):
 
         if node.type == NodeType.JOB:
             return self._job_data(index, node, role)
-        elif node.type == NodeType.REAL:
+        if node.type == NodeType.REAL:
             return self._real_data(index, node, role)
 
         if role == Qt.DisplayRole:
@@ -398,7 +404,7 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def _real_data(self, index: QModelIndex, node: Node, role: int):
+    def _real_data(self, _index: QModelIndex, node: Node, role: int):
         if role == RealJobColorHint:
             colors: List[QColor] = []
             assert node.parent  # mypy
@@ -406,18 +412,17 @@ class SnapshotModel(QAbstractItemModel):
                 for job_id in node.parent.data[SORTED_JOB_IDS][node.id][step_id]:
                     colors.append(node.data[REAL_JOB_STATUS_AGGREGATED][job_id])
             return colors
-        elif role == RealLabelHint:
+        if role == RealLabelHint:
             return node.id
-        elif role == RealIens:
+        if role == RealIens:
             return node.id
-        elif role == RealStatusColorHint:
+        if role == RealStatusColorHint:
             return node.data[REAL_STATUS_COLOR]
-        elif role == StatusRole:
+        if role == StatusRole:
             return node.data[ids.STATUS]
-        else:
-            return QVariant()
+        return QVariant()
 
-    # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-return-statements, no-self-use
     def _job_data(self, index: QModelIndex, node: Node, role: int):
         if role == Qt.BackgroundRole:
             assert node.parent  # mypy
@@ -467,22 +472,24 @@ class SnapshotModel(QAbstractItemModel):
 
         return QVariant()
 
-    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+        if parent is None:
+            parent = QModelIndex()
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
         if not parent.isValid():
-            parentItem = self.root
+            parent_item = self.root
         else:
-            parentItem = parent.internalPointer()
+            parent_item = parent.internalPointer()
 
-        childItem = None
+        child_item = None
         try:
-            childItem = list(parentItem.children.values())[row]
+            child_item = list(parent_item.children.values())[row]
         except KeyError:
             return QModelIndex()
         else:
-            return self.createIndex(row, column, childItem)
+            return self.createIndex(row, column, child_item)
 
     def reset(self):
         self.modelAboutToBeReset.emit()
