@@ -27,34 +27,40 @@ class RealListModel(QAbstractProxyModel):
     iter_changed = Signal(int)
 
     @Slot(int)
-    def setIter(self, iter_):
+    # pylint: disable=invalid-name
+    def setIter(self, iter_: int):
         self._disconnect()
         self.modelAboutToBeReset.emit()
-        self._iter = iter_
+        self._iter: int = iter_
         self.modelReset.emit()
         self._connect()
         self.iter_changed.emit(iter_)
 
     def _disconnect(self):
-        sm = self.sourceModel()
-        if sm is None:
+        source_model = self.sourceModel()
+        if source_model is None:
             return
-        sm.dataChanged.disconnect(self._source_data_changed)
-        sm.rowsAboutToBeInserted.disconnect(self._source_rows_about_to_be_inserted)
-        sm.rowsInserted.disconnect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
-        sm.modelReset.disconnect(self.modelReset)
+        source_model.dataChanged.disconnect(self._source_data_changed)
+        source_model.rowsAboutToBeInserted.disconnect(
+            self._source_rows_about_to_be_inserted
+        )
+        source_model.rowsInserted.disconnect(self._source_rows_inserted)
+        source_model.modelAboutToBeReset.disconnect(self.modelAboutToBeReset)
+        source_model.modelReset.disconnect(self.modelReset)
 
     def _connect(self):
-        sm = self.sourceModel()
-        if sm is None:
+        source_model = self.sourceModel()
+        if source_model is None:
             return
-        sm.dataChanged.connect(self._source_data_changed)
-        sm.rowsAboutToBeInserted.connect(self._source_rows_about_to_be_inserted)
-        sm.rowsInserted.connect(self._source_rows_inserted)
-        sm.modelAboutToBeReset.connect(self.modelAboutToBeReset)
-        sm.modelReset.connect(self.modelReset)
+        source_model.dataChanged.connect(self._source_data_changed)
+        source_model.rowsAboutToBeInserted.connect(
+            self._source_rows_about_to_be_inserted
+        )
+        source_model.rowsInserted.connect(self._source_rows_inserted)
+        source_model.modelAboutToBeReset.connect(self.modelAboutToBeReset)
+        source_model.modelReset.connect(self.modelReset)
 
+    # pylint: disable=invalid-name
     def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
         if not sourceModel:
             raise ValueError("need source model")
@@ -64,7 +70,10 @@ class RealListModel(QAbstractProxyModel):
         self._connect()
         self.endResetModel()
 
-    def columnCount(self, parent=QModelIndex()) -> int:
+    # pylint: disable=invalid-name
+    def columnCount(self, parent: QModelIndex = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return 0
         iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
@@ -72,7 +81,10 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().columnCount(iter_index)
 
-    def rowCount(self, parent=QModelIndex()) -> int:
+    # pylint: disable=invalid-name
+    def rowCount(self, parent: QModelIndex = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return 0
         iter_index = self.sourceModel().index(self._iter, 0, QModelIndex())
@@ -80,16 +92,20 @@ class RealListModel(QAbstractProxyModel):
             return 0
         return self.sourceModel().rowCount(iter_index)
 
-    def parent(self, index: QModelIndex):
+    # pylint: disable=no-self-use
+    def parent(self, _index: QModelIndex):
         return QModelIndex()
 
-    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return QModelIndex()
         real_index = self.mapToSource(self.createIndex(row, 0, parent))
         ret_index = self.createIndex(row, column, real_index.data(NodeRole))
         return ret_index
 
+    # pylint: disable=invalid-name
     def hasChildren(self, parent: QModelIndex) -> bool:
         # Reimplemented, since in the source model, the realizations have
         # children (i.e. valid indices.). Realizations do not have children in
@@ -98,6 +114,7 @@ class RealListModel(QAbstractProxyModel):
             return False
         return self.sourceModel().hasChildren(self.mapToSource(parent))
 
+    # pylint: disable=invalid-name
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if not proxyIndex.isValid():
             return QModelIndex()
@@ -108,6 +125,7 @@ class RealListModel(QAbstractProxyModel):
         real_index = sm.index(proxyIndex.row(), proxyIndex.column(), iter_index)
         return real_index
 
+    # pylint: disable=invalid-name
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         if not sourceIndex.isValid():
             return QModelIndex()
@@ -140,7 +158,7 @@ class RealListModel(QAbstractProxyModel):
             return
         self.beginInsertRows(self.mapFromSource(parent), start, end)
 
-    def _source_rows_inserted(self, parent: QModelIndex, start: int, end: int):
+    def _source_rows_inserted(self, parent: QModelIndex, _start: int, _end: int):
         if not parent.isValid():
             return
         if not self._accept_index(parent):

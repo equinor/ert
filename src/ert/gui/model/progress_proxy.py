@@ -1,5 +1,5 @@
-import typing
 from collections import defaultdict
+from typing import Dict, List, Optional, Union
 
 from qtpy.QtCore import QAbstractItemModel, QModelIndex, QSize, Qt, QVariant
 from qtpy.QtGui import QColor, QFont
@@ -8,10 +8,12 @@ from ert.gui.model.snapshot import IsEnsembleRole, ProgressRole, StatusRole
 
 
 class ProgressProxyModel(QAbstractItemModel):
-    def __init__(self, source_model: QAbstractItemModel, parent=None) -> None:
+    def __init__(
+        self, source_model: QAbstractItemModel, parent: QModelIndex = None
+    ) -> None:
         QAbstractItemModel.__init__(self, parent)
-        self._source_model = source_model
-        self._progress = None
+        self._source_model: QAbstractItemModel = source_model
+        self._progress: Optional[Dict[Union[str, dict], int]] = None
         self._connect()
 
     def _connect(self):
@@ -22,28 +24,37 @@ class ProgressProxyModel(QAbstractItemModel):
 
         # rowCount-1 of the top index in the underlying, will be the last/most
         # recent iteration. If it's -1, then there are no iterations yet.
-        last_iter = self._source_model.rowCount(QModelIndex()) - 1
+        last_iter: int = self._source_model.rowCount(QModelIndex()) - 1
         if last_iter >= 0:
             self._recalculate_progress(last_iter)
 
-    def columnCount(self, parent=QModelIndex()) -> int:
+    # pylint: disable=invalid-name,no-self-use
+    def columnCount(self, parent: QModelIndex = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return 0
         return 1
 
-    def rowCount(self, parent=QModelIndex()) -> int:
+    # pylint: disable=invalid-name,no-self-use
+    def rowCount(self, parent: QModelIndex = None) -> int:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return 0
         return 1
 
-    def index(self, row: int, column: int, parent=QModelIndex()) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+        if parent is None:
+            parent = QModelIndex()
         if parent.isValid():
             return QModelIndex()
         return self.createIndex(row, column, None)
 
-    def parent(self, index: QModelIndex):
+    def parent(self, _index: QModelIndex) -> QModelIndex:
         return QModelIndex()
 
+    # pylint: disable=invalid-name,no-self-use
     def hasChildren(self, parent: QModelIndex) -> bool:
         return not parent.isValid()
 
@@ -75,26 +86,25 @@ class ProgressProxyModel(QAbstractItemModel):
 
         return QVariant()
 
-    def _recalculate_progress(self, iter_):
-        d = defaultdict(lambda: 0)
-        nr_reals = 0
+    def _recalculate_progress(self, iter_: int):
+        status_counts = defaultdict(int)
+        nr_reals: int = 0
         current_iter_index = self._source_model.index(iter_, 0, QModelIndex())
         if current_iter_index.internalPointer() is None:
             self._progress = None
             return
         for row in range(0, self._source_model.rowCount(current_iter_index)):
             real_index = self._source_model.index(row, 0, current_iter_index)
-            # realizations
             status = real_index.data(StatusRole)
             nr_reals += 1
-            d[status] += 1
-        self._progress = {"status": d, "nr_reals": nr_reals}
+            status_counts[status] += 1
+        self._progress = {"status": status_counts, "nr_reals": nr_reals}
 
     def _source_data_changed(
         self,
         top_left: QModelIndex,
-        bottom_right: QModelIndex,
-        roles: typing.List[int],
+        _bottom_right: QModelIndex,
+        _roles: List[int],
     ):
         if top_left.internalPointer() is None:
             return
@@ -104,7 +114,7 @@ class ProgressProxyModel(QAbstractItemModel):
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
 
-    def _source_rows_inserted(self, parent: QModelIndex, start: int, end: int):
+    def _source_rows_inserted(self, _parent: QModelIndex, start: int, _end: int):
         self._recalculate_progress(start)
         index = self.index(0, 0, QModelIndex())
         self.dataChanged.emit(index, index, [ProgressRole])
