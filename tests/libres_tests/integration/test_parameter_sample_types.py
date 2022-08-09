@@ -10,7 +10,7 @@ from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
 

@@ -14,7 +14,7 @@ from ert.experiment_server import ExperimentStateMachine
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert_shared.feature_toggling import feature_enabled
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from ert_shared.storage.extraction import (
     post_ensemble_data,
     post_ensemble_results,

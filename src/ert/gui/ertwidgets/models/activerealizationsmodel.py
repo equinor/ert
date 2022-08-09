@@ -1,7 +1,7 @@
 from typing import List
 
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.config.active_range import ActiveRange
 from res.config.rangestring import mask_to_rangestring
 

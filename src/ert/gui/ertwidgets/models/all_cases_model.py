@@ -1,7 +1,7 @@
 from qtpy.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from ert.gui.ertwidgets.models.ertmodel import getAllCases
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class AllCasesModel(QAbstractItemModel):

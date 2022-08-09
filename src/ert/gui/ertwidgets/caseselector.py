@@ -5,7 +5,7 @@ from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.models.ertmodel import (
     getAllCases,
 )
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class CaseSelector(QComboBox):

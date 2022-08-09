@@ -1,7 +1,7 @@
 from argparse import Namespace
 
 from ert_shared.cli import model_factory
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from ert_shared.models.ensemble_experiment import EnsembleExperiment
 from ert_shared.models.ensemble_smoother import EnsembleSmoother
 from ert_shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother

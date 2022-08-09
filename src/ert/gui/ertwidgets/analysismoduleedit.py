@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QWidget, QHBoxLayout, QToolButton
 
 from ert.gui.ertwidgets import addHelpToWidget, ClosableDialog, resourceIcon
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleEdit(QWidget):

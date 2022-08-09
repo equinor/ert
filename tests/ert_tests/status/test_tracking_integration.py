@@ -28,7 +28,7 @@ from ert_shared.cli import (
 from ert_shared.cli.model_factory import create_model
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert_shared.feature_toggling import FeatureToggling
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from ert_shared.main import ert_parser
 from ert.ensemble_evaluator.event import (
     EndEvent,

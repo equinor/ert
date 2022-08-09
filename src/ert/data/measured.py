@@ -17,7 +17,7 @@ from ert.data import loader
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert_shared.libres_facade import LibresFacade
+    from ert.libres_facade import LibresFacade
 
 
 class MeasuredData:

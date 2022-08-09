@@ -1,6 +1,6 @@
 from typing import List
 
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, RealizationStateEnum
 from res.enkf import RunContext
 from ecl.util.util import StringList
