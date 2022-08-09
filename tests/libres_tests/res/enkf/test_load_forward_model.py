@@ -9,7 +9,7 @@ import pytest
 from ecl.summary import EclSum
 from ecl.util.util import BoolVector
 
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import ResConfig, EnKFMain
 
 

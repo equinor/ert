@@ -17,7 +17,7 @@ from qtpy.QtWidgets import QWidget, QFormLayout, QLineEdit
 
 from ert.gui.ertwidgets.analysismoduleedit import AnalysisModuleEdit
 from ert.gui.ertwidgets.caseselector import CaseSelector
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class RunAnalysisPanel(QWidget):

@@ -3,7 +3,7 @@ from ert.async_utils import run_in_loop
 import pandas as pd
 import io
 
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 from ert_shared.dark_storage.endpoints import experiments, ensembles, records, responses
 

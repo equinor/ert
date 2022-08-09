@@ -35,7 +35,7 @@ from ert_shared.ide.keywords.definitions import (
 )
 from ert.gui.simulation import SimulationConfigPanel
 from ert_shared.models import MultipleDataAssimilation
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 from dataclasses import dataclass
 from typing import List

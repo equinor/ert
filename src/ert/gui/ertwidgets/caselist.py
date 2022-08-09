@@ -15,7 +15,7 @@ from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.models.ertmodel import getAllCases
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.ertwidgets import resourceIcon
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class AddRemoveWidget(QWidget):

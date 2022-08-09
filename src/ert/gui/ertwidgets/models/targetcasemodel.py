@@ -1,6 +1,6 @@
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class TargetCaseModel(ValueModel):

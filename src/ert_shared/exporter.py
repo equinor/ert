@@ -15,7 +15,7 @@
 #  for more details.
 import logging
 
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 logger = logging.getLogger(__name__)
 

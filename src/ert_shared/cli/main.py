@@ -18,7 +18,7 @@ from ert_shared.cli.model_factory import create_model
 from ert_shared.cli.monitor import Monitor
 from ert_shared.cli.workflow import execute_workflow
 from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 
 
