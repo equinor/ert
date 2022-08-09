@@ -1,7 +1,8 @@
 import io
 import json
+import random
+import string
 from pathlib import Path
-from random import randint, random
 from typing import List, Tuple
 
 import numpy as np
@@ -73,7 +74,7 @@ class ErtConfigBuilder:
         # The C code doesn't do resource counting correctly, so we need to hook
         # ResConfig to EnKFMain because otherwise ResConfig will be deleted and
         # EnKFMain will use a dangling pointer.
-        enkfmain.__config = config
+        enkfmain.__config = config  # pylint: disable=unused-private-member
 
         return LibresFacade(enkfmain)
 
@@ -102,7 +103,7 @@ class ErtConfigBuilder:
         if not self._obs:
             return
 
-        (path / "time_map").write_text("1/10/2006\n")
+        (path / "time_map").write_text("2006-10-01\n")
         with (path / "test.ert").open("a") as f:
             f.write("OBS_CONFIG obs_config.txt\n")
             f.write("TIME_MAP time_map\n")
@@ -155,16 +156,16 @@ def test_empty_ensemble(client):
     ert = ErtConfigBuilder().build()
     extraction.post_ensemble_data(ert, -1)
 
-    id = client.fetch_experiment()
+    _id = client.fetch_experiment()
 
     # Name is "default"
-    for ens in client.get(f"/experiments/{id}/ensembles").json():
+    for ens in client.get(f"/experiments/{_id}/ensembles").json():
         assert (
             client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == "default"
         )
 
     # No priors exist
-    assert client.get(f"/experiments/{id}").json()["priors"] == {}
+    assert client.get(f"/experiments/{_id}").json()["priors"] == {}
 
 
 def test_empty_ensemble_with_name(client):
@@ -178,8 +179,8 @@ def test_empty_ensemble_with_name(client):
     extraction.post_ensemble_data(ert, -1)
 
     # Compare results
-    id = client.fetch_experiment()
-    for ens in client.get(f"/experiments/{id}/ensembles").json():
+    _id = client.fetch_experiment()
+    for ens in client.get(f"/experiments/{_id}/ensembles").json():
         assert client.get(f"/ensembles/{ens['id']}/userdata").json()["name"] == name
 
 
@@ -199,8 +200,8 @@ def test_priors(client):
     extraction.post_ensemble_data(ert, -1)
 
     # Compare results
-    id = client.fetch_experiment()
-    actual_priors = client.get(f"/experiments/{id}").json()["priors"]
+    _id = client.fetch_experiment()
+    actual_priors = client.get(f"/experiments/{_id}").json()["priors"]
     assert len(priors) == len(actual_priors)
     for name, _, resp in priors:
         assert actual_priors[f"COEFFS:{name}"] == resp
@@ -394,14 +395,14 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         # trans_normal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
-        a, b = random(), random()
+        a, b = random.random(), random.random()
         return (f"NORMAL {a} {b}", dict(function="normal", mean=a, std=b))
 
     def lognormal():
         # trans_lognormal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
-        a, b = random(), random()
+        a, b = random.random(), random.random()
         return (
             f"LOGNORMAL {a} {b}",
             {"function": "lognormal", "mean": a, "std": b},
@@ -411,7 +412,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         # trans_truncated_normal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a, b, c and d
-        a, b, c, d = [random() for _ in range(4)]
+        a, b, c, d = [random.random() for _ in range(4)]
         return (
             f"TRUNCATED_NORMAL {a} {b} {c} {d}",
             {
@@ -427,21 +428,21 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         # trans_unif @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
-        a, b = random(), random()
+        a, b = random.random(), random.random()
         return (f"UNIFORM {a} {b}", {"function": "uniform", "min": a, "max": b})
 
     def loguniform():
         # trans_logunif @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for strictly positive a, b due to log()
-        a, b = random() + 1, random() + 1  # +1 to avoid zero
+        a, b = random.random() + 1, random.random() + 1  # +1 to avoid zero
         return (
             f"LOGUNIF {a} {b}",
             {"function": "loguniform", "min": a, "max": b},
         )
 
     def const():
-        a = random()
+        a = random.random()
         return (f"CONST {a}", {"function": "const", "value": a})
 
     def duniform():
@@ -449,8 +450,8 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         #
         # Well defined for all real values of b and c, integer values >= 2 of
         # bins (due to division by [bins - 1])
-        bins = randint(2, 100)
-        b, c = random(), random()
+        bins = random.randint(2, 100)
+        b, c = random.random(), random.random()
         return (
             f"DUNIF {bins} {b} {c}",
             {"function": "ert_duniform", "bins": bins, "min": b, "max": c},
@@ -461,7 +462,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         #
         # Well defined for all real values of a, b, c, non-zero real values of d
         # (width) due to division by zero.
-        a, b, c, d = [random() + 1 for _ in range(4)]  # +1 to all to avoid zero
+        a, b, c, d = [random.random() + 1 for _ in range(4)]  # +1 to all to avoid zero
         return (
             f"ERRF {a} {b} {c} {d}",
             {"function": "ert_erf", "min": a, "max": b, "skewness": c, "width": d},
@@ -473,8 +474,8 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         # Well defined for all real values of a, b, c, non-zero real values of d
         # (width) due to division by zero, integer values >= 2 of bins due to
         # division by (bins - 1)
-        bins = randint(2, 100)
-        a, b, c, d = [random() + 1 for _ in range(4)]  # +1 to all to avoid zero
+        bins = random.randint(2, 100)
+        a, b, c, d = [random.random() + 1 for _ in range(4)]  # +1 to all to avoid zero
         return (
             f"DERRF {bins} {a} {b} {c} {d}",
             {
@@ -504,9 +505,6 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
 
 
 def _rand_name():
-    import random
-    import string
-
     return "".join(random.choice(string.ascii_lowercase) for _ in range(8))
 
 

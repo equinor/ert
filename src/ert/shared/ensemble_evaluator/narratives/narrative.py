@@ -264,7 +264,7 @@ class _Interaction:
             "events": [event.json() for event in self.events],
         }
         if hasattr(self, "terminator"):
-            ret["terminator"] = self.__getattribute__("terminator").json()
+            ret["terminator"] = self.getattr("terminator").json()
 
         if self.scenario:
             ret["scenario"] = self.scenario

@@ -137,6 +137,7 @@ class ErtScript:
     def __findErtScriptImplementations(module) -> "ErtScript":
         result = []
         predicate = (
+            # pylint: disable=unnecessary-lambda-assignment
             lambda member: inspect.isclass(member)
             and member.__module__ == module.__name__
         )

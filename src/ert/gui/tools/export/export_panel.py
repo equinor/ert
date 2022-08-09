@@ -69,7 +69,7 @@ class ExportPanel(QWidget):
         directory = QFileDialog(self).getExistingDirectory(
             self, "Directory", self._file_name.text(), QFileDialog.ShowDirsOnly
         )
-        if str(directory).__len__() > 0:
+        if len(str(directory)) > 0:
             self._file_name.setText(str(directory))
 
     def export(self):

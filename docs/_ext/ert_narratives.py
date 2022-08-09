@@ -1,10 +1,11 @@
 import json
 import logging
 import sys
-from docutils import nodes, statemachine
-from docutils.parsers.rst import Directive
 from os.path import basename
 from pathlib import Path
+
+from docutils import nodes, statemachine
+from docutils.parsers.rst import Directive
 from sphinx.application import Sphinx
 
 from ert.shared.ensemble_evaluator import narratives

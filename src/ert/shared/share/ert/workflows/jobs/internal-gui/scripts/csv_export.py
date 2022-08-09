@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import pandas
 
@@ -115,10 +114,10 @@ class CSVExportJob(ErtPlugin):
             case = case.strip()
 
             if not self.ert().getEnkfFsManager().caseExists(case):
-                raise UserWarning("The case '%s' does not exist!" % case)
+                raise UserWarning(f"The case '{case}' does not exist!")
 
             if not self.ert().getEnkfFsManager().caseHasData(case):
-                raise UserWarning("The case '%s' does not have any data!" % case)
+                raise UserWarning(f"The case '{case}' does not have any data!")
 
             if infer_iteration:
                 iteration_number = self.inferIterationNumber(case)
@@ -157,10 +156,9 @@ class CSVExportJob(ErtPlugin):
 
         data.to_csv(output_file)
 
-        export_info = "Exported %d rows and %d columns to %s." % (
-            len(data.index),
-            len(data.columns),
-            output_file,
+        export_info = (
+            f"Exported {len(data.index)} rows and {len(data.columns)} "
+            f"columns to {output_file}."
         )
         return export_info
 
