@@ -18,7 +18,7 @@ import json
 import os.path
 import time
 
-from ert.job_runner import JOBS_FILE, STATUS_json
+from ert.constant_filenames import JOBS_FILE, STATUS_json
 
 
 def _serialize_date(dt):

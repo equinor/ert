@@ -29,19 +29,26 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, 
 
 from cloudevents.http import CloudEvent, to_json
 from cwrap import BaseCClass
-from ert.job_runner import CERT_FILE, JOBS_FILE
+from websockets.client import connect
+from websockets.datastructures import Headers
+from websockets.exceptions import ConnectionClosedError
+
+from ert.constant_filenames import (
+    CERT_FILE,
+    JOBS_FILE,
+    ERROR_file,
+    OK_file,
+    STATUS_file,
+)
 from res import ResPrototype
 from res.job_queue.job_queue_node import JobQueueNode
 from res.job_queue.job_status_type_enum import JobStatusType
 from res.job_queue.queue_differ import QueueDiffer
 from res.job_queue.thread_status_type_enum import ThreadStatus
-from websockets.datastructures import Headers
-from websockets.exceptions import ConnectionClosedError
-from websockets.client import connect
 
 if TYPE_CHECKING:
-    from res.enkf.run_arg import RunArg
     from res.enkf.res_config import ResConfig
+    from res.enkf.run_arg import RunArg
 
 
 logger = logging.getLogger(__name__)
@@ -154,12 +161,9 @@ class JobQueue(BaseCClass):
                 in this case.
         """
 
-        OK_file = "OK"
-        status_file = "STATUS"
-        exit_file = "ERROR"
         self.job_list = []
         self._stopped = False
-        c_ptr = self._alloc(max_submit, OK_file, status_file, exit_file)
+        c_ptr = self._alloc(max_submit, OK_file, STATUS_file, ERROR_file)
         super().__init__(c_ptr)
         self.size = size
 

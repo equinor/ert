@@ -6,7 +6,8 @@ import signal
 import sys
 import typing
 
-from ert.job_runner import JOBS_FILE, reporting
+from ert.constant_filenames import JOBS_FILE
+from ert.job_runner import reporting
 from ert.job_runner.reporting.message import Finish
 from ert.job_runner.runner import JobRunner
 
