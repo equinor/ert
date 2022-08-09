@@ -14,8 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.job_queue import CancelPluginException, ErtPlugin, ErtScript
-
 from .active_list import ActiveList
 from .analysis_config import AnalysisConfig
 from .analysis_iter_config import AnalysisIterConfig
@@ -86,9 +84,6 @@ __all__ = [
     "GenData",
     "ExtParam",
     "EnkfNode",
-    "CancelPluginException",
-    "ErtPlugin",
-    "ErtScript",
     "FieldConfig",
     "FieldTypeEnum",
     "GenKwConfig",

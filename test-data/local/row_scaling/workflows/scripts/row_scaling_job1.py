@@ -1,8 +1,8 @@
-from res._lib.local.row_scaling import RowScaling
-
-from res.enkf import ErtScript
-from functools import partial
 import math
+from functools import partial
+
+from res._lib.local.row_scaling import RowScaling
+from res.job_queue import ErtScript
 
 
 def gaussian_decay(obs_pos, length_scale, grid, data_index):

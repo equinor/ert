@@ -1,4 +1,4 @@
-from res.enkf import CancelPluginException, ErtPlugin
+from res.job_queue import CancelPluginException, ErtPlugin
 
 from ...libres_utils import ResTest
 
