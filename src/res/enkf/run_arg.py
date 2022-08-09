@@ -15,6 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
 
 
@@ -75,7 +76,7 @@ class RunArg(BaseCClass):
             raise ValueError("Cannot get queue index before job is submitted.")
         return qi
 
-    def isSubmitted(self):
+    def isSubmitted(self) -> bool:
         return self._is_submitted()
 
     def __repr__(self):
@@ -88,15 +89,15 @@ class RunArg(BaseCClass):
 
         return f"RunArg(queue_index = {qi}, {su}) {self._ad_str()}"
 
-    def get_run_id(self):
+    def get_run_id(self) -> str:
         return self._get_run_id()
 
     @property
-    def runpath(self):
+    def runpath(self) -> str:
         return self._get_runpath()
 
     @property
-    def iter_id(self):
+    def iter_id(self) -> int:
         return self._get_iter()
 
     @property

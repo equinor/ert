@@ -1,6 +1,7 @@
 import logging
 import time
 from collections import namedtuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -9,11 +10,26 @@ from res.enkf.data import EnkfNode
 
 from .simulation_context import SimulationContext
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    import numpy.typing as npt
+
+    from res.enkf import EnkfFs, EnKFMain
+
 Status = namedtuple("Status", "waiting pending running complete failed")
 
 
 class BatchContext(SimulationContext):
-    def __init__(self, result_keys, ert, fs, mask, itr, case_data):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        result_keys: "Iterable[str]",
+        ert: "EnKFMain",
+        fs: "EnkfFs",
+        mask: List[bool],
+        itr: int,
+        case_data: List[Tuple[Any, Any]],
+    ):
         """
         Handle which can be used to query status and results for batch simulation.
         """
@@ -21,18 +37,18 @@ class BatchContext(SimulationContext):
         self.result_keys = result_keys
         self.res_config = ert.resConfig()
 
-    def join(self):
+    def join(self) -> None:
         """
         Will block until the simulation is complete.
         """
         while self.running():
             time.sleep(1)
 
-    def running(self):
+    def running(self) -> bool:
         return self.isRunning()
 
     @property
-    def status(self):
+    def status(self) -> Status:
         """
         Will return the state of the simulations.
         """
@@ -44,7 +60,7 @@ class BatchContext(SimulationContext):
             failed=self.getNumFailed(),
         )
 
-    def results(self):
+    def results(self) -> List[Optional[Dict[str, "npt.NDArray[np.float64]"]]]:
         """Will return the results of the simulations.
 
         Observe that this function will raise RuntimeError if the simulations
@@ -78,7 +94,7 @@ class BatchContext(SimulationContext):
                 "Simulations are still running - need to wait before gettting results"
             )
 
-        res = []
+        res: List[Optional[Dict[str, "npt.NDArray[np.float64]"]]] = []
         nodes = [
             EnkfNode(self.res_config.ensemble_config[key]) for key in self.result_keys
         ]

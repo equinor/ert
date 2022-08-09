@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import sys
+from typing import TYPE_CHECKING
 
 from cwrap import BaseCClass
 
@@ -26,6 +27,9 @@ from res.enkf.data.summary import Summary
 from res.enkf.enkf_fs import EnkfFs
 from res.enkf.enums import ErtImplType
 from res.enkf.node_id import NodeId
+
+if TYPE_CHECKING:
+    from enkf.config import EnkfConfigNode
 
 
 class EnkfNode(BaseCClass):
@@ -44,7 +48,7 @@ class EnkfNode(BaseCClass):
     )
     _ecl_write = ResPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
 
-    def __init__(self, config_node, private=False):
+    def __init__(self, config_node: "EnkfConfigNode", private: bool = False):
         self._private = private
         if private:
             c_pointer = self._alloc_private(config_node)

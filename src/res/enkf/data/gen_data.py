@@ -39,7 +39,7 @@ class GenData(BaseCClass):
         """
         self._export(file_name, file_format_type, fortio)
 
-    def getData(self):
+    def getData(self) -> DoubleVector:
         data = DoubleVector()
         self._export_data(data)
         return data
