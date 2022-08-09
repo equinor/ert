@@ -22,7 +22,7 @@ from ert.gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class LoadResultsPanel(QWidget):

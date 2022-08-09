@@ -29,7 +29,7 @@ from qtpy.QtWidgets import (
 from ert.gui.ertwidgets.models.analysismodulevariablesmodel import (
     AnalysisModuleVariablesModel,
 )
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 
 class AnalysisModuleVariablesPanel(QWidget):

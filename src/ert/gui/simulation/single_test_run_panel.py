@@ -6,7 +6,7 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert_shared.models import SingleTestRun
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
 
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 from dataclasses import dataclass
 

@@ -34,7 +34,7 @@ from ert.gui.tools.plot import PlotTool
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
 

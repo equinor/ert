@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from ecl.summary import EclSum
 from ert.data import loader, MeasuredData
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
 from res.enkf.export import SummaryObservationCollector
 

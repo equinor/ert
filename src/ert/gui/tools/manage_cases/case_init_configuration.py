@@ -20,7 +20,7 @@ from ert.gui.ertwidgets.models.ertmodel import (
     initializeCurrentCaseFromExisting,
 )
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
-from ert_shared.libres_facade import LibresFacade
+from ert.libres_facade import LibresFacade
 from res.enkf import EnkfVarType
 
 
