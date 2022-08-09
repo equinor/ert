@@ -1,7 +1,7 @@
 from typing import List
 
 from res.config.rangestring import rangestring_to_mask
-from res.enkf import ErtScript
+from res.job_queue import ErtScript
 
 
 class ExportRunpathJob(ErtScript):

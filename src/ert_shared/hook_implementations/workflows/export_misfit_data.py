@@ -1,8 +1,10 @@
 from collections import defaultdict
 
 import pandas as pd
+
 from ert.exceptions import StorageError
-from res.enkf import ErtScript, RealizationStateEnum
+from res.enkf import RealizationStateEnum
+from res.job_queue import ErtScript
 
 
 class ExportMisfitDataJob(ErtScript):
