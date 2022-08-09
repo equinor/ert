@@ -1,25 +1,31 @@
+import functools
 import json
+import logging
 import os
 import socket
 import time
-import logging
-import functools
 
-from ert.job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
+from ert.constant_filenames import (
+    ERROR_file,
+    LOG_file,
+    OK_file,
+    STATUS_file,
+    STATUS_json,
+)
 from ert.job_runner.io import cond_unlink
+from ert.job_runner.reporting.base import Reporter
 from ert.job_runner.reporting.message import (
+    _JOB_EXIT_FAILED_STRING,
     _JOB_STATUS_FAILURE,
     _JOB_STATUS_RUNNING,
     _JOB_STATUS_SUCCESS,
-    _JOB_EXIT_FAILED_STRING,
-    Message,
     Exited,
     Finish,
     Init,
+    Message,
     Running,
     Start,
 )
-from ert.job_runner.reporting.base import Reporter
 from ert.job_runner.util import data as data_util
 
 TIME_FORMAT = "%H:%M:%S"

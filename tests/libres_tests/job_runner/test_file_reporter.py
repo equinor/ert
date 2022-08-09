@@ -2,12 +2,18 @@ import os
 import os.path
 from unittest import TestCase
 
-from ..libres_utils import tmpdir
-
+from ert.constant_filenames import (
+    ERROR_file,
+    LOG_file,
+    OK_file,
+    STATUS_file,
+    STATUS_json,
+)
 from ert.job_runner.job import Job
 from ert.job_runner.reporting import File
 from ert.job_runner.reporting.message import Exited, Finish, Init, Running, Start
-from ert.job_runner import LOG_file, ERROR_file, STATUS_file, OK_file, STATUS_json
+
+from ..libres_utils import tmpdir
 
 
 class FileReporterTests(TestCase):
