@@ -1,6 +1,9 @@
+from typing import Optional
+
 import numpy
 from ecl.util.util import IntVector
 from pandas import DataFrame
+
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
 from res.enkf.plot_data import EnsemblePlotGenData
@@ -13,7 +16,7 @@ class GenDataCollector:
         case_name: str,
         key: str,
         report_step: int,
-        realization_index: int = None,
+        realization_index: Optional[int] = None,
     ) -> DataFrame:
         """
         In the returned dataframe the realisation index runs along the

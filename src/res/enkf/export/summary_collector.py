@@ -1,10 +1,12 @@
+from typing import List, Optional
+
 import numpy as np
 from pandas import DataFrame, MultiIndex
+
 from res import _lib
 from res.enkf import EnKFMain
-from res.enkf.enums import RealizationStateEnum
 from res.enkf.enkf_fs import EnkfFs
-from typing import List
+from res.enkf.enums import RealizationStateEnum
 
 
 class SummaryCollector:
@@ -22,8 +24,8 @@ class SummaryCollector:
     def loadAllSummaryData(
         ert: EnKFMain,
         case_name: str,
-        keys: List[str] = None,
-        realization_index: int = None,
+        keys: Optional[List[str]] = None,
+        realization_index: Optional[int] = None,
     ) -> DataFrame:
         fs = ert.getEnkfFsManager().getFileSystem(case_name, read_only=True)
 
