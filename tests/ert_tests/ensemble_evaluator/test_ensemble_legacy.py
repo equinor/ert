@@ -22,7 +22,7 @@ def test_run_legacy_ensemble(tmpdir, make_ensemble_builder):
             use_token=False,
             generate_cert=False,
         )
-        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0)
         with evaluator.run() as monitor:
             for e in monitor.track():
                 if e["type"] in (
@@ -54,7 +54,7 @@ def test_run_and_cancel_legacy_ensemble(tmpdir, make_ensemble_builder):
             generate_cert=False,
         )
 
-        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0)
 
         with evaluator.run() as mon:
             cancel = True
@@ -85,7 +85,7 @@ def test_run_legacy_ensemble_exception(tmpdir, make_ensemble_builder):
             use_token=False,
             generate_cert=False,
         )
-        evaluator = EnsembleEvaluator(ensemble, config, 0, ee_id="1")
+        evaluator = EnsembleEvaluator(ensemble, config, 0)
 
         with patch.object(ensemble._job_queue, "submit_complete") as faulty_queue:
             faulty_queue.side_effect = RuntimeError()

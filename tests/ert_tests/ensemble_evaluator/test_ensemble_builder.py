@@ -14,24 +14,28 @@ from ert.data import (
 
 @pytest.mark.parametrize("active_real", [True, False])
 def test_build_ensemble(active_real):
-    ensemble = ee.EnsembleBuilder().add_realization(
-        ee.RealizationBuilder()
-        .set_iens(0)
-        .add_step(
-            ee.StepBuilder()
-            .add_job(
-                ee.LegacyJobBuilder()
+    ensemble = (
+        ee.EnsembleBuilder()
+        .add_realization(
+            ee.RealizationBuilder()
+            .set_iens(0)
+            .add_step(
+                ee.StepBuilder()
+                .add_job(
+                    ee.LegacyJobBuilder()
+                    .set_id("0")
+                    .set_index("0")
+                    .set_name("echo_command")
+                    .set_ext_job(Mock())
+                )
                 .set_id("0")
-                .set_index("0")
-                .set_name("echo_command")
-                .set_ext_job(Mock())
+                .set_name("some_step")
+                .set_dummy_io()
+                .set_type("unix")
             )
-            .set_id("0")
-            .set_name("some_step")
-            .set_dummy_io()
-            .set_type("unix")
+            .active(active_real)
         )
-        .active(active_real)
+        .set_id("0")
     )
     ensemble = ensemble.build()
 
@@ -69,7 +73,7 @@ def test_build_ensemble_legacy():
         res_config=res_config,
     )
 
-    ensemble = ensemble_builder.build()
+    ensemble = ensemble_builder.set_id("0").build()
 
     real = ensemble.reals[0]
     assert real.active
@@ -203,7 +207,7 @@ def test_topological_sort(steps, expected, ambiguous):
             )
         real.add_step(step)
 
-    ensemble = ee.EnsembleBuilder().add_realization(real).build()
+    ensemble = ee.EnsembleBuilder().add_realization(real).set_id("0").build()
     real = ensemble.reals[0]
 
     if ambiguous:

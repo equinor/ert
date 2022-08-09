@@ -45,7 +45,7 @@ def send_dispatch_event(client, event_type, source, event_id, data, **extra_attr
 class TestEnsemble(_Ensemble):
     __test__ = False
 
-    def __init__(self, iter, reals, steps, jobs):
+    def __init__(self, iter, reals, steps, jobs, id_):
         self.iter = iter
         self.test_reals = reals
         self.steps = steps
@@ -82,15 +82,15 @@ class TestEnsemble(_Ensemble):
             )
             for real_no in range(0, reals)
         ]
-        super().__init__(the_reals, {})
+        super().__init__(the_reals, {}, id_)
 
-    def _evaluate(self, url, ee_id):
+    def _evaluate(self, url):
         event_id = 0
         with Client(url + "/dispatch") as dispatch:
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ee/{ee_id}",
+                f"/ert/ensemble/{self.id_}",
                 f"event-{event_id}",
                 None,
             )
@@ -99,7 +99,7 @@ class TestEnsemble(_Ensemble):
                 send_dispatch_event(
                     dispatch,
                     identifiers.EVTYPE_ENSEMBLE_FAILED,
-                    f"/ert/ee/{ee_id}",
+                    f"/ert/ensemble/{self.id_}",
                     f"event-{event_id}",
                     None,
                 )
@@ -112,7 +112,7 @@ class TestEnsemble(_Ensemble):
                     send_dispatch_event(
                         dispatch,
                         identifiers.EVTYPE_FM_STEP_UNKNOWN,
-                        f"/ert/ee/{ee_id}/real/{real}/step/{step}",
+                        f"/ert/ensemble/{self.id_}/real/{real}/step/{step}",
                         f"event-{event_id}",
                         None,
                     )
@@ -121,7 +121,8 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_JOB_RUNNING,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/"
+                            + f"{real}/step/{step}/job/{job}",
                             f"event-{event_id}",
                             {"current_memory_usage": 1000},
                         )
@@ -130,7 +131,8 @@ class TestEnsemble(_Ensemble):
                             send_dispatch_event(
                                 dispatch,
                                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                                f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                                f"/ert/ensemble/{self.id_}/real/"
+                                + f"{real}/step/{step}/job/{job}",
                                 f"event-{event_id}",
                                 {},
                             )
@@ -140,7 +142,8 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_JOB_SUCCESS,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/"
+                            + f"{real}/step/{step}/job/{job}",
                             f"event-{event_id}",
                             {"current_memory_usage": 1000},
                         )
@@ -149,7 +152,8 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_STEP_FAILURE,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/"
+                            + f"{real}/step/{step}/job/{job}",
                             f"event-{event_id}",
                             {},
                         )
@@ -158,7 +162,8 @@ class TestEnsemble(_Ensemble):
                         send_dispatch_event(
                             dispatch,
                             identifiers.EVTYPE_FM_STEP_SUCCESS,
-                            f"/ert/ee/{ee_id}/real/{real}/step/{step}/job/{job}",
+                            f"/ert/ensemble/{self.id_}/real/"
+                            + f"{real}/step/{step}/job/{job}",
                             f"event-{event_id}",
                             {},
                         )
@@ -171,7 +176,7 @@ class TestEnsemble(_Ensemble):
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                f"/ert/ee/{ee_id}",
+                f"/ert/ensemble/{self.id_}",
                 f"event-{event_id}",
                 data,
                 **extra_attrs,
@@ -180,10 +185,10 @@ class TestEnsemble(_Ensemble):
     def join(self):
         self._eval_thread.join()
 
-    def evaluate(self, config, ee_id):
+    def evaluate(self, config):
         self._eval_thread = threading.Thread(
             target=self._evaluate,
-            args=(config.dispatch_uri, ee_id),
+            args=(config.dispatch_uri,),
             name="TestEnsemble",
         )
 
@@ -208,25 +213,25 @@ class TestEnsemble(_Ensemble):
 
 class AutorunTestEnsemble(TestEnsemble):
     # pylint: disable=arguments-differ
-    def _evaluate(self, client_url, dispatch_url, ee_id):
-        super()._evaluate(dispatch_url, ee_id)
+    def _evaluate(self, client_url, dispatch_url):
+        super()._evaluate(dispatch_url)
         with Client(client_url) as client:
             client.send(
                 to_json(
                     CloudEvent(
                         {
                             "type": identifiers.EVTYPE_EE_USER_DONE,
-                            "source": f"/ert/ee/{ee_id}",
+                            "source": f"/ert/ensemble/{self.id_}",
                             "id": "event-user-done",
                         }
                     )
                 )
             )
 
-    def evaluate(self, config, ee_id):
+    def evaluate(self, config):
         self._eval_thread = threading.Thread(
             target=self._evaluate,
-            args=(config.client_uri, config.dispatch_uri, ee_id),
+            args=(config.client_uri, config.dispatch_uri),
             name="AutorunTestEnsemble",
         )
 

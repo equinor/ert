@@ -97,7 +97,11 @@ def test_evaluator(
         )
 
     ensemble = ert3.evaluator.build_ensemble(
-        stage, ensemble_config.forward_model.driver, ensemble_config.size, step_builder
+        stage,
+        ensemble_config.forward_model.driver,
+        ensemble_config.size,
+        step_builder,
+        ens_id="0",
     )
 
     evaluation_records = ert3.evaluator.evaluate(ensemble, range(1024, 65535))
@@ -161,6 +165,7 @@ def test_inactive_realizations(
         ensemble_config.size,
         step_builder,
         active_mask,
+        ens_id="0",
     )
 
     evaluation_records = ert3.evaluator.evaluate(ensemble, range(1024, 65535))
@@ -216,7 +221,11 @@ def test_inline_script(commandline, parsed_name, parsed_args, plugin_registry):
     )
 
     ensemble = ert3.evaluator.build_ensemble(
-        stage=step, driver="local", ensemble_size=1, step_builder=step_builder
+        stage=step,
+        driver="local",
+        ensemble_size=1,
+        step_builder=step_builder,
+        ens_id="0",
     )
 
     job = ensemble.reals[0].steps[0].jobs[0]

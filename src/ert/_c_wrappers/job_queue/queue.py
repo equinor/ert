@@ -355,12 +355,12 @@ class JobQueue(BaseCClass):
 
     @staticmethod
     def _translate_change_to_cloudevent(
-        ee_id: str, real_id: str, status: JobStatusType
+        ens_id: str, real_id: str, status: JobStatusType
     ) -> CloudEvent:
         return CloudEvent(
             {
                 "type": _queue_state_event_type(status),
-                "source": f"/ert/ee/{ee_id}/real/{real_id}/step/{0}",
+                "source": f"/ert/ensemble/{ens_id}/real/{real_id}/step/{0}",
                 "datacontenttype": "application/json",
             },
             {
@@ -370,12 +370,12 @@ class JobQueue(BaseCClass):
 
     @staticmethod
     async def _queue_changes(
-        ee_id: str,
+        ens_id: str,
         changes,
         output_bus: "asyncio.Queue[CloudEvent]",
     ):
         events = [
-            JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+            JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
             for real_id, status in changes.items()
         ]
 
@@ -384,7 +384,7 @@ class JobQueue(BaseCClass):
 
     @staticmethod
     async def _publish_changes(
-        ee_id: str,
+        ens_id: str,
         changes,
         ws_uri: str,
         ssl_context: ssl.SSLContext,
@@ -392,7 +392,7 @@ class JobQueue(BaseCClass):
     ):
         events = deque(
             [
-                JobQueue._translate_change_to_cloudevent(ee_id, real_id, status)
+                JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
                 for real_id, status in changes.items()
             ]
         )
@@ -431,7 +431,7 @@ class JobQueue(BaseCClass):
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
         ws_uri: str,
-        ee_id: str,
+        ens_id: str,
         pool_sema: threading.BoundedSemaphore,
         evaluators: List[Callable[..., Any]],
         cert: Optional[Union[str, bytes]] = None,
@@ -450,7 +450,7 @@ class JobQueue(BaseCClass):
 
         try:
             await JobQueue._publish_changes(
-                ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+                ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
             )
             while True:
                 self.launch_jobs(pool_sema)
@@ -461,7 +461,11 @@ class JobQueue(BaseCClass):
                     func()
 
                 await JobQueue._publish_changes(
-                    ee_id, self.changes_after_transition(), ws_uri, ssl_context, headers
+                    ens_id,
+                    self.changes_after_transition(),
+                    ws_uri,
+                    ssl_context,
+                    headers,
                 )
 
                 if self.stopped:
@@ -488,12 +492,12 @@ class JobQueue(BaseCClass):
         self.assert_complete()
         self._differ.transition(self.job_list)
         await JobQueue._publish_changes(
-            ee_id, self._differ.snapshot(), ws_uri, ssl_context, headers
+            ens_id, self._differ.snapshot(), ws_uri, ssl_context, headers
         )
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,
-        ee_id: str,
+        ens_id: str,
         pool_sema: threading.BoundedSemaphore,
         evaluators: List[Callable[..., Any]],
         output_bus: "asyncio.Queue[CloudEvent]",
@@ -501,7 +505,7 @@ class JobQueue(BaseCClass):
         if evaluators is None:
             evaluators = []
         try:
-            await JobQueue._queue_changes(ee_id, self._differ.snapshot(), output_bus)
+            await JobQueue._queue_changes(ens_id, self._differ.snapshot(), output_bus)
             while True:
                 self.launch_jobs(pool_sema)
 
@@ -511,7 +515,7 @@ class JobQueue(BaseCClass):
                     func()
 
                 changes = self.changes_after_transition()
-                await JobQueue._queue_changes(ee_id, changes, output_bus)
+                await JobQueue._queue_changes(ens_id, changes, output_bus)
 
                 if self.stopped:
                     raise asyncio.CancelledError
@@ -536,7 +540,7 @@ class JobQueue(BaseCClass):
 
         self.assert_complete()
         self._differ.transition(self.job_list)
-        await JobQueue._queue_changes(ee_id, self._differ.snapshot(), output_bus)
+        await JobQueue._queue_changes(ens_id, self._differ.snapshot(), output_bus)
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(
@@ -619,7 +623,7 @@ class JobQueue(BaseCClass):
 
     def add_dispatch_information_to_jobs_file(
         self,
-        ee_id: str,
+        ens_id: str,
         dispatch_url: str,
         cert: Optional[Union[str, bytes]],
         token: Optional[str],
@@ -633,7 +637,7 @@ class JobQueue(BaseCClass):
             with open(f"{q_node.run_path}/{JOBS_FILE}", "r+") as jobs_file:
                 data = json.load(jobs_file)
 
-                data["ee_id"] = ee_id
+                data["ens_id"] = ens_id
                 data["real_id"] = self._differ.qindex_to_iens(q_index)
                 data["step_id"] = 0
                 data["dispatch_url"] = dispatch_url

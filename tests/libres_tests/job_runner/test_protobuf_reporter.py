@@ -28,7 +28,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
                 1,
                 19,
                 experiment_id="experiment_id",
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
             )
@@ -44,7 +44,7 @@ def test_report_with_successful_start_message_argument(unused_tcp_port):
     assert event.job.id.index == 0
     assert event.job.id.step.step == 0
     assert event.job.id.step.realization.realization == 0
-    assert event.job.id.step.realization.ensemble.id == "ee_id"
+    assert event.job.id.step.realization.ensemble.id == "ens_id"
     assert event.job.id.step.realization.ensemble.experiment.id == "experiment_id"
     assert os.path.basename(event.job.stdout) == "stdout"
     assert os.path.basename(event.job.stderr) == "stderr"
@@ -64,7 +64,7 @@ def test_report_with_failed_start_message_argument(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",
@@ -96,7 +96,7 @@ def test_report_with_successful_exit_message_argument(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",
@@ -125,7 +125,7 @@ def test_report_with_failed_exit_message_argument(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",
@@ -156,7 +156,7 @@ def test_report_with_running_message_argument(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",
@@ -187,7 +187,7 @@ def test_report_only_job_running_for_successful_run(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",
@@ -212,7 +212,7 @@ def test_report_with_failed_finish_message_argument(unused_tcp_port):
                 [job1],
                 1,
                 19,
-                ee_id="ee_id",
+                ens_id="ens_id",
                 real_id=0,
                 step_id=0,
                 experiment_id="experiment_id",

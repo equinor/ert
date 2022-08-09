@@ -40,6 +40,7 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         self._max_retries = 0
         self._retry_delay = 5
         self._executor: str = "local"
+        self._id: Optional[str] = None
 
     def set_forward_model(
         self, forward_model: _RealizationBuilder
@@ -100,6 +101,10 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
 
     def set_executor(self, executor: str) -> "_EnsembleBuilder":
         self._executor = executor
+        return self
+
+    def set_id(self, id_: str) -> "_EnsembleBuilder":
+        self._id = id_
         return self
 
     @staticmethod
@@ -187,6 +192,9 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         if not (self._reals or self._forward_model):
             raise ValueError("Either forward model or realizations needs to be set")
 
+        if self._id is None:
+            raise ValueError("ID must be set prior to building")
+
         real_builders: List[_RealizationBuilder] = []
         if self._forward_model:
             # duplicate the original forward model into realizations
@@ -205,7 +213,9 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
         reals = [builder.build() for builder in real_builders]
 
         if self._legacy_dependencies:
-            return _LegacyEnsemble(reals, self._metadata, *self._legacy_dependencies)
+            return _LegacyEnsemble(
+                reals, self._metadata, *self._legacy_dependencies, id_=self._id
+            )
         else:
             return PrefectEnsemble(
                 reals=reals,
@@ -216,4 +226,5 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                 executor=self._executor,
                 retry_delay=self._retry_delay,
                 custom_port_range=self._custom_port_range,
+                id_=self._id,
             )

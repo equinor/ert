@@ -246,21 +246,21 @@ else:
 
 
 @pytest.mark.parametrize(
-    "is_interactive_run, ee_id",
+    "is_interactive_run, ens_id",
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
-def test_setup_reporters(is_interactive_run, ee_id):
-    reporters = _setup_reporters(is_interactive_run, ee_id, "")
+def test_setup_reporters(is_interactive_run, ens_id):
+    reporters = _setup_reporters(is_interactive_run, ens_id, "")
 
-    if not is_interactive_run and not ee_id:
+    if not is_interactive_run and not ens_id:
         assert len(reporters) == 1
         assert not any(isinstance(r, Event) for r in reporters)
 
-    if not is_interactive_run and ee_id:
+    if not is_interactive_run and ens_id:
         assert len(reporters) == 2
         assert any(isinstance(r, Event) for r in reporters)
 
-    if is_interactive_run and ee_id:
+    if is_interactive_run and ens_id:
         assert len(reporters) == 1
         assert any(isinstance(r, Interactive) for r in reporters)
 
@@ -269,7 +269,7 @@ def test_setup_reporters(is_interactive_run, ee_id):
 def test_job_dispatch_kills_itself_after_unsuccessful_job(unused_tcp_port):
     host = "localhost"
     port = unused_tcp_port
-    jobs_json = json.dumps({"ee_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
+    jobs_json = json.dumps({"ens_id": "_id_", "dispatch_url": f"ws://localhost:{port}"})
 
     with patch("ert.job_runner.cli.os") as mock_os, patch(
         "ert.job_runner.cli.open", new=mock_open(read_data=jobs_json)

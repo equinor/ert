@@ -28,8 +28,8 @@ class _BaseJob:
         self.index = index
         self._source = source
 
-    def source(self, ee_id: str) -> str:
-        return self._source.format(ee_id=ee_id)
+    def source(self, ens_id: str) -> str:
+        return self._source.format(ens_id=ens_id)
 
 
 class _UnixJob(_BaseJob):

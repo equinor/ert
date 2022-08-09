@@ -57,7 +57,7 @@ class UnixTask(prefect.Task):  # type: ignore
         self,
         step: "_Step",
         output_transmitters: _stage_transmitter_mapping,
-        ee_id: str,
+        ens_id: str,
         *args: Any,
         run_path: Optional[Path] = None,
         **kwargs: Any,
@@ -65,7 +65,7 @@ class UnixTask(prefect.Task):  # type: ignore
         super().__init__(*args, **kwargs)
         self.step = step
         self._output_transmitters = output_transmitters
-        self._ee_id = ee_id
+        self._ens_id = ens_id
         self._run_path = run_path
 
     def run_job(self, job: _UnixJob, run_path: Path) -> None:
@@ -92,7 +92,7 @@ class UnixTask(prefect.Task):  # type: ignore
             self.logger.error(cmd_exec.stderr)
             _send_event(
                 EVTYPE_FM_JOB_FAILURE,
-                job.source(self._ee_id),
+                job.source(self._ens_id),
                 {ERROR_MSG: cmd_exec.stderr},
             )
             raise OSError(
@@ -105,14 +105,14 @@ class UnixTask(prefect.Task):  # type: ignore
             self.logger.info(f"Running command {job.name}")
             _send_event(
                 EVTYPE_FM_JOB_START,
-                job.source(self._ee_id),
+                job.source(self._ens_id),
             )
             if not isinstance(job, _UnixJob):
                 raise TypeError(f"unexpected job {type(job)} in unix task")
             self.run_job(job, run_path)
             _send_event(
                 EVTYPE_FM_JOB_SUCCESS,
-                job.source(self._ee_id),
+                job.source(self._ens_id),
             )
 
     def _load_and_dump_input(
@@ -157,7 +157,7 @@ class UnixTask(prefect.Task):  # type: ignore
                 self._load_and_dump_input(transmitters=inputs, runpath=run_path)
             _send_event(
                 EVTYPE_FM_STEP_RUNNING,
-                self.step.source(self._ee_id),
+                self.step.source(self._ens_id),
             )
 
             outputs: _stage_transmitter_mapping = {}
@@ -186,6 +186,6 @@ class UnixTask(prefect.Task):  # type: ignore
             get_event_loop().run_until_complete(asyncio.gather(*futures))
             _send_event(
                 EVTYPE_FM_STEP_SUCCESS,
-                self.step.source(self._ee_id),
+                self.step.source(self._ens_id),
             )
         return outputs

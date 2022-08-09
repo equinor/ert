@@ -254,6 +254,7 @@ def run(
         ensemble_size,
         step_builder,
         active_mask,
+        ens_id="0",
     )
     ert3.evaluator.evaluate(ensemble, use_gui=use_gui)
 
@@ -343,6 +344,7 @@ def run_sensitivity_analysis(
         experiment_run_config.ensemble_config.forward_model.driver,
         ensemble_size,
         step_builder,
+        ens_id="0",
     )
 
     output_transmitters = ert3.evaluator.evaluate(ensemble, use_gui=use_gui)

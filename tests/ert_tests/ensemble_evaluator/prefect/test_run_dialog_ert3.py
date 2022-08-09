@@ -12,7 +12,7 @@ def test_success_ert3(qtbot, poly_ensemble):
         generate_cert=False,
     )
 
-    evaluator = EnsembleEvaluator(poly_ensemble, ee_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(poly_ensemble, ee_config, 0)
     run_model = ERT3RunModel()
     widget = RunDialog("poly_example", run_model)
     widget.show()

@@ -47,7 +47,7 @@ class Event(Reporter):
         self._statemachine.add_handler((Start, Running, Exited), self._job_handler)
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
-        self._ee_id = None
+        self._ens_id = None
         self._real_id = None
         self._step_id = None
         self._event_queue = queue.Queue()
@@ -74,10 +74,10 @@ class Event(Reporter):
         self._event_queue.put(event)
 
     def _step_path(self):
-        return f"/ert/ee/{self._ee_id}/real/{self._real_id}/step/{self._step_id}"
+        return f"/ert/ensemble/{self._ens_id}/real/{self._real_id}/step/{self._step_id}"
 
     def _init_handler(self, msg):
-        self._ee_id = msg.ee_id
+        self._ens_id = msg.ens_id
         self._real_id = msg.real_id
         self._step_id = msg.step_id
         self._event_publisher_thread.start()
