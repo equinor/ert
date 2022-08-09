@@ -14,6 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
@@ -34,6 +35,9 @@ from res.enkf.enums import (
     ErtImplType,
     LoadFailTypeEnum,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class EnkfConfigNode(BaseCClass):
@@ -233,12 +237,11 @@ class EnkfConfigNode(BaseCClass):
         return self._get_init_file_fmt()
 
     def getObservationKeys(self) -> StringList:
-        """@rtype:  StringList"""
         return self._get_obs_keys().setParent(self)
 
     @classmethod
     def createSummaryConfigNode(
-        cls, key: str, load_fail_type: LoadFaiLTypeEnum
+        cls, key: str, load_fail_type: LoadFailTypeEnum
     ) -> "EnkfConfigNode":
         assert isinstance(load_fail_type, LoadFailTypeEnum)
         return cls._alloc_summary_node(key, load_fail_type)
@@ -250,7 +253,12 @@ class EnkfConfigNode(BaseCClass):
         return cls._alloc_field_node(key, grid, trans_table, forward_init)
 
     @classmethod
-    def create_ext_param(cls, key, input_keys, output_file=None):
+    def create_ext_param(
+        cls,
+        key: str,
+        input_keys: Union[List[str], Dict[str, List[Tuple[str, str]]]],
+        output_file: Optional[str] = None,
+    ) -> ExtParamConfig:
         config = ExtParamConfig(key, input_keys)
         output_file = output_file or key + ".json"
         node = cls._alloc(
@@ -268,7 +276,9 @@ class EnkfConfigNode(BaseCClass):
 
     # This method only exposes the details relevant for Everest usage.
     @classmethod
-    def create_gen_data(cls, key, file_fmt, report_steps=(0,)):
+    def create_gen_data(
+        cls, key: str, file_fmt: str, report_steps: "Iterable[int]" = (0,)
+    ):
         active_steps = IntVector()
         for step in report_steps:
             active_steps.append(step)

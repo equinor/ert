@@ -1,5 +1,6 @@
 import copy
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from res import _lib
@@ -142,7 +143,7 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                 ).set_num_cpu(
                     num_cpu
                 ).set_run_path(
-                    run_arg.runpath
+                    Path(run_arg.runpath)
                 ).set_job_script(
                     res_config.queue_config.job_script
                 ).set_job_name(

@@ -17,7 +17,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
-from typing import List, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
@@ -103,7 +103,9 @@ class EnKFMain(BaseCClass):
         "state_map_obj enkf_main_alloc_readonly_state_map(enkf_main, char*)"
     )
 
-    def __init__(self, config, strict=True, read_only=False):
+    def __init__(
+        self, config: "ResConfig", strict: bool = True, read_only: bool = False
+    ):
         self.config_file = config
         self.update_snapshots = {}
         self._update_configuration = None
@@ -172,7 +174,7 @@ class EnKFMain(BaseCClass):
     def runpath_list_filename(self):
         return self._runpaths.runpath_list_filename
 
-    def getEnkfFsManager(self):
+    def getEnkfFsManager(self) -> "EnKFMain":
         return self
 
     def getLocalConfig(self) -> "UpdateConfiguration":
@@ -294,7 +296,7 @@ class EnKFMain(BaseCClass):
     def getDataKW(self) -> SubstitutionList:
         return self._get_data_kw()
 
-    def addDataKW(self, key, value):
+    def addDataKW(self, key: str, value: str) -> None:
         # Substitution should be the responsibility of
         # self.substituter. However,
         # self.resConfig().subst_config.subst_list is still

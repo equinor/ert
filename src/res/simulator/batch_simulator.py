@@ -1,17 +1,28 @@
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+
 from res.enkf import EnKFMain, NodeId, ResConfig
 from res.enkf.config import EnkfConfigNode
 from res.enkf.data import EnkfNode
 
 from .batch_simulator_context import BatchContext
 
+if TYPE_CHECKING:
+    from res.enkf import EnkfFs, ExtParam
 
-def _slug(entity):
+
+def _slug(entity: str) -> str:
     entity = " ".join(str(entity).split())
     return "".join([x if x.isalnum() else "_" for x in entity.strip()])
 
 
 class BatchSimulator:
-    def __init__(self, res_config, controls, results, callback=None):
+    def __init__(  # pylint: disable: too-many-arguments
+        self,
+        res_config: ResConfig,
+        controls: Dict[str, List[str]],
+        results: List[str],
+        callback: Optional[Callable[[BatchContext], None]] = None,
+    ):
         """Will create simulator which can be used to run multiple simulations.
 
         The @res_config argument should be a ResConfig object, representing the
@@ -93,8 +104,14 @@ class BatchSimulator:
         for key in results:
             ens_config.addNode(EnkfConfigNode.create_gen_data(key, f"{key}_%d"))
 
-    def _setup_sim(self, sim_id, controls, file_system):
-        def _set_ext_param(ext_param, key, assignment):
+    def _setup_sim(
+        self, sim_id: int, controls: Dict[str, Dict[str, Any]], file_system: "EnkfFs"
+    ) -> None:
+        def _set_ext_param(
+            ext_param: "ExtParam",
+            key: Union[str, int],
+            assignment: Union[Dict[str, Any], Tuple[str, str], str, int],
+        ) -> None:
             if isinstance(assignment, dict):  # handle suffixes
                 suffixes = ext_param.config[key]
                 if len(assignment) != len(suffixes):
@@ -129,7 +146,9 @@ class BatchSimulator:
                 _set_ext_param(ext_node, var_name, var_setting)
             node.save(file_system, node_id)
 
-    def start(self, case_name, case_data):
+    def start(
+        self, case_name: str, case_data: List[Tuple[int, Dict[str, Dict[str, Any]]]]
+    ) -> BatchContext:
         """Start batch simulation, return a simulation context
 
         The start method will submit simulations to the queue system and then

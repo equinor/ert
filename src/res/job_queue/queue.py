@@ -231,7 +231,7 @@ class JobQueue(BaseCClass):
     def set_max_running(self, max_running):
         self.driver.set_max_running(max_running)
 
-    def set_max_job_duration(self, max_duration):
+    def set_max_job_duration(self, max_duration: int) -> None:
         self._set_max_job_duration(max_duration)
 
     @property
