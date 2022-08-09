@@ -2,7 +2,7 @@ from ...libres_utils import wait_until
 
 from res.enkf import EnKFMain
 from res.enkf.enums import RealizationStateEnum
-from res.simulator import SimulationContext
+from ert.simulator import SimulationContext
 
 
 def test_simulation_context(setup_case):

@@ -81,7 +81,6 @@ from .ext_job import ExtJob  # noqa
 from .ext_joblist import ExtJoblist  # noqa
 from .external_ert_script import ExternalErtScript  # noqa
 from .forward_model import ForwardModel  # noqa
-from .forward_model_status import ForwardModelJobStatus, ForwardModelStatus  # noqa
 from .function_ert_script import FunctionErtScript  # noqa
 from .job import Job  # noqa
 from .job_queue_manager import JobQueueManager  # noqa
@@ -116,8 +115,6 @@ __all__ = [
     "ExtJoblist",
     "EnvironmentVarlist",
     "ForwardModel",
-    "ForwardModelJobStatus",
-    "ForwardModelStatus",
     "ErtScript",
     "ErtPlugin",
     "CancelPluginException",

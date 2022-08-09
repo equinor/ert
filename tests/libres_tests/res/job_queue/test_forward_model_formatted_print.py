@@ -9,7 +9,7 @@ from res.job_queue.environment_varlist import EnvironmentVarlist
 from res.job_queue.ext_job import ExtJob
 from res.job_queue.ext_joblist import ExtJoblist
 from res.job_queue.forward_model import ForwardModel
-from res.job_queue.forward_model_status import ForwardModelStatus
+from ert.simulator.forward_model_status import ForwardModelStatus
 from res.util.substitution_list import SubstitutionList
 
 from ...libres_utils import ResTest
