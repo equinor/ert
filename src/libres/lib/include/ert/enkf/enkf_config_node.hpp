@@ -30,7 +30,9 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_trans.hpp>
 #include <ert/enkf/gen_data_config.hpp>
+#include <ert/enkf/run_arg_type.hpp>
 #include <ert/enkf/summary_config.hpp>
+#include <ert/res_util/path_fmt.hpp>
 
 typedef void(config_free_ftype)(void *);
 typedef int(get_data_size_ftype)(const void *);

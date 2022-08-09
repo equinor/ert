@@ -161,12 +161,11 @@ void summary_user_get_vector(const summary_type *summary, const char *index_key,
    e.g. a well which has not yet opened.
 */
 bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
-                          const forward_load_context_type *load_context) {
+                          int report_step, const void *argument) {
     bool loadOK = false;
     double load_value;
-    int report_step = forward_load_context_get_load_step(load_context);
     const ecl_sum_type *ecl_sum =
-        forward_load_context_get_ecl_sum(load_context);
+        reinterpret_cast<const ecl_sum_type *>(argument);
     if (ecl_sum == NULL)
         return false;
 
@@ -237,12 +236,10 @@ bool summary_forward_load(summary_type *summary, const char *ecl_file_name,
 
 bool summary_forward_load_vector(summary_type *summary,
                                  const char *ecl_file_name,
-                                 const forward_load_context_type *load_context,
+                                 const ecl_sum_type *ecl_sum,
                                  const int_vector_type *time_index) {
     bool loadOK = false;
 
-    const ecl_sum_type *ecl_sum =
-        forward_load_context_get_ecl_sum(load_context);
     if (ecl_sum == NULL)
         return false;
 

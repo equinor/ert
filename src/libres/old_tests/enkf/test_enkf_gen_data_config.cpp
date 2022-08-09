@@ -82,20 +82,13 @@ void test_gendata_fload(const char *filename) {
 
     const char *cwd = ta.original_cwd().c_str();
     enkf_fs_type *write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, true);
-    run_arg_type *run_arg =
-        run_arg_alloc("run_id", write_fs, 0, 0, "path", "base");
-    forward_load_context_type *load_context =
-        forward_load_context_alloc(run_arg, false, NULL);
-    forward_load_context_select_step(load_context, 0);
-    gen_data_fload_with_report_step(gen_data, filename, load_context);
+    gen_data_fload_with_report_step(gen_data, filename, 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_true(data_size > 0);
     enkf_fs_decref(write_fs);
 
     gen_data_free(gen_data);
     gen_data_config_free(config);
-    run_arg_free(run_arg);
-    forward_load_context_free(load_context);
 }
 
 void test_gendata_fload_empty_file(const char *filename) {
@@ -105,21 +98,13 @@ void test_gendata_fload_empty_file(const char *filename) {
     gen_data_type *gen_data = gen_data_alloc(config);
     const char *cwd = ta.original_cwd().c_str();
     enkf_fs_type *write_fs = enkf_fs_create_fs(cwd, BLOCK_FS_DRIVER_ID, true);
-    run_arg_type *run_arg =
-        run_arg_alloc("run_id", write_fs, 0, 0, "path", "base");
-    forward_load_context_type *load_context =
-        forward_load_context_alloc(run_arg, false, NULL);
-
-    forward_load_context_select_step(load_context, 0);
-    gen_data_fload_with_report_step(gen_data, filename, load_context);
+    gen_data_fload_with_report_step(gen_data, filename, 0, write_fs);
     int data_size = gen_data_config_get_data_size(config, 0);
     test_assert_true(data_size == 0);
     enkf_fs_decref(write_fs);
 
     gen_data_free(gen_data);
     gen_data_config_free(config);
-    run_arg_free(run_arg);
-    forward_load_context_free(load_context);
 }
 
 void test_result_format() {

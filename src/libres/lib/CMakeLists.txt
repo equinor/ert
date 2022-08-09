@@ -108,7 +108,6 @@ pybind11_add_module(
   enkf/field.cpp
   enkf/field_config.cpp
   enkf/field_trans.cpp
-  enkf/forward_load_context.cpp
   enkf/fs_driver.cpp
   enkf/fs_types.cpp
   enkf/gen_common.cpp

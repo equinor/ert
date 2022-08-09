@@ -421,10 +421,9 @@ void gen_data_config_assert_size(gen_data_config_type *config, int data_size,
     pthread_mutex_unlock(&config->update_lock);
 }
 
-static void
-update_config_to_datamask(gen_data_config_type *config,
-                          const forward_load_context_type *load_context,
-                          const bool_vector_type *data_mask, int report_step) {
+static void update_config_to_datamask(gen_data_config_type *config,
+                                      const bool_vector_type *data_mask,
+                                      int report_step, enkf_fs_type *sim_fs) {
     // Is this the first ensemble member loading for this particular report_step?
     if (config->active_report_step != report_step) {
         bool_vector_reset(config->active_mask);
@@ -448,9 +447,8 @@ update_config_to_datamask(gen_data_config_type *config,
     // The global mask has been modified after the last load;
     // i.e. we update the on-disk representation.
     char *filename = util_alloc_sprintf("%s_active", config->key);
-    FILE *stream = enkf_fs_open_case_tstep_file(
-        forward_load_context_get_sim_fs(load_context), filename, report_step,
-        "w");
+    FILE *stream =
+        enkf_fs_open_case_tstep_file(sim_fs, filename, report_step, "w");
     free(filename);
 
     bool_vector_fwrite(config->active_mask, stream);
@@ -468,13 +466,13 @@ update_config_to_datamask(gen_data_config_type *config,
 
    This MUST be called after gen_data_config_assert_size().
 */
-void gen_data_config_update_active(
-    gen_data_config_type *config, const forward_load_context_type *load_context,
-    const bool_vector_type *data_mask) {
+void gen_data_config_update_active(gen_data_config_type *config,
+                                   int report_step,
+                                   const bool_vector_type *data_mask,
+                                   enkf_fs_type *sim_fs) {
     pthread_mutex_lock(&config->update_lock);
-    int report_step = forward_load_context_get_load_step(load_context);
     if (int_vector_iget(config->data_size_vector, report_step) > 0)
-        update_config_to_datamask(config, load_context, data_mask, report_step);
+        update_config_to_datamask(config, data_mask, report_step, sim_fs);
     config->active_report_step = report_step;
     pthread_mutex_unlock(&config->update_lock);
 }

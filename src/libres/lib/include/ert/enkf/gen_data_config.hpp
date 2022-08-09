@@ -27,7 +27,6 @@
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/enkf_macros.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/gen_data_common.hpp>
 
 typedef enum {
@@ -81,10 +80,10 @@ gen_data_config_get_initial_size(const gen_data_config_type *config);
 void gen_data_config_assert_size(gen_data_config_type *, int, int);
 extern "C" const bool_vector_type *
 gen_data_config_get_active_mask(const gen_data_config_type *config);
-extern "C" void
-gen_data_config_update_active(gen_data_config_type *config,
-                              const forward_load_context_type *load_context,
-                              const bool_vector_type *data_mask);
+extern "C" void gen_data_config_update_active(gen_data_config_type *config,
+                                              int report_step,
+                                              const bool_vector_type *data_mask,
+                                              enkf_fs_type *sim_fs);
 void gen_data_config_get_template_data(const gen_data_config_type *, char **,
                                        int *, int *, int *);
 extern "C" const char *

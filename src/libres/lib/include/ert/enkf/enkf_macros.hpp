@@ -34,7 +34,6 @@
 #include <ert/enkf/enkf_fs_type.hpp>
 #include <ert/enkf/enkf_serialize.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/forward_load_context.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/value_export.hpp>
 
@@ -118,31 +117,29 @@
                               value_export_type *export_value);
 
 #define VOID_FORWARD_LOAD(prefix)                                              \
-    bool prefix##_forward_load__(                                              \
-        void *void_arg, const char *ecl_file,                                  \
-        const forward_load_context_type *load_context) {                       \
+    bool prefix##_forward_load__(void *void_arg, const char *ecl_file,         \
+                                 int report_step, const void *argument) {      \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
-        return prefix##_forward_load(arg, ecl_file, load_context);             \
+        return prefix##_forward_load(arg, ecl_file, report_step, argument);    \
     }
 
 #define VOID_FORWARD_LOAD_HEADER(prefix)                                       \
-    bool prefix##_forward_load__(                                              \
-        void *, const char *, const forward_load_context_type *load_context);
+    bool prefix##_forward_load__(void *, const char *, int,                    \
+                                 const void *argument);
 
 #define VOID_FORWARD_LOAD_VECTOR(prefix)                                       \
-    bool prefix##_forward_load_vector__(                                       \
-        void *void_arg, const char *ecl_file,                                  \
-        const forward_load_context_type *load_context,                         \
-        const int_vector_type *time_index) {                                   \
+    bool prefix##_forward_load_vector__(void *void_arg, const char *ecl_file,  \
+                                        const ecl_sum_type *ecl_sum,           \
+                                        const int_vector_type *time_index) {   \
         prefix##_type *arg = prefix##_safe_cast(void_arg);                     \
-        return prefix##_forward_load_vector(arg, ecl_file, load_context,       \
+        return prefix##_forward_load_vector(arg, ecl_file, ecl_sum,            \
                                             time_index);                       \
     }
 
 #define VOID_FORWARD_LOAD_VECTOR_HEADER(prefix)                                \
-    bool prefix##_forward_load_vector__(                                       \
-        void *, const char *, const forward_load_context_type *load_context,   \
-        const int_vector_type *time_index);
+    bool prefix##_forward_load_vector__(void *, const char *,                  \
+                                        const ecl_sum_type *ecl_sum,           \
+                                        const int_vector_type *time_index);
 
 #define VOID_FREE(prefix)                                                      \
     void prefix##_free__(void *void_arg) {                                     \

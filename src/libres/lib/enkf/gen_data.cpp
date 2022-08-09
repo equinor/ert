@@ -36,6 +36,7 @@
 #include <ert/enkf/gen_common.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/enkf/gen_data_config.hpp>
+#include <ert/enkf/run_arg.hpp>
 
 namespace fs = std::filesystem;
 static auto logger = ert::get_logger("enkf");
@@ -212,14 +213,12 @@ void gen_data_deserialize(gen_data_type *gen_data, node_id_type node_id,
   data has been loaded from file.
 */
 static void gen_data_set_data__(gen_data_type *gen_data, int size,
-                                const forward_load_context_type *load_context,
-                                ecl_data_type load_data_type,
-                                const void *data) {
-    gen_data_assert_size(gen_data, size,
-                         forward_load_context_get_load_step(load_context));
+                                int report_step, ecl_data_type load_data_type,
+                                const void *data, enkf_fs_type *sim_fs) {
+    gen_data_assert_size(gen_data, size, report_step);
     if (gen_data_config_is_dynamic(gen_data->config))
-        gen_data_config_update_active(gen_data->config, load_context,
-                                      gen_data->active_mask);
+        gen_data_config_update_active(gen_data->config, report_step,
+                                      gen_data->active_mask, sim_fs);
 
     gen_data_realloc_data(gen_data);
 
@@ -310,9 +309,9 @@ static bool gen_data_fload_active__(gen_data_type *gen_data,
    Return value is whether file was found or was empty
   - might have to check this in calling scope.
 */
-bool gen_data_fload_with_report_step(
-    gen_data_type *gen_data, const char *filename,
-    const forward_load_context_type *load_context) {
+bool gen_data_fload_with_report_step(gen_data_type *gen_data,
+                                     const char *filename, int report_step,
+                                     enkf_fs_type *sim_fs) {
     bool file_exists = fs::exists(filename);
     void *buffer = NULL;
     if (file_exists) {
@@ -331,8 +330,9 @@ bool gen_data_fload_with_report_step(
         } else {
             bool_vector_reset(gen_data->active_mask);
         }
-        gen_data_set_data__(gen_data, size, load_context,
-                            ecl_type_create_from_type(load_type), buffer);
+        gen_data_set_data__(gen_data, size, report_step,
+                            ecl_type_create_from_type(load_type), buffer,
+                            sim_fs);
         free(buffer);
     } else
         logger->warning("GEN_DATA({}): missing file: {}",
@@ -342,8 +342,11 @@ bool gen_data_fload_with_report_step(
 }
 
 bool gen_data_forward_load(gen_data_type *gen_data, const char *ecl_file,
-                           const forward_load_context_type *load_context) {
-    return gen_data_fload_with_report_step(gen_data, ecl_file, load_context);
+                           int report_step, const void *argument) {
+    const run_arg_type *run_arg =
+        reinterpret_cast<const run_arg_type *>(argument);
+    return gen_data_fload_with_report_step(gen_data, ecl_file, report_step,
+                                           run_arg_get_sim_fs(run_arg));
 }
 
 /**
@@ -364,15 +367,9 @@ C_USED bool gen_data_initialize(gen_data_type *gen_data, int iens,
                                 const char *init_file, rng_type *rng) {
     bool ret = false;
     if (init_file) {
-        forward_load_context_type *load_context =
-            forward_load_context_alloc(NULL, false, NULL);
-
-        forward_load_context_select_step(load_context, 0);
-        if (!gen_data_fload_with_report_step(gen_data, init_file, load_context))
+        if (!gen_data_fload_with_report_step(gen_data, init_file, 0, NULL))
             util_abort("%s: could not find file:%s \n", __func__, init_file);
         ret = true;
-
-        forward_load_context_free(load_context);
     }
     return ret;
 }
