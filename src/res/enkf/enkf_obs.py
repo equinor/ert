@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import Generator, Union
+from typing import Generator, List, Optional, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -88,7 +88,9 @@ class EnkfObs(BaseCClass):
         else:
             raise KeyError(f"Unknown observation key: {key}")
 
-    def getMatchingKeys(self, pattern, obs_type=None):
+    def getMatchingKeys(
+        self, pattern: str, obs_type: Optional[EnkfObservationImplementationType] = None
+    ) -> List[str]:
         """
         Will return a list of all the observation keys matching the input
         pattern. The matching is based on fnmatch().

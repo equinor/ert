@@ -175,7 +175,7 @@ class EclConfig(BaseCClass):
     def validateGridFile(self, gridfile):
         return self._validate_gridfile(gridfile)
 
-    def getGrid(self):
+    def getGrid(self) -> EclGrid:
         return self._get_grid()
 
     def getRefcaseName(self):

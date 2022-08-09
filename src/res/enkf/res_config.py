@@ -13,9 +13,9 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-
 import os
 from os.path import isfile
+from typing import Any, Dict, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
@@ -99,7 +99,12 @@ class ResConfig(BaseCClass):
         "void res_config_init_config_parser(config_parser)", bind=False
     )
 
-    def __init__(self, user_config_file=None, config=None, config_dict=None):
+    def __init__(
+        self,
+        user_config_file: Optional[str] = None,
+        config: Optional[Dict[ConfigKeys, Any]] = None,
+        config_dict: Optional[Dict[ConfigKeys, Any]] = None,
+    ):
 
         self._assert_input(user_config_file, config, config_dict)
 
@@ -593,7 +598,7 @@ class ResConfig(BaseCClass):
         return self._failed_keys
 
     @property
-    def user_config_file(self):
+    def user_config_file(self) -> str:
         return self._user_config_file()
 
     @property

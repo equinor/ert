@@ -111,7 +111,7 @@ class FieldConfig(BaseCClass):
     def get_nz(self):
         return self._get_nz()
 
-    def get_data_size(self):
+    def get_data_size(self) -> int:
         return self._get_data_size()
 
     def get_grid(self) -> EclGrid:
