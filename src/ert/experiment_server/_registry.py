@@ -1,4 +1,5 @@
 from typing import Dict, List
+import uuid
 from ._experiment_protocol import Experiment
 
 
@@ -14,7 +15,7 @@ class _Registry:
     def __init__(self) -> None:
         self._experiments: Dict[str, Experiment] = {}
 
-    def add_experiment(self, experiment: Experiment) -> str:
+    def add_experiment(self, experiment: Experiment) -> None:
         """Add an experiment to the registry.
 
         An id is generated here, but it should share (or receive) this ID from
@@ -22,9 +23,8 @@ class _Registry:
 
         [1] https://github.com/equinor/ert/issues/3437#issue-1247962008
         """
-        experiment_id = str(len(self._experiments.keys()))
-        self._experiments[experiment_id] = experiment
-        return experiment_id
+        experiment.id_ = str(uuid.uuid4())
+        self._experiments[experiment.id_] = experiment
 
     @property
     def all_experiments(self) -> List[Experiment]:

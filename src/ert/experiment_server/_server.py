@@ -138,11 +138,11 @@ class ExperimentServer:
             current_case_name,
             args,
         )
-        experiment.id_ = self._registry.add_experiment(experiment)
+        self._registry.add_experiment(experiment)
         return experiment.id_
 
     def add_experiment(self, experiment: Experiment) -> str:
-        experiment.id_ = self._registry.add_experiment(experiment)
+        self._registry.add_experiment(experiment)
         return experiment.id_
 
     async def run_experiment(self, experiment_id: str) -> None:
