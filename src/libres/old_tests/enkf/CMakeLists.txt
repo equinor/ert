@@ -69,7 +69,6 @@ foreach(
   enkf_main
   gen_kw_logarithmic
   enkf_executable_path
-  enkf_forward_load_context
   enkf_ensemble_GEN_PARAM
   gen_kw)
 
@@ -78,9 +77,6 @@ foreach(
 endforeach()
 
 add_config_test(enkf_executable_path enkf_executable_path)
-
-add_config_test(enkf_forward_load_context enkf_forward_load_context
-                "${TEST_DATA_DIR}/enkf/config" forward_load_context)
 
 add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
                 "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")

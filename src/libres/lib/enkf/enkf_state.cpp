@@ -34,10 +34,12 @@
 #include <ert/job_queue/environment_varlist.hpp>
 #include <ert/job_queue/forward_model.hpp>
 
+#include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/enkf_node.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/gen_data.hpp>
 #include <ert/logging.hpp>
+#include <ert/res_util/memory.hpp>
 
 static auto logger = ert::get_logger("enkf");
 #define ENKF_STATE_TYPE_ID 78132
@@ -161,6 +163,73 @@ static void enkf_state_add_nodes(enkf_state_type *enkf_state,
     stringlist_free(container_keys);
 }
 
+ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
+                           const char *run_path, const char *eclbase) {
+    ecl_sum_type *summary = NULL;
+
+    const bool fmt_file = ecl_config_get_formatted(ecl_config);
+    char *header_file = ecl_util_alloc_exfilename(
+        run_path, eclbase, ECL_SUMMARY_HEADER_FILE, fmt_file, -1);
+    char *unified_file = ecl_util_alloc_exfilename(
+        run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, fmt_file, -1);
+    stringlist_type *data_files = stringlist_alloc_new();
+
+    if ((unified_file != NULL) && (header_file != NULL)) {
+        stringlist_append_copy(data_files, unified_file);
+
+        bool include_restart = false;
+
+        /*
+             * Setting this flag causes summary-data to be loaded by
+             * ecl::unsmry_loader which is "horribly slow" according
+             * to comments in the code. The motivation for introducing
+             * this mode was at some point to use less memory, but
+             * computers nowadays should not have a problem with that.
+             *
+             * For comments, reasoning and discussions, please refer to
+             * https://github.com/equinor/ert/issues/2873
+             *   and
+             * https://github.com/equinor/ert/issues/2972
+             */
+        bool lazy_load = false;
+        if (std::getenv("ERT_LAZY_LOAD_SUMMARYDATA"))
+            lazy_load = true;
+
+        {
+            ert::utils::scoped_memory_logger memlogger(
+                logger, fmt::format("lazy={}", lazy_load));
+
+            int file_options = 0;
+            summary = ecl_sum_fread_alloc(
+                header_file, data_files, SUMMARY_KEY_JOIN_STRING,
+                include_restart, lazy_load, file_options);
+        }
+
+        {
+            time_t end_time = ecl_config_get_end_date(ecl_config);
+            if (end_time > 0) {
+                if (ecl_sum_get_end_time(summary) < end_time) {
+                    /* The summary vector was shorter than expected; we interpret this as
+               a simulation failure and discard the current summary instance. */
+                    logger->error("The summary vector was shorter (end: "
+                                  "{}) than expected (end: {})",
+                                  ecl_sum_get_end_time(summary), end_time);
+                }
+                ecl_sum_free(summary);
+                summary = NULL;
+            }
+        }
+    } else
+        logger->error("Could not find SUMMARY file at: {}/{} or using non "
+                      "unified SUMMARY file",
+                      run_path, eclbase);
+
+    stringlist_free(data_files);
+    free(header_file);
+    free(unified_file);
+    return summary;
+}
+
 enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
                                   model_config_type *model_config,
                                   ensemble_config_type *ensemble_config,
@@ -188,13 +257,14 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
  * Eclipse. If this is the case, AND we have observations for this key, we have
  * a problem. Otherwise, just print a message to the log.
  */
-static void enkf_state_check_for_missing_eclipse_summary_data(
+static std::pair<fw_load_status, std::string>
+enkf_state_check_for_missing_eclipse_summary_data(
     const ensemble_config_type *ens_config,
     const summary_key_matcher_type *matcher, const ecl_smspec_type *smspec,
-    forward_load_context_type *load_context, const int iens) {
-
+    const int iens) {
     stringlist_type *keys = summary_key_matcher_get_keys(matcher);
-
+    std::pair<fw_load_status, std::string> result = {LOAD_SUCCESSFUL, ""};
+    std::vector<std::string> missing_keys;
     for (int i = 0; i < stringlist_get_size(keys); i++) {
 
         const char *key = stringlist_iget(keys, i);
@@ -214,28 +284,27 @@ static void enkf_state_check_for_missing_eclipse_summary_data(
                 "{}, but have no observations either, so will continue.",
                 iens, key);
         } else {
-            logger->error(
-                "[{:03d}:----] Unable to find Eclipse data for summary key: "
-                "{}, but have observation for this, job will fail.",
-                iens, key);
-            forward_load_context_update_result(load_context, LOAD_FAILURE);
+            missing_keys.push_back(key);
         }
     }
-
     stringlist_free(keys);
+    if (!missing_keys.empty())
+        return {
+            LOAD_FAILURE,
+            fmt::format("Missing Eclipse data for required summary keys: {}",
+                        fmt::join(missing_keys, ", "))};
+    return result;
 }
 
 static std::pair<fw_load_status, std::string>
 enkf_state_internalize_dynamic_eclipse_results(
-    ensemble_config_type *ens_config, forward_load_context_type *load_context,
+    ensemble_config_type *ens_config, const ecl_sum_type *summary,
     const model_config_type *model_config, enkf_fs_type *sim_fs,
     const int iens) {
 
     bool load_summary = ensemble_config_has_impl_type(ens_config, SUMMARY);
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
-    const ecl_sum_type *summary =
-        forward_load_context_get_ecl_sum(load_context);
     int matcher_size = summary_key_matcher_get_size(matcher);
 
     if (load_summary || matcher_size > 0 || summary) {
@@ -288,23 +357,20 @@ enkf_state_internalize_dynamic_eclipse_results(
                         // before we update.
                         enkf_node_try_load_vector(node, sim_fs, iens);
 
-                        enkf_node_forward_load_vector(node, load_context,
+                        enkf_node_forward_load_vector(node, summary,
                                                       time_index);
                         enkf_node_store_vector(node, sim_fs, iens);
                         enkf_node_free(node);
                     }
                 }
-
                 int_vector_free(time_index);
 
                 // Check if some of the specified keys are missing from the Eclipse
                 // data, and if there are observations for them. That is a problem.
-                enkf_state_check_for_missing_eclipse_summary_data(
-                    ens_config, matcher, smspec, load_context, iens);
-
-                return {LOAD_SUCCESSFUL, ""};
+                return enkf_state_check_for_missing_eclipse_summary_data(
+                    ens_config, matcher, smspec, iens);
             } else {
-                return {LOAD_FAILURE, "Missing keys in summary file"};
+                return {LOAD_FAILURE, "Could not load ECLIPSE summary data"};
             }
         }
     } else {
@@ -312,17 +378,17 @@ enkf_state_internalize_dynamic_eclipse_results(
     }
 }
 
-static void enkf_state_load_gen_data_node(
-    forward_load_context_type *load_context, enkf_fs_type *sim_fs, int iens,
+static fw_load_status enkf_state_load_gen_data_node(
+    const run_arg_type *run_arg, enkf_fs_type *sim_fs, int iens,
     const enkf_config_node_type *config_node, int start, int stop) {
+    fw_load_status status = LOAD_SUCCESSFUL;
     for (int report_step = start; report_step <= stop; report_step++) {
         if (!enkf_config_node_internalize(config_node, report_step))
             continue;
 
-        forward_load_context_select_step(load_context, report_step);
         enkf_node_type *node = enkf_node_alloc(config_node);
 
-        if (enkf_node_forward_load(node, load_context)) {
+        if (enkf_node_forward_load(node, report_step, run_arg, NULL)) {
             node_id_type node_id = {.report_step = report_step, .iens = iens};
 
             enkf_node_store(node, sim_fs, node_id);
@@ -334,20 +400,19 @@ static void enkf_state_load_gen_data_node(
                          gen_data_get_size(
                              (const gen_data_type *)enkf_node_value_ptr(node)));
         } else {
-            forward_load_context_update_result(load_context, LOAD_FAILURE);
             logger->error(
                 "[{:03d}:{:04d}] Failed load data for GEN_DATA node:{}.", iens,
                 report_step, enkf_node_get_key(node));
+            status = LOAD_FAILURE;
         }
         enkf_node_free(node);
     }
+    return status;
 }
 
-static void
-enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
-                                forward_load_context_type *load_context,
-                                const model_config_type *model_config,
-                                int last_report) {
+static fw_load_status enkf_state_internalize_GEN_DATA(
+    const ensemble_config_type *ens_config, const run_arg_type *run_arg,
+    const model_config_type *model_config, int last_report) {
 
     stringlist_type *keylist_GEN_DATA =
         ensemble_config_alloc_keylist_from_impl_type(ens_config, GEN_DATA);
@@ -361,11 +426,9 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
                 "set last_report (was {}) - will only look for step 0 data: {}",
                 last_report, stringlist_iget(keylist_GEN_DATA, 0));
 
-    const run_arg_type *run_arg =
-        forward_load_context_get_run_arg(load_context);
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
     const int iens = run_arg_get_iens(run_arg);
-
+    fw_load_status result = LOAD_SUCCESSFUL;
     for (int ikey = 0; ikey < numkeys; ikey++) {
         const enkf_config_node_type *config_node = ensemble_config_get_node(
             ens_config, stringlist_iget(keylist_GEN_DATA, ikey));
@@ -375,30 +438,30 @@ enkf_state_internalize_GEN_DATA(const ensemble_config_type *ens_config,
         // spinning through them all.
         int start = 0;
         int stop = util_int_max(0, last_report); // inclusive
-        enkf_state_load_gen_data_node(load_context, sim_fs, iens, config_node,
-                                      start, stop);
+        auto status = enkf_state_load_gen_data_node(run_arg, sim_fs, iens,
+                                                    config_node, start, stop);
+        if (status == LOAD_FAILURE)
+            result = LOAD_FAILURE;
     }
     stringlist_free(keylist_GEN_DATA);
+    return result;
 }
 
-static forward_load_context_type *
-enkf_state_alloc_load_context(const ensemble_config_type *ens_config,
-                              const ecl_config_type *ecl_config,
-                              const run_arg_type *run_arg) {
+static ecl_sum_type *
+enkf_state_load_ecl_summary(const ensemble_config_type *ens_config,
+                            const ecl_config_type *ecl_config,
+                            const run_arg_type *run_arg) {
     bool load_summary = false;
     const summary_key_matcher_type *matcher =
         ensemble_config_get_summary_key_matcher(ens_config);
-    if (summary_key_matcher_get_size(matcher) > 0)
+    if (summary_key_matcher_get_size(matcher) > 0 ||
+        ensemble_config_require_summary(ens_config))
         load_summary = true;
 
-    if (ensemble_config_require_summary(ens_config))
-        load_summary = true;
-
-    forward_load_context_type *load_context;
-
-    load_context =
-        forward_load_context_alloc(run_arg, load_summary, ecl_config);
-    return load_context;
+    if (load_summary)
+        return load_ecl_sum(ecl_config, run_arg_get_runpath(run_arg),
+                            run_arg_get_job_name(run_arg));
+    return NULL;
 }
 
 /**
@@ -413,21 +476,22 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
 
-    forward_load_context_type *load_context =
-        enkf_state_alloc_load_context(ens_config, ecl_config, run_arg);
-
+    ecl_sum_type *summary =
+        enkf_state_load_ecl_summary(ens_config, ecl_config, run_arg);
+    std::pair<fw_load_status, std::string> status = {LOAD_SUCCESSFUL, ""};
     // The timing information - i.e. mainly what is the last report step
     // in these results are inferred from the loading of summary results,
     // hence we must load the summary results first.
-    auto status = enkf_state_internalize_dynamic_eclipse_results(
-        ens_config, load_context, model_config, run_arg_get_sim_fs(run_arg),
+
+    status = enkf_state_internalize_dynamic_eclipse_results(
+        ens_config, summary, model_config, run_arg_get_sim_fs(run_arg),
         run_arg_get_iens(run_arg));
+    if (summary)
+        ecl_sum_free(summary);
 
     if (status.first != LOAD_SUCCESSFUL) {
-        forward_load_context_free(load_context);
         return {status.first,
-                status.second + fmt::format(", in summary file: "
-                                            "{}/{}.UNSMRY",
+                status.second + fmt::format(" from: {}/{}.UNSMRY",
                                             run_arg_get_runpath(run_arg),
                                             run_arg_get_job_name(run_arg))};
     }
@@ -436,13 +500,11 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
-
-    enkf_state_internalize_GEN_DATA(ens_config, load_context, model_config,
-                                    last_report);
-
-    auto result = forward_load_context_get_result(load_context);
-    forward_load_context_free(load_context);
-    return {result, ""};
+    auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
+                                                  model_config, last_report);
+    if (result == LOAD_FAILURE)
+        status = {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
+    return status;
 }
 
 static std::pair<fw_load_status, std::string>

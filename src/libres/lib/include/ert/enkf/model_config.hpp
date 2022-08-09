@@ -36,6 +36,7 @@
 
 #include <ert/res_util/path_fmt.hpp>
 
+#include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/fs_types.hpp>
 #include <ert/enkf/time_map.hpp>
