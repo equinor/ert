@@ -1,8 +1,11 @@
 import weakref
-from typing import List
+from typing import TYPE_CHECKING, Dict, List
 
 from res.enkf.config import GenKwConfig
 from res.enkf.enums import EnkfObservationImplementationType, ErtImplType
+
+if TYPE_CHECKING:
+    from res.enkf.config import PriorDict
 
 
 class KeyManager:
@@ -163,10 +166,10 @@ class KeyManager:
     def isMisfitKey(self, key: str) -> bool:
         return key in self.misfitKeys()
 
-    def gen_kw_priors(self):
+    def gen_kw_priors(
+        self,
+    ) -> Dict[str, List["PriorDict"]]:
         gen_kw_keys = self.ensembleConfig().getKeylistFromImplType(ErtImplType.GEN_KW)
-        gen_kw_keys = [key for key in gen_kw_keys]
-
         all_gen_kw_priors = {}
         for key in gen_kw_keys:
             enkf_config_node = self.ensembleConfig().getNode(key)

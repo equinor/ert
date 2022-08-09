@@ -65,7 +65,6 @@ class ObsVector(BaseCClass):
         config_node: EnkfConfigNode,
         num_reports: int,
     ):
-
         assert isinstance(observation_type, EnkfObservationImplementationType)
         assert isinstance(observation_key, str)
         assert isinstance(config_node, EnkfConfigNode)
@@ -79,10 +78,10 @@ class ObsVector(BaseCClass):
     def getObservationKey(self) -> str:
         return self.getKey()
 
-    def getKey(self):
+    def getKey(self) -> str:
         return self._get_key()
 
-    def getObsKey(self):
+    def getObsKey(self) -> str:
         return self._get_obs_key()
 
     def getNode(

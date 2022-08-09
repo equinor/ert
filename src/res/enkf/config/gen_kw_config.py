@@ -14,11 +14,19 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 import os
+from typing import TYPE_CHECKING, Dict, List, TypedDict
 
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
 from res import ResPrototype
+
+if TYPE_CHECKING:
+
+    class PriorDict(TypedDict):
+        key: str
+        function: str
+        parameters: Dict[str, float]
 
 
 class GenKwConfig(BaseCClass):
@@ -145,7 +153,7 @@ class GenKwConfig(BaseCClass):
 
         return True
 
-    def get_priors(self):
+    def get_priors(self) -> List["PriorDict"]:
         """
         @rtype: list
         [

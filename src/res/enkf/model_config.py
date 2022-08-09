@@ -17,6 +17,7 @@ import os
 
 from cwrap import BaseCClass
 from ecl.summary import EclSum
+
 from res import ResPrototype
 from res.enkf.config_keys import ConfigKeys
 from res.enkf.util import TimeMap

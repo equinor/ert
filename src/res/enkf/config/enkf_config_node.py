@@ -200,7 +200,7 @@ class EnkfConfigNode(BaseCClass):
     def getImplementationType(self) -> ErtImplType:
         return self._get_impl_type()
 
-    def getVariableType(self):
+    def getVariableType(self) -> EnkfVarType:
         return self._get_var_type()
 
     def getPointerReference(self):
@@ -215,7 +215,7 @@ class EnkfConfigNode(BaseCClass):
     def get_min_std_file(self):
         return self._get_min_std_file()
 
-    def get_enkf_outfile(self):
+    def get_enkf_outfile(self) -> str:
         return self._get_enkf_outfile()
 
     def getFieldModelConfig(self) -> FieldConfig:

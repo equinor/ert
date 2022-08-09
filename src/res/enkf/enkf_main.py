@@ -17,7 +17,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, List, Union
 
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
@@ -134,7 +134,7 @@ class EnKFMain(BaseCClass):
         )
 
     @property
-    def update_configuration(self):
+    def update_configuration(self) -> UpdateConfiguration:
         if not self._update_configuration:
             global_update_step = [
                 {
@@ -149,7 +149,7 @@ class EnKFMain(BaseCClass):
         return self._update_configuration
 
     @update_configuration.setter
-    def update_configuration(self, user_config: List):
+    def update_configuration(self, user_config: Any):
         config = UpdateConfiguration(update_steps=user_config)
         config.context_validate(self._observation_keys, self._parameter_keys)
         self._update_configuration = config
@@ -180,7 +180,9 @@ class EnKFMain(BaseCClass):
     def getLocalConfig(self) -> "UpdateConfiguration":
         return self.update_configuration
 
-    def loadFromForwardModel(self, realization: List[bool], iteration: int, fs):
+    def loadFromForwardModel(
+        self, realization: List[bool], iteration: int, fs: EnkfFs
+    ) -> int:
         """Returns the number of loaded realizations"""
         run_context = self.create_ensemble_experiment_run_context(
             active_mask=realization, iteration=iteration, source_filesystem=fs
@@ -311,7 +313,7 @@ class EnKFMain(BaseCClass):
     def getObservations(self) -> EnkfObs:
         return self._get_obs().setParent(self)
 
-    def have_observations(self):
+    def have_observations(self) -> bool:
         return self._have_observations()
 
     def getHistoryLength(self) -> int:
@@ -360,7 +362,7 @@ class EnKFMain(BaseCClass):
     # scope for the return value to be valid.
     def getFileSystem(
         self, case_name: str, mount_root: str = None, read_only: bool = False
-    ) -> "EnkfFs":
+    ) -> EnkfFs:
         if mount_root is None:
             mount_root = self.getMountPoint()
 
@@ -395,7 +397,7 @@ class EnKFMain(BaseCClass):
 
         return any(state == RealizationStateEnum.STATE_HAS_DATA for state in state_map)
 
-    def getCurrentFileSystem(self) -> "EnkfFs":
+    def getCurrentFileSystem(self) -> EnkfFs:
         """Returns the currently selected file system"""
         current_fs = self._get_current_fs()
         case_name = current_fs.getCaseName()
@@ -414,7 +416,7 @@ class EnKFMain(BaseCClass):
     def getFileSystemCount(self) -> int:
         return len(self._fs_rotator)
 
-    def switchFileSystem(self, file_system: "EnkfFs") -> None:
+    def switchFileSystem(self, file_system: EnkfFs) -> None:
         self.addDataKW("<ERT-CASE>", file_system.getCaseName())
         self.addDataKW("<ERTCASE>", file_system.getCaseName())
         self._switch_fs(file_system, None)
@@ -445,12 +447,12 @@ class EnKFMain(BaseCClass):
         )
 
     def initializeCurrentCaseFromExisting(
-        self, source_fs: "EnkfFs", source_report_step: int
+        self, source_fs: EnkfFs, source_report_step: int
     ) -> None:
         self._initialize_current_case_from_existing(source_fs, source_report_step)
 
     def initializeCaseFromExisting(
-        self, source_fs: "EnkfFs", source_report_step: int, target_fs: "EnkfFs"
+        self, source_fs: EnkfFs, source_report_step: int, target_fs: EnkfFs
     ) -> None:
         self._initialize_case_from_existing(source_fs, source_report_step, target_fs)
 

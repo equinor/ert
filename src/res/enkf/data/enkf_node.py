@@ -29,7 +29,7 @@ from res.enkf.enums import ErtImplType
 from res.enkf.node_id import NodeId
 
 if TYPE_CHECKING:
-    from enkf.config import EnkfConfigNode
+    from res.enkf.config import EnkfConfigNode
 
 
 class EnkfNode(BaseCClass):
@@ -66,14 +66,14 @@ class EnkfNode(BaseCClass):
     @classmethod
     def exportMany(
         cls,
-        config_node,
-        file_format,
-        fs,
+        config_node: "EnkfConfigNode",
+        file_format: str,
+        fs: EnkfFs,
         iens_list,
         report_step=0,
         file_type=None,
         arg=None,
-    ):
+    ) -> None:
         node = EnkfNode(config_node)
         for iens in iens_list:
             filename = file_format % iens
