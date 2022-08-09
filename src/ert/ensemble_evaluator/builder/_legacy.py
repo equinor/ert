@@ -37,14 +37,15 @@ experiment_logger = logging.getLogger("ert.experiment_server")
 
 
 class _LegacyEnsemble(_Ensemble):
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         reals: List[_Realization],
         metadata: Dict[str, Any],
         queue_config: QueueConfig,
         analysis_config: AnalysisConfig,
+        id_: str,
     ) -> None:
-        super().__init__(reals, metadata)
+        super().__init__(reals, metadata, id_)
         if not queue_config:
             raise ValueError(f"{self} needs queue_config")
         if not analysis_config:
@@ -52,7 +53,6 @@ class _LegacyEnsemble(_Ensemble):
         self._job_queue = queue_config.create_job_queue()
         self._analysis_config = analysis_config
         self._config: Optional["EvaluatorServerConfig"] = None
-        self._ee_id: Optional[str] = None
         self._output_bus: "asyncio.Queue[CloudEvent]" = asyncio.Queue()
 
     def setup_timeout_callback(
@@ -65,7 +65,7 @@ class _LegacyEnsemble(_Ensemble):
             timeout_cloudevent = CloudEvent(
                 {
                     "type": identifiers.EVTYPE_FM_STEP_TIMEOUT,
-                    "source": f"/ert/ee/{self._ee_id}/real/{run_args.iens}/step/0",
+                    "source": f"/ert/ensemble/{self.id_}/real/{run_args.iens}/step/0",
                     "id": str(uuid.uuid1()),
                 }
             )
@@ -83,11 +83,10 @@ class _LegacyEnsemble(_Ensemble):
 
         return on_timeout, send_timeout_future
 
-    def evaluate(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
+    def evaluate(self, config: "EvaluatorServerConfig") -> None:
         if not config:
-            raise ValueError("no config for evaluator {ee_id}")
+            raise ValueError("no config for evaluator")
         self._config = config
-        self._ee_id = ee_id
         get_event_loop().run_until_complete(
             wait_for_evaluator(
                 base_url=self._config.url,
@@ -131,9 +130,8 @@ class _LegacyEnsemble(_Ensemble):
         finally:
             get_event_loop().close()
 
-    async def evaluate_async(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
+    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
         self._config = config
-        self._ee_id = ee_id
         await self._evaluate_inner(
             cloudevent_unary_send=self.queue_cloudevent,
             output_bus=self.output_bus,
@@ -162,8 +160,8 @@ class _LegacyEnsemble(_Ensemble):
             timeout_queue, cloudevent_unary_send
         )
 
-        if not self._ee_id:
-            raise ValueError(f"invalid ensemble evaluator id: {self._ee_id}")
+        if not self.id_:
+            raise ValueError("Ensemble id not set")
         if not self._config:
             raise ValueError("no config")  # mypy
 
@@ -172,7 +170,7 @@ class _LegacyEnsemble(_Ensemble):
         result = CloudEvent(
             {
                 "type": identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                "source": f"/ert/ee/{self._ee_id}/ensemble",
+                "source": f"/ert/ensemble/{self.id_}",
                 "id": str(uuid.uuid1()),
             }
         )
@@ -181,7 +179,7 @@ class _LegacyEnsemble(_Ensemble):
             out_cloudevent = CloudEvent(
                 {
                     "type": identifiers.EVTYPE_ENSEMBLE_STARTED,
-                    "source": f"/ert/ee/{self._ee_id}/ensemble",
+                    "source": f"/ert/ensemble/{self.id_}",
                     "id": str(uuid.uuid1()),
                 }
             )
@@ -216,22 +214,22 @@ class _LegacyEnsemble(_Ensemble):
             sema = threading.BoundedSemaphore(value=CONCURRENT_INTERNALIZATION)
             if output_bus:  # when running experiment server
                 self._job_queue.add_dispatch_information_to_jobs_file(
-                    ee_id=self._ee_id,
+                    ens_id=self.id_,
                     dispatch_url=self._config.dispatch_uri,
                     cert=self._config.cert,
                     token=self._config.token,
-                    experiment_id=self._ee_id,
+                    experiment_id=self.id_,
                 )
                 # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_comms_via_bus(
-                    ee_id=self._ee_id,
+                    ens_id=self.id_,
                     pool_sema=sema,
                     evaluators=queue_evaluators,  # type: ignore
                     output_bus=output_bus,
                 )
             else:
                 self._job_queue.add_dispatch_information_to_jobs_file(
-                    ee_id=self._ee_id,
+                    ens_id=self.id_,
                     dispatch_url=self._config.dispatch_uri,
                     cert=self._config.cert,
                     token=self._config.token,
@@ -239,7 +237,7 @@ class _LegacyEnsemble(_Ensemble):
                 # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_via_websockets(
                     self._config.dispatch_uri,
-                    self._ee_id,
+                    self.id_,
                     sema,
                     queue_evaluators,  # type: ignore
                     cert=self._config.cert,
@@ -251,7 +249,7 @@ class _LegacyEnsemble(_Ensemble):
             result = CloudEvent(
                 {
                     "type": identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-                    "source": f"/ert/ee/{self._ee_id}/ensemble",
+                    "source": f"/ert/ensemble/{self.id_}",
                     "id": str(uuid.uuid1()),
                 }
             )
@@ -264,7 +262,7 @@ class _LegacyEnsemble(_Ensemble):
             result = CloudEvent(
                 {
                     "type": identifiers.EVTYPE_ENSEMBLE_FAILED,
-                    "source": f"/ert/ee/{self._ee_id}/ensemble",
+                    "source": f"/ert/ensemble/{self.id_}",
                     "id": str(uuid.uuid1()),
                 }
             )

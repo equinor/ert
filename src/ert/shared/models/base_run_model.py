@@ -294,13 +294,17 @@ class BaseRunModel:
     def run_ensemble_evaluator(
         self, run_context: RunContext, ee_config: EvaluatorServerConfig
     ) -> int:
-        ensemble = EnsembleBuilder.from_legacy(
-            run_context,
-            self.get_forward_model(),
-            self._queue_config,
-            self.ert().analysisConfig(),
-            self.ert().resConfig(),
-        ).build()
+        ensemble = (
+            EnsembleBuilder.from_legacy(
+                run_context,
+                self.get_forward_model(),
+                self._queue_config,
+                self.ert().analysisConfig(),
+                self.ert().resConfig(),
+            )
+            .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
+            .build()
+        )
 
         self.ert().initRun(run_context)
 
@@ -308,7 +312,6 @@ class BaseRunModel:
             ensemble,
             ee_config,
             run_context.iteration,
-            ee_id=str(uuid.uuid1()).split("-", maxsplit=1)[0],
         ).run_and_get_successful_realizations()
 
         self.deactivate_failed_jobs(run_context)
@@ -333,13 +336,18 @@ class BaseRunModel:
         experiment_logger.debug("_evaluate")
         loop = asyncio.get_running_loop()
         experiment_logger.debug("building...")
-        ensemble = EnsembleBuilder.from_legacy(
-            run_context,
-            self.get_forward_model(),
-            self._queue_config,
-            self.ert().analysisConfig(),
-            self.ert().resConfig(),
-        ).build()
+        ensemble = (
+            EnsembleBuilder.from_legacy(
+                run_context,
+                self.get_forward_model(),
+                self._queue_config,
+                self.ert().analysisConfig(),
+                self.ert().resConfig(),
+            )
+            .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
+            .build()
+        )
+
         experiment_logger.debug("built")
 
         ensemble_listener = asyncio.create_task(
@@ -353,7 +361,7 @@ class BaseRunModel:
                 run_context,
             )
 
-            await ensemble.evaluate_async(ee_config, self.id_)
+            await ensemble.evaluate_async(ee_config)
 
             await ensemble_listener
 

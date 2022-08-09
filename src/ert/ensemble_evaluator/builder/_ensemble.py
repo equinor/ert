@@ -27,25 +27,30 @@ logger = logging.getLogger(__name__)
 
 class _Ensemble:
     def __init__(
-        self, reals: Sequence[_Realization], metadata: Mapping[str, Any]
+        self, reals: Sequence[_Realization], metadata: Mapping[str, Any], id_: str
     ) -> None:
         self.reals = reals
         self.metadata = metadata
         self._snapshot = self._create_snapshot()
         self.status = self._snapshot.status
         self._status_tracker = EnsembleStateTracker(self._snapshot.status)
+        self._id: str = id_
 
     def __repr__(self) -> str:
         return f"Ensemble with {len(self.reals)} members"
 
-    def evaluate(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
+    def evaluate(self, config: "EvaluatorServerConfig") -> None:
         pass
 
-    async def evaluate_async(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
+    async def evaluate_async(self, config: "EvaluatorServerConfig") -> None:
         pass
 
     def cancel(self) -> None:
         pass
+
+    @property
+    def id_(self) -> str:
+        return self._id
 
     @property
     def cancellable(self) -> bool:

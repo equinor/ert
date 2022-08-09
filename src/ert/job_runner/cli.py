@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def _setup_reporters(
     is_interactive_run,
-    ee_id,
+    ens_id,
     dispatch_url,
     ee_token=None,
     ee_cert_path=None,
@@ -25,7 +25,7 @@ def _setup_reporters(
     reporters: typing.List[reporting.Report] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
-    elif ee_id and experiment_id is None:
+    elif ens_id and experiment_id is None:
         reporters.append(reporting.File(sync_disc_timeout=0))
         reporters.append(
             reporting.Event(
@@ -71,12 +71,12 @@ def main(args):
             sys.exit(f"No such directory: {parsed_args.run_path}")
         os.chdir(parsed_args.run_path)
 
-    ee_id = None
+    ens_id = None
     try:
         with open(JOBS_FILE, "r") as json_file:
             jobs_data = json.load(json_file)
             experiment_id = jobs_data.get("experiment_id")
-            ee_id = jobs_data.get("ee_id")
+            ens_id = jobs_data.get("ens_id")
             ee_token = jobs_data.get("ee_token")
             ee_cert_path = jobs_data.get("ee_cert_path")
             dispatch_url = jobs_data.get("dispatch_url")
@@ -86,7 +86,7 @@ def main(args):
     is_interactive_run = len(parsed_args.job) > 0
     reporters = _setup_reporters(
         is_interactive_run,
-        ee_id,
+        ens_id,
         dispatch_url,
         ee_token,
         ee_cert_path,

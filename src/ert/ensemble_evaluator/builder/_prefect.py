@@ -130,7 +130,7 @@ def _get_executor(custom_port_range: Optional[range], name: str = "local") -> An
 
 # pylint: disable=no-member
 def _on_task_failure(
-    task: Union[UnixTask, FunctionTask], state: State, ee_id: str
+    task: Union[UnixTask, FunctionTask], state: State, ens_id: str
 ) -> None:
     if prefect_context.task_run_count > task.max_retries:
         url = prefect_context.url
@@ -140,7 +140,7 @@ def _on_task_failure(
             event = CloudEvent(
                 {
                     "type": EVTYPE_FM_STEP_FAILURE,
-                    "source": task.step.source(ee_id),
+                    "source": task.step.source(ens_id),
                     "datacontenttype": "application/json",
                 },
                 {"error_msg": state.message},
@@ -158,9 +158,10 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         max_retries: int,
         executor: str,
         retry_delay: int,
+        id_: str,
         custom_port_range: Optional[range] = None,
     ):
-        super().__init__(reals=reals, metadata={"iter": 0})
+        super().__init__(reals=reals, metadata={"iter": 0}, id_=id_)
         self._inputs = inputs
         self._outputs = outputs
         self._real_per_batch = max_running
@@ -179,7 +180,6 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
 
         self._ee_con_info: Optional[EvaluatorConnectionInfo] = None
         self._eval_proc: Optional[BaseProcess] = None
-        self._ee_id: Optional[str] = None
         self._iens_to_task = {}  # type: ignore
         self._allow_cancel = multiprocessing.Event()
 
@@ -192,7 +192,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         # It cannot use asyncio.Queue as it is unpicklable.
         raise NotImplementedError
 
-    def get_flow(self, ee_id: str, iens_range: List[int]) -> Any:
+    def get_flow(self, iens_range: List[int]) -> Any:
         with Flow(f"Realization range {iens_range}") as flow:
             # one map pr flow (real-batch)
             transmitter_map: _ensemble_transmitter_mapping = {}
@@ -208,11 +208,11 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                     assert isinstance(step, (_UnixStep, _FunctionStep))  # mypy
                     step_task = step.get_task(
                         outputs,
-                        ee_id,
+                        self.id_,
                         name=str(iens),
                         max_retries=self._max_retries,
                         retry_delay=retry_delay,
-                        on_failure=functools.partial(_on_task_failure, ee_id=ee_id),
+                        on_failure=functools.partial(_on_task_failure, ens_id=self.id_),
                     )
                     result = step_task(inputs=inputs)
                     if iens not in self._iens_to_task:
@@ -237,8 +237,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         ctx.set_forkserver_preload([preload_module_name])
         return ctx
 
-    def evaluate(self, config: "EvaluatorServerConfig", ee_id: str) -> None:
-        self._ee_id = ee_id
+    def evaluate(self, config: "EvaluatorServerConfig") -> None:
         self._ee_con_info = config.get_connection_info()
 
         # everything in self will be pickled since we bind a member function in target
@@ -252,7 +251,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
     def _evaluate(self) -> None:
         get_event_loop()
         assert self._ee_con_info  # mypy
-        assert self._ee_id  # mypy
+        assert self.id_  # mypy
         try:
             with Client(
                 self._ee_con_info.dispatch_uri,
@@ -262,7 +261,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 event = CloudEvent(
                     {
                         "type": EVTYPE_ENSEMBLE_STARTED,
-                        "source": f"/ert/ee/{self._ee_id}",
+                        "source": f"/ert/ensemble/{self.id_}",
                     },
                 )
                 c.send(to_json(event).decode())
@@ -271,7 +270,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 token=self._ee_con_info.token,
                 cert=self._ee_con_info.cert,
             ):
-                self.run_flow(self._ee_id)
+                self.run_flow()
 
             with Client(
                 self._ee_con_info.dispatch_uri,
@@ -281,7 +280,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 event = CloudEvent(
                     {
                         "type": EVTYPE_ENSEMBLE_STOPPED,
-                        "source": f"/ert/ee/{self._ee_id}",
+                        "source": f"/ert/ensemble/{self.id_}",
                         "datacontenttype": "application/octet-stream",
                     },
                     cloudpickle.dumps(self._outputs),
@@ -307,12 +306,12 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
                 event = CloudEvent(
                     {
                         "type": EVTYPE_ENSEMBLE_FAILED,
-                        "source": f"/ert/ee/{self._ee_id}",
+                        "source": f"/ert/ensemble/{self.id_}",
                     },
                 )
                 c.send(to_json(event).decode())
 
-    def run_flow(self, ee_id: str) -> None:
+    def run_flow(self) -> None:
         """Send batches of active realizations as Prefect-flows to the Prefect flow
         executor
         """
@@ -322,7 +321,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         state_map = {}
         while i < len(active_iens):
             iens_range = active_iens[i : i + self._real_per_batch]
-            flow = self.get_flow(ee_id, iens_range)
+            flow = self.get_flow(iens_range)
             with prefect_log_level_context(level="WARNING"):
                 state = flow.run(executor=self._new_executor())
                 if isinstance(state.result, OSError) and "Signal 2" in str(
@@ -374,7 +373,7 @@ class PrefectEnsemble(_Ensemble):  # pylint: disable=too-many-instance-attribute
         event = CloudEvent(
             {
                 "type": EVTYPE_ENSEMBLE_CANCELLED,
-                "source": f"/ert/ee/{self._ee_id}",
+                "source": f"/ert/ensemble/{self.id_}",
                 "datacontenttype": "application/json",
             },
         )

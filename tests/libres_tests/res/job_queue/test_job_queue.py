@@ -227,7 +227,7 @@ def test_timeout_jobs(tmpdir):
 def test_add_dispatch_info(tmpdir):
     os.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
-    ee_id = "some_id"
+    ens_id = "some_id"
     cert = "My very nice cert"
     token = "my_super_secret_token"
     dispatch_url = "wss://example.org"
@@ -236,7 +236,7 @@ def test_add_dispatch_info(tmpdir):
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
     job_queue.add_dispatch_information_to_jobs_file(
-        ee_id=ee_id,
+        ens_id=ens_id,
         dispatch_url=dispatch_url,
         cert=cert,
         token=token,
@@ -258,7 +258,7 @@ def test_add_dispatch_info(tmpdir):
 def test_add_dispatch_info_cert_none(tmpdir):
     os.chdir(tmpdir)
     job_queue = create_local_queue(SIMPLE_SCRIPT)
-    ee_id = "some_id"
+    ens_id = "some_id"
     dispatch_url = "wss://example.org"
     cert = None
     token = None
@@ -267,7 +267,7 @@ def test_add_dispatch_info_cert_none(tmpdir):
     for runpath in runpaths:
         (runpath / "jobs.json").write_text(json.dumps({}), encoding="utf-8")
     job_queue.add_dispatch_information_to_jobs_file(
-        ee_id=ee_id,
+        ens_id=ens_id,
         dispatch_url=dispatch_url,
         cert=cert,
         token=token,
@@ -304,7 +304,7 @@ async def test_retry_on_closed_connection(tmpdir):
         with pytest.raises(RuntimeError, match="coroutine raised StopIteration"):
             await job_queue.execute_queue_via_websockets(
                 ws_uri="ws://example.org",
-                ee_id="",
+                ens_id="",
                 pool_sema=pool_sema,
                 evaluators=[],
             )

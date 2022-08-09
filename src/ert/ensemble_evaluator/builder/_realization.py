@@ -88,8 +88,8 @@ class _Realization:
     def set_active(self, active: bool) -> None:
         self.active = active
 
-    def source(self, ee_id: str) -> str:
-        return self._source.format(ee_id=ee_id)
+    def source(self, ens_id: str) -> str:
+        return self._source.format(ens_id=ens_id)
 
     def get_steps_sorted_topologically(self) -> Generator[_Step, None, None]:
         steps = self.steps

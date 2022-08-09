@@ -23,16 +23,22 @@ def monitor_failing_evaluation():
             [
                 EventDescription(
                     type_=identifiers.EVTYPE_EE_SNAPSHOT,
-                    source=ReMatch(re.compile(r"/ert/ee/ee."), "/ert/ee/ee-0"),
+                    source=ReMatch(
+                        re.compile(r"/ert/ensemble/ee."), "/ert/ensemble/ee-0"
+                    ),
                 ),
                 EventDescription(
                     type_=identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    source=ReMatch(re.compile(r"/ert/ee/ee."), "/ert/ee/ee-0"),
+                    source=ReMatch(
+                        re.compile(r"/ert/ensemble/ee."), "/ert/ensemble/ee-0"
+                    ),
                     data={identifiers.STATUS: state.ENSEMBLE_STATE_STARTED},
                 ),
                 EventDescription(
                     type_=identifiers.EVTYPE_EE_SNAPSHOT_UPDATE,
-                    source=ReMatch(re.compile(r"/ert/ee/ee."), "/ert/ee/ee-0"),
+                    source=ReMatch(
+                        re.compile(r"/ert/ensemble/ee."), "/ert/ensemble/ee-0"
+                    ),
                     data={identifiers.STATUS: state.ENSEMBLE_STATE_FAILED},
                 ),
             ]
@@ -51,7 +57,9 @@ def monitor_failing_evaluation():
             [
                 EventDescription(
                     type_=identifiers.EVTYPE_EE_TERMINATED,
-                    source=ReMatch(re.compile(r"/ert/ee/ee."), "/ert/ee/ee-0"),
+                    source=ReMatch(
+                        re.compile(r"/ert/ensemble/ee."), "/ert/ensemble/ee-0"
+                    ),
                 ),
             ]
         )

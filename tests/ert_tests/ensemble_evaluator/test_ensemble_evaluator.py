@@ -61,7 +61,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -70,7 +70,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -79,7 +79,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_SUCCESS,
-                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
@@ -88,7 +88,7 @@ def test_dispatchers_can_connect_and_monitor_can_shut_down_evaluator(evaluator):
             send_dispatch_event(
                 dispatch2,
                 identifiers.EVTYPE_FM_JOB_FAILURE,
-                f"/ert/ee/{evaluator._ee_id}/real/1/step/0/job/1",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
                 "event_job_1_fail",
                 {identifiers.ERROR_MSG: "error"},
             )
@@ -139,28 +139,28 @@ def test_ensure_multi_level_events_in_order(evaluator):
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event0",
                 {},
             )
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ee/{evaluator._ee_id}/real/0/step/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0",
                 "event1",
                 {},
             )
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ee/{evaluator._ee_id}/real/1/step/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
                 "event2",
                 {},
             )
             send_dispatch_event(
                 dispatch1,
                 identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event3",
                 {},
             )
@@ -194,35 +194,35 @@ def test_dying_batcher(evaluator):
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_ENSEMBLE_STARTED,
-                f"/ert/ee/{evaluator._ee_id}/ensemble",
+                f"/ert/ensemble/{evaluator.ensemble.id_}",
                 "event0",
                 {},
             )
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
                 "event1",
                 {"current_memory_usage": 1000},
             )
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_JOB_RUNNING,
-                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
                 "event2",
                 {},
             )
             send_dispatch_event(
                 dispatch,
                 "EXPLODING",
-                f"/ert/ee/{evaluator._ee_id}/real/1/step/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0",
                 "event3",
                 {},
             )
             send_dispatch_event(
                 dispatch,
                 identifiers.EVTYPE_FM_STEP_SUCCESS,
-                f"/ert/ee/{evaluator._ee_id}/real/0/step/0/job/0",
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
                 "event4",
                 {},
             )
@@ -236,13 +236,12 @@ def test_dying_batcher(evaluator):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
+    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.addFailJob(real=1, step=0, job=1)
     ee = EnsembleEvaluator(
         ensemble,
         ee_config,
         0,
-        ee_id="0",
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
@@ -253,13 +252,12 @@ def test_verify_monitor_failing_ensemble(make_ee_config, event_loop):
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2)
+    ensemble = TestEnsemble(iter=1, reals=2, steps=1, jobs=2, id_="ee-0")
     ensemble.with_failure()
     ee = EnsembleEvaluator(
         ensemble,
         ee_config,
         0,
-        ee_id="ee-0",
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
@@ -269,7 +267,7 @@ def test_verify_monitor_failing_evaluation(make_ee_config, event_loop):
 
 @pytest.mark.consumer_driven_contract_verification
 def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
-    ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2).with_result(
+    ensemble = TestEnsemble(iter=1, reals=2, steps=2, jobs=2, id_="ee-0").with_result(
         b"\x80\x04\x95\x0f\x00\x00\x00\x00\x00\x00\x00\x8c\x0bhello world\x94.",
         "application/octet-stream",
     )
@@ -278,7 +276,6 @@ def test_verify_monitor_successful_ensemble(make_ee_config, event_loop):
         ensemble,
         ee_config,
         0,
-        ee_id="ee-0",
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
@@ -297,7 +294,6 @@ def test_verify_dispatch_failing_job(make_ee_config, event_loop):
         mock_ensemble,
         ee_config,
         0,
-        ee_id="0",
     )
     ee.run()
     event_loop.run_until_complete(wait_for_evaluator(ee_config.url))
@@ -311,10 +307,12 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
 ):
 
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    ensemble = AutorunTestEnsemble(
+        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+    )
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    ee = EnsembleEvaluator(ensemble, ee_config, 0)
 
     with patch.object(
         _Monitor, "track", side_effect=ConnectionRefusedError("Connection error")
@@ -326,8 +324,8 @@ def test_ens_eval_run_and_get_successful_realizations_connection_refused_no_reco
 
 def test_ens_eval_run_and_get_successful_realizations_timeout(make_ee_config):
     ee_config = make_ee_config(use_token=False, generate_cert=False)
-    ensemble = AutorunTestEnsemble(iter=1, reals=1, steps=1, jobs=2)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    ensemble = AutorunTestEnsemble(iter=1, reals=1, steps=1, jobs=2, id_="0")
+    ee = EnsembleEvaluator(ensemble, ee_config, 0)
 
     with patch.object(
         _Monitor, "track", side_effect=ServerTimeoutError("timed out")
@@ -361,10 +359,13 @@ def test_recover_from_failure_in_run_and_get_successful_realizations(
     ee_config = make_ee_config(
         use_token=False, generate_cert=False, custom_host="localhost"
     )
-    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    ensemble = AutorunTestEnsemble(
+        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+    )
+
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    ee = EnsembleEvaluator(ensemble, ee_config, 0)
     with patch.object(
         _Monitor,
         "track",
@@ -387,10 +388,13 @@ def test_exhaust_retries_in_run_and_get_successful_realizations(
     ee_config = make_ee_config(
         use_token=False, generate_cert=False, custom_host="localhost"
     )
-    ensemble = AutorunTestEnsemble(iter=1, reals=num_realizations, steps=1, jobs=2)
+    ensemble = AutorunTestEnsemble(
+        iter=1, reals=num_realizations, steps=1, jobs=2, id_="0"
+    )
+
     for i in range(num_failing):
         ensemble.addFailJob(real=i, step=0, job=1)
-    ee = EnsembleEvaluator(ensemble, ee_config, 0, ee_id="0")
+    ee = EnsembleEvaluator(ensemble, ee_config, 0)
     with patch.object(
         _Monitor,
         "track",

@@ -92,7 +92,7 @@ def prefect_flow_run(ws_monitor, step, input_map, output_map, **kwargs):
     with prefect.context(url=ws_monitor.url, token=None, cert=None):
         with Flow("testing") as flow:
             task = step.get_task(
-                output_transmitters=output_map, ee_id="test_ee_id", **kwargs
+                output_transmitters=output_map, ens_id="test_ens_id", **kwargs
             )
             result = task(inputs=input_map)
         with tmp():
@@ -289,7 +289,7 @@ def test_on_task_failure(
             output_map=output_map,
             max_retries=retries,
             retry_delay=timedelta(seconds=1),
-            on_failure=functools.partial(_on_task_failure, ee_id="test_ee_id"),
+            on_failure=functools.partial(_on_task_failure, ens_id="test_ens_id"),
         )
     task_result = flow_run.result[result]
     assert task_result.is_successful() == expect

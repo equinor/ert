@@ -58,8 +58,8 @@ class _Step(_Stage):
         self.jobs = jobs
         self._source = source
 
-    def source(self, ee_id: str) -> str:
-        return self._source.format(ee_id=ee_id)
+    def source(self, ens_id: str) -> str:
+        return self._source.format(ens_id=ens_id)
 
 
 class _UnixStep(_Step):
@@ -79,12 +79,12 @@ class _UnixStep(_Step):
     def get_task(
         self,
         output_transmitters: _stage_transmitter_mapping,
-        ee_id: str,
+        ens_id: str,
         *args: Any,
         **kwargs: Any,
     ) -> UnixTask:
         return UnixTask(
-            self, output_transmitters, ee_id, *args, run_path=self._run_path, **kwargs
+            self, output_transmitters, ens_id, *args, run_path=self._run_path, **kwargs
         )
 
 
@@ -92,11 +92,11 @@ class _FunctionStep(_Step):
     def get_task(
         self,
         output_transmitters: _stage_transmitter_mapping,
-        ee_id: str,
+        ens_id: str,
         *args: Any,
         **kwargs: Any,
     ) -> FunctionTask:
-        return FunctionTask(self, output_transmitters, ee_id, *args, **kwargs)
+        return FunctionTask(self, output_transmitters, ens_id, *args, **kwargs)
 
 
 class _LegacyStep(_Step):  # pylint: disable=too-many-instance-attributes

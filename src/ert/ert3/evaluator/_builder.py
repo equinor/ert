@@ -118,15 +118,18 @@ def add_step_outputs(
         step.add_output(output)
 
 
-def build_ensemble(
+def build_ensemble(  # pylint: disable=too-many-arguments
     stage: ert3.config.Step,
     driver: str,
     ensemble_size: int,
     step_builder: ert.ensemble_evaluator.StepBuilder,
     active_mask: Optional[List[bool]] = None,
+    ens_id: Optional[str] = None,
 ) -> ert.ensemble_evaluator.Ensemble:
     if active_mask is None:
         active_mask = [True] * ensemble_size
+    if ens_id is None:
+        ens_id = "0"
     if isinstance(stage, ert3.config.Function):
         step_builder.add_job(
             ert.ensemble_evaluator.JobBuilder()
@@ -151,6 +154,7 @@ def build_ensemble(
         .set_max_running(10000)
         .set_max_retries(0)
         .set_executor(driver)
+        .set_id(ens_id)
     )
     for iens, active_flag in enumerate(active_mask):
         builder = builder.add_realization(

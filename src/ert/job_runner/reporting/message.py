@@ -48,7 +48,7 @@ class Init(Message):
         jobs,
         run_id,
         ert_pid,
-        ee_id=None,
+        ens_id=None,
         real_id=None,
         step_id=None,
         experiment_id=None,
@@ -58,7 +58,7 @@ class Init(Message):
         self.run_id = run_id
         self.ert_pid = ert_pid
         self.experiment_id = experiment_id
-        self.ee_id = ee_id
+        self.ens_id = ens_id
         self.real_id = real_id
         self.step_id = step_id
 

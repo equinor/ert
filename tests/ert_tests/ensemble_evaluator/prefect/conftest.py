@@ -294,13 +294,15 @@ def poly_ensemble_builder(real_builder, ensemble_size):
         .set_max_retries(2)
         .set_executor("local")
         .set_forward_model(real_builder)
+        .set_id("0")
     )
     return builder
 
 
 @pytest.fixture()
 def poly_ensemble(poly_ensemble_builder):
-    return poly_ensemble_builder.build()
+    ens = poly_ensemble_builder.build()
+    return ens
 
 
 @pytest.fixture()
@@ -349,6 +351,7 @@ def function_ensemble_builder_factory(
         .set_max_retries(2)
         .set_executor("local")
         .set_forward_model(real_builder)
+        .set_id("0")
     )
 
     def build(pickled_function):

@@ -48,7 +48,7 @@ class Protobuf(Reporter):
         self._statemachine.add_handler((Finish,), self._finished_handler)
 
         self._experiment_id = None
-        self._ee_id = None
+        self._ens_id = None
         self._real_id = None
         self._step_id = None
         self._event_queue = queue.Queue()
@@ -75,7 +75,7 @@ class Protobuf(Reporter):
 
     def _init_handler(self, msg: Init):
         self._experiment_id = msg.experiment_id
-        self._ee_id = msg.ee_id
+        self._ens_id = msg.ens_id
         self._real_id = int(msg.real_id)
         self._step_id = int(msg.step_id)
         self._event_publisher_thread.start()
@@ -90,7 +90,7 @@ class Protobuf(Reporter):
                     realization=RealizationId(
                         realization=self._real_id,
                         ensemble=EnsembleId(
-                            id=self._ee_id,
+                            id=self._ens_id,
                             experiment=ExperimentId(id=self._experiment_id),
                         ),
                     ),

@@ -38,7 +38,7 @@ def test_get_flow(
 
         for iens in range(ensemble_size):
             with prefect.context():
-                flow = ensemble.get_flow(ensemble._ee_id, [iens])
+                flow = ensemble.get_flow([iens])
 
             # Get the ordered tasks and retrieve their step state.
             flow_steps = [
@@ -71,7 +71,7 @@ def wait_until_done(monitor, event):
 @pytest.mark.timeout(60)
 def test_run_prefect_ensemble(evaluator_config, poly_ensemble, ensemble_size):
     """Test successful realizations from prefect-run equals ensemble-size"""
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
     with evaluator.run() as mon:
         for event in mon.track():
             wait_until_done(mon, event)
@@ -83,7 +83,7 @@ def test_run_prefect_ensemble(evaluator_config, poly_ensemble, ensemble_size):
 @pytest.mark.timeout(60)
 def test_cancel_run_prefect_ensemble(evaluator_config, poly_ensemble):
     """Test cancellation of prefect-run"""
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
     with evaluator.run() as mon:
         cancel = True
         for _ in mon.track():
@@ -108,7 +108,7 @@ def dummy_get_flow(*args, **kwargs):
 def test_run_prefect_ensemble_exception(evaluator_config, poly_ensemble):
     """Test prefect on flow with runtime-error"""
     poly_ensemble.get_flow = dummy_get_flow
-    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(poly_ensemble, evaluator_config, 0)
     with evaluator.run() as mon:
         for event in mon.track():
             wait_until_done(mon, event)
@@ -141,8 +141,9 @@ def test_prefect_retries(
     pickle_func = cloudpickle.dumps(function_that_fails_once)
     cloudpickle.unregister_pickle_by_value(sys.modules[__name__])
 
-    ensemble = function_ensemble_builder_factory(pickle_func).set_retry_delay(2).build()
-    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0, ee_id="1")
+    builder = function_ensemble_builder_factory(pickle_func)
+    ensemble = builder.set_retry_delay(2).set_id("0").build()
+    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0)
     with tmpdir.as_cwd():
         error_event_reals: Set[str] = set()
         with evaluator.run() as mon:
@@ -177,9 +178,10 @@ def test_prefect_no_retries(
         function_ensemble_builder_factory(pickle_func)
         .set_retry_delay(1)
         .set_max_retries(0)
+        .set_id("0")
         .build()
     )
-    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0)
     with tmpdir.as_cwd():
         # Get events
         event_list = []
@@ -217,9 +219,10 @@ def test_run_prefect_for_function_defined_outside_py_environment(
         function_ensemble_builder_factory(external_sum_function)
         .set_retry_delay(1)
         .set_max_retries(0)
+        .set_id("0")
         .build()
     )
-    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0, ee_id="1")
+    evaluator = EnsembleEvaluator(ensemble, evaluator_config, 0)
     with evaluator.run() as mon:
         for event in mon.track():
             if event["type"] == ids.EVTYPE_EE_TERMINATED:

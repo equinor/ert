@@ -19,8 +19,10 @@ from websockets.legacy.server import WebSocketServerProtocol
 
 import ert.shared.ensemble_evaluator.monitor as ee_monitor
 from ert.ensemble_evaluator import identifiers
+from ert.ensemble_evaluator.builder._ensemble import _Ensemble
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.dispatch import BatchingDispatcher
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
@@ -36,16 +38,15 @@ _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
 class EnsembleEvaluator:
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, ensemble, config, iter_, ee_id: str = "0"):
+    def __init__(self, ensemble: _Ensemble, config: EvaluatorServerConfig, iter_: int):
         # Without information on the iteration, the events emitted from the
         # evaluator are ambiguous. In the future, an experiment authority* will
         # "own" the evaluators and can add iteration information to events they
         # emit. In the mean time, it is added here.
         # * https://github.com/equinor/ert/issues/1250
-        self._iter = iter_
-        self._ee_id = ee_id
-        self._config = config
-        self._ensemble = ensemble
+        self._iter: int = iter_
+        self._config: EvaluatorServerConfig = config
+        self._ensemble: _Ensemble = ensemble
 
         self._loop = asyncio.new_event_loop()
         self._done = self._loop.create_future()
@@ -148,7 +149,7 @@ class EnsembleEvaluator:
 
         attrs = {
             "type": event_type,
-            "source": f"/ert/ee/{self._ee_id}",
+            "source": f"/ert/ensemble/{self.ensemble.id_}",
         }
         attrs.update(extra_attrs)
         return CloudEvent(
@@ -216,11 +217,11 @@ class EnsembleEvaluator:
                     event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
                 except cloudevents.exceptions.DataUnmarshallerError:
                     event = from_json(msg, data_unmarshaller=pickle.loads)
-                if self._get_ee_id(event["source"]) != self._ee_id:
+                if self._get_ens_id(event["source"]) != self.ensemble.id_:
                     logger.info(
-                        f"Got event from evaluator {self._get_ee_id(event['source'])} "
+                        f"Got event from evaluator {self._get_ens_id(event['source'])} "
                         f"with source {event['source']}, "
-                        f"ignoring since I am {self._ee_id}"
+                        f"ignoring since I am {self.ensemble.id_}"
                     )
                     continue
                 try:
@@ -312,7 +313,7 @@ class EnsembleEvaluator:
 
     def run(self) -> ee_monitor._Monitor:
         self._ws_thread.start()
-        self._ensemble.evaluate(self._config, self._ee_id)
+        self._ensemble.evaluate(self._config)
         return ee_monitor.create(self._config.get_connection_info())
 
     def _stop(self):
@@ -384,6 +385,6 @@ class EnsembleEvaluator:
         return self._ensemble.get_successful_realizations()
 
     @staticmethod
-    def _get_ee_id(source) -> str:
-        # the ee_id will be found at /ert/ee/ee_id/...
+    def _get_ens_id(source) -> str:
+        # the ens_id will be found at /ert/ensemble/ens_id/...
         return source.split("/")[3]

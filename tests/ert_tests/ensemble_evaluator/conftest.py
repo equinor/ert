@@ -170,6 +170,7 @@ def make_ensemble_builder(queue_config):
             queue_config,
             analysis_config,
         )
+        builder.set_id("0")
         return builder
 
     return _make_ensemble_builder
@@ -207,12 +208,11 @@ def make_ee_config():
 
 @pytest.fixture
 def evaluator(make_ee_config):
-    ensemble = TestEnsemble(0, 2, 1, 2)
+    ensemble = TestEnsemble(0, 2, 1, 2, id_="0")
     ee = EnsembleEvaluator(
         ensemble,
         make_ee_config(),
         0,
-        ee_id="ee-0",
     )
     yield ee
     ee.stop()
