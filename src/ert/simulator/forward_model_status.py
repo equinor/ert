@@ -161,3 +161,9 @@ class ForwardModelStatus:
 
     def add_job(self, job: ForwardModelJobStatus) -> None:
         self._jobs.append(job)
+
+
+__all__ = [
+    "ForwardModelJobStatus",
+    "ForwardModelStatus",
+]

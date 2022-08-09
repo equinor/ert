@@ -3,7 +3,8 @@ from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from res.enkf.enums import HookRuntime
-from res.job_queue import ForwardModelStatus, JobQueueManager
+from res.job_queue import JobQueueManager
+from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from res.enkf import EnkfFs, EnKFMain, RunArg, RunContext
