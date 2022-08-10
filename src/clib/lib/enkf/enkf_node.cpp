@@ -777,6 +777,7 @@ enkf_node_alloc_empty(const enkf_config_node_type *config) {
 
         node->clear = gen_data_clear__;
         break;
+    /* EXT_PARAM is used by Everest */
     case (EXT_PARAM):
         node->alloc = ext_param_alloc__;
         node->freef = ext_param_free__;
