@@ -33,7 +33,6 @@ Keyword name                                                            Required
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
 :ref:`DELETE_RUNPATH <delete_runpath>`                                  NO                                                                      Explicitly tell ERT to delete the runpath when a job is complete
 :ref:`ECLBASE <eclbase>`                                                YES\*                                                                   Define a name for the ECLIPSE simulations. \*Either JOBNAME or ECLBASE must be specified
-:ref:`END_DATE <end_date>`                                              NO                                                                      You can tell ERT how long the simulations should be - for error check
 :ref:`ENKF_ALPHA <enkf_alpha>`                                          NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
 :ref:`ENKF_FORCE_NCOMP <enkf_force_ncomp>`                              NO                                      0                               Indicate if ERT should force a specific number of principal components
 :ref:`ENKF_NCOMP <enkf_ncomp>`                                          NO                                                                      Number of PC to use when forcing a fixed number; used in combination with kw ENKF_FORCE_NCOMP
@@ -319,35 +318,6 @@ possible to do with ERT.
 .. topic:: RERUN_START
 
         `RERUN_START` is deprecated.
-
-
-.. _end_date:
-.. topic:: END_DATE
-
-        When running a set of models from beginning to end ERT does
-        not know in advance how long the simulation is supposed to be,
-        it is therefore impossible beforehand to determine which
-        restart file number should be used as target file, and the
-        procedure used for Smoother runs can not be used to verify that an
-        ECLIPSE simulation has run to the end.
-
-        By using the END_DATE keyword you can tell ERT that the
-        simulation should go at least up to the date given by
-        END_DATE, otherwise they will be regarded as failed. The
-        END_DATE does not need to correspond exactly to the end date
-        of the simulation, it must just be set so that all simulations
-        which go to or beyond END_DATE are regarded as successful.
-
-        *Example:*
-
-        ::
-
-                END_DATE  2010-05-10
-
-        With this END_DATE setting all simulations which have gone to
-        at least May 10th 2010 are OK. Date format YYYY-MM-DD is required.
-        Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
-        and its support will be removed in a future release.
 
 
 .. _enspath:

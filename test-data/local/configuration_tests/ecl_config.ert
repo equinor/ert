@@ -2,7 +2,6 @@ ECLBASE                         input/<ECLIPSE_NAME>-%d
 DATA_FILE                       input/SPE1.DATA
 REFCASE                         input/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
-END_DATE                        2010-10-10
 SCHEDULE_PREDICTION_FILE        input/schedule.sch
 
 RUNPATH /tmp/simulations/run%d
