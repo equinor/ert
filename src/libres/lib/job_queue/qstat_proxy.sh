@@ -34,8 +34,8 @@ if [ -z $QSTAT ]; then
     QSTAT=`which qstat 2>/dev/null`
 fi
 
-if [[ $OSTYPE == "darwin"* ]]; then
-    # No sufficient file locking mechanism available on Mac OS X. Fallback:
+if [ `uname` != "Linux" ]; then
+    # Fallback if we are not on Linux
     $QSTAT $@
     exit $?
 fi

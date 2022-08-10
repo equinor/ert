@@ -224,39 +224,41 @@ def test_many_concurrent_qstat_invocations(tmpdir):
             )
             sleep(sleeptime)
 
-    class CacheState(enum.Enum):
-        # Only consecutive transitions are allowed.
-        FIRST_INVOCATION = 0
-        FIRST_HOLDS_FLOCK = 1
-        CACHE_EXISTS = 2
+        class CacheState(enum.Enum):
+            # Only consecutive transitions are allowed.
+            FIRST_INVOCATION = 0
+            FIRST_HOLDS_FLOCK = 1
+            CACHE_EXISTS = 2
 
-    state = None
-    for number, process in enumerate(subprocesses):
-        process.wait()
-        if state is None:
-            if process.returncode == 0:
-                state = CacheState.FIRST_INVOCATION
-            assert state is not None, "First invocation should not fail"
+        state = None
+        for _, process in enumerate(subprocesses):
+            process.wait()
+            if state is None:
+                if process.returncode == 0:
+                    state = CacheState.FIRST_INVOCATION
+                assert state is not None, "First invocation should not fail"
 
-        elif state == CacheState.FIRST_INVOCATION:
-            assert process.returncode == 1
-            # The proxy should fail in this scenario, and ERTs queue
-            # manager must retry later.
-            state = CacheState.FIRST_HOLDS_FLOCK
+            elif state == CacheState.FIRST_INVOCATION:
+                assert process.returncode == 1
+                # The proxy should fail in this scenario, and ERTs queue
+                # manager must retry later.
+                state = CacheState.FIRST_HOLDS_FLOCK
 
-        elif state == CacheState.FIRST_HOLDS_FLOCK:
-            if process.returncode == 1:
-                # Continue waiting until the cache is ready
-                pass
-            if process.returncode == 0:
-                state = CacheState.CACHE_EXISTS
+            elif state == CacheState.FIRST_HOLDS_FLOCK:
+                if process.returncode == 1:
+                    # Continue waiting until the cache is ready
+                    pass
+                if process.returncode == 0:
+                    state = CacheState.CACHE_EXISTS
 
-        else:
-            assert state == CacheState.CACHE_EXISTS
-            assert process.returncode == 0, "Check for race condition if AssertionError"
+            else:
+                assert state == CacheState.CACHE_EXISTS
+                assert (
+                    process.returncode == 0
+                ), "Check for race condition if AssertionError"
 
-        print(process.returncode, end="")
-    print("\n")
+            print(process.returncode, end="")
+        print("\n")
 
     # Allow a limited set of backend runs. We get more backend runs the
     # slower the iron.
