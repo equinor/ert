@@ -19,9 +19,5 @@ This package defines the following:
 [1] see https://peps.python.org/pep-0544/ for information about protocols
 """
 from ._server import ExperimentServer
-from ._state_machine import ExperimentStateMachine
 
-__all__ = (
-    "ExperimentServer",
-    "ExperimentStateMachine",
-)
+__all__ = ("ExperimentServer",)

@@ -9,7 +9,7 @@ from setuptools_scm import get_version
 from skbuild import setup
 
 # list of pair of .proto file and out directory
-PROTOBUF_FILES = [("src/ert/experiment_server/_schema.proto", "src/_ert_job_runner/")]
+PROTOBUF_FILES = [("src/_ert_com_protocol/_schema.proto", "src/_ert_com_protocol")]
 
 
 def compile_protocol_buffers():

@@ -66,6 +66,10 @@ nitpick_ignore = [
     ("py:class", "pydantic.types.PositiveInt"),
     ("py:class", "LibresFacade"),
     ("py:class", "pandas.core.frame.DataFrame"),
+    ("py:class", "google.protobuf.descriptor.Descriptor"),
+]
+nitpick_ignore_regex = [
+    ("py:class", ".*pb2.*"),
 ]
 
 # Add any paths that contain templates here, relative to this directory.

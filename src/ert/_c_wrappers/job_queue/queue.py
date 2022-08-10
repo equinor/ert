@@ -19,6 +19,7 @@ from websockets.client import connect
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosedError
 
+import _ert_com_protocol
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
 from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
@@ -352,13 +353,28 @@ class JobQueue(BaseCClass):
         )
 
     @staticmethod
+    def _translate_change_to_protobuf(
+        experiment_id: str, ens_id: str, real_id: str, status: JobStatusType
+    ) -> _ert_com_protocol.DispatcherMessage:
+        return _ert_com_protocol.node_status_builder(
+            status=_ert_com_protocol.queue_state_to_pbuf_type(status),
+            experiment_id=experiment_id,
+            ensemble_id=ens_id,
+            realization_id=real_id,
+            step_id=0,
+        )
+
+    @staticmethod
     async def _queue_changes(
+        experiment_id: str,
         ens_id: str,
         changes,
-        output_bus: "asyncio.Queue[CloudEvent]",
+        output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]",
     ):
         events = [
-            JobQueue._translate_change_to_cloudevent(ens_id, real_id, status)
+            JobQueue._translate_change_to_protobuf(
+                experiment_id, ens_id, real_id, status
+            )
             for real_id, status in changes.items()
         ]
 
@@ -480,15 +496,18 @@ class JobQueue(BaseCClass):
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,
+        experiment_id: str,
         ens_id: str,
         pool_sema: threading.BoundedSemaphore,
         evaluators: List[Callable[..., Any]],
-        output_bus: "asyncio.Queue[CloudEvent]",
+        output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]",
     ) -> None:
         if evaluators is None:
             evaluators = []
         try:
-            await JobQueue._queue_changes(ens_id, self._differ.snapshot(), output_bus)
+            await JobQueue._queue_changes(
+                experiment_id, ens_id, self._differ.snapshot(), output_bus
+            )
             while True:
                 self.launch_jobs(pool_sema)
 
@@ -498,7 +517,9 @@ class JobQueue(BaseCClass):
                     func()
 
                 changes = self.changes_after_transition()
-                await JobQueue._queue_changes(ens_id, changes, output_bus)
+                await JobQueue._queue_changes(
+                    experiment_id, ens_id, changes, output_bus
+                )
 
                 if self.stopped:
                     raise asyncio.CancelledError
@@ -523,7 +544,9 @@ class JobQueue(BaseCClass):
 
         self.assert_complete()
         self._differ.transition(self.job_list)
-        await JobQueue._queue_changes(ens_id, self._differ.snapshot(), output_bus)
+        await JobQueue._queue_changes(
+            experiment_id, ens_id, self._differ.snapshot(), output_bus
+        )
 
     # pylint: disable=too-many-arguments
     def add_job_from_run_arg(

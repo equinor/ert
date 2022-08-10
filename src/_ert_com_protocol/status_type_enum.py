@@ -1,0 +1,24 @@
+from typing import Dict
+
+_queue_state_to_pbuf_type_map: Dict[str, str] = {
+    "JOB_QUEUE_NOT_ACTIVE": "STEP_WAITING",
+    "JOB_QUEUE_WAITING": "STEP_WAITING",
+    "JOB_QUEUE_SUBMITTED": "STEP_WAITING",
+    "JOB_QUEUE_PENDING": "STEP_PENDING",
+    "JOB_QUEUE_RUNNING": "STEP_RUNNING",
+    "JOB_QUEUE_DONE": "STEP_RUNNING",
+    "JOB_QUEUE_EXIT": "STEP_RUNNING",
+    "JOB_QUEUE_IS_KILLED": "STEP_FAILED",
+    "JOB_QUEUE_DO_KILL": "STEP_FAILED",
+    "JOB_QUEUE_SUCCESS": "STEP_SUCCESS",
+    "JOB_QUEUE_RUNNING_DONE_CALLBACK": "STEP_RUNNING",
+    "JOB_QUEUE_RUNNING_EXIT_CALLBACK": "STEP_RUNNING",
+    "JOB_QUEUE_STATUS_FAILURE": "STEP_UNKNOWN",
+    "JOB_QUEUE_FAILED": "STEP_FAILED",
+    "JOB_QUEUE_DO_KILL_NODE_FAILURE": "STEP_FAILED",
+    "JOB_QUEUE_UNKNOWN": "STEP_UNKNOWN",
+}
+
+
+def queue_state_to_pbuf_type(status: str) -> str:
+    return _queue_state_to_pbuf_type_map[status]

@@ -4,11 +4,11 @@ import logging
 from functools import partial
 from typing import Any, Dict, Optional
 
+import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
-from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
@@ -39,9 +39,10 @@ class EnsembleSmoother(BaseRunModel):
         prior_context = await loop.run_in_executor(threadpool, self.create_context)
 
         experiment_logger.debug("starting ensemble smoother experiment")
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_STARTED, iteration=prior_context.iteration
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
         self._checkMinimumActiveRealizations(prior_context)
 
@@ -83,10 +84,10 @@ class EnsembleSmoother(BaseRunModel):
             HookRuntime.PRE_UPDATE, prior_context.iteration, loop, threadpool
         )
 
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_STARTED,
-            iteration=prior_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_ANALYSIS_STARTED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
         experiment_logger.debug("running update...")
         try:
@@ -95,23 +96,20 @@ class EnsembleSmoother(BaseRunModel):
             )
         except ErtAnalysisError as e:
             experiment_logger.exception("analysis failed")
-            await self._dispatch_ee(
-                identifiers.EVTYPE_EXPERIMENT_FAILED,
-                data={
-                    "error": str(e),
-                },
-                iteration=prior_context.iteration,
+            event = _ert_com_protocol.node_status_builder(
+                status="EXPERIMENT_FAILED", experiment_id=self.id_
             )
+            event.experiment.message = str(e)
+            await self.dispatch(event)
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"
             ) from e
 
         experiment_logger.debug("update complete")
-
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_ENDED,
-            iteration=prior_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_ANALYSIS_ENDED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
         await self._run_hook(
             HookRuntime.POST_UPDATE, prior_context.iteration, loop, threadpool
@@ -164,10 +162,10 @@ class EnsembleSmoother(BaseRunModel):
         # Push simulation results to storage
         await loop.run_in_executor(threadpool, self._post_ensemble_results, ensemble_id)
 
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_SUCCEEDED,
-            iteration=rerun_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_SUCCEEDED", experiment_id=self.id_
         )
+        await self.dispatch(event)
         experiment_logger.debug("experiment done")
 
     def runSimulations(

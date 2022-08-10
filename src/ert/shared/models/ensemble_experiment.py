@@ -3,10 +3,10 @@ import concurrent
 import logging
 from typing import Any, Dict
 
+import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel
 from ert.shared.models.base_run_model import ErtRunError
@@ -27,10 +27,10 @@ class EnsembleExperiment(BaseRunModel):
     async def run(self, evaluator_server_config: EvaluatorServerConfig) -> None:
 
         experiment_logger.debug("starting ensemble experiment")
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_STARTED,
-            iteration=0,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
         loop = asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -62,14 +62,11 @@ class EnsembleExperiment(BaseRunModel):
             try:
                 self.checkHaveSufficientRealizations(num_successful_realizations)
             except ErtRunError as e:
-
-                await self._dispatch_ee(
-                    identifiers.EVTYPE_EXPERIMENT_FAILED,
-                    data={
-                        "error": str(e),
-                    },
-                    iteration=run_context.iteration,
+                event = _ert_com_protocol.node_status_builder(
+                    status="EXPERIMENT_FAILED", experiment_id=self.id_
                 )
+                event.experiment.message = str(e)
+                await self.dispatch(event)
                 return
 
             await self._run_hook(
@@ -83,10 +80,10 @@ class EnsembleExperiment(BaseRunModel):
                 ensemble_id,
             )
 
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_SUCCEEDED,
-            iteration=run_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_SUCCEEDED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
     def runSimulations__(
         self,

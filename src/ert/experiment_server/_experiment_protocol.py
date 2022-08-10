@@ -1,7 +1,9 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from cloudevents.http import CloudEvent
 from typing_extensions import Protocol
+
+from _ert_com_protocol import DispatcherMessage
 
 if TYPE_CHECKING:
     from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
@@ -25,13 +27,12 @@ class Experiment(Protocol):
         to set this more than once."""
         pass
 
-    async def dispatch(self, event: CloudEvent, iter_: int) -> None:
-        """dispatch(self, event, iter_: int) -> None
-
+    async def dispatch(self, event: Union[CloudEvent, DispatcherMessage]) -> None:
+        """dispatch(self, event) -> None
         event is a ``CloudEvent`` https://github.com/cloudevents/sdk-python
-
-        Pass an event for ``iter_`` to the experiment. The experiment will internalize
-        the event and update its state."""
+        or a ``protocol buffer object`` https://developers.google.com/protocol-buffers
+        The experiment will internalize the event and update its state.
+        """
         pass
 
     # TODO: this is preliminary, see https://github.com/equinor/ert/issues/3407
