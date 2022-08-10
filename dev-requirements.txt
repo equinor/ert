@@ -10,6 +10,7 @@ jupytext
 hypothesis
 oil_reservoir_synthesizer
 pylint
+pylint-protobuf
 pytest-asyncio
 pytest-benchmark
 pytest-cov

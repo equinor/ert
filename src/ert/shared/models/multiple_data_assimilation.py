@@ -3,11 +3,11 @@ import concurrent
 import logging
 from typing import Any, Dict, List, Tuple
 
+import _ert_com_protocol
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
-from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
@@ -49,10 +49,10 @@ class MultipleDataAssimilation(BaseRunModel):
         )
 
         experiment_logger.debug("starting es-mda experiment")
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_STARTED,
-            iteration=prior_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_STARTED", experiment_id=self.id_
         )
+        await self.dispatch(event)
         self._checkMinimumActiveRealizations(prior_context)
 
         weights = self.parseWeights(self._simulation_arguments["weights"])
@@ -119,10 +119,10 @@ class MultipleDataAssimilation(BaseRunModel):
             await self._run_hook(HookRuntime.POST_UPDATE, iteration, loop, threadpool)
 
         assert run_context is not None  # mypy
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_ANALYSIS_ENDED,
-            iteration=run_context.iteration,
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_ANALYSIS_ENDED", experiment_id=self.id_
         )
+        await self.dispatch(event)
 
     def runSimulations(
         self, evaluator_server_config: EvaluatorServerConfig

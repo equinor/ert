@@ -2,19 +2,24 @@ import asyncio
 import logging
 import pickle
 from contextlib import contextmanager
-from typing import Any, Callable, Iterator, Set
+from typing import TYPE_CHECKING, Iterator, Set, Union
 
 from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import from_json
+from cloudevents.http import CloudEvent, from_json
+from google.protobuf.message import DecodeError
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
 
-from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from _ert_com_protocol import DispatcherMessage
 from ert.serialization import evaluator_unmarshaller
-from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 from ._experiment_protocol import Experiment
 from ._registry import _Registry
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+
 
 logger = logging.getLogger(__name__)
 event_logger = logging.getLogger("ert.event_log")
@@ -29,7 +34,7 @@ class ExperimentServer:
     workers can connect.
     """
 
-    def __init__(self, ee_config: EvaluatorServerConfig) -> None:
+    def __init__(self, ee_config: "EvaluatorServerConfig") -> None:
         self._config = ee_config
         self._registry = _Registry()
         self._clients: Set[WebSocketServerProtocol] = set()
@@ -60,29 +65,31 @@ class ExperimentServer:
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
         """handle_dispatch(self, websocket, path: str)
-
         Handle incoming "dispatch" connections, which refers to remote workers.
-
         websocket is a https://websockets.readthedocs.io/en/stable/reference/server.html#websockets.server.WebSocketServerProtocol  # pylint: disable=line-too-long
         """
+        event: Union[CloudEvent, DispatcherMessage]
         async for msg in websocket:
             if isinstance(msg, bytes):
-                # TODO handle protobuf messages; update statemachine
-                event_logger.debug("handle_dispatch pbuf: %s", msg)
-                continue
-            try:
-                event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
-            except DataUnmarshallerError:
-                event = from_json(msg, data_unmarshaller=pickle.loads)
+                # all Protobuf objects come in DispatcherMessage container
+                # which needs to be parsed
+                event = DispatcherMessage()
+                try:
+                    event.ParseFromString(msg)
+                except DecodeError:
+                    logger.error(f"Cannot parse pbuf event: {msg.decode()}")
+                    raise
+            else:
+                try:
+                    event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
+                except DataUnmarshallerError:
+                    event = from_json(msg, data_unmarshaller=pickle.loads)
 
-            event_logger.debug("handle_dispatch: %s", event)
-
-            await self._registry.all_experiments[0].dispatch(event, 0)
+            await self._registry.all_experiments[0].dispatch(event)
 
     @contextmanager
     def store_client(self, websocket: WebSocketServerProtocol) -> Iterator[None]:
         """store_client(self, websocket)
-
         Context manager for a client connection handler, allowing to know how
         many clients are connected."""
         logger.debug("client %s connected", websocket)
@@ -117,33 +124,6 @@ class ExperimentServer:
             logger.debug("Async server exiting.")
         except Exception:  # pylint: disable=broad-except
             logger.exception("crash/burn")
-
-    # pylint: disable=line-too-long
-    def add_legacy_experiment(  # pylint: disable=too-many-arguments
-        self,
-        ert: EnKFMain,
-        ensemble_size: int,
-        current_case_name: str,
-        args: Any,
-        factory: Callable[[EnKFMain, int, str, Any, str], Experiment],
-        experiment_id: str,
-    ) -> str:
-        """add_legacy_experiment(self, ert, ensemble_size: int,current_case_name: str, factory: Callable[[Any, int, str, Any, str], Experiment], experiment_id: str)
-
-        The ert parameter, as well as the first input parameter in the factory
-        :class:`Callable`, refers to the EnkfMain type.
-
-        Create a legacy experiment using a model factory. See ``ert.cli.model_factory.create_model``.
-        """
-        experiment = factory(
-            ert,
-            ensemble_size,
-            current_case_name,
-            args,
-            experiment_id,
-        )
-        self._registry.add_experiment(experiment)
-        return experiment.id_
 
     def add_experiment(self, experiment: Experiment) -> str:
         self._registry.add_experiment(experiment)

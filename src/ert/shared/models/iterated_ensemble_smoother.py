@@ -5,13 +5,13 @@ from typing import Any, Dict, Optional
 
 from iterative_ensemble_smoother import IterativeEnsembleSmoother
 
+import _ert_com_protocol
 from ert._c_wrappers.analysis.analysis_module import AnalysisModule
 from ert._c_wrappers.enkf import RunContext
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 from ert.analysis import ErtAnalysisError
-from ert.ensemble_evaluator import identifiers
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
 
@@ -266,7 +266,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
                 num_retries += 1
 
         if current_iter == (phase_count - 1):
-            self.setPhase(phase_count, "Simulations completed.")
+            self.setPhase(current_iter, "Simulations completed.")
         else:
             raise ErtRunError(
                 (
@@ -305,7 +305,7 @@ class IteratedEnsembleSmoother(BaseRunModel):
         experiment_logger.debug("evaluating")
         await self._evaluate(run_context, evaluator_server_config)
 
-        num_successful_realizations = self._state_machine.successful_realizations(
+        num_successful_realizations = await self.successful_realizations(
             run_context.iteration,
         )
 
@@ -347,13 +347,11 @@ class IteratedEnsembleSmoother(BaseRunModel):
             )
         except ErtAnalysisError as e:
             experiment_logger.exception("analysis failed")
-            await self._dispatch_ee(
-                identifiers.EVTYPE_EXPERIMENT_FAILED,
-                data={
-                    "error": str(e),
-                },
-                iteration=run_context.iteration,
+            event = _ert_com_protocol.node_status_builder(
+                status="EXPERIMENT_FAILED", experiment_id=self.id_
             )
+            event.experiment.message = str(e)
+            await self.dispatch(event)
             raise ErtRunError(
                 f"Analysis of simulation failed with the following error: {e}"
             ) from e

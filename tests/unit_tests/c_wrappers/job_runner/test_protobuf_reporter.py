@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from _ert_job_runner._schema_pb2 import (
+from _ert_com_protocol import (
     JOB_FAILURE,
     JOB_RUNNING,
     JOB_START,

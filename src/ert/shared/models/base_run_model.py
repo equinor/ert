@@ -5,16 +5,16 @@ import time
 import uuid
 from abc import abstractmethod
 from contextlib import contextmanager
+from functools import singledispatchmethod
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 from cloudevents.http import CloudEvent
 
+import _ert_com_protocol
 from ert._c_wrappers.enkf import EnKFMain, QueueConfig
 from ert._c_wrappers.enkf.ert_run_context import RunContext
 from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
-from ert.ensemble_evaluator import Ensemble, EnsembleBuilder, identifiers
-from ert.ensemble_evaluator.util._tool import get_real_id
-from ert.experiment_server import ExperimentStateMachine
+from ert.ensemble_evaluator import Ensemble, EnsembleBuilder
 from ert.libres_facade import LibresFacade
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
@@ -99,7 +99,9 @@ class BaseRunModel:
         self.reset()
 
         # experiment-server
-        self._state_machine = ExperimentStateMachine()
+        self._state_machine = _ert_com_protocol.ExperimentStateMachine()
+        # mapping from iteration number to ensemble id
+        self._iter_map: Dict[int, str] = {}
 
     def ert(self) -> EnKFMain:
         return self._ert
@@ -237,7 +239,7 @@ class BaseRunModel:
         self.setPhaseName(phase_name)
         if not 0 <= phase <= self._phase_count:
             raise ValueError(
-                "Phase must be an integer between (inclusive) 0 and {self._phase_count}"
+                f"Phase must be integer between (inclusive) 0 and {self._phase_count}"
             )
 
         self.setIndeterminate(indeterminate)
@@ -355,7 +357,7 @@ class BaseRunModel:
             .set_id(str(uuid.uuid1()).split("-", maxsplit=1)[0])
             .build()
         )
-
+        self._iter_map[run_context.iteration] = ensemble.id_
         experiment_logger.debug("built")
 
         ensemble_listener = asyncio.create_task(
@@ -391,7 +393,7 @@ class BaseRunModel:
         raise NotImplementedError
 
     async def successful_realizations(self, iter_: int) -> int:
-        return self._state_machine.successful_realizations(iter_)
+        return self._state_machine.successful_realizations(self._iter_map[iter_])
 
     async def _run_hook(
         self,
@@ -400,24 +402,24 @@ class BaseRunModel:
         loop: asyncio.AbstractEventLoop,
         executor: concurrent.futures.Executor,
     ) -> None:
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_HOOK_STARTED,
-            iteration=iter_,
-            data={"name": str(hook)},
-        )
 
-        # Run hook
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_HOOK_STARTED", experiment_id=self.id_
+        )
+        event.experiment.message = str(hook)
+        await self.dispatch(event)
+
         await loop.run_in_executor(
             executor,
             self.ert().runWorkflows,
             hook,
         )
 
-        await self._dispatch_ee(
-            identifiers.EVTYPE_EXPERIMENT_HOOK_ENDED,
-            iteration=iter_,
-            data={"name": str(hook)},
+        event = _ert_com_protocol.node_status_builder(
+            status="EXPERIMENT_HOOK_ENDED", experiment_id=self.id_
         )
+        event.experiment.message = str(hook)
+        await self.dispatch(event)
 
     @property
     def id_(self) -> str:
@@ -434,38 +436,29 @@ class BaseRunModel:
     async def _ensemble_listener(self, ensemble: Ensemble, iter_: int) -> None:
         """Redirect events emitted by the ensemble to this experiment."""
         while True:
-            event: CloudEvent = await ensemble.output_bus.get()
-            await self.dispatch(event, iter_)
-            if event["type"] in (
-                identifiers.EVTYPE_ENSEMBLE_FAILED,
-                identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-                identifiers.EVTYPE_ENSEMBLE_STOPPED,
+            event: _ert_com_protocol.DispatcherMessage = await ensemble.output_bus.get()
+            await self.dispatch(event)
+            if event.WhichOneof("object") == "ensemble" and event.ensemble.status in (
+                _ert_com_protocol.ENSEMBLE_FAILED,
+                _ert_com_protocol.ENSEMBLE_CANCELLED,
+                _ert_com_protocol.ENSEMBLE_STOPPED,
             ):
                 break
 
-    async def _dispatch_ee(
-        self, ee_event_type: str, iteration: int, data: Optional[dict] = None
+    @singledispatchmethod
+    async def dispatch(
+        self,
+        event: Union[CloudEvent, _ert_com_protocol.DispatcherMessage],
     ) -> None:
-        await self.dispatch(
-            CloudEvent(
-                {
-                    "type": ee_event_type,
-                    "source": f"/ert/experiment/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                },
-                data,
-            ),
-            iteration,
-        )
+        raise NotImplementedError("Not implemented")
 
-    async def dispatch(self, event: CloudEvent, iter_: int) -> None:
+    @dispatch.register
+    async def _(self, event: CloudEvent) -> None:
+        event_logger.debug(f"dispatch cloudevent: {event} (experiment: {self.id_})")
 
-        event_logger.debug(
-            "dispatch: %s (experiment: %s, iter: %d)", event, self.id_, iter_
-        )
-        if event["type"] == identifiers.EVTYPE_FM_STEP_SUCCESS:
-            real = int(get_real_id(event["source"]))
-            self._state_machine.add_successful_realization(iter_, real)
+    @dispatch.register
+    async def _(self, event: _ert_com_protocol.DispatcherMessage) -> None:
+        await self._state_machine.update(event)
 
     def get_forward_model(self) -> ForwardModel:
         return self.ert().resConfig().model_config.getForwardModel()

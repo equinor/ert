@@ -13,10 +13,12 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Union,
 )
 
 from cloudevents.http.event import CloudEvent
 
+import _ert_com_protocol
 from ert._c_wrappers.enkf import RunArg
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.queue_config import QueueConfig
@@ -29,6 +31,7 @@ from ._realization import _Realization
 
 if TYPE_CHECKING:
     from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+
 
 CONCURRENT_INTERNALIZATION = 10
 
@@ -54,23 +57,74 @@ class _LegacyEnsemble(_Ensemble):
         self._job_queue = queue_config.create_job_queue()
         self._analysis_config = analysis_config
         self._config: Optional["EvaluatorServerConfig"] = None
-        self._output_bus: "asyncio.Queue[CloudEvent]" = asyncio.Queue()
+        self._output_bus: "asyncio.Queue[_ert_com_protocol.DispatcherMessage]" = (
+            asyncio.Queue()
+        )
+
+    def generate_event_creator(
+        self, experiment_id: Optional[str] = None
+    ) -> Callable[
+        [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
+    ]:
+        if experiment_id is not None:
+
+            def node_builder(
+                status: str, real_id: Optional[int] = None
+            ) -> _ert_com_protocol.DispatcherMessage:
+                assert experiment_id  # mypy error
+                # TODO: this might got to _ert_com_protocol enum
+                status_tab = {
+                    identifiers.EVTYPE_ENSEMBLE_STARTED: "ENSEMBLE_STARTED",
+                    identifiers.EVTYPE_ENSEMBLE_FAILED: "ENSEMBLE_FAILED",
+                    identifiers.EVTYPE_ENSEMBLE_CANCELLED: "ENSEMBLE_CANCELLED",
+                    identifiers.EVTYPE_ENSEMBLE_STOPPED: "ENSEMBLE_STOPPED",
+                    identifiers.EVTYPE_FM_STEP_TIMEOUT: "STEP_TIMEOUT",
+                }
+                step_id = None
+                if real_id is not None:
+                    step_id = 0
+
+                return _ert_com_protocol.node_status_builder(
+                    ensemble_id=self.id_,
+                    experiment_id=experiment_id,
+                    status=status_tab[status],
+                    realization_id=real_id,
+                    step_id=step_id,
+                )
+
+            return node_builder
+
+        else:
+
+            def event_builder(status: str, real_id: Optional[int] = None) -> CloudEvent:
+                source = f"/ert/ensemble/{self.id_}"
+                if real_id is not None:
+                    source += f"/real/{real_id}/step/0"
+                return CloudEvent(
+                    {
+                        "type": status,
+                        "source": source,
+                        "id": str(uuid.uuid1()),
+                    }
+                )
+
+            return event_builder
 
     def setup_timeout_callback(
         self,
-        timeout_queue: "asyncio.Queue[CloudEvent]",
-        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
+        timeout_queue: "asyncio.Queue[Union[CloudEvent, _ert_com_protocol.DispatcherMessage]]",  # noqa: E501 # pylint: disable=line-too-long
+        cloudevent_unary_send: Callable[
+            [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
+        ],
+        event_generator: Callable[
+            [str, Optional[int]], Union[CloudEvent, _ert_com_protocol.DispatcherMessage]
+        ],
     ) -> Tuple[Callable[[List[Any]], Any], "asyncio.Task[None]"]:
         def on_timeout(callback_args: Sequence[Any]) -> None:
             run_args: RunArg = callback_args[0]
-            timeout_cloudevent = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_FM_STEP_TIMEOUT,
-                    "source": f"/ert/ensemble/{self.id_}/real/{run_args.iens}/step/0",
-                    "id": str(uuid.uuid1()),
-                }
+            timeout_queue.put_nowait(
+                event_generator(identifiers.EVTYPE_FM_STEP_TIMEOUT, run_args.iens)
             )
-            timeout_queue.put_nowait(timeout_cloudevent)
 
         async def send_timeout_message() -> None:
             while True:
@@ -143,10 +197,14 @@ class _LegacyEnsemble(_Ensemble):
             experiment_id=experiment_id,
         )
 
-    async def _evaluate_inner(
+    async def _evaluate_inner(  # pylint: disable=too-many-branches
         self,
-        cloudevent_unary_send: Callable[[CloudEvent], Awaitable[None]],
-        output_bus: Optional["asyncio.Queue[CloudEvent]"] = None,
+        cloudevent_unary_send: Callable[
+            [Union[CloudEvent, _ert_com_protocol.DispatcherMessage]], Awaitable[None]
+        ],
+        output_bus: Optional[
+            "asyncio.Queue[_ert_com_protocol.DispatcherMessage]"
+        ] = None,
         experiment_id: Optional[str] = None,
     ) -> None:
         """
@@ -162,9 +220,14 @@ class _LegacyEnsemble(_Ensemble):
         argument.
         """
         # Set up the timeout-mechanism
-        timeout_queue: "asyncio.Queue[CloudEvent]" = asyncio.Queue()
+        timeout_queue: "asyncio.Queue[Union[CloudEvent, _ert_com_protocol.DispatcherMessage]]" = (  # noqa: E501 # pylint: disable=line-too-long
+            asyncio.Queue()
+        )
+        # Based on the experiment id the generator will
+        # give a function returning cloud event or protobuf
+        event_creator = self.generate_event_creator(experiment_id=experiment_id)
         on_timeout, send_timeout_future = self.setup_timeout_callback(
-            timeout_queue, cloudevent_unary_send
+            timeout_queue, cloudevent_unary_send, event_creator
         )
 
         if not self.id_:
@@ -174,22 +237,11 @@ class _LegacyEnsemble(_Ensemble):
 
         # event for normal evaluation, will be overwritten later in case of failure
         # or cancellation
-        result = CloudEvent(
-            {
-                "type": identifiers.EVTYPE_ENSEMBLE_STOPPED,
-                "source": f"/ert/ensemble/{self.id_}",
-                "id": str(uuid.uuid1()),
-            }
-        )
+        result = event_creator(identifiers.EVTYPE_ENSEMBLE_STOPPED, None)
+
         try:
             # Dispatch STARTED-event
-            out_cloudevent = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_ENSEMBLE_STARTED,
-                    "source": f"/ert/ensemble/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                }
-            )
+            out_cloudevent = event_creator(identifiers.EVTYPE_ENSEMBLE_STARTED, None)
             await cloudevent_unary_send(out_cloudevent)
 
             # Submit all jobs to queue and inform queue when done
@@ -231,6 +283,7 @@ class _LegacyEnsemble(_Ensemble):
                 )
                 # Finally, run the queue-loop until it finishes or raises
                 await self._job_queue.execute_queue_comms_via_bus(
+                    experiment_id=experiment_id,
                     ens_id=self.id_,
                     pool_sema=sema,
                     evaluators=queue_evaluators,  # type: ignore
@@ -255,26 +308,14 @@ class _LegacyEnsemble(_Ensemble):
 
         except asyncio.CancelledError:
             logger.debug("ensemble was cancelled")
-            result = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_ENSEMBLE_CANCELLED,
-                    "source": f"/ert/ensemble/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                }
-            )
+            result = event_creator(identifiers.EVTYPE_ENSEMBLE_CANCELLED, None)
 
         except Exception:  # pylint: disable=broad-except
             logger.exception(
                 "unexpected exception in ensemble",
                 exc_info=True,
             )
-            result = CloudEvent(
-                {
-                    "type": identifiers.EVTYPE_ENSEMBLE_FAILED,
-                    "source": f"/ert/ensemble/{self.id_}",
-                    "id": str(uuid.uuid1()),
-                }
-            )
+            result = event_creator(identifiers.EVTYPE_ENSEMBLE_FAILED, None)
 
         else:
             logger.debug("ensemble finished normally")
@@ -298,5 +339,5 @@ class _LegacyEnsemble(_Ensemble):
     @property
     def output_bus(
         self,
-    ) -> "asyncio.Queue[CloudEvent]":
+    ) -> "asyncio.Queue[_ert_com_protocol.DispatcherMessage]":
         return self._output_bus

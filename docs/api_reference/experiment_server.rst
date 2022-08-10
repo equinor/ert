@@ -5,6 +5,10 @@ Experiment Server reference
     :members:
     :undoc-members:
 
+.. automodule:: ert.experiment_server._server
+    :members:
+    :undoc-members:
+
 .. automodule:: ert.experiment_server._experiment_protocol
     :members:
     :undoc-members:
@@ -14,7 +18,7 @@ Experiment Server reference
     :undoc-members:
     :private-members:
 
-.. automodule:: ert.experiment_server._state_machine
+.. automodule:: _ert_com_protocol._state_machine
     :members:
     :undoc-members:
     :private-members:

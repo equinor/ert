@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, 
 from cloudevents.conversion import to_json
 from cloudevents.http import CloudEvent
 
+from _ert_com_protocol import DispatcherMessage
 from _ert_job_runner.client import Client
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
@@ -95,14 +96,14 @@ class _Ensemble:
     @abstractmethod
     def output_bus(
         self,
-    ) -> "asyncio.Queue[CloudEvent]":
+    ) -> "asyncio.Queue[DispatcherMessage]":
         raise NotImplementedError
 
     # TODO: make legacy-only?
     # See https://github.com/equinor/ert/issues/3456
     async def queue_cloudevent(
         self,
-        event: CloudEvent,
+        event: DispatcherMessage,
     ) -> None:
         self.output_bus.put_nowait(event)
 

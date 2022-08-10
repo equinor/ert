@@ -36,7 +36,7 @@ async def test_receiving_event_from_cluster(
             )
             await dispatcher.send(to_json(event).decode())
 
-    experiment.dispatch.assert_awaited_once_with(event, 0)
+    experiment.dispatch.assert_awaited_once_with(event)
 
 
 async def test_successful_run(

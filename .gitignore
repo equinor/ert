@@ -34,3 +34,4 @@ src/ert/shared/version.py
 .libs
 /compile_commands.json
 *_pb2.py
+*_pb2.pyi
