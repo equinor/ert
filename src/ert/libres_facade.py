@@ -15,7 +15,6 @@ from ert._c_wrappers.enkf.export import (
     SummaryCollector,
     SummaryObservationCollector,
 )
-from ert._c_wrappers.enkf.plot_data import PlotBlockDataLoader
 
 _logger = logging.getLogger(__name__)
 
@@ -208,11 +207,6 @@ class LibresFacade:  # pylint: disable=too-many-public-methods
         return SummaryObservationCollector.loadObservationData(
             self._enkf_main, case_name, keys
         )
-
-    def create_plot_block_data_loader(
-        self, obs_vector: "ObsVector"
-    ) -> PlotBlockDataLoader:
-        return PlotBlockDataLoader(obs_vector)
 
     def select_or_create_new_case(self, case_name: str) -> None:
         if self.get_current_case_name() != case_name:

@@ -5,7 +5,6 @@ from .ensemble_plot_gen_data_vector import EnsemblePlotGenDataVector
 from .ensemble_plot_gen_kw import EnsemblePlotGenKW
 from .ensemble_plot_gen_kw_vector import EnsemblePlotGenKWVector
 from .plot_block_data import PlotBlockData
-from .plot_block_data_loader import PlotBlockDataLoader
 from .plot_block_vector import PlotBlockVector
 
 __all__ = [
@@ -13,7 +12,6 @@ __all__ = [
     "EnsemblePlotData",
     "PlotBlockVector",
     "PlotBlockData",
-    "PlotBlockDataLoader",
     "EnsemblePlotGenDataVector",
     "EnsemblePlotGenData",
     "EnsemblePlotGenKWVector",

@@ -29,7 +29,6 @@ build_and_test () {
 	run build_ert_dev
 	run run_ctest
 	run run_pytest_normal
-	run run_pytest_equinor
 }
 
 setup () {
@@ -140,20 +139,9 @@ run_pytest_normal () {
 
 	# Avoid implicitly loaded cwd modules
 	pushd ${ERT_CLIB_BUILD}
-	python -m pytest -m "not equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
+	python -m pytest --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
-
-
-run_pytest_equinor () {
-	run enable_environment
-
-	# Avoid implicitly loaded cwd modules
-	pushd ${ERT_CLIB_BUILD}
-	python -m pytest -m "equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests --eclipse-simulator
-	popd
-}
-
 
 run () {
 	echo ""

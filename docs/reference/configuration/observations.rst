@@ -27,10 +27,6 @@ different classes of observations using the associated keywords:
    can be extracted from an ECLIPSE summary file. Examples are rates from
    separator tests, water cut, GOR, shut in pressures, etc.
 
- - :ref:`BLOCK_OBSERVATION <block_observation>`: For grid dependent observations
-   that can be extracted from ECLIPSE output files. Examples are Well logs, RFTs,
-   PLTs, etc.
-
  - :ref:`GENERAL_OBSERVATION <general_observation>`: All other observations.
    These observations are extracted from ascii files and allows for loading
    of just about anything. Examples: 4D seismic, results from non ECLIPSE
@@ -118,103 +114,6 @@ Here are two examples:
     DAYS     = 911;
     KEY      = GOPR:NESS;
  };
-
-
-
-.. _block_observation:
-
-BLOCK_OBSERVATION keyword
--------------------------
-
-This is observations of variables in grid blocks/cells. The
-observations can be of arbitrary ECLIPSE fields like PRESSURE
-(typically for an RFT), PORO or PERM. A block observation is entered
-with the BLOCK_OBSERVATION keyword. Here is an example of a typical
-block observation:
-
-.. code-block:: none
-
-  BLOCK_OBSERVATION RFT_2006
-  {
-     FIELD = PRESSURE;
-     DATE  = 2006-10-22;
-
-    OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-    OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-    OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
-  };
-
-This will condition on observations of the pressure in grid blocks
-(1,1,1), (2,2,1) and (2,3,1) on the 22 October 2006.
-
-By default the BLOCK_OBSERVATION requires that the specific field
-which has been observed (e.g. PRESSURE in the example above) must have
-been specified in main ERT configuration file using the FIELD keyword,
-and ECLIPSE must be configured to produce a restart file for this
-particular time. Alternatively, it is possible to tell ERT to use the
-summary vector as source of the data:
-
-.. code-block:: none
-
- BLOCK_OBSERVATION RFT_2006
- {
-    FIELD  = PRESSURE;
-    DATE   = 2006-10-22;
-    SOURCE = SUMMARY;
-
-    OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-    OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-    OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 102;  ERROR = 5; };
- };
-
-In this case the data will be loaded from the BPR vectors in the
-summary file.
-
-Note the use of the sub class OBS to specify the actual observed
-values, the observation errors and their grid location. Each OBS shall
-have a unique key within the BLOCK_OBSERVATION instance, and is
-required to have the items I, J, K, VALUE and ERROR. These are the
-grid i, j and k indices for the observation point, the observed value
-and it's standard deviation.
-
-As with a SUMMARY_OBSERVATION, the observation time can be given as either a
-date, days since simulation start (integer or float) or restart number
-(integer). The respective keys for setting giving it as date, days or restart
-number are DATE, DAYS and RESTART. Note that each BLOCK_OBSERVATION instance
-must have an unique global name (RFT_2006 in the example above).
-
-INCLUDE keyword
----------------
-
-Block observations can often be quite long. Thus, it is often a good
-idea to use the special keyword include in order to store the OBS
-structures in a different file. This is done as follows:
-
-.. code-block:: none
-
- BLOCK_OBSERVATION RFT_2006
- {
-    FIELD   = PRESSURE;
-    RESTART = 20;
-
-    include 'RFT_2006_OBS_DATA.txt';
- };
-
-Where the file RFT_2006_OBS_DATA.txt contains the OBS instances::
-
-   OBS P1 { I = 1;  J = 1;  K = 1;   VALUE = 100;  ERROR = 5; };
-   OBS P2 { I = 2;  J = 2;  K = 1;   VALUE = 101;  ERROR = 5; };
-   OBS P3 { I = 2;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
-   OBS P4 { I = 3;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
-   OBS P5 { I = 4;  J = 3;  K = 1;   VALUE = 112;  ERROR = 5; };
-   OBS P6 { I = 5;  J = 3;  K = 1;   VALUE = 122;  ERROR = 5; };
-
-
-Note that the file name / path in the include keyword is relative to
-the location of ERT config file. And that the keyword can be used
-anywhere in the configuration file. However, nested inclusion (use of
-include in a file that has already been included with include) is not
-allowed.
 
 .. _general_observation:
 

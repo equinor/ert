@@ -19,7 +19,6 @@
 
 #include <ert/util/test_util.h>
 
-#include <ert/enkf/block_obs.hpp>
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_plot_genvector.hpp>
 #include <ert/enkf/gen_data.hpp>

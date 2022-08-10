@@ -98,7 +98,7 @@ add_config_test(enkf_ecl_config2 enkf_ecl_config
 add_config_test(enkf_ecl_config_config enkf_ecl_config_config
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert")
 
-foreach(test enkf_gen_data_config enkf_block_obs enkf_obs_fs enkf_time_map)
+foreach(test enkf_gen_data_config enkf_time_map)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
@@ -116,12 +116,6 @@ add_equinor_test(
   enkf_gen_data_config enkf_gen_data_config
   "${EQUINOR_TEST_DATA_DIR}/config/gendata_test/RFT_E-3H_21"
   "${EQUINOR_TEST_DATA_DIR}/config/gendata_test/RFT_E-3H_21_empty")
-
-add_equinor_test(enkf_block_obs enkf_block_obs
-                 "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/Gurbat/ECLIPSE.EGRID")
-
-add_equinor_test(enkf_obs_fs enkf_obs_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/obs_testing/config")
 
 add_equinor_test(enkf_time_map1 enkf_time_map)
 add_equinor_test(

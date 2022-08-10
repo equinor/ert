@@ -5,8 +5,6 @@ import pandas as pd
 import pytest
 from ert.data import loader
 
-from .mocked_block_observation import MockedBlockObservation
-
 
 def create_summary_get_observations():
     return pd.DataFrame(
@@ -20,7 +18,7 @@ def mocked_obs_node_get_index_nr(nr):
 
 @pytest.mark.parametrize(
     "obs_type",
-    ["GEN_OBS", "SUMMARY_OBS", "BLOCK_OBS"],
+    ["GEN_OBS", "SUMMARY_OBS"],
 )
 def test_data_loader_factory(obs_type):
     # pylint: disable=comparison-with-callable
@@ -78,9 +76,7 @@ def test_load_general_obs(facade, monkeypatch):
     assert all(result.values.flatten() == [10.0, 20.0, 30.0, 1.0, 2.0, 3.0])
 
 
-@pytest.mark.parametrize(
-    "func", [loader.data_loader_factory("GEN_OBS"), loader.load_general_data]
-)
+@pytest.mark.parametrize("func", [loader.load_general_data])
 def test_load_general_data(facade, monkeypatch, func):
     def side_effect(val):
         if val == "some_key@2":
@@ -119,39 +115,6 @@ def test_load_general_data(facade, monkeypatch, func):
     assert result.index.to_list() == ["OBS", "STD", 0]
     assert all(
         result.values.flatten() == [10.0, 20.0, 30.0, 1.0, 2.0, 3.0, 9.9, 29.9, 39.9]
-    )
-
-
-@pytest.mark.usefixtures("facade")
-def test_load_block_response(facade, monkeypatch):
-    obs_mock = Mock()
-    obs_mock.getStepList.return_value = [1]
-    facade.get_observations.return_value = {"some_key": obs_mock}
-
-    mocked_get_block_measured = Mock(
-        return_value=pd.DataFrame(data=[[10.0, 10.0, 10.0, 10.0]])
-    )
-
-    monkeypatch.setattr(loader, "_get_block_measured", mocked_get_block_measured)
-    block_data = Mock()
-    plot_block_data_loader = Mock()
-    facade.create_plot_block_data_loader.return_value = plot_block_data_loader
-    plot_block_data_loader.load.return_value = block_data
-
-    mocked_block_obs = MockedBlockObservation(
-        {"values": [10.0, None, 10.0, 10.0], "stds": [1.0, None, 1.0, 1.0]}
-    )
-    plot_block_data_loader.getBlockObservation.return_value = mocked_block_obs
-
-    result = loader._load_block_response(facade, "some_key", "a_random_name")
-    mocked_get_block_measured.assert_called_once_with(
-        facade.get_ensemble_size(), block_data
-    )
-    assert result.equals(
-        pd.DataFrame(
-            [[10.0, 10.0, 10.0, 10.0]],
-            index=[0],
-        )
     )
 
 
@@ -243,19 +206,22 @@ def test_no_obs_error(facade, monkeypatch):
         )
 
 
-def test_multiple_obs_types(facade, monkeypatch):
+def test_that_its_not_possible_to_load_multiple_different_obs_types(facade):
     facade.get_impl_type_name_for_obs_key.side_effect = [
         "SUMMARY_OBS",
-        "SUMMARY_OBS",
-        "BLOCK_OBS",
+        "GEN_OBS",
     ]
     with pytest.raises(
         loader.ObservationError,
-        match=r"Found: \['SUMMARY_OBS', 'SUMMARY_OBS', 'BLOCK_OBS'\]",
+        match=(
+            r"Expected only SUMMARY_OBS observation type. "
+            r"Found: \['SUMMARY_OBS', 'GEN_OBS'\] for "
+            r"\['some_summary_key', 'block_key'\]"
+        ),
     ):
         loader._extract_data(
             facade,
-            ["some_summary_key", "another_summary_key", "block_key"],
+            ["some_summary_key", "block_key"],
             "a_random_name",
             Mock(),
             Mock(),
@@ -285,9 +251,7 @@ def test_different_data_key(facade):
 
 
 @deprecation.fail_if_not_removed
-@pytest.mark.parametrize(
-    "func", [loader.load_general_data, loader.load_summary_data, loader.load_block_data]
-)
+@pytest.mark.parametrize("func", [loader.load_general_data, loader.load_summary_data])
 def test_deprecated_entry_points(facade, monkeypatch, func):
     facade = MagicMock()
     extract_data = MagicMock()

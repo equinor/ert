@@ -402,7 +402,7 @@ static void enkf_obs_get_obs_and_measure_node(
         return;
     }
 
-    // obs_type is GEN_OBS or BLOCK_OBS
+    // obs_type is GEN_OBS
     int report_step = -1;
     while (true) {
         report_step = obs_vector_get_next_active_step(obs_vector, report_step);
@@ -562,37 +562,16 @@ static void handle_summary_observation(enkf_obs_type *enkf_obs,
     stringlist_free(sum_obs_keys);
 }
 
-/** Handle BLOCK_OBSERVATION instances. */
-static void handle_block_observation(enkf_obs_type *enkf_obs,
-                                     conf_instance_type *enkf_conf) {
-    stringlist_type *block_obs_keys =
-        conf_instance_alloc_list_of_sub_instances_of_class_by_name(
-            enkf_conf, "BLOCK_OBSERVATION");
-    int num_block_obs = stringlist_get_size(block_obs_keys);
-
-    for (int i = 0; i < num_block_obs; i++) {
-        const char *obs_key = stringlist_iget(block_obs_keys, i);
-        const conf_instance_type *block_obs_conf =
-            conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-        obs_vector_type *obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(
-            block_obs_conf, enkf_obs->grid, enkf_obs->obs_time,
-            enkf_obs->refcase, enkf_obs->ensemble_config);
-        if (obs_vector != NULL)
-            enkf_obs_add_obs_vector(enkf_obs, obs_vector);
-    }
-    stringlist_free(block_obs_keys);
-}
-
 /** Handle GENERAL_OBSERVATION instances. */
 static void handle_general_observation(enkf_obs_type *enkf_obs,
                                        conf_instance_type *enkf_conf) {
-    stringlist_type *block_obs_keys =
+    stringlist_type *obs_keys =
         conf_instance_alloc_list_of_sub_instances_of_class_by_name(
             enkf_conf, "GENERAL_OBSERVATION");
-    int num_block_obs = stringlist_get_size(block_obs_keys);
+    int num_obs = stringlist_get_size(obs_keys);
 
-    for (int i = 0; i < num_block_obs; i++) {
-        const char *obs_key = stringlist_iget(block_obs_keys, i);
+    for (int i = 0; i < num_obs; i++) {
+        const char *obs_key = stringlist_iget(obs_keys, i);
         const conf_instance_type *gen_obs_conf =
             conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
 
@@ -601,7 +580,7 @@ static void handle_general_observation(enkf_obs_type *enkf_obs,
         if (obs_vector != NULL)
             enkf_obs_add_obs_vector(enkf_obs, obs_vector);
     }
-    stringlist_free(block_obs_keys);
+    stringlist_free(obs_keys);
 }
 
 static void enkf_obs_reinterpret_DT_FILE(const char *errors) {
@@ -646,7 +625,6 @@ void enkf_obs_load(enkf_obs_type *enkf_obs, const char *config_file,
 
     handle_history_observation(enkf_obs, enkf_conf, last_report, std_cutoff);
     handle_summary_observation(enkf_obs, enkf_conf, last_report);
-    handle_block_observation(enkf_obs, enkf_conf);
     handle_general_observation(enkf_obs, enkf_conf);
 
     conf_instance_free(enkf_conf);
@@ -860,142 +838,6 @@ conf_class_type *enkf_obs_get_obs_conf_class(void) {
 
         conf_class_insert_owned_sub_class(enkf_conf_class,
                                           summary_observation_class);
-    }
-
-    /* Create and insert BLOCK_OBSERVATION class. */
-    {
-        const char *help_class_block_observation =
-            "The class BLOCK_OBSERVATION can be used to condition on an "
-            "observation whos simulated values are block/cell values of a "
-            "field, e.g. RFT tests.";
-        conf_class_type *block_observation_class = conf_class_alloc_empty(
-            "BLOCK_OBSERVATION", false, false, help_class_block_observation);
-
-        const char *help_item_spec_field =
-            "The item FIELD gives the observed field. E.g., ECLIPSE fields "
-            "such as PRESSURE, SGAS or any user defined fields such as PORO or "
-            "PERMX.";
-        conf_item_spec_type *item_spec_field =
-            conf_item_spec_alloc("FIELD", true, DT_STR, help_item_spec_field);
-
-        const char *help_item_spec_date =
-            "The DATE item gives the observation time as the date date it "
-            "occured. Format is YYYY-MM-DD.";
-        conf_item_spec_type *item_spec_date =
-            conf_item_spec_alloc("DATE", false, DT_DATE, help_item_spec_date);
-
-        const char *help_item_spec_days =
-            "The DAYS item gives the observation time as days after simulation "
-            "start.";
-        conf_item_spec_type *item_spec_days = conf_item_spec_alloc(
-            "DAYS", false, DT_POSFLOAT, help_item_spec_days);
-
-        const char *help_item_spec_hours =
-            "The HOURS item gives the observation time as hours after "
-            "simulation start.";
-        conf_item_spec_type *item_spec_hours = conf_item_spec_alloc(
-            "HOURS", false, DT_POSFLOAT, help_item_spec_hours);
-
-        const char *help_item_spec_restart =
-            "The RESTART item gives the observation time as the ECLIPSE "
-            "restart nr.";
-        conf_item_spec_type *item_spec_restart = conf_item_spec_alloc(
-            "RESTART", false, DT_POSINT, help_item_spec_restart);
-
-        conf_item_spec_type *item_spec_source = conf_item_spec_alloc(
-            "SOURCE", false, DT_STR,
-            "The simulated data can be taken from the field or summary keys.");
-
-        conf_item_spec_add_restriction(item_spec_source, "FIELD");
-        conf_item_spec_add_restriction(item_spec_source, "SUMMARY");
-        conf_item_spec_set_default_value(item_spec_source, "FIELD");
-
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_source);
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_field);
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_date);
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_days);
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_restart);
-        conf_class_insert_owned_item_spec(block_observation_class,
-                                          item_spec_hours);
-        /* Create a mutex on DATE, DAYS and RESTART. */
-        {
-            conf_item_mutex_type *time_mutex =
-                conf_class_new_item_mutex(block_observation_class, true, false);
-            conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
-            conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
-            conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
-            conf_item_mutex_add_item_spec(time_mutex, item_spec_hours);
-        }
-
-        /* Create and insert the sub class OBS. */
-        {
-            const char *help_class_obs =
-                "The class OBS is used to specify a single observed point.";
-            conf_class_type *obs_class =
-                conf_class_alloc_empty("OBS", true, false, help_class_obs);
-
-            const char *help_item_i =
-                "The item I gives the I index of the block observation.";
-            conf_item_spec_type *item_spec_i =
-                conf_item_spec_alloc("I", true, DT_POSINT, help_item_i);
-
-            const char *help_item_j =
-                "The item J gives the J index of the block observation.";
-            conf_item_spec_type *item_spec_j =
-                conf_item_spec_alloc("J", true, DT_POSINT, help_item_j);
-
-            const char *help_item_k =
-                "The item K gives the K index of the block observation.";
-            conf_item_spec_type *item_spec_k =
-                conf_item_spec_alloc("K", true, DT_POSINT, help_item_k);
-
-            const char *help_item_spec_value =
-                "The floating point number VALUE gives the observed value.";
-            conf_item_spec_type *item_spec_value = conf_item_spec_alloc(
-                "VALUE", true, DT_FLOAT, help_item_spec_value);
-
-            const char *help_item_spec_error =
-                "The positive floating point number ERROR is the standard "
-                "deviation of the observed value.";
-            conf_item_spec_type *item_spec_error = conf_item_spec_alloc(
-                "ERROR", true, DT_POSFLOAT, help_item_spec_error);
-
-            conf_item_spec_type *item_spec_error_mode =
-                conf_item_spec_alloc("ERROR_MODE", true, DT_STR,
-                                     "The string ERROR_MODE gives the error "
-                                     "mode for the observation.");
-
-            conf_item_spec_type *item_spec_error_min = conf_item_spec_alloc(
-                "ERROR_MIN", true, DT_POSFLOAT,
-                "The positive floating point number ERROR_MIN gives the "
-                "minimum value for the standard deviation of the observation "
-                "when RELMIN is used.");
-
-            conf_item_spec_add_restriction(item_spec_error_mode, "REL");
-            conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
-            conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
-            conf_item_spec_set_default_value(item_spec_error_mode, "ABS");
-            conf_item_spec_set_default_value(item_spec_error_min, "0.10");
-
-            conf_class_insert_owned_item_spec(obs_class, item_spec_i);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_j);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_k);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_value);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_error);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_error_mode);
-            conf_class_insert_owned_item_spec(obs_class, item_spec_error_min);
-
-            conf_class_insert_owned_sub_class(block_observation_class,
-                                              obs_class);
-        }
-
-        conf_class_insert_owned_sub_class(enkf_conf_class,
-                                          block_observation_class);
     }
 
     /* Create and insert class for general observations. */

@@ -147,47 +147,6 @@ def test_gen_obs(monkeypatch, facade_snake_oil, formatted_date):
     )
 
 
-@pytest.mark.parametrize("formatted_date", ["2010-01-10", "10/1/2010", "10.1.2010"])
-def test_block_obs(monkeypatch, tmpdir, formatted_date):
-    """
-    This test causes util_abort on some runs, so it will not be run by default
-    as it is too flaky. I have chosen to leave it here as it could be useful when
-    debugging. To run the test, run an ensemble_experiment on the snake_oil_field
-    case to create a storage with BLOCK_OBS.
-    """
-    with tmpdir.as_cwd():
-        test_data_dir = pathlib.Path(test_data_root) / "snake_oil_field"
-        if not (test_data_dir / "storage").exists():
-            pytest.skip()
-        else:
-            shutil.copytree(test_data_dir, "test_data")
-            os.chdir("test_data")
-
-            block_obs = (
-                "\n"
-                "BLOCK_OBSERVATION RFT_2006\n"
-                "{\n"
-                "   FIELD = PRESSURE;\n"
-                f"   DATE  = {formatted_date};\n"
-                "   SOURCE = SUMMARY;\n"
-                "   OBS P1 { I = 5;  J = 5;  K = 5;   VALUE = 100;  ERROR = 5; };\n"
-                "   OBS P2 { I = 1;  J = 3;  K = 8;   VALUE = 50;  ERROR = 2; };\n"
-                "};\n"
-            )
-            obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-            with obs_file.open(mode="a") as fin:
-                fin.write(block_obs)
-
-            res_config = ResConfig("snake_oil.ert")
-            ert = EnKFMain(res_config)
-            facade = LibresFacade(ert)
-
-            df = MeasuredData(facade, ["RFT_2006"])
-            df.remove_inactive_observations()
-            assert all(df.data.columns.get_level_values("data_index").values == [0, 1])
-            assert all(df.data.columns.get_level_values("key_index").values == [0, 1])
-
-
 def test_gen_obs_and_summary(monkeypatch, facade_snake_oil):
     df = MeasuredData(facade_snake_oil, ["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()

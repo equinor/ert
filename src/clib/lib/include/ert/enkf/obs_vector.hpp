@@ -40,7 +40,7 @@
 #include <ert/enkf/obs_data.hpp>
 #include <ert/enkf/time_map.hpp>
 
-typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2, BLOCK_OBS = 3 } obs_impl_type;
+typedef enum { GEN_OBS = 1, SUMMARY_OBS = 2 } obs_impl_type;
 
 typedef struct obs_vector_struct obs_vector_type;
 
@@ -92,10 +92,6 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type *obs_vector,
                                               const history_type *,
                                               ensemble_config_type *,
                                               double std_cutoff);
-obs_vector_type *obs_vector_alloc_from_BLOCK_OBSERVATION(
-    const conf_instance_type *, const ecl_grid_type *grid,
-    time_map_type *obs_time, const ecl_sum_type *refcase,
-    ensemble_config_type *);
 extern "C" obs_vector_type *obs_vector_alloc(obs_impl_type obs_type,
                                              const char *obs_key,
                                              enkf_config_node_type *config_node,

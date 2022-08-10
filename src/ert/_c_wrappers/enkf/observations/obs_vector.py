@@ -21,7 +21,6 @@ from ert import _clib
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.config import EnkfConfigNode
 from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
-from ert._c_wrappers.enkf.observations.block_observation import BlockObservation
 from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
 from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
@@ -85,17 +84,12 @@ class ObsVector(BaseCClass):
     def getObsKey(self) -> str:
         return self._get_obs_key()
 
-    def getNode(
-        self, index: int
-    ) -> Union[SummaryObservation, BlockObservation, GenObservation]:
-
+    def getNode(self, index: int) -> Union[SummaryObservation, GenObservation]:
         pointer = self._iget_node(index)
 
         node_type = self.getImplementationType()
         if node_type == EnkfObservationImplementationType.SUMMARY_OBS:
             return SummaryObservation.createCReference(pointer, self)
-        elif node_type == EnkfObservationImplementationType.BLOCK_OBS:
-            return BlockObservation.createCReference(pointer, self)
         elif node_type == EnkfObservationImplementationType.GEN_OBS:
             return GenObservation.createCReference(pointer, self)
         else:
