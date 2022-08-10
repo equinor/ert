@@ -36,4 +36,4 @@ jobs:
         mypy --disallow-untyped-defs --ignore-missing-imports src/ert_shared/models
     - name: Run strict mypy
       run: |
-        mypy src/ert --exclude src/ert/logging --exclude src/ert/ert3/examples --config-file .mypy-strict.ini
+        mypy src/ert --config-file .mypy-strict.ini
