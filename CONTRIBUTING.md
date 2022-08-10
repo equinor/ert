@@ -32,12 +32,12 @@ We expect commit messages to follow the style described [here](https://chris.bea
 You can build the documentation after installation by running
 ```bash
 pip install -r dev-requirements.txt
-sphinx-build -n -v -E -W ./docs/rst/manual ./tmp/ert_docs
+sphinx-build -n -v -E -W ./docs ./tmp/ert_docs
 ```
 and then open the generated `./tmp/ert_docs/index.html` in a browser.
 
 To automatically reload on changes you may use
 
 ```bash
-sphinx-autobuild docs/rst/manual docs/_build/html
+sphinx-autobuild docs docs/_build/html
 ```
