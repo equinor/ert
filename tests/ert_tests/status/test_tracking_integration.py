@@ -424,16 +424,17 @@ def test_tracking_missing_ecl(
                 if isinstance(event, EndEvent):
                     failures.append(event)
         assert (
-            f"Realization: 0 failed after reaching max submit with: Could not load "
-            f"ECLIPSE summary data from: {Path().absolute()}/simulations/"
-            f"realization0/ECLIPSE_CASE.UNSMRY"
+            f"Realization: 0 failed after reaching max submit with: Could not find "
+            f"SUMMARY file or using non unified SUMMARY file from: "
+            f"{Path().absolute()}/simulations/realization0/ECLIPSE_CASE.UNSMRY"
         ) in caplog.messages
 
         # Just also check that it failed for the expected reason
         assert len(failures) == 1
         assert (
-            f"Could not find SUMMARY file at: {Path().absolute()}/simulations/"
-            f"realization0/ECLIPSE_CASE or using non unified SUMMARY file"
+            f"Realization: 0 failed after reaching max submit with: Could not find "
+            f"SUMMARY file or using non unified SUMMARY file from: "
+            f"{Path().absolute()}/simulations/realization0/ECLIPSE_CASE.UNSMRY"
         ) in failures[0].failed_msg
 
         thread.join()

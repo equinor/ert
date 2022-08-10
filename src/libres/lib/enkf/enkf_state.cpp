@@ -173,7 +173,6 @@ ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
     char *unified_file = ecl_util_alloc_exfilename(
         run_path, eclbase, ECL_UNIFIED_SUMMARY_FILE, fmt_file, -1);
     stringlist_type *data_files = stringlist_alloc_new();
-
     if ((unified_file != NULL) && (header_file != NULL)) {
         stringlist_append_copy(data_files, unified_file);
 
@@ -219,11 +218,11 @@ ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
                 summary = NULL;
             }
         }
-    } else
-        logger->error("Could not find SUMMARY file at: {}/{} or using non "
-                      "unified SUMMARY file",
-                      run_path, eclbase);
-
+    } else {
+        stringlist_free(data_files);
+        throw std::invalid_argument(
+            "Could not find SUMMARY file or using non unified SUMMARY file");
+    }
     stringlist_free(data_files);
     free(header_file);
     free(unified_file);
@@ -299,83 +298,62 @@ enkf_state_check_for_missing_eclipse_summary_data(
 static std::pair<fw_load_status, std::string>
 enkf_state_internalize_dynamic_eclipse_results(
     ensemble_config_type *ens_config, const ecl_sum_type *summary,
-    const model_config_type *model_config, enkf_fs_type *sim_fs,
+    const summary_key_matcher_type *matcher, enkf_fs_type *sim_fs,
     const int iens) {
+    int load_start = 0;
 
-    bool load_summary = ensemble_config_has_impl_type(ens_config, SUMMARY);
-    const summary_key_matcher_type *matcher =
-        ensemble_config_get_summary_key_matcher(ens_config);
-    int matcher_size = summary_key_matcher_get_size(matcher);
-
-    if (load_summary || matcher_size > 0 || summary) {
-        int load_start = 0;
-
-        if (load_start == 0) {
-            // Do not attempt to load the "S0000" summary results.
-            load_start++;
-        }
-
-        {
-            // OK - now we have actually loaded the ecl_sum instance, or
-            // ecl_sum == NULL.
-            if (summary) {
-                time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
-                auto status = time_map_summary_update(time_map, summary);
-                if (!status.empty()) {
-                    // Something has gone wrong in checking time map, fail
-                    return {TIME_MAP_FAILURE, status};
-                }
-                int_vector_type *time_index =
-                    time_map_alloc_index_map(time_map, summary);
-
-                // The actual loading internalizing - from ecl_sum -> enkf_node.
-                // step2 is just taken from the number of steps found in the
-                // summary file.
-                const int step2 = ecl_sum_get_last_report_step(summary);
-
-                int_vector_iset_block(time_index, 0, load_start, -1);
-                int_vector_resize(time_index, step2 + 1, -1);
-
-                const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
-
-                for (int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
-                    const ecl::smspec_node &smspec_node =
-                        ecl_smspec_iget_node_w_node_index(smspec, i);
-                    const char *key = smspec_node.get_gen_key1();
-
-                    if (summary_key_matcher_match_summary_key(matcher, key)) {
-                        summary_key_set_type *key_set =
-                            enkf_fs_get_summary_key_set(sim_fs);
-                        summary_key_set_add_summary_key(key_set, key);
-
-                        enkf_config_node_type *config_node =
-                            ensemble_config_get_or_create_summary_node(
-                                ens_config, key);
-                        enkf_node_type *node = enkf_node_alloc(config_node);
-
-                        // Ensure that what is currently on file is loaded
-                        // before we update.
-                        enkf_node_try_load_vector(node, sim_fs, iens);
-
-                        enkf_node_forward_load_vector(node, summary,
-                                                      time_index);
-                        enkf_node_store_vector(node, sim_fs, iens);
-                        enkf_node_free(node);
-                    }
-                }
-                int_vector_free(time_index);
-
-                // Check if some of the specified keys are missing from the Eclipse
-                // data, and if there are observations for them. That is a problem.
-                return enkf_state_check_for_missing_eclipse_summary_data(
-                    ens_config, matcher, smspec, iens);
-            } else {
-                return {LOAD_FAILURE, "Could not load ECLIPSE summary data"};
-            }
-        }
-    } else {
-        return {LOAD_SUCCESSFUL, ""};
+    if (load_start == 0) {
+        // Do not attempt to load the "S0000" summary results.
+        load_start++;
     }
+
+    time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
+    auto status = time_map_summary_update(time_map, summary);
+    if (!status.empty()) {
+        // Something has gone wrong in checking time map, fail
+        return {TIME_MAP_FAILURE, status};
+    }
+    int_vector_type *time_index = time_map_alloc_index_map(time_map, summary);
+
+    // The actual loading internalizing - from ecl_sum -> enkf_node.
+    // step2 is just taken from the number of steps found in the
+    // summary file.
+    const int step2 = ecl_sum_get_last_report_step(summary);
+
+    int_vector_iset_block(time_index, 0, load_start, -1);
+    int_vector_resize(time_index, step2 + 1, -1);
+
+    const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
+
+    for (int i = 0; i < ecl_smspec_num_nodes(smspec); i++) {
+        const ecl::smspec_node &smspec_node =
+            ecl_smspec_iget_node_w_node_index(smspec, i);
+        const char *key = smspec_node.get_gen_key1();
+
+        if (summary_key_matcher_match_summary_key(matcher, key)) {
+            summary_key_set_type *key_set = enkf_fs_get_summary_key_set(sim_fs);
+            summary_key_set_add_summary_key(key_set, key);
+
+            enkf_config_node_type *config_node =
+                ensemble_config_get_or_create_summary_node(ens_config, key);
+            enkf_node_type *node = enkf_node_alloc(config_node);
+
+            // Ensure that what is currently on file is loaded
+            // before we update.
+            enkf_node_try_load_vector(node, sim_fs, iens);
+
+            enkf_node_forward_load_vector(node, summary, time_index);
+            enkf_node_store_vector(node, sim_fs, iens);
+            enkf_node_free(node);
+        }
+    }
+    int_vector_free(time_index);
+
+    // Check if some of the specified keys are missing from the Eclipse
+    // data, and if there are observations for them. That is a problem.
+    return enkf_state_check_for_missing_eclipse_summary_data(
+        ens_config, matcher, smspec, iens);
+    return {LOAD_SUCCESSFUL, ""};
 }
 
 static fw_load_status enkf_state_load_gen_data_node(
@@ -447,23 +425,6 @@ static fw_load_status enkf_state_internalize_GEN_DATA(
     return result;
 }
 
-static ecl_sum_type *
-enkf_state_load_ecl_summary(const ensemble_config_type *ens_config,
-                            const ecl_config_type *ecl_config,
-                            const run_arg_type *run_arg) {
-    bool load_summary = false;
-    const summary_key_matcher_type *matcher =
-        ensemble_config_get_summary_key_matcher(ens_config);
-    if (summary_key_matcher_get_size(matcher) > 0 ||
-        ensemble_config_require_summary(ens_config))
-        load_summary = true;
-
-    if (load_summary)
-        return load_ecl_sum(ecl_config, run_arg_get_runpath(run_arg),
-                            run_arg_get_job_name(run_arg));
-    return NULL;
-}
-
 /**
    This function loads the results from a forward simulations from report_step1
    to report_step2. The details of what to load are in model_config and the
@@ -475,25 +436,36 @@ enkf_state_load_ecl_summary(const ensemble_config_type *ens_config,
 static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     ensemble_config_type *ens_config, model_config_type *model_config,
     const ecl_config_type *ecl_config, const run_arg_type *run_arg) {
+    const summary_key_matcher_type *matcher =
+        ensemble_config_get_summary_key_matcher(ens_config);
 
-    ecl_sum_type *summary =
-        enkf_state_load_ecl_summary(ens_config, ecl_config, run_arg);
-    std::pair<fw_load_status, std::string> status = {LOAD_SUCCESSFUL, ""};
-    // The timing information - i.e. mainly what is the last report step
-    // in these results are inferred from the loading of summary results,
-    // hence we must load the summary results first.
-
-    status = enkf_state_internalize_dynamic_eclipse_results(
-        ens_config, summary, model_config, run_arg_get_sim_fs(run_arg),
-        run_arg_get_iens(run_arg));
-    if (summary)
-        ecl_sum_free(summary);
-
-    if (status.first != LOAD_SUCCESSFUL) {
-        return {status.first,
-                status.second + fmt::format(" from: {}/{}.UNSMRY",
+    if (summary_key_matcher_get_size(matcher) > 0 ||
+        ensemble_config_require_summary(ens_config)) {
+        // We are expecting there to be summary data
+        // The timing information - i.e. mainly what is the last report step
+        // in these results are inferred from the loading of summary results,
+        // hence we must load the summary results first.
+        try {
+            auto summary =
+                load_ecl_sum(ecl_config, run_arg_get_runpath(run_arg),
+                             run_arg_get_job_name(run_arg));
+            auto status = enkf_state_internalize_dynamic_eclipse_results(
+                ens_config, summary, matcher, run_arg_get_sim_fs(run_arg),
+                run_arg_get_iens(run_arg));
+            ecl_sum_free(summary);
+            if (status.first != LOAD_SUCCESSFUL) {
+                return {status.first,
+                        status.second +
+                            fmt::format(" from: {}/{}.UNSMRY",
+                                        run_arg_get_runpath(run_arg),
+                                        run_arg_get_job_name(run_arg))};
+            }
+        } catch (std::invalid_argument const &ex) {
+            return {LOAD_FAILURE,
+                    ex.what() + fmt::format(" from: {}/{}.UNSMRY",
                                             run_arg_get_runpath(run_arg),
                                             run_arg_get_job_name(run_arg))};
+        }
     }
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
@@ -503,8 +475,8 @@ static std::pair<fw_load_status, std::string> enkf_state_internalize_results(
     auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
                                                   model_config, last_report);
     if (result == LOAD_FAILURE)
-        status = {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
-    return status;
+        return {LOAD_FAILURE, "Failed to internalize GEN_DATA"};
+    return {LOAD_SUCCESSFUL, ""};
 }
 
 static std::pair<fw_load_status, std::string>
