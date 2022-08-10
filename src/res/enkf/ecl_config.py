@@ -15,12 +15,11 @@
 #  for more details.
 
 import os
-from datetime import datetime
 
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import CTime, StringList
+from ecl.util.util import StringList
 
 from res import ResPrototype
 from res.util import UIReturn
@@ -38,7 +37,6 @@ class EclConfig(BaseCClass):
                                                                             ecl_grid, \
                                                                             char*, \
                                                                             stringlist, \
-                                                                            time_t, \
                                                                             char*)",  # noqa
         bind=False,
     )
@@ -67,7 +65,6 @@ class EclConfig(BaseCClass):
     _get_last_history_restart = ResPrototype(
         "int ecl_config_get_last_history_restart(ecl_config)"
     )
-    _get_end_date = ResPrototype("time_t ecl_config_get_end_date(ecl_config)")
     _get_num_cpu = ResPrototype("int ecl_config_get_num_cpu(ecl_config)")
 
     def __init__(self, config_content=None, config_dict=None):
@@ -110,25 +107,6 @@ class EclConfig(BaseCClass):
             for refcase in config_dict.get(ConfigKeys.REFCASE_LIST, []):
                 refcase_list.append(refcase)
 
-            # END_DATE_KEY
-            try:
-                end_date = CTime(
-                    datetime.strptime(
-                        config_dict.get(ConfigKeys.END_DATE, "1969-12-31"), "%Y-%m-%d"
-                    )
-                )
-            except ValueError:
-                print(
-                    "Deprecation warning: The date format DD/MM/YYYY is deprecated, "
-                    "and its support will be removed in a future release. "
-                    "Please use ISO date format YYYY-MM-DD."
-                )
-                end_date = CTime(
-                    datetime.strptime(
-                        config_dict.get(ConfigKeys.END_DATE, "31/12/1969"), "%d/%m/%Y"
-                    )
-                )
-
             # SCHEDULE_PREDICTION_FILE_KEY
             schedule_prediction_file = config_dict.get(
                 ConfigKeys.SCHEDULE_PREDICTION_FILE
@@ -140,7 +118,6 @@ class EclConfig(BaseCClass):
                 grid,
                 refcase_default,
                 refcase_list,
-                end_date,
                 schedule_prediction_file,
             )
             if grid is not None:
@@ -210,9 +187,6 @@ class EclConfig(BaseCClass):
 
     # -----------------------------------------------------------------
 
-    def getEndDate(self):
-        return self._get_end_date()
-
     def active(self):
         """
         Has ECLIPSE been configured?"
@@ -243,9 +217,6 @@ class EclConfig(BaseCClass):
             return False
 
         if self.getPressureUnit() != other.getPressureUnit():
-            return False
-
-        if self.getEndDate() != other.getEndDate():
             return False
 
         return True

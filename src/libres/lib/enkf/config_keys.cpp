@@ -25,7 +25,6 @@ RES_LIB_SUBMODULE("config_keys", m) {
     cls.attr("DST_NAME") = "DST_NAME";
     cls.attr("ECLBASE") = ECLBASE_KEY;
     cls.attr("ECL_FILE") = ECL_FILE_KEY;
-    cls.attr("END_DATE") = END_DATE_KEY;
     cls.attr("ENKF_INFILE") = "ENKF_INFILE";
     cls.attr("ENSPATH") = ENSPATH_KEY;
     cls.attr("EXPORT") = "EXPORT";

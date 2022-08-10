@@ -66,7 +66,6 @@ ecl_refcase_list_type *
 ecl_config_get_refcase_list(const ecl_config_type *ecl_config);
 
 extern "C" bool ecl_config_active(const ecl_config_type *config);
-extern "C" time_t ecl_config_get_end_date(const ecl_config_type *ecl_config);
 
 const char *
 ecl_config_get_schedule_prediction_file(const ecl_config_type *ecl_config);
@@ -90,7 +89,7 @@ ecl_config_alloc(const config_content_type *config_content);
 extern "C" PY_USED ecl_config_type *
 ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
                       char *refcase_default, stringlist_type *ref_case_list,
-                      time_t end_date, char *sched_prediction_file);
+                      char *sched_prediction_file);
 void ecl_config_add_config_items(config_parser_type *config);
 extern "C" const char *
 ecl_config_get_depth_unit(const ecl_config_type *ecl_config);

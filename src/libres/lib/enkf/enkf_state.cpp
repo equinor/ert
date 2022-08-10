@@ -203,21 +203,6 @@ ecl_sum_type *load_ecl_sum(const ecl_config_type *ecl_config,
                 header_file, data_files, SUMMARY_KEY_JOIN_STRING,
                 include_restart, lazy_load, file_options);
         }
-
-        {
-            time_t end_time = ecl_config_get_end_date(ecl_config);
-            if (end_time > 0) {
-                if (ecl_sum_get_end_time(summary) < end_time) {
-                    /* The summary vector was shorter than expected; we interpret this as
-               a simulation failure and discard the current summary instance. */
-                    logger->error("The summary vector was shorter (end: "
-                                  "{}) than expected (end: {})",
-                                  ecl_sum_get_end_time(summary), end_time);
-                }
-                ecl_sum_free(summary);
-                summary = NULL;
-            }
-        }
     } else {
         stringlist_free(data_files);
         throw std::invalid_argument(

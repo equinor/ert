@@ -57,7 +57,6 @@ struct ecl_config_struct {
     char *data_file;
     /** An optional date value which can be used to check if the ECLIPSE
      * simulation has been 'long enough'. */
-    time_t end_date;
     ecl_refcase_list_type *refcase_list;
     /** The grid which is active for this model. */
     ecl_grid_type *grid;
@@ -153,15 +152,6 @@ const char *ecl_config_get_data_file(const ecl_config_type *ecl_config) {
     return ecl_config->data_file;
 }
 
-time_t ecl_config_get_end_date(const ecl_config_type *ecl_config) {
-    return ecl_config->end_date;
-}
-
-static void ecl_config_set_end_date(ecl_config_type *ecl_config,
-                                    time_t end_date) {
-    ecl_config->end_date = end_date;
-}
-
 int ecl_config_get_num_cpu(const ecl_config_type *ecl_config) {
     return ecl_config->num_cpu;
 }
@@ -252,7 +242,6 @@ static ecl_config_type *ecl_config_alloc_empty(void) {
     ecl_config->data_file = NULL;
     ecl_config->grid = NULL;
     ecl_config->can_restart = false;
-    ecl_config->end_date = -1;
     ecl_config->schedule_prediction_file = NULL;
     ecl_config->refcase_list = ecl_refcase_list_alloc();
 
@@ -268,10 +257,11 @@ ecl_config_type *ecl_config_alloc(const config_content_type *config_content) {
     return ecl_config;
 }
 
-ecl_config_type *
-ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
-                      char *refcase_default, stringlist_type *ref_case_list,
-                      time_t end_date, char *sched_prediction_file) {
+ecl_config_type *ecl_config_alloc_full(bool have_eclbase, char *data_file,
+                                       ecl_grid_type *grid,
+                                       char *refcase_default,
+                                       stringlist_type *ref_case_list,
+                                       char *sched_prediction_file) {
     ecl_config_type *ecl_config = ecl_config_alloc_empty();
     ecl_config->have_eclbase = have_eclbase;
     ecl_config->grid = grid;
@@ -286,7 +276,6 @@ ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
     if (refcase_default)
         ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
 
-    ecl_config->end_date = end_date;
     if (sched_prediction_file)
         ecl_config->schedule_prediction_file =
             util_alloc_string_copy(sched_prediction_file);
@@ -368,28 +357,6 @@ static void handle_has_refcase_list_key(ecl_config_type *ecl_config,
     }
 }
 
-static void handle_has_end_date_key(ecl_config_type *ecl_config,
-                                    const config_content_type *config) {
-    const char *date_string = config_content_get_value(config, END_DATE_KEY);
-    time_t end_date;
-    bool end_date_parsed_ok = util_sscanf_isodate(date_string, &end_date);
-    if (!end_date_parsed_ok) {
-        end_date_parsed_ok = util_sscanf_date_utc(date_string, &end_date);
-        fprintf(stderr,
-                "** Deprecation warning: The date format as in \'%s\' is "
-                "deprecated, and its support will be removed in a future "
-                "release. Please use ISO date format YYYY-MM-DD.\n",
-                date_string);
-    }
-    if (end_date_parsed_ok)
-        ecl_config_set_end_date(ecl_config, end_date);
-    else
-        fprintf(stderr,
-                "** WARNING **: Failed to parse %s as a date - should be in "
-                "format YYYY-MM-DD.\n",
-                date_string);
-}
-
 static void
 handle_has_schedule_prediction_file_key(ecl_config_type *ecl_config,
                                         const config_content_type *config) {
@@ -427,9 +394,6 @@ void ecl_config_init(ecl_config_type *ecl_config,
             "            for this functionality has been removed. libres will "
             "not\n"
             "            be able to properly initialize the ECLIPSE MODEL.\n");
-
-    if (config_content_has_item(config, END_DATE_KEY))
-        handle_has_end_date_key(ecl_config, config);
 
     if (config_content_has_item(config, SCHEDULE_PREDICTION_FILE_KEY))
         handle_has_schedule_prediction_file_key(ecl_config, config);
@@ -545,9 +509,6 @@ void ecl_config_add_config_items(config_parser_type *config) {
     item = config_add_schema_item(config, GRID_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, END_DATE_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
 }
 
 /** Units as specified in the ECLIPSE technical manual */

@@ -148,7 +148,6 @@ config_data_new = {
     ConfigKeys.RUNPATH: "<SCRATCH>/<USER>/<CASE_DIR>/realization-%d/iter-%d",  # model
     ConfigKeys.NUM_REALIZATIONS: 10,  # model
     ConfigKeys.MAX_RUNTIME: 23400,
-    ConfigKeys.END_DATE: "2010-10-10",
     ConfigKeys.JOB_SCRIPT: "../../../script.sh",
     ConfigKeys.QUEUE_SYSTEM: QueueDriverEnum.LSF_DRIVER,
     ConfigKeys.USER_MODE: True,
@@ -600,30 +599,6 @@ class ResConfigTest(ResTest):
             ResConfig(config=config)
 
     @tmpdir()
-    def test_iso_date_format_iso(self):
-        self.set_up_simple()
-        with TestAreaContext("res_config_init_isodate_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-
-            config_file = "simple_config/minimum_config"
-            with open(config_file, "a+") as ert_file:
-                ert_file.write("END_DATE 2010-10-10\n")
-            res_config = ResConfig(user_config_file=config_file)
-            assert res_config.ecl_config.getEndDate() == date(2010, 10, 10)
-
-    @tmpdir()
-    def test_legacy_date_format_iso(self):
-        self.set_up_simple()
-        with TestAreaContext("res_config_init_legacydate_test") as work_area:
-            work_area.copy_directory(self.case_directory)
-
-            config_file = "simple_config/minimum_config"
-            with open(config_file, "a+") as ert_file:
-                ert_file.write("END_DATE 10/10/2010\n")
-            res_config = ResConfig(user_config_file=config_file)
-            assert res_config.ecl_config.getEndDate() == date(2010, 10, 10)
-
-    @tmpdir()
     def test_res_config_dict_constructor(self):
         self.set_up_snake_oil_structure()
 
@@ -641,7 +616,6 @@ class ResConfigTest(ResTest):
             # add a missing entries to config file
             with open(self.config_file, "a+") as ert_file:
                 ert_file.write("JOB_SCRIPT ../../../script.sh\n")
-                ert_file.write("END_DATE 2010-10-10\n")
 
             # split config_file to path and filename
             cfg_path, cfg_file = os.path.split(os.path.realpath(self.config_file))
