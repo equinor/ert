@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include <ert/logging.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/path_stack.hpp>
 #include <ert/util/vector.hpp>
@@ -32,6 +33,8 @@
 #include <ert/config/conf_util.hpp>
 
 namespace fs = std::filesystem;
+
+static auto logger = ert::get_logger("config");
 
 struct conf_class_struct {
     /** Can be NULL */
@@ -1314,6 +1317,12 @@ conf_instance_add_data_from_token_buffer(conf_instance_type *conf_instance,
             }
             free(token_end);
             free(file_name);
+        } else if (strcmp(token, "BLOCK_OBSERVATION") == 0) {
+            std::string msg = "The keyword BLOCK_OBSERVATION is no longer "
+                              "supported. For RFT use GENDATA_RFT.\n";
+            logger->error(msg);
+            fprintf(stderr, "%s", msg.c_str());
+            util_abort(msg.c_str());
         } else {
             printf("WARNING: Skipping unexpected token \"%s\".\n\n", token);
         }

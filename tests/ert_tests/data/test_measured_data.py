@@ -40,7 +40,7 @@ def _set_multiindex(df):
     return pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
 
 
-@pytest.mark.parametrize("obs_type", [("GEN_OBS"), ("SUMMARY_OBS"), ("BLOCK_OBS")])
+@pytest.mark.parametrize("obs_type", [("GEN_OBS"), ("SUMMARY_OBS")])
 def test_get_data(
     obs_type, monkeypatch, facade, valid_data, measured_data_setup, valid_obs_data
 ):

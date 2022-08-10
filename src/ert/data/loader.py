@@ -20,16 +20,13 @@ def data_loader_factory(observation_type):
     TODO: Remove discrepancies between returned methods.
         See https://github.com/equinor/libres/issues/808
     """
-    if observation_type in ["GEN_OBS", "SUMMARY_OBS", "BLOCK_OBS"]:
+    if observation_type in ["GEN_OBS", "SUMMARY_OBS"]:
         if observation_type == "GEN_OBS":
             response_loader = _load_general_response
             obs_loader = _load_general_obs
         elif observation_type == "SUMMARY_OBS":
             response_loader = _load_summary_response
             obs_loader = _load_summary_obs
-        elif observation_type == "BLOCK_OBS":
-            response_loader = _load_block_response
-            obs_loader = _load_block_obs
         return partial(
             _extract_data,
             expected_obs=observation_type,
@@ -123,82 +120,10 @@ def load_summary_data(facade, obs_keys, case_name, include_data=True):
     )
 
 
-@deprecation.deprecated(
-    deprecated_in="2.19",
-    removed_in="3.0",
-    current_version=__version__,
-    details="Use the data_loader_factory",
-)
-def load_block_data(facade, obs_keys, case_name, include_data=True):
-    return _extract_data(
-        facade,
-        obs_keys,
-        case_name,
-        _load_block_response,
-        _load_block_obs,
-        "BLOCK_OBS",
-        include_data=include_data,
-    )
-
-
-def _load_block_response(facade, obs_key, case_name):
-    """
-    _load_block_response is a part of the data_loader_factory, and the other
-    methods returned by this factory, require case_name, so it is accepted
-    here as well.
-    """
-    obs_vector = facade.get_observations()[obs_key]
-    loader = facade.create_plot_block_data_loader(obs_vector)
-
-    data = pd.DataFrame()
-    for report_step in obs_vector.getStepList():
-
-        block_data = loader.load(facade.get_current_fs(), report_step)
-        data = data.append(_get_block_measured(facade.get_ensemble_size(), block_data))
-
-    return data
-
-
 def _create_multi_index(key_index, data_index):
     arrays = [key_index, data_index]
     tuples = list(zip(*arrays))
     return pd.MultiIndex.from_tuples(tuples, names=["key_index", "data_index"])
-
-
-def _load_block_obs(facade, observation_keys, case_name):
-    """
-    _load_block_response is a part of the data_loader_factory, and the other
-    methods returned by this factory, require case_name, so it is accepted
-    here as well.
-    """
-    observations = []
-    for observation_key in observation_keys:
-        obs_vector = facade.get_observations()[observation_key]
-        loader = facade.create_plot_block_data_loader(obs_vector)
-
-        data = pd.DataFrame()
-        for report_step in obs_vector.getStepList():
-            obs_block = loader.getBlockObservation(report_step)
-            index_list = [i for i in obs_block]
-            index = _create_multi_index(index_list, index_list)
-            data = data.append(
-                pd.DataFrame(
-                    [[obs_block.getValue(i) for i in obs_block]],
-                    index=["OBS"],
-                    columns=index,
-                )
-            ).append(
-                pd.DataFrame(
-                    [[obs_block.getStd(i) for i in obs_block]],
-                    index=["STD"],
-                    columns=index,
-                )
-            )
-
-        data = pd.concat({observation_key: data}, axis=1)
-        observations.append(data)
-
-    return pd.concat(observations, axis=1)
 
 
 def _load_general_response(facade, obs_key, case_name):

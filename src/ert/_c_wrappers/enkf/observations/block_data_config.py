@@ -33,11 +33,5 @@ class BlockDataConfig(BaseCClass):
         elif isinstance(c_class_object, FieldConfig):
             return FieldConfig.from_param(c_class_object)
 
-        # The Container class which is used to support summary based
-        # source in the BLOCK_OBS configuration is not yet supported
-        # in Python.
-
-        # elif isinstance(instance , ContainerConfig):
-        #    return ContainerConfig.from_param( instance )
         else:
             raise ValueError("Currently ONLY field data is supported")

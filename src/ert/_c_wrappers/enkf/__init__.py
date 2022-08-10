@@ -55,7 +55,6 @@ from .model_config import ModelConfig
 from .node_id import NodeId
 from .observations import (
     BlockDataConfig,
-    BlockObservation,
     GenObservation,
     ObsVector,
     SummaryObservation,
@@ -75,7 +74,6 @@ __all__ = [
     "SummaryObservation",
     "GenObservation",
     "BlockDataConfig",
-    "BlockObservation",
     "ObsVector",
     "Field",
     "GenKw",
