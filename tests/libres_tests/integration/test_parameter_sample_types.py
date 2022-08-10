@@ -5,6 +5,7 @@ from contextlib import ExitStack as does_not_raise
 
 import cwrap
 import pytest
+
 from ecl import EclDataType
 from ecl.eclfile import EclKW
 from ecl.grid import EclGrid
@@ -19,32 +20,24 @@ def write_file(fname, contents):
         fout.writelines(contents)
 
 
-@pytest.fixture
-def create_runpath():
-    def func(config):
-        res_config = ResConfig(config)
-        ert = EnKFMain(res_config)
+def create_runpath(config):
+    res_config = ResConfig(config)
+    ert = EnKFMain(res_config)
 
-        run_context = ert.create_ensemble_experiment_run_context(
-            active_mask=[True],
-            iteration=0,
-        )
-        ert.createRunPath(run_context)
-        return ert
-
-    yield func
+    run_context = ert.create_ensemble_experiment_run_context(
+        active_mask=[True],
+        iteration=0,
+    )
+    ert.createRunPath(run_context)
+    return ert
 
 
-@pytest.fixture
-def load_from_forward_model():
-    def func(ert):
-        facade = LibresFacade(ert)
-        realizations = BoolVector(
-            default_value=True, initial_size=facade.get_ensemble_size()
-        )
-        return facade.load_from_forward_model("default_0", realizations, 0)
-
-    yield func
+def load_from_forward_model(ert):
+    facade = LibresFacade(ert)
+    realizations = BoolVector(
+        default_value=True, initial_size=facade.get_ensemble_size()
+    )
+    return facade.load_from_forward_model("default_0", realizations, 0)
 
 
 @pytest.mark.integration_test
@@ -85,7 +78,7 @@ def load_from_forward_model():
         ),
     ],
 )
-def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation, create_runpath):
+def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -122,9 +115,7 @@ def test_gen_kw(tmpdir, config_str, expected, extra_files, expectation, create_r
         ),
     ],
 )
-def test_field_param(
-    tmpdir, create_runpath, config_str, expected, load_from_forward_model
-):
+def test_field_param(tmpdir, config_str, expected):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -179,13 +170,11 @@ def test_field_param(
 )
 def test_surface_param(
     tmpdir,
-    create_runpath,
     config_str,
     expected,
     expect_loaded,
     error,
     caplog,
-    load_from_forward_model,
 ):
     with tmpdir.as_cwd():
         config = dedent(
@@ -233,9 +222,7 @@ def test_surface_param(
         ),
     ],
 )
-def test_gen_param(
-    tmpdir, config_str, expected, extra_files, expectation, create_runpath
-):
+def test_gen_param(tmpdir, config_str, expected, extra_files, expectation):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -257,9 +244,7 @@ def test_gen_param(
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
-def test_gen_param_forward_init(
-    tmpdir, create_runpath, load_from_forward_model, load_forward_init
-):
+def test_gen_param_forward_init(tmpdir, load_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
@@ -285,9 +270,7 @@ def test_gen_param_forward_init(
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize("load_forward_init", [True, False])
-def test_gen_kw_forward_init(
-    tmpdir, create_runpath, load_from_forward_model, load_forward_init
-):
+def test_gen_kw_forward_init(tmpdir, load_forward_init):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
