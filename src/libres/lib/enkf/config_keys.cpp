@@ -89,7 +89,6 @@ RES_LIB_SUBMODULE("config_keys", m) {
     cls.attr("RERUN_KEY") = ENKF_RERUN_KEY;
     cls.attr("RERUN_START_KEY") = RERUN_START_KEY;
     cls.attr("RESULT_FILE") = RESULT_FILE_KEY;
-    cls.attr("RFTPATH") = RFTPATH_KEY;
     cls.attr("RUNPATH") = RUNPATH_KEY;
     cls.attr("RUNPATH_FILE") = RUNPATH_FILE_KEY;
     cls.attr("RUNPATH_LIST_FILE") = ".ert_runpath_list";

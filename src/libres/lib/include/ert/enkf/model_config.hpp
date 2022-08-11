@@ -56,8 +56,6 @@ void model_config_set_jobname_fmt(model_config_type *model_config,
                                   const char *jobname_fmt);
 void model_config_set_enspath(model_config_type *model_config,
                               const char *enspath);
-void model_config_set_rftpath(model_config_type *model_config,
-                              const char *rftpath);
 extern "C" const char *
 model_config_get_enspath(const model_config_type *model_config);
 const ecl_sum_type *
@@ -106,9 +104,9 @@ extern "C" model_config_type *model_config_alloc(const config_content_type *,
 extern "C" model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
     char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *rftpath,
-    char *gen_kw_export_name, history_source_type history_source,
-    const ext_joblist_type *joblist, const ecl_sum_type *refcase);
+    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
+    history_source_type history_source, const ext_joblist_type *joblist,
+    const ecl_sum_type *refcase);
 extern "C" bool model_config_select_history(model_config_type *model_config,
                                             history_source_type source_type,
                                             const ecl_sum_type *refcase);

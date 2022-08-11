@@ -79,7 +79,6 @@ struct model_config_struct {
     hash_type *runpath_map;
     char *jobname_fmt;
     char *enspath;
-    char *rftpath;
     char *data_root;
     char *default_data_root;
 
@@ -195,12 +194,6 @@ void model_config_set_enspath(model_config_type *model_config,
         util_realloc_string_copy(model_config->enspath, enspath);
 }
 
-void model_config_set_rftpath(model_config_type *model_config,
-                              const char *rftpath) {
-    model_config->rftpath =
-        util_realloc_string_copy(model_config->rftpath, rftpath);
-}
-
 const char *model_config_get_enspath(const model_config_type *model_config) {
     return model_config->enspath;
 }
@@ -262,7 +255,6 @@ model_config_type *model_config_alloc_empty() {
   */
     UTIL_TYPE_ID_INIT(model_config, MODEL_CONFIG_TYPE_ID);
     model_config->enspath = NULL;
-    model_config->rftpath = NULL;
     model_config->data_root = NULL;
     model_config->default_data_root = NULL;
     model_config->current_runpath = NULL;
@@ -278,7 +270,6 @@ model_config_type *model_config_alloc_empty() {
     model_config->obs_config_file = NULL;
 
     model_config_set_enspath(model_config, DEFAULT_ENSPATH);
-    model_config_set_rftpath(model_config, DEFAULT_RFTPATH);
     model_config_set_max_internal_submit(model_config,
                                          DEFAULT_MAX_INTERNAL_SUBMIT);
     model_config_add_runpath(model_config, DEFAULT_RUNPATH_KEY,
@@ -307,9 +298,9 @@ model_config_type *model_config_alloc(const config_content_type *config_content,
 model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
     char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *rftpath,
-    char *gen_kw_export_name, history_source_type history_source,
-    const ext_joblist_type *joblist, const ecl_sum_type *refcase) {
+    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
+    history_source_type history_source, const ext_joblist_type *joblist,
+    const ecl_sum_type *refcase) {
     model_config_type *model_config = model_config_alloc_empty();
     model_config->max_internal_submit = max_resample;
     model_config->num_realizations = num_realizations;
@@ -325,8 +316,6 @@ model_config_type *model_config_alloc_full(
     model_config->forward_model = forward_model;
     model_config->obs_config_file = util_alloc_string_copy(obs_config);
     model_config->external_time_map = time_map;
-    model_config->rftpath =
-        util_realloc_string_copy(model_config->rftpath, rftpath);
     model_config->gen_kw_export_name = util_realloc_string_copy(
         model_config->gen_kw_export_name, gen_kw_export_name);
     model_config->refcase = refcase;
@@ -498,10 +487,6 @@ void model_config_init(model_config_type *model_config,
                             "The ECLBASE keyword will be ignored.");
     }
 
-    if (config_content_has_item(config, RFTPATH_KEY))
-        model_config_set_rftpath(model_config,
-                                 config_content_get_value(config, RFTPATH_KEY));
-
     if (config_content_has_item(config, MAX_RESAMPLE_KEY))
         model_config_set_max_internal_submit(
             model_config,
@@ -525,7 +510,6 @@ void model_config_init(model_config_type *model_config,
 
 void model_config_free(model_config_type *model_config) {
     free(model_config->enspath);
-    free(model_config->rftpath);
     free(model_config->jobname_fmt);
     free(model_config->current_path_key);
     free(model_config->gen_kw_export_name);
@@ -671,9 +655,6 @@ static void model_config_init_user_config(config_parser_type *config) {
     config_schema_item_iset_type(item, 0, CONFIG_EXISTING_PATH);
 
     config_add_key_value(config, TIME_MAP_KEY, false, CONFIG_EXISTING_PATH);
-
-    item = config_add_schema_item(config, RFTPATH_KEY, false);
-    config_schema_item_set_argc_minmax(item, 1, 1);
 
     item = config_add_schema_item(config, GEN_KW_EXPORT_NAME_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);

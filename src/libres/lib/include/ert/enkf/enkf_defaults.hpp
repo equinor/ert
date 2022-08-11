@@ -98,7 +98,6 @@
 /* Default directories. */
 #define DEFAULT_RUNPATH "simulations/realization%d"
 #define DEFAULT_ENSPATH "storage"
-#define DEFAULT_RFTPATH "rft"
 
 #define SUMMARY_KEY_JOIN_STRING ":"
 #define USER_KEY_JOIN_STRING ":"
