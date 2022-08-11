@@ -31,8 +31,6 @@
 
 #include <ert/res_util/path_fmt.hpp>
 
-#include <ert/enkf/ecl_refcase_list.hpp>
-
 typedef struct ecl_config_struct ecl_config_type;
 
 extern "C" const char *ecl_config_get_data_file(const ecl_config_type *);
@@ -62,8 +60,6 @@ ecl_config_validate_refcase(const ecl_config_type *ecl_config,
 extern "C" const ecl_sum_type *
 ecl_config_get_refcase(const ecl_config_type *ecl_config);
 extern "C" bool ecl_config_has_refcase(const ecl_config_type *ecl_config);
-ecl_refcase_list_type *
-ecl_config_get_refcase_list(const ecl_config_type *ecl_config);
 
 extern "C" bool ecl_config_active(const ecl_config_type *config);
 
@@ -88,8 +84,7 @@ extern "C" ecl_config_type *
 ecl_config_alloc(const config_content_type *config_content);
 extern "C" PY_USED ecl_config_type *
 ecl_config_alloc_full(bool have_eclbase, char *data_file, ecl_grid_type *grid,
-                      char *refcase_default, stringlist_type *ref_case_list,
-                      char *sched_prediction_file);
+                      char *refcase_default, char *sched_prediction_file);
 void ecl_config_add_config_items(config_parser_type *config);
 extern "C" const char *
 ecl_config_get_depth_unit(const ecl_config_type *ecl_config);

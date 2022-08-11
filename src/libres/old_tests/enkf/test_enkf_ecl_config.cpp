@@ -27,20 +27,10 @@ int main(int argc, char **argv) {
     if (argc == 2) {
         test_assert_true(ecl_config_load_refcase(ecl_config, argv[1]));
 
-        ecl_refcase_list_type *refcase_list =
-            ecl_config_get_refcase_list(ecl_config);
-        test_assert_int_equal(ecl_refcase_list_get_size(refcase_list), 1);
         {
-            const ecl_sum_type *iget0 =
-                ecl_refcase_list_iget_case(refcase_list, 0);
-            const ecl_sum_type *def =
-                ecl_refcase_list_get_default(refcase_list);
+            const ecl_sum_type *def = ecl_config_get_refcase(ecl_config);
 
-            test_assert_ptr_equal(iget0, def);
             test_assert_string_equal(argv[1], ecl_sum_get_case(def));
-            test_assert_string_equal(
-                ecl_refcase_list_iget_pathcase(refcase_list, 0),
-                ecl_sum_get_case(def));
         }
     }
     test_assert_false(ecl_config_load_refcase(ecl_config, "DOES_NOT_EXIST"));

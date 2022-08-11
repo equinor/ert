@@ -30,8 +30,6 @@ int main(int argc, char **argv) {
         char *config_file = util_alloc_abs_path(argv[1]);
 
         ecl_config_type *ecl_config = ecl_config_alloc(NULL);
-        ecl_refcase_list_type *refcase_list =
-            ecl_config_get_refcase_list(ecl_config);
         {
             config_parser_type *config = config_alloc();
             config_content_type *content;
@@ -48,7 +46,6 @@ int main(int argc, char **argv) {
         }
 
         test_assert_true(ecl_config_has_refcase(ecl_config));
-        test_assert_int_equal(ecl_refcase_list_get_size(refcase_list), 17);
 
         ecl_config_free(ecl_config);
         free(config_file);

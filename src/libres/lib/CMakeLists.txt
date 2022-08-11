@@ -82,7 +82,6 @@ pybind11_add_module(
   enkf/container.cpp
   enkf/container_config.cpp
   enkf/ecl_config.cpp
-  enkf/ecl_refcase_list.cpp
   enkf/enkf_analysis.cpp
   enkf/enkf_config_node.cpp
   enkf/enkf_fs.cpp

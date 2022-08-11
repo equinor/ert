@@ -1,6 +1,6 @@
 ECLBASE                         input/<ECLIPSE_NAME>-%d
 DATA_FILE                       input/SPE1.DATA
-REFCASE                         input/SNAKE_OIL_FIELD
+REFCASE                         input/refcase/SNAKE_OIL_FIELD
 GRID                            input/CASE.EGRID
 SCHEDULE_PREDICTION_FILE        input/schedule.sch
 

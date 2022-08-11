@@ -69,7 +69,6 @@ Keyword name                                                            Required
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                                                      System used for running simulation jobs
 :ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
-:ref:`REFCASE_LIST <refcase_list>`                                      NO                                                                      Full path to Eclipse .DATA files containing completed runs (which you can add to plots)
 :ref:`RERUN_START  <rerun_start>`                                       NO                                      0                               Deprecated
 :ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results
 :ref:`RUNPATH <runpath>`                                                NO                                      simulations/realization%d       Directory to run simulations
@@ -2073,24 +2072,8 @@ Configuring the SLURM queue
                 -- running via SLURM.
                 QUEUE_OPTION SLURM MAX_RUNNING 10
 
-Keywords related to plotting
+Workflow hooks
 ----------------------------
-.. _keywords_related_to_plotting:
-
-
-.. _refcase_list:
-.. topic:: REFCASE_LIST
-
-        Provide one or more Eclipse .DATA files for a refcase to be added in the
-        plots. This refcase will be plotted in different colours. The summary files
-        related to the refcase should be in the same folder as the refcase.
-
-        *Example:*
-
-        ::
-
-                REFCASE_LIST /path/to/refcase1/file1.DATA /path/to/refcase2/file2.DATA
-
 
 .. _hook_workflow:
 .. topic:: HOOK_WORKFLOW
