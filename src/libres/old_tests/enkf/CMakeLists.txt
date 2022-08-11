@@ -67,6 +67,7 @@ foreach(
   enkf_gen_obs_load
   enkf_ert_workflow_list
   enkf_main
+  enkf_ecl_config
   gen_kw_logarithmic
   enkf_executable_path
   enkf_ensemble_GEN_PARAM
@@ -91,6 +92,10 @@ add_config_test(
   gen_kw_logarithmic gen_kw_logarithmic
   "${TEST_DATA_DIR}/enkf/config/gen_kw_logarithmic/config_GEN_KW_logarithmic")
 
+add_config_test(enkf_ecl_config1 enkf_ecl_config)
+add_config_test(enkf_ecl_config2 enkf_ecl_config
+                "${LOCAL_TEST_DATA_DIR}/snake_oil/refcase/SNAKE_OIL_FIELD")
+
 foreach(
   test
   enkf_main_fs_current_file
@@ -98,7 +103,6 @@ foreach(
   enkf_state_report_step_compatible
   enkf_state_manual_load
   enkf_refcase_list
-  enkf_ecl_config
   enkf_ecl_config_config
   enkf_gen_data_config
   enkf_block_obs
@@ -174,10 +178,6 @@ add_equinor_test(
   enkf_refcase_list2 enkf_refcase_list
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/Gurbat/ECLIPSE"
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/Gurbat*/ECLIPSE.*")
-
-add_equinor_test(enkf_ecl_config1 enkf_ecl_config)
-add_equinor_test(enkf_ecl_config2 enkf_ecl_config
-                 "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/Gurbat/ECLIPSE")
 
 add_equinor_test(enkf_ecl_config_config enkf_ecl_config_config
                  "${EQUINOR_TEST_DATA_DIR}/config/ecl_config")
