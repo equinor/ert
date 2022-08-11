@@ -272,8 +272,8 @@ def test_many_concurrent_qstat_invocations(tmpdir):
 
     # We require more than one backend run because there is race condition we need
     # to test for. Number of backend runs should then be relative to the time taken
-    # to run the test (plus 1 for slack)
-    assert 1 < backend_runs < int(time_taken / cache_timeout) + 1
+    # to run the test (plus 3 for slack)
+    assert 1 < backend_runs < int(time_taken / cache_timeout) + 3
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
