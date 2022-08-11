@@ -97,7 +97,6 @@ foreach(
   enkf_plot_gendata_fs
   enkf_state_report_step_compatible
   enkf_state_manual_load
-  enkf_state_skip_summary_load
   enkf_refcase_list
   enkf_ecl_config
   enkf_ecl_config_config
@@ -165,15 +164,6 @@ add_equinor_test(
   enkf_state_manual_load enkf_state_manual_load
   "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_true"
   config_ecl_sum_compatible_true)
-
-add_equinor_test(
-  enkf_state_summary_vars_present enkf_state_skip_summary_load
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_summary_vars_config" config_summary_vars)
-
-add_equinor_test(
-  enkf_state_no_summary_vars_present enkf_state_skip_summary_load
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_no_summary_vars_config"
-  config_no_summary_vars)
 
 add_equinor_test(
   enkf_refcase_list enkf_refcase_list

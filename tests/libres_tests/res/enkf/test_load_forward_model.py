@@ -4,6 +4,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from ecl.summary import EclSum
@@ -121,3 +122,57 @@ def test_load_forward_model(copy_data):
         facade.get_current_fs().getStateMap()[realisation_number].name
         == "STATE_HAS_DATA"
     )  # Check that status is as expected
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "summary_configuration, expected",
+    [
+        pytest.param(
+            None,
+            (1, None),
+            id=(
+                "Checking that we are able to successfully load "
+                "from forward model with eclipse case even though "
+                "there is no eclipse file in the run path. This is "
+                "because no SUMMARY is added to the config"
+            ),
+        ),
+        pytest.param(
+            "SUMMARY *",
+            (0, "Could not find SUMMARY file"),
+            id=(
+                "Check that loading fails if we have configured"
+                "SUMMARY but no summary is available in the run path"
+            ),
+        ),
+    ],
+)
+def test_load_forward_model_summary(summary_configuration, expected, caplog):
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE SNAKE_OIL_FIELD
+        REFCASE SNAKE_OIL_FIELD
+        """
+    )
+    if summary_configuration:
+        config_text += summary_configuration
+    Path("config.ert").write_text(config_text)
+    # Create refcase
+    ecl_sum = run_simulator(1, datetime(2014, 9, 10))
+    ecl_sum.fwrite()
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0, active_mask=[True]
+    )
+    ert.createRunPath(run_context)
+    facade = LibresFacade(ert)
+    with caplog.at_level(logging.ERROR):
+        loaded = facade.load_from_forward_model("default", [True], 0)
+    expected_loaded, expected_log_message = expected
+    assert loaded == expected_loaded
+    if expected_log_message:
+        assert expected_log_message in "".join(caplog.messages)
