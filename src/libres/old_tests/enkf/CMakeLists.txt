@@ -100,7 +100,6 @@ foreach(
   test
   enkf_main_fs_current_file
   enkf_plot_gendata_fs
-  enkf_state_report_step_compatible
   enkf_state_manual_load
   enkf_refcase_list
   enkf_ecl_config_config
@@ -158,11 +157,6 @@ add_equinor_test(enkf_main_fs_current_file enkf_main_fs_current_file
 
 add_equinor_test(enkf_plot_gendata_fs enkf_plot_gendata_fs
                  "${EQUINOR_TEST_DATA_DIR}/config/with_GEN_DATA/config")
-
-add_equinor_test(
-  enkf_state_report_step_compatible_TRUE enkf_state_report_step_compatible
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_true"
-  config_ecl_sum_compatible_true TRUE)
 
 add_equinor_test(
   enkf_state_manual_load enkf_state_manual_load
