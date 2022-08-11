@@ -57,7 +57,8 @@ struct ecl_config_struct {
     char *data_file;
     /** An optional date value which can be used to check if the ECLIPSE
      * simulation has been 'long enough'. */
-    ecl_refcase_list_type *refcase_list;
+    ecl_sum_type *refcase;
+    const char *refcase_name;
     /** The grid which is active for this model. */
     ecl_grid_type *grid;
     /** Name of schedule prediction file - observe that this is internally
@@ -200,8 +201,20 @@ ui_return_type *ecl_config_validate_eclbase(const ecl_config_type *ecl_config,
  Can be called with @refcase == NULL - which amounts to clearing the
  current refcase.
 */
-bool ecl_config_load_refcase(ecl_config_type *ecl_config, const char *refcase) {
-    return ecl_refcase_list_set_default(ecl_config->refcase_list, refcase);
+bool ecl_config_load_refcase(ecl_config_type *ecl_config,
+                             const char *case_name) {
+    if (case_name) {
+        auto ecl_sum = ecl_sum_fread_alloc_case(case_name, ":");
+        if (ecl_sum == NULL) {
+            ecl_config->refcase = NULL;
+            return false;
+        }
+        ecl_config->refcase = ecl_sum;
+        return true;
+    } else {
+        ecl_config->refcase = NULL;
+        return true;
+    }
 }
 
 ui_return_type *ecl_config_validate_refcase(const ecl_config_type *ecl_config,
@@ -222,12 +235,10 @@ ui_return_type *ecl_config_validate_refcase(const ecl_config_type *ecl_config,
  Will return NULL if no refcase is set.
 */
 const char *ecl_config_get_refcase_name(const ecl_config_type *ecl_config) {
-    const ecl_sum_type *refcase =
-        ecl_refcase_list_get_default(ecl_config->refcase_list);
-    if (refcase == NULL)
+    auto refcase = ecl_config->refcase;
+    if (!refcase)
         return NULL;
-    else
-        return ecl_sum_get_case(refcase);
+    return ecl_sum_get_case(ecl_config->refcase);
 }
 
 static ecl_config_type *ecl_config_alloc_empty(void) {
@@ -243,7 +254,7 @@ static ecl_config_type *ecl_config_alloc_empty(void) {
     ecl_config->grid = NULL;
     ecl_config->can_restart = false;
     ecl_config->schedule_prediction_file = NULL;
-    ecl_config->refcase_list = ecl_refcase_list_alloc();
+    ecl_config->refcase = NULL;
 
     return ecl_config;
 }
@@ -260,7 +271,6 @@ ecl_config_type *ecl_config_alloc(const config_content_type *config_content) {
 ecl_config_type *ecl_config_alloc_full(bool have_eclbase, char *data_file,
                                        ecl_grid_type *grid,
                                        char *refcase_default,
-                                       stringlist_type *ref_case_list,
                                        char *sched_prediction_file) {
     ecl_config_type *ecl_config = ecl_config_alloc_empty();
     ecl_config->have_eclbase = have_eclbase;
@@ -269,12 +279,10 @@ ecl_config_type *ecl_config_alloc_full(bool have_eclbase, char *data_file,
         ecl_config_set_data_file(ecl_config, data_file);
     }
 
-    for (int i = 0; i < stringlist_get_size(ref_case_list); i++) {
-        ecl_refcase_list_add_matching(ecl_config->refcase_list,
-                                      stringlist_safe_iget(ref_case_list, i));
-    }
     if (refcase_default)
-        ecl_refcase_list_set_default(ecl_config->refcase_list, refcase_default);
+        if (!ecl_config_load_refcase(ecl_config, refcase_default))
+            fprintf(stderr, "** Warning: loading refcase:%s failed \n",
+                    refcase_default);
 
     if (sched_prediction_file)
         ecl_config->schedule_prediction_file =
@@ -342,21 +350,6 @@ static void handle_has_refcase_key(ecl_config_type *ecl_config,
                 refcase_path);
 }
 
-static void handle_has_refcase_list_key(ecl_config_type *ecl_config,
-                                        const config_content_type *config) {
-    config_content_item_type *item =
-        config_content_get_item(config, REFCASE_LIST_KEY);
-    for (int i = 0; i < config_content_item_get_size(item); i++) {
-        config_content_node_type *node = config_content_item_iget_node(item, i);
-        for (int j = 0; j < config_content_node_get_size(node); j++) {
-            const char *refcase_list_path =
-                config_content_node_iget_as_abspath(node, j);
-            ecl_refcase_list_add_matching(ecl_config->refcase_list,
-                                          refcase_list_path);
-        }
-    }
-}
-
 static void
 handle_has_schedule_prediction_file_key(ecl_config_type *ecl_config,
                                         const config_content_type *config) {
@@ -383,9 +376,6 @@ void ecl_config_init(ecl_config_type *ecl_config,
     if (config_content_has_item(config, REFCASE_KEY))
         handle_has_refcase_key(ecl_config, config);
 
-    if (config_content_has_item(config, REFCASE_LIST_KEY))
-        handle_has_refcase_list_key(ecl_config, config);
-
     if (ecl_config->can_restart)
         fprintf(
             stderr,
@@ -407,7 +397,8 @@ void ecl_config_free(ecl_config_type *ecl_config) {
     if (ecl_config->grid != NULL)
         ecl_grid_free(ecl_config->grid);
 
-    ecl_refcase_list_free(ecl_config->refcase_list);
+    if (ecl_config->refcase)
+        ecl_sum_free(ecl_config->refcase);
 
     delete ecl_config;
 }
@@ -456,13 +447,8 @@ ui_return_type *ecl_config_validate_grid(const ecl_config_type *ecl_config,
     return ui_return;
 }
 
-ecl_refcase_list_type *
-ecl_config_get_refcase_list(const ecl_config_type *ecl_config) {
-    return ecl_config->refcase_list;
-}
-
 const ecl_sum_type *ecl_config_get_refcase(const ecl_config_type *ecl_config) {
-    return ecl_refcase_list_get_default(ecl_config->refcase_list);
+    return ecl_config->refcase;
 }
 
 bool ecl_config_has_refcase(const ecl_config_type *ecl_config) {
@@ -502,9 +488,6 @@ void ecl_config_add_config_items(config_parser_type *config) {
     item = config_add_schema_item(config, REFCASE_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);
     config_schema_item_iset_type(item, 0, CONFIG_PATH);
-
-    item = config_add_schema_item(config, REFCASE_LIST_KEY, false);
-    config_schema_item_set_default_type(item, CONFIG_PATH);
 
     item = config_add_schema_item(config, GRID_KEY, false);
     config_schema_item_set_argc_minmax(item, 1, 1);

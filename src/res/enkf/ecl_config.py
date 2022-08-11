@@ -19,7 +19,6 @@ import os
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
-from ecl.util.util import StringList
 
 from res import ResPrototype
 from res.util import UIReturn
@@ -36,7 +35,6 @@ class EclConfig(BaseCClass):
                                                                             char*, \
                                                                             ecl_grid, \
                                                                             char*, \
-                                                                            stringlist, \
                                                                             char*)",  # noqa
         bind=False,
     )
@@ -102,11 +100,6 @@ class EclConfig(BaseCClass):
             if refcase_default is not None:
                 refcase_default = os.path.realpath(refcase_default)
 
-            # REFCASE_LIST_KEY
-            refcase_list = StringList()
-            for refcase in config_dict.get(ConfigKeys.REFCASE_LIST, []):
-                refcase_list.append(refcase)
-
             # SCHEDULE_PREDICTION_FILE_KEY
             schedule_prediction_file = config_dict.get(
                 ConfigKeys.SCHEDULE_PREDICTION_FILE
@@ -117,7 +110,6 @@ class EclConfig(BaseCClass):
                 data_file,
                 grid,
                 refcase_default,
-                refcase_list,
                 schedule_prediction_file,
             )
             if grid is not None:

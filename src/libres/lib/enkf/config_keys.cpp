@@ -84,7 +84,6 @@ RES_LIB_SUBMODULE("config_keys", m) {
     cls.attr("QUEUE_SYSTEM") = QUEUE_SYSTEM_KEY;
     cls.attr("RANDOM_SEED") = RANDOM_SEED_KEY;
     cls.attr("REFCASE") = REFCASE_KEY;
-    cls.attr("REFCASE_LIST") = REFCASE_LIST_KEY;
     cls.attr("REPORT_STEPS") = REPORT_STEPS_KEY;
     cls.attr("RERUN_KEY") = ENKF_RERUN_KEY;
     cls.attr("RERUN_START_KEY") = RERUN_START_KEY;
