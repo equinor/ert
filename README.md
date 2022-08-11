@@ -35,7 +35,7 @@ $ ert --help
 or, for the latest development version:
 
 ``` sh
-$ pip install git+https://github.com/equinor/ert.git@master
+$ pip install git+https://github.com/equinor/ert.git@main
 $ ert --help
 ```
 
