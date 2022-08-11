@@ -5,8 +5,8 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
-from time import sleep
 
 import pytest
 import testpath
@@ -205,6 +205,7 @@ def test_many_concurrent_qstat_invocations(tmpdir):
     is allowed after the start, later on there should be no failures (that would be
     errors from race conditions.)
     """
+    starttime = time.time()
     invocations = 400
     sleeptime = 0.01  # seconds. Lower number increase probability of race conditions.
     # (the mocked qstat backend sleeps for 0.5 seconds to facilitate races)
@@ -222,7 +223,7 @@ def test_many_concurrent_qstat_invocations(tmpdir):
                     stdout=subprocess.DEVNULL,
                 )
             )
-            sleep(sleeptime)
+            time.sleep(sleeptime)
 
         class CacheState(enum.Enum):
             # Only consecutive transitions are allowed.
@@ -262,12 +263,17 @@ def test_many_concurrent_qstat_invocations(tmpdir):
 
     # Allow a limited set of backend runs. We get more backend runs the
     # slower the iron.
+    time_taken = time.time() - starttime
     backend_runs = len(list(Path("log").iterdir()))
-    print(f"We got {backend_runs} backend runs from {invocations} invocations.")
+    print(
+        f"We got {backend_runs} backend runs from "
+        f"{invocations} invocations in {time_taken:.2f} seconds."
+    )
 
     # We require more than one backend run because there is race condition we need
-    # to test for. Adjust invocations and mocked backend sleep timeout as needed.
-    assert 1 < backend_runs < 5
+    # to test for. Number of backend runs should then be relative to the time taken
+    # to run the test (plus 1 for slack)
+    assert 1 < backend_runs < int(time_taken / cache_timeout) + 1
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No flock on MacOS")
