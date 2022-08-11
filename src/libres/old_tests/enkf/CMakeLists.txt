@@ -93,7 +93,6 @@ add_config_test(
 
 foreach(
   test
-  enkf_site_config
   enkf_main_fs_current_file
   enkf_plot_gendata_fs
   enkf_state_report_step_compatible
@@ -121,9 +120,6 @@ endforeach()
 if(NOT EXISTS "${EQUINOR_TEST_DATA_DIR}")
   return()
 endif()
-
-add_equinor_test(enkf_site_config enkf_site_config
-                 /project/res/etc/ERT/site-config)
 
 add_equinor_test(
   enkf_gen_data_config enkf_gen_data_config
