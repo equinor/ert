@@ -46,7 +46,6 @@ class ModelConfig(BaseCClass):
                                         char*, \
                                         time_map, \
                                         char*, \
-                                        char*, \
                                         history_source_enum, \
                                         ext_joblist, \
                                         ecl_sum)",
@@ -179,11 +178,6 @@ class ModelConfig(BaseCClass):
                 time_map = TimeMap()
                 time_map.fload(filename=os.path.realpath(time_map_file))
 
-            # RFTPATH_KEY
-            rft_path = config_dict.get(ConfigKeys.RFTPATH)
-            if rft_path is not None:
-                rft_path = os.path.realpath(rft_path)
-
             # GEN_KW_EXPORT_NAME_KEY
             gen_kw_export_name = config_dict.get(ConfigKeys.GEN_KW_EXPORT_NAME)
 
@@ -200,7 +194,6 @@ class ModelConfig(BaseCClass):
                 forward_model,
                 obs_config,
                 time_map,
-                rft_path,
                 gen_kw_export_name,
                 history_source,
                 joblist,

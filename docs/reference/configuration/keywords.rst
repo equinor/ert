@@ -72,7 +72,6 @@ Keyword name                                                            Required
 :ref:`REFCASE_LIST <refcase_list>`                                      NO                                                                      Full path to Eclipse .DATA files containing completed runs (which you can add to plots)
 :ref:`RERUN_START  <rerun_start>`                                       NO                                      0                               Deprecated
 :ref:`RESULT_PATH  <result_path>`                                       NO                                      results/step_%d                 Define where ERT should store results
-:ref:`RFTPATH <rftpath>`                                                NO                                      rft                             Path to where the rft well observations are stored
 :ref:`RUNPATH <runpath>`                                                NO                                      simulations/realization%d       Directory to run simulations
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -2091,19 +2090,6 @@ Keywords related to plotting
         ::
 
                 REFCASE_LIST /path/to/refcase1/file1.DATA /path/to/refcase2/file2.DATA
-
-
-.. _rftpath:
-.. topic:: RFTPATH
-
-
-        RFTPATHs argument is the path to where the rft-files are located.
-
-        ::
-
-                RFTPATH  ../models/wells/rft/
-
-
 
 
 .. _hook_workflow:
