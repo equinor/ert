@@ -1,9 +1,14 @@
 import os
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from cwrap import BaseCClass
+
 from res import ResPrototype
-from res.job_queue import ErtScript, FunctionErtScript, ErtPlugin, ExternalErtScript
 from res.config import ContentTypeEnum
+from res.job_queue import ErtPlugin, ErtScript, ExternalErtScript, FunctionErtScript
+
+if TYPE_CHECKING:
+    from res.enkf import EnKFMain
 
 
 class WorkflowJob(BaseCClass):
@@ -55,53 +60,41 @@ class WorkflowJob(BaseCClass):
         c_ptr = self._alloc(name, internal)
         super().__init__(c_ptr)
 
-        self.__script = None
-        """ :type: ErtScript """
+        self.__script: Optional[ErtScript] = None
         self.__running = False
 
-    def isInternal(self):
-        """@rtype: bool"""
+    def isInternal(self) -> bool:
         return self._internal()
 
-    def name(self):
-        """@rtype: str"""
+    def name(self) -> str:
         return self._name()
 
-    def minimumArgumentCount(self):
-        """@rtype: int"""
+    def minimumArgumentCount(self) -> int:
         return self._min_arg()
 
-    def maximumArgumentCount(self):
-        """@rtype: int"""
+    def maximumArgumentCount(self) -> int:
         return self._max_arg()
 
-    def functionName(self):
-        """@rtype: str"""
+    def functionName(self) -> str:
         return self._get_function()
 
-    def executable(self):
-        """@rtype: str"""
+    def executable(self) -> str:
         return self._get_executable()
 
-    def isInternalScript(self):
-        """@rtype: bool"""
+    def isInternalScript(self) -> bool:
         return self._is_internal_script()
 
-    def getInternalScriptPath(self):
-        """@rtype: str"""
+    def getInternalScriptPath(self) -> str:
         return self._get_internal_script()
 
-    def isPlugin(self):
-        """@rtype: bool"""
+    def isPlugin(self) -> bool:
         if self.isInternalScript():
             script_obj = ErtScript.loadScriptFromFile(self.getInternalScriptPath())
             return script_obj is not None and issubclass(script_obj, ErtPlugin)
 
         return False
 
-    def argumentTypes(self):
-        """@rtype: list of type"""
-
+    def argumentTypes(self) -> List[Optional[ContentTypeEnum]]:
         result = []
         for index in range(self.maximumArgumentCount()):
             t = self._arg_type(index)
@@ -126,13 +119,7 @@ class WorkflowJob(BaseCClass):
             return "internal C"
         return "external"
 
-    def run(self, ert, arguments, verbose=False):
-        """
-        @type ert: res.enkf.enkf_main.EnKFMain
-        @type arguments: list of str
-        @type verbose: bool
-        @rtype: ctypes.c_void_p
-        """
+    def run(self, ert: "EnKFMain", arguments: List[str], verbose: bool = False) -> Any:
         self.__running = True
 
         min_arg = self.minimumArgumentCount()
@@ -179,29 +166,26 @@ class WorkflowJob(BaseCClass):
         self.__running = False
         return result
 
-    def cancel(self):
+    def cancel(self) -> None:
         if self.__script is not None:
             self.__script.cancel()
 
-    def isRunning(self):
+    def isRunning(self) -> bool:
         return self.__running
 
-    def isCancelled(self):
+    def isCancelled(self) -> bool:
         return self.__script.isCancelled()
 
-    def hasFailed(self):
-        """@rtype: bool"""
+    def hasFailed(self) -> bool:
         return self.__script.hasFailed()
 
     def free(self):
         self._free()
 
-    def stdoutdata(self):
-        """@rtype: str"""
+    def stdoutdata(self) -> str:
         return self.__script.stdoutdata
 
-    def stderrdata(self):
-        """@rtype: str"""
+    def stderrdata(self) -> str:
         return self.__script.stderrdata
 
     @classmethod
@@ -211,10 +195,10 @@ class WorkflowJob(BaseCClass):
         workflow.__running = False
         return workflow
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not (self == other)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
 
         if self.executable() != other.executable():
             return False
