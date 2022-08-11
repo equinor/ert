@@ -10,7 +10,6 @@ from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
-from ert._c_wrappers.enkf.time_map import TimeMap
 from ert._clib import update
 
 if TYPE_CHECKING:
@@ -51,8 +50,9 @@ class EnkfFs(BaseCClass):
         self._ensemble_config = ensemble_config
         self._ensemble_size = ensemble_size
 
-    def getTimeMap(self) -> TimeMap:
-        return self._get_time_map().setParent(self)
+    @property
+    def datetime_index(self) -> npt.NDArray[np.datetime64]:
+        return _lib.enkf_fs.get_time_map(self)
 
     def getStateMap(self) -> "StateMap":
         return _clib.enkf_fs.get_state_map(self)

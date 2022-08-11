@@ -308,9 +308,9 @@ bool enkf_node_forward_init(enkf_node_type *enkf_node, const char *run_path,
     return init;
 }
 
-bool enkf_node_forward_load_vector(enkf_node_type *enkf_node,
-                                   const ecl_sum_type *ecl_sum,
-                                   const int_vector_type *time_index) {
+bool enkf_node_forward_load_vector(
+    enkf_node_type *enkf_node,
+    const std::vector<int> &time_index) {
     bool loadOK;
     FUNC_ASSERT(enkf_node->forward_load_vector);
     loadOK = enkf_node->forward_load_vector(enkf_node->data, NULL, ecl_sum,

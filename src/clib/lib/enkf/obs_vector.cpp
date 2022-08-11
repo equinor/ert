@@ -2,6 +2,7 @@
    See the overview documentation of the observation system in enkf_obs.c
 */
 
+#include "ert/enkf/time_map.hpp"
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -52,19 +53,19 @@ struct obs_vector_struct {
 
 static int
 __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
-                               const char *obs_key, time_map_type *time_map) {
+                               const char *obs_key, const SparseTimeArray &time_map) {
     int obs_restart_nr = -1; /* To shut up compiler warning. */
 
     if (conf_instance_has_item(conf_instance, "RESTART")) {
         obs_restart_nr =
             conf_instance_get_item_value_int(conf_instance, "RESTART");
-        if (obs_restart_nr > time_map_get_last_step(time_map))
+        if (obs_restart_nr > time_map->last_step())
             util_abort("%s: Observation %s occurs at restart %i, but history "
                        "file has only %i restarts.\n",
                        __func__, obs_key, obs_restart_nr,
-                       time_map_get_last_step(time_map));
+                       time_map->last_step());
     } else {
-        time_t obs_time = time_map_get_start_time(time_map);
+        time_t obs_time = time_map->start_time();
 
         if (conf_instance_has_item(conf_instance, "DATE")) {
             obs_time =
@@ -82,7 +83,7 @@ __conf_instance_get_restart_nr(const conf_instance_type *conf_instance,
                        __func__);
 
         obs_restart_nr =
-            time_map_lookup_time_with_tolerance(time_map, obs_time, 30, 30);
+            time_map->index(obs_time, 30);
         if (obs_restart_nr < 0) {
             if (conf_instance_has_item(conf_instance, "DATE"))
                 printf("** ERROR: Could not determine REPORT step "
@@ -278,7 +279,7 @@ int obs_vector_get_next_active_step(const obs_vector_type *obs_vector,
 */
 void obs_vector_load_from_SUMMARY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    time_map_type *obs_time, ensemble_config_type *ensemble_config) {
+    const SparseTimeArray &obs_time, ensemble_config_type *ensemble_config) {
     if (!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
         util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" "
                    "instance, got \"%s\".\n",
@@ -301,7 +302,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 
         if (obs_restart_nr == 0) {
             int day, month, year;
-            time_t start_time = time_map_iget(obs_time, 0);
+            time_t start_time = obs_time->get(0);
             util_set_date_values_utc(start_time, &day, &month, &year);
 
             fprintf(stderr, "** ERROR: It is unfortunately not possible to use "
@@ -325,7 +326,7 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
 }
 
 obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
-    const conf_instance_type *conf_instance, time_map_type *obs_time,
+    const conf_instance_type *conf_instance, const SparseTimeArray &obs_time,
     const ensemble_config_type *ensemble_config) {
     if (!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
         util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" "
@@ -371,7 +372,7 @@ obs_vector_type *obs_vector_alloc_from_GENERAL_OBSERVATION(
                     obs_vector = obs_vector_alloc(
                         GEN_OBS, obs_key,
                         ensemble_config_get_node(ensemble_config, state_kw),
-                        time_map_get_last_step(obs_time));
+                        obs_time->last_step());
                     if (conf_instance_has_item(conf_instance, "VALUE")) {
                         scalar_value = conf_instance_get_item_value_double(
                             conf_instance, "VALUE");
@@ -482,9 +483,8 @@ static bool read_history_from_ecl_summary(const history_source_type history,
 
 bool obs_vector_load_from_HISTORY_OBSERVATION(
     obs_vector_type *obs_vector, const conf_instance_type *conf_instance,
-    time_map_type *obs_time, const history_source_type history,
+    const SparseTimeArray &obs_time, const history_source_type history,
     double std_cutoff, const ecl_sum_type *refcase) {
-
     if (!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
         util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" "
                    "instance, got \"%s\".\n",
@@ -506,7 +506,7 @@ bool obs_vector_load_from_HISTORY_OBSERVATION(
         const char *sum_key = conf_instance_get_name_ref(conf_instance);
 
         // Get time series data from refcase and allocate
-        size = time_map_get_last_step(obs_time) + 1;
+        size = obs_time->last_step() + 1;
         if (read_history_from_ecl_summary(history, sum_key, value, valid,
                                           refcase)) {
             // Create  the standard deviation vector

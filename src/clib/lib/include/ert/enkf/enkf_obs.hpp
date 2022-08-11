@@ -20,7 +20,7 @@
 extern "C" bool enkf_obs_is_valid(const enkf_obs_type *);
 
 extern "C" enkf_obs_type *enkf_obs_alloc(const history_source_type history,
-                                         time_map_type *external_time_map,
+                                         std::shared_ptr<SparseTimeArray> external_time_map,
                                          const ecl_grid_type *grid,
                                          const ecl_sum_type *refcase,
                                          ensemble_config_type *ensemble_config);

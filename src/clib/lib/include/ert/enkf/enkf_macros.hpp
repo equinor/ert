@@ -6,7 +6,6 @@
 #include <stdlib.h>
 
 #include <ert/util/double_vector.hpp>
-#include <ert/util/int_vector.hpp>
 
 #include <ert/ecl/ecl_file.hpp>
 #include <ert/ecl/ecl_sum.hpp>

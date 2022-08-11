@@ -1,6 +1,5 @@
 #include <ert/util/bool_vector.h>
 #include <ert/util/double_vector.h>
-#include <ert/util/time_t_vector.h>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_plot_tvector.hpp>
@@ -9,6 +8,7 @@
 struct enkf_plot_tvector_struct {
     double_vector_type *data;
     double_vector_type *work;
+    SparseTimeArray time;
     bool_vector_type *mask;
     const enkf_config_node_type *config_node;
     int iens;
@@ -17,13 +17,13 @@ struct enkf_plot_tvector_struct {
 
 void enkf_plot_tvector_reset(enkf_plot_tvector_type *plot_tvector) {
     double_vector_reset(plot_tvector->data);
+    plot_tvector->time.clear();
     bool_vector_reset(plot_tvector->mask);
 }
 
 enkf_plot_tvector_type *
 enkf_plot_tvector_alloc(const enkf_config_node_type *config_node, int iens) {
-    enkf_plot_tvector_type *plot_tvector =
-        (enkf_plot_tvector_type *)util_malloc(sizeof *plot_tvector);
+    auto plot_tvector = new enkf_plot_tvector_type;
 
     plot_tvector->data = double_vector_alloc(0, 0);
     plot_tvector->mask = bool_vector_alloc(false, 0);
@@ -43,6 +43,7 @@ void enkf_plot_tvector_free(enkf_plot_tvector_type *plot_tvector) {
     double_vector_free(plot_tvector->data);
     double_vector_free(plot_tvector->work);
     bool_vector_free(plot_tvector->mask);
+    delete plot_tvector;
 }
 
 bool enkf_plot_tvector_all_active(const enkf_plot_tvector_type *plot_tvector) {
@@ -85,9 +86,9 @@ bool enkf_plot_tvector_iget_active(const enkf_plot_tvector_type *plot_tvector,
 void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
                             enkf_fs_type *fs, const char *index_key) {
 
-    time_map_type *time_map = enkf_fs_get_time_map(fs);
-    int step1 = 0;
-    int step2 = time_map_get_last_step(time_map);
+    auto time_array = enkf_fs_get_time_array(fs);
+    size_t step1 = 0;
+    size_t step2 = time_array->size() - 1;
     enkf_node_type *work_node = enkf_node_alloc(plot_tvector->config_node);
 
     if (enkf_node_vector_storage(work_node)) {
@@ -98,7 +99,7 @@ void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
             for (int step = 0; step < double_vector_size(plot_tvector->work);
                  step++)
                 enkf_plot_tvector_iset(
-                    plot_tvector, step, time_map_iget(time_map, step),
+                    plot_tvector, step, time_array->at(step),
                     double_vector_iget(plot_tvector->work, step));
         }
     } else {
@@ -113,7 +114,7 @@ void enkf_plot_tvector_load(enkf_plot_tvector_type *plot_tvector,
 
             if (enkf_node_user_get(work_node, fs, index_key, node_id, &value)) {
                 enkf_plot_tvector_iset(plot_tvector, step,
-                                       time_map_iget(time_map, step), value);
+                                       time_map->get(step), value);
             }
         }
     }

@@ -60,15 +60,15 @@ extern "C" int obs_vector_get_next_active_step(const obs_vector_type *, int);
 extern "C" void *obs_vector_iget_node(const obs_vector_type *, int);
 obs_vector_type *
 obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type *,
-                                          time_map_type *obs_time,
+                                          const SparseTimeArray &obs_time,
                                           const ensemble_config_type *);
 void obs_vector_load_from_SUMMARY_OBSERVATION(obs_vector_type *obs_vector,
                                               const conf_instance_type *,
-                                              time_map_type *obs_time,
+                                              const SparseTimeArray &obs_time,
                                               ensemble_config_type *);
 bool obs_vector_load_from_HISTORY_OBSERVATION(obs_vector_type *obs_vector,
                                               const conf_instance_type *,
-                                              time_map_type *obs_time,
+                                              const SparseTimeArray &obs_time,
                                               const history_source_type history,
                                               double std_cutoff,
                                               const ecl_sum_type *);

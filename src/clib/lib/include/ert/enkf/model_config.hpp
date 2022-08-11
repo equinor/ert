@@ -42,7 +42,7 @@ bool model_config_has_prediction(const model_config_type *);
 extern "C" PY_USED bool
 model_config_has_history(const model_config_type *config);
 extern "C" int model_config_get_last_history_restart(const model_config_type *);
-extern "C" time_map_type *
+std::shared_ptr<SparseTimeArray>
 model_config_get_external_time_map(const model_config_type *config);
 extern "C" int
 model_config_get_num_realizations(const model_config_type *model_config);
@@ -78,10 +78,10 @@ extern "C" model_config_type *model_config_alloc(const config_content_type *,
                                                  const char *data_root,
                                                  const ext_joblist_type *,
                                                  const ecl_sum_type *);
-extern "C" model_config_type *model_config_alloc_full(
+model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
     char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
+    char *obs_config, const char *time_map, char *gen_kw_export_name,
     history_source_type history_source, const ext_joblist_type *joblist,
     const ecl_sum_type *refcase);
 extern "C" bool model_config_select_history(model_config_type *model_config,

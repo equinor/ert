@@ -44,7 +44,6 @@ from .site_config import SiteConfig
 from .state_map import StateMap
 from .subst_config import SubstConfig
 from .summary_key_set import SummaryKeySet
-from .time_map import TimeMap
 
 __all__ = [
     "SummaryObservation",
@@ -64,7 +63,6 @@ __all__ = [
     "SummaryConfig",
     "ExtParamConfig",
     "NodeId",
-    "TimeMap",
     "StateMap",
     "SummaryKeySet",
     "EnkfFs",

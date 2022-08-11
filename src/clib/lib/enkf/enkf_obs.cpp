@@ -144,35 +144,34 @@ struct enkf_obs_struct {
     vector_type *obs_vector;
     hash_type *obs_hash;
     /** For fast lookup of report_step -> obs_time */
-    time_map_type *obs_time;
+    SparseTimeArray obs_time;
 
     bool valid;
     /* Several shared resources - can generally be NULL*/
     history_source_type history;
     const ecl_sum_type *refcase;
     const ecl_grid_type *grid;
-    time_map_type *external_time_map;
+    std::shared_ptr<SparseTimeArray> external_time_map;
     ensemble_config_type *ensemble_config;
 };
 
 static void enkf_obs_iset_obs_time(enkf_obs_type *enkf_obs, int report_step,
                                    time_t obs_time) {
-    time_map_update(enkf_obs->obs_time, report_step, obs_time);
+    enkf_obs->obs_time.insert(report_step, obs_time);
 }
 
 static int enkf_obs_get_last_restart(const enkf_obs_type *enkf_obs) {
-    return time_map_get_size(enkf_obs->obs_time) - 1;
+    return enkf_obs->obs_time.size() - 1;
 }
 
 enkf_obs_type *enkf_obs_alloc(const history_source_type history,
-                              time_map_type *external_time_map,
+                              std::shared_ptr<SparseTimeArray> external_time_map,
                               const ecl_grid_type *grid,
                               const ecl_sum_type *refcase,
                               ensemble_config_type *ensemble_config) {
     enkf_obs_type *enkf_obs = (enkf_obs_type *)util_malloc(sizeof *enkf_obs);
     enkf_obs->obs_hash = hash_alloc();
     enkf_obs->obs_vector = vector_alloc_new();
-    enkf_obs->obs_time = time_map_alloc();
 
     enkf_obs->history = history;
     enkf_obs->refcase = refcase;
@@ -198,11 +197,11 @@ enkf_obs_type *enkf_obs_alloc(const history_source_type history,
         } else {
             if (enkf_obs->external_time_map) {
                 int last_report =
-                    time_map_get_size(enkf_obs->external_time_map) - 1;
+                    enkf_obs->external_time_map->size() - 1;
                 int step;
                 for (step = 0; step <= last_report; step++) {
                     time_t obs_time =
-                        time_map_iget(enkf_obs->external_time_map, step);
+                        enkf_obs->external_time_map->get(step);
                     enkf_obs_iset_obs_time(enkf_obs, step, obs_time);
                 }
                 enkf_obs->valid = true;
@@ -218,12 +217,11 @@ bool enkf_obs_is_valid(const enkf_obs_type *obs) { return obs->valid; }
 void enkf_obs_free(enkf_obs_type *enkf_obs) {
     hash_free(enkf_obs->obs_hash);
     vector_free(enkf_obs->obs_vector);
-    time_map_free(enkf_obs->obs_time);
-    free(enkf_obs);
+    delete enkf_obs;
 }
 
 time_t enkf_obs_iget_obs_time(const enkf_obs_type *enkf_obs, int report_step) {
-    return time_map_iget(enkf_obs->obs_time, report_step);
+    return enkf_obs->obs_time->get(report_step);
 }
 
 /**

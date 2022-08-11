@@ -225,8 +225,8 @@ bool summary_forward_load_vector(summary_type *summary,
         // will fill the vector with zeros.
 
         if (!ecl_sum_has_general_var(ecl_sum, var_key)) {
-            for (int step = 0; step < int_vector_size(time_index); step++) {
-                int summary_step = int_vector_iget(time_index, step);
+            for (int step = 0; step < time_index.size(); step++) {
+                int summary_step = time_index[step];
                 if (summary_step >= 0)
                     double_vector_iset(summary->data_vector, summary_step, 0);
             }
@@ -245,9 +245,8 @@ bool summary_forward_load_vector(summary_type *summary,
         return loadOK;
 
     int key_index = ecl_sum_get_general_var_params_index(ecl_sum, var_key);
-    for (int store_index = 0; store_index < int_vector_size(time_index);
-         store_index++) {
-        int summary_index = int_vector_iget(time_index, store_index);
+    for (int store_index = 0; store_index < time_index.size(); store_index++) {
+        int summary_index = time_index[store_index];
 
         if (summary_index >= 0) {
             if (ecl_sum_has_report_step(ecl_sum, summary_index)) {

@@ -47,7 +47,7 @@ struct model_config_struct {
     /** The forward_model - as loaded from the config file. Each enkf_state
      * object internalizes its private copy of the forward_model. */
     forward_model_type *forward_model;
-    time_map_type *external_time_map;
+    std::shared_ptr<SparseTimeArray> external_time_map;
     /** The history object. */
     history_source_type history;
     /** path_fmt instance for runpath - runtime the call gets arguments: (iens,
@@ -210,8 +210,7 @@ void model_config_set_max_internal_submit(model_config_type *model_config,
 }
 
 model_config_type *model_config_alloc_empty() {
-    model_config_type *model_config =
-        (model_config_type *)util_malloc(sizeof *model_config);
+    auto model_config = new model_config_type;
     /*
      There are essentially three levels of initialisation:
 
@@ -228,7 +227,6 @@ model_config_type *model_config_alloc_empty() {
     model_config->history = REFCASE_HISTORY;
     model_config->jobname_fmt = NULL;
     model_config->forward_model = NULL;
-    model_config->external_time_map = NULL;
     model_config->runpath_map = hash_alloc();
     model_config->gen_kw_export_name = NULL;
     model_config->refcase = NULL;
@@ -263,7 +261,7 @@ model_config_type *model_config_alloc(const config_content_type *config_content,
 model_config_type *model_config_alloc_full(
     int max_resample, int num_realizations, char *run_path, char *data_root,
     char *enspath, char *job_name, forward_model_type *forward_model,
-    char *obs_config, time_map_type *time_map, char *gen_kw_export_name,
+    char *obs_config, const char *time_map, char *gen_kw_export_name,
     history_source_type history_source, const ext_joblist_type *joblist,
     const ecl_sum_type *refcase) {
     model_config_type *model_config = model_config_alloc_empty();
@@ -274,13 +272,18 @@ model_config_type *model_config_alloc_full(
     model_config_select_runpath(model_config, DEFAULT_RUNPATH_KEY);
     model_config_set_data_root(model_config, data_root);
 
+    auto time_array = time_array::parse_file(time_map);
+    if (time_array) {
+        model_config->external_time_map =
+            std::make_shared<SparseTimeArray>(std::move(*time_array));
+    }
+
     model_config->enspath =
         util_realloc_string_copy(model_config->enspath, enspath);
     model_config->jobname_fmt =
         util_realloc_string_copy(model_config->jobname_fmt, job_name);
     model_config->forward_model = forward_model;
     model_config->obs_config_file = util_alloc_string_copy(obs_config);
-    model_config->external_time_map = time_map;
     model_config->gen_kw_export_name = util_realloc_string_copy(
         model_config->gen_kw_export_name, gen_kw_export_name);
     model_config->refcase = refcase;
@@ -402,11 +405,10 @@ void model_config_init(model_config_type *model_config,
     if (config_content_has_item(config, TIME_MAP_KEY)) {
         const char *filename =
             config_content_get_value_as_path(config, TIME_MAP_KEY);
-        time_map_type *time_map = time_map_alloc();
-        if (time_map_fscanf(time_map, filename))
-            model_config->external_time_map = time_map;
-        else {
-            time_map_free(time_map);
+        if (auto time_array = time_array::parse_file(filename); time_array) {
+            model_config->external_time_map =
+                std::make_shared<SparseTimeArray>(std::move(*time_array));
+        } else {
             logger->warning(
                 "** ERROR: Loading external time map from: {} failed.",
                 filename);
@@ -485,11 +487,8 @@ void model_config_free(model_config_type *model_config) {
     if (model_config->forward_model)
         forward_model_free(model_config->forward_model);
 
-    if (model_config->external_time_map)
-        time_map_free(model_config->external_time_map);
-
     hash_free(model_config->runpath_map);
-    free(model_config);
+    delete model_config;
 }
 
 int model_config_get_num_realizations(const model_config_type *model_config) {
@@ -500,7 +499,7 @@ int model_config_get_num_realizations(const model_config_type *model_config) {
    Will be NULL unless the user has explicitly loaded an external time
    map with the TIME_MAP config option.
 */
-time_map_type *
+std::shared_ptr<SparseTimeArray>
 model_config_get_external_time_map(const model_config_type *config) {
     return config->external_time_map;
 }
@@ -510,7 +509,7 @@ int model_config_get_last_history_restart(const model_config_type *config) {
         return ecl_sum_get_last_report_step(config->refcase);
     else {
         if (config->external_time_map)
-            return time_map_get_last_step(config->external_time_map);
+            return config->external_time_map->last_step();
         else
             return -1;
     }

@@ -140,21 +140,21 @@ enkf_state_internalize_dynamic_eclipse_results(
         load_start++;
     }
 
-    time_map_type *time_map = enkf_fs_get_time_map(sim_fs);
-    auto status = time_map_summary_update(time_map, summary);
+    auto &time_array = enkf_fs_get_time_array(sim_fs);
+    auto status = time_array::validate_or_extend(time_array, summary);
     if (!status.empty()) {
         // Something has gone wrong in checking time map, fail
         return {TIME_MAP_FAILURE, status};
     }
-    int_vector_type *time_index = time_map_alloc_index_map(time_map, summary);
+    auto time_index = time_array::make_indices(time_map, summary);
 
     // The actual loading internalizing - from ecl_sum -> enkf_node.
     // step2 is just taken from the number of steps found in the
     // summary file.
     const int step2 = ecl_sum_get_last_report_step(summary);
 
-    int_vector_iset_block(time_index, 0, load_start, -1);
-    int_vector_resize(time_index, step2 + 1, -1);
+    std::fill_n(time_index.begin(), load_start, -1);
+    time_index.resize(step2 + 1, -1);
 
     const ecl_smspec_type *smspec = ecl_sum_get_smspec(summary);
 
@@ -302,7 +302,7 @@ enkf_state_internalize_results(ensemble_config_type *ens_config,
     }
 
     enkf_fs_type *sim_fs = run_arg_get_sim_fs(run_arg);
-    int last_report = time_map_get_last_step(enkf_fs_get_time_map(sim_fs));
+    int last_report = enkf_fs_get_time_map(sim_fs)->last_step();
     if (last_report < 0)
         last_report = model_config_get_last_history_restart(model_config);
     auto result = enkf_state_internalize_GEN_DATA(ens_config, run_arg,
