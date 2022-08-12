@@ -555,6 +555,11 @@ class EnKFMain(BaseCClass):
                 subst_list = SubstitutionList()
                 for subst in substitutions.items():
                     subst_list.addItem(*subst)
+                os.makedirs(
+                    run_arg.runpath,
+                    exist_ok=True,
+                )
+
                 enkf_main.init_active_run(
                     res_config=self.resConfig(),
                     run_path=run_arg.runpath,

@@ -39,6 +39,9 @@ class RunpathListDumpTest(ResTest):
             ert.runpaths._runpath_format = runpath_fmt
             ert.runpaths._job_name_format = jobname_fmt
 
+            for i in range(num_realizations):
+                ert.set_geo_id(str(10 * i), i, itr)
+
             run_context = ert.create_ensemble_experiment_run_context(
                 source_filesystem=sim_fs,
                 active_mask=mask,
@@ -46,10 +49,6 @@ class RunpathListDumpTest(ResTest):
             )
 
             ert.initRun(run_context)
-
-            for i, run_arg in enumerate(run_context):
-                if mask[i]:
-                    ert.set_geo_id(str(10 * i), i, itr)
 
             ert.createRunPath(run_context)
 
