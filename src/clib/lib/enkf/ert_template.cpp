@@ -70,7 +70,7 @@ ert_template_type *ert_template_alloc(const char *template_file,
         (ert_template_type *)util_malloc(sizeof *ert_template);
     UTIL_TYPE_ID_INIT(ert_template, ERT_TEMPLATE_TYPE_ID);
     ert_template->tmpl = template_alloc(
-        template_file, false,
+        template_file,
         parent_subst); /* The templates are instantiated with internalize_template == false;
                           this means that substitutions are performed on the filename of the
                           template itself .*/
@@ -90,7 +90,7 @@ void ert_template_instantiate(ert_template_type *ert_template, const char *path,
                               const subst_list_type *arg_list) {
     char *target_file =
         util_alloc_filename(path, ert_template->target_file, NULL);
-    template_instantiate(ert_template->tmpl, target_file, arg_list, true);
+    template_instantiate(ert_template->tmpl, target_file, arg_list);
     free(target_file);
 }
 

@@ -26,13 +26,11 @@
 typedef struct template_struct template_type;
 
 template_type *template_alloc(const char *template_file,
-                              bool internalize_template,
                               subst_list_type *parent_subst);
 void template_free(template_type *_template);
 void template_instantiate(const template_type *_template,
                           const char *__target_file,
-                          const subst_list_type *arg_list,
-                          bool override_symlink);
+                          const subst_list_type *arg_list);
 void template_add_arg(template_type *_template, const char *key,
                       const char *value);
 subst_list_type *template_get_args_list(template_type *_template);

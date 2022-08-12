@@ -64,10 +64,6 @@ void template_set_template_file(template_type *_template,
                                 const char *template_file) {
     _template->template_file =
         util_realloc_string_copy(_template->template_file, template_file);
-    if (_template->internalize_template) {
-        free(_template->template_buffer);
-        _template->template_buffer = template_load(_template, NULL);
-    }
 }
 
 /* This will not instantiate */
@@ -83,14 +79,12 @@ const char *template_get_template_file(const template_type *_template) {
    template file can change dynamically).
 */
 template_type *template_alloc(const char *template_file,
-                              bool internalize_template,
                               subst_list_type *parent_subst) {
     template_type *_template = (template_type *)util_malloc(sizeof *_template);
     UTIL_TYPE_ID_INIT(_template, TEMPLATE_TYPE_ID);
     _template->arg_list = subst_list_alloc(parent_subst);
     _template->template_buffer = NULL;
     _template->template_file = NULL;
-    _template->internalize_template = internalize_template;
     _template->arg_string = NULL;
     template_set_template_file(_template, template_file);
 
@@ -127,10 +121,7 @@ void template_free(template_type *_template) {
 
     2. @__target_file can contain path components.
 
-    3. If internalize_template == false subsititions will be performed
-       on the filename of the file with template content.
-
-    4. If the parameter @override_symlink is true the function will
+    3. If the parameter @override_symlink is true the function will
        have the following behaviour:
 
          If the target_file already exists as a symbolic link, the
@@ -140,8 +131,7 @@ void template_free(template_type *_template) {
 */
 void template_instantiate(const template_type *template_,
                           const char *__target_file,
-                          const subst_list_type *arg_list,
-                          bool override_symlink) {
+                          const subst_list_type *arg_list) {
     char *target_file = util_alloc_string_copy(__target_file);
 
     /* Finding the name of the target file. */
@@ -151,11 +141,8 @@ void template_instantiate(const template_type *template_,
 
     {
         char *char_buffer;
-        /* Loading the template - possibly expanding keys in the filename */
-        if (template_->internalize_template)
-            char_buffer = util_alloc_string_copy(template_->template_buffer);
-        else
-            char_buffer = template_load(template_, arg_list);
+        /* Loading the template*/
+        char_buffer = template_load(template_, arg_list);
 
         /* Substitutions on the content. */
         subst_list_update_string(template_->arg_list, &char_buffer);
@@ -173,11 +160,9 @@ void template_instantiate(const template_type *template_,
 #endif
 
         // Check if target file already exists as a symlink,
-        // and remove it if override_symlink is true.
-        if (override_symlink) {
-            if (util_is_link(target_file))
-                remove(target_file);
-        }
+        // and remove it.
+        if (util_is_link(target_file))
+            remove(target_file);
 
         /* Write the content out. */
         {
