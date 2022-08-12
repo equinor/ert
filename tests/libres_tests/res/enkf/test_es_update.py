@@ -1,6 +1,6 @@
 from pathlib import Path
-
 import sys
+from argparse import ArgumentParser
 
 import pytest
 
@@ -11,6 +11,14 @@ from ert._c_wrappers.enkf import (
     NodeId,
     EnKFMain,
     ResConfig,
+)
+from ert.shared.cli.main import run_cli
+from ert.shared.main import ert_parser
+from ert.shared.cli import (
+    ENSEMBLE_SMOOTHER_MODE,
+)
+from ert._c_wrappers.enkf.export import (
+    GenKwCollector,
 )
 from ert._clib import ies
 
@@ -172,6 +180,39 @@ def test_update(setup_case, module, expected_gen_kw):
     )
 
     assert target_gen_kw == pytest.approx(expected_gen_kw)
+
+
+@pytest.mark.integration_test
+def test_that_posterior_has_lower_variance_than_prior(copy_case):
+    copy_case("local/poly_example")
+
+    parser = ArgumentParser(prog="test_main")
+    parsed = ert_parser(
+        parser,
+        [
+            ENSEMBLE_SMOOTHER_MODE,
+            "--current-case",
+            "default",
+            "--target-case",
+            "target",
+            "poly.ert",
+            "--port-range",
+            "1024-65535",
+        ],
+    )
+
+    run_cli(parsed)
+
+    res_config = ResConfig("poly.ert")
+
+    ert = EnKFMain(res_config)
+
+    df_default = GenKwCollector.loadAllGenKwData(ert, "default")
+    df_target = GenKwCollector.loadAllGenKwData(ert, "target")
+
+    assert df_default["COEFFS:COEFF_A"].var() > df_target["COEFFS:COEFF_A"].var()
+    assert df_default["COEFFS:COEFF_B"].var() > df_target["COEFFS:COEFF_B"].var()
+    assert df_default["COEFFS:COEFF_C"].var() > df_target["COEFFS:COEFF_C"].var()
 
 
 @pytest.mark.parametrize(
