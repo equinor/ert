@@ -26,7 +26,6 @@ from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
 from ert._c_wrappers.enkf.ecl_config import EclConfig
 from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
-from ert._c_wrappers.enkf.ert_templates import ErtTemplates
 from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
 from ert._c_wrappers.enkf.hook_manager import HookManager
 from ert._c_wrappers.enkf.model_config import ModelConfig
@@ -50,7 +49,6 @@ class ResConfig(BaseCClass):
         "analysis_config, "
         "ert_workflow_list, "
         "hook_manager, "
-        "ert_templates, "
         "ecl_config, "
         "ens_config, "
         "model_config, "
@@ -89,9 +87,6 @@ class ResConfig(BaseCClass):
         "ert_workflow_list_ref res_config_get_workflow_list(res_config)"
     )
     _rng_config = ResPrototype("rng_config_ref res_config_get_rng_config(res_config)")
-    _ert_templates = ResPrototype(
-        "ert_templates_ref res_config_get_templates(res_config)"
-    )
     _queue_config = ResPrototype(
         "queue_config_ref res_config_get_queue_config(res_config)"
     )
@@ -109,7 +104,7 @@ class ResConfig(BaseCClass):
         self._assert_input(user_config_file, config, config_dict)
 
         self._errors, self._failed_keys = None, None
-
+        self._templates = []
         configs = None
         config_dir = None
         if config is not None or user_config_file is not None:
@@ -192,9 +187,9 @@ class ResConfig(BaseCClass):
             workflow_list=ert_workflow_list, config_content=config_content
         )
 
-        ert_templates = ErtTemplates(
-            parent_subst=subst_config.subst_list, config_content=config_content
-        )
+        if config_content.hasKey(ConfigKeys.RUN_TEMPLATE):
+            for template in config_content[ConfigKeys.RUN_TEMPLATE]:
+                self._templates.append(list(template))
 
         ensemble_config = EnsembleConfig(
             config_content=config_content,
@@ -217,7 +212,6 @@ class ResConfig(BaseCClass):
             analysis_config,
             ert_workflow_list,
             hook_manager,
-            ert_templates,
             ecl_config,
             ensemble_config,
             model_config,
@@ -246,12 +240,12 @@ class ResConfig(BaseCClass):
         self.runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"
         )
+        templates = config_dict.get(ConfigKeys.RUN_TEMPLATE, [])
+        for source_file, target_file, *_ in templates:
+            self._templates.append([os.path.abspath(source_file), target_file])
+
         hook_manager = HookManager(
             workflow_list=ert_workflow_list, config_dict=config_dict
-        )
-
-        ert_templates = ErtTemplates(
-            parent_subst=subst_config.subst_list, config_dict=config_dict
         )
 
         ensemble_config = EnsembleConfig(
@@ -275,7 +269,6 @@ class ResConfig(BaseCClass):
             analysis_config,
             ert_workflow_list,
             hook_manager,
-            ert_templates,
             ecl_config,
             ensemble_config,
             model_config,
@@ -647,7 +640,7 @@ class ResConfig(BaseCClass):
 
     @property
     def ert_templates(self):
-        return self._ert_templates()
+        return self._templates
 
     @property
     def queue_config(self):

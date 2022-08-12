@@ -560,6 +560,14 @@ class EnKFMain(BaseCClass):
                     exist_ok=True,
                 )
 
+                for source_file, target_file in self.config_file.ert_templates:
+                    result = self.substituter.substitute(
+                        Path(source_file).read_text("utf-8"),
+                        run_arg.iens,
+                        run_context.iteration,
+                    )
+                    (Path(run_arg.runpath) / target_file).write_text(result)
+
                 enkf_main.init_active_run(
                     res_config=self.resConfig(),
                     run_path=run_arg.runpath,

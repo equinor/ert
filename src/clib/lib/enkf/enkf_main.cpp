@@ -387,9 +387,6 @@ void init_active_run(const res_config_type *res_config, char *run_path,
     ensemble_config_type *ens_config =
         res_config_get_ensemble_config(res_config);
 
-    ert_templates_instansiate(res_config_get_templates(res_config), run_path,
-                              subst_list);
-
     ecl_write(ens_config, model_config_get_gen_kw_export_name(model_config),
               run_path, iens, fs);
 
@@ -892,8 +889,7 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
                              res_config_get_model_config(res_config),
                              res_config_get_ensemble_config(res_config),
                              res_config_get_site_config(res_config),
-                             res_config_get_ecl_config(res_config),
-                             res_config_get_templates(res_config)),
+                             res_config_get_ecl_config(res_config)),
             enkf_state_deleter());
     enkf_main->ensemble = ensemble;
     enkf_main->ens_size = num_realizations;

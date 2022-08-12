@@ -8,7 +8,6 @@ from ert._c_wrappers.enkf import (
     EclConfig,
     EnkfConfigNode,
     EnKFMain,
-    ErtTemplate,
     ResConfig,
 )
 from ert._c_wrappers.enkf.util import TimeMap
@@ -20,7 +19,7 @@ class EnKFLibraryTest(ResTest):
         self.case_directory = self.createTestPath("local/simple_config/")
 
     def test_failed_class_creation(self):
-        classes = [EnkfConfigNode, ErtTemplate]
+        classes = [EnkfConfigNode]
 
         for cls in classes:
             with self.assertRaises(NotImplementedError):
