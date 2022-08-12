@@ -46,7 +46,6 @@ class EnkfNode(BaseCClass):
     _get_impl_type = ResPrototype(
         "ert_impl_type_enum enkf_node_get_impl_type(enkf_node)"
     )
-    _ecl_write = ResPrototype("void enkf_node_ecl_write(enkf_node, char*, void*, int)")
 
     def __init__(self, config_node: "EnkfConfigNode", private: bool = False):
         self._private = private
@@ -160,8 +159,3 @@ class EnkfNode(BaseCClass):
     def __repr__(self):
         pp = ", private" if self._private else ""
         return f'EnkfNode(name = "{self.name()}"{pp}) {self._ad_str()}'
-
-    def ecl_write(self, path):
-        filestream_ptr = None
-        report_step = 0
-        self._ecl_write(path, filestream_ptr, report_step)
