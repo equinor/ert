@@ -382,7 +382,6 @@ void ecl_write(const ensemble_config_type *ens_config,
 void init_active_run(const res_config_type *res_config, char *run_path,
                      int iens, enkf_fs_type *fs, char *run_id, char *job_name,
                      const subst_list_type *subst_list) {
-    util_make_path(run_path);
 
     model_config_type *model_config = res_config_get_model_config(res_config);
     ensemble_config_type *ens_config =
