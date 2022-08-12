@@ -447,9 +447,9 @@ void model_config_init(model_config_type *model_config,
             model_config->external_time_map = time_map;
         else {
             time_map_free(time_map);
-            fprintf(stderr,
-                    "** ERROR: Loading external time map from:%s failed \n",
-                    filename);
+            logger->warning(
+                "** ERROR: Loading external time map from: {} failed.",
+                filename);
         }
     }
 
@@ -704,13 +704,16 @@ config_content_type *model_config_alloc_content(const char *user_config_file,
 
     const stringlist_type *warnings = config_content_get_warnings(content);
     if (stringlist_get_size(warnings) > 0) {
-        fprintf(
-            stderr,
-            " ** There were warnings when parsing the configuration file: %s",
-            user_config_file);
-
-        for (int i = 0; i < stringlist_get_size(warnings); i++)
-            fprintf(stderr, " %02d : %s \n", i, stringlist_iget(warnings, i));
+        std::string error_string =
+            "** There were warnings when parsing the configuration file: ";
+        error_string.append(user_config_file);
+        error_string.append(". ");
+        for (int i = 0; i < stringlist_get_size(warnings); i++) {
+            error_string.append(std::to_string(i));
+            error_string.append(" : ");
+            error_string.append(stringlist_iget(warnings, i));
+        }
+        logger->warning(error_string);
     }
 
     if (!config_content_is_valid(content)) {
