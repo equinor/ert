@@ -409,9 +409,8 @@ bool config_parser_add_key_values(
             return false;
 
         if (unrecognized == CONFIG_UNRECOGNIZED_WARN) {
-            fprintf(
-                stderr,
-                "** Warning keyword: %s not recognized when parsing: %s --- \n",
+            logger->warning(
+                "** Warning keyword: {} not recognized when parsing: {} ---",
                 kw, config_filename);
             return false;
         }
