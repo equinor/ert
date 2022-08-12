@@ -521,10 +521,10 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
                              &current[2]);
     util_set_date_values_utc(time, &new_time[0], &new_time[1], &new_time[2]);
 
-    util_abort("%s: time mismatch for step:%d   New_Time: %02d/%02d/%04d   "
-               "existing: %02d/%02d/%04d \n",
-               __func__, step, new_time[0], new_time[1], new_time[2],
-               current[0], current[1], current[2]);
+    util_abort("%s: time mismatch for step:%d   New_Time: %04d-%02d-%02d   "
+               "existing: %04d-%02d-%02d \n",
+               __func__, step, new_time[2], new_time[1], new_time[0],
+               current[2], current[1], current[0]);
 }
 
 /**
@@ -537,15 +537,15 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
 
      time map                      Summary
      -------------------------------------------------
-     0: 01/01/2000   <-------      0: 01/01/2000
+     0: 2000-01-01   <-------      0: 2000-01-01
 
-     1: 01/02/2000   <-------      1: 01/02/2000
+     1: 2000-02-01   <-------      1: 2000-02-01
 
-     2: 01/03/2000   <-\           2: 02/02/2000 (Ignored)
+     2: 2000-03-01   <-\           2: 2000-02-02 (Ignored)
                         \
-                         \--       3: 01/03/2000
+                         \--       3: 2000-03-01
 
-     3: 01/04/2000   <-------      4: 01/04/2000
+     3: 2000-04-01   <-------      4: 2000-04-01
 
 
      index_map = { 0 , 1 , 3 , 4 }
@@ -557,13 +557,13 @@ static void time_map_update_abort(time_map_type *map, int step, time_t time) {
 
      time map                      Summary
      -------------------------------------------------
-     0: 01/01/2000   <-------      0: 01/01/2000
+     0: 2000-01-01   <-------      0: 2000-01-01
 
-     1: 01/02/2000   <-------      1: 01/02/2000
+     1: 2000-02-01   <-------      1: 2000-02-01
 
-     2: 01/03/2000                 ## ERROR -> util_abort()
+     2: 2000-03-01                 ## ERROR -> util_abort()
 
-     3: 01/04/2000   <-------      2: 01/04/2000
+     3: 2000-04-01   <-------      2: 2000-04-01
 
 */
 int_vector_type *time_map_alloc_index_map(time_map_type *map,
@@ -588,8 +588,8 @@ int_vector_type *time_map_alloc_index_map(time_map_type *map,
                 int day, month, year;
                 util_set_date_values_utc(map_time, &day, &month, &year);
                 util_abort("%s: The eclipse summary cases is missing data for "
-                           "date:%02d/%02d/%4d - aborting\n",
-                           __func__, day, month, year);
+                           "date:%4d-%02d-%02d - aborting\n",
+                           __func__, year, month, day);
             }
         }
 

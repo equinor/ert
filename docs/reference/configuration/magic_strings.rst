@@ -41,6 +41,7 @@ List of keywords
    * :ref:`CONFIG_FILE <ms_config_file>`
    * :ref:`CONFIG_FILE_BASE <ms_config_file_base>`
    * :ref:`CWD <ms_cwd>`
+   * :ref:`DATE <ms_date>`
 
 * Experiment variables
 
@@ -149,6 +150,11 @@ Experiment constants
    ::
 
       YOUR_WORKFLOW_JOB /data/repos/ert/test-data/local/poly_example
+
+.. _ms_date:
+.. topic:: DATE
+
+    Will be replaced with the current date in ISO-8601 format (YYYY-MM-DD).
 
 .. _ms_exp_variables:
 

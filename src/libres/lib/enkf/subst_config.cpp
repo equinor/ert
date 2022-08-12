@@ -166,7 +166,10 @@ static void subst_config_init_default(subst_config_type *subst_config) {
     // Installing the based (key,value) pairs which are common to all ensemble
     // members, and independent of time.
 
-    char *date_string = util_alloc_date_stamp_utc();
+    int mday, year, month;
+    util_set_datetime_values_utc(time(NULL), NULL, NULL, NULL, &mday, &month,
+                                 &year);
+    char *date_string = util_alloc_sprintf("%4d-%02d-%02d", year, month, mday);
     subst_config_add_internal_subst_kw(subst_config, "DATE", date_string,
                                        "The current date.");
     free(date_string);

@@ -639,8 +639,8 @@ static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
             util_set_datetime_values_utc(now, &second, &minute, &hour, &day,
                                          &month, &year);
 
-            fprintf(stream, "TIME:%02d/%02d/%4d-%02d.%02d.%02d\n", day, month,
-                    year, hour, minute, second);
+            fprintf(stream, "TIME:%04d-%02d-%02dT%02d:%02d:%02d\n", year, month,
+                    day, hour, minute, second);
         }
         fclose(stream);
         free(current_host);

@@ -367,8 +367,8 @@ void obs_vector_load_from_SUMMARY_OBSERVATION(
                             "summary observations from the\n");
             fprintf(stderr,
                     "          start of the simulation. Problem with "
-                    "observation:%s at %02d/%02d/%4d\n",
-                    obs_key, day, month, year);
+                    "observation:%s at %4d-%02d-%02d\n",
+                    obs_key, year, month, day);
             exit(1);
         }
         {
