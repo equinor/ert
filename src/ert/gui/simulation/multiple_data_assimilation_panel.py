@@ -27,14 +27,14 @@ from ert.gui.ertwidgets.models.init_iter_value import IterValueModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
+from ert.shared.ide.keywords.definitions import (
     NumberListStringArgument,
     RangeStringArgument,
     ProperNameFormatArgument,
     IntegerArgument,
 )
 from ert.gui.simulation import SimulationConfigPanel
-from ert_shared.models import MultipleDataAssimilation
+from ert.shared.models import MultipleDataAssimilation
 from ert.libres_facade import LibresFacade
 
 from dataclasses import dataclass

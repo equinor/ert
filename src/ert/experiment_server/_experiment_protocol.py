@@ -3,7 +3,7 @@ from typing_extensions import Protocol
 from cloudevents.http import CloudEvent
 
 if TYPE_CHECKING:
-    from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 class Experiment(Protocol):

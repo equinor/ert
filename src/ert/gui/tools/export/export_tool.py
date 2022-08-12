@@ -19,7 +19,7 @@ from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.export import ExportPanel
-from ert_shared.exporter import Exporter
+from ert.shared.exporter import Exporter
 from qtpy.QtWidgets import QMessageBox
 import logging
 

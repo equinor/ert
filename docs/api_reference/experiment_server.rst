@@ -23,6 +23,6 @@ Experiment Server reference
     :members:
     :undoc-members:
 
-.. autoclass:: ert_shared.ensemble_evaluator.config.EvaluatorServerConfig
+.. autoclass:: ert.shared.ensemble_evaluator.config.EvaluatorServerConfig
     :members:
     :undoc-members:

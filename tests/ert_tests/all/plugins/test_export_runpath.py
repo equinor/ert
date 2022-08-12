@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from unittest.mock import Mock, patch
 
 import pytest
-from ert_shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
-from ert_shared.plugins import ErtPluginManager
+from ert.shared.hook_implementations.workflows.export_runpath import ExportRunpathJob
+from ert.shared.plugins import ErtPluginManager
 from res.enkf import EnKFMain
 from res.enkf.runpaths import Runpaths
 

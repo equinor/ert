@@ -12,15 +12,15 @@ from ert.gui.model.snapshot import RealIens, SnapshotModel, FileRole
 from ert.gui.simulation.tracker_worker import TrackerWorker
 from ert.gui.tools.file import FileDialog
 from ert.gui.tools.plot.plot_tool import PlotTool
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.models import BaseRunModel
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.models import BaseRunModel
 from ert.ensemble_evaluator import (
     EndEvent,
     EvaluatorTracker,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from ert_shared.status.utils import format_running_time
+from ert.shared.status.utils import format_running_time
 from qtpy.QtCore import QModelIndex, QSize, Qt, QThread, QTimer, Signal, Slot
 from qtpy.QtWidgets import (
     QApplication,
@@ -50,7 +50,7 @@ from typing import Dict, TYPE_CHECKING, cast
 if TYPE_CHECKING:
     from ert.data import RecordTransmitter
     from ert.ert3.evaluator._evaluator import ERT3RunModel
-    from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+    from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"

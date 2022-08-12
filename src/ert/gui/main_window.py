@@ -13,7 +13,7 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.about_dialog import AboutDialog
-from ert_shared.plugins import ErtPluginManager
+from ert.shared.plugins import ErtPluginManager
 
 
 class GertMainWindow(QMainWindow):

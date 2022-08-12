@@ -1,5 +1,5 @@
 import logging
-from ert_shared.main import log_process_usage
+from ert.shared.main import log_process_usage
 
 
 def test_valid(caplog):

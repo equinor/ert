@@ -5,8 +5,8 @@ import pytest
 
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator import state
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from websockets.exceptions import ConnectionClosed
 
 

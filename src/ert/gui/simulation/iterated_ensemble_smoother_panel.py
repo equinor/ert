@@ -5,12 +5,12 @@ from ert.gui.ertwidgets import addHelpToWidget, AnalysisModuleEdit, CaseSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import (
+from ert.shared.ide.keywords.definitions import (
     RangeStringArgument,
     ProperNameFormatArgument,
 )
 from ert.gui.simulation import SimulationConfigPanel
-from ert_shared.models import IteratedEnsembleSmoother
+from ert.shared.models import IteratedEnsembleSmoother
 from ert.libres_facade import LibresFacade
 
 from dataclasses import dataclass

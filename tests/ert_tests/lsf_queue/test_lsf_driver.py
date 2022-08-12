@@ -5,9 +5,9 @@ from textwrap import dedent
 
 import pytest
 
-from ert_shared.cli import ENSEMBLE_EXPERIMENT_MODE
-from ert_shared.cli.main import run_cli
-from ert_shared.main import ert_parser
+from ert.shared.cli import ENSEMBLE_EXPERIMENT_MODE
+from ert.shared.cli.main import run_cli
+from ert.shared.main import ert_parser
 
 
 @pytest.fixture

@@ -8,7 +8,7 @@ from textwrap import dedent
 import pytest
 import threading
 
-from ert_shared.services._base_service import (
+from ert.shared.services._base_service import (
     ServerBootFail,
     BaseService,
     local_exec_args,

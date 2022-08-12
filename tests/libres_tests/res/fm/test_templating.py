@@ -202,7 +202,7 @@ class TemplatingTest(ResTest):
                 "--input_files other.json"
             )
             template_render_exec = pkg_resources.resource_filename(
-                "ert_shared",
+                "ert.shared",
                 "share/ert/forward-models/templating/script/template_render",
             )
 

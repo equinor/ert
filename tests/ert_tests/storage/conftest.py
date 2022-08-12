@@ -6,7 +6,7 @@ def _enable_new_storage(monkeypatch):
     """
     All tests in this module assume --enable-new-storage is set
     """
-    from ert_shared.feature_toggling import FeatureToggling
+    from ert.shared.feature_toggling import FeatureToggling
 
     feature = FeatureToggling._conf["new-storage"]
     monkeypatch.setattr(feature, "is_enabled", True)
@@ -14,7 +14,7 @@ def _enable_new_storage(monkeypatch):
 
 @pytest.fixture
 def client(monkeypatch, ert_storage_client):
-    from ert_shared.storage import extraction
+    from ert.shared.storage import extraction
 
     class MockStorage:
         @staticmethod

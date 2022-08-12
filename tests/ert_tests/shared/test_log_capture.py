@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from ert_shared.models.base_run_model import captured_logs
+from ert.shared.models.base_run_model import captured_logs
 
 logger = logging.getLogger(__name__)
 

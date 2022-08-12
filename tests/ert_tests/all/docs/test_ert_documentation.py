@@ -1,6 +1,6 @@
 import pytest
 
-from ert_shared._doc_utils.ert_jobs import _ErtDocumentation
+from ert.shared._doc_utils.ert_jobs import _ErtDocumentation
 
 
 @pytest.mark.parametrize(

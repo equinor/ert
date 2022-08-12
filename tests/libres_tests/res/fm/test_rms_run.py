@@ -278,7 +278,7 @@ class RMSRunTest(ResTest):
                     f.write(json.dumps(action))
 
                 rms_exec = pkg_resources.resource_filename(
-                    "ert_shared", "share/ert/forward-models/res/script/rms"
+                    "ert.shared", "share/ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -346,7 +346,7 @@ class RMSRunTest(ResTest):
                     f.write(json.dumps(action))
 
                 rms_exec = pkg_resources.resource_filename(
-                    "ert_shared", "share/ert/forward-models/res/script/rms"
+                    "ert.shared", "share/ert/forward-models/res/script/rms"
                 )
                 subprocess.check_call(
                     [
@@ -674,7 +674,7 @@ env:
                 f.write(json.dumps(action))
 
             rms_exec = pkg_resources.resource_filename(
-                "ert_shared", "share/ert/forward-models/res/script/rms"
+                "ert.shared", "share/ert/forward-models/res/script/rms"
             )
             subprocess.check_call(
                 [

@@ -4,7 +4,7 @@ import pandas as pd
 import io
 import pytest
 from unittest.mock import MagicMock
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 from ert.gui.tools.plot.plot_api import PlotApi
 
 

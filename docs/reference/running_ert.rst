@@ -5,7 +5,7 @@ Graphical User Interface (GUI)
 ------------------------------
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: gui
@@ -20,7 +20,7 @@ Test Run
 ~~~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: test_run
@@ -29,7 +29,7 @@ Ensemble Experiment
 ~~~~~~~~~~~~~~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: ensemble_experiment
@@ -38,7 +38,7 @@ Ensemble Smoother
 ~~~~~~~~~~~~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: ensemble_smoother
@@ -47,7 +47,7 @@ Iterative Ensemble Smoother
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: iterative_ensemble_smoother
@@ -56,7 +56,7 @@ ES MDA
 ~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: es_mda
@@ -65,7 +65,7 @@ Workflow
 ~~~~~~~~
 
 .. argparse::
-   :module: ert_shared.main
+   :module: ert.shared.main
    :func: get_ert_parser
    :prog: ert
    :path: workflow

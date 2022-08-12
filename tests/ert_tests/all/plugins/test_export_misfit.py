@@ -2,10 +2,10 @@ import pandas as pd
 import pytest
 
 from ert.exceptions import StorageError
-from ert_shared.hook_implementations.workflows.export_misfit_data import (
+from ert.shared.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
 )
-from ert_shared.plugins import ErtPluginManager
+from ert.shared.plugins import ErtPluginManager
 from res.enkf import EnKFMain
 
 

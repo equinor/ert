@@ -14,7 +14,7 @@ import pytest
 import websockets
 from ecl.util.test import ExtendedTestCase
 
-from ert_shared.ensemble_evaluator.client import Client
+from ert.shared.ensemble_evaluator.client import Client
 
 """
 Swiped from

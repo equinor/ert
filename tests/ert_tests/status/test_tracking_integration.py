@@ -20,16 +20,16 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.ensemble_evaluator import EvaluatorTracker
-from ert_shared.cli import (
+from ert.shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
 )
-from ert_shared.cli.model_factory import create_model
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.feature_toggling import FeatureToggling
+from ert.shared.cli.model_factory import create_model
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.feature_toggling import FeatureToggling
 from ert.libres_facade import LibresFacade
-from ert_shared.main import ert_parser
+from ert.shared.main import ert_parser
 from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,

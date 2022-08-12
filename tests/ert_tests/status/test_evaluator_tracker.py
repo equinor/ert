@@ -10,8 +10,8 @@ from ert.ensemble_evaluator.snapshot import (
     SnapshotBuilder,
     Step,
 )
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.models.base_run_model import BaseRunModel
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.models.base_run_model import BaseRunModel
 from ert.ert3.evaluator._evaluator import ERT3RunModel
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent

@@ -19,7 +19,7 @@ import pandas as pd
 import ert.data
 import ert.exceptions
 from ert.async_utils import get_event_loop
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 
 logger = logging.getLogger(__name__)
 read_csv = partial(pd.read_csv, index_col=0, float_precision="round_trip")

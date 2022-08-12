@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert_shared.plugins import workflow_config
+from ert.shared.plugins import workflow_config
 
 
 @pytest.mark.parametrize(

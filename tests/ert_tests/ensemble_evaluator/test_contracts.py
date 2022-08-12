@@ -2,7 +2,7 @@ import pytest
 import websockets
 from cloudevents.http import CloudEvent, from_json, to_json
 
-from ert_shared.ensemble_evaluator.narratives.narrative import (
+from ert.shared.ensemble_evaluator.narratives.narrative import (
     Consumer,
     EventDescription,
     Provider,

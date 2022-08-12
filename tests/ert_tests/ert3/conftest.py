@@ -123,7 +123,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture()
 def workspace_integration(tmpdir):
-    from ert_shared.services import Storage
+    from ert.shared.services import Storage
 
     workspace_dir = pathlib.Path(tmpdir / "polynomial")
     workspace_dir.mkdir()

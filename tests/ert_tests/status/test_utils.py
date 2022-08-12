@@ -1,6 +1,6 @@
 import unittest
 
-from ert_shared.status.utils import (
+from ert.shared.status.utils import (
     format_running_time,
 )
 

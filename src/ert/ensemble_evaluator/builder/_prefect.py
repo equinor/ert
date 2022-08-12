@@ -39,8 +39,8 @@ from ert.ensemble_evaluator.identifiers import (
     EVTYPE_FM_STEP_FAILURE,
 )
 from ert.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.port_handler import find_available_port
+from ert.shared.ensemble_evaluator.client import Client
+from ert.shared.port_handler import find_available_port
 
 from ._ensemble import _Ensemble
 from ._function_task import FunctionTask
@@ -50,7 +50,7 @@ from ._step import _FunctionStep, _UnixStep
 from ._unix_task import UnixTask
 
 if TYPE_CHECKING:
-    from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 DEFAULT_MAX_RETRIES = 0
 DEFAULT_RETRY_DELAY = 5  # seconds

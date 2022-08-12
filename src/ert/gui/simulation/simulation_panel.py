@@ -25,7 +25,7 @@ from collections import OrderedDict
 
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain
-from ert_shared.cli.model_factory import create_model
+from ert.shared.cli.model_factory import create_model
 
 
 class SimulationPanel(QWidget):

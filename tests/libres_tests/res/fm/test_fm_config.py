@@ -23,7 +23,7 @@ class TestFMValidity(ResTest):
 
     def test_validate_scripts(self):
         fm_path = pkg_resources.resource_filename(
-            "ert_shared", "share/ert/forward-models"
+            "ert.shared", "share/ert/forward-models"
         )
         for fm_dir in os.listdir(fm_path):
             fm_dir = os.path.join(fm_path, fm_dir)

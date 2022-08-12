@@ -13,7 +13,7 @@ import pytest
 from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert.libres_facade import LibresFacade
-from ert_shared.storage import extraction
+from ert.shared.storage import extraction
 from res.enkf import RunContext
 from res.enkf.enkf_main import EnKFMain
 from res.enkf.res_config import ResConfig

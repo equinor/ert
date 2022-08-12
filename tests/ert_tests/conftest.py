@@ -2,7 +2,7 @@
 import logging
 import pytest
 
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +31,7 @@ def no_cert_in_test(monkeypatch):
             super().__init__(*args, **kwargs)
 
     for object_to_mock in [
-        "ert_shared.cli.main.EvaluatorServerConfig",
+        "ert.shared.cli.main.EvaluatorServerConfig",
         "ert.ert3.evaluator._evaluator.EvaluatorServerConfig",
     ]:
         monkeypatch.setattr(object_to_mock, MockESConfig)

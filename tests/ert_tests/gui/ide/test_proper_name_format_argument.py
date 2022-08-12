@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions import ProperNameFormatArgument
+from ert.shared.ide.keywords.definitions import ProperNameFormatArgument
 
 from ...ert_utils import ErtTest
 

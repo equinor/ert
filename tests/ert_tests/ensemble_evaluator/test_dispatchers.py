@@ -1,6 +1,6 @@
 import pytest
 
-from ert_shared.ensemble_evaluator.narratives import dispatch_failing_job
+from ert.shared.ensemble_evaluator.narratives import dispatch_failing_job
 
 
 @pytest.mark.consumer_driven_contract_test

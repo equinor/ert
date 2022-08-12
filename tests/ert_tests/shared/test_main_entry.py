@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from ert_shared import main
-from ert_shared.main import log_config
+from ert.shared import main
+from ert.shared.main import log_config
 
 from ...utils import SOURCE_DIR
 
@@ -62,7 +62,7 @@ def test_api_database_default(monkeypatch):
     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
     mocked_start_server = MagicMock()
     monkeypatch.setattr(
-        "ert_shared.services.storage_service.BaseService.start_server",
+        "ert.shared.services.storage_service.BaseService.start_server",
         mocked_start_server,
     )
     monkeypatch.setattr(
@@ -84,7 +84,7 @@ def test_api_database_url_forwarded(monkeypatch):
     monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
     mocked_start_server = MagicMock()
     monkeypatch.setattr(
-        "ert_shared.services.storage_service.BaseService.start_server",
+        "ert.shared.services.storage_service.BaseService.start_server",
         mocked_start_server,
     )
     monkeypatch.setattr(

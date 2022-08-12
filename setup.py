@@ -39,15 +39,15 @@ args = dict(
     author="Equinor ASA",
     author_email="fg_sib-scout@equinor.com",
     description="Ensemble based Reservoir Tool (ERT)",
-    use_scm_version={"root": ".", "write_to": "src/ert_shared/version.py"},
+    use_scm_version={"root": ".", "write_to": "src/ert/shared/version.py"},
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/equinor/ert",
     packages=find_packages(where="src", exclude=["libres"]),
     package_dir={"": "src"},
     package_data={
-        "ert_shared": package_files("src/ert_shared/share/"),
         "ert": package_files("src/ert/gui/resources/")
+        + package_files("src/ert/shared/share/")
         + package_files("src/ert/ert3/examples/")
         + ["logging/logger.conf", "logging/storage_log.conf"],
         "res": [
@@ -106,7 +106,7 @@ args = dict(
     entry_points={
         "console_scripts": [
             "ert3=ert.ert3.console:main",
-            "ert=ert_shared.main:main",
+            "ert=ert.shared.main:main",
             "job_dispatch.py = ert.job_runner.job_dispatch:main",
         ]
     },
