@@ -40,7 +40,6 @@
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/enkf_util.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/res_config.hpp>
 #include <ert/enkf/run_arg.hpp>
@@ -60,8 +59,7 @@ enkf_state_load_from_forward_model(enkf_state_type *enkf_state,
 enkf_state_type *enkf_state_alloc(int, rng_type *main_rng, model_config_type *,
                                   ensemble_config_type *,
                                   const site_config_type *,
-                                  const ecl_config_type *,
-                                  ert_templates_type *templates);
+                                  const ecl_config_type *);
 
 void enkf_state_add_node(enkf_state_type *, const char *,
                          const enkf_config_node_type *);

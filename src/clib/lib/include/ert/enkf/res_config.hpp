@@ -24,7 +24,6 @@
 #include <ert/enkf/analysis_config.hpp>
 #include <ert/enkf/ecl_config.hpp>
 #include <ert/enkf/ensemble_config.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/ert_workflow_list.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/model_config.hpp>
@@ -44,9 +43,8 @@ extern "C" PY_USED res_config_type *res_config_alloc_full(
     site_config_type *site_config, rng_config_type *rng_config,
     analysis_config_type *analysis_config,
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
-    ert_templates_type *templates, ecl_config_type *ecl_config,
-    ensemble_config_type *ensemble_config, model_config_type *model_config,
-    queue_config_type *queue_config);
+    ecl_config_type *ecl_config, ensemble_config_type *ensemble_config,
+    model_config_type *model_config, queue_config_type *queue_config);
 extern "C" void res_config_free(res_config_type *);
 void res_config_add_config_items(config_parser_type *config_parser);
 
@@ -64,8 +62,6 @@ extern "C" subst_config_type *
 res_config_get_subst_config(const res_config_type *res_config);
 extern "C" const hook_manager_type *
 res_config_get_hook_manager(const res_config_type *res_config);
-extern "C" ert_templates_type *
-res_config_get_templates(const res_config_type *res_config);
 extern "C" const ecl_config_type *
 res_config_get_ecl_config(const res_config_type *res_config);
 extern "C" ensemble_config_type *

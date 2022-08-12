@@ -35,7 +35,6 @@ struct res_config_struct {
     ert_workflow_list_type *workflow_list;
     subst_config_type *subst_config;
     hook_manager_type *hook_manager;
-    ert_templates_type *templates;
     ecl_config_type *ecl_config;
     ensemble_config_type *ensemble_config;
     model_config_type *model_config;
@@ -45,8 +44,8 @@ struct res_config_struct {
 static char *res_config_alloc_config_directory(const char *user_config_file);
 
 static res_config_type *res_config_alloc_empty() {
-    res_config_type *res_config =
-        (res_config_type *)util_malloc(sizeof *res_config);
+    res_config_type *res_config = new res_config_type;
+
     res_config->user_config_file = NULL;
     res_config->config_dir = NULL;
 
@@ -56,7 +55,6 @@ static res_config_type *res_config_alloc_empty() {
     res_config->workflow_list = NULL;
     res_config->subst_config = NULL;
     res_config->hook_manager = NULL;
-    res_config->templates = NULL;
     res_config->ecl_config = NULL;
     res_config->ensemble_config = NULL;
     res_config->model_config = NULL;
@@ -177,9 +175,6 @@ res_config_type *res_config_alloc(const config_content_type *config_content) {
     res_config->hook_manager =
         hook_manager_alloc(res_config->workflow_list, config_content);
 
-    res_config->templates = ert_templates_alloc(
-        subst_config_get_subst_list(res_config->subst_config), config_content);
-
     res_config->ecl_config = ecl_config_alloc(config_content);
 
     res_config->ensemble_config = ensemble_config_alloc(
@@ -204,9 +199,8 @@ res_config_type *res_config_alloc_full(
     site_config_type *site_config, rng_config_type *rng_config,
     analysis_config_type *analysis_config,
     ert_workflow_list_type *workflow_list, hook_manager_type *hook_manager,
-    ert_templates_type *templates, ecl_config_type *ecl_config,
-    ensemble_config_type *ensemble_config, model_config_type *model_config,
-    queue_config_type *queue_config) {
+    ecl_config_type *ecl_config, ensemble_config_type *ensemble_config,
+    model_config_type *model_config, queue_config_type *queue_config) {
     res_config_type *res_config = res_config_alloc_empty();
 
     res_config->user_config_file = util_alloc_string_copy(user_config_file);
@@ -217,7 +211,6 @@ res_config_type *res_config_alloc_full(
     res_config->analysis_config = analysis_config;
     res_config->workflow_list = workflow_list;
     res_config->hook_manager = hook_manager;
-    res_config->templates = templates;
     res_config->ecl_config = ecl_config;
     res_config->ensemble_config = ensemble_config;
     res_config->model_config = model_config;
@@ -235,7 +228,6 @@ void res_config_free(res_config_type *res_config) {
     ert_workflow_list_free(res_config->workflow_list);
     subst_config_free(res_config->subst_config);
     hook_manager_free(res_config->hook_manager);
-    ert_templates_free(res_config->templates);
     ecl_config_free(res_config->ecl_config);
     ensemble_config_free(res_config->ensemble_config);
     model_config_free(res_config->model_config);
@@ -243,7 +235,7 @@ void res_config_free(res_config_type *res_config) {
     free(res_config->user_config_file);
     free(res_config->config_dir);
     queue_config_free(res_config->queue_config);
-    free(res_config);
+    delete res_config;
 }
 
 const site_config_type *
@@ -273,11 +265,6 @@ res_config_get_subst_config(const res_config_type *res_config) {
 const hook_manager_type *
 res_config_get_hook_manager(const res_config_type *res_config) {
     return res_config->hook_manager;
-}
-
-ert_templates_type *
-res_config_get_templates(const res_config_type *res_config) {
-    return res_config->templates;
 }
 
 const ecl_config_type *

@@ -44,7 +44,6 @@
 #include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
-#include <ert/enkf/ert_template.hpp>
 #include <ert/enkf/field_config.hpp>
 #include <ert/enkf/hook_manager.hpp>
 #include <ert/enkf/misfit_ensemble.hpp>

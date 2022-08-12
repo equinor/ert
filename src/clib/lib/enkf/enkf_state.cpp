@@ -62,7 +62,6 @@ typedef struct shared_info_struct {
      * be run (with Python code) */
     ext_joblist_type *joblist;
     const site_config_type *site_config;
-    ert_templates_type *templates;
     const ecl_config_type *ecl_config;
 } shared_info_type;
 
@@ -78,14 +77,12 @@ struct enkf_state_struct {
 
 static shared_info_type *shared_info_alloc(const site_config_type *site_config,
                                            model_config_type *model_config,
-                                           const ecl_config_type *ecl_config,
-                                           ert_templates_type *templates) {
+                                           const ecl_config_type *ecl_config) {
     shared_info_type *shared_info =
         (shared_info_type *)util_malloc(sizeof *shared_info);
     shared_info->joblist = site_config_get_installed_jobs(site_config);
     shared_info->site_config = site_config;
     shared_info->model_config = model_config;
-    shared_info->templates = templates;
     shared_info->ecl_config = ecl_config;
     return shared_info;
 }
@@ -217,8 +214,7 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
                                   model_config_type *model_config,
                                   ensemble_config_type *ensemble_config,
                                   const site_config_type *site_config,
-                                  const ecl_config_type *ecl_config,
-                                  ert_templates_type *templates) {
+                                  const ecl_config_type *ecl_config) {
 
     enkf_state_type *enkf_state =
         (enkf_state_type *)util_malloc(sizeof *enkf_state);
@@ -226,7 +222,7 @@ enkf_state_type *enkf_state_alloc(int iens, rng_type *rng,
 
     enkf_state->ensemble_config = ensemble_config;
     enkf_state->shared_info =
-        shared_info_alloc(site_config, model_config, ecl_config, templates);
+        shared_info_alloc(site_config, model_config, ecl_config);
     enkf_state->node_hash = hash_alloc();
 
     enkf_state->__iens = iens;

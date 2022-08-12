@@ -48,8 +48,6 @@ from .enums import (
     RealizationStateEnum,
 )
 from .ert_run_context import RunContext
-from .ert_template import ErtTemplate
-from .ert_templates import ErtTemplates
 from .ert_workflow_list import ErtWorkflowList
 from .hook_manager import HookManager
 from .hook_workflow import HookWorkflow
@@ -120,8 +118,6 @@ __all__ = [
     "SubstConfig",
     "EnsembleConfig",
     "EnkfObs",
-    "ErtTemplate",
-    "ErtTemplates",
     "ModelConfig",
     "HookWorkflow",
     "HookManager",

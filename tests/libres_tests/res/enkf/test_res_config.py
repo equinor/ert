@@ -266,7 +266,6 @@ config_data_new = {
         (
             "../input/templates/seed_template.txt",
             "seed.txt",
-            [],
         )  # ert_templates not sure about this we might do a proper dict instead?
     ],
 }
