@@ -4,7 +4,7 @@ import threading
 import websockets
 from cloudevents.http import CloudEvent, to_json
 
-from ert_shared.ensemble_evaluator.client import Client
+from ert.shared.ensemble_evaluator.client import Client
 from ert.ensemble_evaluator import identifiers
 from ert.ensemble_evaluator.builder._job import _BaseJob
 from ert.ensemble_evaluator.builder._realization import _Realization

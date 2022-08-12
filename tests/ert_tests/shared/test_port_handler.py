@@ -2,7 +2,7 @@ import sys
 import socket
 import threading
 import pytest
-from ert_shared import port_handler
+from ert.shared import port_handler
 
 
 def test_find_available_port(unused_tcp_port):

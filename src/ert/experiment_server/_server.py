@@ -9,7 +9,7 @@ from cloudevents.http import from_json
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
 from ert.serialization import evaluator_unmarshaller
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from res.enkf.enkf_main import EnKFMain
 
 from ._experiment_protocol import Experiment
@@ -130,7 +130,7 @@ class ExperimentServer:
         The ert parameter, as well as the first input parameter in the factory
         :class:`Callable`, refers to the EnkfMain type.
 
-        Create a legacy experiment using a model factory. See ``ert_shared.cli.model_factory.create_model``.
+        Create a legacy experiment using a model factory. See ``ert.shared.cli.model_factory.create_model``.
         """
         experiment = factory(
             ert,

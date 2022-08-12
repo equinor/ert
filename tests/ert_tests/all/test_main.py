@@ -3,8 +3,8 @@ from unittest.mock import Mock
 import pytest
 from packaging.version import Version
 
-import ert_shared
-from ert_shared.cli import (
+import ert.shared
+from ert.shared.cli import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
@@ -12,13 +12,13 @@ from ert_shared.cli import (
     TEST_RUN_MODE,
     WORKFLOW_MODE,
 )
-from ert_shared.main import ert_parser
+from ert.shared.main import ert_parser
 
 
 @pytest.fixture(autouse=True)
 def mocked_valid_file(monkeypatch):
     monkeypatch.setattr(
-        ert_shared.main, "valid_file", Mock(return_value="path/to/config.ert")
+        ert.shared.main, "valid_file", Mock(return_value="path/to/config.ert")
     )
 
 
@@ -30,7 +30,7 @@ def test_argparse_exec_gui():
 @pytest.mark.parametrize("input_path", ["a/path/config.ert", "another/path/config.ert"])
 def test_parsed_config(monkeypatch, input_path):
     monkeypatch.setattr(
-        ert_shared.main, "valid_file", Mock(side_effect=lambda x: input_path)
+        ert.shared.main, "valid_file", Mock(side_effect=lambda x: input_path)
     )
     parsed = ert_parser(None, [TEST_RUN_MODE, input_path])
     assert parsed.config == input_path
@@ -216,7 +216,7 @@ def test_version_valid_Version(capsys):
 
 
 def test_version_mocked(capsys, monkeypatch):
-    monkeypatch.setattr(ert_shared, "__version__", "1.0.3")
+    monkeypatch.setattr(ert.shared, "__version__", "1.0.3")
 
     try:
         ert_parser(None, ["--version"])

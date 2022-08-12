@@ -30,12 +30,12 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.ensemble_evaluator.util._network import wait_for_evaluator
 from ert.async_utils import get_event_loop
-from ert_shared.ensemble_evaluator.monitor import create as create_ee_monitor
+from ert.shared.ensemble_evaluator.monitor import create as create_ee_monitor
 
 if TYPE_CHECKING:
     from cloudevents.http.event import CloudEvent
     from ert.ert3.evaluator._evaluator import ERT3RunModel
-    from ert_shared.models.base_run_model import BaseRunModel
+    from ert.shared.models.base_run_model import BaseRunModel
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):
@@ -64,7 +64,7 @@ class EvaluatorTracker:
 
     def _drain_monitor(self) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
-        drainer_logger = logging.getLogger("ert_shared.ensemble_evaluator.drainer")
+        drainer_logger = logging.getLogger("ert.shared.ensemble_evaluator.drainer")
         while not self._model.isFinished():
             try:
                 drainer_logger.debug("connecting to new monitor...")
@@ -209,7 +209,7 @@ class EvaluatorTracker:
             pass
 
     def request_termination(self) -> None:
-        logger = logging.getLogger("ert_shared.ensemble_evaluator.tracker")
+        logger = logging.getLogger("ert.shared.ensemble_evaluator.tracker")
         # There might be some situations where the
         # evaluation is finished or the evaluation
         # is yet to start when calling this function.

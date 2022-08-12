@@ -9,11 +9,11 @@ from ert.gui.ertwidgets.models.ertmodel import (
     get_runnable_realizations_mask,
 )
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
+from ert.shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
-from ert_shared.models import EnsembleExperiment
+from ert.shared.models import EnsembleExperiment
 
 from dataclasses import dataclass
 

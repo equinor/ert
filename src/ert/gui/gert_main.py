@@ -38,7 +38,7 @@ from ert.libres_facade import LibresFacade
 
 from res.enkf import EnKFMain, ResConfig
 
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 
 
 def run_gui(args):

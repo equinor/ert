@@ -5,7 +5,7 @@ import io
 
 from ert.libres_facade import LibresFacade
 from res.enkf import EnKFMain, ResConfig
-from ert_shared.dark_storage.endpoints import experiments, ensembles, records, responses
+from ert.shared.dark_storage.endpoints import experiments, ensembles, records, responses
 
 
 def get_single_record_csv(ert, ensemble_id1, keyword, poly_ran):

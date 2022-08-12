@@ -14,7 +14,7 @@ from ert.async_utils import get_event_loop
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.builder._unix_task import UnixTask
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 
 
 def test_get_flow(

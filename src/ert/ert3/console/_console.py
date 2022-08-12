@@ -14,7 +14,7 @@ import ert.storage
 from ert.ert3.config import DEFAULT_RECORD_MIME_TYPE, ConfigPluginRegistry
 from ert.ert3.workspace import Workspace
 from ert.async_utils import get_event_loop
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 
 _ERT3_DESCRIPTION = (
     "ert3 is an ensemble-based tool for uncertainty studies.\n"

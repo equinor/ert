@@ -5,9 +5,9 @@ from concurrent import futures
 from typing import Dict, Optional, Union, Any
 
 import ert
-from ert_shared.cli.monitor import Monitor
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator
+from ert.shared.cli.monitor import Monitor
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_STOPPED,
     ENSEMBLE_STATE_FAILED,

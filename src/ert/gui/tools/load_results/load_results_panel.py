@@ -21,7 +21,7 @@ from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizations
 from ert.gui.ertwidgets.models.all_cases_model import AllCasesModel
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
+from ert.shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert.libres_facade import LibresFacade
 
 

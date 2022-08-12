@@ -9,7 +9,7 @@ import yaml
 
 import ert
 from ert import ert3
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 
 from ....ert_utils import chdir
 

@@ -36,7 +36,7 @@ To avoid having to deal with the details of this a decorator is provided, which 
 
 .. code-block:: python
 
-   from ert_shared.plugins.plugin_response import plugin_response
+   from ert.shared.plugins.plugin_response import plugin_response
    @hook_implementation
    @plugin_response(plugin_name="ert")
    def installable_jobs():
@@ -112,7 +112,7 @@ This hook spesification relies on creating a config file, and has no utility fun
 The second hook registers individual jobs, with the option of adding documentation in the form
 of a description, examples, parser, etc. It passes in a config object where the job is added.
 
-.. literalinclude:: ../../src/ert_shared/plugins/hook_specifications/jobs.py
+.. literalinclude:: ../../src/ert/shared/plugins/hook_specifications/jobs.py
    :pyobject: legacy_ertscript_workflow
 
 Minimal example:
@@ -120,7 +120,7 @@ Minimal example:
 .. code-block:: python
 
    from res.enkf import ErtScript
-   from ert_shared.plugins.plugin_manager import hook_implementation
+   from ert.shared.plugins.plugin_manager import hook_implementation
 
    class MyJob(ErtScript)
        def run()
@@ -136,7 +136,7 @@ Full example:
 .. code-block:: python
 
    from res.enkf import ErtScript
-   from ert_shared.plugins.plugin_manager import hook_implementation
+   from ert.shared.plugins.plugin_manager import hook_implementation
 
    class MyJob(ErtScript)
        def run()
@@ -149,16 +149,16 @@ Full example:
         workflow.description = "My job description"  # Optional
         workflow.examples = "example of use"  # Optional
 
-The configuration object and properties is documented in: :class:`ert_shared.plugins.workflow_config.WorkflowConfig`
+The configuration object and properties is documented in: :class:`ert.shared.plugins.workflow_config.WorkflowConfig`
 
-.. autofunction:: ert_shared.plugins.hook_specifications.jobs.legacy_ertscript_workflow
+.. autofunction:: ert.shared.plugins.hook_specifications.jobs.legacy_ertscript_workflow
 
-.. autoclass:: ert_shared.plugins.workflow_config.WorkflowConfigs
+.. autoclass:: ert.shared.plugins.workflow_config.WorkflowConfigs
     :members: add_workflow
     :undoc-members:
 
 
-.. autoclass:: ert_shared.plugins.workflow_config.WorkflowConfig
+.. autoclass:: ert.shared.plugins.workflow_config.WorkflowConfig
     :members:
     :undoc-members:
 
@@ -166,14 +166,14 @@ Logging Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 The logging can be configured by plugins to add custom log handlers.
 
-.. autofunction:: ert_shared.plugins.hook_specifications.logging.add_log_handle_to_root
+.. autofunction:: ert.shared.plugins.hook_specifications.logging.add_log_handle_to_root
 
 Minimal example to log to a new file:
 
 .. code-block:: python
 
 
-   from ert_shared.plugins.plugin_manager import hook_implementation
+   from ert.shared.plugins.plugin_manager import hook_implementation
 
     @hook_implementation
     def add_log_handle_to_root():

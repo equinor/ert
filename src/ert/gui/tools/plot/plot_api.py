@@ -4,7 +4,7 @@ import io
 import httpx
 import pandas as pd
 from typing import List
-from ert_shared.services import Storage
+from ert.shared.services import Storage
 from pandas.errors import ParserError
 from itertools import combinations as combi
 from json.decoder import JSONDecodeError

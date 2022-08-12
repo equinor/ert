@@ -9,10 +9,10 @@ import gc
 
 from starlette.testclient import TestClient
 
-from ert_shared.cli import ENSEMBLE_SMOOTHER_MODE
-from ert_shared.cli.main import run_cli
-from ert_shared.dark_storage import enkf
-from ert_shared.main import ert_parser
+from ert.shared.cli import ENSEMBLE_SMOOTHER_MODE
+from ert.shared.cli.main import run_cli
+from ert.shared.dark_storage import enkf
+from ert.shared.main import ert_parser
 
 
 @pytest.fixture(scope="session")
@@ -83,7 +83,7 @@ def reset_enkf():
 
 
 def new_storage_client(monkeypatch, ert_storage_client):
-    from ert_shared.storage import extraction
+    from ert.shared.storage import extraction
 
     class MockStorage:
         @staticmethod
@@ -113,7 +113,7 @@ def run_poly_example_new_storage(monkeypatch, tmpdir, source_root):
     ) as dark_app:
         new_storage_client_ = new_storage_client(monkeypatch, ert_storage_cli)
 
-        from ert_shared.feature_toggling import FeatureToggling
+        from ert.shared.feature_toggling import FeatureToggling
 
         # Enable new storage
         feature = FeatureToggling._conf["new-storage"]
@@ -144,7 +144,7 @@ def dark_storage_app_(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
     monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
-    from ert_shared.dark_storage.app import app
+    from ert.shared.dark_storage.app import app
 
     yield app
     reset_enkf()

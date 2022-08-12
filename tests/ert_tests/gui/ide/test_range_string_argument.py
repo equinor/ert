@@ -1,4 +1,4 @@
-from ert_shared.ide.keywords.definitions.range_string_argument import (
+from ert.shared.ide.keywords.definitions.range_string_argument import (
     RangeStringArgument,
 )
 

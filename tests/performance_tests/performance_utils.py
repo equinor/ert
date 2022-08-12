@@ -3,7 +3,7 @@ from jinja2 import Environment, FileSystemLoader
 import tempfile
 import shutil
 import contextlib
-from ert_shared.dark_storage import enkf
+from ert.shared.dark_storage import enkf
 import os
 from ecl.summary import EclSum
 import datetime
@@ -138,7 +138,7 @@ def dark_storage_app(monkeypatch):
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
     monkeypatch.setenv("ERT_STORAGE_RES_CONFIG", "poly.ert")
     monkeypatch.setenv("ERT_STORAGE_DATABASE_URL", "sqlite://")
-    from ert_shared.dark_storage.app import app
+    from ert.shared.dark_storage.app import app
 
     yield app
     reset_enkf()

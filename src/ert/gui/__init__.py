@@ -2,7 +2,7 @@ import os
 
 import matplotlib
 
-import ert_shared
+import ert.shared
 
 
 def headless():
@@ -14,4 +14,4 @@ if headless():
 else:
     matplotlib.use("Qt5Agg")
 
-__version__ = ert_shared.__version__
+__version__ = ert.shared.__version__

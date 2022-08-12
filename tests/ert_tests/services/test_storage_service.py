@@ -2,8 +2,8 @@ import pytest
 import requests
 import os
 import json
-from ert_shared.services import Storage, _storage_main
-from ert_shared import port_handler
+from ert.shared.services import Storage, _storage_main
+from ert.shared import port_handler
 
 
 @pytest.mark.skip

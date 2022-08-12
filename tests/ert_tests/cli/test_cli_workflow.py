@@ -1,8 +1,8 @@
 import os
 from argparse import Namespace
 
-from ert_shared.cli.workflow import execute_workflow
-from ert_shared.plugins.plugin_manager import ErtPluginContext
+from ert.shared.cli.workflow import execute_workflow
+from ert.shared.plugins.plugin_manager import ErtPluginContext
 from res.enkf import EnKFMain, ResConfig
 
 from ...utils import SOURCE_DIR

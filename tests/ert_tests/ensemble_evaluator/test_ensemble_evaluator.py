@@ -11,10 +11,10 @@ from ert.ensemble_evaluator.state import (
     JOB_STATE_FINISHED,
     JOB_STATE_RUNNING,
 )
-from ert_shared.ensemble_evaluator.client import Client
-from ert_shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
-from ert_shared.ensemble_evaluator.monitor import _Monitor
-from ert_shared.ensemble_evaluator.narratives import (
+from ert.shared.ensemble_evaluator.client import Client
+from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator, ee_monitor
+from ert.shared.ensemble_evaluator.monitor import _Monitor
+from ert.shared.ensemble_evaluator.narratives import (
     dispatch_failing_job,
     monitor_failing_ensemble,
     monitor_failing_evaluation,

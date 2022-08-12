@@ -3,7 +3,7 @@ from qtpy.QtWidgets import QFormLayout, QLabel
 from ert.gui.ertwidgets import addHelpToWidget
 from ert.gui.ertwidgets.caseselector import CaseSelector
 from ert.gui.ertwidgets.models.activerealizationsmodel import ActiveRealizationsModel
-from ert_shared.models import SingleTestRun
+from ert.shared.models import SingleTestRun
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
 
 from ert.libres_facade import LibresFacade

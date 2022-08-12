@@ -14,13 +14,13 @@ from ert.ensemble_evaluator.snapshot import (
 )
 from ert.ensemble_evaluator.tracker.ensemble_state_tracker import EnsembleStateTracker
 from ert.serialization import evaluator_marshaller
-from ert_shared.ensemble_evaluator.client import Client
+from ert.shared.ensemble_evaluator.client import Client
 
 from ._realization import _Realization
 
 if TYPE_CHECKING:
     import asyncio
-    from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 logger = logging.getLogger(__name__)
 

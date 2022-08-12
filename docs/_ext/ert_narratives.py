@@ -7,7 +7,7 @@ from os.path import basename
 from pathlib import Path
 from sphinx.application import Sphinx
 
-from ert_shared.ensemble_evaluator import narratives
+from ert.shared.ensemble_evaluator import narratives
 
 TMPL = """.. datatemplate:json:: {source_path}
     :template: ert_narratives.tmpl"""

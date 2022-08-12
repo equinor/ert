@@ -33,7 +33,7 @@ jobs:
         python -m pip install -r types-requirements.txt
     - name: Run mypy
       run: |
-        mypy --disallow-untyped-defs --ignore-missing-imports src/ert_shared/models
+        mypy --disallow-untyped-defs --ignore-missing-imports src/ert/shared/models
     - name: Run strict mypy
       run: |
         mypy src/ert --config-file .mypy-strict.ini

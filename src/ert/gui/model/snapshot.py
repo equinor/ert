@@ -11,7 +11,7 @@ from qtpy.QtGui import QColor, QFont
 from ert.gui.model.node import Node, NodeType
 from ert.ensemble_evaluator import state, PartialSnapshot, Snapshot
 from ert.ensemble_evaluator import identifiers as ids
-from ert_shared.status.utils import byte_with_unit
+from ert.shared.status.utils import byte_with_unit
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import Mock
 
 import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
-from ert_shared.plugins import ErtPluginContext
+from ert.shared.plugins import ErtPluginContext
 from pytest import MonkeyPatch
 
 env_vars = [

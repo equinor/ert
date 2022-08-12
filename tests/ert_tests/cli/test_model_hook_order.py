@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, call
 
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
-from ert_shared.models import (
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.models import (
     EnsembleSmoother,
     IteratedEnsembleSmoother,
     MultipleDataAssimilation,

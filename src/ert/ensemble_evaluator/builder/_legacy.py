@@ -27,7 +27,7 @@ from ._ensemble import _Ensemble
 from ._realization import _Realization
 
 if TYPE_CHECKING:
-    from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+    from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 CONCURRENT_INTERNALIZATION = 10
 

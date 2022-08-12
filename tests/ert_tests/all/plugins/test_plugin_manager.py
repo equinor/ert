@@ -3,14 +3,14 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
-import ert_shared.hook_implementations
+import ert.shared.hook_implementations
 import tests.ert_tests.all.plugins.dummy_plugins as dummy_plugins
-from ert_shared.plugins import ErtPluginManager
+from ert.shared.plugins import ErtPluginManager
 
 
 class PluginManagerTest(unittest.TestCase):
     def test_no_plugins(self):
-        pm = ErtPluginManager(plugins=[ert_shared.hook_implementations])
+        pm = ErtPluginManager(plugins=[ert.shared.hook_implementations])
         self.assertDictEqual(
             {"GitHub page": "https://github.com/equinor/ert"}, pm.get_help_links()
         )
@@ -33,7 +33,7 @@ class PluginManagerTest(unittest.TestCase):
         )
 
     def test_with_plugins(self):
-        pm = ErtPluginManager(plugins=[ert_shared.hook_implementations, dummy_plugins])
+        pm = ErtPluginManager(plugins=[ert.shared.hook_implementations, dummy_plugins])
         self.assertDictEqual(
             {
                 "GitHub page": "https://github.com/equinor/ert",

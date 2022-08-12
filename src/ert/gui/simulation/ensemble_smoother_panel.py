@@ -9,10 +9,10 @@ from ert.gui.ertwidgets.models.ertmodel import (
 )
 from ert.gui.ertwidgets.models.targetcasemodel import TargetCaseModel
 from ert.gui.ertwidgets.stringbox import StringBox
-from ert_shared.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
+from ert.shared.ide.keywords.definitions import RangeStringArgument, ProperNameArgument
 from ert.gui.simulation import SimulationConfigPanel
 from ert.libres_facade import LibresFacade
-from ert_shared.models import EnsembleSmoother
+from ert.shared.models import EnsembleSmoother
 from res.enkf import EnKFMain
 
 from dataclasses import dataclass

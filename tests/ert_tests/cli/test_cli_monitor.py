@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 from io import StringIO
 
-from ert_shared.cli.monitor import Monitor
+from ert.shared.cli.monitor import Monitor
 from ert.ensemble_evaluator.snapshot import (
     Realization,
     Snapshot,

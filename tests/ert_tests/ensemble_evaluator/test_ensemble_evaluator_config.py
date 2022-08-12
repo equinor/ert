@@ -1,4 +1,4 @@
-from ert_shared.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
 
 def test_load_config(unused_tcp_port):
