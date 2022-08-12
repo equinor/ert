@@ -47,6 +47,7 @@ The `ert` program is based on two different repositories:
 2. ert - this repository - the actual application and all of the GUI.
 
 
+
 ERT is now Python 3 only. The last Python 2 compatible release is [2.14](https://github.com/equinor/ert/tree/version-2.14)
 
 ## Documentation
