@@ -16,6 +16,7 @@
 import os
 import os.path
 import unittest
+import datetime
 
 from ecl.util.test import TestAreaContext
 from res.enkf import ConfigKeys, ResConfig, SubstConfig
@@ -69,6 +70,9 @@ class SubstConfigTest(ResTest):
         subst_config = SubstConfig(config_dict=self.config_data)
         self.assertKeyValue(subst_config, "<CWD>", self.path)
         self.assertKeyValue(subst_config, "<CONFIG_PATH>", self.path)
+        self.assertKeyValue(
+            subst_config, "<DATE>", datetime.datetime.now().date().isoformat()
+        )
         self.assertKeyValue(subst_config, "keyA", "valA")
         self.assertKeyValue(subst_config, "keyB", "valB")
         self.assertKeyValue(subst_config, "keyC", "valC")
