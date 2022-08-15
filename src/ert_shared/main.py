@@ -49,6 +49,12 @@ def run_ert_storage(args):
 
 
 def run_webviz_ert(args):
+    try:
+        import webviz_ert  # noqa
+    except ImportError as err:
+        raise ValueError(
+            "Running `ert vis` requires that webviz_ert is installed"
+        ) from err
     kwargs = {"res_config": args.config}
     kwargs["verbose"] = args.verbose
 
@@ -68,8 +74,8 @@ Starting up Webviz-ERT. This might take more than a minute.
         )
         kwargs = {"experimental_mode": args.experimental_mode}
         kwargs["verbose"] = args.verbose
-        with WebvizErt.start_server(**kwargs) as webviz_ert:
-            webviz_ert.wait()
+        with WebvizErt.start_server(**kwargs) as webviz_ert_server:
+            webviz_ert_server.wait()
 
 
 def strip_error_message_and_raise_exception(validated):

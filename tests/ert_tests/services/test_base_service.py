@@ -290,9 +290,7 @@ def test_singleton_start_or_connect_exists(server_script):
             assert server.fetch_conn_info() == client.fetch_conn_info()
 
 
-@pytest.mark.parametrize(
-    "script,should_exist", [("storage", True), ("webviz_ert", True), ("foobar", False)]
-)
+@pytest.mark.parametrize("script,should_exist", [("storage", True), ("foobar", False)])
 def test_local_exec_args(script, should_exist):
     exec_args = local_exec_args(script)
     assert len(exec_args) == 2
