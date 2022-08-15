@@ -17,16 +17,16 @@
 */
 
 #include <cmath>
-#include <ert/python.hpp>
 #include <vector>
 
 #include <ert/util/util.h>
 
 #include <ert/analysis/analysis_module.hpp>
-
 #include <ert/enkf/enkf_analysis.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
+#include <ert/except.hpp>
+#include <ert/python.hpp>
 
 void UpdateSnapshot::add_member(std::string observation_name,
                                 double observation_value,
@@ -97,9 +97,9 @@ void enkf_analysis_deactivate_outliers(
         const std::vector<int> deactivate_index =
             selected_obs.at(block_nr).second;
         if (obs_block_get_key(obs_block) != selected_obs.at(block_nr).first)
-            throw std::invalid_argument(fmt::format(
-                "Expected obs_key: {}, got: {}", obs_block_get_key(obs_block),
-                selected_obs.at(block_nr).first));
+            throw exc::invalid_argument("Expected obs_key: {}, got: {}",
+                                        obs_block_get_key(obs_block),
+                                        selected_obs.at(block_nr).first);
 
         int iobs;
         for (iobs = 0; iobs < meas_block_get_total_obs_size(meas_block);

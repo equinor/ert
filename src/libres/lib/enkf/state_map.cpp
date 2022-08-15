@@ -24,16 +24,15 @@
 #include <stdexcept>
 #include <stdlib.h>
 
-#include <ert/python.hpp>
-
-#include <ert/res_util/file_utils.hpp>
 #include <ert/util/bool_vector.h>
 #include <ert/util/int_vector.h>
 #include <ert/util/util.h>
 
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/state_map.hpp>
-#include <system_error>
+#include <ert/except.hpp>
+#include <ert/python.hpp>
+#include <ert/res_util/file_utils.hpp>
 
 namespace fs = std::filesystem;
 
@@ -118,8 +117,7 @@ void StateMap::set(int index, realisation_state_enum new_state) {
     if (index < 0)
         index += m_state.size();
     if (index < 0)
-        throw std::out_of_range(
-            fmt::format("index out of range: {} < 0", index));
+        throw exc::out_of_range("index out of range: {} < 0", index);
     if (index >= m_state.size())
         m_state.resize(index + 1, STATE_UNDEFINED);
 

@@ -1,7 +1,5 @@
 #include <Eigen/Dense>
-#include <assert.h>
 #include <cerrno>
-#include <fmt/format.h>
 #include <optional>
 #include <string>
 #include <vector>
@@ -14,6 +12,7 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/meas_data.hpp>
 #include <ert/enkf/obs_data.hpp>
+#include <ert/except.hpp>
 #include <ert/python.hpp>
 #include <ert/res_util/memory.hpp>
 #include <ert/res_util/metric.hpp>
@@ -115,11 +114,9 @@ void deserialize_node(enkf_fs_type *fs,
 void assert_matrix_size(const Eigen::MatrixXd &m, const char *name, int rows,
                         int columns) {
     if (!((m.rows() == rows) && (m.cols() == columns)))
-        throw std::invalid_argument("matrix mismatch " + std::string(name) +
-                                    ":[" + std::to_string(m.rows()) + "," +
-                                    std::to_string(m.cols()) +
-                                    "   - expected:[" + std::to_string(rows) +
-                                    "," + std::to_string(columns) + "]");
+        throw exc::invalid_argument(
+            "matrix mismatch {}:[{},{}] - expected:[{},{}]", name, m.rows(),
+            m.cols(), rows, columns);
 }
 
 /**

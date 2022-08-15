@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include <catch2/catch.hpp>
-#include <fmt/format.h>
+#include <ert/except.hpp>
 
 #include "tmpdir.hpp"
 
@@ -86,9 +86,8 @@ std::filesystem::path make_numbered_dir(const fs::path &basepath,
         }
     }
 
-    throw std::runtime_error(
-        fmt::format("Could not make numbered dir in {} with prefix {}",
-                    basepath.string(), norm_prefix));
+    throw exc::runtime_error("Could not make numbered dir in {} with prefix {}",
+                             basepath.string(), norm_prefix);
 }
 
 /**

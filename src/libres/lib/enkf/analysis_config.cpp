@@ -38,6 +38,7 @@
 #include <ert/enkf/enkf_defaults.hpp>
 #include <ert/enkf/model_config.hpp>
 #include <ert/enkf/site_config.hpp>
+#include <ert/except.hpp>
 
 #define UPDATE_ENKF_ALPHA_KEY "ENKF_ALPHA"
 #define UPDATE_STD_CUTOFF_KEY "STD_CUTOFF"
@@ -244,8 +245,8 @@ analysis_config_get_module(const analysis_config_type *config,
     if (analysis_config_has_module(config, module_name)) {
         return config->analysis_modules.at(module_name);
     } else {
-        throw std::invalid_argument(
-            fmt::format("Analysis module named {} not found", module_name));
+        throw exc::invalid_argument("Analysis module named {} not found",
+                                    module_name);
     }
 }
 

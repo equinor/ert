@@ -18,7 +18,6 @@
 #include <Eigen/Dense>
 #include <array>
 #include <filesystem>
-#include <fmt/format.h>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -26,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include <ert/except.hpp>
 #include <ert/res_util/es_testdata.hpp>
 
 namespace fs = std::filesystem;
@@ -43,8 +43,8 @@ public:
         }
 
         if (!util_is_directory(path.c_str()))
-            throw std::invalid_argument("The path: " + path +
-                                        " does not exist - can not proceed");
+            throw exc::invalid_argument(
+                "The path: {} does not exist - can not proceed", path);
 
         this->org_cwd = util_alloc_cwd();
         util_chdir(path.c_str());
@@ -67,8 +67,8 @@ Eigen::MatrixXd load_matrix_from_file(int rows, int columns, FILE *stream) {
             if (fscanf(stream, "%lg", &value) == 1)
                 matrix(row, col) = value;
             else
-                throw std::runtime_error(fmt::format(
-                    "reading of matrix failed at row:{}  col:{}", row, col));
+                throw exc::runtime_error(
+                    "reading of matrix failed at row:{}  col:{}", row, col);
         }
     }
     return matrix;
@@ -181,8 +181,7 @@ es_testdata::es_testdata(const Eigen::MatrixXd &S, const Eigen::MatrixXd &R,
 
 void es_testdata::deactivate_obs(int iobs) {
     if (iobs >= this->obs_mask.size())
-        throw std::invalid_argument("Obs number: " + std::to_string(iobs) +
-                                    " out of reach");
+        throw exc::invalid_argument("Obs number: {} out of reach", iobs);
 
     if (this->obs_mask[iobs]) {
         this->obs_mask[iobs] = false;
@@ -198,8 +197,8 @@ void es_testdata::deactivate_obs(int iobs) {
 
 void es_testdata::deactivate_realization(int iens) {
     if (iens >= this->ens_mask.size())
-        throw std::invalid_argument(
-            "iRealization number: " + std::to_string(iens) + " out of reach");
+        throw exc::invalid_argument("iRealization number: {} out of reach",
+                                    iens);
 
     if (this->ens_mask[iens]) {
         this->ens_mask[iens] = false;
@@ -250,16 +249,16 @@ Eigen::MatrixXd es_testdata::make_state(const std::string &name) const {
 
     std::ifstream stream(name);
     if (!stream)
-        throw std::invalid_argument("No such state matrix: " + this->path +
-                                    "/" + name);
+        throw exc::invalid_argument("No such state matrix: {}/{}", this->path,
+                                    name);
     std::istream_iterator<double> start(stream), end;
     std::vector<double> data(start, end);
 
     if ((data.size() % this->active_ens_size) != 0)
-        throw std::invalid_argument(
+        throw exc::invalid_argument(
             "Number of elements in file with state informaton must be a "
-            "multiple of ensemble_size: " +
-            std::to_string(this->active_ens_size));
+            "multiple of ensemble_size: {}",
+            this->active_ens_size);
 
     int state_size = data.size() / this->active_ens_size;
     Eigen::MatrixXd state =
