@@ -6,7 +6,7 @@ import pandas
 import sys
 
 from ecl.rft import WellTrajectory
-from res.enkf import ErtPlugin, CancelPluginException
+from res.job_queue import ErtPlugin, CancelPluginException
 from res.enkf import RealizationStateEnum
 from res.enkf.enums import EnkfObservationImplementationType
 from res.enkf.export import GenDataCollector, ArgLoader

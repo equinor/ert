@@ -5,7 +5,7 @@ import pandas
 import sys
 
 
-from res.enkf import ErtPlugin, CancelPluginException
+from res.job_queue import ErtPlugin, CancelPluginException
 from res.enkf.export import (
     SummaryCollector,
     GenKwCollector,
