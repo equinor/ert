@@ -4,6 +4,7 @@ import sys
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
+
 from ert_shared import main
 from ert_shared.main import log_config
 
@@ -95,32 +96,6 @@ def test_api_database_url_forwarded(monkeypatch):
     main.main()
     mocked_start_server.assert_called_once_with(
         res_config=None, database_url="TEST_DATABASE_URL", verbose=True
-    )
-
-
-def test_vis_database_url_forwarded(monkeypatch):
-    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
-
-    monkeypatch.setattr(main, "start_ert_server", MagicMock())
-    monkeypatch.setattr(main, "ErtPluginContext", MagicMock())
-    mocked_connect_or_start_server = MagicMock()
-    monkeypatch.setattr(
-        "ert_shared.services.storage_service.BaseService.connect_or_start_server",
-        mocked_connect_or_start_server,
-    )
-    monkeypatch.setattr(
-        "ert_shared.services.storage_service.BaseService.start_server",
-        MagicMock,
-    )
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["ert", "vis", "--database-url", "TEST_DATABASE_URL"],
-    )
-
-    main.main()
-    mocked_connect_or_start_server.assert_called_once_with(
-        res_config=None, database_url="TEST_DATABASE_URL", verbose=False
     )
 
 
