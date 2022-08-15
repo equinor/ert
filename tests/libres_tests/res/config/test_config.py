@@ -29,29 +29,29 @@ from res.config import (
 )
 
 
-class TestConfigPrototype(ResPrototype):
+class _TestConfigPrototype(ResPrototype):
     def __init__(self, prototype, bind=False):
         super().__init__(prototype, bind=bind)
 
 
 # Adding extra functions to the ConfigContent object for the ability
 # to test low level C functions which are not exposed in Python.
-_safe_iget = TestConfigPrototype(
+_safe_iget = _TestConfigPrototype(
     "char* config_content_safe_iget(config_content, char*, int, int)"
 )
-_iget = TestConfigPrototype(
+_iget = _TestConfigPrototype(
     "char* config_content_iget(config_content, char*, int, int)"
 )
-_iget_as_int = TestConfigPrototype(
+_iget_as_int = _TestConfigPrototype(
     "int config_content_iget_as_int(config_content, char*, int, int)"
 )
-_iget_as_bool = TestConfigPrototype(
+_iget_as_bool = _TestConfigPrototype(
     "bool config_content_iget_as_bool(config_content, char*, int, int)"
 )
-_iget_as_double = TestConfigPrototype(
+_iget_as_double = _TestConfigPrototype(
     "double config_content_iget_as_double(config_content, char*, int, int)"
 )
-_get_occurences = TestConfigPrototype(
+_get_occurences = _TestConfigPrototype(
     "int config_content_get_occurences(config_content, char*)"
 )
 

@@ -114,5 +114,5 @@ class ExportJoinTest(ResTest):
 
             column_count = len(result.columns)
             self.assertEqual(result.dtypes[0], np.float64)
-            self.assertEqual(result.dtypes[column_count - 1], np.object)
+            self.assertEqual(result.dtypes[column_count - 1], object)
             self.assertEqual(result.dtypes[column_count - 2], np.int64)
