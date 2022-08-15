@@ -1,18 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.13.8
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
-
 # %%
 # flake8: noqa
 # ---
@@ -55,8 +40,9 @@ def plot_result(
             axs[i + 1].hist(A_trans, bins=10)
     else:
         axs.plot(response_x_axis, responses)
+    axs[0].plot(observation_x_axis, observation_values, color='black', linewidth=2,\
+                linestyle='dashed', marker='o', markerfacecolor='black', markersize=3)
     plt.show()
-
 
 # %%
 # Oscilator example
@@ -128,11 +114,10 @@ A = np.asfortranarray(np.random.normal(0, 1, size=(2, realizations)))
 priors = [(2.5e-2, 4.5e-2), (2.0e-4, 4.0e-4)]
 plot_result(A, response_x_axis, uniform, priors, True)
 
-
 # %%
 import numpy as np
 from matplotlib import pyplot as plt
-from ert.analysis import ies
+from ert.analysis import _ies as ies
 
 
 def ensemble_smoother():
@@ -158,7 +143,7 @@ ensemble_smoother()
 # %%
 import numpy as np
 from matplotlib import pyplot as plt
-from ert.analysis import ies
+from ert.analysis import _ies as ies
 
 
 def iterative_smoother():
@@ -200,3 +185,37 @@ def iterative_smoother():
 
 
 iterative_smoother()
+
+# %%
+import numpy as np
+from matplotlib import pyplot as plt
+from ert.analysis import _ies as ies
+
+
+def ensemble_smoother(A_current, scale):
+    responses_before = forward_model(A_current, priors, response_x_axis)
+    S = responses_before[observation_x_axis]
+    noise = np.random.rand(*S.shape)
+    observation_errors_scaled = observation_errors*sqrt(scale)
+    E = ies.make_E(observation_errors_scaled, noise)
+    R = np.identity(len(observation_errors))
+    D = ies.make_D(observation_values, E, S)
+    D = (D.T / observation_errors_scaled).T
+    E = (E.T / observation_errors_scaled).T
+    S = (S.T / observation_errors_scaled).T
+
+    X = ies.make_X(S, R, E, D)
+    A_current = A_current @ X
+
+    plot_result(A_current, response_x_axis, uniform, priors, True)
+    return A_current
+
+
+A_current = np.copy(A)
+plot_result(A_current, response_x_axis, uniform, priors, True)
+weights = [2, 1]
+length = sum(1.0 / x for x in weights)
+for weight in weights:
+    A_current = ensemble_smoother(A_current, weight*length)
+
+
