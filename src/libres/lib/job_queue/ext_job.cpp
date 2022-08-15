@@ -23,13 +23,13 @@
 #include <ert/res_util/subst_list.hpp>
 #include <ert/util/hash.hpp>
 #include <ert/util/util.hpp>
-#include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #include <ert/config/config_parser.hpp>
+#include <ert/except.hpp>
 
 #include <ert/job_queue/ext_job.hpp>
 #include <ert/job_queue/job_kw_definitions.hpp>
@@ -412,8 +412,8 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
         // existing job we mark it as invalid - no possibility to provide
         // context replacement afterwards. The job will be discarded by the
         // calling scope.
-        throw std::invalid_argument(fmt::format(
-            "** The executable {} was not found", executable_input));
+        throw exc::invalid_argument("** The executable {} was not found",
+                                    executable_input);
     } else {
         if (search_path) {
             /* Go through the PATH variable to try to locate the executable. */
@@ -425,8 +425,8 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
                                        search_path);
                 free(path_executable);
             } else {
-                throw std::invalid_argument(fmt::format(
-                    "** The executable {} was not found", executable_input));
+                throw exc::invalid_argument(
+                    "** The executable {} was not found", executable_input);
             }
         } else {
             ext_job->executable =
@@ -439,13 +439,13 @@ void ext_job_set_executable(ext_job_type *ext_job, const char *executable_abs,
     if (ext_job->executable != NULL) {
         if (fs::exists(executable_abs)) {
             if (!util_is_executable(ext_job->executable)) {
-                throw std::invalid_argument(
-                    fmt::format("** You do not have execute rights to: {}",
-                                ext_job->executable));
+                throw exc::invalid_argument(
+                    "** You do not have execute rights to: {}",
+                    ext_job->executable);
             }
         } else {
-            throw std::invalid_argument(fmt::format(
-                "** The executable {} was not found", ext_job->executable));
+            throw exc::invalid_argument("** The executable {} was not found",
+                                        ext_job->executable);
         }
     }
 }

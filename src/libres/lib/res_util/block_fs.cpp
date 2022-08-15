@@ -31,8 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <fmt/ostream.h>
-
+#include <ert/except.hpp>
 #include <ert/python.hpp>
 
 #include <ert/res_util/block_fs.hpp>
@@ -260,8 +259,8 @@ static block_fs_type *block_fs_alloc_empty(const fs::path &mount_file,
     int id = util_fread_int(stream);
     int version = util_fread_int(stream);
     if (version != 0)
-        throw std::runtime_error(fmt::format(
-            "block_fs data version unexpected. Expected 0, got {}", version));
+        throw exc::runtime_error(
+            "block_fs data version unexpected. Expected 0, got {}", version);
 
     fclose(stream);
 
