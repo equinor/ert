@@ -109,3 +109,105 @@ def test_run_template_replace_in_file(key, expected):
     assert (
         Path(run_context.paths[0]) / "result.txt"
     ).read_text() == f"I WANT TO REPLACE:{expected}"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "ecl_base, expected_file",
+    (
+        ("MY_ECL_BASE", "MY_ECL_BASE.DATA"),
+        ("MY_ECL_BASE%d", "MY_ECL_BASE0.DATA"),
+        ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
+    ),
+)
+def test_run_template_replace_in_ecl(ecl_base, expected_file):
+    config_text = dedent(
+        f"""
+        NUM_REALIZATIONS 1
+        ECLBASE {ecl_base}
+        RUN_TEMPLATE BASE_ECL_FILE.DATA <ECLBASE>.DATA
+        """
+    )
+    Path("BASE_ECL_FILE.DATA").write_text("I WANT TO REPLACE:<NUM_CPU>")
+    Path("config.ert").write_text(config_text)
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0, active_mask=[True]
+    )
+    ert.createRunPath(run_context)
+    assert (
+        Path(run_context.paths[0]) / expected_file
+    ).read_text() == "I WANT TO REPLACE:1"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "key, expected",
+    [
+        ("<DATE>", datetime.date(datetime.today()).isoformat()),
+        ("<NUM_CPU>", "1"),
+        ("<CONFIG_FILE_BASE>", "config"),
+        ("<CONFIG_FILE>", "config.ert"),
+        ("<ERT-CASE>", "default"),
+        ("<ERTCASE>", "default"),
+        ("<ECL_BASE>", "ECL_CASE0"),
+        ("<ECLBASE>", "ECL_CASE0"),
+        ("<IENS>", "0"),
+        ("<ITER>", "0"),
+    ],
+)
+def test_run_template_replace_in_ecl_data_file(key, expected):
+    """
+    This test that we copy the DATA_FILE into the runpath,
+    do substitutions and rename it from the DATA_FILE name
+    to ECLBASE
+    """
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE ECL_CASE%d
+        DATA_FILE MY_DATA_FILE.DATA
+        """
+    )
+    Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}")
+    Path("config.ert").write_text(config_text)
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0, active_mask=[True]
+    )
+    ert.createRunPath(run_context)
+    assert (
+        Path(run_context.paths[0]) / "ECL_CASE0.DATA"
+    ).read_text() == f"I WANT TO REPLACE:{expected}"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_template_replace_in_file_name():
+    """
+    This test checks that we are able to magically replace custom magic
+    strings using the DEFINE keyword
+    """
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME my_case%d
+        DEFINE <MY_FILE_NAME> result.txt
+        RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
+        """
+    )
+    Path("template.tmpl").write_text("Not important, name of the file is important")
+    Path("config.ert").write_text(config_text)
+
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0, active_mask=[True]
+    )
+    ert.createRunPath(run_context)
+    assert (
+        Path(run_context.paths[0]) / "result.txt"
+    ).read_text() == "Not important, name of the file is important"

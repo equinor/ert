@@ -523,27 +523,6 @@ class ResConfigTest(ResTest):
     def assert_rng_config(self, rng_config, config_data, working_dir):
         self.assertEqual(config_data["RNG_ALG_TYPE"], rng_config.alg_type)
 
-    def assert_ert_templates(self, ert_templates, config_data, working_dir):
-        self.assertEqual(
-            config_data["RUN_TEMPLATE"].keys(), ert_templates.getTemplateNames()
-        )
-
-        for template_name in ert_templates.getTemplateNames():
-            ert_template = ert_templates.get_template(template_name)
-            config_template = config_data["RUN_TEMPLATE"][template_name]
-
-            self.assert_same_config_file(
-                config_template["TEMPLATE_FILE"],
-                ert_template.get_template_file(),
-                working_dir,
-            )
-
-            self.assertEqual(
-                config_template["TARGET_FILE"],
-                ert_template.get_target_file(),
-                working_dir,
-            )
-
     @tmpdir()
     def test_extensive_config(self):
         self.set_up_snake_oil_structure()
@@ -572,7 +551,6 @@ class ResConfigTest(ResTest):
                 res_config.ert_workflow_list, config_data, work_dir
             )
             self.assert_rng_config(res_config.rng_config, config_data, work_dir)
-            self.assert_ert_templates(res_config.ert_templates, config_data, work_dir)
 
             # TODO: Not tested
             # - MIN_REALIZATIONS

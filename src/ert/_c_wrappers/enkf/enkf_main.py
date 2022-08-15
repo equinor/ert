@@ -561,6 +561,9 @@ class EnKFMain(BaseCClass):
                 )
 
                 for source_file, target_file in self.config_file.ert_templates:
+                    target_file = self.substituter.substitute(
+                        target_file, run_arg.iens, run_context.iteration
+                    )
                     result = self.substituter.substitute(
                         Path(source_file).read_text("utf-8"),
                         run_arg.iens,
