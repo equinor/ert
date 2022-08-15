@@ -135,7 +135,7 @@ def test_num_cpu_submitted_correctly_lsf(tmpdir):
         done_callback_function=DUMMY_CONFIG["ok_callback"],
         exit_callback_function=DUMMY_CONFIG["exit_callback"],
         callback_arguments=[
-            {"job_number": job_id},
+            RunArg(iens=job_id),
             Path(DUMMY_CONFIG["run_path"].format(job_id)).resolve(),
         ],
     )
