@@ -78,7 +78,7 @@ double ies::Config::get_steplength(int iteration_nr) const {
     return ies_steplength;
 }
 
-RES_LIB_SUBMODULE("ies", m) {
+ERT_CLIB_SUBMODULE("ies", m) {
     using namespace py::literals;
     py::class_<ies::Config, std::shared_ptr<ies::Config>>(m, "Config")
         .def(py::init<bool>())

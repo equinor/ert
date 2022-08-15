@@ -1,5 +1,5 @@
-from res.enkf.key_manager import KeyManager
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf.key_manager import KeyManager
+from ert._c_wrappers.test import ErtTestContext
 
 from ...libres_utils import ResTest
 

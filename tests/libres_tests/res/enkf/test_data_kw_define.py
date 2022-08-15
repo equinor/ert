@@ -17,7 +17,7 @@ import os
 
 import pytest
 
-from res.enkf import ResConfig, EnKFMain
+from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
 @pytest.mark.usefixtures("use_tmpdir")

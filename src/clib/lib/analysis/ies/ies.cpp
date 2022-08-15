@@ -355,7 +355,7 @@ Eigen::MatrixXd ies::makeD(const Eigen::VectorXd &obs_values,
     return D;
 }
 
-RES_LIB_SUBMODULE("ies", m) {
+ERT_CLIB_SUBMODULE("ies", m) {
     m.def("make_X", ies::makeX, py::arg("A"), py::arg("Y0"), py::arg("R"),
           py::arg("E"), py::arg("D"), py::arg("ies_inversion"),
           py::arg("truncation"), py::arg("W0"), py::arg("ies_steplength"),

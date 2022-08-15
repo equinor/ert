@@ -1,6 +1,6 @@
 from ecl.util.util import DoubleVector
 
-from res.enkf.plot_data.plot_block_vector import PlotBlockVector
+from ert._c_wrappers.enkf.plot_data.plot_block_vector import PlotBlockVector
 
 
 class PlotBlockData:

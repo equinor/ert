@@ -17,7 +17,7 @@
 
 from ...libres_utils import ResTest
 
-from res.enkf import AnalysisIterConfig
+from ert._c_wrappers.enkf import AnalysisIterConfig
 
 
 class AnalysisIterConfigTest(ResTest):

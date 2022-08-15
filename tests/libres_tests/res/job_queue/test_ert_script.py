@@ -1,5 +1,5 @@
 from ecl.util.test import TestAreaContext
-from res.job_queue import ErtScript
+from ert._c_wrappers.job_queue import ErtScript
 
 from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon
@@ -31,13 +31,13 @@ class ErtScriptTest(ResTest):
         WorkflowCommon.createErtScriptsJob()
 
         with open("syntax_error_script.py", "w") as f:
-            f.write("from res.enkf not_legal_syntax ErtScript\n")
+            f.write("from ert._c_wrappers.enkf not_legal_syntax ErtScript\n")
 
         with open("import_error_script.py", "w") as f:
-            f.write("from res.enkf import DoesNotExist\n")
+            f.write("from ert._c_wrappers.enkf import DoesNotExist\n")
 
         with open("empty_script.py", "w") as f:
-            f.write("from res.enkf import ErtScript\n")
+            f.write("from ert._c_wrappers.enkf import ErtScript\n")
 
     def test_ert_script_return_ert(self):
         script = ReturnErtScript("ert")

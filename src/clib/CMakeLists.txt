@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(res C CXX)
+project(ert C CXX)
 
 option(BUILD_TESTS "Should the tests be built" OFF)
 option(COVERAGE "Should binaries record coverage information" OFF)

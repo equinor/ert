@@ -2,10 +2,10 @@ from typing import List, Optional
 
 from pandas import DataFrame
 
-from res import _lib
-from res.enkf import EnKFMain
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import RealizationStateEnum
+from ert import _clib
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 class GenKwCollector:
@@ -44,7 +44,7 @@ class GenKwCollector:
                 key for key in keys if key in gen_kw_keys
             ]  # ignore keys that doesn't exist
 
-        gen_kw_array = _lib.enkf_fs_keyword_data.keyword_data_get_realizations(
+        gen_kw_array = _clib.enkf_fs_keyword_data.keyword_data_get_realizations(
             ert.ensembleConfig(), fs, gen_kw_keys, realizations
         )
         gen_kw_data = DataFrame(

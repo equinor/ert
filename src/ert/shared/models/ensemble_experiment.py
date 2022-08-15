@@ -2,9 +2,9 @@ import logging
 import concurrent
 import asyncio
 from ert.shared.models.base_run_model import ErtRunError
-from res.enkf.enkf_main import EnKFMain, QueueConfig
-from res.enkf.enums import HookRuntime
-from res.enkf import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf import RunContext
 import uuid
 from ert.shared.models import BaseRunModel
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig

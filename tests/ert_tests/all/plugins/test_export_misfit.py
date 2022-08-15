@@ -6,7 +6,7 @@ from ert.shared.hook_implementations.workflows.export_misfit_data import (
     ExportMisfitDataJob,
 )
 from ert.shared.plugins import ErtPluginManager
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 
 
 def test_export_misfit(setup_case, snapshot):

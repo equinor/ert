@@ -1,7 +1,7 @@
 import datetime
 
 from ecl.util.test import TestAreaContext
-from res.enkf import TimeMap
+from ert._c_wrappers.enkf import TimeMap
 
 from ...libres_utils import ResTest
 

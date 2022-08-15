@@ -18,8 +18,8 @@ config commands by writing a Python script, and invoking it from a workflow.
 
 ::
 
- from res.enkf import ErtScript
- from ert.ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
+ from ert import ErtScript
+ from ecl import EclGrid, EclRegion, Ecl3DKW, EclFile, EclInitFile, EclKW, EclTypeEnum
 
  class LocalConfigJob(ErtScript):
 

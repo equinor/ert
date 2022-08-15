@@ -2,12 +2,17 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING, Tuple, Optional
 
 from cwrap import BaseCClass  # pylint: disable=import-error
 
-from res import ResPrototype
-from res.job_queue.workflow_joblist import WorkflowJoblist
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue.workflow_joblist import WorkflowJoblist
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.job_queue import WorkflowJob
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert._c_wrappers.util import SubstitutionList
 
 
 class Workflow(BaseCClass):
@@ -22,11 +27,7 @@ class Workflow(BaseCClass):
     _get_last_error = ResPrototype("config_error_ref workflow_get_last_error(workflow)")
     _get_src_file = ResPrototype("char* worflow_get_src_file(workflow)")
 
-    def __init__(self, src_file, job_list: WorkflowJoblist):
-        """
-        @type src_file: str
-        @type job_list: WorkflowJoblist
-        """
+    def __init__(self, src_file: str, job_list: WorkflowJoblist):
         c_ptr = self._alloc(src_file, job_list)
         super().__init__(c_ptr)
 
@@ -38,11 +39,7 @@ class Workflow(BaseCClass):
     def __len__(self):
         return self._count()
 
-    def __getitem__(self, index):
-        """
-        @type index: int
-        @rtype: tuple of (WorkflowJob, arguments)
-        """
+    def __getitem__(self, index: int) -> Tuple["WorkflowJob", Any]:
         job = self._iget_job(index)
         args = self._iget_args(index)
         return job, args
@@ -55,13 +52,12 @@ class Workflow(BaseCClass):
     def src_file(self):
         return self._get_src_file()
 
-    def run(self, ert, verbose=False, context=None):
-        """
-        @type ert: res.enkf.enkf_main.EnKFMain
-        @type verbose: bool
-        @type context: SubstitutionList
-        @rtype: bool
-        """
+    def run(
+        self,
+        ert: "EnKFMain",
+        verbose: bool = False,
+        context: Optional["SubstitutionList"] = None,
+    ) -> bool:
         logger = logging.getLogger(__name__)
 
         # Reset status

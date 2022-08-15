@@ -15,7 +15,7 @@
 # for more details.
 
 from cwrap import BaseCClass
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 
 
 class EnsemblePlotGenKWVector(BaseCClass):

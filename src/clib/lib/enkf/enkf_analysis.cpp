@@ -146,7 +146,7 @@ void enkf_analysis_deactivate_outliers(
     }
 }
 
-RES_LIB_SUBMODULE("enkf_analysis", m) {
+ERT_CLIB_SUBMODULE("enkf_analysis", m) {
     using namespace py::literals;
     py::class_<UpdateSnapshot>(m, "UpdateSnapshot")
         .def(py::init<>())

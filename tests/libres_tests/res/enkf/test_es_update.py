@@ -5,14 +5,14 @@ import sys
 import pytest
 
 from ert.analysis import ESUpdate, ErtAnalysisError
-from res.enkf import (
+from ert._c_wrappers.enkf import (
     EnkfNode,
     RunContext,
     NodeId,
     EnKFMain,
     ResConfig,
 )
-from res._lib import ies
+from ert._clib import ies
 
 
 @pytest.fixture()

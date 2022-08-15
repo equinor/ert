@@ -1,7 +1,7 @@
 import shutil
 import os
 import pytest
-from res.enkf import ResConfig, EnKFMain, RunContext
+from ert._c_wrappers.enkf import ResConfig, EnKFMain, RunContext
 from ecl.util.util import StringList
 
 

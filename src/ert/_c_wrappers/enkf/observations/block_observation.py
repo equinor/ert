@@ -18,11 +18,11 @@ from typing import Union
 from cwrap import BaseCClass
 from ecl.grid import EclGrid
 
-from res import ResPrototype
-from res.enkf.config import FieldConfig
-from res.enkf.node_id import NodeId
-from res.enkf.observations import BlockDataConfig
-from res import _lib
+from ert import _clib
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import FieldConfig
+from ert._c_wrappers.enkf.node_id import NodeId
+from ert._c_wrappers.enkf.observations import BlockDataConfig
 
 
 class BlockObservation(BaseCClass):
@@ -94,7 +94,7 @@ class BlockObservation(BaseCClass):
         return self._get_std_scaling(index)
 
     def updateStdScaling(self, factor, active_list):
-        _lib.local.block_obs.update_std_scaling(self, factor, active_list)
+        _clib.local.block_obs.update_std_scaling(self, factor, active_list)
 
     def getDepth(self, index):
         """@rtype: float"""

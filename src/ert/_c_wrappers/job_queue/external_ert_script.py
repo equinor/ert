@@ -1,7 +1,7 @@
 import codecs
 import sys
 from subprocess import Popen, PIPE
-from res.job_queue import ErtScript
+from ert._c_wrappers.job_queue import ErtScript
 
 
 class ExternalErtScript(ErtScript):

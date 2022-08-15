@@ -16,7 +16,7 @@
 from typing import List
 
 from ert.libres_facade import LibresFacade
-from res.analysis.analysis_module import AnalysisModule
+from ert._c_wrappers.analysis.analysis_module import AnalysisModule
 
 
 class AnalysisModuleVariablesModel:

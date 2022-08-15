@@ -1,7 +1,12 @@
 import pytest
 from ecl.util.util import DoubleVector
-from res.enkf.plot_data import PlotBlockData, PlotBlockDataLoader, PlotBlockVector
-from res.test import ErtTestContext
+
+from ert._c_wrappers.enkf.plot_data import (
+    PlotBlockData,
+    PlotBlockDataLoader,
+    PlotBlockVector,
+)
+from ert._c_wrappers.test import ErtTestContext
 
 from ....libres_utils import ResTest
 

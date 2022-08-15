@@ -16,8 +16,8 @@
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from res import ResPrototype
-from res.job_queue import ExtJob
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue import ExtJob
 
 
 class ExtJoblist(BaseCClass):

@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pandas import DataFrame
 
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 
 
 class SummaryObservationCollector:

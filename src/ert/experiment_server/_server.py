@@ -10,7 +10,7 @@ from websockets.legacy.server import WebSocketServerProtocol
 from websockets.server import serve
 from ert.serialization import evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
-from res.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 from ._experiment_protocol import Experiment
 from ._registry import _Registry

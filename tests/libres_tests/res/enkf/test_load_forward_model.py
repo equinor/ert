@@ -11,7 +11,7 @@ from ecl.summary import EclSum
 from ecl.util.util import BoolVector
 
 from ert.libres_facade import LibresFacade
-from res.enkf import ResConfig, EnKFMain
+from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
 @pytest.fixture

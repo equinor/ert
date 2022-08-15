@@ -2,7 +2,7 @@ import copy
 import logging
 import typing
 
-from res.job_queue.job_status_type_enum import JobStatusType
+from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
 
 logger = logging.getLogger(__name__)
 

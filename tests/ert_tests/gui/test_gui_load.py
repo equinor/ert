@@ -57,7 +57,7 @@ def patch_enkf_main(monkeypatch, tmpdir):
         return ""
 
     monkeypatch.setattr(
-        "res.config.rangestring.mask_to_rangestring.__code__",
+        "ert._c_wrappers.config.rangestring.mask_to_rangestring.__code__",
         patched_mask_to_rangestring.__code__,
     )
 

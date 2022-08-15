@@ -2,8 +2,8 @@ import pytest
 
 from ....libres_utils import ResTest
 
-from res.enkf.export import MisfitCollector
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf.export import MisfitCollector
+from ert._c_wrappers.test import ErtTestContext
 
 
 class MisfitCollectorTest(ResTest):

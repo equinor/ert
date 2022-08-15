@@ -410,7 +410,7 @@ static void save_row_scaling_parameters_pybind(
 }
 
 } // namespace
-RES_LIB_SUBMODULE("update", m) {
+ERT_CLIB_SUBMODULE("update", m) {
     using namespace py::literals;
     py::class_<analysis::RowScalingParameter,
                std::shared_ptr<analysis::RowScalingParameter>>(

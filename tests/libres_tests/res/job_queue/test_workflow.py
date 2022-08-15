@@ -1,6 +1,6 @@
 from ecl.util.test import TestAreaContext
-from res.job_queue import Workflow, WorkflowJoblist
-from res.util.substitution_list import SubstitutionList
+from ert._c_wrappers.job_queue import Workflow, WorkflowJoblist
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 from ...libres_utils import ResTest
 from .workflow_common import WorkflowCommon

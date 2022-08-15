@@ -5,10 +5,10 @@ copy_test_files () {
     # Trick to find a fake source root
     mkdir ${CI_TEST_ROOT}/.git
 
-    mkdir -p ${CI_TEST_ROOT}/libres/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/libres/res/fm/rms/rms_config.yml
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/lib
-    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/libres/bin
+    mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
+    ln -s ${CI_SOURCE_ROOT}/ert/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
+    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/src/clib/lib
+    ln -s {$CI_SOURCE_ROOT,$CI_TEST_ROOT}/src/clib/bin
 
     ln -s ${CI_SOURCE_ROOT}/share ${CI_TEST_ROOT}/share
 

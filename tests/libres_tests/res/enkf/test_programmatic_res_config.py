@@ -18,7 +18,7 @@ import tempfile
 from textwrap import dedent
 
 from ecl.util.test import TestAreaContext
-from res.enkf import ResConfig
+from ert._c_wrappers.enkf import ResConfig
 
 from ...libres_utils import ResTest
 

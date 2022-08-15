@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import ActiveList, SummaryObservation
+from ert._c_wrappers.enkf import ActiveList, SummaryObservation
 
 from ...libres_utils import ResTest
 

@@ -2,8 +2,8 @@ import pytest
 
 from ....libres_utils import ResTest
 
-from res.enkf.export import GenKwCollector
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf.export import GenKwCollector
+from ert._c_wrappers.test import ErtTestContext
 
 
 class GenKwCollectorTest(ResTest):

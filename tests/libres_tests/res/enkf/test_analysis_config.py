@@ -20,7 +20,7 @@ import pytest
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest
 
-from res.enkf import AnalysisConfig, ConfigKeys
+from ert._c_wrappers.enkf import AnalysisConfig, ConfigKeys
 
 
 class AnalysisConfigTest(ResTest):

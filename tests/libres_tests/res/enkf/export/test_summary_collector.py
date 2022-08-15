@@ -2,8 +2,8 @@ import pytest
 
 from ....libres_utils import ResTest
 
-from res.enkf.export import SummaryCollector
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf.export import SummaryCollector
+from ert._c_wrappers.test import ErtTestContext
 
 
 class SummaryCollectorTest(ResTest):

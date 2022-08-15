@@ -3,12 +3,12 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from res import _lib
-from res.enkf import QueueConfig
-from res.enkf.analysis_config import AnalysisConfig
-from res.enkf.ert_run_context import RunContext
-from res.enkf.res_config import ResConfig
-from res.job_queue.forward_model import ForwardModel
+from ert import _clib
+from ert._c_wrappers.enkf import QueueConfig
+from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.enkf.res_config import ResConfig
+from ert._c_wrappers.job_queue.forward_model import ForwardModel
 
 from ._ensemble import _Ensemble
 from ._io_ import _DummyIOBuilder
@@ -137,9 +137,9 @@ class _EnsembleBuilder:  # pylint: disable=too-many-instance-attributes
                 step.set_max_runtime(
                     analysis_config.get_max_runtime()
                 ).set_callback_arguments((run_arg, res_config)).set_done_callback(
-                    _lib.model_callbacks.forward_model_ok
+                    _clib.model_callbacks.forward_model_ok
                 ).set_exit_callback(
-                    _lib.model_callbacks.forward_model_exit
+                    _clib.model_callbacks.forward_model_exit
                 ).set_num_cpu(
                     num_cpu
                 ).set_run_path(

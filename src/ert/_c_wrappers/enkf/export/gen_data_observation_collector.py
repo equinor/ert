@@ -1,5 +1,5 @@
-from res.enkf import EnKFMain
-from res.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
 from typing import List
 
 

@@ -1,20 +1,19 @@
 import os
 import re
+import sys
 
 import numpy
 import pandas
-import sys
-
 from ecl.rft import WellTrajectory
-from res.job_queue import ErtPlugin, CancelPluginException
-from res.enkf import RealizationStateEnum
-from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.export import GenDataCollector, ArgLoader
+
+from ert._c_wrappers.enkf import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf.export import ArgLoader, GenDataCollector
+from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.models.path_model import PathModel
 from ert.gui.ertwidgets.pathchooser import PathChooser
-
 
 try:
     from PyQt4.QtGui import QCheckBox

@@ -27,6 +27,6 @@ add_executable(
   job_queue/test_rsh_driver.cpp
   job_queue/test_ext_job_executable.cpp)
 
-target_link_libraries(ert_test_suite res Catch2::Catch2WithMain fmt::fmt)
+target_link_libraries(ert_test_suite ert Catch2::Catch2WithMain fmt::fmt)
 
 catch_discover_tests(ert_test_suite)

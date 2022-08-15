@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 import inspect
 import sys
 import traceback
@@ -5,14 +6,14 @@ import logging
 
 import importlib.util
 
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
+
 logger = logging.getLogger(__name__)
 
 
 class ErtScript:
-    def __init__(self, ert):
-        """
-        @type ert: EnKFMain
-        """
+    def __init__(self, ert: "EnKFMain"):
         if not hasattr(self, "run"):
             raise UserWarning(
                 "ErtScript implementations must provide a method run(self, ert, ...)"
@@ -42,8 +43,7 @@ class ErtScript:
     def isVerbose(self):
         return self.__verbose
 
-    def ert(self):
-        """@rtype: res.enkf.EnKFMain"""
+    def ert(self) -> "EnKFMain":
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self.__ert
 

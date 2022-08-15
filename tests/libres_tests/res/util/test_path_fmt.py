@@ -1,4 +1,4 @@
-from res.util import PathFormat
+from ert._c_wrappers.util import PathFormat
 
 from ...libres_utils import ResTest
 

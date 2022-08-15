@@ -3,9 +3,9 @@ from typing import Any, Dict, Optional
 from ert.analysis import ErtAnalysisError
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.models import BaseRunModel, ErtRunError
-from res.enkf import RunContext
-from res.enkf.enkf_main import EnKFMain, QueueConfig
-from res.enkf.enums import HookRuntime, RealizationStateEnum
+from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.enums import HookRuntime, RealizationStateEnum
 
 
 class EnsembleSmoother(BaseRunModel):

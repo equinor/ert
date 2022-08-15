@@ -3,10 +3,10 @@ from typing import List
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.config_keys import ConfigKeys
-from res.job_queue import Workflow, WorkflowJob, WorkflowJoblist
-from res.util.substitution_list import SubstitutionList
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.job_queue import Workflow, WorkflowJob, WorkflowJoblist
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 
 class ErtWorkflowList(BaseCClass):

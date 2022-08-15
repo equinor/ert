@@ -1,4 +1,4 @@
-from res.config.rangestring import mask_to_rangestring
+from ert._c_wrappers.config.rangestring import mask_to_rangestring
 
 from ...ert_utils import ErtTest
 

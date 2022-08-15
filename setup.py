@@ -49,11 +49,11 @@ args = dict(
         "ert": package_files("src/ert/gui/resources/")
         + package_files("src/ert/shared/share/")
         + package_files("src/ert/ert3/examples/")
-        + ["logging/logger.conf", "logging/storage_log.conf"],
-        "res": [
-            "fm/rms/rms_config.yml",
-            "fm/ecl/ecl300_config.yml",
-            "fm/ecl/ecl100_config.yml",
+        + ["logging/logger.conf", "logging/storage_log.conf"]
+        + [
+            "_c_wrappers/fm/rms/rms_config.yml",
+            "_c_wrappers/fm/ecl/ecl300_config.yml",
+            "_c_wrappers/fm/ecl/ecl100_config.yml",
         ],
     },
     include_package_data=True,
@@ -110,7 +110,7 @@ args = dict(
             "job_dispatch.py = ert.job_runner.job_dispatch:main",
         ]
     },
-    scripts=["src/libres/lib/job_queue/qstat_proxy.sh"],
+    scripts=["src/clib/lib/job_queue/qstat_proxy.sh"],
     cmake_args=[
         "-DECL_INCLUDE_DIRS=" + get_ecl_include(),
         # we can safely pass OSX_DEPLOYMENT_TARGET as it's ignored on
@@ -119,7 +119,7 @@ args = dict(
         "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15",
         f"-DPYTHON_EXECUTABLE={sys.executable}",
     ],
-    cmake_source_dir="src/libres/",
+    cmake_source_dir="src/clib/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Other Environment",

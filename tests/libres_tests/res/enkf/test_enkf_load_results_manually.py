@@ -1,5 +1,5 @@
-from res.enkf import EnKFMain
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
 
 
 def test_load_results_manually(setup_case):

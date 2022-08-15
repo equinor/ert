@@ -13,7 +13,7 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from res._lib.config_keys import ConfigKeys
+from ert._clib.config_keys import ConfigKeys
 
 
 __all__ = ["ConfigKeys"]

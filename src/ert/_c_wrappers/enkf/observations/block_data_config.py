@@ -17,7 +17,7 @@ import ctypes
 
 from cwrap import BaseCClass
 
-from res.enkf.config import FieldConfig
+from ert._c_wrappers.enkf.config import FieldConfig
 
 
 class BlockDataConfig(BaseCClass):

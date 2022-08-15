@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Dict, List, TypedDict
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 
 if TYPE_CHECKING:
 

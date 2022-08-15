@@ -17,12 +17,13 @@ from typing import Union
 
 from cwrap import BaseCClass
 
-from res import ResPrototype, _lib
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.observations.block_observation import BlockObservation
-from res.enkf.observations.gen_observation import GenObservation
-from res.enkf.observations.summary_observation import SummaryObservation
+from ert import _clib
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf.observations.block_observation import BlockObservation
+from ert._c_wrappers.enkf.observations.gen_observation import GenObservation
+from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 
 class ObsVector(BaseCClass):
@@ -109,7 +110,7 @@ class ObsVector(BaseCClass):
         """
         Will return an IntVector with the active report steps.
         """
-        return _lib.obs_vector_get_step_list(self)
+        return _clib.obs_vector_get_step_list(self)
 
     def activeStep(self):
         """Assuming the observation is only active for one report step, this

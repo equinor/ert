@@ -1,7 +1,7 @@
 from functools import partial
 from threading import Thread
 import time
-from res.job_queue.ert_plugin import CancelPluginException
+from ert._c_wrappers.job_queue.ert_plugin import CancelPluginException
 from ert.gui.tools.plugins import ProcessJobDialog
 
 

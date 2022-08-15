@@ -13,7 +13,7 @@ from ert.shared.ide.keywords.definitions import RangeStringArgument, ProperNameA
 from ert.gui.simulation import SimulationConfigPanel
 from ert.libres_facade import LibresFacade
 from ert.shared.models import EnsembleSmoother
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 
 from dataclasses import dataclass
 

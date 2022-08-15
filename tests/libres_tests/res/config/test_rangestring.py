@@ -1,6 +1,6 @@
 import pytest
 
-from res.config.rangestring import mask_to_rangestring, rangestring_to_mask
+from ert._c_wrappers.config.rangestring import mask_to_rangestring, rangestring_to_mask
 
 
 @pytest.mark.parametrize(

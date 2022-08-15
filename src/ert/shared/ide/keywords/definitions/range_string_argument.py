@@ -1,6 +1,6 @@
 from ert.shared.ide.keywords.data import ValidationStatus
 from ert.shared.ide.keywords.definitions import ArgumentDefinition
-from res.config.active_range import ActiveRange
+from ert._c_wrappers.config.active_range import ActiveRange
 
 
 class RangeStringArgument(ArgumentDefinition):

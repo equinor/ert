@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from res.enkf import EnkfFs
+from ert._c_wrappers.enkf import EnkfFs
 
 
 def test_create(copy_case):

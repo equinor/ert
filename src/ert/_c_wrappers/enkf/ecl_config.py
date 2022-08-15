@@ -20,8 +20,8 @@ from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.summary import EclSum
 
-from res import ResPrototype
-from res.util import UIReturn
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.util import UIReturn
 
 from .config_keys import ConfigKeys
 

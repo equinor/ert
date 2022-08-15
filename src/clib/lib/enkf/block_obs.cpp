@@ -422,7 +422,7 @@ void update_std_scaling(py::handle obj, double scaling,
 }
 } // namespace
 
-RES_LIB_SUBMODULE("local.block_obs", m) {
+ERT_CLIB_SUBMODULE("local.block_obs", m) {
     using namespace py::literals;
 
     m.def("update_std_scaling", &update_std_scaling, "self"_a, "scaling"_a,

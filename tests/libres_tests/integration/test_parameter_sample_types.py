@@ -12,7 +12,7 @@ from ecl.grid import EclGrid
 from ecl.util.geometry import Surface
 from ecl.util.util import BoolVector
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 def write_file(fname, contents):

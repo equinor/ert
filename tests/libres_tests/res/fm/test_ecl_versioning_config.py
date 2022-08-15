@@ -21,8 +21,8 @@ import unittest
 import yaml
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch
-from res.fm.ecl import Ecl100Config
-from res.fm.ecl.ecl_config import Keys
+from ert._c_wrappers.fm.ecl import Ecl100Config
+from ert._c_wrappers.fm.ecl.ecl_config import Keys
 
 from ...libres_utils import ResTest
 

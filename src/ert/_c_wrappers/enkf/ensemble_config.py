@@ -21,12 +21,12 @@ from ecl.grid import EclGrid
 from ecl.summary import EclSum
 from ecl.util.util import StringList
 
-from res import ResPrototype
-from res.config import ConfigContent
-from res.enkf.config import EnkfConfigNode
-from res.enkf.config_keys import ConfigKeys
-from res.enkf.enums import EnkfVarType, ErtImplType
-from res import _lib
+from ert import _clib
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ConfigContent
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.enkf.enums import EnkfVarType, ErtImplType
 
 
 def _get_abs_path(file):
@@ -245,7 +245,7 @@ class EnsembleConfig(BaseCClass):
 
     def getKeylistFromVarType(self, var_mask: EnkfVarType) -> List[str]:
         assert isinstance(var_mask, EnkfVarType)
-        return _lib.ensemble_config.ensemble_config_keylist_from_var_type(
+        return _clib.ensemble_config.ensemble_config_keylist_from_var_type(
             self, int(var_mask)
         )
 

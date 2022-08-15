@@ -14,9 +14,9 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 from ert.libres_facade import LibresFacade
 from ert.shared.storage import extraction
-from res.enkf import RunContext
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 @pytest.mark.parametrize(
@@ -434,14 +434,14 @@ def test_post_update_data(client):
 
 def _make_priors() -> List[Tuple[str, str, dict]]:
     def normal():
-        # trans_normal @ libres/enkf/trans_func.cpp
+        # trans_normal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
         a, b = random(), random()
         return (f"NORMAL {a} {b}", dict(function="normal", mean=a, std=b))
 
     def lognormal():
-        # trans_lognormal @ libres/enkf/trans_func.cpp
+        # trans_lognormal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
         a, b = random(), random()
@@ -451,7 +451,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def truncnormal():
-        # trans_truncated_normal @ libres/enkf/trans_func.cpp
+        # trans_truncated_normal @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a, b, c and d
         a, b, c, d = [random() for _ in range(4)]
@@ -467,14 +467,14 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def uniform():
-        # trans_unif @ libres/enkf/trans_func.cpp
+        # trans_unif @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a and b
         a, b = random(), random()
         return (f"UNIFORM {a} {b}", {"function": "uniform", "min": a, "max": b})
 
     def loguniform():
-        # trans_logunif @ libres/enkf/trans_func.cpp
+        # trans_logunif @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for strictly positive a, b due to log()
         a, b = random() + 1, random() + 1  # +1 to avoid zero
@@ -488,7 +488,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         return (f"CONST {a}", {"function": "const", "value": a})
 
     def duniform():
-        # trans_dunif @ libres/enkf/trans_func.cpp
+        # trans_dunif @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of b and c, integer values >= 2 of
         # bins (due to division by [bins - 1])
@@ -500,7 +500,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def erf():
-        # trans_errf @ libres/enkf/trans_func.cpp
+        # trans_errf @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a, b, c, non-zero real values of d
         # (width) due to division by zero.
@@ -511,7 +511,7 @@ def _make_priors() -> List[Tuple[str, str, dict]]:
         )
 
     def derf():
-        # trans_derrf @ libres/enkf/trans_func.cpp
+        # trans_derrf @ clib/lib/enkf/trans_func.cpp
         #
         # Well defined for all real values of a, b, c, non-zero real values of d
         # (width) due to division by zero, integer values >= 2 of bins due to

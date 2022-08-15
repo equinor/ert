@@ -2,7 +2,7 @@
 #include <ert/python.hpp>
 #include <pybind11/pytypes.h>
 
-RES_LIB_SUBMODULE("config_keys", m) {
+ERT_CLIB_SUBMODULE("config_keys", m) {
     struct ConfigKeys {};
 
     py::class_<ConfigKeys> cls(m, "ConfigKeys");

@@ -36,7 +36,7 @@ from ert.gui.tools.run_analysis import RunAnalysisTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.libres_facade import LibresFacade
 
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 from ert.shared.services import Storage
 

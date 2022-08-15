@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-from res.enkf import ResConfig
-from res.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 import pytest
 from unittest.mock import MagicMock
 

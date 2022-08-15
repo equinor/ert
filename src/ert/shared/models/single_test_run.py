@@ -3,8 +3,8 @@ from typing import Any, Dict
 from ert.shared.models import ErtRunError, EnsembleExperiment
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 
-from res.enkf.ert_run_context import RunContext
-from res.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
 
 
 class SingleTestRun(EnsembleExperiment):

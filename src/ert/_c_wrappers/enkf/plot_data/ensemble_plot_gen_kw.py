@@ -18,11 +18,13 @@ from typing import List, Optional
 
 from cwrap import BaseCClass
 from ecl.util.util import BoolVector
-from res import ResPrototype
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums.ert_impl_type_enum import ErtImplType
-from res.enkf.plot_data.ensemble_plot_gen_kw_vector import EnsemblePlotGenKWVector
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums.ert_impl_type_enum import ErtImplType
+from ert._c_wrappers.enkf.plot_data.ensemble_plot_gen_kw_vector import (
+    EnsemblePlotGenKWVector,
+)
 
 
 class EnsemblePlotGenKW(BaseCClass):

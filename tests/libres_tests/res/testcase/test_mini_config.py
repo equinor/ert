@@ -1,5 +1,5 @@
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
+from ert._c_wrappers.test import ErtTestContext
 
 from ...libres_utils import ResTest, tmpdir
 

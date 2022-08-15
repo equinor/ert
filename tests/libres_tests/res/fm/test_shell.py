@@ -5,7 +5,7 @@ import unittest
 
 from ecl.util.test import TestAreaContext
 from pytest import MonkeyPatch
-from res.fm.shell import (
+from ert._c_wrappers.fm.shell import (
     careful_copy_file,
     copy_directory,
     copy_file,

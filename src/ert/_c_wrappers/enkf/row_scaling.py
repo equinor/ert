@@ -1,4 +1,4 @@
-from res._lib.local.row_scaling import RowScaling
+from ert._clib.local.row_scaling import RowScaling
 
 
 def assign(self, target_size, func):

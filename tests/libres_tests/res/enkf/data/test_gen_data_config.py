@@ -1,9 +1,9 @@
 from ....libres_utils import ResTest
 
-from res.enkf import NodeId
-from res.enkf.config import GenDataConfig
-from res.enkf.data import EnkfNode
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf import NodeId
+from ert._c_wrappers.enkf.config import GenDataConfig
+from ert._c_wrappers.enkf.data import EnkfNode
+from ert._c_wrappers.test import ErtTestContext
 
 
 class GenDataConfigTest(ResTest):

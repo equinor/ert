@@ -6,7 +6,7 @@ from ert.shared.models import (
     IteratedEnsembleSmoother,
     MultipleDataAssimilation,
 )
-from res.enkf.enums import HookRuntime
+from ert._c_wrappers.enkf.enums import HookRuntime
 
 EXPECTED_CALL_ORDER = [
     HookRuntime.PRE_SIMULATION,

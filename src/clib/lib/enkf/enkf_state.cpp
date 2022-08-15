@@ -532,7 +532,7 @@ bool enkf_state_complete_forward_model_EXIT_handler__(run_arg_type *run_arg) {
 
 #include "enkf_state_nodes.cpp"
 
-RES_LIB_SUBMODULE("enkf_state", m) {
+ERT_CLIB_SUBMODULE("enkf_state", m) {
     m.def("state_initialize", [](py::object enkf_main, py::object fs,
                                  std::vector<std::string> &param_list,
                                  int init_mode, int iens) {

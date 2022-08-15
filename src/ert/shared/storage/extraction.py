@@ -2,7 +2,9 @@ from collections import defaultdict
 from typing import Dict, List, Mapping, Optional, Union, TYPE_CHECKING
 
 from ert.data import MeasuredData
-from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
+from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
+    EnkfObservationImplementationType,
+)
 from ert.shared.feature_toggling import feature_enabled
 from ert.shared.services import Storage
 

@@ -55,7 +55,7 @@ external commands.
 
 import os
 
-import res
+import ert._c_wrappers
 from cwrap import Prototype
 
 

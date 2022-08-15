@@ -11,11 +11,11 @@ install_libecl () {
     popd
 }
 
-build_libres () {
+build_ert_clib () {
     INSTALL=$WORKSPACE/install
-    LIBRES_BUILD=$CI_SOURCE_ROOT/src/libres/build
-    mkdir -p $LIBRES_BUILD
-    pushd $LIBRES_BUILD
+    ERT_CLIB_BUILD=$CI_SOURCE_ROOT/src/clib/build
+    mkdir -p $ERT_CLIB_BUILD
+    pushd $ERT_CLIB_BUILD
     KOMODO_PATH=/prog/res/komodo/${CI_KOMODO_RELEASE}
     cmake .. \
           -DCMAKE_PREFIX_PATH=$INSTALL \
@@ -26,8 +26,8 @@ build_libres () {
     popd
 }
 
-run_libres_ctest() {
-    pushd $LIBRES_BUILD
+run_ert_clib_tests() {
+    pushd $ERT_CLIB_BUILD
     export ERT_SITE_CONFIG=${CI_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
 
     ctest -j 6 -E Lint --output-on-failure
@@ -35,9 +35,8 @@ run_libres_ctest() {
 }
 
 copy_test_files () {
-     # libres
-    mkdir -p ${CI_TEST_ROOT}/src/libres/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/src/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/libres/res/fm/rms/rms_config.yml
+    mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
+    ln -s ${CI_SOURCE_ROOT}/src/clib/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
 }
 
 install_test_dependencies () {
@@ -51,10 +50,10 @@ install_package () {
 
     python -m pip install pybind11
     install_libecl
-    build_libres
+    build_ert_clib
 }
 
 start_tests () {
     # build and run libres ctests
-    run_libres_ctest
+    run_ert_clib_tests
 }

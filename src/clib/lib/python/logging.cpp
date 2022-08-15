@@ -120,7 +120,7 @@ ert::get_logger(const std::string &name) {
     return logger;
 }
 
-RES_LIB_SUBMODULE("", m) {
+ERT_CLIB_SUBMODULE("", m) {
     has_init_logging = true;
 
     // Initialise all loggers that were created before Python initialised

@@ -1,19 +1,17 @@
 import weakref
 from typing import TYPE_CHECKING, Dict, List
 
-from res.enkf.config import GenKwConfig
-from res.enkf.enums import EnkfObservationImplementationType, ErtImplType
+from ert._c_wrappers.enkf.config import GenKwConfig
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType, ErtImplType
 
 if TYPE_CHECKING:
-    from res.enkf.config import PriorDict
+    from ert._c_wrappers.enkf.config import PriorDict
+    from ert._c_wrappers.enkf import EnKFMain, EnsembleConfig
 
 
 class KeyManager:
-    def __init__(self, ert):
+    def __init__(self, ert: "EnKFMain"):
         super().__init__()
-        """
-        @type ert: res.enkf.EnKFMain
-        """
         self.__ert_ref = weakref.ref(ert)
 
         self.__all_keys = None
@@ -25,15 +23,13 @@ class KeyManager:
         self.__gen_kw_keys = None
         self.__misfit_keys = None
 
-    def _ert(self):
-        """:rtype:  res.enkf.EnKFMain"""
+    def _ert(self) -> "EnKFMain":
         ert = self.__ert_ref()
         if ert is None:
             raise RuntimeError("The reference EnKFMain instance has been deleted")
         return ert
 
-    def ensembleConfig(self):
-        """:rtype: res.enkf.EnsembleConfig"""
+    def ensembleConfig(self) -> "EnsembleConfig":
         return self._ert().ensembleConfig()
 
     def summaryKeys(self) -> List[str]:

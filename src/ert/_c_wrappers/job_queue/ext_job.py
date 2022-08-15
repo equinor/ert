@@ -19,8 +19,8 @@ from typing import List
 from cwrap import BaseCClass
 from ecl.util.util import StringHash, StringList
 
-from res import ResPrototype
-from res.config import ContentTypeEnum
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ContentTypeEnum
 
 
 class ExtJob(BaseCClass):

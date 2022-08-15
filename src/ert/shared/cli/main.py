@@ -19,7 +19,7 @@ from ert.shared.cli.monitor import Monitor
 from ert.shared.cli.workflow import execute_workflow
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 class ErtCliError(Exception):

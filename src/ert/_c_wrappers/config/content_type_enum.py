@@ -17,7 +17,7 @@
 import ctypes
 from cwrap import BaseCEnum
 from ecl import EclPrototype
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 
 
 class ContentTypeEnum(BaseCEnum):

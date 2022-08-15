@@ -12,7 +12,7 @@ from typing import (
 from pathlib import Path
 
 
-from res.enkf import RunArg
+from ert._c_wrappers.enkf import RunArg
 
 from ._io_ import (
     _IO,

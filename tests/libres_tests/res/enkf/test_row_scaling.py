@@ -21,7 +21,7 @@ from functools import partial
 import pytest
 from ecl.grid import EclGridGenerator
 
-from res.enkf import FieldConfig, RowScaling
+from ert._c_wrappers.enkf import FieldConfig, RowScaling
 
 
 def row_scaling_one(data_index):

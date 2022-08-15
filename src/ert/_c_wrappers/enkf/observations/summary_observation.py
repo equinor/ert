@@ -15,8 +15,9 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res import ResPrototype
-from res import _lib
+
+from ert import _clib
+from ert._c_wrappers import ResPrototype
 
 
 class SummaryObservation(BaseCClass):
@@ -72,7 +73,7 @@ class SummaryObservation(BaseCClass):
         return self._get_summary_key()
 
     def updateStdScaling(self, factor, active_list):
-        _lib.local.summary_obs.update_std_scaling(self, factor, active_list)
+        _clib.local.summary_obs.update_std_scaling(self, factor, active_list)
 
     def free(self):
         self._free()

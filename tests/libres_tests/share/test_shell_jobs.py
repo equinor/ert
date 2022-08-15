@@ -1,6 +1,6 @@
 import pytest
 
-from res.enkf import ResConfig
+from ert._c_wrappers.enkf import ResConfig
 
 
 @pytest.fixture

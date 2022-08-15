@@ -5,7 +5,7 @@ from pydantic import BaseModel, ValidationError, create_model, root_validator, v
 
 import ert
 import ert.ensemble_evaluator
-from res.config.active_range import ActiveRange
+from ert._c_wrappers.config.active_range import ActiveRange
 
 from ._config_plugin_registry import ConfigPluginRegistry, create_plugged_model
 from ._experiment_config import ExperimentConfig

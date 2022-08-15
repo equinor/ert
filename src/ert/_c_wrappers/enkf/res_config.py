@@ -20,20 +20,20 @@ from typing import Any, Dict, Optional
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from res import ResPrototype
-from res.config import ConfigContent, ConfigParser
-from res.enkf.analysis_config import AnalysisConfig
-from res.enkf.config_keys import ConfigKeys
-from res.enkf.ecl_config import EclConfig
-from res.enkf.ensemble_config import EnsembleConfig
-from res.enkf.ert_templates import ErtTemplates
-from res.enkf.ert_workflow_list import ErtWorkflowList
-from res.enkf.hook_manager import HookManager
-from res.enkf.model_config import ModelConfig
-from res.enkf.queue_config import QueueConfig
-from res.enkf.rng_config import RNGConfig
-from res.enkf.site_config import SiteConfig
-from res.enkf.subst_config import SubstConfig
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ConfigContent, ConfigParser
+from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.enkf.ecl_config import EclConfig
+from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+from ert._c_wrappers.enkf.ert_templates import ErtTemplates
+from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
+from ert._c_wrappers.enkf.hook_manager import HookManager
+from ert._c_wrappers.enkf.model_config import ModelConfig
+from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert._c_wrappers.enkf.rng_config import RNGConfig
+from ert._c_wrappers.enkf.site_config import SiteConfig
+from ert._c_wrappers.enkf.subst_config import SubstConfig
 
 
 class ResConfig(BaseCClass):

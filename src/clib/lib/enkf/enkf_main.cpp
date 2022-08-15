@@ -917,7 +917,7 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     return enkf_main;
 }
 
-RES_LIB_SUBMODULE("enkf_main", m) {
+ERT_CLIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def(
         "init_current_case_from_existing_custom",

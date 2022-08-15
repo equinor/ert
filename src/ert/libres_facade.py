@@ -6,8 +6,8 @@ from pandas import DataFrame
 
 from ert.analysis import ESUpdate, SmootherSnapshot
 from ert.data import MeasuredData
-from res.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
-from res.enkf.export import (
+from ert._c_wrappers.enkf import EnKFMain, EnkfNode, ErtImplType, ResConfig, RunContext
+from ert._c_wrappers.enkf.export import (
     GenDataCollector,
     GenDataObservationCollector,
     GenKwCollector,
@@ -15,7 +15,7 @@ from res.enkf.export import (
     SummaryCollector,
     SummaryObservationCollector,
 )
-from res.enkf.plot_data import PlotBlockDataLoader
+from ert._c_wrappers.enkf.plot_data import PlotBlockDataLoader
 
 _logger = logging.getLogger(__name__)
 
@@ -23,13 +23,13 @@ if TYPE_CHECKING:
     from ecl.grid import EclGrid
 
     from ert.analysis import ModuleData
-    from res.analysis.analysis_module import AnalysisModule
-    from res.analysis.configuration import UpdateConfiguration
-    from res.enkf import AnalysisConfig, ObsVector, QueueConfig
-    from res.enkf.config.gen_kw_config import PriorDict
-    from res.enkf.enkf_fs import EnkfFs
-    from res.enkf.enkf_obs import EnkfObs
-    from res.job_queue import WorkflowJob
+    from ert._c_wrappers.analysis.analysis_module import AnalysisModule
+    from ert._c_wrappers.analysis.configuration import UpdateConfiguration
+    from ert._c_wrappers.enkf import AnalysisConfig, ObsVector, QueueConfig
+    from ert._c_wrappers.enkf.config.gen_kw_config import PriorDict
+    from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+    from ert._c_wrappers.enkf.enkf_obs import EnkfObs
+    from ert._c_wrappers.job_queue import WorkflowJob
 
 
 class LibresFacade:  # pylint: disable=too-many-public-methods

@@ -20,10 +20,10 @@ Module implementing a queue for managing external jobs.
 from threading import BoundedSemaphore
 from typing import TYPE_CHECKING, Any
 
-from res.job_queue.job_status_type_enum import JobStatusType
+from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
 
 if TYPE_CHECKING:
-    from res.job_queue import JobQueue
+    from ert._c_wrappers.job_queue import JobQueue
 
 
 CONCURRENT_INTERNALIZATION = 1

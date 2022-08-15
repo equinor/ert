@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import Depends
 from ert_storage.security import security
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 __all__ = ["LibresFacade", "get_res"]
 

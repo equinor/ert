@@ -1,22 +1,20 @@
 import os
 import re
-
-import pandas
 import sys
 
+import pandas
 
-from res.job_queue import ErtPlugin, CancelPluginException
-from res.enkf.export import (
-    SummaryCollector,
+from ert._c_wrappers.enkf.export import (
+    DesignMatrixReader,
     GenKwCollector,
     MisfitCollector,
-    DesignMatrixReader,
+    SummaryCollector,
 )
+from ert._c_wrappers.job_queue import CancelPluginException, ErtPlugin
 from ert.gui.ertwidgets.customdialog import CustomDialog
 from ert.gui.ertwidgets.listeditbox import ListEditBox
 from ert.gui.ertwidgets.models.path_model import PathModel
 from ert.gui.ertwidgets.pathchooser import PathChooser
-
 
 try:
     from PyQt4.QtGui import QCheckBox

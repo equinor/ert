@@ -35,8 +35,8 @@ from ert.ensemble_evaluator.event import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 def check_expression(original, path_expression, expected, msg_start):

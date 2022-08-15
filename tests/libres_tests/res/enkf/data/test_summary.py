@@ -1,7 +1,7 @@
 from ....libres_utils import ResTest
 
-from res.enkf.config import SummaryConfig
-from res.enkf.data.summary import Summary
+from ert._c_wrappers.enkf.config import SummaryConfig
+from ert._c_wrappers.enkf.data.summary import Summary
 
 
 class SummaryTest(ResTest):

@@ -5,8 +5,8 @@ import time
 import unittest
 
 from ecl.util.test import TestAreaContext
-from res.enkf import ResConfig
-from res.job_queue import JobStatusType
+from ert._c_wrappers.enkf import ResConfig
+from ert._c_wrappers.job_queue import JobStatusType
 from ert.simulator import BatchContext, BatchSimulator
 
 from ...libres_utils import ResTest, tmpdir

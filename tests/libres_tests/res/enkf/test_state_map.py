@@ -1,6 +1,6 @@
 from ecl.util.test import TestAreaContext
-from res.enkf.enums.realization_state_enum import RealizationStateEnum
-from res.enkf.state_map import StateMap
+from ert._c_wrappers.enkf.enums.realization_state_enum import RealizationStateEnum
+from ert._c_wrappers.enkf.state_map import StateMap
 
 from ...libres_utils import ResTest
 

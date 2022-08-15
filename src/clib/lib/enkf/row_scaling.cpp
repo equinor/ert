@@ -221,7 +221,7 @@ void assign_vector(RowScaling &self, const py::array_t<T> &array) {
 }
 } // namespace
 
-RES_LIB_SUBMODULE("local.row_scaling", m) {
+ERT_CLIB_SUBMODULE("local.row_scaling", m) {
     using namespace py::literals;
 
     py::options opts;

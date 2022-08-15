@@ -18,7 +18,7 @@ import os.path
 import unittest
 
 from ecl.util.test import TestArea
-from res.enkf import ConfigKeys, HookManager, HookRuntime, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, HookManager, HookRuntime, ResConfig
 
 from ...libres_utils import ResTest
 

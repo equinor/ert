@@ -16,8 +16,8 @@
 import sys
 
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.enkf.config import FieldConfig
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import FieldConfig
 
 
 class Field(BaseCClass):

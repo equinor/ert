@@ -2,10 +2,10 @@ import os
 
 import pytest
 from ecl.util.util import IntVector
-from res.enkf import NodeId, RunContext
-from res.enkf.config import FieldTypeEnum
-from res.enkf.data import EnkfNode
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf import NodeId, RunContext
+from ert._c_wrappers.enkf.config import FieldTypeEnum
+from ert._c_wrappers.enkf.data import EnkfNode
+from ert._c_wrappers.test import ErtTestContext
 
 from ...libres_utils import ResTest
 

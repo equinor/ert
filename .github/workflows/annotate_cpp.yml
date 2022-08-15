@@ -32,10 +32,10 @@ jobs:
         sudo cmake --build libecl/build --target install
         sudo rm -rf libecl
 
-    - name: Create compile commands for libres
+    - name: Create compile commands for clib
       run: |
         mkdir cmake-build
-        cmake -S src/libres -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake -S src/clib -B cmake-build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         cmake --build cmake-build
 
     - name: find changed files

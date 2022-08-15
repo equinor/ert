@@ -1,6 +1,6 @@
 from typing import List
-from res._lib.state_map import StateMap
-from res.enkf.enums import RealizationStateEnum
+from ert._clib.state_map import StateMap
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 def __getitem__(self, iens: int) -> RealizationStateEnum:

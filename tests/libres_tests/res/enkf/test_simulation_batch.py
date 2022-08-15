@@ -1,6 +1,6 @@
-from res.enkf import EnkfConfigNode, EnkfNode, NodeId
-from res.enkf.enums import RealizationStateEnum
-from res.test import ErtTestContext
+from ert._c_wrappers.enkf import EnkfConfigNode, EnkfNode, NodeId
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.test import ErtTestContext
 
 from ...libres_utils import ResTest, tmpdir
 

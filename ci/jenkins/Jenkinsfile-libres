@@ -13,12 +13,12 @@ pipeline {
         stage('build libres') {
             steps {
                 sh 'sh ci/jenkins/test_libres_jenkins.sh build_libecl'
-                sh 'sh ci/jenkins/test_libres_jenkins.sh build_libres'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh build_ert_clib'
             }
         }
         stage('build res') {
             steps {
-                sh 'sh ci/jenkins/test_libres_jenkins.sh build_res'
+                sh 'sh ci/jenkins/test_libres_jenkins.sh build_ert_dev'
             }
         }
         stage('tests') {

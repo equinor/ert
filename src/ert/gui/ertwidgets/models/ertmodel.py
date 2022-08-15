@@ -1,8 +1,8 @@
 from typing import List
 
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, RealizationStateEnum
-from res.enkf import RunContext
+from ert._c_wrappers.enkf import EnKFMain, RealizationStateEnum
+from ert._c_wrappers.enkf import RunContext
 from ecl.util.util import StringList
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
 

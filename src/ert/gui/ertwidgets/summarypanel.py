@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
@@ -12,7 +12,9 @@ from qtpy.QtWidgets import (
 )
 
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
-from res.enkf import EnKFMain
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
 
 
 class SummaryTemplate:
@@ -53,7 +55,7 @@ class SummaryTemplate:
 
 
 class SummaryPanel(QFrame):
-    def __init__(self, ert: EnKFMain):
+    def __init__(self, ert: "EnKFMain"):
         self.ert = ert
         QFrame.__init__(self)
 

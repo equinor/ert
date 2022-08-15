@@ -27,7 +27,7 @@ from ecl.summary import EclSum
 from ...libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 
-from res.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
+from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, EclrunConfig, run
 
 
 def find_version(output):

@@ -16,7 +16,7 @@
 
 
 from cwrap import BaseCClass, BaseCEnum
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 
 from .job import Job
 

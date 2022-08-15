@@ -6,8 +6,8 @@ import pandas as pd
 from pandas.core.base import PandasObject
 
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
-from res.enkf.export import SummaryCollector
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf.export import SummaryCollector
 
 
 @pytest.fixture

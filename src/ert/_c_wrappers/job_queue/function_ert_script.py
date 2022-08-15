@@ -1,7 +1,7 @@
 from ecl.util.util.stringlist import StringList
 
-from res import ResPrototype
-from res.job_queue import ErtScript
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue import ErtScript
 
 
 class FunctionErtScript(ErtScript):

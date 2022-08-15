@@ -25,8 +25,8 @@ import pytest
 import yaml
 from ecl.summary import EclSum
 
-from res.fm.ecl import Ecl100Config, EclRun, FlowConfig, ecl_run, run
-from res.fm.ecl.ecl_run import make_SLURM_machine_list
+from ert._c_wrappers.fm.ecl import Ecl100Config, EclRun, FlowConfig, ecl_run, run
+from ert._c_wrappers.fm.ecl.ecl_run import make_SLURM_machine_list
 
 from ...libres_utils import tmpdir
 

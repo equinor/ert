@@ -1,7 +1,7 @@
 import logging
 import pytest
 
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 
 
 @pytest.mark.skip

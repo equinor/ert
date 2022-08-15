@@ -1,8 +1,8 @@
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.enums import HookRuntime
-from res.job_queue import Workflow
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.job_queue import Workflow
 
 
 class HookWorkflow(BaseCClass):

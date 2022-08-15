@@ -22,7 +22,7 @@ import pytest
 from cwrap import Prototype, load
 from ecl.util.enums import RngAlgTypeEnum
 from ecl.util.test import TestAreaContext
-from res.enkf import (
+from ert._c_wrappers.enkf import (
     AnalysisConfig,
     ConfigKeys,
     GenDataFileType,
@@ -30,8 +30,8 @@ from res.enkf import (
     ResConfig,
     SiteConfig,
 )
-from res.job_queue import QueueDriverEnum
-from res.sched import HistorySourceEnum
+from ert._c_wrappers.job_queue import QueueDriverEnum
+from ert._c_wrappers.sched import HistorySourceEnum
 
 from ...libres_utils import ResTest, tmpdir
 

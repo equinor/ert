@@ -21,7 +21,7 @@ from ert.gui.ertwidgets import resourceIcon
 from ert.gui.ertwidgets.closabledialog import ClosableDialog
 from ert.gui.tools import Tool
 from ert.gui.tools.run_analysis import RunAnalysisPanel
-from res.enkf import RunContext
+from ert._c_wrappers.enkf import RunContext
 
 
 def analyse(ert, target, source):

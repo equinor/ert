@@ -2,14 +2,14 @@ from typing import TYPE_CHECKING
 
 from ecl.util.util import DoubleVector, ThreadPool
 
-from res.enkf import NodeId
-from res.enkf.data import EnkfNode
-from res.enkf.enums import ErtImplType, RealizationStateEnum
-from res.enkf.plot_data.plot_block_data import PlotBlockData
-from res.enkf.plot_data.plot_block_vector import PlotBlockVector
+from ert._c_wrappers.enkf import NodeId
+from ert._c_wrappers.enkf.data import EnkfNode
+from ert._c_wrappers.enkf.enums import ErtImplType, RealizationStateEnum
+from ert._c_wrappers.enkf.plot_data.plot_block_data import PlotBlockData
+from ert._c_wrappers.enkf.plot_data.plot_block_vector import PlotBlockVector
 
 if TYPE_CHECKING:
-    from res.enkf import BlockObservation, EnkfFs, ObsVector
+    from ert._c_wrappers.enkf import BlockObservation, EnkfFs, ObsVector
 
 
 class PlotBlockDataLoader:

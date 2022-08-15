@@ -2,8 +2,8 @@ from textwrap import dedent
 
 import pytest
 
-from res.enkf import ResConfig, EnKFMain
-from res.enkf.export import GenDataObservationCollector
+from ert._c_wrappers.enkf import ResConfig, EnKFMain
+from ert._c_wrappers.enkf.export import GenDataObservationCollector
 
 
 @pytest.mark.usefixtures("use_tmpdir")

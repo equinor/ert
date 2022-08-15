@@ -10,9 +10,6 @@ class DataTypeKeysListModel(QAbstractItemModel):
     GROUP_ITEM = QColor(64, 64, 64)
 
     def __init__(self, keys):
-        """
-        @type ert: res.enkf.EnKFMain
-        """
         QAbstractItemModel.__init__(self)
         self._keys = keys
         self.__icon = resourceIcon("star_filled.svg")
