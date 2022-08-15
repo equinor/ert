@@ -298,30 +298,6 @@ std::vector<std::string> get_parameter_keys(py::object self) {
 }
 
 namespace enkf_main {
-/** @brief Writes the eclipse data file
- *
- *  Substitutes the parameters of the templated ECL_DATA_FILE
- *  and writes it to the runpath.
- *
- * @param data_file_template The template for the data file.
- * @param run_arg Contains the information about the given run.
- */
-void write_eclipse_data_file(const char *data_file_template,
-                             const char *run_path, const char *job_name,
-                             const subst_list_type *subst_list) {
-    char *data_file_destination =
-        ecl_util_alloc_filename(run_path, job_name, ECL_DATA_FILE, true, -1);
-
-    //Perform substitutions on the data file destination path
-    subst_list_update_string(subst_list, &data_file_destination);
-
-    //Perform substitutions on the data file template contents
-    subst_list_filter_file(subst_list, data_file_template,
-                           data_file_destination);
-
-    free(data_file_destination);
-}
-
 /**
   @brief Substitutes the sampled parameters into the runpath.
 
@@ -389,14 +365,6 @@ void init_active_run(const res_config_type *res_config, char *run_path,
 
     ecl_write(ens_config, model_config_get_gen_kw_export_name(model_config),
               run_path, iens, fs);
-
-    // Create the eclipse data file (if eclbase and DATA_FILE)
-    const ecl_config_type *ecl_config = res_config_get_ecl_config(res_config);
-    const char *data_file_template = ecl_config_get_data_file(ecl_config);
-    if (ecl_config_have_eclbase(ecl_config) && data_file_template) {
-        write_eclipse_data_file(data_file_template, run_path, job_name,
-                                subst_list);
-    }
 
     // Create the job script
     const site_config_type *site_config =

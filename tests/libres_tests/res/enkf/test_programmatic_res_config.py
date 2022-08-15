@@ -185,12 +185,7 @@ class ProgrammaticResConfigTest(ResTest):
                     "SNAKE_OIL_NPV",
                     "SNAKE_OIL_DIFF",
                 ],
-                "RUN_TEMPLATE": [
-                    {
-                        "TEMPLATE": "../input/templates/seed_template.txt",
-                        "EXPORT": "seed.txt",
-                    }
-                ],
+                "RUN_TEMPLATE": ["../input/templates/seed_template.txt", "seed.txt"],
                 "GEN_KW": [
                     {
                         "NAME": "SIGMA",
@@ -329,18 +324,6 @@ class ProgrammaticResConfigTest(ResTest):
             set(loaded_config.alloc_keylist()), set(prog_config.alloc_keylist())
         )
 
-    def assert_equal_ert_templates(self, loaded_templates, prog_templates):
-        self.assertEqual(
-            loaded_templates.getTemplateNames(), prog_templates.getTemplateNames()
-        )
-
-        for template_name in loaded_templates.getTemplateNames():
-            let = loaded_templates.get_template(template_name)
-            pet = prog_templates.get_template(template_name)
-
-            self.assertEqual(let.get_template_file(), pet.get_template_file())
-            self.assertEqual(let.get_target_file(), pet.get_target_file())
-
     def assert_equal_ert_workflow(self, loaded_workflow_list, prog_workflow_list):
         self.assertEqual(loaded_workflow_list, prog_workflow_list)
 
@@ -408,7 +391,7 @@ class ProgrammaticResConfigTest(ResTest):
                 loaded_res_config.ensemble_config, prog_res_config.ensemble_config
             )
 
-            self.assert_equal_ert_templates(
+            self.assertEqual(
                 loaded_res_config.ert_templates, prog_res_config.ert_templates
             )
 

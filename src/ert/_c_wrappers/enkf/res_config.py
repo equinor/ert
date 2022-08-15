@@ -187,6 +187,17 @@ class ResConfig(BaseCClass):
             workflow_list=ert_workflow_list, config_content=config_content
         )
 
+        if config_content.hasKey(ConfigKeys.DATA_FILE) and config_content.hasKey(
+            ConfigKeys.ECLBASE
+        ):
+            # This replicates the behavior of the DATA_FILE implementation
+            # in C, it adds the .DATA extension and facilitates magic string
+            # replacement in the data file
+            source_file = config_content[ConfigKeys.DATA_FILE]
+            target_file = config_content[ConfigKeys.ECLBASE]
+            target_file = target_file.getValue(0).replace("%d", "<IENS>")
+            self._templates.append([source_file.getValue(0), target_file + ".DATA"])
+
         if config_content.hasKey(ConfigKeys.RUN_TEMPLATE):
             for template in config_content[ConfigKeys.RUN_TEMPLATE]:
                 self._templates.append(list(template))
@@ -236,6 +247,16 @@ class ResConfig(BaseCClass):
         ert_workflow_list = ErtWorkflowList(
             subst_list=subst_config.subst_list, config_dict=config_dict
         )
+
+        if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
+            # This replicates the behavior of the DATA_FILE implementation
+            # in C, it adds the .DATA extension and facilitates magic string
+            # replacement in the data file
+            source_file = config_dict[ConfigKeys.DATA_FILE]
+            target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>")
+            self._templates.append(
+                [os.path.abspath(source_file), target_file + ".DATA"]
+            )
 
         self.runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ".ert_runpath_list"
@@ -402,21 +423,6 @@ class ResConfig(BaseCClass):
 
         return seed_config
 
-    def _extract_run_templates(self, config):
-        if ConfigKeys.RUN_TEMPLATE not in config:
-            return []
-
-        template_config = []
-        for rt in config[ConfigKeys.RUN_TEMPLATE]:
-            rt_options = [ConfigKeys.TEMPLATE, ConfigKeys.EXPORT]
-
-            self._assert_keys(ConfigKeys.RUN_TEMPLATE, rt_options, rt.keys())
-
-            value = [rt[option] for option in rt_options]
-            template_config.append((ConfigKeys.RUN_TEMPLATE, value))
-
-        return template_config
-
     def _extract_gen_kw(self, config):
         if ConfigKeys.GEN_KW not in config:
             return []
@@ -493,10 +499,6 @@ class ResConfig(BaseCClass):
         # Extract seed
         sim_filter.append(ConfigKeys.SEED)
         simulation_config += self._extract_seed(sc)
-
-        # Extract run templates
-        sim_filter.append(ConfigKeys.RUN_TEMPLATE)
-        simulation_config += self._extract_run_templates(sc)
 
         # Extract GEN_KW
         sim_filter.append(ConfigKeys.GEN_KW)
