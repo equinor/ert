@@ -2,9 +2,11 @@ import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+import packaging
 
 import pytest
 
+from ert.shared.version import version
 from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
@@ -164,6 +166,8 @@ def test_run_template_replace_in_ecl_data_file(key, expected):
     do substitutions and rename it from the DATA_FILE name
     to ECLBASE
     """
+    if packaging.version.parse(version) > packaging.version.parse("2.43"):
+        pytest.fail("DATA_FILE has passed deprecation period and should be removed")
     config_text = dedent(
         """
         NUM_REALIZATIONS 1
