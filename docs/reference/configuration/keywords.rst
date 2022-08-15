@@ -99,6 +99,7 @@ These keywords must be set to make ERT function properly.
 .. _data_file:
 .. topic:: DATA_FILE
 
+        ``DATA_FILE`` has been deprecated, use: :ref:`RUN_TEMPLATE <run_template>` instead
         Name of the template ECLIPSE data file used to control the simulations.
         A modified realization specific version of this file will be prepared by ERT,
         named according to :ref:`ECLBASE <ECLBASE>` and copied to the runpath
@@ -536,7 +537,54 @@ possible to do with ERT.
 .. _run_template:
 .. topic:: RUN_TEMPLATE
 
-        Install arbitrary files in the runpath directory.
+        ``RUN_TEMPLATE`` can be used to copy files to the run path while doing magic string
+        replacement in the file content and the file name.
+
+        *Example:*
+
+        ::
+
+                RUN_TEMPLATE my_text_file_template.txt my_text_file.txt
+
+
+        this will copy ``my_text_file_template`` into the run path, and perform magic string
+        replacements in the file. If no magic strings are present, the file will be copied
+        as it is.
+
+        It is also possible to perform replacements in target file names:
+
+        *Example:*
+
+        ::
+
+            DEFINE <MY_FILE_NAME> result.txt
+            RUN_TEMPLATE template.tmpl <MY_FILE_NAME>
+
+
+
+
+        If one would like to do substitutions in the ECLIPSE data file, that can be
+        done like this:
+
+        *Example:*
+
+        ::
+
+                ECLBASE BASE_ECL_NAME%d
+                RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
+
+        This will copy ``MY_DATA_FILE.DATA`` into the run path and name it ``BASE_ECL_NAME0.DATA``
+        while doing magic string replacement in the contents.
+
+        If you would like to substitute in the realization number as a part of ECLBASE using
+        ``<IENS>`` instead of ``%d`` is a better option:
+
+        *Example:*
+
+        ::
+
+                ECLBASE BASE_ECL_NAME-<IENS>
+                RUN_TEMPLATE MY_DATA_FILE.DATA <ECLBASE>.DATA
 
 
 Keywords controlling the simulations
