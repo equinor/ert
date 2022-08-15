@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from res._lib import _test_logger
+from ert._clib import _test_logger
 
 
 RECORDS = [

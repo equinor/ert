@@ -310,7 +310,7 @@ ies::Config *analysis_module_get_module_config_pybind(py::object module) {
     return analysis_module_get_module_config(module_);
 }
 
-RES_LIB_SUBMODULE("analysis_module", m) {
+ERT_CLIB_SUBMODULE("analysis_module", m) {
     m.def("get_module_config", analysis_module_get_module_config_pybind,
           py::return_value_policy::reference_internal);
 }

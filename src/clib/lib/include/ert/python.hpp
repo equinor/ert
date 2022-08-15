@@ -37,16 +37,16 @@ template <typename T> T *from_cwrap(py::handle obj) {
 }
 } // namespace ert
 /**
- * Define a submodule path within the Python package 'res._lib'
+ * Define a submodule path within the Python package 'ert._clib'
  *
  * This is macro is similar to Pybind11's PYBIND11_MODULE macro. The first
  * argument is the Python submodule path, and the second is the name of the
  * py::module_ parameter (eg. 'm').
  *
- * For example, the following will create the Python module 'res._lib.foo.bar'
+ * For example, the following will create the Python module 'ert._clib.foo.bar'
  * which contains an object named 'baz' whose value is the string 'quz'.
  *
- *     RES_LIB_SUBMODULE("foo.bar", m) {
+ *     ERT_CLIB_SUBMODULE("foo.bar", m) {
  *         m.add_object("baz", py::str{"quz"});
  *     }
  *
@@ -54,10 +54,10 @@ template <typename T> T *from_cwrap(py::handle obj) {
  * However, the order in which each function is called is undefined.
  *
  * Note: The name of this macro should reflect the module path of this libres
- * library. At the moment it is 'res._lib', so the macro is prefixed with
+ * library. At the moment it is 'ert._clib', so the macro is prefixed with
  * RES_LIB.
  */
-#define RES_LIB_SUBMODULE(_Path, _ModuleParam)                                 \
+#define ERT_CLIB_SUBMODULE(_Path, _ModuleParam)                                \
     static void _python_submodule_init(py::module_);                           \
     static ::ert::detail::Submodule _python_submodule{_Path,                   \
                                                       _python_submodule_init}; \

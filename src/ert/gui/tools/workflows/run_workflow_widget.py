@@ -13,7 +13,7 @@ from qtpy.QtWidgets import (
 
 from ert.gui.ertwidgets import addHelpToWidget, resourceMovie, resourceIcon
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
-from res.job_queue import WorkflowRunner
+from ert._c_wrappers.job_queue import WorkflowRunner
 
 
 class RunWorkflowWidget(QWidget):

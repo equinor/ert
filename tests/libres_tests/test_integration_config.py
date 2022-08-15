@@ -1,7 +1,7 @@
 import pytest
-from res.enkf import RunContext
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.res_config import ResConfig
+from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 def _create_runpath(enkf_main: EnKFMain) -> RunContext:

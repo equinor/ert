@@ -3,7 +3,7 @@ import os
 from textwrap import dedent
 
 import pytest
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 @pytest.mark.usefixtures("use_tmpdir")

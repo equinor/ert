@@ -1,4 +1,4 @@
-from res.test import ErtTestContext
+from ert._c_wrappers.test import ErtTestContext
 
 from ..ert_utils import ErtTest
 

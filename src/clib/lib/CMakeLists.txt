@@ -6,7 +6,7 @@ if(NOT SKBUILD)
 endif()
 
 pybind11_add_module(
-  _lib
+  _clib
   SHARED
   res_util/memory.cpp
   res_util/es_testdata.cpp
@@ -145,13 +145,13 @@ pybind11_add_module(
   enkf/subst_config.cpp)
 
 # -----------------------------------------------------------------
-# Target: Python C Extension 'res._lib'
+# Target: Python C Extension 'ert._clib'
 # -----------------------------------------------------------------
 
-target_link_libraries(_lib PUBLIC ${ECL} std::filesystem cJSON::cJSON fmt::fmt
-                                  Eigen3::Eigen)
+target_link_libraries(_clib PUBLIC ${ECL} std::filesystem cJSON::cJSON fmt::fmt
+                                   Eigen3::Eigen)
 target_include_directories(
-  _lib
+  _clib
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
          $<INSTALL_INTERFACE:include>
   PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include>
@@ -159,8 +159,8 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private-include/ext/json>
   PRIVATE "${ECL_INCLUDE_DIRS}")
 
-set_target_properties(_lib PROPERTIES CXX_VISIBILITY_PRESET "default")
-install(TARGETS _lib LIBRARY DESTINATION src/res)
+set_target_properties(_clib PROPERTIES CXX_VISIBILITY_PRESET "default")
+install(TARGETS _clib LIBRARY DESTINATION src/ert)
 
 # This extra deploy is only for ctest to be able to locate the script, this file
 # is otherwise deployed through setup.py.
@@ -170,10 +170,10 @@ file(
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 
 # -----------------------------------------------------------------
-# Target: 'libres.so' for use in tests
+# Target: 'libert.so' for use in tests
 # -----------------------------------------------------------------
 
 if(BUILD_TESTS)
-  add_library(res $<TARGET_OBJECTS:_lib>)
-  target_link_libraries(res _lib pybind11::embed)
+  add_library(ert $<TARGET_OBJECTS:_clib>)
+  target_link_libraries(ert _clib pybind11::embed)
 endif()

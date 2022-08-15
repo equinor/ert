@@ -5,7 +5,7 @@ from ert.shared.models.ensemble_smoother import EnsembleSmoother
 from ert.shared.models.iterated_ensemble_smoother import IteratedEnsembleSmoother
 from ert.shared.models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.shared.models.single_test_run import SingleTestRun
-from res.config.active_range import ActiveRange
+from ert._c_wrappers.config.active_range import ActiveRange
 
 
 def create_model(ert, ensemble_size, current_case_name, args):

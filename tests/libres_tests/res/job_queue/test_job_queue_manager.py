@@ -7,8 +7,8 @@ from typing import Callable, List, TypedDict
 
 import pytest
 
-from res._lib.model_callbacks import LoadStatus
-from res.job_queue import (
+from ert._clib.model_callbacks import LoadStatus
+from ert._c_wrappers.job_queue import (
     Driver,
     JobQueue,
     JobQueueManager,

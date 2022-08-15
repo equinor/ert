@@ -19,7 +19,7 @@ import os
 import unittest
 from subprocess import PIPE, Popen, TimeoutExpired
 
-from res.util.subprocess import await_process_tee
+from ert._c_wrappers.util.subprocess import await_process_tee
 
 from ...libres_utils import tmpdir
 

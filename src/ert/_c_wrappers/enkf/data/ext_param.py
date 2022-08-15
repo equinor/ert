@@ -16,8 +16,8 @@
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.config import ExtParamConfig
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import ExtParamConfig
 
 
 class ExtParam(BaseCClass):

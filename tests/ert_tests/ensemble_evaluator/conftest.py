@@ -10,11 +10,11 @@ import pytest
 from ert.ensemble_evaluator.snapshot import SnapshotBuilder
 from ert.shared.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.shared.ensemble_evaluator.evaluator import EnsembleEvaluator
-from res._lib.model_callbacks import LoadStatus
-from res.enkf import ConfigKeys
-from res.enkf.queue_config import QueueConfig
-from res.job_queue.driver import LOCAL_DRIVER
-from res.job_queue.ext_job import ExtJob
+from ert._clib.model_callbacks import LoadStatus
+from ert._c_wrappers.enkf import ConfigKeys
+from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert._c_wrappers.job_queue.driver import LOCAL_DRIVER
+from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 from .ensemble_evaluator_utils import TestEnsemble
 

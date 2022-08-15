@@ -18,9 +18,9 @@ from typing import Generator, List, Optional, Union
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from res import ResPrototype
-from res.enkf.enums import EnkfObservationImplementationType
-from res.enkf.observations import ObsVector
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums import EnkfObservationImplementationType
+from ert._c_wrappers.enkf.observations import ObsVector
 
 
 class EnkfObs(BaseCClass):

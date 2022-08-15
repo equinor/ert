@@ -5,12 +5,12 @@ from threading import Lock, Thread
 from cwrap import BaseCClass
 from ecl.util.util import StringList
 
-from res import ResPrototype
-from res.job_queue.job_status_type_enum import JobStatusType
-from res.job_queue.job_submit_status_type_enum import JobSubmitStatusType
-from res.job_queue.thread_status_type_enum import ThreadStatus
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
+from ert._c_wrappers.job_queue.job_submit_status_type_enum import JobSubmitStatusType
+from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 
-from res._lib.model_callbacks import LoadStatus
+from ert._clib.model_callbacks import LoadStatus
 
 logger = logging.getLogger(__name__)
 

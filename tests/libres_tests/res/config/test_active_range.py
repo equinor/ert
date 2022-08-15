@@ -1,6 +1,6 @@
 import pytest
 
-from res.config.active_range import ActiveRange
+from ert._c_wrappers.config.active_range import ActiveRange
 
 
 @pytest.mark.parametrize(

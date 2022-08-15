@@ -8,7 +8,7 @@ from threading import BoundedSemaphore
 from typing import Any, Dict, Optional
 from unittest.mock import patch, MagicMock
 
-from res._lib.model_callbacks import LoadStatus
+from ert._clib.model_callbacks import LoadStatus
 
 try:
     from unittest.mock import AsyncMock
@@ -17,8 +17,15 @@ except ImportError:
     from mock import AsyncMock
 
 import pytest
-from res.job_queue import Driver, JobQueue, JobQueueNode, JobStatusType, QueueDriverEnum
 from websockets.exceptions import ConnectionClosedError
+
+from ert._c_wrappers.job_queue import (
+    Driver,
+    JobQueue,
+    JobQueueNode,
+    JobStatusType,
+    QueueDriverEnum,
+)
 
 from ...libres_utils import wait_for
 
@@ -282,7 +289,7 @@ async def test_retry_on_closed_connection(tmpdir):
     job_queue = create_local_queue(SIMPLE_SCRIPT, max_submit=1)
     pool_sema = BoundedSemaphore(value=10)
 
-    with patch("res.job_queue.queue.connect") as queue_connection:
+    with patch("ert._c_wrappers.job_queue.queue.connect") as queue_connection:
         websocket_mock = AsyncMock()
         queue_connection.side_effect = [
             ConnectionClosedError(1006, "expected close"),
@@ -355,12 +362,12 @@ def test_stop_long_running():
 
     # The driver is of no consequence, so resolving it in the c layer is
     # uninteresting and mocked out.
-    with patch("res.job_queue.JobQueue._set_driver"):
+    with patch("ert._c_wrappers.job_queue.JobQueue._set_driver"):
         queue = JobQueue(MagicMock())
 
         # We don't need the c layer call here, we only need it added to
         # the queue's job_list.
-        with patch("res.job_queue.JobQueue._add_job") as _add_job:
+        with patch("ert._c_wrappers.job_queue.JobQueue._add_job") as _add_job:
             for idx, job in enumerate(job_list):
                 _add_job.return_value = idx
                 queue.add_job(job, idx)

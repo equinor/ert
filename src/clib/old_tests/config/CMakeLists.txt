@@ -6,7 +6,7 @@ foreach(name config_content_node config_path_elm config_error config_content
              config_config config_schema_item)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
-  target_link_libraries(${name} res)
+  target_link_libraries(${name} ert)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
@@ -22,7 +22,7 @@ foreach(
   config_argc)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
-  target_link_libraries(${name} res)
+  target_link_libraries(${name} ert)
 endforeach()
 
 config_test(config_append append_test)

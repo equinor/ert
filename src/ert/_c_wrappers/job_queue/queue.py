@@ -40,15 +40,15 @@ from ert.constant_filenames import (
     OK_file,
     STATUS_file,
 )
-from res import ResPrototype
-from res.job_queue.job_queue_node import JobQueueNode
-from res.job_queue.job_status_type_enum import JobStatusType
-from res.job_queue.queue_differ import QueueDiffer
-from res.job_queue.thread_status_type_enum import ThreadStatus
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue.job_queue_node import JobQueueNode
+from ert._c_wrappers.job_queue.job_status_type_enum import JobStatusType
+from ert._c_wrappers.job_queue.queue_differ import QueueDiffer
+from ert._c_wrappers.job_queue.thread_status_type_enum import ThreadStatus
 
 if TYPE_CHECKING:
-    from res.enkf.res_config import ResConfig
-    from res.enkf.run_arg import RunArg
+    from ert._c_wrappers.enkf.res_config import ResConfig
+    from ert._c_wrappers.enkf.run_arg import RunArg
 
 
 logger = logging.getLogger(__name__)

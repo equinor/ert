@@ -32,10 +32,10 @@ except ImportError:
 
 
 def _load_lib():
-    import res._lib
+    import ert._clib
     import ctypes
 
-    lib = ctypes.CDLL(res._lib.__file__)
+    lib = ctypes.CDLL(ert._clib.__file__)
 
     # Configure site_config to be a ctypes.CFUNCTION with type:
     # void set_site_config(char *);

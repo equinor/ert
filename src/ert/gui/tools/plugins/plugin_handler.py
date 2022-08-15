@@ -1,11 +1,17 @@
+from typing import TYPE_CHECKING, List
 from typing import Generator
 
 from .plugin import Plugin
 
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert._c_wrappers.job_queue import WorkflowJob
+
 
 class PluginHandler:
-    def __init__(self, ert, plugin_jobs, parent_window):
-        """@type plugin_jobs: list of WorkflowJob"""
+    def __init__(
+        self, ert: "EnKFMain", plugin_jobs: List["WorkflowJob"], parent_window
+    ):
         self.__ert = ert
         self.__plugins = []
 
@@ -16,8 +22,7 @@ class PluginHandler:
 
         self.__plugins = sorted(self.__plugins, key=Plugin.getName)
 
-    def ert(self):
-        """@rtype: res.enkf.enkf_main.EnKFMain"""
+    def ert(self) -> "EnKFMain":
         return self.__ert
 
     def __iter__(self) -> Generator[Plugin, None, None]:

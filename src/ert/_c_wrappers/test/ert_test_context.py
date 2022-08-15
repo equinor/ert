@@ -19,7 +19,7 @@ import shutil
 import tempfile
 from distutils.dir_util import copy_tree
 
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 class ErtTestContext:

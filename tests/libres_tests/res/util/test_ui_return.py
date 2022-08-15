@@ -1,5 +1,5 @@
-from res.util import UIReturn
-from res.util.enums import UIReturnStatusEnum
+from ert._c_wrappers.util import UIReturn
+from ert._c_wrappers.util.enums import UIReturnStatusEnum
 
 from ...libres_utils import ResTest
 

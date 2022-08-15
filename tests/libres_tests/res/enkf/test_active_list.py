@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-from res.enkf import ActiveList, ActiveMode
+from ert._c_wrappers.enkf import ActiveList, ActiveMode
 
 
 def test_active_mode_enum():

@@ -675,7 +675,7 @@ void enkf_fs_decrease_run_count(enkf_fs_type *fs) {
 
 bool enkf_fs_is_running(const enkf_fs_type *fs) { return (fs->runcount > 0); }
 
-RES_LIB_SUBMODULE("enkf_fs", m) {
+ERT_CLIB_SUBMODULE("enkf_fs", m) {
     using namespace py::literals;
 
     m.def(

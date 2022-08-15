@@ -5,7 +5,7 @@ import pytest
 from ecl.util.test import TestAreaContext
 from ....libres_utils import ResTest, tmpdir
 
-from res.enkf import GenKwConfig, ResConfig, EnKFMain
+from ert._c_wrappers.enkf import GenKwConfig, ResConfig, EnKFMain
 
 
 class GenKwConfigTest(ResTest):

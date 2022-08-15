@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from cwrap import Prototype
-import res
+import ert._c_wrappers
 
 from .substitution_list import SubstitutionList
 from .enums import LLSQResultEnum

@@ -119,7 +119,7 @@ Minimal example:
 
 .. code-block:: python
 
-   from res.enkf import ErtScript
+   from ert import ErtScript
    from ert.shared.plugins.plugin_manager import hook_implementation
 
    class MyJob(ErtScript)
@@ -135,7 +135,7 @@ Full example:
 
 .. code-block:: python
 
-   from res.enkf import ErtScript
+   from ert import ErtScript
    from ert.shared.plugins.plugin_manager import hook_implementation
 
    class MyJob(ErtScript)

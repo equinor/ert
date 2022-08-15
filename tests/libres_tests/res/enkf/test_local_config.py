@@ -15,7 +15,7 @@
 #  for more details.
 
 
-from res.test import ErtTestContext
+from ert._c_wrappers.test import ErtTestContext
 
 from ...libres_utils import ResTest
 

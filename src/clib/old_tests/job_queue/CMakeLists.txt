@@ -24,13 +24,13 @@ foreach(
   job_torque)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
-  target_link_libraries(${name} res)
+  target_link_libraries(${name} ert)
   add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 foreach(name job_slurm_submit job_slurm_runtest)
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
-  target_link_libraries(${name} res)
+  target_link_libraries(${name} ert)
   if(SBATCH)
     add_test(NAME ${name} COMMAND ${name})
   endif()
@@ -48,12 +48,12 @@ foreach(
   job_loadFail)
 
   add_executable(${name} ${TESTS_EXCLUDE_FROM_ALL} test_${name}.cpp)
-  target_link_libraries(${name} res)
+  target_link_libraries(${name} ert)
 endforeach()
 
 if(NOT APPLE)
   add_executable(job_list ${TESTS_EXCLUDE_FROM_ALL} test_job_list.cpp)
-  target_link_libraries(job_list res)
+  target_link_libraries(job_list ert)
 
   add_test(NAME job_list COMMAND $<TARGET_FILE:job_list>)
 endif()

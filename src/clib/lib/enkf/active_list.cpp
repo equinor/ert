@@ -130,7 +130,7 @@ std::string repr(const ActiveList &al) {
 
 } // namespace
 
-RES_LIB_SUBMODULE("local.active_list", m) {
+ERT_CLIB_SUBMODULE("local.active_list", m) {
     py::class_<ActiveList>(m, "ActiveList")
         .def(py::init<>())
         .def("getMode", &ActiveList::getMode)

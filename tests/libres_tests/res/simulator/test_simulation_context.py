@@ -1,7 +1,7 @@
 from ...libres_utils import wait_until
 
-from res.enkf import EnKFMain
-from res.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert.simulator import SimulationContext
 
 

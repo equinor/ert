@@ -3,8 +3,8 @@ import json
 from ecl.util.test import TestAreaContext
 from ....libres_utils import ResTest
 
-from res.enkf.config import ExtParamConfig
-from res.enkf.data import ExtParam
+from ert._c_wrappers.enkf.config import ExtParamConfig
+from ert._c_wrappers.enkf.data import ExtParam
 
 
 class ExtParamTest(ResTest):

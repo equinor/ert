@@ -175,7 +175,7 @@ Eigen::MatrixXd ies::Data::make_activeA() const {
     return make_active(this->A0, row_mask, this->m_ens_mask);
 }
 
-RES_LIB_SUBMODULE("ies", m) {
+ERT_CLIB_SUBMODULE("ies", m) {
     py::class_<ies::Data, std::shared_ptr<ies::Data>>(m, "ModuleData")
         .def(py::init<int>())
         .def_readwrite("iteration_nr", &ies::Data::iteration_nr);

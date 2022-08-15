@@ -2,8 +2,8 @@ import os
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.job_queue.workflow_job import WorkflowJob
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.job_queue.workflow_job import WorkflowJob
 
 
 class WorkflowJoblist(BaseCClass):

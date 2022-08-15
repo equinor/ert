@@ -46,13 +46,13 @@ jobs:
         # of 3.0.0) will create an incorrect report when a directory matches
         # the package name
         cd tests
-        pytest ert_tests --cov=ert --cov=res --cov-report=xml:cov.xml
+        pytest ert_tests --cov=ert --cov-report=xml:cov.xml
 
     - name: Run res tests
       if: matrix.system-under-test == 'res'
       run: |
         cd tests
-        pytest libres_tests --cov=res --cov-report=xml:cov.xml
+        pytest libres_tests --cov=ert --cov-report=xml:cov.xml
 
     - name: Upload python coverage to Codecov
       uses: codecov/codecov-action@v2

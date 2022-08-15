@@ -1,8 +1,10 @@
 from typing import List
 
-from res.enkf import EnKFMain
-from res.enkf.enums.enkf_obs_impl_type_enum import EnkfObservationImplementationType
-from res.enkf.enums.enkf_var_type_enum import EnkfVarType
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enums.enkf_obs_impl_type_enum import (
+    EnkfObservationImplementationType,
+)
+from ert._c_wrappers.enkf.enums.enkf_var_type_enum import EnkfVarType
 
 
 class ErtSummary:

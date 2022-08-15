@@ -10,8 +10,8 @@ from collections import namedtuple
 from contextlib import contextmanager
 
 from packaging import version
-from res.fm.ecl.ecl_config import EclrunConfig
-from res.util.subprocess import await_process_tee
+from ert._c_wrappers.fm.ecl.ecl_config import EclrunConfig
+from ert._c_wrappers.util.subprocess import await_process_tee
 
 from ecl.summary import EclSum
 
@@ -148,7 +148,7 @@ class EclRun:
 
        #!/usr/bin/env python
        import sys
-       from res.fm.ecl import EclRun
+       from ert._c_wrappers.fm.ecl import EclRun
 
        run = EclRun()
        run.runEclipse( )

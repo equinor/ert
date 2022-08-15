@@ -3,9 +3,9 @@
 from typing import List, Dict
 
 from pydantic import validator, BaseModel, root_validator, conlist
-from res._lib.update import RowScalingParameter, Parameter
+from ert._clib.update import RowScalingParameter, Parameter
 
-from res.enkf.row_scaling import RowScaling
+from ert._c_wrappers.enkf.row_scaling import RowScaling
 
 
 @classmethod

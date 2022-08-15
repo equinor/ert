@@ -15,7 +15,7 @@
 #  for more details.
 
 from cwrap import BaseCClass
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 import os
 
 # The path_fmt implementation hinges strongly on variable length

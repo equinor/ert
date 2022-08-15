@@ -20,7 +20,7 @@ import os.path
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest, tmpdir
 
-from res.enkf import (
+from ert._c_wrappers.enkf import (
     AnalysisConfig,
     EclConfig,
     EnkfFs,
@@ -32,13 +32,13 @@ from res.enkf import (
     RunArg,
     SiteConfig,
 )
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enkf_main import EnKFMain
-from res.enkf.enums import (
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.enkf_main import EnKFMain
+from ert._c_wrappers.enkf.enums import (
     EnkfObservationImplementationType,
     LoadFailTypeEnum,
 )
-from res.enkf.observations.summary_observation import SummaryObservation
+from ert._c_wrappers.enkf.observations.summary_observation import SummaryObservation
 
 
 class EnKFTest(ResTest):

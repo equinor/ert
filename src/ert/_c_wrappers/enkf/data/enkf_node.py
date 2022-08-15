@@ -18,18 +18,18 @@ from typing import TYPE_CHECKING
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.data.ext_param import ExtParam
-from res.enkf.data.field import Field
-from res.enkf.data.gen_data import GenData
-from res.enkf.data.gen_kw import GenKw
-from res.enkf.data.summary import Summary
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import ErtImplType
-from res.enkf.node_id import NodeId
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.data.ext_param import ExtParam
+from ert._c_wrappers.enkf.data.field import Field
+from ert._c_wrappers.enkf.data.gen_data import GenData
+from ert._c_wrappers.enkf.data.gen_kw import GenKw
+from ert._c_wrappers.enkf.data.summary import Summary
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import ErtImplType
+from ert._c_wrappers.enkf.node_id import NodeId
 
 if TYPE_CHECKING:
-    from res.enkf.config import EnkfConfigNode
+    from ert._c_wrappers.enkf.config import EnkfConfigNode
 
 
 class EnkfNode(BaseCClass):

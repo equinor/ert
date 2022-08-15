@@ -22,7 +22,7 @@ ert::detail::Submodule::Submodule(const char *path, init_type &init)
     submodules().push_back(this);
 }
 
-PYBIND11_MODULE(_lib, m) {
+PYBIND11_MODULE(_clib, m) {
     py::register_exception_translator([](std::exception_ptr p) {
         if (!p)
             return;

@@ -197,7 +197,7 @@ size_t StateMap::count_matching(int mask) const {
                          [mask](int value) { return value & mask; });
 }
 
-RES_LIB_SUBMODULE("state_map", m) {
+ERT_CLIB_SUBMODULE("state_map", m) {
     using namespace py::literals;
 
     const auto init_with_exception = [](const fs::path &path) -> StateMap {

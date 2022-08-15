@@ -16,8 +16,8 @@
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.config.content_type_enum import ContentTypeEnum
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
 
 
 class SchemaItem(BaseCClass):

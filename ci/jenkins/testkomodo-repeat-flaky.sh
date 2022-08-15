@@ -8,8 +8,8 @@ copy_test_files () {
     mkdir ${CI_TEST_ROOT}/.git
 
     # libres
-    mkdir -p ${CI_TEST_ROOT}/src/libres/res/fm/rms
-    ln -s ${CI_SOURCE_ROOT}/src/res/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/libres/res/fm/rms/rms_config.yml
+    mkdir -p ${CI_TEST_ROOT}/src/clib/res/fm/rms
+    ln -s ${CI_SOURCE_ROOT}/src/ert/_c_wrappers/fm/rms/rms_config.yml ${CI_TEST_ROOT}/src/clib/res/fm/rms/rms_config.yml
 
     # Keep pytest configuration:
     ln -s ${CI_SOURCE_ROOT}/pyproject.toml ${CI_TEST_ROOT}/pyproject.toml
@@ -20,7 +20,7 @@ install_test_dependencies () {
     pip install pytest-repeat
 }
 
-run_libres_ert_tests(){
+run_ert_clib_tests(){
     # If a developer would like to test a specific function, remove these
     # lines and include the specific tests one would like to run.
     # The internal job will use the testkomodo-repeat-flaky.sh from the branch
@@ -59,7 +59,7 @@ start_tests () {
 
     for ((i = 0; i <= $n_runs; i++))
     do
-        if ! run_libres_ert_tests; then
+        if ! run_ert_clib_tests; then
             ((failures +=1))
         fi
     done

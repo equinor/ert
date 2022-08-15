@@ -1,9 +1,11 @@
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.plot_data.ensemble_plot_data_vector import EnsemblePlotDataVector
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.plot_data.ensemble_plot_data_vector import (
+    EnsemblePlotDataVector,
+)
 
 
 class EnsemblePlotData(BaseCClass):

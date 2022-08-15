@@ -3,7 +3,7 @@ import pandas as pd
 
 from ert.data import loader, MeasuredData
 from ert.libres_facade import LibresFacade
-from res.enkf import EnkfObservationImplementationType
+from ert._c_wrappers.enkf import EnkfObservationImplementationType
 
 
 def ensemble_parameter_names(res: LibresFacade) -> List[str]:

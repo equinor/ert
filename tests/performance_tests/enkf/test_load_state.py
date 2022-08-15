@@ -1,4 +1,4 @@
-from res.enkf import ResConfig, EnKFMain
+from ert._c_wrappers.enkf import ResConfig, EnKFMain
 
 
 def test_load_from_context(benchmark, template_config):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import argparse
-from res.fm.rms import run
+from ert._c_wrappers.fm.rms import run
 import sys
 
 

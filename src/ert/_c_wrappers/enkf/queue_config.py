@@ -17,10 +17,10 @@
 from typing import Optional
 
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.config import ConfigContent
-from res.enkf.config_keys import ConfigKeys
-from res.job_queue import Driver, JobQueue
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ConfigContent
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.job_queue import Driver, JobQueue
 
 
 class QueueConfig(BaseCClass):

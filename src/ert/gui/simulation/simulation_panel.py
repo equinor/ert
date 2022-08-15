@@ -24,7 +24,7 @@ from ert.gui.simulation import RunDialog
 from collections import OrderedDict
 
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 from ert.shared.cli.model_factory import create_model
 
 

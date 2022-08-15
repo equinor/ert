@@ -19,15 +19,14 @@ from cwrap import BaseCClass
 import numpy as np
 import numpy.typing as npt
 
-from res import ResPrototype
-from res.enkf.res_config import EnsembleConfig
-from res.enkf.enums import EnKFFSType
-from res.enkf.state_map import StateMap
-from res.enkf.summary_key_set import SummaryKeySet
-from res.enkf.util import TimeMap
-from res import _lib
-
-from res._lib import update
+from ert import _clib
+from ert._clib import update
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums import EnKFFSType
+from ert._c_wrappers.enkf.res_config import EnsembleConfig
+from ert._c_wrappers.enkf.state_map import StateMap
+from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
+from ert._c_wrappers.enkf.util import TimeMap
 
 
 class EnkfFs(BaseCClass):
@@ -74,7 +73,7 @@ class EnkfFs(BaseCClass):
 
     def getStateMap(self) -> StateMap:
         """@rtype: StateMap"""
-        return _lib.enkf_fs.get_state_map(self)
+        return _clib.enkf_fs.get_state_map(self)
 
     def getCaseName(self) -> str:
         return self._get_case_name()
@@ -131,7 +130,7 @@ class EnkfFs(BaseCClass):
     def realizationList(self, state):
         """
         Will return list of realizations with state == the specified state.
-        @type state: res.enkf.enums.RealizationStateEnum
+        @type state: _c_wrappers.enkf.enums.RealizationStateEnum
         @rtype: ecl.util.IntVector
         """
         state_map = self.getStateMap()

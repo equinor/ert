@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Generator, List
 
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import EnkfInitModeEnum
-from res.enkf.run_arg import RunArg
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import EnkfInitModeEnum
+from ert._c_wrappers.enkf.run_arg import RunArg
 
 
 @dataclass

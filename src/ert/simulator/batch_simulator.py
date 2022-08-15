@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
-from res.enkf import EnKFMain, NodeId, ResConfig
-from res.enkf.config import EnkfConfigNode
-from res.enkf.data import EnkfNode
+from ert._c_wrappers.enkf import EnKFMain, NodeId, ResConfig
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.data import EnkfNode
 
 from .batch_simulator_context import BatchContext
 
 if TYPE_CHECKING:
-    from res.enkf import EnkfFs, ExtParam
+    from ert._c_wrappers.enkf import EnkfFs, ExtParam
 
 
 def _slug(entity: str) -> str:

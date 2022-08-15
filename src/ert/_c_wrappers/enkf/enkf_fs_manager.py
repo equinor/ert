@@ -1,6 +1,6 @@
 from typing import List, Dict, Union
 
-from res.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 
 
 class FileSystemRotator:

@@ -1,5 +1,5 @@
 from ecl.util.test import TestAreaContext
-from res.enkf import ActiveList, GenDataConfig, GenObservation
+from ert._c_wrappers.enkf import ActiveList, GenDataConfig, GenObservation
 
 from ...libres_utils import ResTest
 

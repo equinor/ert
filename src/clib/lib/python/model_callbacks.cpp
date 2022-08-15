@@ -2,7 +2,7 @@
 #include <ert/enkf/run_arg.hpp>
 #include <ert/python.hpp>
 
-RES_LIB_SUBMODULE("model_callbacks", m) {
+ERT_CLIB_SUBMODULE("model_callbacks", m) {
     py::enum_<fw_load_status>(m, "LoadStatus", py::arithmetic())
         .value("LOAD_SUCCESSFUL", LOAD_SUCCESSFUL)
         .value("LOAD_FAILURE", LOAD_FAILURE)

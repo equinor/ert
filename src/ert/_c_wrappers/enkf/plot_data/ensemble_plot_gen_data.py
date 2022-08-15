@@ -16,12 +16,15 @@
 
 from cwrap import BaseCClass
 from ecl.util.util import DoubleVector
-from res import ResPrototype
-from res import _lib
-from res.enkf.config import EnkfConfigNode
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import ErtImplType
-from res.enkf.plot_data.ensemble_plot_gen_data_vector import EnsemblePlotGenDataVector
+
+from ert import _clib
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import ErtImplType
+from ert._c_wrappers.enkf.plot_data.ensemble_plot_gen_data_vector import (
+    EnsemblePlotGenDataVector,
+)
 
 
 class EnsemblePlotGenData(BaseCClass):
@@ -87,7 +90,7 @@ class EnsemblePlotGenData(BaseCClass):
         return self._min_values().setParent(self)
 
     def getRealizations(self, realizations):
-        return _lib.enkf_fs_general_data.gendata_get_realizations(self, realizations)
+        return _clib.enkf_fs_general_data.gendata_get_realizations(self, realizations)
 
     def free(self):
         self._free()

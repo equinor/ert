@@ -4,7 +4,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-RES_LIB_SUBMODULE("enkf_fs_general_data", m) {
+ERT_CLIB_SUBMODULE("enkf_fs_general_data", m) {
     m.def(
         "gendata_get_realizations",
         [](py::object self, const std::vector<int> &realizations) {

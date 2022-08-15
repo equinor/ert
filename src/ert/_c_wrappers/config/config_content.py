@@ -16,14 +16,14 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from cwrap import BaseCClass
-from res import ResPrototype
-from res.config.config_error import ConfigError
-from res.config.config_path_elm import ConfigPathElm
-from res.config.content_type_enum import ContentTypeEnum
-from res.config.schema_item import SchemaItem
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config.config_error import ConfigError
+from ert._c_wrappers.config.config_path_elm import ConfigPathElm
+from ert._c_wrappers.config.content_type_enum import ContentTypeEnum
+from ert._c_wrappers.config.schema_item import SchemaItem
 
 if TYPE_CHECKING:
-    from res.config.config_parser import ConfigParser
+    from ert._c_wrappers.config.config_parser import ConfigParser
 
 
 class ContentNode(BaseCClass):

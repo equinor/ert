@@ -18,8 +18,8 @@ import os
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest, tmpdir
 
-from res import ResPrototype
-from res.config import (
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import (
     ConfigParser,
     ContentItem,
     ContentNode,

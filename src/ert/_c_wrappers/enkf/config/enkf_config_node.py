@@ -20,16 +20,16 @@ from cwrap import BaseCClass
 from ecl.grid import EclGrid
 from ecl.util.util import IntVector, StringList
 
-from res import ResPrototype
-from res.enkf.config import (
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.config import (
     ExtParamConfig,
     FieldConfig,
     GenDataConfig,
     GenKwConfig,
     SummaryConfig,
 )
-from res.enkf.config_keys import ConfigKeys
-from res.enkf.enums import (
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
+from ert._c_wrappers.enkf.enums import (
     EnkfTruncationType,
     EnkfVarType,
     ErtImplType,

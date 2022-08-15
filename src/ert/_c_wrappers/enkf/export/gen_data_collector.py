@@ -4,9 +4,9 @@ import numpy
 from ecl.util.util import IntVector
 from pandas import DataFrame
 
-from res.enkf import EnKFMain
-from res.enkf.enums import RealizationStateEnum
-from res.enkf.plot_data import EnsemblePlotGenData
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.plot_data import EnsemblePlotGenData
 
 
 class GenDataCollector:

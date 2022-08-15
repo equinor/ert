@@ -4,7 +4,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-RES_LIB_SUBMODULE("enkf_fs_summary_data", m) {
+ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
     m.def(
         "get_summary_data",
         [](py::object ens_cfg, py::object fs,

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from res.enkf import EnKFMain
-from res.enkf.substituter import Substituter
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.substituter import Substituter
 
 
 def test_global_substitution():

@@ -3,10 +3,10 @@ from typing import List, Optional
 import numpy as np
 from pandas import DataFrame, MultiIndex
 
-from res import _lib
-from res.enkf import EnKFMain
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.enums import RealizationStateEnum
+from ert import _clib
+from ert._c_wrappers.enkf import EnKFMain
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
 
 
 class SummaryCollector:
@@ -44,7 +44,7 @@ class SummaryCollector:
                 key for key in keys if key in summary_keys
             ]  # ignore keys that doesn't exist
 
-        summary_data = _lib.enkf_fs_summary_data.get_summary_data(
+        summary_data = _clib.enkf_fs_summary_data.get_summary_data(
             ert.ensembleConfig(), fs, summary_keys, realizations, len(dates)
         )
 

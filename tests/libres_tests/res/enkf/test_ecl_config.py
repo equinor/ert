@@ -21,8 +21,8 @@ from datetime import datetime
 from ecl.summary import EclSum
 from ecl.util.test import TestAreaContext
 
-from res.enkf import ConfigKeys, EclConfig, ResConfig
-from res.util import UIReturn
+from ert._c_wrappers.enkf import ConfigKeys, EclConfig, ResConfig
+from ert._c_wrappers.util import UIReturn
 
 
 def test_grid(source_root):

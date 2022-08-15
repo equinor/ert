@@ -20,9 +20,9 @@ from ert.shared.storage.extraction import (
     post_ensemble_results,
     post_update_data,
 )
-from res.enkf import EnKFMain, QueueConfig
-from res.enkf.ert_run_context import RunContext
-from res.job_queue import ForwardModel, RunStatusType
+from ert._c_wrappers.enkf import EnKFMain, QueueConfig
+from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.job_queue import ForwardModel, RunStatusType
 
 event_logger = logging.getLogger("ert.event_log")
 experiment_logger = logging.getLogger("ert.experiment_server.base_run_model")

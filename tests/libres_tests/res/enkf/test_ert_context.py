@@ -2,7 +2,7 @@ from distutils.errors import DistutilsFileError
 
 from ...libres_utils import ResTest
 
-from res.test import ErtTestContext
+from ert._c_wrappers.test import ErtTestContext
 
 
 class ErtTestContextTest(ResTest):

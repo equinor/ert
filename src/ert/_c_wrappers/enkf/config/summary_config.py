@@ -15,8 +15,8 @@
 #  for more details.
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.enkf.enums import LoadFailTypeEnum
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.enkf.enums import LoadFailTypeEnum
 
 
 class SummaryConfig(BaseCClass):

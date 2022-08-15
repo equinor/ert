@@ -51,14 +51,14 @@ foreach(
   trans_func
   value_export)
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
-  target_link_libraries(${test} res)
+  target_link_libraries(${test} ert)
   add_test(NAME ${test} COMMAND ${test})
 endforeach()
 
 # rng_config test is unique in that it requires mocking of logs
 add_executable(rng_config ${TESTS_EXCLUDE_FROM_ALL} test_rng_config.cpp
                           ../../tests/logging.cpp)
-target_link_libraries(rng_config res)
+target_link_libraries(rng_config ert)
 add_test(NAME rng_config COMMAND rng_config)
 
 foreach(
@@ -75,7 +75,7 @@ foreach(
   gen_kw)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
-  target_link_libraries(${test} res)
+  target_link_libraries(${test} ert)
 endforeach()
 
 add_config_test(enkf_executable_path enkf_executable_path)
@@ -114,7 +114,7 @@ foreach(
   enkf_main_fs)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
-  target_link_libraries(${test} res)
+  target_link_libraries(${test} ert)
 endforeach()
 
 # -----------------------------------------------------------------

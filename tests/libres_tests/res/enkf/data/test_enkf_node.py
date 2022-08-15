@@ -3,8 +3,8 @@ import json
 from ecl.util.test import TestAreaContext
 from ....libres_utils import ResTest
 
-from res.enkf.config import EnkfConfigNode
-from res.enkf.data import EnkfNode
+from ert._c_wrappers.enkf.config import EnkfConfigNode
+from ert._c_wrappers.enkf.data import EnkfNode
 
 
 class EnkfNodeTest(ResTest):

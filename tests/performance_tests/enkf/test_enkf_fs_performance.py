@@ -1,4 +1,4 @@
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 
 
 def mount_and_umount(ert, case_name):

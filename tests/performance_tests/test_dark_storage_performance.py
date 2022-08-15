@@ -4,7 +4,7 @@ import pandas as pd
 import io
 
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
 from ert.shared.dark_storage.endpoints import experiments, ensembles, records, responses
 
 

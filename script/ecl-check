@@ -77,9 +77,9 @@ def main() -> None:
     args = parse_args()
 
     import ecl
-    import res
+    from ert._c_wrappers import ResPrototype
 
-    res_syms = get_symbols(res.ResPrototype.lib._name, undefined=True)
+    res_syms = get_symbols(ResPrototype.lib._name, undefined=True)
     ecl_syms = get_symbols(ecl.EclPrototype.lib._name, undefined=False)
     shared_syms = ecl_syms & res_syms
 

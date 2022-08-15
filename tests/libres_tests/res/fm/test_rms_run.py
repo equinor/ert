@@ -25,11 +25,12 @@ import pkg_resources
 
 import pytest
 from ecl.util.test import TestAreaContext
-from ...libres_utils import ResTest, tmpdir
 from pytest import MonkeyPatch
 
-import res.fm.rms
-from res.fm.rms import RMSRun, RMSRunException
+from ert._c_wrappers.fm.rms import RMSRun, RMSRunException
+from ert._c_wrappers.fm.rms import run as rms_run
+
+from ...libres_utils import ResTest, tmpdir
 
 TEST_ENV_WRAPPER = """\
 #!/usr/bin/env bash
@@ -189,9 +190,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", allow_no_env=True
-            )
+            rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -200,7 +199,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(
+                rms_run(
                     0, "project", "workflow", run_path="run_path", allow_no_env=True
                 )
 
@@ -211,7 +210,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(
+                rms_run(
                     0,
                     "project",
                     "workflow",
@@ -229,7 +228,7 @@ class RMSRunTest(ResTest):
 
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
-            res.fm.rms.run(
+            rms_run(
                 0,
                 "project",
                 "workflow",
@@ -434,9 +433,7 @@ class RMSRunTest(ResTest):
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
 
-            res.fm.rms.run(
-                0, "project", "workflow", run_path="run_path", allow_no_env=True
-            )
+            rms_run(0, "project", "workflow", run_path="run_path", allow_no_env=True)
 
             # -----------------------------------------------------------------
 
@@ -445,7 +442,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(
+                rms_run(
                     0, "project", "workflow", run_path="run_path", allow_no_env=True
                 )
 
@@ -456,7 +453,7 @@ class RMSRunTest(ResTest):
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException):
-                res.fm.rms.run(
+                rms_run(
                     0,
                     "project",
                     "workflow",
@@ -474,7 +471,7 @@ class RMSRunTest(ResTest):
 
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
-            res.fm.rms.run(
+            rms_run(
                 0,
                 "project",
                 "workflow",
@@ -526,7 +523,7 @@ env:
 
             with open("run_path/action.json", "w") as f:
                 f.write(json.dumps(action))
-            res.fm.rms.run(
+            rms_run(
                 0,
                 "project",
                 "workflow",
@@ -587,7 +584,7 @@ env:
 
                 with open("run_path/action.json", "w") as f:
                     f.write(json.dumps(action))
-                res.fm.rms.run(
+                rms_run(
                     0,
                     "project",
                     "workflow",
@@ -627,7 +624,7 @@ env:
                 f.write(json.dumps(action))
 
             with self.assertRaises(RMSRunException) as e:
-                res.fm.rms.run(
+                rms_run(
                     0,
                     "project",
                     "workflow",
@@ -637,7 +634,7 @@ env:
                 )
                 assert "non-existing" in str(e)
 
-            res.fm.rms.run(
+            rms_run(
                 0,
                 "project",
                 "workflow",

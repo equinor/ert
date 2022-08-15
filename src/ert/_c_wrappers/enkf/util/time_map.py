@@ -19,7 +19,7 @@ import os
 from cwrap import BaseCClass
 from ecl.util.util import CTime
 
-from res import ResPrototype
+from ert._c_wrappers import ResPrototype
 
 
 class TimeMap(BaseCClass):

@@ -8,7 +8,7 @@
 
 static auto logger = ert::get_logger("enkf_fs");
 
-RES_LIB_SUBMODULE("enkf_fs_keyword_data", m) {
+ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
     m.def(
         "keyword_data_get_realizations",
         [](py::object config, py::object fs,

@@ -1,4 +1,4 @@
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 
 
 def test_enkf_fs_manager_create(setup_case):

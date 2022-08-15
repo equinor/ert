@@ -11,7 +11,7 @@ from ert.gui.ertwidgets.models.ertmodel import (
 from ert.gui.ertwidgets.stringbox import StringBox
 from ert.shared.ide.keywords.definitions import RangeStringArgument, IntegerArgument
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain
+from ert._c_wrappers.enkf import EnKFMain
 from ert.gui.simulation.simulation_config_panel import SimulationConfigPanel
 from ert.shared.models import EnsembleExperiment
 

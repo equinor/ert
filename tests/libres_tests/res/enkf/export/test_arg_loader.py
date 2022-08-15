@@ -1,6 +1,6 @@
 import pytest
 
-from res.enkf.export import ArgLoader
+from ert._c_wrappers.enkf.export import ArgLoader
 
 
 def test_arg_loader(tmp_path):

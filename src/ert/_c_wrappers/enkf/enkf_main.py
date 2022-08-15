@@ -22,33 +22,33 @@ from typing import TYPE_CHECKING, Any, List, Union
 from cwrap import BaseCClass
 from ecl.util.util import RandomNumberGenerator
 
-from res import ResPrototype
-from res._lib import enkf_main, enkf_state, model_callbacks
-from res.analysis.configuration import UpdateConfiguration
-from res.enkf.enums import RealizationStateEnum
-from res.enkf.enkf_fs import EnkfFs
-from res.enkf.analysis_config import AnalysisConfig
-from res.enkf.ecl_config import EclConfig
-from res.enkf.enkf_fs_manager import FileSystemRotator
-from res.enkf.enkf_obs import EnkfObs
-from res.enkf.ensemble_config import EnsembleConfig
-from res.enkf.ert_run_context import RunContext
-from res.enkf.ert_workflow_list import ErtWorkflowList
-from res.enkf.hook_manager import HookManager
-from res.enkf.key_manager import KeyManager
-from res.enkf.model_config import ModelConfig
-from res.enkf.queue_config import QueueConfig
-from res.enkf.runpaths import Runpaths
-from res.enkf.site_config import SiteConfig
-from res.enkf.substituter import Substituter
-from res.job_queue import JobQueueManager, RunStatusType
-from res.util.substitution_list import SubstitutionList
+from ert._c_wrappers import ResPrototype
+from ert._clib import enkf_main, enkf_state, model_callbacks
+from ert._c_wrappers.analysis.configuration import UpdateConfiguration
+from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enkf_fs import EnkfFs
+from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
+from ert._c_wrappers.enkf.ecl_config import EclConfig
+from ert._c_wrappers.enkf.enkf_fs_manager import FileSystemRotator
+from ert._c_wrappers.enkf.enkf_obs import EnkfObs
+from ert._c_wrappers.enkf.ensemble_config import EnsembleConfig
+from ert._c_wrappers.enkf.ert_run_context import RunContext
+from ert._c_wrappers.enkf.ert_workflow_list import ErtWorkflowList
+from ert._c_wrappers.enkf.hook_manager import HookManager
+from ert._c_wrappers.enkf.key_manager import KeyManager
+from ert._c_wrappers.enkf.model_config import ModelConfig
+from ert._c_wrappers.enkf.queue_config import QueueConfig
+from ert._c_wrappers.enkf.runpaths import Runpaths
+from ert._c_wrappers.enkf.site_config import SiteConfig
+from ert._c_wrappers.enkf.substituter import Substituter
+from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
+from ert._c_wrappers.util.substitution_list import SubstitutionList
 
 if TYPE_CHECKING:
-    from res.enkf.state_map import StateMap
-    from res.job_queue.queue import JobQueue
-    from res.enkf.hook_manager import HookRuntime
-    from res.enkf.res_config import ResConfig
+    from ert._c_wrappers.enkf.state_map import StateMap
+    from ert._c_wrappers.job_queue.queue import JobQueue
+    from ert._c_wrappers.enkf.hook_manager import HookRuntime
+    from ert._c_wrappers.enkf.res_config import ResConfig
 
 
 def naturalSortKey(s: str) -> List[Union[int, str]]:

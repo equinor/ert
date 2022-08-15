@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from res.analysis.configuration import RowScalingParameter, Parameter
-from res.analysis.configuration import UpdateConfiguration, Observation
-from res.enkf.row_scaling import RowScaling
+from ert._c_wrappers.analysis.configuration import RowScalingParameter, Parameter
+from ert._c_wrappers.analysis.configuration import UpdateConfiguration, Observation
+from ert._c_wrappers.enkf.row_scaling import RowScaling
 
 
 def test_observation_default_init():

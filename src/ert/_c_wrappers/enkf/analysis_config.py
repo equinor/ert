@@ -19,13 +19,12 @@ from typing import List, Optional
 
 from cwrap import BaseCClass
 
-from res import _lib
-
-from res import ResPrototype
-from res.analysis import AnalysisModule
-from res.config import ConfigContent
-from res.enkf.analysis_iter_config import AnalysisIterConfig
-from res.enkf.config_keys import ConfigKeys
+from ert import _clib
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.analysis import AnalysisModule
+from ert._c_wrappers.config import ConfigContent
+from ert._c_wrappers.enkf.analysis_iter_config import AnalysisIterConfig
+from ert._c_wrappers.enkf.config_keys import ConfigKeys
 
 
 class AnalysisConfig(BaseCClass):
@@ -235,7 +234,7 @@ class AnalysisConfig(BaseCClass):
         return self._get_active_module_name()
 
     def getModuleList(self) -> List[str]:
-        return _lib.analysis_config_module_names(self)
+        return _clib.analysis_config_module_names(self)
 
     def getModule(self, module_name: str) -> AnalysisModule:
         return self._get_module(module_name)

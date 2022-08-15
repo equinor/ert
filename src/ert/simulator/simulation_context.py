@@ -2,13 +2,13 @@ from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from res.enkf.enums import HookRuntime
-from res.job_queue import JobQueueManager
+from ert._c_wrappers.enkf.enums import HookRuntime
+from ert._c_wrappers.job_queue import JobQueueManager
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
-    from res.enkf import EnkfFs, EnKFMain, RunArg, RunContext
-    from res.job_queue import JobStatusType
+    from ert._c_wrappers.enkf import EnkfFs, EnKFMain, RunArg, RunContext
+    from ert._c_wrappers.job_queue import JobStatusType
 
 
 class SimulationContext:

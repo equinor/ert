@@ -1,5 +1,5 @@
 import pytest
-from res.enkf.runpaths import Runpaths
+from ert._c_wrappers.enkf.runpaths import Runpaths
 
 
 @pytest.mark.parametrize(

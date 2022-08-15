@@ -9,8 +9,8 @@ import pytest
 from ecl.summary import EclSum
 from ert.data import loader, MeasuredData
 from ert.libres_facade import LibresFacade
-from res.enkf import EnKFMain, ResConfig
-from res.enkf.export import SummaryObservationCollector
+from ert._c_wrappers.enkf import EnKFMain, ResConfig
+from ert._c_wrappers.enkf.export import SummaryObservationCollector
 
 from ...utils import SOURCE_DIR
 

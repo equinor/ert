@@ -1,10 +1,14 @@
-from res.job_queue import ErtScript
+from typing import TYPE_CHECKING
+from ert._c_wrappers.job_queue import ErtScript
+
+if TYPE_CHECKING:
+    from ert._c_wrappers.enkf import EnKFMain
+    from ert._c_wrappers.job_queue import WorkflowJob
 
 
 class Plugin:
-    def __init__(self, ert, workflow_job):
+    def __init__(self, ert: "EnKFMain", workflow_job: "WorkflowJob"):
         """
-        @type ert: res.enkf.EnKFMain
         @type workflow_job: WorkflowJob
         """
         self.__ert = ert
@@ -46,10 +50,8 @@ class Plugin:
         """@rtype: QWidget"""
         return self.__parent_window
 
-    def ert(self):
-        """@rtype: res.enkf.enkf_main.EnKFMain"""
+    def ert(self) -> "EnKFMain":
         return self.__ert
 
-    def getWorkflowJob(self):
-        """@rtype: WorkflowJob"""
+    def getWorkflowJob(self) -> "WorkflowJob":
         return self.__workflow_job

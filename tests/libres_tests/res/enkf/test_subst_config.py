@@ -19,7 +19,7 @@ import unittest
 import datetime
 
 from ecl.util.test import TestAreaContext
-from res.enkf import ConfigKeys, ResConfig, SubstConfig
+from ert._c_wrappers.enkf import ConfigKeys, ResConfig, SubstConfig
 
 from ...libres_utils import ResTest
 

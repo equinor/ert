@@ -18,7 +18,7 @@ import os
 import unittest
 
 from ecl.util.test import TestArea
-from res.enkf import ConfigKeys, ErtTemplates, ResConfig
+from ert._c_wrappers.enkf import ConfigKeys, ErtTemplates, ResConfig
 
 from ...libres_utils import ResTest
 

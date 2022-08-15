@@ -17,7 +17,7 @@
 from ecl.grid import EclGridGenerator
 from ...libres_utils import ResTest
 
-from res.enkf import ActiveList, BlockObservation, FieldConfig
+from ert._c_wrappers.enkf import ActiveList, BlockObservation, FieldConfig
 
 
 class BlockObsTest(ResTest):

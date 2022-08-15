@@ -16,7 +16,7 @@
 
 import pytest
 
-from res.analysis import AnalysisModule
+from ert._c_wrappers.analysis import AnalysisModule
 
 
 def test_analysis_module():

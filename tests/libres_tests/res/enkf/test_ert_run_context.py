@@ -18,8 +18,8 @@
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest, tmpdir
 
-from res.enkf import RunContext
-from res.enkf.runpaths import Runpaths
+from ert._c_wrappers.enkf import RunContext
+from ert._c_wrappers.enkf.runpaths import Runpaths
 
 
 class ErtRunContextTest(ResTest):

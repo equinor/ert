@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from res.enkf import NodeId
-from res.enkf.data import EnkfNode
+from ert._c_wrappers.enkf import NodeId
+from ert._c_wrappers.enkf.data import EnkfNode
 
 from .simulation_context import SimulationContext
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from res.enkf import EnkfFs, EnKFMain
+    from ert._c_wrappers.enkf import EnkfFs, EnKFMain
 
 Status = namedtuple("Status", "waiting pending running complete failed")
 

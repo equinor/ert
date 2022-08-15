@@ -3,12 +3,17 @@ from typing import TYPE_CHECKING, Any, List, Optional
 
 from cwrap import BaseCClass
 
-from res import ResPrototype
-from res.config import ContentTypeEnum
-from res.job_queue import ErtPlugin, ErtScript, ExternalErtScript, FunctionErtScript
+from ert._c_wrappers import ResPrototype
+from ert._c_wrappers.config import ContentTypeEnum
+from ert._c_wrappers.job_queue import (
+    ErtPlugin,
+    ErtScript,
+    ExternalErtScript,
+    FunctionErtScript,
+)
 
 if TYPE_CHECKING:
-    from res.enkf import EnKFMain
+    from ert._c_wrappers.enkf import EnKFMain
 
 
 class WorkflowJob(BaseCClass):

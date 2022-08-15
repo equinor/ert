@@ -25,8 +25,8 @@ build_and_test () {
 	mkdir jenkinsbuild
 	run setup
 	run build_libecl
-	run build_libres
-	run build_res
+	run build_ert_clib
+	run build_ert_dev
 	run run_ctest
 	run run_pytest_normal
 	run run_pytest_equinor
@@ -49,11 +49,11 @@ build_libecl () {
 	popd
 }
 
-build_libres () {
+build_ert_clib () {
 	run enable_environment
 
-	pushd $LIBRES_BUILD
-	cmake ${ERT_SOURCE_ROOT}/src/libres \
+	pushd $ERT_CLIB_BUILD
+	cmake ${ERT_SOURCE_ROOT}/src/clib \
 		  -DCMAKE_PREFIX_PATH=$INSTALL \
 		  -DCMAKE_INSTALL_PREFIX=$INSTALL \
 		  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -63,7 +63,7 @@ build_libres () {
 	popd
 }
 
-build_res () {
+build_ert_dev () {
 	run enable_environment
 	pip install ${ERT_SOURCE_ROOT}
 	pip install -r dev-requirements.txt
@@ -85,8 +85,8 @@ setup_variables () {
 	LIBECL_ROOT=$WORKING_DIR/libecl
 	LIBECL_BUILD=$LIBECL_ROOT/build
 
-	LIBRES_ROOT=$WORKING_DIR/_libres
-	LIBRES_BUILD=$LIBRES_ROOT/build
+	ERT_CLIB_ROOT=$WORKING_DIR/_ert_clib
+	ERT_CLIB_BUILD=$ERT_CLIB_ROOT/build
 }
 
 enable_environment () {
@@ -111,9 +111,9 @@ clone_repos () {
 	git clone https://github.com/equinor/libecl $LIBECL_ROOT
 	mkdir -p $LIBECL_BUILD
 
-	echo "Cloning into $LIBRES_ROOT"
-	git clone . $LIBRES_ROOT
-	mkdir -p $LIBRES_BUILD
+	echo "Cloning into $ERT_CLIB_ROOT"
+	git clone . $ERT_CLIB_ROOT
+	mkdir -p $ERT_CLIB_BUILD
 }
 
 create_virtualenv () {
@@ -129,7 +129,7 @@ create_virtualenv () {
 
 run_ctest () {
 	run enable_environment
-	pushd $LIBRES_BUILD
+	pushd $ERT_CLIB_BUILD
 	export ERT_SITE_CONFIG=${ERT_SOURCE_ROOT}/src/ert/shared/share/ert/site-config
 	ctest -j $CTEST_JARG -E Lint --output-on-failure
 	popd
@@ -139,7 +139,7 @@ run_pytest_normal () {
 	run enable_environment
 
 	# Avoid implicitly loaded cwd modules
-	pushd ${LIBRES_BUILD}
+	pushd ${ERT_CLIB_BUILD}
 	python -m pytest -m "not equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests
 	popd
 }
@@ -149,7 +149,7 @@ run_pytest_equinor () {
 	run enable_environment
 
 	# Avoid implicitly loaded cwd modules
-	pushd ${LIBRES_BUILD}
+	pushd ${ERT_CLIB_BUILD}
 	python -m pytest -m "equinor_test" --durations=10 ${ERT_SOURCE_ROOT}/tests/libres_tests --eclipse-simulator
 	popd
 }

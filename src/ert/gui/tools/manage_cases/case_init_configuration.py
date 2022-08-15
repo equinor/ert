@@ -21,7 +21,7 @@ from ert.gui.ertwidgets.models.ertmodel import (
 )
 from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
 from ert.libres_facade import LibresFacade
-from res.enkf import EnkfVarType
+from ert._c_wrappers.enkf import EnkfVarType
 
 
 def createCheckLists(ert):

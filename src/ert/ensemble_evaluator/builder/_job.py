@@ -10,7 +10,7 @@ from typing import (
     TypeVar,
     Union,
 )
-from res.job_queue.ext_job import ExtJob
+from ert._c_wrappers.job_queue.ext_job import ExtJob
 
 
 from ._template import _SOURCE_TEMPLATE_BASE, _SOURCE_TEMPLATE_JOB
