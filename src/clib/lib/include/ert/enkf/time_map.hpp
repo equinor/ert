@@ -32,8 +32,8 @@ UTIL_IS_INSTANCE_HEADER(time_map);
 bool time_map_try_summary_update(time_map_type *map,
                                  const ecl_sum_type *ecl_sum);
 extern "C" bool time_map_try_update(time_map_type *map, int step, time_t time);
-bool time_map_attach_refcase(time_map_type *time_map,
-                             const ecl_sum_type *refcase);
+extern "C" bool time_map_attach_refcase(time_map_type *time_map,
+                                        const ecl_sum_type *refcase);
 bool time_map_has_refcase(const time_map_type *time_map);
 void time_map_clear(time_map_type *map);
 bool time_map_equal(const time_map_type *map1, const time_map_type *map2);

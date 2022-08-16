@@ -25,7 +25,7 @@ from ecl.util.util import RandomNumberGenerator
 from ert._c_wrappers import ResPrototype
 from ert._clib import enkf_main, enkf_state, model_callbacks
 from ert._c_wrappers.analysis.configuration import UpdateConfiguration
-from ert._c_wrappers.enkf.enums import RealizationStateEnum
+from ert._c_wrappers.enkf.enums import RealizationStateEnum, ErtImplType
 from ert._c_wrappers.enkf.enkf_fs import EnkfFs
 from ert._c_wrappers.enkf.analysis_config import AnalysisConfig
 from ert._c_wrappers.enkf.ecl_config import EclConfig
@@ -88,16 +88,11 @@ class EnKFMain(BaseCClass):
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     # FS operations
-    _get_current_fs = ResPrototype("enkf_fs_obj enkf_main_get_fs_ref(enkf_main)")
-    _switch_fs = ResPrototype("void enkf_main_set_fs(enkf_main, enkf_fs, char*)")
     _is_case_initialized = ResPrototype(
-        "bool enkf_main_case_is_initialized(enkf_main, char*)"
+        "bool enkf_main_case_is_initialized(enkf_main, enkf_fs)"
     )
     _initialize_case_from_existing = ResPrototype(
         "void enkf_main_init_case_from_existing(enkf_main, enkf_fs, int, enkf_fs)"
-    )
-    _initialize_current_case_from_existing = ResPrototype(
-        "void enkf_main_init_current_case_from_existing(enkf_main, enkf_fs, int)"
     )
 
     def __init__(
@@ -110,7 +105,6 @@ class EnKFMain(BaseCClass):
             raise TypeError(
                 "Failed to construct EnKFMain instance due to invalid res_config."
             )
-
         c_ptr = self._alloc(config, read_only)
         if c_ptr:
             super().__init__(c_ptr)
@@ -118,7 +112,6 @@ class EnKFMain(BaseCClass):
             raise ValueError(
                 f"Failed to construct EnKFMain instance from config {config}."
             )
-        self._fs_rotator = FileSystemRotator(5)
         self.__key_manager = KeyManager(self)
         self._substituter = Substituter(
             {key: value for (key, value, _) in self.getDataKW()}
@@ -129,6 +122,18 @@ class EnKFMain(BaseCClass):
             Path(config.runpath_file),
             self.substituter.substitute,
         )
+
+        # Initalize storage
+        self._fs_rotator = FileSystemRotator(5)
+        ens_path = Path(config.model_config.getEnspath())
+        current_case_file = ens_path / "current_case"
+        if current_case_file.exists():
+            fs = EnkfFs(
+                ens_path / current_case_file.read_text("utf-8"), read_only=read_only
+            )
+        else:
+            fs = EnkfFs.createFileSystem(ens_path / "default", read_only=read_only)
+        self.storage = fs
 
     @property
     def update_configuration(self) -> UpdateConfiguration:
@@ -170,6 +175,25 @@ class EnKFMain(BaseCClass):
     @property
     def runpath_list_filename(self):
         return self._runpaths.runpath_list_filename
+
+    @property
+    def storage(self):
+        return self._fs
+
+    @storage.setter
+    def storage(self, file_system):
+        self.addDataKW("<ERT-CASE>", file_system.getCaseName())
+        self.addDataKW("<ERTCASE>", file_system.getCaseName())
+        for key in file_system.getSummaryKeySet().keys():
+            self.ensembleConfig().add_summary(key)
+        if self.config_file.ecl_config.getRefcase():
+            time_map = file_system.getTimeMap()
+            time_map.attach_refcase(self.config_file.ecl_config.getRefcase())
+        case_name = file_system.getCaseName()
+        full_name = self._createFullCaseName(self.getMountPoint(), case_name)
+        if full_name not in self._fs_rotator:
+            self._fs_rotator.addFileSystem(file_system, full_name)
+        self._fs = file_system
 
     def getEnkfFsManager(self) -> "EnKFMain":
         return self
@@ -365,9 +389,6 @@ class EnKFMain(BaseCClass):
 
         if full_case_name not in self._fs_rotator:
             if not os.path.exists(full_case_name):
-                if self._fs_rotator.atCapacity():
-                    self._fs_rotator.dropOldestFileSystem()
-
                 new_fs = EnkfFs.createFileSystem(full_case_name, read_only)
             else:
                 new_fs = EnkfFs(full_case_name, read_only)
@@ -394,30 +415,21 @@ class EnKFMain(BaseCClass):
 
     def getCurrentFileSystem(self) -> EnkfFs:
         """Returns the currently selected file system"""
-        current_fs = self._get_current_fs()
-        case_name = current_fs.getCaseName()
-        full_name = self._createFullCaseName(self.getMountPoint(), case_name)
-        self.addDataKW("<ERT-CASE>", current_fs.getCaseName())
-        self.addDataKW("<ERTCASE>", current_fs.getCaseName())
-
-        if full_name not in self._fs_rotator:
-            self._fs_rotator.addFileSystem(current_fs, full_name)
-
-        return self.getFileSystem(case_name, self.getMountPoint())
+        return self.storage
 
     def umount(self) -> None:
-        self._fs_rotator.umountAll()
+        self._fs_rotator.umount()
 
     def getFileSystemCount(self) -> int:
         return len(self._fs_rotator)
 
     def switchFileSystem(self, file_system: EnkfFs) -> None:
-        self.addDataKW("<ERT-CASE>", file_system.getCaseName())
-        self.addDataKW("<ERTCASE>", file_system.getCaseName())
-        self._switch_fs(file_system, None)
+        self.storage = file_system
 
     def isCaseInitialized(self, case: str) -> bool:
-        return self._is_case_initialized(case)
+        if case not in self._fs_rotator:
+            return False
+        return self._is_case_initialized(self._fs_rotator[case])
 
     def getCaseList(self) -> List[str]:
         caselist = [
@@ -438,13 +450,18 @@ class EnKFMain(BaseCClass):
             )
         source_case_fs = self.getFileSystem(source_case)
         enkf_main.init_current_case_from_existing_custom(
-            self, source_case_fs, source_report_step, node_list, member_mask
+            self.ensembleConfig(),
+            source_case_fs,
+            self._fs,
+            source_report_step,
+            node_list,
+            member_mask,
         )
 
     def initializeCurrentCaseFromExisting(
         self, source_fs: EnkfFs, source_report_step: int
     ) -> None:
-        self._initialize_current_case_from_existing(source_fs, source_report_step)
+        self._initialize_case_from_existing(source_fs, source_report_step, self._fs)
 
     def initializeCaseFromExisting(
         self, source_fs: EnkfFs, source_report_step: int, target_fs: EnkfFs

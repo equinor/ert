@@ -51,7 +51,8 @@ void verify_parameters_txt() {
 }
 
 void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
-    enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
+    enkf_fs_type *init_fs =
+        enkf_fs_create_fs("new_fs", BLOCK_FS_DRIVER_ID, true);
     ensemble_config_type *ens_config =
         res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main));
     enkf_node_type *enkf_node =
@@ -98,7 +99,7 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
     }
     enkf_node_free(enkf_node);
     enkf_node_free(enkf_node2);
-
+    enkf_fs_decref(init_fs);
     verify_parameters_txt();
 }
 

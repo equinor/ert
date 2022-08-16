@@ -98,7 +98,6 @@ using enkf_state = std::shared_ptr<enkf_state_type>;
 struct enkf_main_struct {
     UTIL_TYPE_ID_DECLARATION;
     /** The internalized information. */
-    enkf_fs_type *dbase;
 
     const res_config_type *res_config;
     rng_manager_type *rng_manager;
@@ -165,9 +164,6 @@ void enkf_main_free(enkf_main_type *enkf_main) {
 
     if (enkf_main->obs)
         enkf_obs_free(enkf_main->obs);
-
-    if (enkf_main->dbase != NULL)
-        enkf_fs_decref(enkf_main->dbase);
 
     delete enkf_main;
 }
@@ -382,49 +378,6 @@ enkf_state_type *enkf_main_iget_state(const enkf_main_type *enkf_main,
     return enkf_main->ensemble.at(iens).get();
 }
 
-bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
-                               const char *case_path) {
-    char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-    const char *current_mount_point = NULL;
-    bool is_current;
-
-    if (enkf_main->dbase != NULL)
-        current_mount_point = enkf_fs_get_mount_point(enkf_main->dbase);
-
-    is_current = util_string_equal(mount_point, current_mount_point);
-    free(mount_point);
-    return is_current;
-}
-
-static bool
-enkf_main_current_case_file_exists(const enkf_main_type *enkf_main) {
-    const char *ens_path = model_config_get_enspath(
-        res_config_get_model_config(enkf_main->res_config));
-    char *current_case_file =
-        util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
-    bool exists = fs::exists(current_case_file);
-    free(current_case_file);
-    return exists;
-}
-
-char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main) {
-    char *current_case = NULL;
-    const char *ens_path = model_config_get_enspath(
-        res_config_get_model_config(enkf_main->res_config));
-    char *current_case_file =
-        util_alloc_filename(ens_path, CURRENT_CASE_FILE, NULL);
-    if (enkf_main_current_case_file_exists(enkf_main)) {
-        FILE *stream = util_fopen(current_case_file, "r");
-        current_case = util_fscanf_alloc_token(stream);
-        fclose(stream);
-    } else {
-        util_abort("%s: File: storage/current_case not found, aborting! \n",
-                   __func__);
-    }
-    free(current_case_file);
-    return current_case;
-}
-
 static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
                                     enkf_fs_type *source_case_fs,
                                     int source_report_step,
@@ -457,29 +410,6 @@ static void enkf_main_copy_ensemble(const ensemble_config_type *ensemble_config,
     }
 }
 
-void enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
-                                               enkf_fs_type *source_case_fs,
-                                               int source_report_step) {
-
-    enkf_fs_type *current_fs = enkf_main_get_fs(enkf_main);
-
-    enkf_main_init_case_from_existing(enkf_main, source_case_fs,
-                                      source_report_step, current_fs);
-}
-
-static void enkf_main_init_current_case_from_existing_custom(
-    enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
-    int source_report_step, std::vector<std::string> &node_list,
-    std::vector<bool> &iactive) {
-
-    enkf_fs_type *current_fs = enkf_main_get_fs(enkf_main);
-
-    enkf_main_copy_ensemble(
-        res_config_get_ensemble_config(enkf_main->res_config), source_case_fs,
-        source_report_step, current_fs, iactive, node_list);
-    enkf_fs_fsync(current_fs);
-}
-
 void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
                                        enkf_fs_type *source_case_fs,
                                        int source_report_step,
@@ -497,40 +427,34 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
 }
 
 /**
-   This function will go through the filesystem and check that we have
-   initial data for all parameters and all realizations. If the second
-   argument mask is different from NULL, the function will only
-   consider the realizations for which mask is true (if mask == NULL
-   all realizations will be checked).
+  @brief Check file system is initialized.
+
+  This function will go through the filesystem and check that we have
+  initial data for all parameters and all realizations.
+
+  @param ens_config Where to find the nodes
+  @param fs The filesystem to check
 */
-static bool
-enkf_main_case_is_initialized__(const ensemble_config_type *ensemble_config,
-                                enkf_fs_type *fs, const int ens_size) {
-    std::vector<std::string> parameter_keys =
-        ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
-    bool initialized = true;
-    for (int ikey = 0; (ikey < parameter_keys.size()) && initialized; ikey++) {
-        const enkf_config_node_type *config_node = ensemble_config_get_node(
-            ensemble_config, parameter_keys[ikey].c_str());
-        initialized = enkf_config_node_has_node(config_node, fs,
-                                                {.report_step = 0, .iens = 0});
-        for (int iens = 0; (iens < ens_size) && initialized; iens++) {
-            initialized = enkf_config_node_has_node(
-                config_node, fs, {.report_step = 0, .iens = iens});
-        }
-    }
-
-    return initialized;
-}
-
 bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                   const char *case_name) {
-    enkf_fs_type *fs = enkf_main_mount_alt_fs(enkf_main, case_name, false);
+                                   enkf_fs_type *fs) {
     if (fs) {
-        bool initialized = enkf_main_case_is_initialized__(
-            res_config_get_ensemble_config(enkf_main->res_config), fs,
-            enkf_main->ens_size);
-        enkf_fs_decref(fs);
+        const ensemble_config_type *ensemble_config =
+            res_config_get_ensemble_config(enkf_main->res_config);
+        int ens_size = enkf_main->ens_size;
+        std::vector<std::string> parameter_keys =
+            ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
+        bool initialized = true;
+        for (int ikey = 0; (ikey < parameter_keys.size()) && initialized;
+             ikey++) {
+            const enkf_config_node_type *config_node = ensemble_config_get_node(
+                ensemble_config, parameter_keys[ikey].c_str());
+            initialized = enkf_config_node_has_node(
+                config_node, fs, {.report_step = 0, .iens = 0});
+            for (int iens = 0; (iens < ens_size) && initialized; iens++) {
+                initialized = enkf_config_node_has_node(
+                    config_node, fs, {.report_step = 0, .iens = iens});
+            }
+        }
         return initialized;
     } else
         return false;
@@ -548,44 +472,6 @@ static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
     free(current_case_file);
 }
 
-static void enkf_main_gen_data_special(enkf_main_type *enkf_main,
-                                       enkf_fs_type *fs) {
-    ensemble_config_type *ensemble_config =
-        res_config_get_ensemble_config(enkf_main->res_config);
-    stringlist_type *gen_data_keys =
-        ensemble_config_alloc_keylist_from_impl_type(ensemble_config, GEN_DATA);
-    for (int i = 0; i < stringlist_get_size(gen_data_keys); i++) {
-        enkf_config_node_type *config_node = ensemble_config_get_node(
-            ensemble_config, stringlist_iget(gen_data_keys, i));
-        gen_data_config_type *gen_data_config =
-            (gen_data_config_type *)enkf_config_node_get_ref(config_node);
-
-        if (gen_data_config_is_dynamic(gen_data_config))
-            gen_data_config_set_ens_size(gen_data_config, enkf_main->ens_size);
-    }
-    stringlist_free(gen_data_keys);
-}
-
-static void
-enkf_main_update_current_case(enkf_main_type *enkf_main,
-                              const char *case_path /* Can be NULL */) {
-    if (!case_path)
-        case_path = enkf_fs_get_case_name(enkf_main_get_fs(enkf_main));
-
-    enkf_main_write_current_case_file(enkf_main, case_path);
-
-    enkf_main_gen_data_special(enkf_main, enkf_main_get_fs(enkf_main));
-}
-
-static void enkf_main_create_fs(const enkf_main_type *enkf_main,
-                                const char *case_path) {
-    char *new_mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-
-    enkf_fs_create_fs(new_mount_point, BLOCK_FS_DRIVER_ID, false);
-
-    free(new_mount_point);
-}
-
 char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                                   const char *case_path) {
     char *mount_point;
@@ -597,147 +483,6 @@ char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                 res_config_get_model_config(enkf_main->res_config)),
             case_path, NULL);
     return mount_point;
-}
-
-/**
-  Return a weak reference - i.e. the refcount is not increased.
-*/
-enkf_fs_type *enkf_main_get_fs(const enkf_main_type *enkf_main) {
-    return enkf_main->dbase;
-}
-
-enkf_fs_type *enkf_main_get_fs_ref(const enkf_main_type *enkf_main) {
-    return enkf_fs_get_ref(enkf_main->dbase);
-}
-
-/**
-  This function will return a valid enkf_fs instance; either just a
-  pointer to the current enkf_main->dbase, or alternatively it will
-  create a brand new fs instance. Because we do not really know whether
-  a new instance has been created or not resource handling becomes
-  slightly non trivial:
-
-
-    1. When calling scope is finished with the enkf_fs instance it
-       must call enkf_fs_decref(); the enkf_fs_decref() function will
-       close the filesystem and free all resources when the reference
-       count has reached zero.
-*/
-enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
-                                     const char *case_path, bool create,
-                                     bool read_only) {
-    if (enkf_main_case_is_current(enkf_main, case_path)) {
-        // Fast path - we just return a reference to the currently selected case;
-        // with increased refcount.
-        enkf_fs_incref(enkf_main->dbase);
-        return enkf_main->dbase;
-    } else {
-        // We have asked for an alterantive fs - must mount and possibly create that first.
-        enkf_fs_type *new_fs = NULL;
-        if (case_path != NULL) {
-            char *new_mount_point =
-                enkf_main_alloc_mount_point(enkf_main, case_path);
-
-            if (!enkf_fs_exists(new_mount_point)) {
-                if (create)
-                    enkf_main_create_fs(enkf_main, case_path);
-            }
-
-            new_fs = enkf_fs_mount(new_mount_point, read_only);
-            if (new_fs) {
-                const model_config_type *model_config =
-                    res_config_get_model_config(enkf_main->res_config);
-                const ecl_sum_type *refcase =
-                    model_config_get_refcase(model_config);
-
-                if (refcase) {
-                    time_map_type *time_map = enkf_fs_get_time_map(new_fs);
-                    if (!time_map_attach_refcase(time_map, refcase))
-                        logger->error("Warning mismatch between refcase:{} "
-                                      "and existing case:{}",
-                                      ecl_sum_get_case(refcase),
-                                      new_mount_point);
-                }
-            }
-
-            free(new_mount_point);
-        }
-        return new_fs;
-    }
-}
-
-static void enkf_main_update_summary_config_from_fs__(enkf_main_type *enkf_main,
-                                                      enkf_fs_type *fs) {
-    ensemble_config_type *ensemble_config =
-        res_config_get_ensemble_config(enkf_main->res_config);
-    summary_key_set_type *summary_key_set = enkf_fs_get_summary_key_set(fs);
-    stringlist_type *keys = summary_key_set_alloc_keys(summary_key_set);
-
-    for (int i = 0; i < stringlist_get_size(keys); i++) {
-        const char *key = stringlist_iget(keys, i);
-        ensemble_config_add_summary(ensemble_config, key, LOAD_FAIL_SILENT);
-    }
-    stringlist_free(keys);
-}
-
-/**
-   The enkf_fs instances employ a simple reference counting
-   scheme. The main point with this system is to avoid opening the
-   full timesystem more than necessary (this is quite compute
-   intensive). This is essentially achieved by:
-
-      1. Create new fs instances by using the function
-         enkf_main_mount_alt_fs() - depending on the input arguments
-         this will either create a new enkf_fs instance or it will
-         just return a pointer to currently open fs instance; with an
-         increased refcount.
-
-      2. When you are finished with working with filesystem pointer
-         call enkf_fs_unmount() - this will reduce the refcount with
-         one, and eventually discard the complete datastructure when
-         the refcount has reached zero.
-
-      3. By using the function enkf_main_get_fs() /
-         enkf_fs_get_weakref() you get a pointer to the current fs
-         instance WITHOUT INCREASING THE REFCOUNT. This means that
-         scope calling one of these functions does not get any
-         ownership to the enkf_fs instance.
-
-   The enkf_main instance will take ownership of the enkf_fs instance;
-   this implies that the calling scope must have proper ownership of
-   the fs instance which is passed in. The return value from
-   enkf_main_get_fs() can NOT be used as input to this function; this
-   is not checked for in any way - but the crash will be horrible if
-   this is not adhered to.
-*/
-void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
-                      const char *case_path /* Can be NULL */) {
-    if (enkf_main->dbase != fs) {
-        enkf_fs_incref(fs);
-
-        if (enkf_main->dbase)
-            enkf_fs_decref(enkf_main->dbase);
-
-        enkf_main->dbase = fs;
-        enkf_main_update_current_case(enkf_main, case_path);
-
-        enkf_main_update_summary_config_from_fs__(enkf_main, fs);
-    }
-}
-
-void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
-                         bool read_only) {
-    enkf_fs_type *new_fs =
-        enkf_main_mount_alt_fs(enkf_main, case_path, true, read_only);
-    if (new_fs != NULL)
-        enkf_main_set_fs(enkf_main, new_fs, case_path);
-    else {
-        const char *ens_path = model_config_get_enspath(
-            res_config_get_model_config(enkf_main->res_config));
-        util_exit("%s: select filesystem %s:%s failed \n", __func__, ens_path,
-                  case_path);
-    }
-    enkf_fs_decref(new_fs);
 }
 
 StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
@@ -767,18 +512,6 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     enkf_main->rng_manager = rng_config_alloc_rng_manager(
         res_config_get_rng_config(enkf_main->res_config));
     enkf_main->shared_rng = rng_manager_alloc_rng(enkf_main->rng_manager);
-
-    // Init storage
-    enkf_main->dbase = NULL;
-    const char *ens_path = model_config_get_enspath(
-        res_config_get_model_config(enkf_main->res_config));
-    if (enkf_main_current_case_file_exists(enkf_main)) {
-        char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
-        enkf_main_select_fs(enkf_main, current_case, read_only);
-        free(current_case);
-    } else
-        // Selecting (a new) default case
-        enkf_main_select_fs(enkf_main, DEFAULT_CASE, read_only);
 
     // Init observations
     auto obs = enkf_obs_alloc(model_config_get_history(model_config),
@@ -817,16 +550,21 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
     using namespace py::literals;
     m.def(
         "init_current_case_from_existing_custom",
-        [](py::object self, py::object source_case_py, int source_report_step,
+        [](py::object ensemble_config_py, py::object source_case_py,
+           py::object current_case_py, int source_report_step,
            std::vector<std::string> &node_list, std::vector<bool> &iactive) {
             auto source_case_fs = ert::from_cwrap<enkf_fs_type>(source_case_py);
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            return enkf_main_init_current_case_from_existing_custom(
-                enkf_main, source_case_fs, source_report_step, node_list,
-                iactive);
+            auto current_fs = ert::from_cwrap<enkf_fs_type>(current_case_py);
+            auto ensemble_config =
+                ert::from_cwrap<ensemble_config_type>(ensemble_config_py);
+            enkf_main_copy_ensemble(ensemble_config, source_case_fs,
+                                    source_report_step, current_fs, iactive,
+                                    node_list);
+            enkf_fs_fsync(current_fs);
         },
-        py::arg("self"), py::arg("source_case"), py::arg("source_report_step"),
-        py::arg("node_list"), py::arg("iactive"));
+        py::arg("self"), py::arg("source_case"), py::arg("current_case"),
+        py::arg("source_report_step"), py::arg("node_list"),
+        py::arg("iactive"));
     m.def("get_observation_keys", get_observation_keys);
     m.def("get_parameter_keys", get_parameter_keys);
     m.def("load_from_run_context",
