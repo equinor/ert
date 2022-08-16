@@ -5,13 +5,13 @@ from typing import (
     AsyncGenerator,
     Generator,
     Optional,
-    TYPE_CHECKING,
     Tuple,
     Union,
 )
 
 from contextlib import contextmanager
 from fastapi import Depends
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm.session import Session
 from sqlalchemy.engine.base import Transaction
 from starlette.testclient import (
@@ -179,7 +179,7 @@ def _override_get_db(session: sessionmaker) -> None:
             yield db
             db.commit()
             db.close()
-        except:
+        except DBAPIError:
             db.rollback()
             db.close()
             raise

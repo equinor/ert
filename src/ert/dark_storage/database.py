@@ -1,6 +1,7 @@
 import os
 from typing import Any
 from fastapi import Depends
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -46,7 +47,7 @@ async def get_db(*, _: None = Depends(security)) -> Any:
         yield db
         db.commit()
         db.close()
-    except:
+    except DBAPIError:
         db.rollback()
         db.close()
         raise
