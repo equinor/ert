@@ -78,7 +78,7 @@ args = dict(
         "dnspython >= 2",
         "ecl >= 2.13.0",
         "ert-storage >= 0.3.11",
-        "fastapi==0.70.1",
+        "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",
         "matplotlib",
