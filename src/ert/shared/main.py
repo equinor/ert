@@ -191,7 +191,9 @@ def range_limited_int(user_input):
 def run_gui_wrapper(args):
     from ert.gui.gert_main import run_gui
 
+    os.environ["ERT_LOG_DIR"] = os.getcwd()
     run_gui(args)
+    os.environ.pop("ERT_LOG_DIR")
 
 
 def get_ert_parser(parser=None):
