@@ -26,7 +26,7 @@ scratch.sparsebundle
 /.project
 *.egg*
 /dist
-src/ert_shared/version.py
+src/ert/shared/version.py
 /venv
 .hypothesis
 /_skbuild
