@@ -102,7 +102,6 @@ add_config_test(enkf_ecl_config_config enkf_ecl_config_config
 
 foreach(
   test
-  enkf_main_fs_current_file
   enkf_plot_gendata_fs
   enkf_state_manual_load
   enkf_gen_data_config
@@ -152,9 +151,6 @@ add_equinor_test(
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/MISSING_TSTEP")
 
 add_equinor_test(enkf_main_fs enkf_main_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/plotData/config")
-
-add_equinor_test(enkf_main_fs_current_file enkf_main_fs_current_file
                  "${EQUINOR_TEST_DATA_DIR}/config/plotData/config")
 
 add_equinor_test(enkf_plot_gendata_fs enkf_plot_gendata_fs

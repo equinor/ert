@@ -125,7 +125,6 @@
 */
 
 #define CASE_LOG "case-log"
-#define CURRENT_CASE "current"
 #define DEFAULT_CASE "default"
 #define CURRENT_CASE_FILE "current_case"
 
