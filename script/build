@@ -154,7 +154,7 @@ def install_build_requires() -> None:
         "install",
         "--upgrade",
         "pip",
-        "setuptools",
+        "setuptools<64",
         "wheel",
         "tomli",
         *extra_req,
