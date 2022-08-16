@@ -727,26 +727,17 @@ void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
 
 void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
                          bool read_only) {
-    if (enkf_main_case_is_current(enkf_main, case_path))
-        return; /* We have tried to select the currently selected case - just return. */
+    enkf_fs_type *new_fs =
+        enkf_main_mount_alt_fs(enkf_main, case_path, true, read_only);
+    if (new_fs != NULL)
+        enkf_main_set_fs(enkf_main, new_fs, case_path);
     else {
-        enkf_fs_type *new_fs =
-            enkf_main_mount_alt_fs(enkf_main, case_path, true, read_only);
-        if (enkf_main->dbase == new_fs)
-            util_abort("%s : return reference to current FS in situation where "
-                       "that should not happen.\n",
-                       __func__);
-
-        if (new_fs != NULL)
-            enkf_main_set_fs(enkf_main, new_fs, case_path);
-        else {
-            const char *ens_path = model_config_get_enspath(
-                res_config_get_model_config(enkf_main->res_config));
-            util_exit("%s: select filesystem %s:%s failed \n", __func__,
-                      ens_path, case_path);
-        }
-        enkf_fs_decref(new_fs);
+        const char *ens_path = model_config_get_enspath(
+            res_config_get_model_config(enkf_main->res_config));
+        util_exit("%s: select filesystem %s:%s failed \n", __func__, ens_path,
+                  case_path);
     }
+    enkf_fs_decref(new_fs);
 }
 
 StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
