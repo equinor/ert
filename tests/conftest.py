@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 
 import pkg_resources
 import pytest
-from ert.shared.services import Storage
 from ert._c_wrappers.enkf import ResConfig
+from ert.shared.services import Storage
 
 from .utils import SOURCE_DIR
 
