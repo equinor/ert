@@ -27,12 +27,10 @@ class Plugin:
         script = script_obj(self.__ert)
         return script
 
-    def getName(self):
-        """@rtype: str"""
+    def getName(self) -> str:
         return self.__name
 
-    def getDescription(self):
-        """@rtype: str"""
+    def getDescription(self) -> str:
         return self.__description
 
     def getArguments(self):

@@ -54,8 +54,7 @@ class WorkflowRunner:
         # completion.
         return self._workflow_job is not None and not self._workflow_job.done()
 
-    def isCancelled(self):
-        """@rtype: bool"""
+    def isCancelled(self) -> bool:
         return self.__workflow.isCancelled()
 
     def cancel(self):
@@ -75,16 +74,14 @@ class WorkflowRunner:
             [self._workflow_job], timeout=None, return_when=futures.FIRST_EXCEPTION
         )
 
-    def workflowResult(self):
-        """@rtype: bool or None"""
+    def workflowResult(self) -> Optional[bool]:
         return self.__workflow_result
 
     def workflowReport(self):
         """@rtype: {dict}"""
         return self.__workflow.getJobsReport()
 
-    def workflowError(self):
-        """@rtype: str"""
+    def workflowError(self) -> str:
         error = self.__workflow.getLastError()
 
         error_message = ""
