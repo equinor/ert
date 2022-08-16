@@ -860,28 +860,13 @@ enkf_main_type *enkf_main_alloc(const res_config_type *res_config,
     enkf_main->dbase = NULL;
     const char *ens_path = model_config_get_enspath(
         res_config_get_model_config(enkf_main->res_config));
-    char *current_mount_point =
-        util_alloc_filename(ens_path, CURRENT_CASE, NULL);
-
     if (enkf_main_current_case_file_exists(enkf_main)) {
         char *current_case = enkf_main_read_alloc_current_case_name(enkf_main);
         enkf_main_select_fs(enkf_main, current_case, read_only);
         free(current_case);
-    } else if (enkf_fs_exists(current_mount_point) &&
-               util_is_link(current_mount_point)) {
-        /*If the current_case file does not exists, but the 'current' symlink does we use readlink to
-    get hold of the actual target before calling the  enkf_main_select_fs() function. We then
-    write the current_case file and delete the symlink.*/
-        char *target_case = util_alloc_atlink_target(ens_path, CURRENT_CASE);
-        enkf_main_select_fs(enkf_main, target_case, read_only);
-        unlink(current_mount_point);
-        enkf_main_write_current_case_file(enkf_main, target_case);
-        free(target_case);
     } else
         // Selecting (a new) default case
         enkf_main_select_fs(enkf_main, DEFAULT_CASE, read_only);
-
-    free(current_mount_point);
 
     // Init observations
     auto obs = enkf_obs_alloc(model_config_get_history(model_config),
