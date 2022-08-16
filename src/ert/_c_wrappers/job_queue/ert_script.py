@@ -27,15 +27,13 @@ class ErtScript:
         self._stderrdata = ""
 
     @property
-    def stdoutdata(self):
-        """@rtype: str"""
+    def stdoutdata(self) -> str:
         if isinstance(self._stdoutdata, bytes):
             self._stdoutdata = self._stdoutdata.decode()
         return self._stdoutdata
 
     @property
-    def stderrdata(self):
-        """@rtype: str"""
+    def stderrdata(self) -> str:
         if isinstance(self._stderrdata, bytes):
             self._stderrdata = self._stderrdata.decode()
         return self._stderrdata
@@ -47,12 +45,10 @@ class ErtScript:
         logger.info(f"Accessing EnKFMain from workflow: {self.__class__.__name__}")
         return self.__ert
 
-    def isCancelled(self):
-        """@rtype: bool"""
+    def isCancelled(self) -> bool:
         return self.__is_cancelled
 
-    def hasFailed(self):
-        """@rtype: bool"""
+    def hasFailed(self) -> bool:
         return self.__failed
 
     def cancel(self):
