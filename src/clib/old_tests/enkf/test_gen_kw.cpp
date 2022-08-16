@@ -42,7 +42,8 @@ void test_write_gen_kw_export_file(enkf_main_type *enkf_main) {
         res_config_get_ensemble_config(enkf_main_get_res_config(enkf_main)),
         PARAMETER);
     enkf_state_type *state = enkf_main_iget_state(enkf_main, 0);
-    enkf_fs_type *init_fs = enkf_main_get_fs(enkf_main);
+    enkf_fs_type *init_fs =
+        enkf_fs_create_fs("my_storage", BLOCK_FS_DRIVER_ID, true);
     rng_manager_type *rng_manager = enkf_main_get_rng_manager(enkf_main);
     rng_type *rng = rng_manager_iget(rng_manager, 0);
     enkf_state_initialize(state, rng, init_fs, key_list, INIT_FORCE);

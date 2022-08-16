@@ -19,7 +19,7 @@ class TestEnKFFSManager2(ResTest):
         with ErtTestContext(self.config_file) as testContext:
             ert = testContext.getErt()
             fsm = ert.getEnkfFsManager()
-            self.assertEqual(0, fsm.getFileSystemCount())
+            self.assertEqual(1, fsm.getFileSystemCount())
 
             fs_list = []
             for index in range(5):

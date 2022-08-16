@@ -89,33 +89,15 @@ int enkf_main_load_from_run_context(enkf_main_type *enkf_main,
                                     enkf_fs_type *sim_fs,
                                     std::vector<run_arg_type *> run_args);
 
-bool enkf_main_case_is_current(const enkf_main_type *enkf_main,
-                               const char *case_path);
-char *enkf_main_read_alloc_current_case_name(const enkf_main_type *enkf_main);
-
-extern "C" void
-enkf_main_init_current_case_from_existing(enkf_main_type *enkf_main,
-                                          enkf_fs_type *source_case_fs,
-                                          int source_report_step);
-
 extern "C" void enkf_main_init_case_from_existing(
     const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
     int source_report_step, enkf_fs_type *target_case);
 
 extern "C" bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                              const char *case_name);
+                                              enkf_fs_type *fs);
 
 char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
                                   const char *case_path);
-enkf_fs_type *enkf_main_get_fs(const enkf_main_type *);
-extern "C" enkf_fs_type *enkf_main_get_fs_ref(const enkf_main_type *enkf_main);
-enkf_fs_type *enkf_main_mount_alt_fs(const enkf_main_type *enkf_main,
-                                     const char *case_path, bool create,
-                                     bool read_only = false);
-extern "C" void enkf_main_set_fs(enkf_main_type *enkf_main, enkf_fs_type *fs,
-                                 const char *case_path);
-void enkf_main_select_fs(enkf_main_type *enkf_main, const char *case_path,
-                         bool read_only = false);
 
 StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
                                   const char *case_path);

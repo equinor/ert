@@ -100,17 +100,7 @@ add_config_test(enkf_ecl_config2 enkf_ecl_config
 add_config_test(enkf_ecl_config_config enkf_ecl_config_config
                 "${LOCAL_TEST_DATA_DIR}/snake_oil/snake_oil.ert")
 
-foreach(
-  test
-  enkf_plot_gendata_fs
-  enkf_state_manual_load
-  enkf_gen_data_config
-  enkf_block_obs
-  enkf_obs_fs
-  enkf_obs_vector_fs
-  enkf_plot_data_fs
-  enkf_time_map
-  enkf_main_fs)
+foreach(test enkf_gen_data_config enkf_block_obs enkf_obs_fs enkf_time_map)
 
   add_executable(${test} ${TESTS_EXCLUDE_FROM_ALL} test_${test}.cpp)
   target_link_libraries(${test} ert)
@@ -135,12 +125,6 @@ add_equinor_test(enkf_block_obs enkf_block_obs
 add_equinor_test(enkf_obs_fs enkf_obs_fs
                  "${EQUINOR_TEST_DATA_DIR}/config/obs_testing/config")
 
-add_equinor_test(enkf_obs_vector_fs enkf_obs_vector_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/obs_testing/config")
-
-add_equinor_test(enkf_plot_data_fs enkf_plot_data_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/plotData/config")
-
 add_equinor_test(enkf_time_map1 enkf_time_map)
 add_equinor_test(
   enkf_time_map2
@@ -149,14 +133,3 @@ add_equinor_test(
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/EXTRA_TSTEP"
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/SHORT"
   "${EQUINOR_TEST_DATA_DIR}/ECLIPSE/ModifiedSummary/MISSING_TSTEP")
-
-add_equinor_test(enkf_main_fs enkf_main_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/plotData/config")
-
-add_equinor_test(enkf_plot_gendata_fs enkf_plot_gendata_fs
-                 "${EQUINOR_TEST_DATA_DIR}/config/with_GEN_DATA/config")
-
-add_equinor_test(
-  enkf_state_manual_load enkf_state_manual_load
-  "${EQUINOR_TEST_DATA_DIR}/config/ecl_sum_compatible_true"
-  config_ecl_sum_compatible_true)

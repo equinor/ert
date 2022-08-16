@@ -41,6 +41,7 @@ class TimeMap(BaseCClass):
         "int    time_map_lookup_days( time_map ,         double)"
     )
     _last_step = ResPrototype("int    time_map_get_last_step( time_map )")
+    _attach_refcase = ResPrototype("bool time_map_attach_refcase(time_map, ecl_sum)")
     _free = ResPrototype("void   time_map_free( time_map )")
 
     def __init__(self, filename=None):
@@ -80,6 +81,9 @@ class TimeMap(BaseCClass):
             raise IndexError(f"Index out of range: 0 <= {step} < {size}")
 
         return self._iget_sim_days(step)
+
+    def attach_refcase(self, refcase):
+        self._attach_refcase(refcase)
 
     def __getitem__(self, index):
         """@rtype: CTime"""

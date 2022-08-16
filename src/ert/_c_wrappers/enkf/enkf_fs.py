@@ -14,7 +14,7 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, TYPE_CHECKING
 
 from cwrap import BaseCClass
 import numpy as np
@@ -25,9 +25,13 @@ from ert._clib import update
 from ert._c_wrappers import ResPrototype
 from ert._c_wrappers.enkf.enums import EnKFFSType
 from ert._c_wrappers.enkf.res_config import EnsembleConfig
-from ert._c_wrappers.enkf.state_map import StateMap
 from ert._c_wrappers.enkf.summary_key_set import SummaryKeySet
 from ert._c_wrappers.enkf.util import TimeMap
+
+if TYPE_CHECKING:
+    from ecl.util.util import IntVector
+    from ert._c_wrappers.enkf.state_map import StateMap
+    from ert._clib.state_map import RealizationStateEnum
 
 
 class EnkfFs(BaseCClass):
@@ -56,7 +60,7 @@ class EnkfFs(BaseCClass):
         c_ptr = self._mount(mount_point.as_posix(), read_only)
         super().__init__(c_ptr)
 
-    def copy(self):
+    def copy(self) -> "EnkfFs":
         fs = self.createPythonObject(self._address())
         self._incref()
         return fs
@@ -73,8 +77,7 @@ class EnkfFs(BaseCClass):
     def getTimeMap(self) -> TimeMap:
         return self._get_time_map().setParent(self)
 
-    def getStateMap(self) -> StateMap:
-        """@rtype: StateMap"""
+    def getStateMap(self) -> "StateMap":
         return _clib.enkf_fs.get_state_map(self)
 
     def getCaseName(self) -> str:
@@ -131,22 +134,20 @@ class EnkfFs(BaseCClass):
     def getSummaryKeySet(self) -> SummaryKeySet:
         return self._summary_key_set().setParent(self)
 
-    def realizationList(self, state):
+    def realizationList(self, state: "RealizationStateEnum") -> "IntVector":
         """
         Will return list of realizations with state == the specified state.
-        @type state: _c_wrappers.enkf.enums.RealizationStateEnum
-        @rtype: ecl.util.IntVector
         """
         state_map = self.getStateMap()
         return state_map.realizationList(state)
 
     def save_parameters(
         self,
-        ensemble_config: EnsembleConfig,
+        ensemble_config: "EnsembleConfig",
         iens_active_index: List[int],
         parameters: List[update.Parameter],
         values: npt.ArrayLike,
-    ):
+    ) -> None:
         update.save_parameters(
             self, ensemble_config, iens_active_index, parameters, values
         )
