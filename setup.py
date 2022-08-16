@@ -77,7 +77,7 @@ args = dict(
         "deprecation",
         "dnspython >= 2",
         "ecl >= 2.13.0",
-        "ert-storage >= 0.3.11",
+        "ert-storage >= 0.3.16",
         "fastapi",
         "graphlib_backport; python_version < '3.9'",
         "jinja2",

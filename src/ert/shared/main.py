@@ -1,8 +1,11 @@
+import json
 import logging
 import logging.config
 import os
 import sys
 import re
+
+import requests
 import yaml
 import atexit
 from argparse import ArgumentParser, ArgumentTypeError
@@ -63,6 +66,13 @@ def run_webviz_ert(args):
 
     with Storage.connect_or_start_server(**kwargs) as storage:
         storage.wait_until_ready()
+        url = storage.fetch_url()
+        auth = storage.fetch_auth()
+        response = requests.get(f"{url}/server/info", headers={"Token": auth[1]})
+        if response.status_code == 200:
+            title = json.loads(response.content)["name"]
+        else:
+            title = "ERT - Visualization tool"
         print(
             """
 -----------------------------------------------------------
@@ -72,8 +82,11 @@ Starting up Webviz-ERT. This might take more than a minute.
 -----------------------------------------------------------
 """
         )
-        kwargs = {"experimental_mode": args.experimental_mode}
-        kwargs["verbose"] = args.verbose
+        kwargs = {
+            "experimental_mode": args.experimental_mode,
+            "verbose": args.verbose,
+            "title": title,
+        }
         with WebvizErt.start_server(**kwargs) as webviz_ert_server:
             webviz_ert_server.wait()
 
@@ -562,3 +575,7 @@ def main():
         msg += "\n   " + "\n   ".join(logfiles)
 
         sys.exit(msg)
+
+
+if __name__ == "__main__":
+    main()
