@@ -124,7 +124,6 @@
   Name of the default case.
 */
 
-#define CASE_LOG "case-log"
 #define DEFAULT_CASE "default"
 #define CURRENT_CASE_FILE "current_case"
 

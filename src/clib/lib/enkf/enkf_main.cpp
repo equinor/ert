@@ -572,48 +572,6 @@ bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
         return false;
 }
 
-static void update_case_log(enkf_main_type *enkf_main, const char *case_path) {
-    /*  : Update a small text file with the name of the host currently
-        running ert, the pid number of the process, the active case
-        and when it started.
-
-        If the previous shutdown was unclean the file will be around,
-        and we will need the info from the previous invocation which
-        is in the file. For that reason we open with mode 'a' instead
-        of 'w'.
-  */
-
-    const char *ens_path = model_config_get_enspath(
-        res_config_get_model_config(enkf_main->res_config));
-
-    {
-        int buffer_size = 256;
-        char *current_host = util_alloc_filename(ens_path, CASE_LOG, NULL);
-        FILE *stream = util_fopen(current_host, "a");
-
-        fprintf(stream, "CASE:%-16s  ", case_path);
-        fprintf(stream, "PID:%-8d  ", getpid());
-        {
-            char hostname[buffer_size];
-            gethostname(hostname, buffer_size);
-            fprintf(stream, "HOST:%-16s  ", hostname);
-        }
-
-        {
-            int year, month, day, hour, minute, second;
-            time_t now = time(NULL);
-
-            util_set_datetime_values_utc(now, &second, &minute, &hour, &day,
-                                         &month, &year);
-
-            fprintf(stream, "TIME:%04d-%02d-%02dT%02d:%02d:%02d\n", year, month,
-                    day, hour, minute, second);
-        }
-        fclose(stream);
-        free(current_host);
-    }
-}
-
 static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
                                               const char *case_path) {
     const char *ens_path = model_config_get_enspath(
@@ -651,7 +609,6 @@ enkf_main_update_current_case(enkf_main_type *enkf_main,
         case_path = enkf_fs_get_case_name(enkf_main_get_fs(enkf_main));
 
     enkf_main_write_current_case_file(enkf_main, case_path);
-    update_case_log(enkf_main, case_path);
 
     enkf_main_gen_data_special(enkf_main, enkf_main_get_fs(enkf_main));
 }
