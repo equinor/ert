@@ -494,7 +494,9 @@ class EnKFMain(BaseCClass):
             fs = self.getFileSystem(case)
             return fs.getStateMap()
         else:
-            return enkf_main.read_state_map(self, case)
+            mount_root = self.getMountPoint()
+            full_case_name = self._createFullCaseName(mount_root, case)
+            return self.storage.read_state_map(full_case_name)
 
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)

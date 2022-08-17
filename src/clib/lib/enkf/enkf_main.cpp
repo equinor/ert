@@ -472,27 +472,6 @@ static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
     free(current_case_file);
 }
 
-char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
-                                  const char *case_path) {
-    char *mount_point;
-    if (util_is_abs_path(case_path))
-        mount_point = util_alloc_string_copy(case_path);
-    else
-        mount_point = util_alloc_filename(
-            model_config_get_enspath(
-                res_config_get_model_config(enkf_main->res_config)),
-            case_path, NULL);
-    return mount_point;
-}
-
-StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
-                                  const char *case_path) {
-    char *mount_point = enkf_main_alloc_mount_point(enkf_main, case_path);
-    auto state_map = enkf_fs_read_state_map(mount_point);
-    free(mount_point);
-    return state_map;
-}
-
 /**
    This function boots everything needed for running a EnKF
    application from the provided res_config.
@@ -591,12 +570,4 @@ ERT_CLIB_SUBMODULE("enkf_main", m) {
         py::arg("res_config"), py::arg("run_path"), py::arg("iens"),
         py::arg("sim_fs"), py::arg("run_id"), py::arg("job_name"),
         py::arg("subst_list"));
-
-    m.def(
-        "read_state_map",
-        [](py::handle self, const std::string &ensemble_name) {
-            auto enkf_main = ert::from_cwrap<enkf_main_type>(self);
-            return enkf_main_read_state_map(enkf_main, ensemble_name.c_str());
-        },
-        "self"_a, "ensemble_name"_a);
 }
