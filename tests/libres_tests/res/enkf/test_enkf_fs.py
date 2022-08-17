@@ -17,12 +17,12 @@ def test_create(copy_case):
     assert not os.path.exists("newFS")
     fs = EnkfFs.createFileSystem("newFS")
     assert os.path.exists("newFS")
-    assert fs is None
+    assert isinstance(fs, EnkfFs)
 
 
 def test_create2(tmpdir):
     with tmpdir.as_cwd():
-        new_fs = EnkfFs.createFileSystem("newFS", mount=True)
+        new_fs = EnkfFs.createFileSystem("newFS")
         assert isinstance(new_fs, EnkfFs)
 
 
