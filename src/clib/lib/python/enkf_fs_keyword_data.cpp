@@ -1,4 +1,3 @@
-#include <ert/enkf/enkf_plot_gen_kw.hpp>
 #include <ert/enkf/ensemble_config.hpp>
 #include <ert/python.hpp>
 #include <math.h>
@@ -9,6 +8,7 @@
 static auto logger = ert::get_logger("enkf_fs");
 
 ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
+#if 0
     m.def(
         "keyword_data_get_realizations",
         [](py::object config, py::object fs,
@@ -86,4 +86,5 @@ ERT_CLIB_SUBMODULE("enkf_fs_keyword_data", m) {
         },
         py::arg("config"), py::arg("fs"), py::arg("key"),
         py::arg("realizations"));
+#endif
 }

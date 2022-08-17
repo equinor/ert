@@ -41,7 +41,6 @@
 #include <ert/enkf/enkf_config_node.hpp>
 #include <ert/enkf/enkf_fs.hpp>
 #include <ert/enkf/enkf_obs.hpp>
-#include <ert/enkf/enkf_plot_data.hpp>
 #include <ert/enkf/enkf_state.hpp>
 #include <ert/enkf/enkf_types.hpp>
 #include <ert/enkf/field_config.hpp>

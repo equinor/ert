@@ -1,10 +1,10 @@
-#include <ert/enkf/enkf_plot_gendata.hpp>
 #include <ert/python.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 ERT_CLIB_SUBMODULE("enkf_fs_general_data", m) {
+#if 0
     m.def(
         "gendata_get_realizations",
         [](py::object self, const std::vector<int> &realizations) {
@@ -58,4 +58,5 @@ ERT_CLIB_SUBMODULE("enkf_fs_general_data", m) {
                 free_when_done);  // numpy array references this parent
         },
         py::arg("self"), py::arg("realizations"));
+#endif
 }

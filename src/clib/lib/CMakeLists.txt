@@ -88,12 +88,6 @@ pybind11_add_module(
   enkf/enkf_main.cpp
   enkf/enkf_node.cpp
   enkf/enkf_obs.cpp
-  enkf/enkf_plot_data.cpp
-  enkf/enkf_plot_gendata.cpp
-  enkf/enkf_plot_gen_kw.cpp
-  enkf/enkf_plot_gen_kw_vector.cpp
-  enkf/enkf_plot_genvector.cpp
-  enkf/enkf_plot_tvector.cpp
   enkf/enkf_serialize.cpp
   enkf/enkf_state.cpp
   enkf/enkf_types.cpp

@@ -5,6 +5,7 @@
 #include <pybind11/stl.h>
 
 ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
+#if 0
     m.def(
         "get_summary_data",
         [](py::object ens_cfg, py::object fs,
@@ -70,4 +71,5 @@ ERT_CLIB_SUBMODULE("enkf_fs_summary_data", m) {
         },
         py::arg("ens_cfg"), py::arg("fs"), py::arg("summary_keys"),
         py::arg("realizations"), py::arg("time_map_size"));
+#endif
 }
