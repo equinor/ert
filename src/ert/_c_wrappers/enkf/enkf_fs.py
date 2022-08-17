@@ -90,11 +90,13 @@ class EnkfFs(BaseCClass):
         return self._is_running()
 
     @classmethod
-    def createFileSystem(cls, path: Union[str, Path], mount: bool = False) -> "EnkfFs":
+    def createFileSystem(
+        cls, path: Union[str, Path], read_only: bool = False
+    ) -> "EnkfFs":
         path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        fs = cls._create(path.as_posix(), fs_type, mount)
-        return fs
+        cls._create(path.as_posix(), fs_type, True)
+        return cls(path, read_only=read_only)
 
     def sync(self):
         self._sync()

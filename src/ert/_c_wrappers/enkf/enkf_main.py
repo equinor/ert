@@ -368,9 +368,9 @@ class EnKFMain(BaseCClass):
                 if self._fs_rotator.atCapacity():
                     self._fs_rotator.dropOldestFileSystem()
 
-                EnkfFs.createFileSystem(full_case_name)
-
-            new_fs = EnkfFs(full_case_name, read_only)
+                new_fs = EnkfFs.createFileSystem(full_case_name, read_only)
+            else:
+                new_fs = EnkfFs(full_case_name, read_only)
             self._fs_rotator.addFileSystem(new_fs, full_case_name)
 
         fs = self._fs_rotator[full_case_name]
