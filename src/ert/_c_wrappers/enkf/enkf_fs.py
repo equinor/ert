@@ -13,7 +13,8 @@
 #
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
-from typing import List
+from pathlib import Path
+from typing import List, Union
 
 from cwrap import BaseCClass
 import numpy as np
@@ -50,8 +51,9 @@ class EnkfFs(BaseCClass):
         "summary_key_set_ref enkf_fs_get_summary_key_set(enkf_fs)"
     )
 
-    def __init__(self, mount_point: str, read_only: bool = False):
-        c_ptr = self._mount(mount_point, read_only)
+    def __init__(self, mount_point: Union[str, Path], read_only: bool = False):
+        mount_point = Path(mount_point).absolute()
+        c_ptr = self._mount(mount_point.as_posix(), read_only)
         super().__init__(c_ptr)
 
     def copy(self):
@@ -88,10 +90,10 @@ class EnkfFs(BaseCClass):
         return self._is_running()
 
     @classmethod
-    def createFileSystem(cls, path: str, mount: bool = False) -> "EnkfFs":
-        assert isinstance(path, str)
+    def createFileSystem(cls, path: Union[str, Path], mount: bool = False) -> "EnkfFs":
+        path = Path(path).absolute()
         fs_type = EnKFFSType.BLOCK_FS_DRIVER_ID
-        fs = cls._create(path, fs_type, mount)
+        fs = cls._create(path.as_posix(), fs_type, mount)
         return fs
 
     def sync(self):
