@@ -96,12 +96,6 @@ extern "C" void enkf_main_init_case_from_existing(
 extern "C" bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
                                               enkf_fs_type *fs);
 
-char *enkf_main_alloc_mount_point(const enkf_main_type *enkf_main,
-                                  const char *case_path);
-
-StateMap enkf_main_read_state_map(const enkf_main_type *enkf_main,
-                                  const char *case_path);
-
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);

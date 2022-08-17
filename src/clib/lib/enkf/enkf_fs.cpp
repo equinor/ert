@@ -685,4 +685,10 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
             return enkf_fs->state_map;
         },
         "self"_a);
+    m.def(
+        "read_state_map",
+        [](std::string case_path) {
+            return enkf_fs_read_state_map(case_path.c_str());
+        },
+        "case_path"_a);
 }

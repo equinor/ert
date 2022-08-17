@@ -80,6 +80,9 @@ class EnkfFs(BaseCClass):
     def getStateMap(self) -> "StateMap":
         return _clib.enkf_fs.get_state_map(self)
 
+    def read_state_map(self, case_path) -> "StateMap":
+        return _clib.enkf_fs.read_state_map(case_path)
+
     def getCaseName(self) -> str:
         return self._get_case_name()
 
