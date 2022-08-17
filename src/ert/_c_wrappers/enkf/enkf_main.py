@@ -185,7 +185,7 @@ class EnKFMain(BaseCClass):
         case_name = file_system.getCaseName()
         full_name = self._createFullCaseName(self.getMountPoint(), case_name)
         if full_name not in self._fs_rotator:
-            self._fs_rotator.addFileSystem(file_system, full_name)
+            self._fs_rotator.append(file_system)
         # On setting a new file system we write the current_case file
         (Path(self.getModelConfig().getEnspath()) / "current_case").write_text(
             file_system.getCaseName()
@@ -389,7 +389,7 @@ class EnKFMain(BaseCClass):
                 new_fs = EnkfFs.createFileSystem(full_case_name, read_only)
             else:
                 new_fs = EnkfFs(full_case_name, read_only)
-            self._fs_rotator.addFileSystem(new_fs, full_case_name)
+            self._fs_rotator.append(new_fs)
 
         fs = self._fs_rotator[full_case_name]
 

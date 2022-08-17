@@ -52,9 +52,9 @@ class EnkfFs(BaseCClass):
     _umount = ResPrototype("void enkf_fs_umount(enkf_fs)")
 
     def __init__(self, mount_point: Union[str, Path], read_only: bool = False):
-        mount_point = Path(mount_point).absolute()
-        self.case_name = mount_point.stem
-        c_ptr = self._mount(mount_point.as_posix(), read_only)
+        self.mount_point = Path(mount_point).absolute()
+        self.case_name = self.mount_point.stem
+        c_ptr = self._mount(self.mount_point.as_posix(), read_only)
         super().__init__(c_ptr)
 
     # This method will return a new Python object which shares the underlying
