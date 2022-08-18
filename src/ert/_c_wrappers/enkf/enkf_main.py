@@ -482,69 +482,6 @@ class EnKFMain(BaseCClass):
     def isCaseHidden(self, case_name: str) -> bool:
         return case_name.startswith(".")
 
-    def runSimpleStep(self, job_queue: "JobQueue", run_context: RunContext) -> int:
-        # run simplestep
-        self.initRun(run_context)
-
-        # start queue
-        max_runtime = self.analysisConfig().get_max_runtime()
-        if max_runtime == 0:
-            max_runtime = None
-
-        done_callback_function = model_callbacks.forward_model_ok
-        exit_callback_function = model_callbacks.forward_model_exit
-
-        # submit jobs
-        for index, run_arg in enumerate(run_context):
-            if not run_context.is_active(index):
-                continue
-            job_queue.add_job_from_run_arg(
-                run_arg,
-                self.resConfig(),
-                max_runtime,
-                done_callback_function,
-                exit_callback_function,
-            )
-
-        job_queue.submit_complete()
-        queue_evaluators = None
-        if (
-            self.analysisConfig().get_stop_long_running()
-            and self.analysisConfig().minimum_required_realizations > 0
-        ):
-            queue_evaluators = [
-                partial(
-                    job_queue.stop_long_running_jobs,
-                    self.analysisConfig().minimum_required_realizations,
-                )
-            ]
-
-        jqm = JobQueueManager(job_queue, queue_evaluators)
-        jqm.execute_queue()
-
-        # deactivate failed realizations
-        totalOk = 0
-        totalFailed = 0
-        for index, run_arg in enumerate(run_context):
-            if run_context.is_active(index):
-                if run_arg.run_status in (
-                    RunStatusType.JOB_LOAD_FAILURE,
-                    RunStatusType.JOB_RUN_FAILURE,
-                ):
-                    run_context.deactivate_realization(index)
-                    totalFailed += 1
-                else:
-                    totalOk += 1
-
-        run_context.sim_fs.fsync()
-
-        if totalFailed == 0:
-            print(f"All {totalOk} active jobs complete and data loaded.")
-        else:
-            print(f"{totalFailed} active job(s) failed.")
-
-        return totalOk
-
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)
         for iens, run_arg in enumerate(run_context):
