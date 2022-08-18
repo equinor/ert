@@ -426,40 +426,6 @@ void enkf_main_init_case_from_existing(const enkf_main_type *enkf_main,
     enkf_fs_fsync(target_case_fs);
 }
 
-/**
-  @brief Check file system is initialized.
-
-  This function will go through the filesystem and check that we have
-  initial data for all parameters and all realizations.
-
-  @param ens_config Where to find the nodes
-  @param fs The filesystem to check
-*/
-bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                   enkf_fs_type *fs) {
-    if (fs) {
-        const ensemble_config_type *ensemble_config =
-            res_config_get_ensemble_config(enkf_main->res_config);
-        int ens_size = enkf_main->ens_size;
-        std::vector<std::string> parameter_keys =
-            ensemble_config_keylist_from_var_type(ensemble_config, PARAMETER);
-        bool initialized = true;
-        for (int ikey = 0; (ikey < parameter_keys.size()) && initialized;
-             ikey++) {
-            const enkf_config_node_type *config_node = ensemble_config_get_node(
-                ensemble_config, parameter_keys[ikey].c_str());
-            initialized = enkf_config_node_has_node(
-                config_node, fs, {.report_step = 0, .iens = 0});
-            for (int iens = 0; (iens < ens_size) && initialized; iens++) {
-                initialized = enkf_config_node_has_node(
-                    config_node, fs, {.report_step = 0, .iens = iens});
-            }
-        }
-        return initialized;
-    } else
-        return false;
-}
-
 static void enkf_main_write_current_case_file(const enkf_main_type *enkf_main,
                                               const char *case_path) {
     const char *ens_path = model_config_get_enspath(

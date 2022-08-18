@@ -691,4 +691,28 @@ ERT_CLIB_SUBMODULE("enkf_fs", m) {
             return enkf_fs_read_state_map(case_path.c_str());
         },
         "case_path"_a);
+    m.def(
+        "is_initialized",
+        [](py::handle self, py::handle ensemble_config_py,
+           std::vector<std::string> parameter_keys, int ens_size) {
+            auto fs = ert::from_cwrap<enkf_fs_type>(self);
+            const auto ensemble_config =
+                ert::from_cwrap<ensemble_config_type>(ensemble_config_py);
+            bool initialized = true;
+            for (int ikey = 0; (ikey < parameter_keys.size()) && initialized;
+                 ikey++) {
+                const enkf_config_node_type *config_node =
+                    ensemble_config_get_node(ensemble_config,
+                                             parameter_keys[ikey].c_str());
+                initialized = enkf_config_node_has_node(
+                    config_node, fs, {.report_step = 0, .iens = 0});
+                for (int iens = 0; (iens < ens_size) && initialized; iens++) {
+                    initialized = enkf_config_node_has_node(
+                        config_node, fs, {.report_step = 0, .iens = iens});
+                }
+            }
+            return initialized;
+        },
+        py::arg("self"), py::arg("ensemble_config"), py::arg("parameter_names"),
+        py::arg("ensemble_size"));
 }
