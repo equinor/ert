@@ -14,9 +14,6 @@
 #  See the GNU General Public License at <http://www.gnu.org/licenses/gpl.html>
 #  for more details.
 
-import os
-import os.path
-
 from ecl.util.test import TestAreaContext
 from ...libres_utils import ResTest, tmpdir
 
@@ -230,22 +227,3 @@ class EnKFTest(ResTest):
             rng2 = main.rng()
             d2 = rng2.getDouble()
             self.assertEqual(d1, d2)
-
-
-def test_run_context_from_external_folder(setup_case):
-    res_config = setup_case("local/snake_oil", "snake_oil.ert")
-    main = EnKFMain(res_config)
-
-    mask = [False] * 10
-    mask[0] = True
-    run_context = main.create_ensemble_experiment_run_context(
-        source_filesystem=main.getCurrentFileSystem(), active_mask=mask, iteration=0
-    )
-
-    assert len(run_context) == 10
-
-    job_queue = main.get_queue_config().create_job_queue()
-    main.createRunPath(run_context)
-    num = main.runSimpleStep(job_queue, run_context)
-    assert os.path.isdir("storage/snake_oil/runpath/realization-0/iter-0")
-    assert num == 1
