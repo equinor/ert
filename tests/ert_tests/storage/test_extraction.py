@@ -1,10 +1,7 @@
 import io
 import json
-import os
-import stat
 from pathlib import Path
 from random import randint, random
-from textwrap import dedent
 from typing import List, Tuple
 
 import numpy as np
@@ -44,7 +41,6 @@ class ErtConfigBuilder:
         self.ensemble_size = 1
         self._priors = {}
         self._obs = []
-        self.job_script = None
 
     def add_general_observation(self, observation_name, response_name, data):
         """Add GENERAL_OBSERVATION
@@ -93,20 +89,7 @@ class ErtConfigBuilder:
         )
 
     def _build_job(self, path):
-        f = (path / "test.ert").open("a")
-        f.write("INSTALL_JOB job JOB\nSIMULATION_JOB job\n")
-
-        if self.job_script is None:
-            # true is an executable which should exist on the path for all
-            # normal distros and it is then reasonable to expect this instead of
-            # using hardcoded path
-            (path / "JOB").write_text("EXECUTABLE true\n")
-        else:
-            (path / "JOB").write_text(f"EXECUTABLE {path}/script\n")
-            (path / "script").write_text(self.job_script)
-            mode = os.stat(path / "script").st_mode
-            mode |= stat.S_IXUSR | stat.S_IXGRP
-            os.chmod(path / "script", stat.S_IMODE(mode))
+        (path / "test.ert").open("a")
 
     def _build_observations(self, path):
         """
@@ -307,25 +290,6 @@ def test_observation_transformation(client):
     builder.ensemble_size = 5
     builder.add_general_observation("OBS", "RES", data)
     builder.add_prior("PARAMETER", "NORMAL 0.4 0.07")
-    builder.job_script = dedent(
-        """\
-    #!/usr/bin/python3
-    import re
-    from pathlib import Path
-
-    # Obtain realization index by looking at the name of current directory
-    real = int(re.match("^realization([0-9]+)$", Path.cwd().name)[1])
-
-    outlier   = 1000 + real  # Large number, ERT disables
-    active_a  = 1 + real
-    active_b  = 2 + real
-    small_var = 3  # Small variation between responses, ERT disables
-
-    output = [outlier, active_a, active_b, small_var]
-    with open("poly_0.out", "w") as f:
-        f.write("\\n".join(str(x) for x in output))
-    """
-    )
     ert = builder.build()
 
     # Post first ensemble
@@ -333,7 +297,11 @@ def test_observation_transformation(client):
 
     # Create runpath and run ERT
     run_context = _create_runpath(ert)
-    _evaluate_ensemble(ert, run_context)
+    for nr, path in enumerate(run_context.paths):
+        (Path(path) / "poly_0.out").write_text(
+            f"{1000 + nr}\n{1 + nr}\n{2 + nr}\n{3}\n"
+        )
+    ert.load_from_forward_model("default", [True] * len(run_context), 0)
     ert.smoother_update(run_context)
 
     # Post second ensemble
@@ -371,24 +339,13 @@ def test_post_ensemble_results(client):
     data = [0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9]
     df = pd.DataFrame(data)
 
-    # Create job
-    script = dedent(
-        f"""\
-    #!/usr/bin/python3
-
-    if __name__ == "__main__":
-        output = {str(data)}
-        with open("poly_0.out", "w") as f:
-            f.write("\\n".join(map(str, output)))
-    """
-    )
-    builder.job_script = script
-
     ert = builder.build()
 
     # Create runpath and run ERT
     run_context = _create_runpath(ert)
-    _evaluate_ensemble(ert, run_context)
+    for path in run_context.paths:
+        (Path(path) / "poly_0.out").write_text("\n".join([str(nr) for nr in data]))
+    ert.load_from_forward_model("default", [True] * len(run_context), 0)
 
     # Post initial ensemble
     ensemble_id = extraction.post_ensemble_data(ert, builder.ensemble_size)
@@ -566,16 +523,6 @@ def _create_runpath(ert: LibresFacade, iteration: int = 0) -> RunContext:
 
     enkf_main.createRunPath(run_context)
     return run_context
-
-
-def _evaluate_ensemble(ert: LibresFacade, run_context: RunContext):
-    """
-    Launch ensemble experiment with the created config
-    """
-    queue_config = ert.get_queue_config()
-    _job_queue = queue_config.create_job_queue()
-
-    ert._enkf_main.runSimpleStep(_job_queue, run_context)
 
 
 def _get_parameters() -> pd.DataFrame:
