@@ -1,14 +1,83 @@
+from functools import partial
 from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
+from ert._clib import model_callbacks  # pylint: disable=import-error
+
 from ert._c_wrappers.enkf.enums import HookRuntime
-from ert._c_wrappers.job_queue import JobQueueManager
+from ert._c_wrappers.job_queue import JobQueueManager, RunStatusType
 from .forward_model_status import ForwardModelStatus
 
 if TYPE_CHECKING:
     from ert._c_wrappers.enkf import EnkfFs, EnKFMain, RunArg, RunContext
-    from ert._c_wrappers.job_queue import JobStatusType
+    from ert._c_wrappers.job_queue import JobStatusType, JobQueue
+
+
+def _run_forward_model(
+    ert: "EnKFMain", job_queue: "JobQueue", run_context: "RunContext"
+) -> int:
+    # run simplestep
+    ert.initRun(run_context)  # type: ignore
+
+    # start queue
+    max_runtime: Optional[int] = ert.analysisConfig().get_max_runtime()
+    if max_runtime == 0:
+        max_runtime = None
+
+    done_callback_function = model_callbacks.forward_model_ok
+    exit_callback_function = model_callbacks.forward_model_exit
+
+    # submit jobs
+    for index, run_arg in enumerate(run_context):
+        if not run_context.is_active(index):
+            continue
+        job_queue.add_job_from_run_arg(
+            run_arg,
+            ert.resConfig(),
+            max_runtime,
+            done_callback_function,
+            exit_callback_function,
+        )
+
+    job_queue.submit_complete()  # type: ignore
+    queue_evaluators = None
+    if (
+        ert.analysisConfig().get_stop_long_running()
+        and ert.analysisConfig().minimum_required_realizations > 0
+    ):
+        queue_evaluators = [
+            partial(
+                job_queue.stop_long_running_jobs,
+                ert.analysisConfig().minimum_required_realizations,
+            )
+        ]
+
+    jqm = JobQueueManager(job_queue, queue_evaluators)
+    jqm.execute_queue()  # type: ignore
+
+    # deactivate failed realizations
+    totalOk = 0
+    totalFailed = 0
+    for index, run_arg in enumerate(run_context):
+        if run_context.is_active(index):
+            if run_arg.run_status in (
+                RunStatusType.JOB_LOAD_FAILURE,
+                RunStatusType.JOB_RUN_FAILURE,
+            ):
+                run_context.deactivate_realization(index)  # type: ignore
+                totalFailed += 1
+            else:
+                totalOk += 1
+
+    run_context.sim_fs.fsync()  # type: ignore
+
+    if totalFailed == 0:
+        print(f"All {totalOk} active jobs complete and data loaded.")
+    else:
+        print(f"{totalFailed} active job(s) failed.")
+
+    return totalOk
 
 
 class SimulationContext:
@@ -62,8 +131,8 @@ class SimulationContext:
 
     def _run_simulations_simple_step(self) -> Thread:
         sim_thread = Thread(
-            target=lambda: self._ert.runSimpleStep(
-                self._queue_manager.queue, self._run_context
+            target=lambda: _run_forward_model(
+                self._ert, self._queue_manager.queue, self._run_context
             )
         )
         sim_thread.start()

@@ -1,6 +1,7 @@
 from ert._c_wrappers.enkf import EnkfConfigNode, EnkfNode, NodeId
 from ert._c_wrappers.enkf.enums import RealizationStateEnum
 from ert._c_wrappers.test import ErtTestContext
+from ert.simulator.simulation_context import _run_forward_model
 
 from ...libres_utils import ResTest, tmpdir
 
@@ -69,7 +70,7 @@ class SimulationBatchTest(ResTest):
             job_queue = ert.get_queue_config().create_job_queue()
 
             ert.createRunPath(run_context)
-            num = ert.runSimpleStep(job_queue, run_context)
+            num = _run_forward_model(ert, job_queue, run_context)
             self.assertEqual(num, batch_size)
 
             order_result = EnkfNode(ens_config["ORDER"])
