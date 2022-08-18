@@ -13,16 +13,6 @@ def _create_runpath(enkf_main: EnKFMain) -> RunContext:
     return run_context
 
 
-def _evaluate_ensemble(enkf_main: EnKFMain, run_context: RunContext):
-    """
-    Launch ensemble experiment with the created config
-    """
-    queue_config = enkf_main.get_queue_config()
-    job_queue = queue_config.create_job_queue()
-
-    enkf_main.runSimpleStep(job_queue, run_context)
-
-
 @pytest.mark.parametrize(
     "append,numcpu",
     [
@@ -40,10 +30,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
 
     (tmp_path / "test.ert").write_text(
         "JOBNAME test_%d\n"
-        "QUEUE_SYSTEM LOCAL\n"
-        "QUEUE_OPTION LOCAL MAX_RUNNING 50\n"
         "NUM_REALIZATIONS 1\n"
-        "RUNPATH test/realization-%d/iter-%d\n"
         "INSTALL_JOB dump DUMP\n"
         "FORWARD_MODEL dump\n" + append
     )
@@ -52,8 +39,7 @@ def test_num_cpu_subst(monkeypatch, tmp_path, append, numcpu):
 
     config = ResConfig(str(tmp_path / "test.ert"))
     enkf_main = EnKFMain(config)
-    run_context = _create_runpath(enkf_main)
-    _evaluate_ensemble(enkf_main, run_context)
+    _create_runpath(enkf_main)
 
-    with open("test/realization-0/iter-0/dump.stdout.0") as f:
-        assert f.read() == f"{numcpu}\n"
+    with open("simulations/realization0/jobs.json") as f:
+        assert f'"argList" : ["{numcpu}"]' in f.read()
