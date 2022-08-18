@@ -215,3 +215,32 @@ def test_run_template_replace_in_file_name():
     assert (
         Path(run_context.paths[0]) / "result.txt"
     ).read_text() == "Not important, name of the file is important"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_creating_runpath_makes_initialized_fs():
+    """
+    This checks that creating the run path initializes the selected case,
+    for that parameters are needed, so add a simple GEN_KW.
+    """
+    config_text = dedent(
+        """
+        NUM_REALIZATIONS 1
+        JOBNAME my_case%d
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+    )
+    Path("template.tmpl").write_text("Not important, name of the file is important")
+    Path("config.ert").write_text(config_text)
+    with open("template.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", "w") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+    res_config = ResConfig("config.ert")
+    ert = EnKFMain(res_config)
+    run_context = ert.create_ensemble_experiment_run_context(
+        iteration=0, active_mask=[True]
+    )
+    assert not ert.isCaseInitialized("default")
+    ert.createRunPath(run_context)
+    assert ert.isCaseInitialized("default")

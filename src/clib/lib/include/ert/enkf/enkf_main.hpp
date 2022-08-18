@@ -93,9 +93,6 @@ extern "C" void enkf_main_init_case_from_existing(
     const enkf_main_type *enkf_main, enkf_fs_type *source_case_fs,
     int source_report_step, enkf_fs_type *target_case);
 
-extern "C" bool enkf_main_case_is_initialized(const enkf_main_type *enkf_main,
-                                              enkf_fs_type *fs);
-
 rng_manager_type *enkf_main_get_rng_manager(const enkf_main_type *enkf_main);
 extern "C" const res_config_type *
 enkf_main_get_res_config(const enkf_main_type *enkf_main);

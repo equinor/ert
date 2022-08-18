@@ -66,7 +66,6 @@ foreach(
   enkf_queue_config
   enkf_gen_obs_load
   enkf_ert_workflow_list
-  enkf_main
   enkf_ecl_config
   enkf_ecl_config_config
   gen_kw_logarithmic
@@ -84,7 +83,6 @@ add_config_test(enkf_ensemble_GEN_PARAM enkf_ensemble_GEN_PARAM
                 "${TEST_DATA_DIR}/enkf/ensemble/GEN_PARAM")
 
 add_config_test(enkf_queue_config enkf_queue_config)
-add_config_test(enkf_main enkf_main "${TEST_DATA_DIR}/enkf/config" rng)
 add_config_test(enkf_gen_obs_load enkf_gen_obs_load
                 "${LOCAL_TEST_DATA_DIR}/poly_example/poly.ert")
 add_config_test(gen_kw gen_kw

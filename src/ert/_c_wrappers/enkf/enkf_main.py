@@ -88,9 +88,6 @@ class EnKFMain(BaseCClass):
     _get_shared_rng = ResPrototype("rng_ref enkf_main_get_shared_rng(enkf_main)")
 
     # FS operations
-    _is_case_initialized = ResPrototype(
-        "bool enkf_main_case_is_initialized(enkf_main, enkf_fs)"
-    )
     _initialize_case_from_existing = ResPrototype(
         "void enkf_main_init_case_from_existing(enkf_main, enkf_fs, int, enkf_fs)"
     )
@@ -427,9 +424,12 @@ class EnKFMain(BaseCClass):
         self.storage = file_system
 
     def isCaseInitialized(self, case: str) -> bool:
+        case = os.path.join(self.getMountPoint(), case)
         if case not in self._fs_rotator:
             return False
-        return self._is_case_initialized(self._fs_rotator[case])
+        return self._fs_rotator[case].is_initalized(
+            self.ensembleConfig(), self._parameter_keys, self.getEnsembleSize()
+        )
 
     def getCaseList(self) -> List[str]:
         caselist = [

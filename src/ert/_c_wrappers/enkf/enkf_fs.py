@@ -95,6 +95,16 @@ class EnkfFs(BaseCClass):
     def is_running(self) -> bool:
         return self._is_running()
 
+    def is_initalized(
+        self,
+        ensemble_config: "EnsembleConfig",
+        parameters: List[str],
+        ensemble_size: int,
+    ) -> bool:
+        return _clib.enkf_fs.is_initialized(
+            self, ensemble_config, parameters, ensemble_size
+        )
+
     @classmethod
     def createFileSystem(
         cls, path: Union[str, Path], read_only: bool = False
