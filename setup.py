@@ -122,7 +122,7 @@ args = dict(
         "ansicolors==1.1.8",
         "async-generator",
         "beartype >= 0.9.1",
-        "cloudevents",
+        "cloudevents>=1.6.0",
         "cloudpickle",
         "tqdm>=4.62.0",
         "cryptography",

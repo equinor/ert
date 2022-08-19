@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 
 from ert.job_runner.reporting.message import (
     Exited,

@@ -15,7 +15,8 @@ from multiprocessing.process import BaseProcess
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Union
 
 import cloudpickle
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 
 with warnings.catch_warnings():
     # This is needed until dask_jobqueue is tagged by something newer

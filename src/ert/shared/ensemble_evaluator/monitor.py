@@ -6,8 +6,8 @@ from typing import Optional, TYPE_CHECKING
 
 from ert.ensemble_evaluator import identifiers
 from cloudevents.exceptions import DataUnmarshallerError
-from cloudevents.http import from_json, to_json
-from cloudevents.http.event import CloudEvent
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent, from_json
 from ert.serialization import evaluator_marshaller, evaluator_unmarshaller
 from ert.shared.ensemble_evaluator.sync_ws_duplexer import SyncWebsocketDuplexer
 

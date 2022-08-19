@@ -1,7 +1,7 @@
 import datetime
 
-from cloudevents.http import from_json, to_json
-from cloudevents.http.event import CloudEvent
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent, from_json
 
 from ert import serialization
 
