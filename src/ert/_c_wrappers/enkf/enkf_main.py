@@ -479,9 +479,6 @@ class EnKFMain(BaseCClass):
         else:
             return enkf_main.read_state_map(self, case)
 
-    def isCaseHidden(self, case_name: str) -> bool:
-        return case_name.startswith(".")
-
     def createRunPath(self, run_context: RunContext) -> None:
         self.initRun(run_context)
         for iens, run_arg in enumerate(run_context):

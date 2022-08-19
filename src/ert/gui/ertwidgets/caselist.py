@@ -12,7 +12,6 @@ from qtpy.QtWidgets import (
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import addHelpToWidget
-from ert.gui.ertwidgets.models.ertmodel import getAllCases
 from ert.gui.ertwidgets.validateddialog import ValidatedDialog
 from ert.gui.ertwidgets import resourceIcon
 from ert.libres_facade import LibresFacade
@@ -108,7 +107,7 @@ class CaseList(QWidget):
 
     def addItem(self):
         dialog = ValidatedDialog(
-            "New case", "Enter name of new case:", getAllCases(self.facade)
+            "New case", "Enter name of new case:", self.facade.cases()
         )
         new_case_name = dialog.showAndTell()
         if not new_case_name == "":
@@ -121,7 +120,7 @@ class CaseList(QWidget):
 
     def updateList(self):
         """Retrieves data from the model and inserts it into the list"""
-        case_list = getAllCases(self.facade)
+        case_list = self.facade.cases()
 
         self._list.clear()
 

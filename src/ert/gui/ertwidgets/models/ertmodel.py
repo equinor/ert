@@ -1,21 +1,9 @@
 from typing import List
 
-from ert.libres_facade import LibresFacade
 from ert._c_wrappers.enkf import EnKFMain, RealizationStateEnum
 from ert._c_wrappers.enkf import RunContext
 from ecl.util.util import StringList
 from ert.gui.ertwidgets import showWaitCursorWhileWaiting
-
-
-def getAllCases(facade: LibresFacade):
-    """@rtype: list[str]"""
-    case_list = facade.cases()
-    return [str(case) for case in case_list if not facade.is_case_hidden(case)]
-
-
-def caseExists(case_name, facade: LibresFacade):
-    """@rtype: bool"""
-    return str(case_name) in getAllCases(facade)
 
 
 def get_runnable_realizations_mask(ert, casename):
@@ -65,9 +53,9 @@ def initializeCurrentCaseFromExisting(
     ert: EnKFMain,
 ):
     if (
-        caseExists(source_case, LibresFacade(ert))
+        ert.caseExists(source_case)
         and ert.getEnkfFsManager().isCaseInitialized(source_case)
-        and caseExists(target_case, LibresFacade(ert))
+        and ert.caseExists(target_case)
     ):
         member_mask = [False] * ert.getEnsembleSize()
         for member in members:
