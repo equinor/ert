@@ -100,4 +100,4 @@ class Client:  # pylint: disable=too-many-instance-attributes
             },
             ev_data,
         )
-        self.send(cloudevents.http.to_json(event).decode())
+        self.send(cloudevents.conversion.to_json(event).decode())

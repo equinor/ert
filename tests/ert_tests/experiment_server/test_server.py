@@ -8,7 +8,8 @@ except ImportError:
 from ert.experiment_server._experiment_protocol import Experiment
 from typing import AsyncContextManager, Awaitable, Callable
 
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 from websockets.client import WebSocketClientProtocol
 
 # All test coroutines will be treated as marked.

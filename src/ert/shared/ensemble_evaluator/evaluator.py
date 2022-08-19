@@ -10,8 +10,8 @@ from typing import Optional, Set
 import cloudevents.exceptions
 import cloudpickle
 import websockets
-from cloudevents.http import from_json, to_json
-from cloudevents.http.event import CloudEvent
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent, from_json
 from contextlib import asynccontextmanager
 from websockets.exceptions import ConnectionClosedError
 from aiohttp import ClientError

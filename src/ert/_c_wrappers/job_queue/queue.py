@@ -27,7 +27,8 @@ import time
 from collections import deque
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Union
 
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 from cwrap import BaseCClass
 from websockets.client import connect
 from websockets.datastructures import Headers

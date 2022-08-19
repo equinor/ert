@@ -2,7 +2,8 @@ from abc import abstractmethod
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Union
 
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.snapshot import (
     Job,

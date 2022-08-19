@@ -2,7 +2,8 @@ import asyncio
 import threading
 
 import websockets
-from cloudevents.http import CloudEvent, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent
 
 from ert.shared.ensemble_evaluator.client import Client
 from ert.ensemble_evaluator import identifiers

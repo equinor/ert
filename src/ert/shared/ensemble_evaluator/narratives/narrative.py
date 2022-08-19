@@ -17,7 +17,8 @@ from ert.ensemble_evaluator import wait_for_evaluator
 
 from websockets.client import connect
 from websockets.server import serve
-from cloudevents.http import CloudEvent, from_json, to_json
+from cloudevents.conversion import to_json
+from cloudevents.http import CloudEvent, from_json
 
 _DATACONTENTTYPE = "datacontenttype"
 
